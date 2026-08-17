@@ -280,6 +280,7 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
     .function("get_validation",&molecules_container_js::get_validation)
+    .function("get_B_validation",&molecules_container_js::get_B_validation)
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
     .function("writeCIFASCII",&molecules_container_js::writeCIFASCII)
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)

@@ -1,19 +1,15 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useMemo, useState } from "react";
 import { useCommandCentre, useMoorhenInstance } from "@/InstanceManager";
-import { WorkerResponse } from "@/InstanceManager/CommandCentre/MoorhenCommandCentre";
 import {
     addValidationDataToSeqViewerSequences,
-    cootMMRCCToSeqViewer,
     cootValidationDataToSeqViewer,
 } from "@/components/sequence-viewer/utils";
 import { RootState, setValidationOption } from "@/store";
-import { libcootApi } from "@/types/libcoot";
 import { BaseSequenceViewerPanel } from "./BaseSequenceViewerPanel";
 import { useMoleculeChanged } from "@/hooks/usMolleculeChange";
 import { OverlayModal } from "@/components/interface-base/ModalBase/OverlayModal";
 import { MoorhenSpinner } from "@/components/icons/MoorhenSpinner";
-import { MoorhenStack } from "@/components/interface-base/Stack/Stack";
 
 export type ValidationOption = {
     selectedMolecule: string
@@ -63,6 +59,10 @@ export const ValidationPanel = () => {
             setIsLoading(true);
             const sequences = molecule.seqViewerData;
 
+        const scaleRMSZ = val => {
+            return Math.min(val / 4, 1);
+        };
+
             if (validationOption.selectedMap === "") {
                 // use active map if no map is selected
                 if (store.getState().generalStates.activeMap) {
@@ -76,27 +76,29 @@ export const ValidationPanel = () => {
             }
 
             const geoValidationData = await moorhenInstance.cootCommand.getGeoValidationData(molecule.molNo);
-            addValidationDataToSeqViewerSequences(sequences, geoValidationData, "Geometry", 4, undefined, undefined);
+            addValidationDataToSeqViewerSequences(sequences, geoValidationData, "Geometry", undefined, undefined, scaleRMSZ);
+
+            const BValidationData = await moorhenInstance.cootCommand.getBValidationData(molecule.molNo);
+            addValidationDataToSeqViewerSequences(sequences, BValidationData, "B Factor", "mpl Viridis", undefined, (value) => { return Math.min(value / 100 , 1); });
 
             if (!skipDensity) {
-                const MMRRCC = (await commandCentre.current.cootCommand(
-                    {
-                        message: "coot_command",
-                        command: "mmrrcc",
-                        returnType: "mmrrcc_stats",
-                        commandArgs: [molecule.molNo, "A", map.molNo],
-                    },
-                    false
-                )) as WorkerResponse<libcootApi.MMRCCStatsJS>;
+                // const MMRRCC = (await commandCentre.current.cootCommand(
+                //     {
+                //         message: "coot_command",
+                //         command: "mmrrcc",
+                //         returnType: "mmrrcc_stats",
+                //         commandArgs: [molecule.molNo, "A", map.molNo],
+                //     },
+                //     false
+                // )) as WorkerResponse<libcootApi.MMRCCStatsJS>;
 
-                addValidationDataToSeqViewerSequences(
-                    sequences,
-                    cootMMRCCToSeqViewer(MMRRCC.data.result.result),
-                    "Density",
-                    undefined,
-                    undefined,
-                    true,              
-                );
+                // addValidationDataToSeqViewerSequences(
+                //     sequences,
+                //     cootMMRCCToSeqViewer(MMRRCC.data.result.result),
+                //     "Density",
+                //     undefined,
+                //     true,              
+                // );
 
                 const newCootDensityCorrelationData = await moorhenInstance.cootCommand.getDensityCorrelationAnalysis(
                     molecule.molNo,
@@ -106,7 +108,6 @@ export const ValidationPanel = () => {
                     sequences,
                     cootValidationDataToSeqViewer(newCootDensityCorrelationData, "Density Correlation"),
                     "Density",
-                    undefined,
                     "mpl Viridis",
                     true,
                     
@@ -117,7 +118,6 @@ export const ValidationPanel = () => {
                     sequences,
                     cootValidationDataToSeqViewer(qScore, "Q Score"),
                     "Density",
-                    undefined,
                     "mpl Viridis",
                     true,
                     

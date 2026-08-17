@@ -104,13 +104,11 @@ export const addValidationDataToSeqViewerSequences = (
     sequences: SeqElement[],
     validationData: ValidationData,
     category: string,
-    rmszScale: number = 5,
     gradientPresets?: GradientPreset,
     reverseGradient?: boolean,
+    scoreTransform?: (value: number) => number,
 ): SeqElement[] => {
-    const scaleRMSZ = val => {
-        return Math.min(val / rmszScale, 1);
-    };
+
 
 
 
@@ -144,9 +142,9 @@ export const addValidationDataToSeqViewerSequences = (
                             if (!residue.validationData[key]) {
                                 residue.validationData[key] = { value: null };
                             }
-                            if (key.includes("RMSZ") || key.includes("ZScore")) {
+                            if (scoreTransform) {
                                 residue.validationData[key] = {
-                                    value: [scaleRMSZ(value), value],
+                                    value: [scoreTransform(value), value],
                                     gradientPreset: gradientPresets ? gradientPresets[key] : null,
                                     reverseGradient: reverseGradient ?? false,
                                     category: key.includes("Rota") || key.includes("Rama") ? "Ramachandran & Rotamer" : category,

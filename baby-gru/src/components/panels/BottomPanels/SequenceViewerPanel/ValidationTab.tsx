@@ -4,12 +4,14 @@ import { MoorhenMapSelect, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenSel
 import { MoorhenInfoCard, MoorhenStack } from "@/components/interface-base";
 import { RootState, setShownBottomPanel, setValidationOption } from "@/store";
 import { BaseSequenceViewerTab } from "./BaseSequenceViewerTab";
+import { validationDoc } from "./ValidationDoc";
 
 const presets = {
     Default: ["Overall RMSZ", "Density Correlation"],
+    "B factors": ["Main Chain B-factor", "Side Chain B-factor"],
     RotaRama: ["Rota. ZScore", "Rama. ZScore"],
     Geometry: ["Bond RMSZ", "Angle RMSZ", "Chiral RMSZ", "Plane RMSZ", "Torsion RMSZ"],
-    MMRRCC: ["MMRRCC All Atoms", "MMRRCC Side Chain"],
+    // MMRRCC: ["MMRRCC All Atoms", "MMRRCC Side Chain"],
 } 
 
 export const ValidationTab = () => {
@@ -86,12 +88,6 @@ export const ValidationTab = () => {
     ));
 
 
-    const infoPanel = (
-        <>
-            <h1>Validation Panel</h1>
-        </>
-    );
-
 
     const configPanel = (<>
         <MoorhenStack inputGrid>
@@ -137,7 +133,7 @@ export const ValidationTab = () => {
             onTitleClick={handleTitleClick}
             titleText="Validation"
             configPanel={configPanel}
-            infoCard={<MoorhenInfoCard infoText={infoPanel} />}
+            infoCard={<MoorhenInfoCard infoText={validationDoc} />}
         />
     );
 };

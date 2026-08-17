@@ -35,6 +35,7 @@
 #include <gemmi/to_cif.hpp>
 #include <gemmi/read_cif.hpp>
 #include <gemmi/topo.hpp>
+#include <gemmi/polyheur.hpp>
 
 #include "xpid_moorhen/interface.h"
 
@@ -582,6 +583,73 @@ class molecules_container_js : public molecules_container_t {
             Json::StreamWriterBuilder builder;
             const std::string json_string = Json::writeString(builder, root);
             
+            return json_string;
+        }
+
+        std::string get_B_validation(int imol){
+            mmdb::Manager *mol = get_mol(imol);
+            auto st = gemmi::copy_from_mmdb(mol);
+            size_t model_index = 0;
+
+            Json::Value root;
+
+            for (auto& chain : st.models[model_index].chains) {
+                Json::Value chain_json;
+                int res_idx = 0;
+
+                // Determine what kind of polymer this chain is so that we know
+                // which atoms belong to the main chain (backbone)
+                gemmi::PolymerType ptype = gemmi::check_polymer_type(chain.whole());
+                const std::vector<gemmi::AtomNameElement> mainchain_atoms =
+                    gemmi::get_mainchain_atoms(ptype);
+
+                for (auto& res : chain.residues) {
+                    Json::Value res_json;
+                    res_json["name"] = res.name;
+                    res_json["seqNum"] = res.seqid.num.value;
+                    res_json["insCode"] = std::string{res.seqid.icode};
+
+                    double main_chain_b_sum = 0.0;
+                    int    main_chain_b_count = 0;
+                    double side_chain_b_sum = 0.0;
+                    int    side_chain_b_count = 0;
+
+                    for (auto& atom : res.atoms) {
+                        // Hydrogens (when present) often carry the B of their
+                        // parent atom, so skip them to avoid skewing the mean
+                        if (atom.element == gemmi::El::H)
+                            continue;
+
+                        std::string atom_name = moorhen::ltrim(moorhen::rtrim(atom.name));
+                        bool is_main_chain = false;
+                        for (const auto& ane : mainchain_atoms) {
+                            if (atom_name == ane.atom_name) {
+                                is_main_chain = true;
+                                break;
+                            }
+                        }
+                        if (is_main_chain) {
+                            main_chain_b_sum += atom.b_iso;
+                            main_chain_b_count++;
+                        } else {
+                            side_chain_b_sum += atom.b_iso;
+                            side_chain_b_count++;
+                        }
+                    }
+
+                    res_json["Main Chain B-factor"] =
+                        main_chain_b_count > 0 ? main_chain_b_sum / main_chain_b_count : Json::nullValue;
+                    res_json["Side Chain B-factor"] =
+                        side_chain_b_count > 0 ? side_chain_b_sum / side_chain_b_count : Json::nullValue;
+
+                    chain_json[res_idx++] = res_json;
+                }
+                root[chain.name] = chain_json;
+            }
+
+            Json::StreamWriterBuilder builder;
+            const std::string json_string = Json::writeString(builder, root);
+
             return json_string;
         }
 
