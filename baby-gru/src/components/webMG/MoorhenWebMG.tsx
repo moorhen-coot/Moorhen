@@ -735,7 +735,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}
                     store={store}
                     dispatch={dispatch} />
-                    <Moorhen2DOverlay drawQuat={drawQuat}/>;
+                    <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>;
                 </figure>
                 {showContextMenu &&
                 <MoorhenContextMenu
