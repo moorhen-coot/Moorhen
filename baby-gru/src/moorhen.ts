@@ -39,7 +39,7 @@ export { MoorhenMenuSystem } from "./components/menu-system/MenuSystem";
 export { reducers as MoorhenStoreReducers } from "./store/MoorhenReduxStore";
 export type { RootState  } from "./store/MoorhenReduxStore";
 export { useCommandCentre, useCommandAndCapsule, useMoorhenInstance } from '@/InstanceManager';
-export { Preferences as MoorhenPreferences } from '@/components/managers/preferences/MoorhenPreferences';
+export { Preferences as MoorhenPreferences } from '@/InstanceManager/Preferences/MoorhenPreferences';
 export { createMoorhenStore } from "@/store/MoorhenReduxStore";
 export * from "@/WebComponent/utils/entry"; // export the external hook as well to get type generation for the hooks in the main package
 
