@@ -43,6 +43,10 @@ export const About = () => {
             <p>
                 <a href={`https://github.com/moorhen-coot/Moorhen`}>Source code</a>
             </p>
+            {window.location.hostname==="moorhen.hosted.york.ac.uk" && <p>
+                This version of Moorhen is hosted by the University of York. The following legal statements apply:<br/>
+                <a href={`https://www.york.ac.uk/about/legal-statements/`} target="_blank">Legal statements</a>
+            </p>}
         </div>
     );
 };

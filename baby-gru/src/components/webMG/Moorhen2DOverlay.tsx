@@ -783,13 +783,13 @@ export const Moorhen2DOverlay = ((props) => {
            <canvas style={{zIndex:3, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef3} height={width} width={height} />
            <canvas style={{zIndex:4, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef4} height={width} width={height} />
            {isLegalVisible && <div style={{zIndex:5, position: "absolute", bottom: legalOffset, right:"3rem"}}>
-           <div style={{background:"lightgray",height:"5rem"}}>
+           <div style={{background:"lightgray",height:"7rem"}}>
+                Hosted by the University of York, please see Help-&gt;About for Legal Statements.
                 <MoorhenStack direction="line" style={{ padding: "0.5rem" }}>
                     <img style={{height:"4rem"}} src={`${props.urlPrefix}/pixmaps/UOY-Logo-Stacked-shield-Black.png`} alt="Moorhen logo"/>
                     <img style={{height:"4rem"}} src={`${props.urlPrefix}/pixmaps/Medical_Research_Council_logo.svg`} alt="Moorhen logo"/>
                     <img style={{height:"4rem"}} src={`${props.urlPrefix}/pixmaps/ccp4-big-logo2-transparent.png`} alt="Moorhen logo"/>
                 </MoorhenStack>
-                Hosted by the University of York
            </div>
            </div>}
             </>
