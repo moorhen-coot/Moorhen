@@ -3,7 +3,7 @@ import { MoorhenInstance } from '@/InstanceManager';
 import { _MoorhenReduxStore as MoorhenReduxStore } from '@/store/MoorhenReduxStore';
 import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre';
 import { MockMoorhenInstance } from '../__mocks__/mockMoorhenInstance';
-import { setOrigin } from '@/store/glRefSlice';
+import { setOrigin } from '@/store/sceneSettingsSlice';
 import { setActiveMap, setDevMode, setDisableFileUpload } from '@/store/generalStatesSlice';
 import { setEnableTimeCapsule } from '@/store/backupSettingsSlice';
 import { setBackgroundColor } from '@/store/sceneSettingsSlice';
