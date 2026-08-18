@@ -3,7 +3,7 @@ import pako from "pako";
 import type { Dispatch, Store } from "redux";
 import { MoorhenInstance } from "@/InstanceManager";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
-import { MoorhenReduxStoreType, enqueueSnackbar } from "@/store";
+import { MoorhenReduxStoreType, enqueueSnackbar, setSeqViewerOption, setShownBottomPanel } from "@/store";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setValidationJson } from "../store/jsonValidation";
@@ -269,7 +269,6 @@ export const loadMrParseFiles = async (
     backgroundColor,
     defaultBondSmoothness,
     dispatch,
-    moorhenInstance: MoorhenInstance
 ) => {
     const json_contents = await loadMrParseJson(files);
     const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, moorhenInstance.store.dispatch);
@@ -280,8 +279,6 @@ export const loadMrParseFiles = async (
         backgroundColor,
         defaultBondSmoothness
     );
-
-    const state = store.getState();
 
     await drawModels(newMolecules, moorhenInstance);
     dispatch(addMoleculeList(newMolecules));
@@ -355,11 +352,10 @@ const loadCoordinateFilesFromURL = async (
 
 export const loadMrParseUrl = async (
     urlBase,
-    moorhenInstance,
+    moorhenInstance: MoorhenInstance,
     backgroundColor,
     defaultBondSmoothness,
     dispatch,
-    moorhenInstance: MoorhenInstance
 ) => {
     const json_contents = await loadMrParseJsonUrl(urlBase);
     const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, dispatch);
@@ -371,7 +367,6 @@ export const loadMrParseUrl = async (
         defaultBondSmoothness
     );
 
-    const state = store.getState();
     dispatch(addMoleculeList(newMolecules));
     await drawModels(newMolecules, moorhenInstance);
 
@@ -514,13 +509,11 @@ export const autoOpenFiles = async (
         dispatch(showModal({ key: modalKeys.MRPARSE }));
         loadMrParseFiles(
             files,
-            commandCentre,
-            store,
-            monomerLibraryPath,
+            moorhenInstance,
             backgroundColor,
             defaultBondSmoothness,
             dispatch,
-            moorhenInstance
+            
         );
         return;
     }

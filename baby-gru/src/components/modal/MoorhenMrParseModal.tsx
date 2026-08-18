@@ -151,7 +151,6 @@ export const MoorhenMrParseModal = () => {
         seq_ident: "number",
     };
 
-    const moorhenInstance = useMoorhenInstance();
 
     const mrParseModels = useSelector((state: moorhen.State) => state.mrParse.mrParseModels);
     const targetSequence = useSelector((state: moorhen.State) => state.mrParse.targetSequence);
@@ -683,7 +682,7 @@ export const MoorhenMrParseModal = () => {
         //This is an example of loading a set of MrParse results on a server.
         //In testing I just run Python simple server in an MrParse results dir.
         const urlBase = "http://localhost:8000/";
-        loadMrParseUrl(urlBase, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch);
+        loadMrParseUrl(urlBase, moorhenInstance, backgroundColor, defaultBondSmoothness, dispatch);
     };
 
     const footerContent = (
