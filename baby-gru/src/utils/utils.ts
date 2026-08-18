@@ -6,7 +6,7 @@ import pako from "pako";
 import { CommandCentre, WorkerResponse } from "@/InstanceManager/CommandCentre";
 import { MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 import type { MoorhenMolecule, ResidueInfo } from "@/utils//MoorhenMolecule";
-import { Shortcut } from "../components/managers/preferences";
+import { Shortcut } from "../InstanceManager/Preferences";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
@@ -384,6 +384,64 @@ export const atomInfoToResSpec = (atom: moorhen.AtomInfo) => {
         mol_name: "",
     };
 };
+
+export type ParsedCID = {
+    model: number | string;
+    chain: string;
+    residueNumber: number | string;
+    residueName: string | undefined;
+    isRange: boolean;
+    residueRange: [number, number] | null;
+    atom: string;
+    altloc: string | undefined;
+};
+
+export const parseCid = (cid: string): ParsedCID => {
+    const firstCid = cid.split("|")[0];
+    const cidArray = firstCid.split("/");
+    const model = cidArray[1] || "*";
+    const chain = cidArray[2] || "*";
+    const residuePart = cidArray[3];
+
+    let hasNumber = false;
+    let isRange = false;
+    let numb1: string | undefined;
+    let numb2: string | undefined;
+    let residueNumber: number | string = "*";
+    let residueName: string | undefined;
+    let residueRange: [number, number] | null = null;
+
+    if (residuePart) {
+        hasNumber = !!residuePart.match(/\d+/);
+        isRange = residuePart.includes("-");
+        residueName = residuePart.match(/\(([^)]+)\)/)?.[1] || undefined;
+
+        if (hasNumber) {
+            numb1 = residuePart.split("-")[0].split("(")[0];
+            residueNumber = parseInt(numb1);
+            if (isRange) {
+                numb2 = residuePart.split("-")[1].split("(")[0];
+                residueRange = [parseInt(numb1), parseInt(numb2)];
+            }
+        }
+    }
+
+    const atom = cidArray[4] || "";
+    const altloc = cidArray[4]?.split(":")[1] || undefined;
+
+    return {
+        model,
+        chain,
+        residueNumber,
+        residueName,
+        isRange,
+        residueRange,
+        atom,
+        altloc,
+    };
+}
+
+
 
 export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     //molNo, chain_id, res_no, ins_code, alt_conf
@@ -955,6 +1013,7 @@ export const gemmiAtomsToCirclesSpheresInfo = (
 };
 
 export const findConsecutiveRanges = (numbers: number[]): [number, number][] => {
+    if (numbers.length === 0) return [];
     numbers.sort((a, b) => a - b);
     const ranges: [number, number][] = [];
 

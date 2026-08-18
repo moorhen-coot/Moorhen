@@ -25,6 +25,7 @@ type MoorhenNumberInputProps = {
     integer?: boolean;
     tooltip?: string;
     className?: string;
+    isInvalid?: boolean;
 };
 
 /**
@@ -89,7 +90,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
 
     let displayValue: string = "";
     if (!isUserInteracting) {
-        displayValue = props.value?.toFixed(decimalDigits);
+        displayValue = props.value?.toFixed(decimalDigits) ?? "";
     } else {
         displayValue = internalValue;
     }

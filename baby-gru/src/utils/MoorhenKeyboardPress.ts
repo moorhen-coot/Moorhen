@@ -11,8 +11,8 @@ import { webGL } from "../types/mgWebGL";
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { Shortcut } from '../components/managers/preferences';
 import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, triggerClearLabels } from "../store";
+import { Shortcut } from '../InstanceManager/Preferences';
 import { cidToSpec, getCentreAtom } from "./utils"
 import { setShownControl, RootState, enqueueSnackbar  } from '@/store';
 

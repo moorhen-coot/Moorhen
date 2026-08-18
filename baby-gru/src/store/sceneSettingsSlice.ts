@@ -170,7 +170,10 @@ const sceneSettingsSlice = createSlice({
         },
         // API
         setDefaultBondSmoothness: (state, action: PayloadAction<number>) => {
-            state.defaultBondSmoothness = action.payload;
+            // Smoothness is an enum (1 = Coarse, 2 = Nice, 3 = Smooth). Coerce any invalid
+            // value (e.g. a stale slider-space value like 50 restored from preferences)
+            // to the default 'Nice' so a corrupt stored value can never break rendering.
+            state.defaultBondSmoothness = [1, 2, 3].includes(action.payload) ? action.payload : 2;
         },
         // API
         setDrawAxes: (state, action: PayloadAction<boolean>) => {

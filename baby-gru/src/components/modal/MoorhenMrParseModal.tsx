@@ -2,7 +2,7 @@ import Fasta from "biojs-io-fasta";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { createRef, useCallback, useEffect, useMemo, useRef } from "react";
 import { RootState } from "@/store";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 import {
@@ -18,7 +18,7 @@ import {
     setTargetSequence,
 } from "../../store/mrParseSlice";
 import { moorhen } from "../../types/moorhen";
-import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading";
+import { loadMrParseFiles, loadMrParseUrl } from "../../utils/FileLoading";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenButton, MoorhenFileInput } from "../inputs";
@@ -94,6 +94,7 @@ export const MoorhenMrParseModal = () => {
     const dispatch = useDispatch();
     const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
@@ -680,7 +681,7 @@ export const MoorhenMrParseModal = () => {
         //This is an example of loading a set of MrParse results on a server.
         //In testing I just run Python simple server in an MrParse results dir.
         const urlBase = "http://localhost:8000/";
-        loadMrParseUrl(urlBase, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch);
+        loadMrParseUrl(urlBase, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch, moorhenInstance);
     };
 
     const footerContent = (
@@ -697,7 +698,8 @@ export const MoorhenMrParseModal = () => {
                         monomerLibraryPath,
                         backgroundColor,
                         defaultBondSmoothness,
-                        dispatch
+                        dispatch,
+                        moorhenInstance
                     );
                 }}
             />

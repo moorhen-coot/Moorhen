@@ -2,7 +2,7 @@ import { useSelector} from "react-redux";
 import { useState } from "react";
 import { useMoorhenInstance } from "../../InstanceManager";
 import { RootState } from "../../store/MoorhenReduxStore";
-import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
+import { autoOpenFiles } from "../../utils/FileLoading";
 import { MoorhenFileInput } from "../inputs";
 
 export const LoadFiles = () => {

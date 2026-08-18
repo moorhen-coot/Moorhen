@@ -14,7 +14,7 @@ import { setDrawCrosshairs, setDrawScaleBar, setDrawMissingLoops, setDefaultBond
     setSpecifyMultiViewRowsColumns, setThreeWayViewOrder} from "../store/sceneSettingsSlice"
 import {setAnimateRefine, setEnableRefineAfterMod, setUseRamaRefinementRestraints, 
   setuseTorsionRefinementRestraints, setRefinementSelection, resetRefinementSettings } from "../store/refinementSettingsSlice"
-import { MoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation } from "./Representation/MoorhenMoleculeRepresentation";
 import { ColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";

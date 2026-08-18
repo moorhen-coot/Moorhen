@@ -34,7 +34,6 @@ export {
     setReContourMapOnlyOnMouseUp,
     resetMapContourSettings,
 }  from "./mapContourSettingsSlice";
-export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export {
     setConnectedMolecule,
     enableUpdatingMaps,
@@ -102,6 +101,94 @@ export {
     setRefinementSelection,
     resetRefinementSettings,
 }  from "./refinementSettingsSlice";
+export { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession }  from "./sharedSessionSlice";
+export { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings }  from "./shortCutsSlice";
+export {
+    resetSliceNDiceSlice,
+    setPaeFileIsUploaded,
+    setThresholdType,
+    setMoleculeBfactors,
+    setSlicingResults,
+    setMoleculeMaxBfactor,
+    setMoleculeMinBfactor,
+    setBFactorThreshold,
+    setNClusters,
+    setClusteringType,
+    setPAEFileContents,
+}  from "./sliceNDiceSlice";
+export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
+export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
+export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
+export {
+    setRequestDrawScene,
+    setIsWebGL2,
+    setActiveMolecule,
+    setQuat,
+    setCursorPosition,
+    setShortCutHelp,
+    setDraggableMolecule,
+    triggerRedrawEnv,
+    triggerClearLabels,
+    setGLCtx,
+    setDisplayBuffers,
+    setHoverSize,
+    setLabelBuffers,
+    setTexturedShapes,
+    setRttFramebufferSize,
+    setCanvasSize,
+    setElementsIndicesRestrict,
+}  from "./glRefSlice";
+export {
+    setActiveMap,
+    setViewOnly,
+    setTheme,
+    setIsDraggingAtoms,
+    setAppTittle,
+    setUserPreferencesMounted,
+    setDevMode,
+    setCootInitialized,
+    setStopResidueSelection,
+    setStartResidueSelection,
+    clearResidueSelection,
+    setMoleculeResidueSelection,
+    setResidueSelection,
+    setCidResidueSelection,
+    setIsRotatingAtoms,
+    setIsChangingRotamers,
+    setShowResidueSelection,
+    toggleCootCommandExit,
+    toggleCootCommandStart,
+    setIsAnimatingTrajectory,
+    resetGeneralStates,
+    setIsShowingTomograms,
+    setDefaultExpandDisplayCards,
+    setTransparentModalsOnMouseOut,
+    setUseGemmi,
+    setShowHoverInfo,
+    setAllowScripting,
+    setAllowAddNewFittedLigand,
+    setAllowMergeFittedLigand,
+    setDisableFileUpload,
+}  from "./generalStatesSlice";
+export {
+    setBusy,
+    setTimeCapsuleBusy,
+    setGlobalInstanceReady,
+    setShowBottomPanel,
+    setSearchBarActive,
+    setMainMenuOpen,
+    setShortCutsBlocked,
+    setShownSidePanel,
+    setSidePanelWidth,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
+    setShownBottomPanel,
+    pauseClickAwayListener,
+    resumeClickAwayListener,
+}  from "./globalUISlice";
 export {
     setOrigin,
     setDefaultBackgroundColor,
@@ -159,93 +246,6 @@ export {
     setZoom,
     autoClipFogByZoom,
 }  from "./sceneSettingsSlice";
-export { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession }  from "./sharedSessionSlice";
-export { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings }  from "./shortCutsSlice";
-export {
-    resetSliceNDiceSlice,
-    setPaeFileIsUploaded,
-    setThresholdType,
-    setMoleculeBfactors,
-    setSlicingResults,
-    setMoleculeMaxBfactor,
-    setMoleculeMinBfactor,
-    setBFactorThreshold,
-    setNClusters,
-    setClusteringType,
-    setPAEFileContents,
-}  from "./sliceNDiceSlice";
-export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
-export {
-    setActiveMap,
-    setViewOnly,
-    setTheme,
-    setIsDraggingAtoms,
-    setAppTittle,
-    setUserPreferencesMounted,
-    setDevMode,
-    setCootInitialized,
-    setStopResidueSelection,
-    setStartResidueSelection,
-    clearResidueSelection,
-    setMoleculeResidueSelection,
-    setResidueSelection,
-    setCidResidueSelection,
-    setIsRotatingAtoms,
-    setIsChangingRotamers,
-    setShowResidueSelection,
-    toggleCootCommandExit,
-    toggleCootCommandStart,
-    setIsAnimatingTrajectory,
-    resetGeneralStates,
-    setIsShowingTomograms,
-    setDefaultExpandDisplayCards,
-    setTransparentModalsOnMouseOut,
-    setUseGemmi,
-    setShowHoverInfo,
-    setAllowScripting,
-    setAllowAddNewFittedLigand,
-    setAllowMergeFittedLigand,
-    setDisableFileUpload,
-    setDefaultMoleculeRepresentation,
-}  from "./generalStatesSlice";
-export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
-export {
-    setBusy,
-    setTimeCapsuleBusy,
-    setGlobalInstanceReady,
-    setShowBottomPanel,
-    setSearchBarActive,
-    setMainMenuOpen,
-    setShortCutsBlocked,
-    setShownSidePanel,
-    setSidePanelWidth,
-    setShownControl,
-    lockControls,
-    unlockControls,
-    closeResidueSelectionTools,
-    setShownBottomPanel,
-    setClickAwayListenerActive,
-}  from "./globalUISlice";
-export {
-    setRequestDrawScene,
-    setIsWebGL2,
-    setActiveMolecule,
-    setQuat,
-    setCursorPosition,
-    setShortCutHelp,
-    setDraggableMolecule,
-    triggerRedrawEnv,
-    triggerClearLabels,
-    setGLCtx,
-    setDisplayBuffers,
-    setHoverSize,
-    setLabelBuffers,
-    setTexturedShapes,
-    setRttFramebufferSize,
-    setCanvasSize,
-    setElementsIndicesRestrict,
-}  from "./glRefSlice";
-export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

@@ -10,6 +10,7 @@
     max-height: 60px;
 }
 
+.moorhen__representation-chip-box,
 .moorhen__representation-chip-strike-box {
     display: inline-block;
     position: relative;
@@ -17,6 +18,8 @@
     border: 1px solid var(--moorhen-border);
     padding: 0.1rem;
 }
+
+
 
 .moorhen__representation-chip-strike-box::after {
     content: "";

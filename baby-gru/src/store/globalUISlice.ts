@@ -17,7 +17,7 @@ const initialState: {
     controlLocked: number | null;
     selectionToolsActive: boolean;
     shownBottomPanel: BottomPanelIDs | null;
-    isClickAwayListenerActive?: boolean;
+    clickAwayListenerPauseCount: number;
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
@@ -32,7 +32,7 @@ const initialState: {
     controlLocked: null,
     selectionToolsActive: false,
     shownBottomPanel: "sequences-viewer",
-    isClickAwayListenerActive: true,
+    clickAwayListenerPauseCount: 0,
 };
 
 const globalUISlice = createSlice({
@@ -105,8 +105,14 @@ const globalUISlice = createSlice({
         setShownBottomPanel: (state, action: PayloadAction<BottomPanelIDs | null>) => {
             state.shownBottomPanel = action.payload;
         },
-        setClickAwayListenerActive: (state, action: PayloadAction<boolean>) => {
-            state.isClickAwayListenerActive = action.payload;
+        // Reference-counted pausing: independent pauses stack, and an early resume can
+        // never leave the click-away listeners disabled for the remaining pauses (the
+        // original "listener never re-activated" bug).
+        pauseClickAwayListener: state => {
+            state.clickAwayListenerPauseCount += 1;
+        },
+        resumeClickAwayListener: state => {
+            state.clickAwayListenerPauseCount = Math.max(0, state.clickAwayListenerPauseCount - 1);
         },
     },
 });
@@ -126,6 +132,7 @@ export const {
     unlockControls,
     closeResidueSelectionTools,
     setShownBottomPanel,
-    setClickAwayListenerActive,
+    pauseClickAwayListener,
+    resumeClickAwayListener,
 } = globalUISlice.actions;
 export default globalUISlice.reducer;
