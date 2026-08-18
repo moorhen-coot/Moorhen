@@ -305,7 +305,7 @@ export const MoorhenDevMenu = () => {
         }
     };
 
-    const origin = useSelector((state: RootState) => state.glRef.origin);
+    const origin = useSelector((state: RootState) => state.sceneSettings.origin);
 
     // const tomogramTest = () => {
     //     enqueueSnackbar("tomogram", {

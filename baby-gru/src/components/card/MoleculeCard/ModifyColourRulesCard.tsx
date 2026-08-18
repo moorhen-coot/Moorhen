@@ -377,7 +377,7 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                 <div style={{ width: `${convertRemToPx(15) * 2}px`, padding: "0.5rem", textAlign: "center" }}>
                     <MoorhenSequenceViewer
                         sequences={moorhenSequenceToSeqViewer(selectedSequence, props.molecule.name, props.molecule.molNo)}
-                        onResiduesSelect={selection => handleResiduesSelection(selection)}
+                        setSelectedResidues={selection => handleResiduesSelection(selection)}
                         maxDisplayHeight={1}
                     />
                 </div>

@@ -10,8 +10,8 @@ import { webGL } from "../types/mgWebGL";
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
 import { changeMapRadius } from "../store/mapContourSettingsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
-import { Shortcut } from '../components/managers/preferences';
-import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, triggerClearLabels } from "../store/glRefSlice";
+import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, triggerClearLabels } from "../store";
+import { Shortcut } from '../InstanceManager/Preferences';
 import { cidToSpec, getCentreAtom } from "./utils"
 import { setShownControl, RootState, enqueueSnackbar  } from '@/store';
 
@@ -47,13 +47,13 @@ export const moorhenKeyPress = (
     } = collectedProps;
 
 
-    const originState = store.getState().glRef.origin
-    const zoom = store.getState().glRef.zoom
+    const originState = store.getState().sceneSettings.origin
+    const zoom = store.getState().sceneSettings.zoom
     const myQuat = store.getState().glRef.quat
-    const fogStart = store.getState().glRef.fogStart
-    const fogEnd = store.getState().glRef.fogEnd
-    const clipStart = store.getState().glRef.clipStart
-    const clipEnd = store.getState().glRef.clipEnd
+    const fogStart = store.getState().sceneSettings.fogStart
+    const fogEnd = store.getState().sceneSettings.fogEnd
+    const clipStart = store.getState().sceneSettings.clipStart
+    const clipEnd = store.getState().sceneSettings.clipEnd
     const width = store.getState().sceneSettings.width
     const height = store.getState().sceneSettings.height
     const cursorPosition = store.getState().glRef.cursorPosition

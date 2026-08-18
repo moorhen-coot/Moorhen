@@ -1,8 +1,7 @@
-import { MoorhenLinearProgress } from "../../icons";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState, removeVectors } from "@/store";
-import { useCommandCentre, usePaths } from "../../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../../InstanceManager";
 import { isDarkBackground } from "../../../WebGLgComponents/webGLUtils";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
 import {
@@ -14,12 +13,12 @@ import {
 } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx, getCentreAtom } from "../../../utils/utils";
+import { MoorhenLinearProgress } from "../../icons";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenToggle } from "../../inputs";
 import { MoorhenAccordion, MoorhenInfoCard, MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../../interface-base";
 import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../../menu-item";
 import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
 import { ItemName } from "../utils/ItemName";
-import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
 import { MoorhenModifyColourRulesCard } from "./ModifyColourRulesCard";
 import {
     MoorhenMoleculeRepresentationSettingsCard,
@@ -28,6 +27,7 @@ import {
 } from "./MoleculeRepresentationSettingsCard";
 import { PictureWizardCard } from "./PictureWizardCard";
 import { CustomRepresentationChip } from "./RepresentationChip";
+import { AddCustomRepresentationCard } from "./addRepresentation/AddRepresentationCard";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
 
@@ -322,9 +322,8 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
 
     const dropDownMenu: React.JSX.Element = (
         <MoorhenStack>
-            <MoorhenMenuItemPopover menuItemText="Header info" popoverStyle={{ maxWidth: "40%", overflowY: "auto"}}
-            >
-                <MoorhenHeaderInfoCard molecule={props.molecule}/>
+            <MoorhenMenuItemPopover menuItemText="Header info" popoverStyle={{ maxWidth: "40%", overflowY: "auto" }}>
+                <MoorhenHeaderInfoCard molecule={props.molecule} />
             </MoorhenMenuItemPopover>
             <MoorhenMenuItemPopover menuItemText="Rename Molecule">
                 <RenameDisplayObject key="rename" setCurrentName={handleRename} item={props.molecule} />
@@ -370,7 +369,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             size="accordion"
             tooltip="Save molecule"
         />,
-        <MoorhenPopoverButton size="accordion" popoverPlacement="left" tooltip="More">
+        <MoorhenPopoverButton key="more" size="accordion" popoverPlacement="left" tooltip="More">
             {dropDownMenu}
         </MoorhenPopoverButton>,
     ];
@@ -482,7 +481,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                     >
                         <PictureWizardCard
                             setBusy={setBusyDrawingCustomRepresentation}
-                            urlPrefix={urlPrefix}
                             molecule={props.molecule}
                             onApply={() => document.body.click()}
                         />
