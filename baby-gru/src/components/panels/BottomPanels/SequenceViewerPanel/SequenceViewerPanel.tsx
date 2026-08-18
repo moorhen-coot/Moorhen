@@ -151,7 +151,7 @@ export const SequenceViewerPanel = () => {
                     // displayHeight={1}
                     showTitleBar={false}
                     onResidueClick={handleClick}
-                    onResiduesSelect={residueSelectionCallback}
+                    setSelectedResidues={residueSelectionCallback}
                     onHoverResidue={handleHoverResidue}
                     className={`moorhen__edge-panel-sequence-viewer`}
                     style={sidePanelIsOpen ? { width: GlViewportWidth } : {}}

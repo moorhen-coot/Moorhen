@@ -182,7 +182,6 @@ export {
     setAllowAddNewFittedLigand,
     setAllowMergeFittedLigand,
     setDisableFileUpload,
-    setDefaultMoleculeRepresentation,
 }  from "./generalStatesSlice";
 export {
     setDefaultBackgroundColor,

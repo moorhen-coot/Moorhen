@@ -38,7 +38,7 @@ export const stringToSeqViewer = (
 };
 
 export function moorhenSequenceToSeqViewer(sequence: Sequence, molName: string, molNo: number): SeqElement | null {
-    if (sequence !== null && sequence.sequence.length > 0) {
+    if (sequence && sequence.sequence.length > 0) {
         return {
             molName: molName,
             chain: sequence.chain,
@@ -67,7 +67,7 @@ export function MoleculeToSeqViewerSequences(molecule: MoorhenMolecule | null, g
         if (!getColors) {
             return newSeq;
         }
-        const seqColour = molecule.representations[0].colourRules.find(rule => rule.cid === "//" + newSeq.chain)?.color;
+        const seqColour = molecule.representations?.[0]?.colourRules?.find(rule => rule.cid === "//" + newSeq.chain)?.color;
         newSeq.colour = seqColour ? `color-mix(in srgb, ${seqColour}, rgb(255,255,255) 50%)` : null;
         return newSeq;
     });
