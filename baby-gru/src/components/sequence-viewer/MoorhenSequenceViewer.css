@@ -26,7 +26,7 @@
     margin-bottom: 2px;
     color: black;
 }
-.moorhen__seqviewer__residue-validation-box-top{
+.moorhen__seqviewer__residue-validation-box{
     cursor: pointer;
     min-width: var(--column-width, 1rem);
     max-width: var(--column-width, 1rem);
@@ -38,21 +38,42 @@
     user-select: none;
     font-size: 1rem;
     margin-bottom: 2px;
-    border: 1px solid var(--moorhen-border);
+    /* border: 1px solid var(--moorhen-border); */
+    border-bottom: 1px solid var(--moorhen-border);
     position: relative;
     overflow: hidden;
 }
 
-.moorhen__seqviewer__residue-validation-box-top::after {
+.moorhen__seqviewer__residue-validation-box::after {
     content: "";
     position: absolute;
     bottom: 0;
-    left: 0;
-    width: 100%;
+    border: 1px solid grey;
+    border-bottom: none;
+    left: 5%;
+    width: 90%;
     height: var(--bar-height, 50%);
     background-color: var(--bar-color, rgba(100, 150, 200, 0.6));
     pointer-events: none;
+    animation: moorhen__validation-bar-grow 0.6s ease-out;
+    transform-origin: bottom;
 }
+
+.moorhen__seqviewer__residue-validation-box.empty::after {
+    content: "";
+    border: none;
+    pointer-events: none;
+}
+
+@keyframes moorhen__validation-bar-grow {
+    from {
+        height: 0;
+    }
+    to {
+        height: var(--bar-height, 50%);
+    }
+}
+
 
 
 .moorhen__seqviewer__residue-validation-popup-bar {

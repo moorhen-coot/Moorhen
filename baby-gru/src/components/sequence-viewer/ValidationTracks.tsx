@@ -28,7 +28,7 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
         return (
             <div
                 key={trackKey}
-                className="moorhen__seqviewer__residue-validation-box-top"
+                className={`moorhen__seqviewer__residue-validation-box ${data.value === null ?  "empty" : ""}`}
                 style={
                     {
                         "--column-width": `${columnWidth}rem`,
