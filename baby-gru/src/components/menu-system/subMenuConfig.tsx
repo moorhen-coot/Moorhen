@@ -27,6 +27,7 @@ import { SidePanelIDs } from "../panels";
 export type BaseMenuItem = {
     id: string;
     label: string;
+    ariaLabel?: string;
     keywords?: string[];
     description?: string;
     devOnly?: boolean;

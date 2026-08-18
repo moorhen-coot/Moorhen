@@ -34,7 +34,6 @@ export {
     setReContourMapOnlyOnMouseUp,
     resetMapContourSettings,
 }  from "./mapContourSettingsSlice";
-export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export {
     setConnectedMolecule,
     enableUpdatingMaps,
@@ -117,26 +116,15 @@ export {
     setClusteringType,
     setPAEFileContents,
 }  from "./sliceNDiceSlice";
-export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
-export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
 export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
+export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
+export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
 export {
-    setOrigin,
     setRequestDrawScene,
     setIsWebGL2,
     setActiveMolecule,
-    setLightPosition,
-    setAmbient,
-    setSpecular,
-    setDiffuse,
-    setSpecularPower,
-    setZoom,
     setQuat,
-    setFogClipOffset,
-    setFogStart,
-    setFogEnd,
-    setClipStart,
-    setClipEnd,
     setCursorPosition,
     setShortCutHelp,
     setDraggableMolecule,
@@ -184,6 +172,25 @@ export {
     setDisableFileUpload,
 }  from "./generalStatesSlice";
 export {
+    setBusy,
+    setTimeCapsuleBusy,
+    setGlobalInstanceReady,
+    setShowBottomPanel,
+    setSearchBarActive,
+    setMainMenuOpen,
+    setShortCutsBlocked,
+    setShownSidePanel,
+    setSidePanelWidth,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
+    setShownBottomPanel,
+    pauseClickAwayListener,
+    resumeClickAwayListener,
+}  from "./globalUISlice";
+export {
+    setOrigin,
     setDefaultBackgroundColor,
     setDrawCrosshairs,
     setDrawScaleBar,
@@ -226,25 +233,19 @@ export {
     setMultiViewColumns,
     setSpecifyMultiViewRowsColumns,
     setThreeWayViewOrder,
+    setLightPosition,
+    setAmbient,
+    setSpecular,
+    setDiffuse,
+    setSpecularPower,
+    setFogClipOffset,
+    setFogStart,
+    setFogEnd,
+    setClipStart,
+    setClipEnd,
+    setZoom,
+    autoClipFogByZoom,
 }  from "./sceneSettingsSlice";
-export {
-    setBusy,
-    setTimeCapsuleBusy,
-    setGlobalInstanceReady,
-    setShowBottomPanel,
-    setSearchBarActive,
-    setMainMenuOpen,
-    setShortCutsBlocked,
-    setShownSidePanel,
-    setSidePanelWidth,
-    setShownControl,
-    lockControls,
-    unlockControls,
-    closeResidueSelectionTools,
-    setShownBottomPanel,
-    pauseClickAwayListener,
-    resumeClickAwayListener,
-}  from "./globalUISlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

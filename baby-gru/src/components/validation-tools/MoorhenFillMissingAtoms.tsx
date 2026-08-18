@@ -105,6 +105,7 @@ export const MoorhenFillMissingAtoms = () => {
                     <MoorhenStack direction="row" style={{ display: "flex", marginLeft: "auto", marginRight: "0rem" }}>
                         <MoorhenButton
                             style={{ display: "flex", marginLeft: "auto", marginRight: "0.1rem" }}
+                            ariaLabel={`View ${label}`}
                             onClick={() =>
                                 selectedMolecule.centreAndAlignViewOn(`//${residue.chainId}/${residue.resNum}-${residue.resNum}/`, true)
                             }
@@ -113,6 +114,7 @@ export const MoorhenFillMissingAtoms = () => {
                         </MoorhenButton>
                         <MoorhenButton
                             style={{ display: "flex", marginLeft: "0rem" }}
+                            ariaLabel={`Fill ${label}`}
                             onClick={() => {
                                 handleAtomFill(selectedMolecule, residue.chainId, residue.resNum, residue.insCode);
                             }}

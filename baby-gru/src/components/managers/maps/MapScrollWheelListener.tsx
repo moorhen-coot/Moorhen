@@ -15,10 +15,10 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
         return mapRadiusItem?.radius || props.map.suggestedRadius || 25;
     });
 
-    const zoomLevel = useSelector((state: RootState) => state.glRef.zoom);
+    const zoomLevel = useSelector((state: RootState) => state.sceneSettings.zoom);
     const contourWheelSensitivityFactor = useSelector((state: RootState) => state.mouseSettings.contourWheelSensitivityFactor);
     const store = useStore<RootState>();
-    const origin = store.getState().glRef.origin;
+    const origin = store.getState().sceneSettings.origin;
 
     // Use the fast contour mode hook
     const { fastMapContourLevel } = useFastContourMode({

@@ -6,7 +6,7 @@ import * as vec3 from "gl-matrix/vec3";
 import "pako";
 import { quatToMat4 } from "../WebGLgComponents/quatToMat4.js";
 import { isDarkBackground } from "../WebGLgComponents/webGLUtils";
-import { setOrigin, setQuat, setRequestDrawScene, setZoom } from "../store/glRefSlice";
+import { setOrigin, setQuat, setRequestDrawScene, setZoom } from "../store";
 import { hideMolecule } from "../store/moleculesSlice";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
@@ -431,7 +431,7 @@ export class MoorhenMolecule {
         if (!this.symmetryOn) {
             this.symmetryMatrices = [];
         } else {
-            const originState = this.store.getState().glRef.origin;
+            const originState = this.store.getState().sceneSettings.origin;
             const selectionCentre: number[] = originState.map(coord => -coord);
             const response = (await this.commandCentre.current.cootCommand(
                 {
@@ -1745,7 +1745,7 @@ export class MoorhenMolecule {
             }
             const chains = model.chains;
             const chainsSize = chains.size();
-            const originState = this.store.getState().glRef.origin;
+            const originState = this.store.getState().sceneSettings.origin;
             for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
                 const chain = chains.get(chainIndex);
                 if (!selection.matches_chain(chain)) {
@@ -1934,7 +1934,7 @@ export class MoorhenMolecule {
      * @param {number} [fromMolNo=-999999] - Indicate the molecule number to which the ligand dictionary was associated (use -999999 for "any")
      */
     async addLigandOfType(resType: string, fromMolNo: number = -999999): Promise<moorhen.WorkerResponse> {
-        const originState = this.store.getState().glRef.origin;
+        const originState = this.store.getState().sceneSettings.origin;
         const getMonomer = () => {
             return this.commandCentre.current.cootCommand(
                 {
@@ -2525,7 +2525,7 @@ export class MoorhenMolecule {
         useConformers: boolean = false,
         conformerCount: number = 0
     ): Promise<moorhen.Molecule[]> {
-        const originState = this.store.getState().glRef.origin;
+        const originState = this.store.getState().sceneSettings.origin;
         let newMolecules: moorhen.Molecule[] = [];
         const command = fitRightHere ? "fit_ligand_right_here" : "fit_ligand";
         const returnType = fitRightHere ? "int_array" : "fit_ligand_info_array";
