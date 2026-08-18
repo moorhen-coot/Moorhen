@@ -33,20 +33,20 @@ import {
     setMakeBackups,
     setMaxBackupCount,
     setModificationCountBackupThreshold,
-} from "../../../store/backupSettingsSlice";
-import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut, setUseGemmi } from "../../../store/generalStatesSlice";
-import { setElementsIndicesRestrict } from "../../../store/glRefSlice";
-import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../../store/labelSettingsSlice";
+} from "../../store/backupSettingsSlice";
+import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut, setUseGemmi } from "../../store/generalStatesSlice";
+import { setElementsIndicesRestrict } from "../../store/glRefSlice";
+import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
 import {
     setDefaultMapLitLines,
     setDefaultMapSamplingRate,
     setDefaultMapSurface,
     setMapLineWidth,
     setReContourMapOnlyOnMouseUp,
-} from "../../../store/mapContourSettingsSlice";
-import { overwriteMapUpdatingScores, setShowScoresToast } from "../../../store/moleculeMapUpdateSlice";
-import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../../store/mouseSettings";
-import { setAnimateRefine, setEnableRefineAfterMod } from "../../../store/refinementSettingsSlice";
+} from "../../store/mapContourSettingsSlice";
+import { overwriteMapUpdatingScores, setShowScoresToast } from "../../store/moleculeMapUpdateSlice";
+import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
+import { setAnimateRefine, setEnableRefineAfterMod } from "../../store/refinementSettingsSlice";
 import {
     setClipCap,
     setDefaultBackgroundColor,
@@ -72,9 +72,9 @@ import {
     setSsaoBias,
     setSsaoRadius,
     setUseOffScreenBuffers,
-} from "../../../store/sceneSettingsSlice";
-import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../../store/shortCutsSlice";
-import { moorhen } from "../../../types/moorhen";
+} from "../../store/sceneSettingsSlice";
+import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../store/shortCutsSlice";
+import { moorhen } from "../../types/moorhen";
 import { DEFAULT_SHORTCUTS } from "./DefaultShortcuts";
 
 export type PreferenceEntry<T = unknown> = {
@@ -82,6 +82,12 @@ export type PreferenceEntry<T = unknown> = {
     valueSetter: (value: T) => UnknownAction;
     selector: (state: moorhen.State) => T;
     defaultValue: T;
+    /**
+     * The version of this preference's current default. Bump it (increment) whenever you
+     * change `defaultValue`: stored values saved under an older version are considered stale
+     * and are reset to the new default. If omitted, defaults to 1.
+     */
+    version?: number;
 };
 
 export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
@@ -179,7 +185,11 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "defaultBondSmoothness",
         valueSetter: setDefaultBondSmoothness,
         selector: (state: moorhen.State) => state.sceneSettings.defaultBondSmoothness,
-        defaultValue: 1,
+        // Enum value: 1 = Coarse, 2 = Nice, 3 = Smooth
+        defaultValue: 2,
+        // Bumped for 1.0: the default changed from 1 (Coarse) to 2 (Nice), so any previously
+        // stored value must be reset to the new default.
+        version: 2,
     },
     17: {
         label: "showScoresToast",

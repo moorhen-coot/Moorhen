@@ -12,8 +12,7 @@ type MoorhenSequenceViewerPropsType = {
     clickedResidue?: clickedResidueType;
     onResidueClick?: (modelIndex: number, molName: string, chain: string, seqNum: number) => void;
     selectedResidues?: ResiduesSelection;
-    onResiduesSelect?: (selection: ResiduesSelection) => void;
-    useMainStateResidueSelections?: boolean;
+    setSelectedResidues?: (selection: ResiduesSelection) => void;
     onHoverResidue?: (molName: string, chain: string, resNum: number, resCode: string, resCID: string) => void;
     hoveredResidue?: { molNo: number; chain: string; resNum: number };
     maxDisplayHeight?: number;
@@ -72,10 +71,16 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     //const [displayHeight, setDisplayHeight] = useState<number>(_displayHeight > 0 ? _displayHeight : 1);
     const [sequencesSlice, setSequencesSlices] = useState<[number, number]>([0, displayHeight]);
     const [mouseIsHovering, setMouseIsHovering, mouseIsHoveringRef] = useStateWithRef<boolean>(false);
-    const [internalSelectedResidues, setInternalSelectedResidues, internalSelectedResiduesRef] = useStateWithRef<ResiduesSelection>(
+    
+    const [_selectedResidues, _setSelectedResidues] = useState<ResiduesSelection>(
         props.selectedResidues ? props.selectedResidues : null
     );
-    const selectedResidues = props.selectedResidues === undefined ? internalSelectedResidues : props.selectedResidues;
+    const selectedResiduesRef = useRef<ResiduesSelection>(props.selectedResidues ? props.selectedResidues : null);
+
+    const selectedResidues = props.setSelectedResidues ? props.selectedResidues : _selectedResidues;
+    selectedResiduesRef.current = selectedResidues;
+    const setSelectedResidues = props.setSelectedResidues ? props.setSelectedResidues : _setSelectedResidues;
+
 
     const [glideSelectStartRes, setGlideSelectStartRes, glideSelectStartResRef] = useStateWithRef<ResiduesSelection>(null);
     const [isGliding, setIsGliding, isGlidingRef] = useStateWithRef<boolean>(false);
@@ -134,25 +139,18 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
 
     const handleGlideSelect = (molNo, chain, resNum) => {
         if (molNo === glideSelectStartResRef.current.molNo && chain === glideSelectStartResRef.current.chain) {
-            setInternalSelectedResidues({
+            setSelectedResidues({
                 molNo: molNo,
                 chain: chain,
                 range: [glideSelectStartResRef.current.range[0], resNum],
             });
-            if (props.onResiduesSelect) {
-                props.onResiduesSelect({
-                    molNo: molNo,
-                    chain: chain,
-                    range: [glideSelectStartResRef.current.range[0], resNum],
-                });
-            }
         } else {
             setGlideSelectStartRes(null);
         }
     };
 
     const handleShiftSelect = (molNo, chain, resNum) => {
-        const currentSelection = internalSelectedResiduesRef.current;
+        const currentSelection = selectedResiduesRef.current;
 
         let newSelection: ResiduesSelection = currentSelection
             ? {
@@ -189,10 +187,10 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         }
 
         if (newSelection !== currentSelection) {
-            setInternalSelectedResidues(newSelection);
-            if (props.onResiduesSelect) {
-                props.onResiduesSelect(newSelection);
-            }
+            setSelectedResidues(newSelection);
+            // if (props.setSelectedResidue) {
+            //     props.setSelectedResidue(newSelection);
+            // }
         }
     };
 
@@ -351,7 +349,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         isGliding,
         glideSelectStartRes,
         props.selectedResidues,
-        internalSelectedResidues,
+        selectedResidues,
         noSequence,
         invalidSequences,
         inputArray,
