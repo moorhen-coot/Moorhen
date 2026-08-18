@@ -18,7 +18,6 @@ export const SequenceViewerPanel = () => {
 
     const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
     const [expand, setExpand] = useState<boolean>(true);
-
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const [selectedMolecule, setSelectedMolecule] = useState<number>(-999);
     const [numberOfLines, setNumberOfLines] = useState<number>(4);

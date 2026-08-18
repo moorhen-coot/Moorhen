@@ -19,11 +19,14 @@ import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
+
 import { readGzippedTextFile } from "../../utils/utils";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 import { MoorhenLinearProgress } from "../icons";
+
+
 
 const newVector = () => {
     const aVector: MoorhenVector = {
@@ -53,6 +56,8 @@ export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
+    const [conKitFile1Contents, setConKitFile1Contents] = useState<string>("");
+    const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
 
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);

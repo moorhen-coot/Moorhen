@@ -11,7 +11,6 @@ import type { BuildRepresentationParams, CreateRepresentationParams } from "./Re
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "../utils";
 
-
 export type RepresentationStyles =
     | "VdwSpheres"
     | "ligands"
@@ -41,7 +40,9 @@ export type RepresentationStyles =
     | "adaptativeBonds"
     | "StickBases"
     | "residue_environment"
-    | "transformation";
+    | "transformation"
+    | "NEFRestraints"
+    | "RMSD";
 
 /**
  * Represents a molecule representation
@@ -97,6 +98,7 @@ export type residueEnvironmentOptions = {
     labelled: boolean;
     showHBonds: boolean;
     showContacts: boolean;
+    showNEF: boolean;
 };
 
 export type gaussianSurfSettings = {
@@ -148,7 +150,7 @@ export class MoleculeRepresentation {
         bufferObj1: libcootApi.InstancedMeshJS[],
         bufferObj2: libcootApi.InstancedMeshJS[]
     ) => libcootApi.InstancedMeshJS[];
-    interfaceOption: { visible: boolean; selectionType: "cid" | "residue-range" | "chain" | "molecule" | "ligands" };
+    interfaceOption: { visible: boolean; selectionType: "cid" | "residue-range" | "chain" | "molecule" | "ligands" | "protein-model" };
     /** Snapshot of the lossy build parameters (see BuildRepresentationParams). Null for legacy/deserialized reps. */
     buildParams: BuildRepresentationParams | null;
 
@@ -207,6 +209,7 @@ export class MoleculeRepresentation {
             labelled: true,
             showHBonds: true,
             showContacts: true,
+            showNEF: false,
         };
         this.ligandsCid =
             "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O,G,C,U,A,T)";
@@ -326,6 +329,7 @@ export class MoleculeRepresentation {
             "hover",
             "CDs",
             "restraints",
+            "NEFRestraints"
         ].includes(style);
         this.styleHasSymmetry = ![
             "residueSelection",
@@ -342,6 +346,7 @@ export class MoleculeRepresentation {
             "ligand_environment",
             "CDs",
             "ligand_validation",
+            "NEFRestraints"
         ].includes(style);
         this.styleHasColourRules = ![
             "allHBonds",
@@ -356,6 +361,7 @@ export class MoleculeRepresentation {
             "ligand_validation",
             "restraints",
             "residueSelection",
+            "NEFRestraints"
         ].includes(style);
         if (style === "ligands") {
             this.cid =
@@ -363,6 +369,7 @@ export class MoleculeRepresentation {
                     ? this.parentMolecule.ligands.map(ligand => ligand.cid).join("||")
                     : this.ligandsCid;
         }
+
         this.styleIsM2tRepresentation = M2T_REPRESENTATIONS.includes(this.style);
         this.styleIsCootBondRepresentation = COOT_BOND_REPRESENTATIONS.includes(this.style);
         this.styleIsCombinedRepresentation = ["adaptativeBonds", "residue_environment"].includes(this.style);
@@ -814,6 +821,10 @@ export class MoleculeRepresentation {
                     this.residueEnvironmentOptions.backgroundRepresentation
                 );
                 break;
+            case "NEFRestraints":
+                objects = await this.getNEFBuffers(_cid);
+
+                break;
             default:
                 console.log(`Unrecognised style ${_style}...`);
                 break;
@@ -1022,7 +1033,6 @@ export class MoleculeRepresentation {
     async getEnvironmentBuffers(cid: string) {
         const resSpec = cidToSpec(cid);
         console.log(this.residueEnvironmentOptions.maxDist);
-
         const response = await this.commandCentre.current.cootCommand(
             {
                 returnType: "generic_3d_lines_bonds_box",
@@ -1041,7 +1051,7 @@ export class MoleculeRepresentation {
 
         const labelled = this.useDefaultResidueEnvironmentOptions
             ? this.parentMolecule.defaultResidueEnvironmentOptions.labelled
-            : this.residueEnvironmentOptions.labelled;
+            : this.residueEnvironmentOptions.labelled; 
         const showContacts = this.useDefaultResidueEnvironmentOptions
             ? this.parentMolecule.defaultResidueEnvironmentOptions.showContacts
             : this.residueEnvironmentOptions.showContacts;
@@ -1103,6 +1113,74 @@ export class MoleculeRepresentation {
         return originNeighboursBump.concat(originNeighboursHBond);
     }
 
+
+    async getNEFBuffers(cid: string) {
+        const resSpec = cidToSpec(cid);
+        const nefRestraints = this.parentMolecule.NEFRestraints ?? [];
+
+        const matchingRestraints = nefRestraints.filter(row => {
+            const match1 =
+                row.chain1 === resSpec.chain_id &&
+                parseInt(row.res1) === resSpec.res_no;
+
+            const match2 =
+                row.chain2 === resSpec.chain_id &&
+                parseInt(row.res2) === resSpec.res_no;
+
+            return match1 || match2;
+        });
+
+        const restraintIDs = new Set(matchingRestraints.map(r => r.restraintID));
+
+        const expandedRestraints = nefRestraints.filter(row =>
+            restraintIDs.has(row.restraintID)
+        );
+        console.log("expandedRestraints:") 
+        console.log(expandedRestraints)
+        const atomPairsAmbiguous: any[] = [];
+        const atomPairsUnambiguous: any[] = [];
+
+        for (const restraint of expandedRestraints) {
+            const cid1 = `//${restraint.chain1}/${restraint.res1}/${restraint.atom1}`;
+            const cid2 = `//${restraint.chain2}/${restraint.res2}/${restraint.atom2}`;
+
+            const atoms1 = await this.parentMolecule.gemmiAtomsForCid(cid1);
+            const atoms2 = await this.parentMolecule.gemmiAtomsForCid(cid2);
+
+            const atom1 = atoms1?.[0];
+            const atom2 = atoms2?.[0];
+
+            if (!atom1 || !atom2) continue;
+
+            const pair = [
+                {
+                    pos: [atom1.x, atom1.y, atom1.z],
+                    x: atom1.x,
+                    y: atom1.y,
+                    z: atom1.z,
+                    serial: `${restraint.chain1}:${restraint.res1}:${restraint.atom1}`
+                },
+                {
+                    pos: [atom2.x, atom2.y, atom2.z],
+                    x: atom2.x,
+                    y: atom2.y,
+                    z: atom2.z,
+                    serial: `${restraint.chain2}:${restraint.res2}:${restraint.atom2}`
+                }
+            ];
+
+            if (restraint.ambiguityFlag) {
+                atomPairsAmbiguous.push(pair);
+            } else {
+                atomPairsUnambiguous.push(pair);
+            }
+        }
+    const ambiguousBuffers = this.getGemmiAtomPairsBuffers(atomPairsAmbiguous, [0.7, 0.2, 0.7, 1.0], false);
+    const unambiguousBuffers = this.getGemmiAtomPairsBuffers(atomPairsUnambiguous, [0.0, 0.0, 0.0, 1.0], false);
+
+    return ambiguousBuffers.concat(unambiguousBuffers)
+}
+    
     /**
      * Get arguments passed to libcoot API for M2T representations
      * @param style - The style of this representation
@@ -1498,14 +1576,18 @@ export class MoleculeRepresentation {
             { x: number; y: number; z: number; serial: number | string },
         ][],
         colour: number[],
-        labelled: boolean = false
+        labelled: boolean = false,
+        NEF?
     ): libcootApi.InstancedMeshJS[] {
         const atomColours = {};
+      
         gemmiAtomPairs.forEach(atom => {
-            atomColours[`${atom[0].serial}`] = colour;
-            atomColours[`${atom[1].serial}`] = colour;
+        atomColours[`${atom[0].serial}`] = colour;
+        atomColours[`${atom[1].serial}`] = colour;
         });
-        const objects = [gemmiAtomPairsToCylindersInfo(gemmiAtomPairs, 0.07, atomColours, labelled)];
+        // const objects = [gemmiAtomPairsToCylindersInfo(gemmiAtomPairs, 0.07, atomColours, labelled)];
+        const objects = [gemmiAtomPairsToCylindersInfo(gemmiAtomPairs, 0.07, atomColours, labelled, NEF)];
+        
         return objects;
     }
 
