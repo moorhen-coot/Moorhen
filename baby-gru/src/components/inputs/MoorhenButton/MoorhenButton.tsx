@@ -95,6 +95,9 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
     const [animation, setAnimation] = useState<boolean>(false);
     
     const onClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        if (disabled) {
+            return;
+        }
         props.onClick?.(event);
         setAnimation(true);
         setTimeout(() => setAnimation(false), 1000);

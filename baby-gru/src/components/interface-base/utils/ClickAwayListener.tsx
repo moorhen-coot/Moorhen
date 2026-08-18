@@ -2,6 +2,11 @@ import { useStore } from "react-redux";
 import React, { useEffect, useRef } from "react";
 import { RootState } from "@/store";
 
+const isSelectRelated = (node: Node | null): boolean =>
+    node instanceof HTMLSelectElement ||
+    node instanceof HTMLOptionElement ||
+    node instanceof HTMLOptGroupElement;
+
 export const MoorhenClickAwayListener = (props: {
     onClickAway: (() => void) | ((event: MouseEvent) => void);
     children: React.ReactNode;
@@ -23,10 +28,24 @@ export const MoorhenClickAwayListener = (props: {
         const path = typeof event.composedPath === "function" ? event.composedPath() : [];
         const insideDOMTree = path.length > 0 ? path.includes(node) : !!(target && node.contains(target));
 
-        if (!insideDOMTree && !insideReactTree) {
-            if (store.getState().globalUI.isClickAwayListenerActive) {
-                props.onClickAway(event);
-            }
+        if (insideDOMTree || insideReactTree) {
+            return;
+        }
+
+        // A native <select> dropdown is rendered by the OS outside the DOM, so clicks on its
+        // options can arrive here as "away" clicks even though the user is interacting with a
+        // control that belongs to this popup. While a <select> is focused (its dropdown is
+        // open) - or when the click itself targets a select/option - don't treat it as an
+        // away click. This removes the need for <select> to globally pause this listener.
+        const activeElement = document.activeElement;
+        const isSelectInteraction = isSelectRelated(activeElement) || isSelectRelated(target);
+
+        if (isSelectInteraction) {
+            return;
+        }
+
+        if (store.getState().globalUI.clickAwayListenerPauseCount === 0) {
+            props.onClickAway(event);
         }
     };
 

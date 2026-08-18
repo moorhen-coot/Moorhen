@@ -44,6 +44,7 @@ export const MoorhenEigenFlipLigandButton = (props: ContextButtonProps) => {
                 />
             }
             toolTipLabel={toolTipLabel}
+            ligandOnly={true}
             cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
             {...props}
         />
