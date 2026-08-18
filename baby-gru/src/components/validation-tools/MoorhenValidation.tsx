@@ -29,22 +29,12 @@ const colourPalettes = {
     peptide_omega_analysis: value => {
         return "rgb(" + Math.floor(256 * value) + ", 132, 132)";
     },
-    density_correlation_analysis_json: value => {
-        return "rgb(255, 255, " + Math.floor(256 * value) + ")";
-    },
-    density_fit_analysis_json: value => {
-        return "rgb(0, " + Math.floor(256 * value) + ", 255)";
-    },
-    rotamer_analysis_json: value => {
-        return "rgb(" + Math.floor(256 * value) + ", 255, 132)";
-    },
-    ramachandran_analysis_json: value => {
-        return "rgb(" + Math.floor(256 * value) + ", 132, 255)";
-    },
-    peptide_omega_analysis_json: value => {
-        return "rgb(" + Math.floor(256 * value) + ", 132, 132)";
-    },
 };
+colourPalettes["density_correlation_analysis_json"] = colourPalettes["density_correlation_analysis"]
+colourPalettes["density_fit_analysis_json"] = colourPalettes["density_fit_analysis"]
+colourPalettes["rotamer_analysis_json"] = colourPalettes["rotamer_analysis"]
+colourPalettes["ramachandran_analysis_json"] = colourPalettes["ramachandran_analysis"]
+colourPalettes["peptide_omega_analysis_json"] = colourPalettes["peptide_omega_analysis"]
 
 const metricInfoScaling = {
     density_correlation_analysis: value => {
@@ -65,25 +55,12 @@ const metricInfoScaling = {
         // deviation from ideal 180 peptide omega angle
         return value;
     },
-    density_correlation_analysis_json: value => {
-        return Math.min(Math.max(value, 0), 1);
-    },
-    density_fit_analysis_json: value => {
-        return value;
-    },
-    rotamer_analysis_json: value => {
-        // ??
-        return (Math.min(Math.max(value, 50), 80) - 50) / 30;
-    },
-    ramachandran_analysis_json: value => {
-        // probability density turned into a score...
-        return Math.min(1 / value, 50) / 50;
-    },
-    peptide_omega_analysis_json: value => {
-        // deviation from ideal 180 peptide omega angle
-        return value;
-    },
 };
+metricInfoScaling["density_correlation_analysis_json"] = metricInfoScaling["density_correlation_analysis"]
+metricInfoScaling["density_fit_analysis_json"] = metricInfoScaling["density_fit_analysis"]
+metricInfoScaling["rotamer_analysis_json"] = metricInfoScaling["rotamer_analysis"]
+metricInfoScaling["ramachandran_analysis_json"] = metricInfoScaling["ramachandran_analysis"]
+metricInfoScaling["peptide_omega_analysis_json"] = metricInfoScaling["peptide_omega_analysis"]
 
 export const MoorhenValidation = (props: { chartId: string }) => {
     const dispatch = useDispatch();
