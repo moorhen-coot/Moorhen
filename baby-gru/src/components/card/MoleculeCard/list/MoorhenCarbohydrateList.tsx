@@ -6,6 +6,7 @@ import { addGeneralRepresentation, removeGeneralRepresentation } from "@/store";
 import { moorhen } from "../../../../types/moorhen";
 import { privateer } from "../../../../types/privateer";
 import { MoorhenCarbohydrateCard } from "../../MoorhenCarbohydrateCard";
+import { MoorhenCremerPople } from "../../../modal/MoorhenCremerPople";
 import { MoorhenLinearProgress } from "@/components/icons";
 
 export const MoorhenCarbohydrateList = (props: {
@@ -72,6 +73,7 @@ export const MoorhenCarbohydrateList = (props: {
                     {carbohydrateList.map(carbohydrate => {
                         return <MoorhenCarbohydrateCard key={carbohydrate.id} carbohydrate={carbohydrate} molecule={props.molecule} />;
                     })}
+                <MoorhenCremerPople stackDirection="vertical" width={300} molecule={props.molecule}/>
                 </>
             ) : (
                 <div>

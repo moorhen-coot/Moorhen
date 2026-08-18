@@ -949,6 +949,7 @@ describe("Testing MoorhenMolecule", () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5fjj.pdb')
         const molecule = new MoorhenMolecule(commandCentre,  MoorhenReduxStore, mockMonomerLibraryPath)
         await molecule.loadToCootFromURL(fileUrl, 'mol-test-1')
+        await molecule.updateAtoms()
         expect(molecule.cachedPrivateerValidation).toBeNull()
 
         const result = await molecule.getPrivateerValidation(true)

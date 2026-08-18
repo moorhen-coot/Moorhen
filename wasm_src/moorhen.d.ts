@@ -514,6 +514,7 @@ export interface molecules_container_js extends molecules_container_t {
   export_metaballs_as_gltf(_0: number, _1: EmbindString, _2: number, _3: number, _4: number, _5: EmbindString): void;
   export_metaballs_as_3mf_xml(_0: number, _1: EmbindString, _2: number, _3: number, _4: number, _5: EmbindString): void;
   privateer_validate(_0: number): Table;
+  privateer_calculate_cremer_pople_parameters(_0: number): Table;
   get_map_spacegroup(_0: number): Spacegroup;
   get_map_cell(_0: number): Cell;
   get_map_bounding_sphere(_0: number, _1: number): pair_position_value;
@@ -4290,6 +4291,7 @@ interface EmbindModule {
     new(): Table;
   };
   validate(_0: EmbindString, _1: EmbindString): Table;
+  calculate_cremer_pople_parameters(_0: EmbindString, _1: EmbindString): Table;
   unpackCootDataFile(_0: EmbindString, _1: boolean, _2: EmbindString, _3: EmbindString): void;
   testFloat32Array(_0: any): any;
   Coord_orth: {
