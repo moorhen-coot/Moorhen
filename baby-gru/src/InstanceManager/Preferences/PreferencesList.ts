@@ -19,13 +19,13 @@
  * 52: {
  *   label: "myNewPreference",
  *   valueSetter: setMyNewPreference,
- *   selector: (state: moorhen.State) => state.mySettings.myNewPreference,
+ *   selector: (state: RootState) => state.mySettings.myNewPreference,
  *   defaultValue: false,
  * }
  * ```
  *
  * @see PreferenceEntry
- * @see moorhen.State
+ * @see RootState
  */
 import { UnknownAction } from "@reduxjs/toolkit";
 import {
@@ -71,17 +71,16 @@ import {
     setResetClippingFogging,
     setSsaoBias,
     setSsaoRadius,
-    setUseOffScreenBuffers,
-} from "../../../store/sceneSettingsSlice";
-import { setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast } from "../../../store/shortCutsSlice";
-import { moorhen } from "../../../types/moorhen";
-import { initialState as sceneSettingsInitialState } from "../../../store/sceneSettingsSlice";
+    setUseOffScreenBuffers,setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast, 
+    RootState
+} from "@/store";
+import { initialState as sceneSettingsInitialState } from "@/store/sceneSettingsSlice";
 import { DEFAULT_SHORTCUTS } from "./DefaultShortcuts";
 
 export type PreferenceEntry<T = unknown> = {
     label: string;
     valueSetter: (value: T) => UnknownAction;
-    selector: (state: moorhen.State) => T;
+    selector: (state: RootState) => T;
     defaultValue: T;
     /**
      * The version of this preference's current default. Bump it (increment) whenever you
@@ -95,97 +94,97 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
     1: {
         label: "defaultBackgroundColor",
         valueSetter: setDefaultBackgroundColor,
-        selector: (state: moorhen.State) => state.sceneSettings.defaultBackgroundColor,
+        selector: (state: RootState) => state.sceneSettings.defaultBackgroundColor,
         defaultValue: sceneSettingsInitialState.defaultBackgroundColor,
     },
     2: {
         label: "atomLabelDepthMode",
         valueSetter: setAtomLabelDepthMode,
-        selector: (state: moorhen.State) => state.labelSettings.atomLabelDepthMode,
+        selector: (state: RootState) => state.labelSettings.atomLabelDepthMode,
         defaultValue: false,
     },
     3: {
         label: "defaultExpandDisplayCards",
         valueSetter: setDefaultExpandDisplayCards,
-        selector: (state: moorhen.State) => state.generalStates.defaultExpandDisplayCards,
+        selector: (state: RootState) => state.generalStates.defaultExpandDisplayCards,
         defaultValue: true,
     },
     4: {
         label: "shortCuts",
         valueSetter: setShortCuts,
-        selector: (state: moorhen.State) => state.shortcutSettings.shortCuts,
+        selector: (state: RootState) => state.shortcutSettings.shortCuts,
         defaultValue: DEFAULT_SHORTCUTS,
     },
     5: {
         label: "defaultMapLitLines",
         valueSetter: setDefaultMapLitLines,
-        selector: (state: moorhen.State) => state.mapContourSettings.defaultMapLitLines,
+        selector: (state: RootState) => state.mapContourSettings.defaultMapLitLines,
         defaultValue: false,
     },
     6: {
         label: "enableRefineAfterMod",
         valueSetter: setEnableRefineAfterMod,
-        selector: (state: moorhen.State) => state.refinementSettings.enableRefineAfterMod,
+        selector: (state: RootState) => state.refinementSettings.enableRefineAfterMod,
         defaultValue: true,
     },
     7: {
         label: "mouseSensitivity",
         valueSetter: setMouseSensitivity,
-        selector: (state: moorhen.State) => state.mouseSettings.mouseSensitivity,
+        selector: (state: RootState) => state.mouseSettings.mouseSensitivity,
         defaultValue: 0.3,
     },
     8: {
         label: "zoomWheelSensitivityFactor",
         valueSetter: setZoomWheelSensitivityFactor,
-        selector: (state: moorhen.State) => state.mouseSettings.zoomWheelSensitivityFactor,
+        selector: (state: RootState) => state.mouseSettings.zoomWheelSensitivityFactor,
         defaultValue: 1.0,
     },
     9: {
         label: "drawCrosshairs",
         valueSetter: setDrawCrosshairs,
-        selector: (state: moorhen.State) => state.sceneSettings.drawCrosshairs,
+        selector: (state: RootState) => state.sceneSettings.drawCrosshairs,
         defaultValue: sceneSettingsInitialState.drawCrosshairs,
     },
     10: {
         label: "drawFPS",
         valueSetter: setDrawFPS,
-        selector: (state: moorhen.State) => state.sceneSettings.drawFPS,
+        selector: (state: RootState) => state.sceneSettings.drawFPS,
         defaultValue: sceneSettingsInitialState.drawFPS,
     },
     11: {
         label: "drawMissingLoops",
         valueSetter: setDrawMissingLoops,
-        selector: (state: moorhen.State) => state.sceneSettings.drawMissingLoops,
+        selector: (state: RootState) => state.sceneSettings.drawMissingLoops,
         defaultValue: sceneSettingsInitialState.drawMissingLoops,
     },
     12: {
         label: "mapLineWidth",
         valueSetter: setMapLineWidth,
-        selector: (state: moorhen.State) => state.mapContourSettings.mapLineWidth,
+        selector: (state: RootState) => state.mapContourSettings.mapLineWidth,
         defaultValue: 0.75,
     },
     13: {
         label: "makeBackups",
         valueSetter: setMakeBackups,
-        selector: (state: moorhen.State) => state.backupSettings.makeBackups,
+        selector: (state: RootState) => state.backupSettings.makeBackups,
         defaultValue: true,
     },
     14: {
         label: "showShortcutToast",
         valueSetter: setShowShortcutToast,
-        selector: (state: moorhen.State) => state.shortcutSettings.showShortcutToast,
+        selector: (state: RootState) => state.shortcutSettings.showShortcutToast,
         defaultValue: true,
     },
     15: {
         label: "defaultMapSurface",
         valueSetter: setDefaultMapSurface,
-        selector: (state: moorhen.State) => state.mapContourSettings.defaultMapSurface,
+        selector: (state: RootState) => state.mapContourSettings.defaultMapSurface,
         defaultValue: false,
     },
     16: {
         label: "defaultBondSmoothness",
         valueSetter: setDefaultBondSmoothness,
-        selector: (state: moorhen.State) => state.sceneSettings.defaultBondSmoothness,
+        selector: (state: RootState) => state.sceneSettings.defaultBondSmoothness,
         // Enum value: 1 = Coarse, 2 = Nice, 3 = Smooth
         defaultValue: sceneSettingsInitialState.defaultBondSmoothness,
         // Bumped for 1.0: the default changed from 1 (Coarse) to 2 (Nice), so any previously
@@ -195,211 +194,211 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
     17: {
         label: "showScoresToast",
         valueSetter: setShowScoresToast,
-        selector: (state: moorhen.State) => state.moleculeMapUpdate.showScoresToast,
+        selector: (state: RootState) => state.moleculeMapUpdate.showScoresToast,
         defaultValue: true,
     },
     18: {
         label: "shortcutOnHoveredAtom",
         valueSetter: setShortcutOnHoveredAtom,
-        selector: (state: moorhen.State) => state.shortcutSettings.shortcutOnHoveredAtom,
+        selector: (state: RootState) => state.shortcutSettings.shortcutOnHoveredAtom,
         defaultValue: false,
     },
     19: {
         label: "resetClippingFogging",
         valueSetter: setResetClippingFogging,
-        selector: (state: moorhen.State) => state.sceneSettings.resetClippingFogging,
+        selector: (state: RootState) => state.sceneSettings.resetClippingFogging,
         defaultValue: sceneSettingsInitialState.resetClippingFogging,
     },
     20: {
         label: "defaultUpdatingScores",
         valueSetter: overwriteMapUpdatingScores,
-        selector: (state: moorhen.State) => state.moleculeMapUpdate.defaultUpdatingScores,
+        selector: (state: RootState) => state.moleculeMapUpdate.defaultUpdatingScores,
         defaultValue: ["Rfree", "Rfactor", "Moorhen Points"],
     },
     21: {
         label: "maxBackupCount",
         valueSetter: setMaxBackupCount,
-        selector: (state: moorhen.State) => state.backupSettings.maxBackupCount,
+        selector: (state: RootState) => state.backupSettings.maxBackupCount,
         defaultValue: 10,
     },
     22: {
         label: "modificationCountBackupThreshold",
         valueSetter: setModificationCountBackupThreshold,
-        selector: (state: moorhen.State) => state.backupSettings.modificationCountBackupThreshold,
+        selector: (state: RootState) => state.backupSettings.modificationCountBackupThreshold,
         defaultValue: 5,
     },
     23: {
         label: "clipCap",
         valueSetter: setClipCap,
-        selector: (state: moorhen.State) => state.sceneSettings.clipCap,
+        selector: (state: RootState) => state.sceneSettings.clipCap,
         defaultValue: sceneSettingsInitialState.clipCap,
     },
     24: {
         label: "enableTimeCapsule",
         valueSetter: setEnableTimeCapsule,
-        selector: (state: moorhen.State) => state.backupSettings.enableTimeCapsule,
+        selector: (state: RootState) => state.backupSettings.enableTimeCapsule,
         defaultValue: true,
     },
     25: {
         label: "doPerspectiveProjection",
         valueSetter: setDoPerspectiveProjection,
-        selector: (state: moorhen.State) => state.sceneSettings.doPerspectiveProjection,
+        selector: (state: RootState) => state.sceneSettings.doPerspectiveProjection,
         defaultValue: sceneSettingsInitialState.doPerspectiveProjection,
     },
     26: {
         label: "useOffScreenBuffers",
         valueSetter: setUseOffScreenBuffers,
-        selector: (state: moorhen.State) => state.sceneSettings.useOffScreenBuffers,
+        selector: (state: RootState) => state.sceneSettings.useOffScreenBuffers,
         defaultValue: sceneSettingsInitialState.useOffScreenBuffers,
     },
     27: {
         label: "contourWheelSensitivityFactor",
         valueSetter: setContourWheelSensitivityFactor,
-        selector: (state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor,
+        selector: (state: RootState) => state.mouseSettings.contourWheelSensitivityFactor,
         defaultValue: 1.0,
     },
     28: {
         label: "drawAxes",
         valueSetter: setDrawAxes,
-        selector: (state: moorhen.State) => state.sceneSettings.drawAxes,
+        selector: (state: RootState) => state.sceneSettings.drawAxes,
         defaultValue: sceneSettingsInitialState.drawAxes,
     },
     29: {
         label: "devMode",
         valueSetter: setDevMode,
-        selector: (state: moorhen.State) => state.generalStates.devMode,
+        selector: (state: RootState) => state.generalStates.devMode,
         defaultValue: false,
     },
     30: {
         label: "doShadowDepthDebug",
         valueSetter: setDoShadowDepthDebug,
-        selector: (state: moorhen.State) => state.sceneSettings.doShadowDepthDebug,
+        selector: (state: RootState) => state.sceneSettings.doShadowDepthDebug,
         defaultValue: sceneSettingsInitialState.doShadowDepthDebug,
     },
     31: {
         label: "doShadow",
         valueSetter: setDoShadow,
-        selector: (state: moorhen.State) => state.sceneSettings.doShadow,
+        selector: (state: RootState) => state.sceneSettings.doShadow,
         defaultValue: sceneSettingsInitialState.doShadow,
     },
     32: {
         label: "GLLabelsFontFamily",
         valueSetter: setGLLabelsFontFamily,
-        selector: (state: moorhen.State) => state.labelSettings.GLLabelsFontFamily,
+        selector: (state: RootState) => state.labelSettings.GLLabelsFontFamily,
         defaultValue: "Arial",
     },
     33: {
         label: "GLLabelsFontSize",
         valueSetter: setGLLabelsFontSize,
-        selector: (state: moorhen.State) => state.labelSettings.GLLabelsFontSize,
+        selector: (state: RootState) => state.labelSettings.GLLabelsFontSize,
         defaultValue: 18,
     },
     34: {
         label: "doOutline",
         valueSetter: setDoOutline,
-        selector: (state: moorhen.State) => state.sceneSettings.doOutline,
+        selector: (state: RootState) => state.sceneSettings.doOutline,
         defaultValue: sceneSettingsInitialState.doOutline,
     },
     35: {
         label: "depthBlurRadius",
         valueSetter: setDepthBlurRadius,
-        selector: (state: moorhen.State) => state.sceneSettings.depthBlurRadius,
+        selector: (state: RootState) => state.sceneSettings.depthBlurRadius,
         defaultValue: sceneSettingsInitialState.depthBlurRadius,
     },
     36: {
         label: "depthBlurDepth",
         valueSetter: setDepthBlurDepth,
-        selector: (state: moorhen.State) => state.sceneSettings.depthBlurDepth,
+        selector: (state: RootState) => state.sceneSettings.depthBlurDepth,
         defaultValue: sceneSettingsInitialState.depthBlurDepth,
     },
     37: {
         label: "transparentModalsOnMouseOut",
         valueSetter: setTransparentModalsOnMouseOut,
-        selector: (state: moorhen.State) => state.generalStates.transparentModalsOnMouseOut,
+        selector: (state: RootState) => state.generalStates.transparentModalsOnMouseOut,
         defaultValue: false,
     },
     38: {
         label: "defaultMapSamplingRate",
         valueSetter: setDefaultMapSamplingRate,
-        selector: (state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate,
+        selector: (state: RootState) => state.mapContourSettings.defaultMapSamplingRate,
         defaultValue: 1.8,
     },
     39: {
         label: "doSSAO",
         valueSetter: setDoSSAO,
-        selector: (state: moorhen.State) => state.sceneSettings.doSSAO,
+        selector: (state: RootState) => state.sceneSettings.doSSAO,
         defaultValue: sceneSettingsInitialState.doSSAO,
     },
     40: {
         label: "ssaoRadius",
         valueSetter: setSsaoRadius,
-        selector: (state: moorhen.State) => state.sceneSettings.ssaoRadius,
+        selector: (state: RootState) => state.sceneSettings.ssaoRadius,
         defaultValue: sceneSettingsInitialState.ssaoRadius,
     },
     41: {
         label: "ssaoBias",
         valueSetter: setSsaoBias,
-        selector: (state: moorhen.State) => state.sceneSettings.ssaoBias,
+        selector: (state: RootState) => state.sceneSettings.ssaoBias,
         defaultValue: sceneSettingsInitialState.ssaoBias,
     },
     42: {
         label: "drawScaleBar",
         valueSetter: setDrawScaleBar,
-        selector: (state: moorhen.State) => state.sceneSettings.drawScaleBar,
+        selector: (state: RootState) => state.sceneSettings.drawScaleBar,
         defaultValue: sceneSettingsInitialState.drawScaleBar,
     },
     43: {
         label: "animateRefine",
         valueSetter: setAnimateRefine,
-        selector: (state: moorhen.State) => state.refinementSettings.animateRefine,
+        selector: (state: RootState) => state.refinementSettings.animateRefine,
         defaultValue: true,
     },
     44: {
         label: "doEdgeDetect",
         valueSetter: setDoEdgeDetect,
-        selector: (state: moorhen.State) => state.sceneSettings.doEdgeDetect,
+        selector: (state: RootState) => state.sceneSettings.doEdgeDetect,
         defaultValue: sceneSettingsInitialState.doEdgeDetect,
     },
     45: {
         label: "edgeDetectDepthThreshold",
         valueSetter: setEdgeDetectDepthThreshold,
-        selector: (state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold,
+        selector: (state: RootState) => state.sceneSettings.edgeDetectDepthThreshold,
         defaultValue: sceneSettingsInitialState.edgeDetectDepthThreshold,
     },
     46: {
         label: "edgeDetectNormalThreshold",
         valueSetter: setEdgeDetectNormalThreshold,
-        selector: (state: moorhen.State) => state.sceneSettings.edgeDetectNormalThreshold,
+        selector: (state: RootState) => state.sceneSettings.edgeDetectNormalThreshold,
         defaultValue: sceneSettingsInitialState.edgeDetectNormalThreshold,
     },
     47: {
         label: "edgeDetectDepthScale",
         valueSetter: setEdgeDetectDepthScale,
-        selector: (state: moorhen.State) => state.sceneSettings.edgeDetectDepthScale,
+        selector: (state: RootState) => state.sceneSettings.edgeDetectDepthScale,
         defaultValue: sceneSettingsInitialState.edgeDetectDepthScale,
     },
     48: {
         label: "edgeDetectNormalScale",
         valueSetter: setEdgeDetectNormalScale,
-        selector: (state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale,
+        selector: (state: RootState) => state.sceneSettings.edgeDetectNormalScale,
         defaultValue: sceneSettingsInitialState.edgeDetectNormalScale,
     },
     49: {
         label: "reContourMapOnlyOnMouseUp",
         valueSetter: setReContourMapOnlyOnMouseUp,
-        selector: (state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp,
+        selector: (state: RootState) => state.mapContourSettings.reContourMapOnlyOnMouseUp,
         defaultValue: false,
     },
     // 50: {
     //     label: "useGemmi",
     //     valueSetter: setUseGemmi,
-    //     selector: (state: moorhen.State) => state.generalStates.useGemmi,
+    //     selector: (state: RootState) => state.generalStates.useGemmi,
     //     defaultValue: true,
     // },
     51: {
         label: "elementsIndicesRestrict",
         valueSetter: setElementsIndicesRestrict,
-        selector: (state: moorhen.State) => state.glRef.elementsIndicesRestrict,
+        selector: (state: RootState) => state.glRef.elementsIndicesRestrict,
         defaultValue: false,
     },
 };
