@@ -30,7 +30,7 @@ export const MoorhenCidAndMoleculeSelect = (props: {
     return (
         <>
             <MoorhenMoleculeSelect useUniqueId selectedMolecule={selectedMoleculeUniqueId} onSelect={handleMoleculeUniqueIdChange} />
-            <MoorhenCidInputForm value={props.selectedCid} setCid={props.setSelectedCid} setMoleculeUniqueId={handleMoleculeUniqueIdChange} />
+            <MoorhenCidInputForm value={props.selectedCid} setValue={props.setSelectedCid} setMoleculeUniqueId={handleMoleculeUniqueIdChange} />
         </>
     )
 }

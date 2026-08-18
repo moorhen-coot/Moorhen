@@ -48,7 +48,8 @@ const initialState: {
     drawCrosshairs: null,
     drawFPS: null,
     drawMissingLoops: null,
-    defaultBondSmoothness: null,
+    // Enum value: 1 = Coarse, 2 = Nice, 3 = Smooth (NOT the slider value 1/50/100)
+    defaultBondSmoothness: 2,
     drawAxes: null,
     drawEnvBOcc: null,
     doSSAO: null,
@@ -120,7 +121,10 @@ const sceneSettingsSlice = createSlice({
         },
         // API
         setDefaultBondSmoothness: (state, action: PayloadAction<number>) => {
-            state.defaultBondSmoothness = action.payload;
+            // Smoothness is an enum (1 = Coarse, 2 = Nice, 3 = Smooth). Coerce any invalid
+            // value (e.g. a stale slider-space value like 50 restored from preferences)
+            // to the default 'Nice' so a corrupt stored value can never break rendering.
+            state.defaultBondSmoothness = [1, 2, 3].includes(action.payload) ? action.payload : 2;
         },
         // API
         setDrawAxes: (state, action: PayloadAction<boolean>) => {

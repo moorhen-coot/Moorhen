@@ -1,16 +1,17 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useState } from "react";
 import { MoorhenButton, MoorhenNumberInput, MoorhenPopoverButton } from "@/components/inputs";
-import { MoorhenStack } from "@/components/interface-base";
+import { MoorhenStack, MoorhenTooltip } from "@/components/interface-base";
 import { usePaths } from "../../../InstanceManager";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import { removeCustomRepresentation } from "../../../store/moleculesSlice";
 import { ColourRule } from "../../../utils/MoorhenColourRule";
 import type { MoorhenMolecule } from "../../../utils/MoorhenMolecule";
-import type { MoleculeRepresentation } from "../../../utils/MoorhenMoleculeRepresentation";
+import type { MoleculeRepresentation } from "../../../utils/Representation/MoorhenMoleculeRepresentation";
 import { representationLabelMapping } from "../../../utils/enums";
-import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
+import { AddCustomRepresentationCard } from "./addRepresentation/AddRepresentationCard";
 import "./representation.css";
+import { parseCid } from "@/utils/utils";
 
 export const CustomRepresentationChip = (props: {
     addColourRulesAnchorDivRef: React.RefObject<HTMLDivElement>;
@@ -52,45 +53,60 @@ export const CustomRepresentationChip = (props: {
         props.molecule.clearBuffersOfStyle("environment");
     }, [molecule, representation]);
 
-    let selectionName = <>{representation.cid}</>;
+    let selectionName: React.ReactNode = representation.cid;
     if (representation.style === "adaptativeBonds") {
-        selectionName = <>Adaptative Bonds</>;
+        selectionName = "Adaptative Bonds";
     } else {
+        const nameParts: React.ReactNode[] = [representation.cid];
+        const allLigCID = props.molecule.ligands?.map(ligand => ligand.cid).join("||");
+
         if (
             representation.cid === "//*//:*" ||
             representation.cid === "/*/*/*/*:*" ||
             representation.interfaceOption.selectionType === "molecule"
-        )
-            selectionName = <>All Molecule</>;
+        ) {
+            nameParts[0] = "All Chains";
+        }
 
-        if (representation.cid.includes("!O,C,N")) {
-            selectionName = <>Side Chains</>;
+        if (representation.interfaceOption.selectionType === "ligands") {
+            nameParts[0] = representation.cid === allLigCID ? "All Ligands" : `Ligand ${representation.cid}`;
+        }
+
+        if (representation.interfaceOption.selectionType === "chain") {
+            nameParts[0] = `Chain: ${parseCid(representation.cid).chain}`;
         }
 
         if (representation.restrictToNeighbours) {
-            selectionName = (
-                <>
-                    {selectionName}&nbsp; Neighb. of {representation.neighboursCid}
-                </>
-            );
+
+            if (representation.neighboursCid === allLigCID) {
+                nameParts[0] = "Neighb. of Ligands";
+            } else {
+            nameParts[0] = (<>Neighb. of {representation.neighboursCid}</>);}
+        }
+
+        if (representation.cid.includes("!O,C,N")) {
+            nameParts.push(<div className="moorhen__representation-chip-box">SC</div>);
         }
 
         if (representation.hbondedTo) {
-            selectionName = (
-                <>
-                    {selectionName}&nbsp; H-Bonded to {representation.hbondedToCid}
-                </>
-            );
+            nameParts.push(<>H-Bonded to {representation.hbondedToCid === allLigCID ? "Ligands" : representation.hbondedToCid}</>);
         }
 
         if (representation.cid.includes("[!H]")) {
-            selectionName = (
-                <>
-                    {selectionName}&nbsp;
-                    <div className="moorhen__representation-chip-strike-box">H</div>
-                </>
-            );
+            nameParts.push(<div className="moorhen__representation-chip-strike-box">H</div>);
         }
+
+        if (representation.cid.includes("(!HOH)")) {
+            nameParts.push(<div className="moorhen__representation-chip-strike-box">HOH</div>);
+        }
+
+        selectionName = (
+            <>
+                {nameParts.map((part, i) => (
+                    <span key={i}>{i > 0 && " "}{part}</span>
+                ))}
+            </>
+        );
     }
 
     const onChangeModelSelector = modelIndex => {
@@ -104,7 +120,11 @@ export const CustomRepresentationChip = (props: {
                 <div style={{ flexGrow: 1, textAlign: "left", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                     <b>{`${representationLabelMapping[representation.style]}`}</b>
                     <br />
-                    <span>{selectionName}</span>
+                    <MoorhenTooltip tooltip={<>{selectionName}</>}>
+                        <div style={{ flexGrow: 1, textAlign: "left", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                            {selectionName}
+                        </div>
+                    </MoorhenTooltip>
                 </div>
                 <MoorhenStack direction="row" align="center" gap="0.1rem" flex={0}>
                     {models > 1 && (
@@ -177,100 +197,3 @@ export const getChipStyle = (colourRules: ColourRule[], repIsVisible: boolean, i
 
     return chipStyle;
 };
-
-// export const RepresentationCheckbox = (props: { style: RepresentationStyles; isVisible: boolean; molecule: MoorhenMolecule }) => {
-//     const [busyDrawingRepresentation, setBusyDrawingRepresentation] = useState<boolean>(false);
-//     const [isDisabled, setIsDisabled] = useState<boolean>(true);
-//     const [chipStyle, setChipStyle] = useState<any>({});
-
-//     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
-//     const showState = useSelector((state: RootState) =>
-//         state.molecules.customRepresentations.some(
-//             item => item.parentMolecule?.molNo === props.molecule.molNo && item.style === props.style && !item.isCustom
-//         )
-//     );
-
-//     console.log("chip", useStore<RootState>().getState().molecules.customRepresentations);
-//     const updateSwitch = useSelector((state: RootState) => state.moleculeMapUpdate.moleculeUpdate.switch);
-
-//     const dispatch = useDispatch();
-
-//     useEffect(() => {
-//         setIsDisabled(
-//             !props.isVisible ||
-//                 (props.style === "ligands" && props.molecule.ligands.length === 0) ||
-//                 (props.style === "glycoBlocks" && !props.molecule.hasGlycans) ||
-//                 (props.style === "restraints" && props.molecule.restraints.length === 0) ||
-//                 (["rama", "rotamer"].includes(props.style) && props.molecule.sequences.every(sequence => [3, 4, 5].includes(sequence.type)))
-//         );
-//     }, [props.style, props.isVisible, props.molecule, updateSwitch]);
-
-//     useEffect(() => {
-//         setChipStyle({
-//             ...getChipStyle(props.molecule.defaultColourRules, showState, isDark, `${convertRemToPx(9.5)}px`),
-//             opacity: isDisabled ? 0.3 : 1.0,
-//         });
-//     }, [showState, isDark, isDisabled, props.molecule.defaultColourRules]);
-
-//     const handleClick = useCallback(() => {
-//         if (!isDisabled) {
-//             setBusyDrawingRepresentation(true);
-//             if (props.style === "adaptativeBonds") {
-//                 props.molecule.setDrawAdaptativeBonds(!showState).then(_ => {
-//                     dispatch(
-//                         showState
-//                             ? removeCustomRepresentation(props.molecule.adaptativeBondsRepresentation)
-//                             : addCustomRepresentation(props.molecule.adaptativeBondsRepresentation)
-//                     );
-//                     setBusyDrawingRepresentation(false);
-//                 });
-//             } else if (props.style === "environment") {
-//                 if (showState) {
-//                     props.molecule.environmentRepresentation?.hide();
-//                     dispatch(removeGeneralRepresentation(props.molecule.environmentRepresentation));
-//                     setBusyDrawingRepresentation(false);
-//                 } else {
-//                     props.molecule.drawEnvironment().then(_ => {
-//                         dispatch(addGeneralRepresentation(props.molecule.environmentRepresentation));
-//                         setBusyDrawingRepresentation(false);
-//                     });
-//                 }
-//             } else if (showState) {
-//                 const representation = props.molecule.hide(props.style);
-//                 dispatch(removeGeneralRepresentation(representation));
-//                 setBusyDrawingRepresentation(false);
-//             } else {
-//                 props.molecule.show(props.style).then(representation => {
-//                     dispatch(addGeneralRepresentation(representation));
-//                     setBusyDrawingRepresentation(false);
-//                 });
-//             }
-//         }
-//     }, [showState, isDisabled, props, busyDrawingRepresentation]);
-
-//     return (
-//         <Box sx={{ marginLeft: "0.2rem", marginBottom: "0.2rem", position: "relative" }}>
-//             <Chip
-//                 disabled={busyDrawingRepresentation}
-//                 style={chipStyle}
-//                 variant={"outlined"}
-//                 label={`${representationLabelMapping[props.style]}`}
-//                 onClick={handleClick}
-//             />
-//             {busyDrawingRepresentation && (
-//                 <CircularProgress
-//                     size={"1.5rem"}
-//                     disableShrink={true}
-//                     sx={{
-//                         color: chipStyle["borderColor"],
-//                         position: "absolute",
-//                         top: "50%",
-//                         left: "50%",
-//                         margin: "-0.74rem",
-//                     }}
-//                 />
-//             )}
-//         </Box>
-//         // <div />
-//     );
-// };

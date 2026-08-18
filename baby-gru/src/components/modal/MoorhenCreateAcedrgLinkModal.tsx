@@ -181,7 +181,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
                     Set Atom {props.id}
                 </MoorhenButton>
                 <MoorhenTextInput readOnly={true} text={selectedAtom ? selectedAtom : "No atom selected"} /> */}
-                <MoorhenCidInputForm setCid={setAtomPicked}/>
+                <MoorhenCidInputForm setValue={setAtomPicked}/>
                 <MoorhenToggle label="Delete atom..." checked={deleteAtom} onChange={() => setDeleteAtom(!deleteAtom)} />
                 {/* <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
                         Delete atom...

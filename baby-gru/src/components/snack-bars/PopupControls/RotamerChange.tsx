@@ -7,6 +7,7 @@ import { enqueueSnackbar, removeMolecule, setHoveredAtom, setIsChangingRotamers,
 import { RootState } from "@/store";
 import { libcootApi } from "@/types/libcoot";
 import { moorhen } from "@/types/moorhen";
+import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 
 export const RotamerChange = () => {
     const fragmentMolecule = useRef<null | moorhen.Molecule>(null);
@@ -87,7 +88,13 @@ export const RotamerChange = () => {
                         })
                         .map(representation => {
                             if (representation.buffers.length > 0 && representation.buffers[0].visible) {
-                                return newMolecule.addRepresentation(representation.style, representation.cid);
+                                return MoleculeRepresentation.create({
+                                    representationStyle: representation.style,
+                                    molecule: newMolecule,
+                                    ruleType: "cid",
+                                    cid: representation.cid,
+                                    isCustom: false,
+                                });
                             } else {
                                 return Promise.resolve();
                             }

@@ -179,7 +179,9 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         label: "defaultBondSmoothness",
         valueSetter: setDefaultBondSmoothness,
         selector: (state: moorhen.State) => state.sceneSettings.defaultBondSmoothness,
-        defaultValue: 1,
+        // Enum value: 1 = Coarse, 2 = Nice, 3 = Smooth (this is the runtime-effective default
+        // because the preferences persistence layer overrides the Redux initial state on mount)
+        defaultValue: 2,
     },
     17: {
         label: "showScoresToast",

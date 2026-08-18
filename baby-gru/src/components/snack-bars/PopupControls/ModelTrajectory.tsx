@@ -7,7 +7,7 @@ import { setIsAnimatingTrajectory } from "@/store/generalStatesSlice";
 import { setShownControl } from "@/store/globalUISlice";
 import { hideMolecule, showMolecule } from "@/store/moleculesSlice";
 import { moorhen } from "@/types/moorhen";
-import { MoleculeRepresentation } from "@/utils/MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { MoorhenButton, MoorhenNumberInput, MoorhenSlider } from "@/components/inputs";
 import { MoorhenLinearProgress } from "@/components/icons";
 import useStateWithRef from "@/hooks/useStateWithRef";

@@ -71,7 +71,7 @@ import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
-import { m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
+import { m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
 import { guid } from "./utils";
 import { MoorhenInstance } from "@/InstanceManager";
 

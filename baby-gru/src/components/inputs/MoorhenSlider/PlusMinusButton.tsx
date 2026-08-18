@@ -35,7 +35,7 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
     };
 
     const buttonEffect = () => {
-        if (!props.setValue) {
+        if (!props.setValue || !props.value) {
             return;
         }
 

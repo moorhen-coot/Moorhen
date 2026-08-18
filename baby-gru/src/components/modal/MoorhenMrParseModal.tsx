@@ -18,7 +18,7 @@ import {
     setTargetSequence,
 } from "../../store/mrParseSlice";
 import { moorhen } from "../../types/moorhen";
-import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading";
+import { loadMrParseFiles, loadMrParseUrl } from "../../utils/FileLoading";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenButton, MoorhenFileInput } from "../inputs";
@@ -94,6 +94,7 @@ export const MoorhenMrParseModal = () => {
     const dispatch = useDispatch();
     const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
@@ -682,7 +683,7 @@ export const MoorhenMrParseModal = () => {
         //This is an example of loading a set of MrParse results on a server.
         //In testing I just run Python simple server in an MrParse results dir.
         const urlBase = "http://localhost:8000/";
-        loadMrParseUrl(urlBase, moorhenInstance, backgroundColor, defaultBondSmoothness, dispatch);
+        loadMrParseUrl(urlBase, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch);
     };
 
     const footerContent = (
@@ -697,6 +698,7 @@ export const MoorhenMrParseModal = () => {
                         moorhenInstance,
                         backgroundColor,
                         defaultBondSmoothness,
+                        dispatch
                     );
                 }}
             />

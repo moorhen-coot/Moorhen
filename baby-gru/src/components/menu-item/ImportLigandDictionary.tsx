@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { RootState, enqueueSnackbar } from "@/store/";
-import { parseCifDict } from "@/utils/MoorhenFileLoading";
+import { parseCifDict } from "@/utils/FileLoading";
 import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { addMolecule } from "../../store/moleculesSlice";
