@@ -466,7 +466,7 @@ class molecules_container_js : public molecules_container_t {
             std::vector<gemmi::Topo::Angle> outlier_angles;
             std::vector<gemmi::Topo::Torsion> outlier_torsions;
             std::vector<gemmi::Topo::Plane> outlier_planes;
-            std::vector<gemmi::Topo::Chir> outlier_chirals;
+            std::vector<gemmi::Topo::Chirality> outlier_chirals;
             for (const auto& bond : topo->bonds) {
                 double z = bond.calculate_z();
                 atom_zs[bond.atoms[0]].push_back(z);
@@ -598,14 +598,19 @@ class molecules_container_js : public molecules_container_t {
                 root[chain.name] = chain_json;
             }
             
-            string outlierstring = "";
+            std::string outlierstring = "Outliers: ";
             for (const auto& bond : outlier_bonds) {
-                if (std::find(bond.atoms.begin(), bond.atoms.end(), &res) != bond.atoms.end()) {
                     outlierstring += "Bond ";
                     outlierstring += bond.atoms[0]->name + " - " + bond.atoms[1]->name + " Z: " + std::to_string(bond.calculate_z()) + "\n";
-                }
             }
             root["OutlierBonds"] = outlierstring;
+
+            outlierstring = "Outliers: ";
+            for (const auto& torsion : outlier_torsions) {
+                    outlierstring += "Torsion ";
+                    outlierstring += torsion.atoms[0]->name + " - " + torsion.atoms[1]->name + " - " + torsion.atoms[2]->name + " - " + torsion.atoms[3]->name + " Z: " + std::to_string(torsion.calculate_z()) + "\n";
+            }
+            root["OutlierTorsions"] = outlierstring;
 
             Json::StreamWriterBuilder builder;
             const std::string json_string = Json::writeString(builder, root);

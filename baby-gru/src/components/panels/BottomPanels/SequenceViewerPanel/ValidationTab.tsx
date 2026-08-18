@@ -7,7 +7,7 @@ import { BaseSequenceViewerTab } from "./BaseSequenceViewerTab";
 import { validationDoc } from "./ValidationDoc";
 
 const presets = {
-    Default: ["Overall RMSZ", "Density Correlation"],
+    Default: ["Bond RMSZ", "Density Correlation"],
     "B factors": ["Main Chain B-factor", "Side Chain B-factor"],
     RotaRama: ["Rota. ZScore", "Rama. ZScore"],
     Geometry: ["Bond RMSZ", "Angle RMSZ", "Chiral RMSZ", "Plane RMSZ", "Torsion RMSZ"],
