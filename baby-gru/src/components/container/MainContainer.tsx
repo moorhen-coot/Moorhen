@@ -205,7 +205,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
         const GLviewWidth = newWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
         const GLviewHeigth = newHeight - (bottomPanelHeight ? bottomPanelHeight -35: 0);
-        console.log(bottomPanelHeight, GLviewHeigth, newHeight, sidePanelIsOpen, sidePanelWidth)
         dispatch(setWidth(newWidth));
         dispatch(setGlViewportWidth(GLviewWidth));
         dispatch(setHeight(newHeight));

@@ -25,8 +25,6 @@ export const BottomPanelContainer = () => {
         setContainerHeight(contentRef.current.scrollHeight);
     }, []);
 
-    console.log("BottomPanelContainer size", containerHeight, contentRef.current?.scrollHeight);
-
 
     useEffect(() => {
         if (!contentRef.current) {
