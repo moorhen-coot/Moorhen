@@ -20,8 +20,7 @@
     margin-bottom: 2px;
     color: black;
 }
-.moorhen__seqviewer__residue-validation-box-top,
-.moorhen__seqviewer__residue-validation-box-bottom {
+.moorhen__seqviewer__residue-validation-box-top{
     cursor: pointer;
     min-width: var(--column-width, 1rem);
     max-width: var(--column-width, 1rem);
@@ -49,16 +48,6 @@
     pointer-events: none;
 }
 
-.moorhen__seqviewer__residue-validation-box-bottom::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: var(--bar-height, 50%);
-    background-color: var(--bar-color, rgba(200, 100, 150, 0.6));
-    pointer-events: none;
-}
 
 .moorhen__seqviewer__residue-validation-popup-bar {
     width: 4rem;

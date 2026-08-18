@@ -1,0 +1,28 @@
+@import "../../../colors.css";
+
+.moorhen-hex-input-decorator, .moorhen-hex-input {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    float: left;
+    border: 1px solid var(--moorhen-border);
+    border-radius: 4px 0px 0px 4px;
+    background: var(--moorhen-background);
+    color: var(--moorhen-primary);
+    outline: none;
+    margin: 0.1rem 0 0;
+    padding: 0.1rem;
+    vertical-align: baseline;
+    text-align: center;
+}
+
+.moorhen-hex-input {
+    background: var(--moorhen-input-background);
+    width: 90px;
+    margin: 0.1rem 0 0;
+    padding: 0.1rem;
+    border-radius: 0px 4px 4px 0px;
+    outline: none;
+    font: inherit;
+    text-transform: uppercase;
+}
