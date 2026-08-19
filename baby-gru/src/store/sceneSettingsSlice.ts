@@ -81,7 +81,7 @@ export const initialState: {
     drawCrosshairs: true,
     drawFPS: false,
     drawMissingLoops: true,
-    defaultBondSmoothness: 1,
+    defaultBondSmoothness: 2,
     drawAxes: false,
     drawEnvBOcc: false,
     doSSAO: false,

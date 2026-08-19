@@ -118,8 +118,6 @@ export {
 }  from "./sliceNDiceSlice";
 export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
 export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
-export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
-export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
 export {
     setActiveMap,
     setViewOnly,
@@ -152,24 +150,6 @@ export {
     setAllowMergeFittedLigand,
     setDisableFileUpload,
 }  from "./generalStatesSlice";
-export { setSeqViewerOption, setValidationOption, setShownBottomPanel }  from "./bottomPanelsSlice";
-export {
-    setBusy,
-    setTimeCapsuleBusy,
-    setGlobalInstanceReady,
-    setSearchBarActive,
-    setMainMenuOpen,
-    setShortCutsBlocked,
-    setShownSidePanel,
-    setSidePanelWidth,
-    setBottomPanelHeight,
-    setShownControl,
-    lockControls,
-    unlockControls,
-    closeResidueSelectionTools,
-    pauseClickAwayListener,
-    resumeClickAwayListener,
-}  from "./globalUISlice";
 export {
     setRequestDrawScene,
     setIsWebGL2,
@@ -189,6 +169,25 @@ export {
     setCanvasSize,
     setElementsIndicesRestrict,
 }  from "./glRefSlice";
+export { setSeqViewerOption, setValidationOption, setShownBottomPanel }  from "./bottomPanelsSlice";
+export {
+    setBusy,
+    setTimeCapsuleBusy,
+    setGlobalInstanceReady,
+    setSearchBarActive,
+    setMainMenuOpen,
+    setShortCutsBlocked,
+    setShownSidePanel,
+    setSidePanelWidth,
+    setBottomPanelHeight,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
+    pauseClickAwayListener,
+    resumeClickAwayListener,
+}  from "./globalUISlice";
+export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export {
     setOrigin,
     setDefaultBackgroundColor,
@@ -246,6 +245,7 @@ export {
     setZoom,
     autoClipFogByZoom,
 }  from "./sceneSettingsSlice";
+export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

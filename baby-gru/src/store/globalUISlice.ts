@@ -107,7 +107,7 @@ const globalUISlice = createSlice({
         resumeClickAwayListener: state => {
             state.clickAwayListenerPauseCount = Math.max(0, state.clickAwayListenerPauseCount - 1);
         },
-    },
+    }
 });
 
 export const {
