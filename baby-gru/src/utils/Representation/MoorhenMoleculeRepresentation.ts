@@ -10,6 +10,7 @@ import { createRepresentation } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "../utils";
+import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 
 export type RepresentationStyles =
@@ -150,7 +151,7 @@ export class MoleculeRepresentation {
         bufferObj1: libcootApi.InstancedMeshJS[],
         bufferObj2: libcootApi.InstancedMeshJS[]
     ) => libcootApi.InstancedMeshJS[];
-    interfaceOption: { visible: boolean; selectionType: "cid" | "residue-range" | "chain" | "molecule" | "ligands" | "protein-model" };
+    interfaceOption: { visible: boolean; selectionType: ResidueSelectionRuleType };
     /** Snapshot of the lossy build parameters (see BuildRepresentationParams). Null for legacy/deserialized reps. */
     buildParams: BuildRepresentationParams | null;
 
