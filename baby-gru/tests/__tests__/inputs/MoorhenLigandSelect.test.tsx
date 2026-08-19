@@ -5,6 +5,12 @@ import { Provider } from "react-redux";
 import { MoorhenLigandSelect } from "../../../src/components/inputs/Selector/MoorhenLigandSelect";
 import { MoorhenMolecule } from "../../../src/utils/MoorhenMolecule";
 import { MoorhenReduxStore, renderWithinInstance } from "../testUtils";
+import { MoorhenInstance } from "@/InstanceManager";
+import React from "react";
+
+
+const mockMoorhenInstance = new MoorhenInstance(React.createRef<HTMLDivElement>());
+
 
 describe("MoorhenLigandSelect", () => {
     const makeMolecule = ligands => ({
@@ -84,14 +90,14 @@ describe("MoorhenLigandSelect", () => {
     });
 
     test("renders and selects ligands from real molecules", async () => {
-        const molecule_1 = new MoorhenMolecule(null, null, "");
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_1.molNo = 0;
         molecule_1.name = "mol-1";
         molecule_1.ligands = [{ cid: "//A/301" }, { cid: "//A/302" }, { cid: "//A/303" }] as any;
-        const molecule_2 = new MoorhenMolecule(null, null, "");
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance );
         molecule_2.molNo = 1;
         molecule_2.name = "mol-2";
-        const molecule_3 = new MoorhenMolecule(null, null, "");
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance );
         molecule_3.molNo = 2;
         molecule_3.name = "mol-3";
 
@@ -122,14 +128,14 @@ describe("MoorhenLigandSelect", () => {
     });
 
     test("calls onChange when a ligand is selected from real molecules", async () => {
-        const molecule_1 = new MoorhenMolecule(null, null, "");
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_1.molNo = 0;
         molecule_1.name = "mol-1";
         molecule_1.ligands = [{ cid: "//A/301" }, { cid: "//A/302" }, { cid: "//A/303" }] as any;
-        const molecule_2 = new MoorhenMolecule(null, null, "");
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_2.molNo = 1;
         molecule_2.name = "mol-2";
-        const molecule_3 = new MoorhenMolecule(null, null, "");
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_3.molNo = 2;
         molecule_3.name = "mol-3";
 

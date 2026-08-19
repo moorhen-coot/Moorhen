@@ -24,12 +24,15 @@ import { StoreExtension } from "./StoreExtension";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
 import type { AppDispatch, MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 
+
 export type LoadFilesResult = {
     type: "molecule" | "map";
     uniqueID: string;
     molNo: number;
     fileName: string;
 }[];
+
+type moleculeChangeAction = "new" | "add" | "delete" | "modify" | "refine";
 
 export class MoorhenInstance extends StoreExtension {
     private _defaultStyle:
@@ -556,9 +559,18 @@ export class MoorhenInstance extends StoreExtension {
 
     // ================= Molecules changed callbacks =================
 
-    private _moleculeChangedCallbacks: { [callbackUID: string]: { applyTo: string; callback: (moleculeUID: string) => void } } = {};
+    
 
-    public newMoleculeChangedCallback(callback: (moleculeUID: string) => void, moleculeUID?: string): () => void {
+    private _moleculeChangedCallbacks: { [callbackUID: string]: { applyTo: string; callback: (moleculeUID: string, action?: moleculeChangeAction, cid?: string) => void } } = {};
+
+    /**
+     * Registers a callback that fires whenever a molecule changes.
+     *
+     * If `moleculeUID` is provided, the callback only runs for that molecule.
+     * Otherwise, it runs for any molecule change.
+     * Returns a function that unsubscribes the callback.
+     */
+    public newMoleculeChangedCallback(callback: (moleculeUID: string, action?: moleculeChangeAction, cid?: string) => void, moleculeUID?: string): () => void {
         const callbackUID = guid();
         this._moleculeChangedCallbacks[callbackUID] = { applyTo: moleculeUID ?? "any", callback: callback };
 
@@ -567,7 +579,14 @@ export class MoorhenInstance extends StoreExtension {
         };
     }
 
-    public triggerMoleculeChanged(UIDorMolNo: string | number): void {
+    /**
+     * Notifies all registered molecule-change callbacks.
+     *
+     * `UIDorMolNo` can be either a molecule unique ID or a molecule number.
+     * When a number is provided, it is resolved to the current molecule unique ID
+     * before invoking matching callbacks.
+     */
+    public triggerMoleculeChanged(UIDorMolNo: string | number, action?: moleculeChangeAction, cid?: string): void {
         const state = this.store.getState();
         const molecule =
             typeof UIDorMolNo === "number" ? state.molecules.moleculeList.filter(mol => mol.molNo === UIDorMolNo)[0] : undefined;
@@ -575,7 +594,7 @@ export class MoorhenInstance extends StoreExtension {
 
         Object.values(this._moleculeChangedCallbacks).forEach(callbackInfo => {
             if (callbackInfo.applyTo === "any" || callbackInfo.applyTo === resolvedMoleculeUID) {
-                callbackInfo.callback(resolvedMoleculeUID);
+                callbackInfo.callback(resolvedMoleculeUID, action, cid);
             }
         });
     }
@@ -677,9 +696,9 @@ export class MoorhenInstance extends StoreExtension {
                 onCommandStart: () => {
                     this.dispatch(toggleCootCommandStart());
                 },
-                onMoleculeChanged: (cootMolNo: number) => {
-                    this.triggerMoleculeChanged(cootMolNo);
-                },
+                // onMoleculeChanged: (cootMolNo: number) => {
+                //     this.triggerMoleculeChanged(cootMolNo);
+                // },
             });
             newCommandCentre.onActiveMessagesChanged = newActiveMessages => this.dispatch(setBusy(newActiveMessages.length !== 0));
             this.setCommandCentre(newCommandCentre);
