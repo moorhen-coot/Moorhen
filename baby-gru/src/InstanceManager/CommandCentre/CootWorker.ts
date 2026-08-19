@@ -403,6 +403,21 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     };
 }
 
+const simpleMeshVectorToMeshData = (simpleMeshVec, perm: boolean = false, keepNorm: boolean = false): libcootApi.SimpleMeshJS[] => {
+
+   const meshLength = simpleMeshVec.size();
+   const meshJSArray = [];
+   console.log('------------- meshLength', meshLength);
+   for (let i=0; i<meshLength; i++) {
+      const m = simpleMeshVec.get(i);
+      const m_js = simpleMeshToMeshData(m);
+      console.log('------------- pushing ', i);
+      meshJSArray.push(m_js);
+   }
+   simpleMeshVec.delete();
+   return meshJSArray;
+}
+
 const SuperposeResultsToJSArray = (superposeResults: libcootApi.SuperposeResultsT): libcootApi.SuperposeResultsJS => {
     const alignedPairsVec = superposeResults.aligned_pairs
     const alignedPairsVecSize = alignedPairsVec.size()
@@ -1445,6 +1460,10 @@ const doCootCommand = (messageData: {
                 break;
             case 'mesh_perm':
                 returnResult = simpleMeshToMeshData(cootResult, true)
+                break;
+            case 'mesh_array':
+                returnResult = simpleMeshVectorToMeshData(cootResult)
+                console.log('array_mesh', returnResult);
                 break;
             case 'mesh':
                 returnResult = simpleMeshToMeshData(cootResult)

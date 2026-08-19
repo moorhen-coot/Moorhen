@@ -18,6 +18,7 @@ export type RepresentationStyles =
     | "CBs"
     | "CDs"
     | "gaussian"
+    | "cavities"
     | "allHBonds"
     | "rama"
     | "rotamer"
@@ -321,6 +322,7 @@ export class MoleculeRepresentation {
             "VdWSurface",
             "residueSelection",
             "gaussian",
+            "cavities",
             "allHBonds",
             "rotamer",
             "rama",
@@ -762,6 +764,9 @@ export class MoleculeRepresentation {
                 break;
             case "gaussian":
                 objects = await this.getCootGaussianSurfaceBuffers();
+                break;
+            case "cavities":
+                objects = await this.getCootCavitiesBuffers();
                 break;
             case "allHBonds":
                 if (this.restrictToNeighbours) objects = await this.getHBondBuffers(this.neighboursCid);
@@ -1748,7 +1753,7 @@ export class MoleculeRepresentation {
      * @param {string} cid - The CID selection for this representation
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
-    async getCootGaussianSurfaceBuffers(): Promise<libcootApi.InstancedMeshJS[]> {
+    async getCootGaussianSurfaceBuffers(): Promise<libcootApi.SimpleMeshJS[]> {
         const args = this.useDefaultGaussianSurfaceSettings ? this.parentMolecule.gaussianSurfaceSettings : this.gaussianSurfaceSettings;
         const response = (await this.commandCentre.current.cootCommand(
             {
@@ -1760,6 +1765,35 @@ export class MoleculeRepresentation {
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
         try {
             const objects = [response.data.result.result];
+            if (objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+                const flippedNormalsObjects = objects.map(object => {
+                    const flippedNormalsObject = { ...object };
+                    flippedNormalsObject.idx_tri = object.idx_tri.map(element => element.map(subElement => subElement.reverse()));
+                    return flippedNormalsObject;
+                });
+                //Empty existing buffers of this type
+                return flippedNormalsObjects;
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    /**
+     * Get representation buffers for the cavities surf. representation
+     * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
+     */
+    async getCootCavitiesBuffers(): Promise<libcootApi.SimpleMeshJS[]> {
+        const response = (await this.commandCentre.current.cootCommand(
+            {
+                returnType: "mesh_array",
+                command: "get_cavities",
+                commandArgs: [this.parentMolecule.molNo],
+            },
+            false
+        )) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS[]>;
+        try {
+            const objects = response.data.result.result;
             if (objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
                 const flippedNormalsObjects = objects.map(object => {
                     const flippedNormalsObject = { ...object };
