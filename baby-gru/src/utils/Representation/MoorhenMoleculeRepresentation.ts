@@ -1786,7 +1786,7 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     async getCootCavitiesBuffers(): Promise<libcootApi.SimpleMeshJS[]> {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "mesh_array",
                 command: "get_cavities",
