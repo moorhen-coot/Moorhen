@@ -23,6 +23,7 @@ type MoorhenPopoverType = {
     closeButton?: boolean;
     style?: React.CSSProperties;
     dynamicPosition?: boolean;
+    hideOverflow?: boolean;
 };
 export const MoorhenPopover = (props: MoorhenPopoverType) => {
     const {
@@ -243,7 +244,8 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
     const container = (
         <div className={className} style={{ ...popoverStyle, ...props.style }} ref={popoverRef} data-theme={isDark ? "dark" : "light"}>
             {closeButton && <MoorhenButton type="icon-only" onClick={() => props.setIsShown(false)} icon="MatSymClose" variant="danger" />}
-            {popoverContent || props.children}
+            <div style={{ overflow: props.hideOverflow ? "hidden" : "visible"}}>
+            {popoverContent || props.children}</div>
         </div>
     );
 

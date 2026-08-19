@@ -5,6 +5,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
+import { useMoorhenInstance } from "@/hooks";
 
 ("Add/Remove hydrogen atoms...");
 
@@ -12,7 +13,7 @@ export const AddRemoveHydrogenAtoms = () => {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const commandCentre = useCommandCentre();
-
+    const moorhenInstance = useMoorhenInstance();
     const handleClick = useCallback(
         async (cootCommand: string) => {
             if (moleculeSelectRef.current !== null && moleculeSelectRef.current.value) {
@@ -31,10 +32,12 @@ export const AddRemoveHydrogenAtoms = () => {
                 selectedMolecule?.setAtomsDirty(true);
                 selectedMolecule?.redraw();
                 document.body.click();
+                moorhenInstance.triggerMoleculeChanged(selectedMolNo, "modify");
             }
             document.body.click();
+            
         },
-        [moleculeSelectRef, molecules, commandCentre]
+        [moleculeSelectRef, molecules, commandCentre, moorhenInstance]
     );
 
     return (

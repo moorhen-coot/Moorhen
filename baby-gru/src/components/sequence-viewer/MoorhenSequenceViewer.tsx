@@ -40,11 +40,17 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         className,
         onHoverResidue,
         showValidationData = false,
-        validationTracks = null,
     } = props;
     const inputArray = useMemo(() => (Array.isArray(props.sequences) ? props.sequences : [props.sequences]), [props.sequences]);
     const noSequence: boolean = inputArray.length === 0;
     const invalidSequences: boolean = inputArray.some(seqObj => !seqObj || !seqObj.residues || seqObj.residues.length === 0);
+    const validationTracks = useMemo(() => {
+        if (!props.validationTracks) {
+            return null;
+        }
+        return props.validationTracks.map((track, index) => (track === "" ? `empty track ${index + 1}` : track));
+    }, [props.validationTracks]);
+
 
     const applyOffset = (seqArray: SeqElement[]) =>
         seqArray.map(seq => ({
@@ -493,7 +499,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     }, [sequencesToDisplay?.length, minVal, maxVal, displayHeight]);
 
     if (noSequence) {
-        return <div className="moorhen__seqviewer-no-sequence">No sequences available</div>;
+        return <div className="moorhen__seqviewer-container moorhen__seqviewer-no-sequence">No sequences available</div>;
     }
 
     if (invalidSequences) {
@@ -504,7 +510,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         <>
             <div
                 className={`moorhen__seqviewer-container ${className}`}
-                style={{ ...props.style, height: (showTitleBar ? 72 : 50) + displayHeight * 26 + "px" }}
+                // style={{ ...props.style, height: (showTitleBar ? 72 : 50) + displayHeight * 26 + "px" }}
                 /** Detect mouse on the seq viewer to switch to css hover of the residues box => better (feeling of) performance*/
                 onMouseEnter={() => {
                     setMouseIsHovering(true);
@@ -528,7 +534,6 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     {leftButtonsBar}
                     <CustomHorizontalScrollbar
                         key={scrollbarKey}
-                        style={{ width: seqLength > displayHeight ? "calc(100% - 40px)" : "100%" }}
                         onDraggingChange={setIsScrolling}
                         forceRedrawScrollBarKey={props.forceRedrawScrollBarKey}
                     >

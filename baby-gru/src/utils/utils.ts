@@ -90,7 +90,7 @@ export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
 
 export const getCentreAtom = async (
     molecules: MoorhenMolecule[],
-    commandCentre: React.RefObject<CommandCentre>,
+    commandCentre: CommandCentre,
     store: MoorhenReduxStoreType
 ): Promise<[MoorhenMolecule, string]> => {
     const visibleMolecules: MoorhenMolecule[] = molecules.filter((molecule: MoorhenMolecule) => molecule.isVisible());
@@ -98,7 +98,7 @@ export const getCentreAtom = async (
     if (visibleMolecules.length === 0) {
         return [null, null];
     }
-    const response = (await commandCentre.current.cootCommand(
+    const response = (await commandCentre.cootCommand(
         {
             returnType: "int_string_pair",
             command: "get_active_atom",

@@ -15,12 +15,13 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
     const disableFileUploads = useSelector((state: RootState) => state.generalStates.disableFileUpload);
     const allowScripting = useSelector((state: RootState) => state.generalStates.allowScripting);
 
-    let key = 0;
     if (props.menuItemList === undefined) {
         return <div>Empty menu list</div>;
     }
 
-    const menuJSXList = props.menuItemList.map(menuItem => {
+    const menuJSXList = props.menuItemList.map((menuItem, index) => {
+        const keyForItem = `${menuItem.type}-${index}`;
+
         if ("specialType" in menuItem && menuItem.specialType === "upload" && disableFileUploads) {
             return null;
         }
@@ -31,20 +32,20 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
         if (!("devOnly" in menuItem) || !menuItem.devOnly || (menuItem.devOnly && isDev)) {
             if (menuItem.type === "popover") {
                 return (
-                    <MoorhenMenuItemPopover key={menuItem.label} menuItemText={menuItem.label} ariaLabel={menuItem.ariaLabel ?? menuItem.label}>
+                    <MoorhenMenuItemPopover key={keyForItem} menuItemText={menuItem.label} ariaLabel={menuItem.ariaLabel ?? menuItem.label}>
                         <menuItem.content />
                     </MoorhenMenuItemPopover>
                 );
             } else if (menuItem.type === "item") {
                 return (
-                    <MoorhenMenuItem key={menuItem.label} onClick={menuItem.onClick} ariaLabel={menuItem.ariaLabel ?? menuItem.label}>
+                    <MoorhenMenuItem key={keyForItem} onClick={menuItem.onClick} ariaLabel={menuItem.ariaLabel ?? menuItem.label}>
                         {menuItem.label}
                     </MoorhenMenuItem>
                 );
             } else if (menuItem.type === "showModal") {
                 return (
                     <MoorhenMenuItem
-                        key={menuItem.label}
+                        key={keyForItem}
                         ariaLabel={menuItem.ariaLabel ?? menuItem.label}
                         onClick={() => {
                             dispatch(showModal({ key: menuItem.modal, openDocked: menuItem.args?.openDocked }));
@@ -55,22 +56,21 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
                     </MoorhenMenuItem>
                 );
             } else if (menuItem.type === "customJSX") {
-                return <menuItem.jsx key={menuItem.label} />;
+                return <menuItem.jsx key={keyForItem} />;
             } else if (menuItem.type === "HTMLslot") {
-                return <slot name={menuItem.slotName}></slot>;
+                return <slot key={keyForItem} name={menuItem.slotName}></slot>;
             } else if (menuItem.type === "preferenceSwitch") {
                 return (
-                    <PreferenceChecker selector={menuItem.selector} action={menuItem.action} label={menuItem.label} ariaLabel={menuItem.ariaLabel} key={menuItem.label} />
+                    <PreferenceChecker selector={menuItem.selector} action={menuItem.action} label={menuItem.label} ariaLabel={menuItem.ariaLabel} key={keyForItem} />
                 );
             } else if (menuItem.type === "separator") {
-                key += 1;
-                return <hr key={key} className="moorhen_menu-hr"></hr>;
+                return <hr key={keyForItem} className="moorhen_menu-hr"></hr>;
             } else if (menuItem.type === "subMenu") {
-                return <SubMenuPopover menu={menuItem.menu} label={menuItem.label} key={menuItem.id} ariaLabel={menuItem.ariaLabel ?? menuItem.label} />;
+                return <SubMenuPopover menu={menuItem.menu} label={menuItem.label} key={keyForItem} ariaLabel={menuItem.ariaLabel ?? menuItem.label} />;
             } else if (menuItem.type === "showPanel") {
                 return (
                     <MoorhenMenuItem
-                        key={menuItem.label}
+                        key={keyForItem}
                         ariaLabel={menuItem.ariaLabel ?? menuItem.label}
                         onClick={() => {
                             dispatch(setShownSidePanel(menuItem.panel));
@@ -83,7 +83,7 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
             } else if (menuItem.type === "dispatch") {
                 return (
                     <MoorhenMenuItem
-                        key={menuItem.label}
+                        key={keyForItem}
                         onClick={() => {
                             dispatch(menuItem.action);
                             document.body.click();

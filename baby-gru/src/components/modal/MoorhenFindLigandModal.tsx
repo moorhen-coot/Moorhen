@@ -178,7 +178,7 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
         
         <MoorhenStack>
             <MoorhenStack inputGrid>
-                <MoorhenMapSelect width="" maps={maps} label="Map" ref={mapSelectRef} />
+                <MoorhenMapSelect maps={maps} label="Map" ref={mapSelectRef} />
                 <MoorhenMoleculeSelect
                     label="Molecule"
                     allowAny={false}

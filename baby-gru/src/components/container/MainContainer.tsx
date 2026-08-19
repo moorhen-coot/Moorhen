@@ -134,7 +134,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const sidePanelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
-    const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
+    const bottomPanelHeight = useSelector((state: RootState) => state.globalUI.bottomPanelHeight);
 
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -223,12 +223,12 @@ export const MoorhenContainer = (props: ContainerProps) => {
         [newWidth, newHeight] = [window.innerWidth, window.innerHeight];}
 
         const GLviewWidth = newWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
-        const GLviewHeigth = newHeight - (bottomPanelIsShown ? 75 : 0);
+        const GLviewHeigth = newHeight - (bottomPanelHeight ? bottomPanelHeight -35: 0);
         dispatch(setWidth(newWidth));
         dispatch(setGlViewportWidth(GLviewWidth));
         dispatch(setHeight(newHeight));
         dispatch(setGlViewportHeight(GLviewHeigth));
-    }, [props.size, sidePanelIsOpen, bottomPanelIsShown, sidePanelWidth]);
+    }, [props.size, sidePanelIsOpen, bottomPanelHeight, sidePanelWidth]);
 
     useLayoutEffect(() => {
         setWindowDimensions();
