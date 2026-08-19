@@ -3,6 +3,8 @@ import { getColorFromGradient } from "../inputs";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenPopover, MoorhenStack } from "../interface-base";
 import { Residue, SeqElement } from "./MoorhenSeqViewTypes";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 interface ValidationTracksProps {
     sequence: SeqElement;
@@ -15,7 +17,7 @@ interface ValidationTracksProps {
 
 export const ValidationTracks = memo((props: ValidationTracksProps) => {
     const { sequence, residue, columnWidth, validationTracks = ["Overall RMSZ", "Density Correlation"] } = props;
-
+    const glHeight = useSelector((state: RootState) => state.sceneSettings.GlViewportHeight)
     const [isPopoverShown, setIsPopoverShown] = React.useState<boolean>(false);
 
     const normalizedTracks = validationTracks ?? [];
@@ -52,8 +54,8 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
             validationDataCategories.map(category => {
                 const categoryData = Object.entries(residue?.validationData ?? {}).filter(([key, data]) => data.category === category);
                 return (
-                    <MoorhenStack direction="column" inputGrid card key={category}>
-                        <span style={{ fontWeight: "bold", marginBottom: "0.5rem", display: "block" }}>{category}</span>
+                    <MoorhenStack direction="column" inputGrid card key={category} style={{margin: "0.2rem", width: "100%"}}>
+                        <span style={{ fontWeight: "bold", marginBottom: "0.1rem", display: "block" }}>{category}</span>
                         <div />
                         {categoryData
                             .sort(([keyA], [keyB]) => {
@@ -96,6 +98,7 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
                 isShown={isPopoverShown}
                 setIsShown={setIsPopoverShown}
                 linkRef={props.popoverRef}
+                style={{ overflow: "hidden" }}
                 link={
                     <div
                         data-molname={sequence.molName}
@@ -116,6 +119,7 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
                     Residue Info: {sequence.chain} - {residue.resCode}
                     {residue.resNum}
                 </span>
+               
                 {popoverContent}
                 <span style={{ fontSize: "0.8rem", marginTop: "0.5rem", display: "block" }}>⟐ : Higher values are better </span>
             </MoorhenPopover>
