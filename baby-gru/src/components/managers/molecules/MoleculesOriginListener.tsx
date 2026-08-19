@@ -7,7 +7,7 @@ import { getCentreAtom } from "@/utils/utils";
 
 export const MoleculesOriginListener = () => {
     const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
-    const _origin = useSelector((state: RootState) => state.glRef.origin);
+    const _origin = useSelector((state: RootState) => state.sceneSettings.origin);
     const originRef = useRef(_origin);
     const lastOriginRef = useRef(_origin);
     const moorhenInstance = useMoorhenInstance();

@@ -51,7 +51,8 @@ const ImportLigandDictionary = (props: {
         id,
     } = props;
 
-    const originState = useSelector((state: moorhen.State) => state.glRef.origin);
+    const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin);
+
     const handleFileContent = useCallback(
         
         async (fileContent: string) => {

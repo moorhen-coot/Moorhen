@@ -14,43 +14,22 @@ import {
     setQuat,
     setSpecular,
     setSpecularPower,
-    setZoom,
-} from "../store/glRefSlice";
-import {
-    setContourLevel,
+    setZoom, setContourLevel,
     setMapAlpha,
     setMapColours,
     setMapRadius,
     setMapStyle,
     setNegativeMapColours,
-    setPositiveMapColours,
-} from "../store/mapContourSettingsSlice";
-import { addMap, emptyMaps } from "../store/mapsSlice";
-import {
-    enableUpdatingMaps,
+    setPositiveMapColours, addMap, emptyMaps, enableUpdatingMaps,
     setConnectedMoleculeMolNo,
     setFoFcMapMolNo,
     setReflectionMapMolNo,
-    setTwoFoFcMapMolNo,
-} from "../store/moleculeMapUpdateSlice";
-import { addCustomRepresentation, addMolecule, emptyMolecules } from "../store/moleculesSlice";
-import {
-    addFracPathOverlay,
+    setTwoFoFcMapMolNo, addCustomRepresentation, addMolecule, emptyMolecules, addFracPathOverlay,
     addImageOverlay,
     addLatexOverlay,
     addSvgPathOverlay,
     addTextOverlay,
-    emptyOverlays,
-} from "../store/overlaysSlice";
-import type {
-    Overlay2DFracPath,
-    Overlay2DImageSrcFrac,
-    Overlay2DLatexSrcFrac,
-    Overlay2DSvgPath,
-    Overlay2DTextFrac,
-} from "../store/overlaysSlice";
-import {
-    setBackgroundColor,
+    emptyOverlays, setBackgroundColor,
     setDepthBlurDepth,
     setDepthBlurRadius,
     setDoEdgeDetect,
@@ -64,9 +43,16 @@ import {
     setSsaoBias,
     setSsaoRadius,
     setUseOffScreenBuffers,
-} from "../store/sceneSettingsSlice";
+} from "../store";
+
+import type {
+    Overlay2DFracPath,
+    Overlay2DImageSrcFrac,
+    Overlay2DLatexSrcFrac,
+    Overlay2DSvgPath,
+    Overlay2DTextFrac,
+} from "../store/overlaysSlice";
 import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
-import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
@@ -517,7 +503,7 @@ export class MoorhenTimeCapsule {
         const backgroundColor = this.store.getState().sceneSettings.backgroundColor;
 
         const viewData: viewDataSession = {
-            origin: this.store.getState().glRef.origin,
+            origin: this.store.getState().sceneSettings.origin,
             backgroundColor: backgroundColor,
             ambientLight: ambient,
             diffuseLight: diffuse,
@@ -780,7 +766,7 @@ export class MoorhenTimeCapsule {
         sessionData: backupSession,
         moorhenInstance: MoorhenInstance,
         fetchExternalUrl?: (uniqueId: string) => Promise<string>,
-        
+
     ): Promise<number> {
 
         const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
@@ -843,7 +829,7 @@ export class MoorhenTimeCapsule {
                         return MoorhenMap.loadToCootFromMapData(storedMapData.mapData, storedMapData.name, storedMapData.isDifference, moorhenInstance);
                     } else {
                         if (fetchExternalUrl) {
-                            
+
                             const doppioUrl = await fetchExternalUrl(storedMapData.uniqueId);
                             const newMap = MoorhenMap.loadToCootFromMapURL(doppioUrl, storedMapData.name, moorhenInstance, storedMapData.isDifference, false, undefined, storedMapData.uniqueId);
                             return newMap
@@ -865,7 +851,7 @@ export class MoorhenTimeCapsule {
                                     storedMapData.name,
                                     storedMapData.isDifference,
                                     moorhenInstance,
-                                    storedMapData.uniqueId        
+                                    storedMapData.uniqueId
                                 );
                             });
                     } else {

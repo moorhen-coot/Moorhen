@@ -32,13 +32,13 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
         if (!("devOnly" in menuItem) || !menuItem.devOnly || (menuItem.devOnly && isDev)) {
             if (menuItem.type === "popover") {
                 return (
-                    <MoorhenMenuItemPopover key={keyForItem} menuItemText={menuItem.label}>
+                    <MoorhenMenuItemPopover key={keyForItem} menuItemText={menuItem.label} ariaLabel={menuItem.ariaLabel ?? menuItem.label}>
                         <menuItem.content />
                     </MoorhenMenuItemPopover>
                 );
             } else if (menuItem.type === "item") {
                 return (
-                    <MoorhenMenuItem key={keyForItem} onClick={menuItem.onClick}>
+                    <MoorhenMenuItem key={keyForItem} onClick={menuItem.onClick} ariaLabel={menuItem.ariaLabel ?? menuItem.label}>
                         {menuItem.label}
                     </MoorhenMenuItem>
                 );
@@ -46,6 +46,7 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
                 return (
                     <MoorhenMenuItem
                         key={keyForItem}
+                        ariaLabel={menuItem.ariaLabel ?? menuItem.label}
                         onClick={() => {
                             dispatch(showModal({ key: menuItem.modal, openDocked: menuItem.args?.openDocked }));
                             document.body.click();
@@ -60,16 +61,17 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
                 return <slot key={keyForItem} name={menuItem.slotName}></slot>;
             } else if (menuItem.type === "preferenceSwitch") {
                 return (
-                    <PreferenceChecker selector={menuItem.selector} action={menuItem.action} label={menuItem.label} key={keyForItem} />
+                    <PreferenceChecker selector={menuItem.selector} action={menuItem.action} label={menuItem.label} ariaLabel={menuItem.ariaLabel} key={keyForItem} />
                 );
             } else if (menuItem.type === "separator") {
                 return <hr key={keyForItem} className="moorhen_menu-hr"></hr>;
             } else if (menuItem.type === "subMenu") {
-                return <SubMenuPopover menu={menuItem.menu} label={menuItem.label} key={keyForItem} />;
+                return <SubMenuPopover menu={menuItem.menu} label={menuItem.label} key={keyForItem} ariaLabel={menuItem.ariaLabel ?? menuItem.label} />;
             } else if (menuItem.type === "showPanel") {
                 return (
                     <MoorhenMenuItem
                         key={keyForItem}
+                        ariaLabel={menuItem.ariaLabel ?? menuItem.label}
                         onClick={() => {
                             dispatch(setShownSidePanel(menuItem.panel));
                             document.body.click();
@@ -86,6 +88,7 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
                             dispatch(menuItem.action);
                             document.body.click();
                         }}
+                        ariaLabel={menuItem.ariaLabel ?? menuItem.label}
                     >
                         {menuItem.label}
                     </MoorhenMenuItem>
@@ -106,12 +109,14 @@ const PreferenceChecker = (props: {
     selector: (state: RootState) => boolean;
     action: ActionCreatorWithOptionalPayload<boolean>;
     label: string;
+    ariaLabel?: string;
 }) => {
     const checked = useSelector(props.selector);
     const dispatch = useDispatch();
 
     return (
         <MoorhenToggle
+            aria-label={props.ariaLabel ?? props.label}
             checked={checked}
             onChange={() => dispatch(props.action(!checked))}
             label={props.label}
@@ -120,12 +125,12 @@ const PreferenceChecker = (props: {
     );
 };
 
-const SubMenuPopover = (props: { menu: string; label: string }) => {
+const SubMenuPopover = (props: { menu: string; label: string; ariaLabel: string }) => {
     const moorhenInstance = useMoorhenInstance();
     const menuSystem = moorhenInstance.menuSystem;
     const items = menuSystem.getItems(props.menu);
     return (
-        <MoorhenMenuItemPopover menuItemText={props.label}>
+        <MoorhenMenuItemPopover menuItemText={props.label} ariaLabel={props.ariaLabel}>
             <MenuFromItems menuItemList={items} title={props.label} />
         </MoorhenMenuItemPopover>
     );

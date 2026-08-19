@@ -101,6 +101,27 @@ inline bool is64bit(){
 }
 
 namespace moorhen {
+    inline std::string validation_information_t_to_json(const coot::validation_information_t &info){
+        Json::Value root;
+        for (const auto &cvi : info.cviv){
+            Json::Value chain_json;
+            int res_idx = 0;
+            for (const auto &ri : cvi.rviv) {
+                Json::Value res_json;
+                res_json["chainId"] = ri.residue_spec.chain_id;
+                res_json["insCode"] = ri.residue_spec.ins_code;
+                res_json["seqNum"] = ri.residue_spec.res_no;
+                res_json["restype"] = "UNK";
+                res_json["value"] = ri.function_value;
+                chain_json[res_idx++] = res_json;
+            }
+            root[cvi.chain_id] = chain_json;
+        }
+        Json::StreamWriterBuilder builder;
+        const std::string json_string = Json::writeString(builder, root);
+        return json_string;
+    }
+
     inline void ltrim_inplace(std::string &s, const char cht='\0') {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), [cht](unsigned char ch) {
             if(cht!='\0') {
@@ -1109,6 +1130,30 @@ class molecules_container_js : public molecules_container_t {
         }
         int add(int ic) {
             return ic + 1;
+        }
+        std::string rotamer_analysis_json(int imol_model) {
+            coot::validation_information_t info = rotamer_analysis(imol_model);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string ramachandran_analysis_json(int imol_model) {
+            std::string ret = "";
+            coot::validation_information_t info = ramachandran_analysis(imol_model);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string peptide_omega_analysis_json(int imol_model) {
+            std::string ret = "";
+            coot::validation_information_t info = peptide_omega_analysis(imol_model);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string density_correlation_analysis_json(int imol_model, int imol_map) {
+            std::string ret = "";
+            coot::validation_information_t info = density_correlation_analysis(imol_model,imol_map);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string density_fit_analysis_json(int imol_model, int imol_map) {
+            std::string ret = "";
+            coot::validation_information_t info = density_fit_analysis(imol_model,imol_map);
+            return moorhen::validation_information_t_to_json(info);
         }
         int writePDBASCII(int imol, const std::string &file_name) {
             const char *fname_cp = file_name.c_str();

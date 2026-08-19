@@ -110,7 +110,7 @@ export const GetMonomer = () => {
 
     const dispatch = useDispatch();
 
-    const originState = useSelector((state: moorhen.State) => state.glRef.origin);
+    const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin);
 
     const handleSourceChange = evt => {
         setSource(evt.target.value);
