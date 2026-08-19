@@ -405,25 +405,25 @@ export const moorhenKeyPress = (
 
     else if (action === 'decrease_front_clip') {
         dispatch(setClipStart(clipStart-0.5))
-        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Front clip down",  variant: "info"}))
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:`Front clip down (${clipStart-0.5})`,  variant: "info", autoHideDuration: 1000, tag: "front_clip_down"}))
         return false
     }
 
     else if (action === 'increase_front_clip') {
         dispatch(setClipStart(clipStart+0.5))
-        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Front clip up",  variant: "info"}))
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:`Front clip up (${clipStart+0.5})`,  variant: "info", autoHideDuration: 1000, tag: "front_clip_up"}))
         return false
     }
 
     else if (action === 'decrease_back_clip') {
         dispatch(setClipEnd(clipEnd-0.5))
-        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Back clip down",  variant: "info"}))
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:`Back clip down (${clipEnd-0.5})`,  variant: "info", autoHideDuration: 1000, tag: "back_clip_down"}))
         return false
     }
 
     else if (action === 'increase_back_clip') {
         dispatch(setClipEnd(clipEnd+0.5))
-        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Back clip up",  variant: "info"}))
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:`Back clip up (${clipEnd+0.5})`,  variant: "info", autoHideDuration: 1000, tag: "back_clip_up"}))
         return false
     }
     else if (action === 'show_atom_info') {
