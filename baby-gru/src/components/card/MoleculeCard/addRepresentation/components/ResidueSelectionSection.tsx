@@ -5,9 +5,12 @@ import { MoorhenChainSelect } from "../../../../inputs/Selector/MoorhenChainSele
 import { MoorhenLigandSelect } from "../../../../inputs/Selector/MoorhenLigandSelect";
 import { ResidueRangeSelector } from "@/components/inputs/ResidueRange";
 
+
+export type ResidueSelectionRuleType = "ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood";
+
 interface ResidueSelectionSectionProps {
-    ruleType: "ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood";
-    setRuleType: (val: ResidueSelectionSectionProps["ruleType"]) => void;
+    ruleType: ResidueSelectionRuleType;
+    setRuleType: (val: ResidueSelectionRuleType) => void;
     representationStyle: string;
     molecules: MoorhenMolecule[];
     molecule: MoorhenMolecule;
@@ -46,7 +49,7 @@ export const ResidueSelectionSection = (props: ResidueSelectionSectionProps) => 
                 label={"Residue selection"}
                 defaultValue={ruleType}
                 setValue={e => {
-                    setRuleType(e as ResidueSelectionSectionProps["ruleType"]);
+                    setRuleType(e as ResidueSelectionRuleType);
                     if (e === "neighbourhood") {
                         setRestrictToNeighbours(true);
                     } else {
