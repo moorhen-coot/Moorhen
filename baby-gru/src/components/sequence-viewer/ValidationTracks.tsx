@@ -54,7 +54,7 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
             validationDataCategories.map(category => {
                 const categoryData = Object.entries(residue?.validationData ?? {}).filter(([key, data]) => data.category === category);
                 return (
-                    <MoorhenStack direction="column" inputGrid card key={category} style={{margin: "0.2rem", width: "100%"}}>
+                    <MoorhenStack direction="column" inputGrid card key={category} style={{margin: "0.2rem", padding: "0.5rem", fontSize: "0.9rem"}}>
                         <span style={{ fontWeight: "bold", marginBottom: "0.1rem", display: "block" }}>{category}</span>
                         <div />
                         {categoryData
@@ -98,7 +98,7 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
                 isShown={isPopoverShown}
                 setIsShown={setIsPopoverShown}
                 linkRef={props.popoverRef}
-                style={{ overflow: "hidden" }}
+                style={{maxHeight: `${glHeight}px` }}
                 link={
                     <div
                         data-molname={sequence.molName}
@@ -119,9 +119,9 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
                     Residue Info: {sequence.chain} - {residue.resCode}
                     {residue.resNum}
                 </span>
-               
+               <div style = {{maxHeight: `${glHeight -100}px`, width: "100%", overflow: "hidden" }}>
                 {popoverContent}
-                <span style={{ fontSize: "0.8rem", marginTop: "0.5rem", display: "block" }}>⟐ : Higher values are better </span>
+                <span style={{ fontSize: "0.8rem", marginTop: "0.5rem", display: "block" }}>⟐ : Higher values are better </span></div>
             </MoorhenPopover>
         );
     } else {
