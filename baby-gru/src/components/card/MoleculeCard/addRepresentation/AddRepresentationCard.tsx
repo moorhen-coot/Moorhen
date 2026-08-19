@@ -19,7 +19,7 @@ import { ColourSettingsSection } from "./components/ColourSettingsSection";
 import { FilterToggles } from "./components/FilterToggles";
 import { NeighbourhoodSettings } from "./components/NeighbourhoodSettings";
 import { ResidueEnvironmentStyleSelectors } from "./components/ResidueEnvironmentStyleSelectors";
-import { ResidueSelectionSection } from "./components/ResidueSelectionSection";
+import { ResidueSelectionRuleType, ResidueSelectionSection } from "./components/ResidueSelectionSection";
 import { StyleSelector } from "./components/StyleSelector";
 import { extractRepresentationParams, getNonCustomAlpha } from "../../../../utils/Representation/RepresentationBuilder";
 
@@ -36,7 +36,7 @@ export const AddCustomRepresentationCard = memo(
         const existingParams = props.representation ? extractRepresentationParams(props.representation) : undefined;
         const ncsColourRuleRef = useRef<null | ColourRule>(existingParams?.ncsColourRule ?? null);
 
-        const [ruleType, setRuleType] = useState<"ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood">(
+        const [ruleType, setRuleType] = useState<ResidueSelectionRuleType>(
             existingParams?.ruleType ?? "molecule"
         );
         const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(existingParams?.representationStyle ?? "CBs");
@@ -95,7 +95,7 @@ export const AddCustomRepresentationCard = memo(
 
         const commandCentre = useCommandCentre();
         const representationRef = useRef<MoleculeRepresentation>(
-            props.representation ?? new MoleculeRepresentation(representationStyle, "/*/*/*/*:*", commandCentre)
+            props.representation ?? new MoleculeRepresentation(representationStyle, "/*/*/*/*:*", commandCentre.current)
         );
         representationRef.current.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
 

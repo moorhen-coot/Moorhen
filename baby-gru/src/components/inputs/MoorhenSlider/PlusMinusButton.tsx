@@ -15,6 +15,7 @@ type PlusMinusButtonProps = {
     type?: "arrow" | "round";
     style?: React.CSSProperties;
     colour?: string;
+    minMax?: [number, number];
 };
 
 export function PlusMinusButton(props: PlusMinusButtonProps) {
@@ -24,6 +25,9 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
     const valueRef = useRef<number>(props.value ?? 0);
 
     const clampIfBounded = (value: number): number => {
+        if (props.minMax) {
+            return clampValue(value, props.minMax[0], props.minMax[1]);
+        }
         if (minVal === undefined || maxVal === undefined) {
             return value;
         }
@@ -44,9 +48,10 @@ export function PlusMinusButton(props: PlusMinusButtonProps) {
             const steppedValue = logScale
                 ? Math.pow(10, Math.log10(valueRef.current) + step)
                 : valueRef.current + step;
-            newValue = clampIfBounded(steppedValue);
+            newValue = steppedValue;
         }
 
+        newValue = clampIfBounded(newValue);
         valueRef.current = newValue;
         props.setValue(newValue);
     };

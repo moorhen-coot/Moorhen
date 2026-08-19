@@ -10,6 +10,8 @@ import { createRepresentation } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "../utils";
+import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
+import { CommandCentre } from "@/InstanceManager/CommandCentre";
 
 export type RepresentationStyles =
     | "VdwSpheres"
@@ -54,12 +56,12 @@ export type RepresentationStyles =
  * @property {string} uniqueId - A unique identifier for this colour rule
  * @property {boolean} visible - Indicates whether the molecule representation is currently visible
  * @property {moorhen.ColourRule[]} colourRules - The list of colour rules associated to this molecule representation
- * @property {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+ * @property {moorhen.CommandCentre} commandCentre - The command centre instance
  * @property {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
  * @constructor
  * @param {moorhen.RepresentationStyles} style - The style of this molecule representation instance
  * @param {string} cid - The CID selection for this colour rule
- * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+ * @param {moorhen.CommandCentre} commandCentre - The command centre instance
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
  * @example
  * import { MoorhenMolecule, MoorhenColourRule } from 'moorhen';
@@ -121,8 +123,7 @@ export class MoleculeRepresentation {
     excludeNeighbours: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- WebGL buffer objects are heterogeneous and flow through untyped appendOtherData/buildBuffers
     buffers: any;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
+    commandCentre: CommandCentre;
     parentMolecule: moorhen.Molecule;
     styleHasAtomBuffers: boolean;
     styleHasColourRules: boolean;
@@ -150,11 +151,11 @@ export class MoleculeRepresentation {
         bufferObj1: libcootApi.InstancedMeshJS[],
         bufferObj2: libcootApi.InstancedMeshJS[]
     ) => libcootApi.InstancedMeshJS[];
-    interfaceOption: { visible: boolean; selectionType: "cid" | "residue-range" | "chain" | "molecule" | "ligands" | "protein-model" };
+    interfaceOption: { visible: boolean; selectionType: ResidueSelectionRuleType };
     /** Snapshot of the lossy build parameters (see BuildRepresentationParams). Null for legacy/deserialized reps. */
     buildParams: BuildRepresentationParams | null;
 
-    constructor(style: RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>) {
+    constructor(style: RepresentationStyles, cid: string, commandCentre: CommandCentre) {
         this.uniqueId = guid();
         this.cid = cid;
         this.setStyle(style);
@@ -655,7 +656,7 @@ export class MoleculeRepresentation {
         const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
 
         if (this.restrictToNeighbours || this.hbondedToCid) {
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     command: "set_draw_missing_residue_loops",
                     returnType: "status",
@@ -672,7 +673,7 @@ export class MoleculeRepresentation {
             const hBonds = [];
             const splitHBondedToCids = this.hbondedToCid.split("||");
             for (let isplit = 0; isplit < splitHBondedToCids.length; isplit++) {
-                const response = await this.commandCentre.current.cootCommand(
+                const response = await this.commandCentre.cootCommand(
                     {
                         returnType: "vector_hbond",
                         command: "get_h_bonds",
@@ -831,7 +832,7 @@ export class MoleculeRepresentation {
         }
 
         if (this.restrictToNeighbours && drawMissingLoops) {
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     command: "set_draw_missing_residue_loops",
                     returnType: "status",
@@ -928,7 +929,7 @@ export class MoleculeRepresentation {
         const drawMissingLoops = this.parentMolecule.store.getState().sceneSettings.drawMissingLoops;
 
         if (COOT_BOND_REPRESENTATIONS.includes(focusRepresentation) && drawMissingLoops) {
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     command: "set_draw_missing_residue_loops",
                     returnType: "status",
@@ -941,7 +942,7 @@ export class MoleculeRepresentation {
         const focusBufferObjects = await this.getBufferObjects(focusRepresentation, focusCids);
 
         if (COOT_BOND_REPRESENTATIONS.includes(focusRepresentation) && drawMissingLoops) {
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     command: "set_draw_missing_residue_loops",
                     returnType: "status",
@@ -958,7 +959,7 @@ export class MoleculeRepresentation {
         } else {
             await Promise.all(
                 neighBoringResidues.map(i => {
-                    this.commandCentre.current.cootCommand(
+                    this.commandCentre.cootCommand(
                         {
                             message: "coot_command",
                             command: "add_to_non_drawn_bonds",
@@ -976,7 +977,7 @@ export class MoleculeRepresentation {
         if (M2T_REPRESENTATIONS.includes(backgroundRepresentation)) {
             this.parentMolecule.excludedSelections = [...originalExcludedSelections];
         } else {
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     message: "coot_command",
                     command: "clear_non_drawn_bonds",
@@ -988,7 +989,7 @@ export class MoleculeRepresentation {
 
             await Promise.all(
                 this.parentMolecule.excludedSelections.map(i => {
-                    this.commandCentre.current.cootCommand(
+                    this.commandCentre.cootCommand(
                         {
                             message: "coot_command",
                             command: "add_to_non_drawn_bonds",
@@ -1010,7 +1011,7 @@ export class MoleculeRepresentation {
      */
     async getRestraintsMeshBuffers() {
         try {
-            const response = (await this.commandCentre.current.cootCommand(
+            const response = (await this.commandCentre.cootCommand(
                 {
                     returnType: "instanced_mesh",
                     command: "get_extra_restraints_mesh",
@@ -1033,7 +1034,8 @@ export class MoleculeRepresentation {
     async getEnvironmentBuffers(cid: string) {
         const resSpec = cidToSpec(cid);
         console.log(this.residueEnvironmentOptions.maxDist);
-        const response = await this.commandCentre.current.cootCommand(
+
+        const response = await this.commandCentre.cootCommand(
             {
                 returnType: "generic_3d_lines_bonds_box",
                 command: "make_exportable_environment_bond_box",
@@ -1263,7 +1265,7 @@ export class MoleculeRepresentation {
             Object.keys(this.m2tParams)
                 .filter(param => param !== "nucleotideRibbonStyle")
                 .map(param => {
-                    return this.commandCentre.current.cootCommand(
+                    return this.commandCentre.cootCommand(
                         {
                             returnType: "status",
                             command: ["ribbonStyleAxialSampling", "cylindersStyleAngularSampling", "dishStyleAngularSampling"].includes(
@@ -1294,7 +1296,7 @@ export class MoleculeRepresentation {
             : this.m2tParams.nucleotideRibbonStyle;
 
         await Promise.all([
-            this.commandCentre.current.cootCommand(
+            this.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "M2T_updateFloatParameter",
@@ -1302,7 +1304,7 @@ export class MoleculeRepresentation {
                 },
                 false
             ),
-            this.commandCentre.current.cootCommand(
+            this.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "M2T_updateFloatParameter",
@@ -1312,7 +1314,7 @@ export class MoleculeRepresentation {
             ),
         ]);
 
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 returnType: "mesh_perm3",
                 command: "get_molecular_representation_mesh",
@@ -1322,7 +1324,7 @@ export class MoleculeRepresentation {
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
 
         await Promise.all([
-            this.commandCentre.current.cootCommand(
+            this.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "M2T_updateFloatParameter",
@@ -1336,7 +1338,7 @@ export class MoleculeRepresentation {
                 },
                 false
             ),
-            this.commandCentre.current.cootCommand(
+            this.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "M2T_updateFloatParameter",
@@ -1384,7 +1386,7 @@ export class MoleculeRepresentation {
             ssUsageScheme = this.m2tParams.ssUsageScheme;
         }
 
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "mesh",
                 command: "get_molecular_representation_mesh",
@@ -1463,7 +1465,7 @@ export class MoleculeRepresentation {
         }
 
         if (typeof cid !== "string" || cid === "/*/*/*/*") {
-            meshCommand = this.commandCentre.current.cootCommand(
+            meshCommand = this.commandCentre.cootCommand(
                 {
                     returnType: returnType,
                     command: "get_bonds_mesh_instanced",
@@ -1472,7 +1474,7 @@ export class MoleculeRepresentation {
                 false
             );
         } else {
-            meshCommand = this.commandCentre.current.cootCommand(
+            meshCommand = this.commandCentre.cootCommand(
                 {
                     returnType: returnType,
                     command: "get_bonds_mesh_for_selection_instanced",
@@ -1548,7 +1550,7 @@ export class MoleculeRepresentation {
      */
     async getCootContactDotsCidBuffers(cid: string) {
         try {
-            const response = (await this.commandCentre.current.cootCommand(
+            const response = (await this.commandCentre.cootCommand(
                 {
                     returnType: "instanced_mesh",
                     command: "contact_dots_for_ligand",
@@ -1598,7 +1600,7 @@ export class MoleculeRepresentation {
      */
     async getGlycoBlockBuffers(cid: string) {
         try {
-            const response = (await this.commandCentre.current.cootCommand(
+            const response = (await this.commandCentre.cootCommand(
                 {
                     returnType: "instanced_mesh",
                     command: "DrawGlycoBlocks",
@@ -1623,7 +1625,7 @@ export class MoleculeRepresentation {
         const hBonds = [];
         const splitHBondedToCids = cid.split("||");
         for (let isplit = 0; isplit < splitHBondedToCids.length; isplit++) {
-            const response = await this.commandCentre.current.cootCommand(
+            const response = await this.commandCentre.cootCommand(
                 {
                     returnType: "vector_hbond",
                     command: "get_h_bonds",
@@ -1669,7 +1671,7 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     async getLigandValidationBuffers(cid: string) {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "mesh",
                 command: "get_mesh_for_ligand_validation_vs_dictionary",
@@ -1691,7 +1693,7 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     async getCootChemicalFeaturesCidBuffers(cid: string) {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "mesh",
                 command: "get_chemical_features_mesh",
@@ -1713,7 +1715,7 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
      */
     async getMetaBallBuffers(cid: string) {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "mesh_perm",
                 command: "DrawMoorhenMetaBalls",
@@ -1731,7 +1733,7 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
      */
     async getRamachandranBallBuffers() {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "mesh",
                 command: "get_ramachandran_validation_markup_mesh",
@@ -1750,7 +1752,7 @@ export class MoleculeRepresentation {
      */
     async getCootGaussianSurfaceBuffers(): Promise<libcootApi.InstancedMeshJS[]> {
         const args = this.useDefaultGaussianSurfaceSettings ? this.parentMolecule.gaussianSurfaceSettings : this.gaussianSurfaceSettings;
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "mesh",
                 command: "get_gaussian_surface",
@@ -1779,7 +1781,7 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     async getCootContactDotsBuffers() {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "instanced_mesh",
                 command: "all_molecule_contact_dots",
@@ -1800,7 +1802,7 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
     async getRotamerDodecahedraBuffers() {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "instanced_mesh_perm",
                 command: "get_rotamer_dodecs_instanced",
@@ -1842,7 +1844,7 @@ export class MoleculeRepresentation {
             this.colourRules = this.parentMolecule.defaultColourRules;
         }
 
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 message: "coot_command",
                 command: "delete_colour_rules",
@@ -1858,7 +1860,7 @@ export class MoleculeRepresentation {
                 this.colourRules.forEach(rule => {
                     colourObjectList.push(...rule.getUserDefinedColours());
                 });
-                await this.commandCentre.current.cootCommand(
+                await this.commandCentre.cootCommand(
                     {
                         message: "coot_command",
                         command: "shim_set_bond_colours",
@@ -1890,7 +1892,7 @@ export class MoleculeRepresentation {
             const bondArgs = this.getBondArgs(this.style);
             const state = this.parentMolecule.store.getState();
             const drawMissingLoops = state.sceneSettings.drawMissingLoops;
-            const result = (await this.commandCentre.current.cootCommand(
+            const result = (await this.commandCentre.cootCommand(
                 {
                     returnType: "string",
                     command: "shim_export_molecule_as_obj",
@@ -1907,7 +1909,7 @@ export class MoleculeRepresentation {
             } else {
                 ssUsageScheme = this.m2tParams.ssUsageScheme;
             }
-            const result = (await this.commandCentre.current.cootCommand(
+            const result = (await this.commandCentre.cootCommand(
                 {
                     returnType: "string",
                     command: "shim_export_molecular_representation_as_obj",
@@ -1934,7 +1936,7 @@ export class MoleculeRepresentation {
             const bondArgs = this.getBondArgs(this.style);
             const state = this.parentMolecule.store.getState();
             const drawMissingLoops = state.sceneSettings.drawMissingLoops;
-            const result = (await this.commandCentre.current.cootCommand(
+            const result = (await this.commandCentre.cootCommand(
                 {
                     returnType: "string",
                     command: "shim_export_molecule_as_mesh_file",
@@ -1951,7 +1953,7 @@ export class MoleculeRepresentation {
             } else {
                 ssUsageScheme = this.m2tParams.ssUsageScheme;
             }
-            const result = (await this.commandCentre.current.cootCommand(
+            const result = (await this.commandCentre.cootCommand(
                 {
                     returnType: "string",
                     command: "shim_export_molecular_representation_as_mesh_file",
@@ -1961,7 +1963,7 @@ export class MoleculeRepresentation {
             )) as moorhen.WorkerResponse<ArrayBuffer>;
             gltfData = result.data.result.result;
         } else if (this.style === "MetaBalls") {
-            const result = (await this.commandCentre.current.cootCommand(
+            const result = (await this.commandCentre.cootCommand(
                 {
                     returnType: "string",
                     command: "shim_export_metaballs_as_mesh_file",

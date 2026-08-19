@@ -807,7 +807,7 @@ export class MoorhenTimeCapsule {
         // Load molecules stored in session from coords string
         const newMoleculePromises =
             sessionData.moleculeData?.map(async storedMoleculeData => {
-                const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+                const newMolecule = new MoorhenMolecule(moorhenInstance);
                 if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
                     newMolecule.uniqueId = storedMoleculeData.uniqueId;
                     return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name);
@@ -878,7 +878,7 @@ export class MoorhenTimeCapsule {
                 );
             }
             molecule.defaultColourRules = storedMoleculeData.defaultColourRules.map(item => {
-                const colourRule = ColourRule.initFromDataObject(item, commandCentre, molecule);
+                const colourRule = ColourRule.initFromDataObject(item, moorhenInstance.commandCentre, molecule);
                 return colourRule;
             });
             if (storedMoleculeData.defaultBondOptions) {
@@ -895,9 +895,9 @@ export class MoorhenTimeCapsule {
                     const colourRules = !item.colourRules
                         ? null
                         : item.colourRules.map(item => {
-                            const colourRule = ColourRule.initFromDataObject(item, commandCentre, molecule);
-                            return colourRule;
-                        });
+                              const colourRule = ColourRule.initFromDataObject(item, moorhenInstance.commandCentre, molecule);
+                              return colourRule;
+                          });
                     const representation = await molecule.addRepresentation(
                         item.style,
                         item.cid,

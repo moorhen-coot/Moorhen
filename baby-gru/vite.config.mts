@@ -166,7 +166,7 @@ export default defineConfig({
         },
         watch: {
             ignored: [
-                "**/public/monomers/MoorhenAssets/**",
+                "**/public/MoorhenAssets/monomers/**",
                 "**/public/MoorhenAssets/wasm/**",
                 "**/public/MoorhenAssets/data.tar.gz",
                 "**/public/pixmaps/**",

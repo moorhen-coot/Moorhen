@@ -14,39 +14,34 @@ import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, 
 import { Shortcut } from '../InstanceManager/Preferences';
 import { cidToSpec, getCentreAtom } from "./utils"
 import { setShownControl, RootState, enqueueSnackbar  } from '@/store';
+import { MoorhenInstance } from '@/InstanceManager';
 
-const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, dispatch: Dispatch<AnyAction>) => {
+const apresEdit = (molecule: moorhen.Molecule, moorhenInstance: MoorhenInstance ) => {
     molecule.setAtomsDirty(true)
     molecule.redraw()
-    dispatch( setHoveredAtom({ molecule: null, cid: null,  atomInfo: null }) )
-    dispatch( triggerUpdate(molecule.molNo) )
+    moorhenInstance.dispatch( setHoveredAtom({ molecule: null, cid: null,  atomInfo: null }) )
+    moorhenInstance.dispatch( triggerUpdate(molecule.molNo) )
+    moorhenInstance.triggerMoleculeChanged(molecule.uniqueId, "refine");
 }
 
 
 export const moorhenKeyPress = (
     event: KeyboardEvent, 
-    collectedProps: {
-        dispatch: Dispatch<AnyAction>;
-        store: Store<RootState>;
-        hoveredAtom: moorhen.HoveredAtom;
-        commandCentre: React.RefObject<moorhen.CommandCentre>;
-        activeMap: moorhen.Map;
-        molecules: moorhen.Molecule[];
-        glRef: React.RefObject<webGL.MGWebGL>;
-        viewOnly: boolean;
-        videoRecorderRef: React.RefObject<moorhen.ScreenRecorder>;
-    }, 
+    hoveredAtom: moorhen.HoveredAtom,
+    activeMap: moorhen.Map,
+    molecules: moorhen.Molecule[],
+    viewOnly: boolean,
+    moorhenInstance: MoorhenInstance,
     shortCuts: {[key: string]: Shortcut}, 
     showShortcutToast: boolean, 
     shortcutOnHoveredAtom: boolean
 ): boolean | Promise<boolean> => {
     
-    const { 
-        hoveredAtom, activeMap, commandCentre, glRef, molecules, 
-        viewOnly, videoRecorderRef, dispatch, store
-    } = collectedProps;
 
 
+    const store = moorhenInstance.store
+    const dispatch = moorhenInstance.dispatch
+    const commandCentre = moorhenInstance.commandCentre
     const originState = store.getState().sceneSettings.origin
     const zoom = store.getState().sceneSettings.zoom
     const myQuat = store.getState().glRef.quat
@@ -112,14 +107,14 @@ export const moorhenKeyPress = (
         }
         
         if (chosenAtom && chosenMolecule) {
-            return commandCentre.current.cootCommand({
+            return commandCentre.cootCommand({
                 returnType: "status",
                 command: cootCommand,
                 commandArgs: formatArgs(chosenMolecule, chosenAtom),
                 changesMolecules: [chosenMolecule.molNo]
             }, true)
             .then(_ => {
-                apresEdit(chosenMolecule, glRef, dispatch)
+                apresEdit(chosenMolecule, moorhenInstance)
             })
             .then(_ => false)
             .catch(err => {
@@ -175,7 +170,7 @@ export const moorhenKeyPress = (
     }
 
     else if ((action === 'undo' || action === 'redo') && !viewOnly) {
-        const selectedMolNo = commandCentre.current.history.lastModifiedMolNo()
+        const selectedMolNo = commandCentre.history.lastModifiedMolNo()
         const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
         let promise: Promise<void>
         if(!selectedMolecule) {
@@ -264,7 +259,7 @@ export const moorhenKeyPress = (
             windowY: frontAndBack[3],
         };
 
-        commandCentre.current.cootCommand({
+        commandCentre.cootCommand({
             returnType: "float_array",
             command: "go_to_blob_array",
             commandArgs: [goToBlobEvent.front[0], goToBlobEvent.front[1], goToBlobEvent.front[2], goToBlobEvent.back[0], goToBlobEvent.back[1], goToBlobEvent.back[2], 0.5]
@@ -410,25 +405,25 @@ export const moorhenKeyPress = (
 
     else if (action === 'decrease_front_clip') {
         dispatch(setClipStart(clipStart-0.5))
-        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Front clip down",  variant: "info"}))
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:`Front clip down (${clipStart-0.5})`,  variant: "info", autoHideDuration: 1000, tag: "front_clip_down"}))
         return false
     }
 
     else if (action === 'increase_front_clip') {
         dispatch(setClipStart(clipStart+0.5))
-        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Front clip up",  variant: "info"}))
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:`Front clip up (${clipStart+0.5})`,  variant: "info", autoHideDuration: 1000, tag: "front_clip_up"}))
         return false
     }
 
     else if (action === 'decrease_back_clip') {
         dispatch(setClipEnd(clipEnd-0.5))
-        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Back clip down",  variant: "info"}))
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:`Back clip down (${clipEnd-0.5})`,  variant: "info", autoHideDuration: 1000, tag: "back_clip_down"}))
         return false
     }
 
     else if (action === 'increase_back_clip') {
         dispatch(setClipEnd(clipEnd+0.5))
-        if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Back clip up",  variant: "info"}))
+        if (showShortcutToast) dispatch(enqueueSnackbar({ message:`Back clip up (${clipEnd+0.5})`,  variant: "info", autoHideDuration: 1000, tag: "back_clip_up"}))
         return false
     }
     else if (action === 'show_atom_info') {
