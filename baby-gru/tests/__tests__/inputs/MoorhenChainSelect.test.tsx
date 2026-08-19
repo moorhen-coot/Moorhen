@@ -5,7 +5,10 @@ import { Provider } from "react-redux";
 import { MoorhenChainSelect } from "../../../src/components/inputs/Selector/MoorhenChainSelect";
 import { MoorhenMolecule } from "../../../src/utils/MoorhenMolecule";
 import { MoorhenReduxStore, renderWithinInstance } from "../testUtils";
+import { MoorhenInstance } from "@/InstanceManager";
+import React from "react";
 
+const mockMoorhenInstance = new MoorhenInstance(React.createRef<HTMLDivElement>());
 describe("MoorhenChainSelect", () => {
     test("renders chain options from molecule sequences", () => {
         const mockMolecules = [
@@ -94,7 +97,7 @@ describe("MoorhenChainSelect", () => {
     });
 
     test("renders and selects chains from real molecules", async () => {
-        const molecule_1 = new MoorhenMolecule(null, null, "");
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_1.molNo = 0;
         molecule_1.name = "mol-1";
         molecule_1.sequences = [
@@ -102,10 +105,10 @@ describe("MoorhenChainSelect", () => {
             { type: 2, chain: "B" },
             { type: 3, chain: "C" },
         ] as any;
-        const molecule_2 = new MoorhenMolecule(null, null, "");
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_2.molNo = 1;
         molecule_2.name = "mol-2";
-        const molecule_3 = new MoorhenMolecule(null, null, "");
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_3.molNo = 2;
         molecule_3.name = "mol-3";
 
@@ -136,7 +139,7 @@ describe("MoorhenChainSelect", () => {
     });
 
     test("filters chains by the allowedTypes prop", () => {
-        const molecule_1 = new MoorhenMolecule(null, null, "");
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_1.molNo = 0;
         molecule_1.name = "mol-1";
         molecule_1.sequences = [
@@ -144,10 +147,10 @@ describe("MoorhenChainSelect", () => {
             { type: 2, chain: "B" },
             { type: 3, chain: "C" },
         ] as any;
-        const molecule_2 = new MoorhenMolecule(null, null, "");
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_2.molNo = 1;
         molecule_2.name = "mol-2";
-        const molecule_3 = new MoorhenMolecule(null, null, "");
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_3.molNo = 2;
         molecule_3.name = "mol-3";
 
@@ -173,7 +176,7 @@ describe("MoorhenChainSelect", () => {
     });
 
     test("calls onChange when a chain is selected", async () => {
-        const molecule_1 = new MoorhenMolecule(null, null, "");
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_1.molNo = 0;
         molecule_1.name = "mol-1";
         molecule_1.sequences = [
@@ -181,10 +184,10 @@ describe("MoorhenChainSelect", () => {
             { type: 2, chain: "B" },
             { type: 3, chain: "C" },
         ] as any;
-        const molecule_2 = new MoorhenMolecule(null, null, "");
+        const molecule_2 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_2.molNo = 1;
         molecule_2.name = "mol-2";
-        const molecule_3 = new MoorhenMolecule(null, null, "");
+        const molecule_3 = new MoorhenMolecule(mockMoorhenInstance);
         molecule_3.molNo = 2;
         molecule_3.name = "mol-3";
 

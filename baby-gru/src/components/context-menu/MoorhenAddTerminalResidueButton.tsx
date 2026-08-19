@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { useMoorhenInstance } from "@/hooks"; 
 import { getTooltipShortcutLabel } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
 
 export const MoorhenAddTerminalResidueButton = (props: ContextButtonProps) => {
     const [toolTip, setToolTip] = useState<string>("Add Residue");
-
+    const moorhenInstance = useMoorhenInstance();
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts);
 
     const { selectedMolecule, chosenAtom, urlPrefix } = { ...props };
@@ -44,6 +45,8 @@ export const MoorhenAddTerminalResidueButton = (props: ContextButtonProps) => {
             needsMapData={true}
             toolTipLabel={toolTip}
             cootCommandInput={getCootCommandInput(selectedMolecule, chosenAtom)}
+            onExit={() => moorhenInstance.triggerMoleculeChanged(selectedMolecule.uniqueId, "add")}
+    
             {...props}
         />
     );
