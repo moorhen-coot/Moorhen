@@ -21,9 +21,9 @@ export const flipPeptide = async (
     insCode: string,
     commandCentre: React.RefObject<CommandCentre>,
     enableRefineAfterMod: boolean,
-    dispatch: Dispatch<UnknownAction>
+    dispatch: Dispatch<UnknownAction>,
+    moorhenInstance
 ) => {
-    const moorhenInstance = useMoorhenInstance();
     await commandCentre.current.cootCommand(
         {
             returnType: "status",
@@ -56,6 +56,7 @@ export const MoorhenPepflipsDifferenceMap = () => {
     const [selectedRmsd, setSelectedRmsd] = usePersistentState<number>(modalId, "selectedRmsd", 3.5, true);
     const dispatch = useDispatch();
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -64,7 +65,7 @@ export const MoorhenPepflipsDifferenceMap = () => {
 
     const handleFlip = (...args: [moorhen.Molecule, string, number, string]) => {
         if (args.every(arg => arg !== null)) {
-            flipPeptide(...args, commandCentre, enableRefineAfterMod, dispatch);
+            flipPeptide(...args, commandCentre, enableRefineAfterMod, dispatch, moorhenInstance);
         }
     };
 
