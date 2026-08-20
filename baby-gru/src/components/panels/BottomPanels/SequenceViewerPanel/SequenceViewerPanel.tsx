@@ -25,12 +25,20 @@ export const SequenceViewerPanel = () => {
 
     const moleculeChange = useMoleculeChanged();
 
-    const sequenceList = molecule?.seqViewerData ?? [];
+    const sequenceList = useMemo(() => {
+        return molecule?.seqViewerData ?? [];
+        // moleculeChange forces a refresh when a molecule is mutated in place (same reference)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [molecule, moleculeChange]);
+    const showExpandButton = sequenceList.length > 1;
 
     useEffect(() => {
         const seqviewerOption = store.getState().bottomPanels.seqviewerOption;
-        dispatch(setSeqViewerOption({...seqviewerOption, showExpandButton: sequenceList.length > 1}));
-    }, [sequenceList]);
+        if (seqviewerOption.showExpandButton !== showExpandButton) {
+            dispatch(setSeqViewerOption({...seqviewerOption, showExpandButton}));
+        }
+        console.log("SequenceViewerPanel: showExpandButton", showExpandButton);
+    }, [showExpandButton, dispatch, store]);
 
     const expandLength = sequenceList.length <= option.nOfLines ? sequenceList.length : option.nOfLines;
 
