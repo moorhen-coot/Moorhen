@@ -13,6 +13,7 @@ import { AddCustomRepresentationCard } from "./addRepresentation/AddRepresentati
 import "./representation.css";
 import { parseCid } from "@/utils/utils";
 import { useCommandCentre } from "../../../InstanceManager";
+import { useMoleculeChanged } from "@/hooks/usMolleculeChange";
 
 export const CustomRepresentationChip = (props: {
     addColourRulesAnchorDivRef: React.RefObject<HTMLDivElement>;
@@ -37,6 +38,8 @@ export const CustomRepresentationChip = (props: {
     const isMoleculeVisible = useSelector((state: RootState) => state.molecules.visibleMolecules.some(molNo => molNo === molecule.molNo));
     const chipStyle = getChipStyle(representation.colourRules, representationIsVisible && isMoleculeVisible, isDark);
     if (!isMoleculeVisible) chipStyle["opacity"] = "0.3";
+
+    const moleculeChange = useMoleculeChanged();
 
     const handleVisibility = useCallback(() => {
         if (isMoleculeVisible) {
@@ -64,7 +67,7 @@ export const CustomRepresentationChip = (props: {
             }
         }
         checkMonomerStatus()
-    }, [molecule,representation]);
+    }, [molecule.ligandDicts,moleculeChange]);
 
     const handleDelete = useCallback(() => {
         if (representation.style === "adaptativeBonds") {
