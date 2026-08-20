@@ -2,7 +2,7 @@ import { UnknownAction } from "@reduxjs/toolkit";
 import { useDispatch, useSelector } from "react-redux";
 import React, { Dispatch, useCallback } from "react";
 import { setShownControl } from "@/store/globalUISlice";
-import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
+import { useCommandCentre } from "../../InstanceManager";
 import { CommandCentre } from "../../InstanceManager/CommandCentre/MoorhenCommandCentre";
 import { hideModal } from "../../store/modalsSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
@@ -20,9 +20,9 @@ export const fillPartialResidue = async (
     insCode: string,
     commandCentre: React.RefObject<CommandCentre>,
     dispatch: Dispatch<UnknownAction>,
-    enableRefineAfterMod: boolean
+    enableRefineAfterMod: boolean,
+    moorhenInstance
 ) => {
-    const moorhenInstance = useMoorhenInstance();
     await commandCentre.current.cootCommand(
         {
             returnType: "status",
@@ -50,7 +50,7 @@ export const fillPartialResidue = async (
     moorhenInstance.triggerMoleculeChanged(selectedMolecule.uniqueId, "modify");
 };
 
-export const MoorhenFillMissingAtoms = () => {
+export const MoorhenFillMissingAtoms = (props) => {
     const dispatch = useDispatch();
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
@@ -59,7 +59,7 @@ export const MoorhenFillMissingAtoms = () => {
 
     const handleAtomFill = (...args: [moorhen.Molecule, string, number, string]) => {
         if (args.every(arg => arg !== null)) {
-            fillPartialResidue(...args, commandCentre, dispatch, enableRefineAfterMod);
+            fillPartialResidue(...args, commandCentre, dispatch, enableRefineAfterMod, props.moorhenInstance);
         }
     };
 
