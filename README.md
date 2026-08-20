@@ -64,13 +64,13 @@ Most of these (except emscripten) can be installed by somelike like `sudo apt in
 \
 Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) and any reasonly recent Linux distribution (x86\_64 or aarch64). Tested on Ubuntu 22.04 x86\_64, Raspberry Pi OS Bookworm/Debian 12 on Pi5, macOS Monteray and Sonama and others.
 
-1. Install emscripten (following  [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)):  
+1. Install emscripten (following  [https://emscripten.org/docs/getting\_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)):  
 `git clone https://github.com/emscripten-core/emsdk.git`  
 `cd emsdk`  
 `git pull`  
 `./emsdk install latest`  
 `./emsdk activate latest`  
-(Moorhen is known to build successfully with emscripten version 5.0.3 - the 14th March 2026 release, and several earlier versions. There may have been a problem with 5.0.1)
+(Moorhen is known to build successfully with emscripten version 6.0.2 - the 1st July 2026 release, and several earlier versions. There may have been a problem with 5.0.1)
 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
