@@ -619,7 +619,11 @@ else()
 if(${EMCC_VERSION} VERSION_LESS 5.0.8)
 target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 else()
-target_link_options(moorhen PRIVATE -sASSERTIONS=1  -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
+if(${EMCC_VERSION} VERSION_GREATER 6.0.1)
+target_link_options(moorhen PRIVATE -sINCOMING_MODULE_JS_API=mainScriptUrlOrBlob,preRun,onRuntimeInitialized,print,printErr -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
+else()
+target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
+endif()
 endif()
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install/lib
