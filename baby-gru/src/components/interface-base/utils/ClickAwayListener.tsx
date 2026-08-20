@@ -15,45 +15,56 @@ export const MoorhenClickAwayListener = (props: {
     const syntheticEventRef = useRef(false);
     const store = useStore<RootState>();
 
-    const handleClickAway = (event: MouseEvent) => {
-        const insideReactTree = syntheticEventRef.current; // This flag is set to true when a click event originates from within the React tree because handleSyntheticEvent is normally executed before the event listener
-        syntheticEventRef.current = false;
-
-        const node = clickawayRef.current;
-        if (!node) {
-            return;
-        }
-
-        const target = event.target as Node | null;
-        const path = typeof event.composedPath === "function" ? event.composedPath() : [];
-        const insideDOMTree = path.length > 0 ? path.includes(node) : !!(target && node.contains(target));
-
-        if (insideDOMTree || insideReactTree) {
-            return;
-        }
-
-        // A native <select> dropdown is rendered by the OS outside the DOM, so clicks on its
-        // options can arrive here as "away" clicks even though the user is interacting with a
-        // control that belongs to this popup. While a <select> is focused (its dropdown is
-        // open) - or when the click itself targets a select/option - don't treat it as an
-        // away click. This removes the need for <select> to globally pause this listener.
-        const activeElement = document.activeElement;
-        const isSelectInteraction = isSelectRelated(activeElement) || isSelectRelated(target);
-
-        if (isSelectInteraction) {
-            return;
-        }
-
-        if (store.getState().globalUI.clickAwayListenerPauseCount === 0) {
-            props.onClickAway(event);
-        }
-    };
+    // The document listener below is registered once, on mount, so the handler it
+    // registers would otherwise keep the props it closed over at that moment for the
+    // whole lifetime of the component. Consumers that guard their callback on state
+    // ("don't close the context menu while its popover is open") would then be judged
+    // against the state as it was on mount. Read the callback through a ref so the
+    // listener always calls the current one.
+    const onClickAwayRef = useRef(props.onClickAway);
+    useEffect(() => {
+        onClickAwayRef.current = props.onClickAway;
+    });
 
     const handleSyntheticEvent = () => {
         syntheticEventRef.current = true;
     };
 
     useEffect(() => {
+        const handleClickAway = (event: MouseEvent) => {
+            const insideReactTree = syntheticEventRef.current; // This flag is set to true when a click event originates from within the React tree because handleSyntheticEvent is normally executed before the event listener
+            syntheticEventRef.current = false;
+
+            const node = clickawayRef.current;
+            if (!node) {
+                return;
+            }
+
+            const target = event.target as Node | null;
+            const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+            const insideDOMTree = path.length > 0 ? path.includes(node) : !!(target && node.contains(target));
+
+            if (insideDOMTree || insideReactTree) {
+                return;
+            }
+
+            // A native <select> dropdown is rendered by the OS outside the DOM, so clicks on its
+            // options can arrive here as "away" clicks even though the user is interacting with a
+            // control that belongs to this popup. While a <select> is focused (its dropdown is
+            // open) - or when the click itself targets a select/option - don't treat it as an
+            // away click. This removes the need for <select> to globally pause this listener.
+            const activeElement = document.activeElement;
+            const isSelectInteraction = isSelectRelated(activeElement) || isSelectRelated(target);
+
+            if (isSelectInteraction) {
+                return;
+            }
+
+            if (store.getState().globalUI.clickAwayListenerPauseCount === 0) {
+                onClickAwayRef.current(event);
+            }
+        };
+
         const timer = setTimeout(() => {
             // Delay the event listener registration to ensure it doesn't capture the click that triggered the popover
             document.addEventListener("click", handleClickAway);
@@ -62,7 +73,7 @@ export const MoorhenClickAwayListener = (props: {
             clearTimeout(timer);
             document.removeEventListener("click", handleClickAway);
         };
-    }, []);
+    }, [store]);
     return (
         <div ref={clickawayRef} onMouseDown={handleSyntheticEvent} onTouchStart={handleSyntheticEvent} onClick={handleSyntheticEvent}>
             {props.children}
