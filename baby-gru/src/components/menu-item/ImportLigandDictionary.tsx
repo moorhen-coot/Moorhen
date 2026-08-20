@@ -88,7 +88,7 @@ const ImportLigandDictionary = (props: {
                 );
             }
 
-            if (createRef.current) {
+            if (createRef.current&&createInstance) {
                 const instanceName = tlc;
                 const result = (await commandCentre.cootCommand(
                     {
@@ -124,7 +124,7 @@ const ImportLigandDictionary = (props: {
 
             [...new Set(molNosToUpdate)].map(molNo => dispatch(triggerUpdate(molNo)));
         },
-        [moleculeSelectValueRef, createRef, molecules, commandCentre, tlc, backgroundColor, defaultBondSmoothness, addToMoleculeValueRef]
+        [moleculeSelectValueRef, createRef, molecules, commandCentre, tlc, backgroundColor, defaultBondSmoothness, addToMoleculeValueRef, createInstance]
     );
 
     const popoverContent = (
