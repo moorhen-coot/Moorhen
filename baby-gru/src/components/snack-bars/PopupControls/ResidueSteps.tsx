@@ -109,7 +109,8 @@ export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillA
             resSpec.ins_code,
             commandCentre,
             enableRefineAfterMod,
-            dispatch
+            dispatch,
+            moorhenInstance
         );
     };
 
