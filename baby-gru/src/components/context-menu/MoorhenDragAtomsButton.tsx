@@ -1,7 +1,7 @@
 import { batch, useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef } from "react";
 import { enqueueSnackbar, setShownControl } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { useMoorhenInstance } from "../../InstanceManager";
 import { setIsDraggingAtoms } from "../../store/generalStatesSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { moorhen } from "../../types/moorhen";
@@ -12,7 +12,7 @@ export const MoorhenDragAtomsButton = (props: ContextButtonProps) => {
     const fragmentCid = useRef<string[] | null>(null);
 
     const dispatch = useDispatch();
-    const commandCentre = useCommandCentre();
+   const moorhenInstance = useMoorhenInstance();
 
     const refinementSelection = useSelector((state: moorhen.State) => state.refinementSettings.refinementSelection);
 
@@ -108,6 +108,7 @@ export const MoorhenDragAtomsButton = (props: ContextButtonProps) => {
             refineAfterMod={false}
             needsMapData={true}
             nonCootCommand={nonCootCommand}
+            onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "refine")}
             {...props}
         />
     );
