@@ -843,20 +843,20 @@ export class MoleculeRepresentation {
             );
         }
 
-        const unknownMonomersStatus = await this.commandCentre.cootCommand(
-            {
-                returnType: "string_array",
-                command: "get_residue_names_with_no_dictionary",
-                commandArgs: [this.parentMolecule.molNo ],
-            },
-            false
-        );
-        const unknownMonomers = unknownMonomersStatus.data.result.result
-
-        if(unknownMonomers.length>0){
-            this.parentMolecule.store.dispatch(enqueueSnackbar({ message: `Show monomers have no dictionary description. Some atoms/bonds may be drawn oddly.`, variant: "info" }));
+        if(_style!=="hover"){
+            const unknownMonomersStatus = await this.commandCentre.cootCommand(
+                {
+                    returnType: "string_array",
+                    command: "get_residue_names_with_no_dictionary",
+                    commandArgs: [this.parentMolecule.molNo ],
+                },
+                false
+            );
+            const unknownMonomers = unknownMonomersStatus.data.result.result
+            if(unknownMonomers.length>0){
+                this.parentMolecule.store.dispatch(enqueueSnackbar({ message: `Show monomers (${unknownMonomers.join(",")}) have no dictionary description. Some atoms/bonds may be drawn oddly.`, variant: "warning" }));
+            }
         }
-
 
         return objects;
     }
