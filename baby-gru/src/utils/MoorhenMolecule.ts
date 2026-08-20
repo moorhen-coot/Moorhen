@@ -2102,6 +2102,7 @@ export class MoorhenMolecule {
             const reassembledCif = unindentedLines.join("\n");
             this.ligandDicts[comp_id] = reassembledCif;
         }
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId)
     }
 
     /**

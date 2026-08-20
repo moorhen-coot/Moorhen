@@ -198,9 +198,9 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
                 thisInstance_colours.push(instDataColour[3])
 
                 const instDataSize = inst_data.size
-                thisInstance_sizes.push(instDataSize[0])
-                thisInstance_sizes.push(instDataSize[1])
-                thisInstance_sizes.push(instDataSize[2])
+                thisInstance_sizes.push(Math.abs(instDataSize[0]))
+                thisInstance_sizes.push(Math.abs(instDataSize[1]))
+                thisInstance_sizes.push(Math.abs(instDataSize[2]))
 
                 thisInstance_orientations.push(...[
                     1.0, 0.0, 0.0, 0.0,
