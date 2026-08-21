@@ -1,0 +1,21 @@
+.moorhen-legal-statements {
+    z-index: 5;
+    position: absolute;
+    bottom: 3rem;
+    right: 3rem;
+    background: var(--moorhen-background);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--moorhen-border);
+    animation: moorhen-legal-fadeout 5s ease-in forwards;
+}
+
+@keyframes moorhen-legal-fadeout {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    } 
+}
+

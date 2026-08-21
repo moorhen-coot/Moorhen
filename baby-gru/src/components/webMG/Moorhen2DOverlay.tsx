@@ -10,6 +10,7 @@ import { getMathJaxSVG } from '../../utils/mathJaxUtils';
 import {  RootState } from '../../store/MoorhenReduxStore';
 import { Store } from '@reduxjs/toolkit';
 import { MoorhenStack } from "../interface-base";
+import "./UoY-legal.css"
 
 interface ImageFrac2D {
     x: number
@@ -647,8 +648,7 @@ export const Moorhen2DOverlay = ((props) => {
     const store = useStore<RootState>()
 
     const [ isLegalVisible, setIsLegalVisible ] = useState(window.location.hostname==="moorhen.hosted.york.ac.uk" ? true : false)
-    const [ legalOffset, setLegalOffset ] = useState<number>(50)
-
+    
     const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportHeight)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
@@ -673,26 +673,19 @@ export const Moorhen2DOverlay = ((props) => {
     let ratio = 1.0
     if(window.devicePixelRatio) ratio = Math.ceil(window.devicePixelRatio);
 
+    // remove from dom after 5s
     useEffect(() => {
-        let intervalId;
-
-        const startScrollTimeout = setTimeout(() => {
-            intervalId = setInterval(() => {
-                setLegalOffset(offset => offset - 1);
-            }, 16);
-        }, 1000); // wait 1 second before scrolling
-
-        const hideTimeout = setTimeout(() => {
-            setIsLegalVisible(false);
-            clearInterval(intervalId);
-        }, 5000);
-
-        return () => {
-            clearTimeout(startScrollTimeout);
-            clearTimeout(hideTimeout);
-            clearInterval(intervalId);
-        };
+        if (isLegalVisible) {
+            const hideTimeout = setTimeout(() => {
+                setIsLegalVisible(false);
+            }, 5000);
+            
+            return () => {
+                clearTimeout(hideTimeout);
+            };
+        }
     }, []);
+
 
     useEffect(() => {
         const new_images = []
@@ -787,15 +780,13 @@ export const Moorhen2DOverlay = ((props) => {
            <canvas style={{zIndex:2, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef2} height={width} width={height} />
            <canvas style={{zIndex:3, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef3} height={width} width={height} />
            <canvas style={{zIndex:4, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef4} height={width} width={height} />
-           {isLegalVisible && <div style={{zIndex:5, position: "absolute", bottom: legalOffset, right:"3rem"}}>
-           <div style={{background:"lightgray",height:"7rem"}}>
+           { isLegalVisible && <div className="moorhen-legal-statements" >
                 Hosted by the University of York, please see Help-&gt;About for Legal Statements.
-                <MoorhenStack direction="line" style={{ padding: "0.5rem" }}>
+                <MoorhenStack direction="line" gap={"1rem"}>
                     <img style={{height:"4rem"}} src={`${props.urlPrefix}/pixmaps/UOY-Logo-Stacked-shield-Black.png`} alt="Moorhen logo"/>
                     <img style={{height:"4rem"}} src={`${props.urlPrefix}/pixmaps/Medical_Research_Council_logo.svg`} alt="Moorhen logo"/>
                     <img style={{height:"4rem"}} src={`${props.urlPrefix}/pixmaps/ccp4-big-logo2-transparent.png`} alt="Moorhen logo"/>
                 </MoorhenStack>
-           </div>
            </div>}
             </>
 });
