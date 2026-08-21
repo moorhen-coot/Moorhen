@@ -7,3 +7,4 @@ export { MoorhenMenuItem } from "./MenuItems/MenuItem";
 export { MoorhenInfoCard } from "./Popovers/InfoCard";
 export { MoorhenTooltip } from "./Popovers/Tooltip";
 export { MoorhenTabContainer, MoorhenTab } from "./Tabs/Tabs";
+export { PanelErrorBoundary } from "./PanelErrorBoundary";
