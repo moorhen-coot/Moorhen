@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ActivityCompat } from "@/components/interface-base/Compatibility";
 import { RootState, setBottomPanelHeight } from "@/store";
 import { BottomPanelIDs, BottomPanelsList } from "./BottomPanelsList";
+import { PanelErrorBoundary } from "../../interface-base";
 import {  SequenceViewerTab } from "./SequenceViewerPanel/SequenceViewerTab";
 import { ValidationTab } from "./SequenceViewerPanel/ValidationTab";
 import "./bottom-panel.css";
@@ -54,7 +55,9 @@ export const BottomPanelContainer = () => {
     const panels: React.JSX.Element[] = activePanels.map(id => {
         return (
             <ActivityCompat mode={shownPanel === id ? "visible" : "hidden"} key={`${id}-activity-panel`}>
-                {BottomPanelsList[id]}
+                <PanelErrorBoundary key={`${id}-error-boundary`} panelName={id ?? undefined}>
+                    {BottomPanelsList[id]}
+                </PanelErrorBoundary>
             </ActivityCompat>
         );
     });

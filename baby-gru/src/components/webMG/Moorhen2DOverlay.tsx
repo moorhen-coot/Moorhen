@@ -646,7 +646,8 @@ export const Moorhen2DOverlay = ((props) => {
 
     const store = useStore<RootState>()
 
-    const [ isLegalVisible, setIsLegalVisible ] = useState(window.location.hostname==="moorhen.hosted.york.ac.uk" ? true : false)
+    //const [ isLegalVisible, setIsLegalVisible ] = useState(window.location.hostname==="moorhen.hosted.york.ac.uk" ? true : false)
+    const [ isLegalVisible, setIsLegalVisible ] = useState(window.location.hostname==="moorhen.hosted.york.ac.uk" ? true : true)
     const [ legalOffset, setLegalOffset ] = useState<number>(50)
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth)
@@ -674,19 +675,24 @@ export const Moorhen2DOverlay = ((props) => {
     if(window.devicePixelRatio) ratio = Math.ceil(window.devicePixelRatio);
 
     useEffect(() => {
-      const intervalId = setInterval(() => {
-        setLegalOffset(offset => offset - 0.5);
-      }, 16);
+        let intervalId;
 
-      const timeoutId = setTimeout(() => {
-        setIsLegalVisible(false);
-        clearInterval(intervalId);
-      }, 5000);
+        const startScrollTimeout = setTimeout(() => {
+            intervalId = setInterval(() => {
+                setLegalOffset(offset => offset - 1);
+            }, 16);
+        }, 1000); // wait 1 second before scrolling
 
-      return () => {
-        clearInterval(intervalId);
-        clearTimeout(timeoutId);
-      };
+        const hideTimeout = setTimeout(() => {
+            setIsLegalVisible(false);
+            clearInterval(intervalId);
+        }, 5000);
+
+        return () => {
+            clearTimeout(startScrollTimeout);
+            clearTimeout(hideTimeout);
+            clearInterval(intervalId);
+        };
     }, []);
 
     useEffect(() => {

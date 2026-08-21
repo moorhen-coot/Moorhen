@@ -79,7 +79,7 @@ export const MoorhenMoleculeSelect = (props: MoorhenMoleculeSelectMolNoType | Mo
     };
 
     useEffect(() => {
-        if (selectedMolecule === undefined || selectedMolecule === -1) {
+        if (selectedMolecule === undefined || selectedMolecule === -1 || selectedMolecule === "") {
             const newSelection = getDefaultValue();
             if (newSelection !== undefined) {
                 setSelectedMolecule(newSelection);
