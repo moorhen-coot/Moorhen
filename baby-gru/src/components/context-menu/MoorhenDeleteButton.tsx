@@ -114,7 +114,7 @@ export const MoorhenDeleteButton = (props: ContextButtonProps) => {
                     props.setDefaultActionButtonSettings({ key: "delete", value: newValue });
                 },
             }}
-            onExit={() => {deleteMoleculeIfEmpty; moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "delete")}}
+            onExit={() => {moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "delete")}}
             {...props}
         />
     );

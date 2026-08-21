@@ -3,13 +3,12 @@ import {useEffect, useRef, useState } from "react";
 import { MoorhenButton } from "@/components/inputs";
 import { flipPeptide } from "@/components/validation-tools/MoorhenPepflipsDifferenceMap";
 import { RootState, addGeneralRepresentation, removeGeneralRepresentation, setShownControl } from "@/store";
-import { useCommandCentre, useTimeCapsule } from "../../../InstanceManager";
+import { useCommandCentre, useTimeCapsule, useMoorhenInstance } from "../../../InstanceManager";
 import { setHoveredAtom } from "../../../store/hoveringStatesSlice";
 import { cidToSpec, sleep } from "../../../utils/utils";
 import { MoorhenInfoCard, MoorhenStack } from "../../interface-base";
 import { fillPartialResidue } from "../../validation-tools/MoorhenFillMissingAtoms";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
-
 
 //     await selectedMolecule.fetchIfDirtyAndDraw("rama");
 // },
@@ -19,6 +18,8 @@ import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress"
 export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillAllAtoms" }) => {
     console.log("Rendering residue steps with variant ", props.variant);
     const timeCapsuleRef = useTimeCapsule();
+
+    const moorhenInstance = useMoorhenInstance();
 
     const disableTimeCapsule = true;
     const sleepTime = 600;
@@ -108,7 +109,8 @@ export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillA
             resSpec.ins_code,
             commandCentre,
             enableRefineAfterMod,
-            dispatch
+            dispatch,
+            moorhenInstance
         );
     };
 
@@ -123,7 +125,8 @@ export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillA
             resSpec.ins_code,
             commandCentre,
             dispatch,
-            enableRefineAfterMod
+            enableRefineAfterMod,
+            moorhenInstance
         );
     };
 

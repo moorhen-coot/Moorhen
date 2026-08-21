@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { MoorhenButton, MoorhenNumberInput, MoorhenPopoverButton } from "@/components/inputs";
 import { MoorhenStack, MoorhenTooltip } from "@/components/interface-base";
 import { usePaths } from "../../../InstanceManager";
@@ -12,6 +12,8 @@ import { representationLabelMapping } from "../../../utils/enums";
 import { AddCustomRepresentationCard } from "./addRepresentation/AddRepresentationCard";
 import "./representation.css";
 import { parseCid } from "@/utils/utils";
+import { useCommandCentre } from "../../../InstanceManager";
+import { useMoleculeChanged } from "@/hooks";
 
 export const CustomRepresentationChip = (props: {
     addColourRulesAnchorDivRef: React.RefObject<HTMLDivElement>;
@@ -23,8 +25,10 @@ export const CustomRepresentationChip = (props: {
     if (representation.interfaceOption.visible === undefined) {
         representation.interfaceOption.visible = representation.visible;
     }
+    const commandCentre = useCommandCentre()
     const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(representation.interfaceOption.visible);
     const [reload, setReload] = useState<boolean>(false);
+    const [monomersWarning, setMonomersWarning] = useState<string>("");
     const modelSelector = representation.cid.split("/")[1] !== "*" ? parseInt(representation.cid.split("/")[1]) : 0;
 
     const models = molecule.numberOfModels;
@@ -35,6 +39,8 @@ export const CustomRepresentationChip = (props: {
     const chipStyle = getChipStyle(representation.colourRules, representationIsVisible && isMoleculeVisible, isDark);
     if (!isMoleculeVisible) chipStyle["opacity"] = "0.3";
 
+    const moleculeChange = useMoleculeChanged();
+
     const handleVisibility = useCallback(() => {
         if (isMoleculeVisible) {
             !representationIsVisible ? representation.show() : representation.hide();
@@ -42,6 +48,26 @@ export const CustomRepresentationChip = (props: {
             setRepresentationIsVisible(!representationIsVisible);
         }
     }, [isMoleculeVisible, representationIsVisible]);
+
+    useEffect(() => {
+        const checkMonomerStatus = async() => {
+            const unknownMonomersStatus = await commandCentre.current.cootCommand(
+                {
+                    returnType: "string_array",
+                    command: "get_residue_names_with_no_dictionary",
+                    commandArgs: [molecule.molNo ],
+                },
+                false
+            );
+            const unknownMonomers = unknownMonomersStatus.data.result.result
+            if(unknownMonomers.length>0){
+                setMonomersWarning(" (missing dictionary)")
+            } else {
+                setMonomersWarning("")
+            }
+        }
+        checkMonomerStatus()
+    }, [molecule.ligandDicts,moleculeChange]);
 
     const handleDelete = useCallback(() => {
         if (representation.style === "adaptativeBonds") {
@@ -118,7 +144,7 @@ export const CustomRepresentationChip = (props: {
         <div className="moorhen__representation-chip" style={chipStyle}>
             <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">
                 <div style={{ flexGrow: 1, textAlign: "left", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                    <b>{`${representationLabelMapping[representation.style]}`}</b>
+                    <b>{`${representationLabelMapping[representation.style]}${monomersWarning}`}</b>
                     <br />
                     <MoorhenTooltip tooltip={<>{selectionName}</>}>
                         <div style={{ flexGrow: 1, textAlign: "left", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>

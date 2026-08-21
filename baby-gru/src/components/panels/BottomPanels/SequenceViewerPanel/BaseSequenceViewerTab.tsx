@@ -1,5 +1,6 @@
-import { MoorhenButton, MoorhenPopoverButton } from "@/components/inputs";
 import { ReactNode } from "react";
+import { MoorhenButton, MoorhenPopoverButton } from "@/components/inputs";
+import { PanelErrorBoundary } from "@/components/interface-base";
 
 export interface BaseSequenceViewerTabProps {
     isActiveTab: boolean;
@@ -27,25 +28,23 @@ export const BaseSequenceViewerTab = ({
     infoCard,
 }: BaseSequenceViewerTabProps) => {
     return (
-        <div className={`moorhen__bottom-panel-tab ${isActiveTab ? "" : "background"}`}>
-            {isActiveTab && configPanel && (
-                <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>
-            )}
-            <button className="moorhen__bottom-panel-button" onClick={onTitleClick}>
-                &nbsp;&nbsp;{titleText}&nbsp;&nbsp;
-            </button>
-            {isActiveTab && showExpandButton && onExpandClick && (
-                <MoorhenButton
-                    type="icon-only"
-                    icon={expandedState ? "MatSymDoubleArrowDown" : "MatSymDoubleArrowUp"}
-                    size="small"
-                    onClick={onExpandClick}
-                />
-            )}
-            {isActiveTab && !showExpandButton && showExpandButton !== undefined && (
-                <span>&nbsp;&nbsp;</span>
-            )}
-            {isActiveTab && infoCard}
-        </div>
+        <PanelErrorBoundary>
+            <div className={`moorhen__bottom-panel-tab ${isActiveTab ? "" : "background"}`}>
+                {isActiveTab && configPanel && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
+                <button className="moorhen__bottom-panel-button" onClick={onTitleClick}>
+                    &nbsp;&nbsp;{titleText}&nbsp;&nbsp;
+                </button>
+                {isActiveTab && showExpandButton && onExpandClick && (
+                    <MoorhenButton
+                        type="icon-only"
+                        icon={expandedState ? "MatSymDoubleArrowDown" : "MatSymDoubleArrowUp"}
+                        size="small"
+                        onClick={onExpandClick}
+                    />
+                )}
+                {isActiveTab && !showExpandButton && showExpandButton !== undefined && <span>&nbsp;&nbsp;</span>}
+                {isActiveTab && infoCard}
+            </div>
+        </PanelErrorBoundary>
     );
 };

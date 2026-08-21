@@ -1,6 +1,7 @@
 import { batch } from "react-redux";
 import { appendOtherData, buildBuffers } from "../../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../../store/glRefSlice";
+import { enqueueSnackbar  } from '@/store';
 import { gemmi } from "../../types/gemmi";
 import { libcootApi } from "../../types/libcoot";
 import { webGL } from "../../types/mgWebGL";
@@ -845,6 +846,21 @@ export class MoleculeRepresentation {
                 },
                 false
             );
+        }
+
+        if(_style!=="hover"){
+            const unknownMonomersStatus = await this.commandCentre.cootCommand(
+                {
+                    returnType: "string_array",
+                    command: "get_residue_names_with_no_dictionary",
+                    commandArgs: [this.parentMolecule.molNo ],
+                },
+                false
+            );
+            const unknownMonomers = unknownMonomersStatus.data.result.result
+            if(unknownMonomers.length>0){
+                this.parentMolecule.store.dispatch(enqueueSnackbar({ message: `Show monomers (${unknownMonomers.join(",")}) have no dictionary description. Some atoms/bonds may be drawn oddly.`, variant: "warning" }));
+            }
         }
 
         return objects;

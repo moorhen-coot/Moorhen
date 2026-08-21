@@ -11,7 +11,7 @@ const presets = {
     "B factors": ["Main Chain B-factor", "Side Chain B-factor"],
     RotaRama: ["Rota. ZScore", "Rama. ZScore"],
     Geometry: ["Bond RMSZ", "Angle RMSZ", "Chiral RMSZ", "Plane RMSZ", "Torsion RMSZ"],
-    // MMRRCC: ["MMRRCC All Atoms", "MMRRCC Side Chain"],
+    MMRRCC: ["MMRRCC All Atoms", "MMRRCC Side Chain"],
 } 
 
 export const ValidationTab = () => {
