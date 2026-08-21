@@ -1,7 +1,7 @@
 import { MoorhenLinearProgress } from "@/components/icons"
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { MoorhenButton, MoorhenColourPicker, MoorhenSlider } from "@/components/inputs";
+import { MoorhenButton, MoorhenColourPicker } from "@/components/inputs";
 import { MoorhenAccordion, MoorhenInfoCard, MoorhenStack } from "@/components/interface-base";
 import { moorhen } from "../../../../types/moorhen";
 import { MoorhenToggle } from "@/components/inputs/MoorhenToggle/Toggle"
@@ -34,14 +34,12 @@ export interface MoorhenXPIDResult {
 }
 
 const XPID_DEFAULT_VECTOR_RADIUS = 0.055;
-const XPID_MIN_VECTOR_RADIUS = 0.03;
-const XPID_MAX_VECTOR_RADIUS = 0.14;
 const XPID_DEFAULT_DASH_SPACING = 0.22;
 const XPID_ARROW_HEAD_LENGTH = 0.42;
 const XPID_ARROW_HEAD_RADIUS_SCALE = 2.2;
 const XPID_DISTANCE_LABEL_FONT_SIZE = 20;
 const XPID_DISTANCE_LABEL_SCREEN_OFFSET_DISTANCE = 0.12;
-const XPID_DISTANCE_DECIMALS = 1;
+const XPID_DISTANCE_DECIMALS = 2;
 
 const getXpidMoleculeDictionaries = async (molecule: moorhen.Molecule) => {
     try {
@@ -88,7 +86,6 @@ export const MoorhenXPIDList = (props: {
     const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch);
     const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
     const [vectorColour, setVectorColour] = useState({ r: 255, g: 0, b: 0 });
-    const [vectorRadius, setVectorRadius] = useState(XPID_DEFAULT_VECTOR_RADIUS);
     const [showDistanceLabels, setShowDistanceLabels] = useState(false);
 
     const [xpidList, setXpidList] = useState<MoorhenXPIDResult[] | null>(null);
@@ -152,7 +149,7 @@ export const MoorhenXPIDList = (props: {
                     uniqueId: key,
                     vectorColour: interactionColour,
                     textColour: { r: 0, g: 0, b: 0 },
-                    radius: vectorRadius,
+                    radius: XPID_DEFAULT_VECTOR_RADIUS,
                     dashSpacing: XPID_DEFAULT_DASH_SPACING,
                     arrowHeadLength: XPID_ARROW_HEAD_LENGTH,
                     arrowHeadRadiusScale: XPID_ARROW_HEAD_RADIUS_SCALE,
@@ -204,12 +201,6 @@ export const MoorhenXPIDList = (props: {
         replaceDisplayedVectors(xpidVectorsList.map(v => Object.assign({}, v, { vectorColour: color })));
     };
 
-    const handleVectorRadiusChange = (radius: number) => {
-        setVectorRadius(radius);
-        if (!xpidVectorsList) return;
-        replaceDisplayedVectors(xpidVectorsList.map(v => Object.assign({}, v, { radius })));
-    };
-
     const handleInteractionColorChange = (idx: number, color: { r: number; g: number; b: number }) => {
         if (!xpidVectorsList) return;
         replaceDisplayedVectors(xpidVectorsList.map((v, vecIdx) => vecIdx === idx ? Object.assign({}, v, { vectorColour: color }) : v));
@@ -232,53 +223,33 @@ export const MoorhenXPIDList = (props: {
                 <MoorhenLinearProgress />
             ) : xpidList.length > 0 ? (
                 <>
-                <MoorhenStack direction="column" gap="0.25rem" style={{ margin: "0.25rem 0.5rem 0.5rem 0.5rem" }}>
-                    <MoorhenStack direction="row" align="center" gap="0.5rem" style={{ flexWrap: "wrap" }}>
-                        <MoorhenButton variant="primary" onClick={() => {
-                            if (!xpidVectorsList || !xpidVisibleList) return;
-                            const newVisList = Array(xpidVisibleList.length).fill(true)
-                            setXpidVisibleList(newVisList);
-                            dispatch(removeVectors(xpidVectorsList))
-                            dispatch(addVectors(xpidVectorsList))
-                        }}>Show&nbsp;all</MoorhenButton>
-                        <MoorhenButton variant="primary" onClick={() => {
-                            if (!xpidVectorsList || !xpidVisibleList) return;
-                            const newVisList = Array(xpidVisibleList.length).fill(false)
-                            setXpidVisibleList(newVisList);
-                            dispatch(removeVectors(xpidVectorsList))
-                        }}>Hide&nbsp;all</MoorhenButton>
-                        <MoorhenToggle
-                            label="Show distance"
-                            checked={showDistanceLabels}
-                            onChange={handleDistanceLabelsChange}
-                        />
-                    </MoorhenStack>
-                    <MoorhenStack direction="row" align="center" gap="0.5rem" style={{ width: "100%" }}>
-                        <MoorhenColourPicker
-                            colour={[vectorColour.r, vectorColour.g, vectorColour.b]}
-                            setColour={color => {
-                                handleColorChange({ r: color[0], g: color[1], b: color[2] });
-                            }}
-                            position="right"
-                            tooltip="Set all XH-\u03C0 vector colours"
-                        />
-                        <div style={{ flex: "1 1 auto", minWidth: "10rem" }}>
-                            <MoorhenSlider
-                                minVal={XPID_MIN_VECTOR_RADIUS}
-                                maxVal={XPID_MAX_VECTOR_RADIUS}
-                                showLabels={false}
-                                showButtons={true}
-                                scale="linear"
-                                sliderTitle="Thickness"
-                                value={vectorRadius}
-                                setValue={handleVectorRadiusChange}
-                                decimalPlaces={3}
-                                stepButtons={0.005}
-                                usePreciseInput={true}
-                                piWidth="4rem"
-                            />
-                        </div>
-                    </MoorhenStack>
+                <MoorhenStack direction="row" align="center" gap="0.5rem" style={{ flexWrap: "wrap", margin: "0.25rem 0.5rem 0.5rem 0.5rem" }}>
+                <MoorhenButton variant="primary" onClick={() => {
+                    if (!xpidVectorsList || !xpidVisibleList) return;
+                    const newVisList = Array(xpidVisibleList.length).fill(true)
+                    setXpidVisibleList(newVisList);
+                    dispatch(removeVectors(xpidVectorsList))
+                    dispatch(addVectors(xpidVectorsList))
+                }}>Show&nbsp;all</MoorhenButton>
+                <MoorhenButton variant="primary" onClick={() => {
+                    if (!xpidVectorsList || !xpidVisibleList) return;
+                    const newVisList = Array(xpidVisibleList.length).fill(false)
+                    setXpidVisibleList(newVisList);
+                    dispatch(removeVectors(xpidVectorsList))
+                }}>Hide&nbsp;all</MoorhenButton>
+                <MoorhenColourPicker
+                    colour={[vectorColour.r, vectorColour.g, vectorColour.b]}
+                    setColour={color => {
+                        handleColorChange({ r: color[0], g: color[1], b: color[2] });
+                    }}
+                    position="right"
+                    tooltip="Set all XH-\u03C0 vector colours"
+                />
+                <MoorhenToggle
+                    label="Show distance"
+                    checked={showDistanceLabels}
+                    onChange={handleDistanceLabelsChange}
+                />
                 </MoorhenStack>
                 <MoorhenStack direction="column" gap="0.15rem">
                     {xpidList.map((xpi,idx) => {
