@@ -646,8 +646,7 @@ export const Moorhen2DOverlay = ((props) => {
 
     const store = useStore<RootState>()
 
-    //const [ isLegalVisible, setIsLegalVisible ] = useState(window.location.hostname==="moorhen.hosted.york.ac.uk" ? true : false)
-    const [ isLegalVisible, setIsLegalVisible ] = useState(window.location.hostname==="moorhen.hosted.york.ac.uk" ? true : true)
+    const [ isLegalVisible, setIsLegalVisible ] = useState(window.location.hostname==="moorhen.hosted.york.ac.uk" ? true : false)
     const [ legalOffset, setLegalOffset ] = useState<number>(50)
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth)
