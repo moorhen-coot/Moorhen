@@ -11,7 +11,7 @@ import { BaseSequenceViewerPanel } from "./BaseSequenceViewerPanel";
 import { OverlayModal } from "@/components/interface-base/ModalBase/OverlayModal";
 import { MoorhenSpinner } from "@/components/icons/MoorhenSpinner";
 import type { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
-import { useMoleculeChanged } from "@/hooks/usMolleculeChange";
+import { useMoleculeChanged } from "@/hooks";
 import { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { libcootApi } from "@/types/libcoot";
 import { WorkerResponse } from "@/InstanceManager/CommandCentre";
