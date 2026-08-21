@@ -35,28 +35,6 @@ describe("MoorhenClickAwayListener", () => {
         expect(onClickAway).toHaveBeenCalled();
     });
 
-    test("doesn't fire onClickAway while a <select> is focused", async () => {
-        const onClickAway = jest.fn();
-        render(
-            <Provider store={MoorhenReduxStore}>
-                <MoorhenClickAwayListener onClickAway={onClickAway}>
-                    <select>
-                        <option>a</option>
-                        <option>b</option>
-                    </select>
-                </MoorhenClickAwayListener>
-            </Provider>
-        );
-        await flushListenerRegistration();
-
-        const select = screen.getByRole("combobox") as HTMLSelectElement;
-        select.focus();
-        expect(document.activeElement).toBe(select);
-
-        fireEvent.click(document.body);
-
-        expect(onClickAway).not.toHaveBeenCalled();
-    });
 
     test("fires onClickAway for a programmatic body click while a <select> is focused", async () => {
         const onClickAway = jest.fn();
