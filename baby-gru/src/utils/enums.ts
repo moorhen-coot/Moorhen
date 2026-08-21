@@ -43,6 +43,7 @@ export const representationLabelMapping = Object.freeze({
     CDs: "Contact dots",
     MolecularSurface: "Mol Surface",
     gaussian: "Gaussian Surface",
+    cavities: "Cavities",
     ligands: "Ligands",
     DishyBases: "Bases",
     VdwSpheres: "Spheres",

@@ -304,6 +304,7 @@ ${coot_src}/coot-utils/helix-analysis.cc
 ${coot_src}/coot-utils/segmap.cc
 ${coot_src}/coot-utils/lidia-core-functions.cc
 ${coot_src}/coot-utils/cablam-markup.cc
+${coot_src}/coot-utils/grid-balls.cc
 ${coot_src}/coot-utils/fib-sphere.cc
 ${coot_src}/coot-utils/atom-selection-container.cc
 ${coot_src}/coot-utils/blob-line.cc

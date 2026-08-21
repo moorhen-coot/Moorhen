@@ -102,6 +102,7 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     .field("ligand_atom_index", &coot::atom_overlap_t::ligand_atom_index)
     ;
     register_vector<coot::atom_overlap_t>("vector_overlap");
+    register_vector<coot::simple_mesh_t>("vector_mesh");
     class_<clipper::Spgr_descr>("Spgr_descr")
     .function("spacegroup_number", &clipper::Spgr_descr::spacegroup_number)
     .function("symbol_hall", &clipper::Spgr_descr::symbol_hall)
