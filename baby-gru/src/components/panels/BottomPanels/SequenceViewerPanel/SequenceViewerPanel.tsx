@@ -2,7 +2,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useMemo } from "react";
 import { RootState, setSeqViewerOption } from "@/store";
 import { BaseSequenceViewerPanel } from "./BaseSequenceViewerPanel";
-import { useMoleculeChanged } from "@/hooks/usMolleculeChange";
+import { useMoleculeChanged } from "@/hooks";
 
 export type SequenceViewerOption = {
     showExpandButton: boolean;
