@@ -13,7 +13,7 @@ import { AddCustomRepresentationCard } from "./addRepresentation/AddRepresentati
 import "./representation.css";
 import { parseCid } from "@/utils/utils";
 import { useCommandCentre } from "../../../InstanceManager";
-import { useMoleculeChanged } from "@/hooks/usMolleculeChange";
+import { useMoleculeChanged } from "@/hooks";
 
 export const CustomRepresentationChip = (props: {
     addColourRulesAnchorDivRef: React.RefObject<HTMLDivElement>;
