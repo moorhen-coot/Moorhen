@@ -244,7 +244,7 @@ export const AddCustomRepresentationCard = memo(
         };
 
         return (
-            <MoorhenStack style={{ width: "25rem", margin: "0.5rem" }}>
+            <MoorhenStack style={{ overflowY: "auto", maxHeight: "80vh", width: "25rem" }}>
                 <MoorhenStack inputGrid>
                     <StyleSelector
                         value={representationStyle}
