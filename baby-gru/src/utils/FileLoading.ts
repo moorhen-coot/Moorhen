@@ -416,6 +416,15 @@ const readCifDictionary = async (
             newMonomer.coordsFormat = "mmcif";
             newMonomer.addDict(dict.dict_contents);
             newMonomers.push(newMonomer);
+            moorhenInstance.getMoleculeList().forEach(molecule => {
+                if (molecule.ligands.length > 0) {
+                    molecule.representations.forEach(representation => {
+                        if (representation.style === "CBs") {
+                            representation.redraw();
+                        }
+                    });
+                }
+            });
         }
     }
     return newMonomers;
