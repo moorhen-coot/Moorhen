@@ -43,6 +43,7 @@ import {
     setSsaoBias,
     setSsaoRadius,
     setUseOffScreenBuffers,
+    MoorhenReduxStoreType,
 } from "../store";
 
 import type {
@@ -60,6 +61,7 @@ import { MoorhenMolecule } from "./MoorhenMolecule";
 import { m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
 import { guid } from "./utils";
 import { MoorhenInstance } from "@/InstanceManager";
+import { Root } from "protobufjs";
 
 export interface backupKey {
     name?: string;
@@ -201,14 +203,14 @@ export class MoorhenTimeCapsule {
     version: string;
     disableBackups: boolean;
     storageInstance: LocalForage;
-    store: Store;
+    store: MoorhenReduxStoreType;
     onIsBusyChange: (arg0: boolean) => void;
 
     constructor(
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
         mapsRef: React.RefObject<moorhen.Map[]>,
         activeMapRef: React.RefObject<moorhen.Map>,
-        store: Store
+        store: MoorhenReduxStoreType
     ) {
         this.store = store;
         this.moleculesRef = moleculesRef;
@@ -472,20 +474,20 @@ export class MoorhenTimeCapsule {
             };
         });
 
-        const lightPosition = this.store.getState().glRef.lightPosition;
-        const ambient = this.store.getState().glRef.ambient;
-        const specular = this.store.getState().glRef.specular;
-        const diffuse = this.store.getState().glRef.diffuse;
-        const specularPower = this.store.getState().glRef.specularPower;
-        const zoom = this.store.getState().glRef.zoom;
+        const lightPosition = this.store.getState().sceneSettings.lightPosition;
+        const ambient = this.store.getState().sceneSettings.ambient;
+        const specular = this.store.getState().sceneSettings.specular;
+        const diffuse = this.store.getState().sceneSettings.diffuse;
+        const specularPower = this.store.getState().sceneSettings.specularPower;
+        const zoom = this.store.getState().sceneSettings.zoom;
         const quat = this.store.getState().glRef.quat;
-        const fogClipOffset = this.store.getState().glRef.fogClipOffset;
-        const fogStart = this.store.getState().glRef.fogStart;
-        const fogEnd = this.store.getState().glRef.fogEnd;
+        const fogClipOffset = this.store.getState().sceneSettings.fogClipOffset;
+        const fogStart = this.store.getState().sceneSettings.fogStart;
+        const fogEnd = this.store.getState().sceneSettings.fogEnd;
         //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
         //Now we multiply by -1 at save and restore for compatibility with old status files.
-        const clipStart = this.store.getState().glRef.clipStart * -1;
-        const clipEnd = this.store.getState().glRef.clipEnd;
+        const clipStart = this.store.getState().sceneSettings.clipStart * -1;
+        const clipEnd = this.store.getState().sceneSettings.clipEnd;
 
         const doShadow = this.store.getState().sceneSettings.doShadow;
         const doSSAO = this.store.getState().sceneSettings.doSSAO;
@@ -1051,37 +1053,45 @@ export class MoorhenTimeCapsule {
         }
 
         // Set camera details
-        dispatch(setOrigin(sessionData.viewData.origin));
-        dispatch(setAmbient(sessionData.viewData.ambientLight));
-        dispatch(setSpecular(sessionData.viewData.specularLight));
-        dispatch(setDiffuse(sessionData.viewData.diffuseLight));
-        dispatch(setLightPosition(sessionData.viewData.lightPosition));
-        dispatch(setSpecularPower(sessionData.viewData.specularPower));
-        dispatch(setZoom(sessionData.viewData.zoom));
-        dispatch(setFogStart(sessionData.viewData.fogStart));
-        dispatch(setFogEnd(sessionData.viewData.fogEnd));
+        const guardedDispatch = (action: (data) => AnyAction, data: unknown) => {
+            if (dispatch && action) {
+                if (typeof data === "undefined") 
+                    console.warn(`Data is undefined for action ${action}`);
+                    return;
+                }
+                dispatch(action(data));
+            }
+
+        guardedDispatch(setOrigin, sessionData.viewData.origin);
+        guardedDispatch(setAmbient, sessionData.viewData.ambientLight);
+        guardedDispatch(setSpecular, sessionData.viewData.specularLight);
+        guardedDispatch(setDiffuse, sessionData.viewData.diffuseLight);
+        guardedDispatch(setLightPosition, sessionData.viewData.lightPosition);
+        guardedDispatch(setSpecularPower, sessionData.viewData.specularPower);
+        guardedDispatch(setZoom, sessionData.viewData.zoom);
+        guardedDispatch(setFogStart, sessionData.viewData.fogStart);
+        guardedDispatch(setFogEnd, sessionData.viewData.fogEnd);
         //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
         //Now we multiply by -1 at save and restore for compatibility with old status files.
-        dispatch(setClipStart(sessionData.viewData.clipStart * -1));
-        dispatch(setClipEnd(sessionData.viewData.clipEnd));
-        dispatch(setQuat(sessionData.viewData.quat4));
-        batch(() => {
-            dispatch(setBackgroundColor(sessionData.viewData.backgroundColor));
-            dispatch(setEdgeDetectDepthScale(sessionData.viewData.edgeDetection.depthScale));
-            dispatch(setEdgeDetectDepthThreshold(sessionData.viewData.edgeDetection.depthThreshold));
-            dispatch(setEdgeDetectNormalScale(sessionData.viewData.edgeDetection.normalScale));
-            dispatch(setEdgeDetectNormalThreshold(sessionData.viewData.edgeDetection.normalThreshold));
-            dispatch(setDoEdgeDetect(sessionData.viewData.edgeDetection.enabled));
-            dispatch(setDoShadow(sessionData.viewData.shadows));
-            dispatch(setDoSSAO(sessionData.viewData.ssao.enabled));
-            dispatch(setSsaoBias(sessionData.viewData.ssao.bias));
-            dispatch(setSsaoRadius(sessionData.viewData.ssao.radius));
-            dispatch(setUseOffScreenBuffers(sessionData.viewData.blur.enabled));
-            dispatch(setDepthBlurDepth(sessionData.viewData.blur.depth));
-            dispatch(setDepthBlurRadius(sessionData.viewData.blur.radius));
-            dispatch(setUseOffScreenBuffers(sessionData.viewData.blur.enabled));
-            dispatch(setDoPerspectiveProjection(sessionData.viewData.doPerspectiveProjection ?? false));
-        });
+        guardedDispatch(setClipStart, sessionData.viewData.clipStart * -1);
+        guardedDispatch(setClipEnd, sessionData.viewData.clipEnd);
+        guardedDispatch(setQuat, sessionData.viewData.quat4);
+        guardedDispatch(setBackgroundColor, sessionData.viewData.backgroundColor);
+        guardedDispatch(setEdgeDetectDepthScale, sessionData.viewData.edgeDetection.depthScale);
+        guardedDispatch(setEdgeDetectDepthThreshold, sessionData.viewData.edgeDetection.depthThreshold);
+        guardedDispatch(setEdgeDetectNormalScale, sessionData.viewData.edgeDetection.normalScale);
+        guardedDispatch(setEdgeDetectNormalThreshold, sessionData.viewData.edgeDetection.normalThreshold);
+        guardedDispatch(setDoEdgeDetect, sessionData.viewData.edgeDetection.enabled);
+        guardedDispatch(setDoShadow, sessionData.viewData.shadows);
+        guardedDispatch(setDoSSAO, sessionData.viewData.ssao.enabled);
+        guardedDispatch(setSsaoBias, sessionData.viewData.ssao.bias);
+        guardedDispatch(setSsaoRadius, sessionData.viewData.ssao.radius);
+        guardedDispatch(setUseOffScreenBuffers, sessionData.viewData.blur.enabled);
+        guardedDispatch(setDepthBlurDepth, sessionData.viewData.blur.depth);
+        guardedDispatch(setDepthBlurRadius, sessionData.viewData.blur.radius);
+        guardedDispatch(setUseOffScreenBuffers, sessionData.viewData.blur.enabled);
+        guardedDispatch(setDoPerspectiveProjection, sessionData.viewData.doPerspectiveProjection ?? false);
+
 
         // Set connected maps and molecules if any
         const connectedMoleculeIndex = sessionData.moleculeData?.findIndex(molecule => molecule.connectedToMaps?.length > 0);
