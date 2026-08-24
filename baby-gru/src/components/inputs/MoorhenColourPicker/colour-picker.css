@@ -16,7 +16,7 @@
     text-align: center;
 }
 
-.moorhen-hex-input {
+.moorhen__hex-input {
     background: var(--moorhen-input-background);
     width: 90px;
     margin: 0.1rem 0 0;
