@@ -167,8 +167,9 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                     cidLabel = cid;
                     break;
                 case "residue-range":
-                    cidLabel = residuesSelectionRange
-                        ? `//${selectedChain}/${residuesSelectionRange[0]}-${residuesSelectionRange[1]}`
+                    let range = ( residuesSelectionRange[0] < residuesSelectionRange[1] ? residuesSelectionRange : [residuesSelectionRange[1], residuesSelectionRange[0]]);
+                    cidLabel = range
+                        ? `//${selectedChain}/${range[0]}-${range[1]}`
                         : null;
                     break;
                 default:
