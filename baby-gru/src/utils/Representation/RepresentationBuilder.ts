@@ -274,7 +274,7 @@ export interface CreateRepresentationParams {
     excludeNeighbours?: boolean;
     neighboursCid?: string;
     neighboursDistance?: number;
-    sequenceResidueRange?: [number, number] | null | [number, number][];
+    sequenceResidueRange?: [number, number] | null ;
     cid?: string;
     /** Colour-related options (default to default colours) */
     useDefaultColours?: boolean;
