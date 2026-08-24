@@ -17,6 +17,8 @@
 }
 
 .moorhen__hex-input {
+    all: unset;
+    border: 1px solid var(--moorhen-border);
     background: var(--moorhen-input-background);
     width: 90px;
     margin: 0.1rem 0 0;

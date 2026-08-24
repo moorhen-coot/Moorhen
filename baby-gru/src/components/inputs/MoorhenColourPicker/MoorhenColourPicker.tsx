@@ -5,7 +5,6 @@ import { MoorhenPopover } from "../../interface-base/Popovers/Popover";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
 import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import { MoorhenButton } from "../MoorhenButton/MoorhenButton";
-import { MoorhenTextInput } from "../TextInput";
 import "./colour-picker.css";
 import "./react-colorful.css";
 
@@ -123,11 +122,12 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
                                         }}
                                     />
                                 )}
-                                <div style={{ display: "flex", alignItems: "center", alignSelf: "center", width: "200px" }}>
+                                <div style={{ width: "200px", display: "flex", justifyContent: "center", alignItems: "center" }}>
                                     <div className="moorhen-hex-input-decorator">#</div>
-                                    <MoorhenTextInput
+                                    <input
                                         className="moorhen__hex-input"
-                                        text={hexInput}
+                                        type="text"
+                                        value={hexInput}
                                         maxLength={useAlpha ? 8 : 6}
                                         onChange={evt => {
                                             const hex = evt.target.value;
