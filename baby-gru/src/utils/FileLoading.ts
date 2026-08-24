@@ -17,6 +17,7 @@ import { MoorhenMolecule } from "./MoorhenMolecule";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { modalKeys } from "./enums";
+// import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -483,9 +484,9 @@ const loadMapFile = async (
     return;
 };
 
-const pdbqtTopdb = (pdbqtString: string) => {
+const pdbqtToPdb = (pdbqtString: string) => {
     const lines = pdbqtString.split("\n");
-    const pdbLines = lines.map(line => line.slice(0, 66)).join("\n");
+    const pdbLines = lines.map(line => !line.startsWith("TER") ? line.slice(0, 66) : "").join("\n");
     return pdbLines;
 };
 
@@ -543,7 +544,8 @@ export const autoOpenFiles = async (
             let content = await file.text();
             if (file.name.endsWith(".pdbqt")) {
                 // keep only the first 66 characters of each line to make a kinda pdb
-                content =  pdbqtTopdb(content);
+                content =  pdbqtToPdb(content);
+                console.log(content);
             }
             const newMolecule = await readCoordsString(
                 content,
