@@ -524,8 +524,12 @@ export const autoOpenFiles = async (
 
     for (const file of files) {
         //Structures
-        if (file.name.endsWith(".pdb") || file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
-            const content = await file.text();
+        if (file.name.endsWith(".pdb") || file.name.endsWith(".pdbqt") ||file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
+            let content = await file.text();
+            if (file.name.endsWith(".pdbqt")) {
+                // keep only the first 66 characters of each line to make a kinda pdb
+                content = content.split("\n").map(line => line.slice(0, 66)).join("\n");
+            }
             const newMolecule = await readCoordsString(
                 content,
                 file.name,
