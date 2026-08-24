@@ -483,6 +483,12 @@ const loadMapFile = async (
     return;
 };
 
+const pdbqtTopdb = (pdbqtString: string) => {
+    const lines = pdbqtString.split("\n");
+    const pdbLines = lines.map(line => line.slice(0, 66)).join("\n");
+    return pdbLines;
+};
+
 export const autoOpenFiles = async (
     files: File[],
     moorhenInstance: MoorhenInstance,
@@ -537,7 +543,7 @@ export const autoOpenFiles = async (
             let content = await file.text();
             if (file.name.endsWith(".pdbqt")) {
                 // keep only the first 66 characters of each line to make a kinda pdb
-                content = content.split("\n").map(line => line.slice(0, 66)).join("\n");
+                content =  pdbqtTopdb(content);
             }
             const newMolecule = await readCoordsString(
                 content,
