@@ -146,7 +146,7 @@ export const MoorhenColourRuleCard = (props: {
                 </label>
                 <div style={{ display: "flex", justifyContent: "right", alignItems: "center" }}>
                     {!rule.isMultiColourRule ? (
-                        <MoorhenColourPicker colour={colour} onApply={handleColourChangeDefault} style={{ marginRight: "0.2rem" }} />
+                        <MoorhenColourPicker colour={colour} setColour={handleColourChangeDefault} style={{ marginRight: "0.2rem" }} />
                     ) : rule.propertyType === "secondary-structure" ? (
                         <MoorhenIcon moorhenSVG="SecondaryStructure" size="medium" />
                     ) : rule.propertyType === "jones-rainbow" ? (
