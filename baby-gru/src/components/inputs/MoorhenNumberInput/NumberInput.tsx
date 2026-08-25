@@ -23,6 +23,8 @@ type MoorhenNumberInputProps = {
     style?: React.CSSProperties;
     ref?: React.Ref<HTMLInputElement>;
     integer?: boolean;
+    showButtons?: boolean;
+    buttonSteps?: number;
     tooltip?: string;
     className?: string;
     isInvalid?: boolean;
@@ -80,6 +82,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         ref = null,
         tooltip = null,
         className = "",
+        buttonSteps = null
     } = props;
 
     const decimalDigits = integer ? 0 : (props.decimalDigits ?? 2);
@@ -158,7 +161,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
     };
 
     const inputWidth = width ? width : `${3 + 0.6 * decimalDigits}rem`;
-    const showButtons = type === "number" || type === "numberForm";
+    const showButtons = type === "number" || type === "numberForm" || props.showButtons;
     if (showButtons) {
         if (!props.setValue) {
             console.warn("MoorhenNumberInput: 'setValue' prop is required when using displaying buttons");
@@ -202,7 +205,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
             {showButtons && (
                 <MoorhenStack direction="column" align="center" style={{ marginLeft: "0.1rem" }}>
                     <PlusMinusButton
-                        step={Math.pow(10, -decimalDigits)}
+                        step={buttonSteps ?? Math.pow(10, -decimalDigits)}
                         value={props.value}
                         setValue={props.setValue}
                         type="arrow"
@@ -211,7 +214,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                         minMax={minMax}
                     />
                     <PlusMinusButton
-                        step={-Math.pow(10, -decimalDigits)}
+                        step={-(buttonSteps ?? Math.pow(10, -decimalDigits))}
                         value={props.value}
                         setValue={props.setValue}
                         type="arrow"
