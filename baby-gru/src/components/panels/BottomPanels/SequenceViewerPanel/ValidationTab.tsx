@@ -133,7 +133,7 @@ export const ValidationTab = () => {
             onTitleClick={handleTitleClick}
             titleText="Validation"
             configPanel={configPanel}
-            infoCard={<MoorhenInfoCard infoText={validationDoc} />}
+            infoCard={<MoorhenInfoCard infoText={validationDoc} large />}
         />
     );
 };

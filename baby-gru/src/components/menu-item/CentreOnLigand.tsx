@@ -1,7 +1,6 @@
 import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
-import { MoorhenAccordion, MoorhenMenuItem } from "../interface-base";
 import { TreeBranch } from "../interface-base/Accordion/Tree";
 
 export const CentreOnLigand = () => {
@@ -12,6 +11,7 @@ export const CentreOnLigand = () => {
         const molecule = molecules.find(mol => mol.molNo === molNo);
         if (molecule) {
             molecule.centreOn(cid, true, true);
+            
         }
     };
 
