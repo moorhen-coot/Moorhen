@@ -1,8 +1,8 @@
 import { moorhen } from "@/types/moorhen";
 import { ColourRule } from "../MoorhenColourRule";
 import type { MoorhenMolecule } from "../MoorhenMolecule";
-import { MoleculeRepresentation, RepresentationStyles, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
 import { getMultiColourRuleArgs, parseCid } from "../utils";
+import { MoleculeRepresentation, RepresentationStyles, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
 
 /** The supported ways a representation selection can be built. */
 export type RepresentationRuleType = "ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood";
@@ -50,9 +50,15 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
     switch (ruleType) {
         case "molecule":
         case "neighbourhood":
+        case "residue-range":
         case "chain":
             if (ruleType === "chain") {
                 cidSelection = `//${chainName}/`;
+            } else if (ruleType === "residue-range") {
+                cidSelection =
+                    sequenceResidueRange && sequenceResidueRange.length === 2
+                        ? `//${chainName}/${sequenceResidueRange[0]}-${sequenceResidueRange[1]}`
+                        : null;
             } else {
                 cidSelection = "/*/*/";
             }
@@ -130,12 +136,7 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
                 }
             }
             break;
-        case "residue-range":
-            cidSelection =
-                sequenceResidueRange && sequenceResidueRange.length === 2
-                    ? `//${chainName}/${sequenceResidueRange[0]}-${sequenceResidueRange[1]}`
-                    : null;
-            break;
+
         case "cid":
         case "ligands":
             cidSelection = cid;
@@ -273,7 +274,7 @@ export interface CreateRepresentationParams {
     excludeNeighbours?: boolean;
     neighboursCid?: string;
     neighboursDistance?: number;
-    sequenceResidueRange?: [number, number] | null;
+    sequenceResidueRange?: [number, number] | null ;
     cid?: string;
     /** Colour-related options (default to default colours) */
     useDefaultColours?: boolean;
@@ -355,7 +356,7 @@ export function extractRepresentationParams(representation: MoleculeRepresentati
             snapshot?.ruleType ?? (representation.restrictToNeighbours ? "neighbourhood" : representation.interfaceOption.selectionType),
         cid: representation.cid,
         chainName: snapshot?.chainName ?? (parsedCid && parsedCid.chain !== "*" ? parsedCid.chain : null),
-        sequenceResidueRange: snapshot?.sequenceResidueRange ?? (parsedCid?.residueRange ?? null),
+        sequenceResidueRange: snapshot?.sequenceResidueRange ?? parsedCid?.residueRange ?? null,
         notHOH: snapshot?.notHOH ?? representation.cid.includes("(!HOH)"),
         notH: snapshot?.notH ?? representation.cid.includes("[!H]"),
         sideChainOnly: snapshot?.sideChainOnly ?? representation.cid.includes("!O,C,N"),
@@ -367,14 +368,11 @@ export function extractRepresentationParams(representation: MoleculeRepresentati
         useDefaultColours: representation.useDefaultColourRules,
         colourMode,
         colour: !representation.useDefaultColourRules && colourRule && !colourRule.isMultiColourRule ? colourRule.color : "",
-        applyColourToNonCarbonAtoms:
-            !representation.useDefaultColourRules && colourRule ? colourRule.applyColourToNonCarbonAtoms : false,
+        applyColourToNonCarbonAtoms: !representation.useDefaultColourRules && colourRule ? colourRule.applyColourToNonCarbonAtoms : false,
         ncsColourRule: colourMode === "mol-symm" ? (snapshot?.ncsColourRule ?? colourRule) : null,
         bondOptions: representation.useDefaultBondOptions ? null : representation.bondOptions,
         m2tParams: representation.useDefaultM2tParams ? null : representation.m2tParams,
-        residueEnvironmentOptions: representation.useDefaultResidueEnvironmentOptions
-            ? null
-            : representation.residueEnvironmentOptions,
+        residueEnvironmentOptions: representation.useDefaultResidueEnvironmentOptions ? null : representation.residueEnvironmentOptions,
         nonCustomOpacity: representation.nonCustomOpacity,
     };
 }
@@ -404,9 +402,7 @@ export type PublicRepresentationStyles = Exclude<RepresentationStyles, (typeof I
 export async function createRepresentation(params: CreateRepresentationParams): Promise<MoleculeRepresentation | null> {
     // In edit mode, any parameter that is not explicitly provided falls back to
     // the existing representation's current value instead of a hard-coded default.
-    const existingParams = params.existingRepresentation
-        ? extractRepresentationParams(params.existingRepresentation)
-        : undefined;
+    const existingParams = params.existingRepresentation ? extractRepresentationParams(params.existingRepresentation) : undefined;
 
     const {
         representationStyle,
@@ -543,4 +539,3 @@ export async function createRepresentation(params: CreateRepresentationParams): 
 
     return representation;
 }
-

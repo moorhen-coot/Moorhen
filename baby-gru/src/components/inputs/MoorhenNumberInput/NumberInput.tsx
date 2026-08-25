@@ -11,6 +11,8 @@ type MoorhenNumberInputProps = {
     value: number | null;
     setValue?: (newVal: number) => void | Dispatch<SetStateAction<number>>;
     onChange?: (arg0: React.ChangeEvent<HTMLInputElement>) => void;
+    onBlur?: (arg0: React.FocusEvent<HTMLInputElement>) => void;
+    onReturn?: () => void;
     waitReturn?: boolean;
     allowNegativeValues?: boolean;
     decimalDigits?: number;
@@ -148,6 +150,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         if (evt.key === "Enter") {
             evt.preventDefault();
             commitInputValue();
+            props.onReturn?.();
         }
     };
 
@@ -195,7 +198,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                 ${disabled ? "disabled" : ""} ${className}`}
                 onChange={handleChange}
                 onKeyDown={handleReturn}
-                onBlur={commitInputValue}
+                onBlur={(e) => {commitInputValue(); props.onBlur?.(e);}}
                 onFocus={handleFocus}
             />
 
