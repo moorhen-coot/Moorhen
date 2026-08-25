@@ -96,9 +96,10 @@ const readCoordsString = async (
 };
 
 export const drawModels = async (newMolecules: MoorhenMolecule[], moorhenInstance: MoorhenInstance) => {
-    const representation = moorhenInstance.representation.defaultStyle;
 
     for (const newMolecule of newMolecules) {
+        const hasLongSequence = newMolecule.sequences.some(item => item.sequence.length > 10);
+        const representation = hasLongSequence ? moorhenInstance.representation.defaultStyle : "CBs";
         if (
             representation === "ribbons-and-ligands" ||
             representation === "ribbons-and-side-chains" ||

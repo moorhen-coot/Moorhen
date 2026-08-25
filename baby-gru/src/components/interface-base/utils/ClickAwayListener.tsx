@@ -19,6 +19,9 @@ export const MoorhenClickAwayListener = (props: {
         const insideReactTree = syntheticEventRef.current; // This flag is set to true when a click event originates from within the React tree because handleSyntheticEvent is normally executed before the event listener
         syntheticEventRef.current = false;
 
+        // Programmatic clicks (e.g. `document.body.click()`, `element.click()`) are untrusted
+        const isProgrammatic = event.isTrusted === false;
+
         const node = clickawayRef.current;
         if (!node) {
             return;
@@ -28,7 +31,7 @@ export const MoorhenClickAwayListener = (props: {
         const path = typeof event.composedPath === "function" ? event.composedPath() : [];
         const insideDOMTree = path.length > 0 ? path.includes(node) : !!(target && node.contains(target));
 
-        if (insideDOMTree || insideReactTree) {
+        if (insideDOMTree || (insideReactTree && !isProgrammatic)) {
             return;
         }
 
@@ -40,7 +43,7 @@ export const MoorhenClickAwayListener = (props: {
         const activeElement = document.activeElement;
         const isSelectInteraction = isSelectRelated(activeElement) || isSelectRelated(target);
 
-        if (isSelectInteraction) {
+        if (isSelectInteraction && !isProgrammatic) {
             return;
         }
 
@@ -52,6 +55,7 @@ export const MoorhenClickAwayListener = (props: {
     const handleSyntheticEvent = () => {
         syntheticEventRef.current = true;
     };
+
 
     useEffect(() => {
         const timer = setTimeout(() => {
