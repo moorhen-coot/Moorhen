@@ -1055,12 +1055,13 @@ export class MoorhenTimeCapsule {
         // Set camera details
         const guardedDispatch = (action: (data) => AnyAction, data: unknown) => {
             if (dispatch && action) {
-                if (typeof data === "undefined") 
+                if (typeof data === "undefined") {
                     console.warn(`Data is undefined for action ${action}`);
                     return;
                 }
                 dispatch(action(data));
             }
+        }
 
         guardedDispatch(setOrigin, sessionData.viewData.origin);
         guardedDispatch(setAmbient, sessionData.viewData.ambientLight);
