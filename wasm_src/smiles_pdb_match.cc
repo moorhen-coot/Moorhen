@@ -1,8 +1,3 @@
-/*
-Compile with:
-em++ -fwasm-exceptions -std=c++20 ~/smiles_pdb_match.cc -I ../install/include/rdkit/ -I ../install/include/ -L ../install/lib/ -lRDKitSmilesParse -lRDKitFileParsers -lRDKitSubstructMatch -lRDKitGraphMol -lRDKitRDGeneral -lRDKitGenericGroups -lRDKitRDGeometryLib -lRDKitDataStructs -lboost_serialization
-*/
-
 #include <iostream>
 #include <memory>
 #include <string>
@@ -20,6 +15,14 @@ em++ -fwasm-exceptions -std=c++20 ~/smiles_pdb_match.cc -I ../install/include/rd
 #include <GraphMol/QueryOps.h>
 
 std::string smilesPdbMatch(const std::string &smiles, const std::string &pdbBlock){
+
+    /*
+        Parses the chemically-correct SMILES (target_mol).
+        Parses the coordinate-only PDB (pdb_mol).
+        Relaxes bond-type matching on the PDB molecule.
+        Uses a substructure match to obtain a mapping.
+        Renumber the SMILES molecule into PDB atom order and returns the renumbered SMILES.
+    */
     std::unique_ptr<RDKit::ROMol> targetMol(RDKit::SmilesToMol(smiles));
 
     std::unique_ptr<RDKit::ROMol> pdbMol(RDKit::v2::FileParsers::MolFromPDBBlock(pdbBlock));
@@ -71,6 +74,28 @@ std::string smilesPdbMatch(const std::string &smiles, const std::string &pdbBloc
     return RDKit::MolToSmiles(*permutedMol);
 }
 
+/*
+Below lets you use this a standalone command line version.
+
+Uncomment the main program below.
+
+Then compile with:
+
+em++ -fwasm-exceptions -std=c++20 ~/smiles_pdb_match.cc -I ../install/include/rdkit/ -I ../install/include/ -L ../install/lib/ -lRDKitSmilesParse -lRDKitFileParsers -lRDKitSubstructMatch -lRDKitGraphMol -lRDKitRDGeneral -lRDKitGenericGroups -lRDKitRDGeometryLib -lRDKitDataStructs -lboost_serialization
+
+(
+Or if you have Node 24+, you can even do:
+
+em++ -m64 -fwasm-exceptions -std=c++20 ~/smiles_pdb_match.cc -I ../install64/include/rdkit/ -I ../install64/include/ -L ../install64/lib/ -lRDKitSmilesParse -lRDKitFileParsers -lRDKitSubstructMatch -lRDKitGraphMol -lRDKitRDGeneral -lRDKitGenericGroups -lRDKitRDGeometryLib -lRDKitDataStructs -lboost_serialization
+)
+
+and run with:
+
+node a.out.js
+
+*/
+
+/*
 int main(int argc, char *argv[]){
 
     std::string smiles = R"(C[C@H]1C[C@]2([C@H]([C@H]1O)[C@@H](C(=C)CC[C@H]3[C@H](C3(C)C)/C=C(/C2=O)\C)O)O)";
@@ -111,3 +136,4 @@ END
 
     return 0;
 }
+*/
