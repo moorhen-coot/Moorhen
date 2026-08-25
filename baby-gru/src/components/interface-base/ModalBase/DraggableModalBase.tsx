@@ -8,6 +8,7 @@ import { focusOnModal, hideModal, unFocusModal } from "../../../store/modalsSlic
 import { MoorhenButton } from "../../inputs";
 import { ModalKey } from "./ModalsContainer";
 import "./draggable-modal-base.css";
+import { MoorhenStack } from "../Stack/Stack";
 
 type MoorhenDraggableModalBaseProps = {
     headerTitle: string | React.JSX.Element;
@@ -502,7 +503,8 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             >
                 <div className="moorhen__modal-header">
                     <button className="moorhen__modal-draggable-button" onMouseDown={handleDragStart}>
-                        {props.headerTitle}
+                        <MoorhenStack direction="line" align="center">
+                        {props.headerTitle}</MoorhenStack>
                     </button>
                     <div className={`moorhen__modal-header-buttons`}>
                         {collapse ? null : additionalHeaderButtons?.map(button => button)}
