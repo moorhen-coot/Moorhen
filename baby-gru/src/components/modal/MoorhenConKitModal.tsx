@@ -62,13 +62,13 @@ export const MoorhenConKitModal = () => {
             </ul>
         </>
     );
-    const tittleBar = (
+    const titleBar = (
         <>
             ConKit &nbsp; <MoorhenInfoCard infoText={infoText} large />
         </>
     );
 
     return (
-        <MoorhenDraggableModalBase modalId={modalKeys.CONKIT} lockAspectRatio={false} headerTitle={tittleBar} body={<MoorhenConKit />} />
+        <MoorhenDraggableModalBase modalId={modalKeys.CONKIT} lockAspectRatio={false} headerTitle={titleBar} body={<MoorhenConKit />} />
     );
 };
