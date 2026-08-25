@@ -1,5 +1,6 @@
 export const validationDoc = <>
 <h1>Validation Panel</h1>
+Hover on residue bars to get all the validation scores for that residue.
 <h2>Bonds, Angles, Torsions, Planes and Chiral Volumes</h2>
 Z-scores are a measure of how far a particular value is from the mean of a distribution, expressed in terms of standard deviations. 
 Values are given per residue as the Root Mean Square of the individual Z-scores. 
