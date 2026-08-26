@@ -7,7 +7,7 @@
 -   Lucrezia Catapano
 -   Martin Noble
 -   Paul Bond
--   Sean Wang
+-   Shuai Wang
 -   Adam Simkin
 -   Toby King
 -   Paul Emsley
