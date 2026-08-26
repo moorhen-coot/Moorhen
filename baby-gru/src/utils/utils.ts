@@ -524,12 +524,25 @@ export const getTooltipShortcutLabel = (shortCut: Shortcut): string => {
 };
 
 export function componentToHex(c: number): string {
-    const hex = c.toString(16);
+    // Values can arrive as floats (colour pickers/sliders) or out of the 0-255
+    // range. Round and clamp so toString(16) never produces a hex float like
+    // "4c.800033" or an overlong value.
+    const clamped = Math.max(0, Math.min(255, Math.round(c)));
+    const hex = clamped.toString(16);
     return hex.length === 1 ? "0" + hex : hex;
 }
 
-export function rgbToHex(r: number, g: number, b: number): string {
-    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+export function rgbToHex(r: number, g: number, b: number, noHashtag: boolean = false): string {
+    const hex = componentToHex(r) + componentToHex(g) + componentToHex(b);
+    return noHashtag ? hex : `#${hex}`;
+}
+
+export function rgbaToHex(r: number, g: number, b: number, a: number, noHashtag: boolean = false): string {
+    // Alpha is commonly given in the 0-1 range (colour-picker convention), but
+    // sometimes already scaled to 0-255. Normalise it before converting.
+    const alpha255 = a <= 1 ? Math.round(a * 255) : a;
+    const hex = componentToHex(r) + componentToHex(g) + componentToHex(b) + componentToHex(alpha255);
+    return noHashtag ? hex : `#${hex}`;
 }
 
 const getChainColourRamp = (residueCids: string[]) => {

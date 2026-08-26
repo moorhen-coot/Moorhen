@@ -7,7 +7,7 @@ import { useMoorhenInstance } from "../../../InstanceManager/useMoorhenInstance"
 import { RootState } from "../../../store/MoorhenReduxStore";
 import "./popover.css";
 
-type PlacementType = "left" | "right" | "top" | "bottom";
+type PlacementType = "left" | "right" | "top" | "bottom" | "center";
 type MoorhenPopoverType = {
     popoverContent?: React.JSX.Element | React.ReactNode;
     children?: React.JSX.Element | React.ReactNode;
@@ -16,7 +16,7 @@ type MoorhenPopoverType = {
     link: React.JSX.Element;
     linkRef: React.RefObject<HTMLDivElement | HTMLButtonElement>;
     isShown: boolean;
-    type?: "default" | "tooltip" | "autocomplete";
+    type?: "default" | "tooltip" | "autocomplete" ;
     setIsShown: (arg0: boolean) => void;
     overridePopoverSize?: { width: number; height: number };
     allowAutoFlip?: boolean;
@@ -33,7 +33,6 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
         overridePopoverSize = null,
         allowAutoFlip = true,
         closeButton,
-        dynamicPosition = true,
     } = props;
 
     const popoverRef = useRef<HTMLDivElement>(null);
@@ -59,8 +58,17 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
             return;
         }
 
+        
+
         const buttonRect = props.linkRef.current.getBoundingClientRect();
         const popoverRect = !overridePopoverSize ? popoverRef.current.getBoundingClientRect() : overridePopoverSize;
+
+        if (popoverPlacement === "center") {
+            const left = "calc(50vw - " + popoverRect.width / 2 + "px)";
+            const top = "calc(50vh - " + popoverRect.height / 2 + "px)";
+            setPopoverStyle({ visibility: "visible", left, top });
+            return;
+        }
 
         if (linkPositionRef.current && popoverSizeRef.current) {
             if (
@@ -230,6 +238,8 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
         arrow = `bottom-arrow`;
     } else if (popoverPlacement === "bottom") {
         arrow = `top-arrow`;
+    } else {
+        arrow = "";
     }
 
     let className: string = "";

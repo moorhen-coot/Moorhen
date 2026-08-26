@@ -13,7 +13,7 @@ import { AddCustomRepresentationCard } from "./addRepresentation/AddRepresentati
 import "./representation.css";
 import { parseCid } from "@/utils/utils";
 import { useCommandCentre } from "../../../InstanceManager";
-import { useMoleculeChanged } from "@/hooks/usMolleculeChange";
+import { useMoleculeChanged } from "@/hooks";
 
 export const CustomRepresentationChip = (props: {
     addColourRulesAnchorDivRef: React.RefObject<HTMLDivElement>;
@@ -161,7 +161,7 @@ export const CustomRepresentationChip = (props: {
                             type="number"
                             allowNegativeValues={false}
                             style={{ backgroundColor: "transparent" }}
-                            width={"6ch"}
+                            width={"4ch"}
                             tooltip={"Model Selector"}
                             minMax={[0, models]}
                             className="moorhen__model-selector-input"

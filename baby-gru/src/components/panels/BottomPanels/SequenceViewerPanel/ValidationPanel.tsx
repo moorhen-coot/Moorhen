@@ -1,15 +1,20 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useMemo, useState } from "react";
-import { useCommandCentre, useMoorhenInstance } from "@/InstanceManager";
+import {  MoorhenInstance, useMoorhenInstance } from "@/InstanceManager";
 import {
     addValidationDataToSeqViewerSequences,
+    cootMMRCCToSeqViewer,
     cootValidationDataToSeqViewer,
 } from "@/components/sequence-viewer/utils";
 import { RootState, setValidationOption } from "@/store";
 import { BaseSequenceViewerPanel } from "./BaseSequenceViewerPanel";
-import { useMoleculeChanged } from "@/hooks/usMolleculeChange";
 import { OverlayModal } from "@/components/interface-base/ModalBase/OverlayModal";
 import { MoorhenSpinner } from "@/components/icons/MoorhenSpinner";
+import type { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
+import { useMoleculeChanged } from "@/hooks";
+import { MoorhenMolecule } from "@/utils/MoorhenMolecule";
+import { libcootApi } from "@/types/libcoot";
+import { WorkerResponse } from "@/InstanceManager/CommandCentre";
 
 export type ValidationOption = {
     selectedMolecule: string
@@ -19,61 +24,21 @@ export type ValidationOption = {
     columnWidth: number
 };
 
-export const ValidationPanel = () => {
-    const store = useStore<RootState>();
-    const commandCentre = useCommandCentre();
-    const moorhenInstance = useMoorhenInstance();
-    const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
-    const mapList = useSelector((state: RootState) => state.maps);
 
-    const validationOption = useSelector((state: RootState) => state.bottomPanels.validationOption);
-    const dispatch = useDispatch();
-    const [triggerUpdate, setTriggerUpdate] = useState<number>(0);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    
-    const molecule = useMemo(() => {
-        return moleculeList.length > 0
-            ? (moleculeList.find(molecule => molecule.uniqueId === validationOption.selectedMolecule) ?? moleculeList[0])
-            : null;
-    }, [moleculeList, validationOption.selectedMolecule]);
-
-    const moleculeChange = useMoleculeChanged();
-
-    const map = useMemo(() => {
-        return mapList.length > 0
-            ? (mapList.find(map => map.uniqueId === validationOption.selectedMap) ?? null)
-            : null;
-    }, [mapList, validationOption.selectedMap]);
-
-    const sequencesList = useMemo(() => {
-        return molecule?.seqViewerData ? [...molecule.seqViewerData] : []; // Return a copy of the seqViewerData array to avoid mutating the original data
-    }, [molecule?.seqViewerData, triggerUpdate, moleculeChange]);
-
-
-    useEffect(() => {
-        let skipDensity = false;
+const updateValidationData = async (moorhenInstance: MoorhenInstance, molecule: MoorhenMolecule, map?: number, ) => {
+        const skipDensity = map ? false : true;
         if (!molecule || molecule.molNo === null) {
             return;
         }
-        const updateSequences = async () => {
-            setIsLoading(true);
-            const sequences = molecule.seqViewerData;
+            const sequences: SeqElement[] = molecule.seqViewerData.map(seq => ({
+                ...seq,
+                residues: seq.residues.map(res => ({ ...res })),
+            }));
 
-        const scaleRMSZ = val => {
-            return Math.min(val / 4, 1);
-        };
+            const scaleRMSZ = val => {
+                return Math.min(val / 4, 1);
+            };
 
-            if (validationOption.selectedMap === "") {
-                // use active map if no map is selected
-                if (store.getState().generalStates.activeMap) {
-                    dispatch(setValidationOption({ ...validationOption, selectedMap: store.getState().generalStates.activeMap.uniqueId }));
-                    return [];
-                } else {
-                    skipDensity = true;
-                }
-            } else if (!map || map.molNo === null) {
-                skipDensity = true;
-            }
 
             const geoValidationData = await moorhenInstance.cootCommand.getGeoValidationData(molecule.molNo);
             addValidationDataToSeqViewerSequences(sequences, geoValidationData, "Geometry", undefined, undefined, scaleRMSZ);
@@ -83,27 +48,27 @@ export const ValidationPanel = () => {
             addValidationDataToSeqViewerSequences(sequences, BValidationData, "B Factor", "mpl Viridis", undefined, (value) => { return Math.min(value / 100 , 1); });
 
             if (!skipDensity) {
-                // const MMRRCC = (await commandCentre.current.cootCommand(
-                //     {
-                //         message: "coot_command",
-                //         command: "mmrrcc",
-                //         returnType: "mmrrcc_stats",
-                //         commandArgs: [molecule.molNo, "A", map.molNo],
-                //     },
-                //     false
-                // )) as WorkerResponse<libcootApi.MMRCCStatsJS>;
+                const MMRRCC = (await moorhenInstance.commandCentre.cootCommand(
+                    {
+                        message: "coot_command",
+                        command: "mmrrcc",
+                        returnType: "mmrrcc_stats",
+                        commandArgs: [molecule.molNo, "A", map],
+                    },
+                    false
+                )) as WorkerResponse<libcootApi.MMRCCStatsJS>;
 
-                // addValidationDataToSeqViewerSequences(
-                //     sequences,
-                //     cootMMRCCToSeqViewer(MMRRCC.data.result.result),
-                //     "Density",
-                //     undefined,
-                //     true,              
-                // );
+                addValidationDataToSeqViewerSequences(
+                    sequences,
+                    cootMMRCCToSeqViewer(MMRRCC.data.result.result),
+                    "Density",
+                    undefined,
+                    true,              
+                );
 
                 const newCootDensityCorrelationData = await moorhenInstance.cootCommand.getDensityCorrelationAnalysis(
                     molecule.molNo,
-                    map.molNo
+                    map
                 );
                 addValidationDataToSeqViewerSequences(
                     sequences,
@@ -114,7 +79,7 @@ export const ValidationPanel = () => {
                     
                 );
 
-                const qScore = await moorhenInstance.cootCommand.getQScore(molecule.molNo, map.molNo);
+                const qScore = await moorhenInstance.cootCommand.getQScore(molecule.molNo, map);
                 addValidationDataToSeqViewerSequences(
                     sequences,
                     cootValidationDataToSeqViewer(qScore, "Q Score"),
@@ -124,31 +89,73 @@ export const ValidationPanel = () => {
                     
                 );
             }
-            // const peptideOmegaData = await moorhenInstance.cootCommand.getPeptideOmegaAnalysis(molecule.molNo);
-            // addValidationDataToSeqViewerSequences(
-            //     sequences,
-            //     cootValidationDataToSeqViewer(peptideOmegaData, "Pept. Omega"),
-            //     "Geometry",
-            //     4,
-            //     "mpl Viridis",
-            //     undefined
-            // );
+            molecule.seqViewerData = sequences;
+            return sequences;        
+        }
 
-            dispatch(setValidationOption({ ...validationOption, availableData: sequences[0]?.validationTracks?.map(track => track.name) }));
-        
-            setTriggerUpdate(current => current + 1);
+export const ValidationPanel = () => {
+    const moorhenInstance = useMoorhenInstance();
+
+    const validationOption = useSelector((state: RootState) => state.bottomPanels.validationOption);
+    const dispatch = useDispatch();
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
+    const molecule = useMemo(() => {
+        return moleculeList.length > 0
+            ? (moleculeList.find(molecule => molecule.uniqueId === validationOption.selectedMolecule) ?? moleculeList[0])
+            : null;
+    }, [moleculeList, validationOption.selectedMolecule]);
+
+    const mapList  = useSelector((state: RootState) => state.maps);
+    const mapNo = useMemo(() => {
+        return mapList.find(map => map.uniqueId === validationOption.selectedMap)?.molNo ?? mapList[0]?.molNo ?? null;
+    }, [mapList, validationOption.selectedMap]);
+
+
+
+    const updateSequences = async () => {
+        if (!molecule || molecule.molNo === null) {
+            return;
+        }
+        const sequences = await updateValidationData(moorhenInstance, molecule, mapNo);
+        if (sequences) {
+            dispatch(setValidationOption({ ...validationOption, availableData: sequences[0]?.validationTracks?.map(track => track.name) ?? [] }));
+            // setValidationState({ molUID: molecule.uniqueId, mapUID: validationOption.selectedMap, sequences });
+        }
+    };
+
+
+    useMoleculeChanged({
+        uid: molecule?.uniqueId ?? undefined,
+        onChange: async () => {
+            setIsLoading(true);
+            await updateSequences();
             setIsLoading(false);
+        }
+    });
 
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!molecule || molecule.molNo === null) {
+                return; 
+            }
+            setIsLoading(true);
+            await updateSequences();
+            setIsLoading(false);       
         };
-        updateSequences();
-    }, [molecule?.sequences, map?.molNo, validationOption.selectedMap, moorhenInstance, commandCentre, dispatch, validationOption.selectedMolecule]);
+        fetchData();
+    }, [molecule, mapNo]);
+
+    const displaySequence =  molecule?.seqViewerData ?? [];
 
     return (
         <div style={{ position: "relative"}}>
         <OverlayModal overlay={<><MoorhenSpinner size="4rem" colour="white"/> Loading</>} isShown={isLoading} style={{ height: "calc(100% - 54px)", transform: "translateY(52px)"}}>
         <BaseSequenceViewerPanel
-            selectedMolecule={validationOption.selectedMolecule}
-            sequences={sequencesList}
+            selectedMolecule={molecule?.uniqueId ?? undefined}
+            sequences={displaySequence}
             displayHeight={1}
             showValidationData={true}
             nameColumnWidth={4}
