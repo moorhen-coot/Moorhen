@@ -8,6 +8,7 @@ import { focusOnModal, hideModal, unFocusModal } from "../../../store/modalsSlic
 import { MoorhenButton } from "../../inputs";
 import { ModalKey } from "./ModalsContainer";
 import "./draggable-modal-base.css";
+import { PanelErrorBoundary } from "../PanelErrorBoundary";
 
 type MoorhenDraggableModalBaseProps = {
     headerTitle: string | React.JSX.Element;
@@ -557,9 +558,10 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                         overflowY: props.overflowY ?? "auto",
                         overflowX: props.overflowX ?? "auto",
                     }}
-                >
+                ><PanelErrorBoundary panelName={props.modalId}>
                     {props.body}
                     {additionalChildren}{" "}
+                </PanelErrorBoundary>
                 </div>
                 {!collapse && showFooter && (
                     <div className="moorhen__modal-footer">

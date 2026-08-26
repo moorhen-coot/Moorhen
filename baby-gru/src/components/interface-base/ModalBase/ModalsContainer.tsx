@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
 import React, { memo } from "react";
+import { ModalErrorBoundary } from "./ModalErrorBoundary";
 import { MoorhenShortcutConfigModal } from "@/components/modal/MoorhenShortcutConfigModal";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import { Moorhen2DCanvasObjectsModal } from "../../modal/Moorhen2DCanvasObjectsModal";
@@ -108,13 +109,23 @@ export const MoorhenModalsContainer = memo((props: { extraDraggableModals?: Extr
     const displayModals = activeModals.map(modalCall => {
         const ModalComponent = modalsMap[modalCall.key];
         return ModalComponent ? (
-            <ModalComponent key={modalCall.key} openDocked={modalCall.openDocked} modalProps={modalCall.modalProps} />
+            <ModalErrorBoundary key={modalCall.key} modalId={modalCall.key}>
+                <ModalComponent key={modalCall.key} openDocked={modalCall.openDocked} modalProps={modalCall.modalProps} />
+            </ModalErrorBoundary>
         ) : null;
     });
 
     return (
         <>
-            {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}
+            {props.extraDraggableModals &&
+                props.extraDraggableModals.map((modal, index) => {
+                    const modalId = (modal as React.ReactElement<{ modalId?: ModalKey }>).props?.modalId;
+                    return (
+                        <ModalErrorBoundary key={`extra-${index}`} modalId={modalId}>
+                            {modal}
+                        </ModalErrorBoundary>
+                    );
+                })}
             {displayModals}
         </>
     );
