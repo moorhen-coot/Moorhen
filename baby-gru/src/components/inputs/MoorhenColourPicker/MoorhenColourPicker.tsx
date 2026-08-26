@@ -1,12 +1,12 @@
-import { HexColorInput, RgbColorPicker, RgbaColorPicker } from "react-colorful";
+import { RgbColorPicker, RgbaColorPicker } from "react-colorful";
 import { useRef, useState } from "react";
-import { hexToRGB, rgbToHex } from "../../../utils/utils";
+import { hexToRGB, rgbToHex, rgbaToHex } from "../../../utils/utils";
 import { MoorhenPopover } from "../../interface-base/Popovers/Popover";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
 import { MoorhenStack } from "../../interface-base/Stack/Stack";
 import { MoorhenButton } from "../MoorhenButton/MoorhenButton";
-import "./react-colorful.css";
 import "./colour-picker.css";
+import "./react-colorful.css";
 
 type RGBAColour = [number, number, number] | [number, number, number, number];
 type MoorhenColourPickerBase = {
@@ -20,6 +20,7 @@ type MoorhenColourPickerBase = {
     tooltip?: string;
     onApply?: (colour: RGBAColour) => void;
     style?: React.CSSProperties;
+    ariaLabel?: string;
 };
 
 type MoorhenColourPickerSingle = MoorhenColourPickerBase & {
@@ -50,19 +51,24 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
         useAlpha = false,
     } = props;
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false);
-    const popoverRef = useRef<HTMLDivElement>(null);
+    const popoverRef = useRef<HTMLButtonElement>(null);
     const [internalColour, setInternalColour] = useState<RGBAColour>(
         useAlpha && colour.length === 3 ? [colour[0], colour[1], colour[2], 1] : colour
+    );
+    const [hexInput, setHexInput] = useState<string>(
+        internalColour.length === 3
+            ? rgbToHex(internalColour[0], internalColour[1], internalColour[2], true)
+            : rgbaToHex(internalColour[0], internalColour[1], internalColour[2], internalColour[3], true)
     );
 
     const popoverLink = (
         <MoorhenTooltip tooltip={tooltip}>
-            <div
+            <button
                 ref={popoverRef}
                 onClick={() => {
-                    showColourPicker;
-                    setShowColourPicker(true);
+                    setShowColourPicker(!showColourPicker);
                 }}
+                aria-label={props.ariaLabel ? props.ariaLabel : "Colour picker"}
                 style={{
                     width: "25px",
                     height: "25px",
@@ -101,7 +107,10 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
                                 {useAlpha ? (
                                     <RgbaColorPicker
                                         color={{ r: c[0], g: c[1], b: c[2], a: c[3] }}
-                                        onChange={({ r, g, b, a }) => set([r, g, b, a])}
+                                        onChange={({ r, g, b, a }) => {
+                                            set([r, g, b, a]);
+                                            setHexInput(rgbaToHex(r, g, b, a, true));
+                                        }}
                                     />
                                 ) : (
                                     <RgbColorPicker
@@ -109,25 +118,27 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
                                         onChange={({ r, g, b }) => {
                                             set([r, g, b]);
                                             setInternalColour([r, g, b]);
+                                            setHexInput(rgbToHex(r, g, b, true));
                                         }}
                                     />
                                 )}
-                                <div
-                                    style={{
-                                        width: "100%",
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        marginBottom: "0.1rem",
-                                    }}
-                                >
+                                <div style={{ width: "200px", display: "flex", justifyContent: "center", alignItems: "center" }}>
                                     <div className="moorhen-hex-input-decorator">#</div>
-                                    <HexColorInput
-                                        className="moorhen-hex-input"
-                                        color={rgbToHex(c[0], c[1], c[2])}
-                                        onChange={hex => {
-                                            const [r, g, b] = hexToRGB(hex);
-                                            set([r, g, b]);
-                                            setInternalColour([r, g, b]);
+                                    <input
+                                        className="moorhen__hex-input"
+                                        type="text"
+                                        value={hexInput}
+                                        maxLength={useAlpha ? 8 : 6}
+                                        onChange={evt => {
+                                            const hex = evt.target.value;
+                                            setHexInput(hex);
+                                            if (hex.length === 6 || hex.length === 8) {
+                                                const rgb = hexToRGB(hex);
+                                                if (rgb) {
+                                                    setInternalColour(rgb);
+                                                    set(rgb);
+                                                }
+                                            }
                                         }}
                                     />
                                 </div>

@@ -23,6 +23,7 @@ type MoorhenTextInputBase = {
     onFocus?: () => void;
     onBlur?: () => void;
     className?: string;
+    maxLength?: number;
 };
 export type MoorhenTextInputProps = MoorhenTextInputBase & {
     button?: false;
@@ -30,7 +31,7 @@ export type MoorhenTextInputProps = MoorhenTextInputBase & {
 
 export type MoorhenTextInputButtonProps = MoorhenTextInputBase & {
     button: true;
-    onClick: () => {};
+    onClick: () => void;
     icon?: MoorhenSVG;
     buttonLabel?: string;
 };
@@ -42,17 +43,17 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
     
     const handleBlur = () => {
         dispatch(setShortCutsBlocked(false));
-        props.onBlur ? props.onBlur() : null;
+        props.onBlur?.()
     };
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        props.onChange ? props.onChange(event) : null;
-        props.setText ? props.setText(event.target.value) : null;
+        props.onChange?.(event);
+        props.setText?.(event.target.value);
     };
 
     const handleFocus = () => {
         dispatch(setShortCutsBlocked(true));
-        props.onFocus ? props.onFocus() : null;
+        props.onFocus?.();
     }
 
 
@@ -65,12 +66,13 @@ export const MoorhenTextInput = (props: MoorhenTextInputProps | MoorhenTextInput
                     type="text"
                     onChange={handleChange}
                     value={props.text}
-                    className={`moorhen__input moorhen__input-text-box ${props.button ? "moorhen__input-text-box-wbutton" : null} ${isInvalid ? " invalid" : null}`}
+                    className={`${props.className ? props.className : "moorhen__input moorhen__input-text-box"}  ${props.button ? "moorhen__input-text-box-wbutton" : null} ${isInvalid ? " invalid" : null}`}
                     onBlur={handleBlur}
                     onFocus={handleFocus}
                     ref={ref}
                     disabled={disabled}
                     placeholder={placeholder}
+                    maxLength={props.maxLength}
                     style={props.uppercase ? { textTransform: "uppercase" } : null}
                     readOnly={readOnly}
                     onKeyDown={event => {

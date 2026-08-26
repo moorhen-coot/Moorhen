@@ -23,21 +23,32 @@ export const ResidueRangeSelector = (props: ResidueRangeSelectorProps) => {
         return null;
     }
 
-    const handleResidueRangeChange = (range: [number, number]) => {
-        let clampedRange: [number, number] = range;
-        if (clampedRange[0] > clampedRange[1]) {
-            clampedRange = [clampedRange[1], clampedRange[1]];
+    const handleResidueRangeChange = (value: number, start: boolean) => {
+        let newValue = value
+        if (value > selectedSequence.sequence[selectedSequence.sequence.length - 1].resNum) {
+            newValue = selectedSequence.sequence[selectedSequence.sequence.length - 1].resNum
         }
-
-        if (clampedRange[0] < selectedSequence.sequence[0].resNum) {
-            clampedRange[0] = selectedSequence.sequence[0].resNum;
+        if (value < selectedSequence.sequence[0].resNum) {
+            newValue = selectedSequence.sequence[0].resNum
         }
-        if (clampedRange[1] > selectedSequence.sequence[selectedSequence.sequence.length - 1].resNum) {
-            clampedRange[1] = selectedSequence.sequence[selectedSequence.sequence.length - 1].resNum;
+        if (start) {
+            props.setSequenceResidueRange([newValue, props.sequenceResidueRange ? props.sequenceResidueRange[1] : selectedSequence.sequence[selectedSequence.sequence.length - 1].resNum]);
+        } else {
+            props.setSequenceResidueRange([props.sequenceResidueRange ? props.sequenceResidueRange[0] : selectedSequence.sequence[0].resNum, newValue]);
         }
-
-        props.setSequenceResidueRange(clampedRange);
     };
+        // // if (clampedRange[0] > clampedRange[1]) {
+        // //     clampedRange = [clampedRange[1], clampedRange[1]];
+        // // }
+
+        // // if (clampedRange[0] < selectedSequence.sequence[0].resNum) {
+        // //     clampedRange[0] = selectedSequence.sequence[0].resNum;
+        // // }
+        // // if (clampedRange[1] > selectedSequence.sequence[selectedSequence.sequence.length - 1].resNum) {
+        // //     clampedRange[1] = selectedSequence.sequence[selectedSequence.sequence.length - 1].resNum;
+        // // }
+
+        // props.setSequenceResidueRange(clampedRange);
 
     return (
         <MoorhenStack style={{ padding: "0.5rem", marginTop: "0.5rem", ...props.style }} card direction="column" gap="0.5rem">
@@ -63,7 +74,7 @@ export const ResidueRangeSelector = (props: ResidueRangeSelectorProps) => {
                     width="4rem"
                     type="number"
                     value={props.sequenceResidueRange ? props.sequenceResidueRange[0] : null}
-                    setValue={value => handleResidueRangeChange([value, props.sequenceResidueRange ? props.sequenceResidueRange[1] : null])}
+                    setValue={value => handleResidueRangeChange(value, true)}
                     label="Start"
                 />
                 <MoorhenNumberInput
@@ -71,7 +82,7 @@ export const ResidueRangeSelector = (props: ResidueRangeSelectorProps) => {
                     width="4rem"
                     type="number"
                     value={props.sequenceResidueRange ? props.sequenceResidueRange[1] : null}
-                    setValue={value => handleResidueRangeChange([props.sequenceResidueRange ? props.sequenceResidueRange[0] : null, value])}
+                    setValue={value => handleResidueRangeChange(value, false)}
                     label="End"
                 />
             </MoorhenStack>
