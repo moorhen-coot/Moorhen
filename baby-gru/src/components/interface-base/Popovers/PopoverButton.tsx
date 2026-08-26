@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenButton } from "../../inputs";
+import { PanelErrorBoundary } from "../PanelErrorBoundary";
 import { MoorhenPopover } from "./Popover";
 
 type MoorhenPopoverButtonType = {
@@ -37,12 +38,14 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
         />
     );
 
+    const popoverContent = <PanelErrorBoundary panelName={label ?? tooltip ?? "Popover"}>{props.popoverContent}</PanelErrorBoundary>;
+
     return (
         <MoorhenPopover
             link={popOverLink}
             linkRef={buttonRef}
             isShown={popoverIsShown}
-            popoverContent={props.children}
+            popoverContent={popoverContent}
             popoverPlacement={popoverPlacement}
             setIsShown={setPopOverIsShown}
             closeButton={closeButton}
