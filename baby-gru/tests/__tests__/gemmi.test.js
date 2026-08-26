@@ -5,7 +5,7 @@ const fs = require('fs')
 const path = require('path')
 const fetch = require('node-fetch')
 const {gzip, ungzip} = require('node-gzip');
-const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
+const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen64')
 
 let cootModule;
 let cleanUpVariables = []
@@ -356,7 +356,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         expect(chain.name).toBe('B')
 
         const ligands = chain.get_ligands_const()
-        expect(ligands.size()).toBe(2)
+        expect(ligands.size()).toBe(2n)
 
         const ligand = ligands.at(0)
         expect(ligand.name).toBe('G2F')
@@ -374,7 +374,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         expect(chain.name).toBe('A')
 
         const waters = chain.get_waters_const()
-        expect(waters.size()).toBe(348)
+        expect(waters.size()).toBe(348n)
 
         const water = waters.at(0)
         expect(water.name).toBe('HOH')
@@ -463,7 +463,7 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         expect(col_FP.label).toBe('FP')
         expect(col_FP.has_data()).toBeTruthy()
         expect(col_FP.size()).toBe(26363)
-        expect(col_FP.stride()).toBe(17)
+        expect(col_FP.stride()).toBe(17n)
 
         const col_FWT = columns.get(10)
         expect(col_FWT.label).toBe('FWT')
@@ -576,8 +576,8 @@ CORE DOMAIN AFTER LOSS OF THE CELLULOSE-BINDING DOMAIN(S).
         tags.push_back('_atom_site.label_atom_id')
         const table = block.find(tags)
         expect(table.ok()).toBeTruthy()
-        expect(table.length()).toBe(2765)
-        expect(table.width()).toBe(2)
+        expect(table.length()).toBe(2765n)
+        expect(table.width()).toBe(2n)
 
         cleanUpVariables.push(tags, doc)
     })

@@ -15,8 +15,8 @@ jest.setTimeout(60000);
 const fs = require('fs');
 const path = require('path');
 const { ungzip } = require('node-gzip');
-const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen');
-const createGemmiModule = require('../../public/MoorhenAssets/wasm/gemmi');
+const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen64');
+const createGemmiModule = require('../../public/MoorhenAssets/wasm/gemmi64');
 
 let cootModule: any;
 let gemmiModule: any;

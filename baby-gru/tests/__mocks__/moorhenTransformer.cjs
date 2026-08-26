@@ -30,7 +30,7 @@ module.exports = {
     },
 
     process(sourceText, sourcePath) {
-        if (!sourcePath.endsWith('/public/MoorhenAssets/wasm/moorhen.js') && !sourcePath.endsWith('/public/MoorhenAssets/wasm/moorhen')) {
+        if (!sourcePath.endsWith('/public/MoorhenAssets/wasm/moorhen64.js') && !sourcePath.endsWith('/public/MoorhenAssets/wasm/moorhen64')) {
             return { code: sourceText };
         }
 
