@@ -121,7 +121,7 @@ export const MoorhenModalsContainer = memo((props: { extraDraggableModals?: Extr
                 props.extraDraggableModals.map((modal, index) => {
                     const modalId = (modal as React.ReactElement<{ modalId?: ModalKey }>).props?.modalId;
                     return (
-                        <ModalErrorBoundary key={`extra-${index}`} modalId={modalId}>
+                        <ModalErrorBoundary key={modalId ?? `extra-${index}`} modalId={modalId}>
                             {modal}
                         </ModalErrorBoundary>
                     );

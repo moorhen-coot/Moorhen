@@ -6,7 +6,7 @@ import { setEnableAtomHovering } from "../../../store/hoveringStatesSlice";
 import { usePersistentState } from "../../../store/menusSlice";
 import { focusOnModal, hideModal, unFocusModal } from "../../../store/modalsSlice";
 import { MoorhenButton } from "../../inputs";
-import { ModalKey } from "./ModalsContainer";
+import type { ModalKey } from "./ModalsContainer";
 import { MoorhenStack } from "../Stack/Stack";
 import { PanelErrorBoundary } from "../PanelErrorBoundary";
 import "./draggable-modal-base.css";

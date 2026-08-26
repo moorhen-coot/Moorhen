@@ -1,6 +1,6 @@
 import React, { ErrorInfo } from "react";
 import { MoorhenButton } from "../../inputs";
-import { ModalKey } from "./ModalsContainer";
+import type { ModalKey } from "./ModalsContainer";
 import { MoorhenDraggableModalBase } from "./DraggableModalBase";
 
 type ModalErrorBoundaryProps = {
