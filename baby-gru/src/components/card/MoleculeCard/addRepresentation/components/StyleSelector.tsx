@@ -12,7 +12,7 @@ interface StyleSelectorProps {
 }
 
 export const StyleSelector = (props: StyleSelectorProps) => {
-    const { value, onChange, mode, adaptBondOOF, setAdaptBondOOF } = props;
+    const { value, onChange, mode,  setAdaptBondOOF } = props;
 
     return (
         <>
