@@ -38,7 +38,11 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
         />
     );
 
-    const popoverContent = <PanelErrorBoundary panelName={label ?? tooltip ?? "Popover"}>{props.popoverContent}</PanelErrorBoundary>;
+    const popoverContent = (
+        <PanelErrorBoundary panelName={label ?? tooltip ?? "Popover"}>
+            {props.popoverContent ?? props.children}
+        </PanelErrorBoundary>
+    );
 
     return (
         <MoorhenPopover
