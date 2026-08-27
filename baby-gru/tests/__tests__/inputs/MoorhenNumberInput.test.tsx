@@ -149,6 +149,16 @@ describe("MoorhenNumberInput", () => {
         expect(buttons.length).toBeGreaterThanOrEqual(2);
     });
 
+    test("plus button increments from value 0", async () => {
+        const user = userEvent.setup();
+        const setValue = jest.fn();
+        renderWithinInstance(<MoorhenNumberInput value={0} setValue={setValue} integer type="number" minMax={[0, 5]} />);
+        const buttons = screen.getAllByRole("button");
+        // First button is the up/plus arrow
+        await user.click(buttons[0]);
+        expect(setValue).toHaveBeenCalledWith(1);
+    });
+
     // -------------------------------------------------------
     // labelPosition
     // -------------------------------------------------------

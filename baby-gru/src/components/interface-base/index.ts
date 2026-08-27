@@ -1,5 +1,6 @@
 export { MoorhenAccordion } from "./Accordion/Accordion";
 export { MoorhenDraggableModalBase } from "./ModalBase/DraggableModalBase";
+export { ModalErrorBoundary } from "./ModalBase/ModalErrorBoundary";
 export { MoorhenPopover } from "./Popovers/Popover";
 export { MoorhenStack } from "./Stack/Stack";
 export { MoorhenMenuItemPopover } from "./Popovers/MenuItemPopover";
