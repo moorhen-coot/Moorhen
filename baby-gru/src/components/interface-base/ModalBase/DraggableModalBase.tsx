@@ -542,7 +542,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                             size="small"
                             onClick={() => setCollapse(!collapse)}
                         />
-                        {showCloseButton && <MoorhenButton type="icon-only" icon="MatSymClose" size="small" onClick={handleClose} />}
+                        {showCloseButton && <MoorhenButton type="icon-only" icon="MatSymClose" ariaLabel={`Close ${props.modalId}`} size="small" onClick={handleClose} />}
                     </div>
                 </div>
                 <div

@@ -66,7 +66,7 @@
         "start:preview": "npm run build-release-dev && echo 'Moorhen dist preview is running at http://localhost:3000/preview.dist.html' && python3 SimpleCrossOriginServer.py 3000",
         "build-webcomponent-css": "webpack --config webpack.css.config.js",
         "start:webcomponent": "npm run build-webcomponent-css && vite --config vite.WebC.config.mts",
-        "start:webcomponent:e2e": "npm run prepare:webcomponent:e2e && npm run start:webcomponent -- --host 127.0.0.1 --port 5173",
+        "start:webcomponent:e2e": "npm run prepare:webcomponent:e2e && npm run start:webcomponent -- --host 127.0.0.1 --port ${MOORHEN_E2E_PORT:-5174}",
         "prebuild": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen",
         "build-vite": "vite build",
         "lint": "eslint src/",

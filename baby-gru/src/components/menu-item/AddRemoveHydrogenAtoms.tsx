@@ -44,10 +44,10 @@ export const AddRemoveHydrogenAtoms = () => {
         <>
             <MoorhenMoleculeSelect ref={moleculeSelectRef} />
             <MoorhenStack direction="line" justify="flex-start">
-                <MoorhenButton className="mx-2" variant="primary" onClick={() => handleClick("add_hydrogen_atoms")}>
+                <MoorhenButton variant="primary" ariaLabel="Add hydrogen atoms" onClick={() => handleClick("add_hydrogen_atoms")}>
                     Add
                 </MoorhenButton>
-                <MoorhenButton className="mx-2" variant="danger" onClick={() => handleClick("delete_hydrogen_atoms")}>
+                <MoorhenButton variant="danger" ariaLabel="Remove hydrogen atoms" onClick={() => handleClick("delete_hydrogen_atoms")}>
                     Remove
                 </MoorhenButton>
             </MoorhenStack>

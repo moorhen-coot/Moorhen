@@ -89,7 +89,6 @@ const LigandHitCard = (props: {
             </MoorhenButton>
 
             <MoorhenButton
-
                 onClick={() => handleRefinement(props.ligandMolecule)}
                 tooltip="Refine"
                 type="icon-only"
@@ -103,7 +102,7 @@ const LigandHitCard = (props: {
             )}
             {allowMergeFittedLigand && (
 
-                    <MoorhenButton tooltip="Merge to molecule" onClick={handleMerge} icon="MatSymMerge" type="icon-only">
+                    <MoorhenButton tooltip="Merge to molecule" onClick={handleMerge} ariaLabel={`Merge ${props.ligandMolecule.name} to molecule`} icon="MatSymMerge" type="icon-only">
                     </MoorhenButton>
 
             )}
@@ -260,12 +259,12 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
                 direction="horizontal"
                 style={{ paddingTop: "0.5rem", alignItems: "center", alignContent: "center", justifyContent: "center" }}
             >
-                <MoorhenButton variant="primary" onClick={findLigand}>
+                <MoorhenButton variant="primary" onClick={findLigand} ariaLabel="Find ligand" disabled={busy}>
                     Find
                 </MoorhenButton>
-                <MoorhenButton variant="danger" onClick={handleClose}>
+                {/* <MoorhenButton variant="danger" onClick={handleClose}>
                     Close
-                </MoorhenButton>
+                </MoorhenButton> */}
             </MoorhenStack>
         </>
     );

@@ -1,13 +1,22 @@
 import type { Page } from "@playwright/test";
 import { gotoWebComponentPage, waitForMoorhenReady } from "./setup";
-import { loadFilesViaMoorhenInstance, getMoorhenObjectCounts, getSceneSettingsSnapshot, waitForWebGLRenderSettle } from "./moorhenInstance";
-import { getWebGLCanvasStats } from "./webglCanvas";
-import { assertPageScreenshotBaseline } from "./screenshots";
-import type { MoorhenStartedSession, MoorhenLoadFilesInput, PageScreenshotBaselineOptions } from "./types";
+import { getMoorhenInstance } from "./moorhenInstance";
+import type { MoorhenStartedSession } from "./types";
 
 /**
- * High-level entrypoint to start the web component and get a simple test harness.
- * This keeps test bodies concise while preserving robust browser-context boundaries.
+ * Start the web component and return a minimal test harness.
+ *
+ * The session exposes two things:
+ *  - `getInstance()` — a remote proxy typed as the real `MoorhenInstance`, so
+ *    tests drive the application API directly:
+ *        const mi = await moorhen.getInstance();
+ *        await mi.files.loadFiles([...]);
+ *        await mi.getMoleculeList()[0].getNumberOfAtoms();
+ *  - `buttonClick()` — clicks a button inside the web component's shadow DOM by
+ *    aria-label (the one UI interaction that cannot be reached via the API).
+ *
+ * Everything else (screenshots, WebGL settle/stats, page setup) is available
+ * as a standalone import from "./helpers".
  */
 export async function startAndGetInstance(page: Page, elementId = "moorhen-test"): Promise<MoorhenStartedSession> {
     const host = await gotoWebComponentPage(page);
@@ -17,49 +26,7 @@ export async function startAndGetInstance(page: Page, elementId = "moorhen-test"
         page,
         host,
         elementId,
-        loadFiles: (files, origin) => loadFilesViaMoorhenInstance(page, files, origin, elementId),
-        callInstanceMethod: async <T = unknown>(methodPath: string, ...args: unknown[]): Promise<T> => {
-            const result = await page.evaluate(
-                async ({ targetId, path, methodArgs }) => {
-                    const hostElement = document.getElementById(targetId) as unknown as {
-                        getMoorhenInstance: () => Promise<Record<string, unknown>>;
-                    } | null;
-
-                    if (!hostElement?.getMoorhenInstance) {
-                        throw new Error(`Unable to find web component host with id '${targetId}'`);
-                    }
-
-                    const instance = await hostElement.getMoorhenInstance();
-                    const segments = path.split(".").filter(Boolean);
-                    if (segments.length === 0) {
-                        throw new Error("methodPath must not be empty");
-                    }
-
-                    let target: unknown = instance;
-                    for (let i = 0; i < segments.length - 1; i++) {
-                        const key = segments[i];
-                        target = (target as Record<string, unknown>)?.[key];
-                        if (target === undefined || target === null) {
-                            throw new Error(`Path '${path}' is invalid at '${key}'`);
-                        }
-                    }
-
-                    const methodName = segments[segments.length - 1];
-                    const method = (target as Record<string, unknown>)?.[methodName];
-                    if (typeof method !== "function") {
-                        throw new Error(`Path '${path}' does not resolve to a function`);
-                    }
-
-                    return await (method as (...innerArgs: unknown[]) => unknown).apply(target, methodArgs);
-                },
-                { targetId: elementId, path: methodPath, methodArgs: args }
-            );
-
-            return result as T;
-        },
-        getObjectCounts: () => getMoorhenObjectCounts(page, elementId),
-        getSceneSettings: () => getSceneSettingsSnapshot(page, elementId),
-        getWebGLStats: () => getWebGLCanvasStats(page, elementId),
+        getInstance: () => getMoorhenInstance(page, elementId),
         buttonClick: async (ariaLabel: string): Promise<void> => {
             await page.evaluate(
                 ({ targetId, label }) => {
@@ -97,8 +64,6 @@ export async function startAndGetInstance(page: Page, elementId = "moorhen-test"
                 { targetId: elementId, label: ariaLabel }
             );
         },
-        waitForWebGLRenderSettle: options => waitForWebGLRenderSettle(page, { ...options, elementId }),
-        assertPageScreenshotBaseline: options => assertPageScreenshotBaseline(page, options),
     };
 }
 

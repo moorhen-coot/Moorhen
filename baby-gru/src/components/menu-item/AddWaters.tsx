@@ -49,7 +49,7 @@ export const AddWaters = () => {
             <MoorhenMoleculeSelect molecules={molecules} ref={moleculeSelectRef} allowAny={false} />
             <MoorhenMapSelect maps={maps} ref={mapSelectRef} />
             <MoorhenNumberInput label="RMSD cutoff" type="number" value={sigmaMap} setValue={val => setSigmaMap(+val)} />
-            <MoorhenButton onClick={onCompleted}> OK</MoorhenButton>
+            <MoorhenButton onClick={onCompleted} ariaLabel="Add Waters"> OK</MoorhenButton>
         </MoorhenStack>
     );
 };

@@ -6,8 +6,6 @@ import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 
-("Add simple...");
-
 export const AddSimple = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
 
@@ -61,7 +59,7 @@ export const AddSimple = () => {
             </MoorhenSelect>
             <MoorhenMoleculeSelect allowAny={false} ref={moleculeSelectRef} />
             </MoorhenStack>
-            <MoorhenButton onClick={onCompleted}>OK</MoorhenButton>
+            <MoorhenButton onClick={onCompleted} ariaLabel="Add simple molecule">OK</MoorhenButton>
         </>
     );
 };

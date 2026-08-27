@@ -11,8 +11,6 @@ The 823-line `webcomponent.ts` file has been split into focused, maintainable mo
 - `PageScreenshotBaselineOptions` — Full-page screenshot with canvas crop & subfolder support
 - `WebGLCanvasStats` — WebGL canvas state metrics
 - `MoorhenStartedSession` — Main test harness interface
-- `MoorhenLoadResult` — File loading result type
-- `MoorhenLoadFilesInput` — File loading input union type
 - `WebGLSettleOptions` — WebGL render settling configuration
 - `SceneSettingsSnapshot` — Scene settings state
 
@@ -57,13 +55,15 @@ The 823-line `webcomponent.ts` file has been split into focused, maintainable mo
 
 ---
 
-### `moorhenInstance.ts` (136 lines)
-**Moorhen instance interaction and state management**
+### `moorhenInstance.ts`
+**Remote proxy over the live MoorhenInstance + render settling**
 
-**Functions:**
-- `loadFilesViaMoorhenInstance()` — Load molecule/map files via Moorhen API
-- `getMoorhenObjectCounts()` — Query loaded molecule & map counts
-- `getSceneSettingsSnapshot()` — Read current scene settings (axes, outline, projection, bg color)
+**Exports:**
+- `getMoorhenInstance()` — Return a thenable + callable + async-iterable proxy typed as the real `MoorhenInstance`, so tests drive the application API directly:
+  - `await mi.getMoleculeList()[0].getNumberOfAtoms()` — method chains
+  - `await mol.molNo` — property reads
+  - `for await (const mol of mi.getMoleculeList()) { ... }` — iteration
+  - `const loaded = await mi.files.loadFiles([...])` — JSON-serializable results
 - `waitForWebGLRenderSettle()` — Wait for WebGL rendering to stabilize after changes
 
 ---
@@ -72,9 +72,11 @@ The 823-line `webcomponent.ts` file has been split into focused, maintainable mo
 **Main entry point and re-exports**
 
 **Primary export:**
-- `startAndGetInstance()` — High-level test harness initialization returning `MoorhenStartedSession`
+- `startAndGetInstance()` — Start the web component and return a minimal harness:
+  - `getInstance()` — the remote instance proxy (see `moorhenInstance.ts`)
+  - `buttonClick(ariaLabel)` — click a shadow-DOM button by aria-label
 
-**Re-exports:** All types and functions from submodules for convenience
+**Re-exports:** All types and standalone utilities (screenshots, WebGL stats/settle, page setup) for convenience
 
 ---
 

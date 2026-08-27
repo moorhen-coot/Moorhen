@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useEffect, useState } from "react";
 import { setOrigin } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
-import { usePaths } from "../../InstanceManager";
+import { useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
 import {
@@ -23,7 +23,7 @@ import { modalKeys } from "../../utils/enums";
 import { readGzippedTextFile } from "../../utils/utils";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
-import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
+import { MoorhenMenuItem, MoorhenStack, PanelErrorBoundary} from "../interface-base";
 import { MoorhenLinearProgress } from "../icons";
 
 
@@ -58,6 +58,10 @@ export const MoorhenDevMenu = () => {
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
     const [conKitFile1Contents, setConKitFile1Contents] = useState<string>("");
     const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
+
+    const moorhenInstance = useMoorhenInstance();
+
+    
 
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
@@ -306,6 +310,11 @@ export const MoorhenDevMenu = () => {
     };
 
     const origin = useSelector((state: RootState) => state.sceneSettings.origin);
+    const zoom = useSelector((state: RootState) => state.sceneSettings.zoom);
+
+    const [nAtomsMol0, setNAtomsMol0] = useState<number>(0);
+
+
 
     // const tomogramTest = () => {
     //     enqueueSnackbar("tomogram", {
@@ -317,11 +326,16 @@ export const MoorhenDevMenu = () => {
     // };
 
     return (
+        <PanelErrorBoundary >
         <MoorhenStack>
+            
+            
             {/* <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem> */}
-            Origin: x: {origin[0].toFixed(1)} y: {origin[1].toFixed(1)} z: {origin[2].toFixed(1)}
+            Number of atoms in molecule 0: {nAtomsMol0} <MoorhenButton onClick={async () => setNAtomsMol0(await moorhenInstance.getMoleculeList()[0]?.getNumberOfAtoms() || 0)}>Refresh</MoorhenButton>
+            Origin: x: {origin[0].toFixed(1)} y: {origin[1].toFixed(1)} z: {origin[2].toFixed(1)} <br/>
+            Zoom: {zoom.toFixed(2)}
             <MoorhenStack card>
-                set Origin
+                set Originsds
                 <MoorhenNumberInput
                     value={origin[0]}
                     setValue={val => {
@@ -415,6 +429,6 @@ export const MoorhenDevMenu = () => {
                 label="Show validation panel"
             />
 
-        </MoorhenStack>
+        </MoorhenStack></PanelErrorBoundary>
     );
 };

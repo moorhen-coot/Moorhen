@@ -7,9 +7,9 @@
 Capture only the center portion of the canvas to reduce image size and storage:
 
 ```typescript
-import { startAndGetInstance } from './helpers/webcomponent';
+import { assertPageScreenshotBaseline, startAndGetInstance } from './helpers';
 
-await instance.assertPageScreenshotBaseline({
+await assertPageScreenshotBaseline(page, {
     snapshotName: 'webgl-scene-default',
     canvasOnly: true,
     centerCrop: {
@@ -34,7 +34,7 @@ await instance.assertPageScreenshotBaseline({
 Organize snapshots into subdirectories to keep the snapshots folder clean:
 
 ```typescript
-await instance.assertPageScreenshotBaseline({
+await assertPageScreenshotBaseline(page, {
     snapshotName: 'settings-backgroundColor-blue',
     canvasOnly: true,
     snapshotSubfolder: 'scene-settings-variants',
@@ -61,10 +61,12 @@ For comprehensive WebGL testing with organized storage:
 
 ```typescript
 // Test all scene settings variations
-const testSceneSettings = async (instance: MoorhenStartedSession) => {
-    await instance.waitForWebGLRenderSettle();
-    
-    await instance.assertPageScreenshotBaseline({
+import { assertPageScreenshotBaseline, waitForWebGLRenderSettle } from './helpers';
+
+const testSceneSettings = async (page: Page) => {
+    await waitForWebGLRenderSettle(page);
+
+    await assertPageScreenshotBaseline(page, {
         snapshotName: 'scene-axes-on',
         canvasOnly: true,
         snapshotSubfolder: 'scene-settings-variants',

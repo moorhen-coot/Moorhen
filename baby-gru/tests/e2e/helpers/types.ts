@@ -1,4 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
+import type { MoorhenInstance } from "@/InstanceManager";
 
 export type CanvasScreenshotBaselineOptions = {
     snapshotName: string | string[];
@@ -45,31 +46,9 @@ export type MoorhenStartedSession = {
     page: Page;
     host: Locator;
     elementId: string;
-    loadFiles: (files: MoorhenLoadFilesInput, origin?: string) => Promise<MoorhenLoadResult[]>;
-    callInstanceMethod: <T = unknown>(methodPath: string, ...args: unknown[]) => Promise<T>;
-    getObjectCounts: () => Promise<{ moleculeCount: number; mapCount: number }>;
-    getSceneSettings: () => Promise<SceneSettingsSnapshot>;
-    getWebGLStats: () => Promise<WebGLCanvasStats>;
+    getInstance: () => Promise<MoorhenInstance>;
     buttonClick: (ariaLabel: string) => Promise<void>;
-    waitForWebGLRenderSettle: (options?: Omit<WebGLSettleOptions, "elementId">) => Promise<WebGLCanvasStats>;
-    assertPageScreenshotBaseline: (options: PageScreenshotBaselineOptions) => Promise<void>;
 };
-
-export type MoorhenLoadResult = {
-    type: "molecule" | "map";
-    fileName: string;
-};
-
-export type MoorhenLoadFilesInput =
-    | File[]
-    | File
-    | FileList
-    | string
-    | string[]
-    | URL
-    | URL[]
-    | { url: string | URL; filename: string }[]
-    | { url: string | URL; filename: string };
 
 export type WebGLSettleOptions = {
     elementId?: string;
