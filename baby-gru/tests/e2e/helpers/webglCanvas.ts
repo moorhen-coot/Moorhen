@@ -37,6 +37,29 @@ export async function getWebGLCanvasLocator(page: Page, webComponentId: string):
     return page.locator(`#${webComponentId}`).locator(`canvas[${markerAttr}="1"]`).first();
 }
 
+/**
+ * Hide or show the WebGL canvas via the web component's genuine hide/show API
+ * (`hideWebGLCanvas` / `showWebGLCanvas`). Unlike Playwright masking, only the
+ * canvas element itself is hidden — DOM elements layered on top of it (2D
+ * overlays, UI controls) remain visible.
+ */
+export async function setWebGLCanvasVisible(page: Page, webComponentId: string, visible: boolean): Promise<void> {
+    await page.evaluate(({ targetId, shouldShow }) => {
+        const host = document.getElementById(targetId) as (HTMLElement & {
+            hideWebGLCanvas?: () => void;
+            showWebGLCanvas?: () => void;
+        }) | null;
+        if (!host) {
+            return;
+        }
+        if (shouldShow) {
+            host.showWebGLCanvas?.();
+        } else {
+            host.hideWebGLCanvas?.();
+        }
+    }, { targetId: webComponentId, shouldShow: visible });
+}
+
 export async function setCanvasCaptureIsolation(page: Page, webComponentId: string, enabled: boolean): Promise<void> {
     await page.evaluate(({ targetId, shouldEnable }) => {
         const host = document.getElementById(targetId) as HTMLElement | null;

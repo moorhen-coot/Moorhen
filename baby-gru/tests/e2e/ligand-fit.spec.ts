@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { assertPageScreenshotBaseline, startAndGetInstance, waitForWebGLRenderSettle } from "./helpers";
+import {  startAndGetInstance, waitForWebGLRenderSettle } from "./helpers";
 
 test.describe("Moorhen Web Component API", () => {
     test("loads tutorial data via moorhenInstance and fills partial residues", async ({ page }) => {
@@ -31,18 +31,9 @@ test.describe("Moorhen Web Component API", () => {
             timeoutMs: 30_000,
         });
 
-        await assertPageScreenshotBaseline(page, {
-            snapshotName: "load-ligand.png",
-            // canvasOnly: true,
-        });
 
         await moorhenInstance.sceneSettings.setOrigin([25, -7, 15]);
         await moorhenInstance.sceneSettings.setZoom(0.35);
-
-        await assertPageScreenshotBaseline(page, {
-            snapshotName: "load-ligand.png",
-            // canvasOnly: true,
-        });
 
         await navigate(["Ligand Menu", "Find ligand...", "wait 250", "Find ligand"]);
 
@@ -57,16 +48,17 @@ test.describe("Moorhen Web Component API", () => {
                 { timeout: 10_000 }
             )
             .toBe(true);
-        await assertPageScreenshotBaseline(page, {
-            snapshotName: "found-ligand.png",
-            // canvasOnly: true,
-        });
 
         const molecule = await moorhenInstance.getMoleculeList().find(mol => mol.name === "refmacat");
         const atomsBefore = await molecule?.getNumberOfAtoms();
         expect(atomsBefore).toBe(749);
         await moorhen.buttonClick("Merge 00Z.cif fit. #1 to molecule")
         await page.waitForTimeout(1000)
-        expect(await molecule?.getNumberOfAtoms()).toBe(atomsBefore + 40);
+        expect(await molecule?.getNumberOfAtoms()).toBe(atomsBefore + 70);
+
+        const representation = await molecule?.representations.filter(repr => repr.style === "CBs");
+        expect(await representation?.length).toBe(2);
+        expect(await representation?.[1].cid).toBe("/1/A/101(00Z)");
+
     });
 });

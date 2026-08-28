@@ -63,6 +63,7 @@ const LigandHitCard = (props: {
     );
 
     const handleMerge = useCallback(async () => {
+        await props.ligandMolecule.updateAtoms(); 
         const selectedMolecule = molecules.find(molecule => molecule.molNo === props.selectedMolNo);
         if (selectedMolecule) {
             await selectedMolecule.mergeMolecules([props.ligandMolecule], true);
@@ -99,7 +100,7 @@ const LigandHitCard = (props: {
             </MoorhenButton>
 
             <MoorhenButton
-                onClick={() => handleRefinement(props.ligandMolecule)}
+                onClick={async () => {await props.ligandMolecule.updateAtoms(); handleRefinement(props.ligandMolecule); }}
                 tooltip="Refine"
                 type="icon-only"
                 icon="MatSymCrisisAlert"

@@ -728,7 +728,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     render() {
-        return <canvas ref={this.canvasRef} height={this.state.width} width={this.state.height} />;
+        return <canvas ref={this.canvasRef} className="moorhen-webgl-canvas" height={this.state.width} width={this.state.height} />;
     }
 
     draw() {

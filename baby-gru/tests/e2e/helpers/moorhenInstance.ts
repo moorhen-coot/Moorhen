@@ -20,9 +20,9 @@ import { getWebGLCanvasStats } from "./webglCanvas";
 // Rules of thumb:
 //   - Method calls and property reads are evaluated lazily in the browser;
 //     `await` a proxy to obtain its value.
-//   - `await <proxy>` JSON-serializes the value at that point. Prefer leaf
-//     reads (`await mol.molNo`) over serializing rich objects (molecules hold
-//     circular references and are not JSON-serializable).
+//   - `await <proxy>` resolves to JSON for plain data (primitives, loadFiles
+//     results) and to a non-thenable proxy for rich application objects (the
+//     instance itself, molecules) so chained calls keep working.
 //   - Iteration is async only: `for await (...)`.
 //   - Optional chaining is honoured: `list[0]?.method()` evaluates to `undefined`
 //     when `list[0]` is missing instead of throwing.
@@ -47,42 +47,8 @@ type RemoteProxy = {
 // Evaluate a chain of get/call steps against a handle inside the browser,
 // preserving `this` for method calls, and return a handle to the result.
 async function evaluateSteps(handle: JSHandle<unknown>, steps: RemoteStep[]): Promise<JSHandle<unknown>> {
-    // Functions cannot cross the Playwright serialization boundary, so encode
-    // any function found in a call step's args as a marker; the page side
-    // revives it via `new Function(...)` before invoking the method.
-    const serializeForRemote = (value: unknown): unknown => {
-        if (typeof value === "function") {
-            return { __remoteFn: value.toString() };
-        }
-        if (Array.isArray(value)) {
-            return value.map(serializeForRemote);
-        }
-        if (value !== null && typeof value === "object") {
-            return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, serializeForRemote(val)]));
-        }
-        return value;
-    };
-    const serializedSteps: RemoteStep[] = steps.map(step =>
-        step.kind === "call" ? { kind: "call", args: step.args.map(serializeForRemote) } : step
-    );
-
     return (await handle.evaluateHandle(
         (initialValue, stepsList) => {
-            const reviveArg = (value: unknown): unknown => {
-                if (value !== null && typeof value === "object") {
-                    const marker = value as { __remoteFn?: unknown };
-                    if (typeof marker.__remoteFn === "string") {
-                        // eslint-disable-next-line no-new-func
-                        return new Function(`return (${marker.__remoteFn})`)();
-                    }
-                    if (Array.isArray(value)) {
-                        return value.map(reviveArg);
-                    }
-                    return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, reviveArg(val)]));
-                }
-                return value;
-            };
-
             let owner: unknown = initialValue;
             let target: unknown = initialValue;
             for (const step of stepsList) {
@@ -97,13 +63,12 @@ async function evaluateSteps(handle: JSHandle<unknown>, steps: RemoteStep[]): Pr
                         // instead of throwing, so `expect.poll` keeps retrying.
                         return undefined;
                     }
-                    const args = step.args.map(reviveArg);
-                    target = (target as (...args: unknown[]) => unknown).apply(owner, args);
+                    target = (target as (...args: unknown[]) => unknown).apply(owner, step.args);
                 }
             }
             return target;
         },
-        serializedSteps
+        steps
     )) as JSHandle<unknown>;
 }
 
@@ -128,13 +93,28 @@ function createRemoteProxy(page: Page, ref: RemoteRef, options?: { nonThenable?:
                 return (resolve: (value: unknown) => void, reject: (error: unknown) => void) => {
                     (async () => {
                         const valueHandle = await evaluateSteps(ref.handle, ref.steps);
-                        try {
-                            resolve(await valueHandle.jsonValue());
-                        } catch {
-                            // Rich object (e.g. the MoorhenInstance itself or a
-                            // molecule) that cannot be JSON-serialized: resolve
-                            // with a non-thenable proxy so chained calls keep
-                            // working (e.g. `const mi = await getInstance()`).
+                        // Deterministic (browser-independent) probe: `await <proxy>`
+                        // resolves to the JSON value when the target is plain data
+                        // (primitives, loadFiles results) and to a non-thenable
+                        // proxy when the target is a rich application object (the
+                        // MoorhenInstance itself, molecules) so chained calls keep
+                        // working (e.g. `const mi = await getInstance()`).
+                        const result = await valueHandle.evaluate((value: unknown) => {
+                            if (value === null) {
+                                return { kind: "plain", json: null };
+                            }
+                            if (typeof value !== "object") {
+                                return { kind: "plain", json: value };
+                            }
+                            try {
+                                return { kind: "plain", json: JSON.parse(JSON.stringify(value)) };
+                            } catch {
+                                return { kind: "rich" };
+                            }
+                        });
+                        if (result.kind === "plain") {
+                            resolve(result.json);
+                        } else {
                             resolve(createRemoteProxy(page, ref, { nonThenable: true }));
                         }
                     })().catch(reject);

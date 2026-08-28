@@ -27,6 +27,8 @@ The 823-line `webcomponent.ts` file has been split into focused, maintainable mo
   - Center crop support (`centerCrop: {width, height}`)
   - Snapshot subfolder organization (`snapshotSubfolder: "path"`)
   - Canvas isolation for UI-free capture
+  - Genuine WebGL canvas hiding (`hideWebGLCanvas: true`) to ignore an unstable canvas
+    (only the canvas is hidden — overlays on top stay visible)
 
 ---
 

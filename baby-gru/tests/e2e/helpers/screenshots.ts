@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import type { CanvasScreenshotBaselineOptions, PageScreenshotBaselineOptions } from "./types";
 //@ts-ignore
-import { getWebGLCanvasLocator, setCanvasCaptureIsolation } from "./webglCanvas";
+import { getWebGLCanvasLocator, setCanvasCaptureIsolation, setWebGLCanvasVisible } from "./webglCanvas";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -128,12 +128,19 @@ export async function assertPageScreenshotBaseline(page: Page, options: PageScre
         isolateCanvas = true,
         snapshotSubfolder,
         centerCrop,
+        hideWebGLCanvas = false,
     } = options;
     const testInfo = test.info();
     const comparisonPolicy = getScreenshotComparisonPolicy();
     const maxDiffOption = comparisonPolicy.maxDiffPixelRatio !== undefined
         ? { maxDiffPixelRatio: comparisonPolicy.maxDiffPixelRatio }
         : { maxDiffPixels: comparisonPolicy.maxDiffPixels ?? 0 };
+
+    if (hideWebGLCanvas && canvasOnly) {
+        throw new Error(
+            "`hideWebGLCanvas` cannot be combined with `canvasOnly` — hiding the canvas you are capturing makes the assertion meaningless."
+        );
+    }
     const resolvedSnapshotName = withBrowserSpecificSuffix(snapshotName, testInfo.project.name);
     const baseName = Array.isArray(resolvedSnapshotName) ? resolvedSnapshotName.join("/") : resolvedSnapshotName;
     const screenshotPath = snapshotSubfolder
@@ -178,8 +185,13 @@ export async function assertPageScreenshotBaseline(page: Page, options: PageScre
 
     const shouldUseCenterCrop = Boolean(targetCanvas && centerCrop && canvasOnly);
     const shouldIsolateCanvas = Boolean(targetCanvas && isolateCanvas && canvasSelector === "canvas");
+    const shouldHideWebGLCanvas = Boolean(hideWebGLCanvas && !canvasOnly);
 
     try {
+        if (shouldHideWebGLCanvas) {
+            await setWebGLCanvasVisible(page, webComponentId, false);
+        }
+
         if (shouldIsolateCanvas) {
             await setCanvasCaptureIsolation(page, webComponentId, true);
         }
@@ -254,6 +266,9 @@ export async function assertPageScreenshotBaseline(page: Page, options: PageScre
             ].join("\n")
         );
     } finally {
+        if (shouldHideWebGLCanvas) {
+            await setWebGLCanvasVisible(page, webComponentId, true);
+        }
         if (shouldIsolateCanvas) {
             await setCanvasCaptureIsolation(page, webComponentId, false);
         }

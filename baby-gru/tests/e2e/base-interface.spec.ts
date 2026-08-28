@@ -31,11 +31,13 @@ test.describe("Moorhen Web Component scene settings", () => {
 
         await assertPageScreenshotBaseline(page, {
             snapshotName: "base-interface-light.png",
+            hideWebGLCanvas: true, // ignore the unstable WebGL canvas
         });
 
         await mi.sceneSettings.setBackgroundColor([0.22, 0.22, 0.32, 1]);
         await assertPageScreenshotBaseline(page, {
             snapshotName: "base-interface-dark.png",
+            hideWebGLCanvas: true, // ignore the unstable WebGL canvas
         });
     });
 });

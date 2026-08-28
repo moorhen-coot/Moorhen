@@ -90,6 +90,36 @@ snapshots/
 
 ---
 
+### 4. Ignore an Unstable WebGL Canvas (`hideWebGLCanvas`)
+
+Genuinely hide the WebGL canvas so its (potentially unstable) rendering does
+not cause the full-page screenshot comparison to fail. Only the canvas element
+itself is hidden — DOM elements layered on top of it (2D overlays, axes,
+crosshairs, UI controls) remain visible, unlike a full-box mask:
+
+```typescript
+import { assertPageScreenshotBaseline, startAndGetInstance } from './helpers';
+
+await assertPageScreenshotBaseline(page, {
+    snapshotName: 'ui-shell-ignoring-webgl.png',
+    hideWebGLCanvas: true,
+});
+```
+
+**How it works:**
+- Calls the web component's genuine `hideWebGLCanvas()` / `showWebGLCanvas()`
+  API before/after the screenshot (see `MoorhenWebComponent.tsx`)
+- The canvas has a stable `moorhen-webgl-canvas` className hook used to target it
+- Only applies to page/section captures; it cannot be combined with
+  `canvasOnly` (there is no canvas left to compare)
+- The canvas is always restored in a `finally` block, even on failure
+
+**Example use case:** Asserting the surrounding UI (panels, menus, buttons)
+stays stable while the WebGL scene itself is animated or varies between runs,
+while keeping any in-canvas overlays in the comparison.
+
+---
+
 ## Type Definition
 
 ```typescript
@@ -100,11 +130,12 @@ export type PageScreenshotBaselineOptions = {
     canvasSelector?: string;
     webComponentId?: string;
     isolateCanvas?: boolean;
-    snapshotSubfolder?: string;           // NEW: organize into subfolders
-    centerCrop?: {                        // NEW: crop canvas to center region
+    snapshotSubfolder?: string;           // organize into subfolders
+    centerCrop?: {                        // crop canvas to center region
         width: number;
         height: number;
     };
+    hideWebGLCanvas?: boolean;            // genuinely hide an unstable WebGL canvas
 };
 ```
 

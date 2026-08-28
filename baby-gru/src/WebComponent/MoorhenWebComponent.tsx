@@ -43,6 +43,30 @@ export class MoorhenWebComponent extends HTMLElement {
     get ready(): boolean {
         return this._ready;
     }
+
+    /**
+     * Genuinely hide the WebGL canvas only. Any DOM elements layered on top of it
+     * (2D overlays, UI controls, etc.) stay visible. Useful to ignore unstable
+     * WebGL rendering during screenshot comparisons.
+     */
+    public hideWebGLCanvas(): void {
+        this.setWebGLCanvasVisibility(false);
+    }
+
+    /**
+     * Restore the WebGL canvas after {@link hideWebGLCanvas}.
+     */
+    public showWebGLCanvas(): void {
+        this.setWebGLCanvasVisibility(true);
+    }
+
+    private setWebGLCanvasVisibility(visible: boolean): void {
+        const canvas = this.shadowRoot?.querySelector<HTMLCanvasElement>("canvas.moorhen-webgl-canvas");
+        if (!canvas) {
+            return;
+        }
+        canvas.style.visibility = visible ? "" : "hidden";
+    }
     //---------------------------------------
     // setter and getter for attributes with side effects to trigger re-render of the react tree when they change
     private _width: number | string | null = null;

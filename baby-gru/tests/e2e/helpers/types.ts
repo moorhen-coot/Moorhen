@@ -18,6 +18,14 @@ export type PageScreenshotBaselineOptions = {
         width: number;
         height: number;
     };
+    /**
+     * When true, the WebGL canvas is genuinely hidden (only the canvas element
+     * itself, not overlays layered on top of it) before the page screenshot is
+     * compared. Use this to ignore the WebGL canvas when its rendering is
+     * unstable or not relevant to the assertion. Only applies to page/section
+     * captures (not `canvasOnly`).
+     */
+    hideWebGLCanvas?: boolean;
 };
 
 export type WebGLCanvasStats = {
