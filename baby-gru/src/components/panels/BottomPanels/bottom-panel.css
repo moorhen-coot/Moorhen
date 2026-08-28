@@ -41,6 +41,14 @@
     background-color: var(--moorhen-background-shaded);
     transform: translateY(3px);
     clip-path: inset(0 0 4px 0);
+    color: var(--moorhen-inactive-tab);
+    padding: 0rem;
+}
+
+.moorhen__bottom-panel-tab:hover {
+    box-shadow: var(--moorhen-focus-shadow) -5px 0px 5px;
+    border-color: var(--moorhen-focus);
+    border-bottom: none;
 }
 
 .moorhen__bottom-panel-button {
@@ -50,5 +58,18 @@
     padding: 0;
     margin: 0;
     cursor: pointer;
+    color: inherit;
+}
+
+.moorhen__bottom-panel-button.background {
+    width: 100%;
+    height: 100%;
+}
+
+.moorhen__bottom-panel-button.background:hover {
+    box-shadow: var(--moorhen-focus-shadow) -5px 0px 5px;
+    border-color: var(--moorhen-focus);
+    border-bottom: none;
     color: var(--moorhen-primary);
+    text-shadow: 0px 0px 5px var(--moorhen-focus);
 }
