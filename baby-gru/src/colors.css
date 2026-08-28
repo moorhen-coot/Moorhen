@@ -49,6 +49,7 @@
     --moorhen-focus-shadow: hsl(var(--base-accent-hue) 68% 50% / 0.25);
     --moorhen-error-shadow: hsl(var(--base-error-hue) 50% 42% / 0.25);
     --moorhen-inactive-shadow: hsl(0 0% 0% / 0.2);
+    --moorhen-inactive-tab: hsl(var(--base-neutral-hue) 0% 30%);
     --moorhen-shadow-focus-style: 2px 2px 4px 3px var(--moorhen-focus-shadow);
 
     /* Icon brightness */
@@ -61,12 +62,12 @@
     --moorhen-primary: hsl(var(--base-neutral-hue) 0% 87%);
     --moorhen-secondary: hsl(var(--base-neutral-hue) 11% 15%);
     --moorhen-background: hsl(var(--base-neutral-hue) 4% 18%);
-    --moorhen-background-shadded: hsl(var(--base-neutral-hue) 4% 35%);
+    --moorhen-background-shaded: hsl(var(--base-neutral-hue) 4% 26%);
     --moorhen-background-header: hsl(var(--base-neutral-hue) 0% 38%);
     --moorhen-background-header-secondary: hsl(var(--base-neutral-hue) 0% 43%);
     --moorhen-border: hsl(var(--base-neutral-hue) 10% 81%);
     --moorhen-input-background: hsl(var(--base-neutral-hue) 0% 21%);
-    --moorhen-disabled: hsl(var(--base-neutral-hue) 7% 46%);
+    --moorhen-disabled: hsl(var(--base-neutral-hue) 2% 60%);
 
     /* Button colors for dark theme */
     --moorhen-button-background: hsl(var(--base-accent-hue) 32% 51%);
@@ -77,6 +78,7 @@
     --moorhen-focus-shadow: hsl(var(--base-accent-hue) 92% 53% / 0.25);
     --moorhen-error-shadow: hsl(var(--base-error-hue) 67% 53% / 0.25);
     --moorhen-inactive-shadow: hsl(0 0% 65% / 0.397);
+    --moorhen-inactive-tab: hsl(var(--base-neutral-hue) 10% 70%);
 
     /* Icon brightness for dark theme */
     --moorhen-icon-brightness: 0.9;
