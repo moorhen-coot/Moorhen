@@ -121,7 +121,7 @@ function pow10ofT<T extends number | [number, number]>(val: T, resolveInverseSca
  * @prop {boolean} [piWaitReturn=false]
  *   If true, the precise input only updates the value when Enter is pressed.
  *
- * @prop {[number, number]} [piMinMax]
+ * @prop {number[]} [piMinMax]
  *   Min and max value constraints for the precise input field. Defaults to [minVal, maxVal].
  *
  * @prop {number} [tickSpacing=5]
