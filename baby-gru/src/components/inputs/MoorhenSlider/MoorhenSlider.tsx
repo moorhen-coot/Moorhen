@@ -74,67 +74,125 @@ function pow10ofT<T extends number | [number, number]>(val: T, resolveInverseSca
 }
 
 /**
- * MoorhenSlider component - A customizable slider control with support for logarithmic scaling,
- * precise input, and increment/decrement buttons.
+ * MoorhenSlider component.
+ *
+ * A configurable slider supporting linear, logarithmic and asinh scaling,
+ * optional range selection, tick marks, labels, precise numeric input,
+ * and increment/decrement buttons.
  *
  * @prop {number} value
- *   The current value of the slider, controlled by the parent component.
+ *   Current value of the primary slider.
  *
- * @prop {function} setvalue
- *   Callback function to update the value in the parent component. Receives the new value as argument.
+ * @prop {(value: number) => void} setValue
+ *   Callback used to update the primary value.
  *
- * @prop {boolean} [logScale=false]
- *   If true, the slider operates on a logarithmic scale internally while displaying linear values.
+ * @prop {"linear"|"log"|"asinh"} [scale="linear"]
+ *   Scaling mode used by the slider.
+ *
+ *   - "linear": uniform spacing
+ *   - "log": logarithmic spacing (base 10)
+ *   - "asinh": inverse hyperbolic sine spacing
  *
  * @prop {number} [minVal=0]
- *   The minimum value of the slider range.
+ *   Minimum permitted slider value.
  *
  * @prop {number} [maxVal=100]
- *   The maximum value of the slider range.
+ *   Maximum permitted slider value.
  *
- * @prop {string} [sliderTitle=""]
- *   The label/title displayed above the slider. If empty, no title is shown.
+ * @prop {string} [sliderTitle]
+ *   Optional title displayed above the slider.
+ *
+ * @prop {number} [sliderPrecision]
+ *   Precision used internally by the native range input.
+ *   Defaults to 10^-decimalPlaces.
  *
  * @prop {number} [decimalPlaces=0]
- *   Number of decimal places to display for the value and use for precision.
+ *   Number of decimal places displayed when showing values.
+ *
+ * @prop {boolean} [showTitleValue=true]
+ *   Whether the current value should be displayed in the title.
+ *
+ * @prop {string} [sliderTitleUnit]
+ *   Optional unit string appended to displayed values.
  *
  * @prop {boolean} [showLabels=true]
- *   Whether to display the min and max values below the slider track.
+ *   Whether labels are shown beneath the slider.
  *
- * @prop {boolean} [showButtons=true]
- *   Whether to show increment/decrement buttons on the left and right sides of the slider.
+ * @prop {Array<{value:number,label:string,tick?:boolean,colour?:string}>} [labels]
+ *   Custom labels positioned along the slider.
  *
- * @prop {number} [stepButtons]
- *   Step size for the increment/decrement buttons. If not provided, defaults to 1/100th of the range.
- *   For logarithmic sliders, this represents the step in log space.
- *
- * @prop {boolean} [isDisabled=false]
- *   If true, disables the slider and all its interactive controls.
- *
- * @prop {boolean} [usePreciseInput=false]
- *   If true, replaces the value display with an editable precise numeric input field.
- *
- * @prop {string | number} [piWidth]
- *   Width of the precise input field (when usePreciseInput is true).
- *   If not provided, width is calculated based on decimal places.
- *
- * @prop {boolean} [piWaitReturn=false]
- *   If true, the precise input only updates the value when Enter is pressed.
- *
- * @prop {number[]} [piMinMax]
- *   Min and max value constraints for the precise input field. Defaults to [minVal, maxVal].
+ * @prop {boolean} [showTicks=false]
+ *   Whether tick marks are displayed along the slider.
  *
  * @prop {number} [tickSpacing=5]
- *   Linear-scale spacing between minor ticks.
+ *   Minor tick spacing.
+ *
+ *   For linear scales this is expressed in value units.
+ *   For logarithmic scales this corresponds to the mantissa increment.
  *
  * @prop {number} [majorTickSpacing]
- *   Linear-scale spacing between major ticks.
+ *   Major tick spacing for linear scales.
  *
  * @prop {number} [logMinorTickStep]
- *   Log-scale mantissa increment within each decade. For example, `1` gives 2..9, 20..90, 200..900.
+ *   Mantissa increment used for logarithmic minor ticks.
  *
  * @prop {number} [logMajorTickBase]
- *   Log-scale base mantissa for major ticks. For example, `1` gives 1, 10, 100, 1000.
+ *   Base mantissa used for logarithmic major ticks.
+ *
+ * @prop {boolean} [autoLabelMajorTicks=false]
+ *   Whether major ticks should automatically generate labels.
+ *
+ * @prop {boolean} [tickInside=false]
+ *   Draw tick marks inside the track rather than outside.
+ *
+ * @prop {boolean} [showButtons=true]
+ *   Whether increment/decrement buttons are displayed.
+ *
+ * @prop {number} [stepButtons]
+ *   Increment applied by the side buttons.
+ *
+ * @prop {number} [step]
+ *   Value quantisation step applied to slider movement.
+ *
+ * @prop {number[]} [allowedValues]
+ *   Restricts slider values to the closest member of this list.
+ *
+ * @prop {boolean} [isDisabled=false]
+ *   Disables all slider interaction.
+ *
+ * @prop {boolean} [usePreciseInput=false]
+ *   Replaces the displayed value with editable numeric input fields.
+ *
+ * @prop {string|number} [piWidth]
+ *   Width of the precise input field.
+ *
+ * @prop {boolean} [piWaitReturn=true]
+ *   If true, updates from the precise input occur only after Enter is pressed.
+ *
+ * @prop {number[]} [piMinMax]
+ *   Minimum and maximum values for the precise input.
+ *   Two-element array: [min, max].
+ *
+ * @prop {string} [colour]
+ *   Accent colour used for buttons.
+ *
+ * @prop {React.CSSProperties} [style]
+ *   Additional styles applied to the root container.
+ *
+ * @prop {string} [ariaLabel]
+ *   Accessible label for the slider.
+ *
+ * @prop {(value:number) => string} [getAriaValueText]
+ *   Returns a human-readable string for assistive technologies.
+ *
+ * @prop {number} [value2]
+ *   Secondary value when `type="range"`.
+ *
+ * @prop {(value:number) => void} [setValue2]
+ *   Callback used to update the secondary value when `type="range"`.
+ *
+ * @prop {"range"} [type]
+ *   Enables dual range selection.
  */
 
 export const MoorhenSlider = (props: MoorhenSliderProps) => {
