@@ -1,0 +1,667 @@
+import Fasta from "biojs-io-fasta";
+import pako from "pako";
+import type { Dispatch, Store } from "redux";
+import { MoorhenInstance } from "@/InstanceManager";
+import { CommandCentre } from "@/InstanceManager/CommandCentre";
+import { MoorhenReduxStoreType, enqueueSnackbar, setSeqViewerOption, setShownBottomPanel } from "@/store";
+import { moorhensession } from "../protobuf/MoorhenSession";
+import { setActiveMap } from "../store/generalStatesSlice";
+import { setValidationJson } from "../store/jsonValidation";
+import { addMap, addMapList } from "../store/mapsSlice";
+import { showModal } from "../store/modalsSlice";
+import { addCustomRepresentation, addMoleculeList } from "../store/moleculesSlice";
+import { setAfJson, setEsmJson, setHomologsJson, setMrParseModels, setTargetSequence } from "../store/mrParseSlice";
+import { moorhen } from "../types/moorhen";
+import { MoorhenMap } from "./MoorhenMap";
+import { MoorhenMolecule } from "./MoorhenMolecule";
+import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
+import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
+import { modalKeys } from "./enums";
+
+interface MrParsePDBModelJson {
+    chain_id: string;
+    ellg: number;
+    frac_scat: null | number;
+    length: number;
+    molecular_weight: number;
+    name: string;
+    ncopies: null | number;
+    pdb_file: null | string;
+    pdb_id: string;
+    pdb_url: string;
+    query_start: number;
+    query_stop: number;
+    range: string;
+    region_id: number;
+    region_index: number;
+    resolution: number;
+    rmsd: null | number;
+    score: number;
+    seq_ident: number;
+    total_frac_scat: null | number;
+    total_frac_scat_known: null | number;
+}
+
+interface MrParseAFModelJson {
+    chain_id: string;
+    ellg: number;
+    frac_scat: null | number;
+    length: number;
+    molecular_weight: number;
+    name: string;
+    ncopies: any;
+    pdb_file: null | string;
+    pdb_id: string;
+    pdb_url: string;
+    query_start: number;
+    query_stop: number;
+    range: string;
+    region_id: number;
+    region_index: number;
+    resolution: number;
+    rmsd: null | number;
+    score: number;
+    seq_ident: number;
+    total_frac_scat: null | number;
+    total_frac_scat_known: null | number;
+}
+
+export const parseCifDict = async (file: File) => {
+    const result: { comp_id: string; dict_contents: string }[] = [];
+    const fileContent = await file.text();
+    const compIdsVector = window.gemmiModule.parse_ligand_dict_info(fileContent);
+    const compIdsVectorSize = compIdsVector.size();
+    for (let i = 0; i < compIdsVectorSize; i++) {
+        const ligandInfo = compIdsVector.get(i);
+        if (ligandInfo.comp_id.length > 0) {
+            result.push({ ...ligandInfo });
+        }
+    }
+    compIdsVector.delete();
+    return result;
+};
+
+const readCoordsString = async (
+    fileString: string,
+    fileName: string,
+    moorhenInstance: MoorhenInstance,
+    backgroundColor: [number, number, number, number],
+    defaultBondSmoothness: number | null
+): Promise<moorhen.Molecule> => {
+    const newMolecule = new MoorhenMolecule(moorhenInstance);
+    newMolecule.setBackgroundColour(backgroundColor);
+    newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
+    await newMolecule.loadToCootFromString(fileString, fileName);
+    return newMolecule;
+};
+
+export const drawModels = async (newMolecules: MoorhenMolecule[], moorhenInstance: MoorhenInstance) => {
+
+    for (const newMolecule of newMolecules) {
+        const hasLongSequence = newMolecule.sequences.some(item => item.sequence.length > 10);
+        const representation = hasLongSequence ? moorhenInstance.representation.defaultStyle : "CBs";
+        if (
+            representation === "ribbons-and-ligands" ||
+            representation === "ribbons-and-side-chains" ||
+            representation === "site-and-ribbons"
+        ) {
+            await moorhenInstance.representation.wizard(newMolecule.uniqueId, representation, true);
+        } else {
+            await moorhenInstance.representation.create(newMolecule.uniqueId, { representationStyle: representation });
+        }
+    }
+};
+
+export const loadCoordFiles = async (
+    files: File[],
+    moorhenInstance: MoorhenInstance,
+    backgroundColor: [number, number, number, number],
+    defaultBondSmoothness: number | null
+): Promise<Promise<moorhen.Molecule>[]> => {
+    const loadPromises: Promise<moorhen.Molecule>[] = [];
+    for (const file of files) {
+        if (file.name.endsWith(".pdb") || file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
+            const contents = await file.text();
+            loadPromises.push(
+                readCoordsString(contents, file.name, moorhenInstance, backgroundColor, defaultBondSmoothness)
+            );
+        }
+    }
+    return loadPromises;
+};
+
+const loadSession = async (session: string | object, moorhenInstance: MoorhenInstance) => {
+    moorhenInstance.commandCentre.history.reset();
+    let status = -1;
+    if (typeof session === "string") {
+        status = await MoorhenTimeCapsule.loadSessionFromJsonString(session as string, moorhenInstance);
+    } else {
+        status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(session, moorhenInstance);
+    }
+    if (status === -1) {
+        throw new Error("Failed to read backup (deprecated format)");
+    }
+};
+
+export const handleSessionUpload = async (file: File, moorhenInstance: MoorhenInstance) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
+    await loadSession(sessionMessage, moorhenInstance);
+};
+
+const parseJSONAndGetModelFiles = (json_contents, dispatch) => {
+    const fastaContents = json_contents.fastaContents;
+    const afModelContents = json_contents.afModelContents;
+    const esmModelContents = json_contents.esmModelContents;
+    const homologsContents = json_contents.homologsContents;
+
+    const modelFiles: string[] = [];
+    if (fastaContents) {
+        try {
+            const seqs = Fasta.parse(fastaContents);
+            dispatch(setTargetSequence(seqs[0].seq));
+        } catch (e) {
+            console.log("Failed to extract sequence from input.fasta");
+        }
+    }
+    if (afModelContents) {
+        const json = JSON.parse(afModelContents);
+        dispatch(setAfJson(json));
+        for (const iter of Object.entries(json)) {
+            const key: string = iter[0];
+            const value: MrParseAFModelJson = iter[1] as MrParseAFModelJson;
+            const fullName = value["pdb_file"];
+            console.log(fullName);
+            if (fullName) {
+                const relName = fullName.substring(fullName.lastIndexOf("models/") + "models/".length);
+                modelFiles.push(fullName);
+            }
+        }
+    }
+    if (esmModelContents) {
+        const json = JSON.parse(esmModelContents);
+        dispatch(setEsmJson(json));
+        for (const iter of Object.entries(json)) {
+            const key: string = iter[0];
+            const value: any = iter[1];
+            //console.log(value)
+        }
+    }
+    if (homologsContents) {
+        const json = JSON.parse(homologsContents);
+        dispatch(setHomologsJson(json));
+        for (const iter of Object.entries(json)) {
+            const key: string = iter[0];
+            const value: MrParsePDBModelJson = iter[1] as MrParsePDBModelJson;
+            const fullName = value["pdb_file"];
+            if (fullName) {
+                const relName = fullName.substring(fullName.lastIndexOf("homologs/") + "homologs/".length);
+                modelFiles.push(fullName);
+            }
+        }
+    }
+    return modelFiles;
+};
+
+const loadMrParseJson = async (files: File[]) => {
+    if (files.length === 0) return;
+
+    let fastaContents = "";
+    let afModelContents = "";
+    let esmModelContents = "";
+    let homologsContents = "";
+
+    for (const file of files) {
+        if (file.name.endsWith("input.fasta")) {
+            fastaContents = await file.text();
+        }
+        if (file.name.endsWith("af_models.json")) {
+            afModelContents = await file.text();
+        }
+        if (file.name.endsWith("esm_models.json")) {
+            esmModelContents = await file.text();
+        }
+        if (file.name.endsWith("homologs.json")) {
+            homologsContents = await file.text();
+        }
+    }
+
+    return { fastaContents, afModelContents, esmModelContents, homologsContents };
+};
+
+const loadCoordinateFilesFromFileList = async (
+    files: File[],
+    modelFiles: string[],
+    moorhenInstance: MoorhenInstance,
+    backgroundColor,
+    defaultBondSmoothness
+) => {
+    let newMolecules: moorhen.Molecule[] = [];
+
+    const loadPromises: Promise<moorhen.Molecule>[] = [];
+    for (const file of files) {
+        for (const modelFile of modelFiles) {
+            if (file.webkitRelativePath.includes(modelFile) || (file.webkitRelativePath.length === 0 && modelFile.includes(file.name))) {
+                const contents = await file.text();
+                loadPromises.push(
+                    readCoordsString(contents, file.name, moorhenInstance, backgroundColor, defaultBondSmoothness)
+                );
+            }
+        }
+    }
+
+    if (loadPromises.length === 0) return newMolecules;
+
+    newMolecules = await Promise.all(loadPromises);
+    if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
+        //dispatch(enqueueSnackbar({ message:"Failed to read molecule",  variant: "warning" }))
+        console.log("Failed to read molecule");
+        newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1);
+    }
+
+    return newMolecules;
+};
+
+export const loadMrParseFiles = async (
+    files: File[],
+    moorhenInstance: MoorhenInstance,
+    backgroundColor,
+    defaultBondSmoothness,
+    dispatch,
+) => {
+    const json_contents = await loadMrParseJson(files);
+    const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, moorhenInstance.store.dispatch);
+    const newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromFileList(
+        files,
+        modelFiles,
+        moorhenInstance,
+        backgroundColor,
+        defaultBondSmoothness
+    );
+
+    await drawModels(newMolecules, moorhenInstance);
+    dispatch(addMoleculeList(newMolecules));
+    newMolecules.at(-1).centreOn("/*/*/*/*", true);
+
+    moorhenInstance.store.dispatch(setMrParseModels(newMolecules));
+};
+
+const loadMrParseJsonUrl = async urlBase => {
+    let fastaContents = "";
+    let afModelContents = "";
+    let esmModelContents = "";
+    let homologsContents = "";
+
+    let response = await fetch(urlBase + "/input.fasta");
+    if (response.ok) {
+        fastaContents = await response.text();
+    }
+    response = await fetch(urlBase + "/af_models.json");
+    if (response.ok) {
+        afModelContents = await response.text();
+    }
+    response = await fetch(urlBase + "/esm_models.json");
+    if (response.ok) {
+        esmModelContents = await response.text();
+    }
+    response = await fetch(urlBase + "/homologs.json");
+    if (response.ok) {
+        homologsContents = await response.text();
+    }
+
+    return { fastaContents, afModelContents, esmModelContents, homologsContents };
+};
+
+const loadCoordinateFilesFromURL = async (
+    url: string,
+    modelFiles: string[],
+    moorhenInstance,
+    backgroundColor,
+    defaultBondSmoothness
+) => {
+    let newMolecules: moorhen.Molecule[];
+
+    const loadPromises: Promise<moorhen.Molecule>[] = [];
+    for (const modelFile of modelFiles) {
+        const response = await fetch(url + "/" + modelFile);
+        if (response.ok) {
+            const contents = await response.text();
+            loadPromises.push(
+                readCoordsString(
+                    contents,
+                    modelFile.split("/").reverse()[0],
+                    moorhenInstance,
+                    backgroundColor,
+                    defaultBondSmoothness
+                )
+            );
+        }
+    }
+
+    if (loadPromises.length === 0) return newMolecules;
+
+    newMolecules = await Promise.all(loadPromises);
+    if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
+        //dispatch(enqueueSnackbar({ message:"Failed to read molecule",  variant: "warning" }))
+        newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1);
+    }
+
+    return newMolecules;
+};
+
+export const loadMrParseUrl = async (
+    urlBase,
+    moorhenInstance: MoorhenInstance,
+    backgroundColor,
+    defaultBondSmoothness,
+    dispatch,
+) => {
+    const json_contents = await loadMrParseJsonUrl(urlBase);
+    const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, dispatch);
+    const newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromURL(
+        urlBase,
+        modelFiles,
+        moorhenInstance,
+        backgroundColor,
+        defaultBondSmoothness
+    );
+
+    dispatch(addMoleculeList(newMolecules));
+    await drawModels(newMolecules, moorhenInstance);
+
+    newMolecules.at(-1).centreOn("/*/*/*/*", true);
+
+    dispatch(setMrParseModels(newMolecules));
+};
+
+const readCifDictionary = async (
+    file: File,
+    moorhenInstance: MoorhenInstance,
+    backgroundColor: [number, number, number, number],
+    defaultBondSmoothness: number
+) => {
+    const dictionary = await parseCifDict(file);
+    if (dictionary.length === 0) {
+        return null;
+    }
+    const newMonomers: MoorhenMolecule[] = [];
+    for (const dict of dictionary) {
+        const newMonomer = new MoorhenMolecule(moorhenInstance);
+        await moorhenInstance.commandCentre.cootCommand(
+            {
+                returnType: "status",
+                command: "read_dictionary_string",
+                commandArgs: [dict.dict_contents, -999999],
+                changesMolecules: [],
+            },
+            false
+        );
+        // dictionaryFilesContent.push(content);
+        // const compIdsVector = window.gemmiModule.parse_ligand_dict_info(content);
+
+        const result: moorhen.WorkerResponse<number> = await moorhenInstance.commandCentre.cootCommand(
+            {
+                returnType: "status",
+                command: "get_monomer_and_position_at",
+                commandArgs: [dict.comp_id, -999999, ...moorhenInstance.store.getState().sceneSettings.origin.map(coord => -coord)],
+            },
+            true
+        );
+        if (result.data.result.status === "Completed") {
+            newMonomer.molNo = result.data.result.result;
+            newMonomer.name = file.name;
+            newMonomer.setBackgroundColour(backgroundColor);
+            newMonomer.defaultBondOptions.smoothness = defaultBondSmoothness;
+            newMonomer.coordsFormat = "mmcif";
+            newMonomer.addDict(dict.dict_contents);
+            newMonomers.push(newMonomer);
+        }
+    }
+    return newMonomers;
+};
+
+/**
+ * Load a map to moorhen from a map file data blob
+ * @param {File} source - The map file
+ * @param {boolean} [isDiffMap=false] - Indicates whether the new map is a difference map
+ * @param {boolean} [decompress=false] - Indicates whether the new map should be decompressed before being passed to libcoot api
+ * @returns {Promise<moorhen.Map>} This moorhenMap instance
+ */
+const loadMapFile = async (
+    source: File,
+    isDiffMap: boolean = false,
+    decompress: boolean = false,
+    commandCentre: CommandCentre,
+    store: MoorhenReduxStoreType
+): Promise<moorhen.Map> => {
+    const arrayBuffer = await source.arrayBuffer();
+    let mapData: ArrayBuffer | Uint8Array;
+    let mapName: string;
+    if (decompress) {
+        mapData = pako.inflate(arrayBuffer);
+        mapName = source.name.replace(".gz", "");
+    } else {
+        mapData = new Uint8Array(arrayBuffer);
+        mapName = source.name;
+    }
+
+    try {
+        const reply = await commandCentre.cootCommand(
+            {
+                returnType: "status",
+                command: "shim_read_ccp4_map",
+                commandArgs: [mapData, name, isDiffMap],
+            },
+            true
+        );
+        if (reply.data.result?.status === "Exception") {
+            console.warn("Exception raised when reading map");
+            return Promise.reject(reply.data.result.consoleMessage);
+        } else if (reply.data.result?.result === -1) {
+            console.warn("Returned map has molNo -1");
+            return Promise.reject(reply.data.result.consoleMessage);
+        }
+        const molNo = reply.data.result.result;
+        const isDifference = isDiffMap;
+    } catch (err) {
+        console.warn(err);
+        return Promise.reject(err);
+    }
+    // const newMap = new MoorhenMap(
+
+    // );
+    return;
+};
+
+export const autoOpenFiles = async (
+    files: File[],
+    moorhenInstance: MoorhenInstance,
+    backgroundColor: [number, number, number, number],
+    defaultBondSmoothness: number
+) => {
+    const areThereMolecules = moorhenInstance.getMoleculeList().length > 0
+    const store = moorhenInstance.store;
+    const dispatch = moorhenInstance.dispatch;
+    const commandCentre = moorhenInstance.getCommandCentreRef();
+    const monomerLibraryPath = moorhenInstance.paths.monomerLibraryPath;
+
+    const molecules = store.getState().molecules.moleculeList;
+    const maps = store.getState().maps;
+
+    const state = store.getState();
+
+    let isMrParse = false;
+    let isRelionLocresFolder = false;
+    const fileNames = files.map(file => file.name);
+
+    // Check for MrParse directory
+    if (fileNames.some(name => name.endsWith("input.fasta"))) {
+        isMrParse = true;
+    }
+    // Check for RELION local resolution maps
+    else if (fileNames.some(name => name.endsWith("_locres.mrc")) && fileNames.some(name => name.endsWith("_locres_filtered.mrc"))) {
+        isRelionLocresFolder = true;
+    }
+
+    if (isMrParse) {
+        console.log("I think this is an MrParse directory....");
+        dispatch(showModal({ key: modalKeys.MRPARSE }));
+        loadMrParseFiles(
+            files,
+            moorhenInstance,
+            backgroundColor,
+            defaultBondSmoothness,
+            dispatch,
+            
+        );
+        return;
+    }
+
+    const moleculesCreated: MoorhenMolecule[] = [];
+    const mapsCreated: MoorhenMap[] = [];
+    const returnValues: { type: "molecule" | "map"; uniqueID: string; molNo: number; fileName: string }[] = [];
+
+    for (const file of files) {
+        //Structures
+        if (file.name.endsWith(".pdb") || file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
+            const content = await file.text();
+            const newMolecule = await readCoordsString(
+                content,
+                file.name,
+                moorhenInstance,
+                backgroundColor,
+                defaultBondSmoothness
+            );
+
+            if (newMolecule.molNo === -1) {
+                console.log("Failed to read molecule from file " + file.name + " trying to read as cif dictionary...");
+                const newMonomer = await readCifDictionary(
+                    file,
+                    moorhenInstance,
+                    backgroundColor,
+                    defaultBondSmoothness
+                );
+                if (newMonomer === null) {
+                    console.log(`Failed to read molecule ${file.name} as a cif dictionary, skipping...`);
+                    dispatch(
+                        enqueueSnackbar({
+                            message: `Failed to read molecule ${file.name} as a structure or cif dictionary`,
+                            variant: "warning",
+                        })
+                    );
+                    continue;
+                }
+                await Promise.all(newMonomer.flatMap(monomer => [monomer.fetchIfDirtyAndDraw("CBs"), monomer.fetchDefaultColourRules()]));
+                dispatch(addMoleculeList(newMonomer));
+                moleculesCreated.push(...newMonomer);
+            } else if (newMolecule.atomCount === 0) {
+                console.log(`Molecule ${file.name} has no atoms, skipping...`);
+                dispatch(enqueueSnackbar({ message: `Failed to read molecule ${file.name}, no atoms found`, variant: "warning" }));
+                continue;
+            } else {
+                console.log(`Successfully read molecule ${file.name} molno ${newMolecule.molNo}`);
+                dispatch(addMoleculeList([newMolecule]));
+                await drawModels([newMolecule], moorhenInstance);
+
+                moleculesCreated.push(newMolecule);
+                returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
+            }
+        } else if (file.name.endsWith(".mtz")) {
+            const newMaps = await MoorhenMap.autoReadMtz(file, moorhenInstance);
+            for (const map in newMaps) {
+                returnValues.push({ type: "map", uniqueID: newMaps[map].uniqueId, molNo: newMaps[map].molNo, fileName: file.name });
+            }
+            if (newMaps.length === 0) {
+                dispatch(enqueueSnackbar({ message: `Failed to read mtz file ${file.name}`, variant: "warning" }));
+            } else {
+                dispatch(addMapList(newMaps));
+                dispatch(setActiveMap(newMaps[0]));
+            }
+        } else if (file.name.endsWith(".pb")) {
+            //Session file
+            try {
+                await handleSessionUpload(file, moorhenInstance);
+            } catch (e) {
+                dispatch(enqueueSnackbar({ message: `Failed to load session ${file.name}`, variant: "warning" }));
+            }
+            break; //We only load the first session.
+        } else if (file.name.endsWith(".json")) {
+            try {
+                const fileContents = await file.text();
+                const json = JSON.parse(fileContents);
+                dispatch(setValidationJson(json));
+                dispatch(showModal({ key: modalKeys.JSON_VALIDATION }));
+            } catch (e) {
+                dispatch(enqueueSnackbar({ message: `Failed to load json validation ${file.name}`, variant: "warning" }));
+            }
+        } else if (file.name.endsWith(".nef") || file.name.endsWith(".nef.gz")) {
+            const molecules = store.getState().molecules.moleculeList;
+
+            await processNEFFileAutoLoader(file, molecules, dispatch);
+            
+        }
+
+        else if (
+            file.name.endsWith(".mrc") ||
+            file.name.endsWith(".map") ||
+            file.name.endsWith(".ccp4") ||
+            file.name.endsWith(".mrc.gz") ||
+            file.name.endsWith(".map.gz")
+        ) {
+            try {
+                let newMap: MoorhenMap = null;
+                const isDiff = file.name.includes("_fofc.mrc") || file.name.includes("_diff.ccp4");
+                const isLocres = file.name.includes("_locres.mrc");
+                try {
+                    if (file.name.endsWith(".gz")) {
+                        newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, true);
+                    } else {
+                        newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, false);
+                    }
+                } catch (err) {
+                    // Try again if this is a compressed file...
+                    console.warn(err);
+                    throw new Error("Cannot read the fetched map...");
+                }
+                if (newMap.molNo === -1) {
+                    throw new Error("Cannot read the map file!");
+                }
+
+                if (molecules.length === 0 && !isLocres) {
+                    await newMap.centreOnMap();
+                }
+                if (isLocres) {
+                    newMap.showOnLoad = false;
+                }
+                dispatch(addMap(newMap));
+                if (!isLocres) {
+                    dispatch(setActiveMap(newMap));
+                }
+                mapsCreated.push(newMap);
+                returnValues.push({ type: "map", uniqueID: newMap.uniqueId, molNo: newMap.molNo, fileName: file.name });
+            } catch (err) {
+                console.warn(err);
+                // dispatch(enqueueSnackbar({ message:"Error reading map files",  variant: "error" }));
+                console.log(`Cannot read files`);
+            } finally {
+                document.body.click();
+            }
+        } else {
+            console.log("File unknown file type, skipping... " + file.name);
+        }
+    }
+    if (moleculesCreated.length > 0) {
+        moleculesCreated.at(-1).centreOn("/*/*/*/*", true);
+        if (!areThereMolecules) {
+            dispatch(setShownBottomPanel("sequences-viewer"));
+        }
+        const oldOption = store.getState().bottomPanels.seqviewerOption
+        dispatch(setSeqViewerOption({...oldOption,  selectedMolecule: moleculesCreated.at(-1).uniqueId }));
+        
+    }
+    if (isRelionLocresFolder) {
+        dispatch(showModal({ key: "colour-map-by-map", openDocked: "right" }));
+    }
+    return returnValues;
+};

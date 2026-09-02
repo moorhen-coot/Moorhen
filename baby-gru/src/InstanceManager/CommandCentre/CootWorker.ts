@@ -198,9 +198,9 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
                 thisInstance_colours.push(instDataColour[3])
 
                 const instDataSize = inst_data.size
-                thisInstance_sizes.push(instDataSize[0])
-                thisInstance_sizes.push(instDataSize[1])
-                thisInstance_sizes.push(instDataSize[2])
+                thisInstance_sizes.push(Math.abs(instDataSize[0]))
+                thisInstance_sizes.push(Math.abs(instDataSize[1]))
+                thisInstance_sizes.push(Math.abs(instDataSize[2]))
 
                 thisInstance_orientations.push(...[
                     1.0, 0.0, 0.0, 0.0,
@@ -782,6 +782,15 @@ const stringPairVectorToJSArray = (stringPairsVector: emscriptem.vector<libcootA
     return result
 }
 
+const validationDataJSONToJSArray = (validationData: any, chainID: string | null = null): libcootApi.ValidationInformationJS[] => {
+    let returnResult: { chainId: string; insCode: string; seqNum: number; restype: string; value: number; }[] = []
+    if(validationData){
+        if (chainID !== null && chainID in validationData) {
+            return validationData[chainID]
+        }
+    }
+    return returnResult
+}
 const validationDataToJSArray = (validationData: libcootApi.ValidationInformationT, chainID: string | null = null): libcootApi.ValidationInformationJS[] => {
     let returnResult: { chainId: string; insCode: string; seqNum: number; restype: string; value: number; }[] = []
     const cviv = validationData.cviv
@@ -1513,6 +1522,9 @@ const doCootCommand = (messageData: {
             case 'acedrg_types_for_bond_data':
                 returnResult = acedrgTypesForBondDataToJSArray(cootResult.bond_types)
                 break;
+            case 'validation_data_json':
+                returnResult = validationDataJSONToJSArray(JSON.parse(cootResult), messageData.chainID)
+                break;
             case 'validation_data':
                 returnResult = validationDataToJSArray(cootResult, messageData.chainID)
                 break;
@@ -1648,7 +1660,7 @@ onmessage = function (e) {
                 molecules_container.set_refinement_is_verbose(false)
                 molecules_container.set_map_sampling_rate(1.7)
                 molecules_container.set_map_is_contoured_with_thread_pool(true)
-                molecules_container.set_max_number_of_threads(3)
+                molecules_container.set_max_number_of_threads(8)
                 cootModule.FS.mkdir("COOT_BACKUP")
             })
             .catch((e) => {
@@ -1744,6 +1756,16 @@ onmessage = function (e) {
         postMessage({
             messageId: e.data.messageId, resultList
         })
+    } else if (e.data.message === 'get_nef_restraints') {
+        const noeString = e.data.commandArgs[0]
+        const retCode = cootModule.get_nef_restraints(noeString)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: retCode,
+        })
+
     } else if (e.data.message === 'run_conkit_validate') {
 
         const fileDataPdb = e.data.commandArgs[0]

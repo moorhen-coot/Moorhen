@@ -6,8 +6,11 @@ import { setEnableAtomHovering } from "../../../store/hoveringStatesSlice";
 import { usePersistentState } from "../../../store/menusSlice";
 import { focusOnModal, hideModal, unFocusModal } from "../../../store/modalsSlice";
 import { MoorhenButton } from "../../inputs";
-import { ModalKey } from "./ModalsContainer";
+import type { ModalKey } from "./ModalsContainer";
+import { MoorhenStack } from "../Stack/Stack";
+import { PanelErrorBoundary } from "../PanelErrorBoundary";
 import "./draggable-modal-base.css";
+
 
 type MoorhenDraggableModalBaseProps = {
     headerTitle: string | React.JSX.Element;
@@ -502,7 +505,8 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             >
                 <div className="moorhen__modal-header">
                     <button className="moorhen__modal-draggable-button" onMouseDown={handleDragStart}>
-                        {props.headerTitle}
+                        <MoorhenStack direction="line" align="center">
+                        {props.headerTitle}</MoorhenStack>
                     </button>
                     <div className={`moorhen__modal-header-buttons`}>
                         {collapse ? null : additionalHeaderButtons?.map(button => button)}
@@ -557,9 +561,10 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                         overflowY: props.overflowY ?? "auto",
                         overflowX: props.overflowX ?? "auto",
                     }}
-                >
+                ><PanelErrorBoundary panelName={props.modalId}>
                     {props.body}
                     {additionalChildren}{" "}
+                </PanelErrorBoundary>
                 </div>
                 {!collapse && showFooter && (
                     <div className="moorhen__modal-footer">

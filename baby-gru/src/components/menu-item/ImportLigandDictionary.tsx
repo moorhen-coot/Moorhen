@@ -1,8 +1,8 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { RootState, enqueueSnackbar } from "@/store/";
-import { parseCifDict } from "@/utils/MoorhenFileLoading";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { parseCifDict } from "@/utils/FileLoading";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
@@ -32,9 +32,8 @@ const ImportLigandDictionary = (props: {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    const store = useStore<RootState>();
-    const commandCentre = useCommandCentre();
-    const monomerLibraryPath = usePaths().monomerLibraryPath;
+    const moorhenInstance = useMoorhenInstance();
+    const commandCentre = moorhenInstance.commandCentre;
     const {
         createInstance,
         setCreateInstance,
@@ -52,9 +51,10 @@ const ImportLigandDictionary = (props: {
         id,
     } = props;
 
-    const originState = useSelector((state: moorhen.State) => state.glRef.origin);
+    const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin);
 
     const handleFileContent = useCallback(
+        
         async (fileContent: string) => {
             let newMolecule: moorhen.Molecule;
             let selectedMoleculeIndex: number;
@@ -70,7 +70,7 @@ const ImportLigandDictionary = (props: {
                 }
             } else {
                 selectedMoleculeIndex = -999999;
-                await commandCentre.current.cootCommand(
+                await commandCentre.cootCommand(
                     {
                         returnType: "status",
                         command: "read_dictionary_string",
@@ -88,9 +88,9 @@ const ImportLigandDictionary = (props: {
                 );
             }
 
-            if (createRef.current) {
+            if (createRef.current&&createInstance) {
                 const instanceName = tlc;
-                const result = (await commandCentre.current.cootCommand(
+                const result = (await commandCentre.cootCommand(
                     {
                         returnType: "status",
                         command: "get_monomer_and_position_at",
@@ -99,7 +99,7 @@ const ImportLigandDictionary = (props: {
                     true
                 )) as moorhen.WorkerResponse<number>;
                 if (result.data.result.status === "Completed") {
-                    newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+                    newMolecule = new MoorhenMolecule(moorhenInstance);
                     newMolecule.molNo = result.data.result.result;
                     newMolecule.name = instanceName;
                     newMolecule.setBackgroundColour(backgroundColor);
@@ -124,7 +124,7 @@ const ImportLigandDictionary = (props: {
 
             [...new Set(molNosToUpdate)].map(molNo => dispatch(triggerUpdate(molNo)));
         },
-        [moleculeSelectValueRef, createRef, molecules, commandCentre, tlc, backgroundColor, defaultBondSmoothness, addToMoleculeValueRef]
+        [moleculeSelectValueRef, createRef, molecules, commandCentre, tlc, backgroundColor, defaultBondSmoothness, addToMoleculeValueRef, createInstance]
     );
 
     const popoverContent = (

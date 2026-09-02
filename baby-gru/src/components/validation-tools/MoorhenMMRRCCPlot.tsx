@@ -308,7 +308,6 @@ export const MoorhenMMRRCCPlot = () => {
             <MoorhenStack inputGrid gridWidth={3}>
                 <MoorhenMoleculeSelect onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
                 <MoorhenChainSelect
-                    width=""
                     onChange={handleChainChange}
                     molecules={molecules}
                     selectedCoordMolNo={selectedModel}
@@ -316,7 +315,7 @@ export const MoorhenMMRRCCPlot = () => {
                     ref={chainSelectRef}
                 />
 
-                <MoorhenMapSelect width="" onChange={handleMapChange} maps={maps} ref={mapSelectRef} />
+                <MoorhenMapSelect onChange={handleMapChange} maps={maps} ref={mapSelectRef} />
                 <MoorhenButton variant="secondary" size="lg" onClick={fetchData}>
                     Plot
                 </MoorhenButton>

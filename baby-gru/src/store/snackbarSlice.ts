@@ -6,13 +6,14 @@ export type Snackbar = {
     autoHideDuration: number | null;
     createdAt: number;
     uid: string;
+    tag?: string;
 };
 
 export type SnackbarPayload = {
     message: string;
     variant?: "success" | "error" | "warning" | "info";
     autoHideDuration?: number | null;
-    uid?: string;
+    tag?: string;
 };
 
 const initialState: Snackbar[] = [];
@@ -29,12 +30,23 @@ const snackbarSlice = createSlice({
         @uid An optional unique identifier for the message. If not provided, a unique ID will be generated using the current timestamp and a random number. */
         enqueueSnackbar: (state, action: PayloadAction<SnackbarPayload>
         ) => {
+            const existingTag = state.findIndex(snackbar => (snackbar.tag === action.payload.tag));
+            if (existingTag !== -1) {
+                state.splice(existingTag, 1);
+            }
+
+            const existingMessage = state.findIndex(snackbar => (snackbar.message === action.payload.message));
+            if (existingMessage !== -1) {
+                state.splice(existingMessage, 1);2
+            }
+                 
             state.push({
                 message: action.payload.message,
                 variant: action.payload.variant || "info",
                 autoHideDuration: action.payload.autoHideDuration ?? 6000,
                 createdAt: Date.now(),
-                uid: action.payload.uid || `${Date.now()}-${Math.random()}`,
+                uid: `${Date.now()}-${Math.random()}`,
+                tag: action.payload.tag
             });
         },
         // API

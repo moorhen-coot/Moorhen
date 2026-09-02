@@ -1,7 +1,7 @@
 import { Store } from "@reduxjs/toolkit";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
-import { setDisplayBuffers, setOrigin, setRequestDrawScene, setZoom } from "../store/glRefSlice";
+import { setDisplayBuffers, setOrigin, setRequestDrawScene, setZoom } from "../store";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
@@ -319,6 +319,13 @@ export class MoorhenMap {
                 map.isDifference = selectedColumns.isDifference;
             }
             map.dataOrigin = "mtz";
+            const header = await readMTZHeader(data);
+            if (typeof header !== "number") {
+                map.fileHeader = header;
+                await map.initialise();
+            } else {
+                console.warn("Could not read MTZ header; skipping map.initialise() (contour stats may be unset)");
+            }
             return map;
         } catch (err) {
             return Promise.reject(err);
@@ -641,7 +648,7 @@ export class MoorhenMap {
      * Contour the map with parameters from the redux store
      */
     drawMapContour(): Promise<void> {
-        const originState = this.store.getState().glRef.origin;
+        const originState = this.store.getState().sceneSettings.origin;
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams();
         return this.doCootContour(...(originState.map(coord => -coord) as [number, number, number]), mapRadius, contourLevel, mapStyle);
     }
@@ -1439,7 +1446,7 @@ export class MoorhenMap {
             posY = Math.abs(origin[1]);
             posZ = Math.abs(origin[2]);
         } else {
-            [posX, posY, posZ] = this.store.getState().glRef.origin.map(coord => -coord) as [number, number, number];
+            [posX, posY, posZ] = this.store.getState().sceneSettings.origin.map(coord => -coord) as [number, number, number];
         }
 
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams();
@@ -1524,7 +1531,7 @@ export class MoorhenMap {
      * @returns {ArrayBuffer} - The contents of the gltf file (binary format)
      */
     async exportAsMeshFile(fileType: string): Promise<ArrayBuffer> {
-        const originState = this.store.getState().glRef.origin;
+        const originState = this.store.getState().sceneSettings.origin;
         const { mapRadius, contourLevel } = this.getMapContourParams();
         const result = (await this.commandCentre.cootCommand(
             {
