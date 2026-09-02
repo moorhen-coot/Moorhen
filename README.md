@@ -19,7 +19,8 @@ The following libraries/programs are compiled to Web Assembly:
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
 * gemmi 0.7.0
-* libcoot (commit hash specified in `VERSIONS`; latest release is 1.20) 
+* libcoot (commit hash specified in `VERSIONS`; latest release is 1.3.3)
+* Lhasa (commit 4e11ebf3b6)
 * fftw 2.1.5
 * fftw3 3.3.10
 * gsl 2.8
