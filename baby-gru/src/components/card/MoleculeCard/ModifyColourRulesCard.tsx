@@ -1,6 +1,7 @@
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useSelector, useStore } from "react-redux";
 import { memo, useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { ResidueRangeSelector } from "@/components/inputs/ResidueRange";
 import { RootState } from "@/store/MoorhenReduxStore";
 import { useCommandCentre } from "../../../InstanceManager";
 import { moorhen } from "../../../types/moorhen";
@@ -166,8 +167,9 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                     cidLabel = cid;
                     break;
                 case "residue-range":
-                    cidLabel = residuesSelectionRange
-                        ? `//${selectedChain}/${residuesSelectionRange[0]}-${residuesSelectionRange[1]}`
+                    let range = ( residuesSelectionRange[0] < residuesSelectionRange[1] ? residuesSelectionRange : [residuesSelectionRange[1], residuesSelectionRange[0]]);
+                    cidLabel = range
+                        ? `//${selectedChain}/${range[0]}-${range[1]}`
                         : null;
                     break;
                 default:
@@ -286,7 +288,7 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
         />
     ));
     return (
-        <MoorhenStack direction="vertical" gap={2} style={{ alignItems: "center", padding: "0.5rem", width: "450px" }}>
+        <MoorhenStack direction="vertical" gap={2} style={{  width: "450px" }}>
             <MoorhenStack direction="horizontal" style={{ margin: 0, padding: 0 }}>
                 <MoorhenStack>
                     {!props.residueSelection && (
@@ -374,13 +376,13 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                 )}
             </MoorhenStack>
             {ruleType === "residue-range" && (
-                <div style={{ width: `${convertRemToPx(15) * 2}px`, padding: "0.5rem", textAlign: "center" }}>
-                    <MoorhenSequenceViewer
-                        sequences={moorhenSequenceToSeqViewer(selectedSequence, props.molecule.name, props.molecule.molNo)}
-                        setSelectedResidues={selection => handleResiduesSelection(selection)}
-                        maxDisplayHeight={1}
+                    <ResidueRangeSelector
+                        molecule={props.molecule}
+                        selectedChain={selectedChain}
+                        sequenceResidueRange={residuesSelectionRange}
+                        setSequenceResidueRange={setResidueSelectionRange}
                     />
-                </div>
+
             )}
 
             <MoorhenButton

@@ -1,4 +1,6 @@
+import { RepresentationStyles } from "@/utils";
 import { MoorhenToggle } from "../../../../inputs";
+import { ResidueSelectionRuleType } from "./ResidueSelectionSection";
 
 interface FilterTogglesProps {
     notHOH: boolean;
@@ -7,8 +9,8 @@ interface FilterTogglesProps {
     setNotH: (val: boolean) => void;
     sideChainOnly: boolean;
     setSideChainOnly: (val: boolean) => void;
-    representationStyle: string;
-    ruleType: string;
+    representationStyle: RepresentationStyles;
+    ruleType: ResidueSelectionRuleType;
 }
 
 /**
@@ -21,7 +23,7 @@ export const FilterToggles = (props: FilterTogglesProps) => {
 
     const isApplicableStyle =
         representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs";
-    const isApplicableRuleType = ruleType === "chain" || ruleType === "molecule" || ruleType === "neighbourhood";
+    const isApplicableRuleType = ruleType === "chain" || ruleType === "molecule" || ruleType === "neighbourhood" || ruleType === "residue-range";
 
     if (!isApplicableStyle || !isApplicableRuleType) {
         return null;
