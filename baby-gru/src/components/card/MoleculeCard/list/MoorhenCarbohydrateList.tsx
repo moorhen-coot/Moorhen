@@ -6,6 +6,7 @@ import { addGeneralRepresentation, removeGeneralRepresentation } from "@/store";
 import { moorhen } from "../../../../types/moorhen";
 import { privateer } from "../../../../types/privateer";
 import { MoorhenCarbohydrateCard } from "../../MoorhenCarbohydrateCard";
+import { MoorhenCremerPople } from "../../../modal/MoorhenCremerPople";
 import { MoorhenLinearProgress } from "@/components/icons";
 
 export const MoorhenCarbohydrateList = (props: {
@@ -72,6 +73,7 @@ export const MoorhenCarbohydrateList = (props: {
                     {carbohydrateList.map(carbohydrate => {
                         return <MoorhenCarbohydrateCard key={carbohydrate.id} carbohydrate={carbohydrate} molecule={props.molecule} />;
                     })}
+                <MoorhenCremerPople stackDirection="vertical" width={300} molecule={props.molecule}/>
                 </>
             ) : (
                 <div>
@@ -89,5 +91,14 @@ const privateerInfoText = (
         <a href="https://privateer.york.ac.uk/database" target="_blank" rel="noreferrer">
             Privateer Website
         </a>
+        <br/>
+        <br/>
+        <h1>Cremer-Pople</h1>
+        <p>
+        The Cremer-Pople sphere maps the puckering of a pyranose ring onto spherical coordinates, where the poles of the sphere represent chair conformations, and the equator represents boats and twist-boats. Regions in between these are likely half-chair or envelope conformations. Due to stereochemical effects, the lowest energy conformation is the 4C1 chair (the North Pole), which is where we expect to see most pyranose carbohydrates. This validation widget allows you to quickly identify if any of your carbohydrates are in unlikely high-energy conformations. Colours on the sphere represent the frequency observed in validation carbohydrates from the Protein Data Bank.
+        </p>
+        <p>
+        Dialpuri, J. S., Bagdonas, H., Atanasova, M., Schofield, L. C., Hekkelman, M. L., Joosten, R. P. & Agirre, J. (2023). Analysis and validation of overall N-glycan conformation in Privateer. Acta Cryst. D79, 462-472
+        </p>
     </>
 );
