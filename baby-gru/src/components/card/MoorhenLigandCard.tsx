@@ -239,7 +239,7 @@ export const MoorhenLigandCard = (props: {
                     <MoorhenCopyToClipBoard text={ligand.smiles} tooltip="Copy SMILES to clipboard" />
                 </MoorhenStack>
             )}
-            {ligand.smiles &&
+            {
                 ligand.flev_svg &&
                 (ligand.flev_svg.includes("<!-- Substitution Contour -->") ||
                     ligand.flev_svg.includes("<!-- Solvent Accessibilty of Atom -->") ||

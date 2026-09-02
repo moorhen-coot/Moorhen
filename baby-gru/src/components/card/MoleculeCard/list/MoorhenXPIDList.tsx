@@ -1,6 +1,6 @@
 import { MoorhenLinearProgress } from "@/components/icons"
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MoorhenButton, MoorhenColourPicker } from "@/components/inputs";
 import { MoorhenAccordion, MoorhenInfoCard, MoorhenStack } from "@/components/interface-base";
 import { moorhen } from "../../../../types/moorhen";
@@ -40,6 +40,9 @@ const XPID_ARROW_HEAD_RADIUS_SCALE = 2.2;
 const XPID_DISTANCE_LABEL_FONT_SIZE = 20;
 const XPID_DISTANCE_LABEL_SCREEN_OFFSET_DISTANCE = 0.12;
 const XPID_DISTANCE_DECIMALS = 2;
+const XPID_VIRTUAL_ROW_HEIGHT = 48;
+const XPID_VIRTUAL_VIEWPORT_HEIGHT = 360;
+const XPID_VIRTUAL_OVERSCAN = 4;
 
 const getXpidMoleculeDictionaries = async (molecule: moorhen.Molecule) => {
     try {
@@ -91,6 +94,8 @@ export const MoorhenXPIDList = (props: {
     const [xpidList, setXpidList] = useState<MoorhenXPIDResult[] | null>(null);
     const [xpidVisibleList, setXpidVisibleList] = useState<boolean[] | null>(null);
     const [xpidVectorsList, setXpidVectorsList] = useState<MoorhenVector[] | null>(null);
+    const [xpidFirstVisibleIndex, setXpidFirstVisibleIndex] = useState(0);
+    const xpidVirtualListRef = useRef<HTMLDivElement | null>(null);
 
     const commandCentre = useCommandCentre();
     const moorhenGlobalInstance = useMoorhenInstance();
@@ -161,6 +166,10 @@ export const MoorhenXPIDList = (props: {
             setXpidList(interactions);
             setXpidVisibleList(visibleList);
             setXpidVectorsList(theVectors)
+            setXpidFirstVisibleIndex(0);
+            if (xpidVirtualListRef.current) {
+                xpidVirtualListRef.current.scrollTop = 0;
+            }
         } finally {
             props.setBusy?.(false);
         }
@@ -183,6 +192,13 @@ export const MoorhenXPIDList = (props: {
     const xpidTitle = xpidList === null
         ? "XH-\u03C0 Interactions"
         : `XH-\u03C0 Interactions (detected ${xpidList.length} in total)`;
+
+    const xpidVirtualRenderStart = Math.max(0, xpidFirstVisibleIndex - XPID_VIRTUAL_OVERSCAN);
+    const xpidVirtualVisibleRows = Math.ceil(XPID_VIRTUAL_VIEWPORT_HEIGHT / XPID_VIRTUAL_ROW_HEIGHT);
+    const xpidVirtualRenderEnd = Math.min(
+        xpidList?.length ?? 0,
+        xpidFirstVisibleIndex + xpidVirtualVisibleRows + XPID_VIRTUAL_OVERSCAN
+    );
 
     const replaceDisplayedVectors = (newVectors: MoorhenVector[], visibleList = xpidVisibleList) => {
         if (!xpidVectorsList || !visibleList) return;
@@ -251,19 +267,46 @@ export const MoorhenXPIDList = (props: {
                     onChange={handleDistanceLabelsChange}
                 />
                 </MoorhenStack>
-                <MoorhenStack direction="column" gap="0.15rem">
-                    {xpidList.map((xpi,idx) => {
+                <div
+                    ref={xpidVirtualListRef}
+                    aria-label="XH-pi interaction results"
+                    onScroll={evt => {
+                        const nextFirstVisibleIndex = Math.floor(evt.currentTarget.scrollTop / XPID_VIRTUAL_ROW_HEIGHT);
+                        setXpidFirstVisibleIndex(previousIndex => previousIndex === nextFirstVisibleIndex ? previousIndex : nextFirstVisibleIndex);
+                    }}
+                    style={{
+                        position: "relative",
+                        height: Math.min(XPID_VIRTUAL_VIEWPORT_HEIGHT, xpidList.length * XPID_VIRTUAL_ROW_HEIGHT),
+                        overflowY: "auto",
+                        overflowX: "hidden",
+                        contain: "strict",
+                    }}
+                >
+                    <div style={{ position: "relative", height: xpidList.length * XPID_VIRTUAL_ROW_HEIGHT }}>
+                    {xpidList.slice(xpidVirtualRenderStart, xpidVirtualRenderEnd).map((xpi,localIdx) => {
+                        const idx = xpidVirtualRenderStart + localIdx
                         const key = xpi.X_id+"_"+xpi.H_atom+"_"+xpi.X_atom+"_"+xpi.X_chain+"_"+xpi.X_res+xpi.pi_id+"_"+"_"+xpi.pi_chain+"_"+xpi.pi_res + "_" + idx
                         const text = xpi.X_chain+"/"+xpi.X_id+"/"+xpi.X_res+"/"+xpi.X_atom+" \u2192 " +xpi.pi_chain+"/"+xpi.pi_id+"/"+xpi.pi_res
                         const rowColour = xpidVectorsList?.[idx]?.vectorColour ?? vectorColour
-                        return (<MoorhenStack
+                        return (<div
                             key={key}
+                            data-xpid-index={idx}
+                            style={{
+                                position: "absolute",
+                                top: idx * XPID_VIRTUAL_ROW_HEIGHT,
+                                left: 0,
+                                right: 0,
+                                height: XPID_VIRTUAL_ROW_HEIGHT,
+                                overflow: "hidden",
+                            }}
+                        >
+                        <MoorhenStack
                             direction="row"
                             align="center"
                             gap="0.35rem"
-                            style={{ width: "100%", minWidth: 0 }}
+                            style={{ width: "100%", height: "100%", minWidth: 0 }}
                         >
-                        <MoorhenToggle label={<span style={{ whiteSpace: "normal", overflowWrap: "anywhere", lineHeight: 1.25 }}>{text}</span>} checked={xpidVisibleList[idx]} style={{ flex: "1 1 auto", minWidth: 0, margin: "0.15rem 0" }} onChange={() => {
+                        <MoorhenToggle label={<span title={text} style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", whiteSpace: "normal", overflowWrap: "anywhere", overflow: "hidden", lineHeight: 1.15 }}>{text}</span>} checked={xpidVisibleList[idx]} style={{ flex: "1 1 auto", minWidth: 0, margin: 0 }} onChange={() => {
                             if (!xpidVectorsList || !xpidVisibleList) return;
                             const newVisList = [...xpidVisibleList]
                             newVisList[idx] = !newVisList[idx]
@@ -297,9 +340,11 @@ export const MoorhenXPIDList = (props: {
                             icon="MatSymFilterFocus"
                             tooltip="Center on molecule"
                         />
-                        </MoorhenStack>)
+                        </MoorhenStack>
+                        </div>)
                     })}
-                </MoorhenStack>
+                    </div>
+                </div>
                 </>
             ) : (
                 <div>

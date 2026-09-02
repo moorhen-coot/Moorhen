@@ -36,7 +36,7 @@ export const About = () => {
                 <li>Paul Bond</li>
                 <li>Jordan Dialpuri</li>
                 <li>Jakub Smulski</li>
-                <li>Sean Wang</li>
+                <li>Shuai Wang</li>
                 <li>Adam Simkin</li>
                 <li>Toby King</li>
             </ul>
