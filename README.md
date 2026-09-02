@@ -68,9 +68,9 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 `git clone https://github.com/emscripten-core/emsdk.git`  
 `cd emsdk`  
 `git pull`  
-`./emsdk install latest`  
-`./emsdk activate latest`  
-(Moorhen is known to build successfully with emscripten version 6.0.8 - the 20th August 2026 release, and several earlier versions. There may have been a problem with 5.0.1)
+`./emsdk install 6.0.8`  
+`./emsdk activate 6.0.8`  
+Moorhen is known to build successfully with emscripten version 6.0.8 - the 20th August 2026 release, and several earlier versions. There may have been a problem with 5.0.1; Moorhen currently fails to build with 6.0.9.
 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
