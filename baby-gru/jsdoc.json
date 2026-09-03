@@ -5,7 +5,7 @@
     },
     "source": {
       "include": ["./src/"],
-      "excludePattern": "(src/__tests__/|src/WebGLgComponents/|src/utils/__graphql__/|src/types|src/protobuf)",
+      "excludePattern": "(src/__tests__/|src/WebGLgComponents/|src/utils/__graphql__/|src/types|src/protobuf|src/LhasaReact/bundler_plugins/vite.mjs)",
       "includePattern": ".(jsx|js|ts|tsx)$"
     },
     "plugins": ["plugins/markdown", "node_modules/jsdoc-babel"],
@@ -18,7 +18,7 @@
             "staticFiles": {
                 "include": [
                     "./docs.styles.css",
-                    "./public/baby-gru/pixmaps/MoorhenLogo.png"
+                    "./public/MoorhenAssets/pixmaps/MoorhenLogo.png"
                 ]
             }
         },
@@ -37,6 +37,7 @@
         "destination": "./docs/",
         "recurse": true,
         "verbose": true,
+        "private": true,
         "template": "node_modules/docdash"
     },
     "docdash": {
