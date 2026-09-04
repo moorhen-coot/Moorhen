@@ -256,7 +256,7 @@ export const AddCustomRepresentationCard = memo(
                         adaptBondOOF={adaptBondOOF}
                         setAdaptBondOOF={setAdaptBondOOF}
                     />
-                    {representationStyle !== "adaptativeBonds" && (
+                    {(representationStyle !== "adaptativeBonds" && representationStyle !== "cavities") && (
                         <ResidueSelectionSection
                             ruleType={ruleType}
                             setRuleType={setRuleType}

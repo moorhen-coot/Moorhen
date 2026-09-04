@@ -55,6 +55,12 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
         setColourMode(evt.target.value);
     };
 
+    const setBufferColour = (r:number, g:number, b:number) => {
+        if (representation) {
+            representation.setBufferColour(r,g,b);
+        }
+    }
+
     const handleOpacityChange = (newVal: number) => {
         setNonCustomOpacity(newVal);
         if (representation) {
@@ -198,7 +204,7 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
                         ) : colourMode === "custom" ? (
                             <MoorhenColourPicker
                                 colour={hexToRGB(colour)}
-                                setColour={color => setColour(rgbToHex(color[0], color[1], color[2]))}
+                                setColour={color => {if(representationStyle==="cavities"){setBufferColour(color[0]/255, color[1]/255, color[2]/255)}; setColour(rgbToHex(color[0], color[1], color[2]))}}
                             />
                         ) : (
                             <img
