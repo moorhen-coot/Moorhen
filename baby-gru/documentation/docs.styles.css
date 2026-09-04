@@ -1,0 +1,47 @@
+#main>.sidebar {
+    width: auto;
+    min-width: 240px;
+}
+
+#main>.side-nav {
+    width: auto;
+    min-width: 240px;
+}
+
+.image {
+    width: 3rem;
+    align-items: center;
+    align-content: center;
+    vertical-align: middle;
+    display: flex;
+}
+
+.logo {
+    display: flex;
+}
+
+/*
+ * Dark mode for the generated (docdash) API reference. Docdash's bundled
+ * stylesheet has no dark theme of its own, so rather than overriding its ~800
+ * rules individually, invert the whole page and re-invert images so they keep
+ * their original colours. Follows the OS preference by default; the
+ * "Toggle Theme" link (theme-toggle.js) can force either mode via data-theme.
+ */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) {
+        background: #fff;
+        filter: invert(1) hue-rotate(180deg);
+    }
+    html:not([data-theme="light"]) img {
+        filter: invert(1) hue-rotate(180deg);
+    }
+}
+
+html[data-theme="dark"] {
+    background: #fff;
+    filter: invert(1) hue-rotate(180deg);
+}
+
+html[data-theme="dark"] img {
+    filter: invert(1) hue-rotate(180deg);
+}

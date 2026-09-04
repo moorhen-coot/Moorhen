@@ -5,7 +5,7 @@
     },
     "source": {
       "include": ["./src/"],
-      "excludePattern": "(src/__tests__/|src/WebGLgComponents/|src/utils/__graphql__/|src/types|src/protobuf)",
+      "excludePattern": "(src/__tests__/|src/WebGLgComponents/|src/utils/__graphql__/|src/types|src/protobuf|src/LhasaReact/bundler_plugins/vite.mjs)",
       "includePattern": ".(jsx|js|ts|tsx)$"
     },
     "plugins": ["plugins/markdown", "node_modules/jsdoc-babel"],
@@ -17,8 +17,9 @@
         "default": {
             "staticFiles": {
                 "include": [
-                    "./docs.styles.css",
-                    "./public/baby-gru/pixmaps/MoorhenLogo.png"
+                    "./documentation/docs.styles.css",
+                    "./documentation/theme-toggle.js",
+                    "./public/MoorhenAssets/pixmaps/MoorhenLogo.png"
                 ]
             }
         },
@@ -34,16 +35,17 @@
     },
     "opts": {
         "encoding": "utf8",
-        "destination": "./docs/",
+        "destination": "./docs/api/",
         "recurse": true,
         "verbose": true,
+        "private": true,
         "template": "node_modules/docdash"
     },
     "docdash": {
         "meta": {
-            "title": "Moorhen Developer Documentation",
-            "description": "Moorhen Developer Documentation",
-            "keyword": "Moorhen Developer Documentation"
+            "title": "Moorhen API Reference",
+            "description": "Moorhen API Reference",
+            "keyword": "Moorhen API Reference"
         },
         "collapse":true,
         "sectionOrder": [
@@ -54,10 +56,20 @@
              "Events",
              "Namespaces",
              "Mixins",
-             "Tutorials",
              "Interfaces"
         ],
+        "scripts": ["docs.styles.css", "theme-toggle.js"],
         "menu":{
+            "Docs Home": {
+                "href":"../index.html",
+                "class":"menu-item",
+                "id":"docs-home"
+            },
+            "Toggle Theme": {
+                "href":"#",
+                "class":"menu-item",
+                "id":"theme-toggle"
+            },
             "GitHub": {
                 "href":"https://github.com/moorhen-coot/Moorhen",
                 "target":"_blank",
