@@ -35,6 +35,7 @@
 #include <gemmi/to_cif.hpp>
 #include <gemmi/read_cif.hpp>
 #include <gemmi/topo.hpp>
+#include <gemmi/polyheur.hpp>
 
 #include "xpid_moorhen/interface.h"
 
@@ -100,6 +101,27 @@ inline bool is64bit(){
 }
 
 namespace moorhen {
+    inline std::string validation_information_t_to_json(const coot::validation_information_t &info){
+        Json::Value root;
+        for (const auto &cvi : info.cviv){
+            Json::Value chain_json;
+            int res_idx = 0;
+            for (const auto &ri : cvi.rviv) {
+                Json::Value res_json;
+                res_json["chainId"] = ri.residue_spec.chain_id;
+                res_json["insCode"] = ri.residue_spec.ins_code;
+                res_json["seqNum"] = ri.residue_spec.res_no;
+                res_json["restype"] = "UNK";
+                res_json["value"] = ri.function_value;
+                chain_json[res_idx++] = res_json;
+            }
+            root[cvi.chain_id] = chain_json;
+        }
+        Json::StreamWriterBuilder builder;
+        const std::string json_string = Json::writeString(builder, root);
+        return json_string;
+    }
+
     inline void ltrim_inplace(std::string &s, const char cht='\0') {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), [cht](unsigned char ch) {
             if(cht!='\0') {
@@ -469,12 +491,19 @@ class molecules_container_js : public molecules_container_t {
             auto hchange = gemmi::HydrogenChange::NoChange;
             auto reorder = false;
             auto topo = gemmi::prepare_topology(st, monlib, model_index, hchange, reorder);
+            std::vector<gemmi::Topo::Bond> outlier_bonds;
+            std::vector<gemmi::Topo::Angle> outlier_angles;
+            std::vector<gemmi::Topo::Torsion> outlier_torsions;
+            std::vector<gemmi::Topo::Plane> outlier_planes;
+            std::vector<gemmi::Topo::Chirality> outlier_chirals;
             for (const auto& bond : topo->bonds) {
                 double z = bond.calculate_z();
                 atom_zs[bond.atoms[0]].push_back(z);
                 atom_zs[bond.atoms[1]].push_back(z);
                 atom_zs_bonds[bond.atoms[0]].push_back(z);
                 atom_zs_bonds[bond.atoms[1]].push_back(z);
+                if (std::abs(z) > 3.0)
+                    outlier_bonds.push_back(bond);
             }
             for (const auto& angle : topo->angles) {
                 double z = angle.calculate_z();
@@ -484,6 +513,8 @@ class molecules_container_js : public molecules_container_t {
                 atom_zs_angles[angle.atoms[0]].push_back(z);
                 atom_zs_angles[angle.atoms[1]].push_back(z);
                 atom_zs_angles[angle.atoms[2]].push_back(z);
+                if (std::abs(z) > 3.0)
+                    outlier_angles.push_back(angle);
             }
             for (const auto& torsion : topo->torsions) {
                 // Some torsions are only restrained with planes so check esd
@@ -497,16 +528,23 @@ class molecules_container_js : public molecules_container_t {
                     atom_zs_torsions[torsion.atoms[1]].push_back(z);
                     atom_zs_torsions[torsion.atoms[2]].push_back(z);
                     atom_zs_torsions[torsion.atoms[3]].push_back(z);
+                    if (std::abs(z) > 3.0)
+                        outlier_torsions.push_back(torsion);
                 }
             }
             for (const auto& plane : topo->planes) {
                 const auto abcd = gemmi::find_best_plane(plane.atoms);
+                double max_abs_z = 0;
                 for (const auto &atom : plane.atoms)
                 {
                     const double dist = gemmi::get_distance_from_plane(atom->pos, abcd);
-                    atom_zs[atom].push_back(dist / plane.restr->esd);
-                    atom_zs_planes[atom].push_back(dist / plane.restr->esd);
+                    const double z = dist / plane.restr->esd;
+                    atom_zs[atom].push_back(z);
+                    atom_zs_planes[atom].push_back(z);
+                    max_abs_z = std::max(max_abs_z, std::abs(z));
                 }
+                if (max_abs_z > 3.0)
+                    outlier_planes.push_back(plane);
             }
             for (const auto& chir : topo->chirs) {
                 static const double esd = 0.1;
@@ -520,6 +558,8 @@ class molecules_container_js : public molecules_container_t {
                 atom_zs_chirals[chir.atoms[1]].push_back(z);
                 atom_zs_chirals[chir.atoms[2]].push_back(z);
                 atom_zs_chirals[chir.atoms[3]].push_back(z);
+                if (std::abs(z) > 3.0)
+                    outlier_chirals.push_back(chir);
             }
 
             Json::Value root;
@@ -582,6 +622,87 @@ class molecules_container_js : public molecules_container_t {
                     res_json["Torsion RMSZ"] = z_torsions;
                     res_json["Rama. ZScore"] = rama.score(*prev_res, res, *next_res);
                     res_json["Rota. ZScore"] = rota.score(res);
+                    chain_json[res_idx++] = res_json;
+                }
+                root[chain.name] = chain_json;
+            }
+
+            std::string outlierstring = "Outliers: ";
+            for (const auto& bond : outlier_bonds) {
+                    outlierstring += "Bond ";
+                    outlierstring += bond.atoms[0]->name + " - " + bond.atoms[1]->name + " Z: " + std::to_string(bond.calculate_z()) + "\n";
+            }
+            root["OutlierBonds"] = outlierstring;
+
+            outlierstring = "Outliers: ";
+            for (const auto& torsion : outlier_torsions) {
+                    outlierstring += "Torsion ";
+                    outlierstring += torsion.atoms[0]->name + " - " + torsion.atoms[1]->name + " - " + torsion.atoms[2]->name + " - " + torsion.atoms[3]->name + " Z: " + std::to_string(torsion.calculate_z()) + "\n";
+            }
+            root["OutlierTorsions"] = outlierstring;
+
+            Json::StreamWriterBuilder builder;
+            const std::string json_string = Json::writeString(builder, root);
+
+            return json_string;
+        }
+
+        std::string get_B_validation(int imol){
+            mmdb::Manager *mol = get_mol(imol);
+            auto st = gemmi::copy_from_mmdb(mol);
+            size_t model_index = 0;
+
+            Json::Value root;
+
+            for (auto& chain : st.models[model_index].chains) {
+                Json::Value chain_json;
+                int res_idx = 0;
+
+                // Determine what kind of polymer this chain is so that we know
+                // which atoms belong to the main chain (backbone)
+                gemmi::PolymerType ptype = gemmi::check_polymer_type(chain.whole());
+                const std::vector<gemmi::AtomNameElement> mainchain_atoms =
+                    gemmi::get_mainchain_atoms(ptype);
+
+                for (auto& res : chain.residues) {
+                    Json::Value res_json;
+                    res_json["name"] = res.name;
+                    res_json["seqNum"] = res.seqid.num.value;
+                    res_json["insCode"] = std::string{res.seqid.icode};
+
+                    double main_chain_b_sum = 0.0;
+                    int    main_chain_b_count = 0;
+                    double side_chain_b_sum = 0.0;
+                    int    side_chain_b_count = 0;
+
+                    for (auto& atom : res.atoms) {
+                        // Hydrogens (when present) often carry the B of their
+                        // parent atom, so skip them to avoid skewing the mean
+                        if (atom.element == gemmi::El::H)
+                            continue;
+
+                        std::string atom_name = moorhen::ltrim(moorhen::rtrim(atom.name));
+                        bool is_main_chain = false;
+                        for (const auto& ane : mainchain_atoms) {
+                            if (atom_name == ane.atom_name) {
+                                is_main_chain = true;
+                                break;
+                            }
+                        }
+                        if (is_main_chain) {
+                            main_chain_b_sum += atom.b_iso;
+                            main_chain_b_count++;
+                        } else {
+                            side_chain_b_sum += atom.b_iso;
+                            side_chain_b_count++;
+                        }
+                    }
+
+                    res_json["Main Chain B-factor"] =
+                        main_chain_b_count > 0 ? main_chain_b_sum / main_chain_b_count : Json::nullValue;
+                    res_json["Side Chain B-factor"] =
+                        side_chain_b_count > 0 ? side_chain_b_sum / side_chain_b_count : Json::nullValue;
+
                     chain_json[res_idx++] = res_json;
                 }
                 root[chain.name] = chain_json;
@@ -1049,6 +1170,30 @@ class molecules_container_js : public molecules_container_t {
         }
         int add(int ic) {
             return ic + 1;
+        }
+        std::string rotamer_analysis_json(int imol_model) {
+            coot::validation_information_t info = rotamer_analysis(imol_model);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string ramachandran_analysis_json(int imol_model) {
+            std::string ret = "";
+            coot::validation_information_t info = ramachandran_analysis(imol_model);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string peptide_omega_analysis_json(int imol_model) {
+            std::string ret = "";
+            coot::validation_information_t info = peptide_omega_analysis(imol_model);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string density_correlation_analysis_json(int imol_model, int imol_map) {
+            std::string ret = "";
+            coot::validation_information_t info = density_correlation_analysis(imol_model,imol_map);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string density_fit_analysis_json(int imol_model, int imol_map) {
+            std::string ret = "";
+            coot::validation_information_t info = density_fit_analysis(imol_model,imol_map);
+            return moorhen::validation_information_t_to_json(info);
         }
         int writePDBASCII(int imol, const std::string &file_name) {
             const char *fname_cp = file_name.c_str();

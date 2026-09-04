@@ -1,7 +1,9 @@
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
+import { useMoorhenInstance } from "@/hooks";
 
 export const MoorhenSideChain180Button = (props: ContextButtonProps) => {
+    const moorhenInstance = useMoorhenInstance();
     const getCootCommandInput = (
         selectedMolecule: moorhen.Molecule,
         chosenAtom: moorhen.ResidueSpec,
@@ -32,6 +34,7 @@ export const MoorhenSideChain180Button = (props: ContextButtonProps) => {
             }
             toolTipLabel="Rotate side-chain 180 degrees"
             cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
+            onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "modify")}
             {...props}
         />
     );

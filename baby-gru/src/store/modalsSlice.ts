@@ -1,6 +1,5 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { ModalComponentProps, ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
-
 export type ModalCall = { key: ModalKey } & ModalComponentProps;
 
 const initialState: {

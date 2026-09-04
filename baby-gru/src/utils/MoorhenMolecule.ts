@@ -6,7 +6,7 @@ import * as vec3 from "gl-matrix/vec3";
 import "pako";
 import { quatToMat4 } from "../WebGLgComponents/quatToMat4.js";
 import { isDarkBackground } from "../WebGLgComponents/webGLUtils";
-import { setOrigin, setQuat, setRequestDrawScene, setZoom } from "../store/glRefSlice";
+import { setOrigin, setQuat, setRequestDrawScene, setZoom } from "../store";
 import { hideMolecule } from "../store/moleculesSlice";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
@@ -14,7 +14,7 @@ import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule } from "./MoorhenColourRule";
-import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
 import {
     centreOnGemmiAtoms,
     doDownload,
@@ -26,6 +26,10 @@ import {
     readGemmiCifDocument,
     readGemmiStructure,
 } from "./utils";
+import { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
+import { MoleculeToSeqViewerSequences } from "@/components/sequence-viewer/utils";
+import { MoorhenInstance } from "@/InstanceManager/index";
+import { CommandCentre } from "@/InstanceManager/CommandCentre/index";
 
 export type ResidueInfo = {
     resCode: string;
@@ -51,6 +55,31 @@ export type Sequence = {
     type: number;
     sequence: ResidueInfo[];
 };
+
+export type ChemShift = {
+    atom: string;
+    chain: string;
+    element: string;
+    isotope: number;
+    resname: string;
+    seq: number;
+    chemshift: number;
+    uncertainty?: number;
+    ambiguityFlag: boolean;
+}
+
+export type NEFRestraint = {
+    atom1: string;
+    chain1: string;
+    atom2: string;
+    chain2: string;
+    res1: string;
+    res2: string;
+    name1: number;
+    name2: number;
+    ambiguityFlag: boolean;
+    restraintID: number;
+}
 
 /**
  * Represents a molecule
@@ -94,8 +123,8 @@ export type Sequence = {
 export class MoorhenMolecule {
     type: string;
     atomCount: number;
-    commandCentre: React.RefObject<moorhen.CommandCentre | null>;
-    glRef: React.RefObject<webGL.MGWebGL | null>;
+    moorhenInstance: MoorhenInstance;
+    commandCentre: CommandCentre;
     atomsDirty: boolean;
     name: string;
     molNo: number | null;
@@ -140,13 +169,19 @@ export class MoorhenMolecule {
     store: Store;
     headerInfo: libcootApi.headerInfoJS;
     isMRSearchModel: boolean;
+    chemShifts: ChemShift[];
+    NEFRestraints: NEFRestraint[];
+    NEFRestraintRepresentation: moorhen.MoleculeRepresentation;
     moleculeCardState: { showXpidList: boolean };
+    private _seqViewerData: SeqElement[]
+    moleculeChangedCallbacks: ((molecule: string, changeType: string) => void)[];
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre | null>, reduxStore: Store, monomerLibraryPath: string) {
+    constructor(moorhenInstance: MoorhenInstance) {
         this.type = "molecule";
-        this.store = reduxStore;
-        this.commandCentre = commandCentre;
-        this.monomerLibraryPath = monomerLibraryPath;
+        this.moorhenInstance = moorhenInstance;
+        this.store = moorhenInstance.store;
+        this.commandCentre = moorhenInstance.commandCentre;
+        this.monomerLibraryPath = moorhenInstance.paths.monomerLibraryPath;
         this.atomsDirty = true;
         this.name = "unnamed";
         this.molNo = null;
@@ -178,9 +213,10 @@ export class MoorhenMolecule {
             bFactor: 100,
         };
         this.defaultBondOptions = {
-            smoothness: 1,
+            // Enum value: 1 = Coarse, 2 = Nice, 3 = Smooth (NOT the slider value 1/50/100)
+            smoothness: 2,
             width: 0.1,
-            atomRadiusBondRatio: 1,
+            atomRadiusBondRatio: 2,
             showAniso: false,
             showOrtep: false,
             showHs: true,
@@ -209,6 +245,7 @@ export class MoorhenMolecule {
             labelled: true,
             showHBonds: true,
             showContacts: true,
+            showNEF: false,
         };
         this.restraints = [];
         this.adaptativeBondsEnabled = false;
@@ -230,7 +267,11 @@ export class MoorhenMolecule {
         this.selectionRepresentation.setParentMolecule(this);
         this.adaptativeBondsRepresentation = new MoleculeRepresentation("adaptativeBonds", null, this.commandCentre);
         this.adaptativeBondsRepresentation.setParentMolecule(this);
+        this.chemShifts = [];
+        this.NEFRestraints = [];
         this.moleculeCardState = { showXpidList: false };
+        this.NEFRestraintRepresentation = new MoleculeRepresentation("NEFRestraints", null, this.commandCentre);
+        this.NEFRestraintRepresentation.setParentMolecule(this);
     }
 
     /**
@@ -261,7 +302,7 @@ export class MoorhenMolecule {
      * @param {string} coordData - The coord data for new model
      */
     async replaceModelWithCoordData(coordData: string): Promise<void> {
-        const cootResponse = await this.commandCentre.current.cootCommand(
+        const cootResponse = await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "replace_molecule_by_model_from_string",
@@ -273,10 +314,14 @@ export class MoorhenMolecule {
 
         if (cootResponse.data.result.status === "Completed") {
             this.atomsDirty = true;
-            return this.redraw();
+            return this.redraw().then(() => {
+                // as these call are often chained, we should do the trigger refine from the caller, not here
+                // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "new"));
+            });
         }
 
         return Promise.reject(cootResponse.data.result.status);
+        
     }
 
     /**
@@ -430,9 +475,9 @@ export class MoorhenMolecule {
         if (!this.symmetryOn) {
             this.symmetryMatrices = [];
         } else {
-            const originState = this.store.getState().glRef.origin;
+            const originState = this.store.getState().sceneSettings.origin;
             const selectionCentre: number[] = originState.map(coord => -coord);
-            const response = (await this.commandCentre.current.cootCommand(
+            const response = (await this.commandCentre.cootCommand(
                 {
                     returnType: "symmetry",
                     command: "get_symmetry_with_matrices",
@@ -553,7 +598,7 @@ export class MoorhenMolecule {
      * @returns {Promise<string[]>} List of CIDs with the residues found within the radius of search
      */
     async getNeighborResiduesCids(selectionCid: string, maxDist: number): Promise<string[]> {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "get_neighbours_cid",
@@ -604,10 +649,41 @@ export class MoorhenMolecule {
         sequenceInfoVec.delete();
 
         this.sequences = result;
+        // Do not cache seqViewer data while molNo is not yet assigned (e.g. during
+        // the initial load, parseSequences runs before read_coords_string returns),
+        // otherwise the cached data would permanently carry molNo === null and
+        // residue selection/interaction in the sequence viewer would break.
+        if (this.molNo !== null) {
+            this.updateSeqViewerData();
+        }
         this.hasDNA = this.sequences.some(sequence => [3, 4, 5].includes(sequence.type));
     }
 
-    /**
+    updateSeqViewerData() {
+        if (this.sequences.length === 0) {
+            this._seqViewerData = [];
+            return;
+        }
+        this._seqViewerData = MoleculeToSeqViewerSequences(this);
+    }
+
+    get seqViewerData(): SeqElement[] {
+        const cachedMolNo = this._seqViewerData?.[0]?.molNo;
+        const needsRefresh =
+            !this._seqViewerData ||
+            this._seqViewerData.length === 0 ||
+            (this.molNo !== null && cachedMolNo !== this.molNo);
+        if (needsRefresh) {
+            this.updateSeqViewerData();
+        }
+        return this._seqViewerData;
+    }
+
+    set seqViewerData(newData: SeqElement[]) {
+        this._seqViewerData = newData;
+    }
+
+        /**
      * Check if the molecule instance consists of a ligand
      * @returns {boolean} True if the molecule is a ligand
      */
@@ -629,7 +705,7 @@ export class MoorhenMolecule {
         this.adaptativeBondsRepresentation?.deleteBuffers();
         this.representations.forEach(representation => representation.deleteBuffers());
         this.store.dispatch(setRequestDrawScene(true));
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: popBackImol ? "pop_back" : "close_molecule",
@@ -686,7 +762,7 @@ export class MoorhenMolecule {
     async copyMolecule(doRedraw: boolean = true): Promise<moorhen.Molecule> {
         const state = this.store.getState();
         const useGemmi = state.generalStates.useGemmi;
-        const use_gemmi_response = await this.commandCentre.current.cootCommand(
+        const use_gemmi_response = await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "set_use_gemmi",
@@ -695,10 +771,10 @@ export class MoorhenMolecule {
             true
         );
         const coordString = await this.getAtoms();
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(this.moorhenInstance);
         newMolecule.name = `${this.name}-copy`;
 
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "read_coords_string",
@@ -729,7 +805,7 @@ export class MoorhenMolecule {
         doRecentre: boolean = true,
         style: moorhen.RepresentationStyles = "CBs"
     ): Promise<moorhen.Molecule> {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "copy_fragment_using_cid",
@@ -737,7 +813,7 @@ export class MoorhenMolecule {
             },
             true
         )) as moorhen.WorkerResponse<number>;
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(this.moorhenInstance);
         newMolecule.name = `${this.name} fragment`;
         newMolecule.molNo = response.data.result.result;
         await this.transferMetaData(newMolecule);
@@ -764,8 +840,8 @@ export class MoorhenMolecule {
         redraw: boolean = true,
         redrawFragmentFirst: boolean = true
     ): Promise<moorhen.Molecule> {
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath);
-        const copyResult = await this.commandCentre.current.cootCommand(
+        const newMolecule = new MoorhenMolecule(this.moorhenInstance);
+        const copyResult = await this.commandCentre.cootCommand(
             {
                 returnType: "int",
                 command: "copy_fragment_for_refinement_using_cid",
@@ -776,7 +852,7 @@ export class MoorhenMolecule {
 
         if (copyResult.data.result.result !== -1) {
             newMolecule.molNo = copyResult.data.result.result;
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "init_refinement_of_molecule_as_fragment_based_on_reference",
@@ -789,7 +865,7 @@ export class MoorhenMolecule {
             if (redraw) {
                 const drawMissingLoops = this.store.getState().sceneSettings.drawMissingLoops;
                 if (drawMissingLoops) {
-                    await this.commandCentre.current.cootCommand(
+                    await this.commandCentre.cootCommand(
                         {
                             command: "set_draw_missing_residue_loops",
                             returnType: "status",
@@ -833,7 +909,7 @@ export class MoorhenMolecule {
     ) {
         const drawMissingLoops = this.store.getState().sceneSettings.drawMissingLoops;
         if (drawMissingLoops) {
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     command: "set_draw_missing_residue_loops",
                     returnType: "status",
@@ -843,7 +919,7 @@ export class MoorhenMolecule {
             );
         }
 
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "clear_refinement",
@@ -853,7 +929,7 @@ export class MoorhenMolecule {
         );
 
         if (acceptTransform) {
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "replace_fragment",
@@ -870,6 +946,8 @@ export class MoorhenMolecule {
 
         await this.unhideAll();
         await fragmentMolecule.delete(true);
+                // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "new")
     }
 
     /**
@@ -906,7 +984,7 @@ export class MoorhenMolecule {
             if (source.name.endsWith(".mmcif") || source.name.endsWith(".cif") || source.name.endsWith(".pdbx"))
                 is_small = window.gemmiModule.is_small_structure(coordData as string);
             if (is_small) {
-                const small_to_cif_response = (await this.commandCentre.current.cootCommand(
+                const small_to_cif_response = (await this.commandCentre.cootCommand(
                     {
                         command: "SmallMoleculeCifToMMCif",
                         commandArgs: [coordData],
@@ -918,7 +996,7 @@ export class MoorhenMolecule {
                 const dictContent = small_to_cif_response.data.result.result.second;
                 //FIXME - I think I want specific molecule, but there is a circular dependency between mol and dicts
                 const anyMolNo = -999999;
-                await this.commandCentre.current.cootCommand(
+                await this.commandCentre.cootCommand(
                     {
                         returnType: "status",
                         command: "read_dictionary_string",
@@ -929,7 +1007,7 @@ export class MoorhenMolecule {
                 return await this.loadToCootFromString(coordContent, source.name);
             }
             if (source.name.endsWith(".mol")) {
-                const response = (await this.commandCentre.current.cootCommand(
+                const response = (await this.commandCentre.cootCommand(
                     {
                         command: "mol_text_to_pdb",
                         commandArgs: [coordData, "UNL", 10, 100, true, false],
@@ -940,7 +1018,7 @@ export class MoorhenMolecule {
                 const pdb = response.data.result.result.first;
                 const dict = response.data.result.result.second;
                 const mol = await this.loadToCootFromString(pdb, source.name);
-                await this.commandCentre.current.cootCommand(
+                await this.commandCentre.cootCommand(
                     {
                         returnType: "status",
                         command: "read_dictionary_string",
@@ -1007,7 +1085,7 @@ export class MoorhenMolecule {
         try {
             const state = this.store.getState();
             const useGemmi = state.generalStates.useGemmi;
-            const use_gemmi_response = await this.commandCentre.current.cootCommand(
+            const use_gemmi_response = await this.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "set_use_gemmi",
@@ -1017,7 +1095,7 @@ export class MoorhenMolecule {
             );
             this.updateGemmiStructure(coordData as string);
             this.atomsDirty = false;
-            const response = (await this.commandCentre.current.cootCommand(
+            const response = (await this.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "read_coords_string",
@@ -1087,7 +1165,7 @@ export class MoorhenMolecule {
         }
 
         if (dictContent) {
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "read_dictionary_string",
@@ -1105,7 +1183,7 @@ export class MoorhenMolecule {
      * @returns {Promise<moorhen.Molecule>} This molecule instance
      */
     async loadMissingMonomers(): Promise<void> {
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "string_array",
                 command: "get_residue_names_with_no_dictionary",
@@ -1155,7 +1233,7 @@ export class MoorhenMolecule {
             cootCommand = this.coordsFormat === "mmcif" ? "molecule_to_mmCIF_string" : "molecule_to_PDB_string";
         }
         if (useGemmi && cootCommand === "molecule_to_mmCIF_string") cootCommand = "molecule_to_mmCIF_string_with_gemmi";
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "string",
                 command: cootCommand,
@@ -1181,7 +1259,7 @@ export class MoorhenMolecule {
      */
     async checkHasGlycans(): Promise<boolean> {
         this.cachedPrivateerValidation = null;
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 returnType: "boolean",
                 command: "model_has_glycans",
@@ -1198,7 +1276,7 @@ export class MoorhenMolecule {
      * @returns {number} The molecule diameter
      */
     async getMoleculeDiameter(): Promise<number> {
-        const diameter = (await this.commandCentre.current.cootCommand(
+        const diameter = (await this.commandCentre.cootCommand(
             {
                 returnType: "int",
                 command: "get_molecule_diameter",
@@ -1247,7 +1325,7 @@ export class MoorhenMolecule {
         if (representation) {
             await this.redrawRepresentation(representation.uniqueId);
         } else {
-            await this.addRepresentation(style, cid);
+            await MoleculeRepresentation.create({ representationStyle: style, molecule: this, isCustom: false });
         }
     }
 
@@ -1427,30 +1505,10 @@ export class MoorhenMolecule {
      * @param {moorhen.ColourRule[]} [colourRules=undefined] - A list of colour rules that will be applied to the new representation
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
      * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
+     * @deprecated Use MoleculeRepresentation.create() instead.
      */
     async addRepresentation(
         style: RepresentationStyles,
-        cid?: string,
-        isCustom?: boolean,
-        colourRules?: ColourRule[],
-        bondOptions?: moorhen.cootBondOptions,
-        m2tParams?: m2tParameters,
-        residueEnvOptions?: residueEnvironmentOptions,
-        nonCustomOpacity?: number,
-        neighboursCid?: string,
-        restrictToNeighbours?: boolean,
-        excludeNeighbours?: boolean,
-        hbondedToCid?: string,
-        hbondedTo?: boolean,
-        neighboursDistance?: number
-    ): Promise<moorhen.MoleculeRepresentation>;
-    /**
-     * Add a representation to the molecule
-     * @param {moorhen.MoleculeRepresentation} representation - A pre-configured molecule representation
-     */
-    async addRepresentation(representation: moorhen.MoleculeRepresentation): Promise<moorhen.MoleculeRepresentation>;
-    async addRepresentation(
-        styleOrRepresentation: moorhen.RepresentationStyles | moorhen.MoleculeRepresentation,
         cid: string = "/*/*/*/*:*",
         isCustom: boolean = false,
         colourRules?: moorhen.ColourRule[],
@@ -1469,30 +1527,21 @@ export class MoorhenMolecule {
             await this.fetchDefaultColourRules();
         }
 
-        let representation: moorhen.MoleculeRepresentation;
-
-        // Check if the first argument is a MoleculeRepresentation instance
-        if (styleOrRepresentation instanceof MoleculeRepresentation) {
-            representation = styleOrRepresentation;
-            representation.setParentMolecule(this);
-        } else {
-            // Create a new representation from individual parameters
-            const style = styleOrRepresentation as moorhen.RepresentationStyles;
-            representation = new MoleculeRepresentation(style, cid, this.commandCentre);
-            representation.isCustom = isCustom;
-            representation.setParentMolecule(this);
-            representation.setColourRules(colourRules);
-            representation.setBondOptions(bondOptions);
-            representation.setM2tParams(m2tParams);
-            representation.setResidueEnvOptions(residueEnvOptions);
-            representation.setNonCustomOpacity(nonCustomOpacity);
-            representation.neighboursCid = neighboursCid;
-            representation.restrictToNeighbours = restrictToNeighbours;
-            representation.excludeNeighbours = excludeNeighbours;
-            representation.hbondedToCid = hbondedToCid;
-            representation.hbondedTo = hbondedTo;
-            representation.neighboursDistance = neighboursDistance;
-        }
+        const representation = new MoleculeRepresentation(style, cid, this.commandCentre);
+        representation.isCustom = isCustom;
+        representation.setParentMolecule(this);
+        representation.setColourRules(colourRules);
+        representation.setBondOptions(bondOptions);
+        representation.setM2tParams(m2tParams);
+        representation.setResidueEnvOptions(residueEnvOptions);
+        representation.setNonCustomOpacity(nonCustomOpacity);
+        representation.neighboursCid = neighboursCid;
+        representation.restrictToNeighbours = restrictToNeighbours;
+        representation.excludeNeighbours = excludeNeighbours;
+        representation.hbondedToCid = hbondedToCid;
+        representation.hbondedTo = hbondedTo;
+        representation.neighboursDistance = neighboursDistance;
+        representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
 
         await representation.draw();
         this.representations.push(representation);
@@ -1528,7 +1577,13 @@ export class MoorhenMolecule {
             if (representation) {
                 await representation.show();
             } else {
-                representation = await this.addRepresentation(style, cid);
+                representation = await MoleculeRepresentation.create({
+                    representationStyle: style,
+                    molecule: this,
+                    ruleType: "cid",
+                    cid: cid ?? "/*/*/*/*:*",
+                    isCustom: false,
+                });
             }
         } catch (err) {
             console.log(err);
@@ -1574,6 +1629,9 @@ export class MoorhenMolecule {
             this.selectionRepresentation?.deleteBuffers();
         } else if (style === "adaptativeBonds") {
             this.adaptativeBondsRepresentation?.deleteBuffers();
+         } else if (style === "NEFRestraints") {
+            this.NEFRestraintRepresentation?.deleteBuffers();
+                       
         } else {
             this.representations.forEach(representation => (representation.style === style ? representation.deleteBuffers() : null));
             this.representations = this.representations.filter(representation => representation.style !== style);
@@ -1722,7 +1780,21 @@ export class MoorhenMolecule {
             }
         }
     }
+    async drawNEFRestraints(selectionCid?: string) {
+        if (typeof selectionCid === "string") {
+            this.NEFRestraintRepresentation.cid = selectionCid;
+            await this.NEFRestraintRepresentation.redraw();
+        } else {
+            const [molecule, cid] = await getCentreAtom([this], this.commandCentre, this.store);
+            this.clearBuffersOfStyle("NEFRestraints");
+            if (molecule?.molNo === this.molNo && cid) {
+                this.NEFRestraintRepresentation.cid = cid;
+                await this.NEFRestraintRepresentation.redraw();
 
+            }
+        }
+
+    }
     /**
      * Redraw the molecule representations
      */
@@ -1767,7 +1839,7 @@ export class MoorhenMolecule {
             }
             const chains = model.chains;
             const chainsSize = chains.size();
-            const originState = this.store.getState().glRef.origin;
+            const originState = this.store.getState().sceneSettings.origin;
             for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
                 const chain = chains.get(chainIndex);
                 if (!selection.matches_chain(chain)) {
@@ -1859,7 +1931,7 @@ export class MoorhenMolecule {
      * @param {moorhen.AtomInfo[][]} movedResidues - Set of moved residues
      */
     async updateWithMovedAtoms(movedResidues: moorhen.AtomInfo[][]): Promise<void> {
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "shim_new_positions_for_residue_atoms",
@@ -1873,6 +1945,8 @@ export class MoorhenMolecule {
         this.displayObjectsTransformation.centre = [0, 0, 0];
         this.setAtomsDirty(true);
         await this.redraw();
+                // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "modify")
     }
 
     /**
@@ -1915,7 +1989,7 @@ export class MoorhenMolecule {
     async mergeMolecules(otherMolecules: moorhen.Molecule[], doHide: boolean = false, doRedraw: boolean = true): Promise<void> {
         try {
             const prevChainNames = this.getChainNames();
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     command: "merge_molecules",
                     commandArgs: [this.molNo, `${otherMolecules.map(molecule => molecule.molNo).join(":")}`],
@@ -1945,6 +2019,8 @@ export class MoorhenMolecule {
             if (doRedraw) {
                 await this.redraw();
             }
+                    // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "modify")
         } catch (err) {
             console.log(err);
         }
@@ -1956,9 +2032,9 @@ export class MoorhenMolecule {
      * @param {number} [fromMolNo=-999999] - Indicate the molecule number to which the ligand dictionary was associated (use -999999 for "any")
      */
     async addLigandOfType(resType: string, fromMolNo: number = -999999): Promise<moorhen.WorkerResponse> {
-        const originState = this.store.getState().glRef.origin;
+        const originState = this.store.getState().sceneSettings.origin;
         const getMonomer = () => {
-            return this.commandCentre.current.cootCommand(
+            return this.commandCentre.cootCommand(
                 {
                     returnType: "status",
                     command: "get_monomer_and_position_at",
@@ -1975,7 +2051,7 @@ export class MoorhenMolecule {
             result = await getMonomer();
         }
         if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
-            const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath);
+            const newMolecule = new MoorhenMolecule(this.moorhenInstance);
             newMolecule.setAtomsDirty(true);
             newMolecule.molNo = result.data.result.result;
             newMolecule.name = resType.toUpperCase();
@@ -2036,6 +2112,7 @@ export class MoorhenMolecule {
             const reassembledCif = unindentedLines.join("\n");
             this.ligandDicts[comp_id] = reassembledCif;
         }
+        this.moorhenInstance.triggerMoleculeChanged(this.uniqueId)
     }
 
     /**
@@ -2048,7 +2125,7 @@ export class MoorhenMolecule {
             return;
         }
 
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "read_dictionary_string",
@@ -2064,7 +2141,7 @@ export class MoorhenMolecule {
      * Undo last action performed on this molecule
      */
     async undo(): Promise<void> {
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "undo",
@@ -2074,6 +2151,8 @@ export class MoorhenMolecule {
             true
         );
         this.setAtomsDirty(true);
+                // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "modify")
         return this.redraw();
     }
 
@@ -2081,7 +2160,7 @@ export class MoorhenMolecule {
      * Redo last action performed on this molecule
      */
     async redo(): Promise<void> {
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "redo",
@@ -2091,6 +2170,8 @@ export class MoorhenMolecule {
             true
         );
         this.setAtomsDirty(true);
+                // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "modify")
         return this.redraw();
     }
 
@@ -2178,7 +2259,7 @@ export class MoorhenMolecule {
             return;
         }
 
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 message: "coot_command",
                 command: "get_colour_rules",
@@ -2203,7 +2284,7 @@ export class MoorhenMolecule {
         if (cid.includes("||")) {
             await Promise.all(
                 cid.split("||").map(i => {
-                    this.commandCentre.current.cootCommand(
+                    this.commandCentre.cootCommand(
                         {
                             message: "coot_command",
                             command: "add_to_non_drawn_bonds",
@@ -2215,7 +2296,7 @@ export class MoorhenMolecule {
                 })
             );
         } else {
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     message: "coot_command",
                     command: "add_to_non_drawn_bonds",
@@ -2253,7 +2334,7 @@ export class MoorhenMolecule {
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
     async unhideAll(redraw: boolean = true) {
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 message: "coot_command",
                 command: "clear_non_drawn_bonds",
@@ -2275,7 +2356,7 @@ export class MoorhenMolecule {
      * @param {number} mapNo - Map number that should be used
      */
     async rigidBodyFit(cidsString: string, mapNo: number, redraw: boolean = true): Promise<void> {
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 command: "rigid_body_fit",
                 returnType: "status",
@@ -2289,6 +2370,8 @@ export class MoorhenMolecule {
         if (redraw) {
             await this.redraw();
         }
+                // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "modify")
     }
 
     /**
@@ -2297,7 +2380,7 @@ export class MoorhenMolecule {
      * @param {number} [maxRadius=4.2] The maximum radius for the restraints
      */
     async generateSelfRestraints(cid: string = "//", maxRadius: number = 4.2): Promise<void> {
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 command: "generate_local_self_restraints",
                 returnType: "status",
@@ -2313,7 +2396,7 @@ export class MoorhenMolecule {
      */
     clearExtraRestraints(): Promise<moorhen.WorkerResponse> {
         this.restraints = [];
-        return this.commandCentre.current.cootCommand(
+        return this.commandCentre.cootCommand(
             {
                 command: "clear_extra_restraints",
                 returnType: "status",
@@ -2331,7 +2414,7 @@ export class MoorhenMolecule {
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
     async refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number = 4000, redraw: boolean = true): Promise<void> {
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 command: "refine_residues_using_atom_cid",
                 returnType: "status",
@@ -2345,6 +2428,8 @@ export class MoorhenMolecule {
         if (redraw) {
             await this.redraw();
         }
+                // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "refine", cid)
     }
 
     /**
@@ -2356,7 +2441,7 @@ export class MoorhenMolecule {
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
     async refineResidueRange(chainId: string, start: number, stop: number, ncyc: number = 4000, redraw: boolean = true): Promise<void> {
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "refine_residue_range",
@@ -2370,6 +2455,8 @@ export class MoorhenMolecule {
         if (redraw) {
             await this.redraw();
         }
+                // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "refine", `//${chainId}/${start}-${stop}`)
     }
 
     /**
@@ -2397,7 +2484,10 @@ export class MoorhenMolecule {
         const newMolecule = await this.copyFragmentForRefinement(cidList, activeMap, redraw, redrawFragmentFirst);
         await newMolecule.animateRefine(50, 30, 50);
         await this.mergeFragmentFromRefinement(cidList.join("||"), newMolecule, true, true);
+                // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "refine", cidList.join("||"))
     }
+    
 
     /**
      * Refine a molecule with animation effect
@@ -2407,7 +2497,7 @@ export class MoorhenMolecule {
      */
     async animateRefine(n_cyc: number, n_iteration: number, final_n_cyc: number = 100) {
         for (let i = 0; i <= n_iteration; i++) {
-            const result = (await this.commandCentre.current.cootCommand(
+            const result = (await this.commandCentre.cootCommand(
                 {
                     returnType: "status_instanced_mesh_pair",
                     command: "refine",
@@ -2435,7 +2525,7 @@ export class MoorhenMolecule {
      * @returns {object} - A pair where first is the return status and second is the atom count of the molecule after deletion
      */
     async deleteCid(cid: string, redraw: boolean = true): Promise<libcootApi.PairType<number, number>> {
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "delete_using_cid",
@@ -2450,6 +2540,9 @@ export class MoorhenMolecule {
             await this.redraw();
         }
 
+                // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "delete", cid)
+
         return result.data.result.result;
     }
 
@@ -2461,7 +2554,7 @@ export class MoorhenMolecule {
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
     async SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string, redraw: boolean = true): Promise<void> {
-        this.commandCentre.current.cootCommand(
+        this.commandCentre.cootCommand(
             {
                 command: "SSM_superpose",
                 returnType: "superpose_results",
@@ -2476,6 +2569,8 @@ export class MoorhenMolecule {
             await this.redraw();
             await this.centreOn("/*/*/*/*", true);
         }
+                // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "modify")
     }
 
     /**
@@ -2491,7 +2586,7 @@ export class MoorhenMolecule {
         matchType: number = 1,
         redraw: boolean = true
     ): Promise<void> {
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 command: "clear_lsq_matches",
                 commandArgs: [],
@@ -2502,7 +2597,7 @@ export class MoorhenMolecule {
 
         await Promise.all(
             residueMatches.map(item => {
-                return this.commandCentre.current.cootCommand(
+                return this.commandCentre.cootCommand(
                     {
                         command: "add_lsq_superpose_match",
                         commandArgs: [item.refChainId, ...item.refResidueRange, item.movChainId, ...item.movResidueRange, matchType],
@@ -2513,7 +2608,7 @@ export class MoorhenMolecule {
             })
         );
 
-        await this.commandCentre.current.cootCommand(
+        await this.commandCentre.cootCommand(
             {
                 command: "lsq_superpose",
                 commandArgs: [refMolNo, this.molNo],
@@ -2547,7 +2642,7 @@ export class MoorhenMolecule {
         useConformers: boolean = false,
         conformerCount: number = 0
     ): Promise<moorhen.Molecule[]> {
-        const originState = this.store.getState().glRef.origin;
+        const originState = this.store.getState().sceneSettings.origin;
         let newMolecules: moorhen.Molecule[] = [];
         const command = fitRightHere ? "fit_ligand_right_here" : "fit_ligand";
         const returnType = fitRightHere ? "int_array" : "fit_ligand_info_array";
@@ -2557,7 +2652,7 @@ export class MoorhenMolecule {
             ? [this.molNo, mapMolNo, ligandMolNo, ...originState.map(coord => -coord), 1, useConformers, conformerCount, eigen_orientation_search_mode]
             : [this.molNo, mapMolNo, ligandMolNo, 1, useConformers, conformerCount, eigen_orientation_search_mode];
 
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 returnType: returnType,
                 command: command,
@@ -2573,7 +2668,7 @@ export class MoorhenMolecule {
                 .molecules.moleculeList.find((molecule: moorhen.Molecule) => molecule.molNo === ligandMolNo);
             newMolecules = await Promise.all(
                 result.data.result.result.map(async (fitLigandResult: number | libcootApi.fitLigandInfo, idx: number) => {
-                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath);
+                    const newMolecule = new MoorhenMolecule(this.moorhenInstance);
                     newMolecule.molNo = fitRightHere ? (fitLigandResult as number) : (fitLigandResult as libcootApi.fitLigandInfo).imol;
                     newMolecule.name = `${ligandMolecule?.name ? ligandMolecule.name : "Lig."} fit. #${idx + 1}`;
                     newMolecule.isDarkBackground = this.isDarkBackground;
@@ -2588,7 +2683,8 @@ export class MoorhenMolecule {
         } else {
             console.warn("Something went wrong when finding ligands...");
         }
-
+                // as these call are often chhained, we should do the trigger refine from the caller, not here
+        // this.moorhenInstance.triggerMoleculeChanged(this.uniqueId, "new")(this.uniqueId, "add")
         return newMolecules;
     }
 
@@ -2609,12 +2705,138 @@ export class MoorhenMolecule {
         return result;
     }
 
+    getResidueCAPositions() {
+        const residueMap = new Map();
+
+        const models = this.gemmiStructure.models;
+
+        for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+
+            const model = models.get(modelIndex);
+            const chains = model.chains;
+
+            for (let chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+
+                const chain = chains.get(chainIndex);
+                const residues = chain.residues;
+
+                for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+
+                    const residue = residues.get(residueIndex);
+
+                    const residueKey =
+                        `${chain.name}/${residue.seqid.str()}`;
+
+                    const atoms = residue.atoms;
+
+                    for (let atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
+
+                        const atom = atoms.get(atomIndex);
+
+                        if (atom.name.trim() === "CA") {
+
+                            if (!residueMap.has(residueKey)) {
+                                residueMap.set(residueKey, {
+                                    cid: residueKey,
+                                    positions: []
+                                });
+                            }
+
+                            residueMap.get(residueKey).positions.push({
+                                x: atom.pos.x,
+                                y: atom.pos.y,
+                                z: atom.pos.z
+                            });
+                        }
+
+                        atom.delete();
+                    }
+
+                    atoms.delete();
+                    residue.delete();
+                }
+
+                residues.delete();
+                chain.delete();
+            }
+
+            chains.delete();
+            model.delete();
+        }
+
+        models.delete();
+
+        return residueMap;
+    }
+    /**
+     * Calculate RMSD
+     * @returns {object[]} An array of objects indicating the residue CID and RMSD
+     */
+    getRMSDs() {
+        const result: { cid: string; RMSD: number }[] = [];
+        const residueMap = this.getResidueCAPositions()
+        const averagePositions = [];
+        for (const [cid, residue] of residueMap.entries()) {
+
+            const n = residue.positions.length;
+
+            const avgX =
+                residue.positions.reduce((s,p)=>s+p.x,0) / n;
+
+            const avgY =
+                residue.positions.reduce((s,p)=>s+p.y,0) / n;
+
+            const avgZ =
+                residue.positions.reduce((s,p)=>s+p.z,0) / n;
+
+            averagePositions.push({
+                cid,
+                x: avgX,
+                y: avgY,
+                z: avgZ
+            });
+        }
+        const rmsdValues = [];
+        for (const [cid, residue] of residueMap.entries()) {
+
+            const n = residue.positions.length;
+
+            const avgX =
+                residue.positions.reduce((s,p)=>s+p.x,0) / n;
+
+            const avgY =
+                residue.positions.reduce((s,p)=>s+p.y,0) / n;
+
+            const avgZ =
+                residue.positions.reduce((s,p)=>s+p.z,0) / n;
+
+            let sumSq = 0;
+
+            residue.positions.forEach(pos => {
+
+                const dx = pos.x - avgX;
+                const dy = pos.y - avgY;
+                const dz = pos.z - avgZ;
+
+                sumSq += dx*dx + dy*dy + dz*dz;
+            });
+
+            const RMSD = Math.sqrt(sumSq / n);
+
+            rmsdValues.push({
+                cid,
+                RMSD
+            });
+        }
+        return rmsdValues;
+        }
+
     /**
      * Get chain IDs that are related by NCS or molecular symmetry
      * @returns {string[][]} An array of arrays where chain IDs are grouped together
      */
     async getNcsRelatedChains(): Promise<string[][]> {
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 returnType: "string_array_array",
                 command: "get_ncs_related_chains",
@@ -2630,7 +2852,7 @@ export class MoorhenMolecule {
      * @returns {Promise<number>} The number of atoms in the molecule
      */
     async getNumberOfAtoms(): Promise<number> {
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 returnType: "int",
                 command: "get_number_of_atoms",
@@ -2649,7 +2871,7 @@ export class MoorhenMolecule {
      * @param {number} z - Coordinate Z
      */
     async moveMoleculeHere(x: number, y: number, z: number): Promise<void> {
-        (await this.commandCentre.current.cootCommand(
+        (await this.commandCentre.cootCommand(
             {
                 returnType: "int",
                 command: "move_molecule_to_new_centre",
@@ -2724,7 +2946,7 @@ export class MoorhenMolecule {
      * @returns {object[]} An array of objects containing the secondary structure information for each residue
      */
     async getSecondaryStructInfo(modelNumber: number = 1): Promise<libcootApi.ResidueSpecJS[]> {
-        const secondaryStructInfoVec = (await this.commandCentre.current.cootCommand(
+        const secondaryStructInfoVec = (await this.commandCentre.cootCommand(
             {
                 returnType: "residue_specs",
                 command: "GetSecondaryStructure",
@@ -2761,7 +2983,7 @@ export class MoorhenMolecule {
             return this.cachedPrivateerValidation;
         }
 
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 command: "privateer_validate",
                 commandArgs: [this.molNo],
@@ -2783,7 +3005,7 @@ export class MoorhenMolecule {
      */
     async getFLEVSVG(cid: string): Promise<string> {
         if (window.gemmiModule.has_hydrogen(this.gemmiStructure.first_model())) {
-            const flev_result = (await this.commandCentre.current.cootCommand(
+            const flev_result = (await this.commandCentre.cootCommand(
                 {
                     returnType: "string",
                     command: "get_svg_for_2d_ligand_environment_view",
@@ -2823,7 +3045,7 @@ export class MoorhenMolecule {
 
         const use_rdkit = true;
 
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 returnType: "string",
                 command: "get_svg_for_residue_type",
@@ -2850,7 +3072,7 @@ export class MoorhenMolecule {
      * @returns {number} - Status code -1 on a conflict, 1 on good, 0 on did nothing
      */
     async changeChainId(oldId: string, newId: string, redraw: boolean = false, startResNo?: number, endResNo?: number): Promise<number> {
-        const status = (await this.commandCentre.current.cootCommand(
+        const status = (await this.commandCentre.cootCommand(
             {
                 returnType: "pair_int_str",
                 command: "change_chain_id",
@@ -2888,9 +3110,9 @@ export class MoorhenMolecule {
      */
     async generateAssembly(assemblyNumber: string, draw: boolean = false): Promise<moorhen.Molecule> {
         const coordString = await this.gemmiStructure.as_string();
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(this.moorhenInstance);
         newMolecule.name = `${this.name}-assembly-${assemblyNumber}`;
-        const response = (await this.commandCentre.current.cootCommand(
+        const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "shim_generate_assembly",
@@ -2913,7 +3135,7 @@ export class MoorhenMolecule {
      * @returns {moorhen.Molecule[]} - A list with the new molecules
      */
     async splitMultiModels(draw: boolean = false): Promise<moorhen.Molecule[]> {
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 returnType: "int_array",
                 command: "split_multi_model_molecule",
@@ -2928,7 +3150,7 @@ export class MoorhenMolecule {
             }
             return await Promise.all(
                 result.data.result.result.map(async (molNo, index) => {
-                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.store, this.monomerLibraryPath);
+                    const newMolecule = new MoorhenMolecule(this.moorhenInstance);
                     newMolecule.name = `${this.name}-${index + 1}`;
                     newMolecule.molNo = molNo;
                     await this.transferMetaData(newMolecule);
@@ -2966,7 +3188,7 @@ export class MoorhenMolecule {
     ) {
         const commandArgs = [this.molNo, cid, ncyc, useRamaRestraints, ramaWeight, useTorsionRestraints, torsionWeight, true];
         for (let i = 0; i < nIterations; i++) {
-            const result = (await this.commandCentre.current.cootCommand(
+            const result = (await this.commandCentre.cootCommand(
                 {
                     command: "minimize_energy",
                     commandArgs: commandArgs,
@@ -3000,7 +3222,7 @@ export class MoorhenMolecule {
         const dummy_name = this.gemmiDocument ? "dummy.cif" : "dummy.pdb";
 
         const headerInfoGemmi = this.gemmiDocument
-            ? ((await this.commandCentre.current.cootCommand(
+            ? ((await this.commandCentre.cootCommand(
                   {
                       command: "get_coord_header_info",
                       commandArgs: [docString, dummy_name],
@@ -3008,7 +3230,7 @@ export class MoorhenMolecule {
                   },
                   true
               )) as moorhen.WorkerResponse<libcootApi.headerInfoGemmiJS>)
-            : ((await this.commandCentre.current.cootCommand(
+            : ((await this.commandCentre.cootCommand(
                   {
                       command: "get_coord_header_info",
                       commandArgs: [coordString, dummy_name],
@@ -3021,7 +3243,7 @@ export class MoorhenMolecule {
             return this.headerInfo;
         }
 
-        const headerInfo = (await this.commandCentre.current.cootCommand(
+        const headerInfo = (await this.commandCentre.cootCommand(
             {
                 command: "get_header_info",
                 commandArgs: [this.molNo],
@@ -3056,7 +3278,7 @@ export class MoorhenMolecule {
      * @param {moorhen.Map} activeMap - The map instance used in the refinement
      */
     async calculateQscore(activeMap: moorhen.Map, cid?: string) {
-        const result = (await this.commandCentre.current.cootCommand(
+        const result = (await this.commandCentre.cootCommand(
             {
                 command: cid ? "get_q_score_for_cid" : "get_q_score",
                 commandArgs: cid ? [this.molNo, cid, activeMap.molNo] : [this.molNo, activeMap.molNo],

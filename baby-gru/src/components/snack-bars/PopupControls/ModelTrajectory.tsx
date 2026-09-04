@@ -7,7 +7,7 @@ import { setIsAnimatingTrajectory } from "@/store/generalStatesSlice";
 import { setShownControl } from "@/store/globalUISlice";
 import { hideMolecule, showMolecule } from "@/store/moleculesSlice";
 import { moorhen } from "@/types/moorhen";
-import { MoleculeRepresentation, PickableMesh } from "@/utils/MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation, PickableMesh } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { MoorhenButton, MoorhenNumberInput, MoorhenSlider } from "@/components/inputs";
 import { MoorhenLinearProgress } from "@/components/icons";
 import useStateWithRef from "@/hooks/useStateWithRef";
@@ -101,7 +101,7 @@ export const ModelTrajectory = () => {
     useEffect(() => {
         const loadFrames = async () => {
             dispatch(setIsAnimatingTrajectory(true));
-            representationRef.current = new MoleculeRepresentation(style, "/*/*/*/*", commandCentre);
+            representationRef.current = new MoleculeRepresentation(style, "/*/*/*/*", commandCentre.current);
             framesRef.current = await computeFrames(selectedMolecule, representationRef.current);
             setNFrames(framesRef.current.length);
             setBusyComputingFrames(false);

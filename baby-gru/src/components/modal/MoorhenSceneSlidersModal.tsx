@@ -21,7 +21,7 @@ import {
     setFogEnd,
     setClipStart,
     setClipEnd,
-} from "../../store/glRefSlice";
+} from "../../store";
 import { triangle_side_on_view_instanced_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-instanced-vertex-shader.js';
 import { triangle_side_on_view_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-vertex-shader.js';
 import { triangle_side_on_view_fragment_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-fragment-shader.js';
@@ -98,10 +98,10 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
 
-    const gl_fog_start = useSelector((state: moorhen.State) => state.glRef.fogStart);
-    const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd);
-    const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart);
-    const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd);
+    const gl_fog_start = useSelector((state: moorhen.State) => state.sceneSettings.fogStart);
+    const gl_fog_end = useSelector((state: moorhen.State) => state.sceneSettings.fogEnd);
+    const clipStart = useSelector((state: moorhen.State) => state.sceneSettings.clipStart);
+    const clipEnd = useSelector((state: moorhen.State) => state.sceneSettings.clipEnd);
     const blurSize = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
 
     const [useFog, setUseFog] = useState<boolean>(true);
@@ -136,7 +136,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
 
     const spanScaling = 0.75
 
-    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset);
+    const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset);
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
     const quat = useSelector((state: moorhen.State) => state.glRef.quat)
 
@@ -148,7 +148,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
 
     const displayBuffers = store.getState().glRef.displayBuffers
     const storeMolecules = store.getState().molecules.moleculeList
-    const originState =  store.getState().glRef.origin
+    const originState =  store.getState().sceneSettings.origin
 
     const [clickX, setClickX] = useState<number>(-1)
     const [clickY, setClickY] = useState<number>(-1)

@@ -1,8 +1,7 @@
-import { MoorhenLinearProgress } from "../../icons";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState, removeVectors } from "@/store";
-import { useCommandCentre, usePaths } from "../../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../../InstanceManager";
 import { isDarkBackground } from "../../../WebGLgComponents/webGLUtils";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
 import {
@@ -14,12 +13,12 @@ import {
 } from "../../../store/moleculesSlice";
 import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx, getCentreAtom } from "../../../utils/utils";
+import { MoorhenLinearProgress } from "../../icons";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenToggle } from "../../inputs";
 import { MoorhenAccordion, MoorhenInfoCard, MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../../interface-base";
 import { DeleteDisplayObject, GenerateAssembly, RenameDisplayObject } from "../../menu-item";
 import { MoorhenHeaderInfoCard } from "../MoorhenHeaderInfoCard";
 import { ItemName } from "../utils/ItemName";
-import { AddCustomRepresentationCard } from "./AddCustomRepresentationCard";
 import { MoorhenModifyColourRulesCard } from "./ModifyColourRulesCard";
 import {
     MoorhenMoleculeRepresentationSettingsCard,
@@ -28,9 +27,13 @@ import {
 } from "./MoleculeRepresentationSettingsCard";
 import { PictureWizardCard } from "./PictureWizardCard";
 import { CustomRepresentationChip } from "./RepresentationChip";
+import { AddCustomRepresentationCard } from "./addRepresentation/AddRepresentationCard";
 import { MoorhenCarbohydrateList } from "./list/MoorhenCarbohydrateList";
 import { MoorhenLigandList } from "./list/MoorhenLigandList";
+
 import { MoorhenXPIDList } from "./list/MoorhenXPIDList";
+import { NEFRestraintsSettingsPanel } from "./NEFRestraintsSettingsCard"
+
 import "./molecule-card.css";
 
 interface MoleculeCardProps {
@@ -133,6 +136,11 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "CDs";
         });
     });
+    const displayNEFRestraints = useSelector((state: RootState) => {
+        return state.molecules.generalRepresentations.some(rep => {
+            return rep.parentMolecule.molNo === props.molecule.molNo && rep.style === "NEFRestraints";
+        });
+    });
 
     const symmetrySettingsProps = {
         symmetryRadius,
@@ -150,6 +158,8 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             redrawMolIfDirty(representationIds);
         }
     };
+
+    const NMRMode = (props.molecule.chemShifts?.length ?? 0) > 0;
 
     useEffect(() => {
         if (!userPreferencesMounted || drawMissingLoops === null) {
@@ -253,10 +263,17 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
         dispatch(isVisible ? hideMolecule(props.molecule) : showMolecule(props.molecule));
         if (isVisible) {
             props.molecule.environmentRepresentation?.hide();
+            props.molecule.NEFRestraintRepresentation?.hide();
+
         } else {
             if (displayEnvironment) {
                 props.molecule.environmentRepresentation?.show();
                 props.molecule.environmentRepresentation?.redraw();
+            }
+            
+            if (displayNEFRestraints) {
+                props.molecule.NEFRestraintRepresentation?.show();
+                props.molecule.NEFRestraintRepresentation?.redraw();
             }
         }
     }, [isVisible]);
@@ -305,9 +322,8 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
 
     const dropDownMenu: React.JSX.Element = (
         <MoorhenStack>
-            <MoorhenMenuItemPopover menuItemText="Header info" popoverStyle={{ maxWidth: "40%", overflowY: "auto"}}
-            >
-                <MoorhenHeaderInfoCard molecule={props.molecule}/>
+            <MoorhenMenuItemPopover menuItemText="Header info" popoverStyle={{ maxWidth: "40%", overflowY: "auto" }}>
+                <MoorhenHeaderInfoCard molecule={props.molecule} />
             </MoorhenMenuItemPopover>
             <MoorhenMenuItemPopover menuItemText="Rename Molecule">
                 <RenameDisplayObject key="rename" setCurrentName={handleRename} item={props.molecule} />
@@ -353,7 +369,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
             size="accordion"
             tooltip="Save molecule"
         />,
-        <MoorhenPopoverButton size="accordion" popoverPlacement="left" tooltip="More">
+        <MoorhenPopoverButton key="more" size="accordion" popoverPlacement="left" tooltip="More">
             {dropDownMenu}
         </MoorhenPopoverButton>,
     ];
@@ -393,6 +409,21 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                 .vectors.vectorsList.filter(vector => vector.uniqueId.includes(`__TAG_XPID_${props.molecule.uniqueId}`));
             dispatch(removeVectors(vectorList));
         }
+    };
+    const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList).filter(v => 
+        v.uniqueId.includes("__TAG_NEF"))
+    let doShowAllNEF = false 
+
+    const handleNEFRestraintsToggle = value => {
+        if (!value) {
+            props.molecule.NEFRestraintRepresentation?.hide();
+            dispatch(removeGeneralRepresentation(props.molecule.NEFRestraintRepresentation));
+            return;
+        }
+
+        props.molecule.drawNEFRestraints().then(() => {
+            dispatch(addGeneralRepresentation(props.molecule.NEFRestraintRepresentation));
+        });
     };
 
     return (
@@ -450,7 +481,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                     >
                         <PictureWizardCard
                             setBusy={setBusyDrawingCustomRepresentation}
-                            urlPrefix={urlPrefix}
                             molecule={props.molecule}
                             onApply={() => document.body.click()}
                         />
@@ -594,6 +624,34 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                 </MoorhenStack>
                             }
                         />
+                    {NMRMode && <MoorhenStack direction="row" align="center">
+                        <MoorhenToggle
+                            onChange={e => handleNEFRestraintsToggle(e.target.checked)}
+
+
+                            checked={displayNEFRestraints}
+
+                            disabled={isVisible ? false : true}
+                            label={
+                                <MoorhenStack direction="row" align="center">
+                                    NEF restraints&nbsp;    
+                                    <MoorhenInfoCard
+                                        infoText={
+                                            <>
+                                                <b>NEF restraints</b>
+                                                <br />
+                                                Visualisation settings for NMR restraints loaded in from NEF files.
+                                            </>
+                                        }
+                                    />
+                                </MoorhenStack>
+                                }
+                            />
+
+
+                        </MoorhenStack>
+                        }
+
                     </MoorhenStack>
                 </MoorhenAccordion>
                 {/* <div className="moorhen__molecule_card_representation-buttons"></div> */}

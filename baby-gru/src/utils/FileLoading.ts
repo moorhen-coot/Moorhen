@@ -1,22 +1,23 @@
 import Fasta from "biojs-io-fasta";
+import pako from "pako";
 import type { Dispatch, Store } from "redux";
-import { MoorhenReduxStoreType, enqueueSnackbar } from "@/store";
+import { MoorhenInstance } from "@/InstanceManager";
+import { CommandCentre } from "@/InstanceManager/CommandCentre";
+import { MoorhenReduxStoreType, enqueueSnackbar, setSeqViewerOption, setShownBottomPanel } from "@/store";
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setValidationJson } from "../store/jsonValidation";
 import { addMap, addMapList } from "../store/mapsSlice";
 import { showModal } from "../store/modalsSlice";
-import { addMoleculeList } from "../store/moleculesSlice";
+import { addCustomRepresentation, addMoleculeList } from "../store/moleculesSlice";
 import { setAfJson, setEsmJson, setHomologsJson, setMrParseModels, setTargetSequence } from "../store/mrParseSlice";
 import { moorhen } from "../types/moorhen";
-import { MoorhenTimeCapsule } from "../utils/MoorhenTimeCapsule";
-import { modalKeys } from "../utils/enums";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
-import { MoleculeRepresentation, RepresentationStyles } from "./MoorhenMoleculeRepresentation";
-import pako from "pako";
-import { CommandCentre } from "@/InstanceManager/CommandCentre";
-import { MoorhenInstance } from "@/InstanceManager"
+import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
+import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
+import { modalKeys } from "./enums";
+// import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -84,36 +85,37 @@ export const parseCifDict = async (file: File) => {
 const readCoordsString = async (
     fileString: string,
     fileName: string,
-    commandCentre: React.RefObject<moorhen.CommandCentre>,
-    store: Store,
-    monomerLibraryPath: string,
+    moorhenInstance: MoorhenInstance,
     backgroundColor: [number, number, number, number],
     defaultBondSmoothness: number | null
 ): Promise<moorhen.Molecule> => {
-    const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+    const newMolecule = new MoorhenMolecule(moorhenInstance);
     newMolecule.setBackgroundColour(backgroundColor);
     newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
     await newMolecule.loadToCootFromString(fileString, fileName);
     return newMolecule;
 };
 
-export const drawModels = async (newMolecules: MoorhenMolecule[], representation : RepresentationStyles) => {
-    const drawPromises: Promise<MoleculeRepresentation>[] = [];
-    if (newMolecules.length === 0) {
-        return;
-    }
+export const drawModels = async (newMolecules: MoorhenMolecule[], moorhenInstance: MoorhenInstance) => {
 
     for (const newMolecule of newMolecules) {
-        drawPromises.push(newMolecule.addRepresentation(representation));
+        const hasLongSequence = newMolecule.sequences.some(item => item.sequence.length > 10);
+        const representation = hasLongSequence ? moorhenInstance.representation.defaultStyle : "CBs";
+        if (
+            representation === "ribbons-and-ligands" ||
+            representation === "ribbons-and-side-chains" ||
+            representation === "site-and-ribbons"
+        ) {
+            await moorhenInstance.representation.wizard(newMolecule.uniqueId, representation, true);
+        } else {
+            await moorhenInstance.representation.create(newMolecule.uniqueId, { representationStyle: representation });
+        }
     }
-    await Promise.all(drawPromises);
 };
 
 export const loadCoordFiles = async (
     files: File[],
-    commandCentre: React.RefObject<moorhen.CommandCentre>,
-    store: Store,
-    monomerLibraryPath: string,
+    moorhenInstance: MoorhenInstance,
     backgroundColor: [number, number, number, number],
     defaultBondSmoothness: number | null
 ): Promise<Promise<moorhen.Molecule>[]> => {
@@ -122,40 +124,27 @@ export const loadCoordFiles = async (
         if (file.name.endsWith(".pdb") || file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
             const contents = await file.text();
             loadPromises.push(
-                readCoordsString(contents, file.name, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
+                readCoordsString(contents, file.name, moorhenInstance, backgroundColor, defaultBondSmoothness)
             );
         }
     }
     return loadPromises;
 };
 
-const loadSession = async (
-    session: string | object,
-    moorhenInstance: MoorhenInstance
-
-) => {
+const loadSession = async (session: string | object, moorhenInstance: MoorhenInstance) => {
     moorhenInstance.commandCentre.history.reset();
     let status = -1;
     if (typeof session === "string") {
-        status = await MoorhenTimeCapsule.loadSessionFromJsonString(
-            session as string,
-            moorhenInstance
-        );
+        status = await MoorhenTimeCapsule.loadSessionFromJsonString(session as string, moorhenInstance);
     } else {
-        status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
-            session,
-            moorhenInstance,
-        );
+        status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(session, moorhenInstance);
     }
     if (status === -1) {
         throw new Error("Failed to read backup (deprecated format)");
     }
 };
 
-export const handleSessionUpload = async (
-    file: File,
-    moorhenInstance: MoorhenInstance
-) => {
+export const handleSessionUpload = async (file: File, moorhenInstance: MoorhenInstance) => {
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
     const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
@@ -245,9 +234,7 @@ const loadMrParseJson = async (files: File[]) => {
 const loadCoordinateFilesFromFileList = async (
     files: File[],
     modelFiles: string[],
-    commandCentre,
-    store,
-    monomerLibraryPath,
+    moorhenInstance: MoorhenInstance,
     backgroundColor,
     defaultBondSmoothness
 ) => {
@@ -259,7 +246,7 @@ const loadCoordinateFilesFromFileList = async (
             if (file.webkitRelativePath.includes(modelFile) || (file.webkitRelativePath.length === 0 && modelFile.includes(file.name))) {
                 const contents = await file.text();
                 loadPromises.push(
-                    readCoordsString(contents, file.name, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness)
+                    readCoordsString(contents, file.name, moorhenInstance, backgroundColor, defaultBondSmoothness)
                 );
             }
         }
@@ -279,32 +266,26 @@ const loadCoordinateFilesFromFileList = async (
 
 export const loadMrParseFiles = async (
     files: File[],
-    commandCentre,
-    store: MoorhenReduxStoreType,
-    monomerLibraryPath,
+    moorhenInstance: MoorhenInstance,
     backgroundColor,
     defaultBondSmoothness,
-    dispatch
+    dispatch,
 ) => {
     const json_contents = await loadMrParseJson(files);
-    const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, dispatch);
+    const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, moorhenInstance.store.dispatch);
     const newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromFileList(
         files,
         modelFiles,
-        commandCentre,
-        store,
-        monomerLibraryPath,
+        moorhenInstance,
         backgroundColor,
         defaultBondSmoothness
     );
 
-    const state = store.getState()
-
-    await drawModels(newMolecules, state.generalStates.defaultMoleculeRepresentation);
+    await drawModels(newMolecules, moorhenInstance);
     dispatch(addMoleculeList(newMolecules));
     newMolecules.at(-1).centreOn("/*/*/*/*", true);
 
-    dispatch(setMrParseModels(newMolecules));
+    moorhenInstance.store.dispatch(setMrParseModels(newMolecules));
 };
 
 const loadMrParseJsonUrl = async urlBase => {
@@ -336,9 +317,7 @@ const loadMrParseJsonUrl = async urlBase => {
 const loadCoordinateFilesFromURL = async (
     url: string,
     modelFiles: string[],
-    commandCentre,
-    store,
-    monomerLibraryPath,
+    moorhenInstance,
     backgroundColor,
     defaultBondSmoothness
 ) => {
@@ -353,9 +332,7 @@ const loadCoordinateFilesFromURL = async (
                 readCoordsString(
                     contents,
                     modelFile.split("/").reverse()[0],
-                    commandCentre,
-                    store,
-                    monomerLibraryPath,
+                    moorhenInstance,
                     backgroundColor,
                     defaultBondSmoothness
                 )
@@ -376,29 +353,24 @@ const loadCoordinateFilesFromURL = async (
 
 export const loadMrParseUrl = async (
     urlBase,
-    commandCentre,
-    store: MoorhenReduxStoreType,
-    monomerLibraryPath,
+    moorhenInstance: MoorhenInstance,
     backgroundColor,
     defaultBondSmoothness,
-    dispatch
+    dispatch,
 ) => {
     const json_contents = await loadMrParseJsonUrl(urlBase);
     const modelFiles: string[] = parseJSONAndGetModelFiles(json_contents, dispatch);
     const newMolecules: moorhen.Molecule[] = await loadCoordinateFilesFromURL(
         urlBase,
         modelFiles,
-        commandCentre,
-        store,
-        monomerLibraryPath,
+        moorhenInstance,
         backgroundColor,
         defaultBondSmoothness
     );
 
-    const state = store.getState()
-
-    await drawModels(newMolecules, state.generalStates.defaultMoleculeRepresentation);
     dispatch(addMoleculeList(newMolecules));
+    await drawModels(newMolecules, moorhenInstance);
+
     newMolecules.at(-1).centreOn("/*/*/*/*", true);
 
     dispatch(setMrParseModels(newMolecules));
@@ -406,9 +378,7 @@ export const loadMrParseUrl = async (
 
 const readCifDictionary = async (
     file: File,
-    commandCentre: React.RefObject<moorhen.CommandCentre>,
-    store: MoorhenReduxStoreType,
-    monomerLibraryPath: string,
+    moorhenInstance: MoorhenInstance,
     backgroundColor: [number, number, number, number],
     defaultBondSmoothness: number
 ) => {
@@ -418,8 +388,8 @@ const readCifDictionary = async (
     }
     const newMonomers: MoorhenMolecule[] = [];
     for (const dict of dictionary) {
-        const newMonomer = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
-        await commandCentre.current.cootCommand(
+        const newMonomer = new MoorhenMolecule(moorhenInstance);
+        await moorhenInstance.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "read_dictionary_string",
@@ -431,11 +401,11 @@ const readCifDictionary = async (
         // dictionaryFilesContent.push(content);
         // const compIdsVector = window.gemmiModule.parse_ligand_dict_info(content);
 
-        const result: moorhen.WorkerResponse<number> = await commandCentre.current.cootCommand(
+        const result: moorhen.WorkerResponse<number> = await moorhenInstance.commandCentre.cootCommand(
             {
                 returnType: "status",
                 command: "get_monomer_and_position_at",
-                commandArgs: [dict.comp_id, -999999, ...store.getState().glRef.origin.map(coord => -coord)],
+                commandArgs: [dict.comp_id, -999999, ...moorhenInstance.store.getState().sceneSettings.origin.map(coord => -coord)],
             },
             true
         );
@@ -447,69 +417,90 @@ const readCifDictionary = async (
             newMonomer.coordsFormat = "mmcif";
             newMonomer.addDict(dict.dict_contents);
             newMonomers.push(newMonomer);
+            moorhenInstance.getMoleculeList().forEach(molecule => {
+                if (molecule.ligands.length > 0) {
+                    molecule.representations.forEach(representation => {
+                        if (representation.style === "CBs") {
+                            representation.redraw();
+                        }
+                    });
+                }
+            });
         }
     }
     return newMonomers;
 };
 
-
-    /**
-     * Load a map to moorhen from a map file data blob
-     * @param {File} source - The map file
-     * @param {boolean} [isDiffMap=false] - Indicates whether the new map is a difference map
-     * @param {boolean} [decompress=false] - Indicates whether the new map should be decompressed before being passed to libcoot api
-     * @returns {Promise<moorhen.Map>} This moorhenMap instance
-     */
-    const loadMapFile = async (source: File, isDiffMap: boolean = false, decompress: boolean = false, commandCentre: CommandCentre, store: MoorhenReduxStoreType): Promise<moorhen.Map> => {
-        const arrayBuffer = await source.arrayBuffer();
-        let mapData: ArrayBuffer | Uint8Array;
-        let mapName: string;
-        if (decompress) {
-            mapData = pako.inflate(arrayBuffer);
-            mapName = source.name.replace(".gz", "");
-        } else {
-            mapData = new Uint8Array(arrayBuffer);
-            mapName = source.name;
-        }
-
-        try {
-            const reply = await commandCentre.cootCommand(
-                {
-                    returnType: "status",
-                    command: "shim_read_ccp4_map",
-                    commandArgs: [mapData, name, isDiffMap],
-                },
-                true
-            );
-            if (reply.data.result?.status === "Exception") {
-                console.warn("Exception raised when reading map");
-                return Promise.reject(reply.data.result.consoleMessage);
-            } else if (reply.data.result?.result === -1) {
-                console.warn("Returned map has molNo -1");
-                return Promise.reject(reply.data.result.consoleMessage);
-            }
-            const molNo = reply.data.result.result;
-            const isDifference = isDiffMap;
-        } catch (err) {
-            console.warn(err);
-            return Promise.reject(err);
-        }
-        // const newMap = new MoorhenMap(
-
-        // );
-        return 
+/**
+ * Load a map to moorhen from a map file data blob
+ * @param {File} source - The map file
+ * @param {boolean} [isDiffMap=false] - Indicates whether the new map is a difference map
+ * @param {boolean} [decompress=false] - Indicates whether the new map should be decompressed before being passed to libcoot api
+ * @returns {Promise<moorhen.Map>} This moorhenMap instance
+ */
+const loadMapFile = async (
+    source: File,
+    isDiffMap: boolean = false,
+    decompress: boolean = false,
+    commandCentre: CommandCentre,
+    store: MoorhenReduxStoreType
+): Promise<moorhen.Map> => {
+    const arrayBuffer = await source.arrayBuffer();
+    let mapData: ArrayBuffer | Uint8Array;
+    let mapName: string;
+    if (decompress) {
+        mapData = pako.inflate(arrayBuffer);
+        mapName = source.name.replace(".gz", "");
+    } else {
+        mapData = new Uint8Array(arrayBuffer);
+        mapName = source.name;
     }
+
+    try {
+        const reply = await commandCentre.cootCommand(
+            {
+                returnType: "status",
+                command: "shim_read_ccp4_map",
+                commandArgs: [mapData, name, isDiffMap],
+            },
+            true
+        );
+        if (reply.data.result?.status === "Exception") {
+            console.warn("Exception raised when reading map");
+            return Promise.reject(reply.data.result.consoleMessage);
+        } else if (reply.data.result?.result === -1) {
+            console.warn("Returned map has molNo -1");
+            return Promise.reject(reply.data.result.consoleMessage);
+        }
+        const molNo = reply.data.result.result;
+        const isDifference = isDiffMap;
+    } catch (err) {
+        console.warn(err);
+        return Promise.reject(err);
+    }
+    // const newMap = new MoorhenMap(
+
+    // );
+    return;
+};
+
+const pdbqtToPdb = (pdbqtString: string) => {
+    const lines = pdbqtString.split("\n");
+    const pdbLines = lines.map(line => !line.startsWith("TER") ? line.slice(0, 66) : "").join("\n");
+    return pdbLines;
+};
 
 export const autoOpenFiles = async (
     files: File[],
     moorhenInstance: MoorhenInstance,
     backgroundColor: [number, number, number, number],
-    defaultBondSmoothness: number,
+    defaultBondSmoothness: number
 ) => {
-    const store = moorhenInstance.store
-    const dispatch = moorhenInstance.dispatch
-    const commandCentre = moorhenInstance.getCommandCentreRef()
-    const monomerLibraryPath = moorhenInstance.paths.monomerLibraryPath
+    const areThereMolecules = moorhenInstance.getMoleculeList().length > 0
+    const store = moorhenInstance.store;
+    const dispatch = moorhenInstance.dispatch;
+    const commandCentre = moorhenInstance.getCommandCentreRef();
+    const monomerLibraryPath = moorhenInstance.paths.monomerLibraryPath;
 
     const molecules = store.getState().molecules.moleculeList;
     const maps = store.getState().maps;
@@ -532,7 +523,14 @@ export const autoOpenFiles = async (
     if (isMrParse) {
         console.log("I think this is an MrParse directory....");
         dispatch(showModal({ key: modalKeys.MRPARSE }));
-        loadMrParseFiles(files, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch);
+        loadMrParseFiles(
+            files,
+            moorhenInstance,
+            backgroundColor,
+            defaultBondSmoothness,
+            dispatch,
+            
+        );
         return;
     }
 
@@ -542,14 +540,17 @@ export const autoOpenFiles = async (
 
     for (const file of files) {
         //Structures
-        if (file.name.endsWith(".pdb") || file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
-            const content = await file.text();
+        if (file.name.endsWith(".pdb") || file.name.endsWith(".pdbqt") ||file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
+            let content = await file.text();
+            if (file.name.endsWith(".pdbqt")) {
+                // keep only the first 66 characters of each line to make a kinda pdb
+                content =  pdbqtToPdb(content);
+                console.log(content);
+            }
             const newMolecule = await readCoordsString(
                 content,
                 file.name,
-                commandCentre,
-                store,
-                monomerLibraryPath,
+                moorhenInstance,
                 backgroundColor,
                 defaultBondSmoothness
             );
@@ -558,9 +559,7 @@ export const autoOpenFiles = async (
                 console.log("Failed to read molecule from file " + file.name + " trying to read as cif dictionary...");
                 const newMonomer = await readCifDictionary(
                     file,
-                    commandCentre,
-                    store,
-                    monomerLibraryPath,
+                    moorhenInstance,
                     backgroundColor,
                     defaultBondSmoothness
                 );
@@ -583,8 +582,9 @@ export const autoOpenFiles = async (
                 continue;
             } else {
                 console.log(`Successfully read molecule ${file.name} molno ${newMolecule.molNo}`);
-                await drawModels([newMolecule], state.generalStates.defaultMoleculeRepresentation);
                 dispatch(addMoleculeList([newMolecule]));
+                await drawModels([newMolecule], moorhenInstance);
+
                 moleculesCreated.push(newMolecule);
                 returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
             }
@@ -616,7 +616,14 @@ export const autoOpenFiles = async (
             } catch (e) {
                 dispatch(enqueueSnackbar({ message: `Failed to load json validation ${file.name}`, variant: "warning" }));
             }
-        } else if (
+        } else if (file.name.endsWith(".nef") || file.name.endsWith(".nef.gz")) {
+            const molecules = store.getState().molecules.moleculeList;
+
+            await processNEFFileAutoLoader(file, molecules, dispatch);
+            
+        }
+
+        else if (
             file.name.endsWith(".mrc") ||
             file.name.endsWith(".map") ||
             file.name.endsWith(".ccp4") ||
@@ -624,13 +631,12 @@ export const autoOpenFiles = async (
             file.name.endsWith(".map.gz")
         ) {
             try {
-                let newMap: MoorhenMap = null; 
+                let newMap: MoorhenMap = null;
                 const isDiff = file.name.includes("_fofc.mrc") || file.name.includes("_diff.ccp4");
                 const isLocres = file.name.includes("_locres.mrc");
                 try {
-
                     if (file.name.endsWith(".gz")) {
-                        newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, true,);
+                        newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, true);
                     } else {
                         newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, false);
                     }
@@ -648,7 +654,7 @@ export const autoOpenFiles = async (
                 }
                 if (isLocres) {
                     newMap.showOnLoad = false;
-                }                
+                }
                 dispatch(addMap(newMap));
                 if (!isLocres) {
                     dispatch(setActiveMap(newMap));
@@ -668,6 +674,12 @@ export const autoOpenFiles = async (
     }
     if (moleculesCreated.length > 0) {
         moleculesCreated.at(-1).centreOn("/*/*/*/*", true);
+        if (!areThereMolecules) {
+            dispatch(setShownBottomPanel("sequences-viewer"));
+        }
+        const oldOption = store.getState().bottomPanels.seqviewerOption
+        dispatch(setSeqViewerOption({...oldOption,  selectedMolecule: moleculesCreated.at(-1).uniqueId }));
+        
     }
     if (isRelionLocresFolder) {
         dispatch(showModal({ key: "colour-map-by-map", openDocked: "right" }));

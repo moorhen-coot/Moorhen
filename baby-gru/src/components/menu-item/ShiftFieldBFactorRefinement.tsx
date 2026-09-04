@@ -43,7 +43,6 @@ export const ShiftFieldBFactor = () => {
                 maps={maps}
                 ref={mapSelectRef}
                 filterFunction={map => map.hasReflectionData}
-                width="100%"
                 label="Map with reflection data"
             />
             <MoorhenButton onClick={doRefinement}>OK</MoorhenButton>

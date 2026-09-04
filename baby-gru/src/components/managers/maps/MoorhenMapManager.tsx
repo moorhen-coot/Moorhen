@@ -74,6 +74,9 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         return mapContourItem?.contourLevel || map?.suggestedContourLevel || 0.003;
     });
 
+    const mapLineWidth = useSelector((state: RootState) => state.mapContourSettings.mapLineWidth);
+
+
     const mapStyle: "solid" | "lit-lines" | "lines" = useSelector((state: RootState) => {
         const style = state.mapContourSettings.mapStyles.find(item => item.molNo === mapMolNo);
         if (!style) {
@@ -88,7 +91,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     });
 
     const appendDrawQueue = () => {
-        const currentOrigin = store.getState().glRef.origin;
+        const currentOrigin = store.getState().sceneSettings.origin;
         const drawRadius = mapFastRadius === -1 ? mapRadius : mapFastRadius;
         const [x, y, z] = currentOrigin.map(coord => -coord) as [number, number, number];
         drawQueue.current.push({
@@ -134,6 +137,10 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         }
         appendDrawQueue();
     }
+
+    useEffect(() => {
+        drawMap();
+    }, [mapLineWidth]);
 
     useEffect(() => {
         /* this should be moved to map initialisation in moorhen the instance*/

@@ -41,7 +41,6 @@ import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
 import { AtomClickManager } from "../managers/AtomClickManager";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoleculesOriginListener } from "../managers/molecules/MoleculesOriginListener";
-import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
 import { MoorhenMainMenu } from "../menu-system/MainMenu";
 import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
 import { BottomPanelContainer } from "../panels/BottomPanels/BottomPanel";
@@ -135,7 +134,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const sidePanelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
-    const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
+    const bottomPanelHeight = useSelector((state: RootState) => state.globalUI.bottomPanelHeight);
 
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -169,6 +168,26 @@ export const MoorhenContainer = (props: ContainerProps) => {
         },
         [props.onUserPreferencesChange]
     );
+
+    // Keep the latest host callback so the instance always notifies the current handler.
+    const onUserPreferencesChangeRef = useRef(onUserPreferencesChange);
+    useEffect(() => {
+        onUserPreferencesChangeRef.current = onUserPreferencesChange;
+    }, [onUserPreferencesChange]);
+
+    // Initialise preference persistence (restore from local storage + subscribe to the store) on
+    // the instance. This replaces the old React-based MoorhenPreferencesContainer, so it is
+    // independent of UI mounting. The instance dispatches `userPreferencesMounted` once all
+    // preferences are restored, which then triggers the startup effect below.
+    useEffect(() => {
+        const unsubscribe = moorhenInstance.initPreferences(
+            store,
+            dispatch,
+            (key, value) => onUserPreferencesChangeRef.current?.(key, value)
+        );
+        return unsubscribe;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const onAtomHovered = useCallback(
         (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => {
@@ -204,12 +223,12 @@ export const MoorhenContainer = (props: ContainerProps) => {
         [newWidth, newHeight] = [window.innerWidth, window.innerHeight];}
 
         const GLviewWidth = newWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
-        const GLviewHeigth = newHeight - (bottomPanelIsShown ? 75 : 0);
+        const GLviewHeigth = newHeight - (bottomPanelHeight ? bottomPanelHeight -35: 0);
         dispatch(setWidth(newWidth));
         dispatch(setGlViewportWidth(GLviewWidth));
         dispatch(setHeight(newHeight));
         dispatch(setGlViewportHeight(GLviewHeigth));
-    }, [props.size, sidePanelIsOpen, bottomPanelIsShown, sidePanelWidth]);
+    }, [props.size, sidePanelIsOpen, bottomPanelHeight, sidePanelWidth]);
 
     useLayoutEffect(() => {
         setWindowDimensions();
@@ -406,7 +425,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     {" "}
                     <div />
                 </OverlayModal>
-                <MoorhenPreferencesContainer />
             </div>
         );
     }
@@ -427,7 +445,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     <SnackBars />
                     <ActivityIndicator />
                     <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
-                    <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
                     <AtomClickManager />
                     <UpdatingMapsManager />
                     <MoorhenMapsHeadManager />

@@ -22,18 +22,9 @@ export const BondSettingsPanel = (props: MoleculeSettingPanelProps) => {
         molecule ? molecule.defaultBondOptions.showOrtep : representation.bondOptions.showOrtep
     );
     const [showHs, setShowHs] = useState<boolean>(molecule ? molecule.defaultBondOptions.showHs : representation.bondOptions.showHs);
+    // Smoothness is the enum value (1 = Coarse, 2 = Nice, 3 = Smooth) - no slider-space conversion needed.
     const [bondSmoothness, setBondSmoothness] = useState<number>(
-        molecule
-            ? molecule.defaultBondOptions.smoothness === 1
-                ? 1
-                : props.molecule.defaultBondOptions.smoothness === 2
-                  ? 50
-                  : 100
-            : representation.bondOptions.smoothness === 1
-              ? 1
-              : representation.bondOptions.smoothness === 2
-                ? 50
-                : 100
+        molecule ? molecule.defaultBondOptions.smoothness : representation.bondOptions.smoothness
     );
 
     useEffect(() => {
@@ -48,8 +39,7 @@ export const BondSettingsPanel = (props: MoleculeSettingPanelProps) => {
             showAniso !== (molecule ? molecule.defaultBondOptions.showAniso : representation.bondOptions.showAniso) ||
             showOrtep !== (molecule ? molecule.defaultBondOptions.showOrtep : representation.bondOptions.showOrtep) ||
             showHs !== (molecule ? molecule.defaultBondOptions.showHs : representation.bondOptions.showHs) ||
-            (bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3) !==
-                (molecule ? molecule.defaultBondOptions.smoothness : representation.bondOptions.smoothness)
+            bondSmoothness !== (molecule ? molecule.defaultBondOptions.smoothness : representation.bondOptions.smoothness)
         ) {
             let representations: MoleculeRepresentation[];
             const bondOptions = {
@@ -58,7 +48,7 @@ export const BondSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 showAniso: showAniso,
                 showOrtep: showOrtep,
                 showHs: true,
-                smoothness: bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3,
+                smoothness: bondSmoothness,
             };
             if (props.molecule) {
                 representations = props.molecule.representations.filter(
@@ -113,16 +103,16 @@ export const BondSettingsPanel = (props: MoleculeSettingPanelProps) => {
             <MoorhenSlider
                 aria-label="Smoothness"
                 value={bondSmoothness}
-                setValue={
-                    setBondSmoothness
-                }
+                setValue={setBondSmoothness}
                 sliderTitle="Bond Smoothness"
                 showTitleValue={false}
-                step={50}
+                minVal={1}
+                maxVal={3}
+                step={1}
                 labels={[
-                    { value: 1, label: "Coarse", tick:true },
-                    { value: 50, label: "Nice", tick:true },
-                    { value: 100, label: "Smooth", tick:true },
+                    { value: 1, label: "Coarse", tick: true },
+                    { value: 2, label: "Nice", tick: true },
+                    { value: 3, label: "Smooth", tick: true },
                 ]}
             />
         </MoorhenStack>
