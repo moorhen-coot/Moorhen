@@ -63,10 +63,9 @@ jobs:
 
       - name: compile jsDocs
         working-directory: baby-gru
-        run: |
-          npm install --force better-docs
-          npx jsdoc -c jsdoc.json    
-          
+        run: npm run create-docs
+
+
       - name: Publishing on Github Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
