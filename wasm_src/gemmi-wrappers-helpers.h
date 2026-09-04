@@ -460,8 +460,10 @@ inline std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Stru
             const auto polymerType = gemmi::check_polymer_type(chain.get_polymer());
             for (const auto& residue : chain.residues) {
                 SequenceResInfo seq_entry;
-                seq_entry.resNum = std::stoi(residue.seqid.str());
-                seq_entry.cid = "//"+chain.name+"/"+residue.seqid.str()+"("+residue.name+")/";
+                if(residue.seqid.num.has_value())
+                    seq_entry.cid = "//"+chain.name+"/"+std::to_string(residue.seqid.num.value)+"("+residue.name+")/";
+                else
+                    seq_entry.cid = "//"+chain.name+"/"+residue.seqid.str()+"("+residue.name+")/";
                 if(polymerType==gemmi::PolymerType::Dna||polymerType==gemmi::PolymerType::Rna||polymerType==gemmi::PolymerType::DnaRnaHybrid){
                     seq_entry.resCode = nucleotideCodesThreeToOne[residue.name];
                 } else {
@@ -551,7 +553,10 @@ inline std::vector<ResidueBFactorInfo> get_structure_bfactors(const gemmi::Struc
     for (const auto& model : Structure.models)
         for (const auto& chain : model.chains)
             for (const auto& residue : chain.residues) {
-                cid_vec.push_back("/" + std::to_string(model.num) + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/*");
+                if(residue.seqid.num.has_value())
+                    cid_vec.push_back("/" + std::to_string(model.num) + "/" + chain.name + "/" + std::to_string(residue.seqid.num.value) +"(" + residue.name + ")/*");
+                else
+                    cid_vec.push_back("/" + std::to_string(model.num) + "/" + chain.name + "/" + residue.seqid.str() +"(" + residue.name + ")/*");
                 float bFactor = 0.0;
                 for (const auto& atom : residue.atoms) bFactor += atom.b_iso;
                 bFactor /= residue.atoms.size();
@@ -576,8 +581,13 @@ inline std::vector<LigandInfo> get_ligand_info_for_structure(const gemmi::Struct
             const auto ligands = chain.get_ligands();
             for (const auto& ligand : ligands) {
                 LigandInfo info;
-                info.resName = ligand.name; info.resNum = ligand.seqid.str();
-                info.cid = "/" + std::to_string(model.num) + "/" + chain.name + "/" + ligand.seqid.str() + "(" + ligand.name + ")";
+                if(ligand.seqid.num.has_value()){
+                    info.resName = ligand.name; info.resNum = std::to_string(ligand.seqid.num.value);
+                    info.cid = "/" + std::to_string(model.num) + "/" + chain.name + "/" + std::to_string(ligand.seqid.num.value) + "(" + ligand.name + ")";
+                } else {
+                    info.resName = ligand.name; info.resNum = ligand.seqid.str();
+                    info.cid = "/" + std::to_string(model.num) + "/" + chain.name + "/" + ligand.seqid.str() + "(" + ligand.name + ")";
+                }
                 info.chainName = chain.name; info.modelName = std::to_string(model.num);
                 ligand_info_vec.push_back(info);
             }
@@ -598,11 +608,20 @@ inline std::vector<std::string> parse_multi_cids(const gemmi::Structure &Structu
         else { chain_id_vec.push_back(selection.chain_ids.str()); }
         for (auto chainIndex = 0; chainIndex < chain_id_vec.size(); chainIndex++) {
             if (!selection.from_seqid.empty()) {
-                if (selection.to_seqid.empty()) { result.push_back("/" + std::to_string(model.num) + "/" + chain_id_vec[chainIndex] + "/" + selection.from_seqid.str() + "/*"); }
+                std::string seqStr;
+                seqStr = selection.from_seqid.str();
+                if (selection.to_seqid.empty()) { result.push_back("/" + std::to_string(model.num) + "/" + chain_id_vec[chainIndex] + "/" + seqStr + "/*"); }
                 else { for (auto resNum = selection.from_seqid.seqnum; resNum <= selection.to_seqid.seqnum; resNum++) result.push_back("/" + std::to_string(model.num) + "/" + chain_id_vec[chainIndex] + "/" + std::to_string(resNum) + "/*"); }
             } else {
+                std::string seqStr;
                 const auto chain = model.find_chain(chain_id_vec[chainIndex]);
-                for (int ri = 0; ri < (int)chain->residues.size(); ri++) result.push_back("/" + std::to_string(model.num) + "/" + chain->name + "/" + chain->residues[ri].seqid.str() + "/*");
+                for (int ri = 0; ri < (int)chain->residues.size(); ri++){
+                    if(chain->residues[ri].seqid.num.has_value())
+                        seqStr = std::to_string(chain->residues[ri].seqid.num.value);
+                    else
+                        seqStr = chain->residues[ri].seqid.str();
+                    result.push_back("/" + std::to_string(model.num) + "/" + chain->name + "/" + seqStr + "/*");
+                }
             }
         }
     }
@@ -627,7 +646,11 @@ inline std::vector<AtomInfo> get_atom_info_for_selection(const gemmi::Structure 
                         info.tempFactor=atom.b_iso; info.serial=atom.serial; info.name=atom.name;
                         info.occupancy=atom.occ; info.has_altloc=atom.has_altloc();
                         info.mol_name=std::to_string(model.num); info.chain_id=chain.name;
-                        info.res_no=residue.seqid.str(); info.res_name=residue.name;
+                        if(residue.seqid.num.has_value()){
+                            info.res_no=std::to_string(residue.seqid.num.value); info.res_name=residue.name;
+                        } else {
+                            info.res_no=residue.seqid.str(); info.res_name=residue.name;
+                        }
                         if (atom.has_altloc()) { std::string altloc_str(1, atom.altloc); info.alt_loc = altloc_str; }
                         atom_info_vec.push_back(std::move(info));
                     }
