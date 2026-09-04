@@ -257,6 +257,23 @@ export class MoleculeRepresentation {
         this.redraw();
     }
 
+    setBufferColour(r: number, g:number, b:number) {
+        if (this.buffers) {
+            this.buffers.forEach(buffer => {
+                buffer.triangleColours.forEach(colbuffer => {
+                    for (let idx = 0; idx < colbuffer.length; idx += 4) {
+                        colbuffer[idx] = r;
+                        colbuffer[idx+1] = g;
+                        colbuffer[idx+2] = b;
+                    }
+                });
+                buffer.isDirty = true;
+            });
+            buildBuffers(this.buffers, this.parentMolecule.store);
+        }
+        this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+    }
+
     /**
      * A method to set alpha for molecular representation in case of colour not picked with colour picker
      */
