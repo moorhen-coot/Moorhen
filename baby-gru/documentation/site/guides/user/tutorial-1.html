@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tutorial 1 - Fix up the Cyclin-Dependent Kinase - Moorhen User Guide</title>
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/theme-toggle.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+    <img src="../../assets/MoorhenLogo.png" alt="Moorhen logo">
+    <h1>Tutorial 1 - Fix up the Cyclin-Dependent Kinase</h1>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">Dark mode</button>
+</header>
+<nav class="site-nav">
+    <ul>
+        <li><a href="../../index.html">Docs Home</a></li>
+        <li><a href="index.html">User Guide</a></li>
+        <li><a href="../developer/index.html">Developer Guide</a></li>
+        <li><a href="../../api/index.html">API Reference</a></li>
+    </ul>
+</nav>
+
+<article class="guide-article">
+    <h2>Welcome to Moorhen (“Coot on the Web”).</h2>
+
+    <section>
+        <h2>Getting Started</h2>
+
+        <ul>
+            <li>Open a web browser window and point it at <a href="https://moorhen.org/" target="_blank" rel="noopener noreferrer">moorhen.org</a>.</li>
+        </ul>
+
+        <p>Let’s load some data:</p>
+
+        <ul>
+            <li><strong>File</strong> → <strong>Load Tutorial Data …</strong> → <strong>Tutorial 1</strong> → <strong>OK</strong></li>
+        </ul>
+        <img class="image-column" src="../../assets/Tutorial1-img1.png" />
+
+        <p><em>Moorhen displays a protein model, a blue 2Fo-Fc-style map and an Fo-Fc-style map in green (positive) and red (negative).</em></p>
+
+        <ul>
+            <li>Use Left-Mouse click and drag to rotate the view. (just click and drag, when using at trackpad)</li>
+            <li>Use scroll-wheel scroll to zoom in and out (use 2-finger drag on a trackpad)</li>
+            <li>Use middle-mouse click to centre on an atom (use Option-click on a trackpad on a Mac)</li>
+            <li>To pan the view, use middle-mouse click and drag (use Shift Option click and drag on a trackpad on a Mac)</li>
+        </ul>
+
+        <p>You can change the speed that moving the mouse spins the view:</p>
+
+        <ul>
+            <li><strong>Preferences</strong> → “Mouse Sensitivity” → 0.4 (# for example)</li>
+            <li>Click off the Preferences dialog to make the dialog disappear.</li>
+            <li>Likewise one can change the sensitivity of the zoom using the “Mouse wheel zoom sensitivity” slider. I find a value of around 7 to 8 to be more useful than the default.</li>
+            <li>Similarly, you can change the thickness of the map lines if you wish using “Map contour settings…”</li>
+            <li>Use “[” and “]” on the keyboard to adjust the radius of the density.</li>
+            <li>Ctrl middle-mouse scroll to change the contour level (one step at time seems good to me).</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Software Overview</h2>
+
+    </section>
+
+    <section>
+        <h3>Sequence Viewer</h3>
+        <ul>
+            <img class="image-column" src="../../assets/Tutorial1-img2.png" />
+            At the bottom of the screen, you will see the sequence of the loaded model. 
+            <li>Click on any residue to center the view on it.</li>
+            <li>Click on the gear icon to modify parameters (change which model is displayed, the number of sequence lines displayed, and the column width)</li>
+        </ul>
+    </section>
+    <section>
+        <h3>Models</h3>
+        <ul>
+            Click on the <strong>Models</strong> button. The model panel opens.
+            The top panel show the current molecule representations, 
+            <img class="image-column" src="../../assets/Tutorial1-img3.png" />
+            <li>Click on + icon to add a new representation of the model.</li>
+            <li>Let's make a new ribbons representation by selecting the style ribbons and clicking OK.</li>
+            <img class="image-column" src="../../assets/Tutorial1-img4.png" />
+            <li>Click on the eye icon to hide the model representation for now.</li>
+        </ul> 
+    </section>
+
+    <section>
+        <h3>Maps</h3>
+        <ul>
+            <li>Click on the <strong>Maps</strong> button.</li>
+            <li>The Maps panel opens. The top panel shows the current maps loaded in the session.</li>
+            <li>The 2Fo-Fc-style map has a blue icon and the difference map has an icon with red and green. You can use the sliders there to adjust the contour level. Click or slide the slider for the 2Fo-Fc map so that the level is about 0.42 (1.40 rmsd) or thereabouts. Set the difference map to a level of around 0.53 (3.6 rmsd) (if it isn’t already).</li>
+            <li>You can hide the panels by clicking on the panel icon in the tab, or close them by clicking the X.</li>
+            <li><em>Ctrl scroll-wheel scroll</em> to change the contour level of the currently active map.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Validation Tools</h2>
+        <p>Our job is to fix and amend the protein model in a way that is consistent with the data. Let’s first look at the Ramachandran plot:</p>     
+        <ul>
+            <li>Open the <strong>Validation</strong> window</li>
+            <li>Choose <strong>Ramachandran Plot</strong></li>
+        </ul>
+
+        
+
+        <p>You can resize the dialog for a better view of the plot (pull bottom right triangle).<img class="image-inline" src="../../assets/Tutorial1-img5.png" />
+         <br/>Or dock it to the side of the main window. <img class="image-inline" src="../../assets/Tutorial1-img6.png" /></p>
+        <p>You will see that there are several interesting red spots.</p>
+
+        <ul>
+            <li>Let’s click on the spot at the middle top.</li>
+        </ul>
+
+        <p><em>Moorhen will put residue A180 at the centre of the screen</em></p>
+
+        <p>Take a look at the region…</p>
+
+        <p>Hmmm… the carbonyl oxygen atoms are a bit close to each other. Are there any other Ramachandran outliers in the area?</p>
+
+        <ul>
+            <li>To measure the distance between atoms, hold M and click on an atom, then (with “M” still pressed) click on another atom.</li>
+        </ul>
+
+        <p>2.26 A is too close.</p>
+
+        <ul>
+            <li>To undisplay the distance, press the “C” key.</li>
+            <li>Click on <strong>Models</strong>,</li>
+            <li>then click on the <strong>Rama Balls</strong> button for this protein model.</li>
+        </ul>
+
+        <p><em>Moorhen displays Ramachandran balls that uses colour to represent the probability of those phi, psi angles for that residue</em></p>
+
+        <p>Residue A180 has a red ball and just upstream at A178 the LYS has an orange ball. Maybe both of these can be improved.</p>
+
+        <p>Notice that there is a green blob close to the N of A180. Maybe it would be better if that blob were fitted by the carbonyl of the peptide. So let’s try that:</p>
+    </section>
+
+    <section>
+        <h3>Flipping a Peptide</h3>
+        <ul>
+            <li>Click middle-mouse the N atom of residue A180</li>
+            <li>Click right-mouse on an atom in the peptide (O atom of 179)</li>
+        </ul>
+
+        <p><em>Moorhen displays a grid with icons for modelling (with which you may already be familiar if you have used Coot)</em></p>
+
+        <p>As you move the mouse over the icons in the toolbar, you will see a tooltip for that icon.</p>
+
+        <ul>
+            <li>To flip the peptide you want to use the “Flip Peptide” button. Click it.</li>
+        </ul>
+
+        <p><em>Moorhen flips the Peptide and the Ramachandran ball for that residue turns green</em></p>
+
+        <p>Yay. Progress. Let’s see if we can do the same for peptide bond between A177 and A178.</p>
+
+        <ul>
+            <li>Bring A177 CA to the centre of the screen</li>
+            <li>Click right-mouse over a peptide and then</li>
+            <li>Click on the “Flip Peptide” button</li>
+        </ul>
+
+        <p><em>Moorhen flips the peptide and the Ramachandran ball for 177 turns green</em></p>
+
+        <p>More progress. Good stuff.</p>
+
+        <ul>
+            <li>Look at the Ramachandran Plot again. Notice that the red spots for the problematic residues have disappeared.</li>
+        </ul>
+
+        <p><strong>Navigation tip 1</strong>: Use middle mouse button click on an atom to put the centre of the residue at the centre of the screen. Use Alt left mouse to put the clicked atom at the centre of the screen.</p>
+
+        <p><strong>Navigate tip 2</strong>: To go to a specific residue, use <strong>Edit</strong> → <strong>Go to…</strong> and in the “Atom selection” entry type the residue selection, e.g. “//A/156” to mean residue 156 in the “A” chain.</p>
+    </section>
+
+    <section>
+        <h3>Real Space Refinement</h3>
+        <ul>
+            <li>Right click on an atom in residue A179</li>
+            <li>Click on the “Refine Residues” button (the icon is a target).</li>
+        </ul>
+
+        <p><em>Moorhen refines residues along the chain</em></p>
+
+        <p>Now the local backbone fits quite nicely into the blue map (but the Rama balls may not be completely green).</p>
+    </section>
+
+    <section>
+        <h3>Connect the Maps: Updating Maps</h3>
+        <p>Wouldn’t it be nice though, if the difference map updated when you add atoms to green blobs or removed them from red blobs. A good correction of the model would then make those blobs disappear.</p>
+
+        <p>Let’s try that:</p>
+
+        <ul>
+            <li><strong>File</strong> → <strong>Connect molecule and map for updating…</strong> → <strong>OK</strong>. (No need to change the values in the options menus because they are already setup to be correct.)</li>
+        </ul>
+
+        <p><em>Moorhen will display a “toast” top left informing you of the current R-factor and the number of Moorhen points that you have collected (so far none, because we have just started)</em></p>
+
+        <p><strong>Note</strong>: Using updating/connected maps will slow down the model-building process somewhat but we now have the advantage of collection Moorhen points and watching the R-factor go down as we make changes. Moorhen points indicate progress in flattening the difference map.</p>
+    </section>
+
+    <section>
+        <h3>Difference Map Peaks</h3>
+        <p>In the <strong>Validation</strong> dialog, the active tool in the Validation option menu is the <strong>Ramachandran Plot</strong></p>
+
+        <ul>
+            <li>Let’s change that to <strong>Difference Map Peaks</strong>.</li>
+        </ul>
+
+        <p><em>Moorhen displays the difference map peaks in a waterfall plot</em></p>
+
+        <p>On the left of the waterfall plot are the most positive peaks (and if there were any the most negative peaks would be displayed on the far right).</p>
+
+        <ul>
+            <li>Here I find it useful to adjust the contour level to 0.64 (and 0.47 for the difference map).</li>
+            <li>Let’s open the <strong>Validation Tools</strong> card again and click on the biggest/leftmost peak.</li>
+        </ul>
+
+        <p>What are we looking at? An orange Ramachandran ball?</p>
+    </section>
+
+    <section>
+        <h3>Flipping… flipping</h3>
+        <p>It’s a flipped peptide.</p>
+
+        <ul>
+            <li>So let’s flip it to the correct orientation.</li>
+        </ul>
+
+        <p><em>As we do so, Moorhen makes several updates. It moves the model, it updates the maps in the light of the new model, it updates the Ramachandran balls so that they are both green now. And, in the toast, it updates the R-factor (a tiny amount) and gives us some Moorhen points.</em></p>
+
+        <p>Flipping a peptide to the correct orientation generally gives you 15-20 Moorhen points.</p>
+
+        <p>Have a look around… At the end of the helix, residues A198 has an orange Ramachandran ball and a green difference map peak along the peptide. Let’s flip that too while we are here.</p>
+
+        <ul>
+            <li>Click the “Flip Peptide” button and pick the “C” atom of A197. You can use the key-binding “Shift Q” to flip the peptide when you hover of an atom of the residue and see golden balls.</li>
+        </ul>
+
+        <p><em>As before, the Rama balls update, the maps update (the green blob disappears), the R-factor updates and we get more Moorhen points.</em></p>
+
+        <p>You will notice that that the Difference Map Peaks graph has been updated too - the leftmost peak has gone. Have a look at the next 12 or so peaks. What do you notice?</p>
+    </section>
+
+    <section>
+        <h3>Adding Waters</h3>
+        <p>You will notice that they are mostly peaks of waters. We could add waters one by one, but a more automated method is to do many at the same time.</p>
+
+        <ul>
+            <li><strong>Calculate</strong> → <strong>Add waters…</strong> → <strong>OK</strong></li>
+        </ul>
+
+        <p>This will add around 100 waters. And as above, the maps and the R-factors will update and we will get many Moorhen points. The map should improve a bit so that the ligand is more easy to make out.</p>
+    </section>
+
+    <section>
+        <h3>Contact Dots and Clashes</h3>
+        <ul>
+            <li>Use the sequence viewer to navigate to residue A194.</li>
+        </ul>
+
+        <p>What this? It’s a flipped peptide - let’s flip it back to where it should be. But having done that, what do you notice? Let’s use Moorhen’s clash analysis:</p>
+
+        <ul>
+            <li>In the Model window for the tutorial structure you will see a box labelled <strong>Cont. dots</strong> - click it.</li>
+        </ul>
+
+        <p><em>Moorhen display contact dots and clash interactions</em></p>
+
+        <p>Wooh! Pink sticks. Bad news! So let’s also flip the peptide on the next rung of the helix - residue A197.</p>
+
+        <p><em>The contact dots between A194 and A197 disappear</em></p>
+
+        <ul>
+            <li>OK, you can turn off the contact dots for now by unclicking the <strong>Cont. dots</strong> box in the Model window.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h3>Change the Residue Type</h3>
+        <p>Now navigate to residues A193. What do the maps tell you is going on here? What is the residue type? What does the model say? What does the map say?</p>
+
+        <p>OK, so first let’s fill the side-chain with the atoms of the type from the main-chain atoms: “TYR” - use right-mouse to get the context-sensitive menu and click on the “Auto-fit Rotamer” button (top left).</p>
+
+        <p>What do we see? What does that suggest?</p>
+
+        <p>It suggests that the sequence of the model doesn’t match the sequence of the protein from which the data were collected. OK, so let’s mutate it.</p>
+
+        <ul>
+            <li>In the context-sensitive menu, click the “Mutate Residue” button (it’s the radtion symbol), then from the residues type chooser currently “ALA (A)” choose “PHE (F)”</li>
+        </ul>
+
+        <p><em>Moorhen updates the map so that the red blob goes away</em></p>
+
+        <p>Navigate to residue A168. What do we see? What should it be instead?</p>
+    </section>
+
+    <section>
+        <h3>Mutate</h3>
+        <p>OK, so let’s mutate it:</p>
+
+        <ul>
+            <li>Use the (right-mouse menu) “Mutate Residue” button change the type to “TYR (Y)”</li>
+        </ul>
+
+        <p><em>(More Moorhen Points - yay).</em></p>
+
+        <p>Let’s go back to the <strong>Difference Map Peaks</strong> in the <strong>Validation tools</strong>. Now you can see negative peaks. Let’s have a look at those.</p>
+
+        <p>Can you find a negative difference map peak that is close to residue A187? Have a look at the model? What needs to be changed?</p>
+    </section>
+
+    <section>
+        <h3>Rotamers</h3>
+        <p>In the Model window, click the box for “Rota. dodec”</p>
+
+        <p><em>Moorhen displays rotamer dodecamers coloured by rotamer probability</em></p>
+
+        <p>Yellow is not so high probability. Can we find something with higher probability than the current rotamer?</p>
+
+        <ul>
+            <li>Let’s change the rotamer using the “Auto-fit Rotamer” button.</li>
+        </ul>
+
+        <p><em>On improvement of the rotamer probability, Moorhen will change the colour of the dodecahedron to be more green</em></p>
+
+        <p>Can you find a negative difference map peak close to residue A141? Again examine. What do we need to do? Let’s fix the rotamer then using “Auto-fit Rotamer” as before.</p>
+    </section>
+
+    <section>
+        <h3>Fit the Ligand</h3>
+        <p>OK, now it’s time to fit the ligand!</p>
+
+        <ul>
+            <li>Use the <strong>Difference Map Peaks</strong> to navigate to the ligand.</li>
+        </ul>
+
+        <p>Several of the top 5 peaks should now correspond to the ligand.</p>
+
+        <img src="https://raw.githubusercontent.com/moorhen-coot/blog/main/images/LZA-coot-render-v2.png" alt="Ligand density rendering" style="max-width:100%; height:auto; display:block; margin:1rem auto;">
+
+        <ul>
+            <li><strong>Ligand</strong> → <strong>Get Monomer</strong> →</li>
+            <li>Add “LZA” in the “Monomer identifier” entry → <strong>OK</strong></li>
+        </ul>
+
+        <p><em>Moorhen imports the LZA ligand</em></p>
+
+        <p>OK, fine. Now let’s undisplay it:</p>
+
+        <ul>
+            <li>In the Model window, the bottom card should now be the card for the newly imported ligand (“#3 Mol LZA”). Click on the eye icon to undisplay the ligand</li>
+        </ul>
+
+        <p><em>Moorhen changes the icon to an uncrossed eye and the ligand disappears</em></p>
+
+        <ul>
+            <li><strong>Ligand</strong> → <strong>Find ligand…</strong></li>
+            <li>Check the options then click <strong>Find</strong>.</li>
+        </ul>
+
+        <p><em>Moorhen presents a new dialog saying that 1 possible ligand location</em></p>
+
+        <p>To visualize the ligand, click on the “boxed circle” icon and the ligand will appear in the density.</p>
+
+        <p>It should be a reasonably close fit but not exact because the algorithm didn’t use conformational variation.</p>
+
+        <p>To refine ligand click the “target” icon in that dialog.</p>
+
+        <p>To merge the ligand, use the “arrow” icon in that dialog.</p>
+
+        <p><em>Moorhen updates the maps so that the difference map blobs change</em></p>
+    </section>
+
+    <section>
+        <h3>Add a Water</h3>
+        <ul>
+            <li>Navigate to the nearby water peak using middle-mouse click and drag (or Shift-Alt Left-Mouse on a PC) to drag the view to the water blob.</li>
+            <li>You can also use the arrow-keys to pan the view.</li>
+        </ul>
+
+        <p>Let’s add a water here</p>
+
+        <ul>
+            <li>In <strong>Edit</strong> menu click on the <strong>Add simple</strong> menu item</li>
+            <li>Change the option menu to read “HOH” (if needed)</li>
+            <li><strong>OK</strong></li>
+        </ul>
+
+        <p><em>Moorhen adds a water at the centre of the screen</em></p>
+
+        <p>There are several water peaks in the map similar to this.</p>
+
+        <p>At some stage, when you add a water, you will see a the contours of negative density over part or all the water peak. What does that mean?</p>
+    </section>
+
+    <section>
+        <h3>More Validation Tools</h3>
+        <ul>
+            <li>Click the <strong>Validation</strong> button</li>
+            <li>Click on <strong>Validation Plot</strong></li>
+        </ul>
+
+        <p><em>Moorhen displays interactive validation graphs.</em></p>
+    </section>
+
+    <section>
+        <h3>Over to You!</h3>
+        <ul>
+            <li>Click on the validation bars to navigate to interesting parts of the structure and make some fixes.</li>
+        </ul>
+
+        <p>You should be able to collect about 1800 Moorhen points. Maybe more!</p>
+    </section>
+
+    <section>
+        <h3>Make a Pretty Picture</h3>
+        <ul>
+            <li>Using the cards in the drawer, undisplay the maps using the eye icon</li>
+            <li>Click on “Bonds” to undisplay the “Bonds” representation of the model</li>
+            <li>Likewise undisplay the Rama ball and Rota dodecs if you have them displayed</li>
+            <li>Click on <strong>Ligands</strong> to display the ligand in the model</li>
+            <li>Click on <strong>Ribbons</strong> to display the model in Ribbon mode</li>
+        </ul>
+
+        <p>To navigate to the ligand:</p>
+
+        <ul>
+            <li><strong>Ligand</strong> → <strong>Centre on ligand…</strong></li>
+            <li>Click “mol-1”</li>
+            <li>Click “Chain A”</li>
+            <li>Click the “/1/A/301(LZA)” label</li>
+            <li><strong>View</strong> → <strong>Scene Setting</strong> → <strong>Background Colour</strong> - change it if you wish</li>
+            <li>Adjust the sliders for clipping and fogging to make the ligand more clearly visible</li>
+            <li><strong>OK</strong></li>
+        </ul>
+
+        <p>Use keyboard “S” to activate the “in application” screen capture.</p>
+    </section>
+
+    <section>
+        <h3>Export Your Molecule</h3>
+        <ul>
+            <li>In the Model window, click the “download” icon</li>
+        </ul>
+
+        <p>Then it’s time to think about Reciprocal Space Refinement.</p>
+    </section>
+
+    <section>
+        <h3>Notes:</h3>
+        <p>The tutorial is based on 2vtq “Identification of N-(4-piperidinyl)-4-(2,6-dichlorobenzoylamino)-1H-pyrazole-3-carboxamide (AT7519), a Novel Cyclin Dependent Kinase Inhibitor Using Fragment-Based X-Ray Crystallography and Structure Based Drug Design” Wyatt, P.G. <em>et al.</em> (2008), <em>J. Med. Chem</em>. <strong>51</strong>, 4986.</p>
+    </section>
+</article>
+</body>
+</html>
