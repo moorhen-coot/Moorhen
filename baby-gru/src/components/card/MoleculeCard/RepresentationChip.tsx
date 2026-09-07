@@ -33,6 +33,8 @@ export const CustomRepresentationChip = (props: {
 
     const models = molecule.numberOfModels;
 
+    const [cavityIndex, setCavityIndex] = useState<number>(representation.cavities?.index);
+
     const dispatch = useDispatch();
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
     const isMoleculeVisible = useSelector((state: RootState) => state.molecules.visibleMolecules.some(molNo => molNo === molecule.molNo));
@@ -165,6 +167,22 @@ export const CustomRepresentationChip = (props: {
                             tooltip={"Model Selector"}
                             minMax={[0, models]}
                             className="moorhen__model-selector-input"
+                        />
+                    )}
+
+                    {representation.style  === "cavities" && (
+                        <MoorhenNumberInput
+                            value={representation.cavities.index }
+                            setValue={async (newValue) => {representation.cavities.index = newValue ; await representation.redraw();}}
+                            integer
+                            type="number"
+                            allowNegativeValues={false}
+                            style={{ backgroundColor: "transparent" }}
+                            width={"4ch"}
+                            tooltip={"Cavity Index"}
+                            minMax={[0, representation.cavities?.mesh.length]}
+                            className="moorhen__model-selector-input"
+                            specialValuesTexts={{0: "All"}}
                         />
                     )}
                     <MoorhenButton

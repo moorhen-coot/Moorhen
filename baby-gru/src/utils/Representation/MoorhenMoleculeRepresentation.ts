@@ -156,6 +156,7 @@ export class MoleculeRepresentation {
     interfaceOption: { visible: boolean; selectionType: ResidueSelectionRuleType };
     /** Snapshot of the lossy build parameters (see BuildRepresentationParams). Null for legacy/deserialized reps. */
     buildParams: BuildRepresentationParams | null;
+    cavities: {index: number, mesh: libcootApi.SimpleMeshJS[]} | null;
 
     constructor(style: RepresentationStyles, cid: string, commandCentre: CommandCentre) {
         this.uniqueId = guid();
@@ -225,6 +226,7 @@ export class MoleculeRepresentation {
         this.hbondedToCid = "";
         this.hbondedTo = false;
         this.buildParams = null;
+        this.cavities = null;
     }
 
     /**
@@ -1801,7 +1803,8 @@ export class MoleculeRepresentation {
      * Get representation buffers for the cavities surf. representation
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
-    async getCootCavitiesBuffers(): Promise<libcootApi.SimpleMeshJS[]> {
+    async getCootCavities(): Promise<void> {
+        try {
         const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "mesh_array",
@@ -1810,9 +1813,29 @@ export class MoleculeRepresentation {
             },
             false
         )) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS[]>;
-        try {
-            const objects = response.data.result.result;
-            if (objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+            this.cavities = {index: 1, mesh: response.data.result.result};
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    async getCootCavitiesBuffers() {
+        if (!this.cavities) {
+            await this.getCootCavities();
+        }
+        if (this.cavities) {
+            const _objects = this.cavities.mesh;
+            const cavityIndex = this.cavities.index ?? 1;
+            console.log("cavityIndex", cavityIndex, "cavities", _objects);
+            if (_objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+
+                let objects = [];
+                if (cavityIndex === 0) {
+                    objects = _objects;
+                } else {
+                    objects = [_objects[cavityIndex -1]];
+                }
+
                 const flippedNormalsObjects = objects.map(object => {
                     const flippedNormalsObject = { ...object };
                     flippedNormalsObject.idx_tri = object.idx_tri.map(element => element.map(subElement => subElement.reverse()));
@@ -1821,11 +1844,8 @@ export class MoleculeRepresentation {
                 //Empty existing buffers of this type
                 return flippedNormalsObjects;
             }
-        } catch (err) {
-            console.log(err);
         }
     }
-
     /**
      * Get representation buffers for the molecule-wide contact dots representation
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
