@@ -1,23 +1,24 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoorhenButton } from "@/components/inputs";
-import { MoorhenAccordion, MoorhenInfoCard } from "@/components/interface-base";
-import { addGeneralRepresentation, removeGeneralRepresentation } from "@/store";
-import { moorhen } from "../../../../types/moorhen";
+import { MoorhenAccordion, MoorhenInfoCard, MoorhenStack } from "@/components/interface-base";
+import { addGeneralRepresentation, removeGeneralRepresentation, RootState } from "@/store";
 import { privateer } from "../../../../types/privateer";
 import { MoorhenCarbohydrateCard } from "../../MoorhenCarbohydrateCard";
 import { MoorhenCremerPople } from "../../../modal/MoorhenCremerPople";
 import { MoorhenLinearProgress } from "@/components/icons";
+import { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 
 export const MoorhenCarbohydrateList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
-    molecule: moorhen.Molecule;
+    molecule: MoorhenMolecule;
     height?: number | string;
 }) => {
     const dispatch = useDispatch();
-    const updateMolNo = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.molNo);
-    const updateSwitch = useSelector((state: moorhen.State) => state.moleculeMapUpdate.moleculeUpdate.switch);
-    const showGlycoBlock: boolean = useSelector((state: moorhen.State) =>
+    const updateMolNo = useSelector((state: RootState) => state.moleculeMapUpdate.moleculeUpdate.molNo);
+    const updateSwitch = useSelector((state: RootState) => state.moleculeMapUpdate.moleculeUpdate.switch);
+    const sidePanelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
+    const showGlycoBlock: boolean = useSelector((state: RootState) =>
         Boolean(state.molecules.generalRepresentations.find(item => item.style === "glycoBlocks" && item.parentMolecule === props.molecule))
     );
 
@@ -52,10 +53,9 @@ export const MoorhenCarbohydrateList = (props: {
     };
 
     const extraControl = [
-        <MoorhenInfoCard infoText={privateerInfoText} />,
-
         <MoorhenButton
             icon={showGlycoBlock ? "MatSymVisibility" : "MatSymVisibilityOff"}
+            key="glyco-blocks-button"
             variant="white"
             onClick={toggleGlycoBlocks}
             tooltip={showGlycoBlock ? "Hide Glyco-Blocks" : "Show Glyco-Blocks"}
@@ -65,15 +65,16 @@ export const MoorhenCarbohydrateList = (props: {
     ];
 
     return (
-        <MoorhenAccordion title="Carbohydrates" extraControls={extraControl}>
+        <MoorhenAccordion title={<MoorhenStack direction="line">Carbohydrates &nbsp;<MoorhenInfoCard key="privateer-info-card" infoText={privateerInfoText} /></MoorhenStack>} extraControls={extraControl}>
             {carbohydrateList === null ? (
                 <MoorhenLinearProgress />
             ) : carbohydrateList.length > 0 ? (
                 <>
+                <MoorhenCremerPople stackDirection="vertical" width={sidePanelWidth - 90} molecule={props.molecule}/>
                     {carbohydrateList.map(carbohydrate => {
                         return <MoorhenCarbohydrateCard key={carbohydrate.id} carbohydrate={carbohydrate} molecule={props.molecule} />;
                     })}
-                <MoorhenCremerPople stackDirection="vertical" width={300} molecule={props.molecule}/>
+                
                 </>
             ) : (
                 <div>

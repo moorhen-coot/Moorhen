@@ -4,7 +4,7 @@ import * as quat4 from 'gl-matrix/quat';
 import { useDispatch, useStore } from "react-redux";
 import { RootState } from '../../store/MoorhenReduxStore';
 import { MoorhenStack } from "../interface-base";
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
 import { buildBuffers, createOtherDataOtherContext } from '../../WebGLgComponents/buildBuffers'
@@ -449,6 +449,10 @@ export const SimpleWebGL = (props: { stackDirection: "horizontal" | "vertical", 
     useEffect(() => {
         plotTheData()
     }, [canvasRef.current,quat,storeMolecules,displayBuffers,zoom,myBuffers,origin])
+
+    useLayoutEffect(() => {
+        plotTheData()
+    }, [props.width])
 
     return (
         <>
