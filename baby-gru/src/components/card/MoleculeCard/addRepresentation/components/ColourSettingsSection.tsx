@@ -64,7 +64,9 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
 
     const handleCoulourChange = (newColour: number[]) => {
         setColour(rgbToHex(newColour[0], newColour[1], newColour[2]));
-        if (["cavities", "MolecularSurface", "gaussian"].includes(representationStyle)) {
+
+        if ((representation?.buildParams) && (["cavities", "MolecularSurface", "gaussian"].includes(representationStyle))) {
+            // This directly mutate the represenation build parameter ar buffers so change of colour can be instant without cliking apply)
             setBufferColour(newColour[0]/256, newColour[1]/256, newColour[2]/256);
             representation.buildParams.colourMode = "custom";
             representation.useDefaultColourRules = false;
