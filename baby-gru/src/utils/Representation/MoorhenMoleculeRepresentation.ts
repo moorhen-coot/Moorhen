@@ -10,7 +10,7 @@ import { ColourRule } from "../MoorhenColourRule";
 import { createRepresentation } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
-import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "../utils";
+import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 
@@ -561,6 +561,10 @@ export class MoleculeRepresentation {
         if (this.nonCustomOpacity < 0.99) {
             this.setNonCustomOpacity(this.nonCustomOpacity);
         }
+        if(this.style==="cavities"&&this.colourRules.length>0&&this.colourRules[0].color){
+            const rgb = hexToRGB(this.colourRules[0].color)
+            this.setBufferColour(rgb[0]/255,rgb[1]/255,rgb[2]/255)
+        }
     }
 
     /**
@@ -584,6 +588,10 @@ export class MoleculeRepresentation {
         });
         if (this.nonCustomOpacity < 0.99) {
             this.setNonCustomOpacity(this.nonCustomOpacity);
+        }
+        if(this.style==="cavities"&&this.colourRules.length>0&&this.colourRules[0].color){
+            const rgb = hexToRGB(this.colourRules[0].color)
+            this.setBufferColour(rgb[0]/255,rgb[1]/255,rgb[2]/255)
         }
     }
 
