@@ -1890,7 +1890,7 @@ export class MoorhenMolecule {
                             movedAtoms.push({
                                 mol_name: String(model.name),
                                 chain_id: chain.name,
-                                res_no: String(residueSeqId.num),
+                                res_no: residueSeqId.str(),
                                 res_name: residue.name,
                                 name: atomName,
                                 element: atomElementString,
@@ -2725,7 +2725,7 @@ export class MoorhenMolecule {
                     const residue = residues.get(residueIndex);
 
                     const residueKey =
-                        `${chain.name}/${residue.seqid.num}`;
+                        `${chain.name}/${residue.seqid.str()}`;
 
                     const atoms = residue.atoms;
 
