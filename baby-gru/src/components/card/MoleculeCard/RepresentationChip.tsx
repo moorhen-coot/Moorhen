@@ -142,6 +142,11 @@ export const CustomRepresentationChip = (props: {
         setReload(!reload);
     };
 
+    const handleChangeCavityIndex = (newValue) => {
+        representation.cavities.index = newValue;
+        representation.redraw();
+    };
+
     return (
         <div className="moorhen__representation-chip" style={chipStyle}>
             <MoorhenStack align="center" direction="row" justify="center" gap="0.2rem">
@@ -173,7 +178,7 @@ export const CustomRepresentationChip = (props: {
                     {representation.style  === "cavities" && (
                         <MoorhenNumberInput
                             value={representation.cavities.index }
-                            setValue={async (newValue) => {representation.cavities.index = newValue ; await representation.redraw();}}
+                            setValue={handleChangeCavityIndex}
                             integer
                             type="number"
                             allowNegativeValues={false}
