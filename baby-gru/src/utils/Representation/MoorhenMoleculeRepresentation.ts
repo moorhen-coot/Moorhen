@@ -1830,7 +1830,12 @@ export class MoleculeRepresentation {
             },
             false
         )) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS[]>;
-            this.cavities = {index: 1, mesh: response.data.result.result};
+            const meshes = response.data.result.result.map(object => {
+                 const flippedNormalsObject = { ...object };
+                 flippedNormalsObject.idx_tri = object.idx_tri.map(element => element.map(subElement => subElement.reverse()));
+                 return flippedNormalsObject;
+            });
+            this.cavities = {index: 1, mesh: meshes };
         } catch (err) {
             console.log(err);
         }
@@ -1843,7 +1848,6 @@ export class MoleculeRepresentation {
         if (this.cavities) {
             const _objects = this.cavities.mesh;
             const cavityIndex = this.cavities.index ?? 1;
-            console.log("cavityIndex", cavityIndex, "cavities", _objects);
             if (_objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
 
                 let objects = [];
@@ -1852,14 +1856,7 @@ export class MoleculeRepresentation {
                 } else {
                     objects = [_objects[cavityIndex -1]];
                 }
-
-                const flippedNormalsObjects = objects.map(object => {
-                    const flippedNormalsObject = { ...object };
-                    flippedNormalsObject.idx_tri = object.idx_tri.map(element => element.map(subElement => subElement.reverse()));
-                    return flippedNormalsObject;
-                });
-                //Empty existing buffers of this type
-                return flippedNormalsObjects;
+                return objects;
             }
         }
     }
