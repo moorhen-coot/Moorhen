@@ -460,10 +460,13 @@ inline std::vector<SequenceEntry> get_sequence_info(const gemmi::Structure &Stru
             const auto polymerType = gemmi::check_polymer_type(chain.get_polymer());
             for (const auto& residue : chain.residues) {
                 SequenceResInfo seq_entry;
-                if(residue.seqid.num.has_value())
+                if(residue.seqid.num.has_value()){
                     seq_entry.cid = "//"+chain.name+"/"+std::to_string(residue.seqid.num.value)+"("+residue.name+")/";
-                else
+                    seq_entry.resNum = residue.seqid.num.value;
+                } else {
                     seq_entry.cid = "//"+chain.name+"/"+residue.seqid.str()+"("+residue.name+")/";
+                    seq_entry.resNum = std::stoi(residue.seqid.str());
+                }
                 if(polymerType==gemmi::PolymerType::Dna||polymerType==gemmi::PolymerType::Rna||polymerType==gemmi::PolymerType::DnaRnaHybrid){
                     seq_entry.resCode = nucleotideCodesThreeToOne[residue.name];
                 } else {
