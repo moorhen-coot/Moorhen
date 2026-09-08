@@ -1,5 +1,6 @@
 #include "moorhen-wrappers-helpers.h"
 
+coot::simple_mesh_t DrawCremerPopleSphere(const std::string  &file_content, bool add_radial_conformations);
 gemmi::Structure cloneGemmiStructureWithTrimmedAtomNames(const gemmi::Structure &st){
 
     gemmi::Structure newStructure = st;
@@ -49,8 +50,18 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
       .field("torsions", &TableEntry::torsions)
     ;
 
+    value_object<CremerPopleParameters>("CremerPopleParameters") 
+    .field("q", &CremerPopleParameters::q)
+    .field("phi", &CremerPopleParameters::phi)
+    .field("theta", &CremerPopleParameters::theta)
+    .field("chain_id", &CremerPopleParameters::chain_id)
+    .field("residue_id", &CremerPopleParameters::residue_id);
+
     function("validate", &validate);
+    function("calculate_cremer_pople_parameters", &calculate_cremer_pople_parameters);
+    function("DrawCremerPopleSphere", &DrawCremerPopleSphere);
     register_vector<TableEntry>("Table");
+    register_vector<CremerPopleParameters>("CremerPopleParameterList");
     // END PRIVATEER
 
     //Sean Wang's XPID

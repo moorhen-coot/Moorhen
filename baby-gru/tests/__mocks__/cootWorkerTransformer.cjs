@@ -14,8 +14,8 @@ const appendTestExports = (source) => {
     }
 
     transformed = `${transformed.slice(0, lastMatch.index)}const onmessage = function (e) {${transformed.slice(lastMatch.index + lastMatch[0].length)}`;
-    transformed = transformed.replace(/\nexport\s*\{\s*doCootCommand\s*,\s*setModules\s*\};?\n?$/m, '\n');
-    transformed += '\nfunction setModules(arg0, arg1) { molecules_container = arg0; cootModule = arg1; }\nmodule.exports = { doCootCommand, setModules };\n';
+    transformed = transformed.replace(/\nexport\s*\{\s*doPrivateerValidate\s*,\s*doCootCommand\s*,\s*setModules\s*\};?\n?$/m, '\n');
+    transformed += '\nfunction setModules(arg0, arg1) { molecules_container = arg0; cootModule = arg1; }\nmodule.exports = { doPrivateerValidate, doCootCommand, setModules };\n';
 
     return transformed;
 };
@@ -26,7 +26,7 @@ module.exports = {
         const optionsValue = JSON.stringify(options ?? {});
         return crypto
             .createHash('sha256')
-            .update('coot-worker-transform-v2')
+            .update('coot-worker-transform-v3')
             .update(sourceText)
             .update(sourcePath)
             .update(configValue)
