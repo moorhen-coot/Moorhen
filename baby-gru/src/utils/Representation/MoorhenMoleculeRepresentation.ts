@@ -6,11 +6,11 @@ import { gemmi } from "../../types/gemmi";
 import { libcootApi } from "../../types/libcoot";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
-import { ColourRule } from "../MoorhenColourRule";
+import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
 import { createRepresentation } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
-import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "../utils";
+import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 
@@ -21,6 +21,7 @@ export type RepresentationStyles =
     | "CBs"
     | "CDs"
     | "gaussian"
+    | "cavities"
     | "allHBonds"
     | "rama"
     | "rotamer"
@@ -53,7 +54,7 @@ export type RepresentationStyles =
  * @property {string} cid - The CID selection
  * @property {string} restrictToNeighbours - Whether or not to restrict to neighbourhood
  * @property {string} neighboursCid - The CID for additional selection for neighbourhood
- * @property {moorhen.Molecule} parentMolecule - The molecule assigned to this colour rule
+ * @property {MoorhenMolecule} parentMolecule - The molecule assigned to this colour rule
  * @property {string} uniqueId - A unique identifier for this colour rule
  * @property {boolean} visible - Indicates whether the molecule representation is currently visible
  * @property {moorhen.ColourRule[]} colourRules - The list of colour rules associated to this molecule representation
@@ -133,10 +134,10 @@ export class MoleculeRepresentation {
     styleIsCootBondRepresentation: boolean;
     styleIsCombinedRepresentation: boolean;
     visible: boolean;
-    colourRules: moorhen.ColourRule[];
+    private _colourRules: moorhen.ColourRule[];
+    private _useDefaultColourRules: boolean;
     isCustom: boolean;
     useDefaultBondOptions: boolean;
-    useDefaultColourRules: boolean;
     useDefaultResidueEnvironmentOptions: boolean;
     useDefaultM2tParams: boolean;
     gaussianSurfaceSettings: gaussianSurfSettings;
@@ -155,6 +156,7 @@ export class MoleculeRepresentation {
     interfaceOption: { visible: boolean; selectionType: ResidueSelectionRuleType };
     /** Snapshot of the lossy build parameters (see BuildRepresentationParams). Null for legacy/deserialized reps. */
     buildParams: BuildRepresentationParams | null;
+    cavities: {index: number, mesh: libcootApi.SimpleMeshJS[]} | null;
 
     constructor(style: RepresentationStyles, cid: string, commandCentre: CommandCentre) {
         this.uniqueId = guid();
@@ -164,9 +166,9 @@ export class MoleculeRepresentation {
         this.parentMolecule = null;
         this.buffers = null;
         this.visible = false;
-        this.colourRules = null;
+        this._colourRules = [];
         this.isCustom = false;
-        this.useDefaultColourRules = true;
+        this._useDefaultColourRules = true;
         this.useDefaultBondOptions = true;
         this.nonCustomOpacity = 1.0;
         this.useDefaultM2tParams = true;
@@ -224,6 +226,7 @@ export class MoleculeRepresentation {
         this.hbondedToCid = "";
         this.hbondedTo = false;
         this.buildParams = null;
+        this.cavities = null;
     }
 
     /**
@@ -254,6 +257,23 @@ export class MoleculeRepresentation {
         console.log("splitCid", splitCid);
         this.cid = `/${_modelIndex}/${splitCid.slice(2).join("/")}`;
         this.redraw();
+    }
+
+    setBufferColour(r: number, g:number, b:number) {
+        if (this.buffers) {
+            this.buffers.forEach(buffer => {
+                buffer.triangleColours.forEach(colbuffer => {
+                    for (let idx = 0; idx < colbuffer.length; idx += 4) {
+                        colbuffer[idx] = r;
+                        colbuffer[idx+1] = g;
+                        colbuffer[idx+2] = b;
+                    }
+                });
+                buffer.isDirty = true;
+            });
+            buildBuffers(this.buffers, this.parentMolecule.store);
+        }
+        this.parentMolecule.store.dispatch(setRequestDrawScene(true));
     }
 
     /**
@@ -323,6 +343,7 @@ export class MoleculeRepresentation {
             "VdWSurface",
             "residueSelection",
             "gaussian",
+            "cavities",
             "allHBonds",
             "rotamer",
             "rama",
@@ -378,11 +399,36 @@ export class MoleculeRepresentation {
     }
 
     /**
-     * A method to set whether the molecule default colour rules should be used for this molecule representation instance
-     * @param {boolean} newVal - Indicates whether default molecule colour rules should be used
+     * The colour rules currently applied to this representation. Default
+     * * representations resolve these dynamically from their parent molecule;
+     * custom representations use their own rule list.
      */
-    setUseDefaultColourRules(newVal: boolean) {
-        this.useDefaultColourRules = newVal;
+    get colourRules(): moorhen.ColourRule[] {
+        return this.useDefaultColourRules ? this.parentMolecule?.defaultColourRules ?? [] : this._colourRules;
+    }
+
+    /**
+     * Set custom rules for this representation, or pass an empty value to use
+     * the parent molecule's defaults.
+     */
+    set colourRules(colourRules: moorhen.ColourRule[] | null | undefined) {
+        this._colourRules = colourRules ? [...colourRules] : [];
+        this.useDefaultColourRules = this._colourRules.length === 0;
+        if (!this.useDefaultColourRules) {
+            this._colourRules.forEach(rule => rule.setParentRepresentation(this));
+        }
+    }
+
+    /** Whether this representation resolves colours from its parent molecule. */
+    get useDefaultColourRules(): boolean {
+        return this._useDefaultColourRules;
+    }
+
+    set useDefaultColourRules(useDefaultColourRules: boolean) {
+        this._useDefaultColourRules = useDefaultColourRules;
+        if (useDefaultColourRules) {
+            this._colourRules = [];
+        }
     }
 
     /**
@@ -396,41 +442,19 @@ export class MoleculeRepresentation {
      * @property {string} [label=undefined] - Label displayed in the UI for this colour rule
      */
     addColourRule(
-        ruleType: string,
+        ruleType: ColourRuleType,
         cid: string,
         color: string,
-        args: (string | number)[],
         isMultiColourRule: boolean = false,
         applyColourToNonCarbonAtoms: boolean = false,
         label?: string
     ) {
         const newColourRule = new ColourRule(ruleType, cid, color, this.commandCentre, isMultiColourRule, applyColourToNonCarbonAtoms);
-        newColourRule.setParentRepresentation(this);
-        newColourRule.setArgs(args);
         if (label) {
             newColourRule.setLabel(label);
         }
 
-        this.useDefaultColourRules = false;
-        if (this.colourRules === null) {
-            this.colourRules = [newColourRule];
-        } else {
-            this.colourRules.push(newColourRule);
-        }
-    }
-
-    /**
-     * Set the colour rules used for this molecule representation
-     * @param {moorhen.ColourRule[]} colourRules - An array with the new colour rules
-     */
-    setColourRules(colourRules: moorhen.ColourRule[]) {
-        if (colourRules && colourRules.length > 0) {
-            this.colourRules = colourRules;
-            colourRules.forEach(rule => rule.setParentRepresentation(this));
-            this.useDefaultColourRules = false;
-        } else {
-            this.useDefaultColourRules = true;
-        }
+        this.colourRules = [...this._colourRules, newColourRule];
     }
 
     /**
@@ -457,17 +481,8 @@ export class MoleculeRepresentation {
      */
     setParentMolecule(molecule: moorhen.Molecule) {
         this.parentMolecule = molecule;
-        // Only fall back to the molecule defaults when this representation is
-        // not using explicitly configured values. The setter methods (setColourRules,
-        // setBondOptions, setM2tParams, setResidueEnvOptions) set these flags to
-        // false, so pre-configured representations keep their settings here.
-        if (this.useDefaultColourRules) {
-            this.colourRules = this.parentMolecule.defaultColourRules;
-        } else if (this.colourRules) {
-            // Re-associate custom colour rules with this representation. setColourRules
-            // may have run before setParentMolecule (e.g. in MoleculeRepresentation.create),
-            // leaving the colour rules with a null parent molecule.
-            this.colourRules.forEach(rule => rule.setParentRepresentation(this));
+        if (!this.useDefaultColourRules) {
+            this._colourRules.forEach(rule => rule.setParentRepresentation(this));
         }
         if (this.useDefaultBondOptions) {
             this.bondOptions = this.parentMolecule.defaultBondOptions;
@@ -540,6 +555,10 @@ export class MoleculeRepresentation {
         if (this.nonCustomOpacity < 0.99) {
             this.setNonCustomOpacity(this.nonCustomOpacity);
         }
+        if(this.style==="cavities"&&this.colourRules.length>0&&this.colourRules[0].color){
+            const rgb = hexToRGB(this.colourRules[0].color)
+            this.setBufferColour(rgb[0]/255,rgb[1]/255,rgb[2]/255)
+        }
     }
 
     /**
@@ -563,6 +582,10 @@ export class MoleculeRepresentation {
         });
         if (this.nonCustomOpacity < 0.99) {
             this.setNonCustomOpacity(this.nonCustomOpacity);
+        }
+        if(this.style==="cavities"&&this.colourRules.length>0&&this.colourRules[0].color){
+            const rgb = hexToRGB(this.colourRules[0].color)
+            this.setBufferColour(rgb[0]/255,rgb[1]/255,rgb[2]/255)
         }
     }
 
@@ -764,6 +787,9 @@ export class MoleculeRepresentation {
                 break;
             case "gaussian":
                 objects = await this.getCootGaussianSurfaceBuffers();
+                break;
+            case "cavities":
+                objects = await this.getCootCavitiesBuffers();
                 break;
             case "allHBonds":
                 if (this.restrictToNeighbours) objects = await this.getHBondBuffers(this.neighboursCid);
@@ -1766,7 +1792,7 @@ export class MoleculeRepresentation {
      * @param {string} cid - The CID selection for this representation
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
-    async getCootGaussianSurfaceBuffers(): Promise<libcootApi.InstancedMeshJS[]> {
+    async getCootGaussianSurfaceBuffers(): Promise<libcootApi.SimpleMeshJS[]> {
         const args = this.useDefaultGaussianSurfaceSettings ? this.parentMolecule.gaussianSurfaceSettings : this.gaussianSurfaceSettings;
         const response = (await this.commandCentre.cootCommand(
             {
@@ -1792,6 +1818,50 @@ export class MoleculeRepresentation {
         }
     }
 
+    /**
+     * Get representation buffers for the cavities surf. representation
+     * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
+     */
+    async getCootCavities(): Promise<void> {
+        try {
+        const response = (await this.commandCentre.cootCommand(
+            {
+                returnType: "mesh_array",
+                command: "get_cavities",
+                commandArgs: [this.parentMolecule.molNo],
+            },
+            false
+        )) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS[]>;
+            const meshes = response.data.result.result.map(object => {
+                 const flippedNormalsObject = { ...object };
+                 flippedNormalsObject.idx_tri = object.idx_tri.map(element => element.map(subElement => subElement.reverse()));
+                 return flippedNormalsObject;
+            });
+            this.cavities = {index: 1, mesh: meshes };
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    async getCootCavitiesBuffers() {
+        if (!this.cavities) {
+            await this.getCootCavities();
+        }
+        if (this.cavities) {
+            const _objects = this.cavities.mesh;
+            const cavityIndex = this.cavities.index ?? 1;
+            if (_objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+
+                let objects = [];
+                if (cavityIndex === 0) {
+                    objects = _objects;
+                } else {
+                    objects = [_objects[cavityIndex -1]];
+                }
+                return objects;
+            }
+        }
+    }
     /**
      * Get representation buffers for the molecule-wide contact dots representation
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
@@ -1854,10 +1924,6 @@ export class MoleculeRepresentation {
     async applyColourRules() {
         if (!this.styleHasColourRules) {
             return;
-        }
-
-        if (this.useDefaultColourRules) {
-            this.colourRules = this.parentMolecule.defaultColourRules;
         }
 
         await this.commandCentre.cootCommand(
