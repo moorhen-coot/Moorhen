@@ -727,7 +727,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanced_mesh_1, instanced_mesh_2, geom_vec_1, geom_vec_2)
     })
 
-    test("get_acedrg_types_for_residue_t", async () => {
+    test.skip("get_acedrg_types_for_residue_t", async () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h-nitrobenzene.pdb')
         expect(coordMolNo).toBe(0)
         const pdbChemLig = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/LIG.cif`).then(response=>response.text())

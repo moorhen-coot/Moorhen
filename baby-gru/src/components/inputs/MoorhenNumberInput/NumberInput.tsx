@@ -30,6 +30,7 @@ type MoorhenNumberInputProps = {
     tooltip?: string;
     className?: string;
     isInvalid?: boolean;
+    specialValuesTexts?: { [key: number]: string };
 };
 
 /**
@@ -84,7 +85,8 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         ref = null,
         tooltip = null,
         className = "",
-        buttonSteps = null
+        buttonSteps = null,
+        specialValuesTexts = null
     } = props;
 
     const decimalDigits = integer ? 0 : (props.decimalDigits ?? 2);
@@ -95,10 +97,14 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
 
     let displayValue: string = "";
     if (!isUserInteracting) {
-        displayValue = props.value?.toFixed(decimalDigits) ?? "";
+        if (specialValuesTexts && Number(internalValue) in specialValuesTexts) {
+            displayValue = specialValuesTexts[Number(internalValue)];
+        } else {
+        displayValue = props.value?.toFixed(decimalDigits) ?? "";}
     } else {
-        displayValue = internalValue;
-    }
+            displayValue = internalValue;
+        }
+    
 
     const checkIsValidInput = (input: string) => {
         if (input === "") {
@@ -210,7 +216,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                     <PlusMinusButton
                         step={buttonSteps ?? Math.pow(10, -decimalDigits)}
                         value={props.value}
-                        setValue={props.setValue}
+                        setValue={(val) => {props.setValue(val); setInternalValue(val.toFixed(decimalDigits));}}
                         type="arrow"
                         style={buttonStyle}
                         isDisabled={disabled}
@@ -219,7 +225,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                     <PlusMinusButton
                         step={-(buttonSteps ?? Math.pow(10, -decimalDigits))}
                         value={props.value}
-                        setValue={props.setValue}
+                        setValue={(val) => {props.setValue(val); setInternalValue(val.toFixed(decimalDigits));}}
                         type="arrow"
                         style={buttonStyle}
                         isDisabled={disabled}

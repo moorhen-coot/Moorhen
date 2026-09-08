@@ -5,6 +5,7 @@ import { MoorhenIcon } from "../../../../icons";
 import { hexToRGB, rgbToHex } from "../../../../../utils/utils";
 import { ColourRule } from "../../../../../utils/MoorhenColourRule";
 import { moorhen } from "../../../../../types/moorhen";
+import { RepresentationStyles } from "@/utils";
 
 interface ColourSettingsSectionProps {
     useDefaultColours: boolean;
@@ -17,7 +18,7 @@ interface ColourSettingsSectionProps {
     setColour: React.Dispatch<React.SetStateAction<string>>;
     nonCustomOpacity: number;
     setNonCustomOpacity: (val: number) => void;
-    representationStyle: string;
+    representationStyle: RepresentationStyles;
     mode: "add" | "edit";
     molecule: moorhen.Molecule;
     urlPrefix: string;
@@ -55,6 +56,32 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
         setColourMode(evt.target.value);
     };
 
+    const setBufferColour = (r:number, g:number, b:number) => {
+        if (representation) {
+            representation.setBufferColour(r,g,b);
+        }
+    }
+
+    const handleCoulourChange = (newColour: number[]) => {
+        setColour(rgbToHex(newColour[0], newColour[1], newColour[2]));
+
+        if ((representation?.buildParams) && (["cavities", "MolecularSurface", "gaussian"].includes(representationStyle))) {
+            // This directly mutate the represenation build parameter ar buffers so change of colour can be instant without cliking apply)
+            setBufferColour(newColour[0]/256, newColour[1]/256, newColour[2]/256);
+
+            if (representation.useDefaultColourRules) {
+                const colour = rgbToHex(newColour[0], newColour[1], newColour[2]);
+                const colourRule = new ColourRule("molecule", representation.cid, colour, representation.commandCentre);
+                representation.colourRules = [colourRule];
+                return;
+            }
+            const colourRule = representation.colourRules?.[0]
+            colourRule.color = rgbToHex(newColour[0], newColour[1], newColour[2]);
+
+        }
+    }
+
+
     const handleOpacityChange = (newVal: number) => {
         setNonCustomOpacity(newVal);
         if (representation) {
@@ -84,8 +111,9 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
                     onChange={() => setApplyColourToNonCarbonAtoms(prev => !prev)}
                 />
             )}
-            {!useDefaultColours && (
+            {!useDefaultColours &&  (
                 <>
+                    {!["cavities"].includes(representationStyle) && (
                     <MoorhenSelect
                         value={colourMode}
                         onChange={handleColourModeChange}
@@ -118,7 +146,7 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
                                 Electrostatics
                             </option>
                         )}
-                    </MoorhenSelect>
+                    </MoorhenSelect>)}
                     <MoorhenStack direction="row" addMargin align="center">
                         {colourMode === "b-factor" || colourMode === "b-factor-norm" ? (
                             <img
@@ -198,7 +226,7 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
                         ) : colourMode === "custom" ? (
                             <MoorhenColourPicker
                                 colour={hexToRGB(colour)}
-                                setColour={color => setColour(rgbToHex(color[0], color[1], color[2]))}
+                                setColour={colour => handleCoulourChange(colour)}
                             />
                         ) : (
                             <img

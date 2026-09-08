@@ -164,8 +164,10 @@
 
 .moorhen__slider-thumb.disabled {
     background: var(--moorhen-disabled);
-    box-shadow: 2px 2px 4px 3px var(--moorhen-inactive-shadow);
+    box-shadow: 2px 2px 3px 1px var(--moorhen-inactive-shadow);
     cursor: default;
+    border: 1px solid var(--moorhen-disabled);
+
 }
 
 .moorhen__slider.row {

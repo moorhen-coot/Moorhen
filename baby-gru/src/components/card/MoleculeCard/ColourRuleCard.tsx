@@ -19,17 +19,17 @@ export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: ()
 
     const applyNcsColourChange = () => {
         const chainNames: string[] = JSON.parse(ncsCopySelectRef.current.value);
-        const newRules = (rule.args[0] as string)
+        const newRules = rule.multiColourData
             .split("|")
             .map(item => {
-                const [chainName, hex] = item.split("^");
+                const [chainName] = item.split("^");
                 if (chainNames.includes(chainName)) {
                     return `${chainName}^${newNcsHexValueRef.current}`;
                 }
                 return item;
             })
             .join("|");
-        rule.args[0] = newRules;
+        rule.setMultiColourData(newRules);
         applyColourChange();
     };
 
@@ -57,16 +57,16 @@ export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: ()
                         onChange={evt => {
                             setNcsCopyValue(evt.target.value);
                             const chainNames = JSON.parse(evt.target.value);
-                            const hex = (rule.args[0] as string)
+                            const hex = rule.multiColourData
                                 .split("|")
                                 .find(item => item.includes(chainNames[0]))
                                 ?.split("^")[1];
                             setHex(hex);
                         }}
                     >
-                        {[...new Set((rule.args[0] as string).split("|").map(item => item.split("^")[1]))].map((hex, index) => {
+                        {[...new Set(rule.multiColourData.split("|").map(item => item.split("^")[1]))].map((hex, index) => {
                             const chainNames = JSON.stringify(
-                                (rule.args[0] as string)
+                                rule.multiColourData
                                     .split("|")
                                     .filter(item => item.includes(hex))
                                     .map(item => item.split("^")[0])
@@ -127,9 +127,8 @@ export const MoorhenColourRuleCard = (props: {
 
     const handleColourChangeDefault = (color: [number, number, number]) => {
         console.log(rule.color);
-        rule.color = rgbToHex(color[0], color[1], color[2]);
+        rule.setColor(rgbToHex(color[0], color[1], color[2]));
         console.log(rule.color);
-        if (!rule.isMultiColourRule) rule.args[1] = rule.color;
         isDirty.current = true;
         if (!busyRedrawing.current) {
             redrawIfDirty();
