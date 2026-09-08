@@ -25,6 +25,7 @@ export interface MoorhenVector {
     vectorColour: { r: number; g: number; b: number };
     textColour: { r: number; g: number; b: number };
     radius?: number;
+    customTags?: string[]
     dashSpacing?: number;
     arrowHeadLength?: number;
     arrowHeadRadiusScale?: number;

@@ -7,6 +7,7 @@ import { setSidePanelWidth } from "@/store/globalUISlice";
 import { PanelsList, SidePanelIDs, MoorhenPanel } from "./SidePanelList";
 import { TabsToggle } from "./TabsToggle";
 import "./side-panels.css";
+import { PanelErrorBoundary } from "@/components/interface-base";
 
 interface MoorhenSidePanelProps {
     extraSidePanels?: Record<string, MoorhenPanel>;
@@ -138,7 +139,9 @@ export const MoorhenSidePanel = ({ extraSidePanels }: MoorhenSidePanelProps) => 
     const panels: React.JSX.Element[] = activePanels.map(id => {
         return (
             <ActivityCompat mode={shownPanel === id ? "visible" : "hidden"} key={`${id}-activity-panel`}>
-                {allPanels[id].panelContent}
+                <PanelErrorBoundary panelName={allPanels[id].label}>
+                    {allPanels[id].panelContent}
+                </PanelErrorBoundary>
             </ActivityCompat>
         );
     });

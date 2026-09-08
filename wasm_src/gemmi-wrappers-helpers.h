@@ -45,6 +45,7 @@
 #include <gemmi/resinfo.hpp>
 #include <gemmi/cifdoc.hpp>
 #include <gemmi/smcif.hpp>
+#include "json/json.h"
 
 using namespace emscripten;
 
@@ -52,6 +53,60 @@ using namespace emscripten;
 
 using GemmiSMat33double = gemmi::SMat33<double>;
 using GemmiSMat33float = gemmi::SMat33<float>;
+
+inline std::string get_nef_info(const std::string &data, const std::string &sf_category){
+
+    auto doc = gemmi::cif::read_string(data);
+
+    Json::Value root;
+
+    for (const auto& block: doc.blocks){
+        for (const auto& item: block.items){
+           if (item.type == gemmi::cif::ItemType::Frame){
+                const gemmi::cif::Block& frame = item.frame;
+                bool isNefRestrains = false;
+                for(const auto& item2 : frame.items){
+                    if(item2.type == gemmi::cif::ItemType::Pair) {
+
+                        const std::string full_category = "_" + sf_category + ".sf_category";
+                        std::cout << full_category; 
+                        if(item2.pair[0]==full_category&&item2.pair[1]==sf_category){
+
+                        isNefRestrains = true;
+                        }
+                    }
+                    if(isNefRestrains){
+                        if(item2.type == gemmi::cif::ItemType::Loop) {
+                            for(auto i=0;i<item2.loop.values.size();i+=item2.loop.tags.size()){
+                                Json::Value row;
+                                for(auto j=0;j<item2.loop.tags.size();j++){
+                                    row[item2.loop.tags[j]] = item2.loop.values[i+j];
+                                }
+                                root.append(row);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Json::StreamWriterBuilder builder;
+    const std::string json_string = Json::writeString(builder, root);
+
+    return json_string;
+
+}
+
+
+inline std::string get_nef_restraints(const std::string &data) {
+    return get_nef_info(data, "nef_distance_restraint_list");
+}
+
+
+inline std::string get_chem_shift_info(const std::string &data) {
+    return get_nef_info(data, "nef_chemical_shift_list");
+}
 
 // --- Free functions ---
 

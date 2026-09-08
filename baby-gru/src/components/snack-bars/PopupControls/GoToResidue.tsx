@@ -26,7 +26,7 @@ export const GoToResidue = () => {
             return;
         }
 
-        const [chosenMolecule, _residueCid] = await getCentreAtom(molecules, commandCentre, store);
+        const [chosenMolecule, _residueCid] = await getCentreAtom(molecules, commandCentre.current, store);
         if (!chosenMolecule) {
             return;
         }

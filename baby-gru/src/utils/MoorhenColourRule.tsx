@@ -1,6 +1,7 @@
 import { hexToRgb } from "@/utils/utils";
 import { moorhen } from "../types/moorhen";
 import { guid } from "./utils";
+import { CommandCentre } from "@/InstanceManager/CommandCentre/MoorhenCommandCentre";
 
 /**
  * Represents a colour rule for a given representation
@@ -17,7 +18,7 @@ import { guid } from "./utils";
  * @param {string} ruleType - The type of this colour rule instance
  * @param {string} cid - The CID selection for this colour rule
  * @param {string} color - The colour for this rule (hex format)
- * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+ * @param {moorhen.CommandCentre | null} commandCentre - The command centre instance
  * @param {boolean} [isMultiColourRule=false] - Indicates whether this colour rule consists of multiple colours assigned to different residues
  * @param {boolean} [applyColourToNonCarbonAtoms=false] - Indicates if the colour rule will also be applied to non carbon atoms
  * @example
@@ -42,19 +43,19 @@ export class ColourRule {
     args: (string | number)[];
     label: string;
     isMultiColourRule: boolean;
-    commandCentre: React.RefObject<moorhen.CommandCentre | null>;
+    commandCentre: CommandCentre | null;
     parentMolecule: moorhen.Molecule;
     parentRepresentation: moorhen.MoleculeRepresentation;
     applyColourToNonCarbonAtoms: boolean;
     uniqueId: string;
     initFromString: (
         stringifiedObject: string,
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
+        commandCentre: CommandCentre | null,
         molecule: moorhen.Molecule
     ) => moorhen.ColourRule;
     initFromDataObject: (
         data: moorhen.ColourRuleObject,
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
+        commandCentre: CommandCentre | null,
         molecule: moorhen.Molecule
     ) => moorhen.ColourRule;
     parseHexToRgba: (hex: string) => [number, number, number, number];
@@ -63,7 +64,7 @@ export class ColourRule {
         ruleType: string,
         cid: string,
         color: string,
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
+        commandCentre: CommandCentre | null,
         isMultiColourRule: boolean = false,
         applyColourToNonCarbonAtoms: boolean = false
     ) {
@@ -87,7 +88,7 @@ export class ColourRule {
      */
     static initFromString(
         stringifiedObject: string,
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
+        commandCentre: CommandCentre | null,
         molecule: moorhen.Molecule
     ) {
         const data = JSON.parse(stringifiedObject);
@@ -97,13 +98,14 @@ export class ColourRule {
     /**
      * Static method that can be used to create a new colour rule from a colour rule data object
      * @param {moorhen.ColourRuleObject} data - The colour rule data object
-     * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+     * @param {CommandCentre | null} commandCentre - The command centre instance
+
      * @param {moorhen.Molecule} molecule - The molecule that will be associated to this colour rule
      * @returns {moorhen.ColourRule} The new colour rule
      */
     static initFromDataObject(
         data: moorhen.ColourRuleObject,
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
+        commandCentre: CommandCentre | null,
         molecule: moorhen.Molecule
     ) {
         const colourRule = new ColourRule(
@@ -257,7 +259,7 @@ export class ColourRule {
             );
         } else if (["CBs", "VdwSpheres", "ligands", "CAs"].includes(_style)) {
             const userDefinedColours = this.getUserDefinedColours();
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     message: "coot_command",
                     command: "shim_set_bond_colours",
@@ -267,7 +269,7 @@ export class ColourRule {
                 false
             );
         } else {
-            await this.commandCentre.current.cootCommand(
+            await this.commandCentre.cootCommand(
                 {
                     message: "coot_command",
                     command: this.isMultiColourRule ? "add_colour_rules_multi" : "add_colour_rule",

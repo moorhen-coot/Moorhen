@@ -1,15 +1,15 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { setClipEnd, setClipStart, setFogEnd, setFogStart, setRequestDrawScene } from "../../store/glRefSlice";
-import { setResetClippingFogging } from "../../store/sceneSettingsSlice";
+import {  setRequestDrawScene } from "../../store/glRefSlice";
+import { setClipEnd, setClipStart, setFogEnd, setFogStart, setResetClippingFogging } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 
 export const ScenePreset = () => {
     const dispatch = useDispatch();
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const zoom = useSelector((state: moorhen.State) => state.glRef.zoom);
-    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset);
+    const zoom = useSelector((state: moorhen.State) => state.sceneSettings.zoom);
+    const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset);
 
     const [presetValue, setPresetValue] = useState<string | null>(null);
 

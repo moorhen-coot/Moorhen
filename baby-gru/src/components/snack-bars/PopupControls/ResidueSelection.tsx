@@ -370,7 +370,7 @@ export const ResidueSelectionControls = () => {
                         <MoorhenCidInputForm
                             margin="0"
                             width="100%"
-                            setCid={setCidFormValue}
+                            setValue={setCidFormValue}
                             value={cidFormValue}
                             invalidCid={invalidCid}
                         />

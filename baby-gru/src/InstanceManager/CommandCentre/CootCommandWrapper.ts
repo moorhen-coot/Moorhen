@@ -166,6 +166,28 @@ export class CootCommandWrapper {
     }
 
     /**
+     * Retrieves per-residue B-factor validation data for a molecule.
+     *
+     * For each residue it provides the average B-factor of the main chain
+     * atoms and the average B-factor of the side chain atoms.
+     *
+     * @param imol - The molecule identifier for which to retrieve B-factor data.
+     * @returns A promise that resolves to {@link ValidationData} containing the
+     * per-residue B-factor averages organized by chain.
+     */
+    async getBValidationData(imol): Promise<ValidationData> {
+        const newValidationData = this.cootCommand(
+            {
+                command: "get_B_validation",
+                commandArgs: [imol as number],
+                returnType: "string",
+            },
+            false
+        );
+        return JSON.parse((await newValidationData).data.result.result) as ValidationData;
+    }
+
+    /**
      * Retrieves Q-score validation data for a model against a selected map.
      *
      * @param selectedModel - The model molecule identifier to score.
@@ -178,6 +200,18 @@ export class CootCommandWrapper {
                 command: "get_q_score",
                 commandArgs: [selectedModel, selectedMap],
                 returnType: "validation_data",
+            },
+            false
+        );
+        return (await result).data.result.result as CootValidationData;
+    }
+
+    async getPeptideOmegaAnalysis(selectedModel): Promise<CootValidationData> {
+        const result = this.cootCommand(
+            {
+                command: "peptide_omega_analysis",
+                returnType: "validation_data",
+                commandArgs: [selectedModel],
             },
             false
         );

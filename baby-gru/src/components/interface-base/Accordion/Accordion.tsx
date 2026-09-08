@@ -49,6 +49,7 @@ export const MoorhenAccordion = (props: MoorhenAccordionType) => {
                     <MoorhenButton
                         type="icon-only"
                         icon="MatSymKeyboardArrowDown"
+                        disabled={disabled}
                         onClick={handleChange}
                         className={`moorhen__accordion-toggle-${isOpen ? "open" : "close"}`}
                         tooltip={isOpen ? "Collapse" : "Expand"}

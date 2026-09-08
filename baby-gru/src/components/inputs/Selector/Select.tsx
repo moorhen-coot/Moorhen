@@ -1,4 +1,4 @@
-import React, { useEffect, useId } from "react";
+import React, { useId } from "react";
 import { MoorhenStack } from "../../interface-base/Stack/Stack";
 
 export type MoorhenSelectProps = {
@@ -14,6 +14,8 @@ export type MoorhenSelectProps = {
         | ((val: string | number | readonly string[]) => void)
         | React.Dispatch<React.SetStateAction<string | number | readonly string[]>>;
     style?: React.CSSProperties;
+    onFocus?: () => void;
+    onBlur?: () => void;
 };
 
 export const MoorhenSelect = (props: MoorhenSelectProps) => {
@@ -40,6 +42,9 @@ export const MoorhenSelect = (props: MoorhenSelectProps) => {
                 onChange={onChange}
                 disabled={disabled}
                 value={value}
+                onFocus={props.onFocus}
+                onBlur={props.onBlur}
+
             >
                 {children}
             </select>

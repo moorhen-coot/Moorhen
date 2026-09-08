@@ -100,7 +100,7 @@ export const AcceptRejectDragAtoms = () => {
                     command: "add_target_position_restraint_and_refine",
                     commandArgs: [
                         moltenFragmentRef.current.molNo,
-                        `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`,
+                        `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf ? `:${chosenAtom.alt_conf}` : ""}`,
                         movedAtoms[0][0].x,
                         movedAtoms[0][0].y,
                         movedAtoms[0][0].z,

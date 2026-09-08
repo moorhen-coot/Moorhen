@@ -8,13 +8,12 @@ import { MoorhenButton, MoorhenColourPicker, MoorhenPopoverButton, MoorhenSelect
 import { MoorhenStack } from "../../interface-base";
 
 export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: () => void; style?: { [key: string]: string } }) => {
-    const ncsSwatchRef = useRef(null);
     const newNcsHexValueRef = useRef<string>("");
     const ncsCopySelectRef = useRef<null | HTMLSelectElement>(null);
 
     const [hex, setHex] = useState<string>("#ffffff");
     const [ncsCopyValue, setNcsCopyValue] = useState<string>("");
-    const [showColourPicker, setShowColourPicker] = useState<boolean>(false);
+
 
     const { rule, applyColourChange } = props;
 
@@ -147,7 +146,7 @@ export const MoorhenColourRuleCard = (props: {
                 </label>
                 <div style={{ display: "flex", justifyContent: "right", alignItems: "center" }}>
                     {!rule.isMultiColourRule ? (
-                        <MoorhenColourPicker colour={colour} onApply={handleColourChangeDefault} style={{ marginRight: "0.2rem" }} />
+                        <MoorhenColourPicker colour={colour} setColour={handleColourChangeDefault} style={{ marginRight: "0.2rem" }} />
                     ) : rule.propertyType === "secondary-structure" ? (
                         <MoorhenIcon moorhenSVG="SecondaryStructure" size="medium" />
                     ) : rule.propertyType === "jones-rainbow" ? (

@@ -27,6 +27,7 @@ import { SidePanelIDs } from "../panels";
 export type BaseMenuItem = {
     id: string;
     label: string;
+    ariaLabel?: string;
     keywords?: string[];
     description?: string;
     devOnly?: boolean;
@@ -225,7 +226,6 @@ export const subMenuMap: SubMenuMap = {
                 label: "MrParse results...",
                 type: "showModal",
                 modal: "mrparse",
-                devOnly: true,
                 specialType: "upload",
             },
             { type: "separator" },
@@ -235,6 +235,16 @@ export const subMenuMap: SubMenuMap = {
                 type: "popover",
                 content: MenuItems.DeleteEverything,
             },
+            /*
+            {
+                id: "load-NOE",
+                label: "Load NOE...",
+                type: "showModal",
+                modal: "NOE",
+                devOnly: true,
+                specialType: "upload",
+            },
+            */
         ],
     },
     calculate: {
@@ -508,21 +518,18 @@ export const subMenuMap: SubMenuMap = {
                 label: "Alphafold PAE Plot...",
                 type: "showModal",
                 modal: "pae-plot",
-                devOnly: true,
             },
             {
                 id: "conkit",
                 label: "ConKit...",
                 type: "showModal",
                 modal: "conkit",
-                devOnly: true,
             },
             {
                 id: "json-validation",
                 label: "Interesting bits JSON validation...",
                 type: "showModal",
                 modal: "json-validation",
-                devOnly: true,
             },
         ],
     },

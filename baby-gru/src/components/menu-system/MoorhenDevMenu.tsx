@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
-import { useEffect, useRef, useState } from "react";
-import { enqueueSnackbar, setOrigin } from "@/store";
+import { useEffect, useState } from "react";
+import { setOrigin } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
@@ -19,11 +19,14 @@ import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
+
 import { readGzippedTextFile } from "../../utils/utils";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 import { MoorhenLinearProgress } from "../icons";
+
+
 
 const newVector = () => {
     const aVector: MoorhenVector = {
@@ -53,11 +56,13 @@ export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
+    const [conKitFile1Contents, setConKitFile1Contents] = useState<string>("");
+    const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
 
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
-    const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
+    const toggleValidationPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");
     const [sliderValue, setSliderValue] = useState(1);
     const [sliderValue2, setSliderValue2] = useState(9);
     useEffect(() => {
@@ -300,7 +305,7 @@ export const MoorhenDevMenu = () => {
         }
     };
 
-    const origin = useSelector((state: RootState) => state.glRef.origin);
+    const origin = useSelector((state: RootState) => state.sceneSettings.origin);
 
     // const tomogramTest = () => {
     //     enqueueSnackbar("tomogram", {

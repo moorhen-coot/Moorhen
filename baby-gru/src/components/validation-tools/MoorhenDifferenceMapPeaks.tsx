@@ -3,7 +3,7 @@ import annotationPlugin from "chartjs-plugin-annotation";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
-import { setOrigin } from "../../store/glRefSlice";
+import { setOrigin } from "../../store";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";

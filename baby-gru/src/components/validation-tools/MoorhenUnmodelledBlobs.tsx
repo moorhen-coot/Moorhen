@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux";
 import { useCommandCentre } from "../../InstanceManager";
-import { setOrigin } from "../../store/glRefSlice";
+import { setOrigin } from "../../store";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";

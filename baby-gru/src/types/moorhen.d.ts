@@ -40,28 +40,28 @@ export namespace moorhen {
     type Molecule = import("../utils/MoorhenMolecule").MoorhenMolecule;
     type Map = import("../utils/MoorhenMap").MoorhenMap;
     type CommandCentre = import("../InstanceManager/CommandCentre").CommandCentre;
-    type MoleculeRepresentation = import("../utils/MoorhenMoleculeRepresentation").MoleculeRepresentation;
+    type MoleculeRepresentation = import("../utils/Representation/MoorhenMoleculeRepresentation").MoleculeRepresentation;
     type State = import("../store/MoorhenReduxStore").RootState;
     type HoveredAtom = import("../store/hoveringStatesSlice").HoveredAtom;
-    type PreferencesValues = import("../components/managers/preferences").PreferencesValues;
+    type PreferencesValues = import("../InstanceManager/Preferences").PreferencesValues;
     type Sequence = import("../utils/MoorhenMolecule").Sequence;
     type ResidueInfo = import("../utils/MoorhenMolecule").ResidueInfo;
     type LigandInfo = import("../utils/MoorhenMolecule").LigandInfo;
     type TimeCapsule = import("../utils/MoorhenTimeCapsule").MoorhenTimeCapsule;
     type backupKey = import("../utils/MoorhenTimeCapsule").backupKey;
     type backupSession = import("../utils/MoorhenTimeCapsule").backupSession;
-    type Preferences = import("../components/managers/preferences").Preferences;
+    type Preferences = import("../InstanceManager/Preferences").Preferences;
     type HistoryEntry = import("../utils/MoorhenHistory").HistoryEntry;
     type moleculeSessionData = import("../utils/MoorhenTimeCapsule").moleculeSessionData;
     type mapDataSession = import("../utils/MoorhenTimeCapsule").mapDataSession;
     type viewDataSession = import("../utils/MoorhenTimeCapsule").viewDataSession;
-    type Shortcut = import("../components/managers/preferences/DefaultShortcuts").Shortcut;
+    type Shortcut = import("../InstanceManager/Preferences/DefaultShortcuts").Shortcut;
     type actionButtonSettings = import("../components/context-menu/MoorhenContextMenu").ActionButtonSettings;
-    type LocalStorageInstance = import("../components/managers/preferences/MoorhenPreferences").LocalStorageInstance;
+    type LocalStorageInstance = import("../InstanceManager/Preferences/MoorhenPreferences").LocalStorageInstance;
     type WorkerResponse<T = any> = import("../InstanceManager/CommandCentre").WorkerResponse;
     type cootCommandKwargs = import("../InstanceManager/CommandCentre").cootCommandKwargs;
     type ResidueSelection = import("../store/generalStatesSlice").ResidueSelection;
-    type RepresentationStyles = import("../utils/MoorhenMoleculeRepresentation").RepresentationStyles;
+    type RepresentationStyles = import("../utils/Representation/MoorhenMoleculeRepresentation").RepresentationStyles;
 
     //type ContextButtonProps = import("../components/ContextButton").ContextButtonProps;
 

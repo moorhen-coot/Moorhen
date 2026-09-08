@@ -344,7 +344,7 @@ export const MoorhenConKit = (props: MoorhenConKitProps) => {
             )}
             <MoorhenSequenceViewer
                 onResidueClick={handleClickResidue}
-                onResiduesSelect={handlResiduesSelect}
+                setSelectedResidues={handlResiduesSelect}
                 sequences={sequencesLists}
                 onHoverResidue={onHoverResidue}
                 nameColumnWidth={5}

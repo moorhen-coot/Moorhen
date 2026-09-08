@@ -9,6 +9,7 @@ interface MoorhenMenuItemProps {
     id?: string;
     disabled?: boolean;
     style?: React.CSSProperties;
+    ariaLabel?: string;
 }
 /**
  * A thin wrapper around a standard HTML `<button>` element, applying Moorhen-specific styling.
@@ -34,7 +35,7 @@ export const MoorhenMenuItem: React.FC<MoorhenMenuItemProps> = props => {
         ? `moorhen__menu-item ${props.selected ? `moorhen__menu-item-selected` : ``}`
         : `moorhen__menu-item-disabled`;
     return (
-        <button className={className} onClick={onClick} ref={ref} disabled={props.disabled} style={{ ...props.style }}>
+        <button className={className} onClick={onClick} ref={ref} disabled={props.disabled} style={{ ...props.style }} aria-label={props.ariaLabel ?? undefined}>
             {animation && <span className={`moorhen__menu-item-animation`} />}
             {props.children}
         </button>

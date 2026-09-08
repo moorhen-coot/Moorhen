@@ -208,7 +208,7 @@
 //     pushViewUpdate() {
 //         this.view.set(this.clientId, {
 //             zoom: MoorhenReduxStore.getState().glRef.zoom,
-//             origin: MoorhenReduxStore.getState().glRef.origin,
+//             origin: MoorhenReduxStore.getState().sceneSettings.origin,
 //             quat4: MoorhenReduxStore.getState().glRef.quat
 //         })
 //     }

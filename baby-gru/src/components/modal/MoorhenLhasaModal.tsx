@@ -21,7 +21,7 @@ const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: numbe
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const originState = useSelector((state: moorhen.State) => state.glRef.origin);
+    const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin);
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined);
     const [busy, setBusy] = useState<boolean>(false);

@@ -97,6 +97,7 @@ export interface GemmiModule {
     get_atom_info_for_selection(_0: Structure, _1: string, _2: string):  emscriptem.vector<AtomInfo>;
     get_ligand_info_for_structure(_0: Structure):  emscriptem.vector<LigandInfo>;
     get_sequence_info(_0: Structure, _1: string):  emscriptem.vector<SequenceEntry>;
+    get_chem_shift_info(nef_input:string): string;
 
     gemmi_add_entity_types(_0: Structure, _1: boolean): void;
     getElementNameAsString(_0: Element): string;

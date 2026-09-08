@@ -70,7 +70,7 @@ export class TextCanvasTexture {
     }
 
     draw() {
-        const zoom = this.store.getState().glRef.zoom
+        const zoom = this.store.getState().sceneSettings.zoom
         const canvasHeight = this.store.getState().glRef.canvasSize[1]
         const isWebGL2 = this.store.getState().glRef.isWebGL2
 

@@ -19,7 +19,7 @@ export const TabsToggle = (props: TabsToggleProps) => {
     const dispatch = useDispatch();
     const isShown = useSelector((state: RootState) => state.globalUI.shownSidePanel === id);
     const [hovered, setHovered] = useState(false);
-    const iconColor = isShown ? "inherit" : "var(--moorhen-disabled)";
+    const iconColor = isShown ? "inherit" : "var(--moorhen-inactive-tab)";
 
     return (
         <div className={`moorhen__panel-container-toggle-button ${isShown ? "visible" : ""}`}>

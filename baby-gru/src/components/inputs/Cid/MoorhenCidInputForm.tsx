@@ -22,7 +22,7 @@ type MoorhenCidInputFormPropsType = {
     allowUseCurrentSelection?: boolean;
     ref?: React.Ref<HTMLInputElement>;
     inline?: boolean
-    setCid?: React.Dispatch<React.SetStateAction<string>> | ((newCid: string) => void);
+    setValue?: React.Dispatch<React.SetStateAction<string>> | ((newCid: string) => void);
     setMolecule? : React.Dispatch<React.SetStateAction<MoorhenMolecule>> | ((newMolecules: MoorhenMolecule) => void);
     setMoleculeUniqueId?: React.Dispatch<React.SetStateAction<string>> | ((newMoleculeUniqueId: string) => void);
     allowPickAtom?: boolean
@@ -66,7 +66,7 @@ export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
             onChange(evt);     
         }
         setSelection(evt.target.value)
-        props.setCid?.(evt.target.value)
+        props.setValue?.(evt.target.value)
     };
 
     const handlePickAtom = () => {
@@ -88,7 +88,7 @@ export const MoorhenCidInputForm = (props: MoorhenCidInputFormPropsType) => {
 
             const clickedCid = hoveredAtom.cid ? hoveredAtom.cid : "";
             setSelection(clickedCid)
-            props.setCid?.(clickedCid)
+            props.setValue?.(clickedCid)
             stopPicking();
         };
 

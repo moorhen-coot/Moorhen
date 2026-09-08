@@ -11,6 +11,7 @@ import {
 import { MoorhenStack } from "@/components/interface-base";
 import { addGeneralRepresentation, triggerUpdate } from "@/store";
 import { moorhen } from "@/types/moorhen";
+import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 
 export const SelfRestraints = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -81,7 +82,13 @@ export const SelfRestraints = () => {
             if (restraintsRepresenation) {
                 await restraintsRepresenation.redraw();
             } else {
-                const representation = await selectedMolecule.addRepresentation("restraints", "/*/*/*/*");
+                const representation = await MoleculeRepresentation.create({
+                    representationStyle: "restraints",
+                    molecule: selectedMolecule,
+                    ruleType: "cid",
+                    cid: "/*/*/*/*",
+                    isCustom: false,
+                });
                 dispatch(addGeneralRepresentation(representation));
             }
             dispatch(triggerUpdate(selectedMolecule.molNo));
