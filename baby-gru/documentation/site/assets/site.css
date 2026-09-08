@@ -169,6 +169,39 @@ a.button:hover {
     padding: 0.75rem 1rem;
 }
 
+.guide-article > section {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border-light);
+}
+
+.guide-article > section:first-of-type {
+    margin-top: 1.5rem;
+}
+
+.guide-article h2 {
+    margin: 0 0 1rem;
+    padding-left: 0.75rem;
+    border-left: 4px solid var(--link);
+    color: var(--heading-link);
+    line-height: 1.25;
+}
+
+.guide-article h3 {
+    margin-top: 1.75rem;
+    color: var(--link);
+}
+
+.guide-article p,
+.guide-article ul {
+    margin-top: 0.85rem;
+    margin-bottom: 0.85rem;
+}
+
+.guide-article li + li {
+    margin-top: 0.35rem;
+}
+
 .image-column {
     max-width: 100%;
     width: auto;
