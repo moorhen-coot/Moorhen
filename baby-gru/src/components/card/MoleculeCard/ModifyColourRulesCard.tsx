@@ -5,7 +5,7 @@ import { ResidueRangeSelector } from "@/components/inputs/ResidueRange";
 import { RootState } from "@/store/MoorhenReduxStore";
 import { useCommandCentre } from "../../../InstanceManager";
 import { moorhen } from "../../../types/moorhen";
-import { ColourRule } from "../../../utils/MoorhenColourRule";
+import { ColourRule, ColourRulePropertyType, ColourRuleSelectionType } from "../../../utils/MoorhenColourRule";
 import { cidToSpec, convertRemToPx, getMultiColourRuleArgs } from "../../../utils/utils";
 import { MoorhenButton, MoorhenSelect, MoorhenToggle } from "../../inputs";
 import { MoorhenCidInputForm } from "../../inputs/Cid/MoorhenCidInputForm";
@@ -70,8 +70,8 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
     const cidFormRef = useRef<HTMLInputElement>(null);
     const commandCentre = useCommandCentre();
 
-    const [ruleType, setRuleType] = useState<string>(props.residueSelection ? "cid" : "molecule");
-    const [colourProperty, setColourProperty] = useState<string>("b-factor");
+    const [ruleType, setRuleType] = useState<ColourRuleSelectionType | "property">(props.residueSelection ? "cid" : "molecule");
+    const [colourProperty, setColourProperty] = useState<ColourRulePropertyType>("b-factor");
     const [selectedColour, setSelectedColour] = useState<string>("#808080");
     const [selectedChain, setSelectedChain] = useState<string>(props.molecule.sequences[0]?.chain || "");
     const [residuesSelectionRange, setResidueSelectionRange] = useState<[number, number]>(null);
@@ -292,7 +292,7 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
             <MoorhenStack direction="horizontal" style={{ margin: 0, padding: 0 }}>
                 <MoorhenStack>
                     {!props.residueSelection && (
-                        <MoorhenSelect label={"Rule Type"} defaultValue={ruleType} onChange={val => setRuleType(val.target.value)}>
+                        <MoorhenSelect label={"Rule Type"} defaultValue={ruleType} onChange={val => setRuleType(val.target.value as ColourRuleSelectionType | "property")}>
                             <option value={"molecule"} key={"molecule"}>
                                 By molecule
                             </option>
@@ -329,7 +329,7 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                         />
                     )}
                     {ruleType === "property" && (
-                        <MoorhenSelect label={"Property"} defaultValue={"b-factor"} onChange={val => setColourProperty(val.target.value)}>
+                        <MoorhenSelect label={"Property"} defaultValue={"b-factor"} onChange={val => setColourProperty(val.target.value as ColourRulePropertyType)}>
                             <option value={"mol-symm"} key={"mol-symm"}>
                                 Mol. Symmetry
                             </option>

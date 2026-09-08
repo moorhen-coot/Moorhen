@@ -3,6 +3,19 @@ import { moorhen } from "../types/moorhen";
 import { guid } from "./utils";
 import { CommandCentre } from "@/InstanceManager/CommandCentre/MoorhenCommandCentre";
 
+export type ColourRuleSelectionType = "chain" | "cid" | "ligands" | "molecule" | "neighbourhood" | "residue-range";
+export type ColourRulePropertyType =
+    | "af2-plddt"
+    | "b-factor"
+    | "b-factor-norm"
+    | "electrostatics"
+    | "jones-rainbow"
+    | "mol-symm"
+    | "property"
+    | "RMSD"
+    | "secondary-structure";
+export type ColourRuleType = ColourRuleSelectionType | ColourRulePropertyType;
+
 /**
  * Represents a colour rule for a given representation
  * @property {string} ruleType - The type of this colour rule instance
@@ -36,8 +49,8 @@ import { CommandCentre } from "@/InstanceManager/CommandCentre/MoorhenCommandCen
  * }
  */
 export class ColourRule {
-    ruleType: string;
-    propertyType: string;
+    ruleType: ColourRuleType;
+    propertyType: ColourRulePropertyType;
     cid: string;
     color: string;
     args: (string | number)[];
@@ -61,7 +74,7 @@ export class ColourRule {
     parseHexToRgba: (hex: string) => [number, number, number, number];
 
     constructor(
-        ruleType: string,
+        ruleType: ColourRuleType,
         cid: string,
         color: string,
         commandCentre: CommandCentre | null,
@@ -109,7 +122,7 @@ export class ColourRule {
         molecule: moorhen.Molecule
     ) {
         const colourRule = new ColourRule(
-            data.ruleType,
+            data.ruleType as ColourRuleType,
             data.cid,
             data.color,
             commandCentre,

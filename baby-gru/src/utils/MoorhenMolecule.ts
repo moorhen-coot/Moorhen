@@ -13,7 +13,7 @@ import { libcootApi } from "../types/libcoot";
 import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
-import { ColourRule } from "./MoorhenColourRule";
+import { ColourRule, ColourRuleType } from "./MoorhenColourRule";
 import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
 import {
     centreOnGemmiAtoms,
@@ -1480,7 +1480,7 @@ export class MoorhenMolecule {
     }
 
     addColourRule(
-        ruleType: string,
+        ruleType: ColourRuleType,
         cid: string,
         color: string,
         args: (string | number)[],
@@ -1530,7 +1530,7 @@ export class MoorhenMolecule {
         const representation = new MoleculeRepresentation(style, cid, this.commandCentre);
         representation.isCustom = isCustom;
         representation.setParentMolecule(this);
-        representation.setColourRules(colourRules);
+        representation.colourRules = colourRules;
         representation.setBondOptions(bondOptions);
         representation.setM2tParams(m2tParams);
         representation.setResidueEnvOptions(residueEnvOptions);
