@@ -144,7 +144,7 @@ export const FetchOnlineSources = () => {
                 const newColourRule = new ColourRule("af2-plddt", "/*/*/*/*", "#ffffff", moorhenInstance.commandCentre, true);
                 newColourRule.setLabel("PLDDT");
                 const ruleArgs = await getMultiColourRuleArgs(newMolecule, "af2-plddt");
-                newColourRule.setArgs([ruleArgs]);
+                newColourRule.multiColourData = ruleArgs;
                 newColourRule.setParentMolecule(newMolecule);
                 newMolecule.defaultColourRules = [newColourRule];
             }
