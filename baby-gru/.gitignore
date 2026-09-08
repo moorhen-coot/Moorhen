@@ -5,13 +5,22 @@
 /.pnp
 .pnp.js
 
+# python (uv-managed venv + build artifacts)
+/.venv
+__pycache__/
+*.py[cod]
+
 # testing
 /coverage
+/playwright-report
+/test-results
+/blob-report
 
 # production
 /build
 /dist
 /dev-dist
+/tsDist
 
 # misc
 .DS_Store
@@ -19,6 +28,7 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.vscode
 
 npm-debug.log*
 yarn-debug.log*
@@ -40,6 +50,6 @@ baby-gru/public/baby-gru/CootWorker.js
 
 # Ignore PWA related files
 /dev-dist
-.vscode
+
 
 src/LhasaReact

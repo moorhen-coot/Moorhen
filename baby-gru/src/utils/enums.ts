@@ -30,7 +30,9 @@ export const modalKeys = Object.freeze({
     PAEPLOT : "pae-plot",
     SCENE_SLIDERS: "scene-sliders",
     CONKIT: "conkit",
-})
+    NOE: "NOE"
+});
+
 
 export const representationLabelMapping = Object.freeze({
     rama: "Ramachandran Balls",
@@ -41,6 +43,7 @@ export const representationLabelMapping = Object.freeze({
     CDs: "Contact dots",
     MolecularSurface: "Mol Surface",
     gaussian: "Gaussian Surface",
+    cavities: "Cavities",
     ligands: "Ligands",
     DishyBases: "Bases",
     VdwSpheres: "Spheres",

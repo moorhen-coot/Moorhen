@@ -117,8 +117,7 @@ export const ChangeChainId = () => {
                 />
             </MoorhenStack>
             <MoorhenSequenceRangeSlider
-                style={{ marginTop: "1rem", marginBottom: "1.5rem" }}
-                ref={residueRangeRef}
+                setRange={range => (residueRangeRef.current = range)}
                 selectedChainId={selectedChain}
                 selectedMolNo={selectedModel}
             />

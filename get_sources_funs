@@ -64,7 +64,11 @@ geteigen() {
     else
         echo "Checking out LibEigen"
         curl -fL https://gitlab.com/libeigen/eigen/-/archive/$libeigen_release/eigen-$libeigen_release.tar.gz -o eigen-$libeigen_release.tar.gz &&\
-        tar xf eigen-$libeigen_release.tar.gz || fail "Failed to download and unpack LibEigen"
+        tar xf eigen-$libeigen_release.tar.gz &&\
+        cd eigen-$libeigen_release &&\
+        echo &&\
+        echo "Patching LibEigen for Emscripten 6.0.0" &&\
+        patch -p0 < ../../patches/eigen-emsdk-600.patch || fail "Failed to download and unpack LibEigen"
     fi
     echo
 }
@@ -84,6 +88,18 @@ getlibccp4() {
         echo "Patching libccp4 for Emscripten" &&\
         patch -p0 < ../patches/ccp4-emscripten.patch &&\
         cd .. || fail "Failed to download, unpack and patch libccp4"
+    fi
+    echo
+}
+
+getxpid() {
+    cdcheckout
+    if [ -r xpid_moorhen ]; then
+        echo "Using existing xpid_moorhen"
+    else
+        echo "Checking out xpid_moorhen"
+        git clone https://github.com/SeanWang5868/xpid_moorhen.git || fail "Failed to clone xpid_moorhen"
+        echo
     fi
     echo
 }
@@ -146,7 +162,8 @@ getgemmi() {
         git checkout $gemmi_release &&\
 #half.hpp is \r\n which is a pain for patch
         sed -i'' -e 's/\r//' include/gemmi/third_party/half.hpp
-        patch -p1 < ../../patches/gemmi-emscripten-64.patch || fail "Failed to clone and patch gemmi"
+        patch -p1 < ../../patches/gemmi-emscripten-64.patch &&\
+        patch -p1 < ../../patches/gemmi-atom-name-trim.patch || fail "Failed to clone and patch gemmi"
     fi
     echo
 }
@@ -158,7 +175,7 @@ getmonomers() {
     else
         echo "Checking out monomers subset"
         #git clone https://github.com/MonomerLibrary/monomers monomers
-        mkdir -p monomers/a monomers/c monomers/e monomers/g monomers/h monomers/i monomers/l monomers/m monomers/p monomers/s monomers/t monomers/v monomers/u monomers/d monomers/h monomers/n monomers/h monomers/list &&\
+        mkdir -p monomers/a monomers/c monomers/e monomers/g monomers/h monomers/i monomers/l monomers/m monomers/p monomers/s monomers/t monomers/v monomers/u monomers/d monomers/k monomers/n monomers/z monomers/list &&\
         cd monomers &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ALA.cif -o a/ALA.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ASP.cif -o a/ASP.cif &&\
@@ -199,6 +216,11 @@ getmonomers() {
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/n/NA.cif -o n/NA.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ATP.cif -o a/ATP.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/a/ADP.cif -o a/ADP.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/k/K.cif -o k/K.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/c/CA.cif -o c/CA.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/m/MG.cif -o m/MG.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/n/NI.cif -o n/NI.cif &&\
+        curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/z/ZN.cif -o z/ZN.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/ener_lib.cif -o ener_lib.cif &&\
         curl -fL https://raw.githubusercontent.com/MonomerLibrary/monomers/refs/heads/master/list/mon_lib_list.cif -o list/mon_lib_list.cif || fail "Failed to download monomers"
     fi
@@ -286,7 +308,8 @@ getfreetype() {
     else
         cdcheckout
         echo "Downloading freetype-$freetype_release"
-        curl --retry 5 -fL https://download.savannah.gnu.org/releases/freetype/freetype-$freetype_release.tar.gz -o freetype-$freetype_release.tar.gz &&\
+        (curl --retry 35 -fL https://download.savannah.gnu.org/releases/freetype/freetype-$freetype_release.tar.gz -o freetype-$freetype_release.tar.gz ||\
+        (echo "Falling back to sourceforge mirror for freetype..." && curl --retry 35 -fL https://altushost-swe.dl.sourceforge.net/project/freetype/freetype2/${freetype_release}/freetype-${freetype_release}.tar.gz -o freetype-$freetype_release.tar.gz)) &&\
         echo &&\
         echo "Unpacking freetype-$freetype_release" &&\
         tar xf freetype-$freetype_release.tar.gz || fail "Failed to download and unpack freetype"
@@ -345,6 +368,13 @@ getgsl() {
 getcoot() {
     cdcheckout
     if [ -r coot-1.0 ]; then
+        if [ "x$(git -C coot-1.0 remote get-url origin)" != "xhttps://github.com/${coot_fork}/coot.git" ]; then
+            echo "Switching remote of existent coot-1.0 to a different repository ($(git -C coot-1.0 remote get-url origin | sed  's_https://github.com/__; s_/coot.git__') -> $coot_fork)"
+            git -C coot-1.0 remote set-url origin "https://github.com/${coot_fork}/coot.git" &&\
+            echo "Remote of coot-1.0 switched successfully" || fail "Failed to switch remote of coot-1.0"
+        else
+            echo "Existing coot-1.0 is pointing to the target repository (${coot_fork}). Proceeding to check commit..."
+        fi
         if [ "x$(git -C coot-1.0 rev-parse --short=10 main)" = "x$coot_commit" ];then
             echo "Using existing coot-1.0"
         else
@@ -355,7 +385,7 @@ getcoot() {
         fi
     else
         echo "Downloading coot-1.0..."
-        git clone --branch main https://github.com/pemsley/coot.git coot-1.0 &&\
+        git clone --branch main "https://github.com/${coot_fork}/coot.git" coot-1.0 &&\
         git -C coot-1.0 fetch origin &&\
         git -C coot-1.0 checkout $coot_commit || fail "Failed to clone and checkout coot-1.0"
     fi
@@ -416,6 +446,11 @@ getrdkit() {
         cd ${MOORHEN_SOURCE_DIR} &&\
         rm -f rdkit &&\
         ln -s checkout/rdkit-$rdkit_release rdkit &&\
+        cd ${MOORHEN_SOURCE_DIR}/checkout/rdkit-$rdkit_release &&\
+        echo &&\
+        echo "Patching RDKit for Emscripten 6.0.0" &&\
+        patch -p0 < ../../patches/rdkit-emsdk-600.patch &&\
+        echo &&\
         echo "Getting git version of rapidjson for RDKit" &&\
         cd ${MOORHEN_SOURCE_DIR}/checkout/rdkit-$rdkit_release/External &&\
         git clone https://github.com/Tencent/rapidjson.git rapidjson-1.1.0 || fail "Failed to download, unpack and set up RDKit"

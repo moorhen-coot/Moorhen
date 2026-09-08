@@ -1,4 +1,4 @@
-import { JSX, useRef } from "react";
+import { JSX, useRef, useState } from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
@@ -20,14 +20,16 @@ type MoorhenButtonPropsTypeBase = {
     value?: string | number;
     id?: string;
     tooltip?: string | JSX.Element | false;
+    disabledTooltip?: string | JSX.Element | false;
     tooltipPlacement?: "top" | "bottom" | "left" | "right";
     iconStyle?: React.CSSProperties;
+    ariaLabel?: string;
 };
 
 type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
     type: "icon-only";
     size?: "small" | "medium" | "large" | "accordion";
-    icon: MoorhenSVG;
+    icon?: MoorhenSVG;
     variant?: "default" | "danger";
 };
 
@@ -49,20 +51,20 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
     const {
         type = "default",
         label,
-        onClick,
         onMouseDown,
         onMouseUp,
         onMouseLeave,
         onMouseEnter,
         disabled = false,
+        disabledTooltip,
         icon,
         ref,
         className = "",
         style = {},
         children,
-        tooltip = null,
         iconStyle = null,
         tooltipPlacement,
+        ariaLabel = null,
     } = props;
 
     const internalButtonRef = useRef<HTMLButtonElement>(null);
@@ -91,7 +93,17 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
 
     const isChecked = type === "toggle" && "checked" in props ? props.checked : undefined;
     const iconSize = type === "toggle" ? "medium" : size;
-    const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `${variant}` : ""} ${className}`;
+    const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `${variant}` : ""} ${className} ${disabled ? " disabled" : ""}`;
+    const [animation, setAnimation] = useState<boolean>(false);
+    
+    const onClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        if (disabled) {
+            return;
+        }
+        props.onClick?.(event);
+        setAnimation(true);
+        setTimeout(() => setAnimation(false), 1000);
+    }
 
     const setButtonRef = (buttonElement: HTMLButtonElement | null) => {
         internalButtonRef.current = buttonElement;
@@ -116,10 +128,13 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             onMouseEnter={onMouseEnter}
             disabled={disabled}
             ref={setButtonRef}
-            style={{ ...props.style }}
+            style={{ ...style }}
             value={props.value}
+            aria-label={ariaLabel}
         >
+            {animation && <span className={`moorhen__button__animation`} />}
             <MoorhenStack direction="row" align="center" justify="center" gap="0.2rem">
+                
                 {icon && (
                     <MoorhenIcon
                         moorhenSVG={icon}
@@ -134,6 +149,11 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             </MoorhenStack>
         </button>
     );
+
+    let tooltip = props.tooltip;
+    if (disabled && disabledTooltip) {
+        tooltip = <>{tooltip}<br/>&nbsp;<MoorhenIcon moorhenSVG="MatSymWarning" style={{ color: "var(--moorhen-warning)", width: "18px", height: "18px", transform: "translateY(3px)" }}/>{" "}{disabledTooltip}</>;
+     }
 
     if (tooltip) {
         return <MoorhenTooltip tooltip={tooltip} placement={tooltipPlacement} link={button} linkRef={internalButtonRef} />;

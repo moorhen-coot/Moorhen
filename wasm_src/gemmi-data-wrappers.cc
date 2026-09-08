@@ -617,6 +617,12 @@ GlobWalk
     function("parse_multi_cids", &parse_multi_cids);
     function("get_non_selected_cids", &get_non_selected_cids);
     function("parse_mon_lib_list_cif", &parse_mon_lib_list_cif);
+    function("get_nef_info",&get_nef_info);
+    function("get_nef_restraints",&get_nef_restraints);
+
+    function("get_chem_shift_info",&get_chem_shift_info);
+
+    function("cidToNeighboursCid",&cidToNeighboursCid);
 
     value_array<std::array<double, 9>>("array_native_double_9")
         .element(emscripten::index<0>())
@@ -713,4 +719,5 @@ GlobWalk
     register_vector<gemmi::ChemComp::Atom>("VectorGemmiChemCompAtom"); // ChemComp.atoms
     register_vector<int8_t>("VectorInt8_t"); // GridBase<int8_t>.data
     register_vector<std::array<int, 3>>("VectorMiller"); // ReflnBlock::make_miller_vector()
+
 }

@@ -33,7 +33,7 @@ export const StepRefinement = () => {
 
     return (
         <MoorhenStack inputGrid>
-            {selectedMolecule!==null && <MoorhenMoleculeSelect selected={selectedMolecule} onSelect={setSelectedMolecule} />}
+            {selectedMolecule!==null && <MoorhenMoleculeSelect selectedMolecule={selectedMolecule} onSelect={setSelectedMolecule} />}
             {selectedMolecule===null && <MoorhenMoleculeSelect/>}
             <MoorhenChainSelect
                 molecules={molecules}

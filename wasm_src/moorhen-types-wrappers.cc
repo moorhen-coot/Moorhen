@@ -1,5 +1,23 @@
 #include "moorhen-wrappers-helpers.h"
 
+gemmi::Structure cloneGemmiStructureWithTrimmedAtomNames(const gemmi::Structure &st){
+
+    gemmi::Structure newStructure = st;
+
+    for(auto &model : newStructure.models) {
+        for (auto &chain : model.chains) {
+            for (auto &residue : chain.residues) {
+                for (auto &atom : residue.atoms) {
+                    atom.name = moorhen::rtrim(moorhen::ltrim(atom.name));
+                }
+            }
+        }
+    }
+
+    return newStructure;
+}
+
+
 EMSCRIPTEN_BINDINGS(moorhen_types) {
         // PRIVATEER
     value_object<TorsionEntry>("TorsionEntry")
@@ -34,6 +52,12 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     function("validate", &validate);
     register_vector<TableEntry>("Table");
     // END PRIVATEER
+
+    //Sean Wang's XPID
+    function("detect_xhpi_interactions_json", &xhpi::detect_xhpi_interactions_json);
+    function("detect_xhpi_interactions_json_with_monomer_library", &xhpi::detect_xhpi_interactions_json_with_monomer_library);
+
+    function("cloneGemmiStructureWithTrimmedAtomNames", &cloneGemmiStructureWithTrimmedAtomNames);
 
     function("unpackCootDataFile",&unpackCootDataFile);
     function("testFloat32Array", &testFloat32Array);
@@ -78,6 +102,7 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     .field("ligand_atom_index", &coot::atom_overlap_t::ligand_atom_index)
     ;
     register_vector<coot::atom_overlap_t>("vector_overlap");
+    register_vector<coot::simple_mesh_t>("vector_mesh");
     class_<clipper::Spgr_descr>("Spgr_descr")
     .function("spacegroup_number", &clipper::Spgr_descr::spacegroup_number)
     .function("symbol_hall", &clipper::Spgr_descr::symbol_hall)
@@ -865,8 +890,6 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     function("is64bit",&is64bit);
 
     function("run_conkit_validate",&run_conkit_validate_with_exception);
-
-    function("cidToNeighboursCid",&cidToNeighboursCid);
 
     // Fix unbound types for --emit-tsd
     class_<coot::atom_overlaps_dots_container_t>("coot_atom_overlaps_dots_container_t");

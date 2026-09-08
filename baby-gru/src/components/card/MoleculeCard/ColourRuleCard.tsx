@@ -1,4 +1,3 @@
-import { ArrowDownwardOutlined, ArrowUpwardOutlined, DeleteOutlined } from "@mui/icons-material";
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useRef, useState } from "react";
 import { MoorhenIcon } from "@/components/icons";
@@ -9,29 +8,28 @@ import { MoorhenButton, MoorhenColourPicker, MoorhenPopoverButton, MoorhenSelect
 import { MoorhenStack } from "../../interface-base";
 
 export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: () => void; style?: { [key: string]: string } }) => {
-    const ncsSwatchRef = useRef(null);
     const newNcsHexValueRef = useRef<string>("");
     const ncsCopySelectRef = useRef<null | HTMLSelectElement>(null);
 
     const [hex, setHex] = useState<string>("#ffffff");
     const [ncsCopyValue, setNcsCopyValue] = useState<string>("");
-    const [showColourPicker, setShowColourPicker] = useState<boolean>(false);
+
 
     const { rule, applyColourChange } = props;
 
     const applyNcsColourChange = () => {
         const chainNames: string[] = JSON.parse(ncsCopySelectRef.current.value);
-        const newRules = (rule.args[0] as string)
+        const newRules = rule.multiColourData
             .split("|")
             .map(item => {
-                const [chainName, hex] = item.split("^");
+                const [chainName] = item.split("^");
                 if (chainNames.includes(chainName)) {
                     return `${chainName}^${newNcsHexValueRef.current}`;
                 }
                 return item;
             })
             .join("|");
-        rule.args[0] = newRules;
+        rule.setMultiColourData(newRules);
         applyColourChange();
     };
 
@@ -59,16 +57,16 @@ export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: ()
                         onChange={evt => {
                             setNcsCopyValue(evt.target.value);
                             const chainNames = JSON.parse(evt.target.value);
-                            const hex = (rule.args[0] as string)
+                            const hex = rule.multiColourData
                                 .split("|")
                                 .find(item => item.includes(chainNames[0]))
                                 ?.split("^")[1];
                             setHex(hex);
                         }}
                     >
-                        {[...new Set((rule.args[0] as string).split("|").map(item => item.split("^")[1]))].map((hex, index) => {
+                        {[...new Set(rule.multiColourData.split("|").map(item => item.split("^")[1]))].map((hex, index) => {
                             const chainNames = JSON.stringify(
-                                (rule.args[0] as string)
+                                rule.multiColourData
                                     .split("|")
                                     .filter(item => item.includes(hex))
                                     .map(item => item.split("^")[0])
@@ -129,9 +127,8 @@ export const MoorhenColourRuleCard = (props: {
 
     const handleColourChangeDefault = (color: [number, number, number]) => {
         console.log(rule.color);
-        rule.color = rgbToHex(color[0], color[1], color[2]);
+        rule.setColor(rgbToHex(color[0], color[1], color[2]));
         console.log(rule.color);
-        if (!rule.isMultiColourRule) rule.args[1] = rule.color;
         isDirty.current = true;
         if (!busyRedrawing.current) {
             redrawIfDirty();
@@ -148,7 +145,7 @@ export const MoorhenColourRuleCard = (props: {
                 </label>
                 <div style={{ display: "flex", justifyContent: "right", alignItems: "center" }}>
                     {!rule.isMultiColourRule ? (
-                        <MoorhenColourPicker colour={colour} onApply={handleColourChangeDefault} style={{ marginRight: "0.2rem" }} />
+                        <MoorhenColourPicker colour={colour} setColour={handleColourChangeDefault} style={{ marginRight: "0.2rem" }} />
                     ) : rule.propertyType === "secondary-structure" ? (
                         <MoorhenIcon moorhenSVG="SecondaryStructure" size="medium" />
                     ) : rule.propertyType === "jones-rainbow" ? (
@@ -265,8 +262,8 @@ export const MoorhenColourRuleCard = (props: {
                             setRuleList({ action: reversedOrder ? "MoveDown" : "MoveUp", item: rule });
                         }}
                         tooltip="Move Up"
+                        icon="MatSymArrowUpward"
                     >
-                        <ArrowUpwardOutlined />
                     </MoorhenButton>
                     <MoorhenButton
                         size="sm"
@@ -275,8 +272,8 @@ export const MoorhenColourRuleCard = (props: {
                             setRuleList({ action: reversedOrder ? "MoveUp" : "MoveDown", item: rule });
                         }}
                         tooltip="Move Down"
+                        icon="MatSymArrowDownward"
                     >
-                        <ArrowDownwardOutlined />
                     </MoorhenButton>
                     <MoorhenButton
                         size="sm"
@@ -285,8 +282,8 @@ export const MoorhenColourRuleCard = (props: {
                             setRuleList({ action: "Remove", item: rule });
                         }}
                         tooltip="Delete rule"
+                        icon="MatSymDelete"
                     >
-                        <DeleteOutlined />
                     </MoorhenButton>
                 </div>
             </MoorhenStack>

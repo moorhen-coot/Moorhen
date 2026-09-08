@@ -190,7 +190,6 @@ import subprocess
 print("Running eslint to check for missing types in StoreExtension.ts...")
 result = subprocess.run(
     ["npx", "eslint", "src/InstanceManager/StoreExtension.ts", "--ext", ".ts"],
-    cwd="/home/clement/Moorhen/baby-gru",
     capture_output=True,
     text=True
 )

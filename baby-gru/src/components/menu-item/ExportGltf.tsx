@@ -28,7 +28,7 @@ export const ExportGltf = () => {
     };
 
     return (
-        <MoorhenMenuItem id="export-gltf-menu-item" onClick={handleExportGltf}>
+        <MoorhenMenuItem id="export-gltf-menu-item" onClick={() => { handleExportGltf(); }}>
             Export scene as gltf
         </MoorhenMenuItem>
     );

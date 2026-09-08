@@ -1,5 +1,3 @@
-import { CenterFocusWeakOutlined, CrisisAlertOutlined, DoneOutlined, MergeTypeOutlined } from "@mui/icons-material";
-import { Backdrop, IconButton, Tooltip } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hideModal } from "../../store/modalsSlice";
@@ -14,6 +12,8 @@ import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
+import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
+import { useMoorhenInstance } from "@/hooks";
 
 const LigandHitCard = (props: {
     selectedMolNo: number;
@@ -24,6 +24,8 @@ const LigandHitCard = (props: {
     setLigandResults: React.Dispatch<React.SetStateAction<moorhen.Molecule[]>>;
 }) => {
     const dispatch = useDispatch();
+
+    const moorhenInstance = useMoorhenInstance();
 
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine);
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
@@ -65,10 +67,17 @@ const LigandHitCard = (props: {
         if (selectedMolecule) {
             await selectedMolecule.mergeMolecules([props.ligandMolecule], true);
             await props.ligandMolecule.delete();
+            const hasCBs = selectedMolecule.representations.some(representation => (representation.style === "CBs" && (representation.cid === "/*/*/*/:*" || representation.cid === "/*/*/*/:*" )));
+            if (!hasCBs) {
+                const cid = selectedMolecule.ligands?.find(ligand => ligand.resName === props.ligandMolecule.ligands[0].resName)?.cid;
+                console.log("Ligand", props.ligandMolecule.ligands[0].resName, "has cid", cid);
+                console.log(`Creating CBs representation for ${selectedMolecule.name} with ruleType ligands and cid ${cid}`);
+                await moorhenInstance.representation.create(selectedMolecule.uniqueId, {representationStyle: "CBs", ruleType: "ligands", cid: cid });
+            }
             dispatch(triggerUpdate(selectedMolecule.molNo));
             props.setLigandResults(prevLigands => prevLigands.filter(ligand => ligand.molNo !== props.ligandMolecule.molNo));
         }
-    }, [molecules]);
+    }, [molecules, dispatch]);
 
     const handleAdd = useCallback(async () => {
         if (props.ligandMolecule) {
@@ -78,37 +87,35 @@ const LigandHitCard = (props: {
     }, []);
 
     return (
-        <MoorhenStack card direction="row" align="center">
+        <MoorhenStack card direction="row" align="center" gap={"0.5rem"}>
             <span>{props.ligandMolecule.name}</span>
-            <Tooltip title="View">
-                <IconButton
-                    style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }}
-                    onClick={() => props.setLigandCardMolNoFocus(props.ligandMolecule.molNo)}
-                >
-                    <CenterFocusWeakOutlined />
-                </IconButton>
-            </Tooltip>
-            <Tooltip title="Refine">
-                <IconButton
-                    style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }}
-                    onClick={() => handleRefinement(props.ligandMolecule)}
-                >
-                    <CrisisAlertOutlined />
-                </IconButton>
-            </Tooltip>
+
+            <MoorhenButton
+                onClick={() => props.setLigandCardMolNoFocus(props.ligandMolecule.molNo)}
+                type="icon-only"
+                tooltip="View"
+                icon="MatSymFilterFocus"
+            >
+            </MoorhenButton>
+
+            <MoorhenButton
+
+                onClick={() => handleRefinement(props.ligandMolecule)}
+                tooltip="Refine"
+                type="icon-only"
+                icon="MatSymCrisisAlert"
+            >
+            </MoorhenButton>
             {allowAddNewFittedLigand && (
-                <Tooltip title="Add to new molecule">
-                    <IconButton style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} onClick={handleAdd}>
-                        <DoneOutlined />
-                    </IconButton>
-                </Tooltip>
+
+                <MoorhenButton icon="MatSymCheck" onClick={handleAdd} tooltip="Add to new molecule" type="icon-only">
+                </MoorhenButton>
             )}
             {allowMergeFittedLigand && (
-                <Tooltip title="Merge to molecule">
-                    <IconButton style={{ marginRight: "0.5rem", color: isDark ? "white" : "grey" }} onClick={handleMerge}>
-                        <MergeTypeOutlined />
-                    </IconButton>
-                </Tooltip>
+
+                    <MoorhenButton tooltip="Merge to molecule" onClick={handleMerge} icon="MatSymMerge" type="icon-only">
+                    </MoorhenButton>
+
             )}
         </MoorhenStack>
     );
@@ -123,15 +130,17 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
     const intoMoleculeRef = useRef<HTMLSelectElement | null>(null);
     const ligandMoleculeRef = useRef<HTMLSelectElement | null>(null);
     const mapSelectRef = useRef<HTMLSelectElement | null>(null);
-    const useConformersRef = useRef<boolean>(false);
+    
     const fitAnywhereRef = useRef<boolean>(false);
-    const conformerCountRef = useRef<HTMLInputElement>(null);
+    
 
     const [ligandCardMolNoFocus, setLigandCardMolNoFocus] = useState<number>(null);
     const [useConformers, setUseConformers] = useState<boolean>(false);
+    const [conformerCount, setConformerCount] = useState<number>(10);
+
     const [fitAnywhere, setFitAnywhere] = useState<boolean>(false);
     const [busy, setBusy] = useState<boolean>(false);
-    const [ligandResults, setLigandResults] = useState<moorhen.Molecule[]>(null);
+    const [ligandResults, setLigandResults] = useState<moorhen.Molecule[] | null>(null);
 
     const dispatch = useDispatch();
 
@@ -145,7 +154,7 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
             console.warn("Missing input, cannot find ligand...");
             return;
         }
-        if (useConformersRef.current && !conformerCountRef.current) {
+        if (useConformers && !conformerCount) {
             console.warn("Unable to parse conformer count into a valid int...");
             return;
         }
@@ -160,9 +169,20 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
                 parseInt(ligandMoleculeRef.current.value),
                 !fitAnywhereRef.current,
                 false,
-                useConformersRef.current,
-                parseInt(conformerCountRef.current.value)
+                useConformers,
+                conformerCount
             );
+            for (const newMolecule of newMolecules) {
+                if (newMolecule.gemmiStructure === null) {
+                    console.warn(`Failed to fit ligand ${newMolecule.name} into map ${mapSelectRef.current.value}`);
+                    const atoms = await newMolecule.getNumberOfAtoms();
+                        if (atoms === 0) {
+                            console.warn(`Deleting empty ligand molecule ${newMolecule.name}`);
+                            newMolecules.splice(newMolecules.indexOf(newMolecule), 1);
+                            await newMolecule.delete();
+                        }
+                }
+            }
             setLigandResults(newMolecules);
         }
         setBusy(false);
@@ -176,9 +196,12 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
     }, [ligandResults]);
 
     const bodyContent = (
+                <OverlayModal isShown={busy} overlay={<span><MoorhenSpinner size={40} colour="white"/> Finding ligand...</span>} style={{ zIndex: 12000 }}>
+            
+        
         <MoorhenStack>
             <MoorhenStack inputGrid>
-                <MoorhenMapSelect width="" maps={maps} label="Map" ref={mapSelectRef} />
+                <MoorhenMapSelect maps={maps} label="Map" ref={mapSelectRef} />
                 <MoorhenMoleculeSelect
                     label="Molecule"
                     allowAny={false}
@@ -219,13 +242,10 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
                 style={{ margin: "0.5rem" }}
                 type="switch"
                 checked={useConformers}
-                onChange={() => {
-                    useConformersRef.current = !useConformers;
-                    setUseConformers(!useConformers);
-                }}
+                toggle={setUseConformers}
                 label="Flexible ligand"
             />
-            <MoorhenNumberInput ref={conformerCountRef} label="No. of conformers" value={10} disabled={!useConformers} width="10rem" />
+            <MoorhenNumberInput label="No. of conformers" value={conformerCount} setValue={setConformerCount} disabled={!useConformers} integer buttonSteps={10} showButtons/>
             <hr></hr>
             <MoorhenStack flex={1}>
                 {ligandResults?.length > 0 ? <span>Found {ligandResults.length} possible ligand location(s)</span> : null}
@@ -250,6 +270,7 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
                 )}
             </MoorhenStack>
         </MoorhenStack>
+        </OverlayModal>
     );
 
     const footerContent = (
@@ -269,12 +290,6 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
         </>
     );
 
-    const spinnerContent = (
-        <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy}>
-            <MoorhenSpinner />
-            <span>Finding ligand...</span>
-        </Backdrop>
-    );
 
     return (
         <MoorhenDraggableModalBase
@@ -282,13 +297,13 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
             left={width / 6}
             top={height / 6}
             initialWidth={400}
-            initialHeight={600}
-            additionalChildren={spinnerContent}
+            initialHeight={900}
             headerTitle="Find ligand"
             onClose={handleClose}
             footer={footerContent}
             body={bodyContent}
-            openDocked={props.openDocked}
+            allowDocking={true}
+            openDocked={"right"}
         />
     );
 };

@@ -493,6 +493,7 @@ export interface molecules_container_t extends ClassHandle {
 
 export interface molecules_container_js extends molecules_container_t {
   get_validation(_0: number): string;
+  get_B_validation(_0: number): string;
   writePDBASCII(_0: number, _1: EmbindString): number;
   writeCIFASCII(_0: number, _1: EmbindString): number;
   writeCCP4Map(_0: number, _1: EmbindString): number;

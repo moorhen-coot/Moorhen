@@ -1,0 +1,8 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "noEmit": true,
+        "types": ["node", "jest"]
+    },
+    "include": ["./**/*.ts", "./**/*.tsx", "./**/*.js", "./**/*.jsx", "__tests__/MoorhenContainer.test.jsx.old"]
+}

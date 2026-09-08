@@ -1,4 +1,3 @@
-import FlipCameraAndroidIcon from "@mui/icons-material/FlipCameraAndroid";
 import { memo, useState } from "react";
 import { MoorhenButton, MoorhenColourPicker, MoorhenSelect } from "..";
 import { MoorhenNumberInput } from "../";
@@ -141,8 +140,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
                         </option>
                     ))}
                 </MoorhenSelect>
-                <MoorhenButton key="reverse-gradient" size="sm" variant="outlined" onClick={handleRevert}>
-                    <FlipCameraAndroidIcon />
+                <MoorhenButton key="reverse-gradient" size="sm" variant="outlined" onClick={handleRevert} icon="MatSymFlipCamera">
                 </MoorhenButton>
             </MoorhenStack>
 

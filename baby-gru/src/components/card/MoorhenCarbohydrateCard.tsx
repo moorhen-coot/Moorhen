@@ -1,4 +1,3 @@
-import { DownloadOutlined } from "@mui/icons-material";
 import { useCallback } from "react";
 import { moorhen } from "../../types/moorhen";
 import { privateer } from "../../types/privateer";
@@ -9,9 +8,14 @@ export const MoorhenCarbohydrateCard = (props: { carbohydrate: privateer.Results
     const { carbohydrate, molecule } = props;
 
     const handleClick = useCallback(async e => {
-        if (e.target.dataset?.chainid && e.target.dataset?.seqnum && e.target.dataset?.resname && molecule !== null) {
-            const newCenterString = `${e.target.dataset.chainid}/${e.target.dataset.seqnum}(${e.target.dataset.resname})`;
-            await molecule.centreOn(newCenterString, true, true);
+        if(molecule&&carbohydrate&&carbohydrate.id.length>0&&carbohydrate.id.split("_").length===2){
+            const res_chain = carbohydrate.id.split("_")[0].split("/")
+            const res = res_chain[0].split("-")
+            const chain = res_chain[1]
+            if(res.length===2&&res[0].length>0&&res[1].length>0&&chain.length>0){
+                const newCenterString = (chain+"/"+res[1])
+                await molecule.centreOn(newCenterString, true, true);
+            }
         }
     }, []);
 
@@ -42,8 +46,8 @@ export const MoorhenCarbohydrateCard = (props: { carbohydrate: privateer.Results
                             link.download = carbohydrate.id.replace(/\//g, "_") + ".svg";
                             link.click();
                         }}
+                        icon="MatSymFileDownload"
                     >
-                        <DownloadOutlined />
                         Download image (svg)
                     </MoorhenButton>
                 </MoorhenStack>

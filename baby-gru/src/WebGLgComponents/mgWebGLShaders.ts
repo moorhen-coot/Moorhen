@@ -543,6 +543,7 @@ export function initTextInstancedShaders(vertexShader, fragmentShader, gl) {
     gl.bindAttribLocation(shaderProgramTextInstanced, 8, "size");
     gl.bindAttribLocation(shaderProgramTextInstanced, 9, "offset");
     gl.bindAttribLocation(shaderProgramTextInstanced, 10, "textureOffsets");
+    gl.bindAttribLocation(shaderProgramTextInstanced, 11, "screenOffset");
     gl.linkProgram(shaderProgramTextInstanced);
 
     if (!gl.getProgramParameter(shaderProgramTextInstanced, gl.LINK_STATUS)) {
@@ -566,6 +567,9 @@ export function initTextInstancedShaders(vertexShader, fragmentShader, gl) {
 
     shaderProgramTextInstanced.textureOffsetAttribute = gl.getAttribLocation(shaderProgramTextInstanced, "textureOffsets");
     gl.enableVertexAttribArray(shaderProgramTextInstanced.textureOffsetAttribute);
+
+    shaderProgramTextInstanced.screenOffsetAttribute = gl.getAttribLocation(shaderProgramTextInstanced, "screenOffset");
+    gl.enableVertexAttribArray(shaderProgramTextInstanced.screenOffsetAttribute);
 
     shaderProgramTextInstanced.pMatrixUniform = gl.getUniformLocation(shaderProgramTextInstanced, "uPMatrix");
     shaderProgramTextInstanced.mvMatrixUniform = gl.getUniformLocation(shaderProgramTextInstanced, "uMVMatrix");

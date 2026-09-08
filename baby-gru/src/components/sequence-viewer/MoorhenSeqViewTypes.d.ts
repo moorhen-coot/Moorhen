@@ -34,4 +34,5 @@ export type SeqElement = {
     key?: string;
     blockAlternateColour?: boolean;
     residues: Residue[];
+    validationTracks?: {categorie: string, name: string }[];
 };

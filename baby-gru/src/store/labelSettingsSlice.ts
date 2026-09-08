@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: {
     atomLabelDepthMode: boolean;
@@ -19,29 +19,29 @@ const labelSettingsSlice = createSlice({
         resetLabelSettings: () => {
             return initialState;
         },
-        addAvailableFont: (state, action: { payload: string; type: string }) => {
-            return { ...state, availableFonts: [...state.availableFonts, action.payload] };
+        addAvailableFont: (state, action: PayloadAction<string>) => {
+            state.availableFonts.push(action.payload);
         },
-        removeAvailableFont: (state, action: { payload: string; type: string }) => {
-            return { ...state, availableFonts: state.availableFonts.filter(item => item !== action.payload) };
+        removeAvailableFont: (state, action: PayloadAction<string>) => {
+            state.availableFonts = state.availableFonts.filter(item => item !== action.payload);
         },
         emptyAvailableFonts: state => {
-            return { ...state, availableFonts: [] };
+            state.availableFonts = [];
         },
-        addAvailableFontList: (state, action: { payload: string[]; type: string }) => {
-            return { ...state, availableFonts: [...state.availableFonts, ...action.payload] };
-        },
-        // API
-        setAtomLabelDepthMode: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, atomLabelDepthMode: action.payload };
+        addAvailableFontList: (state, action: PayloadAction<string[]>) => {
+            state.availableFonts.push(...action.payload);
         },
         // API
-        setGLLabelsFontFamily: (state, action: { payload: string; type: string }) => {
-            return { ...state, GLLabelsFontFamily: action.payload };
+        setAtomLabelDepthMode: (state, action: PayloadAction<boolean>) => {
+            state.atomLabelDepthMode = action.payload;
         },
         // API
-        setGLLabelsFontSize: (state, action: { payload: number; type: string }) => {
-            return { ...state, GLLabelsFontSize: action.payload };
+        setGLLabelsFontFamily: (state, action: PayloadAction<string>) => {
+            state.GLLabelsFontFamily = action.payload;
+        },
+        // API
+        setGLLabelsFontSize: (state, action: PayloadAction<number>) => {
+            state.GLLabelsFontSize = action.payload;
         },
     },
 });

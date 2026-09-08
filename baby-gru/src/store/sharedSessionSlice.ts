@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: {
     isInSharedSession: boolean;
@@ -17,14 +17,14 @@ const sharedSessionSlice = createSlice({
         resetSharedSession: () => {
             return initialState;
         },
-        setIsInSharedSession: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, isInSharedSession: action.payload };
+        setIsInSharedSession: (state, action: PayloadAction<boolean>) => {
+            state.isInSharedSession = action.payload;
         },
-        setSharedSessionToken: (state, action: { payload: string; type: string }) => {
-            return { ...state, sharedSessionToken: action.payload };
+        setSharedSessionToken: (state, action: PayloadAction<string>) => {
+            state.sharedSessionToken = action.payload;
         },
-        setShowSharedSessionManager: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, showSharedSessionManager: action.payload };
+        setShowSharedSessionManager: (state, action: PayloadAction<boolean>) => {
+            state.showSharedSessionManager = action.payload;
         },
     },
 });

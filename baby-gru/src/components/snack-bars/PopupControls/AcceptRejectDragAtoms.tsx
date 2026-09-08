@@ -62,11 +62,11 @@ export const AcceptRejectDragAtoms = () => {
     };
 
     const atomDraggedCallback = useCallback(
-        async (evt: moorhen.AtomDraggedEvent) => {
+        async (evt: Event) => {
             draggingDirty.current = true;
             if (!busy.current) {
                 moltenFragmentRef.current.clearBuffersOfStyle("hover");
-                await handleAtomDragged(evt);
+                await handleAtomDragged(evt as moorhen.AtomDraggedEvent);
             }
         },
         [moltenFragmentRef]
@@ -100,7 +100,7 @@ export const AcceptRejectDragAtoms = () => {
                     command: "add_target_position_restraint_and_refine",
                     commandArgs: [
                         moltenFragmentRef.current.molNo,
-                        `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`,
+                        `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf ? `:${chosenAtom.alt_conf}` : ""}`,
                         movedAtoms[0][0].x,
                         movedAtoms[0][0].y,
                         movedAtoms[0][0].z,

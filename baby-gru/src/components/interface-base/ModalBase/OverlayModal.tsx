@@ -1,5 +1,7 @@
+
+
 export const OverlayModal = (props: {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     isShown: boolean;
     overlay: React.ReactNode | React.JSX.Element | string;
     style?: React.CSSProperties;
@@ -26,6 +28,8 @@ export const OverlayModal = (props: {
                         fontWeight: "bold",
                         fontFamily: "var(--moorhen-font-family)",
                         textAlign: "center",
+                        borderRadius: "0.5rem",
+                        zIndex: 11000,
                         ...style,
                     }}
                 >

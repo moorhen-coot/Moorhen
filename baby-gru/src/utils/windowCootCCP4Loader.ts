@@ -95,3 +95,86 @@ export const windowCootCCP4Loader = (src: string) => {
         console.log("CCP4 module loaded on window.");
     }
 };
+
+export const windowGemmiLoader = (src: string) => {
+    // Prevent multiple executions using a custom property
+    if (window._gemmiModuleLoading) {
+        return;
+    }
+    window._gemmiModuleLoading = true;
+
+    if (window.gemmiModule) {
+        delete window._gemmiModuleLoading;
+        return;
+    }
+
+    const memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]));
+    const isChromeLinux = navigator.appVersion.indexOf("Linux") != -1 && navigator.appVersion.indexOf("Chrome") != -1;
+
+    const onModuleLoaded = (returnedModule: any) => {
+        window.gemmiModule = returnedModule as any;
+        const gemmiModuleAttachedEvent = new CustomEvent("gemmiModuleAttachedEvent", {});
+        document.dispatchEvent(gemmiModuleAttachedEvent);
+        delete (window as any)._gemmiModuleLoading;
+    };
+
+    const onModuleError = (e: any) => {
+        console.debug(e);
+        delete window._gemmiModuleLoading;
+    };
+
+    if (memory64 && !isChromeLinux) {
+        loadScript(`${src}/gemmi64.js`)
+            .then(src => {
+                console.debug(src + " loaded 64-bit successfully.");
+                /* eslint-disable no-undef */
+                createGemmi64Module({
+                    print(t) {
+                        console.debug(["output", t]);
+                    },
+                    printErr(t) {
+                        console.error(["output", t]);
+                    },
+                })
+                    .then(onModuleLoaded)
+                    .catch(onModuleError);
+            })
+            .catch(error => {
+                console.error(error.message);
+                console.debug("Trying 32-bit fallback");
+                loadScript(`${src}/gemmi.js`).then(src => {
+                    console.debug(src + " loaded 32-bit successfully (fallback).");
+                    /* eslint-disable no-undef */
+                    createGemmiModule({
+                        /* eslint-enable no-undef */
+                        print(t) {
+                            console.debug(["output", t]);
+                        },
+                        printErr(t) {
+                            console.debug(["output", t]);
+                        },
+                    })
+                        .then(onModuleLoaded)
+                        .catch(onModuleError);
+                });
+            });
+    } else {
+        loadScript(`${src}/gemmi.js`).then(src => {
+            console.debug(src + " loaded 32-bit successfully.");
+            /* eslint-disable no-undef */
+            createGemmiModule({
+                print(t) {
+                    console.debug(["output", t]);
+                },
+                printErr(t) {
+                    console.debug(["output", t]);
+                },
+            })
+                .then(onModuleLoaded)
+                .catch(onModuleError);
+        });
+    }
+    if (window.gemmiModule) {
+        console.log("Gemmi module loaded on window.");
+    }
+};

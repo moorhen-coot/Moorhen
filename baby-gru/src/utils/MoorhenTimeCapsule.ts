@@ -14,43 +14,22 @@ import {
     setQuat,
     setSpecular,
     setSpecularPower,
-    setZoom,
-} from "../store/glRefSlice";
-import {
-    setContourLevel,
+    setZoom, setContourLevel,
     setMapAlpha,
     setMapColours,
     setMapRadius,
     setMapStyle,
     setNegativeMapColours,
-    setPositiveMapColours,
-} from "../store/mapContourSettingsSlice";
-import { addMap, emptyMaps } from "../store/mapsSlice";
-import {
-    enableUpdatingMaps,
+    setPositiveMapColours, addMap, emptyMaps, enableUpdatingMaps,
     setConnectedMoleculeMolNo,
     setFoFcMapMolNo,
     setReflectionMapMolNo,
-    setTwoFoFcMapMolNo,
-} from "../store/moleculeMapUpdateSlice";
-import { addCustomRepresentation, addMolecule, emptyMolecules } from "../store/moleculesSlice";
-import {
-    addFracPathOverlay,
+    setTwoFoFcMapMolNo, addCustomRepresentation, addMolecule, emptyMolecules, addFracPathOverlay,
     addImageOverlay,
     addLatexOverlay,
     addSvgPathOverlay,
     addTextOverlay,
-    emptyOverlays,
-} from "../store/overlaysSlice";
-import type {
-    Overlay2DFracPath,
-    Overlay2DImageSrcFrac,
-    Overlay2DLatexSrcFrac,
-    Overlay2DSvgPath,
-    Overlay2DTextFrac,
-} from "../store/overlaysSlice";
-import {
-    setBackgroundColor,
+    emptyOverlays, setBackgroundColor,
     setDepthBlurDepth,
     setDepthBlurRadius,
     setDoEdgeDetect,
@@ -64,15 +43,25 @@ import {
     setSsaoBias,
     setSsaoRadius,
     setUseOffScreenBuffers,
-} from "../store/sceneSettingsSlice";
+    MoorhenReduxStoreType,
+} from "../store";
+
+import type {
+    Overlay2DFracPath,
+    Overlay2DImageSrcFrac,
+    Overlay2DLatexSrcFrac,
+    Overlay2DSvgPath,
+    Overlay2DTextFrac,
+} from "../store/overlaysSlice";
 import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
-import { webGL } from "../types/mgWebGL";
 import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
-import { m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
+import { m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
 import { guid } from "./utils";
+import { MoorhenInstance } from "@/InstanceManager";
+import { Root } from "protobufjs";
 
 export interface backupKey {
     name?: string;
@@ -206,7 +195,6 @@ export type Overlay2DSessionData = {
 export class MoorhenTimeCapsule {
     moleculesRef: React.RefObject<moorhen.Molecule[]>;
     mapsRef: React.RefObject<moorhen.Map[]>;
-    glRef: React.RefObject<webGL.MGWebGL>;
     activeMapRef: React.RefObject<moorhen.Map | null>;
     busy: boolean;
     modificationCount: number;
@@ -215,55 +203,14 @@ export class MoorhenTimeCapsule {
     version: string;
     disableBackups: boolean;
     storageInstance: LocalForage;
-    store: Store;
+    store: MoorhenReduxStoreType;
     onIsBusyChange: (arg0: boolean) => void;
-    getBackupLabel: (key: backupKey) => string;
-    loadSessionData: (
-        sessionData: backupSession,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
-    loadSessionFromArrayBuffer: (
-        sessionArrayBuffer: ArrayBuffer,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
-    loadSessionFromProtoMessage: (
-        sessionProtoMessage: any,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
-    loadSessionFromJsonString: (
-        sessionDataString: string,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
-    ) => Promise<number>;
 
     constructor(
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
         mapsRef: React.RefObject<moorhen.Map[]>,
         activeMapRef: React.RefObject<moorhen.Map>,
-        store: Store
+        store: MoorhenReduxStoreType
     ) {
         this.store = store;
         this.moleculesRef = moleculesRef;
@@ -527,20 +474,20 @@ export class MoorhenTimeCapsule {
             };
         });
 
-        const lightPosition = this.store.getState().glRef.lightPosition;
-        const ambient = this.store.getState().glRef.ambient;
-        const specular = this.store.getState().glRef.specular;
-        const diffuse = this.store.getState().glRef.diffuse;
-        const specularPower = this.store.getState().glRef.specularPower;
-        const zoom = this.store.getState().glRef.zoom;
+        const lightPosition = this.store.getState().sceneSettings.lightPosition;
+        const ambient = this.store.getState().sceneSettings.ambient;
+        const specular = this.store.getState().sceneSettings.specular;
+        const diffuse = this.store.getState().sceneSettings.diffuse;
+        const specularPower = this.store.getState().sceneSettings.specularPower;
+        const zoom = this.store.getState().sceneSettings.zoom;
         const quat = this.store.getState().glRef.quat;
-        const fogClipOffset = this.store.getState().glRef.fogClipOffset;
-        const fogStart = this.store.getState().glRef.fogStart;
-        const fogEnd = this.store.getState().glRef.fogEnd;
+        const fogClipOffset = this.store.getState().sceneSettings.fogClipOffset;
+        const fogStart = this.store.getState().sceneSettings.fogStart;
+        const fogEnd = this.store.getState().sceneSettings.fogEnd;
         //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
         //Now we multiply by -1 at save and restore for compatibility with old status files.
-        const clipStart = this.store.getState().glRef.clipStart * -1;
-        const clipEnd = this.store.getState().glRef.clipEnd;
+        const clipStart = this.store.getState().sceneSettings.clipStart * -1;
+        const clipEnd = this.store.getState().sceneSettings.clipEnd;
 
         const doShadow = this.store.getState().sceneSettings.doShadow;
         const doSSAO = this.store.getState().sceneSettings.doSSAO;
@@ -558,7 +505,7 @@ export class MoorhenTimeCapsule {
         const backgroundColor = this.store.getState().sceneSettings.backgroundColor;
 
         const viewData: viewDataSession = {
-            origin: this.store.getState().glRef.origin,
+            origin: this.store.getState().sceneSettings.origin,
             backgroundColor: backgroundColor,
             ambientLight: ambient,
             diffuseLight: diffuse,
@@ -819,15 +766,19 @@ export class MoorhenTimeCapsule {
      */
     static async loadSessionData(
         sessionData: backupSession,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre | null>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule | null>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>,
-        fetchExternalUrl?: (uniqueId: string) => Promise<string>
+        moorhenInstance: MoorhenInstance,
+        fetchExternalUrl?: (uniqueId: string) => Promise<string>,
+
     ): Promise<number> {
+
+        const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
+        const molecules = moorhenInstance.getMoleculeList();
+        const maps = moorhenInstance.getMapList();
+        const commandCentre = moorhenInstance.getCommandCentreRef();
+        const store = moorhenInstance.store;
+        const dispatch = moorhenInstance.dispatch;
+        const monomerLibraryPath = moorhenInstance.paths.monomerLibraryPath;
+
         if (!sessionData) {
             return -1;
         } else if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
@@ -839,6 +790,7 @@ export class MoorhenTimeCapsule {
                 return -1;
             }
         }
+        timeCapsuleRef.current.setBusy(true);
 
         // Delete current scene
         molecules.forEach(molecule => {
@@ -857,8 +809,9 @@ export class MoorhenTimeCapsule {
         // Load molecules stored in session from coords string
         const newMoleculePromises =
             sessionData.moleculeData?.map(async storedMoleculeData => {
-                const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+                const newMolecule = new MoorhenMolecule(moorhenInstance);
                 if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
+                    newMolecule.uniqueId = storedMoleculeData.uniqueId;
                     return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name);
                 } else {
                     if (fetchExternalUrl) {
@@ -873,21 +826,19 @@ export class MoorhenTimeCapsule {
         // Load maps stored in session
         const newMapPromises =
             sessionData.mapData?.map(async storedMapData => {
-                const newMap = new MoorhenMap(commandCentre, store);
                 if (sessionData.includesAdditionalMapData) {
                     if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
-                        return newMap.loadToCootFromMapData(storedMapData.mapData, storedMapData.name, storedMapData.isDifference);
+                        return MoorhenMap.loadToCootFromMapData(storedMapData.mapData, storedMapData.name, storedMapData.isDifference, moorhenInstance);
                     } else {
                         if (fetchExternalUrl) {
-                            newMap.uniqueId = storedMapData.uniqueId;
+
                             const doppioUrl = await fetchExternalUrl(storedMapData.uniqueId);
-                            return newMap.loadToCootFromMapURL(doppioUrl, storedMapData.name, storedMapData.isDifference);
+                            const newMap = MoorhenMap.loadToCootFromMapURL(doppioUrl, storedMapData.name, moorhenInstance, storedMapData.isDifference, false, undefined, storedMapData.uniqueId);
+                            return newMap
                         }
                         console.warn("No function provided for fetchExternalUrl");
                     }
                 } else {
-                    newMap.uniqueId = storedMapData.uniqueId;
-
                     if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
                         return timeCapsuleRef.current
                             .retrieveBackup(
@@ -897,16 +848,18 @@ export class MoorhenTimeCapsule {
                                 })
                             )
                             .then(mapData => {
-                                return newMap.loadToCootFromMapData(
+                                return MoorhenMap.loadToCootFromMapData(
                                     mapData as ArrayBuffer | Uint8Array,
                                     storedMapData.name,
-                                    storedMapData.isDifference
+                                    storedMapData.isDifference,
+                                    moorhenInstance,
+                                    storedMapData.uniqueId
                                 );
                             });
                     } else {
                         if (fetchExternalUrl) {
                             const doppioUrl = await fetchExternalUrl(storedMapData.uniqueId);
-                            return newMap.loadToCootFromMapURL(doppioUrl, storedMapData.name, storedMapData.isDifference);
+                            return MoorhenMap.loadToCootFromMapURL(doppioUrl, storedMapData.name, moorhenInstance, storedMapData.isDifference, false, undefined, storedMapData.uniqueId);
                         }
                         console.warn("No function provided for fetchExternalUrl");
                     }
@@ -927,7 +880,7 @@ export class MoorhenTimeCapsule {
                 );
             }
             molecule.defaultColourRules = storedMoleculeData.defaultColourRules.map(item => {
-                const colourRule = ColourRule.initFromDataObject(item, commandCentre, molecule);
+                const colourRule = ColourRule.initFromDataObject(item, moorhenInstance.commandCentre, molecule);
                 return colourRule;
             });
             if (storedMoleculeData.defaultBondOptions) {
@@ -944,7 +897,7 @@ export class MoorhenTimeCapsule {
                     const colourRules = !item.colourRules
                         ? null
                         : item.colourRules.map(item => {
-                              const colourRule = ColourRule.initFromDataObject(item, commandCentre, molecule);
+                              const colourRule = ColourRule.initFromDataObject(item, moorhenInstance.commandCentre, molecule);
                               return colourRule;
                           });
                     const representation = await molecule.addRepresentation(
@@ -961,7 +914,7 @@ export class MoorhenTimeCapsule {
                         item.excludeNeighbours,
                         item.hbondedToCid,
                         item.hbondedTo,
-                        item.neighboursDistance,
+                        item.neighboursDistance
                     );
                     if (item.isCustom) {
                         dispatch(addCustomRepresentation(representation));
@@ -1100,37 +1053,46 @@ export class MoorhenTimeCapsule {
         }
 
         // Set camera details
-        dispatch(setOrigin(sessionData.viewData.origin));
-        dispatch(setAmbient(sessionData.viewData.ambientLight));
-        dispatch(setSpecular(sessionData.viewData.specularLight));
-        dispatch(setDiffuse(sessionData.viewData.diffuseLight));
-        dispatch(setLightPosition(sessionData.viewData.lightPosition));
-        dispatch(setSpecularPower(sessionData.viewData.specularPower));
-        dispatch(setZoom(sessionData.viewData.zoom));
-        dispatch(setFogStart(sessionData.viewData.fogStart));
-        dispatch(setFogEnd(sessionData.viewData.fogEnd));
+        const guardedDispatch = (action: (data) => AnyAction, data: unknown) => {
+            if (dispatch && action) {
+                if (typeof data === "undefined") {
+                    console.warn(`Data is undefined for action ${action}`);
+                    return;
+                }
+                dispatch(action(data));
+            }
+        }
+
+        guardedDispatch(setOrigin, sessionData.viewData.origin);
+        guardedDispatch(setAmbient, sessionData.viewData.ambientLight);
+        guardedDispatch(setSpecular, sessionData.viewData.specularLight);
+        guardedDispatch(setDiffuse, sessionData.viewData.diffuseLight);
+        guardedDispatch(setLightPosition, sessionData.viewData.lightPosition);
+        guardedDispatch(setSpecularPower, sessionData.viewData.specularPower);
+        guardedDispatch(setZoom, sessionData.viewData.zoom);
+        guardedDispatch(setFogStart, sessionData.viewData.fogStart);
+        guardedDispatch(setFogEnd, sessionData.viewData.fogEnd);
         //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
         //Now we multiply by -1 at save and restore for compatibility with old status files.
-        dispatch(setClipStart(sessionData.viewData.clipStart * -1));
-        dispatch(setClipEnd(sessionData.viewData.clipEnd));
-        dispatch(setQuat(sessionData.viewData.quat4));
-        batch(() => {
-            dispatch(setBackgroundColor(sessionData.viewData.backgroundColor));
-            dispatch(setEdgeDetectDepthScale(sessionData.viewData.edgeDetection.depthScale));
-            dispatch(setEdgeDetectDepthThreshold(sessionData.viewData.edgeDetection.depthThreshold));
-            dispatch(setEdgeDetectNormalScale(sessionData.viewData.edgeDetection.normalScale));
-            dispatch(setEdgeDetectNormalThreshold(sessionData.viewData.edgeDetection.normalThreshold));
-            dispatch(setDoEdgeDetect(sessionData.viewData.edgeDetection.enabled));
-            dispatch(setDoShadow(sessionData.viewData.shadows));
-            dispatch(setDoSSAO(sessionData.viewData.ssao.enabled));
-            dispatch(setSsaoBias(sessionData.viewData.ssao.bias));
-            dispatch(setSsaoRadius(sessionData.viewData.ssao.radius));
-            dispatch(setUseOffScreenBuffers(sessionData.viewData.blur.enabled));
-            dispatch(setDepthBlurDepth(sessionData.viewData.blur.depth));
-            dispatch(setDepthBlurRadius(sessionData.viewData.blur.radius));
-            dispatch(setUseOffScreenBuffers(sessionData.viewData.blur.enabled));
-            dispatch(setDoPerspectiveProjection(sessionData.viewData.doPerspectiveProjection ?? false));
-        });
+        guardedDispatch(setClipStart, sessionData.viewData.clipStart * -1);
+        guardedDispatch(setClipEnd, sessionData.viewData.clipEnd);
+        guardedDispatch(setQuat, sessionData.viewData.quat4);
+        guardedDispatch(setBackgroundColor, sessionData.viewData.backgroundColor);
+        guardedDispatch(setEdgeDetectDepthScale, sessionData.viewData.edgeDetection.depthScale);
+        guardedDispatch(setEdgeDetectDepthThreshold, sessionData.viewData.edgeDetection.depthThreshold);
+        guardedDispatch(setEdgeDetectNormalScale, sessionData.viewData.edgeDetection.normalScale);
+        guardedDispatch(setEdgeDetectNormalThreshold, sessionData.viewData.edgeDetection.normalThreshold);
+        guardedDispatch(setDoEdgeDetect, sessionData.viewData.edgeDetection.enabled);
+        guardedDispatch(setDoShadow, sessionData.viewData.shadows);
+        guardedDispatch(setDoSSAO, sessionData.viewData.ssao.enabled);
+        guardedDispatch(setSsaoBias, sessionData.viewData.ssao.bias);
+        guardedDispatch(setSsaoRadius, sessionData.viewData.ssao.radius);
+        guardedDispatch(setUseOffScreenBuffers, sessionData.viewData.blur.enabled);
+        guardedDispatch(setDepthBlurDepth, sessionData.viewData.blur.depth);
+        guardedDispatch(setDepthBlurRadius, sessionData.viewData.blur.radius);
+        guardedDispatch(setUseOffScreenBuffers, sessionData.viewData.blur.enabled);
+        guardedDispatch(setDoPerspectiveProjection, sessionData.viewData.doPerspectiveProjection ?? false);
+
 
         // Set connected maps and molecules if any
         const connectedMoleculeIndex = sessionData.moleculeData?.findIndex(molecule => molecule.connectedToMaps?.length > 0);
@@ -1170,6 +1132,7 @@ export class MoorhenTimeCapsule {
             });
         }
 
+        timeCapsuleRef.current.setBusy(false);
         return 0;
     }
 
@@ -1188,27 +1151,15 @@ export class MoorhenTimeCapsule {
      */
     static async loadSessionFromArrayBuffer(
         sessionArrayBuffer: ArrayBuffer,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        glRef: React.RefObject<webGL.MGWebGL>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
+        moorhenInstance: MoorhenInstance
     ): Promise<number> {
+        const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
         const bytes = new Uint8Array(sessionArrayBuffer);
         const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
         const status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
             sessionMessage,
-            monomerLibraryPath,
-            molecules,
-            maps,
-            commandCentre,
-            timeCapsuleRef,
-            store,
-            dispatch
+            moorhenInstance
         );
         timeCapsuleRef.current.setBusy(false);
         return status;
@@ -1229,25 +1180,15 @@ export class MoorhenTimeCapsule {
      */
     static async loadSessionFromProtoMessage(
         sessionProtoMessage: any,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
+        moorhenInstance: MoorhenInstance
     ): Promise<number> {
+        const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
         const sessionData = moorhensession.Session.toObject(sessionProtoMessage) as backupSession;
         const status = await MoorhenTimeCapsule.loadSessionData(
             sessionData,
-            monomerLibraryPath,
-            molecules,
-            maps,
-            commandCentre,
-            timeCapsuleRef,
-            store,
-            dispatch
+            moorhenInstance
+
         );
         timeCapsuleRef.current.setBusy(false);
         return status;
@@ -1268,25 +1209,14 @@ export class MoorhenTimeCapsule {
      */
     static async loadSessionFromJsonString(
         sessionDataString: string,
-        monomerLibraryPath: string,
-        molecules: moorhen.Molecule[],
-        maps: moorhen.Map[],
-        commandCentre: React.RefObject<moorhen.CommandCentre>,
-        timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>,
-        store: Store,
-        dispatch: Dispatch<AnyAction>
+        moorhenInstance: MoorhenInstance
     ): Promise<number> {
+        const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
         const sessionData: backupSession = JSON.parse(sessionDataString);
         const status = await MoorhenTimeCapsule.loadSessionData(
             sessionData,
-            monomerLibraryPath,
-            molecules,
-            maps,
-            commandCentre,
-            timeCapsuleRef,
-            store,
-            dispatch
+            moorhenInstance
         );
         timeCapsuleRef.current.setBusy(false);
         return status;

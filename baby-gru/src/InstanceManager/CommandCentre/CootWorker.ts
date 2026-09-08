@@ -44,6 +44,82 @@ const parseMonLibListCif = (fileContents: string): libcootApi.compoundInfo[] => 
     return result
 }
 
+const ensureCootModuleDirectory = (dirPath: string) => {
+    const parts = dirPath.split("/").filter(part => part.length > 0)
+    let currentPath = ""
+    parts.forEach(part => {
+        currentPath = currentPath ? `${currentPath}/${part}` : part
+        try {
+            cootModule.FS.mkdir(currentPath)
+        } catch (_err) {
+            // Existing MEMFS directories throw; that is fine here.
+        }
+    })
+}
+
+const cacheXhpiMonomerDictionary = (compId: string, dictionary: string) => {
+    const upperCompId = compId.trim().toUpperCase()
+    if (!upperCompId || !dictionary) return
+
+    const targetDir = `data/ccp4_lib/data/monomers/${upperCompId[0].toLowerCase()}`
+    const targetFileName = `${upperCompId}.cif`
+    const targetPath = `${targetDir}/${targetFileName}`
+    ensureCootModuleDirectory(targetDir)
+
+    try {
+        cootModule.FS_unlink(targetPath)
+    } catch (_err) {
+        // The dictionary may not have been cached for XPID before.
+    }
+    cootModule.FS_createDataFile(targetDir, targetFileName, new TextEncoder().encode(dictionary), true, true)
+}
+
+const XHPI_MONOMER_LIBRARY_PATH = "data/ccp4_lib/data/monomers"
+const XHPI_MONOMER_LIBRARY_PROBE = `${XHPI_MONOMER_LIBRARY_PATH}/p/PHE.cif`
+
+const xhpiPathExists = (path: string) => {
+    try {
+        (cootModule.FS as any).stat(path)
+        return true
+    } catch (_err) {
+        return false
+    }
+}
+
+const detectXhpiInteractions = (imol: number, ligandDicts: Record<string, string> = {}, coordStringOverride?: string | null) => {
+    Object.entries(ligandDicts ?? {}).forEach(([compId, dictionary]) => {
+        cacheXhpiMonomerDictionary(compId, dictionary)
+    })
+
+    if (!xhpiPathExists(XHPI_MONOMER_LIBRARY_PROBE)) {
+        console.warn(`XPID could not find ${XHPI_MONOMER_LIBRARY_PROBE} in the CootWorker MEMFS.`)
+    }
+
+    const coordString = coordStringOverride || (molecules_container["molecule_to_mmCIF_string_with_gemmi"]
+        ? molecules_container["molecule_to_mmCIF_string_with_gemmi"](imol)
+        : molecules_container.molecule_to_mmCIF_string(imol))
+    const structure = cootModule.read_structure_from_string(coordString, `xpid-${imol}`)
+    let trimmedStructure: gemmi.Structure | null = null
+    try {
+        trimmedStructure = cootModule.cloneGemmiStructureWithTrimmedAtomNames(structure)
+        return cootModule.detect_xhpi_interactions_json_with_monomer_library(
+            trimmedStructure,
+            XHPI_MONOMER_LIBRARY_PATH
+        )
+    } finally {
+        try {
+            trimmedStructure?.delete()
+        } catch (_err) {
+            // pass
+        }
+        try {
+            structure.delete()
+        } catch (_err) {
+            // pass
+        }
+    }
+}
+
 const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: boolean, toSpheres: boolean = false, maxZSize: number = 10000.0): libcootApi.InstancedMeshJS => {
     //maxZSize is arguably a hack to deal with overlong bonds. It is set to 5 incall to this function.
 
@@ -122,9 +198,9 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
                 thisInstance_colours.push(instDataColour[3])
 
                 const instDataSize = inst_data.size
-                thisInstance_sizes.push(instDataSize[0])
-                thisInstance_sizes.push(instDataSize[1])
-                thisInstance_sizes.push(instDataSize[2])
+                thisInstance_sizes.push(Math.abs(instDataSize[0]))
+                thisInstance_sizes.push(Math.abs(instDataSize[1]))
+                thisInstance_sizes.push(Math.abs(instDataSize[2]))
 
                 thisInstance_orientations.push(...[
                     1.0, 0.0, 0.0, 0.0,
@@ -325,6 +401,21 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
         norm_tri: [[totNorm]],
         col_tri: [[totCol]]
     };
+}
+
+const simpleMeshVectorToMeshData = (simpleMeshVec, perm: boolean = false, keepNorm: boolean = false): libcootApi.SimpleMeshJS[] => {
+
+   const meshLength = simpleMeshVec.size();
+   const meshJSArray = [];
+   console.log('------------- meshLength', meshLength);
+   for (let i=0; i<meshLength; i++) {
+      const m = simpleMeshVec.get(i);
+      const m_js = simpleMeshToMeshData(m);
+      console.log('------------- pushing ', i);
+      meshJSArray.push(m_js);
+   }
+   simpleMeshVec.delete();
+   return meshJSArray;
 }
 
 const SuperposeResultsToJSArray = (superposeResults: libcootApi.SuperposeResultsT): libcootApi.SuperposeResultsJS => {
@@ -706,6 +797,15 @@ const stringPairVectorToJSArray = (stringPairsVector: emscriptem.vector<libcootA
     return result
 }
 
+const validationDataJSONToJSArray = (validationData: any, chainID: string | null = null): libcootApi.ValidationInformationJS[] => {
+    let returnResult: { chainId: string; insCode: string; seqNum: number; restype: string; value: number; }[] = []
+    if(validationData){
+        if (chainID !== null && chainID in validationData) {
+            return validationData[chainID]
+        }
+    }
+    return returnResult
+}
 const validationDataToJSArray = (validationData: libcootApi.ValidationInformationT, chainID: string | null = null): libcootApi.ValidationInformationJS[] => {
     let returnResult: { chainId: string; insCode: string; seqNum: number; restype: string; value: number; }[] = []
     const cviv = validationData.cviv
@@ -1287,6 +1387,9 @@ const doCootCommand = (messageData: {
             case "parse_mon_lib_list_cif":
                 cootResult = parseMonLibListCif(...commandArgs as [string])
                 break
+            case "shim_detect_xhpi_interactions":
+                cootResult = detectXhpiInteractions(...commandArgs as [number, Record<string, string>?, string?])
+                break
             case "SmallMoleculeCifToMMCif":
                 cootResult = cootModule.SmallMoleculeCifToMMCif(...commandArgs as [string])
                 break
@@ -1358,6 +1461,10 @@ const doCootCommand = (messageData: {
             case 'mesh_perm':
                 returnResult = simpleMeshToMeshData(cootResult, true)
                 break;
+            case 'mesh_array':
+                returnResult = simpleMeshVectorToMeshData(cootResult)
+                console.log('array_mesh', returnResult);
+                break;
             case 'mesh':
                 returnResult = simpleMeshToMeshData(cootResult)
                 break;
@@ -1393,6 +1500,9 @@ const doCootCommand = (messageData: {
                 break;
             case 'acedrg_types_for_bond_data':
                 returnResult = acedrgTypesForBondDataToJSArray(cootResult.bond_types)
+                break;
+            case 'validation_data_json':
+                returnResult = validationDataJSONToJSArray(JSON.parse(cootResult), messageData.chainID)
                 break;
             case 'validation_data':
                 returnResult = validationDataToJSArray(cootResult, messageData.chainID)
@@ -1462,8 +1572,7 @@ onmessage = function (e) {
         let mod
         let scriptName
         let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
-        const isChromeLinux = (navigator.appVersion.indexOf("Linux") != -1) && (navigator.appVersion.indexOf("Chrome") != -1)
-        if (memory64&&!isChromeLinux) {
+        if (memory64) {
             try {
                 // @ts-ignore
                 importScripts('./moorhen64.js')
@@ -1516,7 +1625,6 @@ onmessage = function (e) {
                     unzipName = "data_tmp/data.tar"
                 }
 
-                //FIXME - Need to consider the case of doUnzip is true.
                 cootModule.FS.mkdir("data_tmp")
                 cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
                 const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
@@ -1526,15 +1634,49 @@ onmessage = function (e) {
                 molecules_container.set_use_gemmi(false)
                 molecules_container.set_show_timings(false)
                 molecules_container.set_refinement_is_verbose(false)
-                molecules_container.fill_rotamer_probability_tables()
                 molecules_container.set_map_sampling_rate(1.7)
                 molecules_container.set_map_is_contoured_with_thread_pool(true)
-                molecules_container.set_max_number_of_threads(3)
+                molecules_container.set_max_number_of_threads(8)
                 cootModule.FS.mkdir("COOT_BACKUP")
             })
             .catch((e) => {
                 console.log(e)
             })
+    }
+
+    else if (e.data.message === 'loadRotamerTables') {
+        molecules_container.fill_rotamer_probability_tables()
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            consoleMessage: `Loaded rotamer probability tables`,
+            message: e.data.message,
+            result: { }
+        })
+    }
+    else if (e.data.message === 'loadExtraData') {
+        const fileData = e.data.data.cootData
+
+        let doUnzip = false
+        let unzipName = ""
+
+        let tarFileName = guid()+"data.tar"
+        if(fileData[0]==0x1F && fileData[1]==0x8B){
+            doUnzip = true
+            unzipName = "data_tmp/"+tarFileName
+            tarFileName += ".gz"
+        }
+
+        cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
+        const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
+        cootModule.FS_unlink("data_tmp/"+tarFileName)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            consoleMessage: `Extracted data file`,
+            message: e.data.message,
+            result: { }
+        })
     }
 
     else if (e.data.message === 'close') {
@@ -1590,6 +1732,16 @@ onmessage = function (e) {
         postMessage({
             messageId: e.data.messageId, resultList
         })
+    } else if (e.data.message === 'get_nef_restraints') {
+        const noeString = e.data.commandArgs[0]
+        const retCode = cootModule.get_nef_restraints(noeString)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: retCode,
+        })
+
     } else if (e.data.message === 'run_conkit_validate') {
 
         const fileDataPdb = e.data.commandArgs[0]

@@ -143,6 +143,7 @@ export namespace webGL {
         offsetAttribute: GLint;
         sizeAttribute: GLint;
         textureOffsetAttribute: GLint;
+        screenOffsetAttribute: GLint;
         pixelZoom: WebGLUniformLocation;
         vertexTextureAttribute: GLint;
         textureMatrixUniform: WebGLUniformLocation;

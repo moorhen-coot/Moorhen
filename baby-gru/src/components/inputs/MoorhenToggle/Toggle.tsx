@@ -1,8 +1,9 @@
-import { JSX } from "react";
+import { JSX, SetStateAction, Dispatch } from "react";
 import "./moorhen-toggle.css";
 
 type MoorhenToggleProps = {
     checked?: boolean;
+    toggle?:  Dispatch<SetStateAction<boolean>>
     onChange?: ((e: React.ChangeEvent<HTMLInputElement>) => void) | (() => void);
     label: string | JSX.Element;
     className?: string;
@@ -17,21 +18,29 @@ type MoorhenToggleProps = {
 
 export const MoorhenToggle = (props: MoorhenToggleProps) => {
     const type = props.type ? props.type : "switch";
+    const { id, checked = false, onChange = () => {}, toggle = null, ref, name, disabled } = props;
     return (
         <div
             className={`moorhen__toggle-container ${props.className ? props.className : ""} ${props.disabled ? "disabled" : ""}`}
             style={{ ...props.style }}
         >
-            <label className={`moorhen__toggle-switch`}>
+            <label className={`moorhen__toggle-switch`} htmlFor={id}>
                 <input
-                    id={props.id}
+                    id={id}
                     className="moorhen__toggle-input"
                     type="checkbox"
-                    checked={props.checked}
-                    onChange={props.onChange}
-                    ref={props.ref}
-                    name={props.name}
-                    disabled={props.disabled}
+                    checked={checked}
+                    onChange={(e) => {
+                        if (onChange) {
+                            onChange(e);
+                        }
+                        if (toggle) {
+                            toggle(!checked);
+                        }
+                    }}
+                    ref={ref}
+                    name={name}
+                    disabled={disabled}
                 />
                 <span
                     className={

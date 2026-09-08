@@ -1,10 +1,9 @@
-import { IconButton } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { useCommandCentre } from "@/InstanceManager";
 import { MoorhenButton } from "@/components/inputs";
-import { MoorhenCidInputForm } from "@/components/inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "@/components/inputs/Cid/MoorhenCidInputForm";
 import { MoorhenStack } from "@/components/interface-base";
 import { setShownControl } from "@/store";
 import { RootState } from "@/store/MoorhenReduxStore";
@@ -27,7 +26,7 @@ export const GoToResidue = () => {
             return;
         }
 
-        const [chosenMolecule, _residueCid] = await getCentreAtom(molecules, commandCentre, store);
+        const [chosenMolecule, _residueCid] = await getCentreAtom(molecules, commandCentre.current, store);
         if (!chosenMolecule) {
             return;
         }

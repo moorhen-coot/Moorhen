@@ -5,6 +5,7 @@ import { setIsRotatingAtoms } from "../../store/generalStatesSlice";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { moorhen } from "../../types/moorhen";
 import { ContextButtonProps, MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
+import { useMoorhenInstance } from "@/hooks";
 
 export const MoorhenRotateTranslateZoneButton = (props: ContextButtonProps) => {
     const chosenMolecule = useRef<null | moorhen.Molecule>(null);
@@ -12,7 +13,7 @@ export const MoorhenRotateTranslateZoneButton = (props: ContextButtonProps) => {
     const customCid = useRef<null | string>(null);
 
     const dispatch = useDispatch();
-
+    const moorhenInstance = useMoorhenInstance();
     const rotateTranslateModes = ["ATOM", "RESIDUE", "CHAIN", "MOLECULE"];
 
     const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
@@ -70,6 +71,7 @@ export const MoorhenRotateTranslateZoneButton = (props: ContextButtonProps) => {
                     props.setDefaultActionButtonSettings({ key: "rotateTranslate", value: newValue });
                 },
             }}
+            onExit={() => { moorhenInstance.triggerMoleculeChanged(chosenMolecule.current?.uniqueId, "modify") }}
             {...props}
         />
     );

@@ -20,6 +20,7 @@ export const ManageSession = () => {
     const monomerLibraryPath = useMoorhenInstance().paths.monomerLibraryPath;
     const dispatch = useDispatch();
     const timeCapsule = useTimeCapsule();
+    const moorhenInstance = useMoorhenInstance();
 
     const enableTimeCapsule = useSelector((state: RootState) => state.backupSettings.enableTimeCapsule);
 
@@ -72,24 +73,12 @@ export const ManageSession = () => {
             if (typeof session === "string") {
                 status = await MoorhenTimeCapsule.loadSessionFromJsonString(
                     session as string,
-                    monomerLibraryPath,
-                    molecules,
-                    maps,
-                    commandCentre,
-                    timeCapsule,
-                    store,
-                    dispatch
+                    moorhenInstance,
                 );
             } else {
                 status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
                     session,
-                    monomerLibraryPath,
-                    molecules,
-                    maps,
-                    commandCentre,
-                    timeCapsule,
-                    store,
-                    dispatch
+                    moorhenInstance,
                 );
             }
             if (status === -1) {
@@ -117,7 +106,7 @@ export const ManageSession = () => {
                 />
             </label>
             <hr className="moorhen_menu-hr"></hr>
-            <MoorhenMenuItem id="save-session-menu-item" onClick={createBackup} disabled={!enableTimeCapsule}>
+            <MoorhenMenuItem id="save-session-menu-item" onClick={() => {createBackup()}} disabled={!enableTimeCapsule}>
                 Save in-browser backup
             </MoorhenMenuItem>
             <MoorhenMenuItemPopover menuItemText="Load in-browser Backup">

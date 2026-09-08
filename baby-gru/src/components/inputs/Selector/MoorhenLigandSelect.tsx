@@ -1,4 +1,4 @@
-import { ChangeEvent } from "react";
+import { ChangeEvent, useEffect } from "react";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenSelect } from "./Select";
 
@@ -28,6 +28,16 @@ export const MoorhenLigandSelect = (props: MoorhenLigandSelectProps) => {
         props.onChange?.(evt);
         props.setValue?.(evt.target.value);
     };
+
+    useEffect(() => {
+        if (noLigand || !selectedMolecule) {
+            return;
+        }
+        const defaultValue = allowAll ? allLigands : selectedMolecule.ligands?.[0]?.cid;
+        if (defaultValue !== undefined) {
+            props.setValue?.(defaultValue);
+        }
+    }, []);
 
     const getLigandOptions = (selectedCoordMolNo: number): React.JSX.Element[] => {
         let options: React.JSX.Element[] = [];

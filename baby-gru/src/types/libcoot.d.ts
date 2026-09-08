@@ -8,6 +8,8 @@ declare global {
     function print(arg0: string): void;
     function createCoot64Module(arg0: any): Promise<libcootApi.CootModule>;
     function createCootModule(arg0: any): Promise<libcootApi.CootModule>;
+    function createGemmi64Module(arg0: any): Promise<any>; //FIXME
+    function createGemmiModule(arg0: any): Promise<any>; //FIXME
 }
 
 export namespace libcootApi {
@@ -55,6 +57,10 @@ export namespace libcootApi {
         Position: { new (x: number, y: number, z: number): gemmi.Position };
         Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new (): gemmi.cifDocument };
+        get_nef_info(nef_input:string): string;
+        get_nef_restraints(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
+
         cidToNeighboursCid: (arg0: gemmi.Structure, arg1: string, arg2: string, arg3: number, arg4: boolean) => string;
         // Gemmi free functions
         read_structure_file(filePath: string, format: number): gemmi.Structure;
@@ -77,6 +83,13 @@ export namespace libcootApi {
         CoorFormat: { Unknown: number; UnknownAny: number; Pdb: number; Mmcif: number; Mmjson: number; ChemComp: number; };
         // Gemmi vector constructors
         VectorString: { new (): emscriptem.vector<string> };
+        detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
+        detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
+        cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
+        get_nef_info(nef_input:string): string;
+        get_nef_restraints(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
+
     };
     type headerInfoGemmi = {
         title: string;
@@ -623,6 +636,10 @@ export namespace libcootApi {
         VectorDouble: { new (): emscriptem.vector<double> };
         is64bit(): boolean;
         run_conkit_validate(options:ValidateOptions): number;
+        get_nef_info(nef_input:string): string;
+        get_nef_restraints(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
+
         // Gemmi free functions
         read_structure_file(filePath: string, format: number): gemmi.Structure;
         read_mtz_file(filePath: string): gemmi.Mtz;
@@ -655,6 +672,13 @@ export namespace libcootApi {
         Position: { new (x: number, y: number, z: number): gemmi.Position };
         Fractional: { new (x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new (): gemmi.cifDocument };
+        detect_xhpi_interactions_json(arg0: gemmi.Structure): string;
+        detect_xhpi_interactions_json_with_monomer_library(arg0: gemmi.Structure, arg1: string): string;
+        cloneGemmiStructureWithTrimmedAtomNames(arg0: gemmi.Structure): gemmi.Structure;
+        get_nef_info(nef_input:string): string;
+        get_chem_shift_info(nef_input:string): string;
+        get_nef_restraints(nef_input:string): string;
+
     };
     interface DoublePairDoubleJS {
         first: number;
@@ -706,6 +730,8 @@ export namespace libcootApi {
         writeCCP4Map(molNo: number, tempFilename: string): void;
         writeCIFASCII(molNo: number, tempFilename: string): void;
         writePDBASCII(molNo: number, tempFilename: string): void;
+        molecule_to_mmCIF_string(imol: number): string;
+        molecule_to_mmCIF_string_with_gemmi(imol: number): string;
         set_map_sampling_rate(arg0: number): void;
         fill_rotamer_probability_tables(): void;
         read_coords_string(pdb_string: string, molecule_name: string): PairType<number, string>;
@@ -727,5 +753,6 @@ export namespace libcootApi {
         new_positions_for_atoms_in_residues: (arg0: number, arg1: emscriptem.vector<MovedResidueT>) => number;
         get_map_spacegroup(arg0: number): string;
         get_map_data_resolution(arg0: number): number;
+        find_density_center(arg0: number, arg1: boolean): emscriptem.vector<number>;
     }
 }

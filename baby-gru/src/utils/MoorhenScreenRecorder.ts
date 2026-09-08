@@ -1,7 +1,7 @@
-import { webGL } from "../types/mgWebGL.js";
+import { webGL } from "../types/mgWebGL";
 import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
 import { getMathJaxSVG } from '../utils/mathJaxUtils';
-import { RootState } from "../store/MoorhenReduxStore.js";
+import { RootState } from "../store/MoorhenReduxStore";
 import { Store } from "redux";
 
 interface ImageFrac2D {
@@ -98,9 +98,9 @@ export class ScreenRecorder  {
         if (!link) {
             link = document.createElement('a');
             link.id = 'download_video_link';
-            link.download = `${this.videoName}.webm`;
             document.body.appendChild(link);
         }
+        link.download = `${this.videoName}.webm`;
         link.href = url;
         link.click();
     }
@@ -211,9 +211,9 @@ export class ScreenRecorder  {
             if (!link) {
                 link = document.createElement('a');
                 link.id = 'download_image_link';
-                link.download = filename;
                 document.body.appendChild(link);
             }
+            link.download = filename;
             link.href = saveCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
             link.click();
         })

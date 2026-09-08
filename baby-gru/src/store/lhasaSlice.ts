@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: {
     rdkitMoleculePickleList: { cid: string; moleculeMolNo: number; ligandName: string; pickle: string; id: string }[];
@@ -25,7 +25,7 @@ const lhasaSlice = createSlice({
                 rdkitMoleculePickleList: [...state.rdkitMoleculePickleList, action.payload],
             };
         },
-        removeRdkitMoleculePickle: (state, action: { payload: string; type: string }) => {
+        removeRdkitMoleculePickle: (state, action: PayloadAction<string>) => {
             return {
                 ...state,
                 rdkitMoleculePickleList: [...state.rdkitMoleculePickleList.filter(item => item.id !== action.payload)],

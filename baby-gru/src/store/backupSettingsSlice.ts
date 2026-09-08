@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: {
     enableTimeCapsule: boolean;
@@ -21,20 +21,20 @@ const backupSettingsSlice = createSlice({
             return initialState;
         },
         // API
-        setEnableTimeCapsule: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, enableTimeCapsule: action.payload };
+        setEnableTimeCapsule: (state, action: PayloadAction<boolean>) => {
+            state.enableTimeCapsule = action.payload;
         },
         // API
-        setMakeBackups: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, makeBackups: action.payload };
+        setMakeBackups: (state, action: PayloadAction<boolean>) => {
+            state.makeBackups = action.payload;
         },
         // API
-        setMaxBackupCount: (state, action: { payload: number; type: string }) => {
-            return { ...state, maxBackupCount: action.payload };
+        setMaxBackupCount: (state, action: PayloadAction<number>) => {
+            state.maxBackupCount = action.payload;
         },
         // API
-        setModificationCountBackupThreshold: (state, action: { payload: number; type: string }) => {
-            return { ...state, modificationCountBackupThreshold: action.payload };
+        setModificationCountBackupThreshold: (state, action: PayloadAction<number>) => {
+            state.modificationCountBackupThreshold = action.payload;
         },
     },
 });

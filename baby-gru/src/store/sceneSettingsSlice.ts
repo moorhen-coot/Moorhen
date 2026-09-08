@@ -1,17 +1,38 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const initialState: {
+const execAutoClipFogByZoom = (state: typeof initialState) => {
+    const fieldDepthFront: number = 8;
+    const fieldDepthBack: number = 21;
+    state.fogStart = state.fogClipOffset - (state.zoom * fieldDepthFront);
+    state.fogEnd = state.fogClipOffset + (state.zoom * fieldDepthBack);
+    state.clipStart = state.zoom * fieldDepthFront;
+    state.clipEnd = state.zoom * fieldDepthBack;
+}
+
+export const initialState: {
     defaultBackgroundColor: [number, number, number, number];
+    origin: [number, number, number];
+    zoom: number;
     drawScaleBar: boolean;
     drawCrosshairs: boolean;
     drawAxes: boolean;
     drawEnvBOcc: boolean;
     drawFPS: boolean;
     drawMissingLoops: boolean;
+    fogClipOffset: number;
+    fogStart: number;
+    fogEnd: number;
+    clipStart: number;
+    clipEnd: number;
     doPerspectiveProjection: boolean;
     useOffScreenBuffers: boolean;
     depthBlurRadius: number;
     depthBlurDepth: number;
+    lightPosition: [number, number, number, number];
+    ambient: [number, number, number, number];
+    specular: [number, number, number, number];
+    diffuse: [number, number, number, number];
+    specularPower: number;
     ssaoBias: number;
     ssaoRadius: number;
     doShadowDepthDebug: boolean;
@@ -43,37 +64,49 @@ const initialState: {
     GlViewportWidth: number;
     isDark: boolean;
 } = {
-    defaultBackgroundColor: null,
-    drawScaleBar: null,
-    drawCrosshairs: null,
-    drawFPS: null,
-    drawMissingLoops: null,
-    defaultBondSmoothness: null,
-    drawAxes: null,
-    drawEnvBOcc: null,
-    doSSAO: null,
-    doEdgeDetect: null,
-    edgeDetectDepthThreshold: null,
-    edgeDetectNormalThreshold: null,
-    edgeDetectDepthScale: null,
-    edgeDetectNormalScale: null,
-    ssaoRadius: null,
-    ssaoBias: null,
-    resetClippingFogging: null,
-    clipCap: null,
-    doPerspectiveProjection: null,
-    useOffScreenBuffers: null,
-    doShadowDepthDebug: null,
-    doShadow: null,
-    doSpin: null,
-    doThreeWayView: null,
-    doSideBySideStereo: null,
-    doMultiView: null,
-    doCrossEyedStereo: null,
-    doAnaglyphStereo: null,
-    doOutline: null,
-    depthBlurRadius: null,
-    depthBlurDepth: null,
+    defaultBackgroundColor: [1, 1, 1, 1],
+    origin: [0, 0, 0],
+    zoom: 1.0,
+    lightPosition: [25.0, 25.0, 50.0, 1.0],
+    ambient: [0.2, 0.2, 0.2, 1.0],
+    specular: [0.6, 0.6, 0.6, 1.0],
+    diffuse: [1.0, 1.0, 1.0, 1.0],
+    fogClipOffset: 250,
+    fogStart: 250,
+    fogEnd: 1250,
+    clipStart: 0,
+    clipEnd: 1000,
+    specularPower: 64.0,
+    drawScaleBar: false,
+    drawCrosshairs: true,
+    drawFPS: false,
+    drawMissingLoops: true,
+    defaultBondSmoothness: 2,
+    drawAxes: false,
+    drawEnvBOcc: false,
+    doSSAO: false,
+    doEdgeDetect: false,
+    edgeDetectDepthThreshold: 1.3,
+    edgeDetectNormalThreshold: 0.5,
+    edgeDetectDepthScale: 2.0,
+    edgeDetectNormalScale: 0.0,
+    ssaoRadius: 0.4,
+    ssaoBias: 1.0,
+    resetClippingFogging: true,
+    clipCap: true,
+    doPerspectiveProjection: false,
+    useOffScreenBuffers: false,
+    doShadowDepthDebug: false,
+    doShadow: false,
+    doSpin: false,
+    doThreeWayView: false,
+    doSideBySideStereo: false,
+    doMultiView: false,
+    doCrossEyedStereo: false,
+    doAnaglyphStereo: false,
+    doOutline: false,
+    depthBlurRadius: 3.0,
+    depthBlurDepth: 0.5,
     height: 0,
     width: 0,
     GlViewportHeight: 0,
@@ -91,177 +124,254 @@ const sceneSettingsSlice = createSlice({
     initialState: initialState,
     reducers: {
         // API
-        resetSceneSettings: () => {
-            return initialState;
+        resetSceneSettings: (state) => {
+            // Reset all scene settings, then restore the values that should survive.
+            const height = state.height;
+            const width = state.width;
+            const glViewportHeight = state.GlViewportHeight;
+            const glViewportWidth = state.GlViewportWidth;
+            const zoom = state.zoom;
+            const origin = state.origin;
+
+            Object.assign(state, initialState);
+
+            state.height = height;
+            state.width = width;
+            state.GlViewportHeight = glViewportHeight;
+            state.GlViewportWidth = glViewportWidth;
+            state.zoom = zoom;
+            state.origin = origin;
+
+            execAutoClipFogByZoom(state);
         },
         // API
-        setDefaultBackgroundColor: (state, action: { payload: [number, number, number, number]; type: string }) => {
-            return { ...state, defaultBackgroundColor: action.payload };
+        setDefaultBackgroundColor: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.defaultBackgroundColor = action.payload;
         },
         // API
-        setDrawScaleBar: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawScaleBar: action.payload };
+        setDrawScaleBar: (state, action: PayloadAction<boolean>) => {
+            state.drawScaleBar = action.payload;
         },
         // API
-        setDrawEnvBOcc: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawEnvBOcc: action.payload };
+        setDrawEnvBOcc: (state, action: PayloadAction<boolean>) => {
+            state.drawEnvBOcc = action.payload;
         },
         // API
-        setDrawCrosshairs: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawCrosshairs: action.payload };
+        setDrawCrosshairs: (state, action: PayloadAction<boolean>) => {
+            state.drawCrosshairs = action.payload;
         },
         // API
-        setDrawFPS: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawFPS: action.payload };
+        setDrawFPS: (state, action: PayloadAction<boolean>) => {
+            state.drawFPS = action.payload;
         },
         // API
-        setDrawMissingLoops: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawMissingLoops: action.payload };
+        setDrawMissingLoops: (state, action: PayloadAction<boolean>) => {
+            state.drawMissingLoops = action.payload;
         },
         // API
-        setDefaultBondSmoothness: (state, action: { payload: number; type: string }) => {
-            return { ...state, defaultBondSmoothness: action.payload };
+        setDefaultBondSmoothness: (state, action: PayloadAction<number>) => {
+            // Smoothness is an enum (1 = Coarse, 2 = Nice, 3 = Smooth). Coerce any invalid
+            // value (e.g. a stale slider-space value like 50 restored from preferences)
+            // to the default 'Nice' so a corrupt stored value can never break rendering.
+            state.defaultBondSmoothness = [1, 2, 3].includes(action.payload) ? action.payload : 2;
         },
         // API
-        setDrawAxes: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, drawAxes: action.payload };
+        setDrawAxes: (state, action: PayloadAction<boolean>) => {
+            state.drawAxes = action.payload;
         },
         // API
-        setDoSSAO: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doSSAO: action.payload };
+        setDoSSAO: (state, action: PayloadAction<boolean>) => {
+            state.doSSAO = action.payload;
         },
         // API
-        setDoEdgeDetect: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doEdgeDetect: action.payload };
+        setDoEdgeDetect: (state, action: PayloadAction<boolean>) => {
+            state.doEdgeDetect = action.payload;
         },
         // API
-        setEdgeDetectDepthThreshold: (state, action: { payload: number; type: string }) => {
-            return { ...state, edgeDetectDepthThreshold: action.payload };
+        setEdgeDetectDepthThreshold: (state, action: PayloadAction<number>) => {
+            state.edgeDetectDepthThreshold = action.payload;
         },
         // API
-        setEdgeDetectNormalThreshold: (state, action: { payload: number; type: string }) => {
-            return { ...state, edgeDetectNormalThreshold: action.payload };
+        setEdgeDetectNormalThreshold: (state, action: PayloadAction<number>) => {
+            state.edgeDetectNormalThreshold = action.payload;
         },
         // API
-        setEdgeDetectDepthScale: (state, action: { payload: number; type: string }) => {
-            return { ...state, edgeDetectDepthScale: action.payload };
+        setEdgeDetectDepthScale: (state, action: PayloadAction<number>) => {
+            state.edgeDetectDepthScale = action.payload;
         },
         // API
-        setEdgeDetectNormalScale: (state, action: { payload: number; type: string }) => {
-            return { ...state, edgeDetectNormalScale: action.payload };
+        setEdgeDetectNormalScale: (state, action: PayloadAction<number>) => {
+            state.edgeDetectNormalScale = action.payload;
         },
         // API
-        setSsaoRadius: (state, action: { payload: number; type: string }) => {
-            return { ...state, ssaoRadius: action.payload };
+        setSsaoRadius: (state, action: PayloadAction<number>) => {
+            state.ssaoRadius = action.payload;
         },
         // API
-        setSsaoBias: (state, action: { payload: number; type: string }) => {
-            return { ...state, ssaoBias: action.payload };
+        setSsaoBias: (state, action: PayloadAction<number>) => {
+            state.ssaoBias = action.payload;
         },
         // API
-        setResetClippingFogging: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, resetClippingFogging: action.payload };
+        setResetClippingFogging: (state, action: PayloadAction<boolean>) => {
+            state.resetClippingFogging = action.payload;
         },
         // API
-        setClipCap: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, clipCap: action.payload };
+        setClipCap: (state, action: PayloadAction<boolean>) => {
+            state.clipCap = action.payload;
         },
         // API
-        setDoPerspectiveProjection: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doPerspectiveProjection: action.payload };
+        setDoPerspectiveProjection: (state, action: PayloadAction<boolean>) => {
+            state.doPerspectiveProjection = action.payload;
         },
         // API
-        setUseOffScreenBuffers: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, useOffScreenBuffers: action.payload };
+        setUseOffScreenBuffers: (state, action: PayloadAction<boolean>) => {
+            state.useOffScreenBuffers = action.payload;
         },
         // API
-        setDoShadowDepthDebug: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doShadowDepthDebug: action.payload };
+        setDoShadowDepthDebug: (state, action: PayloadAction<boolean>) => {
+            state.doShadowDepthDebug = action.payload;
         },
         // API
-        setDoShadow: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doShadow: action.payload };
+        setDoShadow: (state, action: PayloadAction<boolean>) => {
+            state.doShadow = action.payload;
         },
         // API
-        setDoSpin: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doSpin: action.payload };
+        setDoSpin: (state, action: PayloadAction<boolean>) => {
+            state.doSpin = action.payload;
         },
         // API
-        setDoAnaglyphStereo: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doAnaglyphStereo: action.payload };
+        setDoAnaglyphStereo: (state, action: PayloadAction<boolean>) => {
+            state.doAnaglyphStereo = action.payload;
         },
         // API
-        setDoCrossEyedStereo: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doCrossEyedStereo: action.payload };
+        setDoCrossEyedStereo: (state, action: PayloadAction<boolean>) => {
+            state.doCrossEyedStereo = action.payload;
         },
         // API
-        setDoSideBySideStereo: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doSideBySideStereo: action.payload };
+        setDoSideBySideStereo: (state, action: PayloadAction<boolean>) => {
+            state.doSideBySideStereo = action.payload;
         },
         // API
-        setDoMultiView: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doMultiView: action.payload };
+        setDoMultiView: (state, action: PayloadAction<boolean>) => {
+            state.doMultiView = action.payload;
         },
         // API
-        setDoThreeWayView: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doThreeWayView: action.payload };
+        setDoThreeWayView: (state, action: PayloadAction<boolean>) => {
+            state.doThreeWayView = action.payload;
         },
         // API
-        setSpecifyMultiViewRowsColumns: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, specifyMultiViewRowsColumns: action.payload };
+        setSpecifyMultiViewRowsColumns: (state, action: PayloadAction<boolean>) => {
+            state.specifyMultiViewRowsColumns = action.payload;
         },
         // API
-        setMultiViewRows: (state, action: { payload: number; type: string }) => {
-            return { ...state, multiViewRows: action.payload };
+        setMultiViewRows: (state, action: PayloadAction<number>) => {
+            state.multiViewRows = action.payload;
         },
         // API
-        setMultiViewColumns: (state, action: { payload: number; type: string }) => {
-            return { ...state, multiViewColumns: action.payload };
+        setMultiViewColumns: (state, action: PayloadAction<number>) => {
+            state.multiViewColumns = action.payload;
         },
         // API
-        setThreeWayViewOrder: (state, action: { payload: string; type: string }) => {
-            return { ...state, threeWayViewOrder: action.payload };
+        setThreeWayViewOrder: (state, action: PayloadAction<string>) => {
+            state.threeWayViewOrder = action.payload;
         },
         // API
-        setDoOutline: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, doOutline: action.payload };
+        setDoOutline: (state, action: PayloadAction<boolean>) => {
+            state.doOutline = action.payload;
         },
         // API
-        setDepthBlurRadius: (state, action: { payload: number; type: string }) => {
-            return { ...state, depthBlurRadius: action.payload };
+        setDepthBlurRadius: (state, action: PayloadAction<number>) => {
+            state.depthBlurRadius = action.payload;
         },
         // API
-        setDepthBlurDepth: (state, action: { payload: number; type: string }) => {
-            return { ...state, depthBlurDepth: action.payload };
+        setDepthBlurDepth: (state, action: PayloadAction<number>) => {
+            state.depthBlurDepth = action.payload;
         },
         // API
-        setBackgroundColor: (state, action: { payload: [number, number, number, number]; type: string }) => {
-            return { ...state, backgroundColor: action.payload };
+        setBackgroundColor: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.backgroundColor = action.payload;
         },
         // API
-        setHeight: (state, action: { payload: number; type: string }) => {
-            return { ...state, height: action.payload };
+        setHeight: (state, action: PayloadAction<number>) => {
+            state.height = action.payload;
         },
         // API
-        setWidth: (state, action: { payload: number; type: string }) => {
-            return { ...state, width: action.payload };
+        setWidth: (state, action: PayloadAction<number>) => {
+            state.width = action.payload;
         },
         // API
-        setGlViewportHeight: (state, action: { payload: number; type: string }) => {
-            return { ...state, GlViewportHeight: action.payload };
+        setGlViewportHeight: (state, action: PayloadAction<number>) => {
+            state.GlViewportHeight = action.payload;
         },
         // API
-        setGlViewportWidth: (state, action: { payload: number; type: string }) => {
-            return { ...state, GlViewportWidth: action.payload };
+        setGlViewportWidth: (state, action: PayloadAction<number>) => {
+            state.GlViewportWidth = action.payload;
         },
         // API
-        setIsDark: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, isDark: action.payload };
+        setIsDark: (state, action: PayloadAction<boolean>) => {
+            state.isDark = action.payload;
         },
+        // API 
+        setLightPosition: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.lightPosition = action.payload;
+        },
+        // API 
+        setAmbient: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.ambient = action.payload;
+        },
+        // API 
+        setSpecular: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.specular = action.payload;
+        },
+        // API 
+        setDiffuse: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.diffuse = action.payload;
+        },
+        // API 
+        setSpecularPower: (state, action: PayloadAction<number>) => {
+            state.specularPower = action.payload;
+        },
+        // API 
+        setFogClipOffset: (state, action: PayloadAction<number>) => {
+            state.fogClipOffset = action.payload;
+        },
+        // API 
+        setFogStart: (state, action: PayloadAction<number>) => {
+            state.fogStart = action.payload;
+        },
+        // API 
+        setFogEnd: (state, action: PayloadAction<number>) => {
+            state.fogEnd = action.payload;
+        },
+        // API
+        setClipStart: (state, action: PayloadAction<number>) => {
+            state.clipStart = action.payload;
+        },
+        // API
+        setClipEnd: (state, action: PayloadAction<number>) => {
+            state.clipEnd = action.payload;
+        },
+        // API
+        /* Set the origin of the scene to the provided coordinates.
+        @value [number, number, number] X, Y, Z coordinates */
+        setOrigin: (state, action: PayloadAction<[number, number, number]>) => {
+            state.origin = action.payload;
+        },
+        // API
+        /* @zoom level 1 = 22A
+         or A/22 */
+        setZoom: (state, action: PayloadAction<number>) => {
+            state.zoom = action.payload;
+        },
+        autoClipFogByZoom: (state) => {
+            execAutoClipFogByZoom(state);
+        },
+
     },
 });
 
 export const {
+    setOrigin,
     setDefaultBackgroundColor,
     setDrawCrosshairs,
     setDrawScaleBar,
@@ -304,6 +414,18 @@ export const {
     setMultiViewColumns,
     setSpecifyMultiViewRowsColumns,
     setThreeWayViewOrder,
+    setLightPosition,
+    setAmbient,
+    setSpecular,
+    setDiffuse,
+    setSpecularPower,
+    setFogClipOffset,
+    setFogStart,
+    setFogEnd,
+    setClipStart,
+    setClipEnd,
+    setZoom,
+    autoClipFogByZoom,
 } = sceneSettingsSlice.actions;
 
 export default sceneSettingsSlice.reducer;

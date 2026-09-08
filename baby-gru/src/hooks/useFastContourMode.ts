@@ -50,7 +50,7 @@ export const useFastContourMode = ({
     const dispatch = useDispatch();
 
     if (fastRadius === 'auto') {
-        const zoomLevel = useSelector((state: RootState) => state.glRef.zoom);
+        const zoomLevel = useSelector((state: RootState) => state.sceneSettings.zoom);
         const aspectRatio = store.sceneSettings.width / store.sceneSettings.height;
         const seamlessRadius = Math.min(22 * zoomLevel * aspectRatio, mapRadius);
         fastRadius = seamlessRadius;

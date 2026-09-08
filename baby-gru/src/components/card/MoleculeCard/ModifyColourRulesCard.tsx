@@ -1,12 +1,14 @@
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
-import { useSelector } from "react-redux";
+import { useSelector, useStore } from "react-redux";
 import { memo, useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { ResidueRangeSelector } from "@/components/inputs/ResidueRange";
+import { RootState } from "@/store/MoorhenReduxStore";
 import { useCommandCentre } from "../../../InstanceManager";
 import { moorhen } from "../../../types/moorhen";
-import { ColourRule } from "../../../utils/MoorhenColourRule";
-import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../../utils/utils";
+import { ColourRule, ColourRulePropertyType, ColourRuleSelectionType } from "../../../utils/MoorhenColourRule";
+import { cidToSpec, convertRemToPx, getMultiColourRuleArgs } from "../../../utils/utils";
 import { MoorhenButton, MoorhenSelect, MoorhenToggle } from "../../inputs";
-import { MoorhenCidInputForm } from "../../inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../../inputs/Selector/MoorhenChainSelect";
 import { MoorhenInfoCard, MoorhenStack } from "../../interface-base";
 import { MoorhenColorSwatch } from "../../misc/MoorhenColorSwatch";
@@ -55,7 +57,6 @@ const itemReducer = (oldList: ColourRule[], change: colourRuleChange) => {
         const newRule = Object.create(Object.getPrototypeOf(oldRule));
         Object.assign(newRule, oldRule);
         newRule.color = change.color;
-        if (!newRule.isMultiColourRule) newRule.args[1] = change.color;
         const newList = [...oldList];
         newList[itemIndex] = newRule;
         return newList;
@@ -64,23 +65,22 @@ const itemReducer = (oldList: ColourRule[], change: colourRuleChange) => {
 
 const initialRuleState: ColourRule[] = [];
 
-export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Molecule }) => {
+export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Molecule; residueSelection?: boolean }) => {
     const cidFormRef = useRef<HTMLInputElement>(null);
     const commandCentre = useCommandCentre();
 
-    const [ruleType, setRuleType] = useState<string>("molecule");
-    const [colourProperty, setColourProperty] = useState<string>("b-factor");
+    const [ruleType, setRuleType] = useState<ColourRuleSelectionType | "property">(props.residueSelection ? "cid" : "molecule");
+    const [colourProperty, setColourProperty] = useState<ColourRulePropertyType>("b-factor");
     const [selectedColour, setSelectedColour] = useState<string>("#808080");
     const [selectedChain, setSelectedChain] = useState<string>(props.molecule.sequences[0]?.chain || "");
     const [residuesSelectionRange, setResidueSelectionRange] = useState<[number, number]>(null);
+    const store = useStore<RootState>();
 
     const [cid, setCid] = useState<string>(null);
     const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState, () => {
         return props.molecule.defaultColourRules;
     });
 
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const [reverseListOrder, setReverseListOrder] = useState<boolean>(true);
 
@@ -166,8 +166,9 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                     cidLabel = cid;
                     break;
                 case "residue-range":
-                    cidLabel = residuesSelectionRange
-                        ? `//${selectedChain}/${residuesSelectionRange[0]}-${residuesSelectionRange[1]}`
+                    let range = ( residuesSelectionRange[0] < residuesSelectionRange[1] ? residuesSelectionRange : [residuesSelectionRange[1], residuesSelectionRange[0]]);
+                    cidLabel = range
+                        ? `//${selectedChain}/${range[0]}-${range[1]}`
                         : null;
                     break;
                 default:
@@ -175,17 +176,16 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                     break;
             }
             if (cidLabel) {
-                newRule = new ColourRule(ruleType, cidLabel, selectedColour, commandCentre, false);
+                newRule = new ColourRule(ruleType, cidLabel, selectedColour, commandCentre.current, false);
                 newRule.setParentMolecule(props.molecule);
-                newRule.setArgs([cidLabel, selectedColour]);
             } else {
                 console.warn("Invalid CID selection used to create a colour rule");
             }
         } else {
             const ruleArgs = await getMultiColourRuleArgs(props.molecule, colourProperty);
-            newRule = new ColourRule(ruleType, "/*/*/*/*", "#ffffff", commandCentre, true);
+            newRule = new ColourRule(ruleType, "/*/*/*/*", "#ffffff", commandCentre.current, true);
             newRule.setParentMolecule(props.molecule);
-            newRule.setArgs([ruleArgs]);
+            newRule.multiColourData = ruleArgs;
             newRule.propertyType = colourProperty;
             newRule.setLabel(
                 `${
@@ -209,6 +209,40 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
         if (newRule) {
             setRuleList({ action: "Add", item: newRule });
         }
+    };
+
+    const createColorRuleResidueSelection = async () => {
+        const residueSelection = store.getState().generalStates.residueSelection;
+        console.log("residueSelection", residueSelection);
+        const newColourRules: moorhen.ColourRule[] = [];
+
+        if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
+            residueSelection.cid.forEach(cid => {
+                const newColourRule = new ColourRule("cid", cid, selectedColour, residueSelection.molecule.commandCentre, false);
+                newColourRule.setParentMolecule(residueSelection.molecule);
+                newColourRules.push(newColourRule);
+            });
+        } else if (residueSelection.molecule && residueSelection.cid) {
+            const newColourRule = new ColourRule(
+                "cid",
+                residueSelection.cid as string,
+                selectedColour,
+                residueSelection.molecule.commandCentre,
+                false
+            );
+            newColourRule.setParentMolecule(residueSelection.molecule);
+            newColourRules.push(newColourRule);
+        } else if (residueSelection.molecule && residueSelection.first) {
+            const startResSpec = cidToSpec(residueSelection.first);
+            const cid = `/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`;
+            const newColourRule = new ColourRule("cid", cid as string, selectedColour, residueSelection.molecule.commandCentre, false);
+            newColourRule.setParentMolecule(residueSelection.molecule);
+            newColourRules.push(newColourRule);
+        }
+
+        newColourRules.forEach((newColourRule, idx) => {
+            setRuleList({ action: "Add", item: newColourRule });
+        });
     };
 
     const selectedSequence = props.molecule.sequences.find(sequence => sequence.chain === selectedChain);
@@ -249,37 +283,28 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
         />
     ));
     return (
-        <MoorhenStack direction="vertical" gap={2} style={{ alignItems: "center", padding: "0.5rem", width: "450px" }}>
-            <MoorhenStack gap={"0.5rem"} direction="horizontal" style={{ margin: 0, padding: 0 }}>
-                <MoorhenStack
-                    gap={"0.5rem"}
-                    direction="vertical"
-                    inputGrid
-                    style={{
-                        margin: 0,
-                        padding: 0,
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                    }}
-                >
-                    <MoorhenSelect label={"Rule Type"} defaultValue={ruleType} onChange={val => setRuleType(val.target.value)}>
-                        <option value={"molecule"} key={"molecule"}>
-                            By molecule
-                        </option>
-                        <option value={"chain"} key={"chain"}>
-                            By chain
-                        </option>
-                        <option value={"residue-range"} key={"residue-range"}>
-                            By residue range
-                        </option>
-                        <option value={"cid"} key={"cid"}>
-                            By atom selection
-                        </option>
-                        <option value={"property"} key={"property"}>
-                            By property
-                        </option>
-                    </MoorhenSelect>
+        <MoorhenStack direction="vertical" gap={2} style={{  width: "450px" }}>
+            <MoorhenStack direction="horizontal" style={{ margin: 0, padding: 0 }}>
+                <MoorhenStack>
+                    {!props.residueSelection && (
+                        <MoorhenSelect label={"Rule Type"} defaultValue={ruleType} onChange={val => setRuleType(val.target.value as ColourRuleSelectionType | "property")}>
+                            <option value={"molecule"} key={"molecule"}>
+                                By molecule
+                            </option>
+                            <option value={"chain"} key={"chain"}>
+                                By chain
+                            </option>
+                            <option value={"residue-range"} key={"residue-range"}>
+                                By residue range
+                            </option>
+                            <option value={"cid"} key={"cid"}>
+                                By atom selection
+                            </option>
+                            <option value={"property"} key={"property"}>
+                                By property
+                            </option>
+                        </MoorhenSelect>
+                    )}
                     {(ruleType === "chain" || ruleType === "residue-range") && (
                         <MoorhenChainSelect
                             width="100%"
@@ -289,7 +314,7 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                             selectedCoordMolNo={props.molecule.molNo}
                         />
                     )}
-                    {ruleType === "cid" && (
+                    {ruleType === "cid" && !props.residueSelection && (
                         <MoorhenCidInputForm
                             allowUseCurrentSelection={true}
                             margin={"0px"}
@@ -299,7 +324,7 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                         />
                     )}
                     {ruleType === "property" && (
-                        <MoorhenSelect label={"Property"} defaultValue={"b-factor"} onChange={val => setColourProperty(val.target.value)}>
+                        <MoorhenSelect label={"Property"} defaultValue={"b-factor"} onChange={val => setColourProperty(val.target.value as ColourRulePropertyType)}>
                             <option value={"mol-symm"} key={"mol-symm"}>
                                 Mol. Symmetry
                             </option>
@@ -320,9 +345,6 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                             </option>
                         </MoorhenSelect>
                     )}
-                    <MoorhenButton onClick={createRule} style={{ margin: "0px", width: "100%" }}>
-                        Add rule
-                    </MoorhenButton>
                 </MoorhenStack>
                 {ruleType !== "property" && (
                     <MoorhenStack direction="vertical" style={{ display: "flex", justifyContent: "center" }} gap={2}>
@@ -349,14 +371,21 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                 )}
             </MoorhenStack>
             {ruleType === "residue-range" && (
-                <div style={{ width: `${convertRemToPx(15) * 2}px`, padding: "0.5rem", textAlign: "center" }}>
-                    <MoorhenSequenceViewer
-                        sequences={moorhenSequenceToSeqViewer(selectedSequence, props.molecule.name, props.molecule.molNo)}
-                        onResiduesSelect={selection => handleResiduesSelection(selection)}
-                        maxDisplayHeight={1}
+                    <ResidueRangeSelector
+                        molecule={props.molecule}
+                        selectedChain={selectedChain}
+                        sequenceResidueRange={residuesSelectionRange}
+                        setSequenceResidueRange={setResidueSelectionRange}
                     />
-                </div>
+
             )}
+
+            <MoorhenButton
+                onClick={props.residueSelection ? createColorRuleResidueSelection : createRule}
+                style={{ margin: "0px", width: "100%" }}
+            >
+                Add rule
+            </MoorhenButton>
             <hr style={{ width: "100%" }}></hr>
             <MoorhenStack direction="row" align="center" justify="flex-start" gap={"0.5rem"}>
                 {"Colour Rules List"}
