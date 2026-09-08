@@ -35,7 +35,7 @@
     },
     "opts": {
         "encoding": "utf8",
-        "destination": "./docs/api/",
+        "destination": "./docs/site/api/",
         "recurse": true,
         "verbose": true,
         "private": true,
