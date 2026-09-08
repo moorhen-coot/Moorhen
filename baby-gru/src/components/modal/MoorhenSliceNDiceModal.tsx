@@ -166,7 +166,7 @@ export const MoorhenSliceNDiceModal = () => {
             const newColourRule = new ColourRule(colourRuleType, "/*/*/*/*", "#ffffff", commandCentre.current, true);
             newColourRule.setLabel(colourRuleType === "af2-plddt" ? "PLDDT" : "B-Factor");
             const ruleArgs = await getMultiColourRuleArgs(molecule, colourRuleType);
-            newColourRule.setArgs([ruleArgs]);
+            newColourRule.multiColourData = ruleArgs;
             newColourRule.setParentMolecule(molecule);
             molecule.defaultColourRules = [newColourRule];
             return newColourRule;
@@ -352,7 +352,6 @@ export const MoorhenSliceNDiceModal = () => {
                 const colorHue = Math.floor(index * 40 + Math.floor(Math.random() * 6));
                 const selectedColour = isDark ? hslToHex(colorHue, 80, 70) : hslToHex(colorHue, 50, 50);
                 const newColourRule = new ColourRule("cid", "/*/*/*/*", selectedColour, commandCentre.current);
-                newColourRule.setArgs(["/*/*/*/*", selectedColour]);
                 newColourRule.setParentMolecule(newMolecule);
                 newMolecule.defaultColourRules = [newColourRule];
                 newMolecule.setAtomsDirty(true);

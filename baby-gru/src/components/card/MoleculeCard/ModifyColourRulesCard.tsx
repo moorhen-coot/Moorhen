@@ -57,7 +57,6 @@ const itemReducer = (oldList: ColourRule[], change: colourRuleChange) => {
         const newRule = Object.create(Object.getPrototypeOf(oldRule));
         Object.assign(newRule, oldRule);
         newRule.color = change.color;
-        if (!newRule.isMultiColourRule) newRule.args[1] = change.color;
         const newList = [...oldList];
         newList[itemIndex] = newRule;
         return newList;
@@ -179,7 +178,6 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
             if (cidLabel) {
                 newRule = new ColourRule(ruleType, cidLabel, selectedColour, commandCentre.current, false);
                 newRule.setParentMolecule(props.molecule);
-                newRule.setArgs([cidLabel, selectedColour]);
             } else {
                 console.warn("Invalid CID selection used to create a colour rule");
             }
@@ -187,7 +185,7 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
             const ruleArgs = await getMultiColourRuleArgs(props.molecule, colourProperty);
             newRule = new ColourRule(ruleType, "/*/*/*/*", "#ffffff", commandCentre.current, true);
             newRule.setParentMolecule(props.molecule);
-            newRule.setArgs([ruleArgs]);
+            newRule.multiColourData = ruleArgs;
             newRule.propertyType = colourProperty;
             newRule.setLabel(
                 `${
@@ -221,7 +219,6 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
         if (residueSelection.isMultiCid && Array.isArray(residueSelection.cid)) {
             residueSelection.cid.forEach(cid => {
                 const newColourRule = new ColourRule("cid", cid, selectedColour, residueSelection.molecule.commandCentre, false);
-                newColourRule.setArgs([cid, selectedColour]);
                 newColourRule.setParentMolecule(residueSelection.molecule);
                 newColourRules.push(newColourRule);
             });
@@ -233,14 +230,12 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                 residueSelection.molecule.commandCentre,
                 false
             );
-            newColourRule.setArgs([residueSelection.cid as string, selectedColour]);
             newColourRule.setParentMolecule(residueSelection.molecule);
             newColourRules.push(newColourRule);
         } else if (residueSelection.molecule && residueSelection.first) {
             const startResSpec = cidToSpec(residueSelection.first);
             const cid = `/${startResSpec.mol_no}/${startResSpec.chain_id}/${startResSpec.res_no}-${startResSpec.res_no}`;
             const newColourRule = new ColourRule("cid", cid as string, selectedColour, residueSelection.molecule.commandCentre, false);
-            newColourRule.setArgs([cid as string, selectedColour]);
             newColourRule.setParentMolecule(residueSelection.molecule);
             newColourRules.push(newColourRule);
         }

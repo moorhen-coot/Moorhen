@@ -195,7 +195,6 @@ export async function buildColourRule(params: BuildColourRuleParams): Promise<Co
                 false,
                 applyColourToNonCarbonAtoms
             );
-            colourRule.setArgs([colourRuleCid, colour]);
             colourRule.setParentMolecule(molecule);
             break;
         case "mol-symm":
@@ -214,7 +213,7 @@ export async function buildColourRule(params: BuildColourRuleParams): Promise<Co
             colourRule = new ColourRule(colourMode, "/*/*/*/*:*", "#ffffff", molecule.commandCentre, true, applyColourToNonCarbonAtoms);
             colourRule.setLabel(getColourModeLabel(colourMode));
             const ruleArgs = await getMultiColourRuleArgs(molecule, colourMode);
-            colourRule.setArgs([ruleArgs]);
+            colourRule.multiColourData = ruleArgs;
             colourRule.setParentMolecule(molecule);
             break;
         }

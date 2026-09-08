@@ -1483,14 +1483,12 @@ export class MoorhenMolecule {
         ruleType: ColourRuleType,
         cid: string,
         color: string,
-        args: (string | number)[],
         isMultiColourRule: boolean = false,
         applyColourToNonCarbonAtoms: boolean = false,
         label?: string
     ) {
         const newColourRule = new ColourRule(ruleType, cid, color, this.commandCentre, isMultiColourRule, applyColourToNonCarbonAtoms);
         newColourRule.setParentMolecule(this);
-        newColourRule.setArgs(args);
         if (label) {
             newColourRule.setLabel(label);
         }
@@ -2013,7 +2011,7 @@ export class MoorhenMolecule {
             const newChains = currentChains.filter(chainName => !prevChainNames.includes(chainName));
             newChains.forEach(chainName => {
                 const selectedColour = getRandomMoleculeColour();
-                this.addColourRule("chain", `//${chainName}`, selectedColour, [`//${chainName}`, selectedColour]);
+                this.addColourRule("chain", `//${chainName}`, selectedColour);
             });
 
             if (doRedraw) {
@@ -2271,7 +2269,7 @@ export class MoorhenMolecule {
 
         this.defaultColourRules = [];
         for (const rule of response.data.result.result) {
-            this.addColourRule("chain", rule.first, rule.second, [rule.first, rule.second]);
+            this.addColourRule("chain", rule.first, rule.second);
         }
     }
 
@@ -3092,7 +3090,7 @@ export class MoorhenMolecule {
             this.setAtomsDirty(true);
             // If the chain is new, then we need to create a random colour rule for it...
             const selectedColour = getRandomMoleculeColour();
-            this.addColourRule("chain", `//${newId}`, selectedColour, [`//${newId}`, selectedColour]);
+            this.addColourRule("chain", `//${newId}`, selectedColour);
             if (redraw) {
                 await this.redraw();
             }

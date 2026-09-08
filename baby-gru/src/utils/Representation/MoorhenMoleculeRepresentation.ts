@@ -445,13 +445,11 @@ export class MoleculeRepresentation {
         ruleType: ColourRuleType,
         cid: string,
         color: string,
-        args: (string | number)[],
         isMultiColourRule: boolean = false,
         applyColourToNonCarbonAtoms: boolean = false,
         label?: string
     ) {
         const newColourRule = new ColourRule(ruleType, cid, color, this.commandCentre, isMultiColourRule, applyColourToNonCarbonAtoms);
-        newColourRule.setArgs(args);
         if (label) {
             newColourRule.setLabel(label);
         }

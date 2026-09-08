@@ -44,7 +44,6 @@ export type ColourRuleType = ColourRuleSelectionType | ColourRulePropertyType;
  *      'molecule', "//", "#ffffff", commandCentre
  *    )
  *
- *    colourRule.setArgs([ ruleArgs ])
  *    colourRule.setParentMolecule(molecule)
  * }
  */
@@ -53,7 +52,7 @@ export class ColourRule {
     propertyType: ColourRulePropertyType;
     cid: string;
     color: string;
-    args: (string | number)[];
+    multiColourData: string;
     label: string;
     isMultiColourRule: boolean;
     commandCentre: CommandCentre | null;
@@ -79,7 +78,8 @@ export class ColourRule {
         color: string,
         commandCentre: CommandCentre | null,
         isMultiColourRule: boolean = false,
-        applyColourToNonCarbonAtoms: boolean = false
+        applyColourToNonCarbonAtoms: boolean = false,
+        multiColourData: string = ""
     ) {
         this.cid = cid;
         this.color = color;
@@ -87,7 +87,7 @@ export class ColourRule {
         this.applyColourToNonCarbonAtoms = applyColourToNonCarbonAtoms;
         this.isMultiColourRule = isMultiColourRule;
         this.ruleType = ruleType;
-        this.args = [];
+        this.multiColourData = multiColourData;
         this.label = cid;
         this.uniqueId = guid();
     }
@@ -127,9 +127,9 @@ export class ColourRule {
             data.color,
             commandCentre,
             data.isMultiColourRule,
-            data.applyColourToNonCarbonAtoms
+            data.applyColourToNonCarbonAtoms,
+            data.isMultiColourRule ? data.args[0] as string : ""
         );
-        colourRule.setArgs(data.args);
         colourRule.setLabel(data.label);
         colourRule.setParentMolecule(molecule);
         return colourRule;
@@ -171,7 +171,8 @@ export class ColourRule {
             applyColourToNonCarbonAtoms: this.applyColourToNonCarbonAtoms,
             isMultiColourRule: this.isMultiColourRule,
             ruleType: this.ruleType,
-            args: this.args,
+            // Preserve the existing session format while rules use named fields in memory.
+            args: this.isMultiColourRule ? [this.multiColourData] : [this.cid, this.color],
             label: this.label,
             uniqueId: this.uniqueId,
             parentMoleculeMolNo: this.parentMolecule ? this.parentMolecule.molNo : null,
@@ -195,12 +196,12 @@ export class ColourRule {
         this.label = label;
     }
 
-    /**
-     * Set the arguments passed to libcoot API in this colour rule instance
-     * @param {any[]} args - The new label
-     */
-    setArgs(args: (string | number)[]) {
-        this.args = args;
+    setColor(color: string) {
+        this.color = color;
+    }
+
+    setMultiColourData(multiColourData: string) {
+        this.multiColourData = multiColourData;
     }
 
     /**
@@ -238,8 +239,7 @@ export class ColourRule {
         applyColourToNonCarbonAtoms: boolean;
     }[] {
         if (this.isMultiColourRule) {
-            const allColours = this.args[0] as string;
-            return allColours.split("|").map(colour => {
+            return this.multiColourData.split("|").filter(Boolean).map(colour => {
                 const [cid, hex] = colour.split("^");
                 const [r, g, b, a] = ColourRule.parseHexToRgba(hex);
                 return {
@@ -258,6 +258,11 @@ export class ColourRule {
                 },
             ];
         }
+    }
+
+    /** Get the colour-rule payload expected by Coot's non-bond commands. */
+    getCootColourRuleArgs(): [string] | [string, string] {
+        return this.isMultiColourRule ? [this.multiColourData] : [this.cid, this.color];
     }
 
     /**
@@ -287,7 +292,7 @@ export class ColourRule {
                     message: "coot_command",
                     command: this.isMultiColourRule ? "add_colour_rules_multi" : "add_colour_rule",
                     returnType: "status",
-                    commandArgs: [this.parentMolecule.molNo, ...this.args],
+                    commandArgs: [this.parentMolecule.molNo, ...this.getCootColourRuleArgs()],
                 },
                 false
             );

@@ -72,7 +72,6 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
             if (representation.useDefaultColourRules) {
                 const colour = rgbToHex(newColour[0], newColour[1], newColour[2]);
                 const colourRule = new ColourRule("molecule", representation.cid, colour, representation.commandCentre);
-                colourRule.setArgs([representation.cid, colour]);
                 representation.colourRules = [colourRule];
                 return;
             }
