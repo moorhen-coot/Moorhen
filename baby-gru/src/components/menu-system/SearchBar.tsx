@@ -1,6 +1,6 @@
 import Fuse from "fuse.js";
 import { useDispatch, useSelector } from "react-redux";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useMoorhenInstance } from "@/InstanceManager";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive, setShortCutsBlocked } from "../../store/globalUISlice";
@@ -10,15 +10,6 @@ import { MenuFromItems } from "./MenuFromItems";
 import "./search-bar.css";
 import { MenuItemType } from "./subMenuConfig";
 
-export const MoorhenSearchBar = () => {
-    const open = useSelector((state: RootState) => state.globalUI.isSearchBarActive);
-    const dispatch = useDispatch();
-    const [query, setQuery] = useState<string>("");
-    const inputRef = useRef<HTMLInputElement>(null);
-    const moorhenInstance = useMoorhenInstance();
-    const menuSystem = moorhenInstance.menuSystem;
-
-    // Set up Fuse.js options for label, keywords, description (priority order)
     const fuseOptions = {
         keys: [
             { name: "label", weight: 1 },
@@ -33,9 +24,23 @@ export const MoorhenSearchBar = () => {
         ignoreDiacritics: true,
     };
 
+export const MoorhenSearchBar = () => {
+    const open = useSelector((state: RootState) => state.globalUI.isSearchBarActive);
+    const dispatch = useDispatch();
+    const [query, setQuery] = useState<string>("");
+    const inputRef = useRef<HTMLInputElement>(null);
+    const moorhenInstance = useMoorhenInstance();
+    const menuSystem = moorhenInstance.menuSystem;
+
+    // Set up Fuse.js options for label, keywords, description (priority order)
+
+    const fuse = useMemo(
+        () => new Fuse(menuSystem.getAllItems(), fuseOptions),
+        [menuSystem],
+    );
+
     const getResults = () => {
         if (query.length > 1) {
-            const fuse = new Fuse(menuSystem.getAllItems(), fuseOptions);
             const fuseResults = fuse.search(query);
             const _results = fuseResults.map(r => r.item);
             const uniqueResults = _results.filter((item, pos) => {
