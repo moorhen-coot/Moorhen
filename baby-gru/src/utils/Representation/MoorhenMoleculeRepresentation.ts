@@ -10,7 +10,7 @@ import { ColourRule } from "../MoorhenColourRule";
 import { createRepresentation } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
-import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from "../utils";
+import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 
@@ -21,6 +21,7 @@ export type RepresentationStyles =
     | "CBs"
     | "CDs"
     | "gaussian"
+    | "cavities"
     | "allHBonds"
     | "rama"
     | "rotamer"
@@ -155,6 +156,7 @@ export class MoleculeRepresentation {
     interfaceOption: { visible: boolean; selectionType: ResidueSelectionRuleType };
     /** Snapshot of the lossy build parameters (see BuildRepresentationParams). Null for legacy/deserialized reps. */
     buildParams: BuildRepresentationParams | null;
+    cavities: {index: number, mesh: libcootApi.SimpleMeshJS[]} | null;
 
     constructor(style: RepresentationStyles, cid: string, commandCentre: CommandCentre) {
         this.uniqueId = guid();
@@ -224,6 +226,7 @@ export class MoleculeRepresentation {
         this.hbondedToCid = "";
         this.hbondedTo = false;
         this.buildParams = null;
+        this.cavities = null;
     }
 
     /**
@@ -254,6 +257,23 @@ export class MoleculeRepresentation {
         console.log("splitCid", splitCid);
         this.cid = `/${_modelIndex}/${splitCid.slice(2).join("/")}`;
         this.redraw();
+    }
+
+    setBufferColour(r: number, g:number, b:number) {
+        if (this.buffers) {
+            this.buffers.forEach(buffer => {
+                buffer.triangleColours.forEach(colbuffer => {
+                    for (let idx = 0; idx < colbuffer.length; idx += 4) {
+                        colbuffer[idx] = r;
+                        colbuffer[idx+1] = g;
+                        colbuffer[idx+2] = b;
+                    }
+                });
+                buffer.isDirty = true;
+            });
+            buildBuffers(this.buffers, this.parentMolecule.store);
+        }
+        this.parentMolecule.store.dispatch(setRequestDrawScene(true));
     }
 
     /**
@@ -323,6 +343,7 @@ export class MoleculeRepresentation {
             "VdWSurface",
             "residueSelection",
             "gaussian",
+            "cavities",
             "allHBonds",
             "rotamer",
             "rama",
@@ -540,6 +561,10 @@ export class MoleculeRepresentation {
         if (this.nonCustomOpacity < 0.99) {
             this.setNonCustomOpacity(this.nonCustomOpacity);
         }
+        if(this.style==="cavities"&&this.colourRules.length>0&&this.colourRules[0].color){
+            const rgb = hexToRGB(this.colourRules[0].color)
+            this.setBufferColour(rgb[0]/255,rgb[1]/255,rgb[2]/255)
+        }
     }
 
     /**
@@ -563,6 +588,10 @@ export class MoleculeRepresentation {
         });
         if (this.nonCustomOpacity < 0.99) {
             this.setNonCustomOpacity(this.nonCustomOpacity);
+        }
+        if(this.style==="cavities"&&this.colourRules.length>0&&this.colourRules[0].color){
+            const rgb = hexToRGB(this.colourRules[0].color)
+            this.setBufferColour(rgb[0]/255,rgb[1]/255,rgb[2]/255)
         }
     }
 
@@ -764,6 +793,9 @@ export class MoleculeRepresentation {
                 break;
             case "gaussian":
                 objects = await this.getCootGaussianSurfaceBuffers();
+                break;
+            case "cavities":
+                objects = await this.getCootCavitiesBuffers();
                 break;
             case "allHBonds":
                 if (this.restrictToNeighbours) objects = await this.getHBondBuffers(this.neighboursCid);
@@ -1766,7 +1798,7 @@ export class MoleculeRepresentation {
      * @param {string} cid - The CID selection for this representation
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
      */
-    async getCootGaussianSurfaceBuffers(): Promise<libcootApi.InstancedMeshJS[]> {
+    async getCootGaussianSurfaceBuffers(): Promise<libcootApi.SimpleMeshJS[]> {
         const args = this.useDefaultGaussianSurfaceSettings ? this.parentMolecule.gaussianSurfaceSettings : this.gaussianSurfaceSettings;
         const response = (await this.commandCentre.cootCommand(
             {
@@ -1792,6 +1824,50 @@ export class MoleculeRepresentation {
         }
     }
 
+    /**
+     * Get representation buffers for the cavities surf. representation
+     * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
+     */
+    async getCootCavities(): Promise<void> {
+        try {
+        const response = (await this.commandCentre.cootCommand(
+            {
+                returnType: "mesh_array",
+                command: "get_cavities",
+                commandArgs: [this.parentMolecule.molNo],
+            },
+            false
+        )) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS[]>;
+            const meshes = response.data.result.result.map(object => {
+                 const flippedNormalsObject = { ...object };
+                 flippedNormalsObject.idx_tri = object.idx_tri.map(element => element.map(subElement => subElement.reverse()));
+                 return flippedNormalsObject;
+            });
+            this.cavities = {index: 1, mesh: meshes };
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    async getCootCavitiesBuffers() {
+        if (!this.cavities) {
+            await this.getCootCavities();
+        }
+        if (this.cavities) {
+            const _objects = this.cavities.mesh;
+            const cavityIndex = this.cavities.index ?? 1;
+            if (_objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+
+                let objects = [];
+                if (cavityIndex === 0) {
+                    objects = _objects;
+                } else {
+                    objects = [_objects[cavityIndex -1]];
+                }
+                return objects;
+            }
+        }
+    }
     /**
      * Get representation buffers for the molecule-wide contact dots representation
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
