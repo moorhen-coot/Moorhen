@@ -32,9 +32,6 @@ export const CustomRepresentationChip = (props: {
     const modelSelector = representation.cid.split("/")[1] !== "*" ? parseInt(representation.cid.split("/")[1]) : 0;
 
     const models = molecule.numberOfModels;
-
-    const [cavityIndex, setCavityIndex] = useState<number>(representation.cavities?.index);
-
     const dispatch = useDispatch();
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
     const isMoleculeVisible = useSelector((state: RootState) => state.molecules.visibleMolecules.some(molNo => molNo === molecule.molNo));
@@ -217,7 +214,7 @@ export const CustomRepresentationChip = (props: {
     );
 };
 
-export const getChipStyle = (colourRules: ColourRule[], repIsVisible: boolean, isDark: boolean, width?: string) => {
+const getChipStyle = (colourRules: ColourRule[], repIsVisible: boolean, isDark: boolean, width?: string) => {
     const chipStyle = {};
 
     if (width) {

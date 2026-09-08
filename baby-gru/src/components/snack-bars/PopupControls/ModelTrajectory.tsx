@@ -46,7 +46,7 @@ export const ModelTrajectory = () => {
             iMolecule.setAtomsDirty(true);
             await iMolecule.updateAtoms();
             representation.setParentMolecule(iMolecule);
-            representation.setColourRules(molecule.defaultColourRules);
+            representation.colourRules = molecule.defaultColourRules;
             await representation.applyColourRules();
             const meshObjects = await representation.getBufferObjects();
             frames.push(meshObjects);
