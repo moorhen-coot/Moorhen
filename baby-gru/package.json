@@ -1,6 +1,6 @@
 {
     "name": "moorhen",
-    "version": "1.0.0-beta.4",
+    "version": "1.0.0",
     "private": false,
     "typesVersions": {
         "*": {
@@ -35,7 +35,7 @@
         }
     },
     "homepage": "./",
-    "author": "Paul Emsley, Filomeno Sanchez Rodriguez, Martin Noble, Jordan Dialpuri, Jakub Smulski, Lucrezia Catapano, Paul Bond, Clément Dégut, Stuart McNicholas",
+    "author": "Paul Emsley, Filomeno Sanchez Rodriguez, Martin Noble, Jordan Dialpuri, Jakub Smulski, Lucrezia Catapano, Paul Bond, Clément Dégut, Stuart McNicholas, Sean Wang, Adam Simkin, Toby King",
     "description": "Moorhen molecular graphics",
     "license": "BSD-3-Clause",
     "repository": {

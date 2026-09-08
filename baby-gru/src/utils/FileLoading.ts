@@ -17,6 +17,7 @@ import { MoorhenMolecule } from "./MoorhenMolecule";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { modalKeys } from "./enums";
+// import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
     chain_id: string;
@@ -416,6 +417,15 @@ const readCifDictionary = async (
             newMonomer.coordsFormat = "mmcif";
             newMonomer.addDict(dict.dict_contents);
             newMonomers.push(newMonomer);
+            moorhenInstance.getMoleculeList().forEach(molecule => {
+                if (molecule.ligands.length > 0) {
+                    molecule.representations.forEach(representation => {
+                        if (representation.style === "CBs") {
+                            representation.redraw();
+                        }
+                    });
+                }
+            });
         }
     }
     return newMonomers;
@@ -474,6 +484,12 @@ const loadMapFile = async (
     return;
 };
 
+const pdbqtToPdb = (pdbqtString: string) => {
+    const lines = pdbqtString.split("\n");
+    const pdbLines = lines.map(line => !line.startsWith("TER") ? line.slice(0, 66) : "").join("\n");
+    return pdbLines;
+};
+
 export const autoOpenFiles = async (
     files: File[],
     moorhenInstance: MoorhenInstance,
@@ -524,8 +540,13 @@ export const autoOpenFiles = async (
 
     for (const file of files) {
         //Structures
-        if (file.name.endsWith(".pdb") || file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
-            const content = await file.text();
+        if (file.name.endsWith(".pdb") || file.name.endsWith(".pdbqt") ||file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
+            let content = await file.text();
+            if (file.name.endsWith(".pdbqt")) {
+                // keep only the first 66 characters of each line to make a kinda pdb
+                content =  pdbqtToPdb(content);
+                console.log(content);
+            }
             const newMolecule = await readCoordsString(
                 content,
                 file.name,

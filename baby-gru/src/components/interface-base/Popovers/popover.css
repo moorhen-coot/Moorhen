@@ -17,7 +17,7 @@
     max-width: 100vw;
 }
 
-.moorhen__menu-item-popover::after {
+.moorhen__menu-item-popover.left-arrow::after {
     content: "";
     position: absolute;
     top: var(--popover-arrow-top, 50%);
@@ -92,6 +92,13 @@
     font-style: italic;
     width: auto;
     max-width: 26rem;
+}
+
+.moorhen__info-card--large {
+    font-size: 1rem;
+    max-width: min(60vw, 45rem);
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .moorhen__info-card > h1 {
