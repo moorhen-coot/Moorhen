@@ -77,16 +77,24 @@ export function doClick(self: MGWebGL, event) {
                     theAtom.label = displayBuffers[minidx].atoms[minj].tempFactor.toFixed(2) + " " + displayBuffers[minidx].atoms[minj].occupancy.toFixed(2) + " " + atomLabel
                 }
                 updateLabels = true
-                if (self.labelledAtoms.length === 0 || (self.labelledAtoms[self.labelledAtoms.length - 1].length > 1)) {
+                if (self.labelledAtoms.length === 0) {
                     self.labelledAtoms.push([]);
                 }
-                self.labelledAtoms[self.labelledAtoms.length - 1].push(theAtom);
+                const idx = self.labelledAtoms[0].findIndex(o => Math.abs(o.x-theAtom.x)<1e-3 && Math.abs(o.y-theAtom.y)<1e-4 && Math.abs(o.z-theAtom.z)<1e-4)
+                if(idx===-1)
+                    self.labelledAtoms[0].push(theAtom);
+                else
+                    self.labelledAtoms[0].splice(idx,1)
             } else if (self.keysDown['measure_distances']) {
                 updateLabels = true
                 if (self.measuredAtoms.length === 0) {
                     self.measuredAtoms.push([]);
                 }
-                self.measuredAtoms[self.measuredAtoms.length - 1].push(theAtom);
+                const idx = self.measuredAtoms[0].findIndex(o => Math.abs(o.x-theAtom.x)<1e-3 && Math.abs(o.y-theAtom.y)<1e-4 && Math.abs(o.z-theAtom.z)<1e-4)
+                if(self.measuredAtoms[0].length>0&&(idx===self.measuredAtoms[0].length-1))
+                    self.measuredAtoms[0].pop()
+                else
+                    self.measuredAtoms[0].push(theAtom);
             }
         }
         if(updateLabels) self.updateLabels()
