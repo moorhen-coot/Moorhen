@@ -4,7 +4,19 @@ import { guid } from "./utils";
 import { CommandCentre } from "@/InstanceManager/CommandCentre/MoorhenCommandCentre";
 
 export type ColourRuleSelectionType = "chain" | "cid" | "ligands" | "molecule" | "neighbourhood" | "residue-range";
+const propertyTypes: ColourRulePropertyType[] = [
+    "af2-plddt",
+    "b-factor",
+    "b-factor-norm",
+    "electrostatics",
+    "jones-rainbow",
+    "mol-symm",
+    "property",
+    "RMSD",
+    "secondary-structure"
+];
 export type ColourRulePropertyType =
+    | "default"
     | "af2-plddt"
     | "b-factor"
     | "b-factor-norm"
@@ -14,14 +26,19 @@ export type ColourRulePropertyType =
     | "property"
     | "RMSD"
     | "secondary-structure";
+
 export type ColourRuleType = ColourRuleSelectionType | ColourRulePropertyType;
+
+const isColourRulePropertyType = (ruleType: ColourRuleType): ruleType is ColourRulePropertyType =>
+    propertyTypes.includes(ruleType as ColourRulePropertyType);
 
 /**
  * Represents a colour rule for a given representation
- * @property {string} ruleType - The type of this colour rule instance
+ * @property {ColourRuleType} ruleType - The type of this colour rule instance
  * @property {string} cid - The CID selection for this colour rule
+ * @property {string} color - The colour for this rule in hexadecimal format
+ * @property {string} multiColourData - Encoded CID/colour data for multi-colour rules
  * @property {string} label - Label displayed in the UI for this colour rule
- * @property {any[]} args - A list of arguments passed to libcoot API
  * @property {boolean} isMultiColourRule - Indicates whether this colour rule consists of multiple colours assigned to different residues
  * @property {moorhen.Molecule} parentMolecule - The molecule assigned to this colour rule
  * @property {moorhen.MoleculeRepresentation} parentRepresentation - The molecule representation assigned to this colour rule
@@ -31,9 +48,10 @@ export type ColourRuleType = ColourRuleSelectionType | ColourRulePropertyType;
  * @param {string} ruleType - The type of this colour rule instance
  * @param {string} cid - The CID selection for this colour rule
  * @param {string} color - The colour for this rule (hex format)
- * @param {moorhen.CommandCentre | null} commandCentre - The command centre instance
+ * @param {CommandCentre | null} commandCentre - The command centre instance
  * @param {boolean} [isMultiColourRule=false] - Indicates whether this colour rule consists of multiple colours assigned to different residues
  * @param {boolean} [applyColourToNonCarbonAtoms=false] - Indicates if the colour rule will also be applied to non carbon atoms
+ * @param {string} [multiColourData=""] - Encoded CID/colour data for multi-colour rules
  * @example
  * import { MoorhenMolecule, MoorhenColourRule } from 'moorhen';
  *
@@ -90,12 +108,13 @@ export class ColourRule {
         this.multiColourData = multiColourData;
         this.label = cid;
         this.uniqueId = guid();
+        this.propertyType = isColourRulePropertyType(ruleType) ? ruleType : null;
     }
 
     /**
      * Static method that can be used to create a new colour rule from a JSON string representation of a colour rule data object
      * @param {string} stringifiedObject - The JSON string representation of a colour rule data object
-     * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+    * @param {CommandCentre | null} commandCentre - The command centre instance
      * @param {moorhen.Molecule} molecule - The molecule that will be associated to this colour rule
      * @returns {moorhen.ColourRule} The new colour rule
      */
@@ -111,8 +130,7 @@ export class ColourRule {
     /**
      * Static method that can be used to create a new colour rule from a colour rule data object
      * @param {moorhen.ColourRuleObject} data - The colour rule data object
-     * @param {CommandCentre | null} commandCentre - The command centre instance
-
+    * @param {CommandCentre | null} commandCentre - The command centre instance
      * @param {moorhen.Molecule} molecule - The molecule that will be associated to this colour rule
      * @returns {moorhen.ColourRule} The new colour rule
      */
@@ -267,7 +285,7 @@ export class ColourRule {
 
     /**
      * Use libcoot API to apply this colour rule
-     * @param {string} [style=undefined] - The style of the molecule representationa associated to this colour rule. By default it will use the style from MoorhenColourRule.parentRepresentation
+    * @param {string} [style] - The style of the molecule representation associated with this colour rule. Defaults to the parent representation's style.
      */
     async apply(style?: string) {
         const _style = style ?? this.parentRepresentation.style;
