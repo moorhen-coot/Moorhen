@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { setBackgroundColor } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { hexToRGB } from "../../utils/utils";
-import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
+import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSwatch";
 
 export const BackgroundColor = () => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);

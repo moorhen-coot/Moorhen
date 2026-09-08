@@ -790,6 +790,15 @@ export const hexToRGB = (hex: string): [number, number, number] => {
     return [r, g, b];
 };
 
+export const hexToRGBA = (hex: string): [number, number, number, number] => {
+    const hexWithoutHash = hex.replace("#", "");
+    const r = parseInt(hexWithoutHash.slice(0, 2), 16);
+    const g = parseInt(hexWithoutHash.slice(2, 4), 16);
+    const b = parseInt(hexWithoutHash.slice(4, 6), 16);
+    const a = hexWithoutHash.length === 8 ? parseInt(hexWithoutHash.slice(6, 8), 16) : 255;
+    return [r, g, b, a];
+};
+
 export const getCone = (cylinder_accu: number): [number[], number[], number[]] => {
     let thisPos = [];
     let thisNorm = [];
