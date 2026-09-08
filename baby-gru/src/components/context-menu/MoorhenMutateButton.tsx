@@ -3,10 +3,12 @@ import { useSelector } from "react-redux";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
 import { useCommandCentre } from "../../InstanceManager";
+import { useMoorhenInstance } from "@/hooks";
 
 export const MoorhenMutateButton = (props: ContextButtonProps) => {
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
 
     const mutateModes = [
         "ALA",
@@ -97,6 +99,7 @@ export const MoorhenMutateButton = (props: ContextButtonProps) => {
                     props.setDefaultActionButtonSettings({ key: "mutate", value: newValue });
                 },
             }}
+            onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "modify")}
             {...props}
         />
     );

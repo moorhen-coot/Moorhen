@@ -21,10 +21,6 @@ export const FetchOnlineSources = () => {
    "ligand test 5hes, glyco test 5fjj";
 
     const { sources, downloadMaps } = { ...defaultProps };
-
-    const store = useStore<RootState>();
-    const commandCentre = useCommandCentre();
-    const monomerLibraryPath = usePaths().monomerLibraryPath;
     const moorhenInstance = useMoorhenInstance();
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const [fetchExtra, setFetchExtra] = usePersistentState("file", "fetch-extra", false, true);
@@ -137,7 +133,7 @@ export const FetchOnlineSources = () => {
     };
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string, isAF2?: boolean): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(moorhenInstance);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         try {
@@ -145,7 +141,7 @@ export const FetchOnlineSources = () => {
             if (newMolecule.molNo === -1) {
                 throw new Error("Cannot read the fetched molecule...");
             } else if (isAF2) {
-                const newColourRule = new ColourRule("af2-plddt", "/*/*/*/*", "#ffffff", commandCentre, true);
+                const newColourRule = new ColourRule("af2-plddt", "/*/*/*/*", "#ffffff", moorhenInstance.commandCentre, true);
                 newColourRule.setLabel("PLDDT");
                 const ruleArgs = await getMultiColourRuleArgs(newMolecule, "af2-plddt");
                 newColourRule.setArgs([ruleArgs]);

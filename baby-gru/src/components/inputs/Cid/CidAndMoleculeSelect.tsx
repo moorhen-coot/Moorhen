@@ -29,8 +29,8 @@ export const MoorhenCidAndMoleculeSelect = (props: {
 
     return (
         <>
-            <MoorhenMoleculeSelect selectedUniqueId={selectedMoleculeUniqueId} onSelectUniqueId={handleMoleculeUniqueIdChange} />
-            <MoorhenCidInputForm value={props.selectedCid} setCid={props.setSelectedCid} setMoleculeUniqueId={handleMoleculeUniqueIdChange} />
+            <MoorhenMoleculeSelect useUniqueId selectedMolecule={selectedMoleculeUniqueId} onSelect={handleMoleculeUniqueIdChange} />
+            <MoorhenCidInputForm value={props.selectedCid} setValue={props.setSelectedCid} setMoleculeUniqueId={handleMoleculeUniqueIdChange} />
         </>
     )
 }

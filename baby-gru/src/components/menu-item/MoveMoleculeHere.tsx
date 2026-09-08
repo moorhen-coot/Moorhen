@@ -12,7 +12,7 @@ export const MoveMoleculeHere = () => {
 
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
 
-    const originState = useSelector((state: moorhen.State) => state.glRef.origin);
+    const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin);
 
     const menuItemText = "Move molecule here...";
 

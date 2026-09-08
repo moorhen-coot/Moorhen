@@ -176,12 +176,12 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     return (
         <MoorhenStack card>
             <MoorhenStack direction="vertical" gap={2} style={{ justifyContent: "space-between" }}>
-                <MoorhenMoleculeSelect  onSelectUniqueId={(uid) => setChosenMolecule(moorhenInstance.getMolecule(uid))}/>
+                <MoorhenMoleculeSelect useUniqueId onSelect={(uid) => setChosenMolecule(moorhenInstance.getMolecule(uid))} />
                 {/* <MoorhenButton variant="primary" onClick={() => props.setAwaitAtomClick(props.id)}>
                     Set Atom {props.id}
                 </MoorhenButton>
                 <MoorhenTextInput readOnly={true} text={selectedAtom ? selectedAtom : "No atom selected"} /> */}
-                <MoorhenCidInputForm setCid={setAtomPicked}/>
+                <MoorhenCidInputForm setValue={setAtomPicked}/>
                 <MoorhenToggle label="Delete atom..." checked={deleteAtom} onChange={() => setDeleteAtom(!deleteAtom)} />
                 {/* <Form.Label style={{ marginTop: "0.2rem", marginBottom: 0, display: "flex", justifyContent: "left" }}>
                         Delete atom...

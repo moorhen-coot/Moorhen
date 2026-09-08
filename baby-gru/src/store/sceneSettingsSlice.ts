@@ -1,17 +1,38 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const initialState: {
+const execAutoClipFogByZoom = (state: typeof initialState) => {
+    const fieldDepthFront: number = 8;
+    const fieldDepthBack: number = 21;
+    state.fogStart = state.fogClipOffset - (state.zoom * fieldDepthFront);
+    state.fogEnd = state.fogClipOffset + (state.zoom * fieldDepthBack);
+    state.clipStart = state.zoom * fieldDepthFront;
+    state.clipEnd = state.zoom * fieldDepthBack;
+}
+
+export const initialState: {
     defaultBackgroundColor: [number, number, number, number];
+    origin: [number, number, number];
+    zoom: number;
     drawScaleBar: boolean;
     drawCrosshairs: boolean;
     drawAxes: boolean;
     drawEnvBOcc: boolean;
     drawFPS: boolean;
     drawMissingLoops: boolean;
+    fogClipOffset: number;
+    fogStart: number;
+    fogEnd: number;
+    clipStart: number;
+    clipEnd: number;
     doPerspectiveProjection: boolean;
     useOffScreenBuffers: boolean;
     depthBlurRadius: number;
     depthBlurDepth: number;
+    lightPosition: [number, number, number, number];
+    ambient: [number, number, number, number];
+    specular: [number, number, number, number];
+    diffuse: [number, number, number, number];
+    specularPower: number;
     ssaoBias: number;
     ssaoRadius: number;
     doShadowDepthDebug: boolean;
@@ -43,37 +64,49 @@ const initialState: {
     GlViewportWidth: number;
     isDark: boolean;
 } = {
-    defaultBackgroundColor: null,
-    drawScaleBar: null,
-    drawCrosshairs: null,
-    drawFPS: null,
-    drawMissingLoops: null,
-    defaultBondSmoothness: null,
-    drawAxes: null,
-    drawEnvBOcc: null,
-    doSSAO: null,
-    doEdgeDetect: null,
-    edgeDetectDepthThreshold: null,
-    edgeDetectNormalThreshold: null,
-    edgeDetectDepthScale: null,
-    edgeDetectNormalScale: null,
-    ssaoRadius: null,
-    ssaoBias: null,
-    resetClippingFogging: null,
-    clipCap: null,
-    doPerspectiveProjection: null,
-    useOffScreenBuffers: null,
-    doShadowDepthDebug: null,
-    doShadow: null,
-    doSpin: null,
-    doThreeWayView: null,
-    doSideBySideStereo: null,
-    doMultiView: null,
-    doCrossEyedStereo: null,
-    doAnaglyphStereo: null,
-    doOutline: null,
-    depthBlurRadius: null,
-    depthBlurDepth: null,
+    defaultBackgroundColor: [1, 1, 1, 1],
+    origin: [0, 0, 0],
+    zoom: 1.0,
+    lightPosition: [25.0, 25.0, 50.0, 1.0],
+    ambient: [0.2, 0.2, 0.2, 1.0],
+    specular: [0.6, 0.6, 0.6, 1.0],
+    diffuse: [1.0, 1.0, 1.0, 1.0],
+    fogClipOffset: 250,
+    fogStart: 250,
+    fogEnd: 1250,
+    clipStart: 0,
+    clipEnd: 1000,
+    specularPower: 64.0,
+    drawScaleBar: false,
+    drawCrosshairs: true,
+    drawFPS: false,
+    drawMissingLoops: true,
+    defaultBondSmoothness: 2,
+    drawAxes: false,
+    drawEnvBOcc: false,
+    doSSAO: false,
+    doEdgeDetect: false,
+    edgeDetectDepthThreshold: 1.3,
+    edgeDetectNormalThreshold: 0.5,
+    edgeDetectDepthScale: 2.0,
+    edgeDetectNormalScale: 0.0,
+    ssaoRadius: 0.4,
+    ssaoBias: 1.0,
+    resetClippingFogging: true,
+    clipCap: true,
+    doPerspectiveProjection: false,
+    useOffScreenBuffers: false,
+    doShadowDepthDebug: false,
+    doShadow: false,
+    doSpin: false,
+    doThreeWayView: false,
+    doSideBySideStereo: false,
+    doMultiView: false,
+    doCrossEyedStereo: false,
+    doAnaglyphStereo: false,
+    doOutline: false,
+    depthBlurRadius: 3.0,
+    depthBlurDepth: 0.5,
     height: 0,
     width: 0,
     GlViewportHeight: 0,
@@ -91,8 +124,25 @@ const sceneSettingsSlice = createSlice({
     initialState: initialState,
     reducers: {
         // API
-        resetSceneSettings: () => {
-            return initialState;
+        resetSceneSettings: (state) => {
+            // Reset all scene settings, then restore the values that should survive.
+            const height = state.height;
+            const width = state.width;
+            const glViewportHeight = state.GlViewportHeight;
+            const glViewportWidth = state.GlViewportWidth;
+            const zoom = state.zoom;
+            const origin = state.origin;
+
+            Object.assign(state, initialState);
+
+            state.height = height;
+            state.width = width;
+            state.GlViewportHeight = glViewportHeight;
+            state.GlViewportWidth = glViewportWidth;
+            state.zoom = zoom;
+            state.origin = origin;
+
+            execAutoClipFogByZoom(state);
         },
         // API
         setDefaultBackgroundColor: (state, action: PayloadAction<[number, number, number, number]>) => {
@@ -120,7 +170,10 @@ const sceneSettingsSlice = createSlice({
         },
         // API
         setDefaultBondSmoothness: (state, action: PayloadAction<number>) => {
-            state.defaultBondSmoothness = action.payload;
+            // Smoothness is an enum (1 = Coarse, 2 = Nice, 3 = Smooth). Coerce any invalid
+            // value (e.g. a stale slider-space value like 50 restored from preferences)
+            // to the default 'Nice' so a corrupt stored value can never break rendering.
+            state.defaultBondSmoothness = [1, 2, 3].includes(action.payload) ? action.payload : 2;
         },
         // API
         setDrawAxes: (state, action: PayloadAction<boolean>) => {
@@ -258,10 +311,67 @@ const sceneSettingsSlice = createSlice({
         setIsDark: (state, action: PayloadAction<boolean>) => {
             state.isDark = action.payload;
         },
+        // API 
+        setLightPosition: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.lightPosition = action.payload;
+        },
+        // API 
+        setAmbient: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.ambient = action.payload;
+        },
+        // API 
+        setSpecular: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.specular = action.payload;
+        },
+        // API 
+        setDiffuse: (state, action: PayloadAction<[number, number, number, number]>) => {
+            state.diffuse = action.payload;
+        },
+        // API 
+        setSpecularPower: (state, action: PayloadAction<number>) => {
+            state.specularPower = action.payload;
+        },
+        // API 
+        setFogClipOffset: (state, action: PayloadAction<number>) => {
+            state.fogClipOffset = action.payload;
+        },
+        // API 
+        setFogStart: (state, action: PayloadAction<number>) => {
+            state.fogStart = action.payload;
+        },
+        // API 
+        setFogEnd: (state, action: PayloadAction<number>) => {
+            state.fogEnd = action.payload;
+        },
+        // API
+        setClipStart: (state, action: PayloadAction<number>) => {
+            state.clipStart = action.payload;
+        },
+        // API
+        setClipEnd: (state, action: PayloadAction<number>) => {
+            state.clipEnd = action.payload;
+        },
+        // API
+        /* Set the origin of the scene to the provided coordinates.
+        @value [number, number, number] X, Y, Z coordinates */
+        setOrigin: (state, action: PayloadAction<[number, number, number]>) => {
+            state.origin = action.payload;
+        },
+        // API
+        /* @zoom level 1 = 22A
+         or A/22 */
+        setZoom: (state, action: PayloadAction<number>) => {
+            state.zoom = action.payload;
+        },
+        autoClipFogByZoom: (state) => {
+            execAutoClipFogByZoom(state);
+        },
+
     },
 });
 
 export const {
+    setOrigin,
     setDefaultBackgroundColor,
     setDrawCrosshairs,
     setDrawScaleBar,
@@ -304,6 +414,18 @@ export const {
     setMultiViewColumns,
     setSpecifyMultiViewRowsColumns,
     setThreeWayViewOrder,
+    setLightPosition,
+    setAmbient,
+    setSpecular,
+    setDiffuse,
+    setSpecularPower,
+    setFogClipOffset,
+    setFogStart,
+    setFogEnd,
+    setClipStart,
+    setClipEnd,
+    setZoom,
+    autoClipFogByZoom,
 } = sceneSettingsSlice.actions;
 
 export default sceneSettingsSlice.reducer;

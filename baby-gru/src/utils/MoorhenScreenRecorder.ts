@@ -1,7 +1,7 @@
-import { webGL } from "../types/mgWebGL.js";
+import { webGL } from "../types/mgWebGL";
 import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
 import { getMathJaxSVG } from '../utils/mathJaxUtils';
-import { RootState } from "../store/MoorhenReduxStore.js";
+import { RootState } from "../store/MoorhenReduxStore";
 import { Store } from "redux";
 
 interface ImageFrac2D {

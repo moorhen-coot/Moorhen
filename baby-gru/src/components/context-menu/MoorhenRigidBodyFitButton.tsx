@@ -3,12 +3,13 @@ import { useCallback, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenToggle } from "../inputs";
 import { ContextButtonProps, MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
+import { useMoorhenInstance } from "@/hooks"; 
 
 export const MoorhenRigidBodyFitButton = (props: ContextButtonProps) => {
     const [randomJiggleMode, setRandomJiggleMode] = useState<boolean>(false);
     const customCid = useRef<null | string>(null);
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
-
+    const moorhenInstance = useMoorhenInstance();
     const rigidBodyModes = ["RESIDUE", "CHAIN", "MOLECULE"];
 
     const rigidBodyFitFormatArgs = (
@@ -100,6 +101,7 @@ export const MoorhenRigidBodyFitButton = (props: ContextButtonProps) => {
                     return <MoorhenToggle ref={ref} style={{ paddingTop: "0.1rem" }} type="switch" label="Use random jiggle fit" />;
                 },
             }}
+            onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "modify")}
             {...props}
         />
     );

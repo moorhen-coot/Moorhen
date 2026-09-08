@@ -110,7 +110,6 @@ export const MoorhenValidationListWidgetBase = (props: {
 
                     <MoorhenMapSelect
                         filterFunction={filterMapFunction}
-                        width=""
                         onChange={handleMapChange}
                         maps={maps}
                         ref={mapSelectRef}

@@ -8,6 +8,7 @@ import { setActiveMolecule } from "../../../store/glRefSlice";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../../types/moorhen";
 import { getTooltipShortcutLabel } from "../../../utils/utils";
+import { MoleculeRepresentation } from "../../../utils/Representation/MoorhenMoleculeRepresentation";
 import { MoorhenStack } from "../../interface-base";
 
 export const AcceptRejectRotateTranslate = () => {
@@ -96,7 +97,13 @@ export const AcceptRejectRotateTranslate = () => {
                         })
                         .map(representation => {
                             if (representation.buffers.length > 0 && representation.buffers[0].visible) {
-                                return newMolecule.addRepresentation(representation.style, representation.cid);
+                                return MoleculeRepresentation.create({
+                                    representationStyle: representation.style,
+                                    molecule: newMolecule,
+                                    ruleType: "cid",
+                                    cid: representation.cid,
+                                    isCustom: false,
+                                });
                             } else {
                                 return Promise.resolve();
                             }

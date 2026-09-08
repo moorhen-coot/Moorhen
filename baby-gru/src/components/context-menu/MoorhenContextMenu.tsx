@@ -152,7 +152,6 @@ export const MoorhenContextMenu = (props: {
                                 selectedMolecule &&
                                 chosenAtom && (
                                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", justifyItems: "center" }}>
-
                                                 <MoorhenAutofitRotamerButton {...collectedProps} />
                                                 <MoorhenFlipPeptideButton {...collectedProps} />
                                                 <MoorhenSideChain180Button {...collectedProps} />

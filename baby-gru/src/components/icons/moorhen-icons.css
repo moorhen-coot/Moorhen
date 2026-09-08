@@ -1,7 +1,6 @@
 @import "../../colors.css";
 
-.moorhen__icon,
-.moorhen__icon-spinner {
+.moorhen__icon{
     display: block;
     width: 100%;
     height: 100%;

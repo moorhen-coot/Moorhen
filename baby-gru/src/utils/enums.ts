@@ -30,7 +30,9 @@ export const modalKeys = Object.freeze({
     PAEPLOT : "pae-plot",
     SCENE_SLIDERS: "scene-sliders",
     CONKIT: "conkit",
-})
+    NOE: "NOE"
+});
+
 
 export const representationLabelMapping = Object.freeze({
     rama: "Ramachandran Balls",

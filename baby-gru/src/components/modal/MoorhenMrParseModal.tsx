@@ -2,7 +2,7 @@ import Fasta from "biojs-io-fasta";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { createRef, useCallback, useEffect, useMemo, useRef } from "react";
 import { RootState } from "@/store";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
 import {
@@ -18,11 +18,11 @@ import {
     setTargetSequence,
 } from "../../store/mrParseSlice";
 import { moorhen } from "../../types/moorhen";
-import { loadMrParseFiles, loadMrParseUrl } from "../../utils/MoorhenFileLoading";
+import { loadMrParseFiles, loadMrParseUrl } from "../../utils/FileLoading";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenButton, MoorhenFileInput } from "../inputs";
-import { MoorhenAccordion, MoorhenStack } from "../interface-base";
+import { MoorhenAccordion, MoorhenInfoCard, MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence, moorhenSequenceToSeqViewer, stringToSeqViewer } from "../sequence-viewer";
 
@@ -85,6 +85,8 @@ type DisplaySettingsType = {
 export const MoorhenMrParseModal = () => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);
 
+    
+
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
@@ -94,6 +96,7 @@ export const MoorhenMrParseModal = () => {
     const dispatch = useDispatch();
     const store = useStore<RootState>();
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
@@ -149,6 +152,7 @@ export const MoorhenMrParseModal = () => {
         h_score: "number",
         seq_ident: "number",
     };
+
 
     const mrParseModels = useSelector((state: moorhen.State) => state.mrParse.mrParseModels);
     const targetSequence = useSelector((state: moorhen.State) => state.mrParse.targetSequence);
@@ -296,7 +300,7 @@ export const MoorhenMrParseModal = () => {
     };
 
     const readPdbString = async (fileString: string, fileName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(moorhenInstance);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         await newMolecule.loadToCootFromString(fileString, fileName);
@@ -304,7 +308,7 @@ export const MoorhenMrParseModal = () => {
     };
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+        const newMolecule = new MoorhenMolecule(moorhenInstance);
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
         await newMolecule.loadToCootFromFile(file);
@@ -680,7 +684,7 @@ export const MoorhenMrParseModal = () => {
         //This is an example of loading a set of MrParse results on a server.
         //In testing I just run Python simple server in an MrParse results dir.
         const urlBase = "http://localhost:8000/";
-        loadMrParseUrl(urlBase, commandCentre, store, monomerLibraryPath, backgroundColor, defaultBondSmoothness, dispatch);
+        loadMrParseUrl(urlBase, moorhenInstance, backgroundColor, defaultBondSmoothness, dispatch);
     };
 
     const footerContent = (
@@ -692,9 +696,7 @@ export const MoorhenMrParseModal = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     loadMrParseFiles(
                         Array.from(e.target.files),
-                        commandCentre,
-                        store,
-                        monomerLibraryPath,
+                        moorhenInstance,
                         backgroundColor,
                         defaultBondSmoothness,
                         dispatch
@@ -909,15 +911,52 @@ export const MoorhenMrParseModal = () => {
             </>
         );
 
+    const path = usePaths().urlPrefix;
+
+    const infoText = (
+    <>
+    <h1>MrParse</h1>
+    <p>MrParse is a CCP4 tool to search the PDB and the AlphaFold database (AFDB) for structures corresponding to an input sequence. 
+Importing the results of MrParse into Moorhen generates MrParse style tables whilst also allowing you to visually inspect the models.</p>
+
+<h2>Output</h2>
+
+    <ul>
+    <li> PDB: PDB code of the structure found by MrParse</li>
+    <li> Resolution: the resolution of the PDB structure</li>
+    <li> Region: grouping models into the regions they correspond to</li>
+    <li> Range: The sequence range from the input sequence that the model corresponds to. This is also shown in the figure below the table.</li>
+    <li> Length: The length of the model</li>
+    <li> eLLG: The expected LLG score if this model is used in molecular replacement with Phaser</li>
+    <li> Mol. Wt:  The molecular weight of the structure</li>
+    <li> Seq. Ident: The sequence identity of the model to the reference sequence</li>
+    <img src={`${path}/pixmaps/docs/mrparse.png`} alt="MrParse table" style={{maxWidth: "32rem"}}/>
+    <li> Name: The name of the model in the AFDB</li>
+    <li> Date made: The date that the predicted model was made, newer models are likely to be better than older ones.</li>
+    <li> Range: The sequence range from the input sequence that the model corresponds to. This is also shown in the figure below the table.</li>
+    <li> Length: The length of the model</li>
+    <li> Average pLDDT: The average pLDDT score of the model, the closer this is to 100, the more confident the model is. </li>
+    <li> H-score: The H-score of the model.</li>
+    <li> Seq. Ident: The sequence identity of the model to the reference sequence</li>
+    </ul>
+
+The ranges are coloured by pLDDT on a scale of orange-yellow-blue-dark blue, where orange represents low pLDDT scores and dark blue represents high pLDDT scores. The higher the pLDDT, the more confident the predicted model. 
+<h2>Citation</h2>
+<a href="https://doi.org/10.1107/S2059798322003576">MrParse: finding homologues in the PDB and the EBI AlphaFold database for molecular replacement and more</a>
+</>)
+
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.MRPARSE}
             initialHeight={500}
             initialWidth={748}
-            headerTitle="MrParse results"
+            headerTitle={<>MrParse results &nbsp; <MoorhenInfoCard infoText={infoText} large/></>}
             footer={footerContent}
             resizeNodeRef={resizeNodeRef}
             body={bodyContent}
         />
     );
 };
+
+
+

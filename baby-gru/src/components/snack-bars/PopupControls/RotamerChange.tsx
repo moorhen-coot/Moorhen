@@ -1,12 +1,13 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useCommandCentre } from "@/InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "@/InstanceManager";
 import { MoorhenButton } from "@/components/inputs";
 import { MoorhenStack } from "@/components/interface-base";
 import { enqueueSnackbar, removeMolecule, setHoveredAtom, setIsChangingRotamers, setShownControl, triggerUpdate } from "@/store";
 import { RootState } from "@/store";
 import { libcootApi } from "@/types/libcoot";
 import { moorhen } from "@/types/moorhen";
+import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 
 export const RotamerChange = () => {
     const fragmentMolecule = useRef<null | moorhen.Molecule>(null);
@@ -16,6 +17,7 @@ export const RotamerChange = () => {
     const [rotamerName, setRotamerName] = useState<string | null>(null);
     const [rotamerRank, setRotamerRank] = useState<number | null>(null);
     const [rotamerProbability, setRotamerProbability] = useState<number | null>(null);
+    const moorhenInstance = useMoorhenInstance();
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -86,7 +88,13 @@ export const RotamerChange = () => {
                         })
                         .map(representation => {
                             if (representation.buffers.length > 0 && representation.buffers[0].visible) {
-                                return newMolecule.addRepresentation(representation.style, representation.cid);
+                                return MoleculeRepresentation.create({
+                                    representationStyle: representation.style,
+                                    molecule: newMolecule,
+                                    ruleType: "cid",
+                                    cid: representation.cid,
+                                    isCustom: false,
+                                });
                             } else {
                                 return Promise.resolve();
                             }
@@ -143,6 +151,7 @@ export const RotamerChange = () => {
         dispatch(triggerUpdate(chosenMolecule.current.molNo));
         dispatch(setIsChangingRotamers(false));
         dispatch(setShownControl(null));
+        moorhenInstance.triggerMoleculeChanged(chosenMolecule.current.uniqueId, "modify");
     }, []);
 
     const rejectTransform = async () => {

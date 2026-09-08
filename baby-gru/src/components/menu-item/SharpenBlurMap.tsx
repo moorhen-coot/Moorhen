@@ -79,7 +79,7 @@ export const SharpenBlurMap = () => {
     return (
         <>
             <MoorhenStack inputGrid>
-                <MoorhenMapSelect maps={maps} selected={selectedMapNo} setSelectedMap={setSelectedMapNo} />
+                <MoorhenMapSelect maps={maps} selectedMap={selectedMapNo} setSelectedMap={setSelectedMapNo} />
                 <MoorhenNumberInput label="B-factor to apply" value={bFactor} setValue={setBFactor} allowNegativeValues={true} />
                 <MoorhenToggle
                     type="switch"

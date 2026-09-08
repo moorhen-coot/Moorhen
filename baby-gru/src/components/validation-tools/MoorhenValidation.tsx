@@ -30,6 +30,11 @@ const colourPalettes = {
         return "rgb(" + Math.floor(256 * value) + ", 132, 132)";
     },
 };
+colourPalettes["density_correlation_analysis_json"] = colourPalettes["density_correlation_analysis"]
+colourPalettes["density_fit_analysis_json"] = colourPalettes["density_fit_analysis"]
+colourPalettes["rotamer_analysis_json"] = colourPalettes["rotamer_analysis"]
+colourPalettes["ramachandran_analysis_json"] = colourPalettes["ramachandran_analysis"]
+colourPalettes["peptide_omega_analysis_json"] = colourPalettes["peptide_omega_analysis"]
 
 const metricInfoScaling = {
     density_correlation_analysis: value => {
@@ -51,6 +56,11 @@ const metricInfoScaling = {
         return value;
     },
 };
+metricInfoScaling["density_correlation_analysis_json"] = metricInfoScaling["density_correlation_analysis"]
+metricInfoScaling["density_fit_analysis_json"] = metricInfoScaling["density_fit_analysis"]
+metricInfoScaling["rotamer_analysis_json"] = metricInfoScaling["rotamer_analysis"]
+metricInfoScaling["ramachandran_analysis_json"] = metricInfoScaling["ramachandran_analysis"]
+metricInfoScaling["peptide_omega_analysis_json"] = metricInfoScaling["peptide_omega_analysis"]
 
 export const MoorhenValidation = (props: { chartId: string }) => {
     const dispatch = useDispatch();
@@ -123,40 +133,40 @@ export const MoorhenValidation = (props: { chartId: string }) => {
     const getAvailableMetrics = (selectedModel: number, selectedMap: number, selectedChain: string) => {
         const allMetrics = [
             {
-                command: "density_correlation_analysis",
-                returnType: "validation_data",
+                command: "density_correlation_analysis_json",
+                returnType: "validation_data_json",
                 chainID: selectedChain,
                 commandArgs: [selectedModel, selectedMap],
                 needsMapData: true,
                 displayName: "Dens. Corr.",
             },
             {
-                command: "density_fit_analysis",
-                returnType: "validation_data",
+                command: "density_fit_analysis_json",
+                returnType: "validation_data_json",
                 chainID: selectedChain,
                 commandArgs: [selectedModel, selectedMap],
                 needsMapData: true,
                 displayName: "Dens. Fit",
             },
             {
-                command: "rotamer_analysis",
-                returnType: "validation_data",
+                command: "rotamer_analysis_json",
+                returnType: "validation_data_json",
                 chainID: selectedChain,
                 commandArgs: [selectedModel],
                 needsMapData: false,
                 displayName: "Rota.",
             },
             {
-                command: "ramachandran_analysis",
-                returnType: "validation_data",
+                command: "ramachandran_analysis_json",
+                returnType: "validation_data_json",
                 chainID: selectedChain,
                 commandArgs: [selectedModel],
                 needsMapData: false,
                 displayName: "Rama.",
             },
             {
-                command: "peptide_omega_analysis",
-                returnType: "validation_data",
+                command: "peptide_omega_analysis_json",
+                returnType: "validation_data_json",
                 chainID: selectedChain,
                 commandArgs: [selectedModel],
                 needsMapData: false,
@@ -175,23 +185,30 @@ export const MoorhenValidation = (props: { chartId: string }) => {
         return currentlyAvailable;
     };
 
+    const fetchInProgress = useRef(false);
     const fetchData = async (selectedModel: number, selectedMap: number, selectedChain: string) => {
-        if (selectedModel === null || selectedChain === null) {
-            return null;
-        }
-        const availableMetrics = getAvailableMetrics(selectedModel, selectedMap, selectedChain);
-
-        const promises: Promise<moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>>[] = [];
-        availableMetrics.forEach(metric => {
-            const inputData = { message: "coot_command", ...metric };
-            promises.push(commandCentre.current.cootCommand(inputData, false));
-        });
-        const responses = await Promise.all(promises);
-
         const newPlotData: libcootApi.ValidationInformationJS[][] = [];
-        responses.forEach(response => {
-            newPlotData.push(response.data.result.result);
-        });
+        if (fetchInProgress.current) {
+            console.log("SKIPPING FETCH");
+            return newPlotData;
+        }
+        fetchInProgress.current = true;
+        try {
+            if (selectedModel === null || selectedChain === null) {
+                return null;
+            }
+            const availableMetrics = getAvailableMetrics(selectedModel, selectedMap, selectedChain);
+
+            for (const metric of availableMetrics) {
+                const inputData = { message: "coot_command", ...metric };
+
+                const response = await commandCentre.current.cootCommand( inputData, false);
+
+                newPlotData.push(response.data.result.result);
+            }
+        } finally {
+            fetchInProgress.current = false;
+        }
 
         return newPlotData;
     };

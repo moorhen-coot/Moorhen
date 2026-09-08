@@ -4,7 +4,7 @@ module.exports = {
     projects: [
         {
             displayName: "api-utils",
-            testMatch: ["<rootDir>/tests/__tests__/*.test.js", "<rootDir>/tests/__tests__/*.test.ts"],
+            testMatch: ["<rootDir>/tests/__tests__/**/*.test.js", "<rootDir>/tests/__tests__/**/*.test.ts"],
             setupFilesAfterEnv: ["<rootDir>/tests/jestOutputFilter.js"],
             transform: {
                 "^.+/public/MoorhenAssets/wasm/moorhen(?:\\.js)?$": "<rootDir>/tests/__mocks__/moorhenTransformer.cjs",
@@ -20,7 +20,7 @@ module.exports = {
         },
         {
             displayName: "react-components",
-            testMatch: ["<rootDir>/tests/__tests__/*.test.jsx"],
+            testMatch: ["<rootDir>/tests/__tests__/**/*.test.jsx", "<rootDir>/tests/__tests__/**/*.test.tsx"],
             setupFilesAfterEnv: ["<rootDir>/tests/jestOutputFilter.js"],
             testEnvironment: "jsdom",
             preset: "ts-jest",

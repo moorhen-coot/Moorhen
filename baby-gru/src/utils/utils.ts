@@ -6,7 +6,7 @@ import pako from "pako";
 import { CommandCentre, WorkerResponse } from "@/InstanceManager/CommandCentre";
 import { MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 import type { MoorhenMolecule, ResidueInfo } from "@/utils//MoorhenMolecule";
-import { Shortcut } from "../components/managers/preferences";
+import { Shortcut } from "../InstanceManager/Preferences";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
@@ -90,15 +90,15 @@ export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
 
 export const getCentreAtom = async (
     molecules: MoorhenMolecule[],
-    commandCentre: React.RefObject<CommandCentre>,
+    commandCentre: CommandCentre,
     store: MoorhenReduxStoreType
 ): Promise<[MoorhenMolecule, string]> => {
     const visibleMolecules: MoorhenMolecule[] = molecules.filter((molecule: MoorhenMolecule) => molecule.isVisible());
-    const originState = store.getState().glRef.origin;
+    const originState = store.getState().sceneSettings.origin;
     if (visibleMolecules.length === 0) {
         return [null, null];
     }
-    const response = (await commandCentre.current.cootCommand(
+    const response = (await commandCentre.cootCommand(
         {
             returnType: "int_string_pair",
             command: "get_active_atom",
@@ -385,6 +385,64 @@ export const atomInfoToResSpec = (atom: moorhen.AtomInfo) => {
     };
 };
 
+export type ParsedCID = {
+    model: number | string;
+    chain: string;
+    residueNumber: number | string;
+    residueName: string | undefined;
+    isRange: boolean;
+    residueRange: [number, number] | null;
+    atom: string;
+    altloc: string | undefined;
+};
+
+export const parseCid = (cid: string): ParsedCID => {
+    const firstCid = cid.split("|")[0];
+    const cidArray = firstCid.split("/");
+    const model = cidArray[1] || "*";
+    const chain = cidArray[2] || "*";
+    const residuePart = cidArray[3];
+
+    let hasNumber = false;
+    let isRange = false;
+    let numb1: string | undefined;
+    let numb2: string | undefined;
+    let residueNumber: number | string = "*";
+    let residueName: string | undefined;
+    let residueRange: [number, number] | null = null;
+
+    if (residuePart) {
+        hasNumber = !!residuePart.match(/\d+/);
+        isRange = residuePart.includes("-");
+        residueName = residuePart.match(/\(([^)]+)\)/)?.[1] || undefined;
+
+        if (hasNumber) {
+            numb1 = residuePart.split("-")[0].split("(")[0];
+            residueNumber = parseInt(numb1);
+            if (isRange) {
+                numb2 = residuePart.split("-")[1].split("(")[0];
+                residueRange = [parseInt(numb1), parseInt(numb2)];
+            }
+        }
+    }
+
+    const atom = cidArray[4] || "";
+    const altloc = cidArray[4]?.split(":")[1] || undefined;
+
+    return {
+        model,
+        chain,
+        residueNumber,
+        residueName,
+        isRange,
+        residueRange,
+        atom,
+        altloc,
+    };
+}
+
+
+
 export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     //molNo, chain_id, res_no, ins_code, alt_conf
     const ResNameRegExp = /\(([^)]+)\)/;
@@ -466,12 +524,25 @@ export const getTooltipShortcutLabel = (shortCut: Shortcut): string => {
 };
 
 export function componentToHex(c: number): string {
-    const hex = c.toString(16);
+    // Values can arrive as floats (colour pickers/sliders) or out of the 0-255
+    // range. Round and clamp so toString(16) never produces a hex float like
+    // "4c.800033" or an overlong value.
+    const clamped = Math.max(0, Math.min(255, Math.round(c)));
+    const hex = clamped.toString(16);
     return hex.length === 1 ? "0" + hex : hex;
 }
 
-export function rgbToHex(r: number, g: number, b: number): string {
-    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+export function rgbToHex(r: number, g: number, b: number, noHashtag: boolean = false): string {
+    const hex = componentToHex(r) + componentToHex(g) + componentToHex(b);
+    return noHashtag ? hex : `#${hex}`;
+}
+
+export function rgbaToHex(r: number, g: number, b: number, a: number, noHashtag: boolean = false): string {
+    // Alpha is commonly given in the 0-1 range (colour-picker convention), but
+    // sometimes already scaled to 0-255. Normalise it before converting.
+    const alpha255 = a <= 1 ? Math.round(a * 255) : a;
+    const hex = componentToHex(r) + componentToHex(g) + componentToHex(b) + componentToHex(alpha255);
+    return noHashtag ? hex : `#${hex}`;
 }
 
 const getChainColourRamp = (residueCids: string[]) => {
@@ -512,6 +583,41 @@ const getBfactorColourRules = (
 
     const bFactorAttr = normaliseBFactors ? "normalised_bFactor" : "bFactor";
     return bFactors.map(item => `${item.cid}^${getColour(item[bFactorAttr])}`).join("|");
+};
+
+const getRMSDColourRules = (
+    RMSDValues: { cid: string; RMSD: number; }[]): string => {
+        const maxRMSD = Math.max(...RMSDValues.map(r => r.RMSD), 1e-6);
+
+        const getColour = (RMSD: number): string => {
+            const scaled = (RMSD / maxRMSD) * 100;
+            console.log("RMSD:", RMSD)
+            console.log("Max RMSD:", maxRMSD)
+            console.log("Scaled RMSD:", scaled)
+                let r: number, g: number, b: number;
+                if (scaled <= 25) {
+                    r = 0;
+                    g = Math.round(10.2 * scaled);
+                    b = 255;
+                } else if (scaled <= 50) {
+                    r = 0;
+                    g = 255;
+                    b = Math.round(scaled);
+                } else if (scaled <= 75) {
+                    r = Math.round(10.2 * (scaled - 50));
+                    g = 255;
+                    b = 0;
+                } else {
+                    r = 255;
+                    g = Math.round(510 - 10.2 * (scaled - 50));
+                    b = 0;
+                }
+                return rgbToHex(r, g, b);
+        };
+    console.log("RAW RMSD VALUES:", RMSDValues);
+    console.log(RMSDValues.map(item => `${item.cid}^${getColour(item.RMSD)}`).join("|"))
+    return RMSDValues.map(item => `${item.cid}^${getColour(item.RMSD)}`).join("|");
+
 };
 
 const getPlddtColourRules = (plddtList: { cid: string; bFactor: number }[]): string => {
@@ -610,6 +716,13 @@ export const getMultiColourRuleArgs = async (molecule: MoorhenMolecule, ruleType
         case "mol-symm":
             const ncsRelatedChains = await molecule.getNcsRelatedChains();
             multiRulesArgs = getNcsColourRules(ncsRelatedChains);
+            break;
+        case "RMSD":
+            const RMSDs = await molecule.getRMSDs();
+            console.log("RMSD sample:", RMSDs.slice(0, 10));
+            console.log("RMSD max:", Math.max(...RMSDs.map(r => r.rmsd)));
+            console.log("NaN count:", RMSDs.filter(r => isNaN(r.rmsd)).length);
+            multiRulesArgs = getRMSDColourRules(RMSDs);
             break;
         default:
             console.log("Unrecognised colour rule...");
@@ -775,7 +888,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     dashed: boolean = true,
     style: "cylinder" | "cone" = "cylinder",
     individualSizes?: number[],
-    dashedSteps: number = 15
+    dashedSteps: number = 15,
+    NEF?: boolean
 ) => {
     const atomPairs = atoms;
 
@@ -817,9 +931,9 @@ export const gemmiAtomPairsToCylindersInfo = (
         totTextIdxs.push(iat); // Meaningless, I think
         totTextPrimNorm.push(...[0, 0, 1]); // Also meaningless, I think
         totTextPrimPos.push(...[midpoint[0], midpoint[1], midpoint[2]]);
-
-        if (l > maxDist || l < minDist) continue;
-
+        if (NEF === false ){
+            if (l > maxDist || l < minDist) continue;
+            }
         for (let ip = 0; ip < colourScheme[`${at0.serial}`].length; ip++) {
             thisInstance_colours.push(colourScheme[`${at0.serial}`][ip]);
             totTextPrimCol.push(colourScheme[`${at0.serial}`][ip]);
@@ -955,6 +1069,7 @@ export const gemmiAtomsToCirclesSpheresInfo = (
 };
 
 export const findConsecutiveRanges = (numbers: number[]): [number, number][] => {
+    if (numbers.length === 0) return [];
     numbers.sort((a, b) => a - b);
     const ranges: [number, number][] = [];
 

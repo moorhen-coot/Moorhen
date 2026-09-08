@@ -129,7 +129,6 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
 
                 {enableChainSelect && (
                     <MoorhenChainSelect
-                        width=""
                         onChange={handleChainChange}
                         molecules={molecules}
                         selectedCoordMolNo={selectedModel}
@@ -139,7 +138,6 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
                     />
                 )}
                 <MoorhenMapSelect
-                    width=""
                     onChange={handleMapChange}
                     maps={maps}
                     ref={mapSelectRef}

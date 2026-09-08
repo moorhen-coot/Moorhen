@@ -10,6 +10,16 @@ import { MockMoorhenInstance } from '../__mocks__/mockMoorhenInstance'
 
 jest.setTimeout(60000)
 
+        const mockMoorhenInstance = {
+            store: MoorhenReduxStore,
+            paths: {
+                monomerLibraryPath: "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
+            },
+            commandCentre: new MockMoorhenCommandCentre(),
+            triggerMoleculeChanged: jest.fn()
+
+        }
+
 const fs = require('fs')
 const path = require('path')
 const {gzip, ungzip} = require('node-gzip');
@@ -100,7 +110,7 @@ describe("Testing MoorhenMolecule", () => {
 
     test("refineResiduesUsingAtomCidAnimated", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h-nitrobenzene.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, MoorhenReduxStore, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance)
         await molecule_1.loadToCootFromURL(fileUrl_1, 'mol-test-1')
 
         const ligandFileName_1 = path.join(__dirname, '..', 'test_data', 'full-nitrobenzene.cif')

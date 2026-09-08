@@ -3,17 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { RootState } from "@/store";
 import {
-    setAmbient,
-    setClipEnd,
-    setClipStart,
-    setDiffuse,
-    setFogEnd,
-    setFogStart,
-    setLightPosition,
-    setSpecular,
-    setSpecularPower,
-} from "../../store/glRefSlice";
-import {
+    resetSceneSettings,
     setBackgroundColor,
     setClipCap,
     setDepthBlurDepth,
@@ -28,13 +18,13 @@ import {
     setResetClippingFogging,
     setSsaoBias,
     setSsaoRadius,
-    setUseOffScreenBuffers,
+    setUseOffScreenBuffers,setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd , setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
@@ -286,11 +276,11 @@ const DepthBlurPanel = () => {
 
 const ClipFogPanel = () => {
     const dispatch = useDispatch();
-    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset);
-    const gl_fog_start = useSelector((state: moorhen.State) => state.glRef.fogStart);
-    const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd);
-    const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart);
-    const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd);
+    const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset);
+    const gl_fog_start = useSelector((state: moorhen.State) => state.sceneSettings.fogStart);
+    const gl_fog_end = useSelector((state: moorhen.State) => state.sceneSettings.fogEnd);
+    const clipStart = useSelector((state: moorhen.State) => state.sceneSettings.clipStart);
+    const clipEnd = useSelector((state: moorhen.State) => state.sceneSettings.clipEnd);
 
     const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap);
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
@@ -364,11 +354,11 @@ const ClipFogPanel = () => {
 };
 
 const LightingPanel = () => {
-    const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition);
-    const ambient = useSelector((state: moorhen.State) => state.glRef.ambient);
-    const specular = useSelector((state: moorhen.State) => state.glRef.specular);
-    const diffuse = useSelector((state: moorhen.State) => state.glRef.diffuse);
-    const specularPower = useSelector((state: moorhen.State) => state.glRef.specularPower);
+    const lightPosition = useSelector((state: moorhen.State) => state.sceneSettings.lightPosition);
+    const ambient = useSelector((state: moorhen.State) => state.sceneSettings.ambient);
+    const specular = useSelector((state: moorhen.State) => state.sceneSettings.specular);
+    const diffuse = useSelector((state: moorhen.State) => state.sceneSettings.diffuse);
+    const specularPower = useSelector((state: moorhen.State) => state.sceneSettings.specularPower);
 
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow);
 
@@ -448,8 +438,10 @@ export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "ve
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
     const panelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const [newSlidersMode, setNewSlidersMode] = useState<boolean>(true);
+    const dispatch = useDispatch();
     return (
         <MoorhenStack direction={props.stackDirection}>
+            <MoorhenButton onClick={() => dispatch(resetSceneSettings())} > Reset </MoorhenButton>
             <MoorhenToggle
                 label="Use new fog/clip/blur sliders"
                 checked={newSlidersMode}

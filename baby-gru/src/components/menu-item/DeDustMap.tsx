@@ -17,7 +17,6 @@ export const DedustMap = () => {
     const selectRef = useRef<HTMLSelectElement>(null);
     const moorhenInstance = useMoorhenInstance();
 
-
     const onCompleted = async () => {
         if (!selectRef.current?.value) {
             return;

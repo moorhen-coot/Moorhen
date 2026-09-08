@@ -19,7 +19,8 @@ The following libraries/programs are compiled to Web Assembly:
 * ssm (1.4.0)
 * mmdb2 (2.0.22)
 * gemmi 0.7.0
-* libcoot (commit hash specified in `VERSIONS`; latest release is 1.20) 
+* libcoot (commit hash specified in `VERSIONS`; latest release is 1.3.3)
+* Lhasa (commit 4e11ebf3b6)
 * fftw 2.1.5
 * fftw3 3.3.10
 * gsl 2.8
@@ -70,7 +71,7 @@ Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) 
 `git pull`  
 `./emsdk install latest`  
 `./emsdk activate latest`  
-(Moorhen is known to build successfully with emscripten version 5.0.3 - the 14th March 2026 release, and several earlier versions. There may have been a problem with 5.0.1)
+(Moorhen is known to build successfully with emscripten version 6.0.1 - the 22nd June 2026 release, and several earlier versions. There may have been a problem with 5.0.1)
 
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
