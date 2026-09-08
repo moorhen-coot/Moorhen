@@ -71,7 +71,7 @@ export const MoorhenQueryHitCard = (props: { data: GetPolimerInfoQuery; idx: num
             const colourRule = new ColourRule("af2-plddt", "//*", "#ffffff", moorhenInstance.commandCentre, true);
             colourRule.setLabel("PLDDT");
             const ruleArgs = await getMultiColourRuleArgs(newMolecule, "af2-plddt");
-            colourRule.setArgs([ruleArgs]);
+            colourRule.multiColourData = ruleArgs;
             colourRule.setParentMolecule(newMolecule);
             newMolecule.defaultColourRules = [colourRule];
         }
