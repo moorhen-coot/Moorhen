@@ -32,6 +32,12 @@
         <ul>
             <li>Open the first tutorial data (see <a href="getting-started.html">Getting Started</a> for how to do
                 this)</li>
+            <p>Moorhen displays a protein model with the associated electron density maps.</p>
+                        <p class="note-technical"><strong>Technical note:</strong> The blue map is a 2Fo−Fc-style map: it shows the
+                electron density overall. The green/red map is the difference (Fo−Fc) map: green (positive) density
+                appears where the data say atoms are missing, red (negative) where the model has atoms the data do not
+                support. The R-factor shown in the toast measures how well the model explains the measured diffraction
+                data (the lower the better), and it updates “on the fly” once the maps are connected to the model.</p>
         </ul>
 
 
@@ -55,6 +61,11 @@
                     src="../../assets/tutorial1/image6.png" />
             </p>
             <p>You will see that there are several interesting red spots.</p>
+
+            <p class="note-technical"><strong>Technical note:</strong> The Ramachandran plot shows one dot per residue,
+                placed by its two backbone torsion angles φ (phi) and ψ (psi). Most residues cluster in the small
+                “allowed” regions that correspond to α-helices and β-sheets. A dot falling outside them (shown red here)
+                flags unusual backbone geometry. It is a useful pointer to where the model may need fixing.</p>
 
             <ul>
                 <li>Let’s click on the spot at the middle top.</li>
@@ -87,10 +98,13 @@
                 <li>Click the <strong>Validation</strong> tab next to the <strong>Sequence</strong> tab.</li>
             </ul>
 
-            <p>After a quick loading, you will see a series of coloured bars for each residue in the model. The first
-                line is an overall geometry quality indicator, the second line is the density correlation for this
-                residue.</p>
+            <p>After a quick loading, you will see a series of coloured bars for each residue in the model.</p>
             <img class="image-column" src="../../assets/tutorial1/image7.png" />
+            <p class="note-technical"><strong>Technical note:</strong> Each row of the plot is a different validation
+                score plotted per residue. The first line is an overall geometry-quality indicator; the second line is
+                the density correlation for the residue, i.e. how well the model matches the map at that position. The
+                scores are coloured so that problem residues stand out, and hovering a bar shows the underlying
+                numbers.</p>
             <p>Hovering a residue bar chart will show a tool tip with extended data for the residue.</p>
 
             <ul>
@@ -127,8 +141,14 @@
 
         <section>
             <h2>Flipping a Peptide</h2>
+
+            <p class="note-technical"><strong>Technical note:</strong> A “peptide flip” rotates the plane of a peptide
+                bond by about 180° so that its carbonyl oxygen points the other way. It does not change the sequence,
+                but it can fix exactly the problems you have just seen: a carbonyl oxygens that are too close together
+                and Ramachandran outliers.</p>
+
             <ul>
-                <li>Click middle-mouse the N atom of residue A180</li>
+                <li>Click middle-mouse the N atom of residue A180</li></li>
                 <li>Click right-mouse on an atom in the peptide (O atom of 179)</li>
             </ul>
             <img class="image-column" src="../../assets/tutorial1/image11.png" alt="Peptide modelling menu" />
@@ -182,17 +202,20 @@
 
             <p>Now the local backbone fits quite nicely into the blue map (but the Ramachandran balls may not be completely
                 green).</p>
+
+            <p class="note-technical"><strong>Technical note:</strong> “Refine Residues” is real-space refinement: it
+                shifts the atoms of the chosen residue and its neighbours so the model fits the electron density better,
+                while keeping bond lengths, angles and other chemistry sensible (these constraints are called
+                restraints). It is the everyday fix-up step for the problems the validation tools have been flagging.</p>
         </section>
 
         <section>
             <h2>Connect the Maps: Updating Maps</h2>
-            <p>Right now the maps are static: they were calculated from the structure factors of our starting model and are not
-                recalculated when we modify the model.  Wouldn’t it be nice
-                though, if the difference map updated as you added atoms to the green blobs or removed them from the red
-                blobs? A good correction of the model would then make those blobs disappear.</p>
-            <p>Connect molecule and map allows you to update the maps as you modify the model, without having to recalculate them in another software</p>
-            
-
+            <p class="note-technical"><strong>Technical note:</strong> At first the maps are static: they were
+                calculated from the structure factors of the starting model and are not recalculated when you edit the
+                model. Connecting the molecule and map makes Moorhen keep the maps in step with your model as you build,
+                so the difference map flattens as you add atoms to the green blobs or remove them from the red blobs,
+                without having to recalculate the maps in another program.</p>
 
             <p>Let’s try that:</p>
 
@@ -222,9 +245,6 @@
             </ul>
 
             <p><em>Moorhen displays the difference map peaks in a waterfall plot</em></p>
-
-            <p>On the left of the waterfall plot are the most positive peaks (and if there were any the most negative
-                peaks would be displayed on the far right).</p>
 
             <p>It is useful to adjust the contour level to 0.64 (and 0.47 for the difference map).</p>
 
@@ -269,6 +289,12 @@
             <p>You will notice that they are mostly peaks of waters. We could add waters one by one, but a more
                 automated method is to do many at the same time.</p>
 
+            <p class="note-technical"><strong>Technical note:</strong> Ordered water molecules sit at fixed positions
+                around the protein, hydrogen-bonded to it, and they scatter X-rays like any other atom. A water left out
+                of the model therefore leaves a small, roughly spherical positive difference peak, usually at a
+                hydrogen-bonding distance (about 2.6–3.5 Å) from protein N/O atoms. Adding these waters improves the
+                model and flattens the difference map.</p>
+
             <ul>
                 <li><strong>Calculate</strong> → <strong>Add waters…</strong> → <strong>OK</strong></li>
             </ul>
@@ -300,8 +326,14 @@
 
             <p>Wooh! Pink sticks. Bad news!</p>
 
+            <p class="note-technical"><strong>Technical note:</strong> Contact dots show where non-bonded atoms just
+                touch (van der Waals contacts). When two atoms are pushed closer than the sum of their van der Waals
+                radii, Moorhen draws the interaction as a “clash”; the pink sticks here. Clashes mean strained, usually
+                wrong, geometry, and are a quick way to spot a problem such as a wrongly flipped peptide or a bad
+                rotamer.</p>
+
             <ul>
-                <li>Flip the peptide on the next rung of the helix — residue A197.</li>
+                <li>Flip the peptide on the next rung of the helix: residue A197.</li>
             </ul>
 
             <p><em>The contact dots between A194 and A197 disappear</em></p>
@@ -321,7 +353,7 @@
                 the map say?</p>
 
             <p>OK, so first let’s fill the side-chain with the atoms of the residue type implied by the main-chain
-                atoms — “TYR”.</p>
+                atoms: “TYR”.</p>
 
             <ul>
                 <li>Use right-mouse to get the context-sensitive menu and click on the “Auto-fit Rotamer” button (top
@@ -332,6 +364,12 @@
 
             <p>It suggests that the sequence of the model doesn’t match the sequence of the protein from which the data
                 were collected. OK, so let’s mutate it.</p>
+
+            <p class="note-technical"><strong>Technical note:</strong> If the density is clearly larger than, or a
+                different shape from, the side chain in the model, the residue was probably assigned the wrong type in
+                the sequence. Left-over positive density after an “Auto-fit Rotamer” is a strong hint of this. Mutating
+                to the residue whose side chain best matches the density (here ALA → PHE) fixes both the model and the
+                difference map.</p>
 
             <ul>
                 <li>In the context-sensitive menu, click the “Mutate Residue” button (it’s the radtion symbol), then
@@ -372,6 +410,12 @@
 
             <p><em>Moorhen displays rotamer dodecamers coloured by rotamer probability</em></p>
 
+            <p class="note-technical"><strong>Technical note:</strong> A rotamer is one of the common low-energy
+                conformations of a side chain, defined by its χ (chi) torsion angles. Around each side chain Moorhen
+                draws a “dodec” (a dodecahedron) coloured by how probable that rotamer is: green is likely,
+                yellow/orange less likely, red very unlikely. “Auto-fit Rotamer” tries a ranked set of rotamers and
+                keeps the best one, judged by both probability and fit to the density.</p>
+
             <p>Yellow is not so high probability. Can we find something with higher probability than the current
                 rotamer?</p>
 
@@ -409,6 +453,12 @@
             </ul>
 
             <p><em>Moorhen imports the LZA ligand</em></p>
+
+            <p class="note-technical"><strong>Technical note:</strong> A ligand can only be placed and refined if
+                Moorhen knows its chemistry. “Get Monomer” fetches the LZA entry from the standard restraints
+                dictionary, which defines the ligand’s atoms and its ideal bond lengths and angles; these restraints
+                keep the ligand sensible while it is being fitted. “Find ligand” (used later) then searches the
+                difference density for a matching blob.</p>
 
             <p>OK, fine. Now let’s undisplay it:</p>
 

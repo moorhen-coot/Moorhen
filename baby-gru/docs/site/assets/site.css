@@ -11,6 +11,8 @@
     --button-text: #fff;
     --note-bg: #fff8e1;
     --note-border: #ffe08a;
+    --note-tech-bg: #e8f1fb;
+    --note-tech-border: #9ec4e6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -27,6 +29,8 @@
         --button-text: #fff;
         --note-bg: #3a3320;
         --note-border: #7a6a2e;
+        --note-tech-bg: #1d2b3a;
+        --note-tech-border: #4a7ba6;
     }
 }
 
@@ -44,6 +48,8 @@
     --button-text: #fff;
     --note-bg: #3a3320;
     --note-border: #7a6a2e;
+    --note-tech-bg: #1d2b3a;
+    --note-tech-border: #4a7ba6;
 }
 
 :root[data-theme="light"] {
@@ -59,6 +65,8 @@
     --button-text: #fff;
     --note-bg: #fff8e1;
     --note-border: #ffe08a;
+    --note-tech-bg: #e8f1fb;
+    --note-tech-border: #9ec4e6;
 }
 
 body {
@@ -165,6 +173,14 @@ a.button:hover {
 .note {
     background: var(--note-bg);
     border: 1px solid var(--note-border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+}
+
+.note-technical {
+    background: var(--note-tech-bg);
+    border: 1px solid var(--note-tech-border);
+    border-left: 4px solid var(--note-tech-border);
     border-radius: 6px;
     padding: 0.75rem 1rem;
 }

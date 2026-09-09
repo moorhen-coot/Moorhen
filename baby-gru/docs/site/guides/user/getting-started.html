@@ -41,10 +41,12 @@
             </ul>
             <img class="image-column" src="../../assets/getstart/image1.png" alt="Moorhen with the tutorial model and maps loaded" />
 
-            <p><em>Moorhen displays a protein model, a blue 2Fo-Fc-style map and an Fo-Fc-style map in green (positive)
-                    and red (negative).  In crystallography, the difference map (Fo−Fc) shows green
-                (positive) peaks where the model has too little electron density—i.e. where atoms should be added—and red
-                (negative) peaks where it has too much density—i.e. where atoms should be removed. </em></p>
+            <p><em>Moorhen displays a protein model with a blue 2Fo−Fc-style map and a green/red Fo−Fc-style difference
+                    map.</em></p>
+
+            <p class="note-technical"><strong>Technical note:</strong> The difference (Fo−Fc) map shows green (positive)
+                peaks where the model has too little electron density, i.e. where atoms should be added, and red
+                (negative) peaks where it has too much density, i.e. where atoms should be removed.</p>
 
             <ul>
                 <li>Use Left-Mouse click and drag to rotate the view. (just click and drag, when using at trackpad)</li>
@@ -71,7 +73,7 @@
         <section>
 
             <h2>Search Bar</h2>
-            <p>If you have forgotten where a function is located, it can be searched for using the search bar — a quick
+            <p>If you have forgotten where a function is located, it can be searched for using the search bar: a quick
                 way to find what you are looking for.</p>
 
             <ul>
@@ -118,6 +120,12 @@
             <p>The Maps panel opens. The top panel shows the current maps loaded in the session. The 2Fo-Fc-style map has
                 a blue icon and the difference map has an icon with red and green. Use the sliders to adjust the contour
                 level:</p>
+
+            <p class="note-technical"><strong>Technical note:</strong> The contour level is the density threshold at
+                which the map is drawn, raise it to show only the strongest features, lower it to reveal weaker
+                density. Moorhen quotes each level twice: as an absolute density value and as a multiple of the map rmsd
+                (its noise level). The suggested values below (0.42/1.40 rmsd for the 2Fo−Fc map, and 0.53/3.6 rmsd for
+                the difference map) are good starting points.</p>
 
             <ul>
                 <li>Click or slide the slider for the 2Fo-Fc map so that the level is about 0.42 (1.40 rmsd) or
