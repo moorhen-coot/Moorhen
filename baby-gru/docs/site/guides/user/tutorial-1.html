@@ -32,12 +32,19 @@
         <ul>
             <li>Open the first tutorial data (see <a href="getting-started.html">Getting Started</a> for how to do
                 this)</li>
-            <p>Moorhen displays a protein model with the associated electron density maps.</p>
-                        <p class="note-technical"><strong>Technical note:</strong> The blue map is a 2Fo−Fc-style map: it shows the
+            <p>Moorhen displays a protein model with the associated electron density maps in blue and green/red.</p>
+            <img class="image-column" src="../../assets/tutorial1/image1.png"
+                alt="Moorhen with the tutorial model and maps loaded" />
+            <div class="image-pair">
+                <img width="35%" class="image-inline" src="../../assets/tutorial1/pos-density.png"
+                    alt="Moorhen with the tutorial model and maps loaded" />
+                <img class="image-inline" width="35%" src="../../assets/tutorial1/neg-density.png"
+                    alt="Moorhen with the tutorial model and maps loaded" />
+            </div>
+            <p class="note-technical"><strong>Technical note:</strong> The blue map is a 2Fo−Fc-style map: it shows the
                 electron density overall. The green/red map is the difference (Fo−Fc) map: green (positive) density
                 appears where the data say atoms are missing, red (negative) where the model has atoms the data do not
-                support. The R-factor shown in the toast measures how well the model explains the measured diffraction
-                data (the lower the better), and it updates “on the fly” once the maps are connected to the model.</p>
+                support. These are the issues we will try to fix during manual refinement.</p>
         </ul>
 
 
@@ -148,7 +155,8 @@
                 and Ramachandran outliers.</p>
 
             <ul>
-                <li>Click middle-mouse the N atom of residue A180</li></li>
+                <li>Click middle-mouse the N atom of residue A180</li>
+                </li>
                 <li>Click right-mouse on an atom in the peptide (O atom of 179)</li>
             </ul>
             <img class="image-column" src="../../assets/tutorial1/image11.png" alt="Peptide modelling menu" />
@@ -200,13 +208,15 @@
 
             <p><em>Moorhen refines residues along the chain</em></p>
 
-            <p>Now the local backbone fits quite nicely into the blue map (but the Ramachandran balls may not be completely
+            <p>Now the local backbone fits quite nicely into the blue map (but the Ramachandran balls may not be
+                completely
                 green).</p>
 
             <p class="note-technical"><strong>Technical note:</strong> “Refine Residues” is real-space refinement: it
                 shifts the atoms of the chosen residue and its neighbours so the model fits the electron density better,
                 while keeping bond lengths, angles and other chemistry sensible (these constraints are called
-                restraints). It is the everyday fix-up step for the problems the validation tools have been flagging.</p>
+                restraints). It is the everyday fix-up step for the problems the validation tools have been flagging.
+            </p>
         </section>
 
         <section>
@@ -226,12 +236,13 @@
                 </li>
             </ul>
 
-            <p><em>Moorhen will display a “toast” top left informing you of the current R-factor and the number of
+            <p><em>Moorhen will display a dialog top right informing you of the current R-factor, R-free and the number of
                     Moorhen points that you have collected (so far none, because we have just started)</em></p>
 
-            <p class="note"><strong>Note</strong>: Using updating/connected maps will slow down the model-building process somewhat
+            <p class="note"><strong>Note</strong>: Using updating/connected maps will slow down the model-building
+                process somewhat
                 but we now have the advantage of collection Moorhen points and watching the R-factor go down as we make
-                changes. Moorhen points indicate progress in flattening the difference map.</p>
+                changes. Moorhen points are awarded as you make progress.</p>
         </section>
 
         <section>
@@ -264,7 +275,7 @@
             </ul>
 
             <p><em>As we do so, Moorhen makes several updates. It moves the model, it updates the maps in the light of
-                    the new model, it updates the Ramachandran balls so that they are both green now. In the toast,
+                    the new model, it updates the Ramachandran balls so that they are both green now. In top right dialog
                     it updates the R-factor (a tiny amount) and gives us some Moorhen points.</em></p>
 
             <p>Flipping a peptide to the correct orientation generally gives you 15-20 Moorhen points.</p>
@@ -277,7 +288,8 @@
                     to flip the peptide when you hover of an atom of the residue and see golden balls.</li>
             </ul>
 
-            <p><em>As before, the Ramachandran balls update, the maps update (the green blob disappears), the R-factor updates
+            <p><em>As before, the Ramachandran balls update, the maps update (the green blob disappears), the R-factor
+                    updates
                     and we get more Moorhen points.</em></p>
 
             <p>You will notice that that the Difference Map Peaks graph has been updated too - the leftmost peak has
@@ -299,7 +311,7 @@
                 <li><strong>Calculate</strong> → <strong>Add waters…</strong> → <strong>OK</strong></li>
             </ul>
 
-            <p>This will add around 100 waters. As above, the maps and the R-factors will update and we will get
+            <p>This will add around 50 waters. As above, the maps and the R-factors will update and we will get
                 many Moorhen points. The map should improve a bit so that the ligand is more easy to make out.</p>
         </section>
 
@@ -323,6 +335,7 @@
             </ul>
 
             <p><em>Moorhen display contact dots and clash interactions</em></p>
+            <img class="image-column" src="../../assets/tutorial1/contact-dots.png" alt="Contact dots and clashes" />
 
             <p>Wooh! Pink sticks. Bad news!</p>
 
@@ -432,6 +445,11 @@
             <ul>
                 <li>Fix the rotamer using “Auto-fit Rotamer” as before.</li>
             </ul>
+
+            <p class="note-technical"><strong>Technical note2:</strong> Some residues such as lysine or arginine have
+                long, flexible side chains that can adopt a large variety of rotamers, for those an improbable rotamer
+                might not be a strong indicator of "badness", density fit to the map should always be the ultimate judge
+            </p>
         </section>
 
         <section>
@@ -550,7 +568,10 @@
                 <li>Use keyboard “S” to activate the “in application” screen capture.</li>
             </ul>
 
-            <p class="note"><strong>Pretty picture:</strong> You can change many of the *image parameters in the <strong>View</strong> -> <strong>Scene Settings</strong> panel. For example, you can change the background colour, the lighting, add some outline...</p>
+            <p class="note"><strong>Pretty picture:</strong> You can change many of the *image parameters in the
+                <strong>View</strong> -> <strong>Scene Settings</strong> panel. For example, you can change the
+                background colour, the lighting, add some outline...
+            </p>
         </section>
 
         <section>

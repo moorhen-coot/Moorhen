@@ -234,3 +234,19 @@ a.button:hover {
     display: inline;
     vertical-align: middle;
 }
+
+/* container that lays two inline images out side by side */
+.image-pair {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: 0.85rem 0;
+}
+
+.image-pair img {
+    width: 48%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
