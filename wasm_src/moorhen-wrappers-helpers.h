@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <cstdio>
 #include <string.h>
 #include <errno.h>
 #include <zlib.h>
@@ -31,6 +32,7 @@
 #include <cctype>
 #include <gemmi/mmdb.hpp>
 #include <gemmi/mmcif.hpp>
+
 #include <gemmi/to_mmcif.hpp>
 #include <gemmi/to_cif.hpp>
 #include <gemmi/read_cif.hpp>
@@ -452,8 +454,13 @@ class molecules_container_js : public molecules_container_t {
         }
 
         std::string get_validation(int imol){
-            mmdb::Manager *mol = get_mol(imol);
-            auto st = gemmi::copy_from_mmdb(mol);
+            // mmdb::Manager *mol = get_mol(imol);
+            // auto st = gemmi::copy_from_mmdb(mol);
+
+            writePDBASCII(imol, "temp.pdb");
+            auto st = gemmi::read_structure_file("temp.pdb");
+            std::remove("temp.pdb");
+
             size_t model_index = 0;
             std::map<gemmi::Atom*, std::vector<double>> atom_zs;
             std::map<gemmi::Atom*, std::vector<double>> atom_zs_bonds;
@@ -482,6 +489,8 @@ class molecules_container_js : public molecules_container_t {
             monlib.read_monomer_lib(monomer_dir, resnames, logger);
             auto hchange = gemmi::HydrogenChange::NoChange;
             auto reorder = false;
+            auto str =gemmi::make_pdb_string(st);
+
             auto topo = gemmi::prepare_topology(st, monlib, model_index, hchange, reorder);
             std::vector<gemmi::Topo::Bond> outlier_bonds;
             std::vector<gemmi::Topo::Angle> outlier_angles;
