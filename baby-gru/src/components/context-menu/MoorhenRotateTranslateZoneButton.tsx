@@ -71,7 +71,6 @@ export const MoorhenRotateTranslateZoneButton = (props: ContextButtonProps) => {
                     props.setDefaultActionButtonSettings({ key: "rotateTranslate", value: newValue });
                 },
             }}
-            onExit={() => { moorhenInstance.triggerMoleculeChanged(chosenMolecule.current?.uniqueId, "modify") }}
             {...props}
         />
     );

@@ -108,7 +108,6 @@ export const MoorhenDragAtomsButton = (props: ContextButtonProps) => {
             refineAfterMod={false}
             needsMapData={true}
             nonCootCommand={nonCootCommand}
-            onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "refine")}
             {...props}
         />
     );
