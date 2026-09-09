@@ -17,8 +17,8 @@
         "default": {
             "staticFiles": {
                 "include": [
-                    "./documentation/docs.styles.css",
-                    "./documentation/theme-toggle.js",
+                    "./docs/docs.styles.css",
+                    "./docs/theme-toggle.js",
                     "./public/MoorhenAssets/pixmaps/MoorhenLogo.png"
                 ]
             }
