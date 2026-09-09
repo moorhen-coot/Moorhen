@@ -1,6 +1,6 @@
 import Fuse from "fuse.js";
 import { useDispatch, useSelector } from "react-redux";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useMoorhenInstance } from "@/InstanceManager";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive, setShortCutsBlocked } from "../../store/globalUISlice";
@@ -9,6 +9,20 @@ import { MoorhenClickAwayListener } from "../interface-base/utils/ClickAwayListe
 import { MenuFromItems } from "./MenuFromItems";
 import "./search-bar.css";
 import { MenuItemType } from "./subMenuConfig";
+
+const fuseOptions = {
+    keys: [
+        { name: "label", weight: 1 },
+        { name: "keywords", weight: 0.5 },
+        { name: "description", weight: 0.25 },
+    ],
+    threshold: 0.3,
+    includeScore: true,
+    minMatchCharLength: 1,
+    useExtendedSearch: true,
+    findAllMatches: true,
+    ignoreDiacritics: true,
+};
 
 export const MoorhenSearchBar = () => {
     const open = useSelector((state: RootState) => state.globalUI.isSearchBarActive);
@@ -19,23 +33,32 @@ export const MoorhenSearchBar = () => {
     const menuSystem = moorhenInstance.menuSystem;
 
     // Set up Fuse.js options for label, keywords, description (priority order)
-    const fuseOptions = {
-        keys: [
-            { name: "label", weight: 1 },
-            { name: "keywords", weight: 0.5 },
-            { name: "description", weight: 0.25 },
-        ],
-        threshold: 0.3,
-        includeScore: true,
-        minMatchCharLength: 1,
-        useExtendedSearch: true,
-        findAllMatches: true,
-        ignoreDiacritics: true,
-    };
+
+    const _shortCuts = useSelector((state: RootState) => state.shortcutSettings.shortCuts);
+    const shortCuts = JSON.parse(_shortCuts as string) as Record<string, { keyPress: string; modifiers: string[]; label: string }>;
+    const shortcutAsMenuItems = useMemo(() => {
+        return Object.entries(shortCuts).map(([key, value]) => {
+            return {
+                type: "customJSX",
+                label: `${value.label} ${value.keyPress} ${(value.modifiers.join(" ")).replaceAll("Key", "")}`,
+                jsx: () => (
+                    <div className="moorhen__search-bar-shortcut-item">
+                        <strong>Shortcut:&nbsp;</strong> {value.label} &nbsp;&nbsp; <strong>{(value.modifiers.join(" ")).replaceAll("Key", "")} {value.keyPress}</strong>
+                    </div>
+                ),
+            };
+        });
+    }, [shortCuts]);
+
+    console.log("shortCuts", shortCuts);
+
+    const fuse = useMemo(
+        () => new Fuse([...menuSystem.getAllItems(), ...shortcutAsMenuItems], fuseOptions),
+        [menuSystem, shortcutAsMenuItems]
+    );
 
     const getResults = () => {
         if (query.length > 1) {
-            const fuse = new Fuse(menuSystem.getAllItems(), fuseOptions);
             const fuseResults = fuse.search(query);
             const _results = fuseResults.map(r => r.item);
             const uniqueResults = _results.filter((item, pos) => {
