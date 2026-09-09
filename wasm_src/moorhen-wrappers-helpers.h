@@ -489,7 +489,6 @@ class molecules_container_js : public molecules_container_t {
             monlib.read_monomer_lib(monomer_dir, resnames, logger);
             auto hchange = gemmi::HydrogenChange::NoChange;
             auto reorder = false;
-            auto str =gemmi::make_pdb_string(st);
 
             auto topo = gemmi::prepare_topology(st, monlib, model_index, hchange, reorder);
             std::vector<gemmi::Topo::Bond> outlier_bonds;
