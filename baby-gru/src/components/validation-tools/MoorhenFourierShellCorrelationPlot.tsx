@@ -7,13 +7,12 @@ import { useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { MoorhenButton } from "@/components/inputs"
 import { useMoorhenInstance } from "../../InstanceManager";
+import { MoorhenStack } from "../interface-base";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
 
-export const MoorhenFourierShellCorrelationPlot = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-}) => {
+export const MoorhenFourierShellCorrelationPlot = () => {
     const moorhenInstance = useMoorhenInstance();
     const chartCardRef = useRef<HTMLDivElement>(null);
     const chartBoxRef = useRef<HTMLDivElement>(null);
@@ -137,13 +136,13 @@ export const MoorhenFourierShellCorrelationPlot = (props: {
     }, [plotData, backgroundColor, isDark, height, width])
 
     return  <Fragment>
-                <>
+                <MoorhenStack gap="0.5rem">
                     <MoorhenMapSelect label="Map 1" onChange={handleMap1Change} maps={maps} ref={map1SelectRef}/>
                     <MoorhenMapSelect label="Map 2" onChange={handleMap2Change} maps={maps} ref={map2SelectRef}/>
-                    <MoorhenButton variant="secondary" size='lg' onClick={fetchData} style={{width: '80%', marginTop:'10%'}}>
+                </MoorhenStack>
+                    <MoorhenButton variant="secondary" size='lg' onClick={fetchData} style={{ marginLeft: "0.5rem" }}>
                         Plot
                     </MoorhenButton>
-                </>
                 <div ref={chartCardRef} className="validation-plot-div" >
                     <div ref={chartBoxRef} style={{height: '100%'}} className="chartBox" id="fsc-chart-box">
                         <div ref={containerRef} className="validation-plot-container" style={{height: '100%', overflowX: 'auto'}}>

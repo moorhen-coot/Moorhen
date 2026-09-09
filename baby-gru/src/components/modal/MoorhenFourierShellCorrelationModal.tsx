@@ -19,7 +19,7 @@ export const MoorhenFourierShellCorrelationModal = (props: ModalComponentProps) 
                 top={height / 3}
                 minHeight={convertViewtoPx(30, height)}
                 minWidth={convertRemToPx(37)}
-                maxHeight={convertViewtoPx(90, height)}
+                maxHeight={convertViewtoPx(80, height)}
                 maxWidth={convertViewtoPx(80, width)}
                 enforceMaxBodyDimensions={false}
                 overflowY='hidden'
@@ -29,7 +29,7 @@ export const MoorhenFourierShellCorrelationModal = (props: ModalComponentProps) 
                 resizeNodeRef={resizeNodeRef}
                 body={
                     <div style={{height: '100%'}} >
-                         <MoorhenFourierShellCorrelationPlot {...props}/>
+                         <MoorhenFourierShellCorrelationPlot/>
                     </div>
                 }
             />
