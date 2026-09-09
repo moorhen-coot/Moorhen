@@ -6,6 +6,7 @@ import { convertViewtoPx } from '../../utils/utils'
 import { useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
 import { MoorhenButton } from "@/components/inputs"
+import { useMoorhenInstance } from "../../InstanceManager";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -13,6 +14,7 @@ Chart.register(annotationPlugin);
 export const MoorhenFourierShellCorrelationPlot = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
+    const moorhenInstance = useMoorhenInstance();
     const chartCardRef = useRef<HTMLDivElement>(null);
     const chartBoxRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -47,7 +49,7 @@ export const MoorhenFourierShellCorrelationPlot = (props: {
             return
         }
         
-        const response = await props.commandCentre.current.cootCommand({
+        const response = await moorhenInstance.commandCentre.cootCommand({
             message: 'coot_command',
             command: 'fourier_shell_correlation',
             returnType: 'fsc_result',
