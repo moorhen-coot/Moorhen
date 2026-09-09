@@ -575,6 +575,19 @@ const stringArrayToJSArray = (stringArray: emscriptem.vector<string>) => {
     return returnResult;
 }
 
+const fscResultToJSArray = (numberPairsVector: emscriptem.vector<libcootApi.PairType<number, number>>) : {x:number,y:number}[] => {
+    const res = []
+    const arrSize = numberPairsVector.size()
+    for(let i = 0; i < arrSize; i++) {
+        const resPair = numberPairsVector.get(i)
+        const first = resPair.first
+        const second = resPair.second
+        res.push({x:first,y:second})
+    }
+    numberPairsVector.delete()
+    return res
+}
+
 const export_map_as_mesh_file = (imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileType: string) => {
     let fn
     let suffix
@@ -1445,6 +1458,9 @@ const doCootCommand = (messageData: {
                 break;
             case 'mmrrcc_stats':
                 returnResult = mmrrccStatsToJSArray(cootResult)
+                break;
+            case 'fsc_result':
+                returnResult = fscResultToJSArray(cootResult)
                 break;
             case 'colour_rules':
                 returnResult = colourRulesToJSArray(cootResult)
