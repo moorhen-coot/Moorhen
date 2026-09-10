@@ -171,6 +171,8 @@ export const MoorhenMMRRCCPlot = () => {
             }
         });
 
+        const simpleLabels = sequenceData.map(residue => residue.resNum);
+
         const barWidth = convertViewtoPx(35, width) / 40;
         const tooltipFontSize = 12;
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60;
@@ -186,14 +188,12 @@ export const MoorhenMMRRCCPlot = () => {
                 beginAtZero: true,
                 display: true,
                 ticks: {
-                    color: isDark ? "white" : "black",
-                    font: {
-                        size: barWidth,
-                        family: "Helvetica",
-                    },
-                    maxRotation: 0,
-                    minRotation: 0,
                     autoSkip: false,
+                    minRotation: 0,
+                    maxRotation: 0,
+                    callback: function(value, index) {
+                        return index % 20 === 0 ? simpleLabels[index] : '';
+                    }
                 },
                 grid: {
                     display: false,
@@ -255,6 +255,11 @@ export const MoorhenMMRRCCPlot = () => {
                 datasets: datasets,
             },
             options: {
+                layout: {
+                    padding: {
+                        bottom: 70
+                    }
+                },
                 plugins: {
                     legend: {
                         display: false,
