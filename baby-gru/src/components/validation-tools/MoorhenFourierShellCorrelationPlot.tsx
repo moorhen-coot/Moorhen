@@ -107,7 +107,7 @@ export const MoorhenFourierShellCorrelationPlot = () => {
                 x: {
                   ticks: {
                     callback: function(value) {
-                        const x = Number(this.getLabelForValue(value));
+                        const x = Number(this.getLabelForValue(parseFloat(String(value))))
                         return Math.sqrt(x).toFixed(3);
                     }
                   }
