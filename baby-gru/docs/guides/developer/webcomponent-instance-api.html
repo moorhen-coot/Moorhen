@@ -138,16 +138,17 @@
 
         <p>
             Molecules and maps are loaded through <code>moorhenInstance.files.loadFiles()</code>. It accepts one or
-            more URLs (or <code>File</code>s, strings, <code>URL</code>s&hellip;) and returns a result per file telling
-            you what was loaded and how to refer to it:
+            more URLs (or <code>File</code>s, strings, <code>URL</code>s&hellip;) and resolves to a
+            <a href="../../api/types/WebComponent_entry.LoadFilesResult.html"><code>LoadFilesResult</code></a>:
+            one entry per successfully loaded file, telling you what was loaded and how to refer to it.
         </p>
 
-        <pre class="code-block" data-lang="typescript"><code>interface LoadFilesResult {
+        <pre class="code-block" data-lang="typescript"><code>type LoadFilesResult = {
     type: "molecule" | "map";
     uniqueID: string;   // use this to refer to the molecule/map later
     molNo: number;
     fileName: string;
-}</code></pre>
+}[];   // one entry per file</code></pre>
 
         <p>
             The example below fetches the structure and the two maps of the PDB entry <code>7AVK</code> straight from

@@ -117,8 +117,10 @@ stopHover();</code></pre>
         <h2>3. Molecule changed</h2>
 
         <p>
-            <code>newMoleculeChangedCallback(callback, moleculeUid?)</code> fires when a molecule is created, added,
-            deleted, modified or refined:
+            <code>newMoleculeChangedCallback(callback, moleculeUid?)</code> fires when one of Moorhen&rsquo;s editing
+            actions changes a molecule: mutate, refine, delete, add waters, rotamer changes and so on. Note that
+            simply <em>loading</em> a file does not fire it. Use the
+            <a href="#files-loaded">files-loaded callback</a> for that.
         </p>
 
         <pre class="code-block" data-lang="typescript"><code>const stopChanges = moorhenInstance.newMoleculeChangedCallback(
@@ -149,27 +151,30 @@ stopChanges();</code></pre>
     </section>
 
     <section>
-        <h2>4. Files loaded</h2>
+        <h2 id="files-loaded">4. Files loaded</h2>
 
         <p>
             The files group has its own callback,
-            <code>moorhenInstance.files.newFilesLoadedCallback(callback)</code>, which fires once per file that
-            finishes loading:
+            <code>moorhenInstance.files.newFilesLoadedCallback(callback)</code>. It runs once per
+            <code>loadFiles()</code> call, with the array of results for the files that loaded:
         </p>
 
-        <pre class="code-block" data-lang="typescript"><code>const stopFiles = moorhenInstance.files.newFilesLoadedCallback((file, origin) =&gt; {
-    console.log(`Loaded ${file.fileName} (${file.type}) as ${file.uniqueID} from "${origin}"`);
+        <pre class="code-block" data-lang="typescript"><code>const stopFiles = moorhenInstance.files.newFilesLoadedCallback((files, origin) =&gt; {
+    for (const file of files) {
+        console.log(`Loaded ${file.fileName} (${file.type}) as ${file.uniqueID} from "${origin}"`);
+    }
 });
 
 // Later, to stop listening:
 stopFiles();</code></pre>
 
         <p>
-            <code>file</code> is a
-            <a href="../../api/types/WebComponent_entry.LoadFilesResult.html"><code>LoadFilesResult</code></a>, the same
-            shape returned by <code>loadFiles()</code>. The second argument is the optional <code>origin</code> label
-            you pass to <code>loadFiles()</code>, which is handy when several parts of your app load files and you want
-            to tell them apart:
+            <code>files</code> is a
+            <a href="../../api/types/WebComponent_entry.LoadFilesResult.html"><code>LoadFilesResult</code></a>, the
+            same value returned by <code>loadFiles()</code>. The second argument is the optional
+            <code>origin</code> label you pass to <code>loadFiles()</code> (it defaults to
+            <code>"unknown"</code>), which is handy when several parts of your app load files and you want to tell
+            them apart:
         </p>
 
         <pre class="code-block" data-lang="typescript"><code>moorhenInstance.files.loadFiles(
