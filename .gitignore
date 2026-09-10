@@ -587,7 +587,7 @@ baby-gru/copyForDist.sh
 baby-gru/public/baby-gru/data.tar.gz
 baby-gru/public/baby-gru/CootWorker.js
 baby-gru/public/baby-gru/Components-inchikey.ich
-baby-gru/docs/site/api
+baby-gru/docs/api
 baby-gru/src/version.js
 react-app/public/wasm/web_example.js
 baby-gru/src/protobuf/MoorhenSession.js
