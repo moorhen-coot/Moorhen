@@ -218,6 +218,41 @@ await moorhenInstance.representation.delete(repUid);</code></pre>
 
         <pre class="code-block" data-lang="typescript"><code>moorhenInstance.sceneSettings.setBackgroundColor([0.85, 0.9, 1.0, 255]);</code></pre>
 
+        <h3 id="page-theme">Matching your page theme</h3>
+
+        <p>
+            A nice touch is to let the viewport follow the light/dark theme of your page. Keep the theme state
+            wherever it already lives, pick a background colour per theme, and push it into Moorhen once at
+            startup and again on every change:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>type Theme = "light" | "dark";
+
+// RGB from 0 to 1, alpha from 0 to 255.
+const BACKGROUNDS: Record&lt;Theme, [number, number, number, number]&gt; = {
+    light: [1, 1, 1, 255],
+    dark: [27 / 255, 30 / 255, 34 / 255, 255], // #1b1e22
+};
+
+function applyTheme(theme: Theme) {
+    moorhenInstance.sceneSettings.setBackgroundColor(BACKGROUNDS[theme]);
+}
+
+// Once for the theme that is already active, then for every later change.
+// These two helpers are your own theme code.
+applyTheme(currentTheme);
+onThemeChange(applyTheme);</code></pre>
+
+        <p class="note">
+            <strong>Runnable examples:</strong> the plain TypeScript project
+            <a href="https://github.com/cdegut/MoorhenWebComponent" target="_blank"
+                rel="noopener noreferrer">MoorhenWebComponent</a> wires its theme toggle to
+            <code>setBackgroundColor()</code> exactly like this, and the React project
+            <a href="https://github.com/cdegut/MoorhenWebComponentReact" target="_blank"
+                rel="noopener noreferrer">MoorhenWebComponentReact</a> does the same from a
+            <code>useEffect</code>.
+        </p>
+
         <p class="note-technical">
             <strong>API tip:</strong> <code>centerOnResidue</code>, <code>centerOnAtom</code> and
             <code>centerOnCoordinate</code> are methods of
