@@ -8,7 +8,7 @@
     ],
     "entryPointStrategy": "resolve",
     "tsconfig": "./tsconfig.json",
-    "out": "docs/site/api",
+    "out": "docs/api",
     "readme": "none",
     "includeVersion": true,
     "excludePrivate": true,
