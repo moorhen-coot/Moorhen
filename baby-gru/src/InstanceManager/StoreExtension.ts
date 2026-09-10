@@ -101,7 +101,7 @@ export class StoreExtension {
             dispatch(setShowHoverInfo(value));
             },
             /** Display the side panel corresponding to the provided ID, or hide the side panel if the payload is null.
-            @value SidePanelIDs | null */
+            @param value SidePanelIDs | null */
             setShownSidePanel(value:SidePanelIDs | null){
             dispatch(setShownSidePanel(value));
             },
@@ -426,7 +426,7 @@ export class StoreExtension {
             dispatch(setMultiViewRows(value));
             },
             /** Set the origin of the scene to the provided coordinates.
-            @value [number, number, number] X, Y, Z coordinates */
+            @param value [number, number, number] X, Y, Z coordinates */
             setOrigin(value:[number, number, number]){
             dispatch(setOrigin(value));
             },
@@ -457,7 +457,7 @@ export class StoreExtension {
             setWidth(value:number){
             dispatch(setWidth(value));
             },
-            /** @zoom level 1 = 22A
+            /** @param zoom level 1 = 22A
             or A/22 */
             setZoom(value:number){
             dispatch(setZoom(value));
@@ -478,10 +478,10 @@ export class StoreExtension {
             dispatch(closeSnackbar(value));
             },
             /** Display a message on the interface with the provided content and styling options.
-            @message The content of the message to be displayed.
-            @variant The styling variant for the message, which can be "success", "error", "warning", or "info". Defaults to "info" if not provided.
-            @autoHideDuration The duration in milliseconds for which the message should be displayed before automatically hiding. If null, the message will not auto-hide. Defaults to 6000 milliseconds if not provided.
-            @uid An optional unique identifier for the message. If not provided, a unique ID will be generated using the current timestamp and a random number. */
+            @param message The content of the message to be displayed.
+            @param variant The styling variant for the message, which can be "success", "error", "warning", or "info". Defaults to "info" if not provided.
+            @param autoHideDuration The duration in milliseconds for which the message should be displayed before automatically hiding. If null, the message will not auto-hide. Defaults to 6000 milliseconds if not provided.
+            @param uid An optional unique identifier for the message. If not provided, a unique ID will be generated using the current timestamp and a random number. */
             enqueueSnackbar(value:SnackbarPayload){
             dispatch(enqueueSnackbar(value));
             },

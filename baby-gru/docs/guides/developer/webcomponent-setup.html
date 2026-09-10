@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Setting up the WebComponent - Moorhen Developer Guide</title>
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/theme-toggle.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+    <img src="../../assets/MoorhenLogo.png" alt="Moorhen logo">
+    <h1>Setting up the WebComponent</h1>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">Dark mode</button>
+</header>
+<nav class="site-nav">
+    <ul>
+        <li><a href="../../index.html">Docs Home</a></li>
+        <li><a href="index.html">Developer Guide</a></li>
+        <li><a href="../user/index.html">User Guide</a></li>
+        <li><a href="../../api/index.html">API Reference</a></li>
+    </ul>
+</nav>
+
+<article class="guide-article">
+    <h2>Embedding the WebComponent in a plain page</h2>
+
+    <p>
+        This guide walks through a minimal, runnable integration of the Moorhen WebComponent in a host page written in
+        plain TypeScript/JavaScript. It covers what you need to get started: serving the Moorhen assets, and registering
+        the element and waiting until it is ready. Loading data and controlling the view are the same for every
+        framework, and are covered in
+        <a href="webcomponent-instance-api.html">Loading data and the MoorhenInstance API</a>.
+    </p>
+
+    <p class="note-technical">
+        <strong>Prerequisite:</strong> you should be comfortable with the concepts and the module layout described in
+        <a href="webcomponent-intro.html">The Moorhen WebComponent</a>. In particular we import everything from the
+        <code>moorhen/web-component</code> sub-path. There is no bare <code>moorhen</code> import.
+    </p>
+
+    <section>
+        <h2>1. Install the package and copy the Moorhen assets</h2>
+
+        <p>Install <code>moorhen</code> in your project:</p>
+
+        <pre class="code-block" data-lang="shell"><code>npm install moorhen</code></pre>
+
+        <p>
+            The element needs static assets (styles, icons and WebAssembly binaries) at runtime. Copy them from the
+            installed package into the <code>public/</code> folder of your own project, so they are served from
+            <code>/MoorhenAssets/...</code>:
+        </p>
+
+        <pre class="code-block" data-lang="shell"><code>cp -r node_modules/moorhen/public/MoorhenAssets public/</code></pre>
+
+        <p class="note-danger">
+            <strong>Important:</strong> copy the assets again after every Moorhen update, because the WebAssembly
+            binaries inside <code>MoorhenAssets</code> can change in any version.
+        </p>
+
+        <p class="note">
+            A Vite plugin that automates this copy is planned but not usable yet. Copy the assets manually for
+            now. If you serve them from a different path, set the <code>url-prefix</code> attribute on the element (see
+            <a href="#element-attributes">Element attributes</a> below).
+        </p>
+
+        <p class="note-technical">
+            <strong>Technical note:</strong> because Moorhen runs WebAssembly in web workers, you must serve the page
+            over HTTP(S) with the cross-origin isolation headers described in
+            <a href="#cross-origin-isolation">section 2</a>, rather than opening the file directly from disk.
+        </p>
+    </section>
+
+    <section>
+        <h2 id="cross-origin-isolation">2. Serve the page with cross-origin isolation</h2>
+
+        <p>
+            Moorhen's Coot/CCP4 code is compiled with WebAssembly <em>threads</em>, which need
+            <code>SharedArrayBuffer</code>. Browsers only expose <code>SharedArrayBuffer</code> to pages that are
+            <strong>cross-origin isolated</strong>, so the server hosting your page must send these two response
+            headers:
+        </p>
+
+        <pre class="code-block" data-lang="http"><code>Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp</code></pre>
+
+        <p>
+            Without them the page is not isolated and Moorhen's Coot worker cannot allocate its shared memory, so the
+            component will not start. Check the result in the browser console:
+            <code>window.crossOriginIsolated</code> must be <code>true</code>.
+        </p>
+
+        <p>
+            <code>require-corp</code> also affects CORS: any cross-origin resource the page loads (scripts, styles,
+            fonts, workers, WebAssembly) must opt in with CORS or a
+            <code>Cross-Origin-Resource-Policy</code> header. Serving <code>MoorhenAssets</code> from your own origin
+            is the simplest way to satisfy that.
+        </p>
+
+        <h3>Vite</h3>
+
+        <p>Add the headers to both the dev server and the preview server:</p>
+
+        <pre class="code-block" data-lang="typescript"><code>// vite.config.ts
+export default defineConfig({
+    server: {
+        headers: {
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Embedder-Policy": "require-corp",
+        },
+    },
+    preview: {
+        headers: {
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Embedder-Policy": "require-corp",
+        },
+    },
+});</code></pre>
+
+        <h3>nginx</h3>
+
+        <pre class="code-block" data-lang="text"><code>add_header 'Cross-Origin-Opener-Policy' 'same-origin';
+add_header 'Cross-Origin-Embedder-Policy' 'require-corp';</code></pre>
+
+        <h3>Python HTTP server</h3>
+        <pre class="code-block" data-lang="python"><code>from http.server import HTTPServer, SimpleHTTPRequestHandler, test
+import sys
+
+class CORSRequestHandler (SimpleHTTPRequestHandler):
+    def end_headers (self):
+        self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
+        self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
+        SimpleHTTPRequestHandler.end_headers(self)
+
+if __name__ == '__main__':
+    test(CORSRequestHandler, HTTPServer, port=int(sys.argv[1]) if len(sys.argv) > 1 else 8000)
+</code></pre>
+
+        <p class="note">
+            <strong>Static hosts:</strong> some hosts (for example GitHub Pages) do not allow you to set response
+            headers. You then need a service-worker shim (such as <code>coi-serviceworker</code>) to add them, or host
+            the page where headers can be configured.
+        </p>
+    </section>
+
+    <section>
+        <h2>3. The host HTML page</h2>
+
+        <p>
+            Start from a very small page. The important parts are the <code>&lt;moorhen-web-component&gt;</code> element
+            (give it a unique <code>id</code> and a size) and a module script that imports your entry point:
+        </p>
+
+        <pre class="code-block" data-lang="html"><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+  &lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    &lt;title&gt;My Moorhen page&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Moorhen&lt;/h1&gt;
+
+    &lt;p id="loading-text"&gt;No structure loaded yet.&lt;/p&gt;
+
+    &lt;moorhen-web-component id="moorhen-1" width="1000" height="800"&gt;&lt;/moorhen-web-component&gt;
+
+    &lt;button id="load-7avk"&gt;Load 7AVK (PDBe)&lt;/button&gt;
+    &lt;button id="center-residue-1231"&gt;Centre on residue 1231&lt;/button&gt;
+
+    &lt;script type="module" src="./main.ts"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+        <p>
+            The buttons and the paragraph are plain HTML hooks, shown here to sketch a typical host page. The Moorhen
+            API calls that would drive them are the same in every framework and are covered in
+            <a href="webcomponent-instance-api.html">Loading data and the MoorhenInstance API</a>. Here
+            <code>main.ts</code> is your module entry point (transpile it to JavaScript for production, as you would
+            with any TypeScript project).
+        </p>
+    </section>
+
+    <section>
+        <h2>4. Register the element and obtain the instance</h2>
+
+        <p>
+            First, register the custom element and grab a strongly-typed reference to it. Then wait for Moorhen to be
+            ready with <code>getMoorhenInstance()</code>, which resolves to the
+            <a href="../../api/classes/moorhen.MoorhenInstance.html">MoorhenInstance</a> you will use for everything else:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>import { registerMoorhenWebComponent, MoorhenWebComponent } from "moorhen/web-component";
+
+// Define the &lt;moorhen-web-component&gt; custom element (idempotent).
+registerMoorhenWebComponent();
+
+// A typed handle on the element we put in the HTML above.
+const moorhen = document.getElementById("moorhen-1") as MoorhenWebComponent;
+
+// Resolves once Moorhen has finished mounting (wasm downloaded, scene built).
+const moorhenInstance = await moorhen.getMoorhenInstance();</code></pre>
+
+        <p>
+            <code>getMoorhenInstance()</code> resolves immediately if the element is already ready, otherwise it waits
+            until it is. The same readiness is also exposed as the boolean property
+            <code>element.ready</code>, and a <code>moorhenReady</code> CustomEvent is dispatched on
+            <code>window</code> (its <code>detail.id</code> is the element id). See the
+            <a href="../../api/classes/WebComponent_entry.MoorhenWebComponent.html">MoorhenWebComponent</a> API page. Because we
+            call it at the top level of a module, <code>await</code> is fine here.
+        </p>
+    </section>
+
+    <section>
+        <h2 id="element-attributes">5. Element attributes</h2>
+
+        <p>The custom element accepts a few HTML attributes that change how it is set up:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Attribute</th>
+                    <th>Property</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>width</code> / <code>height</code></td>
+                    <td><code>width</code> / <code>height</code></td>
+                    <td>Fixed pixel size for the rendered Moorhen UI, e.g. <code>"1000"</code> /
+                        <code>"800"</code>. Leave both out to follow the size of the container instead, see
+                        <a href="#sizing">Sizing the element</a>.</td>
+                </tr>
+                <tr>
+                    <td><code>url-prefix</code></td>
+                    <td><code>urlPrefix</code></td>
+                    <td>Base path of the Moorhen assets (default <code>"MoorhenAssets"</code>). Set it if you did not
+                        copy the assets to <code>public/MoorhenAssets</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>view-only</code></td>
+                    <td><code>viewOnly</code></td>
+                    <td>Set to <code>"true"</code> to hide editing features and expose a view-only UI.</td>
+                </tr>
+                <tr>
+                    <td><code>disable-file-uploads</code></td>
+                    <td><code>disableFileUploads</code></td>
+                    <td>Set to <code>"true"</code> to prevent the user from loading files through the UI.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>For example, a view-only element whose assets live under a custom prefix:</p>
+
+        <pre class="code-block" data-lang="html"><code>&lt;moorhen-web-component
+    id="moorhen-2"
+    width="900"
+    height="700"
+    url-prefix="/static/MoorhenAssets"
+    view-only="true"&gt;
+&lt;/moorhen-web-component&gt;</code></pre>
+
+        <h3 id="sizing">Sizing the element</h3>
+
+        <p>
+            There are two ways to size the component, and they behave differently:
+        </p>
+
+        <ul>
+            <li>
+                <strong>A fixed size.</strong> Set <code>width</code> and <code>height</code>, and Moorhen lays
+                itself out at exactly those pixel dimensions.
+            </li>
+            <li>
+                <strong>Follow the container.</strong> Leave both attributes out, and Moorhen measures the
+                element and follows it with a <code>ResizeObserver</code>, so the view grows and shrinks with its
+                container.
+            </li>
+        </ul>
+
+        <p>
+            For the second option the element must actually have a size, otherwise it measures zero and falls
+            back to the window dimensions (with a warning in the console). The element sets
+            <code>display: block</code>, <code>width: 100%</code>, <code>flex: 1 1 auto</code>,
+            <code>min-width: 0</code> and <code>min-height: 0</code> on itself, so the simplest approach is to
+            let it fill a sized parent:
+        </p>
+
+        <pre class="code-block" data-lang="html"><code>&lt;div class="viewer"&gt;
+    &lt;moorhen-web-component id="moorhen-1"&gt;&lt;/moorhen-web-component&gt;
+&lt;/div&gt;</code></pre>
+
+        <pre class="code-block" data-lang="css"><code>.viewer {
+    display: flex;
+    height: 70vh;   /* the container needs a definite height */
+}</code></pre>
+
+        <p>Sizing the element directly, with an inline style, works too:</p>
+
+        <pre class="code-block" data-lang="html"><code>&lt;moorhen-web-component id="moorhen-1" style="width: 900px; height: 320px"&gt;&lt;/moorhen-web-component&gt;</code></pre>
+
+        <p class="note-technical">
+            <strong>Gotcha:</strong> use the <code>style</code> attribute rather than a stylesheet rule when
+            sizing by hand. The element sets an inline <code>width: 100%</code> on itself, and an inline style
+            beats a stylesheet, so <code>moorhen-web-component { width: 900px }</code> in your CSS is ignored.
+            <code>height</code> is not set by the element, so a stylesheet height works as usual.
+        </p>
+
+        <p class="note">
+            <strong>Fixed size and overflow:</strong> with <code>width</code>/<code>height</code> set, the
+            element&rsquo;s own box stays <code>width: 100%</code>. If you choose a size wider than the space
+            available, the view overflows rather than shrinking, so put the element in a container that can
+            scroll.
+        </p>
+    </section>
+
+    <section>
+        <h2>Next steps</h2>
+
+        <p>
+            That is the whole "setup": register the element and wait for the instance. Using that instance is the same
+            in every framework, and is covered in
+            <a href="webcomponent-instance-api.html">Loading data and the MoorhenInstance API</a>.
+        </p>
+
+        <p>
+            If you are using <strong>React</strong>, the <a href="webcomponent-react.html">React guide</a> shows how to
+            mount the element and drive the instance with the two helper hooks from
+            <code>moorhen/web-component/utils</code>.
+        </p>
+
+        <p class="note">
+            <strong>Related guides:</strong> extending the menu bar is covered in
+            <a href="webcomponent-menu.html">Adding custom menus</a>, and reacting to Moorhen events in
+            <a href="webcomponent-events.html">Callbacks and subscriptions</a>.
+        </p>
+
+        <p>
+            A complete, runnable version of this page is in the example project
+            <a href="https://github.com/cdegut/MoorhenWebComponent" target="_blank"
+                rel="noopener noreferrer">MoorhenWebComponent</a>.
+        </p>
+
+        <p>
+            <a class="button" href="webcomponent-instance-api.html">Next: Loading data and the MoorhenInstance API</a>
+            <a class="button" href="webcomponent-react.html">Using the WebComponent in React</a>
+            <a class="button" href="index.html">Back to Developer Guide</a>
+        </p>
+    </section>
+</article>
+</body>
+</html>
