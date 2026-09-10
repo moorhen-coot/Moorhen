@@ -111,7 +111,7 @@
         <p>
             First, register the custom element and grab a strongly-typed reference to it. Then wait for Moorhen to be
             ready with <code>getMoorhenInstance()</code>, which resolves to the
-            <a href="../../api/MoorhenInstance.html">MoorhenInstance</a> you will use for everything else:
+            <a href="../../api/classes/moorhen.MoorhenInstance.html">MoorhenInstance</a> you will use for everything else:
         </p>
 
         <pre class="code-block" data-lang="typescript"><code>import { registerMoorhenWebComponent, MoorhenWebComponent } from "moorhen/web-component";
@@ -130,7 +130,7 @@ const moorhenInstance = await moorhen.getMoorhenInstance();</code></pre>
             until it is. The same readiness is also exposed as the boolean property
             <code>element.ready</code>, and a <code>moorhenReady</code> CustomEvent is dispatched on
             <code>window</code> (its <code>detail.id</code> is the element id). See the
-            <a href="../../api/WebComponent_MoorhenWebComponent.tsx.html">MoorhenWebComponent</a> API page. Because we
+            <a href="../../api/classes/WebComponent_entry.MoorhenWebComponent.html">MoorhenWebComponent</a> API page. Because we
             call it at the top level of a module, <code>await</code> is fine here.
         </p>
     </section>
@@ -221,7 +221,7 @@ document.getElementById("load-7avk")?.addEventListener("click", async () =&gt; {
         <p class="note-technical">
             <strong>API tip:</strong> <code>centerOnResidue</code>, <code>centerOnAtom</code> and
             <code>centerOnCoordinate</code> are methods of
-            <a href="../../api/MoorhenInstance.html">MoorhenInstance</a>, while the generated
+            <a href="../../api/classes/moorhen.MoorhenInstance.html">MoorhenInstance</a>, while the generated
             <code>sceneSettings</code> setters (a large family including <code>setBackgroundColor</code>,
             <code>setAmbient</code>, <code>setZoom</code> &hellip;) are described on the same API page.
         </p>

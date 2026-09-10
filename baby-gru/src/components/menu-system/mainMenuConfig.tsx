@@ -5,7 +5,7 @@ import { SidePanelIDs } from "../panels";
 import { MoorhenDevMenu } from "./MoorhenDevMenu";
 import "./main-menu.css";
 
-type Icon = { icon: MoorhenSVG; iconSrc?: never } | { icon?: never; iconSrc: string };
+export type Icon = { icon: MoorhenSVG; iconSrc?: never } | { icon?: never; iconSrc: string };
 export type MainMenuEntrySubMenu = {
     type: "sub-menu";
     label: string;

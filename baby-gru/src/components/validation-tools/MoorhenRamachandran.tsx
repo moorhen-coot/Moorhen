@@ -9,7 +9,7 @@ import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
 
-interface MoorhenRamachandranProps {
+export interface MoorhenRamachandranProps {
     resizeTrigger?: boolean;
     resizeNodeRef?: React.RefObject<HTMLDivElement>;
     size?: { width: number; height: number };

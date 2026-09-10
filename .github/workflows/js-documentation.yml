@@ -61,7 +61,7 @@ jobs:
         working-directory: baby-gru
         run: npm install
 
-      - name: compile jsDocs
+      - name: Generate API docs
         working-directory: baby-gru
         run: npm run create-docs
 
@@ -71,4 +71,4 @@ jobs:
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: baby-gru/docs
+          publish_dir: baby-gru/docs/site

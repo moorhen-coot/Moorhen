@@ -40,7 +40,7 @@ export type LoadFilesResult = {
     fileName: string;
 }[];
 
-type moleculeChangeAction = "new" | "add" | "delete" | "modify" | "refine";
+export type moleculeChangeAction = "new" | "add" | "delete" | "modify" | "refine";
 
 /**
  * MoorhenInstance is the key public API entry point for the whole application.

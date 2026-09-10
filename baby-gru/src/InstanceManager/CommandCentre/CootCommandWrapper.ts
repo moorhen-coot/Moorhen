@@ -16,6 +16,21 @@ export type ResidueValidationData = {
 
 export type ValidationData = Record<string, ResidueValidationData[]>;
 
+/**
+ * CootCommand wrapper allowing the execution of web worker commands.
+ *
+ * It is not destined to be used directly, but attached to the
+ * `moorhenInstance` as `moorhenInstance.cootCommand` and used as
+ * `moorhenInstance.cootCommandWrapper.command(params)`.
+ *
+ * Its goal is to provide fully typed methods for each command, with proper argument and return types.
+ * It *will* also manage the queue of commands and their execution, as well as the journal of commands executed.
+ * It is very incomplete, and slowly growing, you can open a github issue or PR for any commands you need to be wrapped.
+ * @remarks
+ * Each method corresponds to a Coot web worker command and forwards its
+ * arguments to the internal `cootCommand` handler, returning the
+ * resulting {@link WorkerResponse}.
+ */
 export class CootCommandWrapper {
     private cootCommand: (kwargs: cootCommandKwargs, doJournal: boolean) => Promise<WorkerResponse>;
     constructor(cootCommand: (kwargs: cootCommandKwargs, doJournal: boolean) => Promise<WorkerResponse>) {

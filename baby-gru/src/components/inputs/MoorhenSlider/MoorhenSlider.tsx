@@ -54,7 +54,7 @@ type MoorhenSliderDefault = {
     value2?: never;
 } & MoorhenSliderPropsBase;
 
-type MoorhenSliderProps = MoorhenSliderDefault | MoorhenSliderRange;
+export type MoorhenSliderProps = MoorhenSliderDefault | MoorhenSliderRange;
 
 function log10ofT<T extends number | [number, number]>(val: T, resolveScaling: (v: number) => number): T {
     if (Array.isArray(val)) {

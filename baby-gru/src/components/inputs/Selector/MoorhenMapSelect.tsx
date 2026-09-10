@@ -15,13 +15,13 @@ type MoorhenMapSelectBaseProps = {
     useUniqueId?: boolean;
 };
 
-type MoorhenMapSelectPropsType = MoorhenMapSelectBaseProps & {
+export type MoorhenMapSelectPropsType = MoorhenMapSelectBaseProps & {
     defaultValue?: number | null;
     selectedMap?: number | null;
     setSelectedMap?: React.Dispatch<React.SetStateAction<number | null>>;
 };
 
-type MoorhenMapSelectPropsUIDType = MoorhenMapSelectBaseProps & {
+export type MoorhenMapSelectPropsUIDType = MoorhenMapSelectBaseProps & {
     defaultValue?: string | null;
     selectedMap?: string | null;
     setSelectedMap?: React.Dispatch<React.SetStateAction<string | null>>;
