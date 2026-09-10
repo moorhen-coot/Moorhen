@@ -47,7 +47,7 @@ export const MoorhenFourierShellCorrelationPlot = () => {
             setPlotData(null)
             return
         }
-        
+
         const response = await moorhenInstance.commandCentre.cootCommand({
             message: 'coot_command',
             command: 'fourier_shell_correlation',
@@ -77,6 +77,22 @@ export const MoorhenFourierShellCorrelationPlot = () => {
         }
     }, [maps])
 
+    function findCrossing(data, threshold = 0.143) {
+        for (let i = 1; i < data.length; i++) {
+            const y1 = data[i - 1].y;
+            const y2 = data[i].y;
+
+            if ((y1 - threshold) * (y2 - threshold) <= 0) {
+                const t = (threshold - y1) / (y2 - y1);
+
+                return data[i - 1].x +
+                       t * (data[i].x - data[i - 1].x);
+            }
+        }
+
+        return null;
+    }
+
     useEffect(() => {
 
         if (chartRef.current) {
@@ -92,24 +108,50 @@ export const MoorhenFourierShellCorrelationPlot = () => {
         const canvas = document.getElementById("fsc-chart-canvas") as HTMLCanvasElement
         const ctx = canvas.getContext("2d")
 
+        const threshold = 0.143;
+        const freq2 = findCrossing(plotData);
+        const frequency = Math.sqrt(freq2);
+        const resolution = 1 / frequency;
+
+        console.log(freq2,frequency,resolution)
+
+        const thresholdData = plotData.map(p => ({
+             x: p.x,
+             y: threshold
+        }));
+
+       const maxFreq2 = Math.max(...plotData.map(p => p.x));
+       const maxFreq = Math.sqrt(maxFreq2);
+
         chartRef.current = new Chart(ctx, {
           type: 'line',
           data: {
-            labels: plotData.map(row => row.x.toExponential(3)),
+            labels: plotData.map(row => row.x.toFixed(3)),
             datasets: [
               {
-                data: plotData.map(row => row.y)
+                data: plotData,
+                  borderColor: "blue",
+                  backgroundColor: "blue",
+              },
+              {
+                  label: "0.143 threshold",
+                  data: thresholdData,
+                  borderColor: "black",
+                  backgroundColor: "black",
+                  borderDash: [4, 4],
+                  pointRadius: 0
               }
             ]
           },
           options: {
               scales: {
                 x: {
+                  type: "linear",
+                  min: 0,
+                  max: maxFreq2,
                   ticks: {
-                    callback: function(value) {
-                        const x = Number(this.getLabelForValue(parseFloat(String(value))))
-                        return Math.sqrt(x).toFixed(3);
-                    }
+                    count: 10,
+                    callback: value => Math.sqrt(Number(value)).toFixed(3)
                   },
                   title: {
                       display: true,
@@ -124,6 +166,21 @@ export const MoorhenFourierShellCorrelationPlot = () => {
                 }
               },
               plugins: {
+                  title: {
+                      display: true,
+                      text: `Calculated FSC Resolution: ${resolution.toFixed(2)} Å`
+                  },
+                  annotation: {
+                      annotations: {
+                          resolutionLine: {
+                              type: 'line',
+                              xMin: freq2,
+                              xMax: freq2,
+                              borderColor: 'green',
+                              borderWidth: 2
+                          }
+                      }
+                  },
                   legend: {
                       display: false,
                   },
@@ -147,11 +204,11 @@ export const MoorhenFourierShellCorrelationPlot = () => {
                             family: 'Helvetica'
                         },
                         callbacks: {
-                        title: () => '',
+                            title: () => '',
                             label: function(context) {
-                                 return `${Math.sqrt(parseFloat(context.label)).toFixed(3)}, ${context.parsed.y.toFixed(3)}`;
+                                return `${Math.sqrt(context.parsed.x).toFixed(3)}, ${context.parsed.y.toFixed(3)}`;
                             }
-                       }
+                        }
                     },
               },
           }
