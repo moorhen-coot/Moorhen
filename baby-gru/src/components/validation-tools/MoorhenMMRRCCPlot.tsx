@@ -196,9 +196,12 @@ export const MoorhenMMRRCCPlot = () => {
                     }
                 },
                 grid: {
-                    display: false,
-                    borderWidth: 1,
-                    borderColor: "black",
+                    drawTicks: true,
+                    color: (context) => {
+                        return context.index % 10 === 0
+                        ? 'rgba(0,0,0,0.2)'
+                        : 'rgba(0,0,0,0)';
+                    }
                 },
             },
             y: {
