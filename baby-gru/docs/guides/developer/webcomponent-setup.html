@@ -227,7 +227,9 @@ const moorhenInstance = await moorhen.getMoorhenInstance();</code></pre>
                 <tr>
                     <td><code>width</code> / <code>height</code></td>
                     <td><code>width</code> / <code>height</code></td>
-                    <td>Size of the element, e.g. <code>"1000"</code> / <code>"800"</code>.</td>
+                    <td>Fixed pixel size for the rendered Moorhen UI, e.g. <code>"1000"</code> /
+                        <code>"800"</code>. Leave both out to follow the size of the container instead, see
+                        <a href="#sizing">Sizing the element</a>.</td>
                 </tr>
                 <tr>
                     <td><code>url-prefix</code></td>
@@ -257,6 +259,59 @@ const moorhenInstance = await moorhen.getMoorhenInstance();</code></pre>
     url-prefix="/static/MoorhenAssets"
     view-only="true"&gt;
 &lt;/moorhen-web-component&gt;</code></pre>
+
+        <h3 id="sizing">Sizing the element</h3>
+
+        <p>
+            There are two ways to size the component, and they behave differently:
+        </p>
+
+        <ul>
+            <li>
+                <strong>A fixed size.</strong> Set <code>width</code> and <code>height</code>, and Moorhen lays
+                itself out at exactly those pixel dimensions.
+            </li>
+            <li>
+                <strong>Follow the container.</strong> Leave both attributes out, and Moorhen measures the
+                element and follows it with a <code>ResizeObserver</code>, so the view grows and shrinks with its
+                container.
+            </li>
+        </ul>
+
+        <p>
+            For the second option the element must actually have a size, otherwise it measures zero and falls
+            back to the window dimensions (with a warning in the console). The element sets
+            <code>display: block</code>, <code>width: 100%</code>, <code>flex: 1 1 auto</code>,
+            <code>min-width: 0</code> and <code>min-height: 0</code> on itself, so the simplest approach is to
+            let it fill a sized parent:
+        </p>
+
+        <pre class="code-block" data-lang="html"><code>&lt;div class="viewer"&gt;
+    &lt;moorhen-web-component id="moorhen-1"&gt;&lt;/moorhen-web-component&gt;
+&lt;/div&gt;</code></pre>
+
+        <pre class="code-block" data-lang="css"><code>.viewer {
+    display: flex;
+    height: 70vh;   /* the container needs a definite height */
+}</code></pre>
+
+        <p>Sizing the element directly, with an inline style, works too:</p>
+
+        <pre class="code-block" data-lang="html"><code>&lt;moorhen-web-component id="moorhen-1" style="width: 900px; height: 320px"&gt;&lt;/moorhen-web-component&gt;</code></pre>
+
+        <p class="note-technical">
+            <strong>Gotcha:</strong> use the <code>style</code> attribute rather than a stylesheet rule when
+            sizing by hand. The element sets an inline <code>width: 100%</code> on itself, and an inline style
+            beats a stylesheet, so <code>moorhen-web-component { width: 900px }</code> in your CSS is ignored.
+            <code>height</code> is not set by the element, so a stylesheet height works as usual.
+        </p>
+
+        <p class="note">
+            <strong>Fixed size and overflow:</strong> with <code>width</code>/<code>height</code> set, the
+            element&rsquo;s own box stays <code>width: 100%</code>. If you choose a size wider than the space
+            available, the view overflows rather than shrinking, so put the element in a container that can
+            scroll.
+        </p>
     </section>
 
     <section>

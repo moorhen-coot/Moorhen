@@ -99,6 +99,13 @@ declare module "react" {
         </p>
 
         <pre class="code-block" data-lang="tsx"><code>&lt;moorhen-web-component id="my-moorhen" width={1000} height={800} view-only={false} /&gt;</code></pre>
+
+        <p>
+            Those two props are optional. Leave them out and the element sizes itself to its container, which is
+            usually what you want in a responsive layout: give a wrapper <code>div</code> a height and let the
+            element fill it. See
+            <a href="webcomponent-setup.html#sizing">Sizing the element</a>.
+        </p>
     </section>
 
     <section>
