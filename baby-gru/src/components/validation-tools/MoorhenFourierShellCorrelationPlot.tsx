@@ -103,6 +103,16 @@ export const MoorhenFourierShellCorrelationPlot = () => {
             ]
           },
           options: {
+              scales: {
+                x: {
+                  ticks: {
+                    callback: function(value) {
+                        const x = Number(this.getLabelForValue(value));
+                        return Math.sqrt(x).toFixed(3);
+                    }
+                  }
+                }
+              },
               plugins: {
                   legend: {
                       display: false,
@@ -115,8 +125,6 @@ export const MoorhenFourierShellCorrelationPlot = () => {
                         titleColor: 'black',
                         bodyColor: 'black',
                         footerColor: 'black',
-                        callbacks: {
-                        },
                         titleFont: {
                             size: tooltipFontSize,
                             family: 'Helvetica'
@@ -127,7 +135,13 @@ export const MoorhenFourierShellCorrelationPlot = () => {
                         },
                         footerFont: {
                             family: 'Helvetica'
-                        }
+                        },
+                        callbacks: {
+                        title: () => '',
+                            label: function(context) {
+                                 return `${Math.sqrt(parseFloat(context.label)).toFixed(3)}, ${context.parsed.y.toFixed(3)}`;
+                            }
+                       }
                     },
               },
           }
