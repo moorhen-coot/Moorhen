@@ -189,22 +189,23 @@ moorhenInstance.menuSystem?.addSubmenu(extraMenuItems);</code></pre>
                 <tr>
                     <td><code>dispatch</code></td>
                     <td><code>action</code></td>
-                    <td><span style="color:red;">Internal only</span>Dispatches a Redux action.</td>
+                    <td><span class="internal-only">Internal only</span>Dispatches a Redux action.</td>
                 </tr>
                 <tr>
                     <td><code>preferenceSwitch</code></td>
                     <td><code>selector</code>, <code>action</code></td>
-                    <td><span style="color:red;">Internal only</span>A toggle bound to a boolean in the store.</td>
+                    <td><span class="internal-only">Internal only</span>A toggle bound to a boolean in the store.</td>
                 </tr>
                 <tr>
                     <td><code>customJSX</code></td>
                     <td><code>jsx</code></td>
-                    <td><span style="color:red;">Internal only</span>Renders React element inside the menu.</td>
+                    <td><span class="internal-only">Internal only</span>Renders React element inside the menu.</td>
                 </tr>
                 <tr>
                     <td><code>popover</code></td>
                     <td><code>content</code></td>
-                    <td><span style="color:red;">Internal only</span> Shows a popover built from your own React element.</td>
+                    <td><span class="internal-only">Internal only</span>Shows a popover built from your own React
+                        element.</td>
                 </tr>
                 <tr>
                     <td><code>HTMLslot</code></td>
@@ -216,7 +217,11 @@ moorhenInstance.menuSystem?.addSubmenu(extraMenuItems);</code></pre>
             </tbody>
         </table>
 
-        Several items are <span style="color:red;">Internal only</span>. They could be used if you decide to use the "react-lib" integration path. The alternative for the webcomponent is to use slots to insert your own React elements into the menu, which is covered in <a href="webcomponent-slots.html">Custom HTML slots</a>.
+        <p>
+            The item types marked <span class="internal-only">Internal only</span> can be used if you choose the
+            <code>moorhen/react-lib</code> integration path. With the WebComponent, use
+            <a href="webcomponent-slots.html">Custom HTML slots</a> instead to insert your own content into a menu.
+        </p>
 
         <p class="note-technical">
             <strong>Item ids must be unique</strong> across all submenus. Moorhen logs a warning if two items share an

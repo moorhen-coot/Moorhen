@@ -161,6 +161,19 @@ a.button:hover {
     padding: 0.75rem 1rem;
 }
 
+/* Inline badge used in tables to flag API surface that is internal-only. */
+.internal-only {
+    display: inline-block;
+    margin-right: 0.4rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 4px;
+    border: 1px solid var(--note-danger-border);
+    background: var(--note-danger-bg);
+    color: var(--text);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
 .guide-article > section {
     margin-top: 2.5rem;
     padding-top: 1.5rem;
