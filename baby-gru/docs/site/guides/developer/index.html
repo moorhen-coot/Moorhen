@@ -15,22 +15,39 @@
 <nav class="site-nav">
     <ul>
         <li><a href="../../index.html">Docs Home</a></li>
+        <li><a href="index.html">Developer Guide</a></li>
         <li><a href="../user/index.html">User Guide</a></li>
         <li><a href="../../api/index.html">API Reference</a></li>
     </ul>
 </nav>
 
 <p>
-    Guides for developers embedding or contributing to Moorhen: build setup,
-    architecture notes, and how to integrate the WebComponent into a host page.
-    For class/function-level reference, see the <a href="../../api/index.html">API Reference</a>.
+    Guides for developers embedding Moorhen in their own applications. The current series focuses on the
+    Moorhen <strong>WebComponent</strong>, starting with an overview of how it works and how the
+    <code>moorhen</code> package is organised, followed by step-by-step integration guides. Read them in order:
 </p>
 
 <div class="card-grid">
     <div class="card">
+        <h3><a href="webcomponent-intro.html">The Moorhen WebComponent</a></h3>
+        <p>What the WebComponent is, how it works, and the split between <code>moorhen/web-component</code>
+        and <code>moorhen/react-lib</code>.</p>
+    </div>
+    <div class="card">
         <h3><a href="webcomponent-setup.html">Setting up the WebComponent</a></h3>
-        <p>Embedding the Moorhen WebComponent in a host page.</p>
+        <p>A plain TypeScript page: serve the Moorhen assets, register the element, load structures and maps
+        from URLs, and control the view.</p>
+    </div>
+    <div class="card">
+        <h3><a href="webcomponent-react.html">Using the WebComponent in React</a></h3>
+        <p>Embed the element in a React application with the <code>useWebComponentInstanceRef</code> and
+        <code>useMoorhenSelector</code> hooks.</p>
     </div>
 </div>
+
+<p>
+    For class/function-level reference, see the <a href="../../api/index.html">API Reference</a>. Guides on
+    reacting to Moorhen events (store subscriptions, atom hover) and extending the Moorhen menus are in preparation.
+</p>
 </body>
 </html>

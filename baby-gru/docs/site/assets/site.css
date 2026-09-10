@@ -1,72 +1,41 @@
 :root {
-    --bg: #fff;
-    --text: #2b2b2b;
-    --border: #ddd;
-    --border-light: #eee;
-    --link: #34495e;
-    --heading-link: #2c3e50;
-    --card-bg: #fff;
-    --button-bg: #2c3e50;
-    --button-bg-hover: #1a252f;
-    --button-text: #fff;
-    --note-bg: #fff8e1;
-    --note-border: #ffe08a;
-    --note-tech-bg: #e8f1fb;
-    --note-tech-border: #9ec4e6;
+    /* Active colour scheme: follows the OS by default, and is forced by the
+       data-theme attribute set by theme-toggle.js. light-dark() resolves each
+       value against it, so every colour is declared only once. */
+    color-scheme: light dark;
+
+    --bg: light-dark(#fff, #1b1e22);
+    --text: light-dark(#2b2b2b, #dcdcdc);
+    --border: light-dark(#ddd, #3a3f45);
+    --border-light: light-dark(#eee, #2c3035);
+    --link: light-dark(#34495e, #8fb3d9);
+    --heading-link: light-dark(#2c3e50, #a9c6e8);
+    --card-bg: light-dark(#fff, #24282d);
+    --button-bg: light-dark(#2c3e50, #3a6ea5);
+    --button-bg-hover: light-dark(#1a252f, #4c85c1);
+    --button-text: #fff; /* identical in both themes */
+    --note-bg: light-dark(#fff8e1, #3a3320);
+    --note-border: light-dark(#ffe08a, #7a6a2e);
+    --note-tech-bg: light-dark(#e8f1fb, #1d2b3a);
+    --note-tech-border: light-dark(#9ec4e6, #4a7ba6);
+    --note-danger-bg: light-dark(#f8d7da, #905358);
+    --note-danger-border: light-dark(#fbb886, #905358);
+    --code-bg: light-dark(#f6f8fa, #262b31);
+    --code-border: light-dark(#dfe3e8, #3a3f45);
+    --code-text: light-dark(#2b2b2b, #d6dde5);
+    --code-label-bg: light-dark(#eceff2, #2b3138);
+    --code-label-text: light-dark(#5b6570, #9aa7b4);
+    --code-cli-accent: light-dark(#1a7f37, #3fb950);
+    --code-ts-accent: light-dark(#0969da, #58a6ff);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #1b1e22;
-        --text: #dcdcdc;
-        --border: #3a3f45;
-        --border-light: #2c3035;
-        --link: #8fb3d9;
-        --heading-link: #a9c6e8;
-        --card-bg: #24282d;
-        --button-bg: #3a6ea5;
-        --button-bg-hover: #4c85c1;
-        --button-text: #fff;
-        --note-bg: #3a3320;
-        --note-border: #7a6a2e;
-        --note-tech-bg: #1d2b3a;
-        --note-tech-border: #4a7ba6;
-    }
-}
-
-/* manual toggle (via data-theme attribute set by theme-toggle.js) always wins over the OS preference above */
+/* Manual toggle (via the data-theme attribute set by theme-toggle.js). */
 :root[data-theme="dark"] {
-    --bg: #1b1e22;
-    --text: #dcdcdc;
-    --border: #3a3f45;
-    --border-light: #2c3035;
-    --link: #8fb3d9;
-    --heading-link: #a9c6e8;
-    --card-bg: #24282d;
-    --button-bg: #3a6ea5;
-    --button-bg-hover: #4c85c1;
-    --button-text: #fff;
-    --note-bg: #3a3320;
-    --note-border: #7a6a2e;
-    --note-tech-bg: #1d2b3a;
-    --note-tech-border: #4a7ba6;
+    color-scheme: dark;
 }
 
 :root[data-theme="light"] {
-    --bg: #fff;
-    --text: #2b2b2b;
-    --border: #ddd;
-    --border-light: #eee;
-    --link: #34495e;
-    --heading-link: #2c3e50;
-    --card-bg: #fff;
-    --button-bg: #2c3e50;
-    --button-bg-hover: #1a252f;
-    --button-text: #fff;
-    --note-bg: #fff8e1;
-    --note-border: #ffe08a;
-    --note-tech-bg: #e8f1fb;
-    --note-tech-border: #9ec4e6;
+    color-scheme: light;
 }
 
 body {
@@ -163,7 +132,6 @@ a.button {
     color: var(--button-text);
     text-decoration: none;
     font-weight: 600;
-    
 }
 
 a.button:hover {
@@ -181,6 +149,14 @@ a.button:hover {
     background: var(--note-tech-bg);
     border: 1px solid var(--note-tech-border);
     border-left: 4px solid var(--note-tech-border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+}
+
+.note-danger {
+    background: var(--note-danger-bg);
+    border: 1px solid var(--note-danger-border);
+    border-left: 4px solid var(--note-danger-border);
     border-radius: 6px;
     padding: 0.75rem 1rem;
 }
@@ -249,4 +225,94 @@ a.button:hover {
     max-width: 100%;
     height: auto;
     object-fit: contain;
+}
+
+/* ---------- inline code and code blocks ---------- */
+
+code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 4px;
+    padding: 0.1em 0.35em;
+}
+
+pre.code-block {
+    position: relative;
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Consolas, "Liberation Mono", Menlo, monospace;
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 1rem 1.15rem;
+    overflow-x: auto;
+    font-size: 0.9em;
+    line-height: 1.55;
+    tab-size: 4;
+}
+
+pre.code-block code {
+    display: block;
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    font-size: inherit;
+    color: var(--code-text);
+    white-space: pre;
+}
+
+/* language label, set per block via data-lang; shell/CLI blocks get an accent colour */
+pre.code-block[data-lang] {
+    padding-top: 2.3rem;
+}
+
+pre.code-block[data-lang]::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 0.35rem 1.15rem;
+    font-size: 0.68rem;
+    line-height: 1.2;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--code-label-text);
+    background: var(--code-label-bg);
+    border-bottom: 1px solid var(--code-border);
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+}
+
+pre.code-block[data-lang="shell"]::before {
+    color: var(--code-cli-accent);
+}
+
+pre.code-block[data-lang="typescript"]::before,
+pre.code-block[data-lang="tsx"]::before {
+    color: var(--code-ts-accent);
+}
+
+/* ---------- tables (guide articles) ---------- */
+
+.guide-article table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.85rem 0;
+    font-size: 0.95em;
+}
+
+.guide-article th,
+.guide-article td {
+    border: 1px solid var(--border);
+    padding: 0.5rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.guide-article th {
+    background: var(--code-bg);
+    color: var(--heading-link);
+    font-weight: 600;
 }

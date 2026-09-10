@@ -21,12 +21,280 @@
     </ul>
 </nav>
 
-<p class="placeholder-note">This page is a placeholder — content to be written.</p>
+<article class="guide-article">
+    <h2>Embedding the WebComponent in a plain page</h2>
 
-<p>
-    This guide will cover embedding the Moorhen WebComponent in a host page:
-    registering the custom element, loading structures/maps, and listening
-    for the <code>moorhenReady</code> event.
-</p>
+    <p>
+        This guide walks through a minimal, runnable integration of the Moorhen WebComponent in a host page written in
+        plain TypeScript/JavaScript. It covers the three things you need to get started: serving the Moorhen
+        assets, registering the element and waiting until it is ready, and then loading a structure and controlling the
+        view.
+    </p>
+
+    <p class="note-technical">
+        <strong>Prerequisite:</strong> you should be comfortable with the concepts and the module layout described in
+        <a href="webcomponent-intro.html">The Moorhen WebComponent</a>. In particular we import everything from the
+        <code>moorhen/web-component</code> sub-path. There is no bare <code>moorhen</code> import.
+    </p>
+
+    <section>
+        <h2>1. Install the package and copy the Moorhen assets</h2>
+
+        <p>Install <code>moorhen</code> in your project:</p>
+
+        <pre class="code-block" data-lang="shell"><code>npm install moorhen</code></pre>
+
+        <p>
+            The element needs static assets (styles, icons and WebAssembly binaries) at runtime. Copy them from the
+            installed package into the <code>public/</code> folder of your own project, so they are served from
+            <code>/MoorhenAssets/...</code>:
+        </p>
+
+        <pre class="code-block" data-lang="shell"><code>cp -r node_modules/moorhen/public/MoorhenAssets public/</code></pre>
+
+        <p class="note-danger">
+            <strong>Important:</strong> copy the assets again after every Moorhen update, because the WebAssembly
+            binaries inside <code>MoorhenAssets</code> can change in any version.
+        </p>
+
+        <p class="note">
+            A Vite plugin that automates this copy is planned but not usable yet. Copy the assets manually for
+            now. If you serve them from a different path, set the <code>url-prefix</code> attribute on the element (see
+            <a href="#element-attributes">Element attributes</a> below).
+        </p>
+
+        <p class="note-technical">
+            <strong>Technical note:</strong> because Moorhen loads WebAssembly modules and uses web workers, you must
+            serve the page over HTTP(S) (e.g. a Vite dev server, or <code>python3 -m http.server</code>) rather than
+            opening the file directly from disk.
+        </p>
+    </section>
+
+    <section>
+        <h2>2. The host HTML page</h2>
+
+        <p>
+            Start from a very small page. The important parts are the <code>&lt;moorhen-web-component&gt;</code> element
+            (give it a unique <code>id</code> and a size) and a module script that imports your entry point:
+        </p>
+
+        <pre class="code-block" data-lang="html"><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+  &lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    &lt;title&gt;My Moorhen page&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Moorhen&lt;/h1&gt;
+
+    &lt;p id="loading-text"&gt;No structure loaded yet.&lt;/p&gt;
+
+    &lt;moorhen-web-component id="moorhen-1" width="1000" height="800"&gt;&lt;/moorhen-web-component&gt;
+
+    &lt;button id="load-7avk"&gt;Load 7AVK (PDBe)&lt;/button&gt;
+    &lt;button id="center-residue-1231"&gt;Centre on residue 1231&lt;/button&gt;
+
+    &lt;script type="module" src="./main.ts"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+        <p>
+            The buttons and the paragraph are plain HTML hooks. Your code will wire them up to the Moorhen API.
+            In the rest of this guide, <code>main.ts</code> is your module entry point (transpile it to JavaScript for
+            production, as you would with any TypeScript project).
+        </p>
+    </section>
+
+    <section>
+        <h2>3. Register the element and obtain the instance</h2>
+
+        <p>
+            First, register the custom element and grab a strongly-typed reference to it. Then wait for Moorhen to be
+            ready with <code>getMoorhenInstance()</code>, which resolves to the
+            <a href="../../api/MoorhenInstance.html">MoorhenInstance</a> you will use for everything else:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>import { registerMoorhenWebComponent, MoorhenWebComponent } from "moorhen/web-component";
+
+// Define the &lt;moorhen-web-component&gt; custom element (idempotent).
+registerMoorhenWebComponent();
+
+// A typed handle on the element we put in the HTML above.
+const moorhen = document.getElementById("moorhen-1") as MoorhenWebComponent;
+
+// Resolves once Moorhen has finished mounting (wasm downloaded, scene built).
+const moorhenInstance = await moorhen.getMoorhenInstance();</code></pre>
+
+        <p>
+            <code>getMoorhenInstance()</code> resolves immediately if the element is already ready, otherwise it waits
+            until it is. The same readiness is also exposed as the boolean property
+            <code>element.ready</code>, and a <code>moorhenReady</code> CustomEvent is dispatched on
+            <code>window</code> (its <code>detail.id</code> is the element id). See the
+            <a href="../../api/WebComponent_MoorhenWebComponent.tsx.html">MoorhenWebComponent</a> API page. Because we
+            call it at the top level of a module, <code>await</code> is fine here.
+        </p>
+    </section>
+
+    <section>
+        <h2>4. Loading a structure and maps from URLs</h2>
+
+        <p>
+            Molecules and maps are loaded through <code>moorhenInstance.files.loadFiles()</code>. It accepts one or
+            more URLs (or <code>File</code>s, strings, <code>URL</code>s&hellip;) and returns a result per file telling
+            you what was loaded and how to refer to it:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>interface LoadFilesResult {
+    type: "molecule" | "map";
+    uniqueID: string;   // use this to refer to the molecule/map later
+    molNo: number;
+    fileName: string;
+}</code></pre>
+
+        <p>
+            The example below fetches the structure and the two maps of the PDB entry <code>7AVK</code> straight from
+            PDBe and returns the load results so the caller can pick out the molecule&rsquo;s
+            <code>uniqueID</code>:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>import type { LoadFilesResult } from "moorhen/web-component";
+
+const PDBe_FILES = "https://www.ebi.ac.uk/pdbe/entry-files";
+
+async function loadEntryFromPDBe(entryId: string): Promise&lt;LoadFilesResult[]&gt; {
+    const results = await moorhenInstance.files.loadFiles([
+        `${PDBe_FILES}/${entryId}.cif`,             // coordinates
+        `${PDBe_FILES}/${entryId}.ccp4`,            // 2Fo-Fc map
+        `${PDBe_FILES}/${entryId}_diff.ccp4`,       // difference map
+    ]);
+    return results;
+}</code></pre>
+
+        <p>
+            Wire it up to the <em>Load</em> button, remembering the <code>uniqueID</code> of the molecule that was
+            created:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>let proteinUniqueId: string | null = null;
+
+document.getElementById("load-7avk")?.addEventListener("click", async () =&gt; {
+    const results = await loadEntryFromPDBe("7avk");
+    proteinUniqueId =
+        results.find((item) =&gt; item.type === "molecule" &amp;&amp; item.fileName.endsWith(".cif"))?.uniqueID ?? null;
+
+    const loadingText = document.getElementById("loading-text");
+    if (loadingText) {
+        loadingText.textContent = `Structure ${proteinUniqueId ?? "?"} loaded.`;
+    }
+});</code></pre>
+
+        <p>
+            Keep the molecule&rsquo;s <code>uniqueID</code> around: it is the stable handle you pass to most other API
+            calls (centring, representations, validation, &hellip;). You can also ask the instance for the loaded
+            molecules at any time with <code>moorhenInstance.getMoleculeList()</code> (or
+            <code>getMolecule(uniqueID)</code>).
+        </p>
+    </section>
+
+    <section>
+        <h2>5. Controlling the view</h2>
+
+        <p>
+            Once a structure is loaded you can drive the camera. To centre on a specific residue, use
+            <code>centerOnResidue(chain, residueNumber, moleculeUniqueId)</code>:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>document.getElementById("center-residue-1231")?.addEventListener("click", () =&gt; {
+    if (proteinUniqueId) {
+        moorhenInstance.centerOnResidue("A", 1231, proteinUniqueId);
+    }
+});</code></pre>
+
+        <p>
+            Scene-wide settings live under <code>moorhenInstance.sceneSettings</code>. These include background
+            colour, ambient light, axes and perspective. For example, to set a light blue background (RGB values from
+            0 to 1, alpha 255):
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>moorhenInstance.sceneSettings.setBackgroundColor([0.85, 0.9, 1.0, 255]);</code></pre>
+
+        <p class="note-technical">
+            <strong>API tip:</strong> <code>centerOnResidue</code>, <code>centerOnAtom</code> and
+            <code>centerOnCoordinate</code> are methods of
+            <a href="../../api/MoorhenInstance.html">MoorhenInstance</a>, while the generated
+            <code>sceneSettings</code> setters (a large family including <code>setBackgroundColor</code>,
+            <code>setAmbient</code>, <code>setZoom</code> &hellip;) are described on the same API page.
+        </p>
+    </section>
+
+    <section>
+        <h2 id="element-attributes">6. Element attributes</h2>
+
+        <p>The custom element accepts a few HTML attributes that change how it is set up:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Attribute</th>
+                    <th>Property</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>width</code> / <code>height</code></td>
+                    <td><code>width</code> / <code>height</code></td>
+                    <td>Size of the element, e.g. <code>"1000"</code> / <code>"800"</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>url-prefix</code></td>
+                    <td><code>urlPrefix</code></td>
+                    <td>Base path of the Moorhen assets (default <code>"MoorhenAssets"</code>). Set it if you did not
+                        copy the assets to <code>public/MoorhenAssets</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>view-only</code></td>
+                    <td><code>viewOnly</code></td>
+                    <td>Set to <code>"true"</code> to hide editing features and expose a view-only UI.</td>
+                </tr>
+                <tr>
+                    <td><code>disable-file-uploads</code></td>
+                    <td><code>disableFileUploads</code></td>
+                    <td>Set to <code>"true"</code> to prevent the user from loading files through the UI.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>For example, a view-only element whose assets live under a custom prefix:</p>
+
+        <pre class="code-block" data-lang="html"><code>&lt;moorhen-web-component
+    id="moorhen-2"
+    width="900"
+    height="700"
+    url-prefix="/static/MoorhenAssets"
+    view-only="true"&gt;
+&lt;/moorhen-web-component&gt;</code></pre>
+    </section>
+
+    <section>
+        <h2>Next steps</h2>
+
+        <p>
+            That is the whole "setup": register, wait for the instance, load data, control the view. In the next guide
+            we do the same inside a <strong>React</strong> application, where the two helper hooks from
+            <code>moorhen/web-component/utils</code> make it much more ergonomic.
+        </p>
+
+        <p class="note">
+            <strong>Coming in later guides:</strong> reacting to Moorhen events, such as store subscriptions and atom
+            hover / molecule-changed callbacks (<code>subscribeToStore</code>, <code>newAtomHoveredCallback</code>,
+            <code>newMoleculeChangedCallback</code>), and extending the Moorhen menu bar with your own items.
+        </p>
+
+        <p>
+            <a class="button" href="webcomponent-react.html">Next: Using the WebComponent in React</a>
+        </p>
+    </section>
+</article>
 </body>
 </html>
