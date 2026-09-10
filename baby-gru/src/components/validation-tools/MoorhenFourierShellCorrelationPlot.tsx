@@ -110,6 +110,16 @@ export const MoorhenFourierShellCorrelationPlot = () => {
                         const x = Number(this.getLabelForValue(parseFloat(String(value))))
                         return Math.sqrt(x).toFixed(3);
                     }
+                  },
+                  title: {
+                      display: true,
+                      text: "Spatial frequency (Å⁻¹)"
+                  }
+                },
+                y: {
+                  title: {
+                      display: true,
+                      text: "Correlation"
                   }
                 }
               },
