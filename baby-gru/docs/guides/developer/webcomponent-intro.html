@@ -52,6 +52,31 @@
     </section>
 
     <section>
+        <h2>Before you start: cross-origin isolation</h2>
+
+        <p>
+            Moorhen's Coot/CCP4 code is compiled with WebAssembly <em>threads</em> and needs
+            <code>SharedArrayBuffer</code>, which browsers only expose to <strong>cross-origin isolated</strong> pages.
+            Your server must therefore send these two response headers:
+        </p>
+
+        <pre class="code-block" data-lang="http"><code>Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp</code></pre>
+
+        <p>
+            This has a CORS consequence too: with <code>require-corp</code>, every cross-origin resource must opt in
+            with CORS or a <code>Cross-Origin-Resource-Policy</code> header, so keeping <code>MoorhenAssets</code> on
+            your own origin is simplest. If <code>window.crossOriginIsolated</code> is not <code>true</code>, Moorhen
+            cannot start.
+        </p>
+
+        <p>
+            See <a href="webcomponent-setup.html#cross-origin-isolation">Setting up the WebComponent</a> for Vite and
+            nginx examples.
+        </p>
+    </section>
+
+    <section>
         <h2>The architecture of the moorhen package</h2>
 
         <p>

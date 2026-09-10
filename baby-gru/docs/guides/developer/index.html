@@ -24,7 +24,8 @@
 <p>
     Guides for developers embedding Moorhen in their own applications. The current series focuses on the
     Moorhen <strong>WebComponent</strong>, starting with an overview of how it works and how the
-    <code>moorhen</code> package is organised, followed by step-by-step integration guides. Read them in order:
+    <code>moorhen</code> package is organised, followed by step-by-step integration guides and a shared guide to the
+    instance API. Read them in order:
 </p>
 
 <div class="card-grid">
@@ -35,19 +36,41 @@
     </div>
     <div class="card">
         <h3><a href="webcomponent-setup.html">Setting up the WebComponent</a></h3>
-        <p>A plain TypeScript page: serve the Moorhen assets, register the element, load structures and maps
-        from URLs, and control the view.</p>
+        <p>A plain TypeScript page: serve the Moorhen assets, register the element and obtain the instance.</p>
     </div>
     <div class="card">
         <h3><a href="webcomponent-react.html">Using the WebComponent in React</a></h3>
         <p>Embed the element in a React application with the <code>useWebComponentInstanceRef</code> and
         <code>useMoorhenSelector</code> hooks.</p>
     </div>
+    <div class="card">
+        <h3><a href="webcomponent-instance-api.html">Loading data and the MoorhenInstance API</a></h3>
+        <p>The framework-agnostic API shared by both integrations: loading structures and maps, representations,
+        scene settings, and the other instance groups.</p>
+    </div>
+    <div class="card">
+        <h3><a href="webcomponent-menu.html">Adding custom menus</a></h3>
+        <p>Extend the Moorhen menu bar with your own main-menu entries, submenus and items.</p>
+    </div>
+    <div class="card">
+        <h3><a href="webcomponent-slots.html">Custom HTML slots</a></h3>
+        <p>Place your own HTML inside the Moorhen menu bar using the Web Component slot mechanism.</p>
+    </div>
+    <div class="card">
+        <h3><a href="webcomponent-events.html">Callbacks and subscriptions</a></h3>
+        <p>React to store changes, atom hover, molecule changes and file loading, and unsubscribe when you are done.</p>
+    </div>
 </div>
 
 <p>
-    For class/function-level reference, see the <a href="../../api/index.html">API Reference</a>. Guides on
-    reacting to Moorhen events (store subscriptions, atom hover) and extending the Moorhen menus are in preparation.
+    For class/function-level reference, see the <a href="../../api/index.html">API Reference</a>. For reacting to
+    changes, see <a href="webcomponent-events.html">Callbacks and subscriptions</a>.
+</p>
+
+<p>
+    Runnable examples: <a href="https://github.com/cdegut/MoorhenWebComponent" target="_blank"
+        rel="noopener noreferrer">plain TypeScript</a> and <a href="https://github.com/cdegut/MoorhenWebComponentReact"
+        target="_blank" rel="noopener noreferrer">React</a>.
 </p>
 </body>
 </html>

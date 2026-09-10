@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Callbacks and subscriptions - Moorhen Developer Guide</title>
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/theme-toggle.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+    <img src="../../assets/MoorhenLogo.png" alt="Moorhen logo">
+    <h1>Callbacks and subscriptions</h1>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">Dark mode</button>
+</header>
+<nav class="site-nav">
+    <ul>
+        <li><a href="../../index.html">Docs Home</a></li>
+        <li><a href="index.html">Developer Guide</a></li>
+        <li><a href="../user/index.html">User Guide</a></li>
+        <li><a href="../../api/index.html">API Reference</a></li>
+    </ul>
+</nav>
+
+<article class="guide-article">
+    <h2>Reacting to changes in Moorhen</h2>
+
+    <p>
+        Moorhen can notify your application when things change. There are two mechanisms: subscribe to any part of the
+        store with
+        <a href="../../api/classes/moorhen.MoorhenInstance.html#subscribetostore"><code>subscribeToStore()</code></a>,
+        or use one of the ready-made callbacks
+        (<a href="../../api/classes/moorhen.MoorhenInstance.html#newatomhoveredcallback"><code>newAtomHoveredCallback()</code></a>,
+        <a href="../../api/classes/moorhen.MoorhenInstance.html#newmoleculechangedcallback"><code>newMoleculeChangedCallback()</code></a>,
+        <code>files.newFilesLoadedCallback()</code>).
+    </p>
+
+    <p class="note-technical">
+        <strong>Always unsubscribe.</strong> Every registration method in this guide returns a function that stops the
+        subscription. Call it when you no longer need the callback (for example when a React component unmounts),
+        otherwise it keeps firing for the lifetime of the page.
+    </p>
+
+    <p class="note-technical">
+        <strong>Prerequisite:</strong> the examples assume you already hold a <code>moorhenInstance</code> (see
+        <a href="webcomponent-setup.html">Setting up the WebComponent</a> or
+        <a href="webcomponent-react.html">Using the WebComponent in React</a>).
+    </p>
+
+    <section>
+        <h2>1. Subscribe to store changes</h2>
+
+        <p>
+            <code>subscribeToStore(selector, callback)</code> watches any value in Moorhen&rsquo;s store. The selector
+            picks the value, and the callback runs whenever that value changes:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>const unsubscribe = moorhenInstance.subscribeToStore(
+    (state) =&gt; state.molecules.moleculeList.length,
+    (count) =&gt; {
+        console.log(`${count} molecule(s) loaded`);
+    },
+);
+
+// Later, to stop listening:
+unsubscribe();</code></pre>
+
+        <p class="note">
+            <strong>It does not fire immediately.</strong> The callback only runs when the selected value changes, so
+            read the current value yourself for the initial state. Two easy ways are
+            <code>moorhenInstance.store.getState()</code> and the convenience methods
+            <code>getMoleculeList()</code> / <code>getMapList()</code>.
+        </p>
+
+        <p>
+            The selector receives the whole store state
+            (<a href="../../api/types/moorhen.RootState.html"><code>RootState</code></a>), so any slice can be watched.
+            Changes are compared with <code>!==</code>, which works well with Redux Toolkit&rsquo;s immutable updates:
+            make sure the selector returns a value that is stable when nothing changed.
+        </p>
+
+        <p>
+            In React you will usually reach for the
+            <a href="webcomponent-react.html"><code>useMoorhenSelector()</code> hook</a> instead, which wraps this and
+            handles the subscription for you.
+        </p>
+    </section>
+
+    <section>
+        <h2>2. Atom hover</h2>
+
+        <p>
+            <code>newAtomHoveredCallback(callback)</code> fires whenever the pointer hovers over a real atom in the 3D
+            view:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>const stopHover = moorhenInstance.newAtomHoveredCallback(
+    (moleculeId, residueNumber, atomName) =&gt; {
+        const molecule = moorhenInstance.getMolecule(moleculeId);
+        console.log(
+            `${atomName} in residue ${residueNumber} of ${molecule?.name ?? moleculeId}`,
+        );
+    },
+);
+
+// Later, to stop listening:
+stopHover();</code></pre>
+
+        <p>
+            The callback gives you the molecule&rsquo;s unique ID (use
+            <a href="../../api/classes/moorhen.MoorhenInstance.html#getmolecule"><code>getMolecule()</code></a> to get
+            the molecule itself), the residue number and the atom name. It only fires once the hovered atom is a real
+            atom, so you do not have to filter empty hover events.
+        </p>
+    </section>
+
+    <section>
+        <h2>3. Molecule changed</h2>
+
+        <p>
+            <code>newMoleculeChangedCallback(callback, moleculeUid?)</code> fires when a molecule is created, added,
+            deleted, modified or refined:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>const stopChanges = moorhenInstance.newMoleculeChangedCallback(
+    (moleculeId, action, cid) =&gt; {
+        console.log(`Molecule ${moleculeId}: ${action}${cid ? ` (${cid})` : ""}`);
+    },
+);
+
+// Later, to stop listening:
+stopChanges();</code></pre>
+
+        <ul>
+            <li><code>action</code> is one of <code>"new"</code>, <code>"add"</code>, <code>"delete"</code>,
+                <code>"modify"</code> or <code>"refine"</code>
+                (<a href="../../api/types/moorhen.moleculeChangeAction.html"><code>moleculeChangeAction</code></a>).
+            </li>
+            <li><code>cid</code> is the CID of the changed region, when relevant.</li>
+            <li>Pass a molecule unique ID as the second argument to only receive changes for that molecule.</li>
+        </ul>
+
+        <p>
+            If you change a molecule through your own code and want registered callbacks to know, fire the change
+            yourself with
+            <a href="../../api/classes/moorhen.MoorhenInstance.html#triggermoleculechanged"><code>triggerMoleculeChanged()</code></a>:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>moorhenInstance.triggerMoleculeChanged(moleculeUid, "modify", cid);</code></pre>
+    </section>
+
+    <section>
+        <h2>4. Files loaded</h2>
+
+        <p>
+            The files group has its own callback,
+            <code>moorhenInstance.files.newFilesLoadedCallback(callback)</code>, which fires once per file that
+            finishes loading:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>const stopFiles = moorhenInstance.files.newFilesLoadedCallback((file, origin) =&gt; {
+    console.log(`Loaded ${file.fileName} (${file.type}) as ${file.uniqueID} from "${origin}"`);
+});
+
+// Later, to stop listening:
+stopFiles();</code></pre>
+
+        <p>
+            <code>file</code> is a
+            <a href="../../api/types/WebComponent_entry.LoadFilesResult.html"><code>LoadFilesResult</code></a>, the same
+            shape returned by <code>loadFiles()</code>. The second argument is the optional <code>origin</code> label
+            you pass to <code>loadFiles()</code>, which is handy when several parts of your app load files and you want
+            to tell them apart:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>moorhenInstance.files.loadFiles(
+    ["https://www.ebi.ac.uk/pdbe/entry-files/1bxn.cif"],
+    "my-importer",
+);</code></pre>
+    </section>
+
+    <section>
+        <h2>5. Unsubscribe when you are done</h2>
+
+        <p>
+            In a long-lived page, and especially in a single-page app, unsubscribe when the code that registered the
+            callback is torn down. In React, return the unsubscribe functions from the effect:
+        </p>
+
+        <pre class="code-block" data-lang="tsx"><code>useEffect(() =&gt; {
+    const instance = moorhenInstanceRef.current;
+    if (!instance) {
+        return;
+    }
+
+    const stopHover = instance.newAtomHoveredCallback((moleculeId, residueNumber, atomName) =&gt; {
+        console.log(`${atomName} in residue ${residueNumber} of ${moleculeId}`);
+    });
+
+    const stopChanges = instance.newMoleculeChangedCallback((moleculeId, action) =&gt; {
+        console.log(`Molecule ${moleculeId}: ${action}`);
+    });
+
+    return () =&gt; {
+        stopHover();
+        stopChanges();
+    };
+}, [moorhenInstanceRef]);</code></pre>
+
+        <p>
+            <code>subscribeToStore()</code> returns an unsubscribe function in the same way, and the
+            <code>useMoorhenSelector()</code> hook manages its own subscription and cleanup.
+        </p>
+    </section>
+
+    <section>
+        <h2>Element events</h2>
+
+        <p>
+            One thing is not on the instance: the element dispatches a <code>moorhenReady</code> CustomEvent on
+            <code>window</code> once it has mounted. That is covered in
+            <a href="webcomponent-intro.html">The Moorhen WebComponent</a> and
+            <a href="webcomponent-setup.html">Setting up the WebComponent</a>.
+        </p>
+    </section>
+
+    <section>
+        <h2>API reference</h2>
+
+        <ul>
+            <li>
+                <a href="../../api/classes/moorhen.MoorhenInstance.html#subscribetostore"><code>subscribeToStore()</code></a>
+                &mdash; subscribe to any store value.
+            </li>
+            <li>
+                <a href="../../api/classes/moorhen.MoorhenInstance.html#newatomhoveredcallback"><code>newAtomHoveredCallback()</code></a>,
+                <a href="../../api/classes/moorhen.MoorhenInstance.html#newmoleculechangedcallback"><code>newMoleculeChangedCallback()</code></a>,
+                <a href="../../api/classes/moorhen.MoorhenInstance.html#triggermoleculechanged"><code>triggerMoleculeChanged()</code></a>.
+            </li>
+            <li>
+                <a href="../../api/classes/moorhen.MoorhenInstance.html#files"><code>files.newFilesLoadedCallback()</code></a>
+                &mdash; file-loading notifications.
+            </li>
+            <li>
+                <a href="../../api/types/moorhen.RootState.html"><code>RootState</code></a>,
+                <a href="../../api/types/moorhen.moleculeChangeAction.html"><code>moleculeChangeAction</code></a>,
+                <a href="../../api/types/WebComponent_entry.LoadFilesResult.html"><code>LoadFilesResult</code></a>.
+            </li>
+        </ul>
+
+        <p>
+            <a class="button" href="webcomponent-slots.html">Prev: Custom HTML slots</a>
+            <a class="button" href="index.html">Back to Developer Guide</a>
+        </p>
+    </section>
+</article>
+</body>
+</html>

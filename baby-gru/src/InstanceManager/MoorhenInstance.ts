@@ -347,10 +347,10 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     /**
-     * The menu system driving the application UI, if one was provided.
+     * The menu system driving the application UI.
      *
-     * **Internal use only.** Exposed for the bundled application UI.
-     * @private
+     * Use it to add your own main-menu entries and submenus. See
+     * {@link MoorhenMenuSystem} for the methods and the menu configuration types.
      */
     public get menuSystem(): MoorhenMenuSystem | null {
         return this._menuSystem;

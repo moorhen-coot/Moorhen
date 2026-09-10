@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Adding custom menus - Moorhen Developer Guide</title>
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/theme-toggle.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+    <img src="../../assets/MoorhenLogo.png" alt="Moorhen logo">
+    <h1>Adding custom menus</h1>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">Dark mode</button>
+</header>
+<nav class="site-nav">
+    <ul>
+        <li><a href="../../index.html">Docs Home</a></li>
+        <li><a href="index.html">Developer Guide</a></li>
+        <li><a href="../user/index.html">User Guide</a></li>
+        <li><a href="../../api/index.html">API Reference</a></li>
+    </ul>
+</nav>
+
+<article class="guide-article">
+    <h2>Extending the Moorhen menu bar</h2>
+
+    <p>
+        The Moorhen menu bar can be extended at runtime through
+        <a href="../../api/classes/moorhen.MoorhenInstance.html#menusystem"><code>moorhenInstance.menuSystem</code></a>,
+        a <a href="../../api/classes/moorhen.MoorhenMenuSystem.html">MoorhenMenuSystem</a>. Adding a menu is two steps:
+        add a main-menu entry, then define the submenu it opens. The API is framework-agnostic, so the same code works
+        in a plain page and in React.
+    </p>
+
+    <p class="note-technical">
+        <strong>Prerequisite:</strong> the examples assume you already hold a <code>moorhenInstance</code> (see
+        <a href="webcomponent-setup.html">Setting up the WebComponent</a> or
+        <a href="webcomponent-react.html">Using the WebComponent in React</a>). The WebComponent always provides a menu
+        system, so <code>moorhenInstance.menuSystem</code> is set.
+    </p>
+
+    <p class="note">
+        <strong>Slots:</strong> inserting your own HTML into a menu uses a separate mechanism, the
+        <code>HTMLslot</code> item type. See <a href="webcomponent-slots.html">Custom HTML slots</a>.
+    </p>
+
+    <section>
+        <h2>1. Add a main menu entry</h2>
+
+        <p>
+            A main-menu entry is a <a href="../../api/types/WebComponent_entry.MainMenuType.html">MainMenuType</a>: a
+            <code>sub-menu</code> (opens one of your submenus), a <code>modal</code>, a <code>panel</code>, or a
+            <code>jsx</code> element. The most common is a submenu:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>import type { MainMenuEntrySubMenu } from "moorhen/web-component";
+
+const extraMenu: MainMenuEntrySubMenu = {
+    type: "sub-menu",
+    label: "Extra",
+    ariaLabel: "Extra menu",
+    icon: "MatSymDownload",
+    menu: "extra-menu",   // the id of the submenu to open
+    align: 5,             // ordering hint among the existing menus
+};
+
+moorhenInstance.menuSystem?.addMainMenu(extraMenu, 2);</code></pre>
+
+        <ul>
+            <li><code>menu</code> must match the key you use when defining the submenu below.</li>
+            <li><code>icon</code> is a <a href="../../api/types/moorhen.MoorhenSVG.html">MoorhenSVG</a> name (for
+                example <code>"MatSymDownload"</code>). Use <code>iconSrc</code> instead to point at an image URL.</li>
+            <li>The second argument of <code>addMainMenu</code> is the position in the menu bar. Existing entries at
+                or after that position are shifted along; omit it to append the entry at the end.</li>
+        </ul>
+
+        <p>
+            The other entry types are described on the
+            <a href="../../api/types/WebComponent_entry.MainMenuType.html">MainMenuType</a> page:
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>What it does</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>sub-menu</code></td>
+                    <td>Opens one of your submenus (set <code>menu</code> to its id).</td>
+                </tr>
+                <tr>
+                    <td><code>modal</code></td>
+                    <td>Opens a Moorhen modal by <code>modal</code> key, with optional <code>args</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>panel</code></td>
+                    <td>Opens one of the side panels by <code>panel</code> id.</td>
+                </tr>
+                <tr>
+                    <td><code>jsx</code></td>
+                    <td>Renders your own React element (set <code>component</code>).</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>2. Define the submenu and its items</h2>
+
+        <p>
+            Submenus are described with a <a href="../../api/types/WebComponent_entry.SubMenuMap.html">SubMenuMap</a>
+            and registered with <code>addSubmenu()</code>. Each submenu has a <code>label</code> and a list of items:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>import type { SubMenuMap } from "moorhen/web-component";
+
+const extraMenuItems: SubMenuMap = {
+    "extra-menu": {
+        label: "Extra",
+        items: [
+            {
+                id: "extra-load-1bxn",
+                type: "item",
+                label: "Load 1BXN",
+                onClick: () => {
+                    moorhenInstance.files.loadFiles(
+                        "https://www.ebi.ac.uk/pdbe/entry-files/1bxn.cif",
+                    );
+                },
+            },
+            { type: "separator" },
+            {
+                id: "extra-reset-view",
+                type: "item",
+                label: "Reset view",
+                onClick: () => {
+                    moorhenInstance.sceneSettings.resetSceneSettings();
+                },
+            },
+        ],
+    },
+};
+
+moorhenInstance.menuSystem?.addSubmenu(extraMenuItems);</code></pre>
+
+        <p>
+            A menu item is a <a href="../../api/types/WebComponent_entry.MenuItemType.html">MenuItemType</a>. All items
+            share some common fields (<code>id</code>, <code>label</code>, <code>ariaLabel</code>,
+            <code>keywords</code>, <code>description</code>) and then differ by <code>type</code>:
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th><code>type</code></th>
+                    <th>Fields</th>
+                    <th>What it does</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>item</code></td>
+                    <td><code>onClick</code></td>
+                    <td>A normal clickable entry. This is the one you will use most.</td>
+                </tr>
+                <tr>
+                    <td><code>separator</code></td>
+                    <td><code>label?</code></td>
+                    <td>A horizontal separator between groups of items.</td>
+                </tr>
+                <tr>
+                    <td><code>subMenu</code></td>
+                    <td><code>menu</code></td>
+                    <td>Opens another submenu (nesting).</td>
+                </tr>
+                <tr>
+                    <td><code>showModal</code></td>
+                    <td><code>modal</code>, <code>args?</code></td>
+                    <td>Opens a Moorhen modal.</td>
+                </tr>
+                <tr>
+                    <td><code>showPanel</code></td>
+                    <td><code>panel</code></td>
+                    <td>Opens a side panel.</td>
+                </tr>
+                <tr>
+                    <td><code>dispatch</code></td>
+                    <td><code>action</code></td>
+                    <td><span style="color:red;">Internal only</span>Dispatches a Redux action.</td>
+                </tr>
+                <tr>
+                    <td><code>preferenceSwitch</code></td>
+                    <td><code>selector</code>, <code>action</code></td>
+                    <td><span style="color:red;">Internal only</span>A toggle bound to a boolean in the store.</td>
+                </tr>
+                <tr>
+                    <td><code>customJSX</code></td>
+                    <td><code>jsx</code></td>
+                    <td><span style="color:red;">Internal only</span>Renders React element inside the menu.</td>
+                </tr>
+                <tr>
+                    <td><code>popover</code></td>
+                    <td><code>content</code></td>
+                    <td><span style="color:red;">Internal only</span> Shows a popover built from your own React element.</td>
+                </tr>
+                <tr>
+                    <td><code>HTMLslot</code></td>
+                    <td><code>slotName</code></td>
+                    <td>Renders a <code>&lt;slot&gt;</code> that you fill with your own HTML. This is the supported way
+                        to add custom content to the menu from the WebComponent. See
+                        <a href="webcomponent-slots.html">Custom HTML slots</a>.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        Several items are <span style="color:red;">Internal only</span>. They could be used if you decide to use the "react-lib" integration path. The alternative for the webcomponent is to use slots to insert your own React elements into the menu, which is covered in <a href="webcomponent-slots.html">Custom HTML slots</a>.
+
+        <p class="note-technical">
+            <strong>Item ids must be unique</strong> across all submenus. Moorhen logs a warning if two items share an
+            id, which would make <code>deleteItemById()</code> ambiguous.
+        </p>
+    </section>
+
+    <section>
+        <h2>3. Modify an existing menu</h2>
+
+        <p>
+            You do not have to create a new menu: you can add items to one of Moorhen&rsquo;s submenus with
+            <code>addToExistingSubmenu()</code>, or remove your own items with <code>deleteItemById()</code>:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>// Add an item at the bottom of the built-in "file" submenu.
+moorhenInstance.menuSystem?.addToExistingSubmenu(
+    [
+        {
+            id: "my-open-custom",
+            type: "item",
+            label: "Open my structure",
+            onClick: () => {
+                moorhenInstance.files.loadFiles("/my-structure.pdb");
+            },
+        },
+    ],
+    "file",
+);
+
+// Remove an item again by its id.
+moorhenInstance.menuSystem?.deleteItemById("my-open-custom");</code></pre>
+
+        <p>
+            Pass <code>true</code> as the third argument of <code>addToExistingSubmenu()</code> to insert the items at
+            the <em>top</em> of the submenu instead of the bottom.
+        </p>
+    </section>
+
+    <section>
+        <h2>API reference</h2>
+
+        <ul>
+            <li>
+                <a href="../../api/classes/moorhen.MoorhenInstance.html#menusystem"><code>MoorhenInstance.menuSystem</code></a>
+                &mdash; entry point.
+            </li>
+            <li>
+                <a href="../../api/classes/moorhen.MoorhenMenuSystem.html"><code>MoorhenMenuSystem</code></a> &mdash;
+                <a href="../../api/classes/moorhen.MoorhenMenuSystem.html#addmainmenu"><code>addMainMenu()</code></a>,
+                <a href="../../api/classes/moorhen.MoorhenMenuSystem.html#addsubmenu"><code>addSubmenu()</code></a>,
+                <a href="../../api/classes/moorhen.MoorhenMenuSystem.html#addtoexistingsubmenu"><code>addToExistingSubmenu()</code></a>,
+                <a href="../../api/classes/moorhen.MoorhenMenuSystem.html#deleteitembyid"><code>deleteItemById()</code></a>.
+            </li>
+            <li>
+                Configuration types:
+                <a href="../../api/types/WebComponent_entry.MainMenuType.html"><code>MainMenuType</code></a>,
+                <a href="../../api/types/WebComponent_entry.MainMenuEntrySubMenu.html"><code>MainMenuEntrySubMenu</code></a>,
+                <a href="../../api/types/WebComponent_entry.MenuItemType.html"><code>MenuItemType</code></a>,
+                <a href="../../api/types/WebComponent_entry.SubMenuMap.html"><code>SubMenuMap</code></a>.
+            </li>
+        </ul>
+
+        <p>
+            <a class="button" href="webcomponent-instance-api.html">Prev: Loading data and the MoorhenInstance API</a>
+            <a class="button" href="webcomponent-slots.html">Next: Custom HTML slots</a>
+            <a class="button" href="index.html">Back to Developer Guide</a>
+        </p>
+    </section>
+</article>
+</body>
+</html>

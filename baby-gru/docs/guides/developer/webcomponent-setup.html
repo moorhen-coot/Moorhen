@@ -26,9 +26,10 @@
 
     <p>
         This guide walks through a minimal, runnable integration of the Moorhen WebComponent in a host page written in
-        plain TypeScript/JavaScript. It covers the three things you need to get started: serving the Moorhen
-        assets, registering the element and waiting until it is ready, and then loading a structure and controlling the
-        view.
+        plain TypeScript/JavaScript. It covers what you need to get started: serving the Moorhen assets, and registering
+        the element and waiting until it is ready. Loading data and controlling the view are the same for every
+        framework, and are covered in
+        <a href="webcomponent-instance-api.html">Loading data and the MoorhenInstance API</a>.
     </p>
 
     <p class="note-technical">
@@ -64,14 +65,86 @@
         </p>
 
         <p class="note-technical">
-            <strong>Technical note:</strong> because Moorhen loads WebAssembly modules and uses web workers, you must
-            serve the page over HTTP(S) (e.g. a Vite dev server, or <code>python3 -m http.server</code>) rather than
-            opening the file directly from disk.
+            <strong>Technical note:</strong> because Moorhen runs WebAssembly in web workers, you must serve the page
+            over HTTP(S) with the cross-origin isolation headers described in
+            <a href="#cross-origin-isolation">section 2</a>, rather than opening the file directly from disk.
         </p>
     </section>
 
     <section>
-        <h2>2. The host HTML page</h2>
+        <h2 id="cross-origin-isolation">2. Serve the page with cross-origin isolation</h2>
+
+        <p>
+            Moorhen's Coot/CCP4 code is compiled with WebAssembly <em>threads</em>, which need
+            <code>SharedArrayBuffer</code>. Browsers only expose <code>SharedArrayBuffer</code> to pages that are
+            <strong>cross-origin isolated</strong>, so the server hosting your page must send these two response
+            headers:
+        </p>
+
+        <pre class="code-block" data-lang="http"><code>Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp</code></pre>
+
+        <p>
+            Without them the page is not isolated and Moorhen's Coot worker cannot allocate its shared memory, so the
+            component will not start. Check the result in the browser console:
+            <code>window.crossOriginIsolated</code> must be <code>true</code>.
+        </p>
+
+        <p>
+            <code>require-corp</code> also affects CORS: any cross-origin resource the page loads (scripts, styles,
+            fonts, workers, WebAssembly) must opt in with CORS or a
+            <code>Cross-Origin-Resource-Policy</code> header. Serving <code>MoorhenAssets</code> from your own origin
+            is the simplest way to satisfy that.
+        </p>
+
+        <h3>Vite</h3>
+
+        <p>Add the headers to both the dev server and the preview server:</p>
+
+        <pre class="code-block" data-lang="typescript"><code>// vite.config.ts
+export default defineConfig({
+    server: {
+        headers: {
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Embedder-Policy": "require-corp",
+        },
+    },
+    preview: {
+        headers: {
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Embedder-Policy": "require-corp",
+        },
+    },
+});</code></pre>
+
+        <h3>nginx</h3>
+
+        <pre class="code-block" data-lang="text"><code>add_header 'Cross-Origin-Opener-Policy' 'same-origin';
+add_header 'Cross-Origin-Embedder-Policy' 'require-corp';</code></pre>
+
+        <h3>Python HTTP server</h3>
+        <pre class="code-block" data-lang="python"><code>from http.server import HTTPServer, SimpleHTTPRequestHandler, test
+import sys
+
+class CORSRequestHandler (SimpleHTTPRequestHandler):
+    def end_headers (self):
+        self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
+        self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
+        SimpleHTTPRequestHandler.end_headers(self)
+
+if __name__ == '__main__':
+    test(CORSRequestHandler, HTTPServer, port=int(sys.argv[1]) if len(sys.argv) > 1 else 8000)
+</code></pre>
+
+        <p class="note">
+            <strong>Static hosts:</strong> some hosts (for example GitHub Pages) do not allow you to set response
+            headers. You then need a service-worker shim (such as <code>coi-serviceworker</code>) to add them, or host
+            the page where headers can be configured.
+        </p>
+    </section>
+
+    <section>
+        <h2>3. The host HTML page</h2>
 
         <p>
             Start from a very small page. The important parts are the <code>&lt;moorhen-web-component&gt;</code> element
@@ -99,14 +172,16 @@
 &lt;/html&gt;</code></pre>
 
         <p>
-            The buttons and the paragraph are plain HTML hooks. Your code will wire them up to the Moorhen API.
-            In the rest of this guide, <code>main.ts</code> is your module entry point (transpile it to JavaScript for
-            production, as you would with any TypeScript project).
+            The buttons and the paragraph are plain HTML hooks, shown here to sketch a typical host page. The Moorhen
+            API calls that would drive them are the same in every framework and are covered in
+            <a href="webcomponent-instance-api.html">Loading data and the MoorhenInstance API</a>. Here
+            <code>main.ts</code> is your module entry point (transpile it to JavaScript for production, as you would
+            with any TypeScript project).
         </p>
     </section>
 
     <section>
-        <h2>3. Register the element and obtain the instance</h2>
+        <h2>4. Register the element and obtain the instance</h2>
 
         <p>
             First, register the custom element and grab a strongly-typed reference to it. Then wait for Moorhen to be
@@ -136,99 +211,7 @@ const moorhenInstance = await moorhen.getMoorhenInstance();</code></pre>
     </section>
 
     <section>
-        <h2>4. Loading a structure and maps from URLs</h2>
-
-        <p>
-            Molecules and maps are loaded through <code>moorhenInstance.files.loadFiles()</code>. It accepts one or
-            more URLs (or <code>File</code>s, strings, <code>URL</code>s&hellip;) and returns a result per file telling
-            you what was loaded and how to refer to it:
-        </p>
-
-        <pre class="code-block" data-lang="typescript"><code>interface LoadFilesResult {
-    type: "molecule" | "map";
-    uniqueID: string;   // use this to refer to the molecule/map later
-    molNo: number;
-    fileName: string;
-}</code></pre>
-
-        <p>
-            The example below fetches the structure and the two maps of the PDB entry <code>7AVK</code> straight from
-            PDBe and returns the load results so the caller can pick out the molecule&rsquo;s
-            <code>uniqueID</code>:
-        </p>
-
-        <pre class="code-block" data-lang="typescript"><code>import type { LoadFilesResult } from "moorhen/web-component";
-
-const PDBe_FILES = "https://www.ebi.ac.uk/pdbe/entry-files";
-
-async function loadEntryFromPDBe(entryId: string): Promise&lt;LoadFilesResult[]&gt; {
-    const results = await moorhenInstance.files.loadFiles([
-        `${PDBe_FILES}/${entryId}.cif`,             // coordinates
-        `${PDBe_FILES}/${entryId}.ccp4`,            // 2Fo-Fc map
-        `${PDBe_FILES}/${entryId}_diff.ccp4`,       // difference map
-    ]);
-    return results;
-}</code></pre>
-
-        <p>
-            Wire it up to the <em>Load</em> button, remembering the <code>uniqueID</code> of the molecule that was
-            created:
-        </p>
-
-        <pre class="code-block" data-lang="typescript"><code>let proteinUniqueId: string | null = null;
-
-document.getElementById("load-7avk")?.addEventListener("click", async () =&gt; {
-    const results = await loadEntryFromPDBe("7avk");
-    proteinUniqueId =
-        results.find((item) =&gt; item.type === "molecule" &amp;&amp; item.fileName.endsWith(".cif"))?.uniqueID ?? null;
-
-    const loadingText = document.getElementById("loading-text");
-    if (loadingText) {
-        loadingText.textContent = `Structure ${proteinUniqueId ?? "?"} loaded.`;
-    }
-});</code></pre>
-
-        <p>
-            Keep the molecule&rsquo;s <code>uniqueID</code> around: it is the stable handle you pass to most other API
-            calls (centring, representations, validation, &hellip;). You can also ask the instance for the loaded
-            molecules at any time with <code>moorhenInstance.getMoleculeList()</code> (or
-            <code>getMolecule(uniqueID)</code>).
-        </p>
-    </section>
-
-    <section>
-        <h2>5. Controlling the view</h2>
-
-        <p>
-            Once a structure is loaded you can drive the camera. To centre on a specific residue, use
-            <code>centerOnResidue(chain, residueNumber, moleculeUniqueId)</code>:
-        </p>
-
-        <pre class="code-block" data-lang="typescript"><code>document.getElementById("center-residue-1231")?.addEventListener("click", () =&gt; {
-    if (proteinUniqueId) {
-        moorhenInstance.centerOnResidue("A", 1231, proteinUniqueId);
-    }
-});</code></pre>
-
-        <p>
-            Scene-wide settings live under <code>moorhenInstance.sceneSettings</code>. These include background
-            colour, ambient light, axes and perspective. For example, to set a light blue background (RGB values from
-            0 to 1, alpha 255):
-        </p>
-
-        <pre class="code-block" data-lang="typescript"><code>moorhenInstance.sceneSettings.setBackgroundColor([0.85, 0.9, 1.0, 255]);</code></pre>
-
-        <p class="note-technical">
-            <strong>API tip:</strong> <code>centerOnResidue</code>, <code>centerOnAtom</code> and
-            <code>centerOnCoordinate</code> are methods of
-            <a href="../../api/classes/moorhen.MoorhenInstance.html">MoorhenInstance</a>, while the generated
-            <code>sceneSettings</code> setters (a large family including <code>setBackgroundColor</code>,
-            <code>setAmbient</code>, <code>setZoom</code> &hellip;) are described on the same API page.
-        </p>
-    </section>
-
-    <section>
-        <h2 id="element-attributes">6. Element attributes</h2>
+        <h2 id="element-attributes">5. Element attributes</h2>
 
         <p>The custom element accepts a few HTML attributes that change how it is set up:</p>
 
@@ -280,19 +263,32 @@ document.getElementById("load-7avk")?.addEventListener("click", async () =&gt; {
         <h2>Next steps</h2>
 
         <p>
-            That is the whole "setup": register, wait for the instance, load data, control the view. In the next guide
-            we do the same inside a <strong>React</strong> application, where the two helper hooks from
-            <code>moorhen/web-component/utils</code> make it much more ergonomic.
-        </p>
-
-        <p class="note">
-            <strong>Coming in later guides:</strong> reacting to Moorhen events, such as store subscriptions and atom
-            hover / molecule-changed callbacks (<code>subscribeToStore</code>, <code>newAtomHoveredCallback</code>,
-            <code>newMoleculeChangedCallback</code>), and extending the Moorhen menu bar with your own items.
+            That is the whole "setup": register the element and wait for the instance. Using that instance is the same
+            in every framework, and is covered in
+            <a href="webcomponent-instance-api.html">Loading data and the MoorhenInstance API</a>.
         </p>
 
         <p>
-            <a class="button" href="webcomponent-react.html">Next: Using the WebComponent in React</a>
+            If you are using <strong>React</strong>, the <a href="webcomponent-react.html">React guide</a> shows how to
+            mount the element and drive the instance with the two helper hooks from
+            <code>moorhen/web-component/utils</code>.
+        </p>
+
+        <p class="note">
+            <strong>Related guides:</strong> extending the menu bar is covered in
+            <a href="webcomponent-menu.html">Adding custom menus</a>, and reacting to Moorhen events in
+            <a href="webcomponent-events.html">Callbacks and subscriptions</a>.
+        </p>
+
+        <p>
+            A complete, runnable version of this page is in the example project
+            <a href="https://github.com/cdegut/MoorhenWebComponent" target="_blank"
+                rel="noopener noreferrer">MoorhenWebComponent</a>.
+        </p>
+
+        <p>
+            <a class="button" href="webcomponent-instance-api.html">Next: Loading data and the MoorhenInstance API</a>
+            <a class="button" href="webcomponent-react.html">Using the WebComponent in React</a>
         </p>
     </section>
 </article>

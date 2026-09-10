@@ -43,16 +43,21 @@
     <section>
         <h2>1. Prerequisites</h2>
 
-        <p>Install the package and copy the Moorhen assets into your app&rsquo;s static folder (a Vite/React app
-        serves <code>public/</code> at the root):</p>
+        <p>
+            Do the setup from <a href="webcomponent-setup.html">Setting up the WebComponent</a> first. In short, your
+            React app must:
+        </p>
 
-        <pre class="code-block" data-lang="shell"><code>npm install moorhen
-cp -r node_modules/moorhen/public/MoorhenAssets public/</code></pre>
+        <ul>
+            <li>install <code>moorhen</code> and copy <code>MoorhenAssets</code> into its static folder
+                (<code>public/</code> in a Vite app);</li>
+            <li>serve the page cross-origin isolated, with the <code>Cross-Origin-Opener-Policy</code> and
+                <code>Cross-Origin-Embedder-Policy</code> headers, or Moorhen&rsquo;s WebAssembly threads cannot
+                start.</li>
+        </ul>
 
         <p>
-            This is exactly the same step as in the plain-page guide. See
-            <a href="webcomponent-setup.html">Setting up the WebComponent</a> for details. A Vite plugin that automates
-            the copy is planned but not usable yet.
+            The previous page has the exact commands, the header values, and ready-made Vite and nginx configuration, and a ready to use python server.
         </p>
     </section>
 
@@ -199,6 +204,12 @@ function MyMoorhen() {
             <code>centerOnResidue(...)</code>. Once your component has the ref, everything from the
             <a href="../../api/classes/moorhen.MoorhenInstance.html">MoorhenInstance</a> API page is available.
         </p>
+
+        <p class="note-technical">
+            <strong>Full API:</strong> loading data, representations, scene settings and the other instance groups are
+            identical to the plain-page case. See
+            <a href="webcomponent-instance-api.html">Loading data and the MoorhenInstance API</a>.
+        </p>
     </section>
 
     <section>
@@ -219,7 +230,14 @@ function MyMoorhen() {
         </p>
 
         <p>
+            A complete, runnable React example is in the example project
+            <a href="https://github.com/cdegut/MoorhenWebComponentReact" target="_blank"
+                rel="noopener noreferrer">MoorhenWebComponentReact</a>.
+        </p>
+
+        <p>
             <a class="button" href="webcomponent-setup.html">Prev: Setting up the WebComponent</a>
+            <a class="button" href="webcomponent-instance-api.html">Next: Loading data and the MoorhenInstance API</a>
             <a class="button" href="index.html">Back to Developer Guide</a>
         </p>
     </section>
