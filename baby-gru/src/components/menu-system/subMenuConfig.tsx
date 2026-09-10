@@ -816,11 +816,11 @@ export const subMenuMap: SubMenuMap = {
         items: [
             {
                 id: "wiki",
-                label: "Go to Moorhen wiki...",
+                label: "Go to Moorhen documentation...",
                 type: "item",
                 keywords: ["wiki", "documentation", "help"],
-                description: "Open Moorhen wiki documentation",
-                onClick: () => window.open("https://moorhen-coot.github.io/wiki/"),
+                description: "Open Moorhen documentation",
+                onClick: () => window.open("https://moorhen.hosted.york.ac.uk/docs"),
             },
             {
                 id: "show-controls",
