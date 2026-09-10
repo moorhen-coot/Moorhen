@@ -117,9 +117,12 @@ stopHover();</code></pre>
         <h2>3. Molecule changed</h2>
 
         <p>
-            <code>newMoleculeChangedCallback(callback, moleculeUid?)</code> fires when one of Moorhen&rsquo;s editing
-            actions changes a molecule: mutate, refine, delete, add waters, rotamer changes and so on. Note that
-            simply <em>loading</em> a file does not fire it. Use the
+            <code>newMoleculeChangedCallback(callback, moleculeUid?)</code> fires whenever Moorhen reports a change
+            to a molecule. Its editing actions pass an <code>action</code>: mutate, refine, delete, add waters,
+            rotamer changes and so on. Some internal paths report a change without one, for example when Moorhen
+            caches a monomer dictionary it had to fetch while loading a structure, so <code>action</code> is
+            optional and can be <code>undefined</code>. Treat this callback as &ldquo;this molecule
+            changed&rdquo;, not as &ldquo;a file finished loading&rdquo;: use the
             <a href="#files-loaded">files-loaded callback</a> for that.
         </p>
 
@@ -133,8 +136,8 @@ stopHover();</code></pre>
 stopChanges();</code></pre>
 
         <ul>
-            <li><code>action</code> is one of <code>"new"</code>, <code>"add"</code>, <code>"delete"</code>,
-                <code>"modify"</code> or <code>"refine"</code>
+            <li><code>action</code>, when Moorhen provides one, is <code>"new"</code>, <code>"add"</code>,
+                <code>"delete"</code>, <code>"modify"</code> or <code>"refine"</code>
                 (<a href="../../api/types/moorhen.moleculeChangeAction.html"><code>moleculeChangeAction</code></a>).
             </li>
             <li><code>cid</code> is the CID of the changed region, when relevant.</li>
@@ -148,6 +151,12 @@ stopChanges();</code></pre>
         </p>
 
         <pre class="code-block" data-lang="typescript"><code>moorhenInstance.triggerMoleculeChanged(moleculeUid, "modify", cid);</code></pre>
+
+        <p class="note-technical">
+            <strong>Resolving the molecule:</strong> the callback can fire before the molecule shows up in
+            <code>getMoleculeList()</code>, so <code>getMolecule(moleculeId)</code> may still return
+            <code>undefined</code>. Fall back to the id rather than assuming a name is available.
+        </p>
     </section>
 
     <section>
