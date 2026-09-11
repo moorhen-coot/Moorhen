@@ -103,7 +103,7 @@ export const Moorhen3DObjects = () => {
         type: "prism",
         colour: "#ff0000ff",
         origin: [0, 0, 0],
-        top: [0, 0, 5],
+        end: [0, 0, 5],
         radius: 1.0,
         n_sides: 6
     });
@@ -133,7 +133,7 @@ export const Moorhen3DObjects = () => {
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
-        scale: [1.0, 1.0, 1.0]
+        scalexyz: [1.0, 1.0, 1.0]
     });
 
     const newTetrahedronObject = (): TetrahedronObject => ({
@@ -215,6 +215,7 @@ export const Moorhen3DObjects = () => {
     const [positionText, setPositionText] = useState<string>("0,0,0");
     const [endPositionText, setEndPositionText] = useState<string>("0,0,1");
     const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0);
+    const [sizeText, setSizeText] = useState<string>("1.0");
 
     const handleDelete = () => {
         dispatch(removeObjectById(theObject.uniqueId));
@@ -236,6 +237,21 @@ export const Moorhen3DObjects = () => {
         }
         return isOk;
     };
+
+    const checkSizeText = () => {
+        let isOk: boolean = false;
+        try {
+            const _new_x = parseFloat(sizeText)
+            if (!Number.isNaN(_new_x) && !(_new_x === undefined)) {
+                isOk = true;
+            } else {
+                console.log("Not a valid number in size.");
+            }
+        } catch(e) {
+            console.log("Not a valid number in size.");
+        }
+        return isOk;
+    }
 
     const checkPosition2Text = () => {
         let isOk: boolean = false;
@@ -272,6 +288,7 @@ export const Moorhen3DObjects = () => {
             y2 = undefined,
             z2 = undefined,
             colour = undefined,
+            size = undefined,
         },
         objectType
     ) => {
@@ -320,6 +337,18 @@ export const Moorhen3DObjects = () => {
                             Number(y2),
                             Number(z2)
                         ] as [number, number, number]
+                    }
+                ),
+                ...(
+                    size !== undefined &&
+                    "radius" in prev && {
+                        radius: Number(size)
+                    }
+                ),
+                ...(
+                    size !== undefined &&
+                    "scale" in prev && {
+                        scale: Number(size)
                     }
                 )
             }));
@@ -530,6 +559,20 @@ export const Moorhen3DObjects = () => {
                                 }
                             }}
                             isInvalid={!checkPosition2Text()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
+                {(drawMode === "sphere"||drawMode === "cylinder"||drawMode === "cone")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Radius"
+                            text={sizeText}
+                            onChange={evt => {
+                                setSizeText(evt.target.value);
+                                updateTheObject({size:parseFloat(evt.target.value)},theObject.type)
+                            }}
+                            isInvalid={!checkSizeText()}
                             style={{ height: "2rem", margin: "0.3rem" }}
                         />
                     </>

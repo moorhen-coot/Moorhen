@@ -69,7 +69,7 @@ export interface CubeObject extends ThreeDObjectBase {
 export interface CuboidObject extends ThreeDObjectBase {
     type: "cuboid";
     orientation: Matrix4x4;
-    scale: Scale3D;
+    scalexyz: Scale3D;
 }
 
 export interface TetrahedronObject extends ThreeDObjectBase {
