@@ -48,7 +48,7 @@ export interface FlatSidedFrustrumObject extends ThreeDObjectBase {
 
 export interface PrismObject extends ThreeDObjectBase {
     type: "prism";
-    top: Position3D;
+    end: Position3D;
     radius: number;
     n_sides: number;
 }

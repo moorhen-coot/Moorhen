@@ -213,6 +213,7 @@ export const Moorhen3DObjects = () => {
     const [theObject, setObject] = useState<ThreeDObject>(newSphereObject());
     const [selectedOption, setSelectedOption] = useState<string>("new");
     const [positionText, setPositionText] = useState<string>("0,0,0");
+    const [endPositionText, setEndPositionText] = useState<string>("0,0,1");
     const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0);
 
     const handleDelete = () => {
@@ -236,6 +237,23 @@ export const Moorhen3DObjects = () => {
         return isOk;
     };
 
+    const checkPosition2Text = () => {
+        let isOk: boolean = false;
+        if(endPositionText.split(",").length!==3) return isOk
+        try {
+            const [_new_x, _new_y, _new_z] = endPositionText.split(",").map(a => parseFloat(a));
+            if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y) && !Number.isNaN(_new_z) && !(_new_x === undefined) && !(_new_y === undefined) && !(_new_z === undefined)) {
+                isOk = true;
+            } else {
+                console.log("Not a valid number triplet in text position.", endPositionText);
+            }
+        } catch (e) {
+            console.log("Not a valid number triplet in text position.");
+        }
+        return isOk;
+    };
+
+
     const handleApply = () => {
         if (vectorSelectRef.current.value !== "new") {
             handleDelete();
@@ -250,6 +268,9 @@ export const Moorhen3DObjects = () => {
             x = undefined,
             y = undefined,
             z = undefined,
+            x2 = undefined,
+            y2 = undefined,
+            z2 = undefined,
             colour = undefined,
         },
         objectType
@@ -276,6 +297,30 @@ export const Moorhen3DObjects = () => {
                             Number(z)
                         ] as [number, number, number]
                     }
+                ),
+                ...(
+                    x2 !== undefined &&
+                    y2 !== undefined &&
+                    z2 !== undefined &&
+                    "top" in prev && {
+                        top: [
+                            Number(x2),
+                            Number(y2),
+                            Number(z2)
+                        ] as [number, number, number]
+                    }
+                ),
+                ...(
+                    x2 !== undefined &&
+                    y2 !== undefined &&
+                    z2 !== undefined &&
+                    "end" in prev && {
+                        end: [
+                            Number(x2),
+                            Number(y2),
+                            Number(z2)
+                        ] as [number, number, number]
+                    }
                 )
             }));
         }
@@ -294,6 +339,11 @@ export const Moorhen3DObjects = () => {
 
                 setSelectedOption(existingObject.uniqueId);
                 setPositionText(existingObject.origin.join(","));
+                if(existingObject.type==="cone"||existingObject.type==="frustrum"||
+                  existingObject.type==="flatfrustrum"||existingObject.type==="pyramid")
+                    setEndPositionText(existingObject.top.join(","));
+                if(existingObject.type==="prism"||existingObject.type==="cylinder")
+                    setEndPositionText(existingObject.end.join(","));
 
                 setObject(existingObject);
             } catch (e) {
@@ -442,6 +492,44 @@ export const Moorhen3DObjects = () => {
                                 }
                             }}
                             isInvalid={!checkPositionText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
+                {(drawMode === "cylinder"||drawMode === "prism")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="End"
+                            text={endPositionText}
+                            onChange={evt => {
+                                setEndPositionText(evt.target.value);
+                                if(evt.target.value.split(",").length===3){
+                                    const x2 = evt.target.value.split(",")[0]
+                                    const y2 = evt.target.value.split(",")[1]
+                                    const z2 = evt.target.value.split(",")[2]
+                                    updateTheObject({x2,y2,z2},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkPosition2Text()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
+                {(drawMode === "cone"||drawMode === "frustrum"||drawMode === "flatfrustrum"||drawMode === "pyramid")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Top position"
+                            text={endPositionText}
+                            onChange={evt => {
+                                setEndPositionText(evt.target.value);
+                                if(evt.target.value.split(",").length===3){
+                                    const x2 = evt.target.value.split(",")[0]
+                                    const y2 = evt.target.value.split(",")[1]
+                                    const z2 = evt.target.value.split(",")[2]
+                                    updateTheObject({x2,y2,z2},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkPosition2Text()}
                             style={{ height: "2rem", margin: "0.3rem" }}
                         />
                     </>
