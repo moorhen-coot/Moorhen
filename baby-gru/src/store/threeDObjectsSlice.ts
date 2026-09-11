@@ -10,32 +10,29 @@ export type Matrix4x4 = [number, number, number, number,
 
 interface ThreeDObjectBase {
     uniqueId: string;
+    origin: Position3D;
     colour: string;
 }
 
 export interface SphereObject extends ThreeDObjectBase {
     type: "sphere";
-    origin: Position3D;
     radius: number;
 }
 
 export interface CylinderObject extends ThreeDObjectBase {
     type: "cylinder";
-    start: Position3D;
     end: Position3D;
     radius: number;
 }
 
 export interface ConeObject extends ThreeDObjectBase {
     type: "cone";
-    bottom: Position3D;
     top: Position3D;
     radius: number;
 }
 
 export interface FrustrumObject extends ThreeDObjectBase {
     type: "frustrum";
-    bottom: Position3D;
     top: Position3D;
     bottom_radius: number;
     top_radius: number;
@@ -43,7 +40,6 @@ export interface FrustrumObject extends ThreeDObjectBase {
 
 export interface FlatSidedFrustrumObject extends ThreeDObjectBase {
     type: "flatfrustrum";
-    bottom: Position3D;
     top: Position3D;
     bottom_radius: number;
     top_radius: number;
@@ -52,7 +48,6 @@ export interface FlatSidedFrustrumObject extends ThreeDObjectBase {
 
 export interface PrismObject extends ThreeDObjectBase {
     type: "prism";
-    bottom: Position3D;
     top: Position3D;
     radius: number;
     n_sides: number;
@@ -60,7 +55,6 @@ export interface PrismObject extends ThreeDObjectBase {
 
 export interface PyramidObject extends ThreeDObjectBase {
     type: "pyramid";
-    bottom: Position3D;
     top: Position3D;
     radius: number;
     n_sides: number;
@@ -68,56 +62,48 @@ export interface PyramidObject extends ThreeDObjectBase {
 
 export interface CubeObject extends ThreeDObjectBase {
     type: "cube";
-    origin: Position3D;
     orientation: Matrix4x4;
     scale: number;
 }
 
 export interface CuboidObject extends ThreeDObjectBase {
     type: "cuboid";
-    origin: Position3D;
     orientation: Matrix4x4;
     scale: Scale3D;
 }
 
 export interface TetrahedronObject extends ThreeDObjectBase {
     type: "tetrahedron";
-    origin: Position3D;
     orientation: Matrix4x4;
     scale: number;
 }
 
 export interface OctahedronObject extends ThreeDObjectBase {
     type: "octahedron";
-    origin: Position3D;
     orientation:Matrix4x4;
     scale: number;
 }
 
 export interface DodecahedronObject extends ThreeDObjectBase {
     type: "dodecahedron";
-    origin: Position3D;
     orientation: Matrix4x4;
     scale: number;
 }
 
 export interface IcosahedronObject extends ThreeDObjectBase {
     type: "icosahedron";
-    origin: Position3D;
     orientation: Matrix4x4;
     scale: number;
 }
 
 export interface FootballObject extends ThreeDObjectBase {
     type: "football";
-    origin: Position3D;
     orientation: Matrix4x4;
     scale: number;
 }
 
 export interface TorusObject extends ThreeDObjectBase {
     type: "torus";
-    origin: Position3D;
     orientation: Matrix4x4;
     scale: number;
 }

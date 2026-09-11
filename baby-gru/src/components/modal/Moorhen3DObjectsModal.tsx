@@ -63,7 +63,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "cylinder",
         colour: "#ff0000ff",
-        start: [0, 0, 0],
+        origin: [0, 0, 0],
         end: [0, 0, 5],
         radius: 1.0
     });
@@ -72,7 +72,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "cone",
         colour: "#ff0000ff",
-        bottom: [0, 0, 0],
+        origin: [0, 0, 0],
         top: [0, 0, 5],
         radius: 1.0
     });
@@ -81,7 +81,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "frustrum",
         colour: "#ff0000ff",
-        bottom: [0, 0, 0],
+        origin: [0, 0, 0],
         top: [0, 0, 5],
         bottom_radius: 1.0,
         top_radius: 0.5
@@ -91,7 +91,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "flatfrustrum",
         colour: "#ff0000ff",
-        bottom: [0, 0, 0],
+        origin: [0, 0, 0],
         top: [0, 0, 5],
         bottom_radius: 1.0,
         top_radius: 0.5,
@@ -102,7 +102,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "prism",
         colour: "#ff0000ff",
-        bottom: [0, 0, 0],
+        origin: [0, 0, 0],
         top: [0, 0, 5],
         radius: 1.0,
         n_sides: 6
@@ -112,7 +112,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "pyramid",
         colour: "#ff0000ff",
-        bottom: [0, 0, 0],
+        origin: [0, 0, 0],
         top: [0, 0, 5],
         radius: 1.0,
         n_sides: 4
@@ -210,7 +210,7 @@ export const Moorhen3DObjects = () => {
         }
     };
 
-    const [theObject, setObject] = useState<any>(newSphereObject());
+    const [theObject, setObject] = useState<ThreeDObject>(newSphereObject());
     const [selectedOption, setSelectedOption] = useState<string>("new");
     const [positionText, setPositionText] = useState<string>("0,0,0");
     const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0);
@@ -251,34 +251,12 @@ export const Moorhen3DObjects = () => {
             y = undefined,
             z = undefined,
             colour = undefined,
-            drawMode = undefined
         },
         objectType
     ) => {
-        console.log("##################################################")
-        console.log("updateTheObject",x,y,z,colour)
-        console.log(objectType,theObject.type)
-        console.log("##################################################")
         if(objectType!==theObject.type){
-            console.log("Create new")
-            let newObject
-            if(objectType === "sphere")       newObject = newSphereObject()
-            if(objectType === "cylinder")     newObject = newCylinderObject()
-            if(objectType === "cone")         newObject = newConeObject()
-            if(objectType === "frustrum")     newObject = newFrustrumObject()
-            if(objectType === "flatfrustrum") newObject = newFlatSidedFrustrumObject()
-            if(objectType === "prism")        newObject = newPrismObject()
-            if(objectType === "pyramid")      newObject = newPyramidObject()
-            if(objectType === "cube")         newObject = newCubeObject()
-            if(objectType === "cuboid")       newObject = newCuboidObject()
-            if(objectType === "tetrahedron")  newObject = newTetrahedronObject()
-            if(objectType === "octahedron")   newObject = newOctahedronObject()
-            if(objectType === "dodecahedron") newObject = newDodecahedronObject()
-            if(objectType === "icosahedron")  newObject = newIcosahedronObject()
-            if(objectType === "football")     newObject = newFootballObject()
-            if(objectType === "torus")        newObject = newTorusObject()
+            const newObject = createNewObject(objectType)
             if(newObject){
-                console.log(newObject.type)
                 if(colour)
                     newObject.colour = colour
                 else
@@ -286,7 +264,6 @@ export const Moorhen3DObjects = () => {
                 setObject(newObject);
             }
         } else {
-            console.log("Update")
             setObject(prev => ({
                 ...prev,
                 ...(colour && { colour }),
@@ -305,7 +282,6 @@ export const Moorhen3DObjects = () => {
             }));
         }
     };
-    console.log(theObject)
 
     const handleObjectChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         if (evt.target.value === "new") {
@@ -318,16 +294,7 @@ export const Moorhen3DObjects = () => {
                 console.log(existingObject)
 
                 setSelectedOption(existingObject.uniqueId);
-                if(existingObject.type==="sphere"||
-                   existingObject.type==="cube"||
-                   existingObject.type==="cuboid"||
-                   existingObject.type==="tetrahedron"||
-                   existingObject.type==="octahedron"||
-                   existingObject.type==="dodecahedron"||
-                   existingObject.type==="icosahedron"||
-                   existingObject.type==="football"||
-                   existingObject.type==="torus"
-                ) setPositionText(existingObject.origin.join(","));
+                setPositionText(existingObject.origin.join(","));
 
                 setObject(existingObject);
             } catch (e) {
@@ -389,8 +356,6 @@ export const Moorhen3DObjects = () => {
 
     const drawMode = theObject.type
 
-    console.log(theObject.type)
-
     return (
         <>
             <MoorhenStack direction="column" inputGrid style={{ padding: "1rem" }}>
@@ -400,7 +365,7 @@ export const Moorhen3DObjects = () => {
                     ref={drawModeRef}
                     value={theObject.type}
                     onChange={(evt) => {
-                        updateTheObject({ drawMode: evt.target.value }, evt.target.value);
+                        updateTheObject({}, evt.target.value);
                     }}
                 >
                     <option value="sphere">Sphere</option>
@@ -429,6 +394,44 @@ export const Moorhen3DObjects = () => {
                     <>
                         <MoorhenTextInput
                             label="Position"
+                            text={positionText}
+                            onChange={evt => {
+                                setPositionText(evt.target.value);
+                                if(evt.target.value.split(",").length===3){
+                                    const x = evt.target.value.split(",")[0]
+                                    const y = evt.target.value.split(",")[1]
+                                    const z = evt.target.value.split(",")[2]
+                                    updateTheObject({x,y,z},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkPositionText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
+                {(drawMode === "cylinder" || drawMode === "prism")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Start"
+                            text={positionText}
+                            onChange={evt => {
+                                setPositionText(evt.target.value);
+                                if(evt.target.value.split(",").length===3){
+                                    const x = evt.target.value.split(",")[0]
+                                    const y = evt.target.value.split(",")[1]
+                                    const z = evt.target.value.split(",")[2]
+                                    updateTheObject({x,y,z},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkPositionText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
+                {(drawMode === "frustrum" || drawMode === "flatfrustrum" || drawMode === "pyramid"|| drawMode === "cone")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Base position"
                             text={positionText}
                             onChange={evt => {
                                 setPositionText(evt.target.value);
