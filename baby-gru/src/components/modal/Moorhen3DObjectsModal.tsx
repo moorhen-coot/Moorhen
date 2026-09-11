@@ -2,16 +2,30 @@ import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useRef, useState } from "react";
 import {
-    addTextOverlay,
-    removeTextOverlay,
-} from "../../store/overlaysSlice";
+    addObject,
+    removeObjectById
+} from "../../store/threeDObjectsSlice";
+
 import type {
-    Overlay2DFracPath,
-    Overlay2DImageSrcFrac,
-    Overlay2DLatexSrcFrac,
-    Overlay2DSvgPath,
-    Overlay2DTextFrac,
-} from "../../store/overlaysSlice";
+    Matrix4x4,
+    SphereObject,
+    CylinderObject,
+    ConeObject,
+    FrustrumObject,
+    FlatSidedFrustrumObject,
+    PrismObject,
+    PyramidObject,
+    CubeObject,
+    CuboidObject,
+    TetrahedronObject,
+    OctahedronObject,
+    DodecahedronObject,
+    IcosahedronObject,
+    FootballObject,
+    TorusObject,
+    ThreeDObject
+} from "../../store/threeDObjectsSlice";
+
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
@@ -21,12 +35,8 @@ import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/Draggable
 
 export const Moorhen3DObjects = () => {
 
-    const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList);
-    const latexOverlays = useSelector((state: moorhen.State) => state.overlays.latexOverlayList);
-    const textOverlays = useSelector((state: moorhen.State) => state.overlays.textOverlayList);
-    const svgPathOverlays = useSelector((state: moorhen.State) => state.overlays.svgPathOverlayList);
-    const fracPathOverlays = useSelector((state: moorhen.State) => state.overlays.fracPathOverlayList);
-    const [drawMode, setDrawMode] = useState("text");
+    const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
+
     const [objectNew, setObjectNew] = useState(true);
 
     const dispatch = useDispatch();
@@ -34,224 +44,302 @@ export const Moorhen3DObjects = () => {
     const vectorSelectRef = useRef<null | HTMLSelectElement>(null);
     const drawModeRef = useRef<null | HTMLSelectElement>(null);
 
-    const newOverlayObject = () => {
-        const anOverlayObject = {
-            drawMode: "text",
-            path: "",
-            src: "",
-            text: "",
-            drawStyle: "stroke",
-            strokeStyle: "black",
-            fillStyle: "black",
-            gradientStops: [],
-            gradientBoundary: [0, 0, 1, 1],
-            width: 20,
-            height: 20,
-            x: 0,
-            y: 0,
-            fontPixelSize: 20,
-            fontFamily: "serif",
-            lineWidth: 1,
-            zIndex: 0,
-            uniqueId: uuidv4(),
-        };
-        return anOverlayObject;
-    };
+    const IDENTITY_MATRIX: Matrix4x4 = [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    ];
 
-    const [theOverlayObject, setOverlayObject] = useState<any>(newOverlayObject());
-    const [selectedOption, setSelectedOption] = useState<string>("new");
-    const [selectedDrawStyle, setSelectedDrawStyle] = useState<string>("stroke");
-    const [pathText, setPathText] = useState<string>("");
-    const [positionText, setPositionText] = useState<string>("");
-    const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0);
+    const newSphereObject = (): SphereObject => ({
+        uniqueId: uuidv4(),
+        type: "sphere",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        radius: 1.0
+    })
 
-    const deleteCurrentObject = () => {
-        let existingObject: Overlay2DLatexSrcFrac | Overlay2DTextFrac | Overlay2DImageSrcFrac | Overlay2DSvgPath | Overlay2DFracPath = null;
-        existingObject = textOverlays.find(element => element.uniqueId === theOverlayObject.uniqueId);
-        if (existingObject) {
-            dispatch(removeTextOverlay(existingObject));
-            setSelectedOption("new");
+    const newCylinderObject = (): CylinderObject => ({
+        uniqueId: uuidv4(),
+        type: "cylinder",
+        colour: "#ff0000ff",
+        start: [0, 0, 0],
+        end: [0, 0, 5],
+        radius: 1.0
+    });
+
+    const newConeObject = (): ConeObject => ({
+        uniqueId: uuidv4(),
+        type: "cone",
+        colour: "#ff0000ff",
+        bottom: [0, 0, 0],
+        top: [0, 0, 5],
+        radius: 1.0
+    });
+
+    const newFrustrumObject = (): FrustrumObject => ({
+        uniqueId: uuidv4(),
+        type: "frustrum",
+        colour: "#ff0000ff",
+        bottom: [0, 0, 0],
+        top: [0, 0, 5],
+        bottom_radius: 1.0,
+        top_radius: 0.5
+    });
+
+    const newFlatSidedFrustrumObject = (): FlatSidedFrustrumObject => ({
+        uniqueId: uuidv4(),
+        type: "flatfrustrum",
+        colour: "#ff0000ff",
+        bottom: [0, 0, 0],
+        top: [0, 0, 5],
+        bottom_radius: 1.0,
+        top_radius: 0.5,
+        n_sides: 6
+    });
+
+    const newPrismObject = (): PrismObject => ({
+        uniqueId: uuidv4(),
+        type: "prism",
+        colour: "#ff0000ff",
+        bottom: [0, 0, 0],
+        top: [0, 0, 5],
+        radius: 1.0,
+        n_sides: 6
+    });
+
+    const newPyramidObject = (): PyramidObject => ({
+        uniqueId: uuidv4(),
+        type: "pyramid",
+        colour: "#ff0000ff",
+        bottom: [0, 0, 0],
+        top: [0, 0, 5],
+        radius: 1.0,
+        n_sides: 4
+    });
+
+    const newCubeObject = (): CubeObject => ({
+        uniqueId: uuidv4(),
+        type: "cube",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scale: 1.0
+    });
+
+    const newCuboidObject = (): CuboidObject => ({
+        uniqueId: uuidv4(),
+        type: "cuboid",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scale: [1.0, 1.0, 1.0]
+    });
+
+    const newTetrahedronObject = (): TetrahedronObject => ({
+        uniqueId: uuidv4(),
+        type: "tetrahedron",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scale: 1.0
+    });
+
+    const newOctahedronObject = (): OctahedronObject => ({
+        uniqueId: uuidv4(),
+        type: "octahedron",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scale: 1.0
+    });
+
+    const newDodecahedronObject = (): DodecahedronObject => ({
+        uniqueId: uuidv4(),
+        type: "dodecahedron",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scale: 1.0
+    });
+
+    const newIcosahedronObject = (): IcosahedronObject => ({
+        uniqueId: uuidv4(),
+        type: "icosahedron",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scale: 1.0
+    });
+
+    const newFootballObject = (): FootballObject => ({
+        uniqueId: uuidv4(),
+        type: "football",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scale: 1.0
+    });
+
+    const newTorusObject = (): TorusObject => ({
+        uniqueId: uuidv4(),
+        type: "torus",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scale: 1.0
+    });
+
+    const createNewObject = (type: ThreeDObject["type"]): ThreeDObject => {
+        switch (type) {
+            case "sphere": return newSphereObject();
+            case "cylinder": return newCylinderObject();
+            case "cone": return newConeObject();
+            case "frustrum": return newFrustrumObject();
+            case "flatfrustrum": return newFlatSidedFrustrumObject();
+            case "prism": return newPrismObject();
+            case "pyramid": return newPyramidObject();
+            case "cube": return newCubeObject();
+            case "cuboid": return newCuboidObject();
+            case "tetrahedron": return newTetrahedronObject();
+            case "octahedron": return newOctahedronObject();
+            case "dodecahedron": return newDodecahedronObject();
+            case "icosahedron": return newIcosahedronObject();
+            case "football": return newFootballObject();
+            case "torus": return newTorusObject();
         }
     };
 
+    const [theObject, setObject] = useState<any>(newSphereObject());
+    const [selectedOption, setSelectedOption] = useState<string>("new");
+    const [positionText, setPositionText] = useState<string>("0,0,0");
+    const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0);
+
     const handleDelete = () => {
-        deleteCurrentObject();
+        dispatch(removeObjectById(theObject.uniqueId));
+        setObjectNew(true);
+    };
+
+    const checkPositionText = () => {
+        let isOk: boolean = false;
+        if(positionText.split(",").length!==3) return isOk
+        try {
+            const [_new_x, _new_y, _new_z] = positionText.split(",").map(a => parseFloat(a));
+            if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y) && !Number.isNaN(_new_z) && !(_new_x === undefined) && !(_new_y === undefined) && !(_new_z === undefined)) {
+                isOk = true;
+            } else {
+                console.log("Not a valid number triplet in text position.", positionText);
+            }
+        } catch (e) {
+            console.log("Not a valid number triplet in text position.");
+        }
+        return isOk;
     };
 
     const handleApply = () => {
-        const objectType = drawModeRef.current.value;
         if (vectorSelectRef.current.value !== "new") {
-            deleteCurrentObject();
+            handleDelete();
         }
-
-        if (objectType === "text") {
-            let [new_x, new_y] = [0, 1];
-            try {
-                const [_new_x, _new_y] = positionText.split(",").map(a => parseFloat(a));
-                if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y)) {
-                    new_x = _new_x;
-                    new_y = _new_y;
-                } else {
-                    console.log("Not a valid number pair in text position.", positionText.split(","));
-                }
-            } catch (e) {
-                console.log("Not a valid number pair in text position.");
-            }
-            dispatch(
-                addTextOverlay({
-                    strokeStyle: theOverlayObject.strokeStyle,
-                    fillStyle: theOverlayObject.fillStyle,
-                    text: theOverlayObject.text,
-                    x: new_x,
-                    y: new_y,
-                    fontFamily: theOverlayObject.fontFamily,
-                    fontPixelSize: theOverlayObject.fontPixelSize,
-                    drawStyle: theOverlayObject.drawStyle,
-                    lineWidth: theOverlayObject.lineWidth,
-                    uniqueId: theOverlayObject.uniqueId,
-                    zIndex: theOverlayObject.zIndex,
-                })
-            );
-        }
-        setSelectedOption(theOverlayObject.uniqueId);
+        dispatch(addObject(theObject))
+        setSelectedOption(theObject.uniqueId);
+        setObjectNew(false)
     };
 
-    const updateObject = (
+    const updateTheObject = (
         {
-            drawMode = undefined,
-            path = undefined,
-            src = undefined,
-            text = undefined,
-            drawStyle = undefined,
-            strokeStyle = undefined,
-            fillStyle = undefined,
-            gradientStops = undefined,
-            gradientBoundary = undefined,
-            width = undefined,
-            height = undefined,
             x = undefined,
             y = undefined,
-            fontPixelSize = undefined,
-            fontFamily = undefined,
-            lineWidth = undefined,
-            zIndex = undefined,
-            uniqueId = undefined,
+            z = undefined,
+            colour = undefined,
+            drawMode = undefined
         },
         objectType
     ) => {
-        const newObject = {
-            drawMode: objectType !== undefined ? objectType : theOverlayObject.drawMode,
-            path: path !== undefined ? path : theOverlayObject.path,
-            src: src !== undefined ? src : theOverlayObject.src,
-            text: text !== undefined ? text : theOverlayObject.text,
-            drawStyle: drawStyle !== undefined ? drawStyle : theOverlayObject.drawStyle,
-            strokeStyle: strokeStyle !== undefined ? strokeStyle : theOverlayObject.strokeStyle,
-            fillStyle: fillStyle !== undefined ? fillStyle : theOverlayObject.fillStyle,
-            gradientStops: gradientStops !== undefined ? gradientStops : theOverlayObject.gradientStops,
-            gradientBoundary: gradientBoundary !== undefined ? gradientBoundary : theOverlayObject.gradientBoundary,
-            width: width !== undefined ? width : theOverlayObject.width,
-            height: height !== undefined ? height : theOverlayObject.height,
-            x: x !== undefined ? x : theOverlayObject.x,
-            y: y !== undefined ? y : theOverlayObject.y,
-            fontPixelSize: fontPixelSize !== undefined ? fontPixelSize : theOverlayObject.fontPixelSize,
-            fontFamily: fontFamily !== undefined ? fontFamily : theOverlayObject.fontFamily,
-            lineWidth: lineWidth !== undefined ? lineWidth : theOverlayObject.lineWidth,
-            zIndex: zIndex !== undefined ? zIndex : theOverlayObject.zIndex,
-            uniqueId: uniqueId !== undefined ? uniqueId : theOverlayObject.uniqueId,
-        };
-        setOverlayObject(newObject);
+        console.log("##################################################")
+        console.log("updateTheObject",x,y,z,colour)
+        console.log(objectType,theObject.type)
+        console.log("##################################################")
+        if(objectType!==theObject.type){
+            console.log("Create new")
+            let newObject
+            if(objectType === "sphere")       newObject = newSphereObject()
+            if(objectType === "cylinder")     newObject = newCylinderObject()
+            if(objectType === "cone")         newObject = newConeObject()
+            if(objectType === "frustrum")     newObject = newFrustrumObject()
+            if(objectType === "flatfrustrum") newObject = newFlatSidedFrustrumObject()
+            if(objectType === "prism")        newObject = newPrismObject()
+            if(objectType === "pyramid")      newObject = newPyramidObject()
+            if(objectType === "cube")         newObject = newCubeObject()
+            if(objectType === "cuboid")       newObject = newCuboidObject()
+            if(objectType === "tetrahedron")  newObject = newTetrahedronObject()
+            if(objectType === "octahedron")   newObject = newOctahedronObject()
+            if(objectType === "dodecahedron") newObject = newDodecahedronObject()
+            if(objectType === "icosahedron")  newObject = newIcosahedronObject()
+            if(objectType === "football")     newObject = newFootballObject()
+            if(objectType === "torus")        newObject = newTorusObject()
+            if(newObject){
+                console.log(newObject.type)
+                if(colour)
+                    newObject.colour = colour
+                else
+                    newObject.colour = theObject.colour
+                setObject(newObject);
+            }
+        } else {
+            console.log("Update")
+            setObject(prev => ({
+                ...prev,
+                ...(colour && { colour }),
+                ...(
+                    x !== undefined &&
+                    y !== undefined &&
+                    z !== undefined &&
+                    "origin" in prev && {
+                        origin: [
+                            Number(x),
+                            Number(y),
+                            Number(z)
+                        ] as [number, number, number]
+                    }
+                )
+            }));
+        }
     };
+    console.log(theObject)
 
     const handleObjectChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-        if (vectorSelectRef !== null && typeof vectorSelectRef !== "function") {
-            vectorSelectRef.current.value = evt.target.value;
-            if (vectorSelectRef.current.value === "new") {
-                setSelectedOption("new");
-                setPathText("");
-                setPositionText("");
-                updateObject(newOverlayObject(), "text");
-                if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "text";
-            } else {
-                try {
-                    let existingObject:
-                        | Overlay2DLatexSrcFrac
-                        | Overlay2DTextFrac
-                        | Overlay2DImageSrcFrac
-                        | Overlay2DSvgPath
-                        | Overlay2DFracPath = null;
-                    existingObject = latexOverlays.find(element => element.uniqueId === evt.target.value);
-                    if (existingObject) {
-                        if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "latex";
-                    }
-                    if (!existingObject) {
-                        existingObject = imageOverlays.find(element => element.uniqueId === evt.target.value);
-                        if (existingObject) {
-                            if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "image";
-                        }
-                    }
-                    if (!existingObject) {
-                        existingObject = textOverlays.find(element => element.uniqueId === evt.target.value);
-                        if (existingObject) {
-                            if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "text";
-                        }
-                    }
-                    if (!existingObject) {
-                        existingObject = svgPathOverlays.find(element => element.uniqueId === evt.target.value);
-                        if (existingObject) {
-                            if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "svgpath";
-                        }
-                    }
-                    if (!existingObject) {
-                        existingObject = fracPathOverlays.find(element => element.uniqueId === evt.target.value);
-                        if (existingObject) {
-                            if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "fracpath";
-                        }
-                    }
+        if (evt.target.value === "new") {
+            setSelectedOption("new");
+            setPositionText("0,0,0");
+            setObject(newSphereObject());
+        } else {
+            try {
+                const existingObject  = threeDObjects.find(element => element.uniqueId === evt.target.value);
+                console.log(existingObject)
 
-                    setSelectedOption(existingObject.uniqueId);
-                    setPathText("");
-                    setPositionText("");
+                setSelectedOption(existingObject.uniqueId);
+                if(existingObject.type==="sphere"||
+                   existingObject.type==="cube"||
+                   existingObject.type==="cuboid"||
+                   existingObject.type==="tetrahedron"||
+                   existingObject.type==="octahedron"||
+                   existingObject.type==="dodecahedron"||
+                   existingObject.type==="icosahedron"||
+                   existingObject.type==="football"||
+                   existingObject.type==="torus"
+                ) setPositionText(existingObject.origin.join(","));
 
-                    if(drawModeRef.current.value === "text") {
-                        existingObject = existingObject as Overlay2DTextFrac;
-                        setPositionText(existingObject.x.toFixed(3) + ", " + existingObject.y.toFixed(3));
-                        if (existingObject.lineWidth === undefined) {
-                            setOverlayObject(
-                                Object.assign({}, existingObject, {
-                                    lineWidth: 1,
-                                })
-                            );
-                        } else {
-                            setOverlayObject(existingObject);
-                        }
-                    } else {
-                        setOverlayObject(existingObject);
-                    }
-                    if (
-                        drawModeRef.current.value === "text" ||
-                        drawModeRef.current.value === "svgpath" ||
-                        drawModeRef.current.value === "fracpath"
-                    ) {
-                        existingObject = existingObject as Overlay2DTextFrac | Overlay2DSvgPath | Overlay2DFracPath;
-                        if (existingObject.drawStyle) {
-                            setSelectedDrawStyle(existingObject.drawStyle);
-                        } else {
-                            setSelectedDrawStyle("fill");
-                        }
-                    }
-                } catch (e) {
-                    console.log("Some problem?");
-                    console.log(e);
-                }
+                setObject(existingObject);
+            } catch (e) {
+                console.log("Some problem?");
+                console.log(e);
             }
         }
     };
 
     const handleColorChange = (color: string) => {
-        updateObject({ strokeStyle: color, fillStyle: color }, drawModeRef.current.value);
+        updateTheObject({ colour: color }, theObject.type);
     };
-
-    const combinedArrays = [...textOverlays, ...svgPathOverlays];
 
     const headerContent = (
         <MoorhenSelect ref={vectorSelectRef} label="Object"
@@ -260,21 +348,13 @@ export const Moorhen3DObjects = () => {
                 handleObjectChange(evt)}}
             value={selectedOption}>
             <option value="new">New</option>
-            {combinedArrays.length > 0 &&
-                combinedArrays.map((vec, i) => {
-                    if (vec.type === "SvgPath") {
-                        return (
-                            <option key={i} value={vec.uniqueId}>
-                                {"SVG path: " + vec.path.substring(0, 50)}
-                            </option>
-                        );
-                    } else {
+            {threeDObjects.length > 0 &&
+                threeDObjects.map((vec, i) => {
                         return (
                             <option key={i} value={vec.uniqueId}>
                                 {vec.uniqueId}
                             </option>
                         );
-                    }
                 })}
         </MoorhenSelect>
     );
@@ -287,7 +367,7 @@ export const Moorhen3DObjects = () => {
                         Delete
                     </MoorhenButton>
                 )}
-                <MoorhenButton className="m-2" onClick={handleApply}>
+                <MoorhenButton className="m-2" onClick={handleApply} disabled={!checkPositionText()}>
                     Apply
                 </MoorhenButton>
             </MoorhenStack>
@@ -295,18 +375,11 @@ export const Moorhen3DObjects = () => {
     );
 
     let existingColour = null;
-    if (theOverlayObject.fillStyle && theOverlayObject.fillStyle !== "gradient") {
-        if (theOverlayObject.fillStyle.startsWith("#") && theOverlayObject.fillStyle.length === 9) {
-            existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.fillStyle.substring(0, 7)));
+    if (theObject.colour && theObject.colour !== "gradient") {
+        if (theObject.colour.startsWith("#") && theObject.colour.length === 9) {
+            existingColour = hexToRGB(getHexForCanvasColourName(theObject.colour.substring(0, 7)));
         } else {
-            existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.fillStyle));
-        }
-    }
-    if (theOverlayObject.strokeStyle && theOverlayObject.strokeStyle !== "gradient") {
-        if (theOverlayObject.strokeStyle.startsWith("#") && theOverlayObject.strokeStyle.length === 9) {
-            existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle.substring(0, 7)));
-        } else {
-            existingColour = hexToRGB(getHexForCanvasColourName(theOverlayObject.strokeStyle));
+            existingColour = hexToRGB(getHexForCanvasColourName(theObject.colour));
         }
     }
 
@@ -314,20 +387,9 @@ export const Moorhen3DObjects = () => {
         existingColour[3] = !isNaN(selectedAlpha) ? selectedAlpha : 1.0;
     if (existingColour && existingColour.length === 3) existingColour[3] = !isNaN(selectedAlpha) ? selectedAlpha : 1.0;
 
-    const checkPositionText = () => {
-        let isOk: boolean = false;
-        try {
-            const [_new_x, _new_y] = positionText.split(",").map(a => parseFloat(a));
-            if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y) && !(_new_x === undefined) && !(_new_y === undefined)) {
-                isOk = true;
-            } else {
-                console.log("Not a valid number pair in text position.", positionText);
-            }
-        } catch (e) {
-            console.log("Not a valid number pair in text position.");
-        }
-        return isOk;
-    };
+    const drawMode = theObject.type
+
+    console.log(theObject.type)
 
     return (
         <>
@@ -336,44 +398,66 @@ export const Moorhen3DObjects = () => {
                 <MoorhenSelect
                     label="Type"
                     ref={drawModeRef}
-                    defaultValue="text"
+                    value={theObject.type}
                     onChange={(evt) => {
-                        setDrawMode(evt.target.value)
-                        updateObject({ drawMode: evt.target.value }, evt.target.value);
+                        updateTheObject({ drawMode: evt.target.value }, evt.target.value);
                     }}
                 >
-                    <option value="text">Text</option>
+                    <option value="sphere">Sphere</option>
+                    <option value="cylinder">Cylinder</option>
+                    <option value="cone">Cone</option>
+                    <option value="frustrum">Frustrum</option>
+                    <option value="flatfrustrum">Flat-Sided Frustrum</option>
+                    <option value="prism">Prism</option>
+                    <option value="pyramid">Pyramid</option>
+                    <option value="cube">Cube</option>
+                    <option value="cuboid">Cuboid</option>
+                    <option value="tetrahedron">Tetrahedron</option>
+                    <option value="octahedron">Octahedron</option>
+                    <option value="dodecahedron">Dodecahedron</option>
+                    <option value="icosahedron">Icosahedron</option>
+                    <option value="football">Football</option>
+                    <option value="torus">Torus</option>
+
                 </MoorhenSelect>
 
-                {drawMode === "text" && 
+                {(drawMode === "sphere" || drawMode === "cube" || drawMode === "cuboid"
+                || drawMode === "tetrahedron" || drawMode === "octahedron"
+                || drawMode === "dodecahedron" || drawMode === "icosahedron"
+                || drawMode === "football" || drawMode === "torus"
+                ) &&
                     <>
                         <MoorhenTextInput
                             label="Position"
                             text={positionText}
                             onChange={evt => {
                                 setPositionText(evt.target.value);
+                                if(evt.target.value.split(",").length===3){
+                                    const x = evt.target.value.split(",")[0]
+                                    const y = evt.target.value.split(",")[1]
+                                    const z = evt.target.value.split(",")[2]
+                                    updateTheObject({x,y,z},theObject.type)
+                                }
                             }}
                             isInvalid={!checkPositionText()}
                             style={{ height: "2rem", margin: "0.3rem" }}
                         />
                     </>
                 }
-                {drawMode === "text" && (
-                        <MoorhenStack direction="line">
-                            <span>Colour</span>
-                            <MoorhenColourPicker
-                                colour={existingColour !== null ? existingColour : [1, 0, 0, selectedAlpha]}
-                                setColour={color => {
-                                    setSelectedAlpha(color[3]);
-                                    handleColorChange(rgbToHex(color[0], color[1], color[2]) + componentToHex(Math.floor(color[3] * 255)));
-                                }}
-                                useAlpha={true}
-                                position="bottom"
-                                tooltip="Change colour"
-                            />
-                            {selectedAlpha < 0.99 && <div>(Opacity {selectedAlpha.toFixed(2)})</div>}
-                        </MoorhenStack>
-                    )}
+                <MoorhenStack direction="line">
+                    <span>Colour</span>
+                    <MoorhenColourPicker
+                        colour={existingColour !== null ? existingColour : [1, 0, 0, selectedAlpha]}
+                        setColour={color => {
+                            setSelectedAlpha(color[3]);
+                            handleColorChange(rgbToHex(color[0], color[1], color[2]) + componentToHex(Math.floor(color[3] * 255)));
+                        }}
+                        useAlpha={true}
+                        position="bottom"
+                        tooltip="Change colour"
+                    />
+                    {selectedAlpha < 0.99 && <div>(Opacity {selectedAlpha.toFixed(2)})</div>}
+                </MoorhenStack>
             </MoorhenStack>
             {footer}
         </>
