@@ -257,11 +257,9 @@ export const Moorhen3DObjects = () => {
         if(objectType!==theObject.type){
             const newObject = createNewObject(objectType)
             if(newObject){
-                if(colour)
-                    newObject.colour = colour
-                else
-                    newObject.colour = theObject.colour
-                setObject(newObject);
+                newObject.uniqueId = theObject.uniqueId
+                newObject.colour = colour ?? theObject.colour
+                setObject(newObject)
             }
         } else {
             setObject(prev => ({
@@ -285,6 +283,7 @@ export const Moorhen3DObjects = () => {
 
     const handleObjectChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         if (evt.target.value === "new") {
+            setObjectNew(true);
             setSelectedOption("new");
             setPositionText("0,0,0");
             setObject(newSphereObject());
