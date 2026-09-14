@@ -343,6 +343,9 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                             <option value={"af2-plddt"} key={"af2-plddt"}>
                                 AF2 PLDDT
                             </option>
+                          <option value={"RMSF"} key={"RMSF"}>
+                                RMSF
+                            </option>
                         </MoorhenSelect>
                     )}
                 </MoorhenStack>
