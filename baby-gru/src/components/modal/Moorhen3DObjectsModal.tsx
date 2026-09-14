@@ -218,6 +218,7 @@ export const Moorhen3DObjects = () => {
     const [scaleXYZText, setScaleXYZText] = useState<string>("1,1,1");
     const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0);
     const [sizeText, setSizeText] = useState<string>("1.0");
+    const [size2Text, setSize2Text] = useState<string>("0.2");
 
     const handleDelete = () => {
         dispatch(removeObjectById(theObject.uniqueId));
@@ -244,6 +245,21 @@ export const Moorhen3DObjects = () => {
         let isOk: boolean = false;
         try {
             const _new_x = parseFloat(sizeText)
+            if (!Number.isNaN(_new_x) && !(_new_x === undefined)) {
+                isOk = true;
+            } else {
+                console.log("Not a valid number in size.");
+            }
+        } catch(e) {
+            console.log("Not a valid number in size.");
+        }
+        return isOk;
+    }
+
+    const checkSize2Text = () => {
+        let isOk: boolean = false;
+        try {
+            const _new_x = parseFloat(size2Text)
             if (!Number.isNaN(_new_x) && !(_new_x === undefined)) {
                 isOk = true;
             } else {
@@ -308,6 +324,7 @@ export const Moorhen3DObjects = () => {
             zscale = undefined,
             colour = undefined,
             size = undefined,
+            size2 = undefined,
         },
         objectType
     ) => {
@@ -381,7 +398,19 @@ export const Moorhen3DObjects = () => {
                     "scale" in prev && {
                         scale: Number(size)
                     }
-                )
+                ),
+                ...(
+                    size !== undefined &&
+                    "major_radius" in prev && {
+                        major_radius: Number(size)
+                    }
+                ),
+                ...(
+                    size2 !== undefined &&
+                    "minor_radius" in prev && {
+                       minor_radius: Number(size2)
+                    }
+                ),
             }));
         }
     };
@@ -408,6 +437,14 @@ export const Moorhen3DObjects = () => {
                     setEndPositionText(existingObject.end.join(","));
                 if(existingObject.type==="cuboid")
                     setScaleXYZText(existingObject.scalexyz.join(","));
+                if(existingObject.type==="torus"){
+                    setSizeText(String(existingObject.major_radius))
+                    setSize2Text(String(existingObject.minor_radius))
+                }
+                if("scale" in existingObject)
+                    setSizeText(String(existingObject.scale))
+                if("radius" in existingObject)
+                    setSizeText(String(existingObject.radius))
 
                 setObject(existingObject);
             } catch (e) {
@@ -649,7 +686,23 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "tetrahedron"||drawMode === "octahedron"
+                {(drawMode === "torus")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Minor radius"
+                            text={size2Text}
+                            onChange={evt => {
+                                setSize2Text(evt.target.value);
+                                if(!isNaN(parseFloat(evt.target.value))){
+                                    updateTheObject({size2:parseFloat(evt.target.value)},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkSize2Text()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
+                {(drawMode === "tetrahedron"||drawMode === "cube"||drawMode === "octahedron"
                 ||drawMode === "dodecahedron"||drawMode === "icosahedron"||drawMode === "football")  &&
                     <>
                         <MoorhenTextInput
