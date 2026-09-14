@@ -187,7 +187,8 @@ export const Moorhen3DObjects = () => {
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
-        scale: 1.0
+        major_radius: 1.0,
+        minor_radius: 0.2
     });
 
     const createNewObject = (type: ThreeDObject["type"]): ThreeDObject => {
@@ -214,6 +215,7 @@ export const Moorhen3DObjects = () => {
     const [selectedOption, setSelectedOption] = useState<string>("new");
     const [positionText, setPositionText] = useState<string>("0,0,0");
     const [endPositionText, setEndPositionText] = useState<string>("0,0,1");
+    const [scaleXYZText, setScaleXYZText] = useState<string>("1,1,1");
     const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0);
     const [sizeText, setSizeText] = useState<string>("1.0");
 
@@ -230,10 +232,10 @@ export const Moorhen3DObjects = () => {
             if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y) && !Number.isNaN(_new_z) && !(_new_x === undefined) && !(_new_y === undefined) && !(_new_z === undefined)) {
                 isOk = true;
             } else {
-                console.log("Not a valid number triplet in text position.", positionText);
+                console.log("Not a valid number triplet in position text.", positionText);
             }
         } catch (e) {
-            console.log("Not a valid number triplet in text position.");
+            console.log("Not a valid number triplet in position text.");
         }
         return isOk;
     };
@@ -261,14 +263,28 @@ export const Moorhen3DObjects = () => {
             if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y) && !Number.isNaN(_new_z) && !(_new_x === undefined) && !(_new_y === undefined) && !(_new_z === undefined)) {
                 isOk = true;
             } else {
-                console.log("Not a valid number triplet in text position.", endPositionText);
+                console.log("Not a valid number triplet in end position text.", endPositionText);
             }
         } catch (e) {
-            console.log("Not a valid number triplet in text position.");
+            console.log("Not a valid number triplet in end position text.");
         }
         return isOk;
     };
-
+    const checkXYZScaleText = () => {
+        let isOk: boolean = false;
+        if(scaleXYZText.split(",").length!==3) return isOk
+        try {
+            const [_new_x, _new_y, _new_z] = scaleXYZText.split(",").map(a => parseFloat(a));
+            if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y) && !Number.isNaN(_new_z) && !(_new_x === undefined) && !(_new_y === undefined) && !(_new_z === undefined)) {
+                isOk = true;
+            } else {
+                console.log("Not a valid number triplet in scale text.", scaleXYZText);
+            }
+        } catch (e) {
+            console.log("Not a valid number triplet in scale text.");
+        }
+        return isOk;
+    };
 
     const handleApply = () => {
         if (vectorSelectRef.current.value !== "new") {
@@ -287,6 +303,9 @@ export const Moorhen3DObjects = () => {
             x2 = undefined,
             y2 = undefined,
             z2 = undefined,
+            xscale = undefined,
+            yscale = undefined,
+            zscale = undefined,
             colour = undefined,
             size = undefined,
         },
@@ -328,6 +347,18 @@ export const Moorhen3DObjects = () => {
                     }
                 ),
                 ...(
+                    xscale !== undefined &&
+                    yscale !== undefined &&
+                    zscale !== undefined &&
+                    "scalexyz" in prev && {
+                        scalexyz: [
+                            Number(xscale),
+                            Number(yscale),
+                            Number(zscale)
+                        ] as [number, number, number]
+                    }
+                ),
+                ...(
                     x2 !== undefined &&
                     y2 !== undefined &&
                     z2 !== undefined &&
@@ -360,6 +391,8 @@ export const Moorhen3DObjects = () => {
             setObjectNew(true);
             setSelectedOption("new");
             setPositionText("0,0,0");
+            setEndPositionText("0,0,1");
+            setScaleXYZText("1,1,1");
             setObject(newSphereObject());
         } else {
             try {
@@ -373,6 +406,8 @@ export const Moorhen3DObjects = () => {
                     setEndPositionText(existingObject.top.join(","));
                 if(existingObject.type==="prism"||existingObject.type==="cylinder")
                     setEndPositionText(existingObject.end.join(","));
+                if(existingObject.type==="cuboid")
+                    setScaleXYZText(existingObject.scalexyz.join(","));
 
                 setObject(existingObject);
             } catch (e) {
@@ -563,6 +598,25 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
+                {(drawMode === "cuboid")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Scales (XYZ)"
+                            text={scaleXYZText}
+                            onChange={evt => {
+                                setScaleXYZText(evt.target.value);
+                                if(evt.target.value.split(",").length===3){
+                                    const xscale = evt.target.value.split(",")[0]
+                                    const yscale = evt.target.value.split(",")[1]
+                                    const zscale = evt.target.value.split(",")[2]
+                                    updateTheObject({xscale,yscale,zscale},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkXYZScaleText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
                 {(drawMode === "sphere"||drawMode === "cylinder"||drawMode === "cone")  &&
                     <>
                         <MoorhenTextInput
@@ -570,7 +624,42 @@ export const Moorhen3DObjects = () => {
                             text={sizeText}
                             onChange={evt => {
                                 setSizeText(evt.target.value);
-                                updateTheObject({size:parseFloat(evt.target.value)},theObject.type)
+                                if(!isNaN(parseFloat(evt.target.value))){
+                                    updateTheObject({size:parseFloat(evt.target.value)},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkSizeText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
+                {(drawMode === "torus")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Major radius"
+                            text={sizeText}
+                            onChange={evt => {
+                                setSizeText(evt.target.value);
+                                if(!isNaN(parseFloat(evt.target.value))){
+                                    updateTheObject({size:parseFloat(evt.target.value)},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkSizeText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
+                {(drawMode === "tetrahedron"||drawMode === "octahedron"
+                ||drawMode === "dodecahedron"||drawMode === "icosahedron"||drawMode === "football")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Size"
+                            text={sizeText}
+                            onChange={evt => {
+                                setSizeText(evt.target.value);
+                                if(!isNaN(parseFloat(evt.target.value))){
+                                    updateTheObject({size:parseFloat(evt.target.value)},theObject.type)
+                                }
                             }}
                             isInvalid={!checkSizeText()}
                             style={{ height: "2rem", margin: "0.3rem" }}

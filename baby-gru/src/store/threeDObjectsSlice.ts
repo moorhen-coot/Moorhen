@@ -105,7 +105,8 @@ export interface FootballObject extends ThreeDObjectBase {
 export interface TorusObject extends ThreeDObjectBase {
     type: "torus";
     orientation: Matrix4x4;
-    scale: number;
+    major_radius: number;
+    minor_radius: number;
 }
 
 export type ThreeDObject =
