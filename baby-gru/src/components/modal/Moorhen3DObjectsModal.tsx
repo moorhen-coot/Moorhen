@@ -219,6 +219,7 @@ export const Moorhen3DObjects = () => {
     const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0);
     const [sizeText, setSizeText] = useState<string>("1.0");
     const [size2Text, setSize2Text] = useState<string>("0.2");
+    const [nSidesText, setNSidesText] = useState<string>("4");
 
     const handleDelete = () => {
         dispatch(removeObjectById(theObject.uniqueId));
@@ -252,6 +253,21 @@ export const Moorhen3DObjects = () => {
             }
         } catch(e) {
             console.log("Not a valid number in size.");
+        }
+        return isOk;
+    }
+
+    const checkNSidesText = () => {
+        let isOk: boolean = false;
+        try {
+            const _new_x = parseFloat(nSidesText)
+            if (!Number.isNaN(_new_x) && !(_new_x === undefined) && Number.isInteger(_new_x)) {
+                isOk = true;
+            } else {
+                console.log("Not a valid number in n_sides.");
+            }
+        } catch(e) {
+            console.log("Not a valid number in n_sides.");
         }
         return isOk;
     }
@@ -325,6 +341,7 @@ export const Moorhen3DObjects = () => {
             colour = undefined,
             size = undefined,
             size2 = undefined,
+            n_sides = undefined,
         },
         objectType
     ) => {
@@ -395,6 +412,12 @@ export const Moorhen3DObjects = () => {
                 ),
                 ...(
                     size !== undefined &&
+                    "bottom_radius" in prev && {
+                        bottom_radius: Number(size)
+                    }
+                ),
+                ...(
+                    size !== undefined &&
                     "scale" in prev && {
                         scale: Number(size)
                     }
@@ -411,6 +434,18 @@ export const Moorhen3DObjects = () => {
                        minor_radius: Number(size2)
                     }
                 ),
+                ...(
+                    size2 !== undefined &&
+                    "top_radius" in prev && {
+                       top_radius: Number(size2)
+                    }
+                ),
+                ...(
+                    n_sides !== undefined &&
+                    "n_sides" in prev && {
+                       n_sides: Number(n_sides)
+                    }
+                ),
             }));
         }
     };
@@ -422,6 +457,9 @@ export const Moorhen3DObjects = () => {
             setPositionText("0,0,0");
             setEndPositionText("0,0,1");
             setScaleXYZText("1,1,1");
+            setNSidesText("4");
+            setSizeText("1");
+            setSize2Text("0.2");
             setObject(newSphereObject());
         } else {
             try {
@@ -440,6 +478,13 @@ export const Moorhen3DObjects = () => {
                 if(existingObject.type==="torus"){
                     setSizeText(String(existingObject.major_radius))
                     setSize2Text(String(existingObject.minor_radius))
+                }
+                if(existingObject.type==="frustrum"||existingObject.type==="flatfrustrum"){
+                    setSizeText(String(existingObject.bottom_radius))
+                    setSize2Text(String(existingObject.top_radius))
+                }
+                if(existingObject.type==="prism"||existingObject.type==="flatfrustrum"||existingObject.type==="pyramid"){
+                    setNSidesText(String(existingObject.n_sides))
                 }
                 if("scale" in existingObject)
                     setSizeText(String(existingObject.scale))
@@ -670,6 +715,34 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
+                {(drawMode === "frustrum"||drawMode === "flatfrustrum")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Bottom size"
+                            text={sizeText}
+                            onChange={evt => {
+                                setSizeText(evt.target.value);
+                                if(!isNaN(parseFloat(evt.target.value))){
+                                    updateTheObject({size:parseFloat(evt.target.value)},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkSizeText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                        <MoorhenTextInput
+                            label="Top size"
+                            text={size2Text}
+                            onChange={evt => {
+                                setSize2Text(evt.target.value);
+                                if(!isNaN(parseFloat(evt.target.value))){
+                                    updateTheObject({size2:parseFloat(evt.target.value)},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkSize2Text()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
                 {(drawMode === "torus")  &&
                     <>
                         <MoorhenTextInput
@@ -715,6 +788,22 @@ export const Moorhen3DObjects = () => {
                                 }
                             }}
                             isInvalid={!checkSizeText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
+                {(drawMode === "prism"||drawMode === "pyramid"||drawMode === "flatfrustrum")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Number of sides"
+                            text={nSidesText}
+                            onChange={evt => {
+                                setNSidesText(evt.target.value);
+                                if(!isNaN(parseInt(evt.target.value))){
+                                    updateTheObject({n_sides:parseInt(evt.target.value)},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkNSidesText()}
                             style={{ height: "2rem", margin: "0.3rem" }}
                         />
                     </>
