@@ -1,6 +1,10 @@
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
+import * as quat4 from 'gl-matrix/quat';
+import * as vec3 from 'gl-matrix/vec3';
+import { createQuatFromAngle } from '../../../src/WebGLgComponents/quatUtils';
+import { quatToMat4 } from '../../../src/WebGLgComponents/quatToMat4';
 import {
     addObject,
     removeObjectById
@@ -32,6 +36,21 @@ import { componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourN
 import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+
+const getOffsetRect = (elem: HTMLCanvasElement) => {
+    const box = elem.getBoundingClientRect()
+    const body = document.body
+    const docElem = document.documentElement
+
+    const scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop
+    const scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft
+    const clientTop = docElem.clientTop || body.clientTop || 0
+    const clientLeft = docElem.clientLeft || body.clientLeft || 0
+    const top  = box.top +  scrollTop - clientTop
+    const left = box.left + scrollLeft - clientLeft
+
+    return { top: Math.round(top), left: Math.round(left) }
+}
 
 export const Moorhen3DObjects = () => {
 
@@ -220,11 +239,86 @@ export const Moorhen3DObjects = () => {
     const [sizeText, setSizeText] = useState<string>("1.0");
     const [size2Text, setSize2Text] = useState<string>("0.2");
     const [nSidesText, setNSidesText] = useState<string>("4");
+    const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
+    const [xyDown, setXYDown] = useState<[number,number]>([-100,-100])
+    const q = quat4.create()
+    quat4.set(q, 0, 0, 0, -1);
+    const [myQuat, setQuat] = useState<quat4>(q)
+
+    const canvasRef = useRef<HTMLCanvasElement>(null)
 
     const handleDelete = () => {
         dispatch(removeObjectById(theObject.uniqueId));
         setObjectNew(true);
     };
+
+    const getXY = (evt) => {
+        if(!canvasRef||!canvasRef.current) return
+
+        const canvas = canvasRef.current
+        const offset = getOffsetRect(canvas)
+        let x: number
+        let y: number
+
+        if (evt.pageX || evt.pageY) {
+            x = evt.pageX
+            y = evt.pageY
+        } else {
+            x = evt.clientX
+            y = evt.clientY
+        }
+        x -= offset.left
+        y -= offset.top
+
+        return [x,y]
+    }
+
+    const drawCanvas = useCallback(() => {
+        if(!canvasRef)
+            return
+
+        if(!canvasRef.current)
+            return
+
+        const canvas = canvasRef.current
+        const ctx = canvas.getContext("2d")
+        const rot_x_axis = vec3.create()
+        const rot_y_axis = vec3.create()
+        const rot_z_axis = vec3.create()
+        vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
+        vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
+        vec3.set(rot_z_axis, 0.0, 0.0, 1.0);
+        const theMat = quatToMat4(myQuat);
+        vec3.transformMat4(rot_x_axis, rot_x_axis, theMat);
+        vec3.transformMat4(rot_y_axis, rot_y_axis, theMat);
+        vec3.transformMat4(rot_z_axis, rot_z_axis, theMat);
+        ctx.save()
+        ctx.clearRect(0,0,canvas.width,canvas.height)
+        ctx.fillStyle = "#aaaaaa"
+        ctx.fillRect(0,0,canvas.width,canvas.height)
+        ctx.save()
+        ctx.strokeStyle = "#ff0000"
+        ctx.beginPath();
+        ctx.moveTo(canvas.width/2, canvas.height/2);
+        ctx.lineTo(canvas.width/2+40*rot_x_axis[0], canvas.height/2+40*rot_x_axis[1])
+        ctx.stroke()
+        ctx.restore()
+        ctx.save()
+        ctx.strokeStyle = "#00ff00"
+        ctx.beginPath();
+        ctx.moveTo(canvas.width/2, canvas.height/2);
+        ctx.lineTo(canvas.width/2-40*rot_y_axis[0], canvas.height/2-40*rot_y_axis[1])
+        ctx.stroke()
+        ctx.restore()
+        ctx.save()
+        ctx.strokeStyle = "#0000bb"
+        ctx.beginPath();
+        ctx.moveTo(canvas.width/2, canvas.height/2);
+        ctx.lineTo(canvas.width/2+40*rot_z_axis[0], canvas.height/2+40*rot_z_axis[1])
+        ctx.stroke()
+        ctx.restore()
+        ctx.restore()
+    },[myQuat])
 
     const checkPositionText = () => {
         let isOk: boolean = false;
@@ -326,6 +420,19 @@ export const Moorhen3DObjects = () => {
         setSelectedOption(theObject.uniqueId);
         setObjectNew(false)
     };
+
+    const updateTheRotation = useCallback((
+        {
+            orientation = undefined
+        }
+    ) => {
+        setObject(prev => {
+            return {
+            ...prev,
+            ...(orientation && { orientation }),
+            };
+        });
+    },[])
 
     const updateTheObject = (
         {
@@ -486,6 +593,25 @@ export const Moorhen3DObjects = () => {
                 if(existingObject.type==="prism"||existingObject.type==="flatfrustrum"||existingObject.type==="pyramid"){
                     setNSidesText(String(existingObject.n_sides))
                 }
+                if(existingObject.type==="cube"||existingObject.type==="cuboid"||existingObject.type==="tetrahedron"||
+                   existingObject.type==="octahedron"||existingObject.type==="dodecahedron"||
+                   existingObject.type==="icosahedron"||existingObject.type==="football"||
+                   existingObject.type==="torus"
+                    ){
+                    console.log(existingObject.orientation)
+                    const m4 = existingObject.orientation
+                    const m3 = [
+                       m4[0], m4[1], m4[2],
+                       m4[4], m4[5], m4[6],
+                       m4[8], m4[9], m4[10]
+                    ];
+                    const q = quat4.create()
+                    quat4.fromMat3(q, m3);
+                    //The fact that I have to do this is slightly worrying.
+                    q[0] = -q[0]; q[1] = -q[1]; q[2] = -q[2]
+                    console.log(...q)
+                    setQuat(q)
+                }
                 if("scale" in existingObject)
                     setSizeText(String(existingObject.scale))
                 if("radius" in existingObject)
@@ -498,6 +624,67 @@ export const Moorhen3DObjects = () => {
             }
         }
     };
+
+    const handleMouseMove = useCallback((evt) => {
+        if(!mouseHeldDown) return
+        const [x,y] = getXY(evt)
+        const [dx,dy]= [xyDown[0]-x,xyDown[1]-y]
+
+        const rot_x_axis = vec3.create()
+        const rot_y_axis = vec3.create()
+        vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
+        vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
+
+        const xQ = createQuatFromAngle(-dy, rot_x_axis);
+        const yQ = createQuatFromAngle(dx, rot_y_axis);
+        quat4.multiply(xQ, xQ, yQ);
+        quat4.multiply(myQuat, myQuat, xQ);
+
+        setQuat(myQuat)
+        setXYDown([x,y])
+
+        drawCanvas()
+        updateTheRotation({orientation:Array.from(quatToMat4(myQuat))})
+
+    },[mouseHeldDown,xyDown,myQuat,drawCanvas,updateTheRotation])
+
+    const handleMouseDown = useCallback((evt) => {
+        const [x,y] = getXY(evt)
+        setXYDown([x,y])
+        setMouseHeldDown(true)
+    },[])
+
+    const handleMouseUp = useCallback((evt) => {
+        setMouseHeldDown(false)
+        const [x,y] = getXY(evt)
+        setXYDown([x,y])
+    },[])
+
+    useEffect(() => {
+        drawCanvas()
+    }, [canvasRef,theObject.type,drawCanvas])
+
+    useEffect(() => {
+
+        if(!canvasRef)
+            return
+
+        if(!canvasRef.current)
+            return
+
+        canvasRef.current.addEventListener("mousemove", handleMouseMove , false)
+        canvasRef.current.addEventListener("mousedown", handleMouseDown , false)
+        canvasRef.current.addEventListener("mouseup", handleMouseUp , false)
+
+        return () => {
+            if (canvasRef.current !== null) {
+                canvasRef.current.removeEventListener("mousemove", handleMouseMove)
+                canvasRef.current.removeEventListener("mousedown", handleMouseDown)
+                canvasRef.current.removeEventListener("mouseup", handleMouseUp)
+            }
+        }
+
+    }, [theObject.type,canvasRef,handleMouseMove,handleMouseUp,handleMouseDown])
 
     const handleColorChange = (color: string) => {
         updateTheObject({ colour: color }, theObject.type);
@@ -806,6 +993,15 @@ export const Moorhen3DObjects = () => {
                             isInvalid={!checkNSidesText()}
                             style={{ height: "2rem", margin: "0.3rem" }}
                         />
+                    </>
+                }
+                {(drawMode === "cube"||drawMode==="cuboid"||drawMode==="tetrahedron"||
+                   drawMode==="octahedron"||drawMode==="dodecahedron"||
+                   drawMode==="icosahedron"||drawMode==="football"||
+                   drawMode==="torus")  &&
+                    <>
+                        <span>Orientation</span>
+                        <canvas ref={canvasRef} width={120} height={120}></canvas>
                     </>
                 }
                 <MoorhenStack direction="line">
