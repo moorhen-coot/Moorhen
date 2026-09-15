@@ -146,7 +146,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const shortcutsBlocked = useSelector((state: RootState) => state.globalUI.areShortcutsBlocked)
 
     useEffect(() => {
-        console.log("Vectors changed!!!!",vectorsList)
         let oldBuffers = displayBuffers
         let oldLabelBuffers = labelBuffers
         const dispatchVectorsBuffers = async() => {
@@ -177,12 +176,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
         const dispatchThreeDObjectsBuffers = async() => {
             if(glRef !== null && typeof glRef !== 'function') {
-                console.log("3D objects updated",threeDObjects)
                 threeDObjectsBuffers.forEach((buffer) => {
                     buffer.clearBuffers()
                     oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
                 })
-                const [objects] = await getThreeDObjectsBuffers(store)
+                const objects = await getThreeDObjectsBuffers(store)
 
                 let newBuffers = []
                 objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
