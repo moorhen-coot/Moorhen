@@ -5,6 +5,7 @@ import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { buildBuffers, appendOtherData, } from '../../WebGLgComponents/buildBuffers'
 import { getVectorsBuffers } from '../../WebGLgComponents/vectorsDraw'
+import { getThreeDObjectsBuffers } from '../../WebGLgComponents/threeDObjectsDraw'
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import type { ActionButtonSettings } from '../context-menu/MoorhenContextMenu';
 import { useCommandCentre, useMoorhenInstance } from '../../InstanceManager';
@@ -137,8 +138,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
 
     const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
+    const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
     const displayBuffers = useSelector((state: moorhen.State) => state.glRef.displayBuffers)
-    const [vectorBuffers, setVectorBuffers] = useState<DisplayBuffer[]>([])
+    const [vectorBuffers, setVectorsBuffers] = useState<DisplayBuffer[]>([])
+    const [threeDObjectsBuffers, setThreeDObjectsBuffers] = useState<DisplayBuffer[]>([])
     const [vectorLabelBuffers, setVectorLabelBuffers] = useState<any>([])
     const shortcutsBlocked = useSelector((state: RootState) => state.globalUI.areShortcutsBlocked)
 
@@ -166,7 +169,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 buildBuffers(a, store)
             })
 
-            setVectorBuffers(newBuffers)
+            setVectorsBuffers(newBuffers)
             setVectorLabelBuffers(newLabelBuffers)
             dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
             dispatch(setLabelBuffers([...newLabelBuffers,...oldLabelBuffers]))
@@ -175,9 +178,34 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         dispatchVectorsBuffers()
     }, [vectorsList])
 
+    useEffect(() => {
+        const dispatchThreeDObjectsBuffers = async() => {
+            if(glRef !== null && typeof glRef !== 'function') {
+                console.log("3D objects updated",threeDObjects)
+                let oldBuffers = displayBuffers
+                vectorBuffers.forEach((buffer) => {
+                    buffer.clearBuffers()
+                    oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
+                })
+                console.log(oldBuffers)
+                const [objects] = await getThreeDObjectsBuffers(store)
+
+                let newBuffers = []
+                objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                    const a = appendOtherData(object, store, true);
+                    newBuffers = [...newBuffers,...a]
+                    buildBuffers(a, store)
+                })
+
+                setThreeDObjectsBuffers(newBuffers)
+                dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
+
+            }
+        }
+        dispatchThreeDObjectsBuffers()
+    }, [threeDObjects])
+
     const commandCentre = useCommandCentre()
-
-
 
     const handleZoomChanged = useCallback(evt => {
         if (resetClippingFogging) {
