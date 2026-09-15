@@ -41,9 +41,7 @@ export const ManageSession = () => {
     const getSession = async () => {
         const sessionData = await timeCapsule.current.fetchSession(true);
         const _sessionName = sessionName !== "" ? sessionName : "moorhen_session";
-        console.log(JSON.stringify(sessionData, null, 4))
         const sessionMessage = moorhensession.Session.fromObject(sessionData);
-        console.log(sessionMessage)
         const sessionBytes = moorhensession.Session.encode(sessionMessage).finish();
         doDownload([sessionBytes] as BlobPart[], `${_sessionName}.pb`);
     };

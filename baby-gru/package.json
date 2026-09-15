@@ -54,7 +54,7 @@
     ],
     "scripts": {
         "transpile-graphql-codegen": "if ! test -r src/utils/__graphql__/gql.ts; then  npx graphql-codegen; fi",
-        "transpile-protobuf": "npx pbjs -t static-module -w es6 -o ./src/protobuf/MoorhenSession.js ./src/protobuf/MoorhenSession.proto",
+        "transpile-protobuf": "npx pbjs -t static-module -w es6 --keep-case -o ./src/protobuf/MoorhenSession.js ./src/protobuf/MoorhenSession.proto",
         "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
         "transpile-ts-worker": "npx tsc --project tsconfig.worker.json && sed -i.bak '/export {}/d' public/MoorhenAssets/wasm/CootWorker.js && rm public/MoorhenAssets/wasm/CootWorker.js.bak",
         "transpile-ts-worker:if-needed": "if ! test -r public/MoorhenAssets/wasm/CootWorker.js; then npm run transpile-ts-worker; fi",

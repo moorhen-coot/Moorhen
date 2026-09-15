@@ -1,16 +1,6 @@
 package moorhensession;
 syntax = "proto3";
 
-message Vec3 {
-  float x = 1;
-  float y = 2;
-  float z = 3;
-}
-
-message Mat4 {
-  repeated float values = 1; // exactly 16 by convention
-}
-
 message CootBondOptions {
   float smoothness = 1;
   float width = 2;
@@ -197,164 +187,28 @@ message Overlay2DSessionData {
   repeated MoorhenOverlay2DImageSrcFrac imageFracPath2D = 5;
 }
 
-message Moorhen3DObjectSphereObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    float radius = 5;
-}
-
-message Moorhen3DObjectCylinderObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Vec3 end = 5;
-    float radius = 6;
-}
-
-message Moorhen3DObjectConeObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Vec3 top = 5;
-    float radius = 6;
-}
-
-message Moorhen3DObjectFrustumObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Vec3 top = 5;
-    float bottom_radius = 6;
-    float top_radius = 7;
-}
-
-message Moorhen3DObjectFlatSidedFrustumObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Vec3 top = 5;
-    float bottom_radius = 6;
-    float top_radius = 7;
-    uint32 n_sides = 8;
-}
-
-message Moorhen3DObjectPrismObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Vec3 end = 5;
-    float radius = 6;
-    uint32 n_sides = 7;
-}
-
-message Moorhen3DObjectPyramidObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Vec3 top = 5;
-    float radius = 6;
-    uint32 n_sides = 7;
-}
-
-message Moorhen3DObjectCubeObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Mat4 orientation = 5;
-    float scale = 6;
-}
-
-message Moorhen3DObjectCuboidObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Mat4 orientation = 5;
-    Vec3 scalexyz = 6;
-}
-
-message Moorhen3DObjectTetrahedronObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Mat4 orientation = 5;
-    float scale = 6;
-}
-
-message Moorhen3DObjectOctahedronObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Mat4 orientation = 5;
-    float scale = 6;
-}
-
-message Moorhen3DObjectDodecahedronObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Mat4 orientation = 5;
-    float scale = 6;
-}
-
-message Moorhen3DObjectIcosahedronObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Mat4 orientation = 5;
-    float scale = 6;
-}
-
-message Moorhen3DObjectFootballObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Mat4 orientation = 5;
-    float scale = 6;
-}
-
-message Moorhen3DObjectTorusObject {
-    string uniqueId = 1;
-    Vec3 origin = 2;
-    string colour = 3;
-    string type = 4;
-    Mat4 orientation = 5;
-    float major_radius = 6;
-    float minor_radius = 7;
-}
+// NOTE: field names here must match the Redux field names exactly. pbjs is invoked with
+// --keep-case so that snake_case names survive into the generated code.
 
 message Moorhen3DObject {
-    oneof object {
-        Moorhen3DObjectSphereObject sphere = 1;
-        Moorhen3DObjectCylinderObject cylinder = 2;
-        Moorhen3DObjectConeObject cone = 3;
-        Moorhen3DObjectFrustumObject frustum = 4;
-        Moorhen3DObjectFlatSidedFrustumObject flatfrustum = 5;
-        Moorhen3DObjectPrismObject prism = 6;
-        Moorhen3DObjectPyramidObject pyramid = 7;
-        Moorhen3DObjectCubeObject cube = 8;
-        Moorhen3DObjectCuboidObject cuboid = 9;
-        Moorhen3DObjectTetrahedronObject tetrahedron = 10;
-        Moorhen3DObjectOctahedronObject octahedron = 11;
-        Moorhen3DObjectDodecahedronObject dodecahedron = 12;
-        Moorhen3DObjectIcosahedronObject icosahedron = 13;
-        Moorhen3DObjectFootballObject football = 14;
-        Moorhen3DObjectTorusObject torus = 15;
-    }
+    string uniqueId = 1;
+    string type = 2;
+    string colour = 3;
+    repeated float origin = 4;
+    repeated float end = 5;
+    repeated float top = 6;
+    repeated float scalexyz = 7;
+    repeated float orientation = 8;
+    // These are `optional` so that explicit presence is tracked: proto3 scalars have no presence
+    // by default, so a genuine value of 0 would be indistinguishable from "not set" and would be
+    // dropped by toObject().
+    optional float radius = 9;
+    optional float scale = 10;
+    optional uint32 n_sides = 11;
+    optional float bottom_radius = 12;
+    optional float top_radius = 13;
+    optional float major_radius = 14;
+    optional float minor_radius = 15;
 }
 
 message RGB {

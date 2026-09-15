@@ -549,10 +549,6 @@ export class MoorhenTimeCapsule {
         const vectorData: MoorhenVector[] = this.store.getState().vectors.vectorsList;
         const threeDObjectData: ThreeDObject[] = this.store.getState().threeDObjects.objects;
 
-        console.log("SAVE")
-        console.log(threeDObjectData)
-        console.trace()
-
         const overlay2dData: Overlay2DSessionData = {
             fracPath2D: this.store.getState().overlays.fracPathOverlayList,
             svgPath2D: this.store.getState().overlays.svgPathOverlayList,
@@ -1026,18 +1022,14 @@ export class MoorhenTimeCapsule {
             dispatch(setActiveMap(newMaps[sessionData.activeMapIndex]));
         }
 
-        console.log("Load 3d objects")
+        // Load 3D objects
         dispatch(emptyObjects());
-        console.log(sessionData.threeDObjectData)
         if (sessionData.threeDObjectData) {
             sessionData.threeDObjectData.forEach(d => {
-                console.log(d)
                 dispatch(addObject(d));
             });
         }
-        console.log("Loaded 3d objects")
 
-        console.log("Load vectors")
         // Load vectors
         dispatch(emptyVectors());
         if (sessionData.vectorData) {
@@ -1045,7 +1037,6 @@ export class MoorhenTimeCapsule {
                 dispatch(addVector(d));
             });
         }
-        console.log("Loaded vectors")
 
         // Load 2D canvas overlays
         dispatch(emptyOverlays());
