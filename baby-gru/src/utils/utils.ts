@@ -790,6 +790,20 @@ export const hexToRGB = (hex: string): [number, number, number] => {
     return [r, g, b];
 };
 
+/**
+ * Parse a "#rrggbb" or "#rrggbbaa" string into RGBA components. Unlike hexToRGB this keeps the
+ * alpha channel, defaulting it to fully opaque when the string carries no alpha.
+ * @param {string} hex - The HEX string, with or without a leading hash
+ * @returns {[number, number, number, number]} r, g, b and a, each in the 0-255 range (matching
+ * hexToRGB - divide by 255 for the 0-1 range the WebGL colour buffers expect)
+ */
+export const hexToRGBA = (hex: string): [number, number, number, number] => {
+    const hexWithoutHash = hex.replace("#", "");
+    const [r, g, b] = hexToRGB(hexWithoutHash);
+    const a = hexWithoutHash.length > 6 ? parseInt(hexWithoutHash.slice(6, 8), 16) : 255;
+    return [r, g, b, a];
+};
+
 export const getCone = (cylinder_accu: number): [number[], number[], number[]] => {
     let thisPos = [];
     let thisNorm = [];
@@ -889,7 +903,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     style: "cylinder" | "cone" = "cylinder",
     individualSizes?: number[],
     dashedSteps: number = 15,
-    NEF?: boolean
+    NEF?: boolean,
+    cylinderAccu: number = 16
 ) => {
     const atomPairs = atoms;
 
@@ -903,7 +918,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     const totInstanceUseColours = [];
     const totInstancePrimTypes = [];
 
-    const [thisPos, thisNorm, thisIdxs] = style === "cylinder" ? getDashedCylinder(dashed ? dashedSteps : 1, 16) : getCone(16);
+    const [thisPos, thisNorm, thisIdxs] =
+        style === "cylinder" ? getDashedCylinder(dashed ? dashedSteps : 1, cylinderAccu) : getCone(cylinderAccu);
 
     const thisInstance_sizes = [];
     const thisInstance_colours = [];
