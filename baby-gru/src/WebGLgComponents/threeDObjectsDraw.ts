@@ -7,6 +7,9 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
     const threeDObjects = store.getState().threeDObjects.objects
     const molecules = store.getState().molecules.moleculeList
 
+    threeDObjects.forEach(obj => {
+        console.log(obj)
+    })
     const objects = []
     return [objects]
 

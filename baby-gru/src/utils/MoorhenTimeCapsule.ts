@@ -54,6 +54,7 @@ import type {
     Overlay2DTextFrac,
 } from "../store/overlaysSlice";
 import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
+import { ThreeDObject, addObject, emptyObjects } from "../store/threeDObjectsSlice";
 import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
@@ -167,6 +168,7 @@ export type backupSession = {
     dataIsEmbedded: boolean;
     vectorData?: MoorhenVector[];
     overlay2dData?: Overlay2DSessionData;
+    threeDObjectData?: ThreeDObject[];
 };
 
 export type Overlay2DSessionData = {
@@ -175,6 +177,10 @@ export type Overlay2DSessionData = {
     textFracPath2D: Overlay2DTextFrac[];
     latexFracPath2D: Overlay2DLatexSrcFrac[];
     imageFracPath2D: Overlay2DImageSrcFrac[];
+};
+
+export type Moorhen3DObjectSessionData = {
+    objects: ThreeDObject[];
 };
 
 /**
@@ -541,6 +547,11 @@ export class MoorhenTimeCapsule {
         };
 
         const vectorData: MoorhenVector[] = this.store.getState().vectors.vectorsList;
+        const threeDObjectData: ThreeDObject[] = this.store.getState().threeDObjects.objects;
+
+        console.log("SAVE")
+        console.log(threeDObjectData)
+        console.trace()
 
         const overlay2dData: Overlay2DSessionData = {
             fracPath2D: this.store.getState().overlays.fracPathOverlayList,
@@ -560,6 +571,7 @@ export class MoorhenTimeCapsule {
             dataIsEmbedded: embedData,
             overlay2dData: overlay2dData,
             vectorData: vectorData,
+            threeDObjectData: threeDObjectData,
         };
 
         return session;
@@ -1014,6 +1026,18 @@ export class MoorhenTimeCapsule {
             dispatch(setActiveMap(newMaps[sessionData.activeMapIndex]));
         }
 
+        console.log("Load 3d objects")
+        dispatch(emptyObjects());
+        console.log(sessionData.threeDObjectData)
+        if (sessionData.threeDObjectData) {
+            sessionData.threeDObjectData.forEach(d => {
+                console.log(d)
+                dispatch(addObject(d));
+            });
+        }
+        console.log("Loaded 3d objects")
+
+        console.log("Load vectors")
         // Load vectors
         dispatch(emptyVectors());
         if (sessionData.vectorData) {
@@ -1021,6 +1045,7 @@ export class MoorhenTimeCapsule {
                 dispatch(addVector(d));
             });
         }
+        console.log("Loaded vectors")
 
         // Load 2D canvas overlays
         dispatch(emptyOverlays());

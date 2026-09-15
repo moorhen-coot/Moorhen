@@ -15,8 +15,8 @@ import type {
     SphereObject,
     CylinderObject,
     ConeObject,
-    FrustrumObject,
-    FlatSidedFrustrumObject,
+    FrustumObject,
+    FlatSidedFrustumObject,
     PrismObject,
     PyramidObject,
     CubeObject,
@@ -96,9 +96,9 @@ export const Moorhen3DObjects = () => {
         radius: 1.0
     });
 
-    const newFrustrumObject = (): FrustrumObject => ({
+    const newFrustumObject = (): FrustumObject => ({
         uniqueId: uuidv4(),
-        type: "frustrum",
+        type: "frustum",
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         top: [0, 0, 5],
@@ -106,9 +106,9 @@ export const Moorhen3DObjects = () => {
         top_radius: 0.5
     });
 
-    const newFlatSidedFrustrumObject = (): FlatSidedFrustrumObject => ({
+    const newFlatSidedFrustumObject = (): FlatSidedFrustumObject => ({
         uniqueId: uuidv4(),
-        type: "flatfrustrum",
+        type: "flatfrustum",
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         top: [0, 0, 5],
@@ -215,8 +215,8 @@ export const Moorhen3DObjects = () => {
             case "sphere": return newSphereObject();
             case "cylinder": return newCylinderObject();
             case "cone": return newConeObject();
-            case "frustrum": return newFrustrumObject();
-            case "flatfrustrum": return newFlatSidedFrustrumObject();
+            case "frustum": return newFrustumObject();
+            case "flatfrustum": return newFlatSidedFrustumObject();
             case "prism": return newPrismObject();
             case "pyramid": return newPyramidObject();
             case "cube": return newCubeObject();
@@ -575,8 +575,8 @@ export const Moorhen3DObjects = () => {
 
                 setSelectedOption(existingObject.uniqueId);
                 setPositionText(existingObject.origin.join(","));
-                if(existingObject.type==="cone"||existingObject.type==="frustrum"||
-                  existingObject.type==="flatfrustrum"||existingObject.type==="pyramid")
+                if(existingObject.type==="cone"||existingObject.type==="frustum"||
+                  existingObject.type==="flatfrustum"||existingObject.type==="pyramid")
                     setEndPositionText(existingObject.top.join(","));
                 if(existingObject.type==="prism"||existingObject.type==="cylinder")
                     setEndPositionText(existingObject.end.join(","));
@@ -586,11 +586,11 @@ export const Moorhen3DObjects = () => {
                     setSizeText(String(existingObject.major_radius))
                     setSize2Text(String(existingObject.minor_radius))
                 }
-                if(existingObject.type==="frustrum"||existingObject.type==="flatfrustrum"){
+                if(existingObject.type==="frustum"||existingObject.type==="flatfrustum"){
                     setSizeText(String(existingObject.bottom_radius))
                     setSize2Text(String(existingObject.top_radius))
                 }
-                if(existingObject.type==="prism"||existingObject.type==="flatfrustrum"||existingObject.type==="pyramid"){
+                if(existingObject.type==="prism"||existingObject.type==="flatfrustum"||existingObject.type==="pyramid"){
                     setNSidesText(String(existingObject.n_sides))
                 }
                 if(existingObject.type==="cube"||existingObject.type==="cuboid"||existingObject.type==="tetrahedron"||
@@ -753,8 +753,8 @@ export const Moorhen3DObjects = () => {
                     <option value="sphere">Sphere</option>
                     <option value="cylinder">Cylinder</option>
                     <option value="cone">Cone</option>
-                    <option value="frustrum">Frustrum</option>
-                    <option value="flatfrustrum">Flat-Sided Frustrum</option>
+                    <option value="frustum">Frustum</option>
+                    <option value="flatfrustum">Flat-Sided Frustum</option>
                     <option value="prism">Prism</option>
                     <option value="pyramid">Pyramid</option>
                     <option value="cube">Cube</option>
@@ -810,7 +810,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "frustrum" || drawMode === "flatfrustrum" || drawMode === "pyramid"|| drawMode === "cone")  &&
+                {(drawMode === "frustum" || drawMode === "flatfrustum" || drawMode === "pyramid"|| drawMode === "cone")  &&
                     <>
                         <MoorhenTextInput
                             label="Base position"
@@ -848,7 +848,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "cone"||drawMode === "frustrum"||drawMode === "flatfrustrum"||drawMode === "pyramid")  &&
+                {(drawMode === "cone"||drawMode === "frustum"||drawMode === "flatfrustum"||drawMode === "pyramid")  &&
                     <>
                         <MoorhenTextInput
                             label="Top position"
@@ -902,7 +902,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "frustrum"||drawMode === "flatfrustrum")  &&
+                {(drawMode === "frustum"||drawMode === "flatfrustum")  &&
                     <>
                         <MoorhenTextInput
                             label="Bottom size"
@@ -979,7 +979,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "prism"||drawMode === "pyramid"||drawMode === "flatfrustrum")  &&
+                {(drawMode === "prism"||drawMode === "pyramid"||drawMode === "flatfrustum")  &&
                     <>
                         <MoorhenTextInput
                             label="Number of sides"

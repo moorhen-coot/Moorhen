@@ -146,48 +146,42 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const shortcutsBlocked = useSelector((state: RootState) => state.globalUI.areShortcutsBlocked)
 
     useEffect(() => {
+        console.log("Vectors changed!!!!",vectorsList)
+        let oldBuffers = displayBuffers
+        let oldLabelBuffers = labelBuffers
         const dispatchVectorsBuffers = async() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-
-            let oldLabelBuffers = labelBuffers
-            vectorLabelBuffers.forEach((buffer) => {
-                oldLabelBuffers = oldLabelBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
-            })
-
-            let oldBuffers = displayBuffers
-            vectorBuffers.forEach((buffer) => {
-                buffer.clearBuffers()
-                oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
-            })
-
-            const [objects,newLabelBuffers] = await getVectorsBuffers(store)
-
-            let newBuffers = []
-            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                const a = appendOtherData(object, store, true);
-                newBuffers = [...newBuffers,...a]
-                buildBuffers(a, store)
-            })
-
-            setVectorsBuffers(newBuffers)
-            setVectorLabelBuffers(newLabelBuffers)
-            dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
-            dispatch(setLabelBuffers([...newLabelBuffers,...oldLabelBuffers]))
-        }
-        }
-        dispatchVectorsBuffers()
-    }, [vectorsList])
-
-    useEffect(() => {
-        const dispatchThreeDObjectsBuffers = async() => {
             if(glRef !== null && typeof glRef !== 'function') {
-                console.log("3D objects updated",threeDObjects)
-                let oldBuffers = displayBuffers
+
+                vectorLabelBuffers.forEach((buffer) => {
+                    oldLabelBuffers = oldLabelBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
+                })
+
                 vectorBuffers.forEach((buffer) => {
                     buffer.clearBuffers()
                     oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
                 })
-                console.log(oldBuffers)
+
+                const [objects,newLabelBuffers] = await getVectorsBuffers(store)
+
+                let newBuffers = []
+                objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                    const a = appendOtherData(object, store, true);
+                    newBuffers = [...newBuffers,...a]
+                    buildBuffers(a, store)
+                })
+
+                setVectorsBuffers(newBuffers)
+                setVectorLabelBuffers(newLabelBuffers)
+                return [newBuffers,newLabelBuffers]
+            }
+        }
+        const dispatchThreeDObjectsBuffers = async() => {
+            if(glRef !== null && typeof glRef !== 'function') {
+                console.log("3D objects updated",threeDObjects)
+                threeDObjectsBuffers.forEach((buffer) => {
+                    buffer.clearBuffers()
+                    oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
+                })
                 const [objects] = await getThreeDObjectsBuffers(store)
 
                 let newBuffers = []
@@ -199,11 +193,19 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
                 setThreeDObjectsBuffers(newBuffers)
                 dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
+                return newBuffers
 
             }
         }
-        dispatchThreeDObjectsBuffers()
-    }, [threeDObjects])
+        const getBuffers = async() => {
+            const [newBuffers,newLabelBuffers] = await dispatchVectorsBuffers()
+            const new3DBuffers = await dispatchThreeDObjectsBuffers()
+            dispatch(setDisplayBuffers([...new3DBuffers,...newBuffers,...oldBuffers]))
+            dispatch(setLabelBuffers([...newLabelBuffers,...oldLabelBuffers]))
+        }
+        getBuffers()
+
+    }, [vectorsList,threeDObjects])
 
     const commandCentre = useCommandCentre()
 

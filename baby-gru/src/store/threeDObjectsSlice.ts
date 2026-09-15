@@ -31,15 +31,15 @@ export interface ConeObject extends ThreeDObjectBase {
     radius: number;
 }
 
-export interface FrustrumObject extends ThreeDObjectBase {
-    type: "frustrum";
+export interface FrustumObject extends ThreeDObjectBase {
+    type: "frustum";
     top: Position3D;
     bottom_radius: number;
     top_radius: number;
 }
 
-export interface FlatSidedFrustrumObject extends ThreeDObjectBase {
-    type: "flatfrustrum";
+export interface FlatSidedFrustumObject extends ThreeDObjectBase {
+    type: "flatfrustum";
     top: Position3D;
     bottom_radius: number;
     top_radius: number;
@@ -113,8 +113,8 @@ export type ThreeDObject =
             | SphereObject
             | CylinderObject
             | ConeObject
-            | FrustrumObject
-            | FlatSidedFrustrumObject
+            | FrustumObject
+            | FlatSidedFrustumObject
             | PrismObject
             | PyramidObject
             | CubeObject
