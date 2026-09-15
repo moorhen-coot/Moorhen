@@ -212,6 +212,13 @@ export class MoorhenTimeCapsule {
     store: MoorhenReduxStoreType;
     onIsBusyChange: (arg0: boolean) => void;
 
+    /**
+     * Session versions older than the current one that can still be loaded. Add the outgoing
+     * version here when bumping `this.version`, and drop any version whose format can no longer
+     * be read.
+     */
+    static readonly supportedLegacyVersions: string[] = ["v21", "v22", "v23"];
+
     constructor(
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
         mapsRef: React.RefObject<moorhen.Map[]>,
@@ -226,7 +233,7 @@ export class MoorhenTimeCapsule {
         this.modificationCount = 0;
         this.modificationCountBackupThreshold = 5;
         this.maxBackupCount = 10;
-        this.version = "v23";
+        this.version = "v24";
         this.disableBackups = false;
         this.storageInstance = null;
         this.onIsBusyChange = null;
@@ -790,11 +797,8 @@ export class MoorhenTimeCapsule {
         if (!sessionData) {
             return -1;
         } else if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
-            if (
-                (timeCapsuleRef.current.version === "v23" && sessionData.version !== "v22" && sessionData.version !== "v21") ||
-                timeCapsuleRef.current.version !== "v23"
-            ) {
-                console.warn("Outdated session backup version, wont load...");
+            if (!MoorhenTimeCapsule.supportedLegacyVersions.includes(sessionData.version)) {
+                console.warn(`Outdated session backup version (${sessionData.version}), wont load...`);
                 return -1;
             }
         }
