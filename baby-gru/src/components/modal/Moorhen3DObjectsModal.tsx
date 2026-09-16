@@ -593,7 +593,6 @@ export const Moorhen3DObjects = () => {
                    existingObject.type==="icosahedron"||existingObject.type==="football"||
                    existingObject.type==="torus"
                     ){
-                    console.log(existingObject.orientation)
                     const m4 = existingObject.orientation
                     const m3 = [
                        m4[0], m4[1], m4[2],
@@ -604,7 +603,6 @@ export const Moorhen3DObjects = () => {
                     quat4.fromMat3(q, m3);
                     //The fact that I have to do this is slightly worrying.
                     q[0] = -q[0]; q[1] = -q[1]; q[2] = -q[2]
-                    console.log(...q)
                     setQuat(q)
                 }
                 if("scale" in existingObject)
@@ -889,6 +887,22 @@ export const Moorhen3DObjects = () => {
                     <>
                         <MoorhenTextInput
                             label="Radius"
+                            text={sizeText}
+                            onChange={evt => {
+                                setSizeText(evt.target.value);
+                                if(!isNaN(parseFloat(evt.target.value))){
+                                    updateTheObject({size:parseFloat(evt.target.value)},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkSizeText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
+                {(drawMode === "pyramid"||drawMode === "prism")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Size"
                             text={sizeText}
                             onChange={evt => {
                                 setSizeText(evt.target.value);
