@@ -434,6 +434,104 @@ export const getTorus = (minorRatio: number, majorAccu: number, minorAccu: numbe
 };
 
 /**
+ * An arc - a segment of a torus - sweeping from angle 0 in the xy plane, major radius 1, so the
+ * instance size gives the major radius and `minorRatio` is minor_radius / major_radius.
+ *
+ * There is no start angle: the orientation already decides where the arc begins, so a start angle
+ * would just be a second way of saying the same thing.
+ *
+ * The open ends are capped, otherwise you see through the hollow tube. A sweep of a full turn
+ * closes on itself, and the caps are dropped so they do not sit on top of each other.
+ *
+ * @param {number} minorRatio - tube radius as a fraction of the major radius
+ * @param {number} sweep - the angle swept, in radians
+ */
+export const getArc = (
+    minorRatio: number,
+    sweep: number,
+    majorAccu: number,
+    minorAccu: number
+): ShapeMesh => {
+    const fullTurn = 2 * Math.PI;
+    const swept = Math.min(Math.max(sweep, 0), fullTurn);
+    const closed = swept >= fullTurn - 1e-9;
+    // Keep the segment density of a full torus, so a short arc is not over-tessellated.
+    const segments = Math.max(2, Math.ceil((majorAccu * swept) / fullTurn));
+
+    const vertices: number[] = [];
+    const normals: number[] = [];
+    const idx: number[] = [];
+
+    const ringPoint = (theta: number, phi: number): { position: Vec3; normal: Vec3 } => {
+        const normal: Vec3 = [
+            Math.cos(theta) * Math.cos(phi),
+            Math.sin(theta) * Math.cos(phi),
+            Math.sin(phi),
+        ];
+        return {
+            position: [
+                Math.cos(theta) + minorRatio * normal[0],
+                Math.sin(theta) + minorRatio * normal[1],
+                minorRatio * normal[2],
+            ],
+            normal,
+        };
+    };
+
+    // The tube surface. Unlike a torus this does not wrap in theta, so there is one more ring of
+    // vertices than there are segments.
+    for (let i = 0; i <= segments; i++) {
+        const theta = (swept * i) / segments;
+        for (let j = 0; j < minorAccu; j++) {
+            const { position, normal } = ringPoint(theta, (2 * Math.PI * j) / minorAccu);
+            vertices.push(...position);
+            normals.push(...normal);
+        }
+    }
+
+    for (let i = 0; i < segments; i++) {
+        for (let j = 0; j < minorAccu; j++) {
+            const nextJ = (j + 1) % minorAccu;
+            const v00 = i * minorAccu + j;
+            const v01 = i * minorAccu + nextJ;
+            const v10 = (i + 1) * minorAccu + j;
+            const v11 = (i + 1) * minorAccu + nextJ;
+            idx.push(v00, v10, v11);
+            idx.push(v00, v11, v01);
+        }
+    }
+
+    if (!closed) {
+        // A flat cap over each open end, facing along the tube's axis. At angle theta the tangent
+        // is (-sin, cos, 0); the start cap faces backwards along it and the end cap forwards. The
+        // ring runs counter-clockwise seen from -tangent, so the end cap takes it reversed.
+        const pushCap = (theta: number, facingForward: boolean) => {
+            const normal: Vec3 = [
+                (facingForward ? 1 : -1) * -Math.sin(theta),
+                (facingForward ? 1 : -1) * Math.cos(theta),
+                0,
+            ];
+            const base = vertices.length / 3;
+            vertices.push(Math.cos(theta), Math.sin(theta), 0);
+            normals.push(...normal);
+            for (let j = 0; j < minorAccu; j++) {
+                const k = facingForward ? minorAccu - 1 - j : j;
+                const { position } = ringPoint(theta, (2 * Math.PI * k) / minorAccu);
+                vertices.push(...position);
+                normals.push(...normal);
+            }
+            for (let j = 0; j < minorAccu; j++) {
+                idx.push(base, base + 1 + j, base + 1 + ((j + 1) % minorAccu));
+            }
+        };
+        pushCap(0, false);
+        pushCap(swept, true);
+    }
+
+    return { vertices, normals, idx };
+};
+
+/**
  * A frustum - a cone or pyramid with its tip cut off - running along z from a base of radius 1 at
  * z = -0.5 to a top of radius `topRadiusRatio` at z = +0.5, with both ends capped.
  *

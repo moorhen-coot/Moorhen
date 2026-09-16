@@ -142,6 +142,18 @@ export interface FootballObject extends ThreeDObjectBase {
     scale: number;
 }
 
+/**
+ * A segment of a torus. `sweep_angle` is in degrees; a full 360 gives a closed ring. The
+ * orientation decides where the arc starts, so there is no separate start angle.
+ */
+export interface ArcObject extends ThreeDObjectBase {
+    type: "arc";
+    orientation: Matrix4x4;
+    major_radius: number;
+    minor_radius: number;
+    sweep_angle: number;
+}
+
 export interface TorusObject extends ThreeDObjectBase {
     type: "torus";
     orientation: Matrix4x4;
@@ -163,6 +175,7 @@ export type ThreeDObject =
             | PlaneObject
             | DiscObject
             | AnnulusObject
+            | ArcObject
             | TetrahedronObject
             | OctahedronObject
             | DodecahedronObject

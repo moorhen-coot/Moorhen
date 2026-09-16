@@ -2,6 +2,7 @@ import { gemmiAtomPairsToCylindersInfo, getCube, getHexForCanvasColourName, hexT
 import {
     ShapeMesh,
     getAnnulus,
+    getArc,
     getDisc,
     getDodecahedron,
     getEllipsoid,
@@ -242,6 +243,21 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
                 () => getAnnulus(ratio, DISC_ACCU),
                 obj.origin,
                 [obj.radius, obj.radius, obj.radius],
+                obj.orientation,
+                colour
+            )
+
+        } else if(obj.type==="arc"){
+            // Same ratio trick as the torus: the tube thickness is baked in relative to a major
+            // radius of 1, so the instance size can carry the major radius. The sweep changes the
+            // geometry too, so it is part of the key.
+            const ratio = obj.major_radius !== 0 ? obj.minor_radius / obj.major_radius : 0
+            const sweep = (obj.sweep_angle * Math.PI) / 180
+            addInstance(
+                `arc-${ratio}-${obj.sweep_angle}`,
+                () => getArc(ratio, sweep, TORUS_MAJOR_ACCU, TORUS_MINOR_ACCU),
+                obj.origin,
+                [obj.major_radius, obj.major_radius, obj.major_radius],
                 obj.orientation,
                 colour
             )

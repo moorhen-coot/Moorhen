@@ -25,6 +25,7 @@ import type {
     PlaneObject,
     DiscObject,
     AnnulusObject,
+    ArcObject,
     TetrahedronObject,
     OctahedronObject,
     DodecahedronObject,
@@ -246,6 +247,17 @@ export const Moorhen3DObjects = () => {
         scale: 1.0
     });
 
+    const newArcObject = (): ArcObject => ({
+        uniqueId: uuidv4(),
+        type: "arc",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        major_radius: 2.0,
+        minor_radius: 0.2,
+        sweep_angle: 90.0
+    });
+
     const newTorusObject = (): TorusObject => ({
         uniqueId: uuidv4(),
         type: "torus",
@@ -271,6 +283,7 @@ export const Moorhen3DObjects = () => {
             case "plane": return newPlaneObject();
             case "disc": return newDiscObject();
             case "annulus": return newAnnulusObject();
+            case "arc": return newArcObject();
             case "tetrahedron": return newTetrahedronObject();
             case "octahedron": return newOctahedronObject();
             case "dodecahedron": return newDodecahedronObject();
@@ -290,6 +303,7 @@ export const Moorhen3DObjects = () => {
     const [size2Text, setSize2Text] = useState<string>("0.2");
     const [heightText, setHeightText] = useState<string>("5.0");
     const [planeSizeText, setPlaneSizeText] = useState<string>("5,5");
+    const [sweepAngleText, setSweepAngleText] = useState<string>("90");
     const [nSidesText, setNSidesText] = useState<string>("4");
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
     const [xyDown, setXYDown] = useState<[number,number]>([-100,-100])
@@ -414,6 +428,21 @@ export const Moorhen3DObjects = () => {
         return isOk;
     };
 
+    const checkSweepAngleText = () => {
+        let isOk: boolean = false;
+        try {
+            const _new_x = parseFloat(sweepAngleText)
+            if (!Number.isNaN(_new_x) && !(_new_x === undefined)) {
+                isOk = true;
+            } else {
+                console.log("Not a valid number in sweep angle.");
+            }
+        } catch(e) {
+            console.log("Not a valid number in sweep angle.");
+        }
+        return isOk;
+    }
+
     const checkHeightText = () => {
         let isOk: boolean = false;
         try {
@@ -527,6 +556,7 @@ export const Moorhen3DObjects = () => {
             size = undefined,
             size2 = undefined,
             height = undefined,
+            sweep_angle = undefined,
             n_sides = undefined,
         },
         objectType
@@ -639,6 +669,12 @@ export const Moorhen3DObjects = () => {
                     }
                 ),
                 ...(
+                    sweep_angle !== undefined &&
+                    "sweep_angle" in prev && {
+                       sweep_angle: Number(sweep_angle)
+                    }
+                ),
+                ...(
                     n_sides !== undefined &&
                     "n_sides" in prev && {
                        n_sides: Number(n_sides)
@@ -660,6 +696,7 @@ export const Moorhen3DObjects = () => {
             setSize2Text("0.2");
             setHeightText("5");
             setPlaneSizeText("5,5");
+            setSweepAngleText("90");
             setObject(newSphereObject());
         } else {
             try {
@@ -682,10 +719,12 @@ export const Moorhen3DObjects = () => {
                     setScaleXYZText(existingObject.scalexyz.join(","));
                 if(existingObject.type==="plane")
                     setPlaneSizeText(existingObject.scalexyz.slice(0,2).join(","));
-                if(existingObject.type==="torus"){
+                if("major_radius" in existingObject)
                     setSizeText(String(existingObject.major_radius))
+                if("minor_radius" in existingObject)
                     setSize2Text(String(existingObject.minor_radius))
-                }
+                if("sweep_angle" in existingObject)
+                    setSweepAngleText(String(existingObject.sweep_angle))
                 if(existingObject.type==="frustum"||existingObject.type==="flatfrustum"){
                     setSizeText(String(existingObject.bottom_radius))
                     setSize2Text(String(existingObject.top_radius))
@@ -861,6 +900,7 @@ export const Moorhen3DObjects = () => {
                     <option value="plane">Plane</option>
                     <option value="disc">Disc</option>
                     <option value="annulus">Annulus</option>
+                    <option value="arc">Arc</option>
                     <option value="tetrahedron">Tetrahedron</option>
                     <option value="octahedron">Octahedron</option>
                     <option value="dodecahedron">Dodecahedron</option>
@@ -875,7 +915,7 @@ export const Moorhen3DObjects = () => {
                 || drawMode === "dodecahedron" || drawMode === "icosahedron"
                 || drawMode === "football" || drawMode === "torus"
                 || drawMode === "ellipsoid" || drawMode === "plane" || drawMode === "disc"
-                || drawMode === "annulus"
+                || drawMode === "annulus" || drawMode === "arc"
                 || drawMode === "frustum" || drawMode === "flatfrustum"
                 || drawMode === "prism" || drawMode === "pyramid"
                 ) &&
@@ -1071,7 +1111,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "torus")  &&
+                {(drawMode === "torus" || drawMode === "arc")  &&
                     <>
                         <MoorhenTextInput
                             label="Major radius"
@@ -1103,7 +1143,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "torus")  &&
+                {(drawMode === "torus" || drawMode === "arc")  &&
                     <>
                         <MoorhenTextInput
                             label="Minor radius"
@@ -1152,6 +1192,22 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
+                {(drawMode === "arc")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Sweep angle (degrees)"
+                            text={sweepAngleText}
+                            onChange={evt => {
+                                setSweepAngleText(evt.target.value);
+                                if(!isNaN(parseFloat(evt.target.value))){
+                                    updateTheObject({sweep_angle:parseFloat(evt.target.value)},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkSweepAngleText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
                 {(drawMode === "prism"||drawMode === "pyramid"||drawMode === "flatfrustum")  &&
                     <>
                         <MoorhenTextInput
@@ -1173,6 +1229,7 @@ export const Moorhen3DObjects = () => {
                    drawMode==="icosahedron"||drawMode==="football"||
                    drawMode==="torus"||drawMode==="ellipsoid"||
                    drawMode==="plane"||drawMode==="disc"||drawMode==="annulus"||
+                   drawMode==="arc"||
                    drawMode==="frustum"||
                    drawMode==="flatfrustum"||drawMode==="prism"||
                    drawMode==="pyramid")  &&
