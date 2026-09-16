@@ -1,4 +1,4 @@
-import { gemmiAtomPairsToCylindersInfo, getHexForCanvasColourName, hexToRGBA } from '../utils/utils'
+import { gemmiAtomPairsToCylindersInfo, getHexForCanvasColourName, hexToRGBA, getCube } from '../utils/utils'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 
@@ -36,6 +36,16 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
 
     const threeDObjects = store.getState().threeDObjects.objects
 
+    // Cubes
+    const cube_sizes = []
+    const cube_col_tri = []
+    const cube_vert_tri = []
+    const cube_idx_tri = []
+    const cube_atoms = []
+    const cubeInstanceUseColours = []
+    const cubeInstance_orientations = []
+    let icube = 0
+
     // Spheres are drawn as instanced impostors (PERFECT_SPHERES): one instance per sphere, with
     // the geometry supplied by the renderer rather than by us.
     const sphere_sizes = []
@@ -43,8 +53,8 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
     const sphere_vert_tri = []
     const sphere_idx_tri = []
     const sphere_atoms = []
-    const totInstanceUseColours = []
-    const totInstance_orientations = []
+    const sphereInstanceUseColours = []
+    const sphereInstance_orientations = []
     let isphere = 0
 
     // Cylinders reuse gemmiAtomPairsToCylindersInfo, which instances a unit cylinder along each
@@ -58,6 +68,8 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
     const coneSizes = []
     let nAtom = 0
 
+    const cubeMesh = getCube()
+
     threeDObjects.forEach(obj => {
         if(obj.type==="sphere"){
             sphere_idx_tri.push(isphere);
@@ -70,10 +82,19 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             sphere_sizes.push(obj.radius)
             sphere_sizes.push(obj.radius)
             sphere_sizes.push(obj.radius)
-            totInstanceUseColours.push(true);
-            totInstance_orientations.push(...IDENTITY_ORIENTATION);
+            sphereInstanceUseColours.push(true);
+            sphereInstance_orientations.push(...IDENTITY_ORIENTATION);
             //sphere_atoms.push(null);
             isphere++;
+        } else if(obj.type==="cube"){
+            cube_vert_tri.push(...obj.origin)
+            cube_col_tri.push(...getObjectColour(obj.colour))
+            cube_sizes.push(obj.scale)
+            cube_sizes.push(obj.scale)
+            cube_sizes.push(obj.scale)
+            cubeInstanceUseColours.push(true);
+            cubeInstance_orientations.push(...IDENTITY_ORIENTATION); //FIXME !!! Actual orientation
+            icube++;
         } else if(obj.type==="cylinder"){
             const colour = getObjectColour(obj.colour)
             const startPoint = {
@@ -128,13 +149,28 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             atoms: [[sphere_atoms]],
             instance_sizes: [[sphere_sizes]],
             instance_origins: [[sphere_vert_tri]],
-            instance_use_colors: [[totInstanceUseColours]],
-            instance_orientations: [[totInstance_orientations]],
+            instance_use_colors: [[sphereInstanceUseColours]],
+            instance_orientations: [[sphereInstance_orientations]],
             col_tri: [[sphere_col_tri]],
-            norm_tri: [[[sphere_vert_tri]]],
+            norm_tri: [[sphere_vert_tri]],
             vert_tri: [[sphere_vert_tri]],
             idx_tri: [[sphere_idx_tri]],
             prim_types: [["PERFECT_SPHERES"]],
+        })
+    }
+
+    if (icube > 0) {
+        objects.push({
+            atoms: [[cube_atoms]],
+            instance_sizes: [[cube_sizes]],
+            instance_origins: [[cube_vert_tri]],
+            instance_use_colors: [[cubeInstanceUseColours]],
+            instance_orientations: [[cubeInstance_orientations]],
+            col_tri: [[cube_col_tri]],
+            norm_tri: [[cubeMesh.normals]],
+            vert_tri: [[cubeMesh.vertices]],
+            idx_tri: [[cubeMesh.idx]],
+            prim_types: [["TRIANGLES"]],
         })
     }
 
@@ -175,6 +211,7 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             )
         )
     }
+    console.log(objects)
 
     return objects
 

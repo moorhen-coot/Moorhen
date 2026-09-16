@@ -701,7 +701,7 @@ export const Moorhen3DObjects = () => {
                 threeDObjects.map((vec, i) => {
                         return (
                             <option key={i} value={vec.uniqueId}>
-                                {vec.uniqueId}
+                                {vec.type}
                             </option>
                         );
                 })}

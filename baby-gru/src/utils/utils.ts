@@ -1066,7 +1066,7 @@ export const gemmiAtomsToCirclesSpheresInfo = (
             instance_use_colors: [[totInstanceUseColours]],
             instance_orientations: [[totInstance_orientations]],
             col_tri: [[sphere_col_tri]],
-            norm_tri: [[[sphere_vert_tri]]],
+            norm_tri: [[sphere_vert_tri]],
             vert_tri: [[sphere_vert_tri]],
             idx_tri: [[sphere_idx_tri]],
             prim_types: [[primType]],
@@ -1105,6 +1105,100 @@ export const findConsecutiveRanges = (numbers: number[]): [number, number][] => 
     ranges.push([start, end]);
     return ranges;
 };
+
+/**
+ * A unit cube centred on the origin, spanning -0.5 to 0.5 on each axis.
+ *
+ * Normals are a per-vertex attribute, so the eight geometric corners cannot be shared: each corner
+ * belongs to three faces with three different outward normals. The cube is therefore built from 24
+ * vertices - four per face, each carrying that face's normal - which also gives flat shading. Every
+ * face is wound counter-clockwise seen from outside, so the winding agrees with the normal.
+ *
+ * @returns {{vertices: number[], normals: number[], idx: number[]}} 72 position floats, 72 normal
+ * floats and 36 indices
+ */
+export function getCube() {
+    // Each face: its four corners counter-clockwise seen from outside, plus its outward normal.
+    const faces: { corners: [number, number, number][]; normal: [number, number, number] }[] = [
+        {
+            // +X
+            corners: [
+                [0.5, -0.5, 0.5],
+                [0.5, -0.5, -0.5],
+                [0.5, 0.5, -0.5],
+                [0.5, 0.5, 0.5],
+            ],
+            normal: [1, 0, 0],
+        },
+        {
+            // -X
+            corners: [
+                [-0.5, -0.5, -0.5],
+                [-0.5, -0.5, 0.5],
+                [-0.5, 0.5, 0.5],
+                [-0.5, 0.5, -0.5],
+            ],
+            normal: [-1, 0, 0],
+        },
+        {
+            // +Y
+            corners: [
+                [-0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, -0.5],
+                [-0.5, 0.5, -0.5],
+            ],
+            normal: [0, 1, 0],
+        },
+        {
+            // -Y
+            corners: [
+                [-0.5, -0.5, -0.5],
+                [0.5, -0.5, -0.5],
+                [0.5, -0.5, 0.5],
+                [-0.5, -0.5, 0.5],
+            ],
+            normal: [0, -1, 0],
+        },
+        {
+            // +Z
+            corners: [
+                [-0.5, -0.5, 0.5],
+                [0.5, -0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [-0.5, 0.5, 0.5],
+            ],
+            normal: [0, 0, 1],
+        },
+        {
+            // -Z
+            corners: [
+                [-0.5, -0.5, -0.5],
+                [-0.5, 0.5, -0.5],
+                [0.5, 0.5, -0.5],
+                [0.5, -0.5, -0.5],
+            ],
+            normal: [0, 0, -1],
+        },
+    ];
+
+    const vertices: number[] = [];
+    const normals: number[] = [];
+    const idx: number[] = [];
+
+    faces.forEach((face, iface) => {
+        const base = 4 * iface;
+        face.corners.forEach(corner => {
+            vertices.push(...corner);
+            normals.push(...face.normal);
+        });
+        // Two triangles per quad, both keeping the face winding.
+        idx.push(base, base + 1, base + 2);
+        idx.push(base, base + 2, base + 3);
+    });
+
+    return { vertices, normals, idx };
+}
 
 export function getCubeLines(
     unitCell: gemmi.UnitCell
