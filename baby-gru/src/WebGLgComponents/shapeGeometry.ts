@@ -260,15 +260,19 @@ export const getTorus = (minorRatio: number, majorAccu: number, minorAccu: numbe
 };
 
 /**
- * A frustum - a cone or pyramid with its tip cut off - running along +z from a base of radius 1 at
- * z = 0 to a top of radius `topRadiusRatio` at z = 1, with both ends capped.
+ * A frustum - a cone or pyramid with its tip cut off - running along z from a base of radius 1 at
+ * z = -0.5 to a top of radius `topRadiusRatio` at z = +0.5, with both ends capped.
+ *
+ * Centred on the origin, like the closed solids, so that the instance orientation turns it on the
+ * spot rather than swinging it about its base, and the instance size's z component is its height.
  *
  * `nSides` controls the cross section: a large value gives a circular (conical) frustum, a small
  * one a truncated pyramid. `flat` selects the shading to match - a truncated pyramid wants one
  * normal per face, a cone wants normals that vary around the barrel.
  *
  * The side normal is not purely radial: for a surface of revolution r(z) the outward normal is
- * (cos, sin, -dr/dz) normalised, and here dr/dz is the constant (topRadiusRatio - 1).
+ * (cos, sin, -dr/dz) normalised. The radius goes from 1 to topRadiusRatio over a unit height, so
+ * dr/dz is the constant (topRadiusRatio - 1) regardless of where the ends sit.
  */
 export const getFrustum = (nSides: number, topRadiusRatio: number, flat: boolean): ShapeMesh => {
     const vertices: number[] = [];
@@ -292,11 +296,11 @@ export const getFrustum = (nSides: number, topRadiusRatio: number, flat: boolean
         const angle0 = (2 * Math.PI * i) / nSides;
         const angle1 = (2 * Math.PI * (i + 1)) / nSides;
 
-        const base0: Vec3 = [Math.cos(angle0), Math.sin(angle0), 0];
-        const base1: Vec3 = [Math.cos(angle1), Math.sin(angle1), 0];
-        const top0: Vec3 = [topRadiusRatio * Math.cos(angle0), topRadiusRatio * Math.sin(angle0), 1];
-        const top1: Vec3 = [topRadiusRatio * Math.cos(angle1), topRadiusRatio * Math.sin(angle1), 1];
-        const apex: Vec3 = [0, 0, 1];
+        const base0: Vec3 = [Math.cos(angle0), Math.sin(angle0), -0.5];
+        const base1: Vec3 = [Math.cos(angle1), Math.sin(angle1), -0.5];
+        const top0: Vec3 = [topRadiusRatio * Math.cos(angle0), topRadiusRatio * Math.sin(angle0), 0.5];
+        const top1: Vec3 = [topRadiusRatio * Math.cos(angle1), topRadiusRatio * Math.sin(angle1), 0.5];
+        const apex: Vec3 = [0, 0, 0.5];
 
         // Wound base0 -> base1 -> top1 -> top0: counter-clockwise seen from outside the barrel, so
         // the cross product of the first two edges is the outward normal.
@@ -327,16 +331,16 @@ export const getFrustum = (nSides: number, topRadiusRatio: number, flat: boolean
 
         // Bottom cap, wound clockwise seen from +z so that it faces -z.
         const bottom = vertices.length / 3;
-        pushVertex([0, 0, 0], [0, 0, -1]);
-        pushVertex([Math.cos(angle1), Math.sin(angle1), 0], [0, 0, -1]);
-        pushVertex([Math.cos(angle0), Math.sin(angle0), 0], [0, 0, -1]);
+        pushVertex([0, 0, -0.5], [0, 0, -1]);
+        pushVertex(base1, [0, 0, -1]);
+        pushVertex(base0, [0, 0, -1]);
         idx.push(bottom, bottom + 1, bottom + 2);
 
         if (topRadiusRatio > 0) {
             const top = vertices.length / 3;
-            pushVertex([0, 0, 1], [0, 0, 1]);
-            pushVertex([topRadiusRatio * Math.cos(angle0), topRadiusRatio * Math.sin(angle0), 1], [0, 0, 1]);
-            pushVertex([topRadiusRatio * Math.cos(angle1), topRadiusRatio * Math.sin(angle1), 1], [0, 0, 1]);
+            pushVertex([0, 0, 0.5], [0, 0, 1]);
+            pushVertex(top0, [0, 0, 1]);
+            pushVertex(top1, [0, 0, 1]);
             idx.push(top, top + 1, top + 2);
         }
     }

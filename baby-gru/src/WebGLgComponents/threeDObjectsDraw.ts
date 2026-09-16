@@ -1,4 +1,4 @@
-import { gemmiAtomPairsToCylindersInfo, getAxisOrientationMatrix, getCube, getHexForCanvasColourName, hexToRGBA } from '../utils/utils'
+import { gemmiAtomPairsToCylindersInfo, getCube, getHexForCanvasColourName, hexToRGBA } from '../utils/utils'
 import {
     ShapeMesh,
     getDodecahedron,
@@ -48,9 +48,6 @@ const getObjectColour = (colour: string): [number, number, number, number] => {
     return [r / 255, g / 255, b / 255, a / 255]
 }
 
-const distance = (a: number[], b: number[]): number =>
-    Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2)
-
 /**
  * One instanced draw: a single mesh plus the per-instance attributes of everything sharing it.
  */
@@ -93,47 +90,30 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
     }
 
     /**
-     * Shapes defined by an axis from origin to a far point, with a radius: the mesh runs along
-     * local +z from z = 0 to z = 1 and is stretched to the axis length.
-     */
-    const addAxialInstance = (
-        key: string,
-        buildMesh: () => ShapeMesh,
-        from: number[],
-        to: number[],
-        radius: number,
-        colour: number[]
-    ) => {
-        addInstance(
-            key,
-            buildMesh,
-            from,
-            [radius, radius, distance(from, to)],
-            getAxisOrientationMatrix(from, to),
-            colour
-        )
-    }
-
-    /**
      * Frusta and everything that is a special case of one: a prism (both ends the same size), a
      * pyramid (top collapsed to a point) and a truncated pyramid. Keyed so that shapes reaching
-     * the same geometry by different routes share a mesh.
+     * the same geometry by different routes share a mesh - a prism and a flat frustum whose two
+     * radii happen to match are the same solid.
+     *
+     * The mesh is centred on the origin with unit height, so the instance size carries the base
+     * radius and the height, and the orientation turns it on the spot.
      */
     const addFrustumInstance = (
         nSides: number,
         ratio: number,
         flat: boolean,
-        from: number[],
-        to: number[],
+        origin: number[],
+        orientation: number[],
         radius: number,
+        height: number,
         colour: number[]
     ) => {
-        addAxialInstance(
+        addInstance(
             `frustum-${nSides}-${ratio}-${flat}`,
             () => getFrustum(nSides, ratio, flat),
-            from,
-            to,
-            radius,
+            origin,
+            [radius, radius, height],
+            orientation,
             colour
         )
     }
@@ -251,7 +231,7 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             const flat = obj.type === "flatfrustum"
             const nSides = flat ? obj.n_sides : CYLINDER_ACCU
             const ratio = obj.bottom_radius !== 0 ? obj.top_radius / obj.bottom_radius : 0
-            addFrustumInstance(nSides, ratio, flat, obj.origin, obj.top, obj.bottom_radius, colour)
+            addFrustumInstance(nSides, ratio, flat, obj.origin, obj.orientation, obj.bottom_radius, obj.height, colour)
 
         } else if(obj.type==="cylinder"){
             addPair("cylinder", CYLINDER_ACCU, obj.origin, obj.end, obj.radius, colour)
@@ -265,10 +245,10 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             // is what gets them flat-lit: getDashedCylinder and getCone give each corner its own
             // radial normal, which is right for a round barrel but smooths away the edges between
             // the flat faces these two are made of.
-            addFrustumInstance(obj.n_sides, 1, true, obj.origin, obj.end, obj.radius, colour)
+            addFrustumInstance(obj.n_sides, 1, true, obj.origin, obj.orientation, obj.radius, obj.height, colour)
 
         } else if(obj.type==="pyramid"){
-            addFrustumInstance(obj.n_sides, 0, true, obj.origin, obj.top, obj.radius, colour)
+            addFrustumInstance(obj.n_sides, 0, true, obj.origin, obj.orientation, obj.radius, obj.height, colour)
         }
     })
 

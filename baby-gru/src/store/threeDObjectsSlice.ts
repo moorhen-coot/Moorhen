@@ -31,32 +31,40 @@ export interface ConeObject extends ThreeDObjectBase {
     radius: number;
 }
 
+// The shapes below are positioned like the closed solids rather than like a cylinder: `origin` is
+// the centre of the shape and `orientation` turns it, with `height` giving its extent along the
+// shape's own z axis. Defining them by a start and end point would pin down that axis but leave
+// the rotation about it unspecified, so there would be no way to turn a square prism on the spot.
 export interface FrustumObject extends ThreeDObjectBase {
     type: "frustum";
-    top: Position3D;
+    orientation: Matrix4x4;
     bottom_radius: number;
     top_radius: number;
+    height: number;
 }
 
 export interface FlatSidedFrustumObject extends ThreeDObjectBase {
     type: "flatfrustum";
-    top: Position3D;
+    orientation: Matrix4x4;
     bottom_radius: number;
     top_radius: number;
+    height: number;
     n_sides: number;
 }
 
 export interface PrismObject extends ThreeDObjectBase {
     type: "prism";
-    end: Position3D;
+    orientation: Matrix4x4;
     radius: number;
+    height: number;
     n_sides: number;
 }
 
 export interface PyramidObject extends ThreeDObjectBase {
     type: "pyramid";
-    top: Position3D;
+    orientation: Matrix4x4;
     radius: number;
+    height: number;
     n_sides: number;
 }
 

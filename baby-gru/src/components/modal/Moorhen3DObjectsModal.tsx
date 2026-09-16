@@ -101,9 +101,10 @@ export const Moorhen3DObjects = () => {
         type: "frustum",
         colour: "#ff0000ff",
         origin: [0, 0, 0],
-        top: [0, 0, 5],
+        orientation: IDENTITY_MATRIX,
         bottom_radius: 1.0,
-        top_radius: 0.5
+        top_radius: 0.5,
+        height: 5.0
     });
 
     const newFlatSidedFrustumObject = (): FlatSidedFrustumObject => ({
@@ -111,9 +112,10 @@ export const Moorhen3DObjects = () => {
         type: "flatfrustum",
         colour: "#ff0000ff",
         origin: [0, 0, 0],
-        top: [0, 0, 5],
+        orientation: IDENTITY_MATRIX,
         bottom_radius: 1.0,
         top_radius: 0.5,
+        height: 5.0,
         n_sides: 4
     });
 
@@ -122,8 +124,9 @@ export const Moorhen3DObjects = () => {
         type: "prism",
         colour: "#ff0000ff",
         origin: [0, 0, 0],
-        end: [0, 0, 5],
+        orientation: IDENTITY_MATRIX,
         radius: 1.0,
+        height: 5.0,
         n_sides: 4
     });
 
@@ -132,8 +135,9 @@ export const Moorhen3DObjects = () => {
         type: "pyramid",
         colour: "#ff0000ff",
         origin: [0, 0, 0],
-        top: [0, 0, 5],
+        orientation: IDENTITY_MATRIX,
         radius: 1.0,
+        height: 5.0,
         n_sides: 4
     });
 
@@ -238,6 +242,7 @@ export const Moorhen3DObjects = () => {
     const [selectedAlpha, setSelectedAlpha] = useState<number>(1.0);
     const [sizeText, setSizeText] = useState<string>("1.0");
     const [size2Text, setSize2Text] = useState<string>("0.2");
+    const [heightText, setHeightText] = useState<string>("5.0");
     const [nSidesText, setNSidesText] = useState<string>("4");
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
     const [xyDown, setXYDown] = useState<[number,number]>([-100,-100])
@@ -346,6 +351,21 @@ export const Moorhen3DObjects = () => {
         return isOk;
     }
 
+    const checkHeightText = () => {
+        let isOk: boolean = false;
+        try {
+            const _new_x = parseFloat(heightText)
+            if (!Number.isNaN(_new_x) && !(_new_x === undefined)) {
+                isOk = true;
+            } else {
+                console.log("Not a valid number in height.");
+            }
+        } catch(e) {
+            console.log("Not a valid number in height.");
+        }
+        return isOk;
+    }
+
     const checkNSidesText = () => {
         let isOk: boolean = false;
         try {
@@ -443,6 +463,7 @@ export const Moorhen3DObjects = () => {
             colour = undefined,
             size = undefined,
             size2 = undefined,
+            height = undefined,
             n_sides = undefined,
         },
         objectType
@@ -543,6 +564,12 @@ export const Moorhen3DObjects = () => {
                     }
                 ),
                 ...(
+                    height !== undefined &&
+                    "height" in prev && {
+                       height: Number(height)
+                    }
+                ),
+                ...(
                     n_sides !== undefined &&
                     "n_sides" in prev && {
                        n_sides: Number(n_sides)
@@ -562,6 +589,7 @@ export const Moorhen3DObjects = () => {
             setNSidesText("4");
             setSizeText("1");
             setSize2Text("0.2");
+            setHeightText("5");
             setObject(newSphereObject());
         } else {
             try {
@@ -570,11 +598,14 @@ export const Moorhen3DObjects = () => {
 
                 setSelectedOption(existingObject.uniqueId);
                 setPositionText(existingObject.origin.join(","));
-                if(existingObject.type==="cone"||existingObject.type==="frustum"||
-                  existingObject.type==="flatfrustum"||existingObject.type==="pyramid")
+                if(existingObject.type==="cone")
                     setEndPositionText(existingObject.top.join(","));
-                if(existingObject.type==="prism"||existingObject.type==="cylinder")
+                if(existingObject.type==="cylinder")
                     setEndPositionText(existingObject.end.join(","));
+                if("height" in existingObject)
+                    setHeightText(String(existingObject.height));
+                if(existingObject.type==="prism"||existingObject.type==="pyramid")
+                    setSizeText(String(existingObject.radius));
                 if(existingObject.type==="cuboid")
                     setScaleXYZText(existingObject.scalexyz.join(","));
                 if(existingObject.type==="torus"){
@@ -588,11 +619,7 @@ export const Moorhen3DObjects = () => {
                 if(existingObject.type==="prism"||existingObject.type==="flatfrustum"||existingObject.type==="pyramid"){
                     setNSidesText(String(existingObject.n_sides))
                 }
-                if(existingObject.type==="cube"||existingObject.type==="cuboid"||existingObject.type==="tetrahedron"||
-                   existingObject.type==="octahedron"||existingObject.type==="dodecahedron"||
-                   existingObject.type==="icosahedron"||existingObject.type==="football"||
-                   existingObject.type==="torus"
-                    ){
+                if("orientation" in existingObject){
                     const m4 = existingObject.orientation
                     const m3 = [
                        m4[0], m4[1], m4[2],
@@ -769,6 +796,8 @@ export const Moorhen3DObjects = () => {
                 || drawMode === "tetrahedron" || drawMode === "octahedron"
                 || drawMode === "dodecahedron" || drawMode === "icosahedron"
                 || drawMode === "football" || drawMode === "torus"
+                || drawMode === "frustum" || drawMode === "flatfrustum"
+                || drawMode === "prism" || drawMode === "pyramid"
                 ) &&
                     <>
                         <MoorhenTextInput
@@ -788,7 +817,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "cylinder" || drawMode === "prism")  &&
+                {(drawMode === "cylinder")  &&
                     <>
                         <MoorhenTextInput
                             label="Start"
@@ -807,7 +836,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "frustum" || drawMode === "flatfrustum" || drawMode === "pyramid"|| drawMode === "cone")  &&
+                {(drawMode === "cone")  &&
                     <>
                         <MoorhenTextInput
                             label="Base position"
@@ -826,7 +855,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "cylinder"||drawMode === "prism")  &&
+                {(drawMode === "cylinder")  &&
                     <>
                         <MoorhenTextInput
                             label="End"
@@ -845,7 +874,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "cone"||drawMode === "frustum"||drawMode === "flatfrustum"||drawMode === "pyramid")  &&
+                {(drawMode === "cone")  &&
                     <>
                         <MoorhenTextInput
                             label="Top position"
@@ -992,6 +1021,22 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
+                {(drawMode === "frustum"||drawMode === "flatfrustum"||drawMode === "prism"||drawMode === "pyramid")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Height"
+                            text={heightText}
+                            onChange={evt => {
+                                setHeightText(evt.target.value);
+                                if(!isNaN(parseFloat(evt.target.value))){
+                                    updateTheObject({height:parseFloat(evt.target.value)},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkHeightText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
                 {(drawMode === "prism"||drawMode === "pyramid"||drawMode === "flatfrustum")  &&
                     <>
                         <MoorhenTextInput
@@ -1011,7 +1056,9 @@ export const Moorhen3DObjects = () => {
                 {(drawMode === "cube"||drawMode==="cuboid"||drawMode==="tetrahedron"||
                    drawMode==="octahedron"||drawMode==="dodecahedron"||
                    drawMode==="icosahedron"||drawMode==="football"||
-                   drawMode==="torus")  &&
+                   drawMode==="torus"||drawMode==="frustum"||
+                   drawMode==="flatfrustum"||drawMode==="prism"||
+                   drawMode==="pyramid")  &&
                     <>
                         <span>Orientation</span>
                         <canvas ref={canvasRef} width={120} height={120}></canvas>
