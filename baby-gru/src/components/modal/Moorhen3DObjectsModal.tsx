@@ -296,27 +296,22 @@ export const Moorhen3DObjects = () => {
         ctx.clearRect(0,0,canvas.width,canvas.height)
         ctx.fillStyle = "#aaaaaa"
         ctx.fillRect(0,0,canvas.width,canvas.height)
-        ctx.save()
-        ctx.strokeStyle = "#ff0000"
-        ctx.beginPath();
-        ctx.moveTo(canvas.width/2, canvas.height/2);
-        ctx.lineTo(canvas.width/2+40*rot_x_axis[0], canvas.height/2+40*rot_x_axis[1])
-        ctx.stroke()
-        ctx.restore()
-        ctx.save()
-        ctx.strokeStyle = "#00ff00"
-        ctx.beginPath();
-        ctx.moveTo(canvas.width/2, canvas.height/2);
-        ctx.lineTo(canvas.width/2-40*rot_y_axis[0], canvas.height/2-40*rot_y_axis[1])
-        ctx.stroke()
-        ctx.restore()
-        ctx.save()
-        ctx.strokeStyle = "#0000bb"
-        ctx.beginPath();
-        ctx.moveTo(canvas.width/2, canvas.height/2);
-        ctx.lineTo(canvas.width/2+40*rot_z_axis[0], canvas.height/2+40*rot_z_axis[1])
-        ctx.stroke()
-        ctx.restore()
+        // The canvas y axis points down, the WebGL one points up, so the y component of every
+        // projected axis is negated - and only the y component. Negating both components (as the
+        // green axis used to) mirrors the axis through the origin rather than flipping the
+        // handedness, which is why the gizmo disagreed with the scene.
+        const drawAxis = (axis: number[], colour: string) => {
+            ctx.save()
+            ctx.strokeStyle = colour
+            ctx.beginPath();
+            ctx.moveTo(canvas.width/2, canvas.height/2);
+            ctx.lineTo(canvas.width/2 + 40*axis[0], canvas.height/2 - 40*axis[1])
+            ctx.stroke()
+            ctx.restore()
+        }
+        drawAxis(rot_x_axis, "#ff0000")
+        drawAxis(rot_y_axis, "#00ff00")
+        drawAxis(rot_z_axis, "#0000bb")
         ctx.restore()
     },[myQuat])
 
@@ -635,7 +630,11 @@ export const Moorhen3DObjects = () => {
         vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
         vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
 
-        const xQ = createQuatFromAngle(-dy, rot_x_axis);
+        // dx/dy are canvas deltas, so dy is positive when the mouse moves UP the screen. The
+        // horizontal drag already reads as a trackball (drag right, the front face swings right);
+        // the vertical one needs no extra negation to match, because the canvas y-down convention
+        // has already supplied one.
+        const xQ = createQuatFromAngle(dy, rot_x_axis);
         const yQ = createQuatFromAngle(dx, rot_y_axis);
         quat4.multiply(xQ, xQ, yQ);
         quat4.multiply(myQuat, myQuat, xQ);

@@ -93,7 +93,7 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             cube_sizes.push(obj.scale)
             cube_sizes.push(obj.scale)
             cubeInstanceUseColours.push(true);
-            cubeInstance_orientations.push(...IDENTITY_ORIENTATION); //FIXME !!! Actual orientation
+            cubeInstance_orientations.push(...obj.orientation)
             icube++;
         } else if(obj.type==="cylinder"){
             const colour = getObjectColour(obj.colour)
