@@ -892,6 +892,47 @@ export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [numbe
     return [thisPos, thisNorm, thisIdxs];
 };
 
+/**
+ * Build the per-instance orientation matrix that carries a mesh built along local +z, spanning
+ * z = 0 to z = 1, onto the axis running from `from` to `to`.
+ *
+ * Pair it with an instance origin of `from` and an instance size whose z component is the distance
+ * between the two points, and the mesh lands with its base at `from` and its top at `to`.
+ *
+ * @param {number[]} from - Start of the axis in world space, where the mesh's z = 0 end goes
+ * @param {number[]} to - End of the axis, where the mesh's z = 1 end goes
+ * @returns {number[]} 16 floats, column-major, as the instanceOrientation attribute expects
+ */
+export const getAxisOrientationMatrix = (from: number[], to: number[]): number[] => {
+    const v = vec3.create();
+    const au = vec3.create();
+    const a = vec3.create();
+    const b = vec3.create();
+    const aup = [from[0] - to[0], from[1] - to[1], from[2] - to[2]];
+    vec3.set(au, ...(aup as [number, number, number]));
+    vec3.normalize(a, au);
+    vec3.set(b, 0.0, 0.0, -1.0);
+    vec3.cross(v, a, b);
+    const c = vec3.dot(a, b);
+    if (Math.abs(c + 1.0) < 1e-4) {
+        // Axis is antiparallel to -z, where the Rodrigues form below is singular.
+        return [-1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0];
+    }
+    const k = mat3.create();
+    k.set([0.0, -v[2], v[1], v[2], 0.0, -v[0], -v[1], v[0], 0.0]);
+    const kk = mat3.create();
+    mat3.multiply(kk, k, k);
+    const sk = mat3.create();
+    mat3.multiplyScalar(sk, k, 1.0);
+    const omckk = mat3.create();
+    mat3.multiplyScalar(omckk, kk, 1.0 / (1.0 + c));
+    const r = mat3.create();
+    r.set([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
+    mat3.add(r, r, sk);
+    mat3.add(r, r, omckk);
+    return [r[0], r[1], r[2], 1.0, r[3], r[4], r[5], 1.0, r[6], r[7], r[8], 1.0, 0.0, 0.0, 0.0, 1.0];
+};
+
 export const gemmiAtomPairsToCylindersInfo = (
     atoms: [{ x: number; y: number; z: number; serial: number | string }, { x: number; y: number; z: number; serial: number | string }][],
     size: number,
@@ -957,34 +998,9 @@ export const gemmiAtomPairsToCylindersInfo = (
         thisInstance_origins.push(at0.x, at0.y, at0.z);
         if (individualSizes) thisInstance_sizes.push(...[individualSizes[iat], individualSizes[iat], l]);
         else thisInstance_sizes.push(...[size, size, l]);
-        const v = vec3.create();
-        const au = vec3.create();
-        const a = vec3.create();
-        const b = vec3.create();
-        const aup = [at0.x - at1.x, at0.y - at1.y, at0.z - at1.z];
-        vec3.set(au, ...aup);
-        vec3.normalize(a, au);
-        vec3.set(b, 0.0, 0.0, -1.0);
-        vec3.cross(v, a, b);
-        const c = vec3.dot(a, b);
-        if (Math.abs(c + 1.0) < 1e-4) {
-            thisInstance_orientations.push(...[-1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0]);
-        } else {
-            const s = vec3.length(v);
-            const k = mat3.create();
-            k.set([0.0, -v[2], v[1], v[2], 0.0, -v[0], -v[1], v[0], 0.0]);
-            const kk = mat3.create();
-            mat3.multiply(kk, k, k);
-            const sk = mat3.create();
-            mat3.multiplyScalar(sk, k, 1.0);
-            const omckk = mat3.create();
-            mat3.multiplyScalar(omckk, kk, 1.0 / (1.0 + c));
-            const r = mat3.create();
-            r.set([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
-            mat3.add(r, r, sk);
-            mat3.add(r, r, omckk);
-            thisInstance_orientations.push(...[r[0], r[1], r[2], 1.0, r[3], r[4], r[5], 1.0, r[6], r[7], r[8], 1.0, 0.0, 0.0, 0.0, 1.0]);
-        }
+        thisInstance_orientations.push(
+            ...getAxisOrientationMatrix([at0.x, at0.y, at0.z], [at1.x, at1.y, at1.z])
+        );
     }
 
     totNorm.push(thisNorm);

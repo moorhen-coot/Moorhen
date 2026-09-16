@@ -1,4 +1,14 @@
-import { gemmiAtomPairsToCylindersInfo, getHexForCanvasColourName, hexToRGBA, getCube } from '../utils/utils'
+import { gemmiAtomPairsToCylindersInfo, getAxisOrientationMatrix, getCube, getHexForCanvasColourName, hexToRGBA } from '../utils/utils'
+import {
+    ShapeMesh,
+    getDodecahedron,
+    getFootball,
+    getFrustum,
+    getIcosahedron,
+    getOctahedron,
+    getTetrahedron,
+    getTorus,
+} from './shapeGeometry'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 
@@ -7,6 +17,12 @@ import { Store } from '@reduxjs/toolkit'
  * cylinders at the cost of more vertices.
  */
 const CYLINDER_ACCU = 16
+
+/**
+ * Segments around the ring and around the tube for torus geometry.
+ */
+const TORUS_MAJOR_ACCU = 32
+const TORUS_MINOR_ACCU = 16
 
 /**
  * The identity orientation, used by primitives that are not rotated.
@@ -32,19 +48,95 @@ const getObjectColour = (colour: string): [number, number, number, number] => {
     return [r / 255, g / 255, b / 255, a / 255]
 }
 
+const distance = (a: number[], b: number[]): number =>
+    Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2)
+
+/**
+ * One instanced draw: a single mesh plus the per-instance attributes of everything sharing it.
+ */
+type InstanceGroup = {
+    mesh: ShapeMesh
+    origins: number[]
+    sizes: number[]
+    orientations: number[]
+    colours: number[]
+}
+
 export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<any>  => {
 
     const threeDObjects = store.getState().threeDObjects.objects
 
-    // Cubes
-    const cube_sizes = []
-    const cube_col_tri = []
-    const cube_vert_tri = []
-    const cube_idx_tri = []
-    const cube_atoms = []
-    const cubeInstanceUseColours = []
-    const cubeInstance_orientations = []
-    let icube = 0
+    // Shapes drawn from a mesh are grouped by that mesh, so that everything sharing one can be
+    // drawn in a single instanced call. Shapes whose geometry depends on a parameter - the number
+    // of sides of a prism, the taper of a frustum, the tube thickness of a torus - cannot be
+    // expressed by the per-instance size alone, so the parameter forms part of the key and each
+    // distinct value gets its own mesh. The mesh is only built when a key is first seen.
+    const groups = new Map<string, InstanceGroup>()
+
+    const addInstance = (
+        key: string,
+        buildMesh: () => ShapeMesh,
+        origin: number[],
+        size: number[],
+        orientation: number[],
+        colour: number[]
+    ) => {
+        let group = groups.get(key)
+        if (!group) {
+            group = { mesh: buildMesh(), origins: [], sizes: [], orientations: [], colours: [] }
+            groups.set(key, group)
+        }
+        group.origins.push(...origin)
+        group.sizes.push(...size)
+        group.orientations.push(...orientation)
+        group.colours.push(...colour)
+    }
+
+    /**
+     * Shapes defined by an axis from origin to a far point, with a radius: the mesh runs along
+     * local +z from z = 0 to z = 1 and is stretched to the axis length.
+     */
+    const addAxialInstance = (
+        key: string,
+        buildMesh: () => ShapeMesh,
+        from: number[],
+        to: number[],
+        radius: number,
+        colour: number[]
+    ) => {
+        addInstance(
+            key,
+            buildMesh,
+            from,
+            [radius, radius, distance(from, to)],
+            getAxisOrientationMatrix(from, to),
+            colour
+        )
+    }
+
+    /**
+     * Frusta and everything that is a special case of one: a prism (both ends the same size), a
+     * pyramid (top collapsed to a point) and a truncated pyramid. Keyed so that shapes reaching
+     * the same geometry by different routes share a mesh.
+     */
+    const addFrustumInstance = (
+        nSides: number,
+        ratio: number,
+        flat: boolean,
+        from: number[],
+        to: number[],
+        radius: number,
+        colour: number[]
+    ) => {
+        addAxialInstance(
+            `frustum-${nSides}-${ratio}-${flat}`,
+            () => getFrustum(nSides, ratio, flat),
+            from,
+            to,
+            radius,
+            colour
+        )
+    }
 
     // Spheres are drawn as instanced impostors (PERFECT_SPHERES): one instance per sphere, with
     // the geometry supplied by the renderer rather than by us.
@@ -55,26 +147,56 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
     const sphere_atoms = []
     const sphereInstanceUseColours = []
     const sphereInstance_orientations = []
-    let isphere = 0
+    let nsphere = 0
 
-    // Cylinders reuse gemmiAtomPairsToCylindersInfo, which instances a unit cylinder along each
-    // start/end pair. It expects atom-like endpoints keyed by serial, a colour lookup on those
-    // serials, and a per-instance radius in individualSizes.
-    const cylinderPairs = []
-    const cylinderColours: { [serial: string]: number[] } = {}
-    const cylinderSizes = []
-    const conePairs = []
-    const coneColours: { [serial: string]: number[] } = {}
-    const coneSizes = []
+    // Cylinders, cones, prisms and pyramids all reuse gemmiAtomPairsToCylindersInfo, which
+    // instances a unit cylinder or cone along each start/end pair. It expects atom-like endpoints
+    // keyed by serial, a colour lookup on those serials, and a per-instance radius in
+    // individualSizes.
+    //
+    // A prism is just a cylinder with a polygonal cross section and a pyramid a cone with one, so
+    // they are the same two styles with the radial accuracy set to n_sides instead of
+    // CYLINDER_ACCU. Accuracy changes the geometry rather than the instance transform, so it has
+    // to be part of the grouping key.
+    type AxialGroup = {
+        style: "cylinder" | "cone"
+        accu: number
+        pairs: any[]
+        colours: { [serial: string]: number[] }
+        sizes: number[]
+    }
+    const axialGroups = new Map<string, AxialGroup>()
     let nAtom = 0
 
-    const cubeMesh = getCube()
+    const addPair = (
+        style: "cylinder" | "cone",
+        accu: number,
+        from: number[],
+        to: number[],
+        radius: number,
+        colour: number[]
+    ) => {
+        const key = `${style}-${accu}`
+        let group = axialGroups.get(key)
+        if (!group) {
+            group = { style, accu, pairs: [], colours: {}, sizes: [] }
+            axialGroups.set(key, group)
+        }
+        const startPoint = { pos: from, x: from[0], y: from[1], z: from[2], serial: nAtom++, colour }
+        const endPoint = { pos: to, x: to[0], y: to[1], z: to[2], serial: nAtom++, colour }
+        group.colours[`${startPoint.serial}`] = colour
+        group.colours[`${endPoint.serial}`] = colour
+        group.sizes.push(radius)
+        group.pairs.push([startPoint, endPoint])
+    }
 
     threeDObjects.forEach(obj => {
+        const colour = getObjectColour(obj.colour)
+
         if(obj.type==="sphere"){
-            sphere_idx_tri.push(isphere);
+            sphere_idx_tri.push(nsphere);
             sphere_vert_tri.push(...obj.origin)
-            sphere_col_tri.push(...getObjectColour(obj.colour))
+            sphere_col_tri.push(...colour)
             // The instance size attribute is a vec3 (itemSize 3, divisor 1), not a scalar radius,
             // so a uniform sphere needs the radius pushed once per axis. Pushing a single value
             // here leaves the buffer a third of the length the draw call expects, which fails as
@@ -85,66 +207,74 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             sphereInstanceUseColours.push(true);
             sphereInstance_orientations.push(...IDENTITY_ORIENTATION);
             //sphere_atoms.push(null);
-            isphere++;
+            nsphere++;
+
         } else if(obj.type==="cube"){
-            cube_vert_tri.push(...obj.origin)
-            cube_col_tri.push(...getObjectColour(obj.colour))
-            cube_sizes.push(obj.scale)
-            cube_sizes.push(obj.scale)
-            cube_sizes.push(obj.scale)
-            cubeInstanceUseColours.push(true);
-            cubeInstance_orientations.push(...obj.orientation)
-            icube++;
+            addInstance("cube", getCube, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+
+        } else if(obj.type==="cuboid"){
+            addInstance("cube", getCube, obj.origin, obj.scalexyz, obj.orientation, colour)
+
+        } else if(obj.type==="tetrahedron"){
+            addInstance("tetrahedron", getTetrahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+
+        } else if(obj.type==="octahedron"){
+            addInstance("octahedron", getOctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+
+        } else if(obj.type==="dodecahedron"){
+            addInstance("dodecahedron", getDodecahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+
+        } else if(obj.type==="icosahedron"){
+            addInstance("icosahedron", getIcosahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+
+        } else if(obj.type==="football"){
+            addInstance("football", getFootball, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+
+        } else if(obj.type==="torus"){
+            // The mesh has major radius 1, so the instance size is the major radius and the tube
+            // thickness has to be baked into the mesh as a ratio.
+            const ratio = obj.major_radius !== 0 ? obj.minor_radius / obj.major_radius : 0
+            addInstance(
+                `torus-${ratio}`,
+                () => getTorus(ratio, TORUS_MAJOR_ACCU, TORUS_MINOR_ACCU),
+                obj.origin,
+                [obj.major_radius, obj.major_radius, obj.major_radius],
+                obj.orientation,
+                colour
+            )
+
+        } else if(obj.type==="frustum" || obj.type==="flatfrustum"){
+            // A circular frustum is a truncated cone, a flat-sided one a truncated pyramid: same
+            // geometry, differing only in the number of sides and whether the barrel is shaded
+            // flat. The mesh has base radius 1, so the taper is a ratio baked into the mesh while
+            // the instance size supplies the base radius.
+            const flat = obj.type === "flatfrustum"
+            const nSides = flat ? obj.n_sides : CYLINDER_ACCU
+            const ratio = obj.bottom_radius !== 0 ? obj.top_radius / obj.bottom_radius : 0
+            addFrustumInstance(nSides, ratio, flat, obj.origin, obj.top, obj.bottom_radius, colour)
+
         } else if(obj.type==="cylinder"){
-            const colour = getObjectColour(obj.colour)
-            const startPoint = {
-                pos: obj.origin,
-                x: obj.origin[0],
-                y: obj.origin[1],
-                z: obj.origin[2],
-                serial: nAtom++,
-                colour: colour,
-            }
-            const endPoint = {
-                pos: obj.end,
-                x: obj.end[0],
-                y: obj.end[1],
-                z: obj.end[2],
-                serial: nAtom++,
-                colour: colour,
-            }
-            cylinderColours[`${startPoint.serial}`] = colour
-            cylinderColours[`${endPoint.serial}`] = colour
-            cylinderSizes.push(obj.radius)
-            cylinderPairs.push([startPoint, endPoint])
+            addPair("cylinder", CYLINDER_ACCU, obj.origin, obj.end, obj.radius, colour)
+
         } else if(obj.type==="cone"){
-            const colour = getObjectColour(obj.colour)
-            const startPoint = {
-                pos: obj.origin,
-                x: obj.origin[0],
-                y: obj.origin[1],
-                z: obj.origin[2],
-                serial: nAtom++,
-                colour: colour,
-            }
-            const endPoint = {
-                pos: obj.top,
-                x: obj.top[0],
-                y: obj.top[1],
-                z: obj.top[2],
-                serial: nAtom++,
-                colour: colour,
-            }
-            coneColours[`${startPoint.serial}`] = colour
-            coneColours[`${endPoint.serial}`] = colour
-            coneSizes.push(obj.radius)
-            conePairs.push([startPoint, endPoint])
+            addPair("cone", CYLINDER_ACCU, obj.origin, obj.top, obj.radius, colour)
+
+        } else if(obj.type==="prism"){
+            // A prism is a frustum whose ends are the same size, and a pyramid one whose top has
+            // collapsed to a point. Going through the frustum mesh rather than the cylinder path
+            // is what gets them flat-lit: getDashedCylinder and getCone give each corner its own
+            // radial normal, which is right for a round barrel but smooths away the edges between
+            // the flat faces these two are made of.
+            addFrustumInstance(obj.n_sides, 1, true, obj.origin, obj.end, obj.radius, colour)
+
+        } else if(obj.type==="pyramid"){
+            addFrustumInstance(obj.n_sides, 0, true, obj.origin, obj.top, obj.radius, colour)
         }
     })
 
     const objects = []
 
-    if (isphere > 0) {
+    if (nsphere > 0) {
         objects.push({
             atoms: [[sphere_atoms]],
             instance_sizes: [[sphere_sizes]],
@@ -159,59 +289,39 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
         })
     }
 
-    if (icube > 0) {
+    groups.forEach(group => {
         objects.push({
-            atoms: [[cube_atoms]],
-            instance_sizes: [[cube_sizes]],
-            instance_origins: [[cube_vert_tri]],
-            instance_use_colors: [[cubeInstanceUseColours]],
-            instance_orientations: [[cubeInstance_orientations]],
-            col_tri: [[cube_col_tri]],
-            norm_tri: [[cubeMesh.normals]],
-            vert_tri: [[cubeMesh.vertices]],
-            idx_tri: [[cubeMesh.idx]],
+            atoms: [[[]]],
+            instance_sizes: [[group.sizes]],
+            instance_origins: [[group.origins]],
+            instance_use_colors: [[[true]]],
+            instance_orientations: [[group.orientations]],
+            col_tri: [[group.colours]],
+            norm_tri: [[group.mesh.normals]],
+            vert_tri: [[group.mesh.vertices]],
+            idx_tri: [[group.mesh.idx]],
             prim_types: [["TRIANGLES"]],
         })
-    }
+    })
 
-    if (cylinderPairs.length > 0) {
+    axialGroups.forEach(group => {
         objects.push(
             gemmiAtomPairsToCylindersInfo(
-                cylinderPairs,
-                0.1,             // fallback radius, unused because cylinderSizes is supplied
-                cylinderColours,
+                group.pairs,
+                0.1,             // fallback radius, unused because per-instance sizes are supplied
+                group.colours,
                 false,           // labelled
                 0.01,            // minDist
                 1000.0,          // maxDist
                 false,           // dashed
-                "cylinder",
-                cylinderSizes,
+                group.style,
+                group.sizes,
                 15,              // dashedSteps, unused when not dashed
                 undefined,       // NEF
-                CYLINDER_ACCU
+                group.accu
             )
         )
-    }
-
-    if (conePairs.length > 0) {
-        objects.push(
-            gemmiAtomPairsToCylindersInfo(
-                conePairs,
-                0.1,             // fallback radius, unused because coneSizes is supplied
-                coneColours,
-                false,           // labelled
-                0.01,            // minDist
-                1000.0,          // maxDist
-                false,           // dashed
-                "cone",
-                coneSizes,
-                15,              // dashedSteps, unused when not dashed
-                undefined,       // NEF
-                CYLINDER_ACCU
-            )
-        )
-    }
-    console.log(objects)
+    })
 
     return objects
 

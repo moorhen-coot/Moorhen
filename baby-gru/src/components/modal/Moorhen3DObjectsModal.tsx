@@ -114,7 +114,7 @@ export const Moorhen3DObjects = () => {
         top: [0, 0, 5],
         bottom_radius: 1.0,
         top_radius: 0.5,
-        n_sides: 6
+        n_sides: 4
     });
 
     const newPrismObject = (): PrismObject => ({
@@ -124,7 +124,7 @@ export const Moorhen3DObjects = () => {
         origin: [0, 0, 0],
         end: [0, 0, 5],
         radius: 1.0,
-        n_sides: 6
+        n_sides: 4
     });
 
     const newPyramidObject = (): PyramidObject => ({
