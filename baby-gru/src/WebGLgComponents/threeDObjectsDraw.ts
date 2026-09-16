@@ -4,6 +4,7 @@ import {
     getAnnulus,
     getArc,
     getCapsule,
+    getCuboctahedron,
     getDisc,
     getDodecahedron,
     getEllipsoid,
@@ -11,6 +12,8 @@ import {
     getFrustum,
     getHelix,
     getPlane,
+    getRhombicDodecahedron,
+    getTruncatedOctahedron,
     getIcosahedron,
     getOctahedron,
     getTetrahedron,
@@ -325,6 +328,15 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
 
         } else if(obj.type==="icosahedron"){
             addInstance("icosahedron", getIcosahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+
+        } else if(obj.type==="truncatedoctahedron"){
+            addInstance("truncatedoctahedron", getTruncatedOctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+
+        } else if(obj.type==="cuboctahedron"){
+            addInstance("cuboctahedron", getCuboctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+
+        } else if(obj.type==="rhombicdodecahedron"){
+            addInstance("rhombicdodecahedron", getRhombicDodecahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
 
         } else if(obj.type==="football"){
             addInstance("football", getFootball, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)

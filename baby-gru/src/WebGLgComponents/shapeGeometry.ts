@@ -157,6 +157,40 @@ const icosahedronVertices = (): Vec3[] => {
     ];
 };
 
+/**
+ * Every distinct signed permutation of a coordinate triple - the usual compact way of writing the
+ * vertex set of a symmetric polyhedron. Duplicates are dropped, so a zero or a repeated
+ * coordinate does not produce the same vertex twice.
+ */
+const signedPermutations = (base: Vec3): Vec3[] => {
+    const orders = [
+        [0, 1, 2],
+        [0, 2, 1],
+        [1, 0, 2],
+        [1, 2, 0],
+        [2, 0, 1],
+        [2, 1, 0],
+    ];
+    const seen = new Set<string>();
+    const out: Vec3[] = [];
+    orders.forEach(order => {
+        for (let signs = 0; signs < 8; signs++) {
+            const v: Vec3 = [
+                base[order[0]] * (signs & 1 ? -1 : 1),
+                base[order[1]] * (signs & 2 ? -1 : 1),
+                base[order[2]] * (signs & 4 ? -1 : 1),
+            ];
+            // Normalise -0 to 0 so that it does not read as a distinct vertex.
+            const key = v.map(x => (x === 0 ? 0 : x).toFixed(9)).join(",");
+            if (!seen.has(key)) {
+                seen.add(key);
+                out.push(v);
+            }
+        }
+    });
+    return out;
+};
+
 const polyhedronFromVertices = (vertices: Vec3[]): ShapeMesh =>
     buildPolyhedron(vertices, facesFromAdjacency(vertices));
 
@@ -192,6 +226,35 @@ export const getDodecahedron = (): ShapeMesh => {
         [p, 0, q], [-p, 0, q], [p, 0, -q], [-p, 0, -q],
     ]);
 };
+
+/**
+ * A truncated octahedron: 24 vertices, 8 hexagons and 6 squares.
+ *
+ * Also the Wigner-Seitz cell of a body-centred cubic lattice, and one of the standard periodic
+ * boundary cells in molecular dynamics, which is the main reason it is worth having.
+ */
+export const getTruncatedOctahedron = (): ShapeMesh =>
+    polyhedronFromVertices(signedPermutations([0, 1, 2]));
+
+/**
+ * A cuboctahedron: 12 vertices, 8 triangles and 6 squares - a cube with its corners cut back to
+ * the edge midpoints. Also the shape of Elite's Coriolis station.
+ */
+export const getCuboctahedron = (): ShapeMesh =>
+    polyhedronFromVertices(signedPermutations([0, 1, 1]));
+
+/**
+ * A rhombic dodecahedron: 14 vertices and 12 rhombic faces. The other standard periodic boundary
+ * cell shape, and the Wigner-Seitz cell of a face-centred cubic lattice.
+ *
+ * Unlike the others here it is a Catalan solid, so it is face-transitive rather than
+ * vertex-transitive: its vertices sit at two different radii - eight at the cube corners and six
+ * further out along the axes. facesFromAdjacency still copes, because what it actually relies on
+ * is that all the edges are the same length (they are, at sqrt(3)) rather than all the vertices
+ * being equidistant. Normalising to a circumradius therefore refers to the outer six.
+ */
+export const getRhombicDodecahedron = (): ShapeMesh =>
+    polyhedronFromVertices([...signedPermutations([1, 1, 1]), ...signedPermutations([2, 0, 0])]);
 
 /**
  * A truncated icosahedron - the football / Bucky ball: 60 vertices, 12 pentagons and 20 hexagons.

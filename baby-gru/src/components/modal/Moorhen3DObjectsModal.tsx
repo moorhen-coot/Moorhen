@@ -33,6 +33,9 @@ import type {
     DodecahedronObject,
     IcosahedronObject,
     FootballObject,
+    TruncatedOctahedronObject,
+    CuboctahedronObject,
+    RhombicDodecahedronObject,
     TorusObject,
     ThreeDObject
 } from "../../store/threeDObjectsSlice";
@@ -249,6 +252,33 @@ export const Moorhen3DObjects = () => {
         scale: 1.0
     });
 
+    const newTruncatedOctahedronObject = (): TruncatedOctahedronObject => ({
+        uniqueId: uuidv4(),
+        type: "truncatedoctahedron",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scale: 1.0
+    });
+
+    const newCuboctahedronObject = (): CuboctahedronObject => ({
+        uniqueId: uuidv4(),
+        type: "cuboctahedron",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scale: 1.0
+    });
+
+    const newRhombicDodecahedronObject = (): RhombicDodecahedronObject => ({
+        uniqueId: uuidv4(),
+        type: "rhombicdodecahedron",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scale: 1.0
+    });
+
     const newArcObject = (): ArcObject => ({
         uniqueId: uuidv4(),
         type: "arc",
@@ -315,6 +345,9 @@ export const Moorhen3DObjects = () => {
             case "dodecahedron": return newDodecahedronObject();
             case "icosahedron": return newIcosahedronObject();
             case "football": return newFootballObject();
+            case "truncatedoctahedron": return newTruncatedOctahedronObject();
+            case "cuboctahedron": return newCuboctahedronObject();
+            case "rhombicdodecahedron": return newRhombicDodecahedronObject();
             case "torus": return newTorusObject();
         }
     };
@@ -934,6 +967,9 @@ export const Moorhen3DObjects = () => {
                     <option value="dodecahedron">Dodecahedron</option>
                     <option value="icosahedron">Icosahedron</option>
                     <option value="football">Football</option>
+                    <option value="truncatedoctahedron">Truncated Octahedron</option>
+                    <option value="cuboctahedron">Cuboctahedron</option>
+                    <option value="rhombicdodecahedron">Rhombic Dodecahedron</option>
                     <option value="torus">Torus</option>
 
                 </MoorhenSelect>
@@ -942,6 +978,8 @@ export const Moorhen3DObjects = () => {
                 || drawMode === "tetrahedron" || drawMode === "octahedron"
                 || drawMode === "dodecahedron" || drawMode === "icosahedron"
                 || drawMode === "football" || drawMode === "torus"
+                || drawMode === "truncatedoctahedron" || drawMode === "cuboctahedron"
+                || drawMode === "rhombicdodecahedron"
                 || drawMode === "ellipsoid" || drawMode === "plane" || drawMode === "disc"
                 || drawMode === "annulus" || drawMode === "arc"
                 || drawMode === "capsule" || drawMode === "helix"
@@ -1189,7 +1227,9 @@ export const Moorhen3DObjects = () => {
                     </>
                 }
                 {(drawMode === "tetrahedron"||drawMode === "cube"||drawMode === "octahedron"
-                ||drawMode === "dodecahedron"||drawMode === "icosahedron"||drawMode === "football")  &&
+                ||drawMode === "dodecahedron"||drawMode === "icosahedron"||drawMode === "football"
+                ||drawMode === "truncatedoctahedron"||drawMode === "cuboctahedron"
+                ||drawMode === "rhombicdodecahedron")  &&
                     <>
                         <MoorhenTextInput
                             label="Size"
@@ -1257,6 +1297,8 @@ export const Moorhen3DObjects = () => {
                 {(drawMode === "cube"||drawMode==="cuboid"||drawMode==="tetrahedron"||
                    drawMode==="octahedron"||drawMode==="dodecahedron"||
                    drawMode==="icosahedron"||drawMode==="football"||
+                   drawMode==="truncatedoctahedron"||drawMode==="cuboctahedron"||
+                   drawMode==="rhombicdodecahedron"||
                    drawMode==="torus"||drawMode==="ellipsoid"||
                    drawMode==="plane"||drawMode==="disc"||drawMode==="annulus"||
                    drawMode==="arc"||drawMode==="capsule"||drawMode==="helix"||

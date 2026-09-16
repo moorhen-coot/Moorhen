@@ -142,6 +142,27 @@ export interface FootballObject extends ThreeDObjectBase {
     scale: number;
 }
 
+/** A truncated octahedron: 8 hexagons and 6 squares. A BCC periodic boundary cell. */
+export interface TruncatedOctahedronObject extends ThreeDObjectBase {
+    type: "truncatedoctahedron";
+    orientation: Matrix4x4;
+    scale: number;
+}
+
+/** A cuboctahedron: 8 triangles and 6 squares - a cube with its corners cut back. */
+export interface CuboctahedronObject extends ThreeDObjectBase {
+    type: "cuboctahedron";
+    orientation: Matrix4x4;
+    scale: number;
+}
+
+/** A rhombic dodecahedron: 12 rhombic faces. An FCC periodic boundary cell. */
+export interface RhombicDodecahedronObject extends ThreeDObjectBase {
+    type: "rhombicdodecahedron";
+    orientation: Matrix4x4;
+    scale: number;
+}
+
 /** A cylinder with hemispherical ends. `height` is the total end-to-end length. */
 export interface CapsuleObject extends ThreeDObjectBase {
     type: "capsule";
@@ -205,6 +226,9 @@ export type ThreeDObject =
             | DodecahedronObject
             | IcosahedronObject
             | FootballObject
+            | TruncatedOctahedronObject
+            | CuboctahedronObject
+            | RhombicDodecahedronObject
             | TorusObject;
 
 const initialState: {
