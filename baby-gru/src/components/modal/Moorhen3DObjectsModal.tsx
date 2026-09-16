@@ -26,6 +26,8 @@ import type {
     DiscObject,
     AnnulusObject,
     ArcObject,
+    CapsuleObject,
+    HelixObject,
     TetrahedronObject,
     OctahedronObject,
     DodecahedronObject,
@@ -258,6 +260,28 @@ export const Moorhen3DObjects = () => {
         sweep_angle: 90.0
     });
 
+    const newCapsuleObject = (): CapsuleObject => ({
+        uniqueId: uuidv4(),
+        type: "capsule",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        radius: 1.0,
+        height: 5.0
+    });
+
+    const newHelixObject = (): HelixObject => ({
+        uniqueId: uuidv4(),
+        type: "helix",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        major_radius: 2.0,
+        minor_radius: 0.3,
+        height: 5.0,
+        sweep_angle: 720.0
+    });
+
     const newTorusObject = (): TorusObject => ({
         uniqueId: uuidv4(),
         type: "torus",
@@ -284,6 +308,8 @@ export const Moorhen3DObjects = () => {
             case "disc": return newDiscObject();
             case "annulus": return newAnnulusObject();
             case "arc": return newArcObject();
+            case "capsule": return newCapsuleObject();
+            case "helix": return newHelixObject();
             case "tetrahedron": return newTetrahedronObject();
             case "octahedron": return newOctahedronObject();
             case "dodecahedron": return newDodecahedronObject();
@@ -901,6 +927,8 @@ export const Moorhen3DObjects = () => {
                     <option value="disc">Disc</option>
                     <option value="annulus">Annulus</option>
                     <option value="arc">Arc</option>
+                    <option value="capsule">Capsule</option>
+                    <option value="helix">Helix</option>
                     <option value="tetrahedron">Tetrahedron</option>
                     <option value="octahedron">Octahedron</option>
                     <option value="dodecahedron">Dodecahedron</option>
@@ -916,6 +944,7 @@ export const Moorhen3DObjects = () => {
                 || drawMode === "football" || drawMode === "torus"
                 || drawMode === "ellipsoid" || drawMode === "plane" || drawMode === "disc"
                 || drawMode === "annulus" || drawMode === "arc"
+                || drawMode === "capsule" || drawMode === "helix"
                 || drawMode === "frustum" || drawMode === "flatfrustum"
                 || drawMode === "prism" || drawMode === "pyramid"
                 ) &&
@@ -1051,7 +1080,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "sphere"||drawMode === "cylinder"||drawMode === "cone"||drawMode === "disc"||drawMode === "annulus")  &&
+                {(drawMode === "sphere"||drawMode === "cylinder"||drawMode === "cone"||drawMode === "disc"||drawMode === "annulus"||drawMode === "capsule")  &&
                     <>
                         <MoorhenTextInput
                             label="Radius"
@@ -1111,7 +1140,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "torus" || drawMode === "arc")  &&
+                {(drawMode === "torus" || drawMode === "arc" || drawMode === "helix")  &&
                     <>
                         <MoorhenTextInput
                             label="Major radius"
@@ -1143,7 +1172,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "torus" || drawMode === "arc")  &&
+                {(drawMode === "torus" || drawMode === "arc" || drawMode === "helix")  &&
                     <>
                         <MoorhenTextInput
                             label="Minor radius"
@@ -1176,7 +1205,8 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "frustum"||drawMode === "flatfrustum"||drawMode === "prism"||drawMode === "pyramid")  &&
+                {(drawMode === "frustum"||drawMode === "flatfrustum"||drawMode === "prism"||drawMode === "pyramid"||
+                  drawMode === "capsule"||drawMode === "helix")  &&
                     <>
                         <MoorhenTextInput
                             label="Height"
@@ -1192,7 +1222,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "arc")  &&
+                {(drawMode === "arc" || drawMode === "helix")  &&
                     <>
                         <MoorhenTextInput
                             label="Sweep angle (degrees)"
@@ -1229,7 +1259,7 @@ export const Moorhen3DObjects = () => {
                    drawMode==="icosahedron"||drawMode==="football"||
                    drawMode==="torus"||drawMode==="ellipsoid"||
                    drawMode==="plane"||drawMode==="disc"||drawMode==="annulus"||
-                   drawMode==="arc"||
+                   drawMode==="arc"||drawMode==="capsule"||drawMode==="helix"||
                    drawMode==="frustum"||
                    drawMode==="flatfrustum"||drawMode==="prism"||
                    drawMode==="pyramid")  &&

@@ -142,6 +142,28 @@ export interface FootballObject extends ThreeDObjectBase {
     scale: number;
 }
 
+/** A cylinder with hemispherical ends. `height` is the total end-to-end length. */
+export interface CapsuleObject extends ThreeDObjectBase {
+    type: "capsule";
+    orientation: Matrix4x4;
+    radius: number;
+    height: number;
+}
+
+/**
+ * A tube following a helical path - an arc that rises. `major_radius` is the coil radius,
+ * `minor_radius` the tube radius, `height` the total rise and `sweep_angle` the total angle in
+ * degrees, so 720 is two turns.
+ */
+export interface HelixObject extends ThreeDObjectBase {
+    type: "helix";
+    orientation: Matrix4x4;
+    major_radius: number;
+    minor_radius: number;
+    height: number;
+    sweep_angle: number;
+}
+
 /**
  * A segment of a torus. `sweep_angle` is in degrees; a full 360 gives a closed ring. The
  * orientation decides where the arc starts, so there is no separate start angle.
@@ -176,6 +198,8 @@ export type ThreeDObject =
             | DiscObject
             | AnnulusObject
             | ArcObject
+            | CapsuleObject
+            | HelixObject
             | TetrahedronObject
             | OctahedronObject
             | DodecahedronObject

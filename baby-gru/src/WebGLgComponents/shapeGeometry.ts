@@ -532,6 +532,183 @@ export const getArc = (
 };
 
 /**
+ * A capsule - a cylinder with hemispherical ends - along z, centred on the origin, radius 1.
+ *
+ * `lengthRatio` is the total end-to-end length as a multiple of the radius, so the caller scales
+ * uniformly by the radius. The shape is baked rather than scaled non-uniformly for the usual two
+ * reasons: a [r, r, h] instance size would squash the hemispheres into ellipsoid caps, and the
+ * shader does not scale normals.
+ *
+ * A length of less than twice the radius has no room for a cylindrical section and gives a sphere.
+ */
+export const getCapsule = (lengthRatio: number, slices: number, capStacks: number): ShapeMesh => {
+    const halfLength = Math.max(0, lengthRatio / 2 - 1);
+
+    // Rings of latitude from the south pole to the north. The two hemispheres are generated with
+    // their own centres, so the gap between the last ring of one and the first of the other is
+    // stitched into the cylindrical band - with radial normals, exactly as a cylinder wants.
+    const rings: { r: number; z: number; nr: number; nz: number }[] = [];
+    const hemisphere = (centreZ: number, fromEquator: boolean) => {
+        for (let i = 0; i <= capStacks; i++) {
+            const phi = fromEquator ?
+                (Math.PI / 2) * (i / capStacks)
+            :   -Math.PI / 2 + (Math.PI / 2) * (i / capStacks);
+            rings.push({
+                r: Math.cos(phi),
+                z: centreZ + Math.sin(phi),
+                nr: Math.cos(phi),
+                nz: Math.sin(phi),
+            });
+        }
+    };
+    hemisphere(-halfLength, false);
+    hemisphere(halfLength, true);
+
+    const vertices: number[] = [];
+    const normals: number[] = [];
+    const idx: number[] = [];
+
+    rings.forEach(ring => {
+        for (let j = 0; j < slices; j++) {
+            const theta = (2 * Math.PI * j) / slices;
+            vertices.push(ring.r * Math.cos(theta), ring.r * Math.sin(theta), ring.z);
+            normals.push(...normalise([ring.nr * Math.cos(theta), ring.nr * Math.sin(theta), ring.nz]));
+        }
+    });
+
+    const at = (i: number, j: number) => i * slices + (j % slices);
+
+    for (let i = 0; i < rings.length - 1; i++) {
+        // With no cylindrical section the two equator rings coincide, leaving nothing to stitch.
+        if (rings[i].r === rings[i + 1].r && rings[i].z === rings[i + 1].z) continue;
+        const poleBelow = rings[i].r < 1e-12;
+        const poleAbove = rings[i + 1].r < 1e-12;
+        for (let j = 0; j < slices; j++) {
+            const a = at(i, j);
+            const b = at(i, j + 1);
+            const c = at(i + 1, j + 1);
+            const d = at(i + 1, j);
+            if (!poleBelow) idx.push(a, b, c);
+            if (!poleAbove) idx.push(a, c, d);
+        }
+    }
+
+    return { vertices, normals, idx };
+};
+
+/**
+ * A helix: a tube following a helical path, major radius 1, rising along z and centred on the
+ * origin, so the caller scales uniformly by the major radius.
+ *
+ * Effectively an arc that climbs, which is why it needs no parameters of its own beyond the ones
+ * an arc already has - `heightRatio` is the total rise and `sweep` may exceed a full turn.
+ *
+ * The tube is swept along a moving frame. The radial direction (cos t, sin t, 0) happens to stay
+ * perpendicular to the helix tangent at every point, so it can be used directly as one axis of
+ * that frame and the tube never twists relative to the axis.
+ *
+ * @param {number} minorRatio - tube radius as a fraction of the major radius
+ * @param {number} heightRatio - total rise as a fraction of the major radius
+ * @param {number} sweep - total angle swept, in radians; 4*pi is two turns
+ */
+export const getHelix = (
+    minorRatio: number,
+    heightRatio: number,
+    sweep: number,
+    majorAccu: number,
+    minorAccu: number
+): ShapeMesh => {
+    const swept = Math.max(sweep, 1e-6);
+    const segments = Math.max(2, Math.ceil((majorAccu * swept) / (2 * Math.PI)));
+    const pitch = heightRatio / swept; // dz/dtheta
+    const halfRise = heightRatio / 2;
+    const invLen = 1 / Math.sqrt(1 + pitch * pitch);
+
+    // A right-handed frame (u, w, tangent) at each point of the centre line.
+    const frameAt = (theta: number) => {
+        const cos = Math.cos(theta);
+        const sin = Math.sin(theta);
+        return {
+            centre: [cos, sin, -halfRise + pitch * theta] as Vec3,
+            u: [cos, sin, 0] as Vec3,
+            w: [-pitch * sin * invLen, pitch * cos * invLen, -invLen] as Vec3,
+            tangent: [-sin * invLen, cos * invLen, pitch * invLen] as Vec3,
+        };
+    };
+
+    const surfaceNormal = (frame: ReturnType<typeof frameAt>, phi: number): Vec3 => {
+        const c = Math.cos(phi);
+        const s = Math.sin(phi);
+        return [
+            c * frame.u[0] + s * frame.w[0],
+            c * frame.u[1] + s * frame.w[1],
+            c * frame.u[2] + s * frame.w[2],
+        ];
+    };
+
+    const vertices: number[] = [];
+    const normals: number[] = [];
+    const idx: number[] = [];
+
+    for (let i = 0; i <= segments; i++) {
+        const frame = frameAt((swept * i) / segments);
+        for (let j = 0; j < minorAccu; j++) {
+            const normal = surfaceNormal(frame, (2 * Math.PI * j) / minorAccu);
+            vertices.push(
+                frame.centre[0] + minorRatio * normal[0],
+                frame.centre[1] + minorRatio * normal[1],
+                frame.centre[2] + minorRatio * normal[2]
+            );
+            normals.push(...normal);
+        }
+    }
+
+    for (let i = 0; i < segments; i++) {
+        for (let j = 0; j < minorAccu; j++) {
+            const nextJ = (j + 1) % minorAccu;
+            const a = i * minorAccu + j;
+            const b = i * minorAccu + nextJ;
+            const c = (i + 1) * minorAccu + nextJ;
+            const d = (i + 1) * minorAccu + j;
+            idx.push(a, b, c);
+            idx.push(a, c, d);
+        }
+    }
+
+    // Cap both open ends. Going round in increasing phi is counter-clockwise seen from +tangent,
+    // so the start cap - which faces backwards along the tube - takes the ring reversed.
+    const pushCap = (theta: number, facingForward: boolean) => {
+        const frame = frameAt(theta);
+        const sign = facingForward ? 1 : -1;
+        const normal: Vec3 = [
+            sign * frame.tangent[0],
+            sign * frame.tangent[1],
+            sign * frame.tangent[2],
+        ];
+        const base = vertices.length / 3;
+        vertices.push(...frame.centre);
+        normals.push(...normal);
+        for (let j = 0; j < minorAccu; j++) {
+            const k = facingForward ? j : minorAccu - 1 - j;
+            const ringNormal = surfaceNormal(frame, (2 * Math.PI * k) / minorAccu);
+            vertices.push(
+                frame.centre[0] + minorRatio * ringNormal[0],
+                frame.centre[1] + minorRatio * ringNormal[1],
+                frame.centre[2] + minorRatio * ringNormal[2]
+            );
+            normals.push(...normal);
+        }
+        for (let j = 0; j < minorAccu; j++) {
+            idx.push(base, base + 1 + j, base + 1 + ((j + 1) % minorAccu));
+        }
+    };
+    pushCap(0, false);
+    pushCap(swept, true);
+
+    return { vertices, normals, idx };
+};
+
+/**
  * A frustum - a cone or pyramid with its tip cut off - running along z from a base of radius 1 at
  * z = -0.5 to a top of radius `topRadiusRatio` at z = +0.5, with both ends capped.
  *

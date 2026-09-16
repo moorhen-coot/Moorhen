@@ -3,11 +3,13 @@ import {
     ShapeMesh,
     getAnnulus,
     getArc,
+    getCapsule,
     getDisc,
     getDodecahedron,
     getEllipsoid,
     getFootball,
     getFrustum,
+    getHelix,
     getPlane,
     getIcosahedron,
     getOctahedron,
@@ -39,6 +41,12 @@ const ELLIPSOID_STACKS = 16
  * Segments around the rim of a disc.
  */
 const DISC_ACCU = 32
+
+/**
+ * Segments around a capsule, and rings of latitude in each of its hemispherical ends.
+ */
+const CAPSULE_SLICES = 32
+const CAPSULE_CAP_STACKS = 8
 
 /**
  * The identity orientation, used by primitives that are not rotated.
@@ -256,6 +264,34 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             addInstance(
                 `arc-${ratio}-${obj.sweep_angle}`,
                 () => getArc(ratio, sweep, TORUS_MAJOR_ACCU, TORUS_MINOR_ACCU),
+                obj.origin,
+                [obj.major_radius, obj.major_radius, obj.major_radius],
+                obj.orientation,
+                colour
+            )
+
+        } else if(obj.type==="capsule"){
+            // Baked as a length-to-radius ratio and scaled uniformly: a [r, r, h] instance size
+            // would squash the hemispherical ends into ellipsoid caps.
+            const ratio = obj.radius !== 0 ? obj.height / obj.radius : 2
+            addInstance(
+                `capsule-${ratio}`,
+                () => getCapsule(ratio, CAPSULE_SLICES, CAPSULE_CAP_STACKS),
+                obj.origin,
+                [obj.radius, obj.radius, obj.radius],
+                obj.orientation,
+                colour
+            )
+
+        } else if(obj.type==="helix"){
+            // Tube thickness and rise are both baked relative to a major radius of 1, so the
+            // instance size carries the coil radius.
+            const minorRatio = obj.major_radius !== 0 ? obj.minor_radius / obj.major_radius : 0
+            const heightRatio = obj.major_radius !== 0 ? obj.height / obj.major_radius : 0
+            const sweep = (obj.sweep_angle * Math.PI) / 180
+            addInstance(
+                `helix-${minorRatio}-${heightRatio}-${obj.sweep_angle}`,
+                () => getHelix(minorRatio, heightRatio, sweep, TORUS_MAJOR_ACCU, TORUS_MINOR_ACCU),
                 obj.origin,
                 [obj.major_radius, obj.major_radius, obj.major_radius],
                 obj.orientation,
