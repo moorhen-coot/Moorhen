@@ -7,7 +7,8 @@ import { createQuatFromAngle } from '../../../src/WebGLgComponents/quatUtils';
 import { quatToMat4 } from '../../../src/WebGLgComponents/quatToMat4';
 import {
     addObject,
-    removeObjectById
+    removeObjectById,
+    updateObject
 } from "../../store/threeDObjectsSlice";
 
 import type {
@@ -599,6 +600,41 @@ export const Moorhen3DObjects = () => {
             };
         });
     },[])
+
+    /**
+     * Live-update the scene while an existing object is being edited, so that changes take effect
+     * without pressing Apply.
+     *
+     * This is deliberately one effect watching theObject rather than a dispatch inside each
+     * handler. Every control already edits through setObject, so syncing from the result covers
+     * all of them at once - and it cannot read a stale value, which a dispatch inside a handler
+     * can: setObject only schedules the change, so anything dispatching straight afterwards sends
+     * the object as it was before the edit.
+     *
+     * A "new" object is left alone. It is not in the store yet, and Apply is what puts it there.
+     */
+    const pendingSync = useRef<number | null>(null);
+    useEffect(() => {
+        if (objectNew) return;
+
+        // Nothing to push if the store already holds this exact object: true just after selecting
+        // one, and again once our own dispatch lands, which is what stops this feeding itself.
+        if (threeDObjects.find(obj => obj.uniqueId === theObject.uniqueId) === theObject) return;
+
+        // Coalesce to at most one dispatch per frame. Dragging the rotation canvas fires mousemove
+        // far more often than the scene can rebuild its buffers, and every dispatch rebuilds them.
+        if (pendingSync.current !== null) cancelAnimationFrame(pendingSync.current);
+        pendingSync.current = requestAnimationFrame(() => {
+            pendingSync.current = null;
+            dispatch(updateObject(theObject));
+        });
+        return () => {
+            if (pendingSync.current !== null) {
+                cancelAnimationFrame(pendingSync.current);
+                pendingSync.current = null;
+            }
+        };
+    }, [theObject, objectNew, threeDObjects, dispatch]);
 
     const updateTheObject = (
         {

@@ -1,4 +1,4 @@
-import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
+import { useEffect, useCallback, forwardRef, useState, useReducer, useRef } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import * as quat4 from 'gl-matrix/quat';
 import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
@@ -139,71 +139,116 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
     const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
-    const displayBuffers = useSelector((state: moorhen.State) => state.glRef.displayBuffers)
-    const [vectorBuffers, setVectorsBuffers] = useState<DisplayBuffer[]>([])
-    const [threeDObjectsBuffers, setThreeDObjectsBuffers] = useState<DisplayBuffer[]>([])
-    const [vectorLabelBuffers, setVectorLabelBuffers] = useState<any>([])
+    // No selector for displayBuffers: the rebuilds read it from the store at dispatch time
+    // instead, so subscribing here would only re-render this component on every publish - which
+    // is now once per animation frame while a 3D object is being dragged.
+    // Held in refs rather than state because a rebuild can start before React has re-rendered -
+    // notably now that a 3D object can change on every animation frame while a control is
+    // dragged. A stale read here would clear the wrong buffers and leak the new ones.
+    const vectorBuffersRef = useRef<DisplayBuffer[]>([])
+    const vectorLabelBuffersRef = useRef<any[]>([])
+    const threeDObjectsBuffersRef = useRef<DisplayBuffer[]>([])
     const shortcutsBlocked = useSelector((state: RootState) => state.globalUI.areShortcutsBlocked)
 
+    /**
+     * Publish the display buffers this component owns, keeping everything it does not.
+     *
+     * Composed from the refs and the live store at dispatch time, never from a value captured
+     * when an effect ran. That is the whole trick to making the two rebuilds independent: if each
+     * captured `displayBuffers` up front, both would dispatch a list missing the other's buffers,
+     * and whichever landed second would erase the other's work. A session load, which populates
+     * vectors and 3D objects in the same commit, hits that every time - and which of the two
+     * disappears just depends on which rebuild happens to finish first.
+     *
+     * @param {Set<string>} droppedIds - ids this rebuild has just retired
+     */
+    const publishDisplayBuffers = useCallback((droppedIds: Set<string>) => {
+        const owned = [...threeDObjectsBuffersRef.current, ...vectorBuffersRef.current]
+        const ownedIds = new Set(owned.map(buffer => buffer.id))
+        const others = (store.getState().glRef.displayBuffers ?? []).filter(
+            buffer => !ownedIds.has(buffer.id) && !droppedIds.has(buffer.id)
+        )
+        dispatch(setDisplayBuffers([...owned, ...others]))
+    }, [store, dispatch])
+
+    /**
+     * The same for label buffers, which only the vectors produce here.
+     *
+     * Note these are identified by `uuid`, not `id` - that is what MoorhenMoleculeRepresentation
+     * uses when it prunes them, and what getVectorsBuffers actually sets.
+     *
+     * @param {Set<string>} droppedUuids - uuids this rebuild has just retired
+     */
+    const publishLabelBuffers = useCallback((droppedUuids: Set<string>) => {
+        const owned = vectorLabelBuffersRef.current
+        const ownedUuids = new Set(owned.map(buffer => buffer.uuid))
+        const others = (store.getState().glRef.labelBuffers ?? []).filter(
+            buffer => !ownedUuids.has(buffer.uuid) && !droppedUuids.has(buffer.uuid)
+        )
+        dispatch(setLabelBuffers([...owned, ...others]))
+    }, [store, dispatch])
+
+    const buildDisplayBuffers = useCallback((objects: any[]): DisplayBuffer[] => {
+        let newBuffers: DisplayBuffer[] = []
+        objects
+            .filter(object => typeof object !== 'undefined' && object !== null)
+            .forEach(object => {
+                const a = appendOtherData(object, store, true)
+                newBuffers = [...newBuffers, ...a]
+                buildBuffers(a, store)
+            })
+        return newBuffers
+    }, [store])
+
+    // Vectors rebuild only when the vector list changes. This is the expensive side: it runs gemmi
+    // atom selections and awaits MathJax for any LaTeX label, so it must not be dragged along by
+    // an unrelated 3D object edit.
     useEffect(() => {
-        let oldBuffers = displayBuffers
-        let oldLabelBuffers = labelBuffers
-        const dispatchVectorsBuffers = async() => {
-            if(glRef !== null && typeof glRef !== 'function') {
+        if (glRef === null || typeof glRef === 'function') return
+        let superseded = false
 
-                vectorLabelBuffers.forEach((buffer) => {
-                    oldLabelBuffers = oldLabelBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
-                })
+        const rebuildVectors = async () => {
+            const [objects, newLabelBuffers] = await getVectorsBuffers(store)
+            // Bail before creating anything if a newer rebuild has started, so there is nothing
+            // left orphaned. The old buffers stay in the refs for that newer run to clear.
+            if (superseded) return
 
-                vectorBuffers.forEach((buffer) => {
-                    buffer.clearBuffers()
-                    oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
-                })
+            const retired = vectorBuffersRef.current
+            const retiredLabels = vectorLabelBuffersRef.current
+            retired.forEach(buffer => buffer.clearBuffers())
 
-                const [objects,newLabelBuffers] = await getVectorsBuffers(store)
+            vectorBuffersRef.current = buildDisplayBuffers(objects)
+            vectorLabelBuffersRef.current = newLabelBuffers ?? []
 
-                let newBuffers = []
-                objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                    const a = appendOtherData(object, store, true);
-                    newBuffers = [...newBuffers,...a]
-                    buildBuffers(a, store)
-                })
-
-                setVectorsBuffers(newBuffers)
-                setVectorLabelBuffers(newLabelBuffers)
-                return [newBuffers,newLabelBuffers]
-            }
+            publishDisplayBuffers(new Set(retired.map(buffer => buffer.id)))
+            publishLabelBuffers(new Set(retiredLabels.map(buffer => buffer.uuid)))
         }
-        const dispatchThreeDObjectsBuffers = async() => {
-            if(glRef !== null && typeof glRef !== 'function') {
-                threeDObjectsBuffers.forEach((buffer) => {
-                    buffer.clearBuffers()
-                    oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
-                })
-                const objects = await getThreeDObjectsBuffers(store)
 
-                let newBuffers = []
-                objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                    const a = appendOtherData(object, store, true);
-                    newBuffers = [...newBuffers,...a]
-                    buildBuffers(a, store)
-                })
+        rebuildVectors()
+        return () => { superseded = true }
+    }, [vectorsList, glRef, store, buildDisplayBuffers, publishDisplayBuffers, publishLabelBuffers])
 
-                setThreeDObjectsBuffers(newBuffers)
-                dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
-                return newBuffers
+    // 3D objects rebuild only when they change, which is now potentially every animation frame
+    // while one of them is being dragged in the editor.
+    useEffect(() => {
+        if (glRef === null || typeof glRef === 'function') return
+        let superseded = false
 
-            }
+        const rebuildThreeDObjects = async () => {
+            const objects = await getThreeDObjectsBuffers(store)
+            if (superseded) return
+
+            const retired = threeDObjectsBuffersRef.current
+            retired.forEach(buffer => buffer.clearBuffers())
+
+            threeDObjectsBuffersRef.current = buildDisplayBuffers(objects)
+
+            publishDisplayBuffers(new Set(retired.map(buffer => buffer.id)))
         }
-        const getBuffers = async() => {
-            const [newBuffers,newLabelBuffers] = await dispatchVectorsBuffers()
-            const new3DBuffers = await dispatchThreeDObjectsBuffers()
-            dispatch(setDisplayBuffers([...new3DBuffers,...newBuffers,...oldBuffers]))
-            dispatch(setLabelBuffers([...newLabelBuffers,...oldLabelBuffers]))
-        }
-        getBuffers()
 
-    }, [vectorsList,threeDObjects])
+        rebuildThreeDObjects()
+        return () => { superseded = true }
+    }, [threeDObjects, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
 
     const commandCentre = useCommandCentre()
 
