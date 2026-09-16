@@ -21,6 +21,7 @@ import type {
     PyramidObject,
     CubeObject,
     CuboidObject,
+    EllipsoidObject,
     TetrahedronObject,
     OctahedronObject,
     DodecahedronObject,
@@ -159,6 +160,15 @@ export const Moorhen3DObjects = () => {
         scalexyz: [1.0, 1.0, 1.0]
     });
 
+    const newEllipsoidObject = (): EllipsoidObject => ({
+        uniqueId: uuidv4(),
+        type: "ellipsoid",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        scalexyz: [1.0, 1.0, 1.0]
+    });
+
     const newTetrahedronObject = (): TetrahedronObject => ({
         uniqueId: uuidv4(),
         type: "tetrahedron",
@@ -225,6 +235,7 @@ export const Moorhen3DObjects = () => {
             case "pyramid": return newPyramidObject();
             case "cube": return newCubeObject();
             case "cuboid": return newCuboidObject();
+            case "ellipsoid": return newEllipsoidObject();
             case "tetrahedron": return newTetrahedronObject();
             case "octahedron": return newOctahedronObject();
             case "dodecahedron": return newDodecahedronObject();
@@ -606,7 +617,7 @@ export const Moorhen3DObjects = () => {
                     setHeightText(String(existingObject.height));
                 if(existingObject.type==="prism"||existingObject.type==="pyramid")
                     setSizeText(String(existingObject.radius));
-                if(existingObject.type==="cuboid")
+                if("scalexyz" in existingObject)
                     setScaleXYZText(existingObject.scalexyz.join(","));
                 if(existingObject.type==="torus"){
                     setSizeText(String(existingObject.major_radius))
@@ -783,6 +794,7 @@ export const Moorhen3DObjects = () => {
                     <option value="pyramid">Pyramid</option>
                     <option value="cube">Cube</option>
                     <option value="cuboid">Cuboid</option>
+                    <option value="ellipsoid">Ellipsoid</option>
                     <option value="tetrahedron">Tetrahedron</option>
                     <option value="octahedron">Octahedron</option>
                     <option value="dodecahedron">Dodecahedron</option>
@@ -796,6 +808,7 @@ export const Moorhen3DObjects = () => {
                 || drawMode === "tetrahedron" || drawMode === "octahedron"
                 || drawMode === "dodecahedron" || drawMode === "icosahedron"
                 || drawMode === "football" || drawMode === "torus"
+                || drawMode === "ellipsoid"
                 || drawMode === "frustum" || drawMode === "flatfrustum"
                 || drawMode === "prism" || drawMode === "pyramid"
                 ) &&
@@ -893,7 +906,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "cuboid")  &&
+                {(drawMode === "cuboid" || drawMode === "ellipsoid")  &&
                     <>
                         <MoorhenTextInput
                             label="Scales (XYZ)"
@@ -1056,7 +1069,8 @@ export const Moorhen3DObjects = () => {
                 {(drawMode === "cube"||drawMode==="cuboid"||drawMode==="tetrahedron"||
                    drawMode==="octahedron"||drawMode==="dodecahedron"||
                    drawMode==="icosahedron"||drawMode==="football"||
-                   drawMode==="torus"||drawMode==="frustum"||
+                   drawMode==="torus"||drawMode==="ellipsoid"||
+                   drawMode==="frustum"||
                    drawMode==="flatfrustum"||drawMode==="prism"||
                    drawMode==="pyramid")  &&
                     <>

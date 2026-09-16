@@ -222,6 +222,67 @@ export const getFootball = (): ShapeMesh => {
 };
 
 /**
+ * An ellipsoid centred on the origin with semi-axes rx, ry, rz.
+ *
+ * The axis lengths are baked into the mesh rather than left to a non-uniform instance size,
+ * because the vertex shader rotates normals but does not scale them: under a non-uniform scale a
+ * normal needs the inverse transpose, so a sphere squashed by the instance size would keep its
+ * spherical normals and light as though it were still a sphere. A uniform instance scale leaves
+ * normal directions alone, so the caller passes the shape here as a ratio and scales uniformly.
+ *
+ * The outward normal of an ellipsoid is the gradient of x^2/rx^2 + y^2/ry^2 + z^2/rz^2, i.e.
+ * (x/rx^2, y/ry^2, z/rz^2) normalised - not the position, which is only true for a sphere.
+ */
+export const getEllipsoid = (
+    rx: number,
+    ry: number,
+    rz: number,
+    slices: number,
+    stacks: number
+): ShapeMesh => {
+    // A zero axis would make the normal undefined; a degenerate ellipsoid is still drawable flat.
+    const ax = Math.max(Math.abs(rx), 1e-6);
+    const ay = Math.max(Math.abs(ry), 1e-6);
+    const az = Math.max(Math.abs(rz), 1e-6);
+
+    const vertices: number[] = [];
+    const normals: number[] = [];
+    const idx: number[] = [];
+
+    // Rings of latitude from the south pole to the north, each of `slices` points of longitude.
+    for (let i = 0; i <= stacks; i++) {
+        const phi = -Math.PI / 2 + (Math.PI * i) / stacks;
+        const cosPhi = Math.cos(phi);
+        const sinPhi = Math.sin(phi);
+        for (let j = 0; j < slices; j++) {
+            const theta = (2 * Math.PI * j) / slices;
+            const x = ax * cosPhi * Math.cos(theta);
+            const y = ay * cosPhi * Math.sin(theta);
+            const z = az * sinPhi;
+            vertices.push(x, y, z);
+            normals.push(...normalise([x / (ax * ax), y / (ay * ay), z / (az * az)]));
+        }
+    }
+
+    const at = (i: number, j: number) => i * slices + (j % slices);
+
+    for (let i = 0; i < stacks; i++) {
+        for (let j = 0; j < slices; j++) {
+            const a = at(i, j);
+            const b = at(i, j + 1);
+            const c = at(i + 1, j + 1);
+            const d = at(i + 1, j);
+            // Wound so that (+theta) x (+phi) is the outward normal. At the poles every point of
+            // the ring is the same position, so one triangle of each quad there is degenerate.
+            if (i > 0) idx.push(a, b, c);
+            if (i < stacks - 1) idx.push(a, c, d);
+        }
+    }
+
+    return { vertices, normals, idx };
+};
+
+/**
  * A torus lying in the xy plane, major radius 1, so the instance size scales it to the wanted
  * major radius and `minorRatio` is minor_radius / major_radius.
  */

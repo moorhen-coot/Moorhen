@@ -2,6 +2,7 @@ import { gemmiAtomPairsToCylindersInfo, getCube, getHexForCanvasColourName, hexT
 import {
     ShapeMesh,
     getDodecahedron,
+    getEllipsoid,
     getFootball,
     getFrustum,
     getIcosahedron,
@@ -23,6 +24,12 @@ const CYLINDER_ACCU = 16
  */
 const TORUS_MAJOR_ACCU = 32
 const TORUS_MINOR_ACCU = 16
+
+/**
+ * Segments of longitude and latitude for ellipsoid geometry.
+ */
+const ELLIPSOID_SLICES = 32
+const ELLIPSOID_STACKS = 16
 
 /**
  * The identity orientation, used by primitives that are not rotated.
@@ -194,6 +201,22 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
 
         } else if(obj.type==="cuboid"){
             addInstance("cube", getCube, obj.origin, obj.scalexyz, obj.orientation, colour)
+
+        } else if(obj.type==="ellipsoid"){
+            // The shader rotates normals but does not scale them, so a non-uniform instance size
+            // would leave a squashed sphere lit as a round one. Bake the shape into the mesh as a
+            // ratio and scale uniformly instead - the same trick the torus and frustum use. A cube
+            // gets away with non-uniform scaling only because its normals are axis-aligned.
+            const largest = Math.max(...obj.scalexyz.map(Math.abs)) || 1
+            const [rx, ry, rz] = obj.scalexyz.map(s => s / largest)
+            addInstance(
+                `ellipsoid-${rx}-${ry}-${rz}`,
+                () => getEllipsoid(rx, ry, rz, ELLIPSOID_SLICES, ELLIPSOID_STACKS),
+                obj.origin,
+                [largest, largest, largest],
+                obj.orientation,
+                colour
+            )
 
         } else if(obj.type==="tetrahedron"){
             addInstance("tetrahedron", getTetrahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)

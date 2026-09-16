@@ -80,6 +80,13 @@ export interface CuboidObject extends ThreeDObjectBase {
     scalexyz: Scale3D;
 }
 
+/** A sphere with independent x, y and z semi-axes; equal axes give a sphere. */
+export interface EllipsoidObject extends ThreeDObjectBase {
+    type: "ellipsoid";
+    orientation: Matrix4x4;
+    scalexyz: Scale3D;
+}
+
 export interface TetrahedronObject extends ThreeDObjectBase {
     type: "tetrahedron";
     orientation: Matrix4x4;
@@ -127,6 +134,7 @@ export type ThreeDObject =
             | PyramidObject
             | CubeObject
             | CuboidObject
+            | EllipsoidObject
             | TetrahedronObject
             | OctahedronObject
             | DodecahedronObject
