@@ -1,10 +1,13 @@
 import { gemmiAtomPairsToCylindersInfo, getCube, getHexForCanvasColourName, hexToRGBA } from '../utils/utils'
 import {
     ShapeMesh,
+    getAnnulus,
+    getDisc,
     getDodecahedron,
     getEllipsoid,
     getFootball,
     getFrustum,
+    getPlane,
     getIcosahedron,
     getOctahedron,
     getTetrahedron,
@@ -30,6 +33,11 @@ const TORUS_MINOR_ACCU = 16
  */
 const ELLIPSOID_SLICES = 32
 const ELLIPSOID_STACKS = 16
+
+/**
+ * Segments around the rim of a disc.
+ */
+const DISC_ACCU = 32
 
 /**
  * The identity orientation, used by primitives that are not rotated.
@@ -201,6 +209,42 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
 
         } else if(obj.type==="cuboid"){
             addInstance("cube", getCube, obj.origin, obj.scalexyz, obj.orientation, colour)
+
+        } else if(obj.type==="plane"){
+            // The mesh is a unit square, so the instance size gives the two side lengths. The z
+            // component is forced to 1 rather than taken from scalexyz: the shape has no
+            // thickness, and a zero z would collapse the two faces back onto each other.
+            addInstance(
+                "plane",
+                getPlane,
+                obj.origin,
+                [obj.scalexyz[0], obj.scalexyz[1], 1],
+                obj.orientation,
+                colour
+            )
+
+        } else if(obj.type==="disc"){
+            addInstance(
+                `disc-${DISC_ACCU}`,
+                () => getDisc(DISC_ACCU),
+                obj.origin,
+                [obj.radius, obj.radius, obj.radius],
+                obj.orientation,
+                colour
+            )
+
+        } else if(obj.type==="annulus"){
+            // The hole is a proportion of the outer radius baked into the mesh, so that the
+            // instance size can carry the outer radius - the same ratio trick as the torus.
+            const ratio = obj.radius !== 0 ? obj.inner_radius / obj.radius : 0
+            addInstance(
+                `annulus-${ratio}-${DISC_ACCU}`,
+                () => getAnnulus(ratio, DISC_ACCU),
+                obj.origin,
+                [obj.radius, obj.radius, obj.radius],
+                obj.orientation,
+                colour
+            )
 
         } else if(obj.type==="ellipsoid"){
             // The shader rotates normals but does not scale them, so a non-uniform instance size

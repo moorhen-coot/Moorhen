@@ -22,6 +22,9 @@ import type {
     CubeObject,
     CuboidObject,
     EllipsoidObject,
+    PlaneObject,
+    DiscObject,
+    AnnulusObject,
     TetrahedronObject,
     OctahedronObject,
     DodecahedronObject,
@@ -169,6 +172,35 @@ export const Moorhen3DObjects = () => {
         scalexyz: [1.0, 1.0, 1.0]
     });
 
+    const newPlaneObject = (): PlaneObject => ({
+        uniqueId: uuidv4(),
+        type: "plane",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        // x and y are the side lengths; z is unused, a plane has no thickness
+        scalexyz: [5.0, 5.0, 1.0]
+    });
+
+    const newDiscObject = (): DiscObject => ({
+        uniqueId: uuidv4(),
+        type: "disc",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        radius: 2.5
+    });
+
+    const newAnnulusObject = (): AnnulusObject => ({
+        uniqueId: uuidv4(),
+        type: "annulus",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        radius: 2.5,
+        inner_radius: 1.5
+    });
+
     const newTetrahedronObject = (): TetrahedronObject => ({
         uniqueId: uuidv4(),
         type: "tetrahedron",
@@ -236,6 +268,9 @@ export const Moorhen3DObjects = () => {
             case "cube": return newCubeObject();
             case "cuboid": return newCuboidObject();
             case "ellipsoid": return newEllipsoidObject();
+            case "plane": return newPlaneObject();
+            case "disc": return newDiscObject();
+            case "annulus": return newAnnulusObject();
             case "tetrahedron": return newTetrahedronObject();
             case "octahedron": return newOctahedronObject();
             case "dodecahedron": return newDodecahedronObject();
@@ -254,6 +289,7 @@ export const Moorhen3DObjects = () => {
     const [sizeText, setSizeText] = useState<string>("1.0");
     const [size2Text, setSize2Text] = useState<string>("0.2");
     const [heightText, setHeightText] = useState<string>("5.0");
+    const [planeSizeText, setPlaneSizeText] = useState<string>("5,5");
     const [nSidesText, setNSidesText] = useState<string>("4");
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
     const [xyDown, setXYDown] = useState<[number,number]>([-100,-100])
@@ -361,6 +397,22 @@ export const Moorhen3DObjects = () => {
         }
         return isOk;
     }
+
+    const checkPlaneSizeText = () => {
+        let isOk: boolean = false;
+        if(planeSizeText.split(",").length!==2) return isOk
+        try {
+            const [_new_x, _new_y] = planeSizeText.split(",").map(a => parseFloat(a));
+            if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y) && !(_new_x === undefined) && !(_new_y === undefined)) {
+                isOk = true;
+            } else {
+                console.log("Not a valid number pair in plane size text.", planeSizeText);
+            }
+        } catch (e) {
+            console.log("Not a valid number pair in plane size text.");
+        }
+        return isOk;
+    };
 
     const checkHeightText = () => {
         let isOk: boolean = false;
@@ -575,6 +627,12 @@ export const Moorhen3DObjects = () => {
                     }
                 ),
                 ...(
+                    size2 !== undefined &&
+                    "inner_radius" in prev && {
+                       inner_radius: Number(size2)
+                    }
+                ),
+                ...(
                     height !== undefined &&
                     "height" in prev && {
                        height: Number(height)
@@ -601,6 +659,7 @@ export const Moorhen3DObjects = () => {
             setSizeText("1");
             setSize2Text("0.2");
             setHeightText("5");
+            setPlaneSizeText("5,5");
             setObject(newSphereObject());
         } else {
             try {
@@ -615,10 +674,14 @@ export const Moorhen3DObjects = () => {
                     setEndPositionText(existingObject.end.join(","));
                 if("height" in existingObject)
                     setHeightText(String(existingObject.height));
-                if(existingObject.type==="prism"||existingObject.type==="pyramid")
+                if("radius" in existingObject)
                     setSizeText(String(existingObject.radius));
+                if("inner_radius" in existingObject)
+                    setSize2Text(String(existingObject.inner_radius));
                 if("scalexyz" in existingObject)
                     setScaleXYZText(existingObject.scalexyz.join(","));
+                if(existingObject.type==="plane")
+                    setPlaneSizeText(existingObject.scalexyz.slice(0,2).join(","));
                 if(existingObject.type==="torus"){
                     setSizeText(String(existingObject.major_radius))
                     setSize2Text(String(existingObject.minor_radius))
@@ -795,6 +858,9 @@ export const Moorhen3DObjects = () => {
                     <option value="cube">Cube</option>
                     <option value="cuboid">Cuboid</option>
                     <option value="ellipsoid">Ellipsoid</option>
+                    <option value="plane">Plane</option>
+                    <option value="disc">Disc</option>
+                    <option value="annulus">Annulus</option>
                     <option value="tetrahedron">Tetrahedron</option>
                     <option value="octahedron">Octahedron</option>
                     <option value="dodecahedron">Dodecahedron</option>
@@ -808,7 +874,8 @@ export const Moorhen3DObjects = () => {
                 || drawMode === "tetrahedron" || drawMode === "octahedron"
                 || drawMode === "dodecahedron" || drawMode === "icosahedron"
                 || drawMode === "football" || drawMode === "torus"
-                || drawMode === "ellipsoid"
+                || drawMode === "ellipsoid" || drawMode === "plane" || drawMode === "disc"
+                || drawMode === "annulus"
                 || drawMode === "frustum" || drawMode === "flatfrustum"
                 || drawMode === "prism" || drawMode === "pyramid"
                 ) &&
@@ -906,6 +973,25 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
+                {(drawMode === "plane")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Size (X,Y)"
+                            text={planeSizeText}
+                            onChange={evt => {
+                                setPlaneSizeText(evt.target.value);
+                                if(evt.target.value.split(",").length===2){
+                                    const xscale = evt.target.value.split(",")[0]
+                                    const yscale = evt.target.value.split(",")[1]
+                                    // a plane has no thickness, so z is pinned rather than asked for
+                                    updateTheObject({xscale,yscale,zscale:1},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkPlaneSizeText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
                 {(drawMode === "cuboid" || drawMode === "ellipsoid")  &&
                     <>
                         <MoorhenTextInput
@@ -925,7 +1011,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "sphere"||drawMode === "cylinder"||drawMode === "cone")  &&
+                {(drawMode === "sphere"||drawMode === "cylinder"||drawMode === "cone"||drawMode === "disc"||drawMode === "annulus")  &&
                     <>
                         <MoorhenTextInput
                             label="Radius"
@@ -1001,6 +1087,22 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
+                {(drawMode === "annulus")  &&
+                    <>
+                        <MoorhenTextInput
+                            label="Inner radius"
+                            text={size2Text}
+                            onChange={evt => {
+                                setSize2Text(evt.target.value);
+                                if(!isNaN(parseFloat(evt.target.value))){
+                                    updateTheObject({size2:parseFloat(evt.target.value)},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkSize2Text()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
+                    </>
+                }
                 {(drawMode === "torus")  &&
                     <>
                         <MoorhenTextInput
@@ -1070,6 +1172,7 @@ export const Moorhen3DObjects = () => {
                    drawMode==="octahedron"||drawMode==="dodecahedron"||
                    drawMode==="icosahedron"||drawMode==="football"||
                    drawMode==="torus"||drawMode==="ellipsoid"||
+                   drawMode==="plane"||drawMode==="disc"||drawMode==="annulus"||
                    drawMode==="frustum"||
                    drawMode==="flatfrustum"||drawMode==="prism"||
                    drawMode==="pyramid")  &&

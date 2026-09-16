@@ -87,6 +87,31 @@ export interface EllipsoidObject extends ThreeDObjectBase {
     scalexyz: Scale3D;
 }
 
+/**
+ * A flat rectangle. The x and y components of `scalexyz` are its side lengths; z is unused, since
+ * the shape has no thickness.
+ */
+export interface PlaneObject extends ThreeDObjectBase {
+    type: "plane";
+    orientation: Matrix4x4;
+    scalexyz: Scale3D;
+}
+
+/** A flat filled circle. */
+export interface DiscObject extends ThreeDObjectBase {
+    type: "disc";
+    orientation: Matrix4x4;
+    radius: number;
+}
+
+/** A flat ring: a disc with a concentric hole. `radius` is the outer radius. */
+export interface AnnulusObject extends ThreeDObjectBase {
+    type: "annulus";
+    orientation: Matrix4x4;
+    radius: number;
+    inner_radius: number;
+}
+
 export interface TetrahedronObject extends ThreeDObjectBase {
     type: "tetrahedron";
     orientation: Matrix4x4;
@@ -135,6 +160,9 @@ export type ThreeDObject =
             | CubeObject
             | CuboidObject
             | EllipsoidObject
+            | PlaneObject
+            | DiscObject
+            | AnnulusObject
             | TetrahedronObject
             | OctahedronObject
             | DodecahedronObject

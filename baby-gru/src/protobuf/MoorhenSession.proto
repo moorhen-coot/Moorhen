@@ -212,6 +212,8 @@ message Moorhen3DObject {
     // Extent along the shape's own z axis, for the shapes positioned by origin + orientation
     // rather than by a start and an end point.
     optional float height = 16;
+    // Radius of the hole in an annulus; `radius` is its outer radius.
+    optional float inner_radius = 17;
 }
 
 message RGB {

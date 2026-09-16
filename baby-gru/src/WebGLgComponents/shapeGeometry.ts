@@ -222,6 +222,119 @@ export const getFootball = (): ShapeMesh => {
 };
 
 /**
+ * Half the gap between the two faces of a flat shape, in mesh units.
+ *
+ * A plane or a disc has to be drawn from both sides, and the fragment shader only lights front
+ * faces - a back face falls back to flat unlit colour. Emitting the same polygon twice with
+ * opposed windings almost works, but the depth function is LESS, so two exactly coplanar faces
+ * tie and whichever was drawn first always wins, leaving one side unlit regardless. Separating
+ * them by this much breaks the tie, so each face wins from its own side and is lit there. Small
+ * enough to be invisible: a disc of radius 10 gets faces 0.01 apart.
+ */
+const FLAT_FACE_SEPARATION = 5e-4;
+
+/**
+ * Emit one flat face of a convex polygon, as a fan, at the given z.
+ *
+ * `ring` is the outline counter-clockwise seen from +z; `reverse` flips it for the -z face so that
+ * each face is wound counter-clockwise when seen from its own side.
+ */
+const pushFlatFace = (mesh: ShapeMesh, ring: [number, number][], z: number, normal: Vec3, reverse: boolean) => {
+    const ordered = reverse ? [...ring].reverse() : ring;
+    const base = mesh.vertices.length / 3;
+    ordered.forEach(([x, y]) => {
+        mesh.vertices.push(x, y, z);
+        mesh.normals.push(...normal);
+    });
+    for (let i = 1; i < ordered.length - 1; i++) {
+        mesh.idx.push(base, base + i, base + i + 1);
+    }
+};
+
+/**
+ * A flat, double-sided convex polygon in the xy plane, centred on the origin.
+ * @param {[number, number][]} ring - the outline, counter-clockwise seen from +z
+ */
+const doubleSidedPolygon = (ring: [number, number][]): ShapeMesh => {
+    const mesh: ShapeMesh = { vertices: [], normals: [], idx: [] };
+    pushFlatFace(mesh, ring, FLAT_FACE_SEPARATION, [0, 0, 1], false);
+    pushFlatFace(mesh, ring, -FLAT_FACE_SEPARATION, [0, 0, -1], true);
+    return mesh;
+};
+
+/**
+ * A unit square in the xy plane, centred on the origin and spanning -0.5 to 0.5 on each axis, so
+ * the instance size gives its two side lengths directly. Double-sided.
+ */
+export const getPlane = (): ShapeMesh =>
+    doubleSidedPolygon([
+        [-0.5, -0.5],
+        [0.5, -0.5],
+        [0.5, 0.5],
+        [-0.5, 0.5],
+    ]);
+
+/**
+ * A filled circle of radius 1 in the xy plane, centred on the origin, so the instance size gives
+ * its radius. Double-sided. `nSides` is the number of segments around the rim.
+ */
+export const getDisc = (nSides: number): ShapeMesh =>
+    doubleSidedPolygon(
+        Array.from({ length: nSides }, (_unused, i) => {
+            const theta = (2 * Math.PI * i) / nSides;
+            return [Math.cos(theta), Math.sin(theta)] as [number, number];
+        })
+    );
+
+/**
+ * A flat ring in the xy plane, centred on the origin: outer radius 1, inner radius `innerRatio`,
+ * so the instance size gives the outer radius and the ratio is inner_radius / radius.
+ *
+ * Double-sided like the plane and disc, and for the same reason. It cannot go through
+ * doubleSidedPolygon, because an annulus is not convex - a fan from one corner would cover the
+ * hole. Instead each segment of the ring is a quad spanning inner to outer radius.
+ *
+ * `nSides` is the number of segments around the ring.
+ */
+export const getAnnulus = (innerRatio: number, nSides: number): ShapeMesh => {
+    const mesh: ShapeMesh = { vertices: [], normals: [], idx: [] };
+    const inner = Math.min(Math.max(innerRatio, 0), 1);
+
+    const pushSide = (z: number, normal: Vec3, flip: boolean) => {
+        for (let i = 0; i < nSides; i++) {
+            const theta0 = (2 * Math.PI * i) / nSides;
+            const theta1 = (2 * Math.PI * (i + 1)) / nSides;
+            // Outer edge counter-clockwise, then back along the inner edge.
+            const corners: [number, number][] = [
+                [Math.cos(theta0), Math.sin(theta0)],
+                [Math.cos(theta1), Math.sin(theta1)],
+                [inner * Math.cos(theta1), inner * Math.sin(theta1)],
+                [inner * Math.cos(theta0), inner * Math.sin(theta0)],
+            ];
+            const base = mesh.vertices.length / 3;
+            corners.forEach(([x, y]) => {
+                mesh.vertices.push(x, y, z);
+                mesh.normals.push(...normal);
+            });
+            if (flip) {
+                mesh.idx.push(base, base + 2, base + 1);
+                // A zero inner radius collapses both inner corners onto the centre, leaving this
+                // triangle degenerate - the shape is then simply a disc.
+                if (inner > 0) mesh.idx.push(base, base + 3, base + 2);
+            } else {
+                mesh.idx.push(base, base + 1, base + 2);
+                if (inner > 0) mesh.idx.push(base, base + 2, base + 3);
+            }
+        }
+    };
+
+    pushSide(FLAT_FACE_SEPARATION, [0, 0, 1], false);
+    pushSide(-FLAT_FACE_SEPARATION, [0, 0, -1], true);
+
+    return mesh;
+};
+
+/**
  * An ellipsoid centred on the origin with semi-axes rx, ry, rz.
  *
  * The axis lengths are baked into the mesh rather than left to a non-uniform instance size,
