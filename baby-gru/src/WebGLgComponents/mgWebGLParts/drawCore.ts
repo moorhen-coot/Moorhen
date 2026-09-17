@@ -959,7 +959,23 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             }
         }
 
-        if(self.state.hoveridx>-1 && self.state.hover_point>-1){
+        // The hover highlight is a blended overlay drawn on top of the geometry, so it has no
+        // business in the passes that are not building the visible image: it would write colour
+        // into the shadow map, and into the G-buffers where it would feed SSAO and edge detection.
+        //
+        // It does belong in the depth-peel passes. As soon as any one visible buffer is
+        // transparent the whole scene switches to depth peeling, and the peel passes are then the
+        // only place the geometry is drawn at all, so skipping them would lose the highlight
+        // entirely. What it must not do is inherit their blend state - see below.
+        const drawingVisibleImage = !calculatingShadowMap && !self.drawingGBuffers && !self.stencilPass
+
+        // hoveridx is an index into displayBuffers, and that array is rebuilt whenever buffers are
+        // added or removed, so the index can outlive the buffer it referred to. Fetched once,
+        // rather than indexed repeatedly below, so a stale index cannot throw part-way through a
+        // frame and take the rest of the draw with it.
+        const hoveredBuffer = self.state.hoveridx>-1 ? displayBuffers[self.state.hoveridx] : undefined
+
+        if(drawingVisibleImage && hoveredBuffer && self.state.hover_point>-1){
             //TODO - We don't really need to do self.draw at all. This could be done in the
             //       general drawing above.
             const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
@@ -1004,6 +1020,15 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                  self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[0])
                  self.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[0].itemSize, self.gl.FLOAT, false, 0, 0)
 
+                 // Blending is the whole mechanism by which this overlay leaves the rest of the
+                 // mesh alone: where the influence weight is low it emits an alpha of nearly
+                 // zero and so contributes nothing. The depth-peel and G-buffer passes disable
+                 // BLEND, and with blending off the overlay stops blending over the surface and
+                 // *replaces* it - writing that near-zero alpha across the whole mesh and leaving
+                 // only the hovered region visible. So do not inherit the pass's blend state;
+                 // set it here and put it back afterwards.
+                 const blendWasEnabled = self.gl.isEnabled(self.gl.BLEND);
+                 self.gl.enable(self.gl.BLEND);
                  self.gl.enable(self.gl.DEPTH_TEST);
                  self.gl.depthFunc(self.gl.LEQUAL);
                  self.gl.depthMask(false);
@@ -1015,10 +1040,13 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                  self.gl.enable(self.gl.DEPTH_TEST);
                  self.gl.depthFunc(self.gl.LESS);
                  self.gl.depthMask(true);
+                 if(!blendWasEnabled) self.gl.disable(self.gl.BLEND);
             }
         }
 
-        if(self.state.hoveridx>-1 && self.state.hoverIndices.length>0){
+        // Same restriction and the same stale-index guard. This overlay needs no blend state of
+        // its own: it draws fully opaque, so it lands the same way whether blending is on or off.
+        if(drawingVisibleImage && hoveredBuffer && self.state.hoverIndices.length>0){
 
             const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
             if(bufferTypes[0]==="TRIANGLES"){
@@ -1045,6 +1073,13 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                  self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, self.hoverBuffer)
                  self.gl.bufferData(self.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(self.state.hoverIndices), self.gl.DYNAMIC_DRAW)
                  self.drawMaxElementsUInt(self.gl.TRIANGLES, self.state.hoverIndices.length)
+
+                 // Put the depth state back. This overlay deliberately draws in front of
+                 // everything, but leaving DEPTH_TEST off and depthFunc at ALWAYS would carry
+                 // into whatever is drawn next - the sibling overlay above restores LESS and
+                 // depthMask for the same reason.
+                 self.gl.enable(self.gl.DEPTH_TEST)
+                 self.gl.depthFunc(self.gl.LESS)
 
             }
         }
