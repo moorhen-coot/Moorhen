@@ -237,6 +237,27 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 self.gl.useProgram(theShader);
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
+
+                // Instanced buffers highlight a whole instance rather than a region of the mesh,
+                // because the mesh is shared between instances and gl_VertexID cannot tell them
+                // apart. -1 disables it.
+                //
+                // hover_point is an index into pick_points. An instance may offer several of them
+                // so that a long or hollow shape is hoverable over its whole extent, so
+                // pick_point_instances maps that index back to the instance it belongs to. Without
+                // it the two are the same thing, which is the one-point-per-instance case.
+                //
+                // A buffer cannot be both kinds: the smooth mesh path is never instanced, so the
+                // presence of an instance origin buffer is enough to tell the two apart.
+                if(theShader.uHoveredInstance){
+                    let hoveredInstance = -1
+                    if(idx === self.state.hoveridx && displayBuffers[idx].triangleInstanceOriginBuffer[j] && self.state.hover_point>-1){
+                        const pickPointInstances = displayBuffers[idx].pick_info?.pick_point_instances
+                        hoveredInstance = pickPointInstances ? pickPointInstances[self.state.hover_point] ?? -1 : self.state.hover_point
+                    }
+                    self.gl.uniform1i(theShader.uHoveredInstance, hoveredInstance);
+                }
+
                 if(theShader.uPointTex !== null){
                     self.gl.uniform1i(theShader.uPointTex, 7);
                 }
@@ -959,7 +980,18 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             }
         }
 
-        if(self.state.hoveridx>-1 && self.state.hover_point>-1){
+        // Only the smooth mesh highlight needs this extra pass, and only it can be drawn by it:
+        // the pass uses the non-instanced program and a non-instanced draw, so pointing it at an
+        // instanced buffer would put one untransformed copy of the shared mesh at the world
+        // origin. Instanced buffers highlight themselves during the main draw instead, via
+        // uHoveredInstance, so requiring the influence textures here keeps them out.
+        const hoveredHasInfluenceTextures = self.state.hoveridx>-1
+            && displayBuffers[self.state.hoveridx].pick_info
+            && displayBuffers[self.state.hoveridx].pick_info.influence_weights_texture
+            && displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_texture
+            && displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_texture
+
+        if(self.state.hoveridx>-1 && self.state.hover_point>-1 && hoveredHasInfluenceTextures){
             //TODO - We don't really need to do self.draw at all. This could be done in the
             //       general drawing above.
             const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes

@@ -76,6 +76,56 @@ const getObjectColour = (colour: string): [number, number, number, number] => {
 }
 
 /**
+ * How many points on each instance are offered to the hover test, beyond its centre.
+ *
+ * One point per object only makes a shape hoverable near that point, which is fine for a compact
+ * solid and poor for anything long or hollow - a helix, a long cylinder, a torus whose centre is
+ * empty space. Several points spread over the shape make all of it hoverable.
+ */
+const PICK_POINTS_PER_INSTANCE = 16
+
+/**
+ * Sample points spread through a mesh, in its own local space.
+ *
+ * Taken from the mesh's own vertices rather than from per-shape rules. The generators emit
+ * vertices in a natural traversal order - ring by ring around a torus, along the coil of a helix,
+ * face by face around a polyhedron - so sampling that list spreads the points over the shape
+ * whatever it is, and a new shape needs no special handling.
+ *
+ * The positions come from a golden-ratio sequence rather than an even stride, because the meshes
+ * are built from nested loops and an even stride can align with the inner one: sampling a torus
+ * every 64th vertex, with 16 vertices per ring, picks the same angle around the tube every time
+ * and lands every point on the z = 0 circle. A low-discrepancy sequence cannot line up with a
+ * period like that, and still spreads evenly.
+ */
+const GOLDEN_RATIO_FRACTION = 0.6180339887498949
+
+const sampleMeshPoints = (mesh: ShapeMesh, count: number): number[][] => {
+    const vertexCount = mesh.vertices.length / 3
+    if (vertexCount === 0) return []
+    const wanted = Math.min(count, vertexCount)
+    return Array.from({ length: wanted }, (_unused, i) => {
+        const v = Math.floor(vertexCount * ((i * GOLDEN_RATIO_FRACTION) % 1))
+        return [mesh.vertices[3 * v], mesh.vertices[3 * v + 1], mesh.vertices[3 * v + 2]]
+    })
+}
+
+/**
+ * Place a point given in a mesh's local space into the world, exactly as the vertex shader does:
+ * instancePosition + instanceOrientation * (instanceSize * vertex).
+ */
+const placeLocalPoint = (local: number[], origin: number[], size: number[], orientation: number[]): number[] => {
+    const x = size[0] * local[0]
+    const y = size[1] * local[1]
+    const z = size[2] * local[2]
+    return [
+        origin[0] + orientation[0] * x + orientation[4] * y + orientation[8] * z,
+        origin[1] + orientation[1] * x + orientation[5] * y + orientation[9] * z,
+        origin[2] + orientation[2] * x + orientation[6] * y + orientation[10] * z,
+    ]
+}
+
+/**
  * One instanced draw: a single mesh plus the per-instance attributes of everything sharing it.
  */
 type InstanceGroup = {
@@ -200,23 +250,7 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
     threeDObjects.forEach(obj => {
         const colour = getObjectColour(obj.colour)
 
-        if(obj.type==="sphere"){
-            sphere_idx_tri.push(nsphere);
-            sphere_vert_tri.push(...obj.origin)
-            sphere_col_tri.push(...colour)
-            // The instance size attribute is a vec3 (itemSize 3, divisor 1), not a scalar radius,
-            // so a uniform sphere needs the radius pushed once per axis. Pushing a single value
-            // here leaves the buffer a third of the length the draw call expects, which fails as
-            // "Vertex buffer is not big enough for the draw call".
-            sphere_sizes.push(obj.radius)
-            sphere_sizes.push(obj.radius)
-            sphere_sizes.push(obj.radius)
-            sphereInstanceUseColours.push(true);
-            sphereInstance_orientations.push(...IDENTITY_ORIENTATION);
-            //sphere_atoms.push(null);
-            nsphere++;
-
-        } else if(obj.type==="cube"){
+        if(obj.type==="cube"){
             addInstance("cube", getCube, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
 
         } else if(obj.type==="cuboid"){
@@ -298,6 +332,24 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
                 obj.origin,
                 [obj.major_radius, obj.major_radius, obj.major_radius],
                 obj.orientation,
+                colour
+            )
+
+        } else if(obj.type==="sphere"){
+            // Drawn as an isotropic ellipsoid rather than a PERFECT_SPHERES impostor, because the
+            // impostor path has its own shaders with no vHighlight and so cannot be highlighted.
+            //
+            // The key must describe the *mesh*, not the instance: a unit sphere is the same mesh
+            // wherever it sits and whatever its radius, so every sphere - and any isotropic
+            // ellipsoid, which produces this same key - shares one mesh and one draw call. Keying
+            // on the origin would give each sphere its own buffer, and worse, would mint a new key
+            // and rebuild the mesh every time one moved, which during a drag is once a frame.
+            addInstance(
+                "ellipsoid-1-1-1",
+                () => getEllipsoid(1.0, 1.0, 1.0, ELLIPSOID_SLICES, ELLIPSOID_STACKS),
+                obj.origin,
+                [obj.radius, obj.radius, obj.radius],
+                IDENTITY_ORIENTATION,
                 colour
             )
 
@@ -401,6 +453,29 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
     }
 
     groups.forEach(group => {
+        // Pick points are what make these shapes hoverable: the ray test in getAtomFomMouseXY
+        // walks pick_points on every visible buffer and is otherwise indifferent to the geometry.
+        //
+        // Several points per instance - its centre plus a sample of its surface - so that a long
+        // or hollow shape is hoverable over its whole extent. That means the reported index is no
+        // longer the instance index, so pick_point_instances carries the mapping the shader needs
+        // to compare against gl_InstanceID.
+        //
+        // No influence weights or triangle lists: a whole instance highlights at once, so there
+        // is no per-vertex weight field to supply and nothing needs uploading as a texture.
+        const localPoints = [[0, 0, 0], ...sampleMeshPoints(group.mesh, PICK_POINTS_PER_INSTANCE)]
+        const pick_points: number[][] = []
+        const pick_point_instances: number[] = []
+        for (let instance = 0; instance < group.origins.length / 3; instance++) {
+            const origin = group.origins.slice(3 * instance, 3 * instance + 3)
+            const size = group.sizes.slice(3 * instance, 3 * instance + 3)
+            const orientation = group.orientations.slice(16 * instance, 16 * instance + 16)
+            localPoints.forEach(local => {
+                pick_points.push(placeLocalPoint(local, origin, size, orientation))
+                pick_point_instances.push(instance)
+            })
+        }
+
         objects.push({
             atoms: [[[]]],
             instance_sizes: [[group.sizes]],
@@ -412,26 +487,54 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             vert_tri: [[group.mesh.vertices]],
             idx_tri: [[group.mesh.idx]],
             prim_types: [["TRIANGLES"]],
+            pick_info: { pick_points: pick_points, pick_point_instances: pick_point_instances },
         })
     })
 
     axialGroups.forEach(group => {
-        objects.push(
-            gemmiAtomPairsToCylindersInfo(
-                group.pairs,
-                0.1,             // fallback radius, unused because per-instance sizes are supplied
-                group.colours,
-                false,           // labelled
-                0.01,            // minDist
-                1000.0,          // maxDist
-                false,           // dashed
-                group.style,
-                group.sizes,
-                15,              // dashedSteps, unused when not dashed
-                undefined,       // NEF
-                group.accu
-            )
+        const cylinderInfo = gemmiAtomPairsToCylindersInfo(
+            group.pairs,
+            0.1,             // fallback radius, unused because per-instance sizes are supplied
+            group.colours,
+            false,           // labelled
+            0.01,            // minDist
+            1000.0,          // maxDist
+            false,           // dashed
+            group.style,
+            group.sizes,
+            15,              // dashedSteps, unused when not dashed
+            undefined,       // NEF
+            group.accu
         )
+
+        // Pick points along each axis, as for the mesh shapes above, so these are hoverable too.
+        //
+        // Spread from end to end rather than placed at the instance origin:
+        // gemmiAtomPairsToCylindersInfo puts the origin at the start of the pair, so a single
+        // point there would mean having to hover a cylinder's end cap rather than its body - and
+        // one point anywhere would leave a long cylinder hoverable only near that point.
+        //
+        // The instance index comes from the pair index because that function emits one instance
+        // per pair, in order. It can skip a pair whose length falls outside minDist..maxDist, but
+        // only when NEF is passed as false, and it is not - which is what keeps these aligned.
+        const pick_points: number[][] = []
+        const pick_point_instances: number[] = []
+        group.pairs.forEach(([from, to], instance) => {
+            for (let i = 0; i <= PICK_POINTS_PER_INSTANCE; i++) {
+                const t = i / PICK_POINTS_PER_INSTANCE
+                pick_points.push([
+                    from.x + t * (to.x - from.x),
+                    from.y + t * (to.y - from.y),
+                    from.z + t * (to.z - from.z),
+                ])
+                pick_point_instances.push(instance)
+            }
+        })
+
+        objects.push({
+            ...cylinderInfo,
+            pick_info: { pick_points: pick_points, pick_point_instances: pick_point_instances },
+        })
     })
 
     return objects

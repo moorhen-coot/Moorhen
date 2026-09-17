@@ -128,6 +128,14 @@ export function doHover(self: MGWebGL, event) {
                 self.setState({ hoveridx: minidx_pi })
                 self.setState({ hover_point: -1 })
                 self.setState({ hoverIndices: completeHoverIndices })
+            } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.pick_points) {
+                // A buffer offering only pick_points, with no per-vertex influence data and no
+                // triangle lists: the instanced shapes, where one pick point stands for one whole
+                // instance. hover_point is then the instance index, which the instanced vertex
+                // shader compares against gl_InstanceID.
+                self.setState({ hoveridx: minidx_pi })
+                self.setState({ hover_point: minj_pi })
+                self.setState({ hoverIndices: [] })
             } else {
                 self.setState({ hoveridx: -1 })
                 self.setState({ hover_point: -1 })

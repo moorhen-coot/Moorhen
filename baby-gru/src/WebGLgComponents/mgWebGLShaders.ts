@@ -47,6 +47,7 @@ export function initInstancedOutlineShaders(vertexShaderOutline, fragmentShaderO
     shaderProgramInstancedOutline.vertexInstanceOriginAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "instancePosition");
     shaderProgramInstancedOutline.vertexInstanceSizeAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "instanceSize");
     shaderProgramInstancedOutline.vertexInstanceOrientationAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "instanceOrientation");
+    shaderProgramInstancedOutline.uHoveredInstance = gl.getUniformLocation(shaderProgramInstancedOutline, "uHoveredInstance");
 
     shaderProgramInstancedOutline.vertexNormalAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "aVertexNormal");
     //gl.enableVertexAttribArray(shaderProgramInstancedOutline.vertexNormalAttribute);
@@ -1064,6 +1065,9 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
     shaderProgramInstanced.vertexInstanceOriginAttribute = gl.getAttribLocation(shaderProgramInstanced, "instancePosition");
     shaderProgramInstanced.vertexInstanceSizeAttribute = gl.getAttribLocation(shaderProgramInstanced, "instanceSize");
     shaderProgramInstanced.vertexInstanceOrientationAttribute = gl.getAttribLocation(shaderProgramInstanced, "instanceOrientation");
+
+    //Per-instance highlighting, the instanced counterpart of uHoveredPoint
+    shaderProgramInstanced.uHoveredInstance = gl.getUniformLocation(shaderProgramInstanced, "uHoveredInstance");
 
     gl.enableVertexAttribArray(shaderProgramInstanced.vertexColourAttribute);
 

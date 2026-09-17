@@ -184,7 +184,18 @@ var triangle_fragment_shader_source = `#version 300 es\n
       float ring = smoothstep(0.4, 0.45, vHighlight) - smoothstep(0.45, 0.5, vHighlight);
 
       fragColor.rgb += ring * vec3(0.4, 1.0, 0.0);
-      fragColor.a *= vHighlight;
+
+      // vHighlight in 0..1 is a smooth mesh influence weight: it fades everything away from the
+      // hovered point and the ring above picks out the isoline. Above 1 it means "this whole
+      // instance is the highlighted one", which the instanced shapes use - they share one mesh
+      // between instances, so there is no per-vertex weight field to fade, and a shape that is
+      // the only instance in its buffer would have nothing to fade against anyway.
+      //
+      // For the 0..1 range the mix below is a no-op and the clamp changes nothing, so the smooth
+      // mesh path behaves exactly as before.
+      float boost = clamp(vHighlight - 1.0, 0.0, 1.0);
+      fragColor.rgb = mix(fragColor.rgb, vec3(1.0, 1.0, 1.0), 0.5 * boost);
+      fragColor.a *= min(vHighlight, 1.0);
 
     }
 `;

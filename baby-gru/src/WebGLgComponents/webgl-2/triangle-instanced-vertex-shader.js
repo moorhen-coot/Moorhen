@@ -24,6 +24,14 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
 
     out float vHighlight;
 
+    // Which instance of this buffer is highlighted, or -1 for none. Instanced geometry shares one
+    // mesh between all of its instances, so gl_VertexID cannot distinguish them and the highlight
+    // has to key on gl_InstanceID instead - unlike the smooth mesh path, which has a genuine
+    // per-vertex weight field to sample.
+    uniform int uHoveredInstance;
+
+    const float HIGHLIGHT_BOOST = 1.0;
+
     void main(void) {
 
       vec4 theVert = vec4(instancePosition,1.0)+instanceOrientation*vec4((outlineSize+instanceSize)*aVertexPosition,1.0);
@@ -39,7 +47,13 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
 
       vTexture = aVertexTexture;
 
-      vHighlight = 1.0;
+      // Only the hovered instance changes: above 1, so the fragment shader brightens it.
+      //
+      // Deliberately nothing happens to its siblings. Fading them back would mirror the smooth
+      // mesh highlight, but which instances share a buffer is an invisible implementation detail
+      // - every sphere in the scene shares one mesh, while a sphere and a cube do not - so fading
+      // siblings makes hovering one shape visibly disturb an arbitrary subset of the others.
+      vHighlight = (uHoveredInstance >= 0 && gl_InstanceID == uHoveredInstance) ? 1.0 + HIGHLIGHT_BOOST : 1.0;
     }
 `;
 

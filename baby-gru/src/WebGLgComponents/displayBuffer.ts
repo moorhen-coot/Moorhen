@@ -12,7 +12,10 @@ interface MGWebGLBuffer {
 }
 
 export class DisplayBuffer {
-    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][]}
+    // pick_point_instances maps a pick_points index back to the instance that owns it, for
+    // instanced geometry where one instance may offer several pick points. Absent means one point
+    // per instance, so the two indices coincide.
+    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][], pick_point_instances?:number[]}
     origin: number[];
     visible: boolean;
     name_label: string;
