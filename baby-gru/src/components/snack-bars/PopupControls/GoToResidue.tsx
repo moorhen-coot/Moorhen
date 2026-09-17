@@ -1,8 +1,8 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
-import { useCommandCentre } from "@/InstanceManager";
-import { MoorhenButton } from "@/components/inputs";
+import { useCommandCentre, useMoorhenInstance } from "@/InstanceManager";
+import { MoorhenButton, MoorhenMoleculeSelect } from "@/components/inputs";
 import { MoorhenCidInputForm } from "@/components/inputs/Cid/MoorhenCidInputForm";
 import { MoorhenStack } from "@/components/interface-base";
 import { setShownControl } from "@/store";
@@ -11,45 +11,45 @@ import { moorhen } from "@/types/moorhen";
 import { getCentreAtom } from "@/utils/utils";
 
 export const GoToResidue = () => {
-    const store = useStore<RootState>();
-    const cidFormRef = useRef<null | HTMLInputElement>(null);
-    const commandCentre = useCommandCentre();
 
     const [invalidCid, setInvalidCid] = useState<boolean>(false);
-
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const [selectedMolecule, setSelectedMolecule] = useState<string>(null);
+    const [cid, setCid] = useState<string>("");
     const dispatch = useDispatch();
+    const moorhenInstance = useMoorhenInstance();
 
-    const centreOnSelection = useCallback(async () => {
-        if (!cidFormRef.current?.value) {
-            return;
-        }
-
-        const [chosenMolecule, _residueCid] = await getCentreAtom(molecules, commandCentre.current, store);
-        if (!chosenMolecule) {
-            return;
-        }
-
-        const isValidCid = await chosenMolecule.isValidSelection(cidFormRef.current.value);
+    const centreOnSelection = async () => {
+        
+        const chosenMolecule = moorhenInstance.getMolecule(selectedMolecule);
+        const isValidCid = await chosenMolecule.isValidSelection(cid);
         if (isValidCid) {
             setInvalidCid(false);
-            await chosenMolecule.centreOn(cidFormRef.current.value, true, true);
+            await chosenMolecule.centreOn(cid, true, true);
             dispatch(setShownControl(null));
         } else {
             setInvalidCid(true);
         }
-    }, [molecules]);
+    };
 
     return (
         <MoorhenStack align="center">
+            <MoorhenMoleculeSelect
+                molecules={molecules}
+                selectedMolecule={selectedMolecule}
+                setSelectedMolecule={setSelectedMolecule}
+                useUniqueId
+            />
             <MoorhenCidInputForm
-                ref={cidFormRef}
                 invalidCid={invalidCid}
                 allowUseCurrentSelection={false}
                 label={null}
+                value={cid}
+                setValue={setCid}
+                setMoleculeUniqueId={setSelectedMolecule}
                 placeholder="//Chain/Residue"
             />
+            
             <div>
                 <MoorhenButton type="icon-only" icon="MatSymCheck" onClick={centreOnSelection} />
                 <MoorhenButton
