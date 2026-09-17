@@ -216,6 +216,8 @@ message Moorhen3DObject {
     optional float inner_radius = 17;
     // Angle swept by an arc, in degrees.
     optional float sweep_angle = 18;
+    // Draw a flat-sided solid as a tube along each of its edges instead of as a solid.
+    optional bool wireframe = 19;
 }
 
 message RGB {

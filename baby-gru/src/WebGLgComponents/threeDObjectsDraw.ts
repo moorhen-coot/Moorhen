@@ -14,6 +14,7 @@ import {
     getPlane,
     getRhombicDodecahedron,
     getTruncatedOctahedron,
+    getWireframe,
     getIcosahedron,
     getOctahedron,
     getTetrahedron,
@@ -167,6 +168,30 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
     }
 
     /**
+     * A flat-sided solid, which may be drawn either solid or as a wireframe.
+     *
+     * The wireframe is just a different mesh derived from the same solid one, so it slots into the
+     * instancing exactly as the solid does - same origin, size and orientation. It is keyed
+     * separately, so a scene holding both a solid and a wireframe cube builds and draws two
+     * meshes rather than one.
+     */
+    const addFlatSidedInstance = (
+        key: string,
+        buildMesh: () => ShapeMesh,
+        origin: number[],
+        size: number[],
+        orientation: number[],
+        colour: number[],
+        wireframe: boolean
+    ) => {
+        if (wireframe) {
+            addInstance(`${key}-wireframe`, () => getWireframe(buildMesh()), origin, size, orientation, colour)
+        } else {
+            addInstance(key, buildMesh, origin, size, orientation, colour)
+        }
+    }
+
+    /**
      * Frusta and everything that is a special case of one: a prism (both ends the same size), a
      * pyramid (top collapsed to a point) and a truncated pyramid. Keyed so that shapes reaching
      * the same geometry by different routes share a mesh - a prism and a flat frustum whose two
@@ -183,15 +208,17 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
         orientation: number[],
         radius: number,
         height: number,
-        colour: number[]
+        colour: number[],
+        wireframe: boolean = false
     ) => {
-        addInstance(
+        addFlatSidedInstance(
             `frustum-${nSides}-${ratio}-${flat}`,
             () => getFrustum(nSides, ratio, flat),
             origin,
             [radius, radius, height],
             orientation,
-            colour
+            colour,
+            wireframe
         )
     }
 
@@ -251,10 +278,10 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
         const colour = getObjectColour(obj.colour)
 
         if(obj.type==="cube"){
-            addInstance("cube", getCube, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+            addFlatSidedInstance("cube", getCube, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
 
         } else if(obj.type==="cuboid"){
-            addInstance("cube", getCube, obj.origin, obj.scalexyz, obj.orientation, colour)
+            addFlatSidedInstance("cube", getCube, obj.origin, obj.scalexyz, obj.orientation, colour, obj.wireframe)
 
         } else if(obj.type==="plane"){
             // The mesh is a unit square, so the instance size gives the two side lengths. The z
@@ -370,28 +397,28 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             )
 
         } else if(obj.type==="tetrahedron"){
-            addInstance("tetrahedron", getTetrahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+            addFlatSidedInstance("tetrahedron", getTetrahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
 
         } else if(obj.type==="octahedron"){
-            addInstance("octahedron", getOctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+            addFlatSidedInstance("octahedron", getOctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
 
         } else if(obj.type==="dodecahedron"){
-            addInstance("dodecahedron", getDodecahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+            addFlatSidedInstance("dodecahedron", getDodecahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
 
         } else if(obj.type==="icosahedron"){
-            addInstance("icosahedron", getIcosahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+            addFlatSidedInstance("icosahedron", getIcosahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
 
         } else if(obj.type==="truncatedoctahedron"){
-            addInstance("truncatedoctahedron", getTruncatedOctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+            addFlatSidedInstance("truncatedoctahedron", getTruncatedOctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
 
         } else if(obj.type==="cuboctahedron"){
-            addInstance("cuboctahedron", getCuboctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+            addFlatSidedInstance("cuboctahedron", getCuboctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
 
         } else if(obj.type==="rhombicdodecahedron"){
-            addInstance("rhombicdodecahedron", getRhombicDodecahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+            addFlatSidedInstance("rhombicdodecahedron", getRhombicDodecahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
 
         } else if(obj.type==="football"){
-            addInstance("football", getFootball, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour)
+            addFlatSidedInstance("football", getFootball, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
 
         } else if(obj.type==="torus"){
             // The mesh has major radius 1, so the instance size is the major radius and the tube
@@ -414,7 +441,8 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             const flat = obj.type === "flatfrustum"
             const nSides = flat ? obj.n_sides : CYLINDER_ACCU
             const ratio = obj.bottom_radius !== 0 ? obj.top_radius / obj.bottom_radius : 0
-            addFrustumInstance(nSides, ratio, flat, obj.origin, obj.orientation, obj.bottom_radius, obj.height, colour)
+            addFrustumInstance(nSides, ratio, flat, obj.origin, obj.orientation, obj.bottom_radius, obj.height, colour,
+                               flat ? obj.wireframe : false)
 
         } else if(obj.type==="cylinder"){
             addPair("cylinder", CYLINDER_ACCU, obj.origin, obj.end, obj.radius, colour)
@@ -428,10 +456,10 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             // is what gets them flat-lit: getDashedCylinder and getCone give each corner its own
             // radial normal, which is right for a round barrel but smooths away the edges between
             // the flat faces these two are made of.
-            addFrustumInstance(obj.n_sides, 1, true, obj.origin, obj.orientation, obj.radius, obj.height, colour)
+            addFrustumInstance(obj.n_sides, 1, true, obj.origin, obj.orientation, obj.radius, obj.height, colour, obj.wireframe)
 
         } else if(obj.type==="pyramid"){
-            addFrustumInstance(obj.n_sides, 0, true, obj.origin, obj.orientation, obj.radius, obj.height, colour)
+            addFrustumInstance(obj.n_sides, 0, true, obj.origin, obj.orientation, obj.radius, obj.height, colour, obj.wireframe)
         }
     })
 

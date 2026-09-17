@@ -771,6 +771,149 @@ export const getHelix = (
     return { vertices, normals, idx };
 };
 
+/** Thickness of a wireframe edge, as a fraction of the shape's own radius. */
+const WIREFRAME_RADIUS_FRACTION = 0.02
+
+/** Segments around each edge tube. Six is plenty at these thicknesses. */
+const WIREFRAME_TUBE_SIDES = 6
+
+/**
+ * Turn a flat-sided solid into a wireframe: a thin tube along each of its edges.
+ *
+ * The edges have to be recovered from the triangles, because the meshes carry no notion of a
+ * polygon. The test is whether an edge is a crease: the triangles either side of a real edge
+ * belong to different faces and so have different normals, whereas the diagonals introduced by
+ * triangulating a polygon lie *within* one face and are shared by two triangles with the same
+ * normal. Drawing every triangle edge instead would criss-cross each face with its fan diagonals.
+ *
+ * Vertices are welded by position first, because the flat-shaded meshes deliberately duplicate
+ * every corner once per face so that each copy can carry its own normal.
+ *
+ * Only meaningful for flat-sided solids. A curved surface is all creases at this tolerance, so a
+ * sphere or a torus would come out as a tube along every triangle edge.
+ */
+export const getWireframe = (mesh: ShapeMesh, sides: number = WIREFRAME_TUBE_SIDES): ShapeMesh => {
+    const vertexCount = mesh.vertices.length / 3
+    const at = (i: number): Vec3 => [mesh.vertices[3 * i], mesh.vertices[3 * i + 1], mesh.vertices[3 * i + 2]]
+
+    // Weld by position. -0 is normalised to 0 so that it does not read as a separate corner.
+    const positionKey = (v: Vec3) => v.map(x => (Math.abs(x) < 1e-12 ? 0 : x).toFixed(6)).join(",")
+    const welded = new Map<string, number>()
+    const weldedPositions: Vec3[] = []
+    const weldedIndexOf: number[] = []
+    for (let i = 0; i < vertexCount; i++) {
+        const key = positionKey(at(i))
+        if (!welded.has(key)) {
+            welded.set(key, weldedPositions.length)
+            weldedPositions.push(at(i))
+        }
+        weldedIndexOf[i] = welded.get(key)
+    }
+
+    // Record, for every welded edge, the normals of the triangles that use it.
+    const edgeNormals = new Map<string, Vec3[]>()
+    for (let t = 0; t < mesh.idx.length; t += 3) {
+        const corners = [mesh.idx[t], mesh.idx[t + 1], mesh.idx[t + 2]]
+        const [a, b, c] = corners.map(at)
+        const faceNormal = normalise(cross(sub(b, a), sub(c, a)))
+        if (length(faceNormal) < 0.5) continue // degenerate triangle, no meaningful normal
+        for (let e = 0; e < 3; e++) {
+            const from = weldedIndexOf[corners[e]]
+            const to = weldedIndexOf[corners[(e + 1) % 3]]
+            if (from === to) continue
+            const key = `${Math.min(from, to)}-${Math.max(from, to)}`
+            if (!edgeNormals.has(key)) edgeNormals.set(key, [])
+            edgeNormals.get(key).push(faceNormal)
+        }
+    }
+
+    const creases: [number, number][] = []
+    edgeNormals.forEach((normals, key) => {
+        const isCrease =
+            normals.length === 1 || normals.some(n => Math.abs(dot(n, normals[0])) < 1 - 1e-6)
+        if (isCrease) {
+            const [from, to] = key.split("-").map(Number)
+            creases.push([from, to])
+        }
+    })
+
+    const shapeRadius = Math.max(...weldedPositions.map(length))
+    const radius = Math.max(shapeRadius * WIREFRAME_RADIUS_FRACTION, 1e-6)
+
+    const vertices: number[] = []
+    const normals: number[] = []
+    const idx: number[] = []
+
+    creases.forEach(([from, to]) => {
+        const start = weldedPositions[from]
+        const end = weldedPositions[to]
+        const axis = normalise(sub(end, start))
+
+        // A right-handed frame (u, w, axis), so that increasing angle winds outward.
+        const reference: Vec3 = Math.abs(axis[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0]
+        const u = normalise(cross(axis, reference))
+        const w = cross(axis, u)
+
+        // Overshoot each end by the tube radius so that the tubes meeting at a corner overlap
+        // rather than leaving a notch. The caps then sit buried inside the joint.
+        const ends = [
+            sub(start, scale(axis, radius)),
+            sub(end, scale(axis, -radius)),
+        ]
+
+        const base = vertices.length / 3
+        ends.forEach(end_ => {
+            for (let j = 0; j < sides; j++) {
+                const theta = (2 * Math.PI * j) / sides
+                const normal: Vec3 = [
+                    Math.cos(theta) * u[0] + Math.sin(theta) * w[0],
+                    Math.cos(theta) * u[1] + Math.sin(theta) * w[1],
+                    Math.cos(theta) * u[2] + Math.sin(theta) * w[2],
+                ]
+                vertices.push(
+                    end_[0] + radius * normal[0],
+                    end_[1] + radius * normal[1],
+                    end_[2] + radius * normal[2]
+                )
+                normals.push(...normal)
+            }
+        })
+
+        for (let j = 0; j < sides; j++) {
+            const nextJ = (j + 1) % sides
+            idx.push(base + j, base + nextJ, base + sides + nextJ)
+            idx.push(base + j, base + sides + nextJ, base + sides + j)
+        }
+
+        // Flat caps, facing out along the axis at each end.
+        const pushCap = (centre: Vec3, normal: Vec3, reverse: boolean) => {
+            const capBase = vertices.length / 3
+            vertices.push(...centre)
+            normals.push(...normal)
+            for (let j = 0; j < sides; j++) {
+                const k = reverse ? sides - 1 - j : j
+                const theta = (2 * Math.PI * k) / sides
+                vertices.push(
+                    centre[0] + radius * (Math.cos(theta) * u[0] + Math.sin(theta) * w[0]),
+                    centre[1] + radius * (Math.cos(theta) * u[1] + Math.sin(theta) * w[1]),
+                    centre[2] + radius * (Math.cos(theta) * u[2] + Math.sin(theta) * w[2])
+                )
+                normals.push(...normal)
+            }
+            for (let j = 0; j < sides; j++) {
+                idx.push(capBase, capBase + 1 + j, capBase + 1 + ((j + 1) % sides))
+            }
+        }
+        // The ring runs counter-clockwise seen from +axis, because (u, w, axis) is right-handed.
+        // So the cap facing back down the axis takes it reversed, and the forward-facing one does
+        // not - the same handedness rule as the helix and arc caps.
+        pushCap(ends[0], scale(axis, -1), true)
+        pushCap(ends[1], axis, false)
+    })
+
+    return { vertices, normals, idx }
+}
+
 /**
  * A frustum - a cone or pyramid with its tip cut off - running along z from a base of radius 1 at
  * z = -0.5 to a top of radius `topRadiusRatio` at z = +0.5, with both ends capped.

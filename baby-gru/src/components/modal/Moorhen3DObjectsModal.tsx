@@ -7,6 +7,7 @@ import { createQuatFromAngle } from '../../../src/WebGLgComponents/quatUtils';
 import { quatToMat4, quat4Inverse } from '../../../src/WebGLgComponents/quatToMat4';
 import {
     addObject,
+    isFlatSidedType,
     removeObjectById,
     updateObject
 } from "../../store/threeDObjectsSlice";
@@ -44,7 +45,7 @@ import type {
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { colourToEmojiSwatch, componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenTextInput } from "../inputs";
+import { MoorhenToggle, MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
@@ -126,6 +127,7 @@ export const Moorhen3DObjects = () => {
     const newFlatSidedFrustumObject = (): FlatSidedFrustumObject => ({
         uniqueId: uuidv4(),
         type: "flatfrustum",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -138,6 +140,7 @@ export const Moorhen3DObjects = () => {
     const newPrismObject = (): PrismObject => ({
         uniqueId: uuidv4(),
         type: "prism",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -149,6 +152,7 @@ export const Moorhen3DObjects = () => {
     const newPyramidObject = (): PyramidObject => ({
         uniqueId: uuidv4(),
         type: "pyramid",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -160,6 +164,7 @@ export const Moorhen3DObjects = () => {
     const newCubeObject = (): CubeObject => ({
         uniqueId: uuidv4(),
         type: "cube",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -169,6 +174,7 @@ export const Moorhen3DObjects = () => {
     const newCuboidObject = (): CuboidObject => ({
         uniqueId: uuidv4(),
         type: "cuboid",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -216,6 +222,7 @@ export const Moorhen3DObjects = () => {
     const newTetrahedronObject = (): TetrahedronObject => ({
         uniqueId: uuidv4(),
         type: "tetrahedron",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -225,6 +232,7 @@ export const Moorhen3DObjects = () => {
     const newOctahedronObject = (): OctahedronObject => ({
         uniqueId: uuidv4(),
         type: "octahedron",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -234,6 +242,7 @@ export const Moorhen3DObjects = () => {
     const newDodecahedronObject = (): DodecahedronObject => ({
         uniqueId: uuidv4(),
         type: "dodecahedron",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -243,6 +252,7 @@ export const Moorhen3DObjects = () => {
     const newIcosahedronObject = (): IcosahedronObject => ({
         uniqueId: uuidv4(),
         type: "icosahedron",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -252,6 +262,7 @@ export const Moorhen3DObjects = () => {
     const newFootballObject = (): FootballObject => ({
         uniqueId: uuidv4(),
         type: "football",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -261,6 +272,7 @@ export const Moorhen3DObjects = () => {
     const newTruncatedOctahedronObject = (): TruncatedOctahedronObject => ({
         uniqueId: uuidv4(),
         type: "truncatedoctahedron",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -270,6 +282,7 @@ export const Moorhen3DObjects = () => {
     const newCuboctahedronObject = (): CuboctahedronObject => ({
         uniqueId: uuidv4(),
         type: "cuboctahedron",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -279,6 +292,7 @@ export const Moorhen3DObjects = () => {
     const newRhombicDodecahedronObject = (): RhombicDodecahedronObject => ({
         uniqueId: uuidv4(),
         type: "rhombicdodecahedron",
+        wireframe: false,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -662,6 +676,7 @@ export const Moorhen3DObjects = () => {
             size2 = undefined,
             height = undefined,
             sweep_angle = undefined,
+            wireframe = undefined,
             n_sides = undefined,
         },
         objectType
@@ -777,6 +792,12 @@ export const Moorhen3DObjects = () => {
                     sweep_angle !== undefined &&
                     "sweep_angle" in prev && {
                        sweep_angle: Number(sweep_angle)
+                    }
+                ),
+                ...(
+                    wireframe !== undefined &&
+                    isFlatSidedType(prev.type) && {
+                       wireframe: Boolean(wireframe)
                     }
                 ),
                 ...(
@@ -1351,6 +1372,19 @@ export const Moorhen3DObjects = () => {
                             isInvalid={!checkNSidesText()}
                             style={{ height: "2rem", margin: "0.3rem" }}
                         />
+                    </>
+                }
+                {isFlatSidedType(drawMode) &&
+                    <>
+                        <MoorhenToggle
+                            label="Wireframe"
+                            checked={"wireframe" in theObject && theObject.wireframe === true}
+                            onChange={() => {
+                                const current = "wireframe" in theObject && theObject.wireframe === true
+                                updateTheObject({wireframe: !current},theObject.type)
+                            }}
+                        />
+                        <span/>
                     </>
                 }
                 {(drawMode === "cube"||drawMode==="cuboid"||drawMode==="tetrahedron"||

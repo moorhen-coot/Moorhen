@@ -14,6 +14,15 @@ interface ThreeDObjectBase {
     colour: string;
 }
 
+/**
+ * Shapes bounded entirely by flat faces, which can therefore be drawn as a wireframe: a tube
+ * along each edge. Deliberately not on ThreeDObjectBase - a curved surface has no edges to trace,
+ * so a wireframe sphere or torus would come out as a tube along every triangle of its mesh.
+ */
+interface FlatSidedSolid {
+    wireframe: boolean;
+}
+
 export interface SphereObject extends ThreeDObjectBase {
     type: "sphere";
     radius: number;
@@ -43,7 +52,7 @@ export interface FrustumObject extends ThreeDObjectBase {
     height: number;
 }
 
-export interface FlatSidedFrustumObject extends ThreeDObjectBase {
+export interface FlatSidedFrustumObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "flatfrustum";
     orientation: Matrix4x4;
     bottom_radius: number;
@@ -52,7 +61,7 @@ export interface FlatSidedFrustumObject extends ThreeDObjectBase {
     n_sides: number;
 }
 
-export interface PrismObject extends ThreeDObjectBase {
+export interface PrismObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "prism";
     orientation: Matrix4x4;
     radius: number;
@@ -60,7 +69,7 @@ export interface PrismObject extends ThreeDObjectBase {
     n_sides: number;
 }
 
-export interface PyramidObject extends ThreeDObjectBase {
+export interface PyramidObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "pyramid";
     orientation: Matrix4x4;
     radius: number;
@@ -68,13 +77,13 @@ export interface PyramidObject extends ThreeDObjectBase {
     n_sides: number;
 }
 
-export interface CubeObject extends ThreeDObjectBase {
+export interface CubeObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "cube";
     orientation: Matrix4x4;
     scale: number;
 }
 
-export interface CuboidObject extends ThreeDObjectBase {
+export interface CuboidObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "cuboid";
     orientation: Matrix4x4;
     scalexyz: Scale3D;
@@ -112,52 +121,52 @@ export interface AnnulusObject extends ThreeDObjectBase {
     inner_radius: number;
 }
 
-export interface TetrahedronObject extends ThreeDObjectBase {
+export interface TetrahedronObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "tetrahedron";
     orientation: Matrix4x4;
     scale: number;
 }
 
-export interface OctahedronObject extends ThreeDObjectBase {
+export interface OctahedronObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "octahedron";
     orientation:Matrix4x4;
     scale: number;
 }
 
-export interface DodecahedronObject extends ThreeDObjectBase {
+export interface DodecahedronObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "dodecahedron";
     orientation: Matrix4x4;
     scale: number;
 }
 
-export interface IcosahedronObject extends ThreeDObjectBase {
+export interface IcosahedronObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "icosahedron";
     orientation: Matrix4x4;
     scale: number;
 }
 
-export interface FootballObject extends ThreeDObjectBase {
+export interface FootballObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "football";
     orientation: Matrix4x4;
     scale: number;
 }
 
 /** A truncated octahedron: 8 hexagons and 6 squares. A BCC periodic boundary cell. */
-export interface TruncatedOctahedronObject extends ThreeDObjectBase {
+export interface TruncatedOctahedronObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "truncatedoctahedron";
     orientation: Matrix4x4;
     scale: number;
 }
 
 /** A cuboctahedron: 8 triangles and 6 squares - a cube with its corners cut back. */
-export interface CuboctahedronObject extends ThreeDObjectBase {
+export interface CuboctahedronObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "cuboctahedron";
     orientation: Matrix4x4;
     scale: number;
 }
 
 /** A rhombic dodecahedron: 12 rhombic faces. An FCC periodic boundary cell. */
-export interface RhombicDodecahedronObject extends ThreeDObjectBase {
+export interface RhombicDodecahedronObject extends ThreeDObjectBase, FlatSidedSolid {
     type: "rhombicdodecahedron";
     orientation: Matrix4x4;
     scale: number;
@@ -203,6 +212,33 @@ export interface TorusObject extends ThreeDObjectBase {
     major_radius: number;
     minor_radius: number;
 }
+
+/**
+ * The types that extend FlatSidedSolid. Kept as a runtime list as well as a type so that the UI
+ * and the draw code can ask "does this shape take a wireframe?" without relying on the field
+ * being present on the object: objects restored from a session saved before `wireframe` existed
+ * have no such key, and a `"wireframe" in obj` test would exclude them for ever.
+ */
+export const FLAT_SIDED_TYPES = [
+    "flatfrustum",
+    "prism",
+    "pyramid",
+    "cube",
+    "cuboid",
+    "tetrahedron",
+    "octahedron",
+    "dodecahedron",
+    "icosahedron",
+    "football",
+    "truncatedoctahedron",
+    "cuboctahedron",
+    "rhombicdodecahedron"
+] as const;
+
+export type FlatSidedObjectType = typeof FLAT_SIDED_TYPES[number];
+
+export const isFlatSidedType = (type: string): type is FlatSidedObjectType =>
+    (FLAT_SIDED_TYPES as readonly string[]).includes(type);
 
 export type ThreeDObject =
             | SphereObject
