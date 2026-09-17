@@ -132,6 +132,36 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
             self.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+1);
             self.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+2);
             self.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+3);
+
+            // Put the per-instance divisors back on every attribute location this draw claimed.
+            //
+            // A divisor belongs to the attribute *location*, not to the program or the buffer, and
+            // it is global state that disableVertexAttribArray above does not clear. Leave one set
+            // and the next program to enable an attribute at that location reads it once per
+            // instance instead of once per vertex - and instanceOrientation is bound explicitly to
+            // location 6, so this draw claims 6..9, squarely among the locations the plain triangle
+            // shader uses. In a non-instanced draw that feeds every vertex from element 0, so any
+            // mesh drawn after an instanced buffer collapses to nothing.
+            //
+            // The colour attribute below was already being restored; these were not. The
+            // PERFECT_SPHERES path in drawCore restores its own for the same reason.
+            const restoreDivisor = (attribute: number) => {
+                if (attribute === undefined || attribute < 0) return
+                if (self.WEBGL2) {
+                    self.gl.vertexAttribDivisor(attribute, 0);
+                } else {
+                    self.instanced_ext.vertexAttribDivisorANGLE(attribute, 0);
+                }
+            }
+            restoreDivisor(theShader.vertexInstanceOriginAttribute);
+            restoreDivisor(theShader.vertexInstanceSizeAttribute);
+            // Guard the base before offsetting, or a base of -1 would reset location 0.
+            if (theShader.vertexInstanceOrientationAttribute >= 0) {
+                for (let column = 0; column < 4; column++) {
+                    restoreDivisor(theShader.vertexInstanceOrientationAttribute + column);
+                }
+            }
+
             if(theShader.vertexColourAttribute>-1){
                 if (self.WEBGL2) {
                     self.gl.vertexAttribDivisor(theShader.vertexColourAttribute, 0);

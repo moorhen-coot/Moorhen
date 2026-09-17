@@ -168,7 +168,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         const others = (store.getState().glRef.displayBuffers ?? []).filter(
             buffer => !ownedIds.has(buffer.id) && !droppedIds.has(buffer.id)
         )
-        dispatch(setDisplayBuffers([...owned, ...others]))
+        // Ours go last, leaving everything else where it already was. Hover state is held as an
+        // *index* into this array, so putting ours first would renumber every molecule and
+        // metaballs buffer each time a 3D object was added or removed - and a 3D object can now
+        // change on every animation frame. Appending keeps those indices stable.
+        dispatch(setDisplayBuffers([...others, ...owned]))
     }, [store, dispatch])
 
     /**

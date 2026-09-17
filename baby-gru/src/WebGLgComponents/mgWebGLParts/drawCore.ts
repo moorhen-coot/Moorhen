@@ -985,13 +985,31 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         // instanced buffer would put one untransformed copy of the shared mesh at the world
         // origin. Instanced buffers highlight themselves during the main draw instead, via
         // uHoveredInstance, so requiring the influence textures here keeps them out.
-        const hoveredHasInfluenceTextures = self.state.hoveridx>-1
-            && displayBuffers[self.state.hoveridx].pick_info
-            && displayBuffers[self.state.hoveridx].pick_info.influence_weights_texture
-            && displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_texture
-            && displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_texture
+        //
+        // hoveridx is an index into displayBuffers, and the array is rebuilt whenever buffers are
+        // added or removed, so the index can outlive the buffer it referred to. Reached through
+        // optional chaining rather than indexed directly: an out-of-range index would otherwise
+        // throw here, part-way through a frame, and take the rest of the draw with it.
+        const hoveredBuffer = self.state.hoveridx>-1 ? displayBuffers[self.state.hoveridx] : undefined
+        const hoveredHasInfluenceTextures = !!hoveredBuffer?.pick_info?.influence_weights_texture
+            && !!hoveredBuffer?.pick_info?.influence_point_indexes_texture
+            && !!hoveredBuffer?.pick_info?.influence_index_offsets_texture
 
-        if(self.state.hoveridx>-1 && self.state.hover_point>-1 && hoveredHasInfluenceTextures){
+        // The highlight is a blended overlay drawn on top of the geometry, so it has no business
+        // in the passes that are not building the visible image.
+        //
+        // It does belong in the depth-peel passes, though: when any one visible buffer is
+        // transparent the whole scene switches to depth peeling, and then the peel passes are the
+        // only place the geometry is drawn at all - skipping them loses the highlight entirely.
+        // What it must not do is inherit their blend state, which is off. Without blending the
+        // overlay does not blend over the surface, it *replaces* it, writing the faded colour and
+        // an alpha of nearly zero wherever the influence weight is low, and wiping out the whole
+        // mesh apart from the hovered region. So it enables blending for itself below and puts it
+        // back afterwards. self.shaderProgram is in the peel shader list, so it gets peelNumber
+        // and its fragments land in the one correct layer rather than all four.
+        const drawingVisibleImage = !calculatingShadowMap && !self.drawingGBuffers && !self.stencilPass
+
+        if(drawingVisibleImage && hoveredBuffer && self.state.hover_point>-1 && hoveredHasInfluenceTextures){
             //TODO - We don't really need to do self.draw at all. This could be done in the
             //       general drawing above.
             const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
@@ -1036,6 +1054,8 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                  self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[0])
                  self.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[0].itemSize, self.gl.FLOAT, false, 0, 0)
 
+                 const blendWasEnabled = self.gl.isEnabled(self.gl.BLEND);
+                 self.gl.enable(self.gl.BLEND);
                  self.gl.enable(self.gl.DEPTH_TEST);
                  self.gl.depthFunc(self.gl.LEQUAL);
                  self.gl.depthMask(false);
@@ -1047,10 +1067,14 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                  self.gl.enable(self.gl.DEPTH_TEST);
                  self.gl.depthFunc(self.gl.LESS);
                  self.gl.depthMask(true);
+                 if(!blendWasEnabled) self.gl.disable(self.gl.BLEND);
             }
         }
 
-        if(self.state.hoveridx>-1 && self.state.hoverIndices.length>0){
+        // Same stale-index guard, and the same restriction to the passes building the visible
+        // image. This one needs no blend state of its own: it draws fully opaque, so it lands the
+        // same way whether blending is on or off.
+        if(drawingVisibleImage && hoveredBuffer && self.state.hoverIndices.length>0){
 
             const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
             if(bufferTypes[0]==="TRIANGLES"){
