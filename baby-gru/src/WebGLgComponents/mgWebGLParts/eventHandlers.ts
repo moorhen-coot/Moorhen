@@ -117,7 +117,7 @@ export function doHover(self: MGWebGL, event) {
                 self.setState({ hoveridx: minidx_pi })
                 self.setState({ hover_point: minj_pi })
                 self.setState({ hoverIndices: [] })
-            } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj].length>0) {
+            } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj_pi].length>0) {
                 //Hmm, I am worried, could triangleIndexs.length > 1 ?
                 const completeHoverIndices = []
                 displayBuffers[minidx_pi]["pick_info"].point_triangles[minj_pi].forEach(idx => {
