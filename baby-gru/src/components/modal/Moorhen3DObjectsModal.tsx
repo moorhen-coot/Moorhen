@@ -6,8 +6,9 @@ import * as vec3 from 'gl-matrix/vec3';
 import { createQuatFromAngle } from '../../../src/WebGLgComponents/quatUtils';
 import { quatToMat4, quat4Inverse } from '../../../src/WebGLgComponents/quatToMat4';
 import {
+    DEFAULT_WIREFRAME_RADIUS,
     addObject,
-    isFlatSidedType,
+    isWireframeableType,
     removeObjectById,
     updateObject
 } from "../../store/threeDObjectsSlice";
@@ -90,6 +91,8 @@ export const Moorhen3DObjects = () => {
     const newSphereObject = (): SphereObject => ({
         uniqueId: uuidv4(),
         type: "sphere",
+        wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         radius: 1.0
@@ -98,6 +101,8 @@ export const Moorhen3DObjects = () => {
     const newCylinderObject = (): CylinderObject => ({
         uniqueId: uuidv4(),
         type: "cylinder",
+        wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         end: [0, 0, 5],
@@ -107,6 +112,8 @@ export const Moorhen3DObjects = () => {
     const newConeObject = (): ConeObject => ({
         uniqueId: uuidv4(),
         type: "cone",
+        wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         top: [0, 0, 5],
@@ -116,6 +123,8 @@ export const Moorhen3DObjects = () => {
     const newFrustumObject = (): FrustumObject => ({
         uniqueId: uuidv4(),
         type: "frustum",
+        wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -128,6 +137,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "flatfrustum",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -141,6 +151,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "prism",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -153,6 +164,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "pyramid",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -165,6 +177,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "cube",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -175,6 +188,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "cuboid",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -184,6 +198,8 @@ export const Moorhen3DObjects = () => {
     const newEllipsoidObject = (): EllipsoidObject => ({
         uniqueId: uuidv4(),
         type: "ellipsoid",
+        wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -212,6 +228,8 @@ export const Moorhen3DObjects = () => {
     const newAnnulusObject = (): AnnulusObject => ({
         uniqueId: uuidv4(),
         type: "annulus",
+        wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -223,6 +241,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "tetrahedron",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -233,6 +252,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "octahedron",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -243,6 +263,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "dodecahedron",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -253,6 +274,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "icosahedron",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -263,6 +285,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "football",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -273,6 +296,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "truncatedoctahedron",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -283,6 +307,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "cuboctahedron",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -293,6 +318,7 @@ export const Moorhen3DObjects = () => {
         uniqueId: uuidv4(),
         type: "rhombicdodecahedron",
         wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -302,6 +328,8 @@ export const Moorhen3DObjects = () => {
     const newArcObject = (): ArcObject => ({
         uniqueId: uuidv4(),
         type: "arc",
+        wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -313,6 +341,8 @@ export const Moorhen3DObjects = () => {
     const newCapsuleObject = (): CapsuleObject => ({
         uniqueId: uuidv4(),
         type: "capsule",
+        wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -323,6 +353,8 @@ export const Moorhen3DObjects = () => {
     const newHelixObject = (): HelixObject => ({
         uniqueId: uuidv4(),
         type: "helix",
+        wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -335,6 +367,8 @@ export const Moorhen3DObjects = () => {
     const newTorusObject = (): TorusObject => ({
         uniqueId: uuidv4(),
         type: "torus",
+        wireframe: false,
+        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
@@ -381,6 +415,8 @@ export const Moorhen3DObjects = () => {
     const [sizeText, setSizeText] = useState<string>("1.0");
     const [size2Text, setSize2Text] = useState<string>("0.2");
     const [heightText, setHeightText] = useState<string>("5.0");
+    const [wireframeRadiusText, setWireframeRadiusText] =
+        useState<string>(String(DEFAULT_WIREFRAME_RADIUS));
     const [planeSizeText, setPlaneSizeText] = useState<string>("5,5");
     const [sweepAngleText, setSweepAngleText] = useState<string>("90");
     const [nSidesText, setNSidesText] = useState<string>("4");
@@ -542,6 +578,13 @@ export const Moorhen3DObjects = () => {
         return isOk;
     }
 
+    const checkWireframeRadiusText = () => {
+        const value = parseFloat(wireframeRadiusText)
+        // Zero or negative would be a tube with no thickness or an inside-out one, so unlike the
+        // other sizes here this one has to be strictly positive.
+        return !Number.isNaN(value) && value > 0;
+    }
+
     const checkNSidesText = () => {
         let isOk: boolean = false;
         try {
@@ -677,6 +720,7 @@ export const Moorhen3DObjects = () => {
             height = undefined,
             sweep_angle = undefined,
             wireframe = undefined,
+            wireframe_radius = undefined,
             n_sides = undefined,
         },
         objectType
@@ -796,8 +840,14 @@ export const Moorhen3DObjects = () => {
                 ),
                 ...(
                     wireframe !== undefined &&
-                    isFlatSidedType(prev.type) && {
+                    isWireframeableType(prev.type) && {
                        wireframe: Boolean(wireframe)
+                    }
+                ),
+                ...(
+                    wireframe_radius !== undefined &&
+                    isWireframeableType(prev.type) && {
+                       wireframe_radius: Number(wireframe_radius)
                     }
                 ),
                 ...(
@@ -823,6 +873,7 @@ export const Moorhen3DObjects = () => {
             setHeightText("5");
             setPlaneSizeText("5,5");
             setSweepAngleText("90");
+            setWireframeRadiusText(String(DEFAULT_WIREFRAME_RADIUS));
             setObject(newSphereObject());
         } else {
             try {
@@ -850,6 +901,11 @@ export const Moorhen3DObjects = () => {
                     setSize2Text(String(existingObject.minor_radius))
                 if("sweep_angle" in existingObject)
                     setSweepAngleText(String(existingObject.sweep_angle))
+                setWireframeRadiusText(String(
+                    ("wireframe_radius" in existingObject && existingObject.wireframe_radius !== undefined)
+                        ? existingObject.wireframe_radius
+                        : DEFAULT_WIREFRAME_RADIUS
+                ))
                 if(existingObject.type==="frustum"||existingObject.type==="flatfrustum"){
                     setSizeText(String(existingObject.bottom_radius))
                     setSize2Text(String(existingObject.top_radius))
@@ -1374,7 +1430,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {isFlatSidedType(drawMode) &&
+                {isWireframeableType(drawMode) &&
                     <>
                         <MoorhenToggle
                             label="Wireframe"
@@ -1385,6 +1441,23 @@ export const Moorhen3DObjects = () => {
                             }}
                         />
                         <span/>
+                    </>
+                }
+                {isWireframeableType(drawMode) && "wireframe" in theObject && theObject.wireframe === true &&
+                    <>
+                        <MoorhenTextInput
+                            label="Wire thickness"
+                            text={wireframeRadiusText}
+                            onChange={evt => {
+                                setWireframeRadiusText(evt.target.value);
+                                const value = parseFloat(evt.target.value)
+                                if(!Number.isNaN(value) && value > 0){
+                                    updateTheObject({wireframe_radius: value},theObject.type)
+                                }
+                            }}
+                            isInvalid={!checkWireframeRadiusText()}
+                            style={{ height: "2rem", margin: "0.3rem" }}
+                        />
                     </>
                 }
                 {(drawMode === "cube"||drawMode==="cuboid"||drawMode==="tetrahedron"||

@@ -15,26 +15,51 @@ interface ThreeDObjectBase {
 }
 
 /**
- * Shapes bounded entirely by flat faces, which can therefore be drawn as a wireframe: a tube
- * along each edge. Deliberately not on ThreeDObjectBase - a curved surface has no edges to trace,
- * so a wireframe sphere or torus would come out as a tube along every triangle of its mesh.
+ * Shapes that can be drawn as a wireframe rather than as a surface.
+ *
+ * How the wires are found differs by shape. A flat-sided solid has real edges, recovered from the
+ * mesh as its creases (see getWireframe). A curved shape has no creases to recover - every edge of
+ * a sphere's triangulation is one - so its wires are stated parametrically instead, as hoops
+ * following the surface (see getEllipsoidWireframe), which also decouples wire density from
+ * tessellation.
+ *
+ * Deliberately not on ThreeDObjectBase: a disc and a plane are the two shapes left out, because
+ * each has nothing but an outline, so a wireframe of one would throw the shape away rather than
+ * reveal it. An annulus is flat too but has two rims with a surface between them, so it earns a
+ * cage of its own.
  */
-interface FlatSidedSolid {
+interface Wireframeable {
     wireframe: boolean;
+    /**
+     * Tube radius of the wires, in scene units. An absolute thickness rather than a proportion of
+     * the shape, so that a large object and a small one wireframed side by side look drawn with
+     * the same pen.
+     *
+     * Optional because an object restored from a session saved before this existed has no value
+     * for it, in which case DEFAULT_WIREFRAME_RADIUS stands in.
+     */
+    wireframe_radius?: number;
 }
 
-export interface SphereObject extends ThreeDObjectBase {
+/**
+ * The tube radius used when an object does not give one, in scene units. Chosen to match what the
+ * wires of a football of scale 16 came out as when thickness was 2% of the shape's own radius,
+ * which is where this started.
+ */
+export const DEFAULT_WIREFRAME_RADIUS = 0.16;
+
+export interface SphereObject extends ThreeDObjectBase, Wireframeable {
     type: "sphere";
     radius: number;
 }
 
-export interface CylinderObject extends ThreeDObjectBase {
+export interface CylinderObject extends ThreeDObjectBase, Wireframeable {
     type: "cylinder";
     end: Position3D;
     radius: number;
 }
 
-export interface ConeObject extends ThreeDObjectBase {
+export interface ConeObject extends ThreeDObjectBase, Wireframeable {
     type: "cone";
     top: Position3D;
     radius: number;
@@ -44,7 +69,7 @@ export interface ConeObject extends ThreeDObjectBase {
 // the centre of the shape and `orientation` turns it, with `height` giving its extent along the
 // shape's own z axis. Defining them by a start and end point would pin down that axis but leave
 // the rotation about it unspecified, so there would be no way to turn a square prism on the spot.
-export interface FrustumObject extends ThreeDObjectBase {
+export interface FrustumObject extends ThreeDObjectBase, Wireframeable {
     type: "frustum";
     orientation: Matrix4x4;
     bottom_radius: number;
@@ -52,7 +77,7 @@ export interface FrustumObject extends ThreeDObjectBase {
     height: number;
 }
 
-export interface FlatSidedFrustumObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface FlatSidedFrustumObject extends ThreeDObjectBase, Wireframeable {
     type: "flatfrustum";
     orientation: Matrix4x4;
     bottom_radius: number;
@@ -61,7 +86,7 @@ export interface FlatSidedFrustumObject extends ThreeDObjectBase, FlatSidedSolid
     n_sides: number;
 }
 
-export interface PrismObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface PrismObject extends ThreeDObjectBase, Wireframeable {
     type: "prism";
     orientation: Matrix4x4;
     radius: number;
@@ -69,7 +94,7 @@ export interface PrismObject extends ThreeDObjectBase, FlatSidedSolid {
     n_sides: number;
 }
 
-export interface PyramidObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface PyramidObject extends ThreeDObjectBase, Wireframeable {
     type: "pyramid";
     orientation: Matrix4x4;
     radius: number;
@@ -77,20 +102,20 @@ export interface PyramidObject extends ThreeDObjectBase, FlatSidedSolid {
     n_sides: number;
 }
 
-export interface CubeObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface CubeObject extends ThreeDObjectBase, Wireframeable {
     type: "cube";
     orientation: Matrix4x4;
     scale: number;
 }
 
-export interface CuboidObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface CuboidObject extends ThreeDObjectBase, Wireframeable {
     type: "cuboid";
     orientation: Matrix4x4;
     scalexyz: Scale3D;
 }
 
 /** A sphere with independent x, y and z semi-axes; equal axes give a sphere. */
-export interface EllipsoidObject extends ThreeDObjectBase {
+export interface EllipsoidObject extends ThreeDObjectBase, Wireframeable {
     type: "ellipsoid";
     orientation: Matrix4x4;
     scalexyz: Scale3D;
@@ -114,66 +139,66 @@ export interface DiscObject extends ThreeDObjectBase {
 }
 
 /** A flat ring: a disc with a concentric hole. `radius` is the outer radius. */
-export interface AnnulusObject extends ThreeDObjectBase {
+export interface AnnulusObject extends ThreeDObjectBase, Wireframeable {
     type: "annulus";
     orientation: Matrix4x4;
     radius: number;
     inner_radius: number;
 }
 
-export interface TetrahedronObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface TetrahedronObject extends ThreeDObjectBase, Wireframeable {
     type: "tetrahedron";
     orientation: Matrix4x4;
     scale: number;
 }
 
-export interface OctahedronObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface OctahedronObject extends ThreeDObjectBase, Wireframeable {
     type: "octahedron";
     orientation:Matrix4x4;
     scale: number;
 }
 
-export interface DodecahedronObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface DodecahedronObject extends ThreeDObjectBase, Wireframeable {
     type: "dodecahedron";
     orientation: Matrix4x4;
     scale: number;
 }
 
-export interface IcosahedronObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface IcosahedronObject extends ThreeDObjectBase, Wireframeable {
     type: "icosahedron";
     orientation: Matrix4x4;
     scale: number;
 }
 
-export interface FootballObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface FootballObject extends ThreeDObjectBase, Wireframeable {
     type: "football";
     orientation: Matrix4x4;
     scale: number;
 }
 
 /** A truncated octahedron: 8 hexagons and 6 squares. A BCC periodic boundary cell. */
-export interface TruncatedOctahedronObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface TruncatedOctahedronObject extends ThreeDObjectBase, Wireframeable {
     type: "truncatedoctahedron";
     orientation: Matrix4x4;
     scale: number;
 }
 
 /** A cuboctahedron: 8 triangles and 6 squares - a cube with its corners cut back. */
-export interface CuboctahedronObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface CuboctahedronObject extends ThreeDObjectBase, Wireframeable {
     type: "cuboctahedron";
     orientation: Matrix4x4;
     scale: number;
 }
 
 /** A rhombic dodecahedron: 12 rhombic faces. An FCC periodic boundary cell. */
-export interface RhombicDodecahedronObject extends ThreeDObjectBase, FlatSidedSolid {
+export interface RhombicDodecahedronObject extends ThreeDObjectBase, Wireframeable {
     type: "rhombicdodecahedron";
     orientation: Matrix4x4;
     scale: number;
 }
 
 /** A cylinder with hemispherical ends. `height` is the total end-to-end length. */
-export interface CapsuleObject extends ThreeDObjectBase {
+export interface CapsuleObject extends ThreeDObjectBase, Wireframeable {
     type: "capsule";
     orientation: Matrix4x4;
     radius: number;
@@ -185,7 +210,7 @@ export interface CapsuleObject extends ThreeDObjectBase {
  * `minor_radius` the tube radius, `height` the total rise and `sweep_angle` the total angle in
  * degrees, so 720 is two turns.
  */
-export interface HelixObject extends ThreeDObjectBase {
+export interface HelixObject extends ThreeDObjectBase, Wireframeable {
     type: "helix";
     orientation: Matrix4x4;
     major_radius: number;
@@ -198,7 +223,7 @@ export interface HelixObject extends ThreeDObjectBase {
  * A segment of a torus. `sweep_angle` is in degrees; a full 360 gives a closed ring. The
  * orientation decides where the arc starts, so there is no separate start angle.
  */
-export interface ArcObject extends ThreeDObjectBase {
+export interface ArcObject extends ThreeDObjectBase, Wireframeable {
     type: "arc";
     orientation: Matrix4x4;
     major_radius: number;
@@ -206,7 +231,7 @@ export interface ArcObject extends ThreeDObjectBase {
     sweep_angle: number;
 }
 
-export interface TorusObject extends ThreeDObjectBase {
+export interface TorusObject extends ThreeDObjectBase, Wireframeable {
     type: "torus";
     orientation: Matrix4x4;
     major_radius: number;
@@ -214,12 +239,22 @@ export interface TorusObject extends ThreeDObjectBase {
 }
 
 /**
- * The types that extend FlatSidedSolid. Kept as a runtime list as well as a type so that the UI
+ * The types that extend Wireframeable. Kept as a runtime list as well as a type so that the UI
  * and the draw code can ask "does this shape take a wireframe?" without relying on the field
  * being present on the object: objects restored from a session saved before `wireframe` existed
  * have no such key, and a `"wireframe" in obj` test would exclude them for ever.
  */
-export const FLAT_SIDED_TYPES = [
+export const WIREFRAMEABLE_TYPES = [
+    "sphere",
+    "ellipsoid",
+    "cylinder",
+    "cone",
+    "frustum",
+    "torus",
+    "arc",
+    "helix",
+    "capsule",
+    "annulus",
     "flatfrustum",
     "prism",
     "pyramid",
@@ -235,10 +270,10 @@ export const FLAT_SIDED_TYPES = [
     "rhombicdodecahedron"
 ] as const;
 
-export type FlatSidedObjectType = typeof FLAT_SIDED_TYPES[number];
+export type WireframeableObjectType = typeof WIREFRAMEABLE_TYPES[number];
 
-export const isFlatSidedType = (type: string): type is FlatSidedObjectType =>
-    (FLAT_SIDED_TYPES as readonly string[]).includes(type);
+export const isWireframeableType = (type: string): type is WireframeableObjectType =>
+    (WIREFRAMEABLE_TYPES as readonly string[]).includes(type);
 
 export type ThreeDObject =
             | SphereObject

@@ -771,11 +771,27 @@ export const getHelix = (
     return { vertices, normals, idx };
 };
 
-/** Thickness of a wireframe edge, as a fraction of the shape's own radius. */
-const WIREFRAME_RADIUS_FRACTION = 0.02
-
 /** Segments around each edge tube. Six is plenty at these thicknesses. */
 const WIREFRAME_TUBE_SIDES = 6
+
+/**
+ * A copy of a mesh with its positions stretched along the axes.
+ *
+ * For baking a shape's proportions into its wire mesh instead of leaving them to the instance
+ * size. A wireframe has to be scaled uniformly - an uneven instance size would flatten its round
+ * tubes into ellipses and the requested thickness would not be what you got - so a cuboid, or
+ * anything in the frustum family with its [radius, radius, height] size, has to arrive here
+ * already the right shape.
+ *
+ * Normals are carried over untouched, which would be wrong in general but is fine for the one use
+ * this has: getWireframe reads only positions, computing each face's normal itself. An affine
+ * stretch keeps flat faces flat, so the creases it finds are still the shape's real edges.
+ */
+export const stretchedMesh = (mesh: ShapeMesh, ratios: number[]): ShapeMesh => ({
+    vertices: mesh.vertices.map((v, i) => v * ratios[i % 3]),
+    normals: [...mesh.normals],
+    idx: [...mesh.idx],
+})
 
 /**
  * Turn a flat-sided solid into a wireframe: a thin tube along each of its edges.
@@ -789,10 +805,17 @@ const WIREFRAME_TUBE_SIDES = 6
  * Vertices are welded by position first, because the flat-shaded meshes deliberately duplicate
  * every corner once per face so that each copy can carry its own normal.
  *
+ * `tubeRadius` is in the mesh's own units, so a caller wanting a given thickness in the scene has
+ * to divide by the instance scale it is going to apply.
+ *
  * Only meaningful for flat-sided solids. A curved surface is all creases at this tolerance, so a
  * sphere or a torus would come out as a tube along every triangle edge.
  */
-export const getWireframe = (mesh: ShapeMesh, sides: number = WIREFRAME_TUBE_SIDES): ShapeMesh => {
+export const getWireframe = (
+    mesh: ShapeMesh,
+    tubeRadius: number,
+    sides: number = WIREFRAME_TUBE_SIDES
+): ShapeMesh => {
     const vertexCount = mesh.vertices.length / 3
     const at = (i: number): Vec3 => [mesh.vertices[3 * i], mesh.vertices[3 * i + 1], mesh.vertices[3 * i + 2]]
 
@@ -837,8 +860,7 @@ export const getWireframe = (mesh: ShapeMesh, sides: number = WIREFRAME_TUBE_SID
         }
     })
 
-    const shapeRadius = Math.max(...weldedPositions.map(length))
-    const radius = Math.max(shapeRadius * WIREFRAME_RADIUS_FRACTION, 1e-6)
+    const radius = Math.max(tubeRadius, 1e-6)
 
     const vertices: number[] = []
     const normals: number[] = []
@@ -913,6 +935,488 @@ export const getWireframe = (mesh: ShapeMesh, sides: number = WIREFRAME_TUBE_SID
 
     return { vertices, normals, idx }
 }
+
+/**
+ * A polyline to be swept into a tube. `closed` joins the last point back to the first and drops
+ * the end caps.
+ */
+type WirePath = {
+    points: Vec3[];
+    closed: boolean;
+};
+
+/**
+ * Sweep a thin tube along each of a set of polylines.
+ *
+ * This is the curved-surface counterpart of getWireframe. A curved mesh has no creases left to
+ * recover - at any sensible tolerance every edge of a sphere's triangulation is one - so the wires
+ * cannot be read back off the triangles and have to be stated parametrically by the caller
+ * instead. The pay-off is that wire density stops being tied to mesh tessellation: a shape meshed
+ * at 32x16 can be drawn as eight smooth hoops rather than as 1500 little struts.
+ *
+ * The cross-section frame is parallel-transported along the path - each step drops the previous
+ * frame's component along the new tangent and renormalises - so that the tube does not spin about
+ * its own axis between samples, which would show up as a visible twist in the facets.
+ *
+ * A closed path reuses ring 0 for its final quad, which assumes the transported frame comes back
+ * to where it started. That is exact for a planar loop, which is what every closed path here is;
+ * a non-planar loop would generally close with a seam, so it should be passed as an open path
+ * whose first and last points coincide.
+ */
+const tubesAlongPaths = (
+    paths: WirePath[],
+    radius: number,
+    sides: number = WIREFRAME_TUBE_SIDES
+): ShapeMesh => {
+    const vertices: number[] = [];
+    const normals: number[] = [];
+    const idx: number[] = [];
+
+    paths.forEach(path => {
+        // Drop repeated points. A zero-length segment has no direction, so it would give a zero
+        // tangent and a degenerate frame, and the ring built on it comes out inside-out. They are
+        // easy to arrive at honestly: a capsule with no barrel has both of its domes ending on the
+        // same circle, and a closed path is often written out with its first point repeated at the
+        // end. For a closed path the wrap-around counts as a repeat, so the last point goes too.
+        const points = path.points.filter(
+            (point, i) => i === 0 || length(sub(point, path.points[i - 1])) > 1e-9
+        );
+        while (
+            path.closed &&
+            points.length > 1 &&
+            length(sub(points[points.length - 1], points[0])) < 1e-9
+        ) {
+            points.pop();
+        }
+        const n = points.length;
+        if (n < 2) return;
+
+        // Central differences, so the frame follows the curve rather than the individual segments.
+        const tangentAt = (i: number): Vec3 => {
+            if (path.closed) return normalise(sub(points[(i + 1) % n], points[(i - 1 + n) % n]));
+            if (i === 0) return normalise(sub(points[1], points[0]));
+            if (i === n - 1) return normalise(sub(points[n - 1], points[n - 2]));
+            return normalise(sub(points[i + 1], points[i - 1]));
+        };
+
+        const base = vertices.length / 3;
+        const tangents: Vec3[] = [];
+        const frames: { u: Vec3; w: Vec3 }[] = [];
+        let u: Vec3 | null = null;
+
+        for (let i = 0; i < n; i++) {
+            const tangent = tangentAt(i);
+            if (u === null) {
+                const reference: Vec3 = Math.abs(tangent[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+                u = normalise(cross(reference, tangent));
+            } else {
+                const projected = sub(u, scale(tangent, dot(u, tangent)));
+                // A reversal would project to nothing; keep the old frame rather than blow up.
+                if (length(projected) > 1e-9) u = normalise(projected);
+            }
+            // (u, w, tangent) right-handed, so the ring winds the same way as getWireframe's.
+            const w = cross(tangent, u);
+            tangents.push(tangent);
+            frames.push({ u, w });
+
+            for (let j = 0; j < sides; j++) {
+                const theta = (2 * Math.PI * j) / sides;
+                const normal: Vec3 = [
+                    Math.cos(theta) * u[0] + Math.sin(theta) * w[0],
+                    Math.cos(theta) * u[1] + Math.sin(theta) * w[1],
+                    Math.cos(theta) * u[2] + Math.sin(theta) * w[2],
+                ];
+                vertices.push(
+                    points[i][0] + radius * normal[0],
+                    points[i][1] + radius * normal[1],
+                    points[i][2] + radius * normal[2]
+                );
+                normals.push(...normal);
+            }
+        }
+
+        const quadRings = path.closed ? n : n - 1;
+        for (let i = 0; i < quadRings; i++) {
+            const here = base + i * sides;
+            const next = base + ((i + 1) % n) * sides;
+            for (let j = 0; j < sides; j++) {
+                const nextJ = (j + 1) % sides;
+                idx.push(here + j, here + nextJ, next + nextJ);
+                idx.push(here + j, next + nextJ, next + j);
+            }
+        }
+
+        if (!path.closed) {
+            const pushCap = (
+                centre: Vec3,
+                normal: Vec3,
+                frame: { u: Vec3; w: Vec3 },
+                reverse: boolean
+            ) => {
+                const capBase = vertices.length / 3;
+                vertices.push(...centre);
+                normals.push(...normal);
+                for (let j = 0; j < sides; j++) {
+                    const k = reverse ? sides - 1 - j : j;
+                    const theta = (2 * Math.PI * k) / sides;
+                    vertices.push(
+                        centre[0] + radius * (Math.cos(theta) * frame.u[0] + Math.sin(theta) * frame.w[0]),
+                        centre[1] + radius * (Math.cos(theta) * frame.u[1] + Math.sin(theta) * frame.w[1]),
+                        centre[2] + radius * (Math.cos(theta) * frame.u[2] + Math.sin(theta) * frame.w[2])
+                    );
+                    normals.push(...normal);
+                }
+                for (let j = 0; j < sides; j++) {
+                    idx.push(capBase, capBase + 1 + j, capBase + 1 + ((j + 1) % sides));
+                }
+            };
+            // The same handedness rule as the getWireframe, helix and arc caps: the ring runs
+            // counter-clockwise seen from +tangent, so the cap facing back down the path takes it
+            // reversed and the forward-facing one does not.
+            pushCap(points[0], scale(tangents[0], -1), frames[0], true);
+            pushCap(points[n - 1], tangents[n - 1], frames[n - 1], false);
+        }
+    });
+
+    return { vertices, normals, idx };
+};
+
+/**
+ * An ellipsoid drawn as a cage of hoops - `meridians` half circles from pole to pole plus
+ * `latitudes` rings of latitude - instead of as a surface.
+ *
+ * Axes and parameterisation match getEllipsoid, so the cage and the solid describe the same
+ * surface and `rx, ry, rz` mean the same thing in both: semi-axes as ratios, scaled uniformly by
+ * the caller.
+ *
+ * `segments` samples a full turn, so a meridian - half a turn - takes half as many. Two opposite
+ * meridians together make one great circle, so an even count gives meridians/2 great circles.
+ */
+export const getEllipsoidWireframe = (
+    rx: number,
+    ry: number,
+    rz: number,
+    meridians: number,
+    latitudes: number,
+    segments: number,
+    tubeRadius: number
+): ShapeMesh => {
+    const ax = Math.max(Math.abs(rx), 1e-6);
+    const ay = Math.max(Math.abs(ry), 1e-6);
+    const az = Math.max(Math.abs(rz), 1e-6);
+
+    const surfacePoint = (phi: number, theta: number): Vec3 => [
+        ax * Math.cos(phi) * Math.cos(theta),
+        ay * Math.cos(phi) * Math.sin(theta),
+        az * Math.sin(phi),
+    ];
+
+    const paths: WirePath[] = [];
+
+    // Meridians run pole to pole, so they are open paths. Their ends all bunch at the two poles,
+    // where the caps end up buried inside the other tubes of the joint.
+    const meridianSegments = Math.max(2, Math.ceil(segments / 2));
+    for (let j = 0; j < meridians; j++) {
+        const theta = (2 * Math.PI * j) / meridians;
+        const points: Vec3[] = [];
+        for (let i = 0; i <= meridianSegments; i++) {
+            points.push(surfacePoint(-Math.PI / 2 + (Math.PI * i) / meridianSegments, theta));
+        }
+        paths.push({ points, closed: false });
+    }
+
+    // Rings of latitude, evenly spaced in angle and excluding the poles, where a ring would
+    // collapse to a point. An odd count therefore puts one ring on the equator.
+    for (let i = 0; i < latitudes; i++) {
+        const phi = -Math.PI / 2 + (Math.PI * (i + 1)) / (latitudes + 1);
+        const points: Vec3[] = [];
+        for (let j = 0; j < segments; j++) {
+            points.push(surfacePoint(phi, (2 * Math.PI * j) / segments));
+        }
+        paths.push({ points, closed: true });
+    }
+
+    return tubesAlongPaths(paths, tubeRadius);
+};
+
+/**
+ * The frustum family drawn as a cage: the two rims plus a set of lines up the slant. Covers a
+ * cylinder (both radii equal), a cone (top radius zero) and anything between.
+ *
+ * Every dimension is a ratio, so the caller can scale uniformly and keep the wire tubes circular.
+ * A [radius, radius, height] instance size - which is how the *solid* frustum is drawn - would
+ * squash them into ellipses. Ratios are taken against the larger rim rather than the base, so a
+ * frustum standing on a point (base radius zero) is not a division by zero.
+ *
+ * A rim of zero radius is skipped: a cone has one rim, not two, and its slant lines converge on
+ * the apex, where their caps bury themselves in the joint.
+ */
+export const getFrustumWireframe = (
+    bottomRatio: number,
+    topRatio: number,
+    heightRatio: number,
+    rimSegments: number,
+    verticals: number,
+    tubeRadius: number
+): ShapeMesh => {
+    const halfHeight = heightRatio / 2;
+    const paths: WirePath[] = [];
+
+    const rim = (radius: number, z: number) => {
+        if (radius < 1e-9) return;
+        const points: Vec3[] = [];
+        for (let i = 0; i < rimSegments; i++) {
+            const theta = (2 * Math.PI * i) / rimSegments;
+            points.push([radius * Math.cos(theta), radius * Math.sin(theta), z]);
+        }
+        paths.push({ points, closed: true });
+    };
+    rim(bottomRatio, -halfHeight);
+    rim(topRatio, halfHeight);
+
+    for (let i = 0; i < verticals; i++) {
+        const theta = (2 * Math.PI * i) / verticals;
+        paths.push({
+            points: [
+                [bottomRatio * Math.cos(theta), bottomRatio * Math.sin(theta), -halfHeight],
+                [topRatio * Math.cos(theta), topRatio * Math.sin(theta), halfHeight],
+            ],
+            closed: false,
+        });
+    }
+
+    return tubesAlongPaths(paths, tubeRadius);
+};
+
+/**
+ * A torus or arc drawn as a cage: rings around the tube plus circles running the long way round.
+ * Matches getTorus and getArc - major radius 1, tube thickness as `minorRatio` - so the cage and
+ * the solid describe the same surface.
+ *
+ * Both families of wire are planar circles, so they can be closed paths without a seam. On a
+ * partial sweep the long-way-round wires become open arcs, and the ring count is scaled down with
+ * the sweep so that a quarter turn is not given a full turn's worth of hoops.
+ */
+export const getTorusWireframe = (
+    minorRatio: number,
+    sweep: number,
+    crossSections: number,
+    longitudes: number,
+    segments: number,
+    tubeRadius: number
+): ShapeMesh => {
+    const fullTurn = 2 * Math.PI;
+    const swept = Math.min(Math.max(sweep, 0), fullTurn);
+    const closed = swept >= fullTurn - 1e-9;
+    const rings = closed
+        ? Math.max(2, crossSections)
+        : Math.max(2, Math.ceil((crossSections * swept) / fullTurn));
+    const longSegments = Math.max(2, Math.ceil((segments * swept) / fullTurn));
+    const ringSegments = Math.max(4, Math.round(segments / 2));
+
+    const paths: WirePath[] = [];
+
+    // Rings around the tube. At angle theta the cross section lies in the plane spanned by the
+    // radial direction and z, which is where the torus's own surface normal sweeps.
+    const ringCount = closed ? rings : rings + 1;
+    for (let i = 0; i < ringCount; i++) {
+        const theta = closed ? (fullTurn * i) / rings : (swept * i) / rings;
+        const points: Vec3[] = [];
+        for (let j = 0; j < ringSegments; j++) {
+            const phi = (fullTurn * j) / ringSegments;
+            points.push([
+                Math.cos(theta) * (1 + minorRatio * Math.cos(phi)),
+                Math.sin(theta) * (1 + minorRatio * Math.cos(phi)),
+                minorRatio * Math.sin(phi),
+            ]);
+        }
+        paths.push({ points, closed: true });
+    }
+
+    // Circles the long way round, each at a fixed angle about the tube: the outer equator, the
+    // crown, the inner equator and the underside for the default of four.
+    for (let j = 0; j < longitudes; j++) {
+        const phi = (fullTurn * j) / longitudes;
+        const radius = 1 + minorRatio * Math.cos(phi);
+        const z = minorRatio * Math.sin(phi);
+        const points: Vec3[] = [];
+        const steps = closed ? longSegments : longSegments + 1;
+        for (let i = 0; i < steps; i++) {
+            const theta = closed ? (fullTurn * i) / longSegments : (swept * i) / longSegments;
+            points.push([radius * Math.cos(theta), radius * Math.sin(theta), z]);
+        }
+        paths.push({ points, closed });
+    }
+
+    return tubesAlongPaths(paths, tubeRadius);
+};
+
+/**
+ * A helix drawn as a cage: helical lines following the tube plus rings around it.
+ *
+ * The frame repeats getHelix's, so the wires sit on the same surface as the solid. The helical
+ * lines are the one set of wires here that is not planar, which is why they are open paths - a
+ * closed non-planar loop would come back with a twist at the join.
+ */
+export const getHelixWireframe = (
+    minorRatio: number,
+    heightRatio: number,
+    sweep: number,
+    crossSections: number,
+    longitudes: number,
+    segments: number,
+    tubeRadius: number
+): ShapeMesh => {
+    const swept = Math.max(sweep, 1e-6);
+    const fullTurn = 2 * Math.PI;
+    const pitch = heightRatio / swept;
+    const halfRise = heightRatio / 2;
+    const invLen = 1 / Math.sqrt(1 + pitch * pitch);
+    const ringSegments = Math.max(4, Math.round(segments / 2));
+    const rings = Math.max(2, Math.ceil((crossSections * swept) / fullTurn));
+    const longSegments = Math.max(2, Math.ceil((segments * swept) / fullTurn));
+
+    // As getHelix: a right-handed frame (u, w, tangent) on the centre line.
+    const frameAt = (theta: number) => {
+        const cos = Math.cos(theta);
+        const sin = Math.sin(theta);
+        return {
+            centre: [cos, sin, -halfRise + pitch * theta] as Vec3,
+            u: [cos, sin, 0] as Vec3,
+            w: [-pitch * sin * invLen, pitch * cos * invLen, -invLen] as Vec3,
+        };
+    };
+    const surfacePoint = (theta: number, phi: number): Vec3 => {
+        const { centre, u, w } = frameAt(theta);
+        const c = Math.cos(phi);
+        const sn = Math.sin(phi);
+        return [
+            centre[0] + minorRatio * (c * u[0] + sn * w[0]),
+            centre[1] + minorRatio * (c * u[1] + sn * w[1]),
+            centre[2] + minorRatio * (c * u[2] + sn * w[2]),
+        ];
+    };
+
+    const paths: WirePath[] = [];
+
+    for (let i = 0; i <= rings; i++) {
+        const theta = (swept * i) / rings;
+        const points: Vec3[] = [];
+        for (let j = 0; j < ringSegments; j++) {
+            points.push(surfacePoint(theta, (fullTurn * j) / ringSegments));
+        }
+        paths.push({ points, closed: true });
+    }
+
+    for (let j = 0; j < longitudes; j++) {
+        const phi = (fullTurn * j) / longitudes;
+        const points: Vec3[] = [];
+        for (let i = 0; i <= longSegments; i++) {
+            points.push(surfacePoint((swept * i) / longSegments, phi));
+        }
+        paths.push({ points, closed: false });
+    }
+
+    return tubesAlongPaths(paths, tubeRadius);
+};
+
+/**
+ * A capsule drawn as a cage: lines running the full length over both domes plus rings across it.
+ *
+ * The profile repeats getCapsule's, hemisphere centres included, so the wires follow the same
+ * surface: the rings at the two joins are where the domes meet the barrel, which is what makes a
+ * wireframe capsule read as a capsule rather than as a stretched sphere.
+ */
+export const getCapsuleWireframe = (
+    lengthRatio: number,
+    meridians: number,
+    segments: number,
+    tubeRadius: number
+): ShapeMesh => {
+    const halfLength = Math.max(0, lengthRatio / 2 - 1);
+    const capSteps = Math.max(2, Math.round(segments / 4));
+
+    // (radius, z) along the outline, south pole to north, as getCapsule builds it.
+    const profile: { r: number; z: number }[] = [];
+    for (let i = 0; i <= capSteps; i++) {
+        const phi = -Math.PI / 2 + (Math.PI / 2) * (i / capSteps);
+        profile.push({ r: Math.cos(phi), z: -halfLength + Math.sin(phi) });
+    }
+    for (let i = 0; i <= capSteps; i++) {
+        const phi = (Math.PI / 2) * (i / capSteps);
+        profile.push({ r: Math.cos(phi), z: halfLength + Math.sin(phi) });
+    }
+
+    const paths: WirePath[] = [];
+
+    for (let j = 0; j < meridians; j++) {
+        const theta = (2 * Math.PI * j) / meridians;
+        paths.push({
+            points: profile.map(({ r, z }): Vec3 => [r * Math.cos(theta), r * Math.sin(theta), z]),
+            closed: false,
+        });
+    }
+
+    const ring = (r: number, z: number) => {
+        if (r < 1e-9) return;
+        const points: Vec3[] = [];
+        for (let i = 0; i < segments; i++) {
+            const theta = (2 * Math.PI * i) / segments;
+            points.push([r * Math.cos(theta), r * Math.sin(theta), z]);
+        }
+        paths.push({ points, closed: true });
+    };
+    // The two joins, one ring part way up each dome, and the waist - which only exists if the
+    // capsule is long enough to have a barrel at all.
+    ring(1, -halfLength);
+    ring(1, halfLength);
+    ring(Math.SQRT1_2, -halfLength - Math.SQRT1_2);
+    ring(Math.SQRT1_2, halfLength + Math.SQRT1_2);
+    if (halfLength > 1e-9) ring(1, 0);
+
+    return tubesAlongPaths(paths, tubeRadius);
+};
+
+/**
+ * An annulus drawn as a cage: the two rims plus spokes between them, like a wheel. Matches
+ * getAnnulus - outer radius 1, the hole as `innerRatio` - and flat in the xy plane.
+ *
+ * The one flat shape that is worth wireframing. A disc or a plane has a single outline and nothing
+ * within it, so a wireframe of either would discard the shape rather than reveal it; an annulus
+ * has two rims, and the gap between them is the shape.
+ */
+export const getAnnulusWireframe = (
+    innerRatio: number,
+    spokes: number,
+    segments: number,
+    tubeRadius: number
+): ShapeMesh => {
+    const inner = Math.min(Math.max(innerRatio, 0), 1);
+    const paths: WirePath[] = [];
+
+    [1, inner].forEach(radius => {
+        if (radius < 1e-9) return;
+        const points: Vec3[] = [];
+        for (let i = 0; i < segments; i++) {
+            const theta = (2 * Math.PI * i) / segments;
+            points.push([radius * Math.cos(theta), radius * Math.sin(theta), 0]);
+        }
+        paths.push({ points, closed: true });
+    });
+
+    for (let i = 0; i < spokes; i++) {
+        const theta = (2 * Math.PI * i) / spokes;
+        paths.push({
+            points: [
+                [inner * Math.cos(theta), inner * Math.sin(theta), 0],
+                [Math.cos(theta), Math.sin(theta), 0],
+            ],
+            closed: false,
+        });
+    }
+
+    return tubesAlongPaths(paths, tubeRadius);
+};
 
 /**
  * A frustum - a cone or pyramid with its tip cut off - running along z from a base of radius 1 at

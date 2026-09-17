@@ -2,24 +2,32 @@ import { gemmiAtomPairsToCylindersInfo, getCube, getHexForCanvasColourName, hexT
 import {
     ShapeMesh,
     getAnnulus,
+    getAnnulusWireframe,
     getArc,
     getCapsule,
+    getCapsuleWireframe,
     getCuboctahedron,
     getDisc,
     getDodecahedron,
     getEllipsoid,
+    getEllipsoidWireframe,
     getFootball,
     getFrustum,
+    getFrustumWireframe,
     getHelix,
+    getHelixWireframe,
     getPlane,
     getRhombicDodecahedron,
     getTruncatedOctahedron,
     getWireframe,
+    stretchedMesh,
     getIcosahedron,
     getOctahedron,
     getTetrahedron,
     getTorus,
+    getTorusWireframe,
 } from './shapeGeometry'
+import { DEFAULT_WIREFRAME_RADIUS } from '../store/threeDObjectsSlice'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 
@@ -38,6 +46,58 @@ const TORUS_MINOR_ACCU = 16
 /**
  * Segments of longitude and latitude for ellipsoid geometry.
  */
+// Wireframe density for the curved shapes. Coarse on purpose: these count hoops, not mesh
+// sections, so the wires stay smooth however few of them there are. An odd latitude count puts
+// one ring on the equator.
+const ELLIPSOID_WIRE_MERIDIANS = 8
+const ELLIPSOID_WIRE_LATITUDES = 5
+// Lines up the slant of a cylinder, cone or frustum. Its two rims are drawn at CYLINDER_ACCU,
+// since they have to read as circles rather than as a count of wires.
+const FRUSTUM_WIRE_VERTICALS = 8
+// Rings around the tube and circles the long way round, for a torus or arc. Four of the latter
+// gives the outer equator, the crown, the inner equator and the underside.
+const TORUS_WIRE_CROSS_SECTIONS = 12
+const TORUS_WIRE_LONGITUDES = 4
+// The same two for a helix, per full turn, so a longer coil gets proportionally more rings.
+const HELIX_WIRE_CROSS_SECTIONS = 8
+const HELIX_WIRE_LONGITUDES = 4
+const CAPSULE_WIRE_MERIDIANS = 8
+const ANNULUS_WIRE_SPOKES = 8
+// Samples per full turn of a wire path. A meridian is half a turn, so it takes half as many.
+const WIRE_PATH_SEGMENTS = 32
+
+/**
+ * The instance orientation that takes a z-aligned mesh onto the direction from `from` to `to`.
+ *
+ * instanceOrientation is a mat4 vertex attribute, and a mat4 attribute takes consecutive vec4s as
+ * its columns, so putting the axis in the third column is what rotates z onto it. Either of the
+ * other two columns can be any perpendicular, because the wire sets are symmetric about z - only
+ * the phase of the slant lines changes, which is not observable.
+ *
+ * Built directly from an orthonormal frame rather than through utils' getAxisOrientationMatrix,
+ * whose Rodrigues form is singular for an axis antiparallel to z and needs a special case there.
+ */
+const axisOrientation = (from: number[], to: number[]): number[] => {
+    const axis = [to[0] - from[0], to[1] - from[1], to[2] - from[2]]
+    const norm = Math.hypot(axis[0], axis[1], axis[2]) || 1
+    const a = axis.map(c => c / norm)
+    // Any reference not parallel to the axis; the swap keeps the cross product well conditioned.
+    const r = Math.abs(a[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0]
+    const ux = r[1] * a[2] - r[2] * a[1]
+    const uy = r[2] * a[0] - r[0] * a[2]
+    const uz = r[0] * a[1] - r[1] * a[0]
+    const ul = Math.hypot(ux, uy, uz) || 1
+    const u = [ux / ul, uy / ul, uz / ul]
+    // w = axis x u, so that (u, w, axis) is right-handed and the matrix is a rotation: the shader
+    // rotates normals with it, so a reflection here would turn the lighting inside out.
+    const w = [
+        a[1] * u[2] - a[2] * u[1],
+        a[2] * u[0] - a[0] * u[2],
+        a[0] * u[1] - a[1] * u[0],
+    ]
+    return [u[0], u[1], u[2], 0, w[0], w[1], w[2], 0, a[0], a[1], a[2], 0, 0, 0, 0, 1]
+}
+
 const ELLIPSOID_SLICES = 32
 const ELLIPSOID_STACKS = 16
 
@@ -182,12 +242,107 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
         size: number[],
         orientation: number[],
         colour: number[],
-        wireframe: boolean
+        wireframe: boolean,
+        wireRadius: number
     ) => {
         if (wireframe) {
-            addInstance(`${key}-wireframe`, () => getWireframe(buildMesh()), origin, size, orientation, colour)
+            // A wireframe is always scaled uniformly, whatever the solid does. An uneven instance
+            // size would flatten its round tubes into ellipses, and the thickness asked for would
+            // not be the thickness drawn - so uneven proportions are baked into the mesh instead
+            // and the instance scales by the largest component. That is what lets a cuboid, a
+            // prism or a truncated pyramid keep one pen width all the way round.
+            //
+            // The thickness is part of the key because it is absolute: two objects of different
+            // sizes need different meshes to end up with the same wires, so they no longer share
+            // one. Objects of the same size and thickness still do.
+            const largest = Math.max(...size.map(Math.abs)) || 1
+            const ratios = size.map(s => s / largest)
+            const meshRadius = wireRadius / largest
+            addInstance(
+                `${key}-wireframe-${ratios.join("-")}-${meshRadius}`,
+                () => getWireframe(stretchedMesh(buildMesh(), ratios), meshRadius),
+                origin,
+                [largest, largest, largest],
+                orientation,
+                colour
+            )
         } else {
             addInstance(key, buildMesh, origin, size, orientation, colour)
+        }
+    }
+
+    /**
+     * A wireframe cylinder or cone. Unlike their solids, these are instanced meshes.
+     *
+     * The solids go through gemmiAtomPairsToCylindersInfo, which places a unit cylinder or cone
+     * along the two points itself. A wireframe cannot use that: its tubes have to stay circular,
+     * which rules out the [radius, radius, length] instance size that comes with it. So the length
+     * is baked into the mesh as a ratio, the instance is scaled uniformly by the radius, and the
+     * rotation onto the axis is supplied here - the one thing the point-to-point shapes lack,
+     * having no orientation of their own.
+     */
+    const addAxialWireframe = (
+        bottomRatio: number,
+        topRatio: number,
+        from: number[],
+        to: number[],
+        radius: number,
+        colour: number[],
+        wireRadius: number
+    ) => {
+        const span = Math.hypot(to[0] - from[0], to[1] - from[1], to[2] - from[2])
+        // Nothing to draw, and both would be a division by zero.
+        if (span < 1e-9 || radius <= 0) return
+        const heightRatio = span / radius
+        const meshRadius = wireRadius / radius
+        addInstance(
+            `axial-wire-${bottomRatio}-${topRatio}-${heightRatio}-${meshRadius}`,
+            () => getFrustumWireframe(
+                bottomRatio, topRatio, heightRatio, CYLINDER_ACCU, FRUSTUM_WIRE_VERTICALS,
+                meshRadius
+            ),
+            [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2, (from[2] + to[2]) / 2],
+            [radius, radius, radius],
+            axisOrientation(from, to),
+            colour
+        )
+    }
+
+    /**
+     * Sphere and ellipsoid, either as a surface or as a cage of hoops.
+     *
+     * Unlike the flat-sided solids, the wireframe is not derived from the solid mesh - a curved
+     * surface has no creases to recover - so the two are separate generators rather than one
+     * feeding the other.
+     *
+     * The key describes the mesh alone, so an isotropic ellipsoid shares a mesh and a draw call
+     * with every sphere, and a wireframe can never collide with a solid of the same proportions.
+     */
+    const addEllipsoidInstance = (
+        rx: number, ry: number, rz: number,
+        origin: number[], size: number[], orientation: number[], colour: number[],
+        wireframe: boolean, wireRadius: number
+    ) => {
+        if (wireframe) {
+            // The thickness is wanted in scene units but the mesh is built at unit size, so it has
+            // to be divided by the uniform scale the instance will apply. Every curved wireframe
+            // below does the same.
+            const meshRadius = wireRadius / (Math.max(...size.map(Math.abs)) || 1)
+            addInstance(
+                `ellipsoid-wire-${rx}-${ry}-${rz}-${meshRadius}`,
+                () => getEllipsoidWireframe(
+                    rx, ry, rz,
+                    ELLIPSOID_WIRE_MERIDIANS, ELLIPSOID_WIRE_LATITUDES, WIRE_PATH_SEGMENTS,
+                    meshRadius
+                ),
+                origin, size, orientation, colour
+            )
+        } else {
+            addInstance(
+                `ellipsoid-${rx}-${ry}-${rz}`,
+                () => getEllipsoid(rx, ry, rz, ELLIPSOID_SLICES, ELLIPSOID_STACKS),
+                origin, size, orientation, colour
+            )
         }
     }
 
@@ -209,7 +364,8 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
         radius: number,
         height: number,
         colour: number[],
-        wireframe: boolean = false
+        wireframe: boolean = false,
+        wireRadius: number = DEFAULT_WIREFRAME_RADIUS
     ) => {
         addFlatSidedInstance(
             `frustum-${nSides}-${ratio}-${flat}`,
@@ -218,7 +374,8 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             [radius, radius, height],
             orientation,
             colour,
-            wireframe
+            wireframe,
+            wireRadius
         )
     }
 
@@ -276,12 +433,17 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
 
     threeDObjects.forEach(obj => {
         const colour = getObjectColour(obj.colour)
+        // Absent on the shapes that cannot be wireframed, and on anything restored from a session
+        // saved before the field existed.
+        const wireRadius = "wireframe_radius" in obj && obj.wireframe_radius !== undefined
+            ? obj.wireframe_radius
+            : DEFAULT_WIREFRAME_RADIUS
 
         if(obj.type==="cube"){
-            addFlatSidedInstance("cube", getCube, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
+            addFlatSidedInstance("cube", getCube, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe, wireRadius)
 
         } else if(obj.type==="cuboid"){
-            addFlatSidedInstance("cube", getCube, obj.origin, obj.scalexyz, obj.orientation, colour, obj.wireframe)
+            addFlatSidedInstance("cube", getCube, obj.origin, obj.scalexyz, obj.orientation, colour, obj.wireframe, wireRadius)
 
         } else if(obj.type==="plane"){
             // The mesh is a unit square, so the instance size gives the two side lengths. The z
@@ -310,9 +472,15 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             // The hole is a proportion of the outer radius baked into the mesh, so that the
             // instance size can carry the outer radius - the same ratio trick as the torus.
             const ratio = obj.radius !== 0 ? obj.inner_radius / obj.radius : 0
+            const wire = obj.wireframe === true
+            const meshRadius = wireRadius / (obj.radius || 1)
             addInstance(
-                `annulus-${ratio}-${DISC_ACCU}`,
-                () => getAnnulus(ratio, DISC_ACCU),
+                wire ? `annulus-wire-${ratio}-${meshRadius}` : `annulus-${ratio}-${DISC_ACCU}`,
+                wire
+                    ? () => getAnnulusWireframe(
+                        ratio, ANNULUS_WIRE_SPOKES, WIRE_PATH_SEGMENTS, meshRadius
+                    )
+                    : () => getAnnulus(ratio, DISC_ACCU),
                 obj.origin,
                 [obj.radius, obj.radius, obj.radius],
                 obj.orientation,
@@ -325,9 +493,19 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             // geometry too, so it is part of the key.
             const ratio = obj.major_radius !== 0 ? obj.minor_radius / obj.major_radius : 0
             const sweep = (obj.sweep_angle * Math.PI) / 180
+            const wire = obj.wireframe === true
+            const meshRadius = wireRadius / (obj.major_radius || 1)
             addInstance(
-                `arc-${ratio}-${obj.sweep_angle}`,
-                () => getArc(ratio, sweep, TORUS_MAJOR_ACCU, TORUS_MINOR_ACCU),
+                wire
+                    ? `arc-wire-${ratio}-${obj.sweep_angle}-${meshRadius}`
+                    : `arc-${ratio}-${obj.sweep_angle}`,
+                wire
+                    ? () => getTorusWireframe(
+                        ratio, sweep,
+                        TORUS_WIRE_CROSS_SECTIONS, TORUS_WIRE_LONGITUDES, WIRE_PATH_SEGMENTS,
+                        meshRadius
+                    )
+                    : () => getArc(ratio, sweep, TORUS_MAJOR_ACCU, TORUS_MINOR_ACCU),
                 obj.origin,
                 [obj.major_radius, obj.major_radius, obj.major_radius],
                 obj.orientation,
@@ -338,9 +516,15 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             // Baked as a length-to-radius ratio and scaled uniformly: a [r, r, h] instance size
             // would squash the hemispherical ends into ellipsoid caps.
             const ratio = obj.radius !== 0 ? obj.height / obj.radius : 2
+            const wire = obj.wireframe === true
+            const meshRadius = wireRadius / (obj.radius || 1)
             addInstance(
-                `capsule-${ratio}`,
-                () => getCapsule(ratio, CAPSULE_SLICES, CAPSULE_CAP_STACKS),
+                wire ? `capsule-wire-${ratio}-${meshRadius}` : `capsule-${ratio}`,
+                wire
+                    ? () => getCapsuleWireframe(
+                        ratio, CAPSULE_WIRE_MERIDIANS, WIRE_PATH_SEGMENTS, meshRadius
+                    )
+                    : () => getCapsule(ratio, CAPSULE_SLICES, CAPSULE_CAP_STACKS),
                 obj.origin,
                 [obj.radius, obj.radius, obj.radius],
                 obj.orientation,
@@ -353,9 +537,19 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             const minorRatio = obj.major_radius !== 0 ? obj.minor_radius / obj.major_radius : 0
             const heightRatio = obj.major_radius !== 0 ? obj.height / obj.major_radius : 0
             const sweep = (obj.sweep_angle * Math.PI) / 180
+            const wire = obj.wireframe === true
+            const meshRadius = wireRadius / (obj.major_radius || 1)
             addInstance(
-                `helix-${minorRatio}-${heightRatio}-${obj.sweep_angle}`,
-                () => getHelix(minorRatio, heightRatio, sweep, TORUS_MAJOR_ACCU, TORUS_MINOR_ACCU),
+                wire
+                    ? `helix-wire-${minorRatio}-${heightRatio}-${obj.sweep_angle}-${meshRadius}`
+                    : `helix-${minorRatio}-${heightRatio}-${obj.sweep_angle}`,
+                wire
+                    ? () => getHelixWireframe(
+                        minorRatio, heightRatio, sweep,
+                        HELIX_WIRE_CROSS_SECTIONS, HELIX_WIRE_LONGITUDES, WIRE_PATH_SEGMENTS,
+                        meshRadius
+                    )
+                    : () => getHelix(minorRatio, heightRatio, sweep, TORUS_MAJOR_ACCU, TORUS_MINOR_ACCU),
                 obj.origin,
                 [obj.major_radius, obj.major_radius, obj.major_radius],
                 obj.orientation,
@@ -366,18 +560,18 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             // Drawn as an isotropic ellipsoid rather than a PERFECT_SPHERES impostor, because the
             // impostor path has its own shaders with no vHighlight and so cannot be highlighted.
             //
-            // The key must describe the *mesh*, not the instance: a unit sphere is the same mesh
-            // wherever it sits and whatever its radius, so every sphere - and any isotropic
-            // ellipsoid, which produces this same key - shares one mesh and one draw call. Keying
-            // on the origin would give each sphere its own buffer, and worse, would mint a new key
-            // and rebuild the mesh every time one moved, which during a drag is once a frame.
-            addInstance(
-                "ellipsoid-1-1-1",
-                () => getEllipsoid(1.0, 1.0, 1.0, ELLIPSOID_SLICES, ELLIPSOID_STACKS),
+            // The radius rides on the instance size rather than on the mesh key, so every sphere
+            // shares one mesh and one draw call. Keying on the origin instead would give each
+            // sphere its own buffer and, worse, would mint a new key and rebuild the mesh every
+            // time one moved - during a drag, once a frame.
+            addEllipsoidInstance(
+                1, 1, 1,
                 obj.origin,
                 [obj.radius, obj.radius, obj.radius],
                 IDENTITY_ORIENTATION,
-                colour
+                colour,
+                obj.wireframe === true,
+                wireRadius
             )
 
         } else if(obj.type==="ellipsoid"){
@@ -387,46 +581,55 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             // gets away with non-uniform scaling only because its normals are axis-aligned.
             const largest = Math.max(...obj.scalexyz.map(Math.abs)) || 1
             const [rx, ry, rz] = obj.scalexyz.map(s => s / largest)
-            addInstance(
-                `ellipsoid-${rx}-${ry}-${rz}`,
-                () => getEllipsoid(rx, ry, rz, ELLIPSOID_SLICES, ELLIPSOID_STACKS),
+            addEllipsoidInstance(
+                rx, ry, rz,
                 obj.origin,
                 [largest, largest, largest],
                 obj.orientation,
-                colour
+                colour,
+                obj.wireframe === true,
+                wireRadius
             )
 
         } else if(obj.type==="tetrahedron"){
-            addFlatSidedInstance("tetrahedron", getTetrahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
+            addFlatSidedInstance("tetrahedron", getTetrahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe, wireRadius)
 
         } else if(obj.type==="octahedron"){
-            addFlatSidedInstance("octahedron", getOctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
+            addFlatSidedInstance("octahedron", getOctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe, wireRadius)
 
         } else if(obj.type==="dodecahedron"){
-            addFlatSidedInstance("dodecahedron", getDodecahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
+            addFlatSidedInstance("dodecahedron", getDodecahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe, wireRadius)
 
         } else if(obj.type==="icosahedron"){
-            addFlatSidedInstance("icosahedron", getIcosahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
+            addFlatSidedInstance("icosahedron", getIcosahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe, wireRadius)
 
         } else if(obj.type==="truncatedoctahedron"){
-            addFlatSidedInstance("truncatedoctahedron", getTruncatedOctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
+            addFlatSidedInstance("truncatedoctahedron", getTruncatedOctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe, wireRadius)
 
         } else if(obj.type==="cuboctahedron"){
-            addFlatSidedInstance("cuboctahedron", getCuboctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
+            addFlatSidedInstance("cuboctahedron", getCuboctahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe, wireRadius)
 
         } else if(obj.type==="rhombicdodecahedron"){
-            addFlatSidedInstance("rhombicdodecahedron", getRhombicDodecahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
+            addFlatSidedInstance("rhombicdodecahedron", getRhombicDodecahedron, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe, wireRadius)
 
         } else if(obj.type==="football"){
-            addFlatSidedInstance("football", getFootball, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe)
+            addFlatSidedInstance("football", getFootball, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe, wireRadius)
 
         } else if(obj.type==="torus"){
             // The mesh has major radius 1, so the instance size is the major radius and the tube
             // thickness has to be baked into the mesh as a ratio.
             const ratio = obj.major_radius !== 0 ? obj.minor_radius / obj.major_radius : 0
+            const wire = obj.wireframe === true
+            const meshRadius = wireRadius / (obj.major_radius || 1)
             addInstance(
-                `torus-${ratio}`,
-                () => getTorus(ratio, TORUS_MAJOR_ACCU, TORUS_MINOR_ACCU),
+                wire ? `torus-wire-${ratio}-${meshRadius}` : `torus-${ratio}`,
+                wire
+                    ? () => getTorusWireframe(
+                        ratio, 2 * Math.PI,
+                        TORUS_WIRE_CROSS_SECTIONS, TORUS_WIRE_LONGITUDES, WIRE_PATH_SEGMENTS,
+                        meshRadius
+                    )
+                    : () => getTorus(ratio, TORUS_MAJOR_ACCU, TORUS_MINOR_ACCU),
                 obj.origin,
                 [obj.major_radius, obj.major_radius, obj.major_radius],
                 obj.orientation,
@@ -441,14 +644,47 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             const flat = obj.type === "flatfrustum"
             const nSides = flat ? obj.n_sides : CYLINDER_ACCU
             const ratio = obj.bottom_radius !== 0 ? obj.top_radius / obj.bottom_radius : 0
-            addFrustumInstance(nSides, ratio, flat, obj.origin, obj.orientation, obj.bottom_radius, obj.height, colour,
-                               flat ? obj.wireframe : false)
+            if(!flat && obj.wireframe === true){
+                // The round frustum's cage is stated parametrically, and so has to be scaled
+                // uniformly to keep its tubes circular - hence ratios against the larger rim
+                // rather than against the base, which lets a frustum stand on a point.
+                const largest = Math.max(obj.bottom_radius, obj.top_radius)
+                if(largest > 0){
+                    const bottom = obj.bottom_radius / largest
+                    const top = obj.top_radius / largest
+                    const height = obj.height / largest
+                    const meshRadius = wireRadius / largest
+                    addInstance(
+                        `frustum-wire-${bottom}-${top}-${height}-${meshRadius}`,
+                        () => getFrustumWireframe(
+                            bottom, top, height, CYLINDER_ACCU, FRUSTUM_WIRE_VERTICALS, meshRadius
+                        ),
+                        obj.origin,
+                        [largest, largest, largest],
+                        obj.orientation,
+                        colour
+                    )
+                }
+            } else {
+                addFrustumInstance(nSides, ratio, flat, obj.origin, obj.orientation, obj.bottom_radius, obj.height, colour,
+                                   flat ? obj.wireframe : false, wireRadius)
+            }
 
         } else if(obj.type==="cylinder"){
-            addPair("cylinder", CYLINDER_ACCU, obj.origin, obj.end, obj.radius, colour)
+            if(obj.wireframe === true){
+                addAxialWireframe(1, 1, obj.origin, obj.end, obj.radius, colour, wireRadius)
+            } else {
+                addPair("cylinder", CYLINDER_ACCU, obj.origin, obj.end, obj.radius, colour)
+            }
 
         } else if(obj.type==="cone"){
-            addPair("cone", CYLINDER_ACCU, obj.origin, obj.top, obj.radius, colour)
+            // A cone is a frustum whose top has closed up, so its cage is one rim and the slant
+            // lines converging on the apex.
+            if(obj.wireframe === true){
+                addAxialWireframe(1, 0, obj.origin, obj.top, obj.radius, colour, wireRadius)
+            } else {
+                addPair("cone", CYLINDER_ACCU, obj.origin, obj.top, obj.radius, colour)
+            }
 
         } else if(obj.type==="prism"){
             // A prism is a frustum whose ends are the same size, and a pyramid one whose top has
@@ -456,10 +692,10 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             // is what gets them flat-lit: getDashedCylinder and getCone give each corner its own
             // radial normal, which is right for a round barrel but smooths away the edges between
             // the flat faces these two are made of.
-            addFrustumInstance(obj.n_sides, 1, true, obj.origin, obj.orientation, obj.radius, obj.height, colour, obj.wireframe)
+            addFrustumInstance(obj.n_sides, 1, true, obj.origin, obj.orientation, obj.radius, obj.height, colour, obj.wireframe, wireRadius)
 
         } else if(obj.type==="pyramid"){
-            addFrustumInstance(obj.n_sides, 0, true, obj.origin, obj.orientation, obj.radius, obj.height, colour, obj.wireframe)
+            addFrustumInstance(obj.n_sides, 0, true, obj.origin, obj.orientation, obj.radius, obj.height, colour, obj.wireframe, wireRadius)
         }
     })
 
