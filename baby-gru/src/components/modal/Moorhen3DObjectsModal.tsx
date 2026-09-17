@@ -4,7 +4,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import * as quat4 from 'gl-matrix/quat';
 import * as vec3 from 'gl-matrix/vec3';
 import { createQuatFromAngle } from '../../../src/WebGLgComponents/quatUtils';
-import { quatToMat4 } from '../../../src/WebGLgComponents/quatToMat4';
+import { quatToMat4, quat4Inverse } from '../../../src/WebGLgComponents/quatToMat4';
 import {
     addObject,
     removeObjectById,
@@ -66,6 +66,11 @@ const getOffsetRect = (elem: HTMLCanvasElement) => {
 export const Moorhen3DObjects = () => {
 
     const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
+
+    // The scene's own rotation, pushed to the store live by MGWebGL's onQuatChanged. Both the
+    // gizmo and the drag are expressed relative to it, so that this widget agrees with what the
+    // main window is showing however the camera is turned.
+    const sceneQuat = useSelector((state: moorhen.State) => state.glRef.quat);
 
     const [objectNew, setObjectNew] = useState(true);
 
@@ -414,10 +419,15 @@ export const Moorhen3DObjects = () => {
         vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
         vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
         vec3.set(rot_z_axis, 0.0, 0.0, 1.0);
+        // Take the object's axes into world space, then into camera space, so the gizmo shows the
+        // object as the main window sees it rather than as an absolute world orientation. The
+        // scene matrix is built the same way mgWebGL builds it for the modelview, so the two agree.
         const theMat = quatToMat4(myQuat);
-        vec3.transformMat4(rot_x_axis, rot_x_axis, theMat);
-        vec3.transformMat4(rot_y_axis, rot_y_axis, theMat);
-        vec3.transformMat4(rot_z_axis, rot_z_axis, theMat);
+        const sceneMat = quatToMat4(sceneQuat);
+        [rot_x_axis, rot_y_axis, rot_z_axis].forEach(axis => {
+            vec3.transformMat4(axis, axis, theMat);
+            vec3.transformMat4(axis, axis, sceneMat);
+        });
         ctx.save()
         ctx.clearRect(0,0,canvas.width,canvas.height)
         ctx.fillStyle = "#aaaaaa"
@@ -439,7 +449,7 @@ export const Moorhen3DObjects = () => {
         drawAxis(rot_y_axis, "#00ff00")
         drawAxis(rot_z_axis, "#0000bb")
         ctx.restore()
-    },[myQuat])
+    },[myQuat,sceneQuat])
 
     const checkPositionText = () => {
         let isOk: boolean = false;
@@ -796,7 +806,6 @@ export const Moorhen3DObjects = () => {
         } else {
             try {
                 const existingObject  = threeDObjects.find(element => element.uniqueId === evt.target.value);
-                console.log(existingObject)
 
                 setSelectedOption(existingObject.uniqueId);
                 setPositionText(existingObject.origin.join(","));
@@ -858,10 +867,23 @@ export const Moorhen3DObjects = () => {
         const [x,y] = getXY(evt)
         const [dx,dy]= [xyDown[0]-x,xyDown[1]-y]
 
+        // Rotate about the camera's axes, not the world's. Screen right and screen up are carried
+        // back into world space through the inverse of the scene rotation - the same derivation
+        // mgWebGL uses for its own `right` and `up` vectors when panning. Using the world axes
+        // instead is why a drag only behaved as expected while the scene sat at its unit rotation.
+        //
+        // The object's orientation itself stays in world space; only the frame the drag is
+        // expressed in has changed.
+        const invSceneQuat = quat4.create()
+        quat4Inverse(sceneQuat, invSceneQuat)
+        const invSceneMat = quatToMat4(invSceneQuat)
+
         const rot_x_axis = vec3.create()
         const rot_y_axis = vec3.create()
         vec3.set(rot_x_axis, 1.0, 0.0, 0.0);
         vec3.set(rot_y_axis, 0.0, 1.0, 0.0);
+        vec3.transformMat4(rot_x_axis, rot_x_axis, invSceneMat);
+        vec3.transformMat4(rot_y_axis, rot_y_axis, invSceneMat);
 
         // dx/dy are canvas deltas, so dy is positive when the mouse moves UP the screen. The
         // horizontal drag already reads as a trackball (drag right, the front face swings right);
@@ -878,7 +900,7 @@ export const Moorhen3DObjects = () => {
         drawCanvas()
         updateTheRotation({orientation:Array.from(quatToMat4(myQuat))})
 
-    },[mouseHeldDown,xyDown,myQuat,drawCanvas,updateTheRotation])
+    },[mouseHeldDown,xyDown,myQuat,sceneQuat,drawCanvas,updateTheRotation])
 
     const handleMouseDown = useCallback((evt) => {
         const [x,y] = getXY(evt)
