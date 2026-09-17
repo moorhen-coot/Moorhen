@@ -135,13 +135,13 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
 
             // Put the per-instance divisors back on every attribute location this draw claimed.
             //
-            // A divisor belongs to the attribute *location*, not to the program or the buffer, and
-            // it is global state that disableVertexAttribArray above does not clear. Leave one set
-            // and the next program to enable an attribute at that location reads it once per
-            // instance instead of once per vertex - and instanceOrientation is bound explicitly to
-            // location 6, so this draw claims 6..9, squarely among the locations the plain triangle
-            // shader uses. In a non-instanced draw that feeds every vertex from element 0, so any
-            // mesh drawn after an instanced buffer collapses to nothing.
+            // A divisor belongs to the attribute *location*, not to the program or to the buffer,
+            // and it is global state that the disableVertexAttribArray calls above do not clear.
+            // Leave one set and the next program to enable an attribute at that location reads it
+            // once per instance rather than once per vertex - and instanceOrientation is bound
+            // explicitly to location 6, so this draw claims 6..9, squarely among the locations the
+            // plain triangle shader uses. In a non-instanced draw that feeds every vertex from
+            // element 0, so a mesh drawn after an instanced buffer collapses and disappears.
             //
             // The colour attribute below was already being restored; these were not. The
             // PERFECT_SPHERES path in drawCore restores its own for the same reason.
