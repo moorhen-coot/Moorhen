@@ -235,6 +235,18 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.useProgram(theShader);
+
+                self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
+                if(theShader.uPointTex !== null){
+                    self.gl.uniform1i(theShader.uPointTex, 7);
+                }
+                if(theShader.uWeightTex !== null){
+                    self.gl.uniform1i(theShader.uWeightTex, 8);
+                }
+                if(theShader.uOffsetTex !== null){
+                    self.gl.uniform1i(theShader.uOffsetTex, 9);
+                }
+
                 self.gl.uniform1i(theShader.doShadows, false);
                 if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
                     self.gl.uniform1i(theShader.ShadowMap, 0);
@@ -944,6 +956,96 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         self.gl.drawElements(self.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, self.gl.UNSIGNED_SHORT, 0);
                     }
                 }
+            }
+        }
+
+        if(self.state.hoveridx>-1 && self.state.hover_point>-1){
+            //TODO - We don't really need to do self.draw at all. This could be done in the
+            //       general drawing above.
+            const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
+            if(bufferTypes[0]==="TRIANGLES"){
+
+                 const triangleVertexNormalBuffer = displayBuffers[self.state.hoveridx].triangleVertexNormalBuffer
+                 const triangleVertexPositionBuffer = displayBuffers[self.state.hoveridx].triangleVertexPositionBuffer
+                 const triangleVertexIndexBuffer = displayBuffers[self.state.hoveridx].triangleVertexIndexBuffer
+                 const influence_weights_texture = displayBuffers[self.state.hoveridx].pick_info.influence_weights_texture
+                 const influence_point_indexes_texture = displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_texture
+                 const influence_index_offsets_texture = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_texture
+                 const influence_weights_width = displayBuffers[self.state.hoveridx].pick_info.influence_weights_width
+                 const influence_point_indexes_width = displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_width
+                 const influence_index_offsets_width = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_width
+                 const theShader = self.shaderProgram
+                 self.gl.useProgram(theShader)
+                 if(theShader.uPointTex !== null){
+                     self.gl.uniform1i(theShader.uPointTex, 7);
+                     self.gl.activeTexture(self.gl.TEXTURE7);
+                     self.gl.bindTexture(self.gl.TEXTURE_2D, influence_point_indexes_texture);
+                     self.gl.uniform1ui(theShader.uPointTexWidth, influence_point_indexes_width);
+                 }
+                 if(theShader.uWeightTex !== null){
+                     self.gl.uniform1i(theShader.uWeightTex, 8);
+                     self.gl.activeTexture(self.gl.TEXTURE8);
+                     self.gl.bindTexture(self.gl.TEXTURE_2D, influence_weights_texture);
+                     self.gl.uniform1ui(theShader.uWeightTexWidth, influence_weights_width);
+                 }
+                 if(theShader.uOffsetTex !== null){
+                     self.gl.uniform1i(theShader.uOffsetTex, 9);
+                     self.gl.activeTexture(self.gl.TEXTURE9);
+                     self.gl.bindTexture(self.gl.TEXTURE_2D, influence_index_offsets_texture);
+                     self.gl.uniform1ui(theShader.uOffsetTexWidth, influence_index_offsets_width);
+                 }
+                 self.gl.uniform1ui(theShader.uHoveredPoint, self.state.hover_point);
+                 self.hoverBuffer ??= self.gl.createBuffer()
+                 self.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
+                 self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])
+                 self.gl.vertexAttribPointer(theShader.vertexNormalAttribute, triangleVertexNormalBuffer[0].itemSize, self.gl.FLOAT, false, 0, 0)
+
+                 self.gl.enableVertexAttribArray(theShader.vertexPositionAttribute)
+                 self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[0])
+                 self.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[0].itemSize, self.gl.FLOAT, false, 0, 0)
+
+                 self.gl.enable(self.gl.DEPTH_TEST);
+                 self.gl.depthFunc(self.gl.LEQUAL);
+                 self.gl.depthMask(false);
+                 self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                 self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.9, 0.5, 0.0, 1.0)
+
+                 self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[0]);
+                 self.drawMaxElementsUInt(self.gl.TRIANGLES, triangleVertexIndexBuffer[0].numItems)
+                 self.gl.enable(self.gl.DEPTH_TEST);
+                 self.gl.depthFunc(self.gl.LESS);
+                 self.gl.depthMask(true);
+            }
+        }
+
+        if(self.state.hoveridx>-1 && self.state.hoverIndices.length>0){
+
+            const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
+            if(bufferTypes[0]==="TRIANGLES"){
+
+                 const triangleVertexNormalBuffer = displayBuffers[self.state.hoveridx].triangleVertexNormalBuffer
+                 const triangleVertexPositionBuffer = displayBuffers[self.state.hoveridx].triangleVertexPositionBuffer
+
+                 const theShader = self.shaderProgram
+                 self.gl.useProgram(theShader)
+                 self.hoverBuffer ??= self.gl.createBuffer()
+                 self.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
+                 self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])
+                 self.gl.vertexAttribPointer(theShader.vertexNormalAttribute, triangleVertexNormalBuffer[0].itemSize, self.gl.FLOAT, false, 0, 0)
+
+                 self.gl.enableVertexAttribArray(theShader.vertexPositionAttribute)
+                 self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[0])
+                 self.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[0].itemSize, self.gl.FLOAT, false, 0, 0)
+
+                 self.gl.disable(self.gl.DEPTH_TEST)
+                 self.gl.depthFunc(self.gl.ALWAYS)
+                 self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                 self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0)
+
+                 self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, self.hoverBuffer)
+                 self.gl.bufferData(self.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(self.state.hoverIndices), self.gl.DYNAMIC_DRAW)
+                 self.drawMaxElementsUInt(self.gl.TRIANGLES, self.state.hoverIndices.length)
+
             }
         }
     }

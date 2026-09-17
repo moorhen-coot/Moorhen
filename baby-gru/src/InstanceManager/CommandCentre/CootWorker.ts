@@ -347,6 +347,49 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
     }
 }
 
+const vectorVectorPairUintFloatToJSArray = (vectorVector)  => {
+    const vectorVectorSize = vectorVector.size()
+    console.log(vectorVectorSize)
+    const theArray = []
+    for(let ivv=0; ivv<vectorVectorSize; ivv++){
+        const theVector = vectorVector.get(ivv)
+        const vectorSize = theVector.size()
+        const thisArray = []
+        for(let iv=0; iv<vectorSize; iv++){
+            thisArray.push(theVector.get(iv))
+        }
+        theVector.delete()
+        theArray.push(thisArray)
+    }
+    console.log(theArray)
+}
+
+const vectorArray3ToJSArray = (vectorArray): number[][] => {
+    const vectorVectorSize = vectorArray.size()
+    const retVal: number[][] = []
+    for(let ivv=0; ivv<vectorVectorSize; ivv++){
+        const theArray = vectorArray.get(ivv)
+        retVal.push(theArray)
+    }
+    return retVal
+}
+
+const vectorVectorToJSArray = (vectorVector): number[][] => {
+    const vectorVectorSize = vectorVector.size()
+    const retVal: number[][] = []
+    for(let ivv=0; ivv<vectorVectorSize; ivv++){
+        const vector = vectorVector.get(ivv)
+        const vectorSize = vector.size()
+        const thisArray: number[] = []
+        for(let iv=0; iv<vectorSize; iv++){
+            thisArray.push(vector.get(iv))
+        }
+        retVal.push(thisArray)
+        vector.delete()
+    }
+    return retVal
+}
+
 const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false, keepNorm: boolean = false): libcootApi.SimpleMeshJS => {
 
     const print_timing = false
@@ -1457,6 +1500,28 @@ const doCootCommand = (messageData: {
                 break;
             case 'mesh_perm3':
                 returnResult = simpleMeshToMeshData(cootResult, true, true)
+                break;
+            case 'PickableMeshPerm':
+                const mesh = cootResult.mesh
+                const influence_index_offsets = cootResult.influence_index_offsets
+                const influence_point_indexes = cootResult.influence_point_indexes
+                const influence_weights = cootResult.influence_weights
+
+                let influence_weights_C = new Float32Array(influence_weights.size())
+                let influence_index_offsets_C = new Uint32Array(influence_index_offsets.size())
+                let influence_point_indexes_C = new Uint32Array(influence_point_indexes.size())
+                cootModule.getFloat32ArrayFromVector(influence_weights, influence_weights_C)
+                cootModule.getUint32ArrayFromVector(influence_point_indexes, influence_point_indexes_C)
+                cootModule.getUint32ArrayFromVector(influence_index_offsets, influence_index_offsets_C) // Size of vertices
+
+                influence_index_offsets.delete()
+                influence_point_indexes.delete()
+                influence_weights.delete()
+
+                const pick_points = cootResult.pick_points
+                const pick_points_js = vectorArray3ToJSArray(pick_points)
+
+                returnResult = {mesh:simpleMeshToMeshData(mesh, true),pick_info:{influence_weights:influence_weights_C,influence_index_offsets:influence_index_offsets_C,influence_point_indexes:influence_point_indexes_C,pick_points:pick_points_js}}
                 break;
             case 'mesh_perm':
                 returnResult = simpleMeshToMeshData(cootResult, true)
