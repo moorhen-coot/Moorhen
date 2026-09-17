@@ -10,6 +10,48 @@
  * shared corners - a shared corner can only carry one normal.
  */
 
+/**
+ * WIREFRAMES
+ *
+ * Every shape except the disc and the plane can be drawn as a cage of tubes instead of a surface.
+ * There are two routes to the wires, and which one a shape takes is not a style choice:
+ *
+ *  - A flat-sided solid has real edges, and they can be recovered from its triangles as the
+ *    creases - see getWireframe. Adding another polyhedron costs nothing; its wires come for free.
+ *  - A curved surface has no creases left to find. At any useful tolerance every edge of a
+ *    sphere's triangulation is one, so crease detection returns a tube along all of them, quad
+ *    diagonals included - a mess, not a wireframe. Curved shapes therefore state their wires
+ *    parametrically and sweep them with tubesAlongPaths. Adding a curved shape means writing its
+ *    wire set by hand, which is the price of the useful half of this: wire density stops being
+ *    tied to tessellation, so a sphere meshed at 32x16 can be drawn as eight smooth hoops.
+ *
+ * Three invariants hold across both routes. Breaking any of them is a visual bug that is easy to
+ * introduce and hard to attribute, so they are worth stating once here:
+ *
+ *  1. A wireframe is ALWAYS placed with a uniform instance size, whatever the solid does. An
+ *     uneven size flattens round tubes into ellipses and makes the requested thickness wrong by a
+ *     different factor along each axis. Uneven proportions are baked into the geometry instead -
+ *     by stretchedMesh on the crease route, or as ratio arguments on the parametric one - and the
+ *     instance then scales by the largest component.
+ *  2. Thickness is absolute, in scene units, not a fraction of the shape. So a caller converts to
+ *     mesh units by dividing by the uniform scale it is about to apply, and the result has to
+ *     appear in the mesh key: two objects of different sizes need different meshes to end up with
+ *     the same wires on screen, and so no longer share one. Same size and thickness still do.
+ *  3. A closed path must be planar. The cross-section frame is parallel-transported, which returns
+ *     to itself around a planar loop but generally not otherwise, leaving a twist at the join. A
+ *     non-planar loop should be passed as an open path whose ends coincide; tubesAlongPaths drops
+ *     the repeated point and the caps hide inside the tube.
+ *
+ * Tubes are expected to interpenetrate where they meet - at a polyhedron's corners, at a sphere's
+ * poles - and their caps are buried inside those joints on purpose. So an edge shared by four
+ * triangles is normal at a junction, whereas an edge used only once is a hole and a real fault.
+ *
+ * tubesAlongPaths knows nothing about any of these shapes: it takes polylines and returns tubes.
+ * A user-defined path primitive - a tube through a CA trace, say - would be a thin wrapper over
+ * it, needing only a data model. Note that such a path is already in scene coordinates, so it
+ * wants a uniform scale of 1 and is its own mesh, with nothing to share and no instancing.
+ */
+
 export type ShapeMesh = {
     vertices: number[];
     normals: number[];

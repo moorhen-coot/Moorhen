@@ -433,8 +433,11 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
 
     threeDObjects.forEach(obj => {
         const colour = getObjectColour(obj.colour)
-        // Absent on the shapes that cannot be wireframed, and on anything restored from a session
-        // saved before the field existed.
+        // The wire thickness every wireframe route below starts from, in scene units. Absent on
+        // the shapes that cannot be wireframed, and on anything restored from a session saved
+        // before the field existed. Each route divides it by the uniform scale it is about to
+        // apply - see the WIREFRAMES note at the top of shapeGeometry.ts for why that scale has
+        // to be uniform and why the result belongs in the mesh key.
         const wireRadius = "wireframe_radius" in obj && obj.wireframe_radius !== undefined
             ? obj.wireframe_radius
             : DEFAULT_WIREFRAME_RADIUS
