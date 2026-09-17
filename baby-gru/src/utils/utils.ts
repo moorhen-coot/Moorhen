@@ -804,6 +804,59 @@ export const hexToRGBA = (hex: string): [number, number, number, number] => {
     return [r, g, b, a];
 };
 
+/**
+ * The hue each coloured emoji circle stands for, in degrees.
+ *
+ * Brown and the two neutrals are handled separately below: brown is not reachable by hue alone,
+ * and there is no grey circle, so anything without much colour has to resolve to black or white.
+ */
+const EMOJI_SWATCH_HUES: { hue: number; emoji: string }[] = [
+    { hue: 0, emoji: "\u{1F534}" }, // red
+    { hue: 33, emoji: "\u{1F7E0}" }, // orange
+    { hue: 55, emoji: "\u{1F7E1}" }, // yellow
+    { hue: 120, emoji: "\u{1F7E2}" }, // green
+    { hue: 210, emoji: "\u{1F535}" }, // blue
+    { hue: 285, emoji: "\u{1F7E3}" }, // purple
+];
+
+/**
+ * Pick the coloured emoji circle closest to a colour, for use as a swatch in places that can only
+ * hold text - a native <option>, most usefully, whose content model forbids markup and whose own
+ * colour styling the OS ignores when it draws the popup list itself.
+ *
+ * Only nine colours are available, so this quantises hard. It is a hint for telling entries apart
+ * at a glance, not a faithful sample.
+ *
+ * @param {string} colour - a CSS colour name, "#rrggbb" or "#rrggbbaa"
+ * @returns {string} a single emoji character
+ */
+export const colourToEmojiSwatch = (colour: string): string => {
+    if (!colour) return "\u{26AA}"; // white circle
+    if (colour === "gradient") return "\u{1F308}"; // rainbow
+
+    // Alpha says nothing about which swatch to use, and would break the 6-digit hex parsing.
+    const opaque = colour.startsWith("#") && colour.length === 9 ? colour.substring(0, 7) : colour;
+    const [hueFraction, saturation, lightness] = hexToHsl(getHexForCanvasColourName(opaque));
+    const hue = hueFraction * 360;
+
+    // Nothing in the palette is grey, so a washed-out or very dark or very pale colour has to
+    // land on one of the two neutrals.
+    if (saturation < 0.15 || lightness < 0.12) return lightness > 0.5 ? "\u{26AA}" : "\u{26AB}";
+    if (lightness > 0.92) return "\u{26AA}";
+
+    // Brown is really just a dark orange, and hue alone cannot distinguish the two.
+    if (hue >= 15 && hue <= 45 && lightness < 0.35) return "\u{1F7E4}";
+
+    // Circular distance, so a magenta at 330 degrees reads as red rather than purple.
+    const hueDistance = (a: number, b: number) => {
+        const d = Math.abs(a - b) % 360;
+        return d > 180 ? 360 - d : d;
+    };
+    return EMOJI_SWATCH_HUES.reduce((best, candidate) =>
+        hueDistance(hue, candidate.hue) < hueDistance(hue, best.hue) ? candidate : best
+    ).emoji;
+};
+
 export const getCone = (cylinder_accu: number): [number[], number[], number[]] => {
     let thisPos = [];
     let thisNorm = [];

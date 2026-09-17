@@ -43,7 +43,7 @@ import type {
 
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
-import { componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
+import { colourToEmojiSwatch, componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
 import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -951,14 +951,15 @@ export const Moorhen3DObjects = () => {
                 handleObjectChange(evt)}}
             value={selectedOption}>
             <option value="new">New</option>
-            {threeDObjects.length > 0 &&
-                threeDObjects.map((vec, i) => {
-                        return (
-                            <option key={i} value={vec.uniqueId}>
-                                {vec.type}
-                            </option>
-                        );
-                })}
+            {threeDObjects.map(obj => (
+                <option key={obj.uniqueId} value={obj.uniqueId}>
+                    {colourToEmojiSwatch(obj.colour)}
+                    {" "}
+                    {String(obj.type).charAt(0).toUpperCase() + String(obj.type).slice(1)}
+                    {" "}
+                    {obj.origin.map(v => v.toFixed(2)).join(", ")}
+                </option>
+            ))}
         </MoorhenSelect>
     );
 
