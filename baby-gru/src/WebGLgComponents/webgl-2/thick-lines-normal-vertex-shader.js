@@ -18,6 +18,8 @@ var thick_lines_normal_vertex_shader_source = `#version 300 es\n
     out lowp vec4 eyePos;
     out lowp vec4 ShadowCoord;
 
+    out float vHighlight;
+
     void main(void) {
 
         vec4 theVert = aVertexPosition;
@@ -36,6 +38,7 @@ var thick_lines_normal_vertex_shader_source = `#version 300 es\n
         mvInvMatrix = uMVINVMatrix;
         v = vec3(uMVMatrix * theVert);
 
+        vHighlight = 1.0;
     }
 `;
 
