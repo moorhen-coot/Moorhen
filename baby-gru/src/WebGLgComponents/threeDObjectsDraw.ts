@@ -16,6 +16,7 @@ import {
     getFrustumWireframe,
     getHelix,
     getHelixWireframe,
+    getPathTubes,
     getPlane,
     getRhombicDodecahedron,
     getTruncatedOctahedron,
@@ -65,6 +66,13 @@ const CAPSULE_WIRE_MERIDIANS = 8
 const ANNULUS_WIRE_SPOKES = 8
 // Samples per full turn of a wire path. A meridian is half a turn, so it takes half as many.
 const WIRE_PATH_SEGMENTS = 32
+
+/**
+ * Segments around a path primitive's tube. More than a wireframe wire gets, because a path is the
+ * object you are looking at rather than a hairline tracing one, and six sides on something drawn
+ * at a radius you can see reads as a hexagonal rod.
+ */
+const PATH_TUBE_SIDES = 12
 
 /**
  * The instance orientation that takes a z-aligned mesh onto the direction from `from` to `to`.
@@ -617,6 +625,28 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
 
         } else if(obj.type==="football"){
             addFlatSidedInstance("football", getFootball, obj.origin, [obj.scale, obj.scale, obj.scale], obj.orientation, colour, obj.wireframe, wireRadius)
+
+        } else if(obj.type==="path"){
+            // The points are the geometry, already in scene units relative to the origin, so
+            // there is no canonical mesh to scale and nothing to share with any other object:
+            // one mesh per path, keyed by its id. That costs nothing, because `groups` lives for
+            // a single rebuild - every mesh here is built afresh each time the objects change -
+            // so the key only has to be unique within one pass, not stable across them.
+            //
+            // The orientation and origin still come from the instance, so a path can be dragged
+            // and turned with the same controls as everything else.
+            if(obj.points && obj.points.length >= 6){
+                addInstance(
+                    `path-${obj.uniqueId}`,
+                    () => getPathTubes(
+                        obj.points, obj.run_starts ?? [], obj.radius, PATH_TUBE_SIDES
+                    ),
+                    obj.origin,
+                    [1, 1, 1],
+                    obj.orientation,
+                    colour
+                )
+            }
 
         } else if(obj.type==="torus"){
             // The mesh has major radius 1, so the instance size is the major radius and the tube

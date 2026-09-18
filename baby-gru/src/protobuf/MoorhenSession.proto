@@ -220,6 +220,10 @@ message Moorhen3DObject {
     optional bool wireframe = 19;
     // Tube radius of those wires, in scene units.
     optional float wireframe_radius = 20;
+    // A path's points, as x, y, z triples relative to origin, and the point index at which each
+    // separate run of it begins.
+    repeated float points = 21;
+    repeated uint32 run_starts = 22;
 }
 
 message RGB {

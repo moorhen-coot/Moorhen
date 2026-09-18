@@ -40,13 +40,15 @@ import type {
     CuboctahedronObject,
     RhombicDodecahedronObject,
     TorusObject,
+    PathObject,
     ThreeDObject
 } from "../../store/threeDObjectsSlice";
 
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { colourToEmojiSwatch, componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenToggle, MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenTextInput } from "../inputs";
+import { MoorhenToggle, MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenSelect, MoorhenTextInput } from "../inputs";
+import { smoothPath } from "../../WebGLgComponents/shapeGeometry";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 
@@ -69,6 +71,8 @@ export const Moorhen3DObjects = () => {
 
     const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
 
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+
     // The scene's own rotation, pushed to the store live by MGWebGL's onQuatChanged. Both the
     // gizmo and the drag are expressed relative to it, so that this widget agrees with what the
     // main window is showing however the camera is turned.
@@ -80,6 +84,7 @@ export const Moorhen3DObjects = () => {
 
     const vectorSelectRef = useRef<null | HTMLSelectElement>(null);
     const drawModeRef = useRef<null | HTMLSelectElement>(null);
+    const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
 
     const IDENTITY_MATRIX: Matrix4x4 = [
         1, 0, 0, 0,
@@ -364,6 +369,18 @@ export const Moorhen3DObjects = () => {
         sweep_angle: 720.0
     });
 
+    const newPathObject = (): PathObject => ({
+        uniqueId: uuidv4(),
+        type: "path",
+        colour: "#ff0000ff",
+        origin: [0, 0, 0],
+        orientation: IDENTITY_MATRIX,
+        // Empty until something generates them; the draw path skips a path with nothing in it.
+        points: [],
+        run_starts: [],
+        radius: 0.3
+    });
+
     const newTorusObject = (): TorusObject => ({
         uniqueId: uuidv4(),
         type: "torus",
@@ -375,6 +392,101 @@ export const Moorhen3DObjects = () => {
         major_radius: 1.0,
         minor_radius: 0.2
     });
+
+    /**
+     * Beyond this, consecutive CA atoms are not part of the same run. A CA-CA step is 3.8 A.
+     *
+     * Residue numbering is deliberately not used for the test: a jump in numbering with the atoms
+     * still a peptide bond apart is a renumbering rather than a gap, and tracing straight through
+     * it is right, while a genuine break shows up as distance whatever the numbers say.
+     */
+    const CA_BREAK_DISTANCE = 5.0;
+
+    /** Segments each 3.8 A step becomes when splined, giving roughly 1 A between points. */
+    const SPLINE_SUBDIVISIONS = 4;
+
+    const [splinePath, setSplinePath] = useState<boolean>(false);
+
+    /**
+     * Replace the current path's points with the CA trace of the selected molecule.
+     *
+     * A snapshot, not a link: the path keeps the coordinates and knows nothing about where they
+     * came from, so refining the molecule afterwards leaves the path where the atoms were. Press
+     * the button again to catch up.
+     *
+     * The points are stored relative to their own centroid, which becomes the object's origin, so
+     * the existing position and orientation controls move and turn the whole trace.
+     */
+    const getPointsFromCATrace = async () => {
+        if (theObject.type !== "path") return;
+        const molecule = molecules.find(
+            mol => mol.molNo === parseInt(moleculeSelectRef.current?.value ?? "")
+        );
+        if (!molecule) return;
+
+        const atoms = await molecule.gemmiAtomsForCid("/*/*/*/*");
+        const cas = atoms.filter(atom => atom.name.trim() === "CA");
+        if (cas.length < 2) return;
+
+        const runs: number[][] = [];
+        let run: number[] = [];
+        cas.forEach((atom, i) => {
+            const previous = i > 0 ? cas[i - 1] : null;
+            const broken = previous !== null && (
+                atom.chain_id !== previous.chain_id ||
+                Math.hypot(atom.x - previous.x, atom.y - previous.y, atom.z - previous.z) > CA_BREAK_DISTANCE
+            );
+            if (broken && run.length > 0) {
+                runs.push(run);
+                run = [];
+            }
+            run.push(atom.x, atom.y, atom.z);
+        });
+        if (run.length > 0) runs.push(run);
+
+        // Splined run by run, never across a break - a spline through a gap would invent a strand
+        // that is not there.
+        const shaped = splinePath ? runs.map(r => smoothPath(r, SPLINE_SUBDIVISIONS)) : runs;
+
+        const points: number[] = [];
+        const run_starts: number[] = [];
+        shaped.forEach(r => {
+            if (r.length < 6) return;
+            run_starts.push(points.length / 3);
+            points.push(...r);
+        });
+        if (points.length < 6) return;
+
+        const count = points.length / 3;
+        const centroid = [0, 1, 2].map(
+            c => points.reduce((total, x, i) => (i % 3 === c ? total + x : total), 0) / count
+        ) as [number, number, number];
+
+        const updated: PathObject = {
+            ...theObject,
+            points: points.map((x, i) => x - centroid[i % 3]),
+            run_starts,
+            origin: centroid
+        };
+        setObject(updated);
+        setPositionText(centroid.map(c => c.toFixed(2)).join(","));
+
+        // Push it to the store here rather than leaving it to the live-sync effect or to Apply.
+        //
+        // Generating points is an explicit action whose whole purpose is to be looked at, so it
+        // has to appear. The sync effect deliberately ignores a "new" object - it is not in the
+        // store, and Apply is what puts it there - which meant a fresh path collected its points
+        // and drew nothing, and then, once applied, went on showing the applied points while the
+        // dialog held newer ones. Dispatching the object we just built also avoids depending on
+        // the effect's coalescing frame for a one-off action.
+        if (objectNew) {
+            dispatch(addObject(updated));
+            setObjectNew(false);
+            setSelectedOption(updated.uniqueId);
+        } else {
+            dispatch(updateObject(updated));
+        }
+    };
 
     const createNewObject = (type: ThreeDObject["type"]): ThreeDObject => {
         switch (type) {
@@ -399,6 +511,7 @@ export const Moorhen3DObjects = () => {
             case "dodecahedron": return newDodecahedronObject();
             case "icosahedron": return newIcosahedronObject();
             case "football": return newFootballObject();
+            case "path": return newPathObject();
             case "truncatedoctahedron": return newTruncatedOctahedronObject();
             case "cuboctahedron": return newCuboctahedronObject();
             case "rhombicdodecahedron": return newRhombicDodecahedronObject();
@@ -1107,6 +1220,7 @@ export const Moorhen3DObjects = () => {
                     <option value="cuboctahedron">Cuboctahedron</option>
                     <option value="rhombicdodecahedron">Rhombic Dodecahedron</option>
                     <option value="torus">Torus</option>
+                    <option value="path">Path</option>
 
                 </MoorhenSelect>
 
@@ -1121,6 +1235,7 @@ export const Moorhen3DObjects = () => {
                 || drawMode === "capsule" || drawMode === "helix"
                 || drawMode === "frustum" || drawMode === "flatfrustum"
                 || drawMode === "prism" || drawMode === "pyramid"
+                || drawMode === "path"
                 ) &&
                     <>
                         <MoorhenTextInput
@@ -1138,6 +1253,33 @@ export const Moorhen3DObjects = () => {
                             isInvalid={!checkPositionText()}
                             style={{ height: "2rem", margin: "0.3rem" }}
                         />
+                    </>
+                }
+                {(drawMode === "path")  &&
+                    <>
+                        <MoorhenMoleculeSelect
+                            ref={moleculeSelectRef}
+                            molecules={molecules}
+                            style={{ width: "20rem" }}
+                        />
+                        <MoorhenStack direction="line">
+                            <MoorhenToggle
+                                label="Spline"
+                                checked={splinePath}
+                                onChange={() => setSplinePath(!splinePath)}
+                            />
+                            <MoorhenButton
+                                label="Get CA points"
+                                onClick={() => { getPointsFromCATrace() }}
+                                tooltip="Replace this path's points with the CA trace of the selected molecule"
+                            />
+                        </MoorhenStack>
+                        <span>
+                            {theObject.type === "path" && theObject.points.length > 0
+                                ? `${theObject.points.length / 3} points in ${Math.max(1, theObject.run_starts?.length ?? 1)} run(s)`
+                                : "No points yet"}
+                        </span>
+                        <span/>
                     </>
                 }
                 {(drawMode === "cylinder")  &&
@@ -1254,7 +1396,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "sphere"||drawMode === "cylinder"||drawMode === "cone"||drawMode === "disc"||drawMode === "annulus"||drawMode === "capsule")  &&
+                {(drawMode === "sphere"||drawMode === "cylinder"||drawMode === "cone"||drawMode === "disc"||drawMode === "annulus"||drawMode === "capsule"||drawMode === "path")  &&
                     <>
                         <MoorhenTextInput
                             label="Radius"
@@ -1470,7 +1612,7 @@ export const Moorhen3DObjects = () => {
                    drawMode==="arc"||drawMode==="capsule"||drawMode==="helix"||
                    drawMode==="frustum"||
                    drawMode==="flatfrustum"||drawMode==="prism"||
-                   drawMode==="pyramid")  &&
+                   drawMode==="pyramid"||drawMode==="path")  &&
                     <>
                         <span>Orientation</span>
                         <canvas ref={canvasRef} width={120} height={120}></canvas>

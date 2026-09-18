@@ -1461,6 +1461,107 @@ export const getAnnulusWireframe = (
 };
 
 /**
+ * A tube following an explicit list of points - the path primitive, and the only generator here
+ * whose geometry is data rather than parameters.
+ *
+ * `points` is flat x, y, z triples. `runStarts` gives the point indices (not float indices) at
+ * which each separate run begins, so one path can hold several disconnected strands - which is
+ * exactly what tubesAlongPaths takes, and what a CA trace broken at chain ends and at unmodelled
+ * residues needs. An empty runStarts means one run.
+ *
+ * There is no canonical size to scale from, so the caller places this with a uniform scale of 1
+ * and `tubeRadius` is already in scene units.
+ *
+ * One limit is worth knowing, and it is inherent to sweeping a tube rather than a fault here: the
+ * radius has to stay below the path's local radius of curvature. A tube cannot follow a bend
+ * tighter than itself - the inside of the turn folds through the centre line and those triangles
+ * come out inside-out. A CA trace is safe by a wide margin, at about 2.7 Angstrom at its tightest
+ * raw and 1 Angstrom once splined, but a hand-built path with a hairpin in it may not be, and the
+ * cure is a thinner tube or a gentler corner.
+ */
+export const getPathTubes = (
+    points: number[],
+    runStarts: number[],
+    tubeRadius: number,
+    sides: number = WIREFRAME_TUBE_SIDES
+): ShapeMesh => {
+    const count = Math.floor(points.length / 3);
+
+    // Tolerate anything: out of range, unsorted, duplicated or a missing leading zero. This is
+    // session data, and a bad boundary should cost a strand, not the whole object.
+    const starts = [...new Set([0, ...runStarts])]
+        .filter(start => Number.isInteger(start) && start >= 0 && start < count)
+        .sort((a, b) => a - b);
+
+    const paths: WirePath[] = [];
+    starts.forEach((start, i) => {
+        const end = i + 1 < starts.length ? starts[i + 1] : count;
+        const run: Vec3[] = [];
+        for (let p = start; p < end; p++) {
+            run.push([points[3 * p], points[3 * p + 1], points[3 * p + 2]]);
+        }
+        // A single point is not a tube. tubesAlongPaths would skip it anyway.
+        if (run.length >= 2) paths.push({ points: run, closed: false });
+    });
+
+    return tubesAlongPaths(paths, tubeRadius, sides);
+};
+
+/**
+ * Subdivide a polyline into a Catmull-Rom spline through its own points.
+ *
+ * For drawing a CA trace as a curve rather than as a 3.8 Angstrom zig-zag. Catmull-Rom is the
+ * right family here because it interpolates: the curve passes exactly through every atom, so the
+ * smoothed path still says where the backbone is. A B-spline would approximate them instead and
+ * pull the curve off the atoms, flattening helices.
+ *
+ * Points are flat x, y, z triples in and out. `subdivisions` is the number of segments each
+ * original interval becomes, so 1 returns the input unchanged. The ends are handled by reflecting
+ * the neighbouring point, which keeps the curve from swinging wide of the first and last atoms.
+ */
+export const smoothPath = (points: number[], subdivisions: number): number[] => {
+    const count = Math.floor(points.length / 3);
+    if (count < 2 || subdivisions < 2) return [...points];
+
+    const at = (i: number): Vec3 => {
+        const clamped = Math.max(0, Math.min(count - 1, i));
+        return [points[3 * clamped], points[3 * clamped + 1], points[3 * clamped + 2]];
+    };
+    // Reflect through the end point rather than repeating it: 2*p0 - p1 continues the direction
+    // the curve was already going, where a repeat would flatten the first span.
+    const control = (i: number): Vec3 => {
+        if (i < 0) { const [a, b] = [at(0), at(1)]; return [2 * a[0] - b[0], 2 * a[1] - b[1], 2 * a[2] - b[2]]; }
+        if (i > count - 1) {
+            const [a, b] = [at(count - 1), at(count - 2)];
+            return [2 * a[0] - b[0], 2 * a[1] - b[1], 2 * a[2] - b[2]];
+        }
+        return at(i);
+    };
+
+    const out: number[] = [];
+    for (let i = 0; i < count - 1; i++) {
+        const [p0, p1, p2, p3] = [control(i - 1), control(i), control(i + 1), control(i + 2)];
+        for (let step = 0; step < subdivisions; step++) {
+            const t = step / subdivisions;
+            const t2 = t * t;
+            const t3 = t2 * t;
+            // Uniform Catmull-Rom, tension 1/2.
+            for (let c = 0; c < 3; c++) {
+                out.push(
+                    0.5 * ((2 * p1[c]) +
+                        (-p0[c] + p2[c]) * t +
+                        (2 * p0[c] - 5 * p1[c] + 4 * p2[c] - p3[c]) * t2 +
+                        (-p0[c] + 3 * p1[c] - 3 * p2[c] + p3[c]) * t3)
+                );
+            }
+        }
+    }
+    // The loop emits each span's start but never the final point, so close the polyline.
+    out.push(...at(count - 1));
+    return out;
+};
+
+/**
  * A frustum - a cone or pyramid with its tip cut off - running along z from a base of radius 1 at
  * z = -0.5 to a top of radius `topRadiusRatio` at z = +0.5, with both ends capped.
  *

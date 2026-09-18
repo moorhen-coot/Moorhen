@@ -231,6 +231,28 @@ export interface ArcObject extends ThreeDObjectBase, Wireframeable {
     sweep_angle: number;
 }
 
+/**
+ * A tube following an explicit list of points - the one shape whose geometry is data rather than
+ * parameters, and so the one that can hold anything: a CA trace, a curve through other objects,
+ * an imported path.
+ *
+ * It stores exactly what tubesAlongPaths consumes and nothing more. `points` is flat x, y, z
+ * triples relative to `origin`, and `run_starts` the point index at which each separate strand
+ * begins, so one path can hold several disconnected runs. How the points were arrived at - from
+ * which molecule, smoothed or raw - is deliberately not recorded: that belongs to whatever
+ * generated them, and baking it in here would make the primitive about CA traces instead of
+ * about paths.
+ *
+ * Not Wireframeable: a path is already a line, so there is nothing to reduce it to.
+ */
+export interface PathObject extends ThreeDObjectBase {
+    type: "path";
+    orientation: Matrix4x4;
+    points: number[];
+    run_starts: number[];
+    radius: number;
+}
+
 export interface TorusObject extends ThreeDObjectBase, Wireframeable {
     type: "torus";
     orientation: Matrix4x4;
@@ -300,7 +322,8 @@ export type ThreeDObject =
             | TruncatedOctahedronObject
             | CuboctahedronObject
             | RhombicDodecahedronObject
-            | TorusObject;
+            | TorusObject
+            | PathObject;
 
 const initialState: {
     objects: ThreeDObject[];
