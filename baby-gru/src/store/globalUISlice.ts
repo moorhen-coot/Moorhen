@@ -59,7 +59,7 @@ const globalUISlice = createSlice({
         },
         // API
         /* Display the side panel corresponding to the provided ID, or hide the side panel if the payload is null. 
-        @value SidePanelIDs | null */
+        @param value SidePanelIDs | null */
         setShownSidePanel: (state, action: PayloadAction<SidePanelIDs | null>) => {
             state.shownSidePanel = action.payload;
         },

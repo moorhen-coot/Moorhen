@@ -53,7 +53,7 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
 
 export type BasicMapHeaderInfo = {}
 
-type mapHeaderInfo = {
+export type mapHeaderInfo = {
     spacegroup: string;
     cell: libcootApi.mapCellJS;
     resolution: number;
