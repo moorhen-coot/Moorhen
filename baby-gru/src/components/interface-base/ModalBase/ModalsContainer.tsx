@@ -6,6 +6,7 @@ import { RootState } from "../../../store/MoorhenReduxStore";
 import { Moorhen2DCanvasObjectsModal } from "../../modal/Moorhen2DCanvasObjectsModal";
 import { MoorhenCarbohydrateValidationModal } from "../../modal/MoorhenCarbohydrateValidationModal";
 import { MoorhenColourMapByOtherMapModal } from "../../modal/MoorhenColourMapByOtherMapModal";
+import { MoorhenFourierShellCorrelationModal } from "../../modal/MoorhenFourierShellCorrelationModal";
 import { MoorhenConKitModal } from "../../modal/MoorhenConKitModal";
 import { MoorhenControlsModal } from "../../modal/MoorhenControlsModal";
 import { MoorhenCreateAcedrgLinkModal } from "../../modal/MoorhenCreateAcedrgLinkModal";
@@ -63,6 +64,7 @@ export type ModalKey =
     | "pae-plot"
     | "NOE"
     | "config-shortcuts"
+    | "fourier-shell-correlation"
 
 export type ModalComponentProps = {
     openDocked?: "left" | "right" | null | undefined;
@@ -99,7 +101,8 @@ const modalsMap: Record<ModalKey, React.FC<ModalComponentProps>> = {
     "overlays-2d": Moorhen2DCanvasObjectsModal,
     conkit: MoorhenConKitModal,
     "config-shortcuts": MoorhenShortcutConfigModal,
-    NOE: MoorhenNOERestraints
+    NOE: MoorhenNOERestraints,
+    "fourier-shell-correlation": MoorhenFourierShellCorrelationModal
 };
 
 export type ExtraDraggableModals = React.JSX.Element[];

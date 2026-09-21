@@ -30,7 +30,8 @@ export const modalKeys = Object.freeze({
     PAEPLOT : "pae-plot",
     SCENE_SLIDERS: "scene-sliders",
     CONKIT: "conkit",
-    NOE: "NOE"
+    NOE: "NOE",
+    FSC : "fourier-shell-correlation"
 });
 
 
