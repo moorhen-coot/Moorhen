@@ -5,6 +5,7 @@ import * as quat4 from 'gl-matrix/quat';
 import * as vec3 from 'gl-matrix/vec3';
 import { createQuatFromAngle } from '../../../src/WebGLgComponents/quatUtils';
 import { quatToMat4, quat4Inverse } from '../../../src/WebGLgComponents/quatToMat4';
+import { setOrigin } from "../../store/sceneSettingsSlice";
 import {
     DEFAULT_WIREFRAME_RADIUS,
     addObject,
@@ -374,7 +375,6 @@ export const Moorhen3DObjects = () => {
         type: "path",
         colour: "#ff0000ff",
         origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
         // Two points to begin with, so a new path is something you can see and then edit rather
         // than an invisible object waiting for a generator.
         points: [0, 0, 0, 5, 0, 0],
@@ -657,6 +657,36 @@ export const Moorhen3DObjects = () => {
     const [myQuat, setQuat] = useState<quat4>(q)
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
+
+    /**
+     * Where an object sits, for centring the view on it.
+     *
+     * Every shape carries an origin, and for all but three that is its centre by construction.
+     * A cylinder and a cone are pinned by their two end points instead, and a path's points are
+     * spread around its origin and have to be averaged. No rotation enters into it: a path has
+     * no orientation, its points being the whole of where it is.
+     */
+    const centreOfObject = (obj: ThreeDObject): [number, number, number] => {
+        const midpoint = (a: number[], b: number[]): [number, number, number] =>
+            [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+
+        if (obj.type === "cylinder") return midpoint(obj.origin, obj.end);
+        if (obj.type === "cone") return midpoint(obj.origin, obj.top);
+        if (obj.type === "path" && obj.points.length >= 3) {
+            const count = obj.points.length / 3;
+            const mean = [0, 1, 2].map(
+                c => obj.points.reduce((total, x, i) => (i % 3 === c ? total + x : total), 0) / count
+            );
+            return [0, 1, 2].map(i => obj.origin[i] + mean[i]) as [number, number, number];
+        }
+        return [...obj.origin];
+    };
+
+    /** Put the view on this object. The scene origin is the negated centre. */
+    const centreOnObject = () => {
+        const centre = centreOfObject(theObject);
+        dispatch(setOrigin([-centre[0], -centre[1], -centre[2]]));
+    };
 
     const handleDelete = () => {
         dispatch(removeObjectById(theObject.uniqueId));
@@ -956,31 +986,34 @@ export const Moorhen3DObjects = () => {
      * nothing had been typed, no change event ever set it on the object.
      */
     const seedTextsFromObject = (obj: ThreeDObject) => {
-        setPositionText(obj.origin.join(","));
-        if (obj.type === "cone") setEndPositionText(obj.top.join(","));
-        if (obj.type === "cylinder") setEndPositionText(obj.end.join(","));
-        if ("height" in obj) setHeightText(String(obj.height));
-        if ("radius" in obj) setSizeText(String(obj.radius));
+        setPositionText(obj.origin.map(v => v.toFixed(3)).join(","));
+        if (obj.type === "cone") setEndPositionText(obj.top.map(v => v.toFixed(3)).join(","));
+        if (obj.type === "cylinder") setEndPositionText(obj.end.map(v => v.toFixed(3)).join(","));
+        if ("height" in obj) setHeightText(obj.height.toFixed(3));
+        if ("radius" in obj){
+            console.log("Setting 'Radius' to ",obj.radius.toFixed(3))
+            setSizeText(obj.radius.toFixed(3));
+        }
         // The polyhedra size themselves through `scale` rather than `radius`.
-        if ("scale" in obj) setSizeText(String(obj.scale));
-        if ("inner_radius" in obj) setSize2Text(String(obj.inner_radius));
-        if ("scalexyz" in obj) setScaleXYZText(obj.scalexyz.join(","));
-        if (obj.type === "plane") setPlaneSizeText(obj.scalexyz.slice(0, 2).join(","));
-        if ("major_radius" in obj) setSizeText(String(obj.major_radius));
-        if ("minor_radius" in obj) setSize2Text(String(obj.minor_radius));
-        if ("sweep_angle" in obj) setSweepAngleText(String(obj.sweep_angle));
-        setWireframeRadiusText(String(
+        if ("scale" in obj) setSizeText(obj.scale.toFixed(3));
+        if ("inner_radius" in obj) setSize2Text(obj.inner_radius.toFixed(3));
+        if ("scalexyz" in obj) setScaleXYZText(obj.scalexyz.map(v => v.toFixed(3)).join(","));
+        if (obj.type === "plane") setPlaneSizeText(obj.scalexyz.slice(0, 2).map(v => v.toFixed(3)).join(","));
+        if ("major_radius" in obj) setSizeText(obj.major_radius.toFixed(3));
+        if ("minor_radius" in obj) setSize2Text(obj.minor_radius.toFixed(3));
+        if ("sweep_angle" in obj) setSweepAngleText(obj.sweep_angle.toFixed(3));
+        setWireframeRadiusText(
             ("wireframe_radius" in obj && obj.wireframe_radius !== undefined)
-                ? obj.wireframe_radius
-                : DEFAULT_WIREFRAME_RADIUS
-        ));
+                ? obj.wireframe_radius.toFixed(3)
+                : DEFAULT_WIREFRAME_RADIUS.toFixed(3)
+        );
         // A frustum's two radii take both boxes, so they come after the single-radius cases.
         if (obj.type === "frustum" || obj.type === "flatfrustum") {
-            setSizeText(String(obj.bottom_radius));
-            setSize2Text(String(obj.top_radius));
+            setSizeText(obj.bottom_radius.toFixed(3));
+            setSize2Text(obj.top_radius.toFixed(3));
         }
         if (obj.type === "prism" || obj.type === "flatfrustum" || obj.type === "pyramid") {
-            setNSidesText(String(obj.n_sides));
+            setNSidesText(obj.n_sides.toFixed(0));
         }
     };
 
@@ -1157,7 +1190,7 @@ export const Moorhen3DObjects = () => {
             setHeightText("5");
             setPlaneSizeText("5,5");
             setSweepAngleText("90");
-            setWireframeRadiusText(String(DEFAULT_WIREFRAME_RADIUS));
+            setWireframeRadiusText(DEFAULT_WIREFRAME_RADIUS.toFixed(3));
             setObject(newSphereObject());
         } else {
             try {
@@ -1179,9 +1212,9 @@ export const Moorhen3DObjects = () => {
                     setQuat(q)
                 }
                 if("scale" in existingObject)
-                    setSizeText(String(existingObject.scale))
+                    setSizeText(existingObject.scale.toFixed(3))
                 if("radius" in existingObject)
-                    setSizeText(String(existingObject.radius))
+                    setSizeText(existingObject.radius.toFixed(3))
 
                 setObject(existingObject);
             } catch (e) {
@@ -1300,6 +1333,13 @@ export const Moorhen3DObjects = () => {
                         Delete
                     </MoorhenButton>
                 )}
+                <MoorhenButton
+                    className="m-2"
+                    onClick={centreOnObject}
+                    tooltip="Put the view on this object. A path centres on the whole of itself; middle-click one in the view to centre on the part under the pointer instead"
+                >
+                    Centre on
+                </MoorhenButton>
                 <MoorhenButton className="m-2" onClick={handleApply} disabled={!checkPositionText()}>
                     Apply
                 </MoorhenButton>
@@ -1817,7 +1857,7 @@ export const Moorhen3DObjects = () => {
                    drawMode==="arc"||drawMode==="capsule"||drawMode==="helix"||
                    drawMode==="frustum"||
                    drawMode==="flatfrustum"||drawMode==="prism"||
-                   drawMode==="pyramid"||drawMode==="path")  &&
+                   drawMode==="pyramid")  &&
                     <>
                         <span>Orientation</span>
                         <canvas ref={canvasRef} width={120} height={120}></canvas>

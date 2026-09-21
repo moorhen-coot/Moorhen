@@ -238,7 +238,12 @@ export interface ArcObject extends ThreeDObjectBase, Wireframeable {
  *
  * It stores exactly what tubesAlongPaths consumes and nothing more. `points` is flat x, y, z
  * triples relative to `origin`, and `run_starts` the point index at which each separate strand
- * begins, so one path can hold several disconnected runs. How the points were arrived at - from
+ * begins, so one path can hold several disconnected runs.
+ *
+ * Deliberately has no orientation, unlike every other shape here. A rotation is already
+ * expressible in the points, so storing one as well would be two ways of saying where the
+ * geometry is, and every consumer would have to remember to combine them - the sort of
+ * redundancy that is only ever noticed when one of them forgets. How the points were arrived at - from
  * which molecule, smoothed or raw - is deliberately not recorded: that belongs to whatever
  * generated them, and baking it in here would make the primitive about CA traces instead of
  * about paths.
@@ -247,7 +252,6 @@ export interface ArcObject extends ThreeDObjectBase, Wireframeable {
  */
 export interface PathObject extends ThreeDObjectBase {
     type: "path";
-    orientation: Matrix4x4;
     points: number[];
     run_starts: number[];
     radius: number;

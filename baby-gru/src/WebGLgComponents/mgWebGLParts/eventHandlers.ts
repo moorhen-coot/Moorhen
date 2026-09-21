@@ -284,6 +284,17 @@ export function doMouseUp(self: MGWebGL, event) {
                         //self.setOriginAnimated([-atx, -aty, -atz], true);
                         self.props.onOriginChanged([-atx, -aty, -atz])
                     }
+                } else {
+                    // No atom there, but perhaps a mesh - which may stand for nothing, so there
+                    // is no cid to centre on, only a position. The pick has already been done
+                    // above: minidx_pi and minj_pi are the other half of its answer.
+                    //
+                    // Atoms keep precedence, as they do when hovering: where both are under the
+                    // pointer, the atom is the finer thing to have been aiming at.
+                    const meshPosition = pickedMeshPosition(displayBuffers, minidx_pi, minj_pi)
+                    if(meshPosition){
+                        self.props.onOriginChanged([-meshPosition[0], -meshPosition[1], -meshPosition[2]])
+                    }
                 }
             }
         } else if (self.reContourMapOnlyOnMouseUp) {
@@ -294,6 +305,33 @@ export function doMouseUp(self: MGWebGL, event) {
     }
     self.mouseDown = false;
     self.doHover(event, self);
+}
+
+/**
+ * Where on a mesh a pick landed, in scene coordinates, or null if it did not land on one.
+ *
+ * A buffer divided into sections gives the section that was picked, so that a trace centres on
+ * the residue pointed at rather than on the middle of the whole chain. Anything else gives the
+ * centre of the instance, which is the first pick point it offers - the rest are scattered over
+ * its surface to make it hoverable, and centring on one of those would put the view on the
+ * shape's edge.
+ *
+ * A position rather than an identity, because a mesh need not stand for anything at all.
+ */
+function pickedMeshPosition(displayBuffers, bufferIndex: number, pickIndex: number): number[] | null {
+    const pickInfo = bufferIndex > -1 ? displayBuffers[bufferIndex]?.pick_info : null;
+    if (!pickInfo?.pick_points || pickIndex < 0) {
+        return null;
+    }
+    let index = pickIndex;
+    if (!pickInfo.pick_point_sections) {
+        const instances = pickInfo.pick_point_instances;
+        if (instances) {
+            const first = instances.indexOf(instances[pickIndex]);
+            if (first > -1) index = first;
+        }
+    }
+    return pickInfo.pick_points[index] ?? null;
 }
 
 export function doMiddleClick(self: MGWebGL, evt) {

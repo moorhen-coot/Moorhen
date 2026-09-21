@@ -644,8 +644,8 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             // a single rebuild - every mesh here is built afresh each time the objects change -
             // so the key only has to be unique within one pass, not stable across them.
             //
-            // The orientation and origin still come from the instance, so a path can be dragged
-            // and turned with the same controls as everything else.
+            // The origin still comes from the instance, so a path can be dragged with the same
+            // control as everything else.
             if(obj.points && obj.points.length >= 6){
                 addInstance(
                     `path-${obj.uniqueId}`,
@@ -655,7 +655,8 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
                     ),
                     obj.origin,
                     [1, 1, 1],
-                    obj.orientation,
+                    // A path has no orientation of its own: its points say where it is.
+                    IDENTITY_ORIENTATION,
                     colour
                 )
                 // Attached after the fact because they belong to the object rather than to its
