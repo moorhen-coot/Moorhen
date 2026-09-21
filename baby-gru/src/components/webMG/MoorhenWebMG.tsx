@@ -6,6 +6,7 @@ import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { buildBuffers, appendOtherData, } from '../../WebGLgComponents/buildBuffers'
 import { getVectorsBuffers } from '../../WebGLgComponents/vectorsDraw'
 import { getThreeDObjectsBuffers } from '../../WebGLgComponents/threeDObjectsDraw'
+import { getGizmoBuffers } from '../../WebGLgComponents/gizmoDraw'
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import type { ActionButtonSettings } from '../context-menu/MoorhenContextMenu';
 import { useCommandCentre, useMoorhenInstance } from '../../InstanceManager';
@@ -21,6 +22,7 @@ import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
 import { HighlightHoveredSection } from './HoverSection';
+import { DragHandles } from './DragHandles';
 
 
 interface MoorhenWebMGPropsInterface {
@@ -149,6 +151,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     // dragged. A stale read here would clear the wrong buffers and leak the new ones.
     const vectorBuffersRef = useRef<DisplayBuffer[]>([])
     const vectorLabelBuffersRef = useRef<any[]>([])
+    const gizmoBuffersRef = useRef<any[]>([])
     const threeDObjectsBuffersRef = useRef<DisplayBuffer[]>([])
     const shortcutsBlocked = useSelector((state: RootState) => state.globalUI.areShortcutsBlocked)
 
@@ -165,7 +168,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
      * @param {Set<string>} droppedIds - ids this rebuild has just retired
      */
     const publishDisplayBuffers = useCallback((droppedIds: Set<string>) => {
-        const owned = [...threeDObjectsBuffersRef.current, ...vectorBuffersRef.current]
+        const owned = [...threeDObjectsBuffersRef.current, ...vectorBuffersRef.current, ...gizmoBuffersRef.current]
         const ownedIds = new Set(owned.map(buffer => buffer.id))
         const others = (store.getState().glRef.displayBuffers ?? []).filter(
             buffer => !ownedIds.has(buffer.id) && !droppedIds.has(buffer.id)
@@ -255,6 +258,30 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         rebuildThreeDObjects()
         return () => { superseded = true }
     }, [threeDObjects, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
+
+    // The manipulation handles rebuild on their own, so that neither editing an object nor
+    // dragging a handle drags the other along with it. Zoom is a dependency because the handles
+    // are a constant size on screen, which means a changing size in the world.
+    const selectedThreeDObjectId = useSelector((state: moorhen.State) => state.generalStates.selectedThreeDObjectId)
+    useEffect(() => {
+        if (glRef === null || typeof glRef === 'function') return
+        let superseded = false
+
+        const rebuildGizmo = async () => {
+            const objects = await getGizmoBuffers(store)
+            if (superseded) return
+
+            const retired = gizmoBuffersRef.current
+            retired.forEach(buffer => buffer.clearBuffers())
+
+            gizmoBuffersRef.current = buildDisplayBuffers(objects)
+
+            publishDisplayBuffers(new Set(retired.map(buffer => buffer.id)))
+        }
+
+        rebuildGizmo()
+        return () => { superseded = true }
+    }, [selectedThreeDObjectId, threeDObjects, zoom, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
 
     const commandCentre = useCommandCentre()
 
@@ -828,6 +855,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 />}
                 <DrawHoverAtom />
                 <HighlightHoveredSection />
+                <DragHandles />
             </>
 });
 

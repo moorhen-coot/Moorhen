@@ -1652,6 +1652,108 @@ export const getPathTubes = (
 };
 
 /**
+ * A copy of a mesh scaled, turned and moved into place.
+ *
+ * Unlike the instanced path, which leaves placement to the per-instance attributes, this bakes it
+ * into the geometry - for when several differently placed parts have to become one mesh, as the
+ * manipulation handles do so that each can be a separately hoverable section of it.
+ *
+ * Normals take the inverse transpose, which for a diagonal scale means dividing rather than
+ * multiplying: a cylinder squashed along its length keeps normals that point along the surface
+ * they belong to, instead of leaning the way the vertices moved.
+ *
+ * `orientation` is a column-major 4x4, as everything else here takes it.
+ */
+export const placedMesh = (
+    mesh: ShapeMesh,
+    scale: number[],
+    orientation: number[],
+    translate: number[]
+): ShapeMesh => {
+    const rotate = (v: Vec3): Vec3 => [
+        orientation[0] * v[0] + orientation[4] * v[1] + orientation[8] * v[2],
+        orientation[1] * v[0] + orientation[5] * v[1] + orientation[9] * v[2],
+        orientation[2] * v[0] + orientation[6] * v[1] + orientation[10] * v[2],
+    ];
+    const safe = scale.map(component => (Math.abs(component) < 1e-12 ? 1e-12 : component));
+
+    const vertices: number[] = [];
+    const normals: number[] = [];
+    for (let i = 0; i < mesh.vertices.length; i += 3) {
+        const placed = rotate([
+            mesh.vertices[i] * safe[0],
+            mesh.vertices[i + 1] * safe[1],
+            mesh.vertices[i + 2] * safe[2],
+        ]);
+        vertices.push(placed[0] + translate[0], placed[1] + translate[1], placed[2] + translate[2]);
+        const turned = rotate([
+            mesh.normals[i] / safe[0],
+            mesh.normals[i + 1] / safe[1],
+            mesh.normals[i + 2] / safe[2],
+        ]);
+        normals.push(...normalise(turned));
+    }
+    return { vertices, normals, idx: [...mesh.idx] };
+};
+
+/** Several meshes concatenated into one, with indices offset to follow. */
+export const mergeMeshes = (...meshes: ShapeMesh[]): ShapeMesh => {
+    const vertices: number[] = [];
+    const normals: number[] = [];
+    const idx: number[] = [];
+    meshes.forEach(mesh => {
+        const start = vertices.length / 3;
+        vertices.push(...mesh.vertices);
+        normals.push(...mesh.normals);
+        mesh.idx.forEach(index => idx.push(index + start));
+    });
+    return { vertices, normals, idx };
+};
+
+/**
+ * Several meshes joined into one, each becoming a separately hoverable section of it.
+ *
+ * The sections are what the highlight and the pick test already understand: a range of vertex
+ * ids, a point to aim at and a centre line to measure against. So a handful of parts assembled
+ * here arrive at the renderer indistinguishable from a path's sections, and light up one at a
+ * time for free.
+ *
+ * Each part gives the two ends of its own axis as `span`, which is what the pick measures
+ * against - far better for a long thin handle than a single point at its middle.
+ */
+export const combineIntoSections = (
+    parts: { mesh: ShapeMesh; span: number[] }[],
+    pickRadius: number
+): ShapeMesh & {
+    sectionRanges: number[][];
+    sectionPoints: number[][];
+    sectionSpans: number[][];
+    sectionRadius: number;
+} => {
+    const vertices: number[] = [];
+    const normals: number[] = [];
+    const idx: number[] = [];
+    const sectionRanges: number[][] = [];
+    const sectionPoints: number[][] = [];
+    const sectionSpans: number[][] = [];
+
+    parts.forEach(({ mesh, span }) => {
+        const start = vertices.length / 3;
+        vertices.push(...mesh.vertices);
+        normals.push(...mesh.normals);
+        mesh.idx.forEach(index => idx.push(index + start));
+        sectionRanges.push([start, vertices.length / 3]);
+        sectionSpans.push(span);
+        const count = Math.max(1, Math.floor(span.length / 3));
+        sectionPoints.push([0, 1, 2].map(
+            c => span.reduce((total, x, i) => (i % 3 === c ? total + x : total), 0) / count
+        ));
+    });
+
+    return { vertices, normals, idx, sectionRanges, sectionPoints, sectionSpans, sectionRadius: pickRadius };
+};
+
+/**
  * Subdivide a polyline into a Catmull-Rom spline through its own points.
  *
  * For drawing a CA trace as a curve rather than as a 3.8 Angstrom zig-zag. Catmull-Rom is the

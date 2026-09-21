@@ -442,3 +442,11 @@ export const MOORHEN_ATOM_TAG_KIND = "moorhen-atom";
 /** The residue key the first three fields of such a tag make up. */
 export const moorhenAtomTagKey = (moleculeUniqueId: string, chainId: string, residueNumber: number | string) =>
     `${moleculeUniqueId}|${chainId}|${parseInt(String(residueNumber))}`;
+
+/**
+ * Tag scheme for manipulation handles, written "<action>|<axis>" - "translate|x", "rotate|z".
+ *
+ * A separate scheme from the atom one so that the bridges which turn a section hover into an
+ * atom hover pass over these without a second thought, which is what the kind field is for.
+ */
+export const MOORHEN_GIZMO_TAG_KIND = "moorhen-gizmo";

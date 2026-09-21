@@ -354,6 +354,92 @@ export type ThreeDObject =
             | TorusObject
             | PathObject;
 
+/**
+ * Where an object sits, for centring the view on it or hanging handles off it.
+ *
+ * Every shape carries an origin, and for all but three that is its centre by construction. A
+ * cylinder and a cone are pinned by their two end points instead, and a path's points are spread
+ * around its origin and have to be averaged. No rotation enters into it: a path has no
+ * orientation, its points being the whole of where it is.
+ */
+export const centreOfObject = (obj: ThreeDObject): [number, number, number] => {
+    const midpoint = (a: number[], b: number[]): [number, number, number] =>
+        [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+
+    if (obj.type === "cylinder") return midpoint(obj.origin, obj.end);
+    if (obj.type === "cone") return midpoint(obj.origin, obj.top);
+    if (obj.type === "path" && obj.points.length >= 3) {
+        const count = obj.points.length / 3;
+        const mean = [0, 1, 2].map(
+            c => obj.points.reduce((total, x, i) => (i % 3 === c ? total + x : total), 0) / count
+        );
+        return [0, 1, 2].map(i => obj.origin[i] + mean[i]) as [number, number, number];
+    }
+    return [...obj.origin];
+};
+
+/**
+ * Roughly how far an object reaches from its centre.
+ *
+ * Only ever used to keep something else clear of it - the manipulation handles - so it errs
+ * generously and does not trouble itself with exact bounds. A closed polyhedron is normalised to
+ * a circumradius of half its scale; a box reaches to its corner, which is further than its face.
+ */
+export const extentOfObject = (obj: ThreeDObject): number => {
+    const largest = (values: number[]) => Math.max(...values.map(Math.abs));
+    const CORNER = Math.sqrt(3) / 2;
+
+    switch (obj.type) {
+        case "sphere":
+        case "disc":
+            return obj.radius;
+        case "annulus":
+            return obj.radius;
+        case "cylinder":
+            return Math.hypot(...obj.end.map((c, i) => (c - obj.origin[i]) / 2)) + obj.radius;
+        case "cone":
+            return Math.hypot(...obj.top.map((c, i) => (c - obj.origin[i]) / 2)) + obj.radius;
+        case "frustum":
+        case "flatfrustum":
+            return Math.max(obj.bottom_radius, obj.top_radius, obj.height / 2);
+        case "prism":
+        case "pyramid":
+            return Math.max(obj.radius, obj.height / 2);
+        case "capsule":
+            return Math.max(obj.height / 2, obj.radius);
+        case "torus":
+        case "arc":
+            return obj.major_radius + obj.minor_radius;
+        case "helix":
+            return Math.max(obj.major_radius + obj.minor_radius, obj.height / 2);
+        case "cube":
+            return obj.scale * CORNER;
+        case "cuboid":
+            return largest(obj.scalexyz) * CORNER;
+        case "ellipsoid":
+        case "plane":
+            return largest(obj.scalexyz);
+        case "path": {
+            const centre = centreOfObject(obj);
+            let furthest = 0;
+            for (let i = 0; i + 2 < obj.points.length; i += 3) {
+                furthest = Math.max(furthest, Math.hypot(
+                    obj.origin[0] + obj.points[i] - centre[0],
+                    obj.origin[1] + obj.points[i + 1] - centre[1],
+                    obj.origin[2] + obj.points[i + 2] - centre[2]
+                ));
+            }
+            return furthest + obj.radius;
+        }
+        default:
+            // The closed polyhedra, all normalised to a circumradius of half their scale.
+            return ("scale" in obj ? obj.scale : 1) / 2;
+    }
+};
+
+/** Whether a shape has an orientation to turn, and so is worth giving rotation handles. */
+export const hasOrientation = (obj: ThreeDObject): boolean => "orientation" in obj;
+
 const initialState: {
     objects: ThreeDObject[];
 

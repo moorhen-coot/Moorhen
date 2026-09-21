@@ -261,6 +261,15 @@ export function doMouseMoveMeasure(self: MGWebGL, evt) {
 }
 
 export function doMouseUp(self: MGWebGL, event) {
+    if (self.pointerClaim) {
+        document.dispatchEvent(new CustomEvent("handleGrabEnd", { detail: { ...self.pointerClaim } }))
+        self.pointerClaim = null
+        self.mouseDown = false
+        // Nothing else on the way out: no centring, and no hover recomputed from a pointer that
+        // has been busy dragging.
+        return
+    }
+
     const displayBuffers = self.store.getState().glRef.displayBuffers
     const event_x = event.pageX;
     const event_y = event.pageY;
@@ -291,7 +300,11 @@ export function doMouseUp(self: MGWebGL, event) {
                     //
                     // Atoms keep precedence, as they do when hovering: where both are under the
                     // pointer, the atom is the finer thing to have been aiming at.
-                    const meshPosition = pickedMeshPosition(displayBuffers, minidx_pi, minj_pi)
+                    const claimsPointer = minidx_pi > -1
+                        && !!displayBuffers[minidx_pi]?.pick_info?.claims_pointer
+                    const meshPosition = claimsPointer
+                        ? null
+                        : pickedMeshPosition(displayBuffers, minidx_pi, minj_pi)
                     if(meshPosition){
                         self.props.onOriginChanged([-meshPosition[0], -meshPosition[1], -meshPosition[2]])
                     }
@@ -354,6 +367,15 @@ export function doDoubleClick(self: MGWebGL, event) {
 }
 
 export function doMouseMove(self: MGWebGL, event) {
+    // A claimed drag never reaches the camera.
+    if (self.pointerClaim) {
+        self.mouseMoved = true
+        document.dispatchEvent(new CustomEvent("handleGrabMove", {
+            detail: { ...self.pointerClaim, ...pointerRay(self, event) }
+        }))
+        return
+    }
+
     const activeMoleculeMotion = (self.activeMolecule != null) && (self.activeMolecule.representations.length > 0) && !self.keysDown['residue_camera_wiggle'];
 
     const centreOfMass = function (atoms) {
@@ -379,31 +401,7 @@ export function doMouseMove(self: MGWebGL, event) {
     if(self.trackMouse)
         requestAnimationFrame(self.mouseMoveAnimateTrack.bind(self, true, 20))
 
-    if (true) {
-        let x;
-        let y;
-        const e = event;
-        if (e.pageX || e.pageY) {
-            x = e.pageX;
-            y = e.pageY;
-        }
-        else {
-            x = e.clientX;
-            y = e.clientY;
-        }
-
-        const c = self.canvasRef.current;
-        const offset = getOffsetRect(c);
-
-        x -= offset.left;
-        y -= offset.top;
-        x *= getDeviceScale();
-        y *= getDeviceScale();
-
-        self.gl_cursorPos[0] = x;
-        self.gl_cursorPos[1] = self.canvas.height - y;
-        self.props.cursorPositionChanged(x/getDeviceScale(), y/getDeviceScale()) //I am updating this in real window coords
-    }
+    updateCursorPosition(self, event)
     if (!self.mouseDown) {
         self.init_x = event.pageX;
         self.init_y = event.pageY;
@@ -595,6 +593,75 @@ export function doMouseMove(self: MGWebGL, event) {
     self.drawScene();
 }
 
+/**
+ * The label of whatever has taken the pointer at this position, or null.
+ *
+ * A buffer may declare that it wants pointer events for itself - the manipulation handles do -
+ * and this is the whole of what the renderer knows about that. It reports a label it does not
+ * interpret, and stops driving the camera; someone else decides what the label means.
+ */
+function pointerClaimAt(self: MGWebGL, event): { tag: string; bufferId: string } | null {
+    const displayBuffers = self.store.getState().glRef.displayBuffers
+    if (!displayBuffers || displayBuffers.length === 0) return null
+    const [, , , , , , , minidx_pi, minj_pi] = self.getAtomFomMouseXY(event, self)
+    const pickInfo = minidx_pi > -1 ? displayBuffers[minidx_pi]?.pick_info : null
+
+    if (minidx_pi < 0 || minj_pi < 0) return null
+    if (!pickInfo?.claims_pointer || !pickInfo.pick_point_tags) return null
+    const tag = pickInfo.pick_point_tags[minj_pi]
+    return tag ? { tag, bufferId: displayBuffers[minidx_pi].id } : null
+}
+
+/**
+ * Record where the pointer is, in the renderer's own terms.
+ *
+ * Everything that turns a screen position into a scene position reads gl_cursorPos rather than
+ * the event - getFrontAndBackPos takes an event argument and ignores it entirely - so anything
+ * that wants a ray has to make sure this is current first.
+ */
+function updateCursorPosition(self: MGWebGL, event) {
+    let x;
+    let y;
+    const e = event;
+    if (e.pageX || e.pageY) {
+        x = e.pageX;
+        y = e.pageY;
+    }
+    else {
+        x = e.clientX;
+        y = e.clientY;
+    }
+
+    const c = self.canvasRef.current;
+    const offset = getOffsetRect(c);
+
+    x -= offset.left;
+    y -= offset.top;
+    x *= getDeviceScale();
+    y *= getDeviceScale();
+
+    self.gl_cursorPos[0] = x;
+    self.gl_cursorPos[1] = self.canvas.height - y;
+    self.props.cursorPositionChanged(x/getDeviceScale(), y/getDeviceScale()) //I am updating this in real window coords
+}
+
+/**
+ * The pointer as a ray through the scene.
+ *
+ * Named for what getFrontAndBackPos actually returns - front first, then back. The blob-fitting
+ * double click labels the same two the other way round, which does no harm there and would do
+ * none here either, both ends describing one line, but the honest names are cheaper to read.
+ */
+function pointerRay(self: MGWebGL, event) {
+    // The ray is built from the recorded cursor position, so that has to be current first.
+    updateCursorPosition(self, event)
+    const frontAndBack = self.getFrontAndBackPos(event)
+    return {
+        front: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
+        back: [frontAndBack[1][0], frontAndBack[1][1], frontAndBack[1][2]],
+    }
+}
+
 export function doMouseDown(self: MGWebGL, event) {
     self.init_x = event.pageX;
     self.init_y = event.pageY;
@@ -605,6 +672,21 @@ export function doMouseDown(self: MGWebGL, event) {
     self.mouseMoved = false;
     if (event.button === 1) {
         event.preventDefault();
+    }
+
+    // Before the camera gets any of this: has something claimed the pointer? If so the drag
+    // belongs to it, and the view must not turn underneath it.
+    self.pointerClaim = null
+    if (event.button === 0 && !self.keysDown['residue_selection']) {
+        const claim = pointerClaimAt(self, event)
+        if (claim) {
+            self.pointerClaim = claim
+            self.mouseDown = false
+            document.dispatchEvent(new CustomEvent("handleGrabStart", {
+                detail: { ...claim, ...pointerRay(self, event) }
+            }))
+            event.preventDefault()
+        }
     }
 }
 

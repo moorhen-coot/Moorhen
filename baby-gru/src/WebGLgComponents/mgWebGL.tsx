@@ -1790,6 +1790,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         // depth, which their distance to it cannot do.
         let bestIsHit_pi = false;
         let bestDepth_pi = -Infinity;
+        // A buffer that takes the pointer for itself outranks anything else under the cursor:
+        // a handle drawn over an object has to be grabbable, not lost behind it.
+        let bestClaims_pi = false;
         let minx_pi = 100000.0;
         let miny_pi = 100000.0;
         let minz_pi = 100000.0;
@@ -1819,6 +1822,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     // merely nearby. A tube supplies its own radius; anything that does not keeps
                     // the plain nearest-to-the-ray rule.
                     const pickRadius = displayBuffers[idx].pick_info.pick_radius
+                    const claimsPointer = !!displayBuffers[idx].pick_info.claims_pointer
                     for (let j = 0; j < displayBuffers[idx].pick_info.pick_points.length; j++) {
                         const atx = displayBuffers[idx].pick_info.pick_points[j][0];
                         const aty = displayBuffers[idx].pick_info.pick_points[j][1];
@@ -1863,8 +1867,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         // section behind wins. Where both are pieces the cursor is over, let the
                         // nearer to the eye take it; in every other case the old rule stands, so
                         // nothing that does not supply a radius behaves differently.
-                        const beatsBest = (isHit && bestIsHit_pi)
-                            ? depth > bestDepth_pi
+                        // A claim only outranks while the cursor is genuinely on the thing;
+                        // otherwise a handle anywhere within the click tolerance would swallow
+                        // every pick in the scene. Where neither claims, the rule is as before.
+                        const claimsThis = claimsPointer && isHit;
+                        const beatsBest =
+                            claimsThis !== bestClaims_pi ? claimsThis
+                            : (isHit && bestIsHit_pi) ? depth > bestDepth_pi
                             : distance < mindist_pi;
 
                         if (
@@ -1878,6 +1887,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             mindist_pi = distance;
                             bestIsHit_pi = isHit;
                             bestDepth_pi = depth;
+                            bestClaims_pi = claimsPointer && isHit;
                         }
                     }
                 }
@@ -1945,6 +1955,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     hoverDebounceTimeout: NodeJS.Timeout | null = null;
+    /**
+     * The label a buffer claimed the pointer with, while a drag on it is in progress.
+     *
+     * Opaque here. The renderer's only interest is that while this is set, the pointer belongs
+     * to whoever claimed it and must not turn the camera.
+     */
+    pointerClaim: { tag: string; bufferId: string } | null = null;
 
     doHover(event, self) {
         doHover(this, event)

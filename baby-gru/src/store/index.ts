@@ -11,6 +11,7 @@ export {
 
 }  from "./threeDObjectsSlice";
 export {
+    setSelectedThreeDObject,
     setActiveMap,
     setViewOnly,
     setTheme,

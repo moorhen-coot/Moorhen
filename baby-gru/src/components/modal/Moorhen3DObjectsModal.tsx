@@ -6,9 +6,11 @@ import * as vec3 from 'gl-matrix/vec3';
 import { createQuatFromAngle } from '../../../src/WebGLgComponents/quatUtils';
 import { quatToMat4, quat4Inverse } from '../../../src/WebGLgComponents/quatToMat4';
 import { setOrigin } from "../../store/sceneSettingsSlice";
+import { setSelectedThreeDObject } from "../../store/generalStatesSlice";
 import {
     DEFAULT_WIREFRAME_RADIUS,
     addObject,
+    centreOfObject,
     isWireframeableType,
     removeObjectById,
     updateObject
@@ -73,6 +75,10 @@ export const Moorhen3DObjects = () => {
     const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+
+    const selectedThreeDObjectId = useSelector(
+        (state: moorhen.State) => state.generalStates.selectedThreeDObjectId
+    );
 
     // The scene's own rotation, pushed to the store live by MGWebGL's onQuatChanged. Both the
     // gizmo and the drag are expressed relative to it, so that this widget agrees with what the
@@ -658,30 +664,6 @@ export const Moorhen3DObjects = () => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
-    /**
-     * Where an object sits, for centring the view on it.
-     *
-     * Every shape carries an origin, and for all but three that is its centre by construction.
-     * A cylinder and a cone are pinned by their two end points instead, and a path's points are
-     * spread around its origin and have to be averaged. No rotation enters into it: a path has
-     * no orientation, its points being the whole of where it is.
-     */
-    const centreOfObject = (obj: ThreeDObject): [number, number, number] => {
-        const midpoint = (a: number[], b: number[]): [number, number, number] =>
-            [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
-
-        if (obj.type === "cylinder") return midpoint(obj.origin, obj.end);
-        if (obj.type === "cone") return midpoint(obj.origin, obj.top);
-        if (obj.type === "path" && obj.points.length >= 3) {
-            const count = obj.points.length / 3;
-            const mean = [0, 1, 2].map(
-                c => obj.points.reduce((total, x, i) => (i % 3 === c ? total + x : total), 0) / count
-            );
-            return [0, 1, 2].map(i => obj.origin[i] + mean[i]) as [number, number, number];
-        }
-        return [...obj.origin];
-    };
-
     /** Put the view on this object. The scene origin is the negated centre. */
     const centreOnObject = () => {
         const centre = centreOfObject(theObject);
@@ -955,18 +937,31 @@ export const Moorhen3DObjects = () => {
     }, [theObject.uniqueId, pathPointCount]);
 
     const pendingSync = useRef<number | null>(null);
+    /**
+     * The last version of this object the dialog itself put into the store.
+     *
+     * This is what tells "the object changed because I changed it" from "the object changed
+     * because something else did", which the dialog has no other way of knowing.
+     */
+    const lastPublishedRef = useRef<ThreeDObject | null>(null);
+
     useEffect(() => {
         if (objectNew) return;
 
-        // Nothing to push if the store already holds this exact object: true just after selecting
-        // one, and again once our own dispatch lands, which is what stops this feeding itself.
-        if (threeDObjects.find(obj => obj.uniqueId === theObject.uniqueId) === theObject) return;
+        // Push only what this dialog itself changed.
+        //
+        // This used to re-run whenever the store changed and push its own copy whenever the two
+        // differed, which made it fight anything else editing the same object: drag a handle in
+        // the view and the dialog put the old position straight back, once per frame, so the
+        // object appeared not to move at all.
+        if (theObject === lastPublishedRef.current) return;
 
         // Coalesce to at most one dispatch per frame. Dragging the rotation canvas fires mousemove
         // far more often than the scene can rebuild its buffers, and every dispatch rebuilds them.
         if (pendingSync.current !== null) cancelAnimationFrame(pendingSync.current);
         pendingSync.current = requestAnimationFrame(() => {
             pendingSync.current = null;
+            lastPublishedRef.current = theObject;
             dispatch(updateObject(theObject));
         });
         return () => {
@@ -975,7 +970,25 @@ export const Moorhen3DObjects = () => {
                 pendingSync.current = null;
             }
         };
-    }, [theObject, objectNew, threeDObjects, dispatch]);
+    }, [theObject, objectNew, dispatch]);
+
+    /**
+     * ...and take on changes made elsewhere, rather than ignoring them.
+     *
+     * The other half of not fighting: if the dialog kept its own copy while the handles moved the
+     * object, its boxes would show the wrong numbers and the next edit made here would carry the
+     * object back to where it used to be.
+     */
+    useEffect(() => {
+        if (objectNew) return;
+        const stored = threeDObjects.find(obj => obj.uniqueId === theObject.uniqueId);
+        if (!stored || stored === theObject || stored === lastPublishedRef.current) return;
+        lastPublishedRef.current = stored;
+        setObject(stored);
+        seedTextsFromObject(stored);
+        seedRotationFromObject(stored);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [threeDObjects, objectNew, theObject]);
 
     /**
      * Point the shared text boxes at an object's actual values.
@@ -985,6 +998,28 @@ export const Moorhen3DObjects = () => {
      * radius of 0.2 while having none: the box was still showing the annulus default, and since
      * nothing had been typed, no change event ever set it on the object.
      */
+    /**
+     * Point the rotation canvas at an object's actual orientation.
+     *
+     * The canvas draws from a quaternion of its own rather than from the object, so it has to be
+     * told separately - and by everything that changes the object from outside the canvas, or it
+     * goes on showing the orientation the object used to have.
+     */
+    const seedRotationFromObject = (obj: ThreeDObject) => {
+        if (!("orientation" in obj)) return;
+        const m4 = obj.orientation;
+        const m3 = [
+            m4[0], m4[1], m4[2],
+            m4[4], m4[5], m4[6],
+            m4[8], m4[9], m4[10]
+        ];
+        const q = quat4.create();
+        quat4.fromMat3(q, m3);
+        //The fact that I have to do this is slightly worrying.
+        q[0] = -q[0]; q[1] = -q[1]; q[2] = -q[2];
+        setQuat(q);
+    };
+
     const seedTextsFromObject = (obj: ThreeDObject) => {
         setPositionText(obj.origin.map(v => v.toFixed(3)).join(","));
         if (obj.type === "cone") setEndPositionText(obj.top.map(v => v.toFixed(3)).join(","));
@@ -1197,25 +1232,10 @@ export const Moorhen3DObjects = () => {
                 const existingObject  = threeDObjects.find(element => element.uniqueId === evt.target.value);
 
                 setSelectedOption(existingObject.uniqueId);
+                // Selecting is not editing: mark it published so the sync below leaves it alone.
+                lastPublishedRef.current = existingObject;
                 seedTextsFromObject(existingObject);
-                if("orientation" in existingObject){
-                    const m4 = existingObject.orientation
-                    const m3 = [
-                       m4[0], m4[1], m4[2],
-                       m4[4], m4[5], m4[6],
-                       m4[8], m4[9], m4[10]
-                    ];
-                    const q = quat4.create()
-                    quat4.fromMat3(q, m3);
-                    //The fact that I have to do this is slightly worrying.
-                    q[0] = -q[0]; q[1] = -q[1]; q[2] = -q[2]
-                    setQuat(q)
-                }
-                if("scale" in existingObject)
-                    setSizeText(existingObject.scale.toFixed(3))
-                if("radius" in existingObject)
-                    setSizeText(existingObject.radius.toFixed(3))
-
+                seedRotationFromObject(existingObject);
                 setObject(existingObject);
             } catch (e) {
                 console.log("Some problem?");
@@ -1332,6 +1352,16 @@ export const Moorhen3DObjects = () => {
                     <MoorhenButton className="m-2" variant="danger" onClick={handleDelete}>
                         Delete
                     </MoorhenButton>
+                )}
+                {!objectNew && (
+                    <MoorhenToggle
+                        label="Handles"
+                        checked={selectedThreeDObjectId === theObject.uniqueId}
+                        onChange={() => dispatch(setSelectedThreeDObject(
+                            selectedThreeDObjectId === theObject.uniqueId ? null : theObject.uniqueId
+                        ))}
+                        style={{ margin: "0.3rem" }}
+                    />
                 )}
                 <MoorhenButton
                     className="m-2"
