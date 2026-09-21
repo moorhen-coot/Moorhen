@@ -451,13 +451,35 @@ export const Moorhen3DObjects = () => {
     };
 
     /**
-     * Beyond this, consecutive CA atoms are not part of the same run. A CA-CA step is 3.8 A.
+     * The atom that stands for a residue when tracing a backbone, in order of preference.
+     *
+     * A protein residue is traced through its alpha carbon. A nucleotide has no such thing, so it
+     * is traced through the phosphate - the classic backbone trace - falling back to C1' and then
+     * C4' for the residue at a 5' end, which has no phosphate to trace through.
+     *
+     * The element is checked as well as the name because they are not unique: a calcium ion is an
+     * atom called CA in a residue called CA, and would otherwise be strung into the protein trace
+     * as though it were a residue of it.
+     */
+    const TRACE_ATOMS: { name: string; element: string; kind: "protein" | "nucleic" }[] = [
+        { name: "CA", element: "C", kind: "protein" },
+        { name: "P", element: "P", kind: "nucleic" },
+        { name: "C1'", element: "C", kind: "nucleic" },
+        { name: "C4'", element: "C", kind: "nucleic" },
+    ];
+
+    /**
+     * Beyond this, consecutive trace atoms are not part of the same run.
+     *
+     * The step differs by polymer: 3.8 A between alpha carbons, around 6 to 7 between phosphates,
+     * so one threshold cannot serve both - 5 A would break a nucleic chain at every residue, and
+     * 9 A would step straight over a missing one in a protein.
      *
      * Residue numbering is deliberately not used for the test: a jump in numbering with the atoms
-     * still a peptide bond apart is a renumbering rather than a gap, and tracing straight through
-     * it is right, while a genuine break shows up as distance whatever the numbers say.
+     * still a bond apart is a renumbering rather than a gap, and tracing straight through it is
+     * right, while a genuine break shows up as distance whatever the numbers say.
      */
-    const CA_BREAK_DISTANCE = 5.0;
+    const BREAK_DISTANCE = { protein: 5.0, nucleic: 9.0 };
 
     /** Segments each 3.8 A step becomes when splined, giving roughly 1 A between points. */
     const SPLINE_SUBDIVISIONS = 4;
@@ -465,7 +487,7 @@ export const Moorhen3DObjects = () => {
     const [splinePath, setSplinePath] = useState<boolean>(false);
 
     /**
-     * Replace the current path's points with the CA trace of the selected molecule.
+     * Replace the current path's points with a backbone trace of the selected molecule.
      *
      * A snapshot, not a link: the path keeps the coordinates and knows nothing about where they
      * came from, so refining the molecule afterwards leaves the path where the atoms were. Press
@@ -474,7 +496,7 @@ export const Moorhen3DObjects = () => {
      * The points are stored relative to their own centroid, which becomes the object's origin, so
      * the existing position and orientation controls move and turn the whole trace.
      */
-    const getPointsFromCATrace = async () => {
+    const getPointsFromBackboneTrace = async () => {
         if (theObject.type !== "path") return;
         const molecule = molecules.find(
             mol => mol.molNo === parseInt(moleculeSelectRef.current?.value ?? "")
@@ -482,18 +504,52 @@ export const Moorhen3DObjects = () => {
         if (!molecule) return;
 
         const atoms = await molecule.gemmiAtomsForCid("/*/*/*/*");
-        const cas = atoms.filter(atom => atom.name.trim() === "CA");
-        if (cas.length < 2) return;
+
+        // One trace atom per residue, rather than a filter on atom name: which atom stands for a
+        // residue depends on what kind of residue it is, and that is only decidable once its
+        // atoms are seen together.
+        const traced: { atom: moorhen.AtomInfo; kind: "protein" | "nucleic" }[] = [];
+        let residueAtoms: moorhen.AtomInfo[] = [];
+        const takeResidue = () => {
+            if (residueAtoms.length === 0) return;
+            for (const candidate of TRACE_ATOMS) {
+                const atom = residueAtoms.find(
+                    item =>
+                        item.name.trim() === candidate.name &&
+                        item.element.trim().toUpperCase() === candidate.element
+                );
+                if (atom) {
+                    traced.push({ atom, kind: candidate.kind });
+                    return;
+                }
+            }
+        };
+        atoms.forEach(atom => {
+            const previous = residueAtoms[residueAtoms.length - 1];
+            if (previous && (previous.chain_id !== atom.chain_id || previous.res_no !== atom.res_no)) {
+                takeResidue();
+                residueAtoms = [];
+            }
+            residueAtoms.push(atom);
+        });
+        takeResidue();
+
+        if (traced.length < 2) return;
 
         // Kept as atoms rather than as bare coordinates, so that the labels below and the runs
         // themselves come from one traversal and cannot drift apart.
         const runAtoms: moorhen.AtomInfo[][] = [];
         let run: moorhen.AtomInfo[] = [];
-        cas.forEach((atom, i) => {
-            const previous = i > 0 ? cas[i - 1] : null;
+        traced.forEach(({ atom, kind }, i) => {
+            const previous = i > 0 ? traced[i - 1] : null;
             const broken = previous !== null && (
-                atom.chain_id !== previous.chain_id ||
-                Math.hypot(atom.x - previous.x, atom.y - previous.y, atom.z - previous.z) > CA_BREAK_DISTANCE
+                atom.chain_id !== previous.atom.chain_id ||
+                // A chain that changes polymer part way along is not one run: the step between
+                // an alpha carbon and a phosphate means nothing.
+                kind !== previous.kind ||
+                Math.hypot(
+                    atom.x - previous.atom.x, atom.y - previous.atom.y, atom.z - previous.atom.z
+                ) > BREAK_DISTANCE[kind]
             );
             if (broken && run.length > 0) {
                 runAtoms.push(run);
@@ -1352,9 +1408,9 @@ export const Moorhen3DObjects = () => {
                                 onChange={() => setSplinePath(!splinePath)}
                             />
                             <MoorhenButton
-                                label="Get CA points"
-                                onClick={() => { getPointsFromCATrace() }}
-                                tooltip="Replace this path's points with the CA trace of the selected molecule"
+                                label="Get backbone"
+                                onClick={() => { getPointsFromBackboneTrace() }}
+                                tooltip="Replace this path's points with a backbone trace of the selected molecule: alpha carbons for protein, phosphates for nucleic acid"
                             />
                         </MoorhenStack>
                         <span>

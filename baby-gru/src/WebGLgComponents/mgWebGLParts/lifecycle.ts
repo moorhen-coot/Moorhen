@@ -303,6 +303,25 @@ export function attachCanvasListeners(self: MGWebGL): void {
             function (evt) {
                 document.onkeydown = function (evt2) {
                 }
+
+                // Nothing here is hovered once the pointer has gone. Without this the last thing
+                // it touched stays lit for as long as the mouse is away, and because a pointer
+                // hover takes precedence over one driven from outside the view, it also stops the
+                // sequence viewer from lighting anything: the stale highlight simply wins.
+                //
+                // The pending hover goes too. doHover is debounced, so a move made just before
+                // leaving would otherwise fire after this and put the highlight straight back.
+                if (self.hoverDebounceTimeout) {
+                    clearTimeout(self.hoverDebounceTimeout);
+                    self.hoverDebounceTimeout = null;
+                }
+                const wasHovering = self.state.hoveridx > -1
+                    || self.state.hover_point > -1
+                    || (self.state.hoverIndices?.length ?? 0) > 0;
+                if (wasHovering) {
+                    self.setState({ hoveridx: -1, hover_point: -1, hoverIndices: [] });
+                    self.drawScene();
+                }
             },
             false);
         self.canvas.addEventListener("wheel",
