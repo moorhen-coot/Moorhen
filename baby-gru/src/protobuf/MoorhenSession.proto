@@ -227,6 +227,10 @@ message Moorhen3DObject {
     repeated uint32 run_starts = 22;
     // How many of those points make one separately hoverable section.
     optional uint32 point_stride = 23;
+    // An opaque label per section, and the scheme they are written in. Meaningful only to
+    // whatever generated the path and whatever consumes a hover on it.
+    repeated string section_tags = 24;
+    optional string tag_kind = 25;
 }
 
 message RGB {

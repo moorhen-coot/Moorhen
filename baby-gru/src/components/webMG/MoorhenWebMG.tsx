@@ -28,6 +28,7 @@ interface MoorhenWebMGPropsInterface {
     viewOnly: boolean;
     urlPrefix: string;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
+    onSectionHovered?: (identifier: { buffer: { id: string; }; kind: string; tag: string; }) => void;
 }
 
 const intialDefaultActionButtonSettings: ActionButtonSettings = {
@@ -791,6 +792,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
+                    onSectionHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onSectionHovered : null}
                     onKeyPress={onKeyPress}
                     onZoomChanged={onZoomChanged}
                     onOriginChanged={onOriginChanged}

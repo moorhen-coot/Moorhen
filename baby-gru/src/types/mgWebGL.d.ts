@@ -345,6 +345,8 @@ export namespace webGL {
     interface MGWebGLPropsInterface {
         reContourMapOnlyOnMouseUp: boolean | null;
         onAtomHovered: (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => void;
+        // A hover on a labelled piece of a mesh. The label is opaque to the renderer.
+        onSectionHovered?: (identifier: { buffer: { id: string }; kind: string; tag: string }) => void;
         onKeyPress: (event: KeyboardEvent) => boolean | Promise<boolean>;
         onZoomChanged: (newZoom: number) => void;
         onOriginChanged: (newOrigin: [number, number, number]) => void;

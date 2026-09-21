@@ -45,8 +45,8 @@ import type {
 } from "../../store/threeDObjectsSlice";
 
 import { moorhen } from "../../types/moorhen";
-import { modalKeys } from "../../utils/enums";
-import { colourToEmojiSwatch, componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
+import { MOORHEN_ATOM_TAG_KIND, modalKeys } from "../../utils/enums";
+import { colourToEmojiSwatch, componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, parseAtomInfoLabel, rgbToHex } from "../../utils/utils";
 import { MoorhenToggle, MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { smoothPath } from "../../WebGLgComponents/shapeGeometry";
 import { MoorhenStack } from "../interface-base";
@@ -382,7 +382,10 @@ export const Moorhen3DObjects = () => {
         radius: 0.3,
         inner_radius: 0,
         // Hand-built paths highlight point to point; the CA generator raises this when it splines.
-        point_stride: 1
+        point_stride: 1,
+        // Nothing to say about the sections until a generator labels them.
+        section_tags: [],
+        tag_kind: ""
     });
 
     const newTorusObject = (): TorusObject => ({
@@ -440,7 +443,10 @@ export const Moorhen3DObjects = () => {
             ...theObject,
             points,
             run_starts: run_starts ?? theObject.run_starts,
-            point_stride: 1
+            point_stride: 1,
+            // Whatever the sections used to stand for, they do not stand for it now.
+            section_tags: [],
+            tag_kind: ""
         });
     };
 
@@ -479,8 +485,10 @@ export const Moorhen3DObjects = () => {
         const cas = atoms.filter(atom => atom.name.trim() === "CA");
         if (cas.length < 2) return;
 
-        const runs: number[][] = [];
-        let run: number[] = [];
+        // Kept as atoms rather than as bare coordinates, so that the labels below and the runs
+        // themselves come from one traversal and cannot drift apart.
+        const runAtoms: moorhen.AtomInfo[][] = [];
+        let run: moorhen.AtomInfo[] = [];
         cas.forEach((atom, i) => {
             const previous = i > 0 ? cas[i - 1] : null;
             const broken = previous !== null && (
@@ -488,12 +496,13 @@ export const Moorhen3DObjects = () => {
                 Math.hypot(atom.x - previous.x, atom.y - previous.y, atom.z - previous.z) > CA_BREAK_DISTANCE
             );
             if (broken && run.length > 0) {
-                runs.push(run);
+                runAtoms.push(run);
                 run = [];
             }
-            run.push(atom.x, atom.y, atom.z);
+            run.push(atom);
         });
-        if (run.length > 0) runs.push(run);
+        if (run.length > 0) runAtoms.push(run);
+        const runs = runAtoms.map(atoms => atoms.flatMap(atom => [atom.x, atom.y, atom.z]));
 
         // Splined run by run, never across a break - a spline through a gap would invent a strand
         // that is not there.
@@ -501,10 +510,19 @@ export const Moorhen3DObjects = () => {
 
         const points: number[] = [];
         const run_starts: number[] = [];
-        shaped.forEach(r => {
+        // One label per section, in the order the geometry will build them: run by run, and
+        // within a run one section per original CA step. Splining multiplies the points by
+        // SPLINE_SUBDIVISIONS and the stride divides by it again, so the count comes to the same
+        // either way - which is the point of carrying the stride at all.
+        const section_tags: string[] = [];
+        shaped.forEach((r, runIndex) => {
             if (r.length < 6) return;
             run_starts.push(points.length / 3);
             points.push(...r);
+            const atoms = runAtoms[runIndex];
+            for (let section = 0; section + 1 < atoms.length; section++) {
+                section_tags.push(`${molecule.uniqueId}|${parseAtomInfoLabel(atoms[section])}`);
+            }
         });
         if (points.length < 6) return;
 
@@ -519,7 +537,9 @@ export const Moorhen3DObjects = () => {
             run_starts,
             origin: centroid,
             // So that a section stays one residue whether or not the trace was splined.
-            point_stride: splinePath ? SPLINE_SUBDIVISIONS : 1
+            point_stride: splinePath ? SPLINE_SUBDIVISIONS : 1,
+            section_tags,
+            tag_kind: MOORHEN_ATOM_TAG_KIND
         };
         commitPath(updated);
         setPositionText(centroid.map(c => c.toFixed(2)).join(","));

@@ -420,3 +420,12 @@ export const railSpecies = [
     "Yellow Rail",
     "Yellow-breasted Crake",
 ];
+
+/**
+ * Tag scheme for mesh sections that stand for atoms, written "<molecule uniqueId>|<atom cid>".
+ *
+ * Lives here rather than with either end of it: the 3D object code must not know what an atom is,
+ * and the molecular code must not know what a section is. The generator that labels a path and
+ * the bridge that reads the label are the only two things that agree on this string.
+ */
+export const MOORHEN_ATOM_TAG_KIND = "moorhen-atom";

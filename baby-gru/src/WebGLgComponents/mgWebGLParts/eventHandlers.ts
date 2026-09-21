@@ -147,6 +147,26 @@ export function doHover(self: MGWebGL, event) {
             else {
                 self.props.onAtomHovered(null)
             }
+
+            // A buffer may label its pickable pieces with strings that mean nothing here. Report
+            // the one under the cursor and let whoever understands the scheme act on it.
+            //
+            // An atom under the cursor takes precedence: the two pick channels are independent,
+            // so both can find something at once, and this is the renderer saying which of its
+            // own answers wins. Reported after onAtomHovered, which has already cleared the
+            // hover state on the way past when there is no atom - so a labelled piece fills the
+            // gap rather than fighting over it.
+            if (self.props.onSectionHovered) {
+                const atomHasIt = minidx > -1
+                const pickInfo = (!atomHasIt && minidx_pi > -1) ? displayBuffers[minidx_pi].pick_info : null
+                const tag = (pickInfo?.pick_point_tags && minj_pi > -1)
+                    ? pickInfo.pick_point_tags[minj_pi]
+                    : null
+                self.props.onSectionHovered(
+                    tag ? { kind: pickInfo.pick_tag_kind, tag: tag, buffer: displayBuffers[minidx_pi] } : null
+                )
+            }
+
             self.drawScene();
         }
         self.hoverDebounceTimeout = null;

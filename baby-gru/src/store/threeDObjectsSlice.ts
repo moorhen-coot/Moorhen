@@ -263,6 +263,19 @@ export interface PathObject extends ThreeDObjectBase {
      * while a hand-built path highlights point to point at a stride of 1.
      */
     point_stride: number;
+    /**
+     * One opaque label per section, and what scheme they are written in.
+     *
+     * Nothing in the 3D object code reads these - not the geometry, not the draw path, not the
+     * pick test. They are carried from whatever generated the path through to whatever consumes
+     * a hover, and only the two ends agree on what they mean. That is what keeps a path a path:
+     * the CA generator can label its sections with atom identifiers without the primitive
+     * acquiring any notion of an atom.
+     *
+     * `tag_kind` names the scheme so a consumer can recognise its own and ignore the rest.
+     */
+    section_tags: string[];
+    tag_kind: string;
 }
 
 export interface TorusObject extends ThreeDObjectBase, Wireframeable {

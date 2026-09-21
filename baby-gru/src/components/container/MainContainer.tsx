@@ -17,6 +17,7 @@ import {
 } from "../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { MOORHEN_ATOM_TAG_KIND } from "../../utils/enums";
 import { addAvailableFontList, emptyAvailableFonts } from "../../store/labelSettingsSlice";
 import { setRefinementSelection } from "../../store/refinementSettingsSlice";
 import {
@@ -203,6 +204,37 @@ export const MoorhenContainer = (props: ContainerProps) => {
             }
         },
         [molecules]
+    );
+
+    /**
+     * The one place that knows both worlds.
+     *
+     * A mesh can label its pickable pieces with strings; nothing in the 3D object code, the
+     * geometry or the pick test reads them. Here, a label written in the scheme we recognise is
+     * turned into an ordinary atom hover, so the info panel and the sequence highlight respond
+     * exactly as they do for a real atom - they are reading hoveredAtom either way and cannot
+     * tell the difference.
+     *
+     * A label in any other scheme is ignored rather than guessed at, which is what lets another
+     * generator label its paths for its own purposes without colliding with this.
+     */
+    const onSectionHovered = useCallback(
+        (identifier: { buffer: { id: string }; kind: string; tag: string }) => {
+            if (identifier == null || identifier.kind !== MOORHEN_ATOM_TAG_KIND) {
+                return;
+            }
+            const separator = identifier.tag.indexOf("|");
+            if (separator < 0) {
+                return;
+            }
+            const moleculeUniqueId = identifier.tag.slice(0, separator);
+            const cid = identifier.tag.slice(separator + 1);
+            const molecule = molecules.find(item => item.uniqueId === moleculeUniqueId);
+            if (molecule && cid) {
+                dispatch(setHoveredAtom({ molecule: molecule, cid: cid, atomInfo: null }));
+            }
+        },
+        [molecules, dispatch]
     );
 
     const setWindowDimensions = useCallback(() => {
@@ -456,6 +488,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                             monomerLibraryPath={monomerLibraryPath}
                             timeCapsuleRef={timeCapsuleRef}
                             onAtomHovered={onAtomHovered}
+                            onSectionHovered={onSectionHovered}
                             urlPrefix={urlPrefix}
                             viewOnly={viewOnly}
                         />

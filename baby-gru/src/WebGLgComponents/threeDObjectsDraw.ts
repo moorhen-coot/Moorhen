@@ -206,6 +206,10 @@ type InstanceGroup = {
         sectionSpans?: number[][];
         sectionRadius?: number;
     }
+    // Opaque labels for this group's sections, and the scheme they are in. Set by whichever
+    // branch built the group; never read here.
+    tags?: string[]
+    tagKind?: string
     origins: number[]
     sizes: number[]
     orientations: number[]
@@ -654,6 +658,13 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
                     obj.orientation,
                     colour
                 )
+                // Attached after the fact because they belong to the object rather than to its
+                // geometry: the mesh generators have no business knowing about them.
+                const pathGroup = groups.get(`path-${obj.uniqueId}`)
+                if(pathGroup){
+                    pathGroup.tags = obj.section_tags
+                    pathGroup.tagKind = obj.tag_kind
+                }
             }
 
         } else if(obj.type==="torus"){
@@ -787,6 +798,7 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
         // than against the single point above is what stops a section being picked from the far
         // side of the object: a point is only a fair stand-in for a shape that is small.
         const pick_spans: number[][] = []
+        const pick_point_tags: string[] = []
         for (let instance = 0; instance < group.origins.length / 3; instance++) {
             const origin = group.origins.slice(3 * instance, 3 * instance + 3)
             const size = group.sizes.slice(3 * instance, 3 * instance + 3)
@@ -804,6 +816,9 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
                     ))
                 }
                 pick_spans.push(placed)
+                // Aligned with pick_points, so a hover can look its label up by the same index
+                // the pick test reports.
+                pick_point_tags.push(group.tags?.[section] ?? "")
             })
         }
 
@@ -825,6 +840,8 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
                     pick_point_sections: pick_point_sections,
                     pick_spans: pick_spans,
                     pick_radius: group.mesh.sectionRadius,
+                    pick_point_tags: pick_point_tags,
+                    pick_tag_kind: group.tagKind,
                     section_ranges: group.mesh.sectionRanges,
                 }
                 : { pick_points: pick_points, pick_point_instances: pick_point_instances },
