@@ -27,11 +27,6 @@ code {
 } */
 
 
-
-.validation-plot-div {
-    height: calc(100%);
-}
-
 .hide-scrolling::-webkit-scrollbar {
     width: 0px;
     background: transparent;

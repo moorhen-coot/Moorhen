@@ -152,7 +152,6 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             });
             setPosition({ x: glWidth - width - 550 > 0 ? 550 : glWidth - width  , y: top });
             sizeRef.current = { width, height };
-            props.onResize?.(null, "bottomRight", bodyRef.current, { width: 0, height: 0 }, { width, height });
             props.onResizeStop?.(null, "bottomRight", bodyRef.current, { width: 0, height: 0 });
             aspectRatioRef.current = width / height;
             console.log(`Measured body size: ${rect.width}x${rect.height}`);
@@ -192,6 +191,25 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     onResizeRef.current = props.onResize;
     const onResizeStopRef = useRef(props.onResizeStop);
     onResizeStopRef.current = props.onResizeStop;
+
+    // The measurement-phase onResize above fires while the body is still the
+    // hidden off-screen copy, before the real modal (with its real content
+    // refs/canvases) has mounted. Re-fire onResize once the real modal has
+    // committed so content that sizes itself off the real DOM fits immediately,
+    // without requiring the user to nudge the resize handle first.
+    useLayoutEffect(() => {
+        if (!measured) {
+            return;
+        }
+        const { width, height } = sizeRef.current;
+        onResizeRef.current?.(
+            null,
+            "bottomRight",
+            modalRef.current,
+            { width: 0, height: 0 },
+            { width: width - marginWidth, height: height - totalNonBodyHeight }
+        );
+    }, [measured]);
 
     const dispatch = useDispatch();
     const focusHierarchy = useSelector((state: RootState) => state.modals.focusHierarchy);
