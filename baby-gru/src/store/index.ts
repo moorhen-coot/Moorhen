@@ -194,7 +194,7 @@ export {
     setZoom,
     autoClipFogByZoom,
 }  from "./sceneSettingsSlice";
-export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates }  from "./hoveringStatesSlice";
+export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
 export {
     resetSliceNDiceSlice,
     setPaeFileIsUploaded,

@@ -45,7 +45,7 @@ import type {
 } from "../../store/threeDObjectsSlice";
 
 import { moorhen } from "../../types/moorhen";
-import { MOORHEN_ATOM_TAG_KIND, modalKeys } from "../../utils/enums";
+import { MOORHEN_ATOM_TAG_KIND, moorhenAtomTagKey, modalKeys } from "../../utils/enums";
 import { colourToEmojiSwatch, componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, parseAtomInfoLabel, rgbToHex } from "../../utils/utils";
 import { MoorhenToggle, MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { smoothPath } from "../../WebGLgComponents/shapeGeometry";
@@ -521,7 +521,11 @@ export const Moorhen3DObjects = () => {
             points.push(...r);
             const atoms = runAtoms[runIndex];
             for (let section = 0; section + 1 < atoms.length; section++) {
-                section_tags.push(`${molecule.uniqueId}|${parseAtomInfoLabel(atoms[section])}`);
+                const atom = atoms[section];
+                section_tags.push(
+                    `${moorhenAtomTagKey(molecule.uniqueId, atom.chain_id, atom.res_no)}` +
+                    `|${parseAtomInfoLabel(atom)}`
+                );
             }
         });
         if (points.length < 6) return;

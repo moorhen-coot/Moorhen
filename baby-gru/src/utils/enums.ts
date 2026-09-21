@@ -422,10 +422,23 @@ export const railSpecies = [
 ];
 
 /**
- * Tag scheme for mesh sections that stand for atoms, written "<molecule uniqueId>|<atom cid>".
+ * Tag scheme for mesh sections that stand for atoms:
+ *
+ *     <molecule uniqueId>|<chain id>|<residue number>|<atom cid>
+ *
+ * The first three fields are a normalised residue key, for matching; the fourth is a CID to hand
+ * to the hover state, for display. Both are carried because CIDs come in more than one shape -
+ * the sequence viewer writes "/0/A/36" while an atom hover writes "/5a3h/A/36(GLY)/CA" - so
+ * matching on the CID itself would depend on where the hover came from. Parsing every tag to
+ * compare them would be correct but costs a pass over every section each time the display
+ * buffers are rebuilt, which is once a frame while a 3D object is being dragged.
  *
  * Lives here rather than with either end of it: the 3D object code must not know what an atom is,
  * and the molecular code must not know what a section is. The generator that labels a path and
- * the bridge that reads the label are the only two things that agree on this string.
+ * the bridges that read the label are the only things that agree on this string.
  */
 export const MOORHEN_ATOM_TAG_KIND = "moorhen-atom";
+
+/** The residue key the first three fields of such a tag make up. */
+export const moorhenAtomTagKey = (moleculeUniqueId: string, chainId: string, residueNumber: number | string) =>
+    `${moleculeUniqueId}|${chainId}|${parseInt(String(residueNumber))}`;

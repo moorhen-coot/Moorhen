@@ -155,6 +155,10 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
         const displayBuffers = self.store.getState().glRef.displayBuffers
         const hoverSize = self.store.getState().glRef.hoverSize
+        // A section lit from outside the 3D view - the sequence viewer, say. Read once per draw
+        // rather than per buffer, and already resolved to a buffer and an index so that nothing
+        // here has to know what it stands for.
+        const hoveredSection = self.store.getState().hoveringStates.hoveredSection
 
         const bright_y = self.background_colour[0] * 0.299 + self.background_colour[1] * 0.587 + self.background_colour[2] * 0.114;
 
@@ -277,6 +281,16 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             from = sectionRanges[section][0]
                             to = sectionRanges[section][1]
                         }
+                    } else if(
+                        sectionRanges && hoveredSection
+                        && displayBuffers[idx].id === hoveredSection.bufferId
+                        && displayBuffers[idx].triangleInstanceOriginBuffer[j]
+                        && sectionRanges[hoveredSection.section]
+                    ){
+                        // The mouse is not on this buffer, but something else has asked for one
+                        // of its sections. The pointer wins where both have an opinion.
+                        from = sectionRanges[hoveredSection.section][0]
+                        to = sectionRanges[hoveredSection.section][1]
                     }
                     self.gl.uniform1i(theShader.uHighlightFrom, from);
                     self.gl.uniform1i(theShader.uHighlightTo, to);

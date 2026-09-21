@@ -223,12 +223,14 @@ export const MoorhenContainer = (props: ContainerProps) => {
             if (identifier == null || identifier.kind !== MOORHEN_ATOM_TAG_KIND) {
                 return;
             }
-            const separator = identifier.tag.indexOf("|");
-            if (separator < 0) {
+            // "<uniqueId>|<chain>|<residue>|<cid>". Only the first and last fields matter here;
+            // the middle two exist so the reverse direction can match without parsing a CID.
+            const fields = identifier.tag.split("|");
+            if (fields.length < 4) {
                 return;
             }
-            const moleculeUniqueId = identifier.tag.slice(0, separator);
-            const cid = identifier.tag.slice(separator + 1);
+            const moleculeUniqueId = fields[0];
+            const cid = fields.slice(3).join("|");
             const molecule = molecules.find(item => item.uniqueId === moleculeUniqueId);
             if (molecule && cid) {
                 dispatch(setHoveredAtom({ molecule: molecule, cid: cid, atomInfo: null }));
