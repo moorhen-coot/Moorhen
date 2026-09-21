@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef } from "react";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
+import { enqueueSnackbar } from "@/store";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
@@ -21,11 +22,18 @@ export const MergeMolecules = () => {
         const fromMolNo = parseInt(fromRef.current.value);
         const otherMolecules = molecules.filter(molecule => molecule.molNo === fromMolNo && molecule.molNo !== toMolecule.molNo);
         if (otherMolecules.length <= 0) {
-            console.log("No valid molecules selected, skipping merge...");
+            dispatch(enqueueSnackbar({ message: "Select two different molecules to merge", variant: "warning" }));
             return;
         }
-        await toMolecule.mergeMolecules(otherMolecules, true);
-        dispatch(triggerUpdate(toMolecule.molNo));
+        try {
+            await toMolecule.mergeMolecules(otherMolecules, true);
+            dispatch(triggerUpdate(toMolecule.molNo));
+            dispatch(enqueueSnackbar({ message: `Merged into ${toMolecule.name}`, variant: "success" }));
+        } catch (err) {
+            console.error(err);
+            dispatch(enqueueSnackbar({ message: "Failed to merge molecules", variant: "error" }));
+        }
+        document.body.click();
     }, [toRef.current, fromRef.current, molecules]);
 
     return (
