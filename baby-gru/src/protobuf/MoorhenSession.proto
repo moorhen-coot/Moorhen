@@ -225,6 +225,8 @@ message Moorhen3DObject {
     // separate run of it begins.
     repeated float points = 21;
     repeated uint32 run_starts = 22;
+    // How many of those points make one separately hoverable section.
+    optional uint32 point_stride = 23;
 }
 
 message RGB {

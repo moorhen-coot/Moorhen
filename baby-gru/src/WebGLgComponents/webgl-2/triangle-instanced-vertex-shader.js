@@ -30,6 +30,16 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
     // per-vertex weight field to sample.
     uniform int uHoveredInstance;
 
+    // The finer-grained alternative: light a contiguous range of vertex ids rather than a whole
+    // instance, for a mesh divided into separately hoverable sections. Sections own their own
+    // boundary vertices, so no triangle spans two of them and the edge is hard rather than a
+    // ramp - vHighlight being a varying, a shared vertex would interpolate across the join.
+    //
+    // Only meaningful for a mesh with one instance, since a vertex id cannot say which instance
+    // it belongs to. -1 disables, as it does for uHoveredInstance.
+    uniform int uHighlightFrom;
+    uniform int uHighlightTo;
+
     const float HIGHLIGHT_BOOST = 1.0;
 
     void main(void) {
@@ -53,7 +63,9 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
       // mesh highlight, but which instances share a buffer is an invisible implementation detail
       // - every sphere in the scene shares one mesh, while a sphere and a cube do not - so fading
       // siblings makes hovering one shape visibly disturb an arbitrary subset of the others.
-      vHighlight = (uHoveredInstance >= 0 && gl_InstanceID == uHoveredInstance) ? 1.0 + HIGHLIGHT_BOOST : 1.0;
+      bool wholeInstanceLit = uHoveredInstance >= 0 && gl_InstanceID == uHoveredInstance;
+      bool sectionLit = uHighlightFrom >= 0 && gl_VertexID >= uHighlightFrom && gl_VertexID < uHighlightTo;
+      vHighlight = (wholeInstanceLit || sectionLit) ? 1.0 + HIGHLIGHT_BOOST : 1.0;
     }
 `;
 

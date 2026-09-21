@@ -198,7 +198,9 @@ const placeLocalPoint = (local: number[], origin: number[], size: number[], orie
  * One instanced draw: a single mesh plus the per-instance attributes of everything sharing it.
  */
 type InstanceGroup = {
-    mesh: ShapeMesh
+    // A generator may return more than a bare mesh: a path reports how it is divided into
+    // separately hoverable sections.
+    mesh: ShapeMesh & { sectionRanges?: number[][]; sectionPoints?: number[][] }
     origins: number[]
     sizes: number[]
     orientations: number[]
@@ -640,7 +642,7 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
                     `path-${obj.uniqueId}`,
                     () => getPathTubes(
                         obj.points, obj.run_starts ?? [], obj.radius, PATH_TUBE_SIDES,
-                        obj.inner_radius ?? 0
+                        obj.inner_radius ?? 0, Math.max(1, obj.point_stride ?? 1)
                     ),
                     obj.origin,
                     [1, 1, 1],
@@ -761,16 +763,29 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
         //
         // No influence weights or triangle lists: a whole instance highlights at once, so there
         // is no per-vertex weight field to supply and nothing needs uploading as a texture.
-        const localPoints = [[0, 0, 0], ...sampleMeshPoints(group.mesh, PICK_POINTS_PER_INSTANCE)]
+        // A sectioned mesh is hoverable in pieces instead of all at once: each section offers one
+        // pick point at its middle, and pick_point_sections maps the reported index to the
+        // section, whose vertex range the shader then lights.
+        //
+        // This works only because such a mesh has a single instance - a path is keyed by its own
+        // id, so nothing else shares it. The shader test is on gl_VertexID, which says nothing
+        // about which instance is being drawn, so a sectioned mesh shared between instances would
+        // light the same section in every one of them.
+        const sectioned = !!(group.mesh.sectionRanges && group.mesh.sectionPoints)
+        const localPoints = sectioned
+            ? group.mesh.sectionPoints
+            : [[0, 0, 0], ...sampleMeshPoints(group.mesh, PICK_POINTS_PER_INSTANCE)]
         const pick_points: number[][] = []
         const pick_point_instances: number[] = []
+        const pick_point_sections: number[] = []
         for (let instance = 0; instance < group.origins.length / 3; instance++) {
             const origin = group.origins.slice(3 * instance, 3 * instance + 3)
             const size = group.sizes.slice(3 * instance, 3 * instance + 3)
             const orientation = group.orientations.slice(16 * instance, 16 * instance + 16)
-            localPoints.forEach(local => {
+            localPoints.forEach((local, section) => {
                 pick_points.push(placeLocalPoint(local, origin, size, orientation))
                 pick_point_instances.push(instance)
+                if (sectioned) pick_point_sections.push(section)
             })
         }
 
@@ -785,7 +800,14 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             vert_tri: [[group.mesh.vertices]],
             idx_tri: [[group.mesh.idx]],
             prim_types: [["TRIANGLES"]],
-            pick_info: { pick_points: pick_points, pick_point_instances: pick_point_instances },
+            pick_info: sectioned
+                ? {
+                    pick_points: pick_points,
+                    pick_point_instances: pick_point_instances,
+                    pick_point_sections: pick_point_sections,
+                    section_ranges: group.mesh.sectionRanges,
+                }
+                : { pick_points: pick_points, pick_point_instances: pick_point_instances },
         })
     })
 

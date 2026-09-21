@@ -1009,15 +1009,20 @@ const tubesAlongPaths = (
     paths: WirePath[],
     radius: number,
     sides: number = WIREFRAME_TUBE_SIDES,
-    innerRadius: number = 0
-): ShapeMesh => {
+    innerRadius: number = 0,
+    sectionStride: number = 0
+): ShapeMesh & { sectionRanges?: number[][]; sectionPoints?: number[][] } => {
     // A bore down the middle turns the tube into a pipe: a second surface at innerRadius facing
     // the other way, and end caps that are annular rather than solid discs. An inner radius at or
     // past the outer one leaves no material, so it is ignored rather than drawn inside out.
     const hollow = innerRadius > 1e-9 && innerRadius < radius;
+
     const vertices: number[] = [];
     const normals: number[] = [];
     const idx: number[] = [];
+    // Only filled in when sections are asked for; see the block comment below.
+    const sectionRanges: number[][] = [];
+    const sectionPoints: number[][] = [];
 
     paths.forEach(path => {
         // Drop repeated points. A zero-length segment has no direction, so it would give a zero
@@ -1046,11 +1051,12 @@ const tubesAlongPaths = (
             return normalise(sub(points[i + 1], points[i - 1]));
         };
 
-        const base = vertices.length / 3;
+        // Frames for the whole path before any geometry is emitted. Parallel transport has to run
+        // end to end: if each section started from its own arbitrary perpendicular, the tube would
+        // visibly twist at every boundary.
         const tangents: Vec3[] = [];
         const frames: { u: Vec3; w: Vec3 }[] = [];
         let u: Vec3 | null = null;
-
         for (let i = 0; i < n; i++) {
             const tangent = tangentAt(i);
             if (u === null) {
@@ -1065,141 +1071,176 @@ const tubesAlongPaths = (
             const w = cross(tangent, u);
             tangents.push(tangent);
             frames.push({ u, w });
+        }
 
+        /** One ring of `sides` vertices about point `i`. `sign` is +1 for the barrel, -1 for the bore. */
+        const emitRing = (i: number, ringRadius: number, sign: number): number => {
+            const { u: fu, w: fw } = frames[i];
+            const ringBase = vertices.length / 3;
             for (let j = 0; j < sides; j++) {
                 const theta = (2 * Math.PI * j) / sides;
-                const normal: Vec3 = [
-                    Math.cos(theta) * u[0] + Math.sin(theta) * w[0],
-                    Math.cos(theta) * u[1] + Math.sin(theta) * w[1],
-                    Math.cos(theta) * u[2] + Math.sin(theta) * w[2],
+                const radial: Vec3 = [
+                    Math.cos(theta) * fu[0] + Math.sin(theta) * fw[0],
+                    Math.cos(theta) * fu[1] + Math.sin(theta) * fw[1],
+                    Math.cos(theta) * fu[2] + Math.sin(theta) * fw[2],
                 ];
                 vertices.push(
-                    points[i][0] + radius * normal[0],
-                    points[i][1] + radius * normal[1],
-                    points[i][2] + radius * normal[2]
+                    points[i][0] + ringRadius * radial[0],
+                    points[i][1] + ringRadius * radial[1],
+                    points[i][2] + ringRadius * radial[2]
+                );
+                normals.push(sign * radial[0], sign * radial[1], sign * radial[2]);
+            }
+            return ringBase;
+        };
+
+        /** The band of quads between two rings. The bore takes it reversed, being seen from within. */
+        const emitBand = (a: number, b: number, reversed: boolean) => {
+            for (let j = 0; j < sides; j++) {
+                const nextJ = (j + 1) % sides;
+                if (reversed) {
+                    idx.push(a + j, b + nextJ, a + nextJ);
+                    idx.push(a + j, b + j, b + nextJ);
+                } else {
+                    idx.push(a + j, a + nextJ, b + nextJ);
+                    idx.push(a + j, b + nextJ, b + j);
+                }
+            }
+        };
+
+        const pushCap = (
+            centre: Vec3,
+            normal: Vec3,
+            frame: { u: Vec3; w: Vec3 },
+            reverse: boolean
+        ) => {
+            const capBase = vertices.length / 3;
+            vertices.push(...centre);
+            normals.push(...normal);
+            for (let j = 0; j < sides; j++) {
+                const k = reverse ? sides - 1 - j : j;
+                const theta = (2 * Math.PI * k) / sides;
+                vertices.push(
+                    centre[0] + radius * (Math.cos(theta) * frame.u[0] + Math.sin(theta) * frame.w[0]),
+                    centre[1] + radius * (Math.cos(theta) * frame.u[1] + Math.sin(theta) * frame.w[1]),
+                    centre[2] + radius * (Math.cos(theta) * frame.u[2] + Math.sin(theta) * frame.w[2])
                 );
                 normals.push(...normal);
             }
-        }
-
-        const innerBase = vertices.length / 3;
-        if (hollow) {
-            for (let i = 0; i < n; i++) {
-                const { u: fu, w: fw } = frames[i];
-                for (let j = 0; j < sides; j++) {
-                    const theta = (2 * Math.PI * j) / sides;
-                    const radial: Vec3 = [
-                        Math.cos(theta) * fu[0] + Math.sin(theta) * fw[0],
-                        Math.cos(theta) * fu[1] + Math.sin(theta) * fw[1],
-                        Math.cos(theta) * fu[2] + Math.sin(theta) * fw[2],
-                    ];
-                    vertices.push(
-                        points[i][0] + innerRadius * radial[0],
-                        points[i][1] + innerRadius * radial[1],
-                        points[i][2] + innerRadius * radial[2]
-                    );
-                    // The bore faces the axis. "Outward" means away from the material, which
-                    // inside a pipe is inward - otherwise the lit side is the one you cannot see.
-                    normals.push(-radial[0], -radial[1], -radial[2]);
-                }
-            }
-        }
-
-        const quadRings = path.closed ? n : n - 1;
-        for (let i = 0; i < quadRings; i++) {
-            const here = base + i * sides;
-            const next = base + ((i + 1) % n) * sides;
             for (let j = 0; j < sides; j++) {
-                const nextJ = (j + 1) % sides;
-                idx.push(here + j, here + nextJ, next + nextJ);
-                idx.push(here + j, next + nextJ, next + j);
+                idx.push(capBase, capBase + 1 + j, capBase + 1 + ((j + 1) % sides));
             }
-        }
+        };
 
-        if (hollow) {
-            for (let i = 0; i < quadRings; i++) {
-                const here = innerBase + i * sides;
-                const next = innerBase + ((i + 1) % n) * sides;
-                for (let j = 0; j < sides; j++) {
-                    const nextJ = (j + 1) % sides;
-                    // Reversed against the outer barrel: the bore is seen from within, so the
-                    // winding that faces the viewer there is the other one.
-                    idx.push(here + j, next + nextJ, here + nextJ);
-                    idx.push(here + j, next + j, next + nextJ);
-                }
-            }
-        }
-
-        if (!path.closed) {
-            const pushCap = (
-                centre: Vec3,
-                normal: Vec3,
-                frame: { u: Vec3; w: Vec3 },
-                reverse: boolean
-            ) => {
-                const capBase = vertices.length / 3;
-                vertices.push(...centre);
-                normals.push(...normal);
+        /**
+         * The flat ring that closes a pipe: the same disc, with the middle left out.
+         *
+         * Its two rims are emitted as separate rings of `sides` vertices rather than reusing
+         * the barrel's, because a cap vertex carries the cap's normal, not the barrel's.
+         */
+        const pushAnnularCap = (
+            centre: Vec3,
+            normal: Vec3,
+            frame: { u: Vec3; w: Vec3 },
+            reverse: boolean
+        ) => {
+            const capBase = vertices.length / 3;
+            [radius, innerRadius].forEach(rimRadius => {
                 for (let j = 0; j < sides; j++) {
                     const k = reverse ? sides - 1 - j : j;
                     const theta = (2 * Math.PI * k) / sides;
                     vertices.push(
-                        centre[0] + radius * (Math.cos(theta) * frame.u[0] + Math.sin(theta) * frame.w[0]),
-                        centre[1] + radius * (Math.cos(theta) * frame.u[1] + Math.sin(theta) * frame.w[1]),
-                        centre[2] + radius * (Math.cos(theta) * frame.u[2] + Math.sin(theta) * frame.w[2])
+                        centre[0] + rimRadius * (Math.cos(theta) * frame.u[0] + Math.sin(theta) * frame.w[0]),
+                        centre[1] + rimRadius * (Math.cos(theta) * frame.u[1] + Math.sin(theta) * frame.w[1]),
+                        centre[2] + rimRadius * (Math.cos(theta) * frame.u[2] + Math.sin(theta) * frame.w[2])
                     );
                     normals.push(...normal);
                 }
-                for (let j = 0; j < sides; j++) {
-                    idx.push(capBase, capBase + 1 + j, capBase + 1 + ((j + 1) % sides));
-                }
-            };
+            });
+            for (let j = 0; j < sides; j++) {
+                const nextJ = (j + 1) % sides;
+                const outer = capBase + j;
+                const outerNext = capBase + nextJ;
+                const inner = capBase + sides + j;
+                const innerNext = capBase + sides + nextJ;
+                idx.push(outer, outerNext, innerNext);
+                idx.push(outer, innerNext, inner);
+            }
+        };
+
+        // The same handedness rule as the getWireframe, helix and arc caps: the ring runs
+        // counter-clockwise seen from +tangent, so the cap facing back down the path takes it
+        // reversed and the forward-facing one does not.
+        const cap = hollow ? pushAnnularCap : pushCap;
+        const capStart = () => { if (!path.closed) cap(points[0], scale(tangents[0], -1), frames[0], true) };
+        const capEnd = () => { if (!path.closed) cap(points[n - 1], tangents[n - 1], frames[n - 1], false) };
+
+        const segmentCount = path.closed ? n : n - 1;
+
+        if (sectionStride > 0) {
             /**
-             * The flat ring that closes a pipe: the same disc, with the middle left out.
+             * Each section gets its own copy of the rings it shares with its neighbours.
              *
-             * Its two rims are emitted as separate rings of `sides` vertices rather than reusing
-             * the barrel's, because a cap vertex carries the cap's normal, not the barrel's.
+             * That duplication is the whole trick behind hard-edged highlighting: vHighlight is a
+             * varying, so if a triangle straddled two sections its brightness would ramp across
+             * the join. With the boundary rings duplicated no triangle spans a boundary, a
+             * section is simply a contiguous run of vertex ids, and the shader can light it by
+             * comparing gl_VertexID against two uniforms - no per-vertex weights, no textures.
+             *
+             * The duplicates are identical in position and normal, so nothing shows: the seam is
+             * in the topology only.
              */
-            const pushAnnularCap = (
-                centre: Vec3,
-                normal: Vec3,
-                frame: { u: Vec3; w: Vec3 },
-                reverse: boolean
-            ) => {
-                const capBase = vertices.length / 3;
-                [radius, innerRadius].forEach(rimRadius => {
-                    for (let j = 0; j < sides; j++) {
-                        const k = reverse ? sides - 1 - j : j;
-                        const theta = (2 * Math.PI * k) / sides;
-                        vertices.push(
-                            centre[0] + rimRadius * (Math.cos(theta) * frame.u[0] + Math.sin(theta) * frame.w[0]),
-                            centre[1] + rimRadius * (Math.cos(theta) * frame.u[1] + Math.sin(theta) * frame.w[1]),
-                            centre[2] + rimRadius * (Math.cos(theta) * frame.u[2] + Math.sin(theta) * frame.w[2])
-                        );
-                        normals.push(...normal);
-                    }
-                });
-                for (let j = 0; j < sides; j++) {
-                    const nextJ = (j + 1) % sides;
-                    const outer = capBase + j;
-                    const outerNext = capBase + nextJ;
-                    const inner = capBase + sides + j;
-                    const innerNext = capBase + sides + nextJ;
-                    idx.push(outer, outerNext, innerNext);
-                    idx.push(outer, innerNext, inner);
+            const stride = Math.max(1, Math.floor(sectionStride));
+            for (let start = 0; start < segmentCount; start += stride) {
+                const end = Math.min(start + stride, segmentCount);
+                const sectionStart = vertices.length / 3;
+
+                const outer: number[] = [];
+                for (let i = start; i <= end; i++) outer.push(emitRing(i % n, radius, 1));
+                for (let k = 0; k + 1 < outer.length; k++) emitBand(outer[k], outer[k + 1], false);
+
+                if (hollow) {
+                    const bore: number[] = [];
+                    for (let i = start; i <= end; i++) bore.push(emitRing(i % n, innerRadius, -1));
+                    for (let k = 0; k + 1 < bore.length; k++) emitBand(bore[k], bore[k + 1], true);
                 }
-            };
-            // The same handedness rule as the getWireframe, helix and arc caps: the ring runs
-            // counter-clockwise seen from +tangent, so the cap facing back down the path takes it
-            // reversed and the forward-facing one does not.
-            const cap = hollow ? pushAnnularCap : pushCap;
-            cap(points[0], scale(tangents[0], -1), frames[0], true);
-            cap(points[n - 1], tangents[n - 1], frames[n - 1], false);
+
+                // A cap belongs to the section it closes, so that the range stays contiguous.
+                if (start === 0) capStart();
+                if (end === segmentCount) capEnd();
+
+                sectionRanges.push([sectionStart, vertices.length / 3]);
+                const from = points[start];
+                const to = points[end % n];
+                sectionPoints.push([
+                    (from[0] + to[0]) / 2, (from[1] + to[1]) / 2, (from[2] + to[2]) / 2
+                ]);
+            }
+        } else {
+            const base = vertices.length / 3;
+            for (let i = 0; i < n; i++) emitRing(i, radius, 1);
+
+            const innerBase = vertices.length / 3;
+            if (hollow) for (let i = 0; i < n; i++) emitRing(i, innerRadius, -1);
+
+            for (let i = 0; i < segmentCount; i++) {
+                emitBand(base + i * sides, base + ((i + 1) % n) * sides, false);
+            }
+            if (hollow) {
+                for (let i = 0; i < segmentCount; i++) {
+                    emitBand(innerBase + i * sides, innerBase + ((i + 1) % n) * sides, true);
+                }
+            }
+            capStart();
+            capEnd();
         }
     });
 
-    return { vertices, normals, idx };
+    return sectionStride > 0
+        ? { vertices, normals, idx, sectionRanges, sectionPoints }
+        : { vertices, normals, idx };
 };
+
 
 /**
  * An ellipsoid drawn as a cage of hoops - `meridians` half circles from pole to pole plus
@@ -1550,6 +1591,11 @@ export const getAnnulusWireframe = (
  * There is no canonical size to scale from, so the caller places this with a uniform scale of 1
  * and `tubeRadius` is already in scene units.
  *
+ * `sectionStride` above zero splits the tube into separately highlightable sections, one per
+ * that many segments of the path, each owning its own vertices; the returned `sectionRanges` give
+ * each one's half-open range of vertex ids and `sectionPoints` a point in the middle of each for
+ * the hover test to aim at. Zero, the default, gives one continuous strip.
+ *
  * One limit is worth knowing, and it is inherent to sweeping a tube rather than a fault here: the
  * radius has to stay below the path's local radius of curvature. A tube cannot follow a bend
  * tighter than itself - the inside of the turn folds through the centre line and those triangles
@@ -1562,8 +1608,9 @@ export const getPathTubes = (
     runStarts: number[],
     tubeRadius: number,
     sides: number = WIREFRAME_TUBE_SIDES,
-    innerRadius: number = 0
-): ShapeMesh => {
+    innerRadius: number = 0,
+    sectionStride: number = 0
+): ShapeMesh & { sectionRanges?: number[][]; sectionPoints?: number[][] } => {
     const count = Math.floor(points.length / 3);
 
     // Tolerate anything: out of range, unsorted, duplicated or a missing leading zero. This is
@@ -1583,7 +1630,7 @@ export const getPathTubes = (
         if (run.length >= 2) paths.push({ points: run, closed: false });
     });
 
-    return tubesAlongPaths(paths, tubeRadius, sides, innerRadius);
+    return tubesAlongPaths(paths, tubeRadius, sides, innerRadius, sectionStride);
 };
 
 /**

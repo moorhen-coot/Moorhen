@@ -380,7 +380,9 @@ export const Moorhen3DObjects = () => {
         points: [0, 0, 0, 5, 0, 0],
         run_starts: [0],
         radius: 0.3,
-        inner_radius: 0
+        inner_radius: 0,
+        // Hand-built paths highlight point to point; the CA generator raises this when it splines.
+        point_stride: 1
     });
 
     const newTorusObject = (): TorusObject => ({
@@ -426,13 +428,19 @@ export const Moorhen3DObjects = () => {
         }
     };
 
-    /** Replace the path's points, keeping everything else. */
+    /**
+     * Replace the path's points, keeping everything else.
+     *
+     * The stride goes back to 1: hand-placed points are the sections, whatever a generator may
+     * have set when it last filled this path in.
+     */
     const setPathPoints = (points: number[], run_starts?: number[]) => {
         if (theObject.type !== "path") return;
         commitPath({
             ...theObject,
             points,
-            run_starts: run_starts ?? theObject.run_starts
+            run_starts: run_starts ?? theObject.run_starts,
+            point_stride: 1
         });
     };
 
@@ -509,7 +517,9 @@ export const Moorhen3DObjects = () => {
             ...theObject,
             points: points.map((x, i) => x - centroid[i % 3]),
             run_starts,
-            origin: centroid
+            origin: centroid,
+            // So that a section stays one residue whether or not the trace was splined.
+            point_stride: splinePath ? SPLINE_SUBDIVISIONS : 1
         };
         commitPath(updated);
         setPositionText(centroid.map(c => c.toFixed(2)).join(","));
@@ -1356,7 +1366,10 @@ export const Moorhen3DObjects = () => {
                             ))
                         }
                         {theObject.type === "path" && pointTexts.length > MAX_EDITABLE_POINTS &&
+                        <MoorhenStack direction="line">
                             <span>Too many points to list; clear them to edit by hand.</span>
+                            <span></span>
+                        </MoorhenStack>
                         }
                         <MoorhenStack direction="line">
                             <MoorhenButton

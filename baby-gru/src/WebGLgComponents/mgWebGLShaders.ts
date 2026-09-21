@@ -48,6 +48,8 @@ export function initInstancedOutlineShaders(vertexShaderOutline, fragmentShaderO
     shaderProgramInstancedOutline.vertexInstanceSizeAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "instanceSize");
     shaderProgramInstancedOutline.vertexInstanceOrientationAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "instanceOrientation");
     shaderProgramInstancedOutline.uHoveredInstance = gl.getUniformLocation(shaderProgramInstancedOutline, "uHoveredInstance");
+    shaderProgramInstancedOutline.uHighlightFrom = gl.getUniformLocation(shaderProgramInstancedOutline, "uHighlightFrom");
+    shaderProgramInstancedOutline.uHighlightTo = gl.getUniformLocation(shaderProgramInstancedOutline, "uHighlightTo");
 
     shaderProgramInstancedOutline.vertexNormalAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "aVertexNormal");
     //gl.enableVertexAttribArray(shaderProgramInstancedOutline.vertexNormalAttribute);
@@ -1068,6 +1070,11 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
 
     //Per-instance highlighting, the instanced counterpart of uHoveredPoint
     shaderProgramInstanced.uHoveredInstance = gl.getUniformLocation(shaderProgramInstanced, "uHoveredInstance");
+
+    // Per-section highlighting, the finer-grained counterpart. A program whose shader does not
+    // declare these gets null back, and the draw code skips them.
+    shaderProgramInstanced.uHighlightFrom = gl.getUniformLocation(shaderProgramInstanced, "uHighlightFrom");
+    shaderProgramInstanced.uHighlightTo = gl.getUniformLocation(shaderProgramInstanced, "uHighlightTo");
 
     gl.enableVertexAttribArray(shaderProgramInstanced.vertexColourAttribute);
 

@@ -249,13 +249,37 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 //
                 // A buffer cannot be both kinds: the smooth mesh path is never instanced, so the
                 // presence of an instance origin buffer is enough to tell the two apart.
+                // A mesh divided into sections highlights one of them instead of the whole
+                // instance, so the two are mutually exclusive: section_ranges present means the
+                // range does the work and uHoveredInstance stays off.
+                const sectionRanges = displayBuffers[idx].pick_info?.section_ranges
+                const isHovered = idx === self.state.hoveridx && self.state.hover_point>-1
+
                 if(theShader.uHoveredInstance){
                     let hoveredInstance = -1
-                    if(idx === self.state.hoveridx && displayBuffers[idx].triangleInstanceOriginBuffer[j] && self.state.hover_point>-1){
+                    if(!sectionRanges && isHovered && displayBuffers[idx].triangleInstanceOriginBuffer[j]){
                         const pickPointInstances = displayBuffers[idx].pick_info?.pick_point_instances
                         hoveredInstance = pickPointInstances ? pickPointInstances[self.state.hover_point] ?? -1 : self.state.hover_point
                     }
                     self.gl.uniform1i(theShader.uHoveredInstance, hoveredInstance);
+                }
+
+                // The section's vertices are a contiguous range because each section owns its own
+                // copies of the rings it shares with its neighbours, so the shader can light it
+                // with a pair of bounds and the edge lands exactly on the boundary ring.
+                if(theShader.uHighlightFrom && theShader.uHighlightTo){
+                    let from = -1
+                    let to = -1
+                    if(sectionRanges && isHovered && displayBuffers[idx].triangleInstanceOriginBuffer[j]){
+                        const sections = displayBuffers[idx].pick_info?.pick_point_sections
+                        const section = sections ? sections[self.state.hover_point] ?? -1 : -1
+                        if(section > -1 && sectionRanges[section]){
+                            from = sectionRanges[section][0]
+                            to = sectionRanges[section][1]
+                        }
+                    }
+                    self.gl.uniform1i(theShader.uHighlightFrom, from);
+                    self.gl.uniform1i(theShader.uHighlightTo, to);
                 }
 
                 if(theShader.uPointTex !== null){

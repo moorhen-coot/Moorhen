@@ -257,6 +257,12 @@ export interface PathObject extends ThreeDObjectBase {
      * field the annulus uses, since it means the same thing.
      */
     inner_radius: number;
+    /**
+     * How many stored points make up one hoverable section, so that smoothing does not change
+     * what a section means: a CA trace splined four ways still highlights one residue at a time,
+     * while a hand-built path highlights point to point at a stride of 1.
+     */
+    point_stride: number;
 }
 
 export interface TorusObject extends ThreeDObjectBase, Wireframeable {
