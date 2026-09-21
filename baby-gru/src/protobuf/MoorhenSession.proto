@@ -212,7 +212,8 @@ message Moorhen3DObject {
     // Extent along the shape's own z axis, for the shapes positioned by origin + orientation
     // rather than by a start and an end point.
     optional float height = 16;
-    // Radius of the hole in an annulus; `radius` is its outer radius.
+    // Radius of the hole: in an annulus, where `radius` is the outer radius, and in a path,
+    // where a non-zero value bores the tube out into a pipe.
     optional float inner_radius = 17;
     // Angle swept by an arc, in degrees.
     optional float sweep_angle = 18;

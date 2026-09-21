@@ -375,10 +375,12 @@ export const Moorhen3DObjects = () => {
         colour: "#ff0000ff",
         origin: [0, 0, 0],
         orientation: IDENTITY_MATRIX,
-        // Empty until something generates them; the draw path skips a path with nothing in it.
-        points: [],
-        run_starts: [],
-        radius: 0.3
+        // Two points to begin with, so a new path is something you can see and then edit rather
+        // than an invisible object waiting for a generator.
+        points: [0, 0, 0, 5, 0, 0],
+        run_starts: [0],
+        radius: 0.3,
+        inner_radius: 0
     });
 
     const newTorusObject = (): TorusObject => ({
@@ -392,6 +394,47 @@ export const Moorhen3DObjects = () => {
         major_radius: 1.0,
         minor_radius: 0.2
     });
+
+    /** Above this many points the rows are hidden: a CA trace is not worth listing by hand. */
+    const MAX_EDITABLE_POINTS = 12;
+
+    const [pointTexts, setPointTexts] = useState<string[]>([]);
+
+    /** Trim float noise so a typed 0.3 does not come back as 0.30000000000000004. */
+    const formatCoord = (x: number) => String(Number(x.toFixed(4)));
+
+    const pointsToTexts = (points: number[]): string[] =>
+        Array.from({ length: Math.floor(points.length / 3) }, (_unused, i) =>
+            [0, 1, 2].map(c => formatCoord(points[3 * i + c])).join(",")
+        );
+
+    /**
+     * Put a path into the store as well as into the dialog.
+     *
+     * The live-sync effect deliberately ignores an object that is not in the store yet - Apply is
+     * what puts it there - but the path controls are explicit actions whose whole point is to be
+     * looked at, so they add it themselves rather than drawing nothing until Apply.
+     */
+    const commitPath = (updated: PathObject) => {
+        setObject(updated);
+        if (objectNew) {
+            dispatch(addObject(updated));
+            setObjectNew(false);
+            setSelectedOption(updated.uniqueId);
+        } else {
+            dispatch(updateObject(updated));
+        }
+    };
+
+    /** Replace the path's points, keeping everything else. */
+    const setPathPoints = (points: number[], run_starts?: number[]) => {
+        if (theObject.type !== "path") return;
+        commitPath({
+            ...theObject,
+            points,
+            run_starts: run_starts ?? theObject.run_starts
+        });
+    };
 
     /**
      * Beyond this, consecutive CA atoms are not part of the same run. A CA-CA step is 3.8 A.
@@ -468,24 +511,8 @@ export const Moorhen3DObjects = () => {
             run_starts,
             origin: centroid
         };
-        setObject(updated);
+        commitPath(updated);
         setPositionText(centroid.map(c => c.toFixed(2)).join(","));
-
-        // Push it to the store here rather than leaving it to the live-sync effect or to Apply.
-        //
-        // Generating points is an explicit action whose whole purpose is to be looked at, so it
-        // has to appear. The sync effect deliberately ignores a "new" object - it is not in the
-        // store, and Apply is what puts it there - which meant a fresh path collected its points
-        // and drew nothing, and then, once applied, went on showing the applied points while the
-        // dialog held newer ones. Dispatching the object we just built also avoids depending on
-        // the effect's coalescing frame for a one-off action.
-        if (objectNew) {
-            dispatch(addObject(updated));
-            setObjectNew(false);
-            setSelectedOption(updated.uniqueId);
-        } else {
-            dispatch(updateObject(updated));
-        }
     };
 
     const createNewObject = (type: ThreeDObject["type"]): ThreeDObject => {
@@ -793,6 +820,20 @@ export const Moorhen3DObjects = () => {
      *
      * A "new" object is left alone. It is not in the store yet, and Apply is what puts it there.
      */
+    /**
+     * Reseed the point rows whenever the path they belong to changes identity or length.
+     *
+     * Not on every change to the points: editing a coordinate leaves the count alone, so the row
+     * being typed in is left as the user has it, half-finished values and all. Generating a CA
+     * trace or adding a point does change the count, and those should refresh the rows.
+     */
+    const pathPointCount = theObject.type === "path" ? theObject.points.length : -1;
+    useEffect(() => {
+        if (theObject.type !== "path") return;
+        setPointTexts(pointsToTexts(theObject.points));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [theObject.uniqueId, pathPointCount]);
+
     const pendingSync = useRef<number | null>(null);
     useEffect(() => {
         if (objectNew) return;
@@ -815,6 +856,43 @@ export const Moorhen3DObjects = () => {
             }
         };
     }, [theObject, objectNew, threeDObjects, dispatch]);
+
+    /**
+     * Point the shared text boxes at an object's actual values.
+     *
+     * There is one "size" box, one "size2" box and so on, shared by every shape, so without this
+     * they keep whatever the last shape left in them. That is how a path came to show an inner
+     * radius of 0.2 while having none: the box was still showing the annulus default, and since
+     * nothing had been typed, no change event ever set it on the object.
+     */
+    const seedTextsFromObject = (obj: ThreeDObject) => {
+        setPositionText(obj.origin.join(","));
+        if (obj.type === "cone") setEndPositionText(obj.top.join(","));
+        if (obj.type === "cylinder") setEndPositionText(obj.end.join(","));
+        if ("height" in obj) setHeightText(String(obj.height));
+        if ("radius" in obj) setSizeText(String(obj.radius));
+        // The polyhedra size themselves through `scale` rather than `radius`.
+        if ("scale" in obj) setSizeText(String(obj.scale));
+        if ("inner_radius" in obj) setSize2Text(String(obj.inner_radius));
+        if ("scalexyz" in obj) setScaleXYZText(obj.scalexyz.join(","));
+        if (obj.type === "plane") setPlaneSizeText(obj.scalexyz.slice(0, 2).join(","));
+        if ("major_radius" in obj) setSizeText(String(obj.major_radius));
+        if ("minor_radius" in obj) setSize2Text(String(obj.minor_radius));
+        if ("sweep_angle" in obj) setSweepAngleText(String(obj.sweep_angle));
+        setWireframeRadiusText(String(
+            ("wireframe_radius" in obj && obj.wireframe_radius !== undefined)
+                ? obj.wireframe_radius
+                : DEFAULT_WIREFRAME_RADIUS
+        ));
+        // A frustum's two radii take both boxes, so they come after the single-radius cases.
+        if (obj.type === "frustum" || obj.type === "flatfrustum") {
+            setSizeText(String(obj.bottom_radius));
+            setSize2Text(String(obj.top_radius));
+        }
+        if (obj.type === "prism" || obj.type === "flatfrustum" || obj.type === "pyramid") {
+            setNSidesText(String(obj.n_sides));
+        }
+    };
 
     const updateTheObject = (
         {
@@ -844,6 +922,9 @@ export const Moorhen3DObjects = () => {
                 newObject.uniqueId = theObject.uniqueId
                 newObject.colour = colour ?? theObject.colour
                 setObject(newObject)
+                // Otherwise the boxes go on showing the previous shape's values, which are then
+                // silently not what the new object holds.
+                seedTextsFromObject(newObject)
             }
         } else {
             setObject(prev => ({
@@ -993,39 +1074,7 @@ export const Moorhen3DObjects = () => {
                 const existingObject  = threeDObjects.find(element => element.uniqueId === evt.target.value);
 
                 setSelectedOption(existingObject.uniqueId);
-                setPositionText(existingObject.origin.join(","));
-                if(existingObject.type==="cone")
-                    setEndPositionText(existingObject.top.join(","));
-                if(existingObject.type==="cylinder")
-                    setEndPositionText(existingObject.end.join(","));
-                if("height" in existingObject)
-                    setHeightText(String(existingObject.height));
-                if("radius" in existingObject)
-                    setSizeText(String(existingObject.radius));
-                if("inner_radius" in existingObject)
-                    setSize2Text(String(existingObject.inner_radius));
-                if("scalexyz" in existingObject)
-                    setScaleXYZText(existingObject.scalexyz.join(","));
-                if(existingObject.type==="plane")
-                    setPlaneSizeText(existingObject.scalexyz.slice(0,2).join(","));
-                if("major_radius" in existingObject)
-                    setSizeText(String(existingObject.major_radius))
-                if("minor_radius" in existingObject)
-                    setSize2Text(String(existingObject.minor_radius))
-                if("sweep_angle" in existingObject)
-                    setSweepAngleText(String(existingObject.sweep_angle))
-                setWireframeRadiusText(String(
-                    ("wireframe_radius" in existingObject && existingObject.wireframe_radius !== undefined)
-                        ? existingObject.wireframe_radius
-                        : DEFAULT_WIREFRAME_RADIUS
-                ))
-                if(existingObject.type==="frustum"||existingObject.type==="flatfrustum"){
-                    setSizeText(String(existingObject.bottom_radius))
-                    setSize2Text(String(existingObject.top_radius))
-                }
-                if(existingObject.type==="prism"||existingObject.type==="flatfrustum"||existingObject.type==="pyramid"){
-                    setNSidesText(String(existingObject.n_sides))
-                }
+                seedTextsFromObject(existingObject);
                 if("orientation" in existingObject){
                     const m4 = existingObject.orientation
                     const m3 = [
@@ -1280,6 +1329,69 @@ export const Moorhen3DObjects = () => {
                                 : "No points yet"}
                         </span>
                         <span/>
+                        {theObject.type === "path" && pointTexts.length <= MAX_EDITABLE_POINTS &&
+                            pointTexts.map((text, i) => (
+                                <MoorhenTextInput
+                                    key={`point-${i}`}
+                                    label={`Point ${i + 1}`}
+                                    text={text}
+                                    onChange={evt => {
+                                        const next = [...pointTexts];
+                                        next[i] = evt.target.value;
+                                        setPointTexts(next);
+                                        const parts = evt.target.value.split(",").map(parseFloat);
+                                        if (parts.length === 3 && parts.every(Number.isFinite)
+                                            && theObject.type === "path") {
+                                            const points = [...theObject.points];
+                                            parts.forEach((value, c) => { points[3 * i + c] = value });
+                                            setPathPoints(points);
+                                        }
+                                    }}
+                                    isInvalid={
+                                        text.split(",").length !== 3 ||
+                                        text.split(",").map(parseFloat).some(v => !Number.isFinite(v))
+                                    }
+                                    style={{ height: "2rem", margin: "0.3rem" }}
+                                />
+                            ))
+                        }
+                        {theObject.type === "path" && pointTexts.length > MAX_EDITABLE_POINTS &&
+                            <span>Too many points to list; clear them to edit by hand.</span>
+                        }
+                        <MoorhenStack direction="line">
+                            <MoorhenButton
+                                label="Add point"
+                                onClick={() => {
+                                    if (theObject.type !== "path") return;
+                                    const points = [...theObject.points];
+                                    const last = points.length - 3;
+                                    // Offset along x from the last point, so the new one is
+                                    // somewhere visible rather than buried inside its neighbour.
+                                    points.push(
+                                        (points[last] ?? 0) + 2,
+                                        points[last + 1] ?? 0,
+                                        points[last + 2] ?? 0
+                                    );
+                                    setPathPoints(points);
+                                }}
+                                tooltip="Append a point two units along x from the last"
+                            />
+                            <MoorhenButton
+                                label="Remove last"
+                                disabled={theObject.type !== "path" || theObject.points.length <= 6}
+                                onClick={() => {
+                                    if (theObject.type !== "path") return;
+                                    setPathPoints(theObject.points.slice(0, -3));
+                                }}
+                                tooltip="A path needs two points, so the last pair cannot be removed"
+                            />
+                            <MoorhenButton
+                                label="Clear"
+                                onClick={() => setPathPoints([0, 0, 0, 5, 0, 0], [0])}
+                                tooltip="Back to two points, discarding any generated trace"
+                            />
+                        </MoorhenStack>
+                        <span/>
                     </>
                 }
                 {(drawMode === "cylinder")  &&
@@ -1472,7 +1584,7 @@ export const Moorhen3DObjects = () => {
                         />
                     </>
                 }
-                {(drawMode === "annulus")  &&
+                {(drawMode === "annulus" || drawMode === "path")  &&
                     <>
                         <MoorhenTextInput
                             label="Inner radius"

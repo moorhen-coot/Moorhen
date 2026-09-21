@@ -1008,8 +1008,13 @@ type WirePath = {
 const tubesAlongPaths = (
     paths: WirePath[],
     radius: number,
-    sides: number = WIREFRAME_TUBE_SIDES
+    sides: number = WIREFRAME_TUBE_SIDES,
+    innerRadius: number = 0
 ): ShapeMesh => {
+    // A bore down the middle turns the tube into a pipe: a second surface at innerRadius facing
+    // the other way, and end caps that are annular rather than solid discs. An inner radius at or
+    // past the outer one leaves no material, so it is ignored rather than drawn inside out.
+    const hollow = innerRadius > 1e-9 && innerRadius < radius;
     const vertices: number[] = [];
     const normals: number[] = [];
     const idx: number[] = [];
@@ -1077,6 +1082,29 @@ const tubesAlongPaths = (
             }
         }
 
+        const innerBase = vertices.length / 3;
+        if (hollow) {
+            for (let i = 0; i < n; i++) {
+                const { u: fu, w: fw } = frames[i];
+                for (let j = 0; j < sides; j++) {
+                    const theta = (2 * Math.PI * j) / sides;
+                    const radial: Vec3 = [
+                        Math.cos(theta) * fu[0] + Math.sin(theta) * fw[0],
+                        Math.cos(theta) * fu[1] + Math.sin(theta) * fw[1],
+                        Math.cos(theta) * fu[2] + Math.sin(theta) * fw[2],
+                    ];
+                    vertices.push(
+                        points[i][0] + innerRadius * radial[0],
+                        points[i][1] + innerRadius * radial[1],
+                        points[i][2] + innerRadius * radial[2]
+                    );
+                    // The bore faces the axis. "Outward" means away from the material, which
+                    // inside a pipe is inward - otherwise the lit side is the one you cannot see.
+                    normals.push(-radial[0], -radial[1], -radial[2]);
+                }
+            }
+        }
+
         const quadRings = path.closed ? n : n - 1;
         for (let i = 0; i < quadRings; i++) {
             const here = base + i * sides;
@@ -1085,6 +1113,20 @@ const tubesAlongPaths = (
                 const nextJ = (j + 1) % sides;
                 idx.push(here + j, here + nextJ, next + nextJ);
                 idx.push(here + j, next + nextJ, next + j);
+            }
+        }
+
+        if (hollow) {
+            for (let i = 0; i < quadRings; i++) {
+                const here = innerBase + i * sides;
+                const next = innerBase + ((i + 1) % n) * sides;
+                for (let j = 0; j < sides; j++) {
+                    const nextJ = (j + 1) % sides;
+                    // Reversed against the outer barrel: the bore is seen from within, so the
+                    // winding that faces the viewer there is the other one.
+                    idx.push(here + j, next + nextJ, here + nextJ);
+                    idx.push(here + j, next + j, next + nextJ);
+                }
             }
         }
 
@@ -1112,11 +1154,47 @@ const tubesAlongPaths = (
                     idx.push(capBase, capBase + 1 + j, capBase + 1 + ((j + 1) % sides));
                 }
             };
+            /**
+             * The flat ring that closes a pipe: the same disc, with the middle left out.
+             *
+             * Its two rims are emitted as separate rings of `sides` vertices rather than reusing
+             * the barrel's, because a cap vertex carries the cap's normal, not the barrel's.
+             */
+            const pushAnnularCap = (
+                centre: Vec3,
+                normal: Vec3,
+                frame: { u: Vec3; w: Vec3 },
+                reverse: boolean
+            ) => {
+                const capBase = vertices.length / 3;
+                [radius, innerRadius].forEach(rimRadius => {
+                    for (let j = 0; j < sides; j++) {
+                        const k = reverse ? sides - 1 - j : j;
+                        const theta = (2 * Math.PI * k) / sides;
+                        vertices.push(
+                            centre[0] + rimRadius * (Math.cos(theta) * frame.u[0] + Math.sin(theta) * frame.w[0]),
+                            centre[1] + rimRadius * (Math.cos(theta) * frame.u[1] + Math.sin(theta) * frame.w[1]),
+                            centre[2] + rimRadius * (Math.cos(theta) * frame.u[2] + Math.sin(theta) * frame.w[2])
+                        );
+                        normals.push(...normal);
+                    }
+                });
+                for (let j = 0; j < sides; j++) {
+                    const nextJ = (j + 1) % sides;
+                    const outer = capBase + j;
+                    const outerNext = capBase + nextJ;
+                    const inner = capBase + sides + j;
+                    const innerNext = capBase + sides + nextJ;
+                    idx.push(outer, outerNext, innerNext);
+                    idx.push(outer, innerNext, inner);
+                }
+            };
             // The same handedness rule as the getWireframe, helix and arc caps: the ring runs
             // counter-clockwise seen from +tangent, so the cap facing back down the path takes it
             // reversed and the forward-facing one does not.
-            pushCap(points[0], scale(tangents[0], -1), frames[0], true);
-            pushCap(points[n - 1], tangents[n - 1], frames[n - 1], false);
+            const cap = hollow ? pushAnnularCap : pushCap;
+            cap(points[0], scale(tangents[0], -1), frames[0], true);
+            cap(points[n - 1], tangents[n - 1], frames[n - 1], false);
         }
     });
 
@@ -1483,7 +1561,8 @@ export const getPathTubes = (
     points: number[],
     runStarts: number[],
     tubeRadius: number,
-    sides: number = WIREFRAME_TUBE_SIDES
+    sides: number = WIREFRAME_TUBE_SIDES,
+    innerRadius: number = 0
 ): ShapeMesh => {
     const count = Math.floor(points.length / 3);
 
@@ -1504,7 +1583,7 @@ export const getPathTubes = (
         if (run.length >= 2) paths.push({ points: run, closed: false });
     });
 
-    return tubesAlongPaths(paths, tubeRadius, sides);
+    return tubesAlongPaths(paths, tubeRadius, sides, innerRadius);
 };
 
 /**

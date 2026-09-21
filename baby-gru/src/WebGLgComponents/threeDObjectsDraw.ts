@@ -639,7 +639,8 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
                 addInstance(
                     `path-${obj.uniqueId}`,
                     () => getPathTubes(
-                        obj.points, obj.run_starts ?? [], obj.radius, PATH_TUBE_SIDES
+                        obj.points, obj.run_starts ?? [], obj.radius, PATH_TUBE_SIDES,
+                        obj.inner_radius ?? 0
                     ),
                     obj.origin,
                     [1, 1, 1],

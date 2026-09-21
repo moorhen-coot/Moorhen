@@ -251,6 +251,12 @@ export interface PathObject extends ThreeDObjectBase {
     points: number[];
     run_starts: number[];
     radius: number;
+    /**
+     * Bore radius. Zero draws a solid rod; anything between zero and `radius` makes it a pipe,
+     * with a lit surface down the inside and flat rings closing the ends. Shares the protobuf
+     * field the annulus uses, since it means the same thing.
+     */
+    inner_radius: number;
 }
 
 export interface TorusObject extends ThreeDObjectBase, Wireframeable {
