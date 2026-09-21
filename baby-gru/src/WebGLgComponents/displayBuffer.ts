@@ -20,7 +20,7 @@ export class DisplayBuffer {
     // separately hoverable maps the picked index to a section, and the section to the half-open
     // range of vertex ids that the shader lights. Present only for a mesh that is the sole
     // instance of itself, since a vertex id says nothing about which instance is being drawn.
-    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][], pick_point_instances?:number[], pick_point_sections?:number[], section_ranges?:number[][]}
+    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][], pick_point_instances?:number[], pick_point_sections?:number[], section_ranges?:number[][], pick_spans?:number[][], pick_radius?:number}
     origin: number[];
     visible: boolean;
     name_label: string;

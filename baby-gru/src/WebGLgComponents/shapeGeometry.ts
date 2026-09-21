@@ -1011,7 +1011,12 @@ const tubesAlongPaths = (
     sides: number = WIREFRAME_TUBE_SIDES,
     innerRadius: number = 0,
     sectionStride: number = 0
-): ShapeMesh & { sectionRanges?: number[][]; sectionPoints?: number[][] } => {
+): ShapeMesh & {
+    sectionRanges?: number[][];
+    sectionPoints?: number[][];
+    sectionSpans?: number[][];
+    sectionRadius?: number;
+} => {
     // A bore down the middle turns the tube into a pipe: a second surface at innerRadius facing
     // the other way, and end caps that are annular rather than solid discs. An inner radius at or
     // past the outer one leaves no material, so it is ignored rather than drawn inside out.
@@ -1023,6 +1028,9 @@ const tubesAlongPaths = (
     // Only filled in when sections are asked for; see the block comment below.
     const sectionRanges: number[][] = [];
     const sectionPoints: number[][] = [];
+    // Each section's stretch of centre line, for a pick test that can measure against the whole
+    // length of it rather than against a single point somewhere in the middle.
+    const sectionSpans: number[][] = [];
 
     paths.forEach(path => {
         // Drop repeated points. A zero-length segment has no direction, so it would give a zero
@@ -1215,6 +1223,9 @@ const tubesAlongPaths = (
                 sectionPoints.push([
                     (from[0] + to[0]) / 2, (from[1] + to[1]) / 2, (from[2] + to[2]) / 2
                 ]);
+                const span: number[] = [];
+                for (let i = start; i <= end; i++) span.push(...points[i % n]);
+                sectionSpans.push(span);
             }
         } else {
             const base = vertices.length / 3;
@@ -1237,7 +1248,9 @@ const tubesAlongPaths = (
     });
 
     return sectionStride > 0
-        ? { vertices, normals, idx, sectionRanges, sectionPoints }
+        // sectionRadius tells the pick test how far from a section's centre line still counts as
+        // being over it, which is what lets it prefer the nearest of several it is over.
+        ? { vertices, normals, idx, sectionRanges, sectionPoints, sectionSpans, sectionRadius: radius }
         : { vertices, normals, idx };
 };
 
@@ -1610,7 +1623,12 @@ export const getPathTubes = (
     sides: number = WIREFRAME_TUBE_SIDES,
     innerRadius: number = 0,
     sectionStride: number = 0
-): ShapeMesh & { sectionRanges?: number[][]; sectionPoints?: number[][] } => {
+): ShapeMesh & {
+    sectionRanges?: number[][];
+    sectionPoints?: number[][];
+    sectionSpans?: number[][];
+    sectionRadius?: number;
+} => {
     const count = Math.floor(points.length / 3);
 
     // Tolerate anything: out of range, unsorted, duplicated or a missing leading zero. This is

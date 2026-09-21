@@ -200,7 +200,12 @@ const placeLocalPoint = (local: number[], origin: number[], size: number[], orie
 type InstanceGroup = {
     // A generator may return more than a bare mesh: a path reports how it is divided into
     // separately hoverable sections.
-    mesh: ShapeMesh & { sectionRanges?: number[][]; sectionPoints?: number[][] }
+    mesh: ShapeMesh & {
+        sectionRanges?: number[][];
+        sectionPoints?: number[][];
+        sectionSpans?: number[][];
+        sectionRadius?: number;
+    }
     origins: number[]
     sizes: number[]
     orientations: number[]
@@ -778,6 +783,10 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
         const pick_points: number[][] = []
         const pick_point_instances: number[] = []
         const pick_point_sections: number[] = []
+        // The section's centre line, in world space. Measuring the pick ray against this rather
+        // than against the single point above is what stops a section being picked from the far
+        // side of the object: a point is only a fair stand-in for a shape that is small.
+        const pick_spans: number[][] = []
         for (let instance = 0; instance < group.origins.length / 3; instance++) {
             const origin = group.origins.slice(3 * instance, 3 * instance + 3)
             const size = group.sizes.slice(3 * instance, 3 * instance + 3)
@@ -785,7 +794,16 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             localPoints.forEach((local, section) => {
                 pick_points.push(placeLocalPoint(local, origin, size, orientation))
                 pick_point_instances.push(instance)
-                if (sectioned) pick_point_sections.push(section)
+                if (!sectioned) return
+                pick_point_sections.push(section)
+                const span = group.mesh.sectionSpans?.[section] ?? []
+                const placed: number[] = []
+                for (let k = 0; k + 2 < span.length; k += 3) {
+                    placed.push(...placeLocalPoint(
+                        [span[k], span[k + 1], span[k + 2]], origin, size, orientation
+                    ))
+                }
+                pick_spans.push(placed)
             })
         }
 
@@ -805,6 +823,8 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
                     pick_points: pick_points,
                     pick_point_instances: pick_point_instances,
                     pick_point_sections: pick_point_sections,
+                    pick_spans: pick_spans,
+                    pick_radius: group.mesh.sectionRadius,
                     section_ranges: group.mesh.sectionRanges,
                 }
                 : { pick_points: pick_points, pick_point_instances: pick_point_instances },

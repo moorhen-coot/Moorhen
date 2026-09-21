@@ -92,7 +92,7 @@ import { triangle_instanced_gbuffer_vertex_shader_source as triangle_instanced_g
 import { twod_gbuffer_vertex_shader_source as twod_gbuffer_vertex_shader_source_webgl1 } from './webgl-1/twodshapes-gbuffer-vertex-shader.js';
 import { perfect_sphere_gbuffer_fragment_shader_source as perfect_sphere_gbuffer_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-gbuffer-fragment-shader.js';
 import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_gbuffer_vertex_shader_source_webgl1 } from './webgl-1/thick-lines-normal-gbuffer-vertex-shader.js';
-import { DistanceBetweenPointAndLine, DihedralAngle, NormalizeVec3, vec3Cross, vec3Add, vec3Subtract, vec3Create  } from './mgMaths.js';
+import { DistanceBetweenPointAndLine, DistanceBetweenLineAndPolyline, DihedralAngle, NormalizeVec3, vec3Cross, vec3Add, vec3Subtract, vec3Create  } from './mgMaths.js';
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
@@ -1785,6 +1785,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let minj = -1;
 
         let mindist_pi = 100000.0;
+        // Whether the winning pick candidate is one the cursor is actually over, and how near the
+        // eye it is. Together these let two candidates that both contain the ray be separated by
+        // depth, which their distance to it cannot do.
+        let bestIsHit_pi = false;
+        let bestDepth_pi = -Infinity;
         let minx_pi = 100000.0;
         let miny_pi = 100000.0;
         let minz_pi = 100000.0;
@@ -1798,42 +1803,87 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //TODO- Do not ignore non-atom hovering with symmetry.
         let minsym_pi = -1;
 
-        let clickTol = 3.65 * this.zoom;
+        const defaultClickTol = 3.65 * this.zoom;
 
         for (let idx = 0; idx < displayBuffers.length; idx++) {
+            // Per buffer, and computed before anything uses it. This used to be one variable
+            // carried across the whole loop and reassigned part way through each iteration, so a
+            // buffer's own tolerance never reached its own pick points and then leaked into every
+            // buffer processed after it - which made picking depend on display-buffer order.
+            const clickTol = displayBuffers[idx].clickTol ? displayBuffers[idx].clickTol : defaultClickTol;
+
             if(displayBuffers[idx].pick_info&&displayBuffers[idx].visible){
                 if(displayBuffers[idx].pick_info.pick_points){
+                    const pickSpans = displayBuffers[idx].pick_info.pick_spans
+                    // How near a candidate has to be to count as under the cursor rather than
+                    // merely nearby. A tube supplies its own radius; anything that does not keeps
+                    // the plain nearest-to-the-ray rule.
+                    const pickRadius = displayBuffers[idx].pick_info.pick_radius
                     for (let j = 0; j < displayBuffers[idx].pick_info.pick_points.length; j++) {
                         const atx = displayBuffers[idx].pick_info.pick_points[j][0];
                         const aty = displayBuffers[idx].pick_info.pick_points[j][1];
                         const atz = displayBuffers[idx].pick_info.pick_points[j][2];
                         const p = vec3Create([atx, aty, atz]);
 
-                        const dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
+                        // A pick point is only a fair stand-in for something small. Where a buffer
+                        // offers the extent of each pickable piece as a polyline, measure against
+                        // that instead: a long section is then picked anywhere along it rather
+                        // than only near its middle, and cannot win from behind just because its
+                        // midpoint happens to lie nearer the ray.
+                        const span = pickSpans ? pickSpans[j] : null
+                        let distance
+                        let testPoint = p
+                        if (span && span.length >= 6) {
+                            const [spanDistance, closest] = DistanceBetweenLineAndPolyline(
+                                modelPointArrayResultsFront, modelPointArrayResultsBack, span
+                            );
+                            if (spanDistance >= 0 && closest) {
+                                distance = spanDistance;
+                                testPoint = vec3Create(closest);
+                            } else {
+                                distance = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p)[0];
+                            }
+                        } else {
+                            distance = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p)[0];
+                        }
 
+                        // Clipped on the point actually measured, which for a span is the nearest
+                        // point of the piece rather than its middle.
                         const atPosTrans = vec3Create([0, 0, 0]);
-                        vec3.transformMat4(atPosTrans, p, mvMatrix);
+                        vec3.transformMat4(atPosTrans, testPoint, mvMatrix);
                         const azDot = this.gl_clipPlane0[3]-atPosTrans[2];
                         const bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
 
+                        // Eye space looks down -z, so the larger z is the nearer the viewer.
+                        const depth = atPosTrans[2];
+                        const isHit = pickRadius !== undefined && distance <= pickRadius;
+
+                        // Two pieces that both contain the ray score the same zero, and distance
+                        // alone then picks whichever happened to come first - which is how a
+                        // section behind wins. Where both are pieces the cursor is over, let the
+                        // nearer to the eye take it; in every other case the old rule stands, so
+                        // nothing that does not supply a radius behaves differently.
+                        const beatsBest = (isHit && bestIsHit_pi)
+                            ? depth > bestDepth_pi
+                            : distance < mindist_pi;
+
                         if (
-                                dpl[0] < clickTol //* targetFactor //clickTol modified to reflect proximity to rptation origin
-                                && dpl[0] < mindist_pi //closest click seen
+                                distance < clickTol //* targetFactor //clickTol modified to reflect proximity to rptation origin
+                                && beatsBest
                                 && azDot > 0 //Beyond near clipping plane
                                 && bzDot > 0 //In front of far clipping plan
                            ) {
                             minidx_pi = idx;
                             minj_pi = j;
-                            mindist_pi = dpl[0];
+                            mindist_pi = distance;
+                            bestIsHit_pi = isHit;
+                            bestDepth_pi = depth;
                         }
                     }
                 }
             }
             if (!displayBuffers[idx].visible) {
                 continue;
-            }
-            if(displayBuffers[idx].clickTol){
-                clickTol = displayBuffers[idx].clickTol;
             }
             for (let j = 0; j < displayBuffers[idx].atoms.length; j++) {
 
