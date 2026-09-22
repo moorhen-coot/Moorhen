@@ -209,6 +209,7 @@ export async function buildColourRule(params: BuildColourRuleParams): Promise<Co
         case "b-factor":
         case "b-factor-norm":
         case "electrostatics":
+        case "RMSF":
         case "af2-plddt": {
             colourRule = new ColourRule(colourMode, "/*/*/*/*:*", "#ffffff", molecule.commandCentre, true, applyColourToNonCarbonAtoms);
             colourRule.setLabel(getColourModeLabel(colourMode));
@@ -241,6 +242,8 @@ function getColourModeLabel(colourMode: string): string {
             return "PLDDT";
         case "electrostatics":
             return "Electrostatics";
+        case "RMSF":
+            return "RMSF";
         default:
             return "";
     }

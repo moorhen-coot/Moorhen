@@ -205,6 +205,16 @@ export const MoorhenColourRuleCard = (props: {
                                 }
                             }}
                         />
+                    ) : rule.propertyType === "RMSF" ? (
+                        <NcsColourSwatch
+                            rule={rule}
+                            applyColourChange={() => {
+                                isDirty.current = true;
+                                if (!busyRedrawing.current) {
+                                    redrawIfDirty();
+                                }
+                            }}
+                        />
                     ) : rule.propertyType === "b-factor" || rule.ruleType === "b-factor-norm" ? (
                         <MoorhenIcon moorhenSVG="temperature" size="medium" />
                     ) : (
