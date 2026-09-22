@@ -81,6 +81,11 @@ export type InstanceGroup = {
     // branch built the group; never read here.
     tags?: string[]
     tagKind?: string
+    // Opaque labels for this group's whole instances - a different question from the one above,
+    // and so a separate channel. A path answers both at once: its sections say which residue,
+    // while the instance says which object the whole thing belongs to, in another scheme
+    // entirely. One kind field could not carry both.
+    instanceTags?: string[]
     origins: number[]
     sizes: number[]
     orientations: number[]
@@ -93,12 +98,22 @@ export type InstanceGroup = {
  * Shapes drawn from a mesh are grouped by that mesh, so that everything sharing one can be drawn
  * in a single instanced call.
  */
-export const createMeshInstances = () => {
+export const createMeshInstances = (instanceTagKind?: string) => {
     // Shapes whose geometry depends on a parameter - the number of sides of a prism, the taper
     // of a frustum, the tube thickness of a torus - cannot be expressed by the per-instance size
     // alone, so the parameter forms part of the key and each distinct value gets its own mesh.
     // The mesh is only built when a key is first seen.
     const groups = new Map<string, InstanceGroup>()
+
+    /**
+     * The label every instance added from now on carries.
+     *
+     * Set once per thing being drawn rather than passed with each instance, because one thing
+     * may add several: a solid and its wireframe, or the two halves of a cylinder. All of them
+     * belong to it, and this is what saves every call site from having to remember that.
+     */
+    let currentTag: string | null = null
+    const setInstanceTag = (tag: string | null) => { currentTag = tag }
 
     const addInstance = (
         key: string,
@@ -117,6 +132,12 @@ export const createMeshInstances = () => {
         group.sizes.push(...size)
         group.orientations.push(...orientation)
         group.colours.push(...colour)
+        if (instanceTagKind) {
+            if (!group.instanceTags) group.instanceTags = []
+            // Kept parallel with the instances whether or not a tag was set, so that an untagged
+            // instance is a gap in the list rather than a shift of everything after it.
+            group.instanceTags.push(currentTag ?? "")
+        }
     }
 
     /** The group under a key, for a caller that needs to attach section labels to it. */
@@ -189,21 +210,29 @@ export const createMeshInstances = () => {
                 vert_tri: [[group.mesh.vertices]],
                 idx_tri: [[group.mesh.idx]],
                 prim_types: [["TRIANGLES"]],
-                pick_info: sectioned
-                    ? {
-                        pick_points: pick_points,
-                        pick_point_instances: pick_point_instances,
-                        pick_point_sections: pick_point_sections,
-                        pick_spans: pick_spans,
-                        pick_radius: group.mesh.sectionRadius,
-                        pick_point_tags: pick_point_tags,
-                        pick_tag_kind: group.tagKind,
-                        section_ranges: group.mesh.sectionRanges,
-                    }
-                    : { pick_points: pick_points, pick_point_instances: pick_point_instances },
+                pick_info: {
+                    ...(sectioned
+                        ? {
+                            pick_points: pick_points,
+                            pick_point_instances: pick_point_instances,
+                            pick_point_sections: pick_point_sections,
+                            pick_spans: pick_spans,
+                            pick_radius: group.mesh.sectionRadius,
+                            pick_point_tags: pick_point_tags,
+                            pick_tag_kind: group.tagKind,
+                            section_ranges: group.mesh.sectionRanges,
+                        }
+                        : { pick_points: pick_points, pick_point_instances: pick_point_instances }),
+                    // One label per instance, not per pick point: pick_point_instances already
+                    // maps one to the other, and a shape offers seventeen pick points.
+                    ...(group.instanceTags && {
+                        instance_tags: group.instanceTags,
+                        instance_tag_kind: instanceTagKind,
+                    }),
+                },
             })
         })
     }
 
-    return { addInstance, group, emit }
+    return { addInstance, group, emit, setInstanceTag }
 }

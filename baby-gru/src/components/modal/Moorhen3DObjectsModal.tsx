@@ -991,6 +991,21 @@ export const Moorhen3DObjects = () => {
     }, [threeDObjects, objectNew, theObject]);
 
     /**
+     * Follow the selection made in the 3D view, so that clicking an object here shows its
+     * settings rather than leaving the dialog editing something else.
+     *
+     * Only ever in that direction. The Handles toggle sets the selection to the object already
+     * being edited, and clearing it sets nothing at all - so both leave this with nothing to do,
+     * which is what keeps the two from chasing each other.
+     */
+    useEffect(() => {
+        if (!selectedThreeDObjectId || selectedThreeDObjectId === theObject.uniqueId) return;
+        const picked = threeDObjects.find(obj => obj.uniqueId === selectedThreeDObjectId);
+        if (picked) selectExistingObject(picked);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedThreeDObjectId, threeDObjects]);
+
+    /**
      * Point the shared text boxes at an object's actual values.
      *
      * There is one "size" box, one "size2" box and so on, shared by every shape, so without this
@@ -1212,6 +1227,23 @@ export const Moorhen3DObjects = () => {
         }
     };
 
+    /**
+     * Point the whole dialog at an object that already exists.
+     *
+     * One function for it, called by the dropdown and by a click in the 3D view, because every
+     * piece of state that shadows the object - the text boxes, the rotation canvas - has to be
+     * reseeded and any that is missed goes on showing the object that was there before.
+     */
+    const selectExistingObject = (existingObject: ThreeDObject) => {
+        setObjectNew(false);
+        setSelectedOption(existingObject.uniqueId);
+        // Selecting is not editing: mark it published so the sync below leaves it alone.
+        lastPublishedRef.current = existingObject;
+        seedTextsFromObject(existingObject);
+        seedRotationFromObject(existingObject);
+        setObject(existingObject);
+    };
+
     const handleObjectChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         if (evt.target.value === "new") {
             setObjectNew(true);
@@ -1230,13 +1262,7 @@ export const Moorhen3DObjects = () => {
         } else {
             try {
                 const existingObject  = threeDObjects.find(element => element.uniqueId === evt.target.value);
-
-                setSelectedOption(existingObject.uniqueId);
-                // Selecting is not editing: mark it published so the sync below leaves it alone.
-                lastPublishedRef.current = existingObject;
-                seedTextsFromObject(existingObject);
-                seedRotationFromObject(existingObject);
-                setObject(existingObject);
+                selectExistingObject(existingObject);
             } catch (e) {
                 console.log("Some problem?");
                 console.log(e);

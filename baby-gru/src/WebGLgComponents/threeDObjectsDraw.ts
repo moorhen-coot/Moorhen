@@ -30,6 +30,7 @@ import {
 } from './shapeGeometry'
 import { IDENTITY_ORIENTATION, PICK_POINTS_PER_INSTANCE, createMeshInstances } from './meshInstancing'
 import { DEFAULT_WIREFRAME_RADIUS } from '../store/threeDObjectsSlice'
+import { MOORHEN_3D_OBJECT_TAG_KIND } from '../utils/enums'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 
@@ -146,8 +147,21 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
     const threeDObjects = store.getState().threeDObjects.objects
 
     // Meshes are collected here and emitted as instanced draws at the end.
-    const meshes = createMeshInstances()
+    //
+    // Every instance is labelled with the object it came from, so that a click on one can be
+    // traced back to the thing that was clicked. The label is opaque to the instancing code,
+    // which is why the scheme has to be named here.
+    const meshes = createMeshInstances(MOORHEN_3D_OBJECT_TAG_KIND)
     const addInstance = meshes.addInstance
+
+    /**
+     * The object currently being turned into instances.
+     *
+     * The axial shapes do not go through the mesh instancer - they are built by
+     * gemmiAtomPairsToCylindersInfo at the end, long after the loop has moved on - so their
+     * labels have to be collected as the pairs are, and this is what they read.
+     */
+    let currentObjectId: string | null = null
 
     /**
      * A flat-sided solid, which may be drawn either solid or as a wireframe.
@@ -327,6 +341,8 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
         pairs: any[]
         colours: { [serial: string]: number[] }
         sizes: number[]
+        // Parallel with pairs, because that function emits one instance per pair in order.
+        tags: string[]
     }
     const axialGroups = new Map<string, AxialGroup>()
     let nAtom = 0
@@ -342,9 +358,10 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
         const key = `${style}-${accu}`
         let group = axialGroups.get(key)
         if (!group) {
-            group = { style, accu, pairs: [], colours: {}, sizes: [] }
+            group = { style, accu, pairs: [], colours: {}, sizes: [], tags: [] }
             axialGroups.set(key, group)
         }
+        group.tags.push(currentObjectId ?? "")
         const startPoint = { pos: from, x: from[0], y: from[1], z: from[2], serial: nAtom++, colour }
         const endPoint = { pos: to, x: to[0], y: to[1], z: to[2], serial: nAtom++, colour }
         group.colours[`${startPoint.serial}`] = colour
@@ -354,6 +371,9 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
     }
 
     threeDObjects.forEach(obj => {
+        // Everything added below belongs to this object, however many instances it turns into.
+        currentObjectId = obj.uniqueId
+        meshes.setInstanceTag(obj.uniqueId)
         const colour = getObjectColour(obj.colour)
         // The wire thickness every wireframe route below starts from, in scene units. Absent on
         // the shapes that cannot be wireframed, and on anything restored from a session saved
@@ -716,7 +736,12 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
 
         objects.push({
             ...cylinderInfo,
-            pick_info: { pick_points: pick_points, pick_point_instances: pick_point_instances },
+            pick_info: {
+                pick_points: pick_points,
+                pick_point_instances: pick_point_instances,
+                instance_tags: group.tags,
+                instance_tag_kind: MOORHEN_3D_OBJECT_TAG_KIND,
+            },
         })
     })
 

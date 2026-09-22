@@ -450,3 +450,12 @@ export const moorhenAtomTagKey = (moleculeUniqueId: string, chainId: string, res
  * atom hover pass over these without a second thought, which is what the kind field is for.
  */
 export const MOORHEN_GIZMO_TAG_KIND = "moorhen-gizmo";
+
+/**
+ * Tag scheme naming a whole 3D object, written as its uniqueId.
+ *
+ * On the instance channel rather than the section one, and so able to sit alongside the atom
+ * tags a path already carries: a path's sections say which residue each piece stands for, while
+ * its instance says which object all of it belongs to. Clicking asks the second question.
+ */
+export const MOORHEN_3D_OBJECT_TAG_KIND = "moorhen-3d-object";

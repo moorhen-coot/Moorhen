@@ -103,6 +103,25 @@ export function doClick(self: MGWebGL, event) {
     self.drawScene();
 }
 
+/**
+ * The label a picked buffer gives to the whole instance under the cursor, or null.
+ *
+ * The instance channel, not the section one: a path labels its sections with the residues they
+ * stand for, and separately labels itself with the object it belongs to. This asks the second
+ * question. As everywhere else here, the string is passed on unread.
+ */
+function pickedInstanceTag(
+    displayBuffers, bufferIndex: number, pickIndex: number
+): { tag: string; kind: string; bufferId: string } | null {
+    const pickInfo = bufferIndex > -1 ? displayBuffers[bufferIndex]?.pick_info : null
+    if (!pickInfo?.instance_tags || !pickInfo.instance_tag_kind || pickIndex < 0) return null
+    // A shape offers many pick points, so the reported index is not the instance index.
+    const instance = pickInfo.pick_point_instances?.[pickIndex] ?? pickIndex
+    const tag = pickInfo.instance_tags[instance]
+    if (!tag) return null
+    return { tag, kind: pickInfo.instance_tag_kind, bufferId: displayBuffers[bufferIndex].id }
+}
+
 export function doHover(self: MGWebGL, event) {
 
     if (self.hoverDebounceTimeout) {
@@ -315,9 +334,43 @@ export function doMouseUp(self: MGWebGL, event) {
         }
     } else if (event.altKey && event.shiftKey && self.reContourMapOnlyOnMouseUp) {
         self.handleOriginUpdated(true)
+    } else if (event.button === 0 && clickWasFree(self)) {
+        // Report what was clicked, for anyone who can make sense of the label.
+        //
+        // Here rather than in doClick because doClick runs on mousedown, and a press is not yet
+        // a click: turning the view starts with a press on whatever happens to be under the
+        // pointer, usually empty space. Reporting then would rewrite the selection every time
+        // the camera moved. The same small-movement test the centring above uses tells the two
+        // apart. A press on a manipulation handle never reaches here at all - the claim at the
+        // top of this function has already returned.
+        if (Math.abs(event_x - self.mouseDown_x) < 5 && Math.abs(event_y - self.mouseDown_y) < 5) {
+            const [minidx, , , , , , , minidx_pi, minj_pi] = self.getAtomFomMouseXY(event, self)
+            // Atoms take precedence, as they do when hovering and when centring: where both are
+            // under the pointer, the atom is the finer thing to have been aiming at.
+            if (minidx < 0) {
+                const picked = pickedInstanceTag(displayBuffers, minidx_pi, minj_pi)
+                document.dispatchEvent(new CustomEvent("meshClicked", {
+                    // Null for empty space, and null too for a mesh carrying no label of its
+                    // own. Both say the same thing to a listener: nothing of yours was clicked.
+                    detail: picked ?? { tag: null, kind: null, bufferId: null }
+                }))
+            }
+        }
     }
     self.mouseDown = false;
     self.doHover(event, self);
+}
+
+/**
+ * Whether a click means only itself.
+ *
+ * Each of these shortcuts already gives a click a meaning - label an atom, measure to it, take
+ * it as one end of a residue range - and a click cannot mean two things at once.
+ */
+function clickWasFree(self: MGWebGL): boolean {
+    return !self.keysDown['label_atom']
+        && !self.keysDown['measure_distances']
+        && !self.keysDown['residue_selection']
 }
 
 /**

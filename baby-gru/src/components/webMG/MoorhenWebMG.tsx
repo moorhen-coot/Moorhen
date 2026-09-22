@@ -23,6 +23,7 @@ import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
 import { HighlightHoveredSection } from './HoverSection';
 import { DragHandles } from './DragHandles';
+import { SelectClickedObject } from './SelectObject';
 
 
 interface MoorhenWebMGPropsInterface {
@@ -856,6 +857,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 <DrawHoverAtom />
                 <HighlightHoveredSection />
                 <DragHandles />
+                <SelectClickedObject />
             </>
 });
 
