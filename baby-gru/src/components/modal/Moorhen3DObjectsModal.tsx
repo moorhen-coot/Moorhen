@@ -1379,16 +1379,6 @@ export const Moorhen3DObjects = () => {
                         Delete
                     </MoorhenButton>
                 )}
-                {!objectNew && (
-                    <MoorhenToggle
-                        label="Handles"
-                        checked={selectedThreeDObjectId === theObject.uniqueId}
-                        onChange={() => dispatch(setSelectedThreeDObject(
-                            selectedThreeDObjectId === theObject.uniqueId ? null : theObject.uniqueId
-                        ))}
-                        style={{ margin: "0.3rem" }}
-                    />
-                )}
                 <MoorhenButton
                     className="m-2"
                     onClick={centreOnObject}
@@ -1933,6 +1923,19 @@ export const Moorhen3DObjects = () => {
                     />
                     {selectedAlpha < 0.99 && <div>(Opacity {selectedAlpha.toFixed(2)})</div>}
                 </MoorhenStack>
+                {!objectNew && (
+                <MoorhenStack direction="line">
+                    <MoorhenToggle
+                        label="Show object handles"
+                        checked={selectedThreeDObjectId === theObject.uniqueId}
+                        onChange={() => dispatch(setSelectedThreeDObject(
+                            selectedThreeDObjectId === theObject.uniqueId ? null : theObject.uniqueId
+                        ))}
+                        style={{ margin: "0.3rem" }}
+                    />
+                    <span/>
+                </MoorhenStack>
+                )}
             </MoorhenStack>
             {footer}
         </>

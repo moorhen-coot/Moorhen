@@ -53,6 +53,27 @@ export const distanceAlongAxis = (
 };
 
 /**
+ * Where the pointer crosses the plane through `centre` that `normal` is perpendicular to.
+ *
+ * Null when the pointer runs along that plane rather than through it, where there is no single
+ * crossing to report - the ring seen edge on, for a rotation.
+ */
+export const pointOnPlane = (
+    centre: number[],
+    normal: number[],
+    rayFrom: number[],
+    rayTo: number[]
+): Vec3 | null => {
+    const n = normalise(normal);
+    const d = sub(rayTo, rayFrom);
+    const alongNormal = dot(d, n);
+    if (Math.abs(alongNormal) < 1e-9 * length(d)) return null;
+
+    const t = dot(sub(centre, rayFrom), n) / alongNormal;
+    return [rayFrom[0] + t * d[0], rayFrom[1] + t * d[1], rayFrom[2] + t * d[2]];
+};
+
+/**
  * The angle round an axis at which the pointer crosses the plane the axis is normal to.
  *
  * Null when the pointer runs along that plane rather than through it - the ring seen edge on,
@@ -66,12 +87,8 @@ export const angleAboutAxis = (
     rayTo: number[]
 ): number | null => {
     const n = normalise(axis);
-    const d = sub(rayTo, rayFrom);
-    const alongNormal = dot(d, n);
-    if (Math.abs(alongNormal) < 1e-9 * length(d)) return null;
-
-    const t = dot(sub(centre, rayFrom), n) / alongNormal;
-    const hit = [rayFrom[0] + t * d[0], rayFrom[1] + t * d[1], rayFrom[2] + t * d[2]];
+    const hit = pointOnPlane(centre, axis, rayFrom, rayTo);
+    if (!hit) return null;
     const spoke = sub(hit, centre);
     if (length(spoke) < 1e-9) return null;
 
@@ -124,7 +141,12 @@ export const rotatedOrientation = (orientation: number[], axis: number[], angle:
     return out;
 };
 
-/** The world axis a handle's label names. */
+/**
+ * The world axis a handle's label names, or null where it names no fixed axis.
+ *
+ * The free handle is the null case on purpose: it moves in whatever plane faces the viewer, so
+ * the direction it works in is not known until the pointer supplies it.
+ */
 export const axisOfTag = (tag: string): Vec3 | null => {
     const axis = tag.split("|")[1];
     if (axis === "x") return [1, 0, 0];
@@ -133,8 +155,8 @@ export const axisOfTag = (tag: string): Vec3 | null => {
     return null;
 };
 
-/** Whether a handle's label asks for a move or a turn. */
-export const actionOfTag = (tag: string): "translate" | "rotate" | null => {
+/** Whether a handle's label asks for a move along an axis, a turn, or a free move. */
+export const actionOfTag = (tag: string): "translate" | "rotate" | "planar" | null => {
     const action = tag.split("|")[0];
-    return action === "translate" || action === "rotate" ? action : null;
+    return action === "translate" || action === "rotate" || action === "planar" ? action : null;
 };

@@ -282,7 +282,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
         rebuildGizmo()
         return () => { superseded = true }
-    }, [selectedThreeDObjectId, threeDObjects, zoom, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
+    }, [selectedThreeDObjectId, threeDObjects, zoom, backgroundColor, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
 
     const commandCentre = useCommandCentre()
 

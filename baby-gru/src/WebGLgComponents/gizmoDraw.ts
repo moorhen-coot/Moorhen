@@ -1,4 +1,6 @@
-import { combineIntoSections, getFrustum, getTorus, mergeMeshes, placedMesh } from './shapeGeometry'
+import {
+    combineIntoSections, getEllipsoid, getFrustum, getTorus, mergeMeshes, placedMesh,
+} from './shapeGeometry'
 import { IDENTITY_ORIENTATION, createMeshInstances } from './meshInstancing'
 import { centreOfObject, extentOfObject, hasOrientation } from '../store/threeDObjectsSlice'
 import { MOORHEN_GIZMO_TAG_KIND } from '../utils/enums'
@@ -30,6 +32,32 @@ const RING_MAJOR_ACCU = 48
 const RING_MINOR_ACCU = 6
 /** Points around a ring offered to the pick test as its centre line. */
 const RING_SPAN_POINTS = 24
+
+/**
+ * The free handle: a small ball where the three arrows meet, for moving in the plane facing the
+ * viewer rather than along any one axis.
+ *
+ * A ball rather than a square or a disc because it looks the same from every direction, so the
+ * gizmo needs to know nothing about where the camera is and never has to be rebuilt when the
+ * view turns. Which way the drag actually goes is settled from the pointer ray when it is
+ * grabbed, not from the geometry.
+ *
+ * It fits in the gap the arrows already leave: their shafts start at SHAFT_FROM.
+ */
+const FREE_RADIUS = 0.075
+const FREE_SLICES = 16
+const FREE_STACKS = 12
+/**
+ * Neutral, because unlike the arrows it belongs to no axis - so it takes its contrast from the
+ * background instead: dark on a light scene, light on a dark one.
+ *
+ * The same luminance weighting the renderer already uses to decide whether crosshairs should be
+ * black or white, so the two agree about what counts as a dark background.
+ */
+const freeColour = (background: number[]): number[] => {
+    const luminance = background[0] * 0.299 + background[1] * 0.587 + background[2] * 0.114
+    return luminance < 0.5 ? [0.95, 0.95, 0.95, 1.0] : [0.15, 0.15, 0.15, 1.0]
+}
 
 /**
  * How close to a handle counts as being on it. Generous next to the geometry, because a handle is
@@ -195,6 +223,39 @@ export const getGizmoBuffers = async (store: Store<RootState>): Promise<any> => 
             group.tagKind = MOORHEN_GIZMO_TAG_KIND
         }
     })
+
+    // The free handle, in a buffer of its own for the same reason the axes are: colour is a
+    // per-instance attribute, and this one is not red, green or blue. Offered for every object,
+    // since everything can be moved even when there is nothing to turn.
+    const freeKey = "gizmo-free"
+    const freeRadius = FREE_RADIUS * scale
+    meshes.addInstance(
+        freeKey,
+        () => combineIntoSections(
+            [{
+                mesh: placedMesh(
+                    getEllipsoid(1, 1, 1, FREE_SLICES, FREE_STACKS),
+                    [freeRadius, freeRadius, freeRadius],
+                    IDENTITY_ORIENTATION,
+                    [0, 0, 0]
+                ),
+                // A ball is small and round, so its centre is a fair stand-in for all of it and
+                // the span is that single point.
+                span: [0, 0, 0],
+            }],
+            PICK_RADIUS * scale
+        ),
+        centre,
+        [1, 1, 1],
+        IDENTITY_ORIENTATION,
+        freeColour(state.sceneSettings.backgroundColor ?? [1, 1, 1, 1])
+    )
+    const freeGroup = meshes.group(freeKey)
+    if (freeGroup) {
+        // No axis in the label: which way this one moves is not decided until the pointer says.
+        freeGroup.tags = ["planar|view"]
+        freeGroup.tagKind = MOORHEN_GIZMO_TAG_KIND
+    }
 
     const objects: any[] = []
     meshes.emit(objects)
