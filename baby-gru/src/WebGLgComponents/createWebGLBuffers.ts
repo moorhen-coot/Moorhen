@@ -318,6 +318,9 @@ export const createWebGLBuffers = (jsondata: any, idat: number, gl): DisplayBuff
     if(jsondata.doStencil){
         theBuffer.doStencil = jsondata.doStencil;
     }
+    if(jsondata.alwaysOnTop){
+        theBuffer.alwaysOnTop = jsondata.alwaysOnTop;
+    }
 
     if(jsondata.norm_tri){
         const rssentries = jsondata.norm_tri[idat];
@@ -471,6 +474,9 @@ export const createWebGLBuffers = (jsondata: any, idat: number, gl): DisplayBuff
     }
     if(jsondata.doStencil){
         theBuffer.doStencil = jsondata.doStencil;
+    }
+    if(jsondata.alwaysOnTop){
+        theBuffer.alwaysOnTop = jsondata.alwaysOnTop;
     }
     if(jsondata.pick_info){
         if(jsondata.pick_info.influence_weights && jsondata.pick_info.influence_point_indexes && jsondata.pick_info.influence_index_offsets && jsondata.pick_info.pick_points){

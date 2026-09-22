@@ -79,6 +79,8 @@ export class DisplayBuffer {
     multiViewGroup: number;
     clickTol: number;
     doStencil: boolean;
+    /** Drawn after everything else, onto a cleared depth buffer, so nothing can hide it. */
+    alwaysOnTop: boolean;
 
     constructor() {
         this.visible = true;
@@ -178,6 +180,7 @@ export class DisplayBuffer {
         this.atoms = [];
         this.clickTol = null;
         this.doStencil = false;
+        this.alwaysOnTop = false;
     }
 
     setTransformMatrix(transformMatrix) {

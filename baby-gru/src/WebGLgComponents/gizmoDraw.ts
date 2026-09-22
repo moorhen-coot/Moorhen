@@ -293,6 +293,10 @@ export const getGizmoBuffers = async (store: Store<RootState>): Promise<any> => 
         // handles are drawn large and the default tolerance is a fraction of them, so the
         // generous radius the free handle asks for is quietly thrown away.
         object.clickTol = object.pick_info.pick_radius
+        // ...and seen wherever it is. A handle hangs off the object's centre, which for a
+        // backbone trace is buried in the middle of the chain, so without this the one that
+        // matters most - the ball at the very centre - is invisible however large it is drawn.
+        object.alwaysOnTop = true
     })
     return objects
 }

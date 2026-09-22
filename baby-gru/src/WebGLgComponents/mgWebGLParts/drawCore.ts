@@ -152,6 +152,14 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
         return invMat
     }
 
+/**
+ * The slice of the depth range given to buffers that must not be hidden.
+ *
+ * Small enough that anything drawn in it beats ordinary scene geometry, large enough that such
+ * buffers are still depth-tested properly against one another.
+ */
+const ON_TOP_DEPTH_RANGE = 0.02
+
 export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
         const displayBuffers = self.store.getState().glRef.displayBuffers
@@ -175,7 +183,42 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttTextureDepth);
         }
 
-        for (let idx = 0; idx < displayBuffers.length; idx++) {
+        /**
+         * Buffers that have to be seen whatever they are inside go last, with the depth buffer
+         * wiped first so that nothing already drawn can hide them.
+         *
+         * The manipulation handles are the case: they hang off an object's centre, which for a
+         * backbone trace is in the middle of the tangle, so the one at the very centre is buried
+         * in geometry and invisible however large it is drawn.
+         *
+         * Done by squeezing them into the nearest sliver of the depth range, so they win almost
+         * every depth comparison against the scene while still being tested normally against
+         * each other - the far side of a ring must not show through the near side, which is why
+         * the depth test cannot simply be switched off.
+         *
+         * An earlier attempt cleared the depth buffer instead. That made everything else vanish:
+         * the passes that run afterwards - ambient occlusion, edge detection, depth blur - read
+         * the depth buffer to work out what the scene looked like, and a cleared one tells them
+         * there is nothing there. Only the handles' own pixels may be touched.
+         *
+         * The sort is stable, so everything else keeps the order it had.
+         */
+        const onTop = (idx: number) => !!displayBuffers[idx].alwaysOnTop
+        const anyOnTop = displayBuffers.some(buffer => buffer.alwaysOnTop)
+        const drawOrder = displayBuffers.map((_buffer, i) => i)
+        if (anyOnTop) drawOrder.sort((a, b) => Number(onTop(a)) - Number(onTop(b)))
+        // Not while building a shadow map or the geometry buffers: those record where things
+        // really are, and a handle pretending to be at the front would be wrong in both.
+        const mayDrawOnTop = anyOnTop && !calculatingShadowMap && !self.drawingGBuffers
+        let nearRangeSet = false
+
+        for (let n = 0; n < drawOrder.length; n++) {
+            const idx = drawOrder[n]
+
+            if (mayDrawOnTop && !nearRangeSet && onTop(idx)) {
+                self.gl.depthRange(0.0, ON_TOP_DEPTH_RANGE);
+                nearRangeSet = true;
+            }
 
             if (!displayBuffers[idx].visible) {
                 continue;
@@ -1165,6 +1208,13 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                  self.gl.depthFunc(self.gl.LESS)
 
             }
+        }
+
+        // Put the depth range back for whatever is drawn next. Left compressed, it would pull
+        // every later pass towards the viewer, which is the sort of fault that shows up
+        // somewhere else entirely.
+        if (nearRangeSet) {
+            self.gl.depthRange(0.0, 1.0);
         }
     }
 
