@@ -44,9 +44,29 @@ const RING_SPAN_POINTS = 24
  *
  * It fits in the gap the arrows already leave: their shafts start at SHAFT_FROM.
  */
-const FREE_RADIUS = 0.075
+const FREE_RADIUS = 0.10
 const FREE_SLICES = 16
 const FREE_STACKS = 12
+
+/**
+ * How close to the free handle counts as being on it - more generous than for the arrows, and
+ * larger than the ball is drawn.
+ *
+ * An arrow is a long line and can be grabbed anywhere along it; a ball is a point, and at the
+ * same tolerance it is by far the hardest handle to hit. Reaching past where it is drawn costs
+ * only the innermost fifth of each shaft, which is the part nobody aims at anyway.
+ */
+const FREE_PICK_RADIUS = 0.18
+
+/**
+ * ...and where it overlaps an arrow, it wins.
+ *
+ * Not a preference but a necessity: an arrow pointing towards the viewer projects onto the very
+ * middle of the gizmo, and since its tip is nearer the eye than the ball at the centre, the
+ * depth rule hands it every pick there. That is exactly the view in which the axis arrows are
+ * useless and the free handle is the only one worth having, so it has to be the one taken.
+ */
+const FREE_PICK_PRIORITY = 1
 /**
  * Neutral, because unlike the arrows it belongs to no axis - so it takes its contrast from the
  * background instead: dark on a light scene, light on a dark one.
@@ -243,7 +263,7 @@ export const getGizmoBuffers = async (store: Store<RootState>): Promise<any> => 
                 // the span is that single point.
                 span: [0, 0, 0],
             }],
-            PICK_RADIUS * scale
+            FREE_PICK_RADIUS * scale
         ),
         centre,
         [1, 1, 1],
@@ -255,6 +275,7 @@ export const getGizmoBuffers = async (store: Store<RootState>): Promise<any> => 
         // No axis in the label: which way this one moves is not decided until the pointer says.
         freeGroup.tags = ["planar|view"]
         freeGroup.tagKind = MOORHEN_GIZMO_TAG_KIND
+        freeGroup.pickPriority = FREE_PICK_PRIORITY
     }
 
     const objects: any[] = []
@@ -262,6 +283,16 @@ export const getGizmoBuffers = async (store: Store<RootState>): Promise<any> => 
     // Dragging a handle must not also spin the camera, and alt-clicking one must not centre the
     // view on it. The renderer knows nothing of handles, only that a buffer may take the pointer
     // for itself.
-    objects.forEach(object => { object.pick_info.claims_pointer = true })
+    objects.forEach(object => {
+        object.pick_info.claims_pointer = true
+        // Each handle is grabbable exactly as far out as it says it is.
+        //
+        // Without this the pick test falls back to its own tolerance, which is a multiple of the
+        // zoom - reasonable for atoms, wrong here, because the handles are sized by whichever is
+        // larger of the zoom and the object. Around anything bigger than the zoom implies, the
+        // handles are drawn large and the default tolerance is a fraction of them, so the
+        // generous radius the free handle asks for is quietly thrown away.
+        object.clickTol = object.pick_info.pick_radius
+    })
     return objects
 }

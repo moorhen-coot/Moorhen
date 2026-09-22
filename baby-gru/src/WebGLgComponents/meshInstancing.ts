@@ -90,6 +90,9 @@ export type InstanceGroup = {
     // while the instance says which object the whole thing belongs to, in another scheme
     // entirely. One kind field could not carry both.
     instanceTags?: string[]
+    // Which of two overlapping claimed hits should be taken. Meaningless on its own; the pick
+    // test only consults it when two things that both want the pointer are both under it.
+    pickPriority?: number
     origins: number[]
     sizes: number[]
     orientations: number[]
@@ -256,6 +259,7 @@ export const createMeshInstances = (instanceTagKind?: string) => {
                         instance_tags: group.instanceTags,
                         instance_tag_kind: instanceTagKind,
                     }),
+                    ...(group.pickPriority !== undefined && { pick_priority: group.pickPriority }),
                 },
             })
         })

@@ -28,7 +28,7 @@ export class DisplayBuffer {
     // section_level_ranges and section_level_points are coarser readings of the same sections,
     // each indexed by section exactly as section_ranges is, so a consumer swaps one level's
     // array in and its existing section index still means something. Level 0 repeats the finest.
-    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][], pick_point_instances?:number[], pick_point_sections?:number[], section_ranges?:number[][], section_level_ranges?:number[][][], section_level_points?:number[][][], pick_spans?:number[][], pick_radius?:number, pick_point_tags?:string[], pick_tag_kind?:string, instance_tags?:string[], instance_tag_kind?:string, claims_pointer?:boolean}
+    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][], pick_point_instances?:number[], pick_point_sections?:number[], section_ranges?:number[][], section_level_ranges?:number[][][], section_level_points?:number[][][], pick_spans?:number[][], pick_radius?:number, pick_point_tags?:string[], pick_tag_kind?:string, instance_tags?:string[], instance_tag_kind?:string, claims_pointer?:boolean, pick_priority?:number}
     origin: number[];
     visible: boolean;
     name_label: string;

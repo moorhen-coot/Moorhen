@@ -1793,6 +1793,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         // A buffer that takes the pointer for itself outranks anything else under the cursor:
         // a handle drawn over an object has to be grabbable, not lost behind it.
         let bestClaims_pi = false;
+        // Where two handles overlap, one may say it should be the one taken. Depth cannot settle
+        // it: an arrow pointing towards the viewer collapses onto the middle of its own gizmo and
+        // its tip is nearer the eye than anything at the centre, so the small handle underneath
+        // becomes unreachable at exactly the angles where it is most wanted.
+        let bestPriority_pi = 0;
         let minx_pi = 100000.0;
         let miny_pi = 100000.0;
         let minz_pi = 100000.0;
@@ -1823,6 +1828,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     // the plain nearest-to-the-ray rule.
                     const pickRadius = displayBuffers[idx].pick_info.pick_radius
                     const claimsPointer = !!displayBuffers[idx].pick_info.claims_pointer
+                    // Only consulted between two claimed hits; everything else is unranked.
+                    const priority = displayBuffers[idx].pick_info.pick_priority ?? 0
                     for (let j = 0; j < displayBuffers[idx].pick_info.pick_points.length; j++) {
                         const atx = displayBuffers[idx].pick_info.pick_points[j][0];
                         const aty = displayBuffers[idx].pick_info.pick_points[j][1];
@@ -1873,6 +1880,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         const claimsThis = claimsPointer && isHit;
                         const beatsBest =
                             claimsThis !== bestClaims_pi ? claimsThis
+                            : (claimsThis && priority !== bestPriority_pi) ? priority > bestPriority_pi
                             : (isHit && bestIsHit_pi) ? depth > bestDepth_pi
                             : distance < mindist_pi;
 
@@ -1888,6 +1896,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             bestIsHit_pi = isHit;
                             bestDepth_pi = depth;
                             bestClaims_pi = claimsPointer && isHit;
+                            bestPriority_pi = priority;
                         }
                     }
                 }

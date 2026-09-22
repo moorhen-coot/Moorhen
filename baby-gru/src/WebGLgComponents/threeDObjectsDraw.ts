@@ -29,7 +29,7 @@ import {
     getTorusWireframe,
 } from './shapeGeometry'
 import { IDENTITY_ORIENTATION, PICK_POINTS_PER_INSTANCE, createMeshInstances } from './meshInstancing'
-import { DEFAULT_WIREFRAME_RADIUS } from '../store/threeDObjectsSlice'
+import { DEFAULT_WIREFRAME_RADIUS, PathObject } from '../store/threeDObjectsSlice'
 import { MOORHEN_3D_OBJECT_TAG_KIND } from '../utils/enums'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
@@ -142,6 +142,33 @@ const getObjectColour = (colour: string): [number, number, number, number] => {
     return [r / 255, g / 255, b / 255, a / 255]
 }
 
+/**
+ * Path tubes kept between rebuilds, so that moving a path does not regenerate it.
+ *
+ * Every change to any object rebuilds every object, which for a backbone trace means sweeping a
+ * tube along thousands of points - tens of milliseconds, once per frame of a drag, to produce
+ * the geometry that was already there. Only the points and the tube's own dimensions decide
+ * that geometry: where the path sits, which way it faces and what colour it is are all
+ * per-instance, applied after the fact.
+ *
+ * Recognising "the same points" is a reference comparison rather than a scan, because that is
+ * exactly what a reducer gives us - `{...object, origin: somewhere}` copies the reference to
+ * the points array, so an untouched array is the same array. Comparing contents would cost more
+ * than the rebuild it saves.
+ *
+ * Pruned at the end of every pass to the paths actually drawn, so it holds one entry per path
+ * on screen and cannot grow.
+ */
+type PathMeshEntry = {
+    points: number[]
+    runStarts: number[] | undefined
+    radius: number
+    innerRadius: number
+    stride: number
+    mesh: ReturnType<typeof getPathTubes>
+}
+const pathMeshCache = new Map<string, PathMeshEntry>()
+
 export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<any>  => {
 
     const threeDObjects = store.getState().threeDObjects.objects
@@ -162,6 +189,36 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
      * labels have to be collected as the pairs are, and this is what they read.
      */
     let currentObjectId: string | null = null
+
+    /** The paths drawn this pass, so the cache can drop any that have gone. */
+    const pathsSeen = new Set<string>()
+
+    /** A path's tube, built only if this path's geometry is not the one already in hand. */
+    const cachedPathTubes = (obj: PathObject) => {
+        const radius = obj.radius
+        const innerRadius = obj.inner_radius ?? 0
+        const stride = Math.max(1, obj.point_stride ?? 1)
+        const held = pathMeshCache.get(obj.uniqueId)
+        if (
+            held
+            && held.points === obj.points
+            && held.runStarts === obj.run_starts
+            && held.radius === radius
+            && held.innerRadius === innerRadius
+            && held.stride === stride
+        ) {
+            return held.mesh
+        }
+        const mesh = getPathTubes(
+            obj.points, obj.run_starts ?? [], radius, PATH_TUBE_SIDES, innerRadius, stride
+        )
+        pathMeshCache.set(obj.uniqueId, {
+            points: obj.points,
+            runStarts: obj.run_starts,
+            radius, innerRadius, stride, mesh,
+        })
+        return mesh
+    }
 
     /**
      * A flat-sided solid, which may be drawn either solid or as a wireframe.
@@ -570,12 +627,10 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
             // The origin still comes from the instance, so a path can be dragged with the same
             // control as everything else.
             if(obj.points && obj.points.length >= 6){
+                pathsSeen.add(obj.uniqueId)
                 addInstance(
                     `path-${obj.uniqueId}`,
-                    () => getPathTubes(
-                        obj.points, obj.run_starts ?? [], obj.radius, PATH_TUBE_SIDES,
-                        obj.inner_radius ?? 0, Math.max(1, obj.point_stride ?? 1)
-                    ),
+                    () => cachedPathTubes(obj),
                     obj.origin,
                     [1, 1, 1],
                     // A path has no orientation of its own: its points say where it is.
@@ -743,6 +798,12 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
                 instance_tag_kind: MOORHEN_3D_OBJECT_TAG_KIND,
             },
         })
+    })
+
+    // Forget any path that is no longer drawn, so the cache tracks the scene rather than
+    // everything the scene has ever contained.
+    pathMeshCache.forEach((_entry, id) => {
+        if (!pathsSeen.has(id)) pathMeshCache.delete(id)
     })
 
     return objects
