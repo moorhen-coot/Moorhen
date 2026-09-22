@@ -1016,6 +1016,8 @@ const tubesAlongPaths = (
     sectionPoints?: number[][];
     sectionSpans?: number[][];
     sectionRadius?: number;
+    sectionLevelRanges?: number[][][];
+    sectionLevelPoints?: number[][][];
 } => {
     // A bore down the middle turns the tube into a pipe: a second surface at innerRadius facing
     // the other way, and end caps that are annular rather than solid discs. An inner radius at or
@@ -1031,8 +1033,12 @@ const tubesAlongPaths = (
     // Each section's stretch of centre line, for a pick test that can measure against the whole
     // length of it rather than against a single point somewhere in the middle.
     const sectionSpans: number[][] = [];
+    // Which path each section came from, so that sections can be gathered into coarser groups
+    // later. A path is as far as this goes: what a path stands for - a chain, a strand, a
+    // fragment - is the caller's business and never enters here.
+    const sectionRuns: number[] = [];
 
-    paths.forEach(path => {
+    paths.forEach((path, runIndex) => {
         // Drop repeated points. A zero-length segment has no direction, so it would give a zero
         // tangent and a degenerate frame, and the ring built on it comes out inside-out. They are
         // easy to arrive at honestly: a capsule with no barrel has both of its domes ending on the
@@ -1226,6 +1232,7 @@ const tubesAlongPaths = (
                 const span: number[] = [];
                 for (let i = start; i <= end; i++) span.push(...points[i % n]);
                 sectionSpans.push(span);
+                sectionRuns.push(runIndex);
             }
         } else {
             const base = vertices.length / 3;
@@ -1247,11 +1254,76 @@ const tubesAlongPaths = (
         }
     });
 
-    return sectionStride > 0
-        // sectionRadius tells the pick test how far from a section's centre line still counts as
-        // being over it, which is what lets it prefer the nearest of several it is over.
-        ? { vertices, normals, idx, sectionRanges, sectionPoints, sectionSpans, sectionRadius: radius }
-        : { vertices, normals, idx };
+    if (sectionStride <= 0) return { vertices, normals, idx };
+
+    // Coarser grains, as alternative answers to "which part of this is that". A section on its
+    // own, then everything from the same path, then all of it. The renderer chooses between them
+    // by how far the view is zoomed out; none of that is decided here.
+    const levels = levelsFromGroupings(sectionRanges, sectionPoints, [
+        sectionRanges.map((_range, section) => section),
+        sectionRuns,
+        sectionRanges.map(() => 0),
+    ]);
+
+    // sectionRadius tells the pick test how far from a section's centre line still counts as
+    // being over it, which is what lets it prefer the nearest of several it is over.
+    return {
+        vertices, normals, idx,
+        sectionRanges, sectionPoints, sectionSpans, sectionRadius: radius,
+        sectionLevelRanges: levels.ranges,
+        sectionLevelPoints: levels.points,
+    };
+};
+
+/**
+ * Coarser views of the same sections, each still indexed by section.
+ *
+ * A grouping says which group every section belongs to; the result says, for each section, the
+ * vertex range and the aim point of the whole group it is part of. Indexing the answer by
+ * section rather than by group is what lets a consumer swap one level's array for another's
+ * without knowing anything about groups at all - the section index it already has still works.
+ *
+ * A group's vertex range is the span from its first section's start to its last one's end. That
+ * is only the group itself if its sections are adjacent in the mesh, which is what the vertex
+ * ranges being contiguous and in order gives us here - each section is appended after the last.
+ * A grouping that interleaved sections would quietly take in the ones in between, so any future
+ * grouping has to keep its members adjacent, or the highlight will need more than one range.
+ */
+const levelsFromGroupings = (
+    sectionRanges: number[][],
+    sectionPoints: number[][],
+    groupings: number[][]
+): { ranges: number[][][]; points: number[][][] } => {
+    const ranges: number[][][] = [];
+    const points: number[][][] = [];
+
+    groupings.forEach(groups => {
+        const extent = new Map<number, { from: number; to: number; sum: number[]; count: number }>();
+        sectionRanges.forEach((range, section) => {
+            const key = groups[section] ?? section;
+            const seen = extent.get(key);
+            const point = sectionPoints[section] ?? [0, 0, 0];
+            if (!seen) {
+                extent.set(key, { from: range[0], to: range[1], sum: [...point], count: 1 });
+                return;
+            }
+            seen.from = Math.min(seen.from, range[0]);
+            seen.to = Math.max(seen.to, range[1]);
+            seen.sum = seen.sum.map((total, c) => total + point[c]);
+            seen.count++;
+        });
+
+        ranges.push(sectionRanges.map((_range, section) => {
+            const seen = extent.get(groups[section] ?? section);
+            return seen ? [seen.from, seen.to] : [..._range];
+        }));
+        points.push(sectionPoints.map((point, section) => {
+            const seen = extent.get(groups[section] ?? section);
+            return seen ? seen.sum.map(total => total / seen.count) : [...point];
+        }));
+    });
+
+    return { ranges, points };
 };
 
 
@@ -1628,6 +1700,8 @@ export const getPathTubes = (
     sectionPoints?: number[][];
     sectionSpans?: number[][];
     sectionRadius?: number;
+    sectionLevelRanges?: number[][][];
+    sectionLevelPoints?: number[][][];
 } => {
     const count = Math.floor(points.length / 3);
 

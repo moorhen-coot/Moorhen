@@ -323,7 +323,7 @@ export function doMouseUp(self: MGWebGL, event) {
                         && !!displayBuffers[minidx_pi]?.pick_info?.claims_pointer
                     const meshPosition = claimsPointer
                         ? null
-                        : pickedMeshPosition(displayBuffers, minidx_pi, minj_pi)
+                        : pickedMeshPosition(displayBuffers, minidx_pi, minj_pi, self.pickLevel)
                     if(meshPosition){
                         self.props.onOriginChanged([-meshPosition[0], -meshPosition[1], -meshPosition[2]])
                     }
@@ -383,12 +383,24 @@ function clickWasFree(self: MGWebGL): boolean {
  * shape's edge.
  *
  * A position rather than an identity, because a mesh need not stand for anything at all.
+ *
+ * `level` says how much of a sectioned mesh counts as one thing at the current zoom: centring
+ * lands on the middle of whatever is highlighted, so pulled back far enough it goes to the
+ * middle of a whole chain rather than of the residue happening to be under the pointer.
  */
-function pickedMeshPosition(displayBuffers, bufferIndex: number, pickIndex: number): number[] | null {
+function pickedMeshPosition(
+    displayBuffers, bufferIndex: number, pickIndex: number, level: number = 0
+): number[] | null {
     const pickInfo = bufferIndex > -1 ? displayBuffers[bufferIndex]?.pick_info : null;
     if (!pickInfo?.pick_points || pickIndex < 0) {
         return null;
     }
+    // A section's aim point at this grain, when the mesh offers coarser ones.
+    const section = pickInfo.pick_point_sections?.[pickIndex];
+    const coarse = section !== undefined
+        ? pickInfo.section_level_points?.[level]?.[section]
+        : undefined;
+    if (coarse) return coarse;
     let index = pickIndex;
     if (!pickInfo.pick_point_sections) {
         const instances = pickInfo.pick_point_instances;

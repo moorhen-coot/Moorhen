@@ -5,6 +5,7 @@ import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
+import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
 
 /**
  * The hot render core - drawScene orchestrates the frame (framebuffer setup,
@@ -160,6 +161,13 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         // here has to know what it stands for.
         const hoveredSection = self.store.getState().hoveringStates.hoveredSection
 
+        // How much of a sectioned mesh counts as one thing at this zoom. Settled once per draw
+        // and kept on the renderer, so that the highlight below and the pick in doMouseUp agree
+        // - and so that the hysteresis has somewhere to remember what it last decided. Zoom
+        // changes redraw, which is what keeps this current. The viewport does not come into it:
+        // see visibleHeight for why resizing the window must not change the grain.
+        self.pickLevel = levelForHeight(visibleHeight(self.zoom), self.pickLevel)
+
         const bright_y = self.background_colour[0] * 0.299 + self.background_colour[1] * 0.587 + self.background_colour[2] * 0.114;
 
         if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
@@ -256,7 +264,14 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 // A mesh divided into sections highlights one of them instead of the whole
                 // instance, so the two are mutually exclusive: section_ranges present means the
                 // range does the work and uHoveredInstance stays off.
-                const sectionRanges = displayBuffers[idx].pick_info?.section_ranges
+                // The grain the view is at. Still indexed by section, so everything below is
+                // unchanged except which array it reads: at the finest level this is the same
+                // array, and at coarser ones a section's neighbours light with it. That is why
+                // both the pointer hover and a hover driven from the sequence viewer widen
+                // together without either of them knowing about zoom.
+                const allLevels = displayBuffers[idx].pick_info?.section_level_ranges
+                const sectionRanges = allLevels?.[self.pickLevel]
+                    ?? displayBuffers[idx].pick_info?.section_ranges
                 const isHovered = idx === self.state.hoveridx && self.state.hover_point>-1
 
                 if(theShader.uHoveredInstance){

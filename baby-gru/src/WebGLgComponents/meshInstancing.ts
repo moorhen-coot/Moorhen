@@ -76,6 +76,10 @@ export type InstanceGroup = {
         sectionPoints?: number[][];
         sectionSpans?: number[][];
         sectionRadius?: number;
+        // Coarser answers to the same question, each still indexed by section. Passed through
+        // untouched; what they mean and when to use one is decided where they are read.
+        sectionLevelRanges?: number[][][];
+        sectionLevelPoints?: number[][][];
     }
     // Opaque labels for this group's sections, and the scheme they are in. Set by whichever
     // branch built the group; never read here.
@@ -199,6 +203,27 @@ export const createMeshInstances = (instanceTagKind?: string) => {
                 })
             }
 
+            // The coarser aim points have to be placed into the world exactly as the pick points
+            // above were: a level's point is a position, in the mesh's own space, and a path in
+            // particular keeps its points relative to its origin - a backbone trace stores the
+            // centroid as the origin and everything else as an offset from it. Handing the raw
+            // point to whatever centres the view sends it to the offset instead of the place,
+            // which is most of a molecule away.
+            //
+            // Vertex ranges need none of this: an index into the mesh means the same wherever
+            // the mesh is put.
+            //
+            // Instance zero because a sectioned mesh is the only instance of itself, as the note
+            // above on gl_VertexID explains.
+            const placedLevelPoints = group.mesh.sectionLevelPoints?.map(level =>
+                level.map(local => placeLocalPoint(
+                    local,
+                    group.origins.slice(0, 3),
+                    group.sizes.slice(0, 3),
+                    group.orientations.slice(0, 16)
+                ))
+            )
+
             objects.push({
                 atoms: [[[]]],
                 instance_sizes: [[group.sizes]],
@@ -221,6 +246,8 @@ export const createMeshInstances = (instanceTagKind?: string) => {
                             pick_point_tags: pick_point_tags,
                             pick_tag_kind: group.tagKind,
                             section_ranges: group.mesh.sectionRanges,
+                            section_level_ranges: group.mesh.sectionLevelRanges,
+                            section_level_points: placedLevelPoints,
                         }
                         : { pick_points: pick_points, pick_point_instances: pick_point_instances }),
                     // One label per instance, not per pick point: pick_point_instances already

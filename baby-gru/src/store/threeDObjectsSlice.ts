@@ -437,8 +437,29 @@ export const extentOfObject = (obj: ThreeDObject): number => {
     }
 };
 
-/** Whether a shape has an orientation to turn, and so is worth giving rotation handles. */
-export const hasOrientation = (obj: ThreeDObject): boolean => "orientation" in obj;
+/**
+ * The shapes that have no orientation, because something else already says which way they face.
+ *
+ * A sphere looks the same whichever way it is turned; a cylinder and a cone are pinned by their
+ * two end points; a path's points are the whole of where it is and how it lies.
+ *
+ * Kept as the short list rather than the long one, since almost everything does have an
+ * orientation and a list of twenty-odd would be the easier of the two to let fall out of date.
+ */
+const UNORIENTED_TYPES = ["sphere", "cylinder", "cone", "path"] as const;
+
+/**
+ * Whether a shape has an orientation to turn, and so is worth giving rotation handles.
+ *
+ * Decided by the type, not by whether the object happens to carry the field - the same reason
+ * `wireframe` is decided by WIREFRAMEABLE_TYPES. An object restored from a session saved before
+ * a field was removed still has it, and `"orientation" in obj` believed it: a path from an old
+ * session came back with rotation rings that turned an orientation nothing reads, since the path
+ * branch of the draw code passes the identity regardless. Asking the type cannot be fooled by
+ * stale data in either direction.
+ */
+export const hasOrientation = (obj: ThreeDObject): boolean =>
+    !(UNORIENTED_TYPES as readonly string[]).includes(obj.type);
 
 const initialState: {
     objects: ThreeDObject[];

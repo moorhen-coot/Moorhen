@@ -1963,6 +1963,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
      */
     pointerClaim: { tag: string; bufferId: string } | null = null;
 
+    /**
+     * How much of a sectioned mesh counts as one thing at the current zoom.
+     *
+     * Written once per draw and read by the highlight and by the pick, so that the two never
+     * disagree. It also carries the hysteresis: the decision depends on what it was last time,
+     * which is why it is remembered here rather than worked out afresh at each use.
+     */
+    pickLevel: number = 0;
+
     doHover(event, self) {
         doHover(this, event)
     }

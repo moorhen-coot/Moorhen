@@ -20,7 +20,15 @@ export class DisplayBuffer {
     // separately hoverable maps the picked index to a section, and the section to the half-open
     // range of vertex ids that the shader lights. Present only for a mesh that is the sole
     // instance of itself, since a vertex id says nothing about which instance is being drawn.
-    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][], pick_point_instances?:number[], pick_point_sections?:number[], section_ranges?:number[][], pick_spans?:number[][], pick_radius?:number, pick_point_tags?:string[], pick_tag_kind?:string, claims_pointer?:boolean}
+    //
+    // instance_tags names whole instances rather than sections - a separate channel with its own
+    // kind, so a mesh can answer both "which piece is this" and "which thing is it part of" in
+    // two different schemes at once.
+    //
+    // section_level_ranges and section_level_points are coarser readings of the same sections,
+    // each indexed by section exactly as section_ranges is, so a consumer swaps one level's
+    // array in and its existing section index still means something. Level 0 repeats the finest.
+    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][], pick_point_instances?:number[], pick_point_sections?:number[], section_ranges?:number[][], section_level_ranges?:number[][][], section_level_points?:number[][][], pick_spans?:number[][], pick_radius?:number, pick_point_tags?:string[], pick_tag_kind?:string, instance_tags?:string[], instance_tag_kind?:string, claims_pointer?:boolean}
     origin: number[];
     visible: boolean;
     name_label: string;
