@@ -56,7 +56,7 @@ export type RepresentationStyles =
     | "residue_environment"
     | "transformation"
     | "NEFRestraints"
-    | "RMSD";
+    | "RMSF";
 
 /**
  * Represents a molecule representation
