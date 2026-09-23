@@ -4,7 +4,7 @@ import { MoorhenButton } from "@/components/inputs";
 import { useControlLock } from "@/hooks/useControlsLock";
 import { setShownControl, unlockControls } from "@/store";
 import { RootState } from "@/store";
-import { useCommandCentre } from "../../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../../InstanceManager";
 import { setIsDraggingAtoms } from "../../../store/generalStatesSlice";
 import { setDraggableMolecule } from "../../../store/glRefSlice";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
@@ -21,6 +21,7 @@ export const AcceptRejectDragAtoms = () => {
     const refinementDirty = useRef<boolean>(false);
     const autoClearRestraintsRef = useRef<boolean>(true);
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
 
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
     const activeMap = useSelector((state: RootState) => state.generalStates.activeMap);
@@ -59,6 +60,8 @@ export const AcceptRejectDragAtoms = () => {
         } else {
             dispatch(setShownControl(null));
         }
+        if (acceptTransform) {
+        moorhenInstance.triggerMoleculeChanged(molecule.uniqueId, "refine");}
     };
 
     const atomDraggedCallback = useCallback(

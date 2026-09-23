@@ -2768,11 +2768,11 @@ export class MoorhenMolecule {
         return residueMap;
     }
     /**
-     * Calculate RMSD
-     * @returns {object[]} An array of objects indicating the residue CID and RMSD
+     * Calculate RMSF
+     * @returns {object[]} An array of objects indicating the residue CID and RMSF
      */
-    getRMSDs() {
-        const result: { cid: string; RMSD: number }[] = [];
+    getRMSFs() {
+        const result: { cid: string; RMSF: number }[] = [];
         const residueMap = this.getResidueCAPositions()
         const averagePositions = [];
         for (const [cid, residue] of residueMap.entries()) {
@@ -2795,7 +2795,7 @@ export class MoorhenMolecule {
                 z: avgZ
             });
         }
-        const rmsdValues = [];
+        const rmsfValues = [];
         for (const [cid, residue] of residueMap.entries()) {
 
             const n = residue.positions.length;
@@ -2820,14 +2820,14 @@ export class MoorhenMolecule {
                 sumSq += dx*dx + dy*dy + dz*dz;
             });
 
-            const RMSD = Math.sqrt(sumSq / n);
+            const RMSF = Math.sqrt(sumSq / n);
 
-            rmsdValues.push({
+            rmsfValues.push({
                 cid,
-                RMSD
+                RMSF
             });
         }
-        return rmsdValues;
+        return rmsfValues;
         }
 
     /**

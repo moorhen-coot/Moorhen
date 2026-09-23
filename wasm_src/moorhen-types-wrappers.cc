@@ -20,7 +20,25 @@ gemmi::Structure cloneGemmiStructureWithTrimmedAtomNames(const gemmi::Structure 
 
 
 EMSCRIPTEN_BINDINGS(moorhen_types) {
-        // PRIVATEER
+
+    value_object<PickableMesh>("PickableMesh")
+      .field("mesh", &PickableMesh::mesh)
+      .field("point_triangles", &PickableMesh::point_triangles)
+      .field("pick_points", &PickableMesh::pick_points)
+      .field("influence_index_offsets", &PickableMesh::influence_index_offsets)
+      .field("influence_point_indexes", &PickableMesh::influence_point_indexes)
+      .field("influence_weights", &PickableMesh::influence_weights)
+    ;
+
+    value_object<std::pair<unsigned,float>>("pair_position_value")
+    .field("point_index", &std::pair<unsigned,float>::first)
+    .field("weight", &std::pair<unsigned,float>::second)
+    ;
+    register_vector<std::vector<unsigned>>("vector_uint");
+    register_vector<std::vector<std::vector<unsigned>>>("vector_vector_uint");
+    register_vector<std::array<float,3>>("vector_array_float_3");
+
+    // PRIVATEER
     value_object<TorsionEntry>("TorsionEntry")
       .field("sugar_1", &TorsionEntry::sugar_1)
       .field("sugar_2", &TorsionEntry::sugar_2)
@@ -81,6 +99,8 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     function("getReversedNormalsFromSimpleMesh", &getReversedNormalsFromSimpleMesh);
     function("getNormalsFromSimpleMesh", &getNormalsFromSimpleMesh);
     function("getColoursFromSimpleMesh", &getColoursFromSimpleMesh);
+    function("getFloat32ArrayFromVector", &getFloat32ArrayFromVector);
+    function("getUint32ArrayFromVector", &getUint32ArrayFromVector);
     function("getLineIndicesFromSimpleMesh", &getLineIndicesFromSimpleMesh);
     function("getPermutedTriangleIndicesFromSimpleMesh", &getPermutedTriangleIndicesFromSimpleMesh);
     function("getTriangleIndicesFromSimpleMesh", &getTriangleIndicesFromSimpleMesh);

@@ -4,7 +4,7 @@ import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRef
 import { DisplayBuffer } from './displayBuffer'
 import { TexturedShape } from './texturedShape'
 import { createWebGLBuffers } from './createWebGLBuffers'
-import {  RootState } from '../store/MoorhenReduxStore';
+import { RootState } from '../store/MoorhenReduxStore';
 import { Store } from '@reduxjs/toolkit';
 
 export const createOtherDataOtherContext = (jsondata: any, gl: any) : any => {

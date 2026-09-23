@@ -254,7 +254,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         showCrosshairs: boolean;
         showScaleBar: boolean;
         showFPS: boolean;
-        declare state:  {width: number, height: number };
+        declare state:  {width: number, height: number, hover_point: number, hoveridx: number, hoverIndices: number[] };
         displayBuffers: any[];
         gl:  any;
         canvasRef: any;
@@ -450,6 +450,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         multiWayQuats: quat4[];
         multiWayRatio: number;
         currentMultiViewGroup: number;
+        hoverBuffer: WebGLBuffer;
 
     setupStereoTransformations() : void {
         setupStereoTransformations(this)
@@ -555,7 +556,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         //Set to false to use WebGL 1
         this.WEBGL2 = false;
-        this.state = { width: this.props.width, height: this.props.height };
+        this.state = { width: this.props.width, height: this.props.height,  hover_point: -1, hoveridx: -1, hoverIndices: [] };
         this.animating = false
         this.canvasRef = React.createRef();
         this.keysDown = {};
@@ -1782,12 +1783,52 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let minz = 100000.0;
         let minidx = -1;
         let minj = -1;
-        //FIXME - This needs to depend on whether spheres, surface are drawn
+
+        let mindist_pi = 100000.0;
+        let minx_pi = 100000.0;
+        let miny_pi = 100000.0;
+        let minz_pi = 100000.0;
+        let minidx_pi = -1;
+        let minj_pi = -1;
+
+        //TODO - This needs to depend on whether spheres, surface, etc. are drawn.
+        //       We will start with metaballs, displayBuffers need something other than atoms?
 
         let minsym = -1;
+        //TODO- Do not ignore non-atom hovering with symmetry.
+        let minsym_pi = -1;
+
+        let clickTol = 3.65 * this.zoom;
 
         for (let idx = 0; idx < displayBuffers.length; idx++) {
-            let clickTol = 3.65 * this.zoom;
+            if(displayBuffers[idx].pick_info&&displayBuffers[idx].visible){
+                if(displayBuffers[idx].pick_info.pick_points){
+                    for (let j = 0; j < displayBuffers[idx].pick_info.pick_points.length; j++) {
+                        const atx = displayBuffers[idx].pick_info.pick_points[j][0];
+                        const aty = displayBuffers[idx].pick_info.pick_points[j][1];
+                        const atz = displayBuffers[idx].pick_info.pick_points[j][2];
+                        const p = vec3Create([atx, aty, atz]);
+
+                        const dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
+
+                        const atPosTrans = vec3Create([0, 0, 0]);
+                        vec3.transformMat4(atPosTrans, p, mvMatrix);
+                        const azDot = this.gl_clipPlane0[3]-atPosTrans[2];
+                        const bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
+
+                        if (
+                                dpl[0] < clickTol //* targetFactor //clickTol modified to reflect proximity to rptation origin
+                                && dpl[0] < mindist_pi //closest click seen
+                                && azDot > 0 //Beyond near clipping plane
+                                && bzDot > 0 //In front of far clipping plan
+                           ) {
+                            minidx_pi = idx;
+                            minj_pi = j;
+                            mindist_pi = dpl[0];
+                        }
+                    }
+                }
+            }
             if (!displayBuffers[idx].visible) {
                 continue;
             }
@@ -1849,7 +1890,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             })
         }
 
-        return [minidx,minj,mindist,minsym,minx,miny,minz];
+        return [minidx,minj,mindist,minsym,minx,miny,minz,minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi];
 
     }
 

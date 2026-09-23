@@ -585,15 +585,15 @@ const getBfactorColourRules = (
     return bFactors.map(item => `${item.cid}^${getColour(item[bFactorAttr])}`).join("|");
 };
 
-const getRMSDColourRules = (
-    RMSDValues: { cid: string; RMSD: number; }[]): string => {
-        const maxRMSD = Math.max(...RMSDValues.map(r => r.RMSD), 1e-6);
+const getRMSFColourRules = (
+    RMSFValues: { cid: string; RMSF: number; }[]): string => {
+        const maxRMSF = Math.max(...RMSFValues.map(r => r.RMSF), 1e-6);
 
-        const getColour = (RMSD: number): string => {
-            const scaled = (RMSD / maxRMSD) * 100;
-            console.log("RMSD:", RMSD)
-            console.log("Max RMSD:", maxRMSD)
-            console.log("Scaled RMSD:", scaled)
+        const getColour = (RMSF: number): string => {
+            const scaled = (RMSF / maxRMSF) * 100;
+            console.log("RMSF:", RMSF)
+            console.log("Max RMSF:", maxRMSF)
+            console.log("Scaled RMSF:", scaled)
                 let r: number, g: number, b: number;
                 if (scaled <= 25) {
                     r = 0;
@@ -614,9 +614,9 @@ const getRMSDColourRules = (
                 }
                 return rgbToHex(r, g, b);
         };
-    console.log("RAW RMSD VALUES:", RMSDValues);
-    console.log(RMSDValues.map(item => `${item.cid}^${getColour(item.RMSD)}`).join("|"))
-    return RMSDValues.map(item => `${item.cid}^${getColour(item.RMSD)}`).join("|");
+    console.log("RAW RMSF VALUES:", RMSFValues);
+    console.log(RMSFValues.map(item => `${item.cid}^${getColour(item.RMSF)}`).join("|"))
+    return RMSFValues.map(item => `${item.cid}^${getColour(item.RMSF)}`).join("|");
 
 };
 
@@ -717,12 +717,12 @@ export const getMultiColourRuleArgs = async (molecule: MoorhenMolecule, ruleType
             const ncsRelatedChains = await molecule.getNcsRelatedChains();
             multiRulesArgs = getNcsColourRules(ncsRelatedChains);
             break;
-        case "RMSD":
-            const RMSDs = await molecule.getRMSDs();
-            console.log("RMSD sample:", RMSDs.slice(0, 10));
-            console.log("RMSD max:", Math.max(...RMSDs.map(r => r.rmsd)));
-            console.log("NaN count:", RMSDs.filter(r => isNaN(r.rmsd)).length);
-            multiRulesArgs = getRMSDColourRules(RMSDs);
+        case "RMSF":
+            const RMSFs = await molecule.getRMSFs();
+            console.log("RMSF sample:", RMSFs.slice(0, 10));
+            console.log("RMSF max:", Math.max(...RMSFs.map(r => r.rmsf)));
+            console.log("NaN count:", RMSFs.filter(r => isNaN(r.rmsf)).length);
+            multiRulesArgs = getRMSFColourRules(RMSFs);
             break;
         default:
             console.log("Unrecognised colour rule...");

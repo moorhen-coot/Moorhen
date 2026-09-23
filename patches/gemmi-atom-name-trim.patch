@@ -1,11 +1,18 @@
-diff --git a/include/gemmi/mmdb.hpp b/include/gemmi/mmdb.hpp
 --- a/include/gemmi/mmdb.hpp
 +++ b/include/gemmi/mmdb.hpp
-@@ -237,7 +237,7 @@ inline Atom copy_atom_from_mmdb(mmdb::Atom& m_atom) {
+@@ -237,7 +237,14 @@
+ // don't use const for mmdb objects - MMDB doesn't have const method
  inline Atom copy_atom_from_mmdb(mmdb::Atom& m_atom) {
    Atom atom;
 -  atom.name = m_atom.label_atom_id;
-+  atom.name = trim_str(m_atom.label_atom_id);
++  // mmdb keeps two atom-name fields: label_atom_id (mmCIF) and name (PDB,
++  // column-aligned, so " CA "). Atoms read from a file have both; atoms built
++  // in memory via the 1-argument mmdb::Atom::SetAtomName() have only `name`,
++  // and would otherwise arrive here with an empty label_atom_id and be written
++  // out with a blank atom name. Prefer label_atom_id, fall back to name, and
++  // trim either way so the PDB padding does not leak into mmCIF.
++  atom.name = trim_str(m_atom.label_atom_id[0] ? m_atom.label_atom_id
++                                               : m_atom.name);
    atom.altloc = m_atom.altLoc[0];
    atom.charge = (signed char) m_atom.charge;
    atom.element = Element(m_atom.element);
