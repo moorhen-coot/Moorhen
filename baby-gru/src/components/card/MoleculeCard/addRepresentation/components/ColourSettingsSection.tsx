@@ -140,6 +140,11 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
                             <option value={"mol-symm"} key={"mol-symm"}>
                                 Mol. Symmetry
                             </option>
+                            {props.molecule.numberOfModels > 1 && (
+                                <option value={"RMSF"} key={"RMSF"}>
+                                    RMSF
+                                </option>
+                            )}
                         </>
                         {representationStyle === "MolecularSurface" && (
                             <option value={"electrostatics"} key={"electrostatics"}>

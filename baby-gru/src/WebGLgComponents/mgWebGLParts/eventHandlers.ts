@@ -29,7 +29,7 @@ export function doRightClick(self: MGWebGL, event) {
     const displayBuffers = self.store.getState().glRef.displayBuffers
     if (self.activeMolecule === null) {
 
-        const [minidx, minj, mindist, minsym, minx, miny, minz] = self.getAtomFomMouseXY(event, self);
+        const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
         const rightClick: moorhen.AtomRightClickEvent = new CustomEvent("rightClick", {
         "detail": {
             atom: minidx > -1 ? displayBuffers[minidx].atoms[minj] : null,
@@ -52,7 +52,7 @@ export function doClick(self: MGWebGL, event) {
     if (!self.mouseMoved) {
         let updateLabels = false
         //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
-        const [minidx, minj, mindist, minsym, minx, miny, minz] = self.getAtomFomMouseXY(event, self);
+        const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
         if (minidx > -1) {
             const atomLabel = parseAtomInfoLabel(displayBuffers[minidx].atoms[minj]);
             const theAtom : webGL.clickAtom = {
@@ -112,7 +112,27 @@ export function doHover(self: MGWebGL, event) {
     self.hoverDebounceTimeout = setTimeout(() => {
         const displayBuffers = self.store.getState().glRef.displayBuffers
         if (self.props.onAtomHovered) {
-            const [minidx, minj, mindist, minsym, minx, miny, minz] = self.getAtomFomMouseXY(event, self);
+            const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
+            if(minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.influence_weights_texture && displayBuffers[minidx_pi].pick_info.influence_point_indexes_texture && displayBuffers[minidx_pi].pick_info.influence_index_offsets_texture && displayBuffers[minidx_pi].pick_info.pick_points){
+                self.setState({ hoveridx: minidx_pi })
+                self.setState({ hover_point: minj_pi })
+                self.setState({ hoverIndices: [] })
+            } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj_pi].length>0) {
+                //Hmm, I am worried, could triangleIndexs.length > 1 ?
+                const completeHoverIndices = []
+                displayBuffers[minidx_pi]["pick_info"].point_triangles[minj_pi].forEach(idx => {
+                    completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx])
+                    completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+1])
+                    completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+2])
+                })
+                self.setState({ hoveridx: minidx_pi })
+                self.setState({ hover_point: -1 })
+                self.setState({ hoverIndices: completeHoverIndices })
+            } else {
+                self.setState({ hoveridx: -1 })
+                self.setState({ hover_point: -1 })
+                self.setState({ hoverIndices: [] })
+            }
             if (minidx > -1) {
                 self.props.onAtomHovered({ atom: displayBuffers[minidx].atoms[minj], buffer: displayBuffers[minidx] });
             }
@@ -224,7 +244,7 @@ export function doMouseUp(self: MGWebGL, event) {
     if (self.keysDown['center_atom'] || event.which === 2) {
         if(Math.abs(event_x - self.mouseDown_x) < 5 && Math.abs(event_y - self.mouseDown_y) < 5){
             if(displayBuffers.length > 0){
-                const [minidx, minj, mindist, minsym, minx, miny, minz] = self.getAtomFomMouseXY(event, self);
+                const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
                 if(displayBuffers[minidx] && displayBuffers[minidx].atoms) {
                     const atx = displayBuffers[minidx].atoms[minj].x;
                     const aty = displayBuffers[minidx].atoms[minj].y;

@@ -967,6 +967,15 @@ export function initShaders(vertexShader, fragmentShader, gl) {
     shaderProgram.mvInvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVINVMatrix");
     shaderProgram.textureMatrixUniform = gl.getUniformLocation(shaderProgram, "TextureMatrix");
 
+    //Fancy picking ...
+    shaderProgram.uPointTex = gl.getUniformLocation(shaderProgram, "uPointTex");
+    shaderProgram.uWeightTex = gl.getUniformLocation(shaderProgram, "uWeightTex");
+    shaderProgram.uOffsetTex = gl.getUniformLocation(shaderProgram, "uOffsetTex");
+    shaderProgram.uPointTexWidth = gl.getUniformLocation(shaderProgram, "uPointTexWidth");
+    shaderProgram.uWeightTexWidth = gl.getUniformLocation(shaderProgram, "uWeightTexWidth");
+    shaderProgram.uOffsetTexWidth = gl.getUniformLocation(shaderProgram, "uOffsetTexWidth");
+    shaderProgram.uHoveredPoint = gl.getUniformLocation(shaderProgram, "uHoveredPoint");
+
     shaderProgram.fog_start = gl.getUniformLocation(shaderProgram, "fog_start");
     shaderProgram.fog_end = gl.getUniformLocation(shaderProgram, "fog_end");
     shaderProgram.fogColour = gl.getUniformLocation(shaderProgram, "fogColour");

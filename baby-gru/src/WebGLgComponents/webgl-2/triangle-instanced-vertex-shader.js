@@ -22,6 +22,8 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
 
     out lowp vec4 eyePos;
 
+    out float vHighlight;
+
     void main(void) {
 
       vec4 theVert = vec4(instancePosition,1.0)+instanceOrientation*vec4((outlineSize+instanceSize)*aVertexPosition,1.0);
@@ -36,6 +38,8 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
       mvInvMatrix = uMVINVMatrix;
 
       vTexture = aVertexTexture;
+
+      vHighlight = 1.0;
     }
 `;
 

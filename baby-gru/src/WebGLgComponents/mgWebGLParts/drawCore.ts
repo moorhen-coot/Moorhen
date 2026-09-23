@@ -235,6 +235,18 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.useProgram(theShader);
+
+                self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
+                if(theShader.uPointTex !== null){
+                    self.gl.uniform1i(theShader.uPointTex, 7);
+                }
+                if(theShader.uWeightTex !== null){
+                    self.gl.uniform1i(theShader.uWeightTex, 8);
+                }
+                if(theShader.uOffsetTex !== null){
+                    self.gl.uniform1i(theShader.uOffsetTex, 9);
+                }
+
                 self.gl.uniform1i(theShader.doShadows, false);
                 if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
                     self.gl.uniform1i(theShader.ShadowMap, 0);
@@ -944,6 +956,131 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         self.gl.drawElements(self.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, self.gl.UNSIGNED_SHORT, 0);
                     }
                 }
+            }
+        }
+
+        // The hover highlight is a blended overlay drawn on top of the geometry, so it has no
+        // business in the passes that are not building the visible image: it would write colour
+        // into the shadow map, and into the G-buffers where it would feed SSAO and edge detection.
+        //
+        // It does belong in the depth-peel passes. As soon as any one visible buffer is
+        // transparent the whole scene switches to depth peeling, and the peel passes are then the
+        // only place the geometry is drawn at all, so skipping them would lose the highlight
+        // entirely. What it must not do is inherit their blend state - see below.
+        const drawingVisibleImage = !calculatingShadowMap && !self.drawingGBuffers && !self.stencilPass
+
+        // hoveridx is an index into displayBuffers, and that array is rebuilt whenever buffers are
+        // added or removed, so the index can outlive the buffer it referred to. Fetched once,
+        // rather than indexed repeatedly below, so a stale index cannot throw part-way through a
+        // frame and take the rest of the draw with it.
+        const hoveredBuffer = self.state.hoveridx>-1 ? displayBuffers[self.state.hoveridx] : undefined
+
+        if(drawingVisibleImage && hoveredBuffer && self.state.hover_point>-1){
+            //TODO - We don't really need to do self.draw at all. This could be done in the
+            //       general drawing above.
+            const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
+            if(bufferTypes[0]==="TRIANGLES"){
+
+                 const triangleVertexNormalBuffer = displayBuffers[self.state.hoveridx].triangleVertexNormalBuffer
+                 const triangleVertexPositionBuffer = displayBuffers[self.state.hoveridx].triangleVertexPositionBuffer
+                 const triangleVertexIndexBuffer = displayBuffers[self.state.hoveridx].triangleVertexIndexBuffer
+                 const influence_weights_texture = displayBuffers[self.state.hoveridx].pick_info.influence_weights_texture
+                 const influence_point_indexes_texture = displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_texture
+                 const influence_index_offsets_texture = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_texture
+                 const influence_weights_width = displayBuffers[self.state.hoveridx].pick_info.influence_weights_width
+                 const influence_point_indexes_width = displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_width
+                 const influence_index_offsets_width = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_width
+                 const theShader = self.shaderProgram
+                 self.gl.useProgram(theShader)
+                 if(theShader.uPointTex !== null){
+                     self.gl.uniform1i(theShader.uPointTex, 7);
+                     self.gl.activeTexture(self.gl.TEXTURE7);
+                     self.gl.bindTexture(self.gl.TEXTURE_2D, influence_point_indexes_texture);
+                     self.gl.uniform1ui(theShader.uPointTexWidth, influence_point_indexes_width);
+                 }
+                 if(theShader.uWeightTex !== null){
+                     self.gl.uniform1i(theShader.uWeightTex, 8);
+                     self.gl.activeTexture(self.gl.TEXTURE8);
+                     self.gl.bindTexture(self.gl.TEXTURE_2D, influence_weights_texture);
+                     self.gl.uniform1ui(theShader.uWeightTexWidth, influence_weights_width);
+                 }
+                 if(theShader.uOffsetTex !== null){
+                     self.gl.uniform1i(theShader.uOffsetTex, 9);
+                     self.gl.activeTexture(self.gl.TEXTURE9);
+                     self.gl.bindTexture(self.gl.TEXTURE_2D, influence_index_offsets_texture);
+                     self.gl.uniform1ui(theShader.uOffsetTexWidth, influence_index_offsets_width);
+                 }
+                 self.gl.uniform1ui(theShader.uHoveredPoint, self.state.hover_point);
+                 self.hoverBuffer ??= self.gl.createBuffer()
+                 self.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
+                 self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])
+                 self.gl.vertexAttribPointer(theShader.vertexNormalAttribute, triangleVertexNormalBuffer[0].itemSize, self.gl.FLOAT, false, 0, 0)
+
+                 self.gl.enableVertexAttribArray(theShader.vertexPositionAttribute)
+                 self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[0])
+                 self.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[0].itemSize, self.gl.FLOAT, false, 0, 0)
+
+                 // Blending is the whole mechanism by which this overlay leaves the rest of the
+                 // mesh alone: where the influence weight is low it emits an alpha of nearly
+                 // zero and so contributes nothing. The depth-peel and G-buffer passes disable
+                 // BLEND, and with blending off the overlay stops blending over the surface and
+                 // *replaces* it - writing that near-zero alpha across the whole mesh and leaving
+                 // only the hovered region visible. So do not inherit the pass's blend state;
+                 // set it here and put it back afterwards.
+                 const blendWasEnabled = self.gl.isEnabled(self.gl.BLEND);
+                 self.gl.enable(self.gl.BLEND);
+                 self.gl.enable(self.gl.DEPTH_TEST);
+                 self.gl.depthFunc(self.gl.LEQUAL);
+                 self.gl.depthMask(false);
+                 self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                 self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.9, 0.5, 0.0, 1.0)
+
+                 self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[0]);
+                 self.drawMaxElementsUInt(self.gl.TRIANGLES, triangleVertexIndexBuffer[0].numItems)
+                 self.gl.enable(self.gl.DEPTH_TEST);
+                 self.gl.depthFunc(self.gl.LESS);
+                 self.gl.depthMask(true);
+                 if(!blendWasEnabled) self.gl.disable(self.gl.BLEND);
+            }
+        }
+
+        // Same restriction and the same stale-index guard. This overlay needs no blend state of
+        // its own: it draws fully opaque, so it lands the same way whether blending is on or off.
+        if(drawingVisibleImage && hoveredBuffer && self.state.hoverIndices.length>0){
+
+            const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
+            if(bufferTypes[0]==="TRIANGLES"){
+
+                 const triangleVertexNormalBuffer = displayBuffers[self.state.hoveridx].triangleVertexNormalBuffer
+                 const triangleVertexPositionBuffer = displayBuffers[self.state.hoveridx].triangleVertexPositionBuffer
+
+                 const theShader = self.shaderProgram
+                 self.gl.useProgram(theShader)
+                 self.hoverBuffer ??= self.gl.createBuffer()
+                 self.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
+                 self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])
+                 self.gl.vertexAttribPointer(theShader.vertexNormalAttribute, triangleVertexNormalBuffer[0].itemSize, self.gl.FLOAT, false, 0, 0)
+
+                 self.gl.enableVertexAttribArray(theShader.vertexPositionAttribute)
+                 self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[0])
+                 self.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[0].itemSize, self.gl.FLOAT, false, 0, 0)
+
+                 self.gl.disable(self.gl.DEPTH_TEST)
+                 self.gl.depthFunc(self.gl.ALWAYS)
+                 self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                 self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0)
+
+                 self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, self.hoverBuffer)
+                 self.gl.bufferData(self.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(self.state.hoverIndices), self.gl.DYNAMIC_DRAW)
+                 self.drawMaxElementsUInt(self.gl.TRIANGLES, self.state.hoverIndices.length)
+
+                 // Put the depth state back. This overlay deliberately draws in front of
+                 // everything, but leaving DEPTH_TEST off and depthFunc at ALWAYS would carry
+                 // into whatever is drawn next - the sibling overlay above restores LESS and
+                 // depthMask for the same reason.
+                 self.gl.enable(self.gl.DEPTH_TEST)
+                 self.gl.depthFunc(self.gl.LESS)
+
             }
         }
     }

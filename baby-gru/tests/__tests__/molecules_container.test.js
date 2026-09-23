@@ -103,10 +103,12 @@ describe('Testing molecules_container_js', () => {
         const gridSize = 0.15
         const radius = 0.65
         const isoLevel = 1.8
-        const mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2", gridSize, radius, isoLevel, 1)
+        const pick_mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2", gridSize, radius, isoLevel, 1)
+        const mesh = pick_mesh.mesh
         expect(mesh.vertices.size()).toBeGreaterThan(1000)
         expect(mesh.triangles.size()).toBeGreaterThan(1000)
         cleanUpVariables.push(mesh)
+        cleanUpVariables.push(pick_mesh)
     })
 
     test("H-Bonds", () => {

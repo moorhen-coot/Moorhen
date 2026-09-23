@@ -162,7 +162,15 @@ export class CootCommandWrapper {
             },
             false
         );
-        return JSON.parse((await newValidationData).data.result.result) as ValidationData;
+        const newValidationDataResult = await newValidationData;
+
+        // console.log("getGeoValidationData: command result", newValidationDataResult.data.result);
+        if (newValidationDataResult.data.result.status !== "Completed" ) {
+            console.warn(`getGeoValidationData: command did not complete successfully. Status: ${newValidationDataResult.data.result.status}`);
+            return {} as ValidationData;
+        }
+        return JSON.parse(newValidationDataResult.data.result.result) as ValidationData;
+
     }
 
     /**

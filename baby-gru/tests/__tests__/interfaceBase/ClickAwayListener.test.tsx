@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { Provider } from "react-redux";
 import { MoorhenClickAwayListener } from "../../../src/components/interface-base/utils/ClickAwayListener";
 import { MoorhenReduxStore } from "../testUtils";
@@ -71,6 +72,37 @@ describe("MoorhenClickAwayListener", () => {
         await flushListenerRegistration();
 
         fireEvent.click(screen.getByText("Inside"));
+
+        expect(onClickAway).not.toHaveBeenCalled();
+    });
+
+    // The document listener is registered once, on mount. A consumer whose callback
+    // depends on state must still be judged against the *current* state, not the state
+    // at mount. MoorhenContextMenu relies on this: it passes
+    // `() => !showOverlay && props.setShowContextMenu(false)`, and showOverlay is false
+    // at mount, so a stale callback dismisses the menu (and the popover it owns) on any
+    // click inside that popover.
+    test("calls the current onClickAway, not the one captured at mount", async () => {
+        const onClickAway = jest.fn();
+        const Guarded = () => {
+            const [overlayShown, setOverlayShown] = useState(false);
+            return (
+                <MoorhenClickAwayListener onClickAway={() => !overlayShown && onClickAway()}>
+                    <button type="button" onClick={() => setOverlayShown(true)}>
+                        Show overlay
+                    </button>
+                </MoorhenClickAwayListener>
+            );
+        };
+        render(
+            <Provider store={MoorhenReduxStore}>
+                <Guarded />
+            </Provider>
+        );
+        await flushListenerRegistration();
+
+        fireEvent.click(screen.getByText("Show overlay"));
+        fireEvent.click(document.body);
 
         expect(onClickAway).not.toHaveBeenCalled();
     });
