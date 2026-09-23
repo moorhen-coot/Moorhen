@@ -111,6 +111,7 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("add_hydrogen_atoms",&molecules_container_t::add_hydrogen_atoms)
     .function("delete_hydrogen_atoms",&molecules_container_t::delete_hydrogen_atoms)
     .function("get_gaussian_surface",&molecules_container_t::get_gaussian_surface)
+    .function("get_cavities",&molecules_container_t::get_cavities)
     .function("get_monomer_from_dictionary",&molecules_container_t::get_monomer_from_dictionary)
     .function("get_molecular_representation_mesh",&molecules_container_t::get_molecular_representation_mesh)
     .function("get_map_weight",&molecules_container_t::get_map_weight)

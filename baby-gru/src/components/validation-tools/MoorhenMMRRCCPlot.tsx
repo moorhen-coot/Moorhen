@@ -8,7 +8,7 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { residueCodesOneToThree } from "../../utils/enums";
 import { convertViewtoPx, getResidueInfo } from "../../utils/utils";
-import { MoorhenButton } from "../inputs";
+import { MoorhenButton, MoorhenNumberInput } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
@@ -20,7 +20,7 @@ Chart.register(annotationPlugin);
 export const MoorhenMMRRCCPlot = () => {
     const commandCentre = useCommandCentre();
     const chartCardRef = useRef<HTMLDivElement>(null);
-    const chartBoxRef = useRef<HTMLDivElement>(null);
+    // const chartBoxRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const containerBodyRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -33,6 +33,7 @@ export const MoorhenMMRRCCPlot = () => {
     const [selectedModel, setSelectedModel] = useState<null | number>(null);
     const [selectedMap, setSelectedMap] = useState<null | number>(null);
     const [selectedChain, setSelectedChain] = useState<null | string>(null);
+    const [barWidth, setBarWidth] = useState<number>(6);
 
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
@@ -59,6 +60,8 @@ export const MoorhenMMRRCCPlot = () => {
     const handleChainChange = evt => {
         setSelectedChain(evt.target.value);
     };
+
+    
 
     const handleClick = evt => {
         if (chartRef.current === null) {
@@ -171,12 +174,18 @@ export const MoorhenMMRRCCPlot = () => {
             }
         });
 
-        const barWidth = convertViewtoPx(35, width) / 40;
+        const simpleLabels = sequenceData.map(residue => residue.resNum);
+
+        //this is insane behaviour
+        // const barWidth = convertViewtoPx(35, width) / 40;
+        // const barWidth = 6;
+        const containerBody = document.getElementById("mmrrcc-container-body");
+        containerBody.style.width = labels.length * barWidth + "px";
+        
         const tooltipFontSize = 12;
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60;
 
-        const containerBody = document.getElementById("mmrrcc-container-body");
-        containerBody.style.width = labels.length * barWidth + "px";
+
         const canvas = document.getElementById("mmrrcc-chart-canvas") as HTMLCanvasElement;
         const ctx = canvas.getContext("2d");
 
@@ -186,19 +195,20 @@ export const MoorhenMMRRCCPlot = () => {
                 beginAtZero: true,
                 display: true,
                 ticks: {
-                    color: isDark ? "white" : "black",
-                    font: {
-                        size: barWidth,
-                        family: "Helvetica",
-                    },
-                    maxRotation: 0,
-                    minRotation: 0,
                     autoSkip: false,
+                    minRotation: 0,
+                    maxRotation: 0,
+                    callback: function(value, index) {
+                        return index % 20 === 0 ? simpleLabels[index] : '';
+                    }
                 },
                 grid: {
-                    display: false,
-                    borderWidth: 1,
-                    borderColor: "black",
+                    drawTicks: true,
+                    color: (context) => {
+                        return context.index % 10 === 0
+                        ? 'rgba(0,0,0,0.2)'
+                        : 'rgba(0,0,0,0)';
+                    }
                 },
             },
             y: {
@@ -255,6 +265,11 @@ export const MoorhenMMRRCCPlot = () => {
                 datasets: datasets,
             },
             options: {
+                layout: {
+                    // padding: {
+                    //     bottom: 70
+                    // }
+                },
                 plugins: {
                     legend: {
                         display: false,
@@ -301,11 +316,11 @@ export const MoorhenMMRRCCPlot = () => {
                 scales: scales,
             },
         });
-    }, [plotData, backgroundColor, isDark, height, width]);
+    }, [plotData, backgroundColor, isDark, height, width, barWidth]);
 
     return (
-        <>
-            <MoorhenStack inputGrid gridWidth={3}>
+        <MoorhenStack style={{ height: "100%", minHeight: 0, width: "100%", display: "flex", flexDirection: "column" }}>
+            <MoorhenStack inputGrid gridWidth={3} flex={0}>
                 <MoorhenMoleculeSelect onSelect={sel => setSelectedModel(sel)} ref={moleculeSelectRef} />
                 <MoorhenChainSelect
                     onChange={handleChainChange}
@@ -319,22 +334,30 @@ export const MoorhenMMRRCCPlot = () => {
                 <MoorhenButton variant="secondary" size="lg" onClick={fetchData}>
                     Plot
                 </MoorhenButton>
+                <MoorhenNumberInput
+                    label="Zoom Level"
+                    value={barWidth}
+                    decimalDigits={1}
+                    showButtons
+                    buttonSteps={0.5}
+                    setValue={setBarWidth}
+                />
             </MoorhenStack>
-            <div ref={chartCardRef} className="validation-plot-div">
-                <div ref={chartBoxRef} style={{ height: "100%" }} className="chartBox" id="mmrrcc-chart-box">
-                    <div ref={containerRef} className="validation-plot-container" style={{ height: "100%", overflowX: "auto" }}>
-                        <div
-                            ref={containerBodyRef}
-                            style={{ height: "100%", minHeight: convertViewtoPx(45, height) }}
-                            className="containerBody"
-                            id="mmrrcc-container-body"
-                        >
-                            <canvas ref={canvasRef} id="mmrrcc-chart-canvas"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <canvas id="mmrrcc-chart-axis"></canvas>
-            </div>
-        </>
+<div
+    ref={chartCardRef}
+    style={{ flex: 1, minHeight: 0, minWidth: 0, overflow: "visible", display: "flex" }}
+>
+    <div style={{ flex: 1, width: "100%", height: "100%", minHeight: 0, minWidth: 0, overflowX: "auto", overflowY: "hidden" }}>
+        <div
+            ref={containerBodyRef}
+            style={{ height: "100%", minHeight: 0 }}
+            className="containerBody"
+            id="mmrrcc-container-body"
+        >
+            <canvas ref={canvasRef} id="mmrrcc-chart-canvas" />
+        </div>
+    </div>
+</div>
+        </MoorhenStack>
     );
 };

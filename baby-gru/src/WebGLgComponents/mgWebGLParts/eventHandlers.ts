@@ -29,7 +29,7 @@ export function doRightClick(self: MGWebGL, event) {
     const displayBuffers = self.store.getState().glRef.displayBuffers
     if (self.activeMolecule === null) {
 
-        const [minidx, minj, mindist, minsym, minx, miny, minz] = self.getAtomFomMouseXY(event, self);
+        const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
         const rightClick: moorhen.AtomRightClickEvent = new CustomEvent("rightClick", {
         "detail": {
             atom: minidx > -1 ? displayBuffers[minidx].atoms[minj] : null,
@@ -52,7 +52,7 @@ export function doClick(self: MGWebGL, event) {
     if (!self.mouseMoved) {
         let updateLabels = false
         //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
-        const [minidx, minj, mindist, minsym, minx, miny, minz] = self.getAtomFomMouseXY(event, self);
+        const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
         if (minidx > -1) {
             const atomLabel = parseAtomInfoLabel(displayBuffers[minidx].atoms[minj]);
             const theAtom : webGL.clickAtom = {
@@ -77,16 +77,24 @@ export function doClick(self: MGWebGL, event) {
                     theAtom.label = displayBuffers[minidx].atoms[minj].tempFactor.toFixed(2) + " " + displayBuffers[minidx].atoms[minj].occupancy.toFixed(2) + " " + atomLabel
                 }
                 updateLabels = true
-                if (self.labelledAtoms.length === 0 || (self.labelledAtoms[self.labelledAtoms.length - 1].length > 1)) {
+                if (self.labelledAtoms.length === 0) {
                     self.labelledAtoms.push([]);
                 }
-                self.labelledAtoms[self.labelledAtoms.length - 1].push(theAtom);
+                const idx = self.labelledAtoms[0].findIndex(o => Math.abs(o.x-theAtom.x)<1e-3 && Math.abs(o.y-theAtom.y)<1e-4 && Math.abs(o.z-theAtom.z)<1e-4)
+                if(idx===-1)
+                    self.labelledAtoms[0].push(theAtom);
+                else
+                    self.labelledAtoms[0].splice(idx,1)
             } else if (self.keysDown['measure_distances']) {
                 updateLabels = true
                 if (self.measuredAtoms.length === 0) {
                     self.measuredAtoms.push([]);
                 }
-                self.measuredAtoms[self.measuredAtoms.length - 1].push(theAtom);
+                const idx = self.measuredAtoms[0].findIndex(o => Math.abs(o.x-theAtom.x)<1e-3 && Math.abs(o.y-theAtom.y)<1e-4 && Math.abs(o.z-theAtom.z)<1e-4)
+                if(self.measuredAtoms[0].length>0&&(idx===self.measuredAtoms[0].length-1))
+                    self.measuredAtoms[0].pop()
+                else
+                    self.measuredAtoms[0].push(theAtom);
             }
         }
         if(updateLabels) self.updateLabels()
@@ -104,7 +112,27 @@ export function doHover(self: MGWebGL, event) {
     self.hoverDebounceTimeout = setTimeout(() => {
         const displayBuffers = self.store.getState().glRef.displayBuffers
         if (self.props.onAtomHovered) {
-            const [minidx, minj, mindist, minsym, minx, miny, minz] = self.getAtomFomMouseXY(event, self);
+            const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
+            if(minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.influence_weights_texture && displayBuffers[minidx_pi].pick_info.influence_point_indexes_texture && displayBuffers[minidx_pi].pick_info.influence_index_offsets_texture && displayBuffers[minidx_pi].pick_info.pick_points){
+                self.setState({ hoveridx: minidx_pi })
+                self.setState({ hover_point: minj_pi })
+                self.setState({ hoverIndices: [] })
+            } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj_pi].length>0) {
+                //Hmm, I am worried, could triangleIndexs.length > 1 ?
+                const completeHoverIndices = []
+                displayBuffers[minidx_pi]["pick_info"].point_triangles[minj_pi].forEach(idx => {
+                    completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx])
+                    completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+1])
+                    completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+2])
+                })
+                self.setState({ hoveridx: minidx_pi })
+                self.setState({ hover_point: -1 })
+                self.setState({ hoverIndices: completeHoverIndices })
+            } else {
+                self.setState({ hoveridx: -1 })
+                self.setState({ hover_point: -1 })
+                self.setState({ hoverIndices: [] })
+            }
             if (minidx > -1) {
                 self.props.onAtomHovered({ atom: displayBuffers[minidx].atoms[minj], buffer: displayBuffers[minidx] });
             }
@@ -216,7 +244,7 @@ export function doMouseUp(self: MGWebGL, event) {
     if (self.keysDown['center_atom'] || event.which === 2) {
         if(Math.abs(event_x - self.mouseDown_x) < 5 && Math.abs(event_y - self.mouseDown_y) < 5){
             if(displayBuffers.length > 0){
-                const [minidx, minj, mindist, minsym, minx, miny, minz] = self.getAtomFomMouseXY(event, self);
+                const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
                 if(displayBuffers[minidx] && displayBuffers[minidx].atoms) {
                     const atx = displayBuffers[minidx].atoms[minj].x;
                     const aty = displayBuffers[minidx].atoms[minj].y;

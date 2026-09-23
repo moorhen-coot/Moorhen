@@ -31,6 +31,7 @@ export const StyleSelector = (props: StyleSelectorProps) => {
                     "MolecularSurface",
                     "VdwSpheres",
                     "MetaBalls",
+                    "cavities",
                     "residue_environment",
                     "allHBonds",
                     "adaptativeBonds",
