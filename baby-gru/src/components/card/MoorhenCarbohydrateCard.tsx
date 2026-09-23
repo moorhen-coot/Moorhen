@@ -1,4 +1,3 @@
-import { DownloadOutlined } from "@mui/icons-material";
 import { useCallback } from "react";
 import { moorhen } from "../../types/moorhen";
 import { privateer } from "../../types/privateer";
@@ -14,7 +13,7 @@ export const MoorhenCarbohydrateCard = (props: { carbohydrate: privateer.Results
             const res = res_chain[0].split("-")
             const chain = res_chain[1]
             if(res.length===2&&res[0].length>0&&res[1].length>0&&chain.length>0){
-                const newCenterString = (chain+"/"+res[1])
+                const newCenterString = (chain+"/"+res[1].replace(":",""))
                 await molecule.centreOn(newCenterString, true, true);
             }
         }
@@ -47,8 +46,8 @@ export const MoorhenCarbohydrateCard = (props: { carbohydrate: privateer.Results
                             link.download = carbohydrate.id.replace(/\//g, "_") + ".svg";
                             link.click();
                         }}
+                        icon="MatSymFileDownload"
                     >
-                        <DownloadOutlined />
                         Download image (svg)
                     </MoorhenButton>
                 </MoorhenStack>

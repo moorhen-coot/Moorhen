@@ -1,0 +1,291 @@
+//these are tests for the old moorhen container, and need replacement, kept for  reference
+
+
+jest.setTimeout(15000)
+jest.mock('chart.js', () => ({
+    ...jest.requireActual('chart.js'),
+    registerables: []
+}))
+
+import '@testing-library/jest-dom'
+import { render, cleanup, screen }  from '@testing-library/react'
+import { Provider } from 'react-redux'
+import { createRef } from 'react'
+import userEvent from '@testing-library/user-event'
+import fetch from 'node-fetch'
+import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
+import { MoorhenModalsContainer } from '../../src/components/interface-base/ModalBase/ModalsContainer'
+import { MockWebGL } from '../__mocks__/mockWebGL'
+import { MockMoorhenCommandCentre } from '../__mocks__/mockMoorhenCommandCentre'
+import { setHoveredAtom } from '../../src/store/hoveringStatesSlice'
+import { setCootInitialized, setDevMode } from '../../src/store/generalStatesSlice'
+import { setDefaultBondSmoothness, setHeight, setIsDark, setWidth } from '../../src/store/sceneSettingsSlice'
+import { overwriteMapUpdatingScores, setShowScoresToast } from '../../src/store/moleculeMapUpdateSlice'
+import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
+const fs = require('fs')
+
+let cootModule = null
+let molecules_container = null
+let collectedProps = null
+let glRef = null
+let commandCentre = null
+let videoRecorderRef = null
+let timeCapsuleRef = null
+let moleculesRef = null
+let mapsRef = null
+let activeMapRef = null
+let lastHoveredAtomRef = null
+let onUserPreferencesChange = null
+let urlPrefix = null
+let monomerLibraryPath = null
+let disableFileUploads = null
+let includeNavBarMenuNames = null
+let extraNavBarModals = null
+let extraNavBarMenus = null
+let extraFileMenuItems = null
+let extraEditMenuItems = null
+let extraCalculateMenuItems = null
+let extraDraggableModals = null
+let viewOnly = null
+let allowScripting = null
+let aceDRGInstance = null
+let mockMonomerLibraryPath = null
+
+describe('Testing MoorhenContainer', () => {
+
+    beforeAll(async () => {
+        const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
+        const createGemmiModule = require('../../public/MoorhenAssets/wasm/gemmi')
+
+        const mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
+
+        // Keep reference to real fetch
+        const realFetch = global.fetch
+
+        // Clean async fetch mock
+        global.fetch = async (input) => {
+            const url = typeof input === "string" ? input : input.url
+
+            if (
+                url.includes(mockMonomerLibraryPath) ||
+                url.includes('https:/files.rcsb.org/download/')
+            ) {
+                return realFetch(url)
+            }
+
+            return {
+                ok: true,
+
+                text: async () => {
+                    return fs.readFileSync(
+                        `./public/baby-gru/${url}`,
+                        { encoding: 'utf8', flag: 'r' }
+                    )
+                },
+
+                blob: async () => ({
+                    arrayBuffer: async () => {
+                        const fileContents = fs.readFileSync(
+                            `./public/baby-gru/${url}`
+                        )
+                        return fileContents.buffer
+                    }
+                })
+            }
+        }
+
+        // Shared module config
+        const moduleConfig = {
+            print: (t) => console.log(["output", t]),
+            printErr: (t) => console.log(["output", t]),
+        }
+
+        // Initialise WASM modules
+        cootModule = await createCootModule(moduleConfig)
+        const gemmiModule = await createGemmiModule(moduleConfig)
+
+        // Proper global setup
+        global.window = {
+            CCP4Module: cootModule,
+            gemmiModule: gemmiModule,
+        }
+    })
+
+    beforeEach(() => {
+        molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(moorhen_test_use_gemmi)
+        molecules_container.set_show_timings(false)
+        molecules_container.set_refinement_is_verbose(false)
+        molecules_container.fill_rotamer_probability_tables()
+        molecules_container.set_map_sampling_rate(1.7)
+        molecules_container.set_map_is_contoured_with_thread_pool(true)
+        molecules_container.set_max_number_of_threads(3)
+
+        glRef = createRef(null)
+        commandCentre = createRef(null)
+        videoRecorderRef = createRef(null)
+        timeCapsuleRef = createRef(null)
+        moleculesRef = createRef(null)
+        mapsRef = createRef(null)
+        activeMapRef = createRef(null)
+        lastHoveredAtomRef = createRef(null)
+
+        onUserPreferencesChange = () => {}
+        urlPrefix = '.'
+        monomerLibraryPath = mockMonomerLibraryPath
+        disableFileUploads = false
+        includeNavBarMenuNames = []
+        extraNavBarModals = []
+        extraNavBarMenus = []
+        extraFileMenuItems = []
+        extraEditMenuItems = []
+        extraCalculateMenuItems = []
+        extraDraggableModals = []
+        viewOnly = false
+        allowScripting = true
+        aceDRGInstance = null
+
+        glRef.current = new MockWebGL()
+        commandCentre.current = new MockMoorhenCommandCentre(molecules_container, cootModule)
+
+        collectedProps = {
+            glRef, commandCentre, timeCapsuleRef, disableFileUploads, extraDraggableModals, aceDRGInstance,
+            urlPrefix, viewOnly, mapsRef, allowScripting, extraCalculateMenuItems, extraEditMenuItems,
+            extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, activeMapRef,
+            videoRecorderRef, lastHoveredAtomRef, onUserPreferencesChange, extraNavBarModals,
+            includeNavBarMenuNames, onAtomHovered: () => {}, onKeyPress: () => {}
+        }
+
+        MoorhenReduxStore.dispatch(setHoveredAtom({
+            molecule: null,
+            cid: null,
+        }))
+        MoorhenReduxStore.dispatch( setDevMode(false) )
+        MoorhenReduxStore.dispatch( setIsDark(false) )
+        MoorhenReduxStore.dispatch( setWidth(1600) )
+        MoorhenReduxStore.dispatch( setHeight(900) )
+        MoorhenReduxStore.dispatch( setCootInitialized(true) )
+        MoorhenReduxStore.dispatch( setDefaultBondSmoothness(1) )
+        MoorhenReduxStore.dispatch( overwriteMapUpdatingScores(['Rfactor', 'Rfree', 'Moorhen Points']) )
+        MoorhenReduxStore.dispatch( setShowScoresToast(true) )
+    })
+
+    afterEach(cleanup)
+
+    test.skip('MoorhenContainer load tutorial data 1', async () => {
+
+        render(
+            <Provider store={MoorhenReduxStore}>
+                {/* <MoorhenNavBar {...collectedProps}/> */}
+                <MoorhenModalsContainer {...collectedProps}/>
+            </Provider>
+        )
+
+        const user = userEvent.setup()
+
+        const moorhenButton = screen.getByRole('button', { name: /moorhen/i })
+        expect(moorhenButton).toBeVisible()
+        await user.click(moorhenButton)
+
+        const file = screen.getByRole('menuitem', { name: /file/i })
+        expect(file).toBeVisible()
+        await user.click(file)
+
+        const tutorialDataMenuItem = screen.getByRole('menuitem', { name: /load tutorial data\.\.\./i })
+        expect(tutorialDataMenuItem).toBeVisible()
+        await user.click(tutorialDataMenuItem)
+
+        const loadButton = screen.getByRole('button', { name: /ok/i })
+        expect(loadButton).toBeVisible()
+        await user.click(loadButton)
+
+        const moleculeCard = screen.getByText(/#0 mol\. mol\-1/i)
+        expect(moleculeCard).not.toBeVisible()
+
+        const molecules = MoorhenReduxStore.getState().molecules.moleculeList
+        expect(molecules).toHaveLength(1)
+        expect(molecules[0].molNo).toBe(0)
+
+        const mapCard = screen.getByText(/#1 map map\-1/i)
+        expect(mapCard).not.toBeVisible()
+
+        const diffMapCard = screen.getByText(/#2 map diff\-map\-1/i)
+        expect(diffMapCard).not.toBeVisible()
+
+        const maps = MoorhenReduxStore.getState().maps
+        expect(maps.map(item => item.molNo)).toEqual([1, 2])
+
+        expect(collectedProps.glRef.current.zoom).toBeCloseTo(1.29, 1)
+        expect(collectedProps.glRef.current.origin[0]).toBeCloseTo(-29.44, 1)
+        expect(collectedProps.glRef.current.origin[1]).toBeCloseTo(-5.04, 1)
+        expect(collectedProps.glRef.current.origin[2]).toBeCloseTo(-50.24, 1)
+
+        await user.click(file)
+        const deleteEverythingMenuItem = screen.getByRole('menuitem', { name: /delete everything/i })
+        await user.click(deleteEverythingMenuItem)
+
+        const deleteButton = screen.getByRole('button', { name: /i understand\, delete/i })
+        await user.click(deleteButton)
+
+        const molecules_empty = MoorhenReduxStore.getState().molecules.moleculeList
+        const maps_empty = MoorhenReduxStore.getState().maps
+        expect(molecules_empty).toHaveLength(0)
+        expect(maps_empty).toHaveLength(0)
+    })
+
+    test.skip('MoorhenContainer connect map and molecule', async () => {
+
+        render(
+            <Provider store={MoorhenReduxStore}>
+                {/* <MoorhenNavBar {...collectedProps}/> */}
+                <MoorhenModalsContainer {...collectedProps}/>
+            </Provider>
+        )
+
+        const user = userEvent.setup()
+
+        await user.click( screen.getByRole('button', { name: /moorhen/i }) )
+        await user.click( screen.getByRole('menuitem', { name: /file/i }) )
+        await user.click( screen.getByRole('menuitem', { name: /load tutorial data\.\.\./i }) )
+        await user.click( screen.getByRole('button', { name: /ok/i }) )
+
+        const molecules = MoorhenReduxStore.getState().molecules.moleculeList
+        const maps = MoorhenReduxStore.getState().maps
+        expect(molecules).toHaveLength(1)
+        expect(maps).toHaveLength(2)
+
+        await user.click( screen.getByRole('menuitem', { name: /file/i }) )
+        await user.click( screen.getByRole('menuitem', { name: /connect mol\. and map for updating\.\.\./i }) )
+        await user.click( screen.getByRole('button', { name: /ok/i }) )
+
+        const state = MoorhenReduxStore.getState()
+        expect(state.moleculeMapUpdate.updatingMapsIsEnabled).toBeTruthy()
+        expect(state.moleculeMapUpdate.connectedMolecule).toBe(0)
+        expect(state.moleculeMapUpdate.reflectionMap).toBe(1)
+        expect(state.moleculeMapUpdate.twoFoFcMap).toBe(1)
+        expect(state.moleculeMapUpdate.foFcMap).toBe(2)
+
+        const rFactor_1 = screen.getByText(/clipper r\-factor/i)
+        const rFree_1 = screen.getByText(/clipper r\-free/i)
+        const moorhenPoints_1 = screen.getByText(/moorhen points/i)
+        expect(rFactor_1).toBeVisible()
+        expect(rFree_1).toBeVisible()
+        expect(moorhenPoints_1).toBeVisible()
+
+        await user.click( screen.getByRole('menuitem', { name: /edit/i }) )
+        await user.click( screen.getByRole('menuitem', { name: /delete atom selection\.\.\./i }) )
+        await user.type( screen.getByRole('textbox'), '//A/1-10' )
+        await user.click( screen.getByRole('button', { name: /ok/i }) )
+
+        const rFactor_2 = screen.getByText(/clipper r\-factor/i)
+        const rFree_2 = screen.getByText(/clipper r\-free/i)
+        const moorhenPoints_2 = screen.getByText(/moorhen points/i)
+
+        expect(rFactor_2).toBeVisible()
+        expect(rFactor_2).toHaveTextContent("Clipper R-Factor 0.284 +0.009")
+        expect(rFree_2).toBeVisible()
+        expect(rFree_2).toHaveTextContent("Clipper R-Free 0.323 +0.013")
+        expect(moorhenPoints_2).toBeVisible()
+        expect(moorhenPoints_2).toHaveTextContent("Moorhen Points 0 -609")
+    })
+})

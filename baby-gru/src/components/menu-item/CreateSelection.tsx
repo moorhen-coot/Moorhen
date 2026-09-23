@@ -5,7 +5,7 @@ import { setResidueSelection } from "../../store/generalStatesSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenStack } from "../interface-base/Stack/Stack"
 
 export const CreateSelection = () => {

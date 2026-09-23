@@ -1,7 +1,9 @@
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
+import { useMoorhenInstance } from "@/hooks"; 
 
 export const MoorhenJedFlipFalseButton = (props: ContextButtonProps) => {
+    const moorhenInstance = useMoorhenInstance();
     const getCootCommandInput = (
         selectedMolecule: moorhen.Molecule,
         chosenAtom: moorhen.ResidueSpec,
@@ -31,8 +33,10 @@ export const MoorhenJedFlipFalseButton = (props: ContextButtonProps) => {
                     alt="jed-flip"
                 />
             }
+            ligandOnly={true}
             toolTipLabel="JED Flip: wag the tail"
             cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
+            onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "modify")}
             {...props}
         />
     );

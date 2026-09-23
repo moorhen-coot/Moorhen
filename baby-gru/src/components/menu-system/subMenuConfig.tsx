@@ -1,4 +1,3 @@
-import { MenuItem } from "@mui/material";
 import { ActionCreatorWithOptionalPayload, PayloadAction } from "@reduxjs/toolkit";
 import React from "react";
 import type { ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
@@ -28,6 +27,7 @@ import { SidePanelIDs } from "../panels";
 export type BaseMenuItem = {
     id: string;
     label: string;
+    ariaLabel?: string;
     keywords?: string[];
     description?: string;
     devOnly?: boolean;
@@ -65,6 +65,15 @@ export type MenuItemCustomJSX = BaseMenuItem & {
     jsx: (aeg0: any) => React.JSX.Element;
 };
 
+export type MenuItemHTMLSlot = BaseMenuItem & {
+    type: "HTMLslot";
+    slotName: string;
+};
+
+export type MenuItemSlider = BaseMenuItem & {
+    type: "customJSX";
+    jsx: (aeg0: any) => React.JSX.Element;
+};
 
 export type MenuItemSubMenu = BaseMenuItem & {
     type: "subMenu";
@@ -91,6 +100,7 @@ export type MenuItemType =
     | MenuItemSubMenu
     | MenuItemShowSidePanel
     | MenuItemDispatch
+    | MenuItemHTMLSlot
     | Separator;
 
 export type SubMenu = {
@@ -106,13 +116,14 @@ export const subMenuMap: SubMenuMap = {
     file: {
         label: "Files",
         items: [
+            { id: "slotTest", label: "slot test", type: "HTMLslot", slotName: "test-slot" },
             {
                 id: "auto-load",
                 label: "Auto load files",
                 type: "customJSX",
                 keywords: ["upload", "load", "pdb"],
                 description: "Upload and open files",
-                jsx: MenuItems.AutoLoadFiles,
+                jsx: MenuItems.LoadFiles,
                 specialType: "upload",
             },
             { type: "separator" },
@@ -215,7 +226,6 @@ export const subMenuMap: SubMenuMap = {
                 label: "MrParse results...",
                 type: "showModal",
                 modal: "mrparse",
-                devOnly: true,
                 specialType: "upload",
             },
             { type: "separator" },
@@ -225,6 +235,16 @@ export const subMenuMap: SubMenuMap = {
                 type: "popover",
                 content: MenuItems.DeleteEverything,
             },
+            /*
+            {
+                id: "load-NOE",
+                label: "Load NOE...",
+                type: "showModal",
+                modal: "NOE",
+                devOnly: true,
+                specialType: "upload",
+            },
+            */
         ],
     },
     calculate: {
@@ -498,21 +518,18 @@ export const subMenuMap: SubMenuMap = {
                 label: "Alphafold PAE Plot...",
                 type: "showModal",
                 modal: "pae-plot",
-                devOnly: true,
             },
             {
                 id: "conkit",
                 label: "ConKit...",
                 type: "showModal",
                 modal: "conkit",
-                devOnly: true,
             },
             {
                 id: "json-validation",
                 label: "Interesting bits JSON validation...",
                 type: "showModal",
                 modal: "json-validation",
-                devOnly: true,
             },
         ],
     },

@@ -5,6 +5,7 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { getTooltipShortcutLabel } from "../../utils/utils";
 import { ContextButtonProps, MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
+import { useMoorhenInstance } from "@/hooks";
 
 export const MoorhenRefineResiduesButton = (props: ContextButtonProps) => {
     const dispatch = useDispatch();
@@ -14,6 +15,7 @@ export const MoorhenRefineResiduesButton = (props: ContextButtonProps) => {
     const refinementSelection = useSelector((state: moorhen.State) => state.refinementSettings.refinementSelection);
 
     const [toolTipLabel, setToolTipLabel] = useState<string>("Refine Residues");
+    const moorhenInstance = useMoorhenInstance();
 
     useEffect(() => {
         if (shortCuts) {
@@ -33,6 +35,7 @@ export const MoorhenRefineResiduesButton = (props: ContextButtonProps) => {
                 await molecule.refineResiduesUsingAtomCid(`//${chosenAtom.chain_id}/${chosenAtom.res_no}`, refinementSelection, 4000);
             }
             dispatch(triggerUpdate(molecule.molNo));
+            moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "refine")
         },
         [animateRefine, refinementSelection]
     );

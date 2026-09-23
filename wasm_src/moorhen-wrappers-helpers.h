@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <cstdio>
 #include <string.h>
 #include <errno.h>
 #include <zlib.h>
@@ -31,10 +32,12 @@
 #include <cctype>
 #include <gemmi/mmdb.hpp>
 #include <gemmi/mmcif.hpp>
+
 #include <gemmi/to_mmcif.hpp>
 #include <gemmi/to_cif.hpp>
 #include <gemmi/read_cif.hpp>
 #include <gemmi/topo.hpp>
+#include <gemmi/polyheur.hpp>
 
 #include "xpid_moorhen/interface.h"
 
@@ -100,6 +103,27 @@ inline bool is64bit(){
 }
 
 namespace moorhen {
+    inline std::string validation_information_t_to_json(const coot::validation_information_t &info){
+        Json::Value root;
+        for (const auto &cvi : info.cviv){
+            Json::Value chain_json;
+            int res_idx = 0;
+            for (const auto &ri : cvi.rviv) {
+                Json::Value res_json;
+                res_json["chainId"] = ri.residue_spec.chain_id;
+                res_json["insCode"] = ri.residue_spec.ins_code;
+                res_json["seqNum"] = ri.residue_spec.res_no;
+                res_json["restype"] = "UNK";
+                res_json["value"] = ri.function_value;
+                chain_json[res_idx++] = res_json;
+            }
+            root[cvi.chain_id] = chain_json;
+        }
+        Json::StreamWriterBuilder builder;
+        const std::string json_string = Json::writeString(builder, root);
+        return json_string;
+    }
+
     inline void ltrim_inplace(std::string &s, const char cht='\0') {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), [cht](unsigned char ch) {
             if(cht!='\0') {
@@ -418,8 +442,16 @@ struct moorhen_hbond {
 
 };
 
-coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4);
-coot::simple_mesh_t GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads=4);
+struct PickableMesh {
+    coot::simple_mesh_t mesh;
+    std::vector<std::vector<unsigned>> point_triangles;
+    std::vector<std::array<float,3>> pick_points;
+    std::vector<unsigned> influence_index_offsets;
+    std::vector<unsigned> influence_point_indexes;
+    std::vector<float> influence_weights;
+};
+
+std::pair<coot::simple_mesh_t,std::vector<std::vector<std::pair<unsigned,float>>>> GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads=4);
 
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
 bool isSugar(const std::string &resName);
@@ -430,8 +462,13 @@ class molecules_container_js : public molecules_container_t {
         }
 
         std::string get_validation(int imol){
-            mmdb::Manager *mol = get_mol(imol);
-            auto st = gemmi::copy_from_mmdb(mol);
+            // mmdb::Manager *mol = get_mol(imol);
+            // auto st = gemmi::copy_from_mmdb(mol);
+
+            writePDBASCII(imol, "temp.pdb");
+            auto st = gemmi::read_structure_file("temp.pdb");
+            std::remove("temp.pdb");
+
             size_t model_index = 0;
             std::map<gemmi::Atom*, std::vector<double>> atom_zs;
             std::map<gemmi::Atom*, std::vector<double>> atom_zs_bonds;
@@ -460,13 +497,21 @@ class molecules_container_js : public molecules_container_t {
             monlib.read_monomer_lib(monomer_dir, resnames, logger);
             auto hchange = gemmi::HydrogenChange::NoChange;
             auto reorder = false;
+
             auto topo = gemmi::prepare_topology(st, monlib, model_index, hchange, reorder);
+            std::vector<gemmi::Topo::Bond> outlier_bonds;
+            std::vector<gemmi::Topo::Angle> outlier_angles;
+            std::vector<gemmi::Topo::Torsion> outlier_torsions;
+            std::vector<gemmi::Topo::Plane> outlier_planes;
+            std::vector<gemmi::Topo::Chirality> outlier_chirals;
             for (const auto& bond : topo->bonds) {
                 double z = bond.calculate_z();
                 atom_zs[bond.atoms[0]].push_back(z);
                 atom_zs[bond.atoms[1]].push_back(z);
                 atom_zs_bonds[bond.atoms[0]].push_back(z);
                 atom_zs_bonds[bond.atoms[1]].push_back(z);
+                if (std::abs(z) > 3.0)
+                    outlier_bonds.push_back(bond);
             }
             for (const auto& angle : topo->angles) {
                 double z = angle.calculate_z();
@@ -476,6 +521,8 @@ class molecules_container_js : public molecules_container_t {
                 atom_zs_angles[angle.atoms[0]].push_back(z);
                 atom_zs_angles[angle.atoms[1]].push_back(z);
                 atom_zs_angles[angle.atoms[2]].push_back(z);
+                if (std::abs(z) > 3.0)
+                    outlier_angles.push_back(angle);
             }
             for (const auto& torsion : topo->torsions) {
                 // Some torsions are only restrained with planes so check esd
@@ -489,16 +536,23 @@ class molecules_container_js : public molecules_container_t {
                     atom_zs_torsions[torsion.atoms[1]].push_back(z);
                     atom_zs_torsions[torsion.atoms[2]].push_back(z);
                     atom_zs_torsions[torsion.atoms[3]].push_back(z);
+                    if (std::abs(z) > 3.0)
+                        outlier_torsions.push_back(torsion);
                 }
             }
             for (const auto& plane : topo->planes) {
                 const auto abcd = gemmi::find_best_plane(plane.atoms);
+                double max_abs_z = 0;
                 for (const auto &atom : plane.atoms)
                 {
                     const double dist = gemmi::get_distance_from_plane(atom->pos, abcd);
-                    atom_zs[atom].push_back(dist / plane.restr->esd);
-                    atom_zs_planes[atom].push_back(dist / plane.restr->esd);
+                    const double z = dist / plane.restr->esd;
+                    atom_zs[atom].push_back(z);
+                    atom_zs_planes[atom].push_back(z);
+                    max_abs_z = std::max(max_abs_z, std::abs(z));
                 }
+                if (max_abs_z > 3.0)
+                    outlier_planes.push_back(plane);
             }
             for (const auto& chir : topo->chirs) {
                 static const double esd = 0.1;
@@ -512,6 +566,8 @@ class molecules_container_js : public molecules_container_t {
                 atom_zs_chirals[chir.atoms[1]].push_back(z);
                 atom_zs_chirals[chir.atoms[2]].push_back(z);
                 atom_zs_chirals[chir.atoms[3]].push_back(z);
+                if (std::abs(z) > 3.0)
+                    outlier_chirals.push_back(chir);
             }
 
             Json::Value root;
@@ -578,10 +634,91 @@ class molecules_container_js : public molecules_container_t {
                 }
                 root[chain.name] = chain_json;
             }
-            
+
+            std::string outlierstring = "Outliers: ";
+            for (const auto& bond : outlier_bonds) {
+                    outlierstring += "Bond ";
+                    outlierstring += bond.atoms[0]->name + " - " + bond.atoms[1]->name + " Z: " + std::to_string(bond.calculate_z()) + "\n";
+            }
+            root["OutlierBonds"] = outlierstring;
+
+            outlierstring = "Outliers: ";
+            for (const auto& torsion : outlier_torsions) {
+                    outlierstring += "Torsion ";
+                    outlierstring += torsion.atoms[0]->name + " - " + torsion.atoms[1]->name + " - " + torsion.atoms[2]->name + " - " + torsion.atoms[3]->name + " Z: " + std::to_string(torsion.calculate_z()) + "\n";
+            }
+            root["OutlierTorsions"] = outlierstring;
+
             Json::StreamWriterBuilder builder;
             const std::string json_string = Json::writeString(builder, root);
-            
+
+            return json_string;
+        }
+
+        std::string get_B_validation(int imol){
+            mmdb::Manager *mol = get_mol(imol);
+            auto st = gemmi::copy_from_mmdb(mol);
+            size_t model_index = 0;
+
+            Json::Value root;
+
+            for (auto& chain : st.models[model_index].chains) {
+                Json::Value chain_json;
+                int res_idx = 0;
+
+                // Determine what kind of polymer this chain is so that we know
+                // which atoms belong to the main chain (backbone)
+                gemmi::PolymerType ptype = gemmi::check_polymer_type(chain.whole());
+                const std::vector<gemmi::AtomNameElement> mainchain_atoms =
+                    gemmi::get_mainchain_atoms(ptype);
+
+                for (auto& res : chain.residues) {
+                    Json::Value res_json;
+                    res_json["name"] = res.name;
+                    res_json["seqNum"] = res.seqid.num.value;
+                    res_json["insCode"] = std::string{res.seqid.icode};
+
+                    double main_chain_b_sum = 0.0;
+                    int    main_chain_b_count = 0;
+                    double side_chain_b_sum = 0.0;
+                    int    side_chain_b_count = 0;
+
+                    for (auto& atom : res.atoms) {
+                        // Hydrogens (when present) often carry the B of their
+                        // parent atom, so skip them to avoid skewing the mean
+                        if (atom.element == gemmi::El::H)
+                            continue;
+
+                        std::string atom_name = moorhen::ltrim(moorhen::rtrim(atom.name));
+                        bool is_main_chain = false;
+                        for (const auto& ane : mainchain_atoms) {
+                            if (atom_name == ane.atom_name) {
+                                is_main_chain = true;
+                                break;
+                            }
+                        }
+                        if (is_main_chain) {
+                            main_chain_b_sum += atom.b_iso;
+                            main_chain_b_count++;
+                        } else {
+                            side_chain_b_sum += atom.b_iso;
+                            side_chain_b_count++;
+                        }
+                    }
+
+                    res_json["Main Chain B-factor"] =
+                        main_chain_b_count > 0 ? main_chain_b_sum / main_chain_b_count : Json::nullValue;
+                    res_json["Side Chain B-factor"] =
+                        side_chain_b_count > 0 ? side_chain_b_sum / side_chain_b_count : Json::nullValue;
+
+                    chain_json[res_idx++] = res_json;
+                }
+                root[chain.name] = chain_json;
+            }
+
+            Json::StreamWriterBuilder builder;
+            const std::string json_string = Json::writeString(builder, root);
+
             return json_string;
         }
 
@@ -709,12 +846,44 @@ class molecules_container_js : public molecules_container_t {
             return results;
         }
 
-        coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4) {
+        PickableMesh DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4) {
             //FIXME - pass in against_a_dark_background
             bool against_a_dark_background = false;
             coot::instanced_mesh_t spheres_mesh = get_bonds_mesh_for_selection_instanced(imol,cid_str,"VDW-BALLS",against_a_dark_background,0.1, 1.0, false, false, false, true, 1);
 
-            return GenerateMoorhenMetaBallsCootInstancedMesh(spheres_mesh,gridSize,radius,isoLevel,n_threads);
+            //This is the coot mesh and list of associations with the input spheres.
+            //Now how we map this onto the spheres when hovering is an as-yet unanswered question.
+            auto mesh_assoc = GenerateMoorhenMetaBallsCootInstancedMesh(spheres_mesh,gridSize,radius,isoLevel,n_threads);
+
+            std::vector<std::array<float,3>> points;
+            const auto geom = spheres_mesh.geom;
+            for(const auto &inst : geom){
+                const auto &As = inst.instancing_data_A;
+                for(const auto &inst_data : As){
+                    const auto &instDataPosition = inst_data.position;
+                    const float atomMult = inst_data.size[0];
+                    std::array<float,3> point{instDataPosition[0],instDataPosition[1],instDataPosition[2]};
+                    points.push_back(point);
+                }
+            }
+
+            PickableMesh pick_mesh;
+            pick_mesh.mesh = mesh_assoc.first;
+            //pick_mesh.pick_weights = mesh_assoc.second;
+            //pick_mesh.point_triangles = mesh_assoc.second;
+            pick_mesh.pick_points = points;
+
+            unsigned total_offset = 0;
+            for(const auto& influences: mesh_assoc.second){
+                for(const auto& aninfluence: influences){
+                    pick_mesh.influence_weights.push_back(aninfluence.second);
+                    pick_mesh.influence_point_indexes.push_back(aninfluence.first);
+                }
+                pick_mesh.influence_index_offsets.push_back(total_offset+influences.size());
+                total_offset += influences.size();
+            }
+
+            return pick_mesh;
         }
 
         std::pair<std::string, std::string> mol_text_to_pdb(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords, bool minimize) {
@@ -1009,6 +1178,30 @@ class molecules_container_js : public molecules_container_t {
         }
         int add(int ic) {
             return ic + 1;
+        }
+        std::string rotamer_analysis_json(int imol_model) {
+            coot::validation_information_t info = rotamer_analysis(imol_model);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string ramachandran_analysis_json(int imol_model) {
+            std::string ret = "";
+            coot::validation_information_t info = ramachandran_analysis(imol_model);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string peptide_omega_analysis_json(int imol_model) {
+            std::string ret = "";
+            coot::validation_information_t info = peptide_omega_analysis(imol_model);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string density_correlation_analysis_json(int imol_model, int imol_map) {
+            std::string ret = "";
+            coot::validation_information_t info = density_correlation_analysis(imol_model,imol_map);
+            return moorhen::validation_information_t_to_json(info);
+        }
+        std::string density_fit_analysis_json(int imol_model, int imol_map) {
+            std::string ret = "";
+            coot::validation_information_t info = density_fit_analysis(imol_model,imol_map);
+            return moorhen::validation_information_t_to_json(info);
         }
         int writePDBASCII(int imol, const std::string &file_name) {
             const char *fname_cp = file_name.c_str();
@@ -1422,24 +1615,24 @@ std::array<float,3> find_density_center_of_mass(
      }
 
      void export_metaballs_as_gltf(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
+         PickableMesh sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as .glb
          bool as_binary = true; // test the extension of file_name
          float gltf_pbr_roughness = 0.2;
          float gltf_pbr_metalicity = 0.0;
-         sm.export_to_gltf(file_name, gltf_pbr_roughness, gltf_pbr_metalicity, as_binary);
+         sm.mesh.export_to_gltf(file_name, gltf_pbr_roughness, gltf_pbr_metalicity, as_binary);
      }
 
      void export_metaballs_as_obj(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
+         PickableMesh sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as .obj
-         write_simple_mesh_to_obj_file(sm,file_name);
+         write_simple_mesh_to_obj_file(sm.mesh,file_name);
      }
 
      void export_metaballs_as_3mf_xml(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
+         PickableMesh sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as 3mf xml
-         write_simple_mesh_to_3mf_xml_file(sm,file_name);
+         write_simple_mesh_to_3mf_xml_file(sm.mesh,file_name);
      }
 
 };
@@ -1694,6 +1887,28 @@ inline emscripten::val getNormalsFromSimpleMesh(const coot::simple_mesh_t &m){
     }
 
     return float32ArrayFromVector(floatArray);
+
+}
+
+inline void getFloat32ArrayFromVector(const std::vector<float> &v, const emscripten::val &eval){
+    std::vector<float> floatArray;
+    floatArray.reserve(v.size());
+
+    for(const auto &val : v){
+        floatArray.push_back(val);
+    }
+    setFloat32ArrayFromVector(floatArray,eval);
+
+}
+
+inline void getUint32ArrayFromVector(const std::vector<unsigned> &v, const emscripten::val &eval){
+    std::vector<unsigned> unsignedArray;
+    unsignedArray.reserve(v.size());
+
+    for(const auto &val : v){
+        unsignedArray.push_back(val);
+    }
+    setUint32ArrayFromVector(unsignedArray,eval);
 
 }
 

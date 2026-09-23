@@ -41,7 +41,6 @@ import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
 import { AtomClickManager } from "../managers/AtomClickManager";
 import { MoorhenMapsHeadManager } from "../managers/maps/MoorhenMapsHeadManager";
 import { MoleculesOriginListener } from "../managers/molecules/MoleculesOriginListener";
-import { MoorhenPreferencesContainer } from "../managers/preferences/MoorhenPreferencesContainer";
 import { MoorhenMainMenu } from "../menu-system/MainMenu";
 import { MoorhenMenuSystem } from "../menu-system/MenuSystem";
 import { BottomPanelContainer } from "../panels/BottomPanels/BottomPanel";
@@ -54,6 +53,7 @@ import { MoorhenWebMG } from "../webMG/MoorhenWebMG";
 import { cootAPIHelpers } from "./ContainerHelpers";
 import { MoorhenDroppable } from "./MoorhenDroppable";
 import "./container.css";
+import "../../global.css";
 
 interface ContainerRefs {
     glRef?: React.RefObject<null | webGL.MGWebGL>;
@@ -66,6 +66,7 @@ interface ContainerRefs {
     lastHoveredAtomRef?: React.RefObject<null | moorhen.HoveredAtom>;
     moorhenInstanceRef?: React.RefObject<null | MoorhenInstance>;
     moorhenMenuSystemRef?: React.RefObject<null | MoorhenMenuSystem>;
+    parentElementRef?: React.RefObject<null | HTMLElement>;
 }
 
 interface ContainerOptionalProps {
@@ -133,7 +134,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
 
     const sidePanelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
-    const bottomPanelIsShown = useSelector((state: RootState) => state.globalUI.bottomPanelIsShown);
+    const bottomPanelHeight = useSelector((state: RootState) => state.globalUI.bottomPanelHeight);
 
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -168,6 +169,26 @@ export const MoorhenContainer = (props: ContainerProps) => {
         [props.onUserPreferencesChange]
     );
 
+    // Keep the latest host callback so the instance always notifies the current handler.
+    const onUserPreferencesChangeRef = useRef(onUserPreferencesChange);
+    useEffect(() => {
+        onUserPreferencesChangeRef.current = onUserPreferencesChange;
+    }, [onUserPreferencesChange]);
+
+    // Initialise preference persistence (restore from local storage + subscribe to the store) on
+    // the instance. This replaces the old React-based MoorhenPreferencesContainer, so it is
+    // independent of UI mounting. The instance dispatches `userPreferencesMounted` once all
+    // preferences are restored, which then triggers the startup effect below.
+    useEffect(() => {
+        const unsubscribe = moorhenInstance.initPreferences(
+            store,
+            dispatch,
+            (key, value) => onUserPreferencesChangeRef.current?.(key, value)
+        );
+        return unsubscribe;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const onAtomHovered = useCallback(
         (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => {
             if (identifier == null) {
@@ -185,21 +206,54 @@ export const MoorhenContainer = (props: ContainerProps) => {
     );
 
     const setWindowDimensions = useCallback(() => {
-        let [newWidth, newHeight]: [number, number] = [window.innerWidth, window.innerHeight];
+        const parent = props.parentElementRef?.current
+        let [newWidth, newHeight]: [number, number] = [1,1];
+        
         if (props.size) {
             [newWidth, newHeight] = props.size;
-        }
+        } else if (parent) {
+            const parentSize = parent.getBoundingClientRect();
+            if (parentSize.width === 0 || parentSize.height === 0) {
+                console.warn("Parent element has zero width or height. Defaulting to window dimensions. You might want to place moorhen into a div container with appropriate size.");
+                [newWidth, newHeight] = [window.innerWidth, window.innerHeight];
+            } else {
+                [newWidth, newHeight] = [parentSize.width, parentSize.height];
+            }
+        } else {
+        [newWidth, newHeight] = [window.innerWidth, window.innerHeight];}
+
         const GLviewWidth = newWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
-        const GLviewHeigth = newHeight - (bottomPanelIsShown ? 75 : 0);
+        const GLviewHeigth = newHeight - (bottomPanelHeight ? bottomPanelHeight -35: 0);
         dispatch(setWidth(newWidth));
         dispatch(setGlViewportWidth(GLviewWidth));
         dispatch(setHeight(newHeight));
         dispatch(setGlViewportHeight(GLviewHeigth));
-    }, [props.size, sidePanelIsOpen, bottomPanelIsShown, sidePanelWidth]);
+    }, [props.size, sidePanelIsOpen, bottomPanelHeight, sidePanelWidth]);
 
     useLayoutEffect(() => {
         setWindowDimensions();
     }, [setWindowDimensions]);
+
+    useLayoutEffect(() => {
+        if (props.size) {
+            return;
+        }
+
+        const parent = props.parentElementRef?.current;
+        if (!parent || typeof ResizeObserver === "undefined") {
+            return;
+        }
+
+        const resizeObserver = new ResizeObserver(() => {
+            setWindowDimensions();
+        });
+
+        resizeObserver.observe(parent);
+
+        return () => {
+            resizeObserver.disconnect();
+        };
+    }, [props.size, props.parentElementRef, setWindowDimensions]);
 
     useWindowEventListener("resize", setWindowDimensions);
 
@@ -225,7 +279,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
         }
         if (isDark !== _isDark) {
             dispatch(setIsDark(_isDark));
-            dispatch(setTheme(_isDark ? "darkly" : "flatly"));
         }
     }, [backgroundColor]);
 
@@ -303,8 +356,11 @@ export const MoorhenContainer = (props: ContainerProps) => {
     }, [width, height]);
 
     useEffect(() => {
+        for (const map of maps ) {
+            map.setActive(false)
+        }
         if (activeMap && commandCentre.current) {
-            activeMap.setActive();
+            activeMap.setActive(true);
             if (activeMap.isEM) {
                 dispatch(setRefinementSelection("SPHERE"));
             } else {
@@ -369,7 +425,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     {" "}
                     <div />
                 </OverlayModal>
-                <MoorhenPreferencesContainer />
             </div>
         );
     }
@@ -390,7 +445,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     <SnackBars />
                     <ActivityIndicator />
                     <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
-                    <MoorhenPreferencesContainer onUserPreferencesChange={onUserPreferencesChange} />
                     <AtomClickManager />
                     <UpdatingMapsManager />
                     <MoorhenMapsHeadManager />

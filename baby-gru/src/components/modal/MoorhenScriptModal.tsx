@@ -1,4 +1,3 @@
-import { PlayArrowOutlined } from "@mui/icons-material";
 import Prism from "prismjs";
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-javascript";
@@ -67,8 +66,8 @@ export const MoorhenScriptModal = () => {
                 </div>
             }
             footer={
-                <MoorhenButton variant="primary" onClick={handleScriptExe}>
-                    <PlayArrowOutlined />
+                <MoorhenButton variant="primary" onClick={handleScriptExe} icon="MatSymArrowRight">
+                   
                 </MoorhenButton>
             }
         />

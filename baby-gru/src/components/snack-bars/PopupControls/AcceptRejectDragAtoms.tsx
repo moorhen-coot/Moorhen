@@ -4,7 +4,7 @@ import { MoorhenButton } from "@/components/inputs";
 import { useControlLock } from "@/hooks/useControlsLock";
 import { setShownControl, unlockControls } from "@/store";
 import { RootState } from "@/store";
-import { useCommandCentre } from "../../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../../InstanceManager";
 import { setIsDraggingAtoms } from "../../../store/generalStatesSlice";
 import { setDraggableMolecule } from "../../../store/glRefSlice";
 import { triggerUpdate } from "../../../store/moleculeMapUpdateSlice";
@@ -21,6 +21,7 @@ export const AcceptRejectDragAtoms = () => {
     const refinementDirty = useRef<boolean>(false);
     const autoClearRestraintsRef = useRef<boolean>(true);
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
 
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
     const activeMap = useSelector((state: RootState) => state.generalStates.activeMap);
@@ -59,6 +60,8 @@ export const AcceptRejectDragAtoms = () => {
         } else {
             dispatch(setShownControl(null));
         }
+        if (acceptTransform) {
+        moorhenInstance.triggerMoleculeChanged(molecule.uniqueId, "refine");}
     };
 
     const atomDraggedCallback = useCallback(
@@ -100,7 +103,7 @@ export const AcceptRejectDragAtoms = () => {
                     command: "add_target_position_restraint_and_refine",
                     commandArgs: [
                         moltenFragmentRef.current.molNo,
-                        `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`,
+                        `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf ? `:${chosenAtom.alt_conf}` : ""}`,
                         movedAtoms[0][0].x,
                         movedAtoms[0][0].y,
                         movedAtoms[0][0].z,

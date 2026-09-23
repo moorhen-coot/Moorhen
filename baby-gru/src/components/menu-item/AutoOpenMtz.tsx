@@ -1,7 +1,7 @@
 import { useDispatch, useStore } from "react-redux";
 import { useCallback, useRef } from "react";
 import { RootState, enqueueSnackbar } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMapList } from "../../store/mapsSlice";
 import { MoorhenMap } from "../../utils/MoorhenMap";
@@ -12,7 +12,7 @@ export const AutoOpenMtz = () => {
     const commandCentre = useCommandCentre();
 
     const dispatch = useDispatch();
-    const store = useStore<RootState>();
+    const moorhenInstance = useMoorhenInstance();
 
     const onCompleted = useCallback(async () => {
         if (filesRef.current.files.length === 0) {
@@ -21,7 +21,7 @@ export const AutoOpenMtz = () => {
 
         try {
             const file = filesRef.current.files[0];
-            const newMaps = await MoorhenMap.autoReadMtz(file, commandCentre, store);
+            const newMaps = await MoorhenMap.autoReadMtz(file, moorhenInstance);
             if (newMaps.length === 0) {
                 dispatch(enqueueSnackbar({ message: "Error reading mtz file", variant: "error" }));
             } else {

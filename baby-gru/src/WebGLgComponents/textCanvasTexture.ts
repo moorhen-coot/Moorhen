@@ -70,7 +70,7 @@ export class TextCanvasTexture {
     }
 
     draw() {
-        const zoom = this.store.getState().glRef.zoom
+        const zoom = this.store.getState().sceneSettings.zoom
         const canvasHeight = this.store.getState().glRef.canvasSize[1]
         const isWebGL2 = this.store.getState().glRef.isWebGL2
 
@@ -342,7 +342,7 @@ export class TextCanvasTexture {
         } else {
             t = this.addTextToBigTexture(textObject.text,colour,textObject.font);
         }
-        const s = [fontSize*this.canvasBig.width / this.canvasBig.height * (t[2]-t[0]), fontSize*(t[3]-t[1]), 1.0];
+        const s = [48 * (t[2]-t[0]) * (this.canvasBig.width / this.canvasBig.height), 48 * (t[3]-t[1]), 1.0];
         this.bigTextureTexOrigins.push(o);
         this.bigTextureTexOffsets.push([t[0], t[2]-t[0], t[1], t[3]-t[1]]);
         this.bigTextureScalings.push(s)

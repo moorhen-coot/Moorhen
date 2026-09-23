@@ -1,4 +1,3 @@
-import { LinearProgress } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoorhenButton } from "@/components/inputs";
@@ -7,6 +6,7 @@ import { addGeneralRepresentation, removeGeneralRepresentation } from "@/store";
 import { moorhen } from "../../../../types/moorhen";
 import { privateer } from "../../../../types/privateer";
 import { MoorhenCarbohydrateCard } from "../../MoorhenCarbohydrateCard";
+import { MoorhenLinearProgress } from "@/components/icons";
 
 export const MoorhenCarbohydrateList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -66,7 +66,7 @@ export const MoorhenCarbohydrateList = (props: {
     return (
         <MoorhenAccordion title="Carbohydrates" extraControls={extraControl}>
             {carbohydrateList === null ? (
-                <LinearProgress variant="indeterminate" />
+                <MoorhenLinearProgress />
             ) : carbohydrateList.length > 0 ? (
                 <>
                     {carbohydrateList.map(carbohydrate => {

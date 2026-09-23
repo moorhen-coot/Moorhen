@@ -1,4 +1,4 @@
-import { LinearProgress } from "@mui/material";
+
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoorhenStack } from "@/components/interface-base";
@@ -6,6 +6,7 @@ import { useCommandCentre } from "../../../../InstanceManager";
 import { moorhen } from "../../../../types/moorhen";
 import { LigandInfo } from "../../../../utils/MoorhenMolecule";
 import { MoorhenLigandCard } from "../../MoorhenLigandCard";
+import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
 
 export const MoorhenLigandList = (props: {
     setBusy?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -31,26 +32,26 @@ export const MoorhenLigandList = (props: {
         const ligandList: LigandInfo[] = [];
 
         for (const ligand of props.molecule.ligands) {
-            const [svg, chemCompInfo, smilesInfo, flev_svg] = await Promise.all([
-                props.molecule.getLigandSVG(ligand.resName, true),
-                commandCentre.current.cootCommand(
+            const svg = await props.molecule.getLigandSVG(ligand.resName, true);
+            const chemCompInfo = await commandCentre.current.cootCommand(
                     {
                         returnType: "string_string_pair_vector",
                         command: "get_gphl_chem_comp_info",
                         commandArgs: [ligand.resName, props.molecule.molNo],
                     },
                     false
-                ) as Promise<moorhen.WorkerResponse<{ first: string; second: string }[]>>,
-                commandCentre.current.cootCommand(
+                ) as moorhen.WorkerResponse<{ first: string; second: string }[]>;
+
+            const smilesInfo = await commandCentre.current.cootCommand(
                     {
                         returnType: "string",
                         command: "get_SMILES_for_residue_type",
                         commandArgs: [ligand.resName, props.molecule.molNo],
                     },
                     false
-                ) as Promise<moorhen.WorkerResponse<string>>,
-                props.molecule.getFLEVSVG(ligand.cid),
-            ]);
+                ) as moorhen.WorkerResponse<string>;
+            const flev_svg = await props.molecule.getFLEVSVG(ligand.cid);
+
             ligandList.push({
                 svg,
                 smiles: smilesInfo.data.result.result,
@@ -58,8 +59,9 @@ export const MoorhenLigandList = (props: {
                 flev_svg,
                 ...ligand,
             });
+            // console.log('Ligand gphl :', chemCompInfo);
         }
-
+        
         setLigandList(ligandList);
         props.setBusy?.(false);
     }
@@ -71,7 +73,7 @@ export const MoorhenLigandList = (props: {
     return (
         <>
             {ligandList === null ? (
-                <LinearProgress variant="indeterminate" />
+                <MoorhenLinearProgress />
             ) : ligandList.length > 0 ? (
                 <MoorhenStack>
                     {ligandList.map(ligand => {

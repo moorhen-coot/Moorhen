@@ -111,6 +111,7 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("add_hydrogen_atoms",&molecules_container_t::add_hydrogen_atoms)
     .function("delete_hydrogen_atoms",&molecules_container_t::delete_hydrogen_atoms)
     .function("get_gaussian_surface",&molecules_container_t::get_gaussian_surface)
+    .function("get_cavities",&molecules_container_t::get_cavities)
     .function("get_monomer_from_dictionary",&molecules_container_t::get_monomer_from_dictionary)
     .function("get_molecular_representation_mesh",&molecules_container_t::get_molecular_representation_mesh)
     .function("get_map_weight",&molecules_container_t::get_map_weight)
@@ -280,6 +281,12 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
     .function("get_validation",&molecules_container_js::get_validation)
+    .function("get_B_validation",&molecules_container_js::get_B_validation)
+    .function("rotamer_analysis_json",&molecules_container_js::rotamer_analysis_json)
+    .function("ramachandran_analysis_json",&molecules_container_js::ramachandran_analysis_json)
+    .function("peptide_omega_analysis_json",&molecules_container_js::peptide_omega_analysis_json)
+    .function("density_correlation_analysis_json",&molecules_container_js::density_correlation_analysis_json)
+    .function("density_fit_analysis_json",&molecules_container_js::density_fit_analysis_json)
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
     .function("writeCIFASCII",&molecules_container_js::writeCIFASCII)
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
@@ -318,4 +325,5 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("export_metaballs_as_gltf", &molecules_container_js::export_metaballs_as_gltf)
     .function("export_metaballs_as_3mf_xml", &molecules_container_js::export_metaballs_as_3mf_xml)
     ;
+
 }

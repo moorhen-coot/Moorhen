@@ -56,13 +56,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
     render() {
         // If there is an error render custom fallback UI otherwise render children
         if (this.state.hasError) {
-            const head = document.head;
-            const style: any = document.createElement("link");
-            style.href = `${this.props.urlPrefix}/flatly.css`;
-            style.rel = "stylesheet";
-            style.async = true;
-            style.type = "text/css";
-            head.appendChild(style);
+            // const head = document.head;
+            // const style: any = document.createElement("link");
+            // style.href = `${this.props.urlPrefix}/flatly.css`;
+            // style.rel = "stylesheet";
+            // style.async = true;
+            // style.type = "text/css";
+            // head.appendChild(style);
 
             return (
                 <div>

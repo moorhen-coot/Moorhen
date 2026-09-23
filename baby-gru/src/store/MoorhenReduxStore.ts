@@ -1,6 +1,7 @@
 import { type AnyAction, type Store, configureStore } from "@reduxjs/toolkit";
 import type { ThunkDispatch } from "redux-thunk";
 import backupSettingsReducer from "./backupSettingsSlice";
+import bottomPanelsReducer from "./bottomPanelsSlice";
 import generalStatesReducer from "./generalStatesSlice";
 import glRefSliceReducer from "./glRefSlice";
 import globalUISliceReducer from "./globalUISlice";
@@ -48,6 +49,7 @@ export const reducers = {
     overlays: overlaysSliceReducer,
     menus: menusReducer,
     globalUI: globalUISliceReducer,
+    bottomPanels: bottomPanelsReducer,
     vectors: vectorsReducer,
     snackBars: snackBarsReducer,
 };

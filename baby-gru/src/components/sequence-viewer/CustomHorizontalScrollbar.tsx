@@ -70,7 +70,7 @@ export const CustomHorizontalScrollbar = memo((props: CustomHorizontalScrollbarP
         };
         // When ending drag (in onMouseUp):
         const onMouseUp = () => {
-            setDragState(s => ({ ...s, isDragging: false }));
+            setTimeout(() => setDragState(s => ({ ...s, isDragging: false })), 50);
             if (onDraggingChange) onDraggingChange(false); // Notify parent
         };
         window.addEventListener('mousemove', onMouseMove);
@@ -82,6 +82,7 @@ export const CustomHorizontalScrollbar = memo((props: CustomHorizontalScrollbarP
     }, [dragState.isDragging, dragState.dragStartX, dragState.initialThumbLeft, thumbWidth]);
 
     const onTrackClick = (e: React.MouseEvent) => {
+        if (dragState.isDragging) return; // Ignore clicks while dragging
         const el = scrollRef.current;
         if (!el) return;
         const track = e.currentTarget as HTMLDivElement;
@@ -97,8 +98,19 @@ export const CustomHorizontalScrollbar = memo((props: CustomHorizontalScrollbarP
     };
 
     return (
-        <div style={{ position: 'relative', width: '100%', ...style }} className={className}>
-            <div ref={scrollRef} style={{ overflow: 'hidden', width: '100%', height: '100%' }}>
+        <div
+            style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: '100%',
+                minWidth: 0,
+                flex: '1 1 auto',
+                boxSizing: 'border-box',
+                ...style,
+            }}
+            className={className}
+        >
+            <div ref={scrollRef} style={{ overflow: 'hidden', width: '100%', minWidth: 0 }}>
                 {children}
             </div>
             <div className="moorhen__custom__scrollbar-track" onClick={onTrackClick}>

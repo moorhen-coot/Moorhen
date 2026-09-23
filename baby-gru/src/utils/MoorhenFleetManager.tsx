@@ -1,6 +1,6 @@
 // import * as Y from 'yjs'
 // import { WebsocketProvider } from 'y-websocket'
-// import { hexToRgb } from '@mui/material';
+// import { hexToRgb } from '@utils';
 // import { webGL } from "../types/mgWebGL";
 // import { moorhen } from "../types/moorhen";
 // import { setIsInSharedSession } from '../store/sharedSessionSlice';
@@ -208,7 +208,7 @@
 //     pushViewUpdate() {
 //         this.view.set(this.clientId, {
 //             zoom: MoorhenReduxStore.getState().glRef.zoom,
-//             origin: MoorhenReduxStore.getState().glRef.origin,
+//             origin: MoorhenReduxStore.getState().sceneSettings.origin,
 //             quat4: MoorhenReduxStore.getState().glRef.quat
 //         })
 //     }

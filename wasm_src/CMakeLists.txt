@@ -69,6 +69,8 @@ ${coot_src}/src/c-interface-image.cc
 set(coot_exception_srcs
 ${coot_src}/api/mmcif-tests.cc
 ${coot_src}/api/molecules-container-gltf.cc
+${coot_src}/api/molecules-container-analysis.cc
+${coot_src}/api/molecules-container-refine.cc
 ${coot_src}/api/coot-molecule-modelling.cc
 ${coot_src}/layla/ligand_editor_canvas.cpp
 ${coot_src}/layla/ligand_editor_canvas/core.cpp
@@ -76,6 +78,7 @@ ${coot_src}/layla/ligand_editor_canvas/model.cpp
 ${coot_src}/layla/ligand_editor_canvas/tools.cpp
 ${coot_src}/layla/ligand_editor_canvas/render.cpp
 ${coot_src}/layla/utils.cpp
+${coot_src}/layla/file_io.cpp
 ${coot_src}/layla/qed.cpp
 ${coot_src}/lhasa/lhasa.cpp
 ${coot_src}/lhasa/glog_replacement.cpp
@@ -227,6 +230,8 @@ ${coot_src}/skeleton/graphical_skel.cc
 ${coot_src}/ideal/pepflip.cc
 ${coot_src}/ideal/parallel-planes.cc
 ${coot_src}/ideal/simple-restraint.cc
+${coot_src}/ideal/simple-restraint-nbc.cc
+${coot_src}/ideal/simple-restraint-density.cc
 ${coot_src}/ideal/ng.cc
 ${coot_src}/ideal/torsion-bonds.cc
 ${coot_src}/ideal/chi-squareds.cc
@@ -299,6 +304,7 @@ ${coot_src}/coot-utils/helix-analysis.cc
 ${coot_src}/coot-utils/segmap.cc
 ${coot_src}/coot-utils/lidia-core-functions.cc
 ${coot_src}/coot-utils/cablam-markup.cc
+${coot_src}/coot-utils/grid-balls.cc
 ${coot_src}/coot-utils/fib-sphere.cc
 ${coot_src}/coot-utils/atom-selection-container.cc
 ${coot_src}/coot-utils/blob-line.cc
@@ -500,7 +506,7 @@ target_include_directories(coot PRIVATE
     ${RDKIT_INCLUDE_DIRS}
 )
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-D__MOORHEN__ -DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" LINK_FLAGS "-pthread -sASSERTIONS=2")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-D__MOORHEN__ -DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" LINK_FLAGS "-pthread -sASSERTIONS=1")
 
 set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -pthread -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT" )
 
@@ -605,16 +611,24 @@ endif()
 add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
 if(${MEMORY64} MATCHES "1")
 target_compile_definitions(moorhen PUBLIC _MOORHEN_MEMORY64_)
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+if(${EMCC_VERSION} VERSION_GREATER 6.0.1)
+target_link_options(moorhen PRIVATE -sINCOMING_MODULE_JS_API=mainScriptUrlOrBlob,preRun,onRuntimeInitialized,print,printErr -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+else()
+target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+endif()
 set_target_properties(moorhen PROPERTIES OUTPUT_NAME moorhen64)
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install64/lib
 )
 else()
 if(${EMCC_VERSION} VERSION_LESS 5.0.8)
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 else()
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
+if(${EMCC_VERSION} VERSION_GREATER 6.0.1)
+target_link_options(moorhen PRIVATE -sINCOMING_MODULE_JS_API=mainScriptUrlOrBlob,preRun,onRuntimeInitialized,print,printErr -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
+else()
+target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
+endif()
 endif()
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install/lib
@@ -761,7 +775,7 @@ target_include_directories(gemmi-wasm PRIVATE
 
 target_link_libraries(gemmi-wasm gemmi_cpp jsoncpp z)
 if(${MEMORY64} MATCHES "1")
-target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=4096MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmi64Module -sEXPORTED_RUNTIME_METHODS=['FS'])
+target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmi64Module -sEXPORTED_RUNTIME_METHODS=['FS'])
 set_target_properties(gemmi-wasm PROPERTIES OUTPUT_NAME gemmi64)
 else()
 if(${EMCC_VERSION} VERSION_LESS 5.0.8)

@@ -6,8 +6,19 @@ import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenR
 import { MockWebGL } from "../__mocks__/mockWebGL"
 import { parseAtomInfoLabel } from "../../src/utils/utils"
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
+import { MockMoorhenInstance } from '../__mocks__/mockMoorhenInstance'
 
 jest.setTimeout(60000)
+
+        const mockMoorhenInstance = {
+            store: MoorhenReduxStore,
+            paths: {
+                monomerLibraryPath: "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
+            },
+            commandCentre: new MockMoorhenCommandCentre(),
+            triggerMoleculeChanged: jest.fn()
+
+        }
 
 const fs = require('fs')
 const path = require('path')
@@ -78,6 +89,7 @@ beforeAll(async () => {
 
 let molecules_container = null
 let commandCentre = null
+let mockInstance = null
 let glRef = null
 
 describe("Testing MoorhenMolecule", () => {
@@ -91,14 +103,14 @@ describe("Testing MoorhenMolecule", () => {
         glRef = {
             current: new MockWebGL()
         }
-        commandCentre = {
-            current: new MockMoorhenCommandCentre(molecules_container, cootModule)
-        }
+
+        commandCentre ={current: new MockMoorhenCommandCentre(molecules_container, cootModule)};
+        mockInstance = new MockMoorhenInstance(commandCentre.current);
     })
 
     test("refineResiduesUsingAtomCidAnimated", async () => {
         const fileUrl_1 = path.join(__dirname, '..', 'test_data', '5a3h-nitrobenzene.pdb')
-        const molecule_1 = new MoorhenMolecule(commandCentre, MoorhenReduxStore, mockMonomerLibraryPath)
+        const molecule_1 = new MoorhenMolecule(mockMoorhenInstance)
         await molecule_1.loadToCootFromURL(fileUrl_1, 'mol-test-1')
 
         const ligandFileName_1 = path.join(__dirname, '..', 'test_data', 'full-nitrobenzene.cif')
@@ -106,7 +118,7 @@ describe("Testing MoorhenMolecule", () => {
         await molecule_1.addDict(ligandFileContents_1)
 
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
-        const map = new MoorhenMap(commandCentre, glRef)
+        const map = new MoorhenMap(mockInstance)
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         await map.setActive()
         const cid = `//A/301`

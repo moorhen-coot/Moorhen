@@ -1,5 +1,7 @@
+
+
 export const OverlayModal = (props: {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     isShown: boolean;
     overlay: React.ReactNode | React.JSX.Element | string;
     style?: React.CSSProperties;

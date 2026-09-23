@@ -13,6 +13,7 @@ import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenSpinner } from "../icons";
 import { MoorhenDraggableModalBase, MoorhenStack } from "../interface-base";
 import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
+import "../../LhasaReact/src/index.scss";
 
 /// Internal wrapper for use in the scope of this file.
 const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: number }) => {
@@ -20,7 +21,7 @@ const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: numbe
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const originState = useSelector((state: moorhen.State) => state.glRef.origin);
+    const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin);
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined);
     const [busy, setBusy] = useState<boolean>(false);

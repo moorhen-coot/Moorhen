@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { MoorhenSpinner } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
 import { MoorhenInfoCard } from "../../interface-base/Popovers/InfoCard";
@@ -22,6 +22,7 @@ export type FilesInputProps = {
 export const MoorhenFileInput = (props: FilesInputProps) => {
     const { label, extraTooltip, ref, onChange, accept, multiple = false, isLoading = false, className, style, disabled } = props;
     const [selectedFiles, setSelectedFiles] = useState<string>("No files selected");
+    const inputId = useId();
 
     const handleSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -37,13 +38,13 @@ export const MoorhenFileInput = (props: FilesInputProps) => {
         } else {
             setSelectedFiles("No files selected");
         }
-        onChange(e);
+        onChange?.(e);
     };
 
     return (
         <div>
             <MoorhenStack direction="line">
-                {label && <label htmlFor="upload-form">{label}</label>}
+                {label && <label htmlFor={inputId}>{label}</label>}
                 {extraTooltip && (
                     <>
                         &nbsp;
@@ -53,7 +54,7 @@ export const MoorhenFileInput = (props: FilesInputProps) => {
             </MoorhenStack>
             <div className={`moorhen__input-files-container ${className}`} style={{ ...style }}>
                 <label
-                    htmlFor="upload-form"
+                    htmlFor={inputId}
                     className={`moorhen__button__default moorhen__input-files-button ${disabled ? "disabled" : ""}`}
                     style={{ cursor: disabled ? "default" : "pointer", height: "2.2rem" }}
                 >
@@ -62,7 +63,7 @@ export const MoorhenFileInput = (props: FilesInputProps) => {
                     {!props.dowebkitdirectory && (
                         <input
                             disabled={disabled}
-                            id="upload-form"
+                            id={inputId}
                             className="moorhen__input-files-upload"
                             type="file"
                             accept={accept}
@@ -74,7 +75,7 @@ export const MoorhenFileInput = (props: FilesInputProps) => {
                     {props.dowebkitdirectory && (
                         <input
                             disabled={disabled}
-                            id="upload-form"
+                            id={inputId}
                             className="moorhen__input-files-upload"
                             type="file"
                             accept={accept}

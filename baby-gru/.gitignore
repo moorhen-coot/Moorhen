@@ -5,8 +5,16 @@
 /.pnp
 .pnp.js
 
+# python (uv-managed venv + build artifacts)
+/.venv
+__pycache__/
+*.py[cod]
+
 # testing
 /coverage
+/playwright-report
+/test-results
+/blob-report
 
 # production
 /build

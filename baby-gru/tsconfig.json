@@ -8,7 +8,7 @@
         "module": "esnext",
         "target": "es2022",
         "rootDir": "./",
-        "types": ["node", "./src/types"],
+        "types": ["node", "./src/types", "vite/client","jest"],
 "lib": [
     "es2017",
   "esnext",

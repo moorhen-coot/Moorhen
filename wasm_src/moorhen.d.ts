@@ -493,6 +493,7 @@ export interface molecules_container_t extends ClassHandle {
 
 export interface molecules_container_js extends molecules_container_t {
   get_validation(_0: number): string;
+  get_B_validation(_0: number): string;
   writePDBASCII(_0: number, _1: EmbindString): number;
   writeCIFASCII(_0: number, _1: EmbindString): number;
   writeCCP4Map(_0: number, _1: EmbindString): number;
@@ -4494,6 +4495,8 @@ interface EmbindModule {
   Vectorg_triangle: {
     new(): Vectorg_triangle;
   };
+  getFloat32ArrayFromVector(arg0: any, arg1: any): void;
+  getUint32ArrayFromVector(arg0: any, arg1: any): void;
   getPositionsFromSimpleMesh2(_0: simple_mesh_t, _1: any): void;
   getReversedNormalsFromSimpleMesh2(_0: simple_mesh_t, _1: any): void;
   getReversedNormalsFromSimpleMesh3(_0: simple_mesh_t, _1: any): void;

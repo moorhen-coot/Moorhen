@@ -1,7 +1,7 @@
-import { CloseOutlined } from "@mui/icons-material";
-import { IconButton, Table, TableBody, TableCell, TableRow } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
+import { MoorhenButton } from "@/components/inputs";
+import { MoorhenGrid } from "@/components/interface-base/Stack/Grid";
 import { RootState } from "@/store";
 import { setShownControl } from "@/store/globalUISlice";
 
@@ -35,51 +35,25 @@ export const AtomInfo = () => {
     return (
         <>
             <span>
-                <em>Atom information</em>
+                <em>Atom information<br/><br/></em> 
             </span>
-            <Table>
-                <TableBody sx={{ padding: 1, border: 0 }}>
-                    <TableRow sx={{ padding: 1, border: 0 }}>
-                        <TableCell sx={{ padding: 1, border: 0 }}>
-                            <Table sx={{ padding: 1, border: 0 }}>
-                                <TableBody sx={{ padding: 1, border: 0 }}>
-                                    <TableRow sx={{ padding: 1, border: 0 }}>
-                                        <TableCell sx={{ padding: 1, border: 0, textAlign: "left" }}>Name:</TableCell>
-                                        <TableCell sx={{ padding: 1, border: 0, textAlign: "right" }}>{fragmentCid}</TableCell>
-                                    </TableRow>
-                                    <TableRow sx={{ padding: 1, border: 0 }}>
-                                        <TableCell sx={{ padding: 1, border: 0, textAlign: "left" }}>Molecule:</TableCell>
-                                        <TableCell sx={{ padding: 1, border: 0, textAlign: "right" }}>{molecule?.name}</TableCell>
-                                    </TableRow>
-                                    <TableRow sx={{ padding: 1, border: 0 }}>
-                                        <TableCell sx={{ padding: 1, border: 0, textAlign: "left" }}>Temp. factor:</TableCell>
-                                        <TableCell sx={{ padding: 1, border: 0, textAlign: "right" }}>
-                                            {atomProps.tempFactor.toFixed(3)}
-                                        </TableCell>
-                                    </TableRow>
-                                    <TableRow sx={{ padding: 1, border: 0 }}>
-                                        <TableCell sx={{ padding: 1, border: 0, textAlign: "left" }}>Occupancy:</TableCell>
-                                        <TableCell sx={{ padding: 1, border: 0, textAlign: "right" }}>
-                                            {atomProps.occupancy.toFixed(3)}
-                                        </TableCell>
-                                    </TableRow>
-                                    <TableRow sx={{ padding: 1, border: 0 }}>
-                                        <TableCell sx={{ padding: 1, border: 0, textAlign: "left" }}>Position:</TableCell>
-                                        <TableCell sx={{ padding: 1, border: 0, textAlign: "right" }}>
-                                            {atomProps.x.toFixed(3)} {atomProps.y.toFixed(3)} {atomProps.z.toFixed(3)}
-                                        </TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
-                        </TableCell>
-                        <TableCell style={{ padding: 1, border: 0 }}>
-                            <IconButton onClick={() => dispatch(setShownControl(null))}>
-                                <CloseOutlined />
-                            </IconButton>
-                        </TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
+            <MoorhenGrid columns={2} columnGap="2rem">
+                <div>Name:</div>
+                <div>{fragmentCid}</div>
+                <div>Molecule:</div>
+                <div>{molecule?.name}</div>
+                <div>Temp. factor:</div>
+                <div>{atomProps.tempFactor.toFixed(3)}</div>
+
+                <div>Occupancy:</div>
+                <div>{atomProps.occupancy.toFixed(3)}</div>
+
+                <div>Position:</div>
+                <div>
+                    {atomProps.x.toFixed(3)} {atomProps.y.toFixed(3)} {atomProps.z.toFixed(3)}
+                </div>
+            </MoorhenGrid>
+            <MoorhenButton tooltip="Close" type="icon-only" icon="MatSymClose" onClick={() => dispatch(setShownControl(null))} />
         </>
     );
 };

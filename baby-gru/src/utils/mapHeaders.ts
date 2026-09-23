@@ -103,18 +103,30 @@ export type MTZHeaderJson = {
     };
 };
 
-export const readMTZHeader = async (file: File): Promise<MTZHeaderJson> => {
-    if (file.size < 20) {
-        throw new Error(`MTZ preamble requires at least 20 bytes, got ${file.size}`);
+export const readMTZHeader = async (file: File | ArrayBuffer | Uint8Array): Promise<MTZHeaderJson | number>=> {
+    // Normalize input to Uint8Array
+    let fileBytes: Uint8Array;
+    if (file instanceof File) {
+        const arrayBuffer = await file.arrayBuffer();
+        fileBytes = new Uint8Array(arrayBuffer);
+    } else if (file instanceof ArrayBuffer) {
+        fileBytes = new Uint8Array(file);
+    } else {
+        fileBytes = file;
     }
 
-    const preambleBuffer = await file.slice(0, 20).arrayBuffer();
-    const preambleBytes = new Uint8Array(preambleBuffer);
-    const preambleView = new DataView(preambleBuffer);
+    const fileSize = fileBytes.byteLength;
+    if (fileSize < 20) {
+        throw new Error(`MTZ preamble requires at least 20 bytes, got ${fileSize}`);
+    }
+
+    const preambleBytes = fileBytes.subarray(0, 20);
+    const preambleView = new DataView(preambleBytes.buffer, preambleBytes.byteOffset, 20);
 
     const magic = String.fromCharCode(...preambleBytes.slice(0, 4));
     if (!magic.startsWith("MTZ")) {
-        throw new Error(`Not an MTZ file: expected magic 'MTZ ', got '${magic}'`);
+        console.error(`Not an MTZ file: expected magic 'MTZ ', got '${magic}'`);
+        return -1
     }
 
     // Machine stamp starts at byte 9 (1-based indexing in CCP4 docs).
@@ -130,18 +142,17 @@ export const readMTZHeader = async (file: File): Promise<MTZHeaderJson> => {
     let headerStartWord = headerStartWordLittle;
     let headerStartByte = headerStartByteLittle;
 
-    if (headerStartByteLittle < 0 || headerStartByteLittle >= file.size) {
+    if (headerStartByteLittle < 0 || headerStartByteLittle >= fileSize) {
         littleEndian = false;
         headerStartWord = headerStartWordBig;
         headerStartByte = headerStartByteBig;
     }
 
-    if (headerStartByte < 0 || headerStartByte >= file.size) {
-        throw new Error(`Invalid MTZ header start byte ${headerStartByte} (file size ${file.size})`);
+    if (headerStartByte < 0 || headerStartByte >= fileSize) {
+        throw new Error(`Invalid MTZ header start byte ${headerStartByte} (file size ${fileSize})`);
     }
 
-    const headerChunk = await file.slice(headerStartByte).arrayBuffer();
-    const headerBytes = new Uint8Array(headerChunk);
+    const headerBytes = fileBytes.subarray(headerStartByte);
     const decoder = new TextDecoder("ascii");
 
     const records: string[] = [];
@@ -343,55 +354,17 @@ export const readMTZHeader = async (file: File): Promise<MTZHeaderJson> => {
     return parsed;
 };
 
-export const readMRCHeader = async (file: File): Promise<MRCHeaderJson> => {
+export const readMRCHeader = async (file: ArrayBuffer | Uint8Array): Promise<MRCHeaderJson> => {
     const MAIN_HEADER_SIZE = 1024;
 
-    let headerBuffer: ArrayBuffer;
-    if (file.name.endsWith(".gz")) {
-        if (typeof DecompressionStream === "undefined") {
-            throw new Error("DecompressionStream is not available in this environment");
-        }
-
-        const decompressedStream = file.stream().pipeThrough(new DecompressionStream("gzip"));
-        const reader = decompressedStream.getReader();
-        const headerBytes = new Uint8Array(MAIN_HEADER_SIZE);
-        let bytesRead = 0;
-
-        try {
-            while (bytesRead < MAIN_HEADER_SIZE) {
-                const { value, done } = await reader.read();
-                if (done) {
-                    break;
-                }
-
-                const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
-                const bytesToCopy = Math.min(chunk.length, MAIN_HEADER_SIZE - bytesRead);
-                headerBytes.set(chunk.subarray(0, bytesToCopy), bytesRead);
-                bytesRead += bytesToCopy;
-
-                if (bytesRead >= MAIN_HEADER_SIZE) {
-                    await reader.cancel();
-                    break;
-                }
-            }
-        } finally {
-            reader.releaseLock();
-        }
-
-        if (bytesRead < MAIN_HEADER_SIZE) {
-            throw new Error(`Uncompressed MRC header requires at least ${MAIN_HEADER_SIZE} bytes, got ${bytesRead}`);
-        }
-
-        headerBuffer = headerBytes.buffer;
-    } else {
-        if (file.size < MAIN_HEADER_SIZE) {
-            throw new Error(`MRC header requires at least ${MAIN_HEADER_SIZE} bytes, got ${file.size}`);
-        }
-        headerBuffer = await file.slice(0, MAIN_HEADER_SIZE).arrayBuffer();
+    const fileBytes = file instanceof Uint8Array ? file : new Uint8Array(file);
+    if (fileBytes.byteLength < MAIN_HEADER_SIZE) {
+        throw new Error(`MRC header requires at least ${MAIN_HEADER_SIZE} bytes, got ${fileBytes.byteLength}`);
     }
 
-    const bytes = new Uint8Array(headerBuffer);
-    const view = new DataView(headerBuffer);
+    const bytes = fileBytes.subarray(0, MAIN_HEADER_SIZE);
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    // }
 
     const machineStamp = Array.from(bytes.slice(212, 216));
     const littleEndian =

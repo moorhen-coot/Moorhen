@@ -65,7 +65,6 @@ export const AssociateReflectionsToMap = () => {
                     maps={maps}
                     ref={mapSelectRef}
                     filterFunction={map => !map.hasReflectionData}
-                    width="100%"
                     label="Select a map"
                 />
                 <MoorhenFileInput

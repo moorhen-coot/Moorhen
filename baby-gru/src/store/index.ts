@@ -2,88 +2,7 @@
 //Use scripts/CreateStoreExport.py to regenerate.
 
 export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
-export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
-export {
-    setBusy,
-    setTimeCapsuleBusy,
-    setGlobalInstanceReady,
-    setShowBottomPanel,
-    setSearchBarActive,
-    setMainMenuOpen,
-    setShortCutsBlocked,
-    setShownSidePanel,
-    setSidePanelWidth,
-    setShownControl,
-    lockControls,
-    unlockControls,
-    closeResidueSelectionTools,
-    setShownBottomPanel,
-    setClickAwayListenerActive,
-}  from "./globalUISlice";
 export { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings }  from "./backupSettingsSlice";
-export {
-    setActiveMap,
-    setViewOnly,
-    setTheme,
-    setIsDraggingAtoms,
-    setAppTittle,
-    setUserPreferencesMounted,
-    setDevMode,
-    setCootInitialized,
-    setStopResidueSelection,
-    setStartResidueSelection,
-    clearResidueSelection,
-    setMoleculeResidueSelection,
-    setResidueSelection,
-    setCidResidueSelection,
-    setIsRotatingAtoms,
-    setIsChangingRotamers,
-    setShowResidueSelection,
-    toggleCootCommandExit,
-    toggleCootCommandStart,
-    setIsAnimatingTrajectory,
-    resetGeneralStates,
-    setIsShowingTomograms,
-    setDefaultExpandDisplayCards,
-    setTransparentModalsOnMouseOut,
-    setUseGemmi,
-    setShowHoverInfo,
-    setAllowScripting,
-    setAllowAddNewFittedLigand,
-    setAllowMergeFittedLigand,
-    setDisableFileUpload,
-}  from "./generalStatesSlice";
-export {
-    setOrigin,
-    setRequestDrawScene,
-    setIsWebGL2,
-    setActiveMolecule,
-    setLightPosition,
-    setAmbient,
-    setSpecular,
-    setDiffuse,
-    setSpecularPower,
-    setZoom,
-    setQuat,
-    setFogClipOffset,
-    setFogStart,
-    setFogEnd,
-    setClipStart,
-    setClipEnd,
-    setCursorPosition,
-    setShortCutHelp,
-    setDraggableMolecule,
-    triggerRedrawEnv,
-    triggerClearLabels,
-    setGLCtx,
-    setDisplayBuffers,
-    setHoverSize,
-    setLabelBuffers,
-    setTexturedShapes,
-    setRttFramebufferSize,
-    setCanvasSize,
-    setElementsIndicesRestrict,
-}  from "./glRefSlice";
 export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates }  from "./hoveringStatesSlice";
 export { setValidationJson }  from "./jsonValidation";
 export {
@@ -115,8 +34,6 @@ export {
     setReContourMapOnlyOnMouseUp,
     resetMapContourSettings,
 }  from "./mapContourSettingsSlice";
-export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
-export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export {
     setConnectedMolecule,
     enableUpdatingMaps,
@@ -184,7 +101,95 @@ export {
     setRefinementSelection,
     resetRefinementSettings,
 }  from "./refinementSettingsSlice";
+export { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession }  from "./sharedSessionSlice";
+export { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings }  from "./shortCutsSlice";
 export {
+    resetSliceNDiceSlice,
+    setPaeFileIsUploaded,
+    setThresholdType,
+    setMoleculeBfactors,
+    setSlicingResults,
+    setMoleculeMaxBfactor,
+    setMoleculeMinBfactor,
+    setBFactorThreshold,
+    setNClusters,
+    setClusteringType,
+    setPAEFileContents,
+}  from "./sliceNDiceSlice";
+export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
+export {
+    setActiveMap,
+    setViewOnly,
+    setTheme,
+    setIsDraggingAtoms,
+    setAppTittle,
+    setUserPreferencesMounted,
+    setDevMode,
+    setCootInitialized,
+    setStopResidueSelection,
+    setStartResidueSelection,
+    clearResidueSelection,
+    setMoleculeResidueSelection,
+    setResidueSelection,
+    setCidResidueSelection,
+    setIsRotatingAtoms,
+    setIsChangingRotamers,
+    setShowResidueSelection,
+    toggleCootCommandExit,
+    toggleCootCommandStart,
+    setIsAnimatingTrajectory,
+    resetGeneralStates,
+    setIsShowingTomograms,
+    setDefaultExpandDisplayCards,
+    setTransparentModalsOnMouseOut,
+    setUseGemmi,
+    setShowHoverInfo,
+    setAllowScripting,
+    setAllowAddNewFittedLigand,
+    setAllowMergeFittedLigand,
+    setDisableFileUpload,
+}  from "./generalStatesSlice";
+export {
+    setRequestDrawScene,
+    setIsWebGL2,
+    setActiveMolecule,
+    setQuat,
+    setCursorPosition,
+    setShortCutHelp,
+    setDraggableMolecule,
+    triggerRedrawEnv,
+    triggerClearLabels,
+    setGLCtx,
+    setDisplayBuffers,
+    setHoverSize,
+    setLabelBuffers,
+    setTexturedShapes,
+    setRttFramebufferSize,
+    setCanvasSize,
+    setElementsIndicesRestrict,
+}  from "./glRefSlice";
+export { setSeqViewerOption, setValidationOption, setShownBottomPanel }  from "./bottomPanelsSlice";
+export {
+    setBusy,
+    setTimeCapsuleBusy,
+    setGlobalInstanceReady,
+    setSearchBarActive,
+    setMainMenuOpen,
+    setShortCutsBlocked,
+    setShownSidePanel,
+    setSidePanelWidth,
+    setBottomPanelHeight,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
+    pauseClickAwayListener,
+    resumeClickAwayListener,
+}  from "./globalUISlice";
+export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
+export {
+    setOrigin,
     setDefaultBackgroundColor,
     setDrawCrosshairs,
     setDrawScaleBar,
@@ -227,22 +232,19 @@ export {
     setMultiViewColumns,
     setSpecifyMultiViewRowsColumns,
     setThreeWayViewOrder,
+    setLightPosition,
+    setAmbient,
+    setSpecular,
+    setDiffuse,
+    setSpecularPower,
+    setFogClipOffset,
+    setFogStart,
+    setFogEnd,
+    setClipStart,
+    setClipEnd,
+    setZoom,
+    autoClipFogByZoom,
 }  from "./sceneSettingsSlice";
-export { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManager, resetSharedSession }  from "./sharedSessionSlice";
-export { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings }  from "./shortCutsSlice";
-export {
-    resetSliceNDiceSlice,
-    setPaeFileIsUploaded,
-    setThresholdType,
-    setMoleculeBfactors,
-    setSlicingResults,
-    setMoleculeMaxBfactor,
-    setMoleculeMinBfactor,
-    setBFactorThreshold,
-    setNClusters,
-    setClusteringType,
-    setPAEFileContents,
-}  from "./sliceNDiceSlice";
 export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
 
 // Export store configuration and types

@@ -38,7 +38,7 @@ export const stringToSeqViewer = (
 };
 
 export function moorhenSequenceToSeqViewer(sequence: Sequence, molName: string, molNo: number): SeqElement | null {
-    if (sequence !== null && sequence.sequence.length > 0) {
+    if (sequence && sequence.sequence.length > 0) {
         return {
             molName: molName,
             chain: sequence.chain,
@@ -67,34 +67,13 @@ export function MoleculeToSeqViewerSequences(molecule: MoorhenMolecule | null, g
         if (!getColors) {
             return newSeq;
         }
-        const seqColour = molecule.representations[0].colourRules.find(rule => rule.cid === "//" + newSeq.chain)?.color;
+        const seqColour = molecule.representations?.[0]?.colourRules?.find(rule => rule.cid === "//" + newSeq.chain)?.color;
         newSeq.colour = seqColour ? `color-mix(in srgb, ${seqColour}, rgb(255,255,255) 50%)` : null;
         return newSeq;
     });
     return newSequenceList;
 }
 
-// export function addValidationDataToSeqViewerSequences(
-//     sequences: SeqElement[],
-//     validationData: { chain: string; label: string; data: { resNum: number; score: number | [number, number] }[] }[]
-// ): SeqElement[] {
-//     for (const dataSet of validationData) {
-//         for (const sequence of sequences) {
-//             if (dataSet.chain === sequence.chain) {
-//                 for (const residue of sequence.residues) {
-//                     const resValidation = dataSet.data.find(v => v.resNum === residue.resNum);
-//                     if (resValidation) {
-//                         if (!residue.validationData) {
-//                             residue.validationData = {};
-//                         }
-//                         residue.validationData[dataSet.label] = resValidation.score;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-//     return sequences;
-// }
 
 export const cootValidationDataToSeqViewer = (cootData, valueName: string): ValidationData => {
     const validationData: ValidationData = {};
@@ -124,23 +103,35 @@ export const cootMMRCCToSeqViewer = (cootData: libcootApi.MMRCCStatsJS): Validat
 export const addValidationDataToSeqViewerSequences = (
     sequences: SeqElement[],
     validationData: ValidationData,
-    rmszScale: number = 5,
+    category: string,
     gradientPresets?: GradientPreset,
     reverseGradient?: boolean,
-    category?: string
+    scoreTransform?: (value: number) => number,
 ): SeqElement[] => {
-    const scaleRMSZ = val => {
-        return Math.min(val / rmszScale, 1);
-    };
+
+
+
 
     const newSequences = [...sequences];
     for (const sequence of newSequences) {
+        const validationTracks = new Map<string, {categorie: string, name: string }>();
+        for (const track of sequence.validationTracks ?? []) {
+            const trackKey = `${track.categorie}::${track.name}`;
+            validationTracks.set(trackKey, { categorie: track.categorie, name: track.name });
+        }
         const chainValidationData = validationData[sequence.chain];
         if (!chainValidationData) {
             continue;
         }
+        const chainValidationBySeqNum = new Map<number, ResidueValidationData>();
+        for (const entry of chainValidationData) {
+            // Preserve previous behavior of Array.find by keeping the first match for each seqNum.
+            if (!chainValidationBySeqNum.has(entry.seqNum)) {
+                chainValidationBySeqNum.set(entry.seqNum, entry);
+            }
+        }
         for (const residue of sequence.residues) {
-            const resValidation = chainValidationData.find(v => v.seqNum === residue.resNum);
+            const resValidation = chainValidationBySeqNum.get(residue.resNum);
             if (resValidation) {
                 if (!residue.validationData) {
                     residue.validationData = {};
@@ -151,9 +142,9 @@ export const addValidationDataToSeqViewerSequences = (
                             if (!residue.validationData[key]) {
                                 residue.validationData[key] = { value: null };
                             }
-                            if (key.includes("RMSZ") || key.includes("ZScore")) {
+                            if (scoreTransform) {
                                 residue.validationData[key] = {
-                                    value: [scaleRMSZ(value), value],
+                                    value: [scoreTransform(value), value],
                                     gradientPreset: gradientPresets ? gradientPresets[key] : null,
                                     reverseGradient: reverseGradient ?? false,
                                     category: key.includes("Rota") || key.includes("Rama") ? "Ramachandran & Rotamer" : category,
@@ -166,11 +157,16 @@ export const addValidationDataToSeqViewerSequences = (
                                     category: category,
                                 };
                             }
+                            const trackCategory = key.includes("Rota") || key.includes("Rama") ? "Ramachandran & Rotamer" : category;
+                            const trackKey = `${trackCategory}::${key}`;
+                            validationTracks.set(trackKey, { categorie: trackCategory, name: key });
                         }
                     }
                 }
             }
+
         }
+        sequence.validationTracks = Array.from(validationTracks.values());
     }
     return newSequences;
 };

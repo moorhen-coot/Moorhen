@@ -1,7 +1,7 @@
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { RootState, enqueueSnackbar } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
 import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -12,7 +12,7 @@ import { MoorhenStack } from "../interface-base";
 
 export const ImportMapCoefficients = () => {
     const dispatch = useDispatch();
-    const store = useStore<RootState>();
+    const moorhenInstance = useMoorhenInstance();
     const commandCentre = useCommandCentre();
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
@@ -59,9 +59,9 @@ export const ImportMapCoefficients = () => {
                 FreeR: freeRSelectRef.current.value,
                 calcStructFact: calcStructFactRef.current.checked,
             };
-            const newMap = new MoorhenMap(commandCentre, store);
+
             try {
-                await newMap.loadToCootFromMtzFile(file, selectedColumns);
+                const newMap = await MoorhenMap.loadToCootFromMtzFile(file, selectedColumns, moorhenInstance);
                 if (newMap.molNo === -1) {
                     throw new Error("Cannot read the mtz file!");
                 }
