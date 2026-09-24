@@ -11,6 +11,7 @@ import { MoorhenButton, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenAutoComplete } from "../inputs/autocomplete/AutoComplete";
 import { MoorhenInfoCard, MoorhenMenuItem, MoorhenPopover, MoorhenStack } from "../interface-base";
+import { viewCentreOf } from "../../utils/viewCentre";
 
 function resizeSvgString(svg: string, size: number): string {
   const s = String(size);
@@ -171,7 +172,7 @@ export const GetMonomer = () => {
             {
                 returnType: "status",
                 command: "get_monomer_and_position_at",
-                commandArgs: [tlc, fromMolNo, ...originState.map(coord => -coord)],
+                commandArgs: [tlc, fromMolNo, ...viewCentreOf(originState)],
             },
             true
         ) as Promise<moorhen.WorkerResponse<number>>;

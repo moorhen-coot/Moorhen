@@ -4,6 +4,7 @@ import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
+import { viewCentreOf } from "../../utils/viewCentre";
 
 export const MoveMoleculeHere = () => {
     const dispatch = useDispatch();
@@ -22,7 +23,7 @@ export const MoveMoleculeHere = () => {
         }
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value));
         if (selectedMolecule) {
-            await selectedMolecule.moveMoleculeHere(...(originState.map(coord => -coord) as [number, number, number]));
+            await selectedMolecule.moveMoleculeHere(...viewCentreOf(originState));
             dispatch(triggerUpdate(selectedMolecule.molNo));
         }
     }, [molecules]);

@@ -83,4 +83,12 @@ export type SceneSettingsSnapshot = {
     drawAxes: boolean;
     doPerspectiveProjection: boolean;
     doOutline: boolean;
+    /**
+     * Where the view is, as the store holds it.
+     *
+     * Note the sign: this is the NEGATIVE of the point the view is centred on, so centring on
+     * an atom at (x, y, z) records (-x, -y, -z). Captured here because nothing else in the
+     * tests did, and a sign mistake in it moves the whole scene without failing anything.
+     */
+    origin: [number, number, number];
 };

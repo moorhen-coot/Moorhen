@@ -19,6 +19,7 @@ import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
+import { originForViewCentre } from "../../utils/viewCentre";
 
 
 interface MoorhenWebMGPropsInterface {
@@ -193,7 +194,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }, false) as moorhen.WorkerResponse<[number, number, number]>;
         const newOrigin = response.data.result.result;
         if(newOrigin.length===3)
-           dispatch(setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]]))
+           dispatch(setOrigin(originForViewCentre(newOrigin)))
     }, [commandCentre, glRef])
 
     const handleMiddleClickGoToAtom = useCallback(evt => {

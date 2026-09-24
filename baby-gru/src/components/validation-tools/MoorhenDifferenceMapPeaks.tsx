@@ -9,6 +9,7 @@ import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
 import { MoorhenSlider } from "../inputs";
 import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase";
+import { originForViewCentre } from "../../utils/viewCentre";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -115,7 +116,8 @@ export const MoorhenDifferenceMapPeaks = (props: { chartId: string }) => {
                 }
 
                 const peakIndex = points[0].index;
-                dispatch(setOrigin([-plotData[peakIndex].coordX, -plotData[peakIndex].coordY, -plotData[peakIndex].coordZ]));
+                const peak = plotData[peakIndex];
+                dispatch(setOrigin(originForViewCentre([peak.coordX, peak.coordY, peak.coordZ])));
             };
 
             const setTooltipTitle = (args: TooltipItem<ChartType>[]) => {

@@ -10,6 +10,7 @@ import { MRCHeaderJson, MTZHeaderJson, readMRCHeader, readMTZHeader } from "./ma
 import { spaceGroupList } from "@/utils/spaceGroupList"
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { MoorhenInstance } from "@/InstanceManager";
+import { viewCentreOf, viewCentreOfState } from "./viewCentre";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8;
 const _DEFAULT_RADIUS = 13;
@@ -650,7 +651,7 @@ export class MoorhenMap {
     drawMapContour(): Promise<void> {
         const originState = this.store.getState().sceneSettings.origin;
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams();
-        return this.doCootContour(...(originState.map(coord => -coord) as [number, number, number]), mapRadius, contourLevel, mapStyle);
+        return this.doCootContour(...viewCentreOf(originState), mapRadius, contourLevel, mapStyle);
     }
 
     /**
@@ -1451,7 +1452,7 @@ export class MoorhenMap {
             posY = -origin[1];
             posZ = -origin[2];
         } else {
-            [posX, posY, posZ] = this.store.getState().sceneSettings.origin.map(coord => -coord) as [number, number, number];
+            [posX, posY, posZ] = viewCentreOfState(this.store.getState());
         }
 
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams();
@@ -1542,7 +1543,7 @@ export class MoorhenMap {
             {
                 returnType: "arrayBuffer",
                 command: "shim_export_map_as_mesh_file",
-                commandArgs: [this.molNo, ...originState.map(coord => -coord), mapRadius, contourLevel, fileType],
+                commandArgs: [this.molNo, ...viewCentreOf(originState), mapRadius, contourLevel, fileType],
                 changesMolecules: [],
             },
             false

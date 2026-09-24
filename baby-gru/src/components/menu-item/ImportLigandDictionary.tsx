@@ -11,6 +11,7 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenButton, MoorhenFileInput, MoorhenNumberInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
+import { viewCentreOf } from "../../utils/viewCentre";
 
 const ImportLigandDictionary = (props: {
     id: string;
@@ -94,7 +95,7 @@ const ImportLigandDictionary = (props: {
                     {
                         returnType: "status",
                         command: "get_monomer_and_position_at",
-                        commandArgs: [instanceName, selectedMoleculeIndex, ...originState.map(coord => -coord)],
+                        commandArgs: [instanceName, selectedMoleculeIndex, ...viewCentreOf(originState)],
                     },
                     true
                 )) as moorhen.WorkerResponse<number>;

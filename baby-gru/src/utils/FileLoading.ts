@@ -17,6 +17,7 @@ import { MoorhenMolecule } from "./MoorhenMolecule";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { modalKeys } from "./enums";
+import { viewCentreOfState } from "./viewCentre";
 // import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
@@ -405,7 +406,7 @@ const readCifDictionary = async (
             {
                 returnType: "status",
                 command: "get_monomer_and_position_at",
-                commandArgs: [dict.comp_id, -999999, ...moorhenInstance.store.getState().sceneSettings.origin.map(coord => -coord)],
+                commandArgs: [dict.comp_id, -999999, ...viewCentreOfState(moorhenInstance.store.getState())],
             },
             true
         );

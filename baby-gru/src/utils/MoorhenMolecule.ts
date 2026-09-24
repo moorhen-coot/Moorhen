@@ -30,6 +30,7 @@ import { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
 import { MoleculeToSeqViewerSequences } from "@/components/sequence-viewer/utils";
 import { MoorhenInstance } from "@/InstanceManager/index";
 import { CommandCentre } from "@/InstanceManager/CommandCentre/index";
+import { viewCentreOf } from "./viewCentre";
 
 export type ResidueInfo = {
     resCode: string;
@@ -476,7 +477,7 @@ export class MoorhenMolecule {
             this.symmetryMatrices = [];
         } else {
             const originState = this.store.getState().sceneSettings.origin;
-            const selectionCentre: number[] = originState.map(coord => -coord);
+            const selectionCentre: number[] = viewCentreOf(originState);
             const response = (await this.commandCentre.cootCommand(
                 {
                     returnType: "symmetry",
@@ -2036,7 +2037,7 @@ export class MoorhenMolecule {
                 {
                     returnType: "status",
                     command: "get_monomer_and_position_at",
-                    commandArgs: [resType.toUpperCase(), fromMolNo, ...originState.map(coord => -coord)],
+                    commandArgs: [resType.toUpperCase(), fromMolNo, ...viewCentreOf(originState)],
                 },
                 true
             ) as Promise<moorhen.WorkerResponse<number>>;
@@ -2647,7 +2648,7 @@ export class MoorhenMolecule {
         const eigen_orientation_search_mode = 2
 
         const commandArgs = fitRightHere
-            ? [this.molNo, mapMolNo, ligandMolNo, ...originState.map(coord => -coord), 1, useConformers, conformerCount, eigen_orientation_search_mode]
+            ? [this.molNo, mapMolNo, ligandMolNo, ...viewCentreOf(originState), 1, useConformers, conformerCount, eigen_orientation_search_mode]
             : [this.molNo, mapMolNo, ligandMolNo, 1, useConformers, conformerCount, eigen_orientation_search_mode];
 
         const result = (await this.commandCentre.cootCommand(

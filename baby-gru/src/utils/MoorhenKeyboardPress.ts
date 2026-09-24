@@ -15,6 +15,7 @@ import { Shortcut } from '../InstanceManager/Preferences';
 import { cidToSpec, getCentreAtom } from "./utils"
 import { setShownControl, RootState, enqueueSnackbar  } from '@/store';
 import { MoorhenInstance } from '@/InstanceManager';
+import { originForViewCentre } from "./viewCentre";
 
 const apresEdit = (molecule: moorhen.Molecule, moorhenInstance: MoorhenInstance ) => {
     molecule.setAtomsDirty(true)
@@ -267,7 +268,7 @@ export const moorhenKeyPress = (
         .then(response => {
             const newOrigin = response.data.result.result;
             if (newOrigin.length === 3) {
-                dispatch(setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]]))
+                dispatch(setOrigin(originForViewCentre(newOrigin)))
             }
         })
     }

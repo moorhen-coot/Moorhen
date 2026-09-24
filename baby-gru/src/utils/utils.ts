@@ -10,6 +10,7 @@ import { Shortcut } from "../InstanceManager/Preferences";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
+import { viewCentreOf } from "./viewCentre";
 
 export const make3MFZipFile = async modelFile => {
     const zip = new JSZip();
@@ -102,7 +103,7 @@ export const getCentreAtom = async (
         {
             returnType: "int_string_pair",
             command: "get_active_atom",
-            commandArgs: [...originState.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(":")],
+            commandArgs: [...viewCentreOf(originState), visibleMolecules.map(molecule => molecule.molNo).join(":")],
         },
         false
     )) as WorkerResponse<libcootApi.PairType<number, string>>;

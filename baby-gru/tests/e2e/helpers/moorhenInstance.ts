@@ -69,6 +69,7 @@ export async function getSceneSettingsSnapshot(page: Page, elementId = "moorhen-
             drawAxes: Boolean(sceneSettings?.drawAxes),
             doPerspectiveProjection: Boolean(sceneSettings?.doPerspectiveProjection),
             doOutline: Boolean(sceneSettings?.doOutline),
+            origin: (sceneSettings?.origin as [number, number, number]) ?? [0, 0, 0],
         };
     }, elementId);
 }

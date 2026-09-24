@@ -6,6 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenButton } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+import { originForViewCentre } from "../../utils/viewCentre";
 
 export const MoorhenUnmodelledBlobs = () => {
     const dispatch = useDispatch();
@@ -35,7 +36,7 @@ export const MoorhenUnmodelledBlobs = () => {
                     <MoorhenButton
                         style={{ display: "flex", marginLeft: "auto", marginRight: "0.1rem" }}
                         onClick={() => {
-                            dispatch(setOrigin([-blob.coordX, -blob.coordY, -blob.coordZ]));
+                            dispatch(setOrigin(originForViewCentre([blob.coordX, blob.coordY, blob.coordZ])));
                         }}
                     >
                         View
