@@ -898,12 +898,18 @@ export class MoorhenInstance extends StoreExtension {
 
     /**
      * Center the view on the given world-space coordinate.
+     *
+     * The scene's `origin` holds the negative of the point being looked at - translating the
+     * world by it is what brings that point to the middle of the screen - so a coordinate to
+     * centre on has to be negated on the way in. Without that this centred on minus the point
+     * it was given, which is to say on the wrong side of the origin by twice the distance.
+     *
      * @param x - X coordinate to centre on.
      * @param y - Y coordinate to centre on.
      * @param z - Z coordinate to centre on.
      */
     public centerOnCoordinate(x: number, y: number, z: number): void {
-        this.dispatch(setOrigin([x, y, z]));
+        this.dispatch(setOrigin([-x, -y, -z]));
     }
 
     /**
