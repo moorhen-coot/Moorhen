@@ -1,4 +1,4 @@
-import { doCootCommand, setModules } from "../../public/MoorhenAssets/wasm/CootWorker"
+import { doPrivateerValidate, doCootCommand, setModules } from "../../public/MoorhenAssets/wasm/CootWorker"
 
 export class MockMoorhenCommandCentre {
     constructor(molecules_container, cootModule) {
@@ -16,6 +16,11 @@ export class MockMoorhenCommandCentre {
     
     async cootCommand(kwargs, doJournal = true) {
         this.commandHistory.push(kwargs)
+
+        if (kwargs.message === 'privateer_validate') {
+            const returnResult = doPrivateerValidate(kwargs)
+            return {data: returnResult}
+        }
         const returnResult = doCootCommand(kwargs)
         return {data: returnResult}
     }
