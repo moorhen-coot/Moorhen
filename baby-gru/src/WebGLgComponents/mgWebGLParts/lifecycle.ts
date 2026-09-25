@@ -228,142 +228,178 @@ export function initGraphicsContext(self: MGWebGL): void {
     const extensionArray = self.gl.getSupportedExtensions();
 }
 
-/** Phase 3 — attach all canvas mouse / touch / wheel / key listeners, once. */
+/**
+ * Phase 3 — attach all canvas mouse / touch / wheel / key listeners, once.
+ *
+ * Handlers are captured as named consts and recorded in
+ * self.canvasEventListeners so detachCanvasListeners() can remove the exact
+ * same references on unmount (anonymous inline handlers can't be removed). The
+ * handler bodies are unchanged from the original inline versions.
+ */
 export function attachCanvasListeners(self: MGWebGL): void {
     if (self.doneEvents === undefined) {
-        self.canvas.addEventListener("mousedown",
-            function (evt) {
-                if (self.keysDown['dist_ang_2d']) {
-                    self.doMouseDownMeasure(evt, self);
-                } else {
-                    self.doMouseDown(evt, self);
-                }
+
+        const onMouseDown = function (evt) {
+            if (self.keysDown['dist_ang_2d']) {
+                self.doMouseDownMeasure(evt, self);
+            } else {
+                self.doMouseDown(evt, self);
+            }
+            evt.stopPropagation();
+        };
+
+        const onMouseUp = function (evt) {
+            if (self.keysDown['dist_ang_2d']) {
+                self.doMouseUpMeasure(evt, self);
+            } else {
+                self.doMouseUp(evt, self);
+            }
+        };
+
+        const onContextMenu = function (evt) {
+            self.doRightClick(evt, self);
+            evt.stopPropagation();
+            evt.preventDefault();
+        };
+
+        const onMouseDownClick = function (evt) {
+            if (evt.which === 1) {
+                self.doClick(evt, self);
                 evt.stopPropagation();
-            },
-            false);
-            self.canvas.addEventListener("mouseup",
-            function (evt) {
-                if (self.keysDown['dist_ang_2d']) {
-                    self.doMouseUpMeasure(evt, self);
-                } else {
-                    self.doMouseUp(evt, self);
-                }
-            },
-            false);
-        self.canvas.addEventListener("contextmenu",
-            function (evt) {
+            } else if (evt.which === 2) {
+                evt.stopPropagation();
+                evt.preventDefault();
+            } else {
                 self.doRightClick(evt, self);
                 evt.stopPropagation();
                 evt.preventDefault();
-            },
-            false);
-        self.canvas.addEventListener("mousedown",
-            function (evt) {
-                if (evt.which === 1) {
-                    self.doClick(evt, self);
-                    evt.stopPropagation();
-                } else if (evt.which === 2) {
-                    evt.stopPropagation();
-                    evt.preventDefault();
-                } else {
-                    self.doRightClick(evt, self);
-                    evt.stopPropagation();
-                    evt.preventDefault();
-                }
-            },
-            false);
-        self.canvas.addEventListener("dblclick",
-            function (evt) {
-                self.doDoubleClick(evt, self);
-                evt.stopPropagation();
-            },
-            false);
-        console.log("addEventListener");
-        self.canvas.addEventListener("mousemove",
-            function (evt) {
-                if (self.keysDown['dist_ang_2d']) {
-                    self.doMouseMoveMeasure(evt, self);
-                } else {
-                    self.doMouseMove(evt, self);
-                }
-                evt.stopPropagation();
-            },
-            false);
-        self.canvas.addEventListener("mouseenter",
-            function (evt) {
-                document.onkeydown = function (evt2) {
-                    self.handleKeyDown(evt2, self);
-                }
-                document.onkeyup = function (evt2) {
-                    self.handleKeyUp(evt2, self);
-                }
-            },
-            false);
-        self.canvas.addEventListener("mouseleave",
-            function (evt) {
-                document.onkeydown = function (evt2) {
-                }
-            },
-            false);
-        self.canvas.addEventListener("wheel",
-            function (evt) {
-                self.doWheel(evt);
-                evt.stopPropagation();
-                evt.preventDefault();
-            },
-            false);
-        self.canvas.addEventListener('touchstart',
-            function (e) {
-                const touchobj = e.changedTouches[0];
-                const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
-                //alert(e.changedTouches.length)
-                if (e.changedTouches.length === 2) {
-                    evt.shiftKey = true;
-                    evt.altKey = true;
-                }
-                self.doMouseDown(evt, self);
-                self.mouseDownedAt = (e.timeStamp)
-                e.stopPropagation();
-                e.preventDefault();
-                // Create a timeout that will check if the user is holding down on the same spot to open the context menu
-                setTimeout(() => {
-                    if (self.mouseDown && !self.mouseMoved) {
-                        self.doRightClick(evt, self);
-                    }
-                }, 1000)
-            }, false)
+            }
+        };
 
-        self.canvas.addEventListener('touchmove',
-            function (e) {
-                const touchobj = e.touches[0]; // reference first touch point for this event
-                const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, buttons: 1 };
-                if (e.touches.length === 2) {
-                    evt.shiftKey = true;
-                    evt.altKey = true;
-                }
+        const onDblClick = function (evt) {
+            self.doDoubleClick(evt, self);
+            evt.stopPropagation();
+        };
+
+        const onMouseMove = function (evt) {
+            if (self.keysDown['dist_ang_2d']) {
+                self.doMouseMoveMeasure(evt, self);
+            } else {
                 self.doMouseMove(evt, self);
-                e.stopPropagation();
-                e.preventDefault();
-            }, false)
+            }
+            evt.stopPropagation();
+        };
 
-        self.canvas.addEventListener('touchend',
-            function (e) {
-                const touchobj = e.changedTouches[0]; // reference first touch point for this event
-                const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
-                if (e.changedTouches.length === 2) {
-                    evt.shiftKey = true;
-                    evt.altKey = true;
+        const onMouseEnter = function (evt) {
+            document.onkeydown = function (evt2) {
+                self.handleKeyDown(evt2, self);
+            }
+            document.onkeyup = function (evt2) {
+                self.handleKeyUp(evt2, self);
+            }
+        };
+
+        const onMouseLeave = function (evt) {
+            document.onkeydown = function (evt2) {
+            }
+        };
+
+        const onWheel = function (evt) {
+            self.doWheel(evt);
+            evt.stopPropagation();
+            evt.preventDefault();
+        };
+
+        const onTouchStart = function (e) {
+            const touchobj = e.changedTouches[0];
+            const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
+            //alert(e.changedTouches.length)
+            if (e.changedTouches.length === 2) {
+                evt.shiftKey = true;
+                evt.altKey = true;
+            }
+            self.doMouseDown(evt, self);
+            self.mouseDownedAt = (e.timeStamp)
+            e.stopPropagation();
+            e.preventDefault();
+            // Create a timeout that will check if the user is holding down on the same spot to open the context menu
+            setTimeout(() => {
+                if (self.mouseDown && !self.mouseMoved) {
+                    self.doRightClick(evt, self);
                 }
-                const deltaTime = e.timeStamp - self.mouseDownedAt;
-                if (deltaTime < 300) {
-                    self.doClick(evt, self);
-                }
-                self.doMouseUp(evt, self);
-                e.stopPropagation();
-                e.preventDefault();
-            }, false)
+            }, 1000)
+        };
+
+        const onTouchMove = function (e) {
+            const touchobj = e.touches[0]; // reference first touch point for this event
+            const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, buttons: 1 };
+            if (e.touches.length === 2) {
+                evt.shiftKey = true;
+                evt.altKey = true;
+            }
+            self.doMouseMove(evt, self);
+            e.stopPropagation();
+            e.preventDefault();
+        };
+
+        const onTouchEnd = function (e) {
+            const touchobj = e.changedTouches[0]; // reference first touch point for this event
+            const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
+            if (e.changedTouches.length === 2) {
+                evt.shiftKey = true;
+                evt.altKey = true;
+            }
+            const deltaTime = e.timeStamp - self.mouseDownedAt;
+            if (deltaTime < 300) {
+                self.doClick(evt, self);
+            }
+            self.doMouseUp(evt, self);
+            e.stopPropagation();
+            e.preventDefault();
+        };
+
+        // Record every binding so detachCanvasListeners can remove the exact refs.
+        // Order/args preserved from the original addEventListener calls.
+        self.canvasEventListeners = [
+            ["mousedown", onMouseDown],
+            ["mouseup", onMouseUp],
+            ["contextmenu", onContextMenu],
+            ["mousedown", onMouseDownClick],
+            ["dblclick", onDblClick],
+            ["mousemove", onMouseMove],
+            ["mouseenter", onMouseEnter],
+            ["mouseleave", onMouseLeave],
+            ["wheel", onWheel],
+            ["touchstart", onTouchStart],
+            ["touchmove", onTouchMove],
+            ["touchend", onTouchEnd],
+        ];
+
+        console.log("addEventListener");
+        for (const [type, handler] of self.canvasEventListeners) {
+            self.canvas.addEventListener(type, handler, false);
+        }
     }
     self.doneEvents = true;
+}
+
+/**
+ * Teardown counterpart to attachCanvasListeners — remove every canvas listener
+ * that was recorded, and clear the document-level key handlers that mouseenter
+ * installs. Called from MGWebGL.componentWillUnmount so listeners don't leak
+ * across unmount / remount.
+ */
+export function detachCanvasListeners(self: MGWebGL): void {
+    if (self.canvasEventListeners && self.canvas) {
+        for (const [type, handler] of self.canvasEventListeners) {
+            self.canvas.removeEventListener(type, handler, false);
+        }
+    }
+    self.canvasEventListeners = [];
+    // mouseenter set these on document; drop them so they don't outlive us.
+    document.onkeydown = null;
+    document.onkeyup = null;
+    self.doneEvents = undefined;
 }
 
 /** Phase 4 — extensions, shaders, framebuffers, buffers, textures, first draw. */
@@ -422,7 +458,7 @@ export function initGraphics(self: MGWebGL): void {
         }
     }
 
-    setInterval(function () { self.drawSceneIfDirty() }, 16);
+    self.drawDirtyIntervalId = setInterval(function () { self.drawSceneIfDirty() }, 16);
     self.initializeShaders();
 
     self.textLegends = [];
