@@ -1,7 +1,15 @@
+#ifndef TINYGLTF_IMPLEMENTATION
 #define TINYGLTF_IMPLEMENTATION
+#endif
+#ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
+#endif
+#ifndef STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#endif
+#ifndef STB_IMAGE_READ_IMPLEMENTATION
 #define STB_IMAGE_READ_IMPLEMENTATION
+#endif
 
 #include <tiny_gltf.h>
 
@@ -12,13 +20,51 @@
 /*
 POSITION  -> VEC3 float
 NORMAL    -> VEC3 float
-TEXCOORD_0-> VEC2 float
-COLOR_0   -> VEC3/VEC4 float or normalized ubyte
+TEXCOORD_0-> VEC2 float  //TODO
+COLOR_0   -> VEC3/VEC4 float or normalized ubyte //TODO partially
 INDICES   -> ubyte, ushort or uint
 */
 
-bool LoadGltfModel(const std::string& filename, tinygltf::Model& model)
-{
+bool LoadGltfModel(tinygltf::Model& model);
+bool LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned char> buffer, const std::string str);
+
+bool LoadGltfModelFromFile(const std::string& filename, tinygltf::Model& model){
+    std::vector<unsigned char> buffer;
+    std::string str;
+
+    if (filename.size() >= 4 && filename.substr(filename.size() - 4) == ".glb"){
+        std::ifstream is(filename, std::ios_base::binary);
+        if (is) {
+            // get length of file:
+            is.seekg (0, is.end);
+            int length = is.tellg();
+            is.seekg (0, is.beg);
+
+
+            // read data as a block:
+            buffer.resize(length);
+            is.read(reinterpret_cast<char *>(&buffer.at(0)),length);
+
+            if (is){
+                std::cout << "all characters read successfully." << std::endl;
+            } else {
+                std::cout << "error: only " << is.gcount() << " could be read" << std::endl;
+                return false;
+            }
+            is.close();
+        }
+    } else {
+	std::ifstream file(filename.c_str());
+	std::stringstream sbuffer;
+	sbuffer << file.rdbuf();
+        str = sbuffer.str();
+    }
+
+    return  LoadGltfModelFromMemory(model, buffer, str);
+    
+}
+
+bool LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned char> buffer, const std::string str){
     tinygltf::TinyGLTF loader;
 
     std::string err;
@@ -27,22 +73,12 @@ bool LoadGltfModel(const std::string& filename, tinygltf::Model& model)
     bool result = false;
 
     // Determine whether this is a .glb or .gltf file
-    if (filename.size() >= 4 &&
-        filename.substr(filename.size() - 4) == ".glb")
-    {
-        result = loader.LoadBinaryFromFile(
-            &model,
-            &err,
-            &warn,
-            filename);
-    }
-    else
-    {
-        result = loader.LoadASCIIFromFile(
-            &model,
-            &err,
-            &warn,
-            filename);
+    if (buffer.size()>0){
+        result = loader.LoadBinaryFromMemory(&model, &err, &warn, &buffer.at(0),
+                static_cast<unsigned int>(buffer.size()),
+                ".", tinygltf::REQUIRE_VERSION);
+    } else {
+        result = loader.LoadASCIIFromString(&model, &err, &warn, str.c_str(), str.length(), "", tinygltf::REQUIRE_VERSION);
     }
 
     if (!warn.empty())
@@ -57,10 +93,14 @@ bool LoadGltfModel(const std::string& filename, tinygltf::Model& model)
 
     if (!result)
     {
-        std::cerr << "Failed to load: " << filename << '\n';
+        std::cerr << "Failed to load\n";
         return false;
     }
 
+    return LoadGltfModel(model);
+}
+
+bool LoadGltfModel(tinygltf::Model& model){
     for(const auto &m : model.meshes){
         std::cout << m.name << std::endl;
         std::cout << m.primitives.size() << std::endl;
@@ -91,7 +131,6 @@ bool LoadGltfModel(const std::string& filename, tinygltf::Model& model)
             }
 
             auto nIt = primitive.attributes.find("NORMAL");
-
             if (nIt != primitive.attributes.end()){
                 const auto& accessor = model.accessors[nIt->second];
 
@@ -110,24 +149,27 @@ bool LoadGltfModel(const std::string& filename, tinygltf::Model& model)
                     std::cout << x << " " << y << " " << z << "\n";
                 }
             }
+
             auto cIt = primitive.attributes.find("COLOR_0");
-            const auto& c_accessor = model.accessors[cIt->second];
+            if (cIt != primitive.attributes.end()){
+                const auto& c_accessor = model.accessors[cIt->second];
 
-            std::cout << c_accessor.componentType << "\n";
-            std::cout << c_accessor.type << "\n";
-            std::cout << c_accessor.normalized << "\n";
-            const auto& view = model.bufferViews[c_accessor.bufferView];
-            const float* colors = reinterpret_cast<const float*>(&buffer.data[view.byteOffset + c_accessor.byteOffset]);
-            std::cout << c_accessor.count << std::endl;
+                std::cout << c_accessor.componentType << "\n";
+                std::cout << c_accessor.type << "\n";
+                std::cout << c_accessor.normalized << "\n";
+                const auto& view = model.bufferViews[c_accessor.bufferView];
+                const float* colors = reinterpret_cast<const float*>(&buffer.data[view.byteOffset + c_accessor.byteOffset]);
+                std::cout << c_accessor.count << std::endl;
 
-            if(c_accessor.type==4){
-                size_t vertexCount = c_accessor.count;
-                for (size_t i = 0; i < vertexCount; i++){
-                    float x = colors[i * 4 + 0];
-                    float y = colors[i * 4 + 1];
-                    float z = colors[i * 4 + 2];
-                    float a = colors[i * 4 + 3];
-                    std::cout << x << " " << y << " " << z << " " << a << "\n";
+                if(c_accessor.type==4){
+                    size_t vertexCount = c_accessor.count;
+                    for (size_t i = 0; i < vertexCount; i++){
+                        float x = colors[i * 4 + 0];
+                        float y = colors[i * 4 + 1];
+                        float z = colors[i * 4 + 2];
+                        float a = colors[i * 4 + 3];
+                        std::cout << x << " " << y << " " << z << " " << a << "\n";
+                    }
                 }
             }
 
@@ -153,12 +195,14 @@ bool LoadGltfModel(const std::string& filename, tinygltf::Model& model)
     return true;
 }
 
+#ifdef __GLTF_IMPORT_MAIN__
 int main(int argc, char *argv[]){
     if(argc>1){
         tinygltf::Model model;
-        bool retval = LoadGltfModel(argv[1],model);
+        bool retval = LoadGltfModelFromFile(argv[1],model);
         if(!retval) return 1;
         return 0;
     }
     return 1;
 }
+#endif
