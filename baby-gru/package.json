@@ -115,6 +115,7 @@
         "@dnd-kit/sortable": "^10.0.0",
         "@dnd-kit/utilities": "^3.2.2",
         "@graphql-typed-document-node/core": "^3.2.0",
+        "@use-gesture/vanilla": "^10.3.1",
         "biojs-io-fasta": "^0.1.17",
         "chart.js": "^4.5.0",
         "chartjs-plugin-annotation": "^3.1.0",

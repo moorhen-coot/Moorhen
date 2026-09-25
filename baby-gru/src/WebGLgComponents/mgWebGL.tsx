@@ -243,6 +243,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doCrossEyedStereo: boolean;
         doAnaglyphStereo: boolean;
         doneEvents: boolean;
+        destroyTouchGestures?: () => void;
         fpsText: string;
         measurePointsArray: any[];
         mspfArray: number[];
