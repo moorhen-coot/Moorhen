@@ -24,10 +24,10 @@ const snackbarSlice = createSlice({
     reducers: {
         // API
         /* Display a message on the interface with the provided content and styling options.
-        @message The content of the message to be displayed.
-        @variant The styling variant for the message, which can be "success", "error", "warning", or "info". Defaults to "info" if not provided.
-        @autoHideDuration The duration in milliseconds for which the message should be displayed before automatically hiding. If null, the message will not auto-hide. Defaults to 6000 milliseconds if not provided.
-        @uid An optional unique identifier for the message. If not provided, a unique ID will be generated using the current timestamp and a random number. */
+        @param message The content of the message to be displayed.
+        @param variant The styling variant for the message, which can be "success", "error", "warning", or "info". Defaults to "info" if not provided.
+        @param autoHideDuration The duration in milliseconds for which the message should be displayed before automatically hiding. If null, the message will not auto-hide. Defaults to 6000 milliseconds if not provided.
+        @param uid An optional unique identifier for the message. If not provided, a unique ID will be generated using the current timestamp and a random number. */
         enqueueSnackbar: (state, action: PayloadAction<SnackbarPayload>
         ) => {
             const existingTag = state.findIndex(snackbar => (snackbar.tag === action.payload.tag));
