@@ -131,11 +131,37 @@ export function doHover(self: MGWebGL, event) {
     self.hoverDebounceTimeout = setTimeout(() => {
         const displayBuffers = self.store.getState().glRef.displayBuffers
         if (self.props.onAtomHovered) {
+        /**
+         * Set the hover state, and draw once it has actually landed.
+         *
+         * This was three separate setState calls per branch with nothing asking for a redraw
+         * afterwards, so the frame on screen was drawn from whatever hover state had been
+         * committed earlier - which is to say the previous hover. With one smooth mesh that is
+         * invisible, because the lag is within a single object. With twenty separate
+         * buffers it can light a different object from the one under the cursor, and leaves the
+         * last one lit after the pointer has moved off everything.
+         *
+         * Drawing from the setState callback is what fixes it: the draw then happens after the
+         * new value is committed rather than racing it.
+         *
+         * Skipping an update that changes nothing matters as much: hovering about within one
+         * object reports the same thing many times a second, and redrawing the scene for each
+         * of those would cost far more than the highlight is worth.
+         */
+        const setHover = (hoveridx: number, hover_point: number, hoverIndices: number[]) => {
+            const held = self.state.hoverIndices ?? []
+            if (self.state.hoveridx === hoveridx
+                && self.state.hover_point === hover_point
+                && held.length === hoverIndices.length
+                && hoverIndices.every((v, i) => held[i] === v)) {
+                return
+            }
+            self.setState({ hoveridx, hover_point, hoverIndices }, () => self.drawScene())
+        }
+
             const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
             if(minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.influence_weights_texture && displayBuffers[minidx_pi].pick_info.influence_point_indexes_texture && displayBuffers[minidx_pi].pick_info.influence_index_offsets_texture && displayBuffers[minidx_pi].pick_info.pick_points){
-                self.setState({ hoveridx: minidx_pi })
-                self.setState({ hover_point: minj_pi })
-                self.setState({ hoverIndices: [] })
+                setHover(minidx_pi, minj_pi, [])
             } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj_pi].length>0) {
                 //Hmm, I am worried, could triangleIndexs.length > 1 ?
                 const completeHoverIndices = []
@@ -144,21 +170,15 @@ export function doHover(self: MGWebGL, event) {
                     completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+1])
                     completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+2])
                 })
-                self.setState({ hoveridx: minidx_pi })
-                self.setState({ hover_point: -1 })
-                self.setState({ hoverIndices: completeHoverIndices })
+                setHover(minidx_pi, -1, completeHoverIndices)
             } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.pick_points) {
                 // A buffer offering only pick_points, with no per-vertex influence data and no
                 // triangle lists: the instanced shapes, where one pick point stands for one whole
                 // instance. hover_point is then the instance index, which the instanced vertex
                 // shader compares against gl_InstanceID.
-                self.setState({ hoveridx: minidx_pi })
-                self.setState({ hover_point: minj_pi })
-                self.setState({ hoverIndices: [] })
+                setHover(minidx_pi, minj_pi, [])
             } else {
-                self.setState({ hoveridx: -1 })
-                self.setState({ hover_point: -1 })
-                self.setState({ hoverIndices: [] })
+                setHover(-1, -1, [])
             }
             if (minidx > -1) {
                 self.props.onAtomHovered({ atom: displayBuffers[minidx].atoms[minj], buffer: displayBuffers[minidx] });
