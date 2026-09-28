@@ -1,3 +1,4 @@
+#ifdef __GLTF_IMPORT_MAIN__
 #ifndef TINYGLTF_IMPLEMENTATION
 #define TINYGLTF_IMPLEMENTATION
 #endif
@@ -10,10 +11,12 @@
 #ifndef STB_IMAGE_READ_IMPLEMENTATION
 #define STB_IMAGE_READ_IMPLEMENTATION
 #endif
+#endif
 
-#include <tiny_gltf.h>
+#include "tiny_gltf.h"
 
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <string>
 
@@ -26,7 +29,7 @@ INDICES   -> ubyte, ushort or uint
 */
 
 bool LoadGltfModel(tinygltf::Model& model);
-bool LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned char> buffer, const std::string str);
+bool LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned char> &buffer, const std::string &str);
 
 bool LoadGltfModelFromFile(const std::string& filename, tinygltf::Model& model){
     std::vector<unsigned char> buffer;
@@ -64,7 +67,7 @@ bool LoadGltfModelFromFile(const std::string& filename, tinygltf::Model& model){
     
 }
 
-bool LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned char> buffer, const std::string str){
+bool LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned char> &buffer, const std::string &str){
     tinygltf::TinyGLTF loader;
 
     std::string err;
@@ -193,6 +196,19 @@ bool LoadGltfModel(tinygltf::Model& model){
     }
 
     return true;
+}
+
+bool LoadGltFromFile(const std::string &fn){
+    tinygltf::Model model;
+    return LoadGltfModelFromFile(fn,model);
+}
+
+bool LoadGltFromMemory(uintptr_t ptr, size_t size, const std::string &str){
+    tinygltf::Model model;
+    std::vector<unsigned char> buffer;
+    auto data = reinterpret_cast<const unsigned char*>(ptr);
+    buffer.assign(data,data+size);
+    return  LoadGltfModelFromMemory(model, buffer, str);
 }
 
 #ifdef __GLTF_IMPORT_MAIN__
