@@ -1,12 +1,12 @@
 import { useDispatch } from "react-redux";
 import { setShownControl } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { useMoorhenInstance } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
 import { ContextButtonProps, MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 
 export const MoorhenRotamerChangeButton = (props: ContextButtonProps) => {
     const dispatch = useDispatch();
-    const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
 
     const nonCootCommand = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
         props.setOpacity(1);
@@ -29,6 +29,7 @@ export const MoorhenRotamerChangeButton = (props: ContextButtonProps) => {
             icon={<img alt="change rotamer" className="moorhen-context-button__icon" src={`${props.urlPrefix}/pixmaps/rotamers.svg`} />}
             toolTipLabel="Change rotamers"
             nonCootCommand={nonCootCommand}
+            onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "modify")}
             {...props}
         />
     );

@@ -3,17 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { RootState } from "@/store";
 import {
-    setAmbient,
-    setClipEnd,
-    setClipStart,
-    setDiffuse,
-    setFogEnd,
-    setFogStart,
-    setLightPosition,
-    setSpecular,
-    setSpecularPower,
-} from "../../store/glRefSlice";
-import {
+    resetSceneSettings,
     setBackgroundColor,
     setClipCap,
     setDepthBlurDepth,
@@ -28,13 +18,13 @@ import {
     setResetClippingFogging,
     setSsaoBias,
     setSsaoRadius,
-    setUseOffScreenBuffers,
+    setUseOffScreenBuffers,setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd , setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
@@ -65,10 +55,10 @@ const EdgeDetectPanel = () => {
                 isDisabled={!doEdgeDetect}
                 minVal={0}
                 maxVal={4}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Depth scale"
-                externalValue={edgeDetectDepthScale}
-                setExternalValue={val => dispatch(setEdgeDetectDepthScale(val))}
+                value={edgeDetectDepthScale}
+                setValue={val => dispatch(setEdgeDetectDepthScale(val))}
                 stepButtons={1}
                 decimalPlaces={0}
             />
@@ -76,10 +66,10 @@ const EdgeDetectPanel = () => {
                 isDisabled={!doEdgeDetect}
                 minVal={0}
                 maxVal={4}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Normal scale"
-                externalValue={edgeDetectNormalScale}
-                setExternalValue={val => dispatch(setEdgeDetectNormalScale(val))}
+                value={edgeDetectNormalScale}
+                setValue={val => dispatch(setEdgeDetectNormalScale(val))}
                 stepButtons={1}
                 decimalPlaces={0}
             />
@@ -87,10 +77,10 @@ const EdgeDetectPanel = () => {
                 isDisabled={!doEdgeDetect}
                 minVal={0.1}
                 maxVal={10.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Depth threshold"
-                externalValue={edgeDetectDepthThreshold}
-                setExternalValue={val => dispatch(setEdgeDetectDepthThreshold(val))}
+                value={edgeDetectDepthThreshold}
+                setValue={val => dispatch(setEdgeDetectDepthThreshold(val))}
                 stepButtons={0.1}
                 decimalPlaces={1}
             />
@@ -98,10 +88,10 @@ const EdgeDetectPanel = () => {
                 isDisabled={!doEdgeDetect}
                 minVal={0.1}
                 maxVal={1.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Normal threshold"
-                externalValue={edgeDetectNormalThreshold}
-                setExternalValue={val => dispatch(setEdgeDetectNormalThreshold(val))}
+                value={edgeDetectNormalThreshold}
+                setValue={val => dispatch(setEdgeDetectNormalThreshold(val))}
                 stepButtons={0.1}
                 decimalPlaces={1}
             />
@@ -129,22 +119,22 @@ const OcclusionPanel = () => {
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={2.0}
-                logScale={false}
+                scale="linear"
                 isDisabled={!doSSAO}
                 sliderTitle="Occlusion radius"
-                externalValue={ssaoRadius}
-                setExternalValue={val => dispatch(setSsaoRadius(val))}
+                value={ssaoRadius}
+                setValue={val => dispatch(setSsaoRadius(val))}
                 stepButtons={0.1}
                 decimalPlaces={1}
             />
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={1.0}
-                logScale={false}
+                scale="linear"
                 isDisabled={!doSSAO}
                 sliderTitle="Occlusion effect"
-                externalValue={ssaoBias}
-                setExternalValue={val => dispatch(setSsaoBias(val))}
+                value={ssaoBias}
+                setValue={val => dispatch(setSsaoBias(val))}
                 stepButtons={0.1}
                 decimalPlaces={1}
             />
@@ -262,10 +252,10 @@ const DepthBlurPanel = () => {
                 isDisabled={!useOffScreenBuffers}
                 minVal={0.4}
                 maxVal={0.6}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Blur depth"
-                externalValue={depthBlurDepth}
-                setExternalValue={val => dispatch(setDepthBlurDepth(val))}
+                value={depthBlurDepth}
+                setValue={val => dispatch(setDepthBlurDepth(val))}
                 stepButtons={0.0001}
                 decimalPlaces={4}
             />
@@ -273,10 +263,10 @@ const DepthBlurPanel = () => {
                 isDisabled={!useOffScreenBuffers}
                 minVal={2}
                 maxVal={16}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Blur radius"
-                externalValue={depthBlurRadius}
-                setExternalValue={val => dispatch(setDepthBlurRadius(val))}
+                value={depthBlurRadius}
+                setValue={val => dispatch(setDepthBlurRadius(val))}
                 stepButtons={1}
                 decimalPlaces={0}
             />
@@ -286,11 +276,11 @@ const DepthBlurPanel = () => {
 
 const ClipFogPanel = () => {
     const dispatch = useDispatch();
-    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset);
-    const gl_fog_start = useSelector((state: moorhen.State) => state.glRef.fogStart);
-    const gl_fog_end = useSelector((state: moorhen.State) => state.glRef.fogEnd);
-    const clipStart = useSelector((state: moorhen.State) => state.glRef.clipStart);
-    const clipEnd = useSelector((state: moorhen.State) => state.glRef.clipEnd);
+    const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset);
+    const gl_fog_start = useSelector((state: moorhen.State) => state.sceneSettings.fogStart);
+    const gl_fog_end = useSelector((state: moorhen.State) => state.sceneSettings.fogEnd);
+    const clipStart = useSelector((state: moorhen.State) => state.sceneSettings.clipStart);
+    const clipEnd = useSelector((state: moorhen.State) => state.sceneSettings.clipEnd);
 
     const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap);
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
@@ -300,10 +290,10 @@ const ClipFogPanel = () => {
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={1000}
-                logScale={true}
+                scale="log"
                 sliderTitle="Front clip"
-                externalValue={clipStart}
-                setExternalValue={newValue => {
+                value={clipStart}
+                setValue={newValue => {
                     dispatch(setClipStart(newValue));
                 }}
                 decimalPlaces={2}
@@ -311,10 +301,10 @@ const ClipFogPanel = () => {
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={1000}
-                logScale={true}
+                scale="log"
                 sliderTitle="Back clip"
-                externalValue={clipEnd}
-                setExternalValue={newValue => {
+                value={clipEnd}
+                setValue={newValue => {
                     dispatch(setClipEnd(newValue));
                 }}
                 decimalPlaces={2}
@@ -322,10 +312,10 @@ const ClipFogPanel = () => {
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={1000}
-                logScale={true}
+                scale="log"
                 sliderTitle="Front zFog"
-                externalValue={fogClipOffset - gl_fog_start}
-                setExternalValue={newValue => {
+                value={fogClipOffset - gl_fog_start}
+                setValue={newValue => {
                     dispatch(setFogStart(fogClipOffset - newValue));
                 }}
                 decimalPlaces={2}
@@ -333,10 +323,10 @@ const ClipFogPanel = () => {
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={1000}
-                logScale={true}
+                scale="log"
                 sliderTitle="Back zFog"
-                externalValue={gl_fog_end - fogClipOffset}
-                setExternalValue={newValue => {
+                value={gl_fog_end - fogClipOffset}
+                setValue={newValue => {
                     dispatch(setFogEnd(newValue + fogClipOffset));
                 }}
                 decimalPlaces={2}
@@ -364,11 +354,11 @@ const ClipFogPanel = () => {
 };
 
 const LightingPanel = () => {
-    const lightPosition = useSelector((state: moorhen.State) => state.glRef.lightPosition);
-    const ambient = useSelector((state: moorhen.State) => state.glRef.ambient);
-    const specular = useSelector((state: moorhen.State) => state.glRef.specular);
-    const diffuse = useSelector((state: moorhen.State) => state.glRef.diffuse);
-    const specularPower = useSelector((state: moorhen.State) => state.glRef.specularPower);
+    const lightPosition = useSelector((state: moorhen.State) => state.sceneSettings.lightPosition);
+    const ambient = useSelector((state: moorhen.State) => state.sceneSettings.ambient);
+    const specular = useSelector((state: moorhen.State) => state.sceneSettings.specular);
+    const diffuse = useSelector((state: moorhen.State) => state.sceneSettings.diffuse);
+    const specularPower = useSelector((state: moorhen.State) => state.sceneSettings.specularPower);
 
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow);
 
@@ -379,10 +369,10 @@ const LightingPanel = () => {
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={1.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Diffuse"
-                externalValue={diffuse[0]}
-                setExternalValue={newValue => {
+                value={diffuse[0]}
+                setValue={newValue => {
                     dispatch(setDiffuse([newValue, newValue, newValue, 1.0]));
                 }}
                 stepButtons={0.01}
@@ -391,10 +381,10 @@ const LightingPanel = () => {
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={1.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Specular"
-                externalValue={specular[0]}
-                setExternalValue={newValue => {
+                value={specular[0]}
+                setValue={newValue => {
                     dispatch(setSpecular([newValue, newValue, newValue, 1.0]));
                 }}
                 stepButtons={0.01}
@@ -403,10 +393,10 @@ const LightingPanel = () => {
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={1.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Ambient"
-                externalValue={ambient[0]}
-                setExternalValue={newValue => {
+                value={ambient[0]}
+                setValue={newValue => {
                     dispatch(setAmbient([newValue, newValue, newValue, 1.0]));
                 }}
                 stepButtons={0.01}
@@ -415,10 +405,10 @@ const LightingPanel = () => {
             <MoorhenSlider
                 minVal={1.0}
                 maxVal={600.0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Specular power"
-                externalValue={specularPower}
-                setExternalValue={newValue => {
+                value={specularPower}
+                setValue={newValue => {
                     dispatch(setSpecularPower(newValue));
                 }}
                 stepButtons={1}
@@ -448,8 +438,10 @@ export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "ve
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
     const panelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const [newSlidersMode, setNewSlidersMode] = useState<boolean>(true);
+    const dispatch = useDispatch();
     return (
         <MoorhenStack direction={props.stackDirection}>
+            <MoorhenButton onClick={() => dispatch(resetSceneSettings())} > Reset </MoorhenButton>
             <MoorhenToggle
                 label="Use new fog/clip/blur sliders"
                 checked={newSlidersMode}

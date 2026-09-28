@@ -82,8 +82,12 @@ export class CommandCentre {
     onCommandExit: null | ((kwargs: any) => void);
     onActiveMessagesChanged: null | ((activeMessages: WorkerMessage[]) => void);
     onMoleculeChanged: null | ((molNo: number) => void);
+    loadedRotamerTables: boolean;
+    loadedRotaRamaTables: boolean;
 
     constructor(urlPrefix: string, timeCapsule: React.RefObject<moorhen.TimeCapsule>, props: { [x: string]: any }) {
+        this.loadedRotamerTables = false
+        this.loadedRotaRamaTables = false
         this.activeMessages = [];
         this.urlPrefix = urlPrefix;
         this.isClosed = false;
@@ -140,6 +144,36 @@ export class CommandCentre {
     }
 
     async cootCommand(kwargs: cootCommandKwargs, doJournal: boolean = true): Promise<WorkerResponse> {
+        if(kwargs.command && ["rotate_around_bond","change_to_next_rotamer","change_to_previous_rotamer",
+            "change_to_first_rotamer", "get_rotamer_dodecs",
+            "get_rotamer_dodecs_instanced","auto_fit_rotamer",
+            "rotamer_analysis","get_validation"
+            ].indexOf(kwargs.command)>-1){
+            if(!this.loadedRotamerTables){
+                console.log("A rotamer command, let's load the rotamers")
+                const fileResponseRota = await fetch(`${this.urlPrefix}/rota_other-data.tar.gz`);
+                const fileDataRota = await fileResponseRota.arrayBuffer();
+                await this.postMessage({ message: "loadExtraData", data: { cootData: new Uint8Array(fileDataRota) } });
+
+                const fileResponseRotaArgLys = await fetch(`${this.urlPrefix}/rota_arg_lys-data.tar.gz`);
+                const fileDataRotaArgLys = await fileResponseRotaArgLys.arrayBuffer();
+                await this.postMessage({ message: "loadExtraData", data: { cootData: new Uint8Array(fileDataRotaArgLys) } });
+
+                await this.postMessage({ message: "loadRotamerTables", data: { } });
+
+                this.loadedRotamerTables = true
+            }
+        }
+        if(kwargs.command && kwargs.command==="get_validation"){
+            if(!this.loadedRotaRamaTables){
+                console.log("A rotarama command, let's load the rotamers")
+                const fileResponse = await fetch(`${this.urlPrefix}/rotarama-data.tar.gz`);
+                const fileData = await fileResponse.arrayBuffer();
+                await this.postMessage({ message: "loadExtraData", data: { cootData: new Uint8Array(fileData) } });
+                this.loadedRotaRamaTables = true
+            }
+        }
+
         const message = "coot_command";
         console.log("In cootCommand", kwargs.command);
         if (this.onCommandStart) {

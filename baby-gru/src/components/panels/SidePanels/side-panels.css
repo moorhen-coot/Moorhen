@@ -38,6 +38,7 @@
     display: flex;
     align-items: flex-end;
     flex-direction: column;
+    gap: 2px;
     top: 4rem;
     right: -1px;
     z-index: calc(var(--z-side-panels) + 1);

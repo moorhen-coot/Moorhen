@@ -1,4 +1,3 @@
-import { Delete, FileOpen } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useRef, useState } from "react";
@@ -210,11 +209,23 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                 })
             );
         } else if (objectType === "latex") {
+            let [new_x, new_y] = [0, 1];
+            try {
+                const [_new_x, _new_y] = positionText.split(",").map(a => parseFloat(a));
+                if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y)) {
+                    new_x = _new_x;
+                    new_y = _new_y;
+                } else {
+                    console.log("Not a valid number pair in latex text position.", positionText.split(","));
+                }
+            } catch (e) {
+                console.log("Not a valid number pair in latex text position.");
+            }
             dispatch(
                 addLatexOverlay({
                     text: theOverlayObject.text,
-                    x: theOverlayObject.x,
-                    y: theOverlayObject.y,
+                    x: new_x,
+                    y: new_y,
                     height: theOverlayObject.height,
                     uniqueId: theOverlayObject.uniqueId,
                     zIndex: theOverlayObject.zIndex,
@@ -783,9 +794,8 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                                     console.log("Change", e.target.files);
                                     upLoadNewImage(e.target.files[0]);
                                 }}
-                                style={{ display: "none" }}
                             />
-                            <MoorhenTextInput
+                            {/* <MoorhenTextInput
                                 disabled
                                 text={pathText}
                                 label="Image file"
@@ -793,25 +803,15 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                                     updateObject({ src: evt.target.value }, drawModeRef.current.value);
                                 }}
                                 style={{ height: "2rem", margin: "0.1rem" }}
-                            />
+                            /> */}
                             {imageString && (
-                                <>
                                     <img
                                         style={{ width: "1.5rem", height: "1.5rem", margin: "0.3rem" }}
                                         src={imageString}
                                         width="28"
                                         height="28"
                                     />
-                                    <MoorhenButton
-                                        size="sm"
-                                        style={{ margin: "0.1rem" }}
-                                        onClick={() => {
-                                            inputFile.current.click();
-                                        }}
-                                    >
-                                        <FileOpen />
-                                    </MoorhenButton>
-                                </>
+
                             )}
                         </MoorhenStack>
                         <MoorhenStack direction="line">
@@ -1050,8 +1050,8 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                                                 drawModeRef.current.value
                                             );
                                         }}
+                                        icon="MatSymDelete"
                                     >
-                                        <Delete />
                                     </MoorhenButton>
                                 </MoorhenStack>
                             );

@@ -22,6 +22,7 @@ export const ExportMenuItem = () => {
                 doDownload([gltfData], `${map.name}.${suffix}`);
             }
         }
+
         for (const molecule of molecules) {
             let index = 0;
             for (const representation of molecule.representations) {
@@ -44,13 +45,13 @@ export const ExportMenuItem = () => {
 
     return (
         <MoorhenStack>
-            <MoorhenMenuItem id="export-gltf-menu-item" onClick={() => handleExportObj("gltf")}>
+            <MoorhenMenuItem id="export-gltf-menu-item" onClick={() => { handleExportObj("gltf"); }}>
                 gltf
             </MoorhenMenuItem>
-            <MoorhenMenuItem id="export-obj-menu-item" onClick={() => handleExportObj("obj")}>
+            <MoorhenMenuItem id="export-obj-menu-item" onClick={() => { handleExportObj("obj"); }}>
                 obj
             </MoorhenMenuItem>
-            <MoorhenMenuItem id="export-3mf-menu-item" onClick={() => handleExportObj("3mf")}>
+            <MoorhenMenuItem id="export-3mf-menu-item" onClick={() => { handleExportObj("3mf"); }}>
                 3mf
             </MoorhenMenuItem>{" "}
         </MoorhenStack>

@@ -63,13 +63,13 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
         <MoorhenSlider
             minVal={0.01}
             maxVal={1.0}
-            logScale={false}
+            scale="linear"
             sliderTitle="Opacity"
             isDisabled={!props.mapIsVisible}
             usePreciseInput={true}
-            showMinMaxVal={false}
-            externalValue={props.mapStyle === "solid" ? surfaceAlpha : props.mapStyle === "lines" ? meshAlpha : litAlpha}
-            setExternalValue={
+            showLabels={false}
+            value={props.mapStyle === "solid" ? surfaceAlpha : props.mapStyle === "lines" ? meshAlpha : litAlpha}
+            setValue={
                 props.mapStyle === "solid"
                     ? value => setSurfaceAlpha(value)
                     : props.mapStyle === "lines"
@@ -94,27 +94,36 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
     return (
         <MoorhenAccordion title="Draw Settings">
             <MoorhenStack direction="line">
-                <MoorhenStack direction="vertical">
-                    <MoorhenButton
+                <MoorhenStack direction="vertical" gap={"0.5rem"}>
+                    {props.map.isEM &&
+                    <MoorhenStack card  style={{ margin: "0rem", padding: "0rem" }} gap={0} justify="center"> 
+                    <MoorhenToggle
                         id={`lock-origin-toggle-${props.map.molNo}`}
-                        type="toggle"
+                        type="radio"
                         checked={isOriginLocked}
-                        onClick={() => {
+                        onChange={() => {
                             handleOriginLockClick();
                         }}
                         disabled={!props.mapIsVisible}
-                        icon={isOriginLocked ? "MatSymLockClose" : "MatSymLockOpen"}
-                    >
-                        <span
-                            style={{
-                                marginLeft: "0.5rem",
-                            }}
-                        >
-                            {props.map.isOriginLocked ? "Locked Origin" : "Moving Origin"}
-                        </span>
-                    </MoorhenButton>
+                        // icon={isOriginLocked ? "MatSymLockClose" : "MatSymLockOpen"}
+                        label={" Draw Full Map"}
+                    />
+                    <MoorhenToggle
+                        id={`lock-origin-toggle-${props.map.molNo}`}
+                        type="radio"
+                        checked={!isOriginLocked}
+                        onChange={() => {
+                            handleOriginLockClick();
+                        }}
+                        disabled={!props.mapIsVisible}
+                        // icon={isOriginLocked ? "MatSymLockClose" : "MatSymLockOpen"}
+                        label={" Draw Local Map"}
+                    />
+                    </MoorhenStack>}
+                    <MoorhenStack card style={{ margin: "0rem", padding: "0rem" }} gap={0} justify="center">
                     <MoorhenToggle
                         checked={props.mapStyle === "lines"}
+                        type="radio"
                         onChange={() => {
                             dispatch(
                                 setMapStyle({
@@ -127,6 +136,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                     />
                     <MoorhenToggle
                         checked={props.mapStyle === "solid"}
+                        type="radio"
                         onChange={() => {
                             dispatch(
                                 setMapStyle({
@@ -139,6 +149,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                     />
                     <MoorhenToggle
                         checked={props.mapStyle === "lit-lines"}
+                        type="radio"
                         onChange={() => {
                             dispatch(
                                 setMapStyle({
@@ -148,20 +159,20 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                             );
                         }}
                         label="Draw as lit lines"
-                    />
+                    /></MoorhenStack>
                 </MoorhenStack>
                 <MoorhenStack direction="vertical" style={{ width: "100%" }}>
                     <MoorhenSlider
                         minVal={2}
                         maxVal={maxRadius}
-                        showMinMaxVal={false}
+                        showLabels={false}
                         showButtons={true}
-                        logScale={false}
+                        scale="linear"
                         stepButtons={1}
                         sliderTitle="Radius:"
                         isDisabled={!props.mapIsVisible}
-                        externalValue={props.mapRadius}
-                        setExternalValue={newVal => {
+                        value={props.mapRadius}
+                        setValue={newVal => {
                             dispatch(
                                 setMapRadius({
                                     molNo: props.map.molNo,

@@ -3,6 +3,8 @@ import { getColorFromGradient } from "../inputs";
 import { gradientPresets } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenPopover, MoorhenStack } from "../interface-base";
 import { Residue, SeqElement } from "./MoorhenSeqViewTypes";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 interface ValidationTracksProps {
     sequence: SeqElement;
@@ -15,17 +17,20 @@ interface ValidationTracksProps {
 
 export const ValidationTracks = memo((props: ValidationTracksProps) => {
     const { sequence, residue, columnWidth, validationTracks = ["Overall RMSZ", "Density Correlation"] } = props;
-
+    const glHeight = useSelector((state: RootState) => state.sceneSettings.GlViewportHeight)
     const [isPopoverShown, setIsPopoverShown] = React.useState<boolean>(false);
 
-    const trackData = validationTracks.map(track => residue?.validationData?.[track] ?? { value: null });
+    const normalizedTracks = validationTracks ?? [];
+    const trackData = normalizedTracks.map(track => residue?.validationData?.[track] ?? { value: null });
 
-    const tracks = trackData.map(data => {
+    const tracks = trackData.map((data, index) => {
         const value = Array.isArray(data.value) ? data.value[0] : data.value;
         const reverseGradient = data.reverseGradient ?? false;
+        const trackKey = `${normalizedTracks[index]}-${index}`;
         return (
             <div
-                className="moorhen__seqviewer__residue-validation-box-top"
+                key={trackKey}
+                className={`moorhen__seqviewer__residue-validation-box ${data.value === null ?  "empty" : ""}`}
                 style={
                     {
                         "--column-width": `${columnWidth}rem`,
@@ -49,8 +54,8 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
             validationDataCategories.map(category => {
                 const categoryData = Object.entries(residue?.validationData ?? {}).filter(([key, data]) => data.category === category);
                 return (
-                    <MoorhenStack direction="column" inputGrid card key={category}>
-                        <span style={{ fontWeight: "bold", marginBottom: "0.5rem", display: "block" }}>{category}</span>
+                    <MoorhenStack direction="column" inputGrid card key={category} style={{margin: "0.2rem", padding: "0.5rem", fontSize: "0.9rem"}}>
+                        <span style={{ fontWeight: "bold", marginBottom: "0.1rem", display: "block" }}>{category}</span>
                         <div />
                         {categoryData
                             .sort(([keyA], [keyB]) => {
@@ -87,12 +92,13 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
         }
     }, [props.popoverRef]);
 
-    if (validationTracks.length > 0) {
+    if (normalizedTracks.length > 0) {
         return (
             <MoorhenPopover
                 isShown={isPopoverShown}
                 setIsShown={setIsPopoverShown}
                 linkRef={props.popoverRef}
+                style={{maxHeight: `${glHeight}px` }}
                 link={
                     <div
                         data-molname={sequence.molName}
@@ -113,8 +119,9 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
                     Residue Info: {sequence.chain} - {residue.resCode}
                     {residue.resNum}
                 </span>
+               <div style = {{maxHeight: `${glHeight -100}px`, width: "100%", overflow: "hidden" }}>
                 {popoverContent}
-                <span style={{ fontSize: "0.8rem", marginTop: "0.5rem", display: "block" }}>⟐ : Higher values are better </span>
+                <span style={{ fontSize: "0.8rem", marginTop: "0.5rem", display: "block" }}>⟐ : Higher values are better </span></div>
             </MoorhenPopover>
         );
     } else {

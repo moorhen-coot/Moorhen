@@ -143,6 +143,7 @@ export namespace webGL {
         offsetAttribute: GLint;
         sizeAttribute: GLint;
         textureOffsetAttribute: GLint;
+        screenOffsetAttribute: GLint;
         pixelZoom: WebGLUniformLocation;
         vertexTextureAttribute: GLint;
         textureMatrixUniform: WebGLUniformLocation;
@@ -224,6 +225,14 @@ export namespace webGL {
         screenZ: WebGLUniformLocation;
         ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
         zoom: WebGLUniformLocation;
+        //Fancy picking ...
+        uPointTex: WebGLUniformLocation;
+        uWeightTex: WebGLUniformLocation;
+        uOffsetTex: WebGLUniformLocation;
+        uPointTexWidth: WebGLUniformLocation;
+        uWeightTexWidth: WebGLUniformLocation;
+        uOffsetTexWidth: WebGLUniformLocation;
+        uHoveredPoint: WebGLUniformLocation;
     }
 
     interface ShaderGBuffersTriangles extends MGWebGLShader {}

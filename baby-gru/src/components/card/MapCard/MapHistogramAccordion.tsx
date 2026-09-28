@@ -1,5 +1,3 @@
-import { ZoomInOutlined, ZoomOutOutlined } from "@mui/icons-material";
-import { Checkbox, IconButton } from "@mui/material";
 import { Chart, registerables } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { useDispatch, useSelector } from "react-redux";
@@ -10,6 +8,7 @@ import { moorhen } from "../../../types/moorhen";
 import { convertViewtoPx } from "../../../utils/utils";
 import { MoorhenStack } from "../../interface-base";
 import { MoorhenAccordion } from "../../interface-base/Accordion/Accordion";
+import { MoorhenButton, MoorhenToggle } from "@/components/inputs";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -207,7 +206,7 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                     gap={1}
                     direction="vertical"
                 >
-                    <IconButton
+                    <MoorhenButton
                         onClick={() =>
                             setZoomFactor(prev => {
                                 if (prev + 2 > 20) {
@@ -216,11 +215,13 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                                 return prev + 2;
                             })
                         }
+                        type="icon-only"
+                        icon="MatSymZoomIn"
+
                     >
-                        <ZoomInOutlined />
-                    </IconButton>
+                    </MoorhenButton>
                     x{zoomFactor}
-                    <IconButton
+                    <MoorhenButton
                         onClick={() =>
                             setZoomFactor(prev => {
                                 if (prev - 2 < 1) {
@@ -229,9 +230,10 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                                 return prev - 2;
                             })
                         }
+                        type="icon-only"
+                        icon="MatSymZoomOut"
                     >
-                        <ZoomOutOutlined />
-                    </IconButton>
+                    </MoorhenButton>
                 </MoorhenStack>
             </MoorhenStack>
             <MoorhenStack
@@ -239,9 +241,9 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                 gap={1}
                 direction="horizontal"
             >
-                <Checkbox checked={exponential} onChange={evt => setExponential(evt.target.checked)} size="small" />
+                <MoorhenToggle checked={exponential} onChange={evt => setExponential(evt.target.checked)} label=""/>
                 <span style={{ margin: "0.0rem", fontSize: "0.8rem" }}>
-                    Log<sub>10</sub>(Y)
+                Log<sub>10</sub>(Y)                 
                 </span>
             </MoorhenStack>
         </MoorhenAccordion>

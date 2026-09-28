@@ -76,3 +76,8 @@
     box-shadow: 5px 5px 5px 2px var(--moorhen-inactive-shadow);
     animation: popInFade 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+.moorhen__search-bar-shortcut-item{
+    margin: 0.2rem;
+    
+}

@@ -472,6 +472,71 @@ export const createWebGLBuffers = (jsondata: any, idat: number, gl): DisplayBuff
     if(jsondata.doStencil){
         theBuffer.doStencil = jsondata.doStencil;
     }
+    if(jsondata.pick_info){
+        if(jsondata.pick_info.influence_weights && jsondata.pick_info.influence_point_indexes && jsondata.pick_info.influence_index_offsets && jsondata.pick_info.pick_points){
+            try {
+                theBuffer.pick_info = {}
+
+                const maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
+
+                const influence_weights_texture = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, influence_weights_texture);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                const influence_weights_width  = Math.ceil(Math.sqrt(jsondata.pick_info.influence_weights.length))
+                const influence_weights_height = Math.ceil(jsondata.pick_info.influence_weights.length / influence_weights_width);
+                if(influence_weights_width*influence_weights_height<maxTexSize*maxTexSize){
+                    const paddWeights = new Float32Array(influence_weights_width * influence_weights_height)
+                    paddWeights.set(jsondata.pick_info.influence_weights)
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, influence_weights_width, influence_weights_height, 0, gl.RED, gl.FLOAT, paddWeights);
+                    theBuffer.pick_info.influence_weights_texture = influence_weights_texture
+                    theBuffer.pick_info.influence_weights_width = influence_weights_width
+                }
+
+                const influence_point_indexes_texture = gl.createTexture();
+                const influence_point_indexes_width  = Math.ceil(Math.sqrt(jsondata.pick_info.influence_point_indexes.length))
+                const influence_point_indexes_height = Math.ceil(jsondata.pick_info.influence_point_indexes.length / influence_point_indexes_width);
+                if(influence_point_indexes_width*influence_point_indexes_height<maxTexSize*maxTexSize){
+                    const padded_influence_point_indexes = new Uint32Array(influence_point_indexes_width * influence_point_indexes_height)
+                    padded_influence_point_indexes.set(jsondata.pick_info.influence_point_indexes)
+                    gl.bindTexture(gl.TEXTURE_2D, influence_point_indexes_texture);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32UI, influence_point_indexes_width, influence_point_indexes_height, 0, gl.RED_INTEGER, gl.UNSIGNED_INT, padded_influence_point_indexes);
+                    theBuffer.pick_info.influence_point_indexes_texture = influence_point_indexes_texture
+                    theBuffer.pick_info.influence_point_indexes_width = influence_point_indexes_width
+                }
+
+                const influence_index_offsets_texture = gl.createTexture();
+                const influence_index_offsets_width  = Math.ceil(Math.sqrt(jsondata.pick_info.influence_index_offsets.length))
+                const influence_index_offsets_height = Math.ceil(jsondata.pick_info.influence_index_offsets.length / influence_index_offsets_width);
+                if(influence_index_offsets_width*influence_index_offsets_height<maxTexSize*maxTexSize){
+                    const padded_influence_index_offsets = new Uint32Array(influence_index_offsets_width * influence_index_offsets_height)
+                    padded_influence_index_offsets.set(jsondata.pick_info.influence_index_offsets)
+                    gl.bindTexture(gl.TEXTURE_2D, influence_index_offsets_texture);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32UI, influence_index_offsets_width, influence_index_offsets_height, 0, gl.RED_INTEGER, gl.UNSIGNED_INT, padded_influence_index_offsets);
+                    theBuffer.pick_info.influence_index_offsets_texture = influence_index_offsets_texture
+                    theBuffer.pick_info.influence_index_offsets_width = influence_index_offsets_width
+                }
+
+                //Do I want to texturify this as well? Or is that CPU stuff to detemine picked point?
+                theBuffer.pick_info.pick_points = jsondata.pick_info.pick_points
+
+            } catch(e) {
+                console.log(e)
+            }
+        } else {
+            theBuffer.pick_info = jsondata.pick_info
+        }
+    }
 
     return theBuffer
 }

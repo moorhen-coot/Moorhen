@@ -587,7 +587,7 @@ baby-gru/copyForDist.sh
 baby-gru/public/baby-gru/data.tar.gz
 baby-gru/public/baby-gru/CootWorker.js
 baby-gru/public/baby-gru/Components-inchikey.ich
-baby-gru/docs/
+baby-gru/docs/api
 baby-gru/src/version.js
 react-app/public/wasm/web_example.js
 baby-gru/src/protobuf/MoorhenSession.js
@@ -609,3 +609,6 @@ CCP4_WASM_BUILD_64/*
 install64/*
 .github/copilot-instructions.md
 baby-gru/src/LhasaReact
+baby-gru/public/MoorhenAssets/rota_arg_lys-data.tar.gz
+baby-gru/public/MoorhenAssets/rota_other-data.tar.gz
+baby-gru/public/MoorhenAssets/rotarama-data.tar.gz

@@ -1,22 +1,14 @@
-import { useDispatch, useSelector, useStore } from "react-redux";
+import { useDispatch,  useStore } from "react-redux";
 import { useRef } from "react";
 import { RootState } from "@/store";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
-import { setActiveMap } from "../../store/generalStatesSlice";
-import { addMapList } from "../../store/mapsSlice";
-import { addMolecule } from "../../store/moleculesSlice";
-import { moorhen } from "../../types/moorhen";
-import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import {  useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { MoorhenButton, MoorhenSelect } from "../inputs";
 
 export const LoadTutorialData = () => {
     const dispatch = useDispatch();
     const store = useStore<RootState>();
-    const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance()
 
-    const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
-    const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const tutorialNumberSelectorRef = useRef<HTMLSelectElement | null>(null);
     const { urlPrefix, monomerLibraryPath } = usePaths();
 
@@ -33,46 +25,25 @@ export const LoadTutorialData = () => {
         if (tutorialNumberSelectorRef.current === null) {
             return;
         }
+        const oldRepresentation = moorhenInstance.representation.defaultStyle;
+        moorhenInstance.representation.defaultStyle = "CBs";
         const tutorialNumber = tutorialNumberSelectorRef.current.value;
-        const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
-        newMolecule.setBackgroundColour(backgroundColor);
-        newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
-        const newMap = new MoorhenMap(commandCentre, store);
-        const newDiffMap = new MoorhenMap(commandCentre, store);
-        await newMolecule.loadToCootFromURL(
-            `${urlPrefix}/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.ent`,
-            `mol-${tutorialNumber}`
-        );
-        await newMolecule.fetchIfDirtyAndDraw("CBs");
-        await newMolecule.centreOn("/*/*/*/*", true);
-        await newMap.loadToCootFromMtzURL(
-            `${urlPrefix}/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
-            `map-${tutorialNumber}`,
-            {
-                F: "FWT",
-                PHI: "PHWT",
-                isDifference: false,
-                useWeight: false,
-                calcStructFact: true,
-                ...tutorialMtzColumnNames[tutorialNumber],
+        const loadedFiles = await moorhenInstance.files.loadFiles([`${urlPrefix}/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.ent`,
+             `${urlPrefix}/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`])
+        
+        for (const file of loadedFiles) {
+            console.log(file)
+            if (file.type === "map"){
+                const map = moorhenInstance.getMap(file.uniqueID) 
+                map.name =`map-${tutorialNumber} ${map.isDifference ? "- diff" : ""}`}
+            
+            if (file.type === "molecule") {
+                moorhenInstance.getMolecule(file.uniqueID).name = `mol-${tutorialNumber}`
             }
-        );
-        await newDiffMap.loadToCootFromMtzURL(
-            `${urlPrefix}/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
-            `diff-map-${tutorialNumber}`,
-            {
-                F: "DELFWT",
-                PHI: "PHDELWT",
-                isDifference: true,
-                useWeight: false,
-                calcStructFact: true,
-                ...tutorialMtzColumnNames[tutorialNumber],
-            }
-        );
-        dispatch(addMolecule(newMolecule));
-        dispatch(addMapList([newMap, newDiffMap]));
-        dispatch(setActiveMap(newMap));
+        }
+
         document.body.click();
+        moorhenInstance.representation.defaultStyle = oldRepresentation;
     };
 
     return (
@@ -82,7 +53,7 @@ export const LoadTutorialData = () => {
                     return <option key={tutorialNumber} value={tutorialNumber}>{`Tutorial ${tutorialNumber}`}</option>;
                 })}
             </MoorhenSelect>
-            <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>
+            <MoorhenButton onClick={onCompleted} ariaLabel="Load Tutorial OK">Ok</MoorhenButton>
         </>
     );
 };

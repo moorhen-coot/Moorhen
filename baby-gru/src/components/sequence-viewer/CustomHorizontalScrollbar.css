@@ -7,10 +7,9 @@
 }
 
 .moorhen__custom__scrollbar-track {
-    position: absolute;
+    position: relative;
     left: 0;
-    bottom: -14px;
-    width: 100%;
+    bottom: 0px;
     height: 12px;
     background: var(--moorhen-middle);
     cursor: pointer;

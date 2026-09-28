@@ -54,9 +54,9 @@ export const MoorhenSequencesAccordion = (props: {
 
     const residueSelectionCallback = useCallback(
         selection => {
-            handleResiduesSelection(selection, props.molecule, dispatch, enqueueSnackbar);
+            handleResiduesSelection(selection, props.molecule, dispatch);
         },
-        [props.molecule, dispatch, enqueueSnackbar]
+        [props.molecule, dispatch]
     );
 
     const handleHoverResidue = useCallback(
@@ -79,7 +79,7 @@ export const MoorhenSequencesAccordion = (props: {
                     sequences={sequenceList}
                     selectedResidues={sequenceSelection}
                     onResidueClick={handleClickResidue}
-                    onResiduesSelect={residueSelectionCallback}
+                    setSelectedResidues={residueSelectionCallback}
                     onHoverResidue={handleHoverResidue}
                     hoveredResidue={hoveredResidue}
                     maxDisplayHeight={8}

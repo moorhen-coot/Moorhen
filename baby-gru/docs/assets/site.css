@@ -1,0 +1,331 @@
+:root {
+    /* Active colour scheme: follows the OS by default, and is forced by the
+       data-theme attribute set by theme-toggle.js. light-dark() resolves each
+       value against it, so every colour is declared only once. */
+    color-scheme: light dark;
+
+    --bg: light-dark(#fff, #1b1e22);
+    --text: light-dark(#2b2b2b, #dcdcdc);
+    --border: light-dark(#ddd, #3a3f45);
+    --border-light: light-dark(#eee, #2c3035);
+    --link: light-dark(#34495e, #8fb3d9);
+    --heading-link: light-dark(#2c3e50, #a9c6e8);
+    --card-bg: light-dark(#fff, #24282d);
+    --button-bg: light-dark(#2c3e50, #3a6ea5);
+    --button-bg-hover: light-dark(#1a252f, #4c85c1);
+    --button-text: #fff; /* identical in both themes */
+    --note-bg: light-dark(#fff8e1, #3a3320);
+    --note-border: light-dark(#ffe08a, #7a6a2e);
+    --note-tech-bg: light-dark(#e8f1fb, #1d2b3a);
+    --note-tech-border: light-dark(#9ec4e6, #4a7ba6);
+    --note-danger-bg: light-dark(#f8d7da, #905358);
+    --note-danger-border: light-dark(#fbb886, #905358);
+    --code-bg: light-dark(#f6f8fa, #262b31);
+    --code-border: light-dark(#dfe3e8, #3a3f45);
+    --code-text: light-dark(#2b2b2b, #d6dde5);
+    --code-label-bg: light-dark(#eceff2, #2b3138);
+    --code-label-text: light-dark(#5b6570, #9aa7b4);
+    --code-cli-accent: light-dark(#1a7f37, #3fb950);
+    --code-ts-accent: light-dark(#0969da, #58a6ff);
+}
+
+/* Manual toggle (via the data-theme attribute set by theme-toggle.js). */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+    color-scheme: light;
+}
+
+body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem;
+    line-height: 1.6;
+}
+
+header.site-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+}
+
+header.site-header img {
+    height: 48px;
+}
+
+header.site-header h1 {
+    font-size: 1.4rem;
+    margin: 0;
+}
+
+.theme-toggle {
+    margin-left: auto;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
+    cursor: pointer;
+    font: inherit;
+}
+
+.theme-toggle:hover {
+    border-color: var(--link);
+}
+
+nav.site-nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+    padding: 0;
+    margin: 0 0 2rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 1rem;
+}
+
+nav.site-nav a {
+    text-decoration: none;
+    color: var(--link);
+    font-weight: 600;
+}
+
+nav.site-nav a:hover {
+    text-decoration: underline;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    background: var(--card-bg);
+}
+
+.card h3 {
+    margin-top: 0;
+}
+
+.card h3 a {
+    text-decoration: none;
+    color: var(--heading-link);
+}
+
+a.button {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+a.button:hover {
+    background: var(--button-bg-hover);
+}
+
+.note {
+    background: var(--note-bg);
+    border: 1px solid var(--note-border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+}
+
+.note-technical {
+    background: var(--note-tech-bg);
+    border: 1px solid var(--note-tech-border);
+    border-left: 4px solid var(--note-tech-border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+}
+
+.note-danger {
+    background: var(--note-danger-bg);
+    border: 1px solid var(--note-danger-border);
+    border-left: 4px solid var(--note-danger-border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+}
+
+/* Inline badge used in tables to flag API surface that is internal-only. */
+.internal-only {
+    display: inline-block;
+    margin-right: 0.4rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 4px;
+    border: 1px solid var(--note-danger-border);
+    background: var(--note-danger-bg);
+    color: var(--text);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.guide-article > section {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border-light);
+}
+
+.guide-article > section:first-of-type {
+    margin-top: 1.5rem;
+}
+
+.guide-article h2 {
+    margin: 0 0 1rem;
+    padding-left: 0.75rem;
+    border-left: 4px solid var(--link);
+    color: var(--heading-link);
+    line-height: 1.25;
+}
+
+.guide-article h3 {
+    margin-top: 1.75rem;
+    color: var(--link);
+}
+
+.guide-article p,
+.guide-article ul {
+    margin-top: 0.85rem;
+    margin-bottom: 0.85rem;
+}
+
+.guide-article li + li {
+    margin-top: 0.35rem;
+}
+
+.image-column {
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+
+.image-inline {
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: inline;
+    vertical-align: middle;
+}
+
+/* container that lays two inline images out side by side */
+.image-pair {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: 0.85rem 0;
+}
+
+.image-pair img {
+    width: 48%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+/* ---------- inline code and code blocks ---------- */
+
+code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 4px;
+    padding: 0.1em 0.35em;
+}
+
+pre.code-block {
+    position: relative;
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Consolas, "Liberation Mono", Menlo, monospace;
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 1rem 1.15rem;
+    overflow-x: auto;
+    font-size: 0.9em;
+    line-height: 1.55;
+    tab-size: 4;
+}
+
+pre.code-block code {
+    display: block;
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    font-size: inherit;
+    color: var(--code-text);
+    white-space: pre;
+}
+
+/* language label, set per block via data-lang; shell/CLI blocks get an accent colour */
+pre.code-block[data-lang] {
+    padding-top: 2.3rem;
+}
+
+pre.code-block[data-lang]::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 0.35rem 1.15rem;
+    font-size: 0.68rem;
+    line-height: 1.2;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--code-label-text);
+    background: var(--code-label-bg);
+    border-bottom: 1px solid var(--code-border);
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+}
+
+pre.code-block[data-lang="shell"]::before {
+    color: var(--code-cli-accent);
+}
+
+pre.code-block[data-lang="typescript"]::before,
+pre.code-block[data-lang="tsx"]::before {
+    color: var(--code-ts-accent);
+}
+
+/* ---------- tables (guide articles) ---------- */
+
+.guide-article table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.85rem 0;
+    font-size: 0.95em;
+}
+
+.guide-article th,
+.guide-article td {
+    border: 1px solid var(--border);
+    padding: 0.5rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.guide-article th {
+    background: var(--code-bg);
+    color: var(--heading-link);
+    font-weight: 600;
+}

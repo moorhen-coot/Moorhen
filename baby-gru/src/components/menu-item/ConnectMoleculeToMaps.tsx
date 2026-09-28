@@ -115,13 +115,12 @@ export const ConnectMoleculeToMaps = () => {
                 maps={maps}
                 ref={mapSelectRef}
                 filterFunction={map => map.hasReflectionData}
-                width="100%"
                 label="Reflection data"
             />
 
-            <MoorhenMapSelect maps={maps} ref={twoFoFcSelectRef} label="2foFc" width="100%" />
+            <MoorhenMapSelect maps={maps} ref={twoFoFcSelectRef} label="2foFc"  />
 
-            <MoorhenMapSelect maps={maps} ref={foFcSelectRef} label="FoFc" filterFunction={map => map.isDifference} width="100%" />
+            <MoorhenMapSelect maps={maps} ref={foFcSelectRef} label="FoFc" filterFunction={map => map.isDifference}  />
 
             <MoorhenMoleculeSelect
                 molecules={molecules}

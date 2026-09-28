@@ -1,0 +1,16 @@
+--- CMakeLists.txt	2026-06-17 17:29:41
++++ CMakeLists.txt-new	2026-06-17 17:25:09
+@@ -114,11 +114,13 @@
+     set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
+   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
+ endif()
++#[[
+ if ((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS) OR RDK_BUILD_MINIMAL_LIB)
+   set(RDK_BUILD_STATIC_LIBS_ONLY ON)
+ else()
+   set(RDK_BUILD_STATIC_LIBS_ONLY OFF)
+ endif()
++]]
+ if(NOT RDK_BUILD_STATIC_LIBS_ONLY)
+   add_definitions(-DRDKIT_DYN_LINK)
+ endif()

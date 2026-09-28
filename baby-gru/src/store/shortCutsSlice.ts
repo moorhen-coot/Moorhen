@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: {
     shortcutOnHoveredAtom: boolean;
@@ -17,14 +17,14 @@ const shortcutSettingsSlice = createSlice({
         resetShortcutSettings: () => {
             return initialState;
         },
-        setShortcutOnHoveredAtom: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, shortcutOnHoveredAtom: action.payload };
+        setShortcutOnHoveredAtom: (state, action: PayloadAction<boolean>) => {
+            state.shortcutOnHoveredAtom = action.payload;
         },
-        setShowShortcutToast: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, showShortcutToast: action.payload };
+        setShowShortcutToast: (state, action: PayloadAction<boolean>) => {
+            state.showShortcutToast = action.payload;
         },
-        setShortCuts: (state, action: { payload: string; type: string }) => {
-            return { ...state, shortCuts: action.payload };
+        setShortCuts: (state, action: PayloadAction<string>) => {
+            state.shortCuts = action.payload;
         },
     },
 });

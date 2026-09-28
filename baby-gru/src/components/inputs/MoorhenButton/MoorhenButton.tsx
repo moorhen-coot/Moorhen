@@ -1,4 +1,4 @@
-import { JSX, useRef } from "react";
+import { JSX, useRef, useState } from "react";
 import { MoorhenSVG } from "../../icons";
 import { MoorhenIcon } from "../../icons/MoorhenIcon";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
@@ -20,14 +20,16 @@ type MoorhenButtonPropsTypeBase = {
     value?: string | number;
     id?: string;
     tooltip?: string | JSX.Element | false;
+    disabledTooltip?: string | JSX.Element | false;
     tooltipPlacement?: "top" | "bottom" | "left" | "right";
     iconStyle?: React.CSSProperties;
+    ariaLabel?: string;
 };
 
 type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
     type: "icon-only";
     size?: "small" | "medium" | "large" | "accordion";
-    icon: MoorhenSVG;
+    icon?: MoorhenSVG;
     variant?: "default" | "danger";
 };
 
@@ -45,24 +47,56 @@ type MoorhenButtonToggleProps = MoorhenButtonPropsTypeBase & {
     icon?: MoorhenSVG;
 };
 
+/**
+ * Renders a Moorhen button with optional label, icon, tooltip, and toggle state.
+ *
+ * @remarks
+ * Use `type="default"` for the standard button, `type="icon-only"` for compact icon buttons,
+ * and `type="toggle"` for buttons that reflect a checked state.
+ *
+ * @param props - Button props.
+ * @param props.type - Button variant.
+ * @param props.label - Text label displayed inside the button.
+ * @param props.children - Additional content rendered inside the button.
+ * @param props.onClick - Click handler invoked unless the button is disabled.
+ * @param props.onMouseDown - Mouse down handler.
+ * @param props.onMouseUp - Mouse up handler.
+ * @param props.onMouseLeave - Mouse leave handler.
+ * @param props.onMouseEnter - Mouse enter handler.
+ * @param props.disabled - Whether the button is disabled.
+ * @param props.ref - Forwarded ref to the underlying button element.
+ * @param props.style - Inline styles applied to the button.
+ * @param props.className - Additional CSS class names.
+ * @param props.value - Value attribute for the underlying button.
+ * @param props.id - ID attribute for the underlying button.
+ * @param props.tooltip - Tooltip content shown on hover or focus.
+ * @param props.disabledTooltip - Extra tooltip content shown when the button is disabled.
+ * @param props.tooltipPlacement - Tooltip placement when a tooltip is rendered.
+ * @param props.icon - SVG icon rendered inside the button.
+ * @param props.iconStyle - Inline styles applied to the icon.
+ * @param props.ariaLabel - Accessible label for the button.
+ * @param props.size - Button or icon size.
+ * @param props.variant - Visual style variant.
+ * @param props.checked - Checked state for toggle buttons.
+ */
 export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefaultProps | MoorhenButtonToggleProps) => {
     const {
         type = "default",
         label,
-        onClick,
         onMouseDown,
         onMouseUp,
         onMouseLeave,
         onMouseEnter,
         disabled = false,
+        disabledTooltip,
         icon,
         ref,
         className = "",
         style = {},
         children,
-        tooltip = null,
         iconStyle = null,
         tooltipPlacement,
+        ariaLabel = null,
     } = props;
 
     const internalButtonRef = useRef<HTMLButtonElement>(null);
@@ -91,7 +125,17 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
 
     const isChecked = type === "toggle" && "checked" in props ? props.checked : undefined;
     const iconSize = type === "toggle" ? "medium" : size;
-    const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `${variant}` : ""} ${className}`;
+    const resultClassName = `moorhen__button__${type}${isChecked !== undefined ? (isChecked ? "-checked" : "-unchecked") : ""} ${variant ? `${variant}` : ""} ${className} ${disabled ? " disabled" : ""}`;
+    const [animation, setAnimation] = useState<boolean>(false);
+    
+    const onClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        if (disabled) {
+            return;
+        }
+        props.onClick?.(event);
+        setAnimation(true);
+        setTimeout(() => setAnimation(false), 1000);
+    }
 
     const setButtonRef = (buttonElement: HTMLButtonElement | null) => {
         internalButtonRef.current = buttonElement;
@@ -116,10 +160,13 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             onMouseEnter={onMouseEnter}
             disabled={disabled}
             ref={setButtonRef}
-            style={{ ...props.style }}
+            style={{ ...style }}
             value={props.value}
+            aria-label={ariaLabel}
         >
+            {animation && <span className={`moorhen__button__animation`} />}
             <MoorhenStack direction="row" align="center" justify="center" gap="0.2rem">
+                
                 {icon && (
                     <MoorhenIcon
                         moorhenSVG={icon}
@@ -134,6 +181,11 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             </MoorhenStack>
         </button>
     );
+
+    let tooltip = props.tooltip;
+    if (disabled && disabledTooltip) {
+        tooltip = <>{tooltip}<br/>&nbsp;<MoorhenIcon moorhenSVG="MatSymWarning" style={{ color: "var(--moorhen-warning)", width: "18px", height: "18px", transform: "translateY(3px)" }}/>{" "}{disabledTooltip}</>;
+     }
 
     if (tooltip) {
         return <MoorhenTooltip tooltip={tooltip} placement={tooltipPlacement} link={button} linkRef={internalButtonRef} />;

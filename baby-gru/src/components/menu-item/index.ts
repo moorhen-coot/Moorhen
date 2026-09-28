@@ -58,7 +58,7 @@ export { SplitModels } from "./SplitModels";
 export { StepRefinement } from "./StepRefinement";
 export { Grid, ViewLayoutPreferences } from "./ViewLayoutPreferences";
 export { FetchOnlineSources } from "./FetchOnlineSources";
-export { AutoLoadFiles } from "./AutoLoadFiles";
+export { LoadFiles } from "./LoadFiles";
 export { ManageSession } from "./ManageSession";
 export { ExportGltf } from "./ExportGltf";
 export { ExportMenuItem } from "./Export";

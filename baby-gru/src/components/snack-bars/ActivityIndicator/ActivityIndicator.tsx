@@ -1,8 +1,6 @@
-import { SaveOutlined } from "@mui/icons-material";
 import { useSelector } from "react-redux";
-import { useState } from "react";
 import { RootState } from "@/store";
-import { MoorhenSpinner } from "../../icons";
+import { MoorhenIcon, MoorhenSpinner } from "../../icons";
 import { MoorhenStack } from "../../interface-base";
 import { UpdatingMapsSnackBar } from "./UpdatingMaps";
 import "./activity-indicator.css";
@@ -11,7 +9,10 @@ export const ActivityIndicator = () => {
     const busy = useSelector((state: RootState) => state.globalUI.busy);
     const hoveredAtom = useSelector((state: RootState) => state.hoveringStates.hoveredAtom);
     const showHoverInfo = useSelector((state: RootState) => state.generalStates.showHoverInfo);
-    const timeCapsuleBusy = useSelector((state: RootState) => state.globalUI.isTimeCapsuleBusy);
+    const timeCapsuleBusy = useSelector((state: RootState) => state.globalUI.isTimeCapsuleBusy);    
+    
+    const chemShifts = useSelector((state: RootState) => state.molecules[0]?.chemShifts);
+    const NMRMode = (hoveredAtom.molecule?.chemShifts?.length ?? 0) > 0;
     const updatingMapsIsEnabled = useSelector((state: RootState) => state.moleculeMapUpdate.updatingMapsIsEnabled);
     const cidAsArray = hoveredAtom.cid?.split("/") || [];
     const residueName = cidAsArray[3]?.split(`(`)[1].slice(0, -3) + cidAsArray[3]?.split(`(`)[1].slice(1, -1).toLowerCase();
@@ -20,8 +21,23 @@ export const ActivityIndicator = () => {
     const bFactorNOccupancy = hoveredAtom.atomInfo
         ? `B-Fact: ${hoveredAtom.atomInfo.tempFactor.toFixed(1)} Occ: ${hoveredAtom.atomInfo.occupancy.toFixed(2)}`
         : "";
-    const glWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
 
+    const glWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
+        const chemShiftAtom = hoveredAtom.atomInfo
+        ? `Chemical shift: ${hoveredAtom.molecule?.chemShifts.filter(cs => 
+            (cs.atom === hoveredAtom.atomInfo.name &&
+             cs.chain === hoveredAtom.atomInfo.chain_id &&
+             (cs.seq+"") === (hoveredAtom.atomInfo.res_no+"") &&
+             cs.resname === hoveredAtom.atomInfo.res_name)
+                        )[0]?.chemshift?? "N/A"
+                    
+                } Ambiguous? ${hoveredAtom.molecule?.chemShifts.filter(cs => 
+            (cs.atom === hoveredAtom.atomInfo.name &&
+             cs.chain === hoveredAtom.atomInfo.chain_id &&
+             (cs.seq+"") === (hoveredAtom.atomInfo.res_no+"") &&
+             cs.resname === hoveredAtom.atomInfo.res_name)
+                        )[0]?.ambiguityFlag?? "N/A"}`
+        : "";    
     const busyIndicator = busy ? (
         <>
             <MoorhenSpinner size="3rem" />
@@ -43,7 +59,8 @@ export const ActivityIndicator = () => {
                     {showHoverInfo && hoveredAtom.cid && (
                         <MoorhenStack style={{ minWidth: "0" }}>
                             <span>{reformatedCid}</span>
-                            <span style={{ fontSize: "0.8em" }}>{bFactorNOccupancy}</span>
+                            
+                            <span style={{ fontSize: "0.8em" }}>{NMRMode? chemShiftAtom: bFactorNOccupancy}</span>
                             <span
                                 style={{
                                     fontSize: "0.8em",
@@ -59,7 +76,7 @@ export const ActivityIndicator = () => {
                             </span>
                         </MoorhenStack>
                     )}
-                    {timeCapsuleBusy && <SaveOutlined style={{ padding: 0, margin: 0, color: "black" }} />}
+                    {timeCapsuleBusy && <MoorhenIcon moorhenSVG="MatSymSaveClock" />}
                 </div>
             )}
             {updatingMapsIsEnabled && (

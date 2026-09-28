@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/InstanceManager/CommandCentre/CootWorker.ts"],
+  "compilerOptions": {
+    "rootDir": "src/InstanceManager/CommandCentre",
+    "outDir": "public/MoorhenAssets/wasm",
+    "module": "es2015",
+    "lib": ["es2017", "webworker"],
+    "skipLibCheck": true
+  }
+}

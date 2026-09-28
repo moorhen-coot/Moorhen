@@ -3,8 +3,9 @@ import { useSelector } from "react-redux";
 import { getTooltipShortcutLabel } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
-
+import { useMoorhenInstance } from "@/hooks"; 
 export const MoorhenFlipPeptideButton = (props: ContextButtonProps) => {
+    const moorhenInstance = useMoorhenInstance();
     const [toolTipLabel, setToolTipLabel] = useState<string>("Flip Peptide");
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts);
 
@@ -47,6 +48,7 @@ export const MoorhenFlipPeptideButton = (props: ContextButtonProps) => {
             needsMapData={true}
             toolTipLabel={toolTipLabel}
             cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
+            onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "modify")}
             {...props}
         />
     );

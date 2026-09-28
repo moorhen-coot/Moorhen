@@ -3,9 +3,11 @@ import { modalKeys } from "../../utils/enums";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { MoorhenFillMissingAtoms } from "../validation-tools/MoorhenFillMissingAtoms";
+import {  useMoorhenInstance } from "../../InstanceManager";
 
 export const MoorhenFillPartialResiduesModal = (props: ModalComponentProps) => {
     const resizeNodeRef = useRef<HTMLDivElement>(null);
+    const moorhenInstance = useMoorhenInstance();
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.FILL_PART_RES}
@@ -17,7 +19,7 @@ export const MoorhenFillPartialResiduesModal = (props: ModalComponentProps) => {
             allowDocking={true}
             openDocked={props.openDocked}
             resizeNodeRef={resizeNodeRef}
-            body={<MoorhenFillMissingAtoms />}
+            body={<MoorhenFillMissingAtoms moorhenInstance={moorhenInstance}/>}
         />
     );
 };

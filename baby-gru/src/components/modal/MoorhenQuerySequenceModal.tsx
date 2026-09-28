@@ -1,6 +1,4 @@
 import { ApolloClient, ApolloProvider, InMemoryCache, useLazyQuery } from "@apollo/client";
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined } from "@mui/icons-material";
-import { Backdrop } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
@@ -14,6 +12,7 @@ import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenChainSelect } from "../inputs/Selector/MoorhenChainSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
+import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
 
 const GET_POLYMER_INFO = gql(`
 query GetPolimerInfo ($entryIds: [String!]! $entityIds: [String!]!) {
@@ -227,10 +226,15 @@ const MoorhenQuerySequence = () => {
             maxHeight={900}
             maxWidth={400}
             additionalChildren={
-                <Backdrop sx={{ color: "#fff", zIndex: theme => theme.zIndex.drawer + 1 }} open={busy || loading}>
-                    <MoorhenSpinner colour="white" size={"3rem"} />
-                    <span>Fetching...</span>
-                </Backdrop>
+                    <OverlayModal
+                        isShown={busy || loading}
+                        overlay={
+                            <>
+                                <MoorhenSpinner colour="white" size={"3rem"} />
+                                <span>Fetching...</span>
+                            </>
+                        }
+                    />
             }
             headerTitle="Query using a sequence"
             body={
@@ -258,20 +262,20 @@ const MoorhenQuerySequence = () => {
                         <MoorhenSlider
                             minVal={0.1}
                             maxVal={1.0}
-                            logScale={false}
+                            scale="linear"
                             sliderTitle="E-Val cutoff"
                             decimalPlaces={1}
-                            externalValue={eValCutoff}
-                            setExternalValue={setEValCutoff}
+                            value={eValCutoff}
+                            setValue={setEValCutoff}
                         />
                         <MoorhenSlider
                             minVal={1}
                             maxVal={100}
-                            logScale={false}
+                            scale="linear"
                             sliderTitle="Seq. Id. cutoff"
-                            externalValue={seqIdCutoff}
+                            value={seqIdCutoff}
                             decimalPlaces={0}
-                            setExternalValue={setSeqIdCutoff}
+                            setValue={setSeqIdCutoff}
                         />
                         <br />
                         <hr></hr>
@@ -311,24 +315,21 @@ const MoorhenQuerySequence = () => {
                         ) : null}
                         <MoorhenButton
                             variant="primary"
+                            icon="MatSymFirstPage"
                             onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, 0)}
-                        >
-                            <FirstPageOutlined />
-                        </MoorhenButton>
+                        ></MoorhenButton>
                         <MoorhenButton
                             variant="primary"
                             disabled={currentResultsPage === 0}
+                            icon="MatSymChevronL"
                             onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage - 1)}
-                        >
-                            <ArrowBackIosOutlined />
-                        </MoorhenButton>
+                        ></MoorhenButton>
                         <MoorhenButton
                             variant="primary"
                             disabled={currentResultsPage === Math.ceil(totalNumberOfHits / 10) - 1}
+                            icon="MatSymChevronR"
                             onClick={() => queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, currentResultsPage + 1)}
-                        >
-                            <ArrowForwardIosOutlined />
-                        </MoorhenButton>
+                        ></MoorhenButton>
                     </MoorhenStack>
                 </>
             }

@@ -1,7 +1,9 @@
+import { useMoorhenInstance } from "@/hooks";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase, ContextButtonProps } from "./MoorhenContextButtonBase";
 
 export const MoorhenAddAltConfButton = (props: ContextButtonProps) => {
+    const moorhenInstance = useMoorhenInstance();
     const getCootCommandInput = (
         selectedMolecule: moorhen.Molecule,
         chosenAtom: moorhen.ResidueSpec,
@@ -33,6 +35,7 @@ export const MoorhenAddAltConfButton = (props: ContextButtonProps) => {
             refineAfterMod={false}
             toolTipLabel="Add alternative conformation"
             cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
+            onExit={() => moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "modify")}
             {...props}
         />
     );

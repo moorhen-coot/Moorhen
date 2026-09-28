@@ -41,6 +41,7 @@ export const AddWaters = () => {
         selectedMolecule.setAtomsDirty(true);
         await selectedMolecule.redraw();
         dispatch(triggerUpdate(moleculeMolNo));
+        moorhenInstance.triggerMoleculeChanged(selectedMolecule.uniqueId, "refine");
     };
 
     return (

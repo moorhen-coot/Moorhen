@@ -1,10 +1,9 @@
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
-import { useEffect, useRef, useState } from "react";
-import { enqueueSnackbar } from "@/store";
+import { useEffect, useState } from "react";
+import { setOrigin } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
 import { usePaths } from "../../InstanceManager";
-import { useCommandCentre } from "../../InstanceManager";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
 import {
@@ -20,10 +19,14 @@ import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
+
 import { readGzippedTextFile } from "../../utils/utils";
-import { MoorhenFileInput, MoorhenToggle } from "../inputs";
+import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
+import { MoorhenLinearProgress } from "../icons";
+
+
 
 const newVector = () => {
     const aVector: MoorhenVector = {
@@ -40,8 +43,8 @@ const newVector = () => {
         zTo: 0.0,
         cidFrom: "",
         cidTo: "",
-        molNoFrom: 0,
-        molNoTo: 0,
+        molFromUniqueId: "",
+        molToUniqueId: "",
         uniqueId: uuidv4(),
         vectorColour: { r: 0, g: 0, b: 0 },
         textColour: { r: 0, g: 0, b: 0 },
@@ -56,17 +59,12 @@ export const MoorhenDevMenu = () => {
     const [conKitFile1Contents, setConKitFile1Contents] = useState<string>("");
     const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
 
-    const commandCentre = useCommandCentre();
-
-    const customCid = useRef<string>("");
-    const conKitFile1Ref = useRef<null | HTMLInputElement>(null);
-    const conKitFile2Ref = useRef<null | HTMLInputElement>(null);
-
     const dispatch = useDispatch();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
-    const toggleValidationPanel = useSelector((state: RootState) => state.globalUI.shownBottomPanel === "validation");
-
+    const toggleValidationPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");
+    const [sliderValue, setSliderValue] = useState(1);
+    const [sliderValue2, setSliderValue2] = useState(9);
     useEffect(() => {
         dispatch(removeVectors(testVectors));
         const myVecs: MoorhenVector[] = [];
@@ -307,6 +305,8 @@ export const MoorhenDevMenu = () => {
         }
     };
 
+    const origin = useSelector((state: RootState) => state.sceneSettings.origin);
+
     // const tomogramTest = () => {
     //     enqueueSnackbar("tomogram", {
     //         variant: "tomogram",
@@ -319,6 +319,28 @@ export const MoorhenDevMenu = () => {
     return (
         <MoorhenStack>
             {/* <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem> */}
+            Origin: x: {origin[0].toFixed(1)} y: {origin[1].toFixed(1)} z: {origin[2].toFixed(1)}
+            <MoorhenStack card>
+                set Origin
+                <MoorhenNumberInput
+                    value={origin[0]}
+                    setValue={val => {
+                        dispatch(setOrigin([val, origin[1], origin[2]]));
+                    }}
+                />
+                <MoorhenNumberInput
+                    value={origin[1]}
+                    setValue={val => {
+                        dispatch(setOrigin([origin[0], val, origin[2]]));
+                    }}
+                />
+                <MoorhenNumberInput
+                    value={origin[2]}
+                    setValue={val => {
+                        dispatch(setOrigin([origin[0], origin[1], val]));
+                    }}
+                />
+            </MoorhenStack>
             <MoorhenMenuItem
                 onClick={() => {
                     dispatch(showModal({ key: modalKeys.VECTORS }));
@@ -392,18 +414,7 @@ export const MoorhenDevMenu = () => {
                 }}
                 label="Show validation panel"
             />
-            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is a success message", variant: "success" }))}>
-                Show Success Snackbar
-            </MoorhenButton>
-            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is a warning message", variant: "warning" }))}>
-                Show Warning Snackbar
-            </MoorhenButton>
-            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is an error message", variant: "error" }))}>
-                Show Error Snackbar
-            </MoorhenButton>
-            <MoorhenButton onClick={() => dispatch(enqueueSnackbar({ message: "This is an info message", variant: "info" }))}>
-                Show Info Snackbar
-            </MoorhenButton>
+
         </MoorhenStack>
     );
 };

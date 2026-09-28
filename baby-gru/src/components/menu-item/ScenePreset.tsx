@@ -1,15 +1,15 @@
-import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { setClipEnd, setClipStart, setFogEnd, setFogStart, setRequestDrawScene } from "../../store/glRefSlice";
-import { setResetClippingFogging } from "../../store/sceneSettingsSlice";
+import {  setRequestDrawScene } from "../../store/glRefSlice";
+import { setClipEnd, setClipStart, setFogEnd, setFogStart, setResetClippingFogging } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 
 export const ScenePreset = () => {
     const dispatch = useDispatch();
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const zoom = useSelector((state: moorhen.State) => state.glRef.zoom);
-    const fogClipOffset = useSelector((state: moorhen.State) => state.glRef.fogClipOffset);
+    const zoom = useSelector((state: moorhen.State) => state.sceneSettings.zoom);
+    const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset);
 
     const [presetValue, setPresetValue] = useState<string | null>(null);
 
@@ -62,27 +62,17 @@ export const ScenePreset = () => {
         }
 
         return (
-            <ToggleButton value={value} aria-label={value} style={{ borderColor: borderColor, color: color }}>
+            <MoorhenMenuItem onClick={() => setPresetValue(value)} aria-label={value} style={{ borderColor: borderColor, color: color }}>
                 {label}
-            </ToggleButton>
+            </MoorhenMenuItem>
         );
     };
 
     return (
-        <>
+        <MoorhenStack>
             <p>Select a preset...</p>
-            <ToggleButtonGroup
-                color={isDark ? "primary" : "standard"}
-                orientation="vertical"
-                value={presetValue}
-                onChange={(evt, newValue: string) => {
-                    setPresetValue(newValue);
-                }}
-                exclusive
-            >
-                {getToggleButton("Model building", "model-building")}
-                {getToggleButton("Figure making", "figure-making")}
-            </ToggleButtonGroup>
-        </>
+            {getToggleButton("Model building", "model-building")}
+            {getToggleButton("Figure making", "figure-making")}
+        </MoorhenStack>
     );
 };

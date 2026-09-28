@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RootState, enqueueSnackbar } from "@/store";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { LhasaComponent } from "../../LhasaReact/src/Lhasa";
 import { emptyRdkitMoleculePickleList } from "../../store/lhasaSlice";
 import { addMolecule } from "../../store/moleculesSlice";
@@ -13,6 +13,7 @@ import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
 import { MoorhenSpinner } from "../icons";
 import { MoorhenDraggableModalBase, MoorhenStack } from "../interface-base";
 import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
+import "../../LhasaReact/src/index.scss";
 
 /// Internal wrapper for use in the scope of this file.
 const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: number }) => {
@@ -20,7 +21,7 @@ const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: numbe
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const originState = useSelector((state: moorhen.State) => state.glRef.origin);
+    const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin);
 
     const [isCootAttached, setCootAttached] = useState(window.cootModule !== undefined);
     const [busy, setBusy] = useState<boolean>(false);
@@ -45,83 +46,19 @@ const LhasaWrapper = (props: { urlPrefix: string; width?: number; height?: numbe
         };
     }, [handleCootAttached]);
 
+    const moorhenInstance = useMoorhenInstance();
+
     const sendToHostProgramCallback = useCallback(
         async (internalLhasaID: number, id: string, smiles: string, rdkitPickleBase64: string) => {
-            // TODO: Handle rdkitPickleBase64
-            try {
-                setBusy(true);
-                const ligandName = id ?? "LIG";
-                const smilesResult = (await commandCentre.current.cootCommand(
-                    {
-                        command: "smiles_to_pdb",
-                        commandArgs: [smiles, ligandName, 10, 100],
-                        returnType: "str_str_pair",
-                    },
-                    true
-                )) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>;
 
-                if (!smilesResult.data.result.result.second) {
-                    dispatch(enqueueSnackbar({ message: "Unable to read SMILES...", variant: "error" }));
-                    setBusy(false);
-                    return;
-                }
-
-                const readDictResult = (await commandCentre.current.cootCommand(
-                    {
-                        returnType: "status",
-                        command: "read_dictionary_string",
-                        commandArgs: [smilesResult.data.result.result.second, -999999],
-                        changesMolecules: [],
-                    },
-                    false
-                )) as moorhen.WorkerResponse<number>;
-
-                if (readDictResult.data.result.result !== 1) {
-                    dispatch(enqueueSnackbar({ message: "Unable to read dictionary...", variant: "error" }));
-                    setBusy(false);
-                    return;
-                }
-
-                const getMonomerResult = (await commandCentre.current.cootCommand(
-                    {
-                        returnType: "status",
-                        command: "get_monomer_and_position_at",
-                        commandArgs: [ligandName, -999999, ...originState.map(coord => -coord)],
-                    },
-                    true
-                )) as moorhen.WorkerResponse<number>;
-
-                if (getMonomerResult.data.result.result === -1) {
-                    dispatch(enqueueSnackbar({ message: "Unable to get monomer...", variant: "error" }));
-                } else if (getMonomerResult.data.result.status === "Completed") {
-                    const newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
-                    newMolecule.molNo = getMonomerResult.data.result.result;
-                    newMolecule.name = ligandName;
-                    newMolecule.setBackgroundColour(backgroundColor);
-                    newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
-                    newMolecule.coordsFormat = "mmcif";
-                    await Promise.all([newMolecule.fetchDefaultColourRules(), newMolecule.addDict(smilesResult.data.result.result.second)]);
-                    await newMolecule.fetchIfDirtyAndDraw("CBs");
-                    dispatch(addMolecule(newMolecule));
-                } else {
-                    dispatch(enqueueSnackbar({ message: "Something went wrong...", variant: "warning" }));
-                }
-                setBusy(false);
-            } catch (err) {
-                console.warn(err);
-                dispatch(enqueueSnackbar({ message: "Something went wrong...", variant: "warning" }));
-                setBusy(false);
-            }
+            moorhenInstance.files.ligandFromSmiles(smiles, "NewLig");
         },
         [commandCentre, store, monomerLibraryPath]
     );
 
-    const bansuCallback = useCallback(
-        (internalLhasaID: number, id: string, cif_string: string) => {
-            dispatch(enqueueSnackbar({ message: "TODO: handle incoming data: \n" + cif_string, variant: "info" }));
-        },
-        [enqueueSnackbar]
-    );
+    const bansuCallback = useCallback((internalLhasaID: number, id: string, cif_string: string) => {
+        moorhenInstance.files.loadCifString(cif_string, "NewLig");
+    }, []);
 
     return isCootAttached ? (
         <OverlayModal

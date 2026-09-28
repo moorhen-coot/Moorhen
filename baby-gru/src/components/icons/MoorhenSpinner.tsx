@@ -1,18 +1,23 @@
+import { useId } from "react";
+
 type SpinnerProps = {
     size?: number | string;
     colour?: string;
     backgroundColour?: string;
 };
 export const MoorhenSpinner = (props: SpinnerProps) => {
-    const { size = 30, colour = "var(--moorhen-primary)", backgroundColour = "var(--moorhen-primary)" } = props;
+    const { size = "3rem", colour = "var(--moorhen-primary)", backgroundColour = "var(--moorhen-primary)" } = props;
+    // Each spinner needs a unique gradient id - a hardcoded id means every spinner on the page
+    // shares one gradient, so url(#id) resolves to whichever spinner rendered first (wrong colour).
+    const gradientId = `moorhen-spinner-gradient-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
     return (
         <span
             className="moorhen-icon-loading-spinner"
-            style={{ display: "inline-block", lineHeight: 0, width: size, color: "#ff0000" }}
+            style={{ display: "inline-block", lineHeight: 0, width: size, color: colour }}
             aria-label={"progress-indicator"}
         >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                <radialGradient id="a12" cx=".66" fx=".66" cy=".3125" fy=".3125" gradientTransform="scale(1.5)">
+                <radialGradient id={gradientId} cx=".66" fx=".66" cy=".3125" fy=".3125" gradientTransform="scale(1.5)">
                     <stop offset="0" stopColor={colour}></stop>
                     <stop offset=".3" stopColor={colour} stopOpacity=".9"></stop>
                     <stop offset=".6" stopColor={colour} stopOpacity=".6"></stop>
@@ -23,7 +28,7 @@ export const MoorhenSpinner = (props: SpinnerProps) => {
                     //@ts-ignore
                     transformOrigin="center"
                     fill="none"
-                    stroke="url(#a12)"
+                    stroke={`url(#${gradientId})`}
                     strokeWidth="15"
                     strokeLinecap="round"
                     strokeDasharray="200 1000"

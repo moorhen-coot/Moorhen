@@ -1,5 +1,5 @@
 export { MoorhenButton } from "./MoorhenButton/MoorhenButton";
-export { MoorhenCidInputForm } from "./MoorhenCidInputForm";
+export { MoorhenCidInputForm } from "./Cid/MoorhenCidInputForm";
 export { MoorhenColourPicker } from "./MoorhenColourPicker/MoorhenColourPicker";
 export { MoorhenGradientPicker } from "./MoorhenGradientPicker/MoorhenGradientPicker";
 export { MoorhenNumberInput } from "./MoorhenNumberInput/NumberInput";

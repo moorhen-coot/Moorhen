@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { moorhen } from "../types/moorhen";
 
 const initialState: {
@@ -32,119 +32,87 @@ const moleculeMapUpdateSlice = createSlice({
     initialState: initialState,
     reducers: {
         // API
-        setCurrentScores: (state, action: { payload: { rFactor: number; rFree: number; moorhenPoints: number }; type: string }) => {
-            return {
-                ...state,
-                currentScores: {
-                    ...action.payload,
-                },
-                currentScoreDiffs: {
-                    rFactor:
-                        state.currentScores.rFactor === null
-                            ? action.payload.rFactor
-                            : action.payload.rFactor - state.currentScores.rFactor,
-                    rFree: state.currentScores.rFree === null ? action.payload.rFree : action.payload.rFree - state.currentScores.rFree,
-                    moorhenPoints:
-                        state.currentScores.moorhenPoints === null
-                            ? action.payload.moorhenPoints
-                            : action.payload.moorhenPoints - state.currentScores.moorhenPoints,
-                },
+        setCurrentScores: (state, action: PayloadAction<{ rFactor: number; rFree: number; moorhenPoints: number }>) => {
+            state.currentScoreDiffs = {
+                rFactor:
+                    state.currentScores.rFactor === null
+                        ? action.payload.rFactor
+                        : action.payload.rFactor - state.currentScores.rFactor,
+                rFree: state.currentScores.rFree === null ? action.payload.rFree : action.payload.rFree - state.currentScores.rFree,
+                moorhenPoints:
+                    state.currentScores.moorhenPoints === null
+                        ? action.payload.moorhenPoints
+                        : action.payload.moorhenPoints - state.currentScores.moorhenPoints,
             };
+            state.currentScores = { ...action.payload };
         },
         // API
         resetMoleculeMapUpdates: () => {
             return initialState;
         },
         // API
-        triggerUpdate: (state, action: { payload: number; type: string }) => {
-            return {
-                ...state,
-                moleculeUpdate: {
-                    molNo: action.payload,
-                    switch: !state.moleculeUpdate.switch,
-                },
+        triggerUpdate: (state, action: PayloadAction<number>) => {
+            state.moleculeUpdate = {
+                molNo: action.payload,
+                switch: !state.moleculeUpdate.switch,
             };
         },
         // API
-        setShowScoresToast: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, showScoresToast: action.payload };
+        setShowScoresToast: (state, action: PayloadAction<boolean>) => {
+            state.showScoresToast = action.payload;
         },
 
-        addMapUpdatingScore: (state, action: { payload: string; type: string }) => {
-            return { ...state, defaultUpdatingScores: [...state.defaultUpdatingScores, action.payload] };
+        addMapUpdatingScore: (state, action: PayloadAction<string>) => {
+            state.defaultUpdatingScores.push(action.payload);
         },
-        removeMapUpdatingScore: (state, action: { payload: string; type: string }) => {
-            return {
-                ...state,
-                defaultUpdatingScores: state.defaultUpdatingScores.filter(item => item !== action.payload),
-            };
+        removeMapUpdatingScore: (state, action: PayloadAction<string>) => {
+            state.defaultUpdatingScores = state.defaultUpdatingScores.filter(item => item !== action.payload);
         },
-        overwriteMapUpdatingScores: (state, action: { payload: string[]; type: string }) => {
-            return { ...state, defaultUpdatingScores: action.payload };
+        overwriteMapUpdatingScores: (state, action: PayloadAction<string[]>) => {
+            state.defaultUpdatingScores = action.payload;
         },
         // API
         enableUpdatingMaps: state => {
-            return { ...state, updatingMapsIsEnabled: true };
+            state.updatingMapsIsEnabled = true;
         },
         // API
         disableUpdatingMaps: state => {
-            return {
-                ...state,
-                updatingMapsIsEnabled: false,
-                connectedMolecule: null,
-                reflectionMap: null,
-                twoFoFcMap: null,
-                foFcMap: null,
-                uniqueMaps: [],
-            };
+            state.updatingMapsIsEnabled = false;
+            state.connectedMolecule = null;
+            state.reflectionMap = null;
+            state.twoFoFcMap = null;
+            state.foFcMap = null;
+            state.uniqueMaps = [];
         },
 
-        setReflectionMap: (state, action: { payload: moorhen.Map; type: string }) => {
-            return {
-                ...state,
-                reflectionMap: action.payload.molNo,
-            };
+        setReflectionMap: (state, action: PayloadAction<moorhen.Map>) => {
+            state.reflectionMap = action.payload.molNo;
         },
-        setReflectionMapMolNo: (state, action: { payload: number; type: string }) => {
-            return {
-                ...state,
-                reflectionMap: action.payload,
-            };
+        setReflectionMapMolNo: (state, action: PayloadAction<number>) => {
+            state.reflectionMap = action.payload;
         },
-        setFoFcMap: (state, action: { payload: moorhen.Map; type: string }) => {
-            return {
-                ...state,
-                foFcMap: action.payload.molNo,
-                uniqueMaps: [...new Set([state.twoFoFcMap, action.payload.molNo])],
-            };
+        setFoFcMap: (state, action: PayloadAction<moorhen.Map>) => {
+            state.foFcMap = action.payload.molNo;
+            state.uniqueMaps = [...new Set([state.twoFoFcMap, action.payload.molNo])];
         },
-        setFoFcMapMolNo: (state, action: { payload: number; type: string }) => {
-            return {
-                ...state,
-                foFcMap: action.payload,
-                uniqueMaps: [...new Set([state.twoFoFcMap, action.payload])],
-            };
+        setFoFcMapMolNo: (state, action: PayloadAction<number>) => {
+            state.foFcMap = action.payload;
+            state.uniqueMaps = [...new Set([state.twoFoFcMap, action.payload])];
         },
-        setTwoFoFcMap: (state, action: { payload: moorhen.Map; type: string }) => {
-            return {
-                ...state,
-                twoFoFcMap: action.payload.molNo,
-                uniqueMaps: [...new Set([action.payload.molNo, state.foFcMap])],
-            };
+        setTwoFoFcMap: (state, action: PayloadAction<moorhen.Map>) => {
+            state.twoFoFcMap = action.payload.molNo;
+            state.uniqueMaps = [...new Set([action.payload.molNo, state.foFcMap])];
         },
-        setTwoFoFcMapMolNo: (state, action: { payload: number; type: string }) => {
-            return {
-                ...state,
-                twoFoFcMap: action.payload,
-                uniqueMaps: [...new Set([action.payload, state.foFcMap])],
-            };
+        setTwoFoFcMapMolNo: (state, action: PayloadAction<number>) => {
+            state.twoFoFcMap = action.payload;
+            state.uniqueMaps = [...new Set([action.payload, state.foFcMap])];
         },
-        setConnectedMolecule: (state, action: { payload: moorhen.Molecule; type: string }) => {
-            return { ...state, connectedMolecule: action.payload.molNo };
+        setConnectedMolecule: (state, action: PayloadAction<moorhen.Molecule>) => {
+            state.connectedMolecule = action.payload.molNo;
         },
         // API
-        setConnectedMoleculeMolNo: (state, action: { payload: number; type: string }) => {
-            return { ...state, connectedMolecule: action.payload };
+        setConnectedMoleculeMolNo: (state, action: PayloadAction<number>) => {
+            state.connectedMolecule = action.payload;
         },
     },
 });

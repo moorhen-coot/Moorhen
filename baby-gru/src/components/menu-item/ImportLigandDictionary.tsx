@@ -1,15 +1,14 @@
-import { TextField } from "@mui/material";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { RootState, enqueueSnackbar } from "@/store/";
-import { parseCifDict } from "@/utils/MoorhenFileLoading";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { parseCifDict } from "@/utils/FileLoading";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenButton, MoorhenFileInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenFileInput, MoorhenNumberInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
 
@@ -33,9 +32,8 @@ const ImportLigandDictionary = (props: {
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    const store = useStore<RootState>();
-    const commandCentre = useCommandCentre();
-    const monomerLibraryPath = usePaths().monomerLibraryPath;
+    const moorhenInstance = useMoorhenInstance();
+    const commandCentre = moorhenInstance.commandCentre;
     const {
         createInstance,
         setCreateInstance,
@@ -53,9 +51,10 @@ const ImportLigandDictionary = (props: {
         id,
     } = props;
 
-    const originState = useSelector((state: moorhen.State) => state.glRef.origin);
+    const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin);
 
     const handleFileContent = useCallback(
+        
         async (fileContent: string) => {
             let newMolecule: moorhen.Molecule;
             let selectedMoleculeIndex: number;
@@ -71,7 +70,7 @@ const ImportLigandDictionary = (props: {
                 }
             } else {
                 selectedMoleculeIndex = -999999;
-                await commandCentre.current.cootCommand(
+                await commandCentre.cootCommand(
                     {
                         returnType: "status",
                         command: "read_dictionary_string",
@@ -89,9 +88,9 @@ const ImportLigandDictionary = (props: {
                 );
             }
 
-            if (createRef.current) {
+            if (createRef.current&&createInstance) {
                 const instanceName = tlc;
-                const result = (await commandCentre.current.cootCommand(
+                const result = (await commandCentre.cootCommand(
                     {
                         returnType: "status",
                         command: "get_monomer_and_position_at",
@@ -100,7 +99,7 @@ const ImportLigandDictionary = (props: {
                     true
                 )) as moorhen.WorkerResponse<number>;
                 if (result.data.result.status === "Completed") {
-                    newMolecule = new MoorhenMolecule(commandCentre, store, monomerLibraryPath);
+                    newMolecule = new MoorhenMolecule(moorhenInstance);
                     newMolecule.molNo = result.data.result.result;
                     newMolecule.name = instanceName;
                     newMolecule.setBackgroundColour(backgroundColor);
@@ -125,7 +124,7 @@ const ImportLigandDictionary = (props: {
 
             [...new Set(molNosToUpdate)].map(molNo => dispatch(triggerUpdate(molNo)));
         },
-        [moleculeSelectValueRef, createRef, molecules, commandCentre, tlc, backgroundColor, defaultBondSmoothness, addToMoleculeValueRef]
+        [moleculeSelectValueRef, createRef, molecules, commandCentre, tlc, backgroundColor, defaultBondSmoothness, addToMoleculeValueRef, createInstance]
     );
 
     const popoverContent = (
@@ -206,7 +205,6 @@ export const SMILESToLigand = () => {
     const moleculeSelectValueRef = useRef<null | string>(null);
     const addToRef = useRef<null | HTMLSelectElement>(null);
     const addToMoleculeValueRef = useRef<null | number>(null);
-    const conformerCountRef = useRef<number>(10);
     const iterationCountRef = useRef<number>(100);
     const sourceSelectRef = useRef<HTMLSelectElement | null>(null);
 
@@ -248,15 +246,8 @@ export const SMILESToLigand = () => {
             return;
         }
 
-        let n_conformer: number;
-        let n_iteration: number;
-        try {
-            n_conformer = conformerCountRef.current;
-            n_iteration = iterationCountRef.current;
-        } catch (err) {
-            console.log(err);
-            return;
-        }
+        let n_conformer: number = conformerCount;
+        let n_iteration: number = iterationCount;
 
         if (
             isNaN(n_conformer) ||
@@ -322,20 +313,21 @@ export const SMILESToLigand = () => {
                     setTlc(e.target.value);
                 }}
             />
-            <TextField
-                style={{ margin: "0.5rem", width: "9rem" }}
-                id="conformer-count"
+            <MoorhenNumberInput
+                // id="conformer-count"
                 label="No. of conformers"
                 type="number"
-                variant="standard"
-                error={isNaN(conformerCount) || conformerCount < 0 || conformerCount === Infinity}
+                decimalDigits={0}
+                // variant="standard"
+                // error={isNaN(conformerCount) || conformerCount < 0 || conformerCount === Infinity}
                 value={conformerCount}
-                onChange={evt => {
-                    conformerCountRef.current = parseInt(evt.target.value);
-                    setConformerCount(parseInt(evt.target.value));
-                }}
+                setValue={setConformerCount}
+                // onChange={evt => {
+                //     conformerCountRef.current = parseInt(evt.target.value);
+                //     setConformerCount(parseInt(evt.target.value));
+                // }}
             />
-            <TextField
+            {/* <MoorhenTextInput
                 style={{ margin: "0.5rem", width: "9rem" }}
                 id="iteration-count"
                 label="No. of iterations"
@@ -346,8 +338,8 @@ export const SMILESToLigand = () => {
                 onChange={evt => {
                     iterationCountRef.current = parseInt(evt.target.value);
                     setIterationCount(parseInt(evt.target.value));
-                }}
-            />
+                }} */}
+            {/* /> */}
         </MoorhenStack>
     );
 

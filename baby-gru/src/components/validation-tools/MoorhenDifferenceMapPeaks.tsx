@@ -3,7 +3,7 @@ import annotationPlugin from "chartjs-plugin-annotation";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
-import { setOrigin } from "../../store/glRefSlice";
+import { setOrigin } from "../../store";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { convertViewtoPx } from "../../utils/utils";
@@ -256,10 +256,10 @@ export const MoorhenDifferenceMapPeaks = (props: { chartId: string }) => {
                 <MoorhenSlider
                     minVal={2.5}
                     maxVal={7.0}
-                    logScale={false}
+                    scale="linear"
                     sliderTitle="RMSD"
-                    externalValue={selectedRmsd}
-                    setExternalValue={value => setSelectedRmsd(value)}
+                    value={selectedRmsd}
+                    setValue={value => setSelectedRmsd(value)}
                 />
             }
             extraControlFormValue={selectedRmsd}

@@ -1,6 +1,5 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useEffect, useMemo, useRef } from "react";
-import { MoorhenInstance, useMoorhenInstance } from "@/InstanceManager";
 import type { RootState } from "../../../store/MoorhenReduxStore";
 import { setContourLevel, setMapFastRadius, setMapRadius, setMapStyle, showMap } from "../../../store/mapContourSettingsSlice";
 import { SelectorEffect } from "../../hookComponent/SelectorEffect";
@@ -9,7 +8,6 @@ import { MapScrollWheelListener } from "./MapScrollWheelListener";
 
 export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const dispatch = useDispatch();
-    const moorhenInstance = useMoorhenInstance();
     const lastTime = useRef<number>(Date.now());
     const drawQueue = useRef<
         {
@@ -28,11 +26,14 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const map = useSelector((state: RootState) => {
         const map = state.maps.find(item => item.molNo === mapMolNo);
         if (!map) {
-            console.warn(`No map found with molNo: ${mapMolNo}`);
             return null;
         }
         return map;
     });
+
+    if (!map) {
+        return null;
+    }
 
     const activeMapMolNo = useSelector((state: RootState) => {
         const activeMap = state.generalStates.activeMap;
@@ -53,10 +54,6 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         return isVisible;
     });
 
-    const reContourMapOnlyOnMouseUp = useSelector((state: RootState) => {
-        const reContourOnMouseUp = state.mapContourSettings.reContourMapOnlyOnMouseUp;
-        return reContourOnMouseUp || false;
-    });
     const isOriginLocked = useSelector((state: RootState) => {
         const mapItem = state.maps.find(item => item.molNo === mapMolNo);
         return mapItem?.isOriginLocked || false;
@@ -74,8 +71,11 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
 
     const mapContourLevel = useSelector((state: RootState) => {
         const mapContourItem = state.mapContourSettings.contourLevels.find(item => item.molNo === mapMolNo);
-        return mapContourItem?.contourLevel || map?.suggestedContourLevel || 0.8;
+        return mapContourItem?.contourLevel || map?.suggestedContourLevel || 0.003;
     });
+
+    const mapLineWidth = useSelector((state: RootState) => state.mapContourSettings.mapLineWidth);
+
 
     const mapStyle: "solid" | "lit-lines" | "lines" = useSelector((state: RootState) => {
         const style = state.mapContourSettings.mapStyles.find(item => item.molNo === mapMolNo);
@@ -83,15 +83,15 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
             const defaultStyle = store.getState().mapContourSettings.defaultMapLitLines
                 ? "lit-lines"
                 : store.getState().mapContourSettings.defaultMapSurface
-                  ? "solid"
-                  : "lines";
+                    ? "solid"
+                    : "lines";
             return defaultStyle;
         }
         return style.style;
     });
 
     const appendDrawQueue = () => {
-        const currentOrigin = store.getState().glRef.origin;
+        const currentOrigin = store.getState().sceneSettings.origin;
         const drawRadius = mapFastRadius === -1 ? mapRadius : mapFastRadius;
         const [x, y, z] = currentOrigin.map(coord => -coord) as [number, number, number];
         drawQueue.current.push({
@@ -139,33 +139,34 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     }
 
     useEffect(() => {
+        drawMap();
+    }, [mapLineWidth]);
+
+    useEffect(() => {
         /* this should be moved to map initialisation in moorhen the instance*/
-        const intiliaseMap = async () => {
+        const intialiseMap = async () => {
             let mapRadius = map?.suggestedRadius * 1.2 || 15;
-            if (map?.isEM) {
-                const boundingSphere = await moorhenInstance.cootCommand.get_map_bounding_sphere(mapMolNo, map?.suggestedContourLevel);
-                const maxRadius = Math.max(map?.headerInfo.cell.a, map?.headerInfo.cell.b, map?.headerInfo.cell.c) / 2;
-                mapRadius = Math.min(boundingSphere.radius, maxRadius);
-                map.drawOrigin = boundingSphere.center;
-                console.log(`Map bounding sphere center: ${boundingSphere.center}, radius: ${boundingSphere.radius}`);
-            }
+
+            const storeContourLevel = store.getState().mapContourSettings.contourLevels.find(item => item.molNo === mapMolNo)?.contourLevel;
 
             let contourLevel = 1;
-            if (map?.isEM) {
+            if (map.isEM) {
                 contourLevel = map?.isDifference ? 5 * map.mapRmsd : map?.suggestedContourLevel;
+
             } else {
                 contourLevel = map?.isDifference ? 3 * map.mapRmsd : 1 * map.mapRmsd;
             }
 
-            if (map?.showOnLoad) {
+
+            if (map.showOnLoad) {
                 dispatch(showMap(map));
                 dispatch(setMapRadius({ molNo: mapMolNo, radius: mapRadius }));
                 dispatch(setMapFastRadius({ molNo: mapMolNo, radius: -1 }));
-                dispatch(setContourLevel({ molNo: mapMolNo, contourLevel: contourLevel }));
-                dispatch(setMapStyle({ molNo: mapMolNo, style: mapStyle }));
+                dispatch(setContourLevel({ molNo: mapMolNo, contourLevel: storeContourLevel ?? contourLevel }));
+                dispatch(setMapStyle({ molNo: mapMolNo, style: map.isEM ? "solid" : mapStyle }));
             }
         };
-        intiliaseMap();
+        intialiseMap();
     }, []);
 
     useEffect(() => {
@@ -198,8 +199,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     return (
         <>
             {mapIsVisible &&
-                !isOriginLocked &&
-                (!reContourMapOnlyOnMouseUp ? <MapOriginListener drawMap={drawMap} /> : <MapOriginListenerMouseUp drawMap={drawMap} />)}
+                <MapOriginListener drawMap={drawMap} mapUID={map.uniqueId} />}
 
             {isMapActive && <MapScrollWheelListener mapContourLevel={mapContourLevel} mapIsVisible={mapIsVisible} map={map} />}
 

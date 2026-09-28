@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 
 const initialState: {
@@ -43,38 +43,38 @@ const mrParseSlice = createSlice({
     name: "mrParse",
     initialState: initialState,
     reducers: {
-        setMrParseModels: (state, action: { payload: MoorhenMolecule[]; type: string }) => {
-            return { ...state, mrParseModels: action.payload };
+        setMrParseModels: (state, action: PayloadAction<MoorhenMolecule[]>) => {
+            state.mrParseModels = action.payload as unknown as typeof state.mrParseModels;
         },
-        setTargetSequence: (state, action: { payload: string; type: string }) => {
-            return { ...state, targetSequence: action.payload };
+        setTargetSequence: (state, action: PayloadAction<string>) => {
+            state.targetSequence = action.payload;
         },
-        setAfJson: (state, action: { payload: any[]; type: string }) => {
-            return { ...state, afJson: action.payload };
+        setAfJson: (state, action: PayloadAction<any[]>) => {
+            state.afJson = action.payload;
         },
-        setEsmJson: (state, action: { payload: any[]; type: string }) => {
-            return { ...state, esmJson: action.payload };
+        setEsmJson: (state, action: PayloadAction<any[]>) => {
+            state.esmJson = action.payload;
         },
-        setHomologsJson: (state, action: { payload: any[]; type: string }) => {
-            return { ...state, homologsJson: action.payload };
+        setHomologsJson: (state, action: PayloadAction<any[]>) => {
+            state.homologsJson = action.payload;
         },
-        setAfSortField: (state, action: { payload: string; type: string }) => {
-            return { ...state, afSortField: action.payload };
+        setAfSortField: (state, action: PayloadAction<string>) => {
+            state.afSortField = action.payload;
         },
-        setHomologsSortField: (state, action: { payload: string; type: string }) => {
-            return { ...state, homologsSortField: action.payload };
+        setHomologsSortField: (state, action: PayloadAction<string>) => {
+            state.homologsSortField = action.payload;
         },
-        setAfSortReversed: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, afSortReversed: action.payload };
+        setAfSortReversed: (state, action: PayloadAction<boolean>) => {
+            state.afSortReversed = action.payload;
         },
-        setHomologsSortReversed: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, homologsSortReversed: action.payload };
+        setHomologsSortReversed: (state, action: PayloadAction<boolean>) => {
+            state.homologsSortReversed = action.payload;
         },
-        setAFDisplaySettings: (state, action: { payload: any; type: string }) => {
-            return { ...state, AFDisplaySettings: action.payload };
+        setAFDisplaySettings: (state, action: PayloadAction<any>) => {
+            state.AFDisplaySettings = action.payload;
         },
-        setHomologsDisplaySettings: (state, action: { payload: any; type: string }) => {
-            return { ...state, HomologsDisplaySettings: action.payload };
+        setHomologsDisplaySettings: (state, action: PayloadAction<any>) => {
+            state.HomologsDisplaySettings = action.payload;
         },
     },
 });

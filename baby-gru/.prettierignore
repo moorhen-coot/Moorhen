@@ -7,7 +7,6 @@ MoorhenScriptAPI.ts
 MoorhenContextMenu.tsx
 eslint.config.mjs
 src/LhasaReact/*
-tests/*
 MoorhenCidInputForm.tsx
 src/moorhen.ts
 StoreExtension.ts

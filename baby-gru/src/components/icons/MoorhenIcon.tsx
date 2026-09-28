@@ -34,10 +34,10 @@ export const MoorhenIcon = ({
     variant,
     tooltip,
 }: MoorhenIconPropsType) => {
-    let internalClassName = className ? className : `moorhen__icon `;
+    let internalClassName = className ? className : `moorhen__icon`;
 
     if (size) {
-        internalClassName += size;
+        internalClassName += " " +size;
     }
     if (isActive !== null) {
         internalClassName += isActive ? " moorhen__icon__active" : " moorhen__icon__inactive";
@@ -63,6 +63,7 @@ export const MoorhenIcon = ({
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
             >
+                {/* @ts-ignore */}
                 <SvgComponent className="moorhen__icon" />
             </span>
         );

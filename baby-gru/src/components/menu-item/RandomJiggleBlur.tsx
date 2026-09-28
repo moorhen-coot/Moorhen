@@ -6,7 +6,7 @@ import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider } from "../inputs";
 import { MoorhenButton } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
-import { MoorhenCidInputForm } from "../inputs/MoorhenCidInputForm";
+import { MoorhenCidInputForm } from "../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
 
@@ -104,33 +104,33 @@ export const RandomJiggleBlur = () => {
                 sliderTitle="B-Factor"
                 minVal={10}
                 maxVal={400}
-                showMinMaxVal={false}
-                logScale={false}
+                showLabels={false}
+                scale="linear"
                 stepButtons={25}
-                externalValue={bFactor}
-                setExternalValue={value => setBFactor(value)}
+                value={bFactor}
+                setValue={value => setBFactor(value)}
                 decimalPlaces={0}
             />
             <MoorhenSlider
                 sliderTitle="No. of trials"
                 minVal={10}
                 maxVal={5000}
-                showMinMaxVal={false}
-                logScale={false}
+                showLabels={false}
+                scale="linear"
                 stepButtons={100}
-                externalValue={noTrials}
-                setExternalValue={value => setNoTrials(value)}
+                value={noTrials}
+                setValue={value => setNoTrials(value)}
                 decimalPlaces={0}
             />
             <MoorhenSlider
                 sliderTitle="Scale factor"
                 minVal={1}
                 maxVal={6}
-                showMinMaxVal={false}
-                logScale={false}
+                showLabels={false}
+                scale="linear"
                 stepButtons={1}
-                externalValue={scaleFactor}
-                setExternalValue={value => setScaleFactor(value)}
+                value={scaleFactor}
+                setValue={value => setScaleFactor(value)}
                 decimalPlaces={0}
             />
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>

@@ -3,7 +3,8 @@
 .moorhen__menu-item,
 .moorhen__menu-item-disabled {
     all: unset;
-    /* font-family: "Roboto", "Helvetica", "Arial", sans-serif; */
+    position: relative;
+    overflow: hidden;
     min-height: 2.4rem;
     height: fit-content;
     text-align: left;
@@ -29,4 +30,30 @@
 
 .moorhen_menu-custom-left-margin {
     margin-left: 1rem;
+}
+
+.moorhen__menu-item-animation {
+    position: absolute;
+    z-index: 2;
+    border-radius: 25%;
+    opacity: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(129, 129, 129, 0.35);
+    transform: scale(1);
+    animation: moorhen-ripple-inverse 0.2s linear;
+    pointer-events: none;
+}
+
+@keyframes moorhen-ripple-inverse {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: scale(0);
+        opacity: 0;
+    }
 }

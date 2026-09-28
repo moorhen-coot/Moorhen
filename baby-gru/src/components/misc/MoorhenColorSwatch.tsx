@@ -1,24 +1,24 @@
-import Brightness1Icon from '@mui/icons-material/Brightness1';
-import IconButton from '@mui/material/IconButton';
-import { Grid } from "@mui/material";
-import { hexToRGB } from "../../utils/utils";
+import { MoorhenGrid } from '../interface-base/Stack/Grid';
+import { MoorhenButton } from '../inputs';
 
 export const MoorhenColorSwatch = (props => {
     const size = (typeof props.size === 'undefined') ? 20 : parseInt(props.size)
     const columns = (typeof props.columns === 'undefined') ? 5 : parseInt(props.columns)
 
     return <>
-              <Grid container minHeight={size} columns={columns}>
+              <MoorhenGrid columns={columns} gap="5px">
                   {props.cols.map((c,i) => {
                       return (
-                         <Grid display="flex" justifyContent="center" alignItems="center" key={i} size={1}>
-                         <IconButton sx={{ padding: 0, margin: 0, maxWidth: size, maxHeight: size }} aria-label="redirect" onClick={(e) => props.onClick(c)}>
-                         <Brightness1Icon sx={{ padding: 0, margin: 0, color: c, maxWidth: size, maxHeight: size }} />
-                         </IconButton>
-                         </Grid>
+                         <div key={i}>
+                         <MoorhenButton onClick={(e) => props.onClick(c)} variant="white" style={{ padding: 0, minWidth: 0, minHeight: 0, width: size, height: size, borderRadius: '50%' }}>
+                         <div style={{ padding: 0, margin: 0, backgroundColor: c, width: size, height: size, borderRadius: '50%' }} />
+                         </MoorhenButton>
+                         </div>
                        
                       )
                   }) }
-              </Grid>
+              </MoorhenGrid>
            </>
 })
+
+

@@ -20,7 +20,8 @@ export const fillPartialResidue = async (
     insCode: string,
     commandCentre: React.RefObject<CommandCentre>,
     dispatch: Dispatch<UnknownAction>,
-    enableRefineAfterMod: boolean
+    enableRefineAfterMod: boolean,
+    moorhenInstance
 ) => {
     await commandCentre.current.cootCommand(
         {
@@ -46,9 +47,10 @@ export const fillPartialResidue = async (
     selectedMolecule.setAtomsDirty(true);
     await selectedMolecule.redraw();
     dispatch(triggerUpdate(selectedMolecule.molNo));
+    moorhenInstance.triggerMoleculeChanged(selectedMolecule.uniqueId, "modify");
 };
 
-export const MoorhenFillMissingAtoms = () => {
+export const MoorhenFillMissingAtoms = (props) => {
     const dispatch = useDispatch();
 
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod);
@@ -57,7 +59,7 @@ export const MoorhenFillMissingAtoms = () => {
 
     const handleAtomFill = (...args: [moorhen.Molecule, string, number, string]) => {
         if (args.every(arg => arg !== null)) {
-            fillPartialResidue(...args, commandCentre, dispatch, enableRefineAfterMod);
+            fillPartialResidue(...args, commandCentre, dispatch, enableRefineAfterMod, props.moorhenInstance);
         }
     };
 
@@ -105,6 +107,7 @@ export const MoorhenFillMissingAtoms = () => {
                     <MoorhenStack direction="row" style={{ display: "flex", marginLeft: "auto", marginRight: "0rem" }}>
                         <MoorhenButton
                             style={{ display: "flex", marginLeft: "auto", marginRight: "0.1rem" }}
+                            ariaLabel={`View ${label}`}
                             onClick={() =>
                                 selectedMolecule.centreAndAlignViewOn(`//${residue.chainId}/${residue.resNum}-${residue.resNum}/`, true)
                             }
@@ -113,6 +116,7 @@ export const MoorhenFillMissingAtoms = () => {
                         </MoorhenButton>
                         <MoorhenButton
                             style={{ display: "flex", marginLeft: "0rem" }}
+                            ariaLabel={`Fill ${label}`}
                             onClick={() => {
                                 handleAtomFill(selectedMolecule, residue.chainId, residue.resNum, residue.insCode);
                             }}

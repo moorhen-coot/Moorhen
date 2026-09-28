@@ -1,9 +1,8 @@
 import { useDropzone } from "react-dropzone";
-import { useDispatch, useSelector, useStore } from "react-redux";
-import { RootState } from "@/store";
-import { useCommandCentre } from "../../InstanceManager";
+import { useSelector} from "react-redux";
+import { useMoorhenInstance } from "../../InstanceManager";
 import { moorhen } from "../../types/moorhen";
-import { autoOpenFiles } from "../../utils/MoorhenFileLoading";
+import { autoOpenFiles } from "../../utils/FileLoading";
 
 interface MoorhenDroppablePropsInterface {
     monomerLibraryPath: string;
@@ -15,21 +14,16 @@ interface MoorhenDroppablePropsInterface {
 export const MoorhenDroppable = (props: MoorhenDroppablePropsInterface) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness);
-    const dispatch = useDispatch();
-    const store = useStore<RootState>();
-    const commandCentre = useCommandCentre();
+    const moorhenInstance =useMoorhenInstance()
+
 
     const { getRootProps } = useDropzone({
         onDrop: async files => {
             autoOpenFiles(
                 files,
-                commandCentre,
-                store,
-                props.monomerLibraryPath,
+                moorhenInstance,
                 backgroundColor,
-                defaultBondSmoothness,
-                props.timeCapsuleRef,
-                dispatch
+                defaultBondSmoothness
             );
         },
     });

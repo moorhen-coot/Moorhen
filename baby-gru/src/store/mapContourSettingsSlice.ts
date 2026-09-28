@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { MoorhenMap } from "@/utils/MoorhenMap";
 import { moorhen } from "../types/moorhen";
 
@@ -44,122 +44,79 @@ const mapContourSettingsSlice = createSlice({
         // API
         /* If true the map will not be re-contoured when moving around, only on mouse up. 
         helps performance on slower machines */
-        setReContourMapOnlyOnMouseUp: (state, action: { payload: boolean; type: string }) => {
-            state = { ...state, reContourMapOnlyOnMouseUp: action.payload };
-            return state;
+        setReContourMapOnlyOnMouseUp: (state, action: PayloadAction<boolean>) => {
+            state.reContourMapOnlyOnMouseUp = action.payload;
         },
         // API
-        showMap: (state, action: { payload: MoorhenMap; type: string }) => {
+        showMap: (state, action: PayloadAction<MoorhenMap>) => {
             if (!state.visibleMaps.includes(action.payload.molNo))
-                state = { ...state, visibleMaps: [...state.visibleMaps, action.payload.molNo] };
-            return state;
+                state.visibleMaps.push(action.payload.molNo);
         },
         // API
-        hideMap: (state, action: { payload: MoorhenMap; type: string }) => {
-            state = { ...state, visibleMaps: state.visibleMaps.filter(item => item !== action.payload.molNo) };
-            return state;
+        hideMap: (state, action: PayloadAction<MoorhenMap>) => {
+            state.visibleMaps = state.visibleMaps.filter(item => item !== action.payload.molNo);
         },
         // API
-        setContourLevel: (state, action: { payload: { molNo: number; contourLevel: number }; type: string }) => {
-            state = {
-                ...state,
-                contourLevels: [...state.contourLevels.filter(item => item.molNo !== action.payload.molNo), action.payload],
-            };
-            return state;
+        setContourLevel: (state, action: PayloadAction<{ molNo: number; contourLevel: number }>) => {
+            state.contourLevels = [...state.contourLevels.filter(item => item.molNo !== action.payload.molNo), action.payload];
         },
         // API
-        setMapRadius: (state, action: { payload: { molNo: number; radius: number }; type: string }) => {
-            state = {
-                ...state,
-                mapRadii: [...state.mapRadii.filter(item => item.molNo !== action.payload.molNo), action.payload],
-            };
-            return state;
+        setMapRadius: (state, action: PayloadAction<{ molNo: number; radius: number }>) => {
+            state.mapRadii = [...state.mapRadii.filter(item => item.molNo !== action.payload.molNo), action.payload];
         },
-        setMapFastRadius: (state, action: { payload: { molNo: number; radius: number | null }; type: string }) => {
-            state = {
-                ...state,
-                mapFastRadii: [...state.mapFastRadii.filter(item => item.molNo !== action.payload.molNo), action.payload],
-            };
-            return state;
+        setMapFastRadius: (state, action: PayloadAction<{ molNo: number; radius: number | null }>) => {
+            state.mapFastRadii = [...state.mapFastRadii.filter(item => item.molNo !== action.payload.molNo), action.payload];
         },
         // API
-        setMapAlpha: (state, action: { payload: { molNo: number; alpha: number }; type: string }) => {
-            state = {
-                ...state,
-                mapAlpha: [...state.mapAlpha.filter(item => item.molNo !== action.payload.molNo), action.payload],
-            };
-            return state;
+        setMapAlpha: (state, action: PayloadAction<{ molNo: number; alpha: number }>) => {
+            state.mapAlpha = [...state.mapAlpha.filter(item => item.molNo !== action.payload.molNo), action.payload];
         },
         // API
-        setMapStyle: (state, action: { payload: { molNo: number; style: "solid" | "lit-lines" | "lines" }; type: string }) => {
-            state = {
-                ...state,
-                mapStyles: [...state.mapStyles.filter(item => item.molNo !== action.payload.molNo), action.payload],
-            };
-            return state;
+        setMapStyle: (state, action: PayloadAction<{ molNo: number; style: "solid" | "lit-lines" | "lines" }>) => {
+            state.mapStyles = [...state.mapStyles.filter(item => item.molNo !== action.payload.molNo), action.payload];
         },
 
-        changeContourLevel: (state, action: { payload: { molNo: number; factor: number }; type: string }) => {
+        changeContourLevel: (state, action: PayloadAction<{ molNo: number; factor: number }>) => {
             const map = state.contourLevels.find(item => item.molNo === action.payload.molNo);
-            state = {
-                ...state,
-                contourLevels: [
-                    ...state.contourLevels.filter(item => item.molNo !== action.payload.molNo),
-                    { molNo: action.payload.molNo, contourLevel: map.contourLevel + action.payload.factor },
-                ],
-            };
-            return state;
+            state.contourLevels = [
+                ...state.contourLevels.filter(item => item.molNo !== action.payload.molNo),
+                { molNo: action.payload.molNo, contourLevel: map.contourLevel + action.payload.factor },
+            ];
         },
-        changeMapRadius: (state, action: { payload: { molNo: number; factor: number }; type: string }) => {
+        changeMapRadius: (state, action: PayloadAction<{ molNo: number; factor: number }>) => {
             const map = state.mapRadii.find(item => item.molNo === action.payload.molNo);
-            state = {
-                ...state,
-                mapRadii: [
-                    ...state.mapRadii.filter(item => item.molNo !== action.payload.molNo),
-                    { molNo: action.payload.molNo, radius: map.radius + action.payload.factor },
-                ],
-            };
-            return state;
+            state.mapRadii = [
+                ...state.mapRadii.filter(item => item.molNo !== action.payload.molNo),
+                { molNo: action.payload.molNo, radius: map.radius + action.payload.factor },
+            ];
         },
         // API
-        setDefaultMapSamplingRate: (state, action: { payload: number; type: string }) => {
-            return { ...state, defaultMapSamplingRate: action.payload };
+        setDefaultMapSamplingRate: (state, action: PayloadAction<number>) => {
+            state.defaultMapSamplingRate = action.payload;
         },
         // API
-        setDefaultMapLitLines: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, defaultMapLitLines: action.payload };
+        setDefaultMapLitLines: (state, action: PayloadAction<boolean>) => {
+            state.defaultMapLitLines = action.payload;
         },
         // API
-        setMapLineWidth: (state, action: { payload: number; type: string }) => {
-            return { ...state, mapLineWidth: action.payload };
+        setMapLineWidth: (state, action: PayloadAction<number>) => {
+            state.mapLineWidth = action.payload;
         },
         // API
-        setDefaultMapSurface: (state, action: { payload: boolean; type: string }) => {
-            return { ...state, defaultMapSurface: action.payload };
+        setDefaultMapSurface: (state, action: PayloadAction<boolean>) => {
+            state.defaultMapSurface = action.payload;
         },
         // API
-        setMapColours: (state, action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }) => {
-            state = {
-                ...state,
-                mapColours: [...state.mapColours.filter(item => item.molNo !== action.payload.molNo), action.payload],
-            };
-            return state;
+        setMapColours: (state, action: PayloadAction<{ molNo: number; rgb: { r: number; g: number; b: number } }>) => {
+            state.mapColours = [...state.mapColours.filter(item => item.molNo !== action.payload.molNo), action.payload];
         },
         // API
-        setNegativeMapColours: (state, action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }) => {
-            state = {
-                ...state,
-                negativeMapColours: [...state.negativeMapColours.filter(item => item.molNo !== action.payload.molNo), action.payload],
-            };
-            return state;
+        setNegativeMapColours: (state, action: PayloadAction<{ molNo: number; rgb: { r: number; g: number; b: number } }>) => {
+            state.negativeMapColours = [...state.negativeMapColours.filter(item => item.molNo !== action.payload.molNo), action.payload];
         },
         // API
-        setPositiveMapColours: (state, action: { payload: { molNo: number; rgb: { r: number; g: number; b: number } }; type: string }) => {
-            state = {
-                ...state,
-                positiveMapColours: [...state.positiveMapColours.filter(item => item.molNo !== action.payload.molNo), action.payload],
-            };
-            return state;
+        setPositiveMapColours: (state, action: PayloadAction<{ molNo: number; rgb: { r: number; g: number; b: number } }>) => {
+            state.positiveMapColours = [...state.positiveMapColours.filter(item => item.molNo !== action.payload.molNo), action.payload];
         },
     },
 });

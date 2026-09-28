@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: {
     contourWheelSensitivityFactor: number;
@@ -19,15 +19,15 @@ const defaultMouseSettingsSlice = createSlice({
             return initialState;
         },
         // API
-        setZoomWheelSensitivityFactor: (state, action: { payload: number; type: string }) => {
+        setZoomWheelSensitivityFactor: (state, action: PayloadAction<number>) => {
             return { ...state, zoomWheelSensitivityFactor: action.payload };
         },
         // API
-        setMouseSensitivity: (state, action: { payload: number; type: string }) => {
+        setMouseSensitivity: (state, action: PayloadAction<number>) => {
             return { ...state, mouseSensitivity: action.payload };
         },
         // API
-        setContourWheelSensitivityFactor: (state, action: { payload: number; type: string }) => {
+        setContourWheelSensitivityFactor: (state, action: PayloadAction<number>) => {
             return { ...state, contourWheelSensitivityFactor: action.payload };
         },
     },

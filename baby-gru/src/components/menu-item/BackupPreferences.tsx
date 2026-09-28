@@ -26,20 +26,20 @@ export const BackupPreferences = () => {
                 minVal={1}
                 maxVal={30}
                 decimalPlaces={0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="Max. number of stored backups"
-                externalValue={maxBackupCount}
-                setExternalValue={(val: number) => dispatch(setMaxBackupCount(val))}
+                value={maxBackupCount}
+                setValue={(val: number) => dispatch(setMaxBackupCount(val))}
             />
             <MoorhenSlider
                 isDisabled={!enableTimeCapsule}
                 minVal={1}
                 maxVal={30}
                 decimalPlaces={0}
-                logScale={false}
+                scale="linear"
                 sliderTitle="No. of modifications to trigger backup"
-                externalValue={modificationCountBackupThreshold}
-                setExternalValue={(val: number) => dispatch(setModificationCountBackupThreshold(val))}
+                value={modificationCountBackupThreshold}
+                setValue={(val: number) => dispatch(setModificationCountBackupThreshold(val))}
             />
         </MoorhenStack>
     );

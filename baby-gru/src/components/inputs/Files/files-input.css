@@ -19,6 +19,7 @@
 }
 .moorhen__input-files-textfield {
     border: 1px solid var(--moorhen-border);
+    background-color: var(--moorhen-input-background);
     border-radius: 0 0.5rem 0.5rem 0;
     display: flex;
     justify-content: flex-start;
@@ -29,6 +30,8 @@
     max-width: 18rem;
     flex-shrink: 1;
     height: 2.2rem;
+    max-height: 2.2rem;
+    min-height: 2.2rem;
     margin: 0px;
-    padding: 5px;
+    padding-left: 1rem;
 }

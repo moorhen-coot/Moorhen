@@ -543,6 +543,7 @@ export function initTextInstancedShaders(vertexShader, fragmentShader, gl) {
     gl.bindAttribLocation(shaderProgramTextInstanced, 8, "size");
     gl.bindAttribLocation(shaderProgramTextInstanced, 9, "offset");
     gl.bindAttribLocation(shaderProgramTextInstanced, 10, "textureOffsets");
+    gl.bindAttribLocation(shaderProgramTextInstanced, 11, "screenOffset");
     gl.linkProgram(shaderProgramTextInstanced);
 
     if (!gl.getProgramParameter(shaderProgramTextInstanced, gl.LINK_STATUS)) {
@@ -566,6 +567,9 @@ export function initTextInstancedShaders(vertexShader, fragmentShader, gl) {
 
     shaderProgramTextInstanced.textureOffsetAttribute = gl.getAttribLocation(shaderProgramTextInstanced, "textureOffsets");
     gl.enableVertexAttribArray(shaderProgramTextInstanced.textureOffsetAttribute);
+
+    shaderProgramTextInstanced.screenOffsetAttribute = gl.getAttribLocation(shaderProgramTextInstanced, "screenOffset");
+    gl.enableVertexAttribArray(shaderProgramTextInstanced.screenOffsetAttribute);
 
     shaderProgramTextInstanced.pMatrixUniform = gl.getUniformLocation(shaderProgramTextInstanced, "uPMatrix");
     shaderProgramTextInstanced.mvMatrixUniform = gl.getUniformLocation(shaderProgramTextInstanced, "uMVMatrix");
@@ -962,6 +966,15 @@ export function initShaders(vertexShader, fragmentShader, gl) {
     shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
     shaderProgram.mvInvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVINVMatrix");
     shaderProgram.textureMatrixUniform = gl.getUniformLocation(shaderProgram, "TextureMatrix");
+
+    //Fancy picking ...
+    shaderProgram.uPointTex = gl.getUniformLocation(shaderProgram, "uPointTex");
+    shaderProgram.uWeightTex = gl.getUniformLocation(shaderProgram, "uWeightTex");
+    shaderProgram.uOffsetTex = gl.getUniformLocation(shaderProgram, "uOffsetTex");
+    shaderProgram.uPointTexWidth = gl.getUniformLocation(shaderProgram, "uPointTexWidth");
+    shaderProgram.uWeightTexWidth = gl.getUniformLocation(shaderProgram, "uWeightTexWidth");
+    shaderProgram.uOffsetTexWidth = gl.getUniformLocation(shaderProgram, "uOffsetTexWidth");
+    shaderProgram.uHoveredPoint = gl.getUniformLocation(shaderProgram, "uHoveredPoint");
 
     shaderProgram.fog_start = gl.getUniformLocation(shaderProgram, "fog_start");
     shaderProgram.fog_end = gl.getUniformLocation(shaderProgram, "fog_end");

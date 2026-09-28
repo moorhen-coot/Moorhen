@@ -14,6 +14,8 @@ type MoorhenChainSelectPropsType = {
     disabled?: boolean;
     ref?: React.Ref<HTMLSelectElement>;
     allowAll?: boolean;
+    value?: string;
+    setValue?: React.Dispatch<React.SetStateAction<string>> | ((newValue: string) => void);
 };
 
 export const MoorhenChainSelect = (props: MoorhenChainSelectPropsType) => {
@@ -49,7 +51,7 @@ export const MoorhenChainSelect = (props: MoorhenChainSelectPropsType) => {
     };
 
     return (
-        <MoorhenSelect ref={ref} disabled={props.disabled} defaultValue={defaultValue} onChange={handleChange} label={label}>
+        <MoorhenSelect ref={ref} disabled={props.disabled} defaultValue={defaultValue} value={props.value} setValue={props.setValue} onChange={handleChange} label={label}>
             {props.selectedCoordMolNo !== null ? getChainOptions(props.selectedCoordMolNo) : null}
         </MoorhenSelect>
     );

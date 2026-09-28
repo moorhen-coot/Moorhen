@@ -1,14 +1,14 @@
-import { LinearProgress } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {useEffect, useRef, useState } from "react";
 import { MoorhenButton } from "@/components/inputs";
 import { flipPeptide } from "@/components/validation-tools/MoorhenPepflipsDifferenceMap";
 import { RootState, addGeneralRepresentation, removeGeneralRepresentation, setShownControl } from "@/store";
-import { useCommandCentre, useTimeCapsule } from "../../../InstanceManager";
+import { useCommandCentre, useTimeCapsule, useMoorhenInstance } from "../../../InstanceManager";
 import { setHoveredAtom } from "../../../store/hoveringStatesSlice";
 import { cidToSpec, sleep } from "../../../utils/utils";
 import { MoorhenInfoCard, MoorhenStack } from "../../interface-base";
 import { fillPartialResidue } from "../../validation-tools/MoorhenFillMissingAtoms";
+import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
 
 //     await selectedMolecule.fetchIfDirtyAndDraw("rama");
 // },
@@ -18,6 +18,8 @@ import { fillPartialResidue } from "../../validation-tools/MoorhenFillMissingAto
 export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillAllAtoms" }) => {
     console.log("Rendering residue steps with variant ", props.variant);
     const timeCapsuleRef = useTimeCapsule();
+
+    const moorhenInstance = useMoorhenInstance();
 
     const disableTimeCapsule = true;
     const sleepTime = 600;
@@ -34,7 +36,7 @@ export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillA
     const timeCapsuleIsEnabled = useSelector((state: RootState) => state.backupSettings.enableTimeCapsule);
     const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
     const [isRunning, setIsRunning] = useState<boolean>(false);
-    const [progress, setProgress] = useState<number>(0);
+    const [progress, setProgress] = useState<number |null>(null);
     const [buffer, setBuffer] = useState<number>(1);
     const [cid, setCid] = useState<string | null>("Refining...");
     const commandCentre = useCommandCentre();
@@ -72,6 +74,7 @@ export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillA
         const nSteps = residueList.length;
         const stepPercent = nSteps / 100;
         const singleStepPercent = 1 / stepPercent;
+        setProgress(0);
 
         for (const residue of residueList) {
             setBuffer(prev => prev + singleStepPercent);
@@ -106,7 +109,8 @@ export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillA
             resSpec.ins_code,
             commandCentre,
             enableRefineAfterMod,
-            dispatch
+            dispatch,
+            moorhenInstance
         );
     };
 
@@ -121,7 +125,8 @@ export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillA
             resSpec.ins_code,
             commandCentre,
             dispatch,
-            enableRefineAfterMod
+            enableRefineAfterMod,
+            moorhenInstance
         );
     };
 
@@ -198,11 +203,8 @@ export const ResidueSteps = (props: { variant: "pepFlip" | "stepRefine" | "fillA
         <MoorhenStack style={{ width: "8rem", padding: "0.5rem" }} align="center" justify="center" gap={"0.5rem"}>
             <MoorhenStack style={{ width: "100%" }} align="center" justify="center" gap={"0.5rem"}>
                 <span>{cid}</span>
-                <LinearProgress
-                    variant={isRunning ? "buffer" : "determinate"}
+                <MoorhenLinearProgress
                     value={progress}
-                    valueBuffer={buffer}
-                    style={{ width: "100%", display: "flex", justifyContent: "start" }}
                 />
             </MoorhenStack>
             <MoorhenStack direction="row" align="center" justify="center" gap={"0.5rem"}>

@@ -1,5 +1,6 @@
 export { MoorhenAccordion } from "./Accordion/Accordion";
 export { MoorhenDraggableModalBase } from "./ModalBase/DraggableModalBase";
+export { ModalErrorBoundary } from "./ModalBase/ModalErrorBoundary";
 export { MoorhenPopover } from "./Popovers/Popover";
 export { MoorhenStack } from "./Stack/Stack";
 export { MoorhenMenuItemPopover } from "./Popovers/MenuItemPopover";
@@ -7,3 +8,4 @@ export { MoorhenMenuItem } from "./MenuItems/MenuItem";
 export { MoorhenInfoCard } from "./Popovers/InfoCard";
 export { MoorhenTooltip } from "./Popovers/Tooltip";
 export { MoorhenTabContainer, MoorhenTab } from "./Tabs/Tabs";
+export { PanelErrorBoundary } from "./PanelErrorBoundary";

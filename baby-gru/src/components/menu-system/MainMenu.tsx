@@ -1,4 +1,3 @@
-import { ClickAwayListener } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { memo, useMemo, useState } from "react";
 import { useMoorhenInstance } from "@/InstanceManager";
@@ -6,6 +5,7 @@ import { setShownSidePanel, showModal } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive } from "../../store/globalUISlice";
 import { MoorhenIcon, MoorhenSVG } from "../icons";
+import { MoorhenClickAwayListener } from "../interface-base/utils/ClickAwayListener";
 import { MenuFromItems } from "./MenuFromItems";
 import { MoorhenSearchBar } from "./SearchBar";
 import "./main-menu.css";
@@ -85,14 +85,14 @@ export const MoorhenMainMenu = memo(() => {
                     dispatch(setShownSidePanel(menu.panel));
                 }
             };
-            return <MainMenuButton key={key} icon={menu.icon} label={menu.label} onClick={onClick} />;
+            return <MainMenuButton key={key} icon={menu.icon} label={menu.label} ariaLabel={menu.ariaLabel} onClick={onClick} />;
         });
 
         return <div className="moorhen__main-menu-buttons-container">{buttonsList}</div>;
     }, [isOpen, isDevMode, menuSystem, menuVersion]);
 
     return (
-        <div className="moorhen__main-menu-scroll" style={{ height: GLViewportHeight - 10 }}>
+        <div className="moorhen__main-menu-scroll" style={{ height: GLViewportHeight - 2 }}>
             {/* moorhen__main-menu-scroll have these CSS properties that will propagate and cause bugs: 
             direction: ltr 
             pointer-events: none;
@@ -114,7 +114,9 @@ export const MoorhenMainMenu = memo(() => {
                 </button>
                 <div className="moorhen__main-menu-container">
                     {menu}
-                    {subMenu ? <ClickAwayListener onClickAway={event => handleClickAway(event)}>{subMenu}</ClickAwayListener> : null}
+                    {subMenu ? (
+                        <MoorhenClickAwayListener onClickAway={event => handleClickAway(event)}>{subMenu}</MoorhenClickAwayListener>
+                    ) : null}
                 </div>
             </div>
         </div>
@@ -122,9 +124,9 @@ export const MoorhenMainMenu = memo(() => {
 });
 MoorhenMainMenu.displayName = "MoorhenMainMenu";
 
-const MainMenuButton = (props: { icon: MoorhenSVG; label: string; onClick: () => void }) => {
+const MainMenuButton = (props: { icon: MoorhenSVG; label: string; ariaLabel?: string; onClick: () => void }) => {
     return (
-        <button className="moorhen__main-menu-button" onClick={props.onClick}>
+        <button className="moorhen__main-menu-button" onClick={props.onClick} aria-label={props.ariaLabel ?? props.label}>
             <MoorhenIcon moorhenSVG={props.icon} className="moorhen__icon menu" alt={props.icon} />
             &nbsp;&nbsp;
             {props.label}
