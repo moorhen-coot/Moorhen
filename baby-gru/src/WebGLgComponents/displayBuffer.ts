@@ -79,7 +79,7 @@ export class DisplayBuffer {
     multiViewGroup: number;
     clickTol: number;
     doStencil: boolean;
-    /** Drawn after everything else, onto a cleared depth buffer, so nothing can hide it. */
+    // uses gl.depthRange
     alwaysOnTop: boolean;
 
     constructor() {
