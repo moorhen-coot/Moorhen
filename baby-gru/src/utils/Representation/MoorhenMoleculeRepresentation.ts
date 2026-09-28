@@ -13,6 +13,7 @@ import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
+import { wholeMeshPickInfo } from "../../WebGLgComponents/wholeMeshPick";
 
 export type MeshType =
     | libcootApi.InstancedMeshJS
@@ -1874,7 +1875,14 @@ export class MoleculeRepresentation {
                 } else {
                     objects = [_objects[cavityIndex -1]];
                 }
-                return objects;
+                // A cavity is one thing, so it is hovered and centred on as one thing: the
+                // whole pocket lights up and centring goes to its middle rather than to
+                // wherever on the surface the pointer happened to be. Everything needed for
+                // that is in the vertices Coot already sent, so this asks libcoot for nothing.
+                return objects.map(object => {
+                    const pick_info = wholeMeshPickInfo(object.vert_tri?.[0]?.[0] ?? []);
+                    return pick_info ? { ...object, pick_info } : object;
+                });
             }
         }
     }

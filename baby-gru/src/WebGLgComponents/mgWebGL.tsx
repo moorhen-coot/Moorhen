@@ -109,6 +109,7 @@ import { drawBuffer, drawMaxElementsUInt, setupModelViewTransformMatrixInteracti
 import { drawPeel, drawTriangles, drawScene, applySymmetryMatrix, bindFramebufferDrawBuffers } from './mgWebGLParts/drawCore'
 import { initInstanceState, initGraphicsContext, attachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
 import { getDeviceScale} from './webGLUtils'
+import { rayMeshHit } from './rayMesh'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
 import { Root } from 'react-dom/client';
@@ -1821,7 +1822,74 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const clickTol = displayBuffers[idx].clickTol ? displayBuffers[idx].clickTol : defaultClickTol;
 
             if(displayBuffers[idx].pick_info&&displayBuffers[idx].visible){
-                if(displayBuffers[idx].pick_info.pick_points){
+                // A mesh that asks to be tested exactly is not measured against sample points
+                // at all: the ray is intersected with its own triangles, which the buffer
+                // already keeps on this side for building its GL buffers from.
+                //
+                // The answer slots into the rule below without changing any of it. An
+                // intersection reports a distance of zero and the depth of the point where the
+                // ray enters, so two meshes the pointer is genuinely over are separated by
+                // depth - the nearer wins, which is what occlusion means - while a mesh the
+                // ray misses is not a candidate at all and cannot win on a near miss.
+                //
+                // This replaces a sampled approximation with a tolerance that had no right
+                // value: too generous and something merely nearby stole the pick, too tight and
+                // something behind could be picked through what was in front of it.
+                if(displayBuffers[idx].pick_info.pick_exact){
+                    const verts = displayBuffers[idx].triangleVertices?.[0]
+                    const tris = displayBuffers[idx].triangleIndexs?.[0]
+                    if(verts && tris && tris.length > 2){
+                        const hit = rayMeshHit(
+                            verts, tris,
+                            modelPointArrayResultsFront, modelPointArrayResultsBack,
+                            displayBuffers[idx].pick_info.pick_bounds
+                        )
+                        if(hit){
+                            // The chord the ray cuts through the mesh, in eye space, where a
+                            // larger z is nearer the viewer.
+                            //
+                            // Which end of it faces the viewer cannot be assumed from the order
+                            // of the two unprojected points: the one named "front" is in fact
+                            // the farther of the two. Nor can how far along the ray the mesh
+                            // lies be judged from them - they straddle only part of the visible
+                            // depth - so what is visible is decided here, against the clip
+                            // planes themselves.
+                            const entryTrans = vec3Create([0, 0, 0]);
+                            const exitTrans = vec3Create([0, 0, 0]);
+                            vec3.transformMat4(entryTrans, vec3Create(hit.entry.point), mvMatrix);
+                            vec3.transformMat4(exitTrans, vec3Create(hit.exit.point), mvMatrix);
+                            const nearestZ = Math.max(entryTrans[2], exitTrans[2]);
+                            const farthestZ = Math.min(entryTrans[2], exitTrans[2]);
+                            // Some of the chord has to lie within the slab for any of the mesh
+                            // to be on screen here...
+                            const onScreen = nearestZ > -this.gl_clipPlane1[3]
+                                          && farthestZ < this.gl_clipPlane0[3];
+                            // ...and the nearest part of it that is, which is the clip plane
+                            // itself where the front of the pocket has been cut away and you
+                            // are looking at its inside.
+                            const depth = Math.min(nearestZ, this.gl_clipPlane0[3]);
+                            const claimsPointer = !!displayBuffers[idx].pick_info.claims_pointer
+                            const priority = displayBuffers[idx].pick_info.pick_priority ?? 0
+                            const claimsThis = claimsPointer;
+                            const beatsBest =
+                                claimsThis !== bestClaims_pi ? claimsThis
+                                : (claimsThis && priority !== bestPriority_pi) ? priority > bestPriority_pi
+                                : bestIsHit_pi ? depth > bestDepth_pi
+                                : true;
+                            if(beatsBest && onScreen){
+                                minidx_pi = idx;
+                                // Pick point zero is the centroid, which is what centring wants
+                                // however the mesh was hit.
+                                minj_pi = 0;
+                                mindist_pi = 0;
+                                bestIsHit_pi = true;
+                                bestDepth_pi = depth;
+                                bestClaims_pi = claimsThis;
+                                bestPriority_pi = priority;
+                            }
+                        }
+                    }
+                } else if(displayBuffers[idx].pick_info.pick_points){
                     const pickSpans = displayBuffers[idx].pick_info.pick_spans
                     // How near a candidate has to be to count as under the cursor rather than
                     // merely nearby. A tube supplies its own radius; anything that does not keeps

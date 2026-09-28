@@ -1101,7 +1101,19 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             && !!hoveredBuffer?.pick_info?.influence_point_indexes_texture
             && !!hoveredBuffer?.pick_info?.influence_index_offsets_texture
 
-        if(drawingVisibleImage && hoveredBuffer && self.state.hover_point>-1 && hoveredHasInfluenceTextures){
+        // A mesh that is one whole thing - a cavity - wants the same overlay with no falloff.
+        //
+        // It can use this pass for the same reason a smooth mesh can: it is not instanced. What
+        // it lacks is the influence data, and it does not need it. Leaving uHoveredPoint at the
+        // sentinel makes the vertex shader take its other branch and set vHighlight to 1
+        // everywhere, which gives full alpha across the mesh - and no ring, since the ring is a
+        // contour of the influence field and a constant field has no contour. So the whole
+        // thing lights solid orange with no shader change at all.
+        const hoveredWholeMesh = !hoveredHasInfluenceTextures
+            && !!hoveredBuffer?.pick_info?.highlight_whole
+
+        if(drawingVisibleImage && hoveredBuffer && self.state.hover_point>-1
+           && (hoveredHasInfluenceTextures || hoveredWholeMesh)){
             //TODO - We don't really need to do self.draw at all. This could be done in the
             //       general drawing above.
             const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
@@ -1118,6 +1130,9 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                  const influence_index_offsets_width = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_width
                  const theShader = self.shaderProgram
                  self.gl.useProgram(theShader)
+                 // Only for the smooth-mesh case; the whole-mesh one has no such textures and
+                 // must not be handed undefined ones.
+                 if(hoveredHasInfluenceTextures){
                  if(theShader.uPointTex !== null){
                      self.gl.uniform1i(theShader.uPointTex, 7);
                      self.gl.activeTexture(self.gl.TEXTURE7);
@@ -1136,7 +1151,12 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                      self.gl.bindTexture(self.gl.TEXTURE_2D, influence_index_offsets_texture);
                      self.gl.uniform1ui(theShader.uOffsetTexWidth, influence_index_offsets_width);
                  }
-                 self.gl.uniform1ui(theShader.uHoveredPoint, self.state.hover_point);
+                 }
+                 // The sentinel the vertex shader compares against: anything at or above it
+                 // means "not hovering a particular point", which is the branch that sets
+                 // vHighlight to 1 for every vertex. That is precisely the whole-mesh case.
+                 self.gl.uniform1ui(theShader.uHoveredPoint,
+                                    hoveredWholeMesh ? 0xFFFFFFFF : self.state.hover_point);
                  self.hoverBuffer ??= self.gl.createBuffer()
                  self.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
                  self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])
