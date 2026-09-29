@@ -17,7 +17,7 @@ import {
 } from "../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { MOORHEN_ATOM_TAG_KIND } from "../../utils/enums";
+import { MOORHEN_ATOM_TAG_KIND, MOORHEN_SURFACE_RESIDUE_TAG_KIND } from "../../utils/enums";
 import { addAvailableFontList, emptyAvailableFonts } from "../../store/labelSettingsSlice";
 import { setRefinementSelection } from "../../store/refinementSettingsSlice";
 import {
@@ -220,20 +220,35 @@ export const MoorhenContainer = (props: ContainerProps) => {
      */
     const onSectionHovered = useCallback(
         (identifier: { buffer: { id: string }; kind: string; tag: string }) => {
-            if (identifier == null || identifier.kind !== MOORHEN_ATOM_TAG_KIND) {
+            if (identifier == null) {
                 return;
             }
-            // "<uniqueId>|<chain>|<residue>|<cid>". Only the first and last fields matter here;
-            // the middle two exist so the reverse direction can match without parsing a CID.
-            const fields = identifier.tag.split("|");
-            if (fields.length < 4) {
+            if (identifier.kind === MOORHEN_ATOM_TAG_KIND) {
+                // "<uniqueId>|<chain>|<residue>|<cid>". Only the first and last fields matter
+                // here; the middle two exist so the reverse direction can match without
+                // parsing a CID.
+                const fields = identifier.tag.split("|");
+                if (fields.length < 4) {
+                    return;
+                }
+                const moleculeUniqueId = fields[0];
+                const cid = fields.slice(3).join("|");
+                const molecule = molecules.find(item => item.uniqueId === moleculeUniqueId);
+                if (molecule && cid) {
+                    dispatch(setHoveredAtom({ molecule: molecule, cid: cid, atomInfo: null }));
+                }
                 return;
             }
-            const moleculeUniqueId = fields[0];
-            const cid = fields.slice(3).join("|");
-            const molecule = molecules.find(item => item.uniqueId === moleculeUniqueId);
-            if (molecule && cid) {
-                dispatch(setHoveredAtom({ molecule: molecule, cid: cid, atomInfo: null }));
+            if (identifier.kind === MOORHEN_SURFACE_RESIDUE_TAG_KIND) {
+                // A molecular surface names the residue behind the triangle under the pointer,
+                // and the tag is the CID Coot wrote. Which molecule it belongs to is not in the
+                // tag - it does not need to be, because the buffer is here and a molecule can
+                // be asked whether it owns one. That is how an atom hover finds its molecule
+                // too.
+                const molecule = molecules.find(item => item.buffersInclude(identifier.buffer));
+                if (molecule && identifier.tag) {
+                    dispatch(setHoveredAtom({ molecule: molecule, cid: identifier.tag, atomInfo: null }));
+                }
             }
         },
         [molecules, dispatch]

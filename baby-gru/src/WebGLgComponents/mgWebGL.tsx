@@ -109,7 +109,7 @@ import { drawBuffer, drawMaxElementsUInt, setupModelViewTransformMatrixInteracti
 import { drawPeel, drawTriangles, drawScene, applySymmetryMatrix, bindFramebufferDrawBuffers } from './mgWebGLParts/drawCore'
 import { initInstanceState, initGraphicsContext, attachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
 import { getDeviceScale} from './webGLUtils'
-import { rayMeshHit } from './rayMesh'
+import { rayMeshHit, buildMeshIndex } from './rayMesh'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
 import { Root } from 'react-dom/client';
@@ -1839,10 +1839,29 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     const verts = displayBuffers[idx].triangleVertices?.[0]
                     const tris = displayBuffers[idx].triangleIndexs?.[0]
                     if(verts && tris && tris.length > 2){
+                        // A mesh with many owners gets its triangles grouped by owner, each
+                        // group with its own box, the first time it is hovered.
+                        //
+                        // Without it a surface is swept whole on every hover, because its
+                        // bounding box is the molecule: 24 ms on a ribosome, against 0.08 ms
+                        // grouped. Built here rather than when the pick information is made,
+                        // so a surface nobody hovers costs nothing - the price is that the
+                        // first hover after a surface is drawn pauses for about 60 ms at that
+                        // size.
+                        //
+                        // A mesh that is one whole thing, like a cavity, has a single owner
+                        // and would group into a single box, so it is left alone.
+                        const pickInfo = displayBuffers[idx].pick_info
+                        const ownerCount = pickInfo.pick_points?.length ?? 0
+                        if(pickInfo.vertex_pick_points && ownerCount > 1 && !pickInfo.mesh_index){
+                            pickInfo.mesh_index = buildMeshIndex(
+                                verts, tris, pickInfo.vertex_pick_points, ownerCount)
+                        }
                         const hit = rayMeshHit(
                             verts, tris,
                             modelPointArrayResultsFront, modelPointArrayResultsBack,
-                            displayBuffers[idx].pick_info.pick_bounds
+                            pickInfo.pick_bounds,
+                            pickInfo.mesh_index
                         )
                         if(hit){
                             // The chord the ray cuts through the mesh, in eye space, where a
