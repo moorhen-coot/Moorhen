@@ -32,7 +32,7 @@
  */
 
 import type { Bounds } from "./rayMesh";
-import { MOORHEN_SURFACE_RESIDUE_TAG_KIND } from "../utils/enums";
+import { MOORHEN_MESH_RESIDUE_TAG_KIND } from "../utils/enums";
 import { encodeOwner } from "../utils/pickLevel";
 
 /** The per-vertex owner value meaning "no residue known", as Coot writes it. */
@@ -76,122 +76,15 @@ export type OwnedMeshPickInfo = {
     influence_weights: Float32Array;
     pick_bounds: Bounds;
     pick_exact: boolean;
-    /** How many vertices are shared between two residues, as a diagnostic. */
+    /**
+     * How many vertices belong to two residues rather than one.
+     *
+     * A count of the blend, not of anything the renderer needs - a surface reports about a
+     * third of its vertices, a ribbon none, because a ribbon vertex lies within one residue's
+     * span of spline. Kept because it is the one number that says at a glance whether the
+     * ownership arrived in the shape expected.
+     */
     shared_vertices: number;
-};
-
-/**
- * What the ownership actually looks like on a real surface, for the console.
- *
- * Two questions worth answering from the data rather than from the picture. First, do the
- * blended weights span the range they should - a blend that only ever ran from 0.5 to 0.55
- * would look almost exactly like no blend at all. Second, and the reason this exists: how much
- * of the boundary is still hard?
- *
- * A boundary triangle is one whose corners name different residues. If any of its corners is
- * shared between two, the field varies across it and the contour can cross it smoothly. If all
- * three corners belong outright to their own residue, the field is 0 or 1 at each and the
- * contour is pinned to the edges - a visible facet. Counting those says exactly how much is
- * left to gain, without knowing anything about which patch type produced them.
- */
-export const surfaceOwnerReport = (
-    info: OwnedMeshPickInfo,
-    vertices?: number[] | Float32Array
-): string => {
-    const count = info.vertex_pick_points.length;
-    const shared = info.shared_vertices;
-
-    // How lopsided each shared vertex is: the larger of its two shares, so the number runs
-    // from 0.5 (the middle of a groove, evenly split) to 1 (at a contact point, where the
-    // groove meets a cap). Per vertex rather than per contribution, because the two shares of
-    // one vertex always sum to 1 and pooling them would say nothing but that.
-    //
-    // A blend that only ever reported 0.95 to 1 would be no blend worth having, and would
-    // look like one in a screenshot.
-    const buckets = new Array(10).fill(0);
-    let min = Infinity, max = -Infinity, total = 0, n = 0;
-    for (let v = 0; v < count; v++) {
-        const begin = v === 0 ? 0 : info.influence_index_offsets[v - 1];
-        const end = info.influence_index_offsets[v];
-        if (end - begin < 2) continue;
-        let dominant = 0;
-        for (let i = begin; i < end; i++)
-            if (info.influence_weights[i] > dominant) dominant = info.influence_weights[i];
-        if (dominant < min) min = dominant;
-        if (dominant > max) max = dominant;
-        total += dominant; n++;
-        buckets[Math.min(9, Math.floor(dominant * 10))]++;
-    }
-
-    let lines = `Surface owners: ${info.pick_points.length} residues, `
-        + `${shared} of ${count} vertices shared between two `
-        + `(${(100 * shared / Math.max(count, 1)).toFixed(1)}%)`;
-    if (n > 0) {
-        lines += `\n  dominant share: ${min.toFixed(3)} to ${max.toFixed(3)}, `
-            + `mean ${(total / n).toFixed(3)} over ${n} shared vertices`
-            + `\n  by tenth: ${buckets.map((b, i) => `${i / 10}-${(i + 1) / 10}:${b}`).join("  ")}`;
-    }
-
-    if (vertices) {
-        // Where the hard edges are, given that the mesh is not welded.
-        //
-        // Counting triangles whose corners disagree finds nothing, and that is a fact about
-        // the surface rather than a bug: each patch is uploaded as its own block of vertices
-        // with its own triangles, and a torus element spans only half a saddle - from the
-        // midline, where the two atoms share the vertex evenly, out to its own contact circle.
-        // So no triangle ever joins two residues; they meet at seams between patches, where
-        // the vertices are duplicated.
-        //
-        // A seam is smooth if the copies agree about who owns them, which is what makes the
-        // halfway line between two atoms invisible. It is a hard edge if they disagree - and
-        // that is what is left to fix, in the three sectors of a re-entrant patch, where each
-        // sector claims its own atom outright and its neighbour's copy claims the next.
-        // Gathered per position: the signatures the copies carry, and the union of the
-        // residues they name. The union is the thing that decides how much room the data
-        // model needs - a seam where three residues meet cannot be described by a vertex that
-        // holds two of them, however the two are chosen.
-        const atPosition = new Map<string, { copies: number; sigs: Set<string>; owners: Set<number> }>();
-        for (let v = 0; v < count; v++) {
-            const key = `${Math.round(vertices[3 * v] * 1000)},`
-                      + `${Math.round(vertices[3 * v + 1] * 1000)},`
-                      + `${Math.round(vertices[3 * v + 2] * 1000)}`;
-            const begin = v === 0 ? 0 : info.influence_index_offsets[v - 1];
-            const end = info.influence_index_offsets[v];
-            const pairs: string[] = [];
-            let group = atPosition.get(key);
-            if (!group) { group = { copies: 0, sigs: new Set(), owners: new Set() }; atPosition.set(key, group); }
-            group.copies++;
-            for (let i = begin; i < end; i++) {
-                pairs.push(`${info.influence_point_indexes[i]}:${info.influence_weights[i].toFixed(2)}`);
-                group.owners.add(info.influence_point_indexes[i]);
-            }
-            group.sigs.add(pairs.sort().join("|"));
-        }
-
-        let seams = 0, mismatched = 0, differentOwners = 0, threeOrMore = 0;
-        for (const group of atPosition.values()) {
-            if (group.copies < 2) continue;      // not a seam: only one patch reaches here
-            seams++;
-            if (group.sigs.size > 1) {
-                mismatched++;
-                // Do the copies name different residues, or only split the same pair
-                // differently? The first is a real discontinuity; the second can be nothing
-                // more than the two patches rounding theta differently at their shared edge.
-                const namesPerSig = new Set<string>();
-                for (const s of group.sigs)
-                    namesPerSig.add(s.split("|").map(p => p.split(":")[0]).sort().join(","));
-                if (namesPerSig.size > 1) differentOwners++;
-                if (group.owners.size > 2) threeOrMore++;
-            }
-        }
-        lines += `\n  seams: ${seams} duplicated positions, ${mismatched} where the copies `
-            + `disagree (${(100 * mismatched / Math.max(seams, 1)).toFixed(1)}% hard edges)`
-            + `\n  of those: ${differentOwners} name different residues, `
-            + `${mismatched - differentOwners} only split the same pair differently`
-            + `\n  ${threeOrMore} seams have three or more residues meeting `
-            + `(these cannot fit a two-owner vertex)`;
-    }
-    return lines;
 };
 
 /**
@@ -339,7 +232,7 @@ export const ownedMeshPickInfo = (
         owner_codes,
         pick_point_sections,
         section_level_points,
-        pick_tag_kind: MOORHEN_SURFACE_RESIDUE_TAG_KIND,
+        pick_tag_kind: MOORHEN_MESH_RESIDUE_TAG_KIND,
         vertex_pick_points,
         influence_index_offsets,
         influence_point_indexes,

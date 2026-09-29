@@ -14,7 +14,7 @@ import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInS
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { wholeMeshPickInfo } from "../../WebGLgComponents/wholeMeshPick";
-import { ownedMeshPickInfo, surfaceOwnerReport } from "../../WebGLgComponents/ownedMeshPick";
+import { ownedMeshPickInfo } from "../../WebGLgComponents/ownedMeshPick";
 
 export type MeshType =
     | libcootApi.InstancedMeshJS
@@ -1458,13 +1458,10 @@ export class MoleculeRepresentation {
         // a question about the mesh rather than about the style: ask what arrived. Ribbons and
         // the rest simply have no owners and fall through unchanged.
         const m2tMesh = response.data.result.result as libcootApi.SimpleMeshJS
-        const surfacePickInfo = ownedMeshPickInfo(
+        const meshPickInfo = ownedMeshPickInfo(
             m2tMesh.vert_tri?.[0]?.[0] ?? [], m2tMesh.vertex_owners, m2tMesh.owners,
             m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights)
-        if (surfacePickInfo) {
-            console.log(surfaceOwnerReport(surfacePickInfo, m2tMesh.vert_tri?.[0]?.[0]))
-        }
-        const ribbonBufferObjects = [{ ...response.data.result.result, pick_info: surfacePickInfo ?? {} }];
+        const ribbonBufferObjects = [{ ...response.data.result.result, pick_info: meshPickInfo ?? {} }];
 
         let resultBufferObjects: PickableMesh[];
         if (m2tStyle === "Ribbon" && this.parentMolecule.hasDNA) {

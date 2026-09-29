@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setHoveredSection } from "../../store/hoveringStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
-import { MOORHEN_ATOM_TAG_KIND, MOORHEN_SURFACE_RESIDUE_TAG_KIND, moorhenAtomTagKey } from "../../utils/enums";
+import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND, moorhenAtomTagKey } from "../../utils/enums";
 import { cidToSpec } from "../../utils/utils";
 
 /**
@@ -56,7 +56,7 @@ export const HighlightHoveredSection = () => {
         if (target && hoveredAtom?.molecule) {
             for (const buffer of displayBuffers ?? []) {
                 const pickInfo = buffer.pick_info;
-                if (pickInfo?.pick_tag_kind !== MOORHEN_SURFACE_RESIDUE_TAG_KIND) continue;
+                if (pickInfo?.pick_tag_kind !== MOORHEN_MESH_RESIDUE_TAG_KIND) continue;
                 if (!pickInfo.pick_point_tags || !pickInfo.owner_codes) continue;
                 if (!hoveredAtom.molecule.buffersInclude(buffer)) continue;
                 const index = pickInfo.pick_point_tags.findIndex(tag => {

@@ -17,7 +17,7 @@ import {
 } from "../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { MOORHEN_ATOM_TAG_KIND, MOORHEN_SURFACE_RESIDUE_TAG_KIND } from "../../utils/enums";
+import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND } from "../../utils/enums";
 import { addAvailableFontList, emptyAvailableFonts } from "../../store/labelSettingsSlice";
 import { setRefinementSelection } from "../../store/refinementSettingsSlice";
 import {
@@ -239,7 +239,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 }
                 return;
             }
-            if (identifier.kind === MOORHEN_SURFACE_RESIDUE_TAG_KIND) {
+            if (identifier.kind === MOORHEN_MESH_RESIDUE_TAG_KIND) {
                 // A molecular surface names the residue behind the triangle under the pointer,
                 // and the tag is the CID Coot wrote. Which molecule it belongs to is not in the
                 // tag - it does not need to be, because the buffer is here and a molecule can
