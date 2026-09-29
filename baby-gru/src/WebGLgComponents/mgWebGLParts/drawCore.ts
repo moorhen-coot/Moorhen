@@ -5,7 +5,7 @@ import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
-import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
+import { levelForHeight, visibleHeight, ownerMaskForLevel } from '../../utils/pickLevel';
 
 /**
  * The hot render core - drawScene orchestrates the frame (framebuffer setup,
@@ -292,6 +292,10 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 self.gl.useProgram(theShader);
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
+                // Always set alongside the hovered point, never left to default: an unset
+                // uint uniform is zero, and zero as a mask matches every point id there is,
+                // which would light whatever mesh forgot to set it from end to end.
+                if(theShader.uHoverMask) self.gl.uniform1ui(theShader.uHoverMask, 0xFFFFFFFF);
 
                 // Instanced buffers highlight a whole instance rather than a region of the mesh,
                 // because the mesh is shared between instances and gl_VertexID cannot tell them
@@ -1090,7 +1094,26 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         // added or removed, so the index can outlive the buffer it referred to. Fetched once,
         // rather than indexed repeatedly below, so a stale index cannot throw part-way through a
         // frame and take the rest of the draw with it.
-        const hoveredBuffer = self.state.hoveridx>-1 ? displayBuffers[self.state.hoveridx] : undefined
+        // Which buffer this pass lights, and which of its pick points.
+        //
+        // Usually the pointer: hoveridx and hover_point are what the pick wrote. But a hover
+        // can also come from somewhere with no pointer in it at all - the sequence viewer
+        // naming a residue - and a surface can light that residue just as well, because
+        // uHoveredPoint does not care where the index came from. The pointer wins where both
+        // have an opinion, matching the instanced path above.
+        let overlayIdx = self.state.hoveridx
+        let overlayPoint = self.state.hover_point
+        if(!(overlayIdx > -1 && overlayPoint > -1) && hoveredSection){
+            const asked = displayBuffers.findIndex(buffer => buffer.id === hoveredSection.bufferId)
+            // Only a mesh with the influence data can be lit this way. A sectioned mesh is
+            // handled during the main draw, by uHighlightFrom and uHighlightTo.
+            if(asked > -1 && displayBuffers[asked].pick_info?.influence_weights_texture){
+                overlayIdx = asked
+                overlayPoint = hoveredSection.section
+            }
+        }
+
+        const hoveredBuffer = overlayIdx>-1 ? displayBuffers[overlayIdx] : undefined
 
         // Only the smooth mesh highlight can be drawn by this pass, and it is the only thing that
         // should be: the pass uses the non-instanced program and a non-instanced draw, so pointing
@@ -1112,22 +1135,22 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         const hoveredWholeMesh = !hoveredHasInfluenceTextures
             && !!hoveredBuffer?.pick_info?.highlight_whole
 
-        if(drawingVisibleImage && hoveredBuffer && self.state.hover_point>-1
+        if(drawingVisibleImage && hoveredBuffer && overlayPoint>-1
            && (hoveredHasInfluenceTextures || hoveredWholeMesh)){
             //TODO - We don't really need to do self.draw at all. This could be done in the
             //       general drawing above.
-            const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
+            const bufferTypes = displayBuffers[overlayIdx].bufferTypes
             if(bufferTypes[0]==="TRIANGLES"){
 
-                 const triangleVertexNormalBuffer = displayBuffers[self.state.hoveridx].triangleVertexNormalBuffer
-                 const triangleVertexPositionBuffer = displayBuffers[self.state.hoveridx].triangleVertexPositionBuffer
-                 const triangleVertexIndexBuffer = displayBuffers[self.state.hoveridx].triangleVertexIndexBuffer
-                 const influence_weights_texture = displayBuffers[self.state.hoveridx].pick_info.influence_weights_texture
-                 const influence_point_indexes_texture = displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_texture
-                 const influence_index_offsets_texture = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_texture
-                 const influence_weights_width = displayBuffers[self.state.hoveridx].pick_info.influence_weights_width
-                 const influence_point_indexes_width = displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_width
-                 const influence_index_offsets_width = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_width
+                 const triangleVertexNormalBuffer = displayBuffers[overlayIdx].triangleVertexNormalBuffer
+                 const triangleVertexPositionBuffer = displayBuffers[overlayIdx].triangleVertexPositionBuffer
+                 const triangleVertexIndexBuffer = displayBuffers[overlayIdx].triangleVertexIndexBuffer
+                 const influence_weights_texture = displayBuffers[overlayIdx].pick_info.influence_weights_texture
+                 const influence_point_indexes_texture = displayBuffers[overlayIdx].pick_info.influence_point_indexes_texture
+                 const influence_index_offsets_texture = displayBuffers[overlayIdx].pick_info.influence_index_offsets_texture
+                 const influence_weights_width = displayBuffers[overlayIdx].pick_info.influence_weights_width
+                 const influence_point_indexes_width = displayBuffers[overlayIdx].pick_info.influence_point_indexes_width
+                 const influence_index_offsets_width = displayBuffers[overlayIdx].pick_info.influence_index_offsets_width
                  const theShader = self.shaderProgram
                  self.gl.useProgram(theShader)
                  // Only for the smooth-mesh case; the whole-mesh one has no such textures and
@@ -1155,8 +1178,22 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                  // The sentinel the vertex shader compares against: anything at or above it
                  // means "not hovering a particular point", which is the branch that sets
                  // vHighlight to 1 for every vertex. That is precisely the whole-mesh case.
+                 //
+                 // Otherwise the point is identified by its code, not by its index, where the
+                 // mesh supplies codes - a surface does, packing the chain into the high half
+                 // so that masking the low half lights the chain and masking everything
+                 // lights the molecule. A mesh without codes, a metaball, keeps comparing
+                 // whole indices and is unaffected.
+                 const ownerCodes = displayBuffers[overlayIdx].pick_info?.owner_codes
+                 const hoveredCode = ownerCodes && overlayPoint < ownerCodes.length
+                     ? ownerCodes[overlayPoint] : overlayPoint
+                 const hoverMask = ownerCodes ? ownerMaskForLevel(self.pickLevel) : 0xFFFFFFFF
                  self.gl.uniform1ui(theShader.uHoveredPoint,
-                                    hoveredWholeMesh ? 0xFFFFFFFF : self.state.hover_point);
+                                    hoveredWholeMesh ? 0xFFFFFFFF : hoveredCode);
+                 if(theShader.uHoverMask){
+                     self.gl.uniform1ui(theShader.uHoverMask,
+                                        hoveredWholeMesh ? 0xFFFFFFFF : hoverMask);
+                 }
                  self.hoverBuffer ??= self.gl.createBuffer()
                  self.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
                  self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])

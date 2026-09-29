@@ -543,7 +543,12 @@ export const createWebGLBuffers = (jsondata: any, idat: number, gl): DisplayBuff
                 // hit triangle into a residue, and the labels to report it by.
                 const carried = ["pick_exact", "pick_bounds", "vertex_pick_points",
                                  "pick_point_tags", "pick_tag_kind", "pick_point_instances",
-                                 "claims_pointer", "pick_priority", "highlight_whole"]
+                                 "claims_pointer", "pick_priority", "highlight_whole",
+                                 // The owner codes the shader compares, and the coarser
+                                 // grains: without these a surface still picks, but the
+                                 // highlight never widens and alt-click never flies to a
+                                 // chain, with nothing to say why.
+                                 "owner_codes", "pick_point_sections", "section_level_points"]
                 carried.forEach(field => {
                     if(jsondata.pick_info[field] !== undefined)
                         theBuffer.pick_info[field] = jsondata.pick_info[field]

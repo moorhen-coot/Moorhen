@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setHoveredSection } from "../../store/hoveringStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
-import { MOORHEN_ATOM_TAG_KIND, moorhenAtomTagKey } from "../../utils/enums";
+import { MOORHEN_ATOM_TAG_KIND, MOORHEN_SURFACE_RESIDUE_TAG_KIND, moorhenAtomTagKey } from "../../utils/enums";
 import { cidToSpec } from "../../utils/utils";
 
 /**
@@ -35,15 +35,41 @@ export const HighlightHoveredSection = () => {
         // name the same residue and share not one character - so the raw strings cannot be
         // compared. cidToSpec reduces either to a chain and a number.
         let target: string | null = null;
+        let hoveredChain: string | null = null;
+        let hoveredResidueNumber = NaN;
         if (hoveredAtom?.molecule && hoveredAtom.cid) {
             const spec = cidToSpec(hoveredAtom.cid);
             if (spec?.chain_id && Number.isFinite(spec.res_no)) {
                 target = moorhenAtomTagKey(hoveredAtom.molecule.uniqueId, spec.chain_id, spec.res_no);
+                hoveredChain = spec.chain_id;
+                hoveredResidueNumber = spec.res_no;
             }
         }
 
         let found: { bufferId: string; section: number } | null = null;
-        if (target) {
+        // A molecular surface labels its pick points with the CID of the residue behind each
+        // one, in its own scheme. It has no sections and no contiguous ranges - one residue's
+        // vertices are scattered wherever its atoms reach the air - so it cannot be matched by
+        // the prefix test below, and it is looked for separately, by reducing each CID the way
+        // the hovered one was reduced. A few hundred CIDs per molecule, and only when the
+        // hovered residue changes.
+        if (target && hoveredAtom?.molecule) {
+            for (const buffer of displayBuffers ?? []) {
+                const pickInfo = buffer.pick_info;
+                if (pickInfo?.pick_tag_kind !== MOORHEN_SURFACE_RESIDUE_TAG_KIND) continue;
+                if (!pickInfo.pick_point_tags || !pickInfo.owner_codes) continue;
+                if (!hoveredAtom.molecule.buffersInclude(buffer)) continue;
+                const index = pickInfo.pick_point_tags.findIndex(tag => {
+                    const spec = cidToSpec(tag);
+                    return spec?.chain_id === hoveredChain && spec?.res_no === hoveredResidueNumber;
+                });
+                if (index > -1) {
+                    found = { bufferId: buffer.id, section: index };
+                    break;
+                }
+            }
+        }
+        if (target && !found) {
             for (const buffer of displayBuffers ?? []) {
                 const pickInfo = buffer.pick_info;
                 if (!pickInfo?.pick_point_tags || pickInfo.pick_tag_kind !== MOORHEN_ATOM_TAG_KIND) {

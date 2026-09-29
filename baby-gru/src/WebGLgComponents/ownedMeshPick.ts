@@ -33,6 +33,7 @@
 
 import type { Bounds } from "./rayMesh";
 import { MOORHEN_SURFACE_RESIDUE_TAG_KIND } from "../utils/enums";
+import { encodeOwner } from "../utils/pickLevel";
 
 /** The per-vertex owner value meaning "no residue known", as Coot writes it. */
 export const NO_OWNER = 0xFFFFFFFF;
@@ -51,6 +52,25 @@ export type OwnedMeshPickInfo = {
      * that coincidence in the pick loop would be a trap for whoever reads it next.
      */
     vertex_pick_points: Uint32Array;
+    /**
+     * The id the shader compares, one per owner: the chain in the high half, the residue in
+     * the low half - see encodeOwner.
+     *
+     * Kept apart from the owner index, which stays a plain 0..n-1 index into everything above.
+     * The renderer looks the code up when it sets the hovered point, so masking off the
+     * residue half lights a whole chain without anything else having to know that ids mean
+     * more than "which one".
+     */
+    owner_codes: Uint32Array;
+    /** Which section each pick point belongs to - itself, for a surface. */
+    pick_point_sections: number[];
+    /**
+     * The point to centre on at each grain, indexed by level and then by section: the middle
+     * of the residue, of its chain, or of the whole surface.
+     *
+     * The same shape the paths use, so pickedMeshPosition reads it without a special case.
+     */
+    section_level_points: number[][][];
     influence_index_offsets: Uint32Array;
     influence_point_indexes: Uint32Array;
     influence_weights: Float32Array;
@@ -202,6 +222,30 @@ export const ownedMeshPickInfo = (
     const totals = new Float64Array(owners.length * 3);
     const counts = new Uint32Array(owners.length);
 
+    // Which chain each owner is in, taken from its own CID rather than asked of the model:
+    // "/1/A/23(ALA)" splits on "/" into ["", "1", "A", "23(ALA)"]. Chains are numbered in the
+    // order they are first seen, which is all the encoding needs - the number never leaves
+    // this mesh.
+    const chainNumber = new Map<string, number>();
+    const owner_codes = new Uint32Array(owners.length);
+    const chainOfOwner = new Uint32Array(owners.length);
+    const withinChain = new Map<number, number>();
+    for (let o = 0; o < owners.length; o++) {
+        const chain = owners[o].split("/")[2] ?? "";
+        let chainIndex = chainNumber.get(chain);
+        if (chainIndex === undefined) {
+            chainIndex = chainNumber.size;
+            chainNumber.set(chain, chainIndex);
+        }
+        const seen = withinChain.get(chainIndex) ?? 0;
+        withinChain.set(chainIndex, seen + 1);
+        chainOfOwner[o] = chainIndex;
+        owner_codes[o] = encodeOwner(chainIndex, seen);
+    }
+    const chainCount = chainNumber.size;
+    const chainTotals = new Float64Array(chainCount * 3);
+    const chainCounts = new Uint32Array(chainCount);
+
     const vertex_pick_points = new Uint32Array(count);
     // A vertex contributes one (point, weight) pair per residue it belongs to - two in the
     // grooves, one on the caps, none where Coot could not place it. The offsets express all
@@ -231,16 +275,23 @@ export const ownedMeshPickInfo = (
             totals[3 * owner] += vertices[3 * v];
             totals[3 * owner + 1] += vertices[3 * v + 1];
             totals[3 * owner + 2] += vertices[3 * v + 2];
+            const chain = chainOfOwner[owner];
+            chainCounts[chain]++;
+            chainTotals[3 * chain] += vertices[3 * v];
+            chainTotals[3 * chain + 1] += vertices[3 * v + 1];
+            chainTotals[3 * chain + 2] += vertices[3 * v + 2];
 
             const other = hasSecond ? vertexOwnersOther[v] : NO_OWNER;
             const weight = hasSecond ? vertexOwnerWeights[v] : 1.0;
+            // The shader compares encoded ids, not owner indices, so the contribution lists
+            // carry the codes.
             if (other < owners.length && other !== owner) {
-                pointIndexes.push(owner); weights.push(weight);
-                pointIndexes.push(other); weights.push(1.0 - weight);
+                pointIndexes.push(owner_codes[owner]); weights.push(weight);
+                pointIndexes.push(owner_codes[other]); weights.push(1.0 - weight);
                 running += 2;
                 shared_vertices++;
             } else {
-                pointIndexes.push(owner); weights.push(1.0);
+                pointIndexes.push(owner_codes[owner]); weights.push(1.0);
                 running++;
             }
         } else {
@@ -265,12 +316,29 @@ export const ownedMeshPickInfo = (
         }
     }
 
+    // Where alt-click takes you at each grain: the residue's patch, its chain, or the whole
+    // surface. Indexed by level then by section, which for a surface is the owner itself.
+    const chainCentre = (chain: number) => chainCounts[chain] === 0
+        ? meshCentre.slice()
+        : [chainTotals[3 * chain] / chainCounts[chain],
+           chainTotals[3 * chain + 1] / chainCounts[chain],
+           chainTotals[3 * chain + 2] / chainCounts[chain]];
+    const pick_point_sections = owners.map((_tag, o) => o);
+    const section_level_points = [
+        pick_points,
+        owners.map((_tag, o) => chainCentre(chainOfOwner[o])),
+        owners.map(() => meshCentre.slice()),
+    ];
+
     const influence_point_indexes = new Uint32Array(pointIndexes);
     const influence_weights = new Float32Array(weights);
 
     return {
         pick_points,
         pick_point_tags: owners.slice(),
+        owner_codes,
+        pick_point_sections,
+        section_level_points,
         pick_tag_kind: MOORHEN_SURFACE_RESIDUE_TAG_KIND,
         vertex_pick_points,
         influence_index_offsets,
