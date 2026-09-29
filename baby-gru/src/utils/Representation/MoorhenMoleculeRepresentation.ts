@@ -125,6 +125,21 @@ export type gaussianSurfSettings = {
     bFactor: number;
 };
 
+/**
+ * A mesh without the ownership arrays Coot now sends alongside it.
+ *
+ * Those four are the raw material for pick information and nothing else reads them: once
+ * ownedMeshPickInfo has turned them into pick points, codes and influence lists, they are
+ * finished with. Leaving them on the buffer object was doing two kinds of harm - they sat in
+ * memory for the life of the buffer, megabytes of it on a ribosome, and mergeBufferObjects
+ * calls concat on every key it finds, which a Uint32Array does not have.
+ */
+const withoutOwnershipArrays = (mesh: libcootApi.SimpleMeshJS) => {
+    const { vertex_owners, owners, vertex_owners_other, vertex_owner_weights, ...rest } =
+        mesh as libcootApi.SimpleMeshJS;
+    return rest;
+};
+
 export class MoleculeRepresentation {
     uniqueId: string;
     style: RepresentationStyles;
@@ -918,6 +933,14 @@ export class MoleculeRepresentation {
                 if (key === "pick_info") continue
                 if (!(key in bufferObj2[i])) {
                     console.warn(`Failed to merge: attr. ${key} with index ${i} not found in buffer object no. 2, skipping...`);
+                } else if (typeof bufferObj1[i][key]?.concat !== "function") {
+                    // Every key used to be a plain array of arrays. When Coot began sending
+                    // per-vertex ownership as typed arrays this threw, because a Uint32Array
+                    // has no concat - and it threw from here, three frames away from anything
+                    // that mentions ownership. Those arrays are stripped before a buffer is
+                    // built now, so this should not fire; it says so rather than crashing if
+                    // something else ever arrives in a form that cannot be joined end to end.
+                    console.warn(`Failed to merge: attr. ${key} with index ${i} is not concatenable, skipping...`);
                 } else {
                     iObjects[key] = bufferObj1[i][key].concat(bufferObj2[i][key]);
                 }
@@ -1414,7 +1437,15 @@ export class MoleculeRepresentation {
             ),
         ]);
 
-        const objects = [{ ...result.data.result.result, pick_info: {} }];
+        // Nucleotide bases are drawn with cylinders, and cylinders name the atom behind each
+        // vertex, so these carry ownership like any other mesh that knows - which means the
+        // bases are hoverable on the same terms as the ribbon beside them.
+        const nucleotideMesh = result.data.result.result as libcootApi.SimpleMeshJS
+        const pick_info = ownedMeshPickInfo(
+            nucleotideMesh.vert_tri?.[0]?.[0] ?? [], nucleotideMesh.vertex_owners,
+            nucleotideMesh.owners, nucleotideMesh.vertex_owners_other,
+            nucleotideMesh.vertex_owner_weights)
+        const objects = [{ ...withoutOwnershipArrays(nucleotideMesh), pick_info: pick_info ?? {} }];
         return objects;
     }
 
@@ -1461,12 +1492,27 @@ export class MoleculeRepresentation {
         const meshPickInfo = ownedMeshPickInfo(
             m2tMesh.vert_tri?.[0]?.[0] ?? [], m2tMesh.vertex_owners, m2tMesh.owners,
             m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights)
-        const ribbonBufferObjects = [{ ...response.data.result.result, pick_info: meshPickInfo ?? {} }];
+        const ribbonBufferObjects = [{ ...withoutOwnershipArrays(m2tMesh), pick_info: meshPickInfo ?? {} }];
 
         let resultBufferObjects: PickableMesh[];
         if (m2tStyle === "Ribbon" && this.parentMolecule.hasDNA) {
+            // Kept as two buffers rather than merged into one.
+            //
+            // Pick information is per buffer and describes that buffer's own vertices, so
+            // merging two meshes would mean merging two sets of it: remapping owner indices,
+            // renumbering chains that were numbered independently, and rebasing every offset
+            // in the influence lists. mergeBufferObjects did none of that - it set pick_info
+            // to {} - so on any structure with nucleotides the ribbon lost its ownership and
+            // nothing hovered at all, protein included.
+            //
+            // Two buffers cost one more draw call and need no remapping, and each keeps what
+            // it knows about itself. buildBuffers has always taken a list; a cavities
+            // representation returns one buffer per cavity.
+            //
+            // The ribbon goes first so that buffers[0] is the same thing whether or not the
+            // structure has nucleotides - setAtomBuffers puts the atoms on that one.
             const nucleotideBufferObjects = await this.getNucleotideRepresentationBuffers(m2tSelection);
-            resultBufferObjects = MoleculeRepresentation.mergeBufferObjects(nucleotideBufferObjects, ribbonBufferObjects);
+            resultBufferObjects = [...ribbonBufferObjects, ...nucleotideBufferObjects];
         } else {
             resultBufferObjects = ribbonBufferObjects;
         }
