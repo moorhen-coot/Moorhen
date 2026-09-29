@@ -421,6 +421,45 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
         cootModule.getTriangleIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
     }
 
+    // Which residue each vertex belongs to, for a mesh that knows.
+    //
+    // Coot records the generating atom against every vertex of a molecular surface as it
+    // builds it - see simple_mesh_t::vertex_owner. Only the surface fills these in so far, so
+    // every other mesh arrives with them empty and is unaffected.
+    //
+    // Note the permuted case: getPermutedTriangleIndicesFromSimpleMesh2 reorders the corners
+    // within each triangle, not the vertices themselves, so the owner of vertex i is still the
+    // owner of vertex i and this needs no equivalent.
+    let vertexOwners: Uint32Array | null = null
+    let vertexOwnersOther: Uint32Array | null = null
+    let vertexOwnerWeights: Float32Array | null = null
+    let owners: string[] | null = null
+    const vertexOwnerVec = simpleMesh.vertex_owner
+    const vertexOwnerOtherVec = simpleMesh.vertex_owner_other
+    const vertexOwnerWeightVec = simpleMesh.vertex_owner_weight
+    const ownerVec = simpleMesh.owners
+    if (vertexOwnerVec && ownerVec && vertexOwnerVec.size() === verticesSize && ownerVec.size() > 0) {
+        vertexOwners = new Uint32Array(verticesSize)
+        cootModule.getUint32ArrayFromVector(vertexOwnerVec, vertexOwners)
+        const ownersSize = ownerVec.size()
+        owners = new Array(ownersSize)
+        for (let i = 0; i < ownersSize; i++) owners[i] = ownerVec.get(i)
+        // The second owner of a saddle. Kept together with the first: a mesh either has both
+        // or neither, so half of it arriving would be a bug rather than a case to handle.
+        if (vertexOwnerOtherVec && vertexOwnerWeightVec
+            && vertexOwnerOtherVec.size() === verticesSize
+            && vertexOwnerWeightVec.size() === verticesSize) {
+            vertexOwnersOther = new Uint32Array(verticesSize)
+            cootModule.getUint32ArrayFromVector(vertexOwnerOtherVec, vertexOwnersOther)
+            vertexOwnerWeights = new Float32Array(verticesSize)
+            cootModule.getFloat32ArrayFromVector(vertexOwnerWeightVec, vertexOwnerWeights)
+        }
+    }
+    vertexOwnerVec?.delete()
+    vertexOwnerOtherVec?.delete()
+    vertexOwnerWeightVec?.delete()
+    ownerVec?.delete()
+
     const tm = performance.now()
     if (print_timing) console.log("DEBUG: SIMPLE MESH TO MESH DATA C++", tm - ts)
 
@@ -442,7 +481,10 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
         idx_tri: [[totIdxs]],
         vert_tri: [[totPos]],
         norm_tri: [[totNorm]],
-        col_tri: [[totCol]]
+        col_tri: [[totCol]],
+        ...(vertexOwners ? { vertex_owners: vertexOwners, owners } : {}),
+        ...(vertexOwnersOther ? { vertex_owners_other: vertexOwnersOther,
+                                  vertex_owner_weights: vertexOwnerWeights } : {})
     };
 }
 
@@ -1140,6 +1182,13 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
 
     vertices.delete();
     triangles.delete();
+    // simple_mesh_t now carries two more vectors, and every field of a value_object arrives as
+    // a handle that has to be freed whether or not this function looks at it. A line mesh
+    // never has owners, but the empty vectors are still allocated.
+    simpleMesh.vertex_owner?.delete();
+    simpleMesh.vertex_owner_other?.delete();
+    simpleMesh.vertex_owner_weight?.delete();
+    simpleMesh.owners?.delete();
 
     if (normalLighting)
         return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };

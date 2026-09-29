@@ -358,6 +358,14 @@ export namespace libcootApi {
     interface SimpleMeshT {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;
+        // Which residue each vertex belongs to, and the residues as CIDs. Present but empty
+        // for every mesh that does not know where its vertices came from.
+        vertex_owner?: emscriptem.vector<number>;
+        // A vertex in the groove between two atoms belongs to both: the second residue, and
+        // how much of the vertex belongs to the first.
+        vertex_owner_other?: emscriptem.vector<number>;
+        vertex_owner_weight?: emscriptem.vector<number>;
+        owners?: emscriptem.vector<string>;
     }
     interface SimpleMeshJS {
         prim_types: [[string]];
@@ -367,6 +375,13 @@ export namespace libcootApi {
         additional_norm_tri?: [[number[] | Float32Array]];
         norm_tri: [[number[] | Float32Array]];
         col_tri: [[number[] | Float32Array]];
+        // One entry per vertex, indexing owners. Absent unless the mesh knows.
+        vertex_owners?: Uint32Array;
+        // The second owner of a saddle vertex, and the share belonging to the first. Present
+        // together with vertex_owners or not at all.
+        vertex_owners_other?: Uint32Array;
+        vertex_owner_weights?: Float32Array;
+        owners?: string[];
     }
     interface SymmetryData {
         cell: CellTranslation;

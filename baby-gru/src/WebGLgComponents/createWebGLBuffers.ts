@@ -536,6 +536,19 @@ export const createWebGLBuffers = (jsondata: any, idat: number, gl): DisplayBuff
                 //Do I want to texturify this as well? Or is that CPU stuff to detemine picked point?
                 theBuffer.pick_info.pick_points = jsondata.pick_info.pick_points
 
+                // This branch builds pick_info afresh rather than copying it, so anything the
+                // caller put there and did not name here is silently lost. These are what a
+                // mesh that names its own vertices needs the pick loop to still have: the
+                // exact test and its bounding box, the vertex-to-pick-point map that turns a
+                // hit triangle into a residue, and the labels to report it by.
+                const carried = ["pick_exact", "pick_bounds", "vertex_pick_points",
+                                 "pick_point_tags", "pick_tag_kind", "pick_point_instances",
+                                 "claims_pointer", "pick_priority", "highlight_whole"]
+                carried.forEach(field => {
+                    if(jsondata.pick_info[field] !== undefined)
+                        theBuffer.pick_info[field] = jsondata.pick_info[field]
+                })
+
             } catch(e) {
                 console.log(e)
             }

@@ -14,6 +14,7 @@ import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInS
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { wholeMeshPickInfo } from "../../WebGLgComponents/wholeMeshPick";
+import { ownedMeshPickInfo, surfaceOwnerReport } from "../../WebGLgComponents/ownedMeshPick";
 
 export type MeshType =
     | libcootApi.InstancedMeshJS
@@ -1451,7 +1452,19 @@ export class MoleculeRepresentation {
             false
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
 
-        const ribbonBufferObjects = [{ ...response.data.result.result, pick_info: {} }];
+        // A mesh that knows which residue made each of its vertices is hoverable per residue.
+        //
+        // Coot fills this in for the molecular surface and for nothing else so far, so this is
+        // a question about the mesh rather than about the style: ask what arrived. Ribbons and
+        // the rest simply have no owners and fall through unchanged.
+        const m2tMesh = response.data.result.result as libcootApi.SimpleMeshJS
+        const surfacePickInfo = ownedMeshPickInfo(
+            m2tMesh.vert_tri?.[0]?.[0] ?? [], m2tMesh.vertex_owners, m2tMesh.owners,
+            m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights)
+        if (surfacePickInfo) {
+            console.log(surfaceOwnerReport(surfacePickInfo, m2tMesh.vert_tri?.[0]?.[0]))
+        }
+        const ribbonBufferObjects = [{ ...response.data.result.result, pick_info: surfacePickInfo ?? {} }];
 
         let resultBufferObjects: PickableMesh[];
         if (m2tStyle === "Ribbon" && this.parentMolecule.hasDNA) {

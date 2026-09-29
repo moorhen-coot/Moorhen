@@ -538,6 +538,14 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     .field("triangles",&coot::simple_mesh_t::triangles)
     .field("status",&coot::simple_mesh_t::status)
     .field("name",&coot::simple_mesh_t::name)
+    // Which residue each vertex belongs to, and the residues themselves as CIDs. Empty for
+    // every mesh that does not know - which is all of them but the molecular surface so far.
+    // A vertex in the groove between two atoms belongs to both, hence the second owner and
+    // the weight that splits it.
+    .field("vertex_owner",&coot::simple_mesh_t::vertex_owner)
+    .field("vertex_owner_other",&coot::simple_mesh_t::vertex_owner_other)
+    .field("vertex_owner_weight",&coot::simple_mesh_t::vertex_owner_weight)
+    .field("owners",&coot::simple_mesh_t::owners)
     ;
 
     class_<coot::util::density_correlation_stats_info_t>("density_correlation_stats_info_t")
@@ -690,6 +698,13 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     register_vector<float>("VectorFloat");
     register_vector<double>("VectorDouble");
     register_vector<int>("VectorInt");
+    // No register_vector<unsigned int> here, though simple_mesh_t::vertex_owner needs one:
+    // Lhasa already registers that type, as "MoleculeIdVector" (lhasa/embind.cpp). embind keys
+    // its registry by C++ type rather than by the name given, so a second registration is a
+    // duplicate however it is named, and the module throws at startup - which shows up as a
+    // link failure, because the generator runs the module to emit the TypeScript. The name is
+    // an odd fit for a list of vertex owners, but only C++ ever says it: JavaScript sees a
+    // handle and calls size/get, or hands it to getUint32ArrayFromVector.
     register_vector<char>("VectorChar");
     register_vector<coot::validation_information_t>("VectorValidationInformation");
     register_vector<std::pair<coot::residue_validation_information_t, coot::residue_validation_information_t> >("VectorResidueValidationInformationPair");

@@ -33,9 +33,23 @@ export type Bounds = { low: [number, number, number]; high: [number, number, num
  * Both are reported because which of the two faces the viewer depends on which way round the
  * caller's two points run, and that is the caller's business, not this file's.
  */
+export type MeshCrossing = {
+    point: [number, number, number];
+    t: number;
+    /**
+     * Which triangle was crossed, as an index into the index array in threes.
+     *
+     * This is how a mesh that knows where its vertices came from answers "what is under the
+     * pointer": take a corner of this triangle and look up what owns it. A molecular surface
+     * carries the residue behind every vertex, so the residue follows from the intersection
+     * with no measuring and no tolerance.
+     */
+    triangle: number;
+};
+
 export type MeshHit = {
-    entry: { point: [number, number, number]; t: number };
-    exit: { point: [number, number, number]; t: number };
+    entry: MeshCrossing;
+    exit: MeshCrossing;
 };
 
 /**
@@ -93,6 +107,8 @@ export const rayMeshHit = (
 
     let leastT = Infinity;
     let greatestT = -Infinity;
+    let leastTriangle = -1;
+    let greatestTriangle = -1;
 
     for (let i = 0; i + 2 < indices.length; i += 3) {
         const a = 3 * indices[i];
@@ -133,15 +149,15 @@ export const rayMeshHit = (
         if (v < 0 || u + v > 1) continue;
 
         const t = (e2x * qx + e2y * qy + e2z * qz) * invDet;
-        if (t < leastT) leastT = t;
-        if (t > greatestT) greatestT = t;
+        if (t < leastT) { leastT = t; leastTriangle = i / 3; }
+        if (t > greatestT) { greatestT = t; greatestTriangle = i / 3; }
     }
 
     if (leastT === Infinity) return null;
     const at = (t: number): [number, number, number] =>
         [from[0] + dx * t, from[1] + dy * t, from[2] + dz * t];
     return {
-        entry: { t: leastT, point: at(leastT) },
-        exit: { t: greatestT, point: at(greatestT) },
+        entry: { t: leastT, point: at(leastT), triangle: leastTriangle },
+        exit: { t: greatestT, point: at(greatestT), triangle: greatestTriangle },
     };
 };
