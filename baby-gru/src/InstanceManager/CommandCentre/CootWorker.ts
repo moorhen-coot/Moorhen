@@ -483,6 +483,30 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     vertices.delete();
     triangles.delete();
 
+    // Report the size of the WebAssembly heap alongside a mesh that failed to build.
+    //
+    // This is the one number that says which problem we have. The heap can only grow, never
+    // shrink, and a failed allocation can mean either of two quite different things: the heap
+    // is at its 8 GB ceiling and there is genuinely no more (exhaustion), or the heap is far
+    // short of the ceiling and the request failed for want of one contiguous block of the size
+    // asked for (fragmentation). The fixes are unrelated - use less in total, versus ask in
+    // smaller pieces - so guessing between them is expensive.
+    //
+    // Printed on failure only, so it costs nothing in normal use.
+    if (simpleMesh.status === 0) {
+        // In a try, because reading HEAPU8 is not a plain property access: when it is absent
+        // from EXPORTED_RUNTIME_METHODS the module installs a getter that calls abort(), which
+        // raises a RuntimeError the optional-chaining operator never gets to see. A diagnostic
+        // that can take the worker down is worse than no diagnostic.
+        let heap = "not exported"
+        try {
+            const heapBytes = (cootModule as any).HEAPU8?.length
+            if (typeof heapBytes === "number") heap = (heapBytes / (1024 * 1024)).toFixed(0) + " MB"
+        } catch (e) { /* leave it as "not exported" */ }
+        console.log("DEBUG: mesh failed to build; WASM heap is", heap,
+                    "and the mesh reached", verticesSize, "vertices and", trianglesSize, "triangles")
+    }
+
     return {
         // Carried through so a caller can tell a mesh that failed to build from one that is
         // legitimately empty. Coot sets it to 0 only when it caught an exception.
