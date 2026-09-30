@@ -1,5 +1,34 @@
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
+import {
+    IDENTITY_MATRIX,
+    newSphereObject,
+    newCylinderObject,
+    newConeObject,
+    newFrustumObject,
+    newFlatSidedFrustumObject,
+    newPrismObject,
+    newPyramidObject,
+    newCubeObject,
+    newCuboidObject,
+    newEllipsoidObject,
+    newPlaneObject,
+    newDiscObject,
+    newAnnulusObject,
+    newTetrahedronObject,
+    newOctahedronObject,
+    newDodecahedronObject,
+    newIcosahedronObject,
+    newFootballObject,
+    newTruncatedOctahedronObject,
+    newCuboctahedronObject,
+    newRhombicDodecahedronObject,
+    newArcObject,
+    newCapsuleObject,
+    newHelixObject,
+    newPathObject,
+    newTorusObject,
+} from "../../utils/threeDObjectFactories";
 import { useRef, useState, useEffect, useCallback } from "react";
 import * as quat4 from 'gl-matrix/quat';
 import * as vec3 from 'gl-matrix/vec3';
@@ -93,318 +122,9 @@ export const Moorhen3DObjects = () => {
     const drawModeRef = useRef<null | HTMLSelectElement>(null);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
 
-    const IDENTITY_MATRIX: Matrix4x4 = [
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    ];
-
-    const newSphereObject = (): SphereObject => ({
-        uniqueId: uuidv4(),
-        type: "sphere",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        radius: 1.0
-    })
-
-    const newCylinderObject = (): CylinderObject => ({
-        uniqueId: uuidv4(),
-        type: "cylinder",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        end: [0, 0, 5],
-        radius: 1.0
-    });
-
-    const newConeObject = (): ConeObject => ({
-        uniqueId: uuidv4(),
-        type: "cone",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        top: [0, 0, 5],
-        radius: 1.0
-    });
-
-    const newFrustumObject = (): FrustumObject => ({
-        uniqueId: uuidv4(),
-        type: "frustum",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        bottom_radius: 1.0,
-        top_radius: 0.5,
-        height: 5.0
-    });
-
-    const newFlatSidedFrustumObject = (): FlatSidedFrustumObject => ({
-        uniqueId: uuidv4(),
-        type: "flatfrustum",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        bottom_radius: 1.0,
-        top_radius: 0.5,
-        height: 5.0,
-        n_sides: 4
-    });
-
-    const newPrismObject = (): PrismObject => ({
-        uniqueId: uuidv4(),
-        type: "prism",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        radius: 1.0,
-        height: 5.0,
-        n_sides: 4
-    });
-
-    const newPyramidObject = (): PyramidObject => ({
-        uniqueId: uuidv4(),
-        type: "pyramid",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        radius: 1.0,
-        height: 5.0,
-        n_sides: 4
-    });
-
-    const newCubeObject = (): CubeObject => ({
-        uniqueId: uuidv4(),
-        type: "cube",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        scale: 1.0
-    });
-
-    const newCuboidObject = (): CuboidObject => ({
-        uniqueId: uuidv4(),
-        type: "cuboid",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        scalexyz: [1.0, 1.0, 1.0]
-    });
-
-    const newEllipsoidObject = (): EllipsoidObject => ({
-        uniqueId: uuidv4(),
-        type: "ellipsoid",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        scalexyz: [1.0, 1.0, 1.0]
-    });
-
-    const newPlaneObject = (): PlaneObject => ({
-        uniqueId: uuidv4(),
-        type: "plane",
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        // x and y are the side lengths; z is unused, a plane has no thickness
-        scalexyz: [5.0, 5.0, 1.0]
-    });
-
-    const newDiscObject = (): DiscObject => ({
-        uniqueId: uuidv4(),
-        type: "disc",
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        radius: 2.5
-    });
-
-    const newAnnulusObject = (): AnnulusObject => ({
-        uniqueId: uuidv4(),
-        type: "annulus",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        radius: 2.5,
-        inner_radius: 1.5
-    });
-
-    const newTetrahedronObject = (): TetrahedronObject => ({
-        uniqueId: uuidv4(),
-        type: "tetrahedron",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        scale: 1.0
-    });
-
-    const newOctahedronObject = (): OctahedronObject => ({
-        uniqueId: uuidv4(),
-        type: "octahedron",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        scale: 1.0
-    });
-
-    const newDodecahedronObject = (): DodecahedronObject => ({
-        uniqueId: uuidv4(),
-        type: "dodecahedron",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        scale: 1.0
-    });
-
-    const newIcosahedronObject = (): IcosahedronObject => ({
-        uniqueId: uuidv4(),
-        type: "icosahedron",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        scale: 1.0
-    });
-
-    const newFootballObject = (): FootballObject => ({
-        uniqueId: uuidv4(),
-        type: "football",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        scale: 1.0
-    });
-
-    const newTruncatedOctahedronObject = (): TruncatedOctahedronObject => ({
-        uniqueId: uuidv4(),
-        type: "truncatedoctahedron",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        scale: 1.0
-    });
-
-    const newCuboctahedronObject = (): CuboctahedronObject => ({
-        uniqueId: uuidv4(),
-        type: "cuboctahedron",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        scale: 1.0
-    });
-
-    const newRhombicDodecahedronObject = (): RhombicDodecahedronObject => ({
-        uniqueId: uuidv4(),
-        type: "rhombicdodecahedron",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        scale: 1.0
-    });
-
-    const newArcObject = (): ArcObject => ({
-        uniqueId: uuidv4(),
-        type: "arc",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        major_radius: 2.0,
-        minor_radius: 0.2,
-        sweep_angle: 90.0
-    });
-
-    const newCapsuleObject = (): CapsuleObject => ({
-        uniqueId: uuidv4(),
-        type: "capsule",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        radius: 1.0,
-        height: 5.0
-    });
-
-    const newHelixObject = (): HelixObject => ({
-        uniqueId: uuidv4(),
-        type: "helix",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        major_radius: 2.0,
-        minor_radius: 0.3,
-        height: 5.0,
-        sweep_angle: 720.0
-    });
-
-    const newPathObject = (): PathObject => ({
-        uniqueId: uuidv4(),
-        type: "path",
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        // Two points to begin with, so a new path is something you can see and then edit rather
-        // than an invisible object waiting for a generator.
-        points: [0, 0, 0, 5, 0, 0],
-        run_starts: [0],
-        radius: 0.3,
-        inner_radius: 0,
-        // Hand-built paths highlight point to point; the CA generator raises this when it splines.
-        point_stride: 1,
-        // Nothing to say about the sections until a generator labels them.
-        section_tags: [],
-        tag_kind: ""
-    });
-
-    const newTorusObject = (): TorusObject => ({
-        uniqueId: uuidv4(),
-        type: "torus",
-        wireframe: false,
-        wireframe_radius: DEFAULT_WIREFRAME_RADIUS,
-        colour: "#ff0000ff",
-        origin: [0, 0, 0],
-        orientation: IDENTITY_MATRIX,
-        major_radius: 1.0,
-        minor_radius: 0.2
-    });
+    // The default object of each shape, and IDENTITY_MATRIX, now live beside the slice in
+    // utils/threeDObjectFactories so that the public API can use the same defaults as this
+    // dialog. Imported at the top of the file; unchanged by the move.
 
     /** Above this many points the rows are hidden: a CA trace is not worth listing by hand. */
     const MAX_EDITABLE_POINTS = 12;

@@ -7,6 +7,15 @@ import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
 import { addCustomRepresentation, removeCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
+import {
+    addObject,
+    emptyObjects,
+    removeObjectById,
+    updateObject,
+    ThreeDObject
+} from "@/store/threeDObjectsSlice";
+import { newObjectOfType, OBJECT_TYPES } from "@/utils/threeDObjectFactories";
+import { v4 as uuidv4 } from "uuid";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/FileLoading";
 import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
@@ -611,6 +620,161 @@ export class MoorhenInstance extends StoreExtension {
     public getMapList(): MoorhenMap[] {
         const state = this.store.getState();
         return state.maps;
+    }
+
+    /**
+     * 3D object API for this instance.
+     *
+     * Lets you get, create, edit and delete the geometric shapes - spheres, cylinders,
+     * arcs, paths, polyhedra and the rest - drawn in the 3D view alongside the molecules.
+     * Each object's `uniqueId` is its handle, as a representation's is.
+     *
+     * Unlike a representation, an object is plain data rather than an instance of a class:
+     * it goes into the store, and the viewer draws whatever it finds there. So there is no
+     * separate step to draw or redraw one, and no async work - these methods return as soon
+     * as the store has been updated.
+     *
+     * @example
+     * const uid = instance.object.create({ type: "sphere", origin: [10, 0, 0], radius: 5 });
+     * instance.object.edit(uid, { colour: "#00ff00ff", wireframe: true });
+     * instance.object.delete(uid);
+     */
+    public get object() {
+        const moorhenInstance = this;
+        return {
+            /**
+             * The shape names that {@link create} accepts.
+             * @example
+             * console.log(instance.object.types); // ["sphere", "cylinder", "cone", ...]
+             */
+            get types(): ThreeDObject["type"][] {
+                return OBJECT_TYPES;
+            },
+
+            /**
+             * Get a 3D object by its unique ID.
+             * @param uniqueId - The unique identifier of the object.
+             * @returns The matching object, or null if there is no such object.
+             * @example
+             * const sphere = instance.object.get(uid);
+             */
+            get(uniqueId: string): ThreeDObject | null {
+                const state = moorhenInstance.store.getState();
+                return state.threeDObjects.objects.find(obj => obj.uniqueId === uniqueId) ?? null;
+            },
+
+            /**
+             * Get every 3D object currently in the scene, in the order they were added.
+             * @returns The list of objects. Treat it as read-only: edit through
+             * {@link edit} rather than by mutating what comes back, or the viewer will not
+             * hear about the change.
+             * @example
+             * instance.object.list().forEach(obj => console.log(obj.type, obj.uniqueId));
+             */
+            list(): ThreeDObject[] {
+                const state = moorhenInstance.store.getState();
+                return state.threeDObjects.objects;
+            },
+
+            /**
+             * Create a 3D object and draw it.
+             *
+             * `type` is the only required field. Everything else falls back to that shape's
+             * default, so `{ type: "sphere" }` is a complete request and gives a unit sphere
+             * at the origin. Because the object types form a discriminated union, naming the
+             * type narrows the rest of the fields: a "sphere" takes `radius`, a "cylinder"
+             * takes `end` and `radius`, a "torus" takes `major_radius` and `minor_radius`.
+             *
+             * Any `uniqueId` in `params` is ignored - the new object always gets a fresh one,
+             * so two calls with the same parameters give two objects rather than one.
+             *
+             * @param params - The shape to make, plus any fields to override its defaults.
+             * @param params.type - One of {@link types}.
+             * @returns The unique ID of the new object, which is its handle for
+             * {@link get}, {@link edit} and {@link delete}. Null if `type` is not a
+             * known shape.
+             * @example
+             * const uid = instance.object.create({
+             *     type: "cylinder",
+             *     origin: [0, 0, 0],
+             *     end: [0, 20, 0],
+             *     radius: 2,
+             *     colour: "#3366ffff"
+             * });
+             */
+            create<K extends ThreeDObject["type"]>(
+                params: { type: K } & Partial<Omit<Extract<ThreeDObject, { type: K }>, "type" | "uniqueId">>
+            ): string | null {
+                if (!params || !(OBJECT_TYPES as readonly string[]).includes(params.type)) {
+                    console.warn(
+                        `3D object type "${params?.type}" is not one of ${OBJECT_TYPES.join(", ")}.`
+                    );
+                    return null;
+                }
+                // The default first, then the caller's fields over the top, then a fresh id
+                // last so that a uniqueId passed in cannot displace it.
+                const object = {
+                    ...newObjectOfType(params.type),
+                    ...params,
+                    uniqueId: uuidv4()
+                } as ThreeDObject;
+                moorhenInstance.dispatch(addObject(object));
+                return object.uniqueId;
+            },
+
+            /**
+             * Edit an existing 3D object in place.
+             *
+             * A partial update: fields left out keep their current value. The object's
+             * `type` and `uniqueId` cannot be changed - to turn a sphere into a cube,
+             * delete it and create the cube, which also makes it clear in a session that
+             * two different objects were involved.
+             *
+             * @param uniqueId - Unique ID of the object to edit.
+             * @param params - The fields to change.
+             * @returns True if the object was found and updated, otherwise false.
+             * @example
+             * instance.object.edit(uid, { radius: 8, colour: "#ff0000ff" });
+             */
+            edit(uniqueId: string, params: Partial<Omit<ThreeDObject, "type" | "uniqueId">>): boolean {
+                const existing = this.get(uniqueId);
+                if (!existing) {
+                    return false;
+                }
+                // updateObject replaces the stored object wholesale, so the merge happens
+                // here; without it, an edit of one field would drop every other.
+                const { type: _ignoredType, uniqueId: _ignoredId, ...changes } = params as Record<string, unknown>;
+                moorhenInstance.dispatch(updateObject({ ...existing, ...changes } as ThreeDObject));
+                return true;
+            },
+
+            /**
+             * Delete a 3D object, removing it from the scene.
+             * @param uniqueId - Unique ID of the object to delete.
+             * @returns True if the object was found and deleted, otherwise false.
+             * @example
+             * const deleted = instance.object.delete(uid);
+             */
+            delete(uniqueId: string): boolean {
+                if (!this.get(uniqueId)) {
+                    return false;
+                }
+                moorhenInstance.dispatch(removeObjectById(uniqueId));
+                return true;
+            },
+
+            /**
+             * Delete every 3D object in the scene. Molecules and maps are untouched.
+             * @returns The number of objects that were removed.
+             * @example
+             * const removed = instance.object.clear();
+             */
+            clear(): number {
+                const count = this.list().length;
+                moorhenInstance.dispatch(emptyObjects());
+                return count;
+            }
+        };
     }
 
     /**
