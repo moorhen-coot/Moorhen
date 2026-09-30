@@ -392,7 +392,7 @@ const vectorVectorToJSArray = (vectorVector): number[][] => {
 
 const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false, keepNorm: boolean = false): libcootApi.SimpleMeshJS => {
 
-    const print_timing = false
+    const print_timing = true
     const ts = performance.now()
 
     const vertices = simpleMesh.vertices;
@@ -406,19 +406,26 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     let totNorm_C = new Float32Array(verticesSize * 3)
     let totCol_C = new Float32Array(verticesSize * 4)
 
-    cootModule.getPositionsFromSimpleMesh2(simpleMesh, totPos_C)
-    cootModule.getColoursFromSimpleMesh2(simpleMesh, totCol_C)
+    // The vectors, not the mesh. Passing simpleMesh reconstructed the whole thing on every
+    // one of these calls - a value_object crosses by copy - so four calls copied a 400 MB
+    // mesh four times before reading a vertex. These handles are the ones deleted below, so
+    // nothing extra is held.
+    cootModule.getPositionsFromVertices(vertices, totPos_C)
+    cootModule.getColoursFromVertices(vertices, totCol_C)
 
     if (perm) {
+        // keepNorm leaves the normals alone while the winding is reversed. It used to call a
+        // separate getReversedNormalsFromSimpleMesh3, which despite its name negated nothing
+        // and was identical to the unreversed version.
         if (keepNorm) {
-            cootModule.getReversedNormalsFromSimpleMesh3(simpleMesh, totNorm_C)
+            cootModule.getNormalsFromVertices(vertices, totNorm_C)
         } else {
-            cootModule.getReversedNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
+            cootModule.getReversedNormalsFromVertices(vertices, totNorm_C)
         }
-        cootModule.getPermutedTriangleIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
+        cootModule.getPermutedTriangleIndicesFromTriangles(triangles, totIdxs_C)
     } else {
-        cootModule.getNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
-        cootModule.getTriangleIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
+        cootModule.getNormalsFromVertices(vertices, totNorm_C)
+        cootModule.getTriangleIndicesFromTriangles(triangles, totIdxs_C)
     }
 
     // Which residue each vertex belongs to, for a mesh that knows.
@@ -427,7 +434,7 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     // builds it - see simple_mesh_t::vertex_owner. Only the surface fills these in so far, so
     // every other mesh arrives with them empty and is unaffected.
     //
-    // Note the permuted case: getPermutedTriangleIndicesFromSimpleMesh2 reorders the corners
+    // Note the permuted case: getPermutedTriangleIndicesFromTriangles reorders the corners
     // within each triangle, not the vertices themselves, so the owner of vertex i is still the
     // owner of vertex i and this needs no equivalent.
     let vertexOwners: Uint32Array | null = null
@@ -477,6 +484,9 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     triangles.delete();
 
     return {
+        // Carried through so a caller can tell a mesh that failed to build from one that is
+        // legitimately empty. Coot sets it to 0 only when it caught an exception.
+        status: simpleMesh.status,
         prim_types: [["TRIANGLES"]],
         idx_tri: [[totIdxs]],
         vert_tri: [[totPos]],
@@ -1162,10 +1172,10 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
     let totPos_C = new Float32Array(verticesSize * 3)
     let totNorm_C = new Float32Array(verticesSize * 3)
     let totCol_C = new Float32Array(verticesSize * 4)
-    cootModule.getLineIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
-    cootModule.getPositionsFromSimpleMesh2(simpleMesh, totPos_C)
-    cootModule.getNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
-    cootModule.getColoursFromSimpleMesh2(simpleMesh, totCol_C)
+    cootModule.getLineIndicesFromTriangles(triangles, totIdxs_C)
+    cootModule.getPositionsFromVertices(vertices, totPos_C)
+    cootModule.getNormalsFromVertices(vertices, totNorm_C)
+    cootModule.getColoursFromVertices(vertices, totCol_C)
 
     const tm = performance.now()
     if (print_timing) console.log("DEBUG: SIMPLE MESH TO LINE MESH DATA C++", tm - ts)
@@ -1191,9 +1201,9 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
     simpleMesh.owners?.delete();
 
     if (normalLighting)
-        return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+        return { status: simpleMesh.status, prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
     else
-        return { prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+        return { status: simpleMesh.status, prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
 
 }
 

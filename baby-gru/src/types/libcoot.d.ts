@@ -358,6 +358,9 @@ export namespace libcootApi {
     interface SimpleMeshT {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;
+        // 1 if the mesh is the answer, 0 if Coot threw while building it. Not the same as an
+        // empty mesh, which is a perfectly good answer for a selection that matched nothing.
+        status?: number;
         // Which residue each vertex belongs to, and the residues as CIDs. Present but empty
         // for every mesh that does not know where its vertices came from.
         vertex_owner?: emscriptem.vector<number>;
@@ -375,6 +378,8 @@ export namespace libcootApi {
         additional_norm_tri?: [[number[] | Float32Array]];
         norm_tri: [[number[] | Float32Array]];
         col_tri: [[number[] | Float32Array]];
+        //! 1 if the mesh is the answer, 0 if Coot threw while building it.
+        status?: number;
         // One entry per vertex, indexing owners. Absent unless the mesh knows.
         vertex_owners?: Uint32Array;
         // The second owner of a saddle vertex, and the share belonging to the first. Present
@@ -622,19 +627,18 @@ export namespace libcootApi {
         getReversedNormalsFromSimpleMesh(arg0: any): Float32Array;
         getColoursFromSimpleMesh(arg0: any): Float32Array;
         getTextureArray(arg0: any, arg1: any): void;
-        getPositionsFromSimpleMesh2(arg0: any, arg1: any): void;
-        getNormalsFromSimpleMesh2(arg0: any, arg1: any): void;
-        getReversedNormalsFromSimpleMesh2(arg0: any, arg1: any): void;
-        getReversedNormalsFromSimpleMesh3(arg0: any, arg1: any): void;
-        getColoursFromSimpleMesh2(arg0: any, arg1: any): void;
+        getPositionsFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
+        getNormalsFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
+        getReversedNormalsFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
+        getColoursFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
         getFloat32ArrayFromVector(arg0: any, arg1: any): void;
         getUint32ArrayFromVector(arg0: any, arg1: any): void;
         getLineIndicesFromSimpleMesh(arg0: any): Uint32Array;
         getPermutedTriangleIndicesFromSimpleMesh(arg0: any): Uint32Array;
         getTriangleIndicesFromSimpleMesh(arg0: any): Uint32Array;
-        getLineIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
-        getPermutedTriangleIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
-        getTriangleIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
+        getLineIndicesFromTriangles(triangles: emscriptem.vector<gTriangle>, out: Uint32Array): void;
+        getPermutedTriangleIndicesFromTriangles(triangles: emscriptem.vector<gTriangle>, out: Uint32Array): void;
+        getTriangleIndicesFromTriangles(triangles: emscriptem.vector<gTriangle>, out: Uint32Array): void;
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
         validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
         parse_mon_lib_list_cif(arg0: string): emscriptem.vector<compoundInfo>;

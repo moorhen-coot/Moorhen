@@ -79,11 +79,16 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
 
     function("unpackCootDataFile",&unpackCootDataFile);
     function("testFloat32Array", &testFloat32Array);
-    function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);
-    function("getReversedNormalsFromSimpleMesh2", &getReversedNormalsFromSimpleMesh2);
-    function("getReversedNormalsFromSimpleMesh3", &getReversedNormalsFromSimpleMesh3);
-    function("getNormalsFromSimpleMesh2", &getNormalsFromSimpleMesh2);
-    function("getColoursFromSimpleMesh2", &getColoursFromSimpleMesh2);
+    // These take the bound vector rather than the whole mesh: a simple_mesh_t is a
+    // value_object and crosses by copy, a registered vector is a class and crosses by
+    // reference. See the comment above them in moorhen-wrappers-helpers.h.
+    function("getPositionsFromVertices", &getPositionsFromVertices);
+    function("getNormalsFromVertices", &getNormalsFromVertices);
+    function("getReversedNormalsFromVertices", &getReversedNormalsFromVertices);
+    function("getColoursFromVertices", &getColoursFromVertices);
+    function("getTriangleIndicesFromTriangles", &getTriangleIndicesFromTriangles);
+    function("getPermutedTriangleIndicesFromTriangles", &getPermutedTriangleIndicesFromTriangles);
+    function("getLineIndicesFromTriangles", &getLineIndicesFromTriangles);
     function("getPositionsFromSimpleMesh", &getPositionsFromSimpleMesh);
     function("getReversedNormalsFromSimpleMesh", &getReversedNormalsFromSimpleMesh);
     function("getNormalsFromSimpleMesh", &getNormalsFromSimpleMesh);
@@ -93,9 +98,6 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     function("getLineIndicesFromSimpleMesh", &getLineIndicesFromSimpleMesh);
     function("getPermutedTriangleIndicesFromSimpleMesh", &getPermutedTriangleIndicesFromSimpleMesh);
     function("getTriangleIndicesFromSimpleMesh", &getTriangleIndicesFromSimpleMesh);
-    function("getLineIndicesFromSimpleMesh2", &getLineIndicesFromSimpleMesh2);
-    function("getPermutedTriangleIndicesFromSimpleMesh2", &getPermutedTriangleIndicesFromSimpleMesh2);
-    function("getTriangleIndicesFromSimpleMesh2", &getTriangleIndicesFromSimpleMesh2);
     function("getTextureArray", &getTextureArray);
     class_<clipper::Coord_orth>("Coord_orth")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()

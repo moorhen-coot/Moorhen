@@ -485,6 +485,39 @@ export class MoleculeRepresentation {
     }
 
     /**
+     * Whether a mesh Coot returned is an answer or a failure, saying so if it is the latter.
+     *
+     * simple_mesh_t carries a status: 1 if it was built, 0 if Coot caught an exception while
+     * building it - in practice a bad_alloc on a mesh too large to fit. Before that flag was
+     * honoured the two were indistinguishable, because a failed mesh arrives empty and an
+     * empty mesh is a perfectly good answer for a selection that matched nothing. So nothing
+     * appeared, nothing was said, and the only trace was one line of Coot's stdout among
+     * hundreds.
+     *
+     * The message hedges on the cause deliberately: the catch that sets the flag is a
+     * catch(...) and cannot know it was memory, however likely that is.
+     *
+     * No throttling needed - the snackbar slice drops an existing entry with the same tag
+     * before pushing, so a representation that fails on every redraw replaces its own toast
+     * rather than stacking them.
+     */
+    meshFailedToBuild(mesh: { status?: number }): boolean {
+        if (mesh?.status !== 0) {
+            return false;
+        }
+        const message = `Could not draw ${this.style} for ${this.parentMolecule.name}: `
+            + `Coot failed to build the mesh, most likely from running out of memory. `
+            + `Try a smaller selection or a simpler style.`;
+        console.warn(message);
+        this.parentMolecule.store.dispatch(enqueueSnackbar({
+            message,
+            variant: "warning",
+            tag: `mesh-build-failed-${this.parentMolecule.molNo}-${this.style}`,
+        }));
+        return true;
+    }
+
+    /**
      * Set the representation buffers
      * @param {moorhen.DisplayObject[]} buffers - The new buffers
      */
@@ -1441,10 +1474,19 @@ export class MoleculeRepresentation {
         // vertex, so these carry ownership like any other mesh that knows - which means the
         // bases are hoverable on the same terms as the ribbon beside them.
         const nucleotideMesh = result.data.result.result as libcootApi.SimpleMeshJS
+        if (this.meshFailedToBuild(nucleotideMesh)) {
+            return [];
+        }
         const pick_info = ownedMeshPickInfo(
             nucleotideMesh.vert_tri?.[0]?.[0] ?? [], nucleotideMesh.vertex_owners,
             nucleotideMesh.owners, nucleotideMesh.vertex_owners_other,
             nucleotideMesh.vertex_owner_weights)
+        // TEMPORARY: is the geometry arriving at all? Remove once the dishy bases are sorted.
+        console.log(`Nucleotide mesh, style "${style}": `
+            + `${(nucleotideMesh.vert_tri?.[0]?.[0]?.length ?? 0) / 3} vertices, `
+            + `${(nucleotideMesh.idx_tri?.[0]?.[0]?.length ?? 0) / 3} triangles, `
+            + `${nucleotideMesh.owners?.length ?? 0} residues named`)
+
         const objects = [{ ...withoutOwnershipArrays(nucleotideMesh), pick_info: pick_info ?? {} }];
         return objects;
     }
@@ -1489,6 +1531,9 @@ export class MoleculeRepresentation {
         // a question about the mesh rather than about the style: ask what arrived. Ribbons and
         // the rest simply have no owners and fall through unchanged.
         const m2tMesh = response.data.result.result as libcootApi.SimpleMeshJS
+        if (this.meshFailedToBuild(m2tMesh)) {
+            return [];
+        }
         const meshPickInfo = ownedMeshPickInfo(
             m2tMesh.vert_tri?.[0]?.[0] ?? [], m2tMesh.vertex_owners, m2tMesh.owners,
             m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights)
@@ -1509,10 +1554,14 @@ export class MoleculeRepresentation {
             // it knows about itself. buildBuffers has always taken a list; a cavities
             // representation returns one buffer per cavity.
             //
-            // The ribbon goes first so that buffers[0] is the same thing whether or not the
-            // structure has nucleotides - setAtomBuffers puts the atoms on that one.
+            // Nucleotides first, because that is the order the merge produced.
+            //
+            // No stronger claim than that. The merge concatenated nucleotides then ribbon, so
+            // this keeps the draw order unchanged from before the split - buffers are drawn in
+            // the order given here, and coincident geometry is decided by depth on LESS, so
+            // the order is not free in general even if nothing is known to depend on it.
             const nucleotideBufferObjects = await this.getNucleotideRepresentationBuffers(m2tSelection);
-            resultBufferObjects = [...ribbonBufferObjects, ...nucleotideBufferObjects];
+            resultBufferObjects = [...nucleotideBufferObjects, ...ribbonBufferObjects];
         } else {
             resultBufferObjects = ribbonBufferObjects;
         }
