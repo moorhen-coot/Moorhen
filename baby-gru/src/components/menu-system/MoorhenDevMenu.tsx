@@ -1,4 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
+import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
 import { v4 as uuidv4 } from "uuid";
 import { newVector } from "../../utils/vectorFactories";
 import { useEffect, useState } from "react";
@@ -17,7 +18,7 @@ import {
     emptyOverlays,
 } from "../../store/overlaysSlice";
 import { setDoOutline } from "../../store/sceneSettingsSlice";
-import { MoorhenVector, addVectors, removeVectors, removeVectorsMatchingIDString } from "../../store/vectorsSlice";
+import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 
@@ -53,14 +54,17 @@ export const MoorhenDevMenu = () => {
             vec.yFrom = i * 2;
             vec.coordsMode = "points";
             vec.arrowMode = "both";
-            vec.uniqueId += "__TAG_DEV_TEST_VECTOR";
+            vec.tags = { [TAG_SOURCE]: SOURCE_DEV_TEST };
             vec.radius = 0.07 + i * 0.01;
             myVecs.push(vec);
         }
         setTestVectors(myVecs);
         return () => {
-            //Remove all with "__DEV_TEST_VECTOR" in uniqueID. This gets around problem with stale state at unmount.
-            dispatch(removeVectorsMatchingIDString("__TAG_DEV_TEST_VECTOR"));
+            // Removing by tag rather than by the vectors in state: the point of doing it this
+            // way is that it does not depend on `testVectors` being current at unmount, which
+            // it is not. Previously the tag was appended to each uniqueId and matched as a
+            // substring; it is a tag now, and nothing else carries this one.
+            dispatch(removeVectorsByTag({ [TAG_SOURCE]: SOURCE_DEV_TEST }));
         };
     }, []);
 

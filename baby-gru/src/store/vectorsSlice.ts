@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Tags } from "../utils/tags";
+import { matchesTags, Tags } from "../utils/tags";
 
 export type VectorsCoordMode = "atoms" | "points" | "atompoint";
 export type VectorsLabelMode = "none" | "start" | "end" | "middle";
@@ -66,8 +66,39 @@ const vectorsSlice = createSlice({
             state.vectorsList = state.vectorsList.filter(item => !ids.includes(item.uniqueId));
         },
         // API
+        /**
+         * @deprecated Matches a substring of uniqueId, from when a tag was written into the
+         * identifier. Use removeVectorsByTag. Kept because it is public and takes an arbitrary
+         * string, so identifiers in the wild carry tags that cannot be migrated.
+         */
         removeVectorsMatchingIDString: (state, action: PayloadAction<string>) => {
             state.vectorsList = state.vectorsList.filter(item => !item.uniqueId.includes(action.payload));
+        },
+        // API
+        /**
+         * Remove every vector carrying all of the given tags. One pair removes a whole group,
+         * several narrow it: { source: "xpid" } takes every XPID vector, and adding
+         * { molecule: uid } restricts it to one molecule's. An empty query removes nothing, so
+         * that a tag object which came out empty by accident cannot clear the scene; use
+         * emptyVectors to mean all of them.
+         */
+        removeVectorsByTag: (state, action: PayloadAction<Tags>) => {
+            const query = action.payload;
+            if (!query || Object.keys(query).length === 0) {
+                return;
+            }
+            state.vectorsList = state.vectorsList.filter(item => !matchesTags(item, query));
+        },
+        // API
+        /** Remove one vector by its uniqueId, without needing the vector itself. */
+        removeVectorById: (state, action: PayloadAction<string>) => {
+            state.vectorsList = state.vectorsList.filter(item => item.uniqueId !== action.payload);
+        },
+        // API
+        /** Remove several vectors by their uniqueIds, without needing the vectors themselves. */
+        removeVectorsByIds: (state, action: PayloadAction<string[]>) => {
+            const ids = new Set(action.payload);
+            state.vectorsList = state.vectorsList.filter(item => !ids.has(item.uniqueId));
         },
         // API
         removeVector: (state, action: PayloadAction<MoorhenVector>) => {
@@ -80,6 +111,16 @@ const vectorsSlice = createSlice({
     },
 });
 
-export const { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString } = vectorsSlice.actions;
+export const {
+    addVector,
+    removeVector,
+    emptyVectors,
+    addVectors,
+    removeVectors,
+    removeVectorsMatchingIDString,
+    removeVectorsByTag,
+    removeVectorById,
+    removeVectorsByIds
+} = vectorsSlice.actions;
 
 export default vectorsSlice.reducer;

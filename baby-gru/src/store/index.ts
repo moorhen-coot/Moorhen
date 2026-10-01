@@ -213,7 +213,17 @@ export { setIsInSharedSession, setSharedSessionToken, setShowSharedSessionManage
 export { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings }  from "./backupSettingsSlice";
 export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
 export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
-export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
+export {
+    addVector,
+    removeVector,
+    emptyVectors,
+    addVectors,
+    removeVectors,
+    removeVectorsMatchingIDString,
+    removeVectorsByTag,
+    removeVectorById,
+    removeVectorsByIds
+}  from "./vectorsSlice";
 export { setMenuSetting, resetMenuSetting, resetMenu }  from "./menusSlice";
 export {
     showMap,
