@@ -396,6 +396,35 @@ export const OBJECT_FACTORIES: { [K in ThreeDObject["type"]]: () => Extract<Thre
 export const OBJECT_TYPES = Object.keys(OBJECT_FACTORIES) as ThreeDObject["type"][];
 
 /**
+ * What the public API's `create` accepts: the shape's name, plus any of that shape's own fields.
+ *
+ * A union with one member per shape rather than one type with every field optional, so naming
+ * `type: "sphere"` offers a `radius` and not an `end`.
+ */
+export type ThreeDObjectCreateParams = {
+    [K in ThreeDObject["type"]]: { type: K } & Partial<Omit<Extract<ThreeDObject, { type: K }>, "type" | "uniqueId">>
+}[ThreeDObject["type"]];
+
+/**
+ * The fields the given params are allowed to carry, worked out from their own `type`.
+ *
+ * Used to turn a field belonging to some other shape - `end` on a sphere - into a compile error
+ * rather than a value that is silently dropped. TypeScript's own excess property check catches
+ * that for an object literal written at the call site, but not for one that arrives in a
+ * variable; requiring the surplus keys to be `never` catches both, since nothing is a `never`.
+ *
+ * Derived from the params rather than from a bare type parameter on purpose. `keyof
+ * Extract<ThreeDObject, { type: K }>` with K still generic collapses to the keys the 26 shapes
+ * have in common, which would make `radius` look surplus on a sphere; going through the inferred
+ * params means `type` is a concrete literal by the time the conditional is evaluated.
+ */
+export type AllowedObjectKeys<P> = P extends { type: infer K }
+    ? K extends ThreeDObject["type"]
+        ? keyof Omit<Extract<ThreeDObject, { type: K }>, "uniqueId">
+        : never
+    : never;
+
+/**
  * A default object of the given shape, with a fresh uniqueId.
  *
  * @param type - The shape to make, one of OBJECT_TYPES.

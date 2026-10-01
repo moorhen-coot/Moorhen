@@ -14,7 +14,12 @@ import {
     updateObject,
     ThreeDObject
 } from "@/store/threeDObjectsSlice";
-import { newObjectOfType, OBJECT_TYPES } from "@/utils/threeDObjectFactories";
+import {
+    newObjectOfType,
+    OBJECT_TYPES,
+    AllowedObjectKeys,
+    ThreeDObjectCreateParams
+} from "@/utils/threeDObjectFactories";
 import { v4 as uuidv4 } from "uuid";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/FileLoading";
@@ -702,8 +707,8 @@ export class MoorhenInstance extends StoreExtension {
              *     colour: "#3366ffff"
              * });
              */
-            create<K extends ThreeDObject["type"]>(
-                params: { type: K } & Partial<Omit<Extract<ThreeDObject, { type: K }>, "type" | "uniqueId">>
+            create<P extends ThreeDObjectCreateParams>(
+                params: P & { [Key in Exclude<keyof P, AllowedObjectKeys<P>>]: never }
             ): string | null {
                 if (!params || !(OBJECT_TYPES as readonly string[]).includes(params.type)) {
                     console.warn(

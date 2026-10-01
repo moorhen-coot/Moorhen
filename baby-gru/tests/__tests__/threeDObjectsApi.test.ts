@@ -20,7 +20,13 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { configureStore } from "@reduxjs/toolkit";
 import threeDObjectsReducer, { ThreeDObject } from "../../src/store/threeDObjectsSlice";
-import { OBJECT_FACTORIES, OBJECT_TYPES, newObjectOfType } from "../../src/utils/threeDObjectFactories";
+import {
+    OBJECT_FACTORIES,
+    OBJECT_TYPES,
+    newObjectOfType,
+    AllowedObjectKeys,
+    ThreeDObjectCreateParams
+} from "../../src/utils/threeDObjectFactories";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -42,12 +48,22 @@ const factoriesIn = (source: string): Record<string, string> => {
     return found;
 };
 
+/**
+ * The last commit in which the factories were still declared inside the modal.
+ *
+ * Pinned to a SHA rather than read from HEAD. HEAD was the obvious choice while the move was
+ * uncommitted and it is wrong the moment the move lands: the comparison then has the extracted
+ * version on both sides and finds nothing to compare, which is how this test first failed.
+ * A fixed commit keeps the check meaningful for as long as the repository has history.
+ */
+const BEFORE_THE_MOVE = "330282d0";
+
 describe("the factories survived the move out of the modal", () => {
     // The modal as it was before the extraction. If this cannot be read the test fails rather
     // than passing vacuously.
     const committedModal = execFileSync(
         "git",
-        ["show", "HEAD:baby-gru/src/components/modal/Moorhen3DObjectsModal.tsx"],
+        ["show", `${BEFORE_THE_MOVE}:baby-gru/src/components/modal/Moorhen3DObjectsModal.tsx`],
         { cwd: resolve(ROOT, ".."), encoding: "utf8", maxBuffer: 32 * 1024 * 1024 }
     );
     const before = factoriesIn(committedModal);
@@ -95,6 +111,64 @@ describe("every shape can be made", () => {
 
     test("each call gives a fresh id", () => {
         expect(newObjectOfType("sphere").uniqueId).not.toBe(newObjectOfType("sphere").uniqueId);
+    });
+});
+
+/**
+ * Compile-time assertions about create's parameter type.
+ *
+ * These run at `npx tsc`, which the test scripts do before jest. @ts-expect-error is itself the
+ * assertion: it is an error when the line below it compiles cleanly, so each one fails if the
+ * typing ever loosens. The runtime body here only exists to keep jest reporting them.
+ */
+describe("create rejects fields belonging to other shapes", () => {
+    test("at compile time", () => {
+        const create = <P extends ThreeDObjectCreateParams>(
+            _params: P & { [K in Exclude<keyof P, AllowedObjectKeys<P>>]: never }
+        ): string | null => null;
+
+        // Allowed: a shape's own fields, and nothing but the type.
+        create({ type: "sphere", origin: [10, 0, 0], radius: 5 });
+        create({ type: "sphere" });
+        create({ type: "cylinder", end: [0, 20, 0], radius: 2 });
+        create({ type: "path", points: [0, 0, 0, 1, 1, 1] });
+        create({ type: "torus", major_radius: 4, minor_radius: 1 });
+
+        // `end` belongs to a cylinder, not a sphere - as a literal at the call site.
+        // @ts-expect-error
+        create({ type: "sphere", origin: [10, 0, 0], radius: 5, end: [0, 0, 0] });
+
+        // And the case the plain excess-property check misses: the same object arriving in a
+        // variable. This is the one worth having a test for, because it is the one that needs
+        // the Exclude/never machinery rather than coming free from TypeScript.
+        const viaVariable = {
+            type: "sphere" as const,
+            radius: 5,
+            end: [0, 0, 0] as [number, number, number]
+        };
+        // @ts-expect-error
+        create(viaVariable);
+
+        // A known field of the wrong type.
+        // @ts-expect-error
+        create({ type: "sphere", radius: "big" });
+
+        // A shape that does not exist.
+        // @ts-expect-error
+        create({ type: "trapezohedron" });
+
+        // radius means nothing to a plane.
+        // @ts-expect-error
+        create({ type: "plane", radius: 3 });
+
+        // A valid object in a variable still passes, which is what stops the check above from
+        // being vacuously strict.
+        const validInVariable = {
+            type: "cylinder" as const,
+            end: [0, 20, 0] as [number, number, number],
+            radius: 2
+        };
+        expect(create(validInVariable)).toBeNull();
     });
 });
 
