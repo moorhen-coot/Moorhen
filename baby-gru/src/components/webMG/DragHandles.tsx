@@ -100,7 +100,10 @@ export const DragHandles = () => {
             const axis = axisOfTag(tag);
             const action = actionOfTag(tag);
             // The free handle names no axis, which is the one case where that is not a fault.
-            if (!object || !action || (!axis && action !== "planar")) {
+            // `locked` is checked here as well as in gizmoDraw: no handles are drawn for a
+            // locked object, so this should be unreachable, but a drag that began before the
+            // object was locked would otherwise still be honoured on the next pointer move.
+            if (!object || object.locked || !action || (!axis && action !== "planar")) {
                 return;
             }
             const centre = centreOfObject(object);
@@ -141,7 +144,9 @@ export const DragHandles = () => {
             const object = current.find(item => item.uniqueId === drag.objectId);
             const axis = axisOfTag(drag.tag);
             const action = actionOfTag(drag.tag);
-            if (!object || !action || (!axis && action !== "planar")) return;
+            // object.locked, so a drag in progress stops being honoured the moment its object is
+            // locked rather than carrying on to the pointer release.
+            if (!object || object.locked || !action || (!axis && action !== "planar")) return;
 
             // Everything shifts by the same vector, always measured from where the drag began -
             // so the shape is carried along rigidly and repeated moves cannot drift. One

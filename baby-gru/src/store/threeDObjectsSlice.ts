@@ -20,6 +20,19 @@ interface ThreeDObjectBase {
      * because an object nobody needs to group does not need one.
      */
     tags?: Tags;
+    /**
+     * Whether this may be changed in place.
+     *
+     * Set by whatever owns it - a custom representation, say - to mean "this geometry follows
+     * from something else, so editing it here would only put the two out of step". The API's
+     * `edit` does nothing to a locked item, including to this field, and the drag handles are
+     * not offered for one.
+     *
+     * Deleting is deliberately still allowed. An owner that redraws recreates what it owns, so a
+     * deletion is self-correcting rather than something to defend against, and refusing it would
+     * leave the owner unable to clear its own on redraw.
+     */
+    locked?: boolean;
 }
 
 /**
@@ -494,6 +507,16 @@ const threeDObjectsSlice = createSlice({
                 obj => obj.uniqueId === action.payload.uniqueId
             );
             if (index !== -1) {
+                // The lock is enforced here rather than only in the public API, because this is
+                // the one place an object changes: the objects dialog dispatches this directly,
+                // and so could anything added later. A rule checked at every caller is a rule
+                // that gets missed by the next caller.
+                //
+                // `locked` is not exempt from itself, so nothing unlocks an object in place;
+                // whatever owns it deletes and recreates, which is what a redraw does anyway.
+                if (state.objects[index].locked) {
+                    return;
+                }
                 state.objects[index] = action.payload;
             }
         },

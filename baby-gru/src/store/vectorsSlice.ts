@@ -33,6 +33,19 @@ export interface MoorhenVector {
      */
     tags?: Tags;
     /**
+     * Whether this may be changed in place.
+     *
+     * Set by whatever owns it - a custom representation, say - to mean "this geometry follows
+     * from something else, so editing it here would only put the two out of step". The API's
+     * `edit` does nothing to a locked item, including to this field, and the drag handles are
+     * not offered for one.
+     *
+     * Deleting is deliberately still allowed. An owner that redraws recreates what it owns, so a
+     * deletion is self-correcting rather than something to defend against, and refusing it would
+     * leave the owner unable to clear its own on redraw.
+     */
+    locked?: boolean;
+    /**
      * @deprecated Superseded by `tags`. Kept so a session saved earlier round-trips unchanged;
      * nothing reads it.
      */

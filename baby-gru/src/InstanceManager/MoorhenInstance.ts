@@ -761,6 +761,12 @@ export class MoorhenInstance extends StoreExtension {
                 if (!existing) {
                     return false;
                 }
+                // Locked means locked, `locked` itself included. One rule rather than two, and
+                // nothing is lost by it: an owner that wants a locked object changed deletes it
+                // and creates the replacement, which is what a redraw does anyway.
+                if (existing.locked) {
+                    return false;
+                }
                 // updateObject replaces the stored object wholesale, so the merge happens
                 // here; without it, an edit of one field would drop every other.
                 const { type: _ignoredType, uniqueId: _ignoredId, ...changes } = params as Record<string, unknown>;
@@ -903,6 +909,10 @@ export class MoorhenInstance extends StoreExtension {
             edit(uniqueId: string, params: Partial<Omit<MoorhenVector, "uniqueId">>): boolean {
                 const existing = this.get(uniqueId);
                 if (!existing) {
+                    return false;
+                }
+                // As for objects: a locked vector is not edited, `locked` included.
+                if (existing.locked) {
                     return false;
                 }
                 const { uniqueId: _ignored, ...changes } = params as Record<string, unknown>;
