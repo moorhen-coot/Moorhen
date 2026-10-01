@@ -53,7 +53,7 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
 
 export type BasicMapHeaderInfo = {}
 
-type mapHeaderInfo = {
+export type mapHeaderInfo = {
     spacegroup: string;
     cell: libcootApi.mapCellJS;
     resolution: number;
@@ -1441,10 +1441,15 @@ export class MoorhenMap {
     async getVerticesHistogram(map2: number, nBins: number = 200): Promise<libcootApi.HistogramInfoJS> {
         let posX: number, posY: number, posZ: number;
         if (this.isOriginLocked) {
+            // Negated, not made positive. Both drawOrigin and mapCentre are stored the same way
+            // round as the scene origin - the negative of the point they refer to - so the way
+            // back is a sign change. Math.abs happens to agree whenever that point lies in the
+            // positive octant, and silently queries the wrong place for anything that does not,
+            // which a structure with negative coordinates does on at least one axis.
             const origin = this.drawOrigin ?? this.mapCentre;
-            posX = Math.abs(origin[0]);
-            posY = Math.abs(origin[1]);
-            posZ = Math.abs(origin[2]);
+            posX = -origin[0];
+            posY = -origin[1];
+            posZ = -origin[2];
         } else {
             [posX, posY, posZ] = this.store.getState().sceneSettings.origin.map(coord => -coord) as [number, number, number];
         }

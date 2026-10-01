@@ -353,12 +353,12 @@ const sceneSettingsSlice = createSlice({
         },
         // API
         /* Set the origin of the scene to the provided coordinates.
-        @value [number, number, number] X, Y, Z coordinates */
+        @param value [number, number, number] X, Y, Z coordinates */
         setOrigin: (state, action: PayloadAction<[number, number, number]>) => {
             state.origin = action.payload;
         },
         // API
-        /* @zoom level 1 = 22A
+        /*@param zoom level 1 = 22A
          or A/22 */
         setZoom: (state, action: PayloadAction<number>) => {
             state.zoom = action.payload;
