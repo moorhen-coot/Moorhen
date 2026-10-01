@@ -1,5 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
+import { newVector } from "../../utils/vectorFactories";
 import { useEffect, useState } from "react";
 import { setOrigin } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
@@ -28,29 +29,6 @@ import { MoorhenLinearProgress } from "../icons";
 
 
 
-const newVector = () => {
-    const aVector: MoorhenVector = {
-        coordsMode: "atoms",
-        labelMode: "none",
-        labelText: "vector label",
-        drawMode: "cylinder",
-        arrowMode: "none",
-        xFrom: 0.0,
-        yFrom: 0.0,
-        zFrom: 0.0,
-        xTo: 0.0,
-        yTo: 0.0,
-        zTo: 0.0,
-        cidFrom: "",
-        cidTo: "",
-        molFromUniqueId: "",
-        molToUniqueId: "",
-        uniqueId: uuidv4(),
-        vectorColour: { r: 0, g: 0, b: 0 },
-        textColour: { r: 0, g: 0, b: 0 },
-    };
-    return aVector;
-};
 
 export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
