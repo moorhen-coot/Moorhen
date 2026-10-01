@@ -15,32 +15,17 @@
  * `vec.radius ? vec.radius : 0.07`. That claim is load-bearing - it is why unifying on 0.07 is
  * not a visual change - so it is checked against the renderer rather than taken on trust.
  */
-import { execFileSync } from "child_process";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { newVector } from "../../src/utils/vectorFactories";
 
 const ROOT = resolve(__dirname, "../..");
 
-/**
- * The last commit in which all three local copies still existed.
- *
- * Pinned, not HEAD: once the move is committed, HEAD holds the shared factory on both sides of
- * the comparison and the test would pass while comparing nothing.
- */
-const BEFORE_THE_MOVE = "fafa709e";
-
-const COPIES = {
-    MoorhenDevMenu: "baby-gru/src/components/menu-system/MoorhenDevMenu.tsx",
-    MoorhenVectorsModal: "baby-gru/src/components/modal/MoorhenVectorsModal.tsx",
-    MoorhenNOERestraints: "baby-gru/src/components/modal/MoorhenNOERestraints.tsx"
-};
-
-/** The fields a committed copy set, as { name: literal-text }, whitespace normalised. */
+/** The fields one copy set, as { name: literal-text }, whitespace normalised. */
 const fieldsOfCopyIn = (source: string): Record<string, string> => {
     const body = source.match(/const newVector = \(\) => \{[\s\S]*?return aVector;/);
     if (!body) {
-        throw new Error("no local newVector found in that revision");
+        throw new Error("no local newVector found in that text");
     }
     const fields: Record<string, string> = {};
     for (const [, key, value] of body[0].matchAll(/^\s*(\w+):\s*(.+?),?\s*$/gm)) {
@@ -49,20 +34,20 @@ const fieldsOfCopyIn = (source: string): Record<string, string> => {
     return fields;
 };
 
-const committed = Object.fromEntries(
-    Object.entries(COPIES).map(([name, path]) => [
-        name,
-        fieldsOfCopyIn(
-            execFileSync("git", ["show", `${BEFORE_THE_MOVE}:${path}`], {
-                cwd: resolve(ROOT, ".."),
-                encoding: "utf8",
-                maxBuffer: 32 * 1024 * 1024
-            })
-        )
-    ])
-);
-
-let failures = 0;
+/**
+ * The three local copies as they were, from a fixture rather than from git.
+ *
+ * This read them with `git show` until CI failed: actions/checkout clones shallow, so any commit
+ * but the tip is missing and git reports "invalid object name". A fixture runs anywhere.
+ */
+const committed: Record<string, Record<string, string>> = (() => {
+    const fixture = JSON.parse(
+        readFileSync(resolve(__dirname, "fixtures/preMoveNewVector.json"), "utf8")
+    ).bodies as Record<string, string>;
+    return Object.fromEntries(
+        Object.entries(fixture).map(([name, body]) => [name, fieldsOfCopyIn(body)])
+    );
+})();
 
 describe("the shared factory matches the three it replaced", () => {
     test("all three copies were found, so this is not comparing nothing", () => {
@@ -154,6 +139,3 @@ describe("overrides", () => {
     });
 });
 
-afterAll(() => {
-    if (failures > 0) throw new Error(`${failures} failed`);
-});

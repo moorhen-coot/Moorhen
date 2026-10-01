@@ -13,32 +13,47 @@
  * was a caller's idea of the convention, so this reads the call sites instead. It is the test
  * that would have caught it.
  */
-import { execFileSync } from "child_process";
-import { readFileSync } from "fs";
-import { resolve } from "path";
+import { readdirSync, readFileSync, statSync } from "fs";
+import { join, relative, resolve } from "path";
 
 const ROOT = resolve(__dirname, "../..");
+const SRC = resolve(ROOT, "src");
 
-/** Every call to centerOnCoordinate outside its own declaration, as file:line:text. */
-const callSites = (): { where: string; args: string }[] => {
-    // git grep rather than a directory walk: it respects .gitignore, so node_modules and build
-    // output cannot drift into the result.
-    const out = execFileSync("git", ["grep", "-n", "centerOnCoordinate(", "--", "baby-gru/src"], {
-        cwd: resolve(ROOT, ".."),
-        encoding: "utf8",
-        maxBuffer: 8 * 1024 * 1024
+/** Every .ts/.tsx file under src, walked directly rather than asked of git. */
+const sourceFiles = (dir: string = SRC): string[] =>
+    readdirSync(dir).flatMap(entry => {
+        const path = join(dir, entry);
+        if (statSync(path).isDirectory()) {
+            return sourceFiles(path);
+        }
+        return /\.tsx?$/.test(entry) ? [path] : [];
     });
-    return out
-        .split("\n")
-        .filter(line => line.trim().length > 0)
-        .filter(line => !/(public|private)?\s*centerOnCoordinate\(x: number/.test(line))
-        .map(line => {
-            const [file, lineNo, ...rest] = line.split(":");
-            const text = rest.join(":");
-            const args = text.slice(text.indexOf("centerOnCoordinate(") + "centerOnCoordinate(".length);
-            return { where: `${file}:${lineNo}`, args: args.slice(0, args.indexOf(")")) };
-        });
-};
+
+/**
+ * Every call to centerOnCoordinate outside its own declaration, as file:line with its arguments.
+ *
+ * Walking the directory rather than using `git grep`. The first version of this shelled out to
+ * git, which works but means the test needs a repository; the pinned-commit tests next door
+ * failed in CI for a related reason - actions/checkout is shallow - and there is no reason for
+ * any of these to care whether git is present. Only src is walked, so build output cannot drift
+ * into the result either way.
+ */
+const callSites = (): { where: string; args: string }[] =>
+    sourceFiles().flatMap(path =>
+        readFileSync(path, "utf8")
+            .split("\n")
+            .map((text, index) => ({ text, lineNo: index + 1 }))
+            .filter(({ text }) => text.includes("centerOnCoordinate("))
+            // The declaration itself is not a call site.
+            .filter(({ text }) => !/centerOnCoordinate\(x: number/.test(text))
+            .map(({ text, lineNo }) => {
+                const args = text.slice(text.indexOf("centerOnCoordinate(") + "centerOnCoordinate(".length);
+                return {
+                    where: `${relative(ROOT, path)}:${lineNo}`,
+                    args: args.slice(0, args.indexOf(")"))
+                };
+            })
+    );
 
 describe("the centerOnCoordinate convention", () => {
     const sites = callSites();

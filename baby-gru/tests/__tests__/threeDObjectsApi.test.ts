@@ -15,7 +15,6 @@
  *
  * These need no libcoot: an object is plain data, and the API talks only to the store.
  */
-import { execFileSync } from "child_process";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { configureStore } from "@reduxjs/toolkit";
@@ -48,24 +47,16 @@ const factoriesIn = (source: string): Record<string, string> => {
     return found;
 };
 
-/**
- * The last commit in which the factories were still declared inside the modal.
- *
- * Pinned to a SHA rather than read from HEAD. HEAD was the obvious choice while the move was
- * uncommitted and it is wrong the moment the move lands: the comparison then has the extracted
- * version on both sides and finds nothing to compare, which is how this test first failed.
- * A fixed commit keeps the check meaningful for as long as the repository has history.
- */
-const BEFORE_THE_MOVE = "330282d0";
 
 describe("the factories survived the move out of the modal", () => {
-    // The modal as it was before the extraction. If this cannot be read the test fails rather
-    // than passing vacuously.
-    const committedModal = execFileSync(
-        "git",
-        ["show", `${BEFORE_THE_MOVE}:baby-gru/src/components/modal/Moorhen3DObjectsModal.tsx`],
-        { cwd: resolve(ROOT, ".."), encoding: "utf8", maxBuffer: 32 * 1024 * 1024 }
-    );
+    // The modal as it was before the extraction, from a fixture rather than from git.
+    //
+    // This read `git show 330282d0:...` until CI failed on it: actions/checkout clones shallow,
+    // so a commit that is not the tip simply is not there - "fatal: invalid object name". A test
+    // that needs history is a test that only runs where history happens to be.
+    const committedModal = JSON.parse(
+        readFileSync(resolve(__dirname, "fixtures/preMoveObjectFactories.json"), "utf8")
+    ).region as string;
     const before = factoriesIn(committedModal);
     const after = factoriesIn(readFileSync(resolve(ROOT, "src/utils/threeDObjectFactories.ts"), "utf8"));
 
