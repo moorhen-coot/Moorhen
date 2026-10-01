@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Tags } from "../utils/tags";
 
 export type VectorsCoordMode = "atoms" | "points" | "atompoint";
 export type VectorsLabelMode = "none" | "start" | "end" | "middle";
@@ -25,6 +26,16 @@ export interface MoorhenVector {
     vectorColour: { r: number; g: number; b: number };
     textColour: { r: number; g: number; b: number };
     radius?: number;
+    /**
+     * Who made this vector, and how it should group. See utils/tags.
+     *
+     * Replaces both customTags below and the older habit of writing a tag into uniqueId.
+     */
+    tags?: Tags;
+    /**
+     * @deprecated Superseded by `tags`. Kept so a session saved earlier round-trips unchanged;
+     * nothing reads it.
+     */
     customTags?: string[]
     dashSpacing?: number;
     arrowHeadLength?: number;

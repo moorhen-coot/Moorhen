@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Tags } from "../utils/tags";
 
 export type Position3D = [number, number, number];
 export type Scale3D = [number, number, number];
@@ -12,6 +13,13 @@ interface ThreeDObjectBase {
     uniqueId: string;
     origin: Position3D;
     colour: string;
+    /**
+     * Who made this object, and how it should group. See utils/tags.
+     *
+     * Optional because an object restored from a session saved before this existed has none, and
+     * because an object nobody needs to group does not need one.
+     */
+    tags?: Tags;
 }
 
 /**
