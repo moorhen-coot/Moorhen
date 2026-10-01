@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Tags } from "../utils/tags";
+import { matchesTags, Tags } from "../utils/tags";
 
 export type Position3D = [number, number, number];
 export type Scale3D = [number, number, number];
@@ -502,6 +502,24 @@ const threeDObjectsSlice = createSlice({
                 item => item.uniqueId !== action.payload
             );
         },
+        /**
+         * Remove every object carrying all of the given tags.
+         *
+         * Deliberately not marked `// API`: 3D objects reach the public API through the curated
+         * `instance.object` namespace rather than through generated per-reducer methods, so that
+         * there is one name for them rather than two.
+         *
+         * An empty query removes nothing. matchesTags({}, {}) is true, which is what you want
+         * from an optional filter and emphatically not what you want from a remover; emptyObjects
+         * is how to mean all of them.
+         */
+        removeObjectsByTag: (state, action: PayloadAction<Tags>) => {
+            const query = action.payload;
+            if (!query || Object.keys(query).length === 0) {
+                return;
+            }
+            state.objects = state.objects.filter(item => !matchesTags(item, query));
+        },
         emptyObjects: state => {
             state.objects = []
         },
@@ -512,6 +530,7 @@ export const {
     addObject,
     removeObject,
     removeObjectById,
+    removeObjectsByTag,
     updateObject,
     emptyObjects,
 
