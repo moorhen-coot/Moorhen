@@ -528,9 +528,13 @@ const threeDObjectsSlice = createSlice({
         /**
          * Remove every object carrying all of the given tags.
          *
-         * Deliberately not marked `// API`: 3D objects reach the public API through the curated
-         * `instance.object` namespace rather than through generated per-reducer methods, so that
-         * there is one name for them rather than two.
+         * Deliberately carries no export marker for scripts/CreateStoreExport.py. 3D objects
+         * reach the public API through the curated `instance.object` namespace rather than
+         * through generated per-reducer methods, so that there is one name for them, not two.
+         *
+         * The marker is not written out here even as prose: the generator looks for it anywhere
+         * in a line, so naming it inside a comment is enough to have the comment generated as
+         * though it were a reducer.
          *
          * An empty query removes nothing. matchesTags({}, {}) is true, which is what you want
          * from an optional filter and emphatically not what you want from a remover; emptyObjects
