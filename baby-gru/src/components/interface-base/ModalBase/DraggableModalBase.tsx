@@ -12,7 +12,7 @@ import { PanelErrorBoundary } from "../PanelErrorBoundary";
 import "./draggable-modal-base.css";
 
 
-type MoorhenDraggableModalBaseProps = {
+export type MoorhenDraggableModalBaseProps = {
     headerTitle: string | React.JSX.Element;
     body: React.JSX.Element | React.JSX.Element[];
     modalId: ModalKey;

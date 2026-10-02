@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Custom HTML slots - Moorhen Developer Guide</title>
+    <link rel="stylesheet" href="../../assets/site.css">
+    <script src="../../assets/theme-toggle.js" defer></script>
+</head>
+
+<body>
+    <header class="site-header">
+        <img src="../../assets/MoorhenLogo.png" alt="Moorhen logo">
+        <h1>Custom HTML slots</h1>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">Dark mode</button>
+    </header>
+    <nav class="site-nav">
+        <ul>
+            <li><a href="../../index.html">Docs Home</a></li>
+            <li><a href="index.html">Developer Guide</a></li>
+            <li><a href="../user/index.html">User Guide</a></li>
+            <li><a href="../../api/index.html">API Reference</a></li>
+        </ul>
+    </nav>
+
+    <article class="guide-article">
+        <h2>Injecting your own HTML with slots</h2>
+
+        <p>
+            Slots let you place your own HTML inside Moorhen&rsquo;s UI. They use the native Web Components
+            <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/slot" target="_blank"
+                rel="noopener">slot</a> mechanism: you give an element a <code>slot="&lt;name&gt;"</code> attribute as a
+            child of <code>&lt;moorhen-web-component&gt;</code>, and Moorhen renders a matching
+            <code>&lt;slot name="&lt;name&gt;"&gt;</code> where you asked for it.
+        </p>
+
+        <p class="note">
+            <strong>Current limitation:</strong> slots can only be placed in the menu bar, as an
+            <code>HTMLslot</code> menu item. See
+            <a href="#current-limitations">Current limitations</a> below for the details.
+        </p>
+
+        <p class="note-technical">
+            <strong>Why slots?</strong> The WebComponent renders its UI in a shadow root, so you cannot inject React
+            elements into its menus directly (that path, <code>customJSX</code>, is reserved for the
+            <code>moorhen/react-lib</code> integration). Slots are the supported way to add your own controls to the
+            menu
+            from the WebComponent.
+        </p>
+
+        <p class="note-technical">
+            <strong>Prerequisite:</strong> the examples assume you already hold a <code>moorhenInstance</code> (see
+            <a href="webcomponent-setup.html">Setting up the WebComponent</a> or
+            <a href="webcomponent-react.html">Using the WebComponent in React</a>) and that you have read
+            <a href="webcomponent-menu.html">Adding custom menus</a>.
+        </p>
+
+        <section>
+            <h2>1. Add an HTMLslot menu item</h2>
+
+            <p>
+                Add an <code>HTMLslot</code> item to one of your submenus. Its <code>slotName</code> is the link between
+                the
+                menu and the HTML you will provide:
+            </p>
+
+            <pre class="code-block" data-lang="typescript"><code>import type { SubMenuMap } from "moorhen/web-component";
+
+const slotMenu: SubMenuMap = {
+    "extra-menu": {
+        label: "Extra",
+        items: [
+            {
+                id: "extra-controls",
+                type: "HTMLslot",
+                label: "My controls",     // used by the search bar and for accessibility
+                slotName: "my-controls",  // matched by slot="my-controls" in your HTML
+            },
+        ],
+    },
+};
+
+moorhenInstance.menuSystem?.addSubmenu(slotMenu);</code></pre>
+
+            <p>
+                The submenu structure is the same as in <a href="webcomponent-menu.html">Adding custom menus</a>; the
+                surrounding main-menu entry is unchanged. The <code>HTMLslot</code> item replaces the normal menu entry,
+                so
+                its <code>label</code> is never drawn. It is only used by the search bar and for accessibility; the
+                visible
+                content is entirely the HTML you provide.
+            </p>
+        </section>
+
+        <section>
+            <h2>2. Provide the content from the host page</h2>
+
+            <p>
+                Put the content inside the <code>&lt;moorhen-web-component&gt;</code> element and give it the matching
+                <code>slot</code> attribute:
+            </p>
+
+            <pre class="code-block" data-lang="html"><code>&lt;moorhen-web-component id="moorhen-1" width="1000" height="800"&gt;
+    &lt;div slot="my-controls" class="my-controls"&gt;
+        &lt;button id="do-something"&gt;Do something&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/moorhen-web-component&gt;</code></pre>
+
+            <p>
+                Those children are assigned to the <code>&lt;slot name="my-controls"&gt;</code> that Moorhen renders
+                inside
+                the menu, so the button appears in the menu when it is opened. Then wire it up as usual:
+            </p>
+
+            <pre class="code-block" data-lang="typescript"><code>document.getElementById("do-something")?.addEventListener("click", () =&gt; {
+    moorhenInstance.files.loadFiles("/my-structure.pdb");
+});</code></pre>
+
+            <ul>
+                <li>The slotted elements must be children of the <code>&lt;moorhen-web-component&gt;</code> element.
+                </li>
+                <li>They are normal elements in your page&rsquo;s DOM, so your own CSS applies to them. Moorhen&rsquo;s
+                    styles do not leak in, and yours do not leak out.</li>
+                <li>Any HTML works: buttons, inputs, labels, images, and so on.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>3. In React</h2>
+
+            <p>
+                In a React app, render the slotted content as children of the element. The <code>slot</code> attribute
+                and
+                your handlers work as usual:
+            </p>
+
+            <pre class="code-block" data-lang="tsx"><code>&lt;moorhen-web-component id="my-moorhen" width={1000} height={800}&gt;
+    &lt;button
+        slot="my-controls"
+        onClick={() =&gt; moorhenInstanceRef.current?.files.loadFiles(["/my-structure.pdb"])}
+    &gt;
+        Load my structure
+    &lt;/button&gt;
+&lt;/moorhen-web-component&gt;</code></pre>
+
+            <p>
+                React renders those children into the light DOM of the custom element, which is exactly what the slot
+                mechanism expects.
+            </p>
+        </section>
+
+        <section>
+            <h2 id="current-limitations">Current limitations</h2>
+
+            <ul>
+                <li>Slots can only be inserted in the menu bar, as an <code>HTMLslot</code> menu item.</li>
+                <li>Using slots to build custom modals and side panels is planned, but not available yet.</li>
+            </ul>
+
+            <p>
+                See the <a href="../../api/types/moorhen.MenuItemHTMLSlot.html"><code>MenuItemHTMLSlot</code></a> type
+                and
+                <a href="../../api/types/WebComponent_entry.MenuItemType.html"><code>MenuItemType</code></a> in the API
+                reference.
+            </p>
+
+            <p class="note">
+                <strong>Runnable example:</strong> the plain TypeScript project
+                <a href="https://github.com/cdegut/MoorhenWebComponent" target="_blank"
+                    rel="noopener noreferrer">MoorhenWebComponent</a> builds a <em>Page controls</em> menu this way,
+                with two buttons that are wired up by the page&rsquo;s own code.
+            </p>
+
+            <p>
+                <a class="button" href="webcomponent-menu.html">Prev: Adding custom menus</a>
+                <a class="button" href="webcomponent-events.html">Next: Callbacks and subscriptions</a>
+                <a class="button" href="index.html">Back to Developer Guide</a>
+            </p>
+        </section>
+    </article>
+</body>
+
+</html>
