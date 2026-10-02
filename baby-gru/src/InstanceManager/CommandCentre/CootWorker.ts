@@ -618,6 +618,24 @@ const stringArrayToJSArray = (stringArray: emscriptem.vector<string>) => {
     return returnResult;
 }
 
+
+/**
+ * Read an exported mesh file back out of the module filesystem, and unlink it.
+ *
+ * The same three lines stood at the end of all four exporters. One copy, because a detail that
+ * has to be right in four places eventually is not - which is how a field added to MoorhenVector
+ * reached none of its three constructors.
+ *
+ * Nothing is corrected here. Moorhen's glTF exports are inside-out by the glTF convention, but
+ * the fix is applied on the main thread, where it can be a module: this worker is loaded as a
+ * classic script, so anything it imports would be emitted as a runtime `import` and fail.
+ */
+const readExportedMeshFile = (fileName: string): ArrayBufferLike => {
+    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
+    cootModule.FS_unlink(fileName)
+    return fileContents.buffer
+}
+
 const export_map_as_mesh_file = (imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileType: string) => {
     let fn
     let suffix
@@ -632,9 +650,7 @@ const export_map_as_mesh_file = (imol: number, x: number, y: number, z: number, 
     }
     const fileName = `${guid()}.${suffix}`
     molecules_container[fn](imol, x, y, z, radius, contourLevel, fileName)
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 }
 
 const export_metaballs_as_mesh_file = (imol: number, cid: string, gridSize: number, radius: number, isoLevel: number, fileType: string) => {
@@ -657,9 +673,7 @@ const export_metaballs_as_mesh_file = (imol: number, cid: string, gridSize: numb
     }
 
     molecules_container[fn](imol, cid, gridSize, radius, isoLevel, fileName)
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 
 }
 
@@ -682,14 +696,22 @@ const export_molecular_representation_as_mesh_file = (imol: number, cid: string,
     }
 
     molecules_container[fn](imol, cid, colourScheme, style, ssUsageScheme, fileName)
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 }
 
 const export_molecule_as_mesh_file = (
+    // showAnisoAsEmpty sits between showOrtep and drawHydrogens because that is the order
+    // getBondArgs produces, which in turn follows coot's get_bonds_mesh_instanced. It was
+    // missing here, so every argument after it arrived one place early: fileType fell off the
+    // end and this function received drawMissingLoops in its place, matched none of "gltf",
+    // "obj" or "3mf", and returned null. The caller only does `if (gltfData) doDownload(...)`,
+    // so that was a silent nothing - no file, no error.
+    //
+    // The three flags are taken and not passed on: export_model_molecule_as_gltf has no use for
+    // them. They are in the signature so that the arguments line up.
     imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number,
-    atomRadius: number, showAniso: boolean, showOrtep: boolean,  drawHydrogens: boolean, bondSmoothness: number, drawMissingResidues: boolean, fileType: string
+    atomRadius: number, showAniso: boolean, showOrtep: boolean, showAnisoAsEmpty: boolean,
+    drawHydrogens: boolean, bondSmoothness: number, drawMissingResidues: boolean, fileType: string
 ) => {
     let fn
     let fileName
@@ -719,9 +741,7 @@ const export_molecule_as_mesh_file = (
         drawMissingResidues,
         fileName
     )
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 }
 
 const symmetryToJSData = (symmetryDataPair: libcootApi.PairType<libcootApi.SymmetryData, emscriptem.vector<number[][]>>) => {
@@ -1219,6 +1239,34 @@ const associate_data_mtz_file_with_map = (iMol: number, mtzData: { data: ArrayBu
     return mtzFilename
 }
 
+
+/**
+ * Read a glTF or glb file and return it as mesh data.
+ *
+ * Written to the module's filesystem first and loaded by path, which is deliberate: a .glb can
+ * refer to buffers and images in files beside it, and only a path lets tinygltf resolve them.
+ * The same reason read_ccp4_map below goes through a file rather than a string, and this follows
+ * its pattern - a name nothing else will collide with, and an unlink in a finally so a failed
+ * load does not leave the file behind.
+ *
+ * The extension is preserved because tinygltf chooses between the binary and the JSON parser by
+ * looking at it; a .glb read as text fails with a confusing message about invalid JSON.
+ */
+const load_gltf = (fileData: ArrayBufferLike, name: string) => {
+    const theGuid = guid()
+    const extension = name.toLowerCase().endsWith(".glb") ? ".glb" : ".gltf"
+    const tempFilename = `./${theGuid}${extension}`
+    cootModule.FS_createDataFile(".", `${theGuid}${extension}`, new Uint8Array(fileData), true, true)
+    try {
+        const simpleMesh = cootModule.LoadGltFromFile(tempFilename)
+        // simpleMeshToMeshData carries status through and deletes the embind handles, so a
+        // failed load arrives as status 0 rather than as an empty mesh that looks successful.
+        return simpleMeshToMeshData(simpleMesh)
+    } finally {
+        cootModule.FS_unlink(tempFilename)
+    }
+}
+
 const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolean) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mapData)
@@ -1406,6 +1454,9 @@ const doCootCommand = (messageData: {
             case 'shim_auto_read_mtz':
                 cootResult = auto_read_mtz(...commandArgs as [ArrayBuffer])
                 break
+            case 'shim_load_gltf':
+                cootResult = load_gltf(...commandArgs as [ArrayBuffer, string])
+                break
             case 'shim_read_ccp4_map':
                 cootResult = read_ccp4_map(...commandArgs as [ArrayBuffer, string, boolean])
                 break
@@ -1422,7 +1473,7 @@ const doCootCommand = (messageData: {
                 cootResult = export_map_as_mesh_file(...commandArgs as [number, number, number, number, number, number, string])
                 break
             case 'shim_export_molecule_as_mesh_file':
-                cootResult = export_molecule_as_mesh_file(...commandArgs as [number, string, string, boolean, number, number, boolean, boolean, boolean, number, boolean, string])
+                cootResult = export_molecule_as_mesh_file(...commandArgs as [number, string, string, boolean, number, number, boolean, boolean, boolean, boolean, number, boolean, string])
                 break
             case 'shim_export_molecular_representation_as_mesh_file':
                 cootResult = export_molecular_representation_as_mesh_file(...commandArgs as [number, string, string, string, number, string])

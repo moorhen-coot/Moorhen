@@ -29,8 +29,9 @@ import {
     getTorusWireframe,
 } from './shapeGeometry'
 import { IDENTITY_ORIENTATION, PICK_POINTS_PER_INSTANCE, createMeshInstances } from './meshInstancing'
-import { DEFAULT_WIREFRAME_RADIUS, PathObject } from '../store/threeDObjectsSlice'
+import { DEFAULT_WIREFRAME_RADIUS, MeshObject, PathObject, ThreeDObject } from '../store/threeDObjectsSlice'
 import { MOORHEN_3D_OBJECT_TAG_KIND } from '../utils/enums'
+import { wholeMeshPickInfo } from './wholeMeshPick'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 
@@ -167,18 +168,113 @@ type PathMeshEntry = {
     stride: number
     mesh: ReturnType<typeof getPathTubes>
 }
-const pathMeshCache = new Map<string, PathMeshEntry>()
 
-export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<any>  => {
 
-    const threeDObjects = store.getState().threeDObjects.objects
+/**
+ * Per-vertex normals from the faces, for a mesh that brought none of its own.
+ *
+ * Each vertex takes the sum of the normals of the faces it belongs to, which gives a smooth
+ * surface where faces meet at a shallow angle and is the usual thing to do when a file omits
+ * them. A vertex no triangle refers to is left pointing up rather than at nothing, so a stray
+ * vertex cannot produce a NaN that spreads through the lighting.
+ */
+const faceNormals = (vertices: number[], indices: number[]): number[] => {
+    const count = Math.floor(vertices.length / 3)
+    const normals = new Array<number>(count * 3).fill(0)
+    for (let t = 0; t + 2 < indices.length; t += 3) {
+        const [a, b, c] = [indices[t], indices[t + 1], indices[t + 2]]
+        if (a >= count || b >= count || c >= count) continue
+        const ab = [0, 1, 2].map(i => vertices[3 * b + i] - vertices[3 * a + i])
+        const ac = [0, 1, 2].map(i => vertices[3 * c + i] - vertices[3 * a + i])
+        const n = [
+            ab[1] * ac[2] - ab[2] * ac[1],
+            ab[2] * ac[0] - ab[0] * ac[2],
+            ab[0] * ac[1] - ab[1] * ac[0]
+        ]
+        for (const v of [a, b, c]) {
+            for (let i = 0; i < 3; i++) normals[3 * v + i] += n[i]
+        }
+    }
+    for (let v = 0; v < count; v++) {
+        const length = Math.hypot(normals[3 * v], normals[3 * v + 1], normals[3 * v + 2])
+        if (length > 0) {
+            for (let i = 0; i < 3; i++) normals[3 * v + i] /= length
+        } else {
+            normals[3 * v + 1] = 1
+        }
+    }
+    return normals
+}
+
+/**
+ * Options for turning shapes into buffers.
+ *
+ * Both of these exist because the builder is no longer the scene's alone. A molecule
+ * representation that draws itself out of cuboids and cylinders wants this machinery without any
+ * of the store behind it, and two callers sharing one tag kind and one cache would tread on each
+ * other.
+ */
+export interface ShapeBufferOptions {
+    /**
+     * What a click on one of these shapes should be reported as.
+     *
+     * The scene's own objects use MOORHEN_3D_OBJECT_TAG_KIND, so a click resolves to the object
+     * that was clicked. A representation drawing shapes per residue wants its own kind, so a
+     * click resolves to a residue instead.
+     */
+    tagKind?: string
+    /**
+     * Where to keep path tubes between passes.
+     *
+     * Build a path's tube once and reuse it while its points are unchanged. The cache must
+     * belong to the caller: the prune at the end of a pass drops every entry not drawn in THAT
+     * pass, so one shared cache between two callers would have each of them continually deleting
+     * the other's tubes and rebuilding them next frame.
+     *
+     * Omit it and a cache is made for this call alone, which is the right thing for shapes that
+     * are generated fresh each time and would otherwise accumulate.
+     */
+    pathCache?: Map<string, PathMeshEntry>
+}
+
+/** The cache for the scene's own objects, which persist between passes. */
+const scenePathMeshCache = new Map<string, PathMeshEntry>()
+
+/**
+ * The scene's 3D objects, as buffers.
+ *
+ * A thin wrapper over {@link getBuffersForShapes}: all it decides is where the shapes come from.
+ */
+export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<any> =>
+    getBuffersForShapes(store.getState().threeDObjects.objects, {
+        tagKind: MOORHEN_3D_OBJECT_TAG_KIND,
+        pathCache: scenePathMeshCache
+    })
+
+/**
+ * Shapes to buffers, knowing nothing about where the shapes came from.
+ *
+ * Takes a plain list, so a caller that generates shapes on the fly - a representation built out
+ * of cuboids and cylinders, say - gets the same drawing for free without putting anything in the
+ * store or into a saved session.
+ *
+ * @param threeDObjects - The shapes to draw. Only read; nothing is kept.
+ * @param options - See {@link ShapeBufferOptions}.
+ */
+export const getBuffersForShapes = async (
+    threeDObjects: ThreeDObject[],
+    options: ShapeBufferOptions = {}
+): Promise<any>  => {
+
+    const tagKind = options.tagKind ?? MOORHEN_3D_OBJECT_TAG_KIND
+    const pathMeshCache = options.pathCache ?? new Map<string, PathMeshEntry>()
 
     // Meshes are collected here and emitted as instanced draws at the end.
     //
     // Every instance is labelled with the object it came from, so that a click on one can be
     // traced back to the thing that was clicked. The label is opaque to the instancing code,
     // which is why the scheme has to be named here.
-    const meshes = createMeshInstances(MOORHEN_3D_OBJECT_TAG_KIND)
+    const meshes = createMeshInstances(tagKind)
     const addInstance = meshes.addInstance
 
     /**
@@ -795,8 +891,61 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
                 pick_points: pick_points,
                 pick_point_instances: pick_point_instances,
                 instance_tags: group.tags,
-                instance_tag_kind: MOORHEN_3D_OBJECT_TAG_KIND,
+                instance_tag_kind: tagKind,
             },
+        })
+    })
+
+    // Meshes, which do not go through the instancer at all.
+    //
+    // Instancing shares one mesh between many placements and gives each a single colour. A mesh
+    // object is the opposite case on both counts: its geometry is its own, and its vertices may
+    // be individually coloured. So each is emitted as a plain buffer of its own, exactly as a
+    // molecular surface or a cavity is, and picked whole by the same means.
+    threeDObjects.filter(obj => obj.type === "mesh").forEach(obj => {
+        const mesh = obj as MeshObject
+        const scale = mesh.scale ?? 1
+        const count = Math.floor(mesh.vertices.length / 3)
+        if (count === 0 || mesh.indices.length < 3) return
+
+        // Placed here rather than by an instance transform, since there is no instance.
+        const vertices = new Array<number>(count * 3)
+        for (let v = 0; v < count; v++) {
+            for (let c = 0; c < 3; c++) {
+                vertices[3 * v + c] = mesh.origin[c] + mesh.vertices[3 * v + c] * scale
+            }
+        }
+
+        const normals = mesh.normals?.length === count * 3
+            ? mesh.normals
+            : faceNormals(mesh.vertices, mesh.indices)
+
+        let colours: number[]
+        if (mesh.colours?.length === count * 4) {
+            colours = mesh.colours
+        } else {
+            // No colours of its own, so the object's single colour stands for every vertex -
+            // which is what keeps a plain mesh recolourable as one thing.
+            const [r, g, b, a] = getObjectColour(mesh.colour)
+            colours = new Array<number>(count * 4)
+            for (let v = 0; v < count; v++) {
+                colours[4 * v] = r
+                colours[4 * v + 1] = g
+                colours[4 * v + 2] = b
+                colours[4 * v + 3] = a
+            }
+        }
+
+        const pick_info = wholeMeshPickInfo(vertices)
+        objects.push({
+            prim_types: [["TRIANGLES"]],
+            idx_tri: [[mesh.indices]],
+            vert_tri: [[vertices]],
+            norm_tri: [[normals]],
+            col_tri: [[colours]],
+            ...(pick_info
+                ? { pick_info: { ...pick_info, instance_tags: [mesh.uniqueId], instance_tag_kind: tagKind } }
+                : {})
         })
     })
 

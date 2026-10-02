@@ -1,4 +1,5 @@
 import { Store } from "@reduxjs/toolkit";
+import { correctExportedGltf } from "./gltfWinding";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setOrigin, setRequestDrawScene, setZoom } from "../store";
@@ -1547,7 +1548,22 @@ export class MoorhenMap {
             },
             false
         )) as moorhen.WorkerResponse<ArrayBuffer>;
-        return result.data.result.result;
+        // Moorhen's glTF exports are inside-out by the glTF convention: Coot's meshes are wound
+        // clockwise seen from outside, Moorhen compensates on screen by asking for "mesh_perm3",
+        // and the exporters write the Coot mesh verbatim - so the compensation never reaches the
+        // file. Corrected here rather than in Coot, whose meshes have assorted histories, and
+        // here rather than in the worker, which is loaded as a classic script and so cannot
+        // import a module.
+        const exported = result.data.result.result;
+        if (!exported) {
+            console.warn(`Export of map ${this.name} as ${fileType} produced nothing.`);
+            return exported;
+        }
+        // Measured: export_map_molecule_as_gltf produces an inside-out mesh (signed volume
+        // -227.0 on a 23,027-triangle contour, with every triangle's normals agreeing with that
+        // winding). The same is true of metaballs and not of M2T or bonds, so the correction is
+        // applied per path rather than to every glTF export.
+        return fileType === "gltf" ? correctExportedGltf(exported) : exported;
     }
 
 

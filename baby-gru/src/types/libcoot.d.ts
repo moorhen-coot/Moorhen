@@ -580,6 +580,14 @@ export namespace libcootApi {
         three_letter_code: string;
     };
     type CootModule = {
+        /**
+         * Read a glTF or glb file from the module's filesystem and return it as one mesh.
+         *
+         * By path rather than from a string, because a .glb may refer to buffers or images in
+         * files beside it and only a path lets those be resolved. `status` is 0 and `name`
+         * carries the reason when the file could not be read.
+         */
+        LoadGltFromFile(fileName: string): SimpleMeshT;
         unpackCootDataFile(arg0: string, arg1: boolean, arg2: string, arg3: string): number;
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
         get_mmcif_string_from_gemmi_struct(arg0: gemmi.Structure): string;

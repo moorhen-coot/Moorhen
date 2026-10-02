@@ -1,3 +1,14 @@
+// The implementation is compiled only for the standalone test program, and deliberately not
+// when this file is part of moorhen: libcoot already compiles tinygltf's function bodies in
+// coot-utils/gltf-export.cc, and a second copy is a few hundred duplicate symbols at link time.
+//
+// For the same reason there are no TINYGLTF_NO_STB_IMAGE defines here. They look harmless - this
+// file reads no textures - but they are not confined to the implementation: they change the
+// in-class initialisers of tinygltf::TinyGLTF, whose LoadImageData member becomes nullptr rather
+// than the default loader. A translation unit compiled with them disagrees with libcoot about
+// what the class is, which is an ODR violation that links quietly and misbehaves later.
+//
+// So: whatever coot does, this file does. coot-utils/gltf-export.cc is the one that decides.
 #ifdef __GLTF_IMPORT_MAIN__
 #ifndef TINYGLTF_IMPLEMENTATION
 #define TINYGLTF_IMPLEMENTATION
@@ -8,12 +19,14 @@
 #ifndef STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #endif
-#ifndef STB_IMAGE_READ_IMPLEMENTATION
-#define STB_IMAGE_READ_IMPLEMENTATION
-#endif
 #endif
 
-#include "tiny_gltf.h"
+// tiny_gltf.h comes in through gltf-mesh.hh. Not included directly as well: its implementation
+// block sits outside its own header guard, so a second include in the same translation unit
+// compiles every function body twice and the link fails on redefinitions.
+#include "gltf-mesh.hh"
+
+#include "coot-utils/simple-mesh.hh"
 
 #include <fstream>
 #include <sstream>
@@ -28,10 +41,26 @@ COLOR_0   -> VEC3/VEC4 float or normalized ubyte //TODO partially
 INDICES   -> ubyte, ushort or uint
 */
 
-bool LoadGltfModel(tinygltf::Model& model);
-bool LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned char> &buffer, const std::string &str);
+coot::simple_mesh_t LoadGltfModel(tinygltf::Model& model);
+coot::simple_mesh_t LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned char> &buffer, const std::string &str);
 
-bool LoadGltfModelFromFile(const std::string& filename, tinygltf::Model& model){
+
+/**
+ * A mesh that says it failed.
+ *
+ * simple_mesh_t documents status as 1 good, 0 bad, and a caller that cannot tell a failure from
+ * an empty result has to guess - which is exactly the confusion the M2T path had before its
+ * status was set. The reason goes in the name, which is the only channel there is.
+ */
+static coot::simple_mesh_t failedMesh(const std::string &why) {
+    coot::simple_mesh_t mesh;
+    mesh.status = 0;
+    mesh.name = "glTF import failed: " + why;
+    std::cerr << "glTF import failed: " << why << std::endl;
+    return mesh;
+}
+
+coot::simple_mesh_t LoadGltfModelFromFile(const std::string& filename, tinygltf::Model& model){
     std::vector<unsigned char> buffer;
     std::string str;
 
@@ -52,7 +81,7 @@ bool LoadGltfModelFromFile(const std::string& filename, tinygltf::Model& model){
                 std::cout << "all characters read successfully." << std::endl;
             } else {
                 std::cout << "error: only " << is.gcount() << " could be read" << std::endl;
-                return false;
+                return failedMesh("file could not be read");
             }
             is.close();
         }
@@ -67,7 +96,7 @@ bool LoadGltfModelFromFile(const std::string& filename, tinygltf::Model& model){
     
 }
 
-bool LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned char> &buffer, const std::string &str){
+coot::simple_mesh_t LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned char> &buffer, const std::string &str){
     tinygltf::TinyGLTF loader;
 
     std::string err;
@@ -97,113 +126,60 @@ bool LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned 
     if (!result)
     {
         std::cerr << "Failed to load\n";
-        return false;
+        return failedMesh(err.empty() ? "tinygltf could not parse the file" : err);
     }
 
     return LoadGltfModel(model);
 }
 
-bool LoadGltfModel(tinygltf::Model& model){
-    for(const auto &m : model.meshes){
-        std::cout << m.name << std::endl;
-        std::cout << m.primitives.size() << std::endl;
+/**
+ * A parsed model as one Coot mesh.
+ *
+ * The extraction itself is in gltf-mesh.hh, which is kept free of Coot so it can be tested on
+ * models built by hand. All that happens here is the change of shape: three parallel float
+ * arrays and an index list become vnc_vertex and g_triangle.
+ */
+coot::simple_mesh_t LoadGltfModel(tinygltf::Model& model){
 
-        for (const auto& primitive : m.primitives){
-            auto posIt = primitive.attributes.find("POSITION");
-            if (posIt == primitive.attributes.end())
-                continue;
-
-            const tinygltf::Accessor& accessor =
-                model.accessors[posIt->second];
-
-            const tinygltf::BufferView& bufferView =
-                model.bufferViews[accessor.bufferView];
-
-            const tinygltf::Buffer& buffer =
-                model.buffers[bufferView.buffer];
-
-            const float* positions = reinterpret_cast<const float*>(&buffer.data[bufferView.byteOffset + accessor.byteOffset]);
-
-            size_t vertexCount = accessor.count;
-
-            for (size_t i = 0; i < vertexCount; i++){
-                float x = positions[i * 3 + 0];
-                float y = positions[i * 3 + 1];
-                float z = positions[i * 3 + 2];
-                std::cout << x << " " << y << " " << z << "\n";
-            }
-
-            auto nIt = primitive.attributes.find("NORMAL");
-            if (nIt != primitive.attributes.end()){
-                const auto& accessor = model.accessors[nIt->second];
-
-                const auto& view = model.bufferViews[accessor.bufferView];
-
-                const auto& buffer = model.buffers[view.buffer];
-
-                const float* normals = reinterpret_cast<const float*>(&buffer.data[view.byteOffset + accessor.byteOffset]);
-
-                size_t vertexCount = accessor.count;
-
-                for (size_t i = 0; i < vertexCount; i++){
-                    float x = normals[i * 3 + 0];
-                    float y = normals[i * 3 + 1];
-                    float z = normals[i * 3 + 2];
-                    std::cout << x << " " << y << " " << z << "\n";
-                }
-            }
-
-            auto cIt = primitive.attributes.find("COLOR_0");
-            if (cIt != primitive.attributes.end()){
-                const auto& c_accessor = model.accessors[cIt->second];
-
-                std::cout << c_accessor.componentType << "\n";
-                std::cout << c_accessor.type << "\n";
-                std::cout << c_accessor.normalized << "\n";
-                const auto& view = model.bufferViews[c_accessor.bufferView];
-                const float* colors = reinterpret_cast<const float*>(&buffer.data[view.byteOffset + c_accessor.byteOffset]);
-                std::cout << c_accessor.count << std::endl;
-
-                if(c_accessor.type==4){
-                    size_t vertexCount = c_accessor.count;
-                    for (size_t i = 0; i < vertexCount; i++){
-                        float x = colors[i * 4 + 0];
-                        float y = colors[i * 4 + 1];
-                        float z = colors[i * 4 + 2];
-                        float a = colors[i * 4 + 3];
-                        std::cout << x << " " << y << " " << z << " " << a << "\n";
-                    }
-                }
-            }
-
-            const auto& i_accessor = model.accessors[primitive.indices];
-            const auto& i_view = model.bufferViews[i_accessor.bufferView];
-            const auto& i_buffer = model.buffers[i_view.buffer];
-            const unsigned char* data = i_buffer.data.data() + i_view.byteOffset + i_accessor.byteOffset;
-            std::cout << i_accessor.type << "\n";
-
-            if (i_accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT){
-                const uint16_t* indices = reinterpret_cast<const uint16_t*>(data);
-                for (size_t i = 0; i< accessor.count; i++) std::cout << indices[i] << "\n";
-            } else if (i_accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT){
-                const uint32_t* indices = reinterpret_cast<const uint32_t*>(data);
-                for (size_t i = 0; i< accessor.count; i++) std::cout << indices[i] << "\n";
-            } else if (i_accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE){
-                const unsigned char* indices = reinterpret_cast<const unsigned char*>(data);
-                for (size_t i = 0; i< accessor.count; i++) std::cout << indices[i] << "\n";
-            }
-        }
+    const moorhen_gltf::MeshData data = moorhen_gltf::modelToMeshData(model);
+    if (data.indices.empty()) {
+        return failedMesh(data.error.empty() ? "no triangles found" : data.error);
     }
 
-    return true;
+    coot::simple_mesh_t mesh;
+    mesh.status = 1;
+    mesh.vertices.reserve(data.vertexCount());
+    for (size_t v = 0; v < data.vertexCount(); v++) {
+        mesh.vertices.push_back(coot::api::vnc_vertex(
+            glm::vec3(data.positions[3 * v], data.positions[3 * v + 1], data.positions[3 * v + 2]),
+            glm::vec3(data.normals[3 * v], data.normals[3 * v + 1], data.normals[3 * v + 2]),
+            glm::vec4(data.colours[4 * v], data.colours[4 * v + 1],
+                      data.colours[4 * v + 2], data.colours[4 * v + 3])));
+    }
+
+    mesh.triangles.reserve(data.triangleCount());
+    for (size_t t = 0; t < data.triangleCount(); t++) {
+        mesh.triangles.push_back(
+            g_triangle(data.indices[3 * t], data.indices[3 * t + 1], data.indices[3 * t + 2]));
+    }
+
+    std::cout << "glTF: " << mesh.vertices.size() << " vertices, "
+              << mesh.triangles.size() << " triangles" << std::endl;
+    return mesh;
 }
 
-bool LoadGltFromFile(const std::string &fn){
+/**
+ * Read a glTF or glb file and return it as one mesh.
+ *
+ * From a file rather than from memory because a .glb may refer to other files beside it, and a
+ * path is what lets tinygltf find them.
+ */
+coot::simple_mesh_t LoadGltFromFile(const std::string &fn){
     tinygltf::Model model;
     return LoadGltfModelFromFile(fn,model);
 }
 
-bool LoadGltFromMemory(uintptr_t ptr, size_t size, const std::string &str){
+coot::simple_mesh_t LoadGltFromMemory(uintptr_t ptr, size_t size, const std::string &str){
     tinygltf::Model model;
     std::vector<unsigned char> buffer;
     auto data = reinterpret_cast<const unsigned char*>(ptr);
@@ -211,12 +187,27 @@ bool LoadGltFromMemory(uintptr_t ptr, size_t size, const std::string &str){
     return  LoadGltfModelFromMemory(model, buffer, str);
 }
 
+
+#ifndef __GLTF_IMPORT_MAIN__
+#include <emscripten/bind.h>
+using namespace emscripten;
+
+// simple_mesh_t is already registered as a value_object in moorhen-types-wrappers.cc, so these
+// need nothing of their own - the mesh crosses by the binding that is already there.
+EMSCRIPTEN_BINDINGS(moorhen_gltf) {
+    function("LoadGltFromFile", &LoadGltFromFile);
+    function("LoadGltFromMemory", &LoadGltFromMemory);
+}
+#endif
+
 #ifdef __GLTF_IMPORT_MAIN__
 int main(int argc, char *argv[]){
     if(argc>1){
         tinygltf::Model model;
-        bool retval = LoadGltfModelFromFile(argv[1],model);
-        if(!retval) return 1;
+        const coot::simple_mesh_t mesh = LoadGltfModelFromFile(argv[1],model);
+        if(mesh.status == 0) return 1;
+        std::cout << mesh.vertices.size() << " vertices, "
+                  << mesh.triangles.size() << " triangles" << std::endl;
         return 0;
     }
     return 1;

@@ -1,4 +1,5 @@
 import Fasta from "biojs-io-fasta";
+import { centreOfObject } from "../store/threeDObjectsSlice";
 import pako from "pako";
 import type { Dispatch, Store } from "redux";
 import { MoorhenInstance } from "@/InstanceManager";
@@ -490,6 +491,78 @@ const pdbqtToPdb = (pdbqtString: string) => {
     return pdbLines;
 };
 
+
+/**
+ * Read a glTF or glb file and add it to the scene as a single 3D object.
+ *
+ * A mesh rather than a molecule: nothing is known about its chemistry, so it is not a
+ * MoorhenMolecule and does not appear in the molecule list. It becomes one ThreeDObject, which
+ * makes it one thing to select, centre on, recolour and delete - the same treatment a cavity
+ * gets, and the reason the whole file is merged into one mesh on the way out of Coot.
+ *
+ * @param file - The .gltf or .glb file to read.
+ * @param moorhenInstance - The instance to add the mesh to.
+ * @returns The uniqueId of the new object.
+ */
+export const loadGltfFile = async (file: File, moorhenInstance: MoorhenInstance): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const reply = await moorhenInstance.commandCentre.cootCommand(
+        {
+            returnType: "status",
+            command: "shim_load_gltf",
+            commandArgs: [new Uint8Array(arrayBuffer), file.name],
+        },
+        true
+    );
+
+    if (reply.data.result?.status === "Exception") {
+        return Promise.reject(reply.data.result.consoleMessage);
+    }
+    const mesh = reply.data.result?.result;
+    // status 0 is Coot saying it could not build the mesh, which is a different thing from a
+    // file that legitimately contained no triangles - and both are failures to report here.
+    if (!mesh || mesh.status === 0) {
+        return Promise.reject(`No mesh could be read from ${file.name}`);
+    }
+
+    // The buffers arrive as typed arrays; the object type wants plain number arrays, and
+    // Array.from on an untyped buffer gives unknown[] without the annotation.
+    const asNumbers = (data: ArrayLike<number> | undefined): number[] => Array.from(data ?? []);
+
+    const vertices = asNumbers(mesh.vert_tri?.[0]?.[0]);
+    const indices = asNumbers(mesh.idx_tri?.[0]?.[0]);
+    if (vertices.length === 0 || indices.length < 3) {
+        return Promise.reject(`${file.name} contained no triangles`);
+    }
+
+    const uniqueId = moorhenInstance.object.create({
+        type: "mesh",
+        vertices,
+        indices,
+        normals: asNumbers(mesh.norm_tri?.[0]?.[0]),
+        colours: asNumbers(mesh.col_tri?.[0]?.[0]),
+        // The file's own name, so a scene with several imports can be told apart, and a tag
+        // saying where it came from, so every imported mesh can be found or cleared together.
+        tags: { source: "gltf", file: file.name },
+    });
+
+    // Look at it, rather than leaving it wherever the camera happened to be. An imported mesh
+    // carries the coordinates its author gave it, which for a file from another program is
+    // usually nowhere near the current view - so without this a successful import looks like
+    // nothing happening.
+    //
+    // The centroid, not the origin: centreOfObject averages the vertices for a mesh, because
+    // an imported file's placement point is rarely in the middle of its geometry.
+    const created = moorhenInstance.object.get(uniqueId);
+    if (created) {
+        const [x, y, z] = centreOfObject(created);
+        // Unnegated: centerOnCoordinate takes the point to look at and negates it itself.
+        moorhenInstance.centerOnCoordinate(x, y, z);
+    }
+
+    return uniqueId;
+};
+
 export const autoOpenFiles = async (
     files: File[],
     moorhenInstance: MoorhenInstance,
@@ -607,6 +680,13 @@ export const autoOpenFiles = async (
                 dispatch(enqueueSnackbar({ message: `Failed to load session ${file.name}`, variant: "warning" }));
             }
             break; //We only load the first session.
+        } else if (file.name.toLowerCase().endsWith(".gltf") || file.name.toLowerCase().endsWith(".glb")) {
+            try {
+                await loadGltfFile(file, moorhenInstance);
+            } catch (e) {
+                dispatch(enqueueSnackbar({ message: `Failed to load mesh ${file.name}`, variant: "warning" }));
+                console.warn(e);
+            }
         } else if (file.name.endsWith(".json")) {
             try {
                 const fileContents = await file.text();

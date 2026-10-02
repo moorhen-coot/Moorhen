@@ -64,8 +64,13 @@ describe("the factories survived the move out of the modal", () => {
         expect(Object.keys(before).length).toBeGreaterThan(20);
     });
 
-    test("the extracted module holds the same set", () => {
-        expect(Object.keys(after).sort()).toEqual(Object.keys(before).sort());
+    test("the extracted module still holds every one that moved", () => {
+        // Containment rather than equality: the claim is that nothing was lost or altered in the
+        // move, not that the module is frozen. Shapes added since - a mesh, say - are fine and
+        // should not make this fail.
+        for (const name of Object.keys(before)) {
+            expect(Object.keys(after)).toContain(name);
+        }
     });
 
     test.each(Object.keys(before).sort())("%s is unchanged", name => {
