@@ -6,6 +6,7 @@ export {
     addObject,
     removeObject,
     removeObjectById,
+    removeObjectsByTag,
     updateObject,
     emptyObjects,
 
