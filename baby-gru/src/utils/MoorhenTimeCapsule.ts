@@ -55,6 +55,7 @@ import type {
 } from "../store/overlaysSlice";
 import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
 import { ThreeDObject, addObject, emptyObjects } from "../store/threeDObjectsSlice";
+import { withMigratedTags } from "./tags";
 import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
@@ -1026,10 +1027,19 @@ export class MoorhenTimeCapsule {
             dispatch(setActiveMap(newMaps[sessionData.activeMapIndex]));
         }
 
+        // A session saved before tags were a field has them written into the uniqueId instead,
+        // so they are recovered on the way in. One-way, by design: nothing writes a tag into an
+        // identifier any more, and a session written now is not expected to group correctly in
+        // an older Moorhen. Anything already tagged is left alone.
+        //
+        // The XPID form needs the molecule ids to be separable from the rest of the identifier,
+        // which is why they are collected first.
+        const knownMoleculeIds = (sessionData.moleculeData ?? []).map(m => m.uniqueId).filter(Boolean);
+
         // Load 3D objects
         dispatch(emptyObjects());
         if (sessionData.threeDObjectData) {
-            sessionData.threeDObjectData.forEach(d => {
+            withMigratedTags(sessionData.threeDObjectData, knownMoleculeIds).forEach(d => {
                 dispatch(addObject(d));
             });
         }
@@ -1037,7 +1047,7 @@ export class MoorhenTimeCapsule {
         // Load vectors
         dispatch(emptyVectors());
         if (sessionData.vectorData) {
-            sessionData.vectorData.forEach(d => {
+            withMigratedTags(sessionData.vectorData, knownMoleculeIds).forEach(d => {
                 dispatch(addVector(d));
             });
         }

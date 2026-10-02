@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { matchesTags, Tags } from "../utils/tags";
 
 export type Position3D = [number, number, number];
 export type Scale3D = [number, number, number];
@@ -12,6 +13,26 @@ interface ThreeDObjectBase {
     uniqueId: string;
     origin: Position3D;
     colour: string;
+    /**
+     * Who made this object, and how it should group. See utils/tags.
+     *
+     * Optional because an object restored from a session saved before this existed has none, and
+     * because an object nobody needs to group does not need one.
+     */
+    tags?: Tags;
+    /**
+     * Whether this may be changed in place.
+     *
+     * Set by whatever owns it - a custom representation, say - to mean "this geometry follows
+     * from something else, so editing it here would only put the two out of step". The API's
+     * `edit` does nothing to a locked item, including to this field, and the drag handles are
+     * not offered for one.
+     *
+     * Deleting is deliberately still allowed. An owner that redraws recreates what it owns, so a
+     * deletion is self-correcting rather than something to defend against, and refusing it would
+     * leave the owner unable to clear its own on redraw.
+     */
+    locked?: boolean;
 }
 
 /**
@@ -486,6 +507,16 @@ const threeDObjectsSlice = createSlice({
                 obj => obj.uniqueId === action.payload.uniqueId
             );
             if (index !== -1) {
+                // The lock is enforced here rather than only in the public API, because this is
+                // the one place an object changes: the objects dialog dispatches this directly,
+                // and so could anything added later. A rule checked at every caller is a rule
+                // that gets missed by the next caller.
+                //
+                // `locked` is not exempt from itself, so nothing unlocks an object in place;
+                // whatever owns it deletes and recreates, which is what a redraw does anyway.
+                if (state.objects[index].locked) {
+                    return;
+                }
                 state.objects[index] = action.payload;
             }
         },
@@ -493,6 +524,28 @@ const threeDObjectsSlice = createSlice({
             state.objects = state.objects.filter(
                 item => item.uniqueId !== action.payload
             );
+        },
+        /**
+         * Remove every object carrying all of the given tags.
+         *
+         * Deliberately carries no export marker for scripts/CreateStoreExport.py. 3D objects
+         * reach the public API through the curated `instance.object` namespace rather than
+         * through generated per-reducer methods, so that there is one name for them, not two.
+         *
+         * The marker is not written out here even as prose: the generator looks for it anywhere
+         * in a line, so naming it inside a comment is enough to have the comment generated as
+         * though it were a reducer.
+         *
+         * An empty query removes nothing. matchesTags({}, {}) is true, which is what you want
+         * from an optional filter and emphatically not what you want from a remover; emptyObjects
+         * is how to mean all of them.
+         */
+        removeObjectsByTag: (state, action: PayloadAction<Tags>) => {
+            const query = action.payload;
+            if (!query || Object.keys(query).length === 0) {
+                return;
+            }
+            state.objects = state.objects.filter(item => !matchesTags(item, query));
         },
         emptyObjects: state => {
             state.objects = []
@@ -504,6 +557,7 @@ export const {
     addObject,
     removeObject,
     removeObjectById,
+    removeObjectsByTag,
     updateObject,
     emptyObjects,
 

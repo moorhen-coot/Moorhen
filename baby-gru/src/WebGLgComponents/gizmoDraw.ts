@@ -200,6 +200,12 @@ export const getGizmoBuffers = async (store: Store<RootState>): Promise<any> => 
     if (!object) {
         return []
     }
+    // A locked object offers no handles. Selecting one still works - you can look at it, centre
+    // on it and read its properties - but there is nothing to drag, because its geometry follows
+    // from whatever owns it rather than from where the user last left it.
+    if (object.locked) {
+        return []
+    }
 
     const centre = centreOfObject(object)
     const scale = Math.max(SIZE_PER_ZOOM * state.sceneSettings.zoom, extentOfObject(object) * CLEARANCE)

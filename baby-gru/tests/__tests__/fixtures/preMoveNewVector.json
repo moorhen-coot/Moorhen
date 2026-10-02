@@ -1,0 +1,14 @@
+{
+  "_comment": [
+    "The three local newVector() copies as they were, captured from commit fafa709e - the",
+    "last commit before they became one shared factory in src/utils/vectorFactories.ts.",
+    "",
+    "A fixture rather than a `git show` in the test, because CI checks out shallow."
+  ],
+  "source": "fafa709e",
+  "bodies": {
+    "MoorhenDevMenu": "const newVector = () => {\n    const aVector: MoorhenVector = {\n        coordsMode: \"atoms\",\n        labelMode: \"none\",\n        labelText: \"vector label\",\n        drawMode: \"cylinder\",\n        arrowMode: \"none\",\n        xFrom: 0.0,\n        yFrom: 0.0,\n        zFrom: 0.0,\n        xTo: 0.0,\n        yTo: 0.0,\n        zTo: 0.0,\n        cidFrom: \"\",\n        cidTo: \"\",\n        molFromUniqueId: \"\",\n        molToUniqueId: \"\",\n        uniqueId: uuidv4(),\n        vectorColour: { r: 0, g: 0, b: 0 },\n        textColour: { r: 0, g: 0, b: 0 },\n    };\n    return aVector;",
+    "MoorhenVectorsModal": "const newVector = () => {\n        const aVector: MoorhenVector = {\n            coordsMode: \"atoms\",\n            labelMode: \"none\",\n            labelText: \"vector label\",\n            drawMode: \"cylinder\",\n            arrowMode: \"none\",\n            xFrom: 0.0,\n            yFrom: 0.0,\n            zFrom: 0.0,\n            xTo: 0.0,\n            yTo: 0.0,\n            zTo: 0.0,\n            cidFrom: \"\",\n            cidTo: \"\",\n            molFromUniqueId: \"\",\n            molToUniqueId: \"\",\n            uniqueId: uuidv4(),\n            vectorColour: { r: 0, g: 0, b: 0 },\n            textColour: { r: 0, g: 0, b: 0 },\n            radius: 0.07,\n        };\n        return aVector;",
+    "MoorhenNOERestraints": "const newVector = () => {\n    const aVector: MoorhenVector = {\n        coordsMode: \"atoms\",\n        labelMode: \"none\",\n        labelText: \"vector label\",\n        drawMode: \"cylinder\",\n        arrowMode: \"none\",\n        xFrom: 0.0,\n        yFrom: 0.0,\n        zFrom: 0.0,\n        xTo: 0.0,\n        yTo: 0.0,\n        zTo: 0.0,\n        cidFrom: \"\",\n        cidTo: \"\",\n        molFromUniqueId: \"\",\n        molToUniqueId: \"\",\n        uniqueId: uuidv4(),\n        vectorColour: { r: 0, g: 0, b: 0 },\n        textColour: { r: 0, g: 0, b: 0 },\n    };\n    return aVector;"
+  }
+}
