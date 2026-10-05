@@ -42,6 +42,16 @@ export type BufferMaterial = {
 const sources = new Map<string, TextureSource>();
 
 /**
+ * Textures registered since the last sweep.
+ *
+ * A texture is registered before the object that refers to it exists - loadGltfFile decodes the
+ * images, then creates the object - so a sweep landing between the two would free a texture that
+ * is about to be used. One sweep of grace closes that window without needing the two operations
+ * to be atomic.
+ */
+let fresh = new Set<string>();
+
+/**
  * Uploaded textures, per context.
  *
  * Per context because Moorhen can have more than one live at a time - the main viewer and the
@@ -61,6 +71,7 @@ let counter = 0;
 export const registerTexture = (source: TextureSource, id?: string): string => {
     const key = id ?? `texture-${++counter}`;
     sources.set(key, source);
+    fresh.add(key);
     // A re-registration under the same id has to invalidate what the GPU already holds, or the
     // old image would go on being drawn.
     forgetUploaded(key);
@@ -71,28 +82,68 @@ export const getTextureSource = (id: string): TextureSource | undefined => sourc
 
 /** Drop every uploaded copy of one texture, leaving its source registered. */
 const forgetUploaded = (id: string) => {
-    // There is no way to enumerate a WeakMap, so the handles for contexts other than those seen
-    // again later are left to be collected with the context itself. Contexts still in use will
-    // re-upload on their next draw because the entry is gone from their map when they look.
-    for (const map of liveContexts) {
-        const texture = map.textures.get(id);
+    pruneContexts();
+    for (const entry of liveContexts) {
+        const texture = entry.textures.get(id);
         if (!texture) continue;
-        map.gl.deleteTexture(texture);
-        map.textures.delete(id);
+        entry.gl.deref()?.deleteTexture(texture);
+        entry.textures.delete(id);
     }
 };
 
 /**
  * Contexts that have uploaded something, so that a re-registered or forgotten texture can be
- * deleted from them. Holds the context strongly, which is why only contexts that have actually
- * been used for a texture are listed.
+ * deleted from them.
+ *
+ * Weakly, so that a context going away is not kept alive by this list. Moorhen creates more than
+ * one - the main viewer and the scene-sliders preview - and holding a dead one strongly would pin
+ * it, its textures and everything else it refers to for the life of the page.
  */
-const liveContexts: { gl: WebGLRenderingContext; textures: Map<string, WebGLTexture> }[] = [];
+const liveContexts: { gl: WeakRef<WebGLRenderingContext>; textures: Map<string, WebGLTexture> }[] = [];
+
+/** Drop entries for contexts that have been collected. */
+const pruneContexts = () => {
+    for (let i = liveContexts.length - 1; i >= 0; i--) {
+        if (!liveContexts[i].gl.deref()) liveContexts.splice(i, 1);
+    }
+};
 
 /** Forget a texture entirely, including its pixels. */
 export const forgetTexture = (id: string) => {
     forgetUploaded(id);
     sources.delete(id);
+    fresh.delete(id);
+};
+
+/**
+ * Free every texture the scene no longer refers to.
+ *
+ * Mark and sweep rather than reference counting, for the same reason the path mesh cache next
+ * door works this way: the scene is walked on every rebuild anyway, so "what is still in use" is
+ * already in hand, where counting would mean a matching decrement at every point an object can
+ * lose a texture - deletion, editing, clearing by tag, loading a session over the top - and one
+ * missed decrement is a leak that nothing reports.
+ *
+ * Without this an import of the chess set costs fifteen textures, and importing it a second time
+ * costs fifteen more: the pixels alone are megabytes each, and the GPU copies are never collected
+ * because a WebGLTexture is freed by deleteTexture, not by the garbage collector.
+ *
+ * @param inUse - Every texture id the scene still refers to.
+ * @returns How many were freed, which is what the tests assert on.
+ */
+export const sweepTextures = (inUse: Set<string>): number => {
+    let freed = 0;
+    for (const id of [...sources.keys()]) {
+        if (inUse.has(id)) continue;
+        // One sweep of grace, so a texture registered moments before its object exists is not
+        // taken away in between.
+        if (fresh.has(id)) continue;
+        forgetUploaded(id);
+        sources.delete(id);
+        freed++;
+    }
+    fresh = new Set();
+    return freed;
 };
 
 /**
@@ -106,7 +157,7 @@ export const glTextureFor = (gl: WebGLRenderingContext, id: string): WebGLTextur
     if (!forContext) {
         forContext = new Map<string, WebGLTexture>();
         uploaded.set(gl, forContext);
-        liveContexts.push({ gl, textures: forContext });
+        liveContexts.push({ gl: new WeakRef(gl), textures: forContext });
     }
 
     const existing = forContext.get(id);

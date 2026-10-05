@@ -11,6 +11,7 @@ import { getBuffersForShapes } from "../../src/WebGLgComponents/threeDObjectsDra
 import { MeshObject, MeshPart, ThreeDObject } from "../../src/store/threeDObjectsSlice";
 import { newObjectOfType } from "../../src/utils/threeDObjectFactories";
 import { getDisc, getPlane, getTetrahedron, getTorus } from "../../src/WebGLgComponents/shapeGeometry";
+import { getTextureSource, registerTexture } from "../../src/WebGLgComponents/textureRegistry";
 
 // jsdom has no OffscreenCanvas, and resolving a CSS colour name goes through one. The same shim
 // is in meshObject.test.ts; the colours are incidental to what is tested here either way.
@@ -307,6 +308,64 @@ describe("a mesh in several parts", () => {
         expect(buffers[0].prim_types[0]).toEqual(["TRIANGLES"]);
         expect(buffers[0].vert_tri[0]).toHaveLength(1);
         expect(buffers[0].materials?.[0][0]).toEqual({ baseColourTexture: "tex-1" });
+    });
+});
+
+/**
+ * The leak this closes: before, nothing ever freed a texture. An object could be deleted, its
+ * tags cleared, a session loaded over the top - the pixels stayed in the registry and the GPU
+ * copy stayed on the card, because a WebGLTexture is reclaimed by deleteTexture and not by the
+ * collector. Importing the chess set twice cost thirty textures and kept them all.
+ */
+describe("textures the scene no longer refers to", () => {
+    const withTexture = (texture: string): ThreeDObject =>
+        square({ texCoords: SQUARE_UVS, texture });
+
+    it("survive while their object is drawn", async () => {
+        const id = registerTexture({ width: 1, height: 1, rgba: new Uint8Array([1, 2, 3, 4]) });
+        for (let i = 0; i < 3; i++) await getBuffersForShapes([withTexture(id)]);
+        expect(getTextureSource(id)).toBeDefined();
+    });
+
+    it("are freed once it is gone", async () => {
+        const id = registerTexture({ width: 1, height: 1, rgba: new Uint8Array([1, 2, 3, 4]) });
+        await getBuffersForShapes([withTexture(id)]);
+        // Two rebuilds of a scene without it: the first is its sweep of grace.
+        await getBuffersForShapes([]);
+        await getBuffersForShapes([]);
+        expect(getTextureSource(id)).toBeUndefined();
+    });
+
+    it("are freed per object, not all or nothing", async () => {
+        const kept = registerTexture({ width: 1, height: 1, rgba: new Uint8Array([1, 2, 3, 4]) });
+        const dropped = registerTexture({ width: 1, height: 1, rgba: new Uint8Array([5, 6, 7, 8]) });
+        await getBuffersForShapes([withTexture(kept), withTexture(dropped)]);
+        await getBuffersForShapes([withTexture(kept)]);
+        await getBuffersForShapes([withTexture(kept)]);
+        expect(getTextureSource(kept)).toBeDefined();
+        expect(getTextureSource(dropped)).toBeUndefined();
+    });
+
+    it("counts a texture referred to by a part, not only by an object", async () => {
+        // A multi-material import puts its textures on the parts, so gathering only the object's
+        // own would free every one of them on the next rebuild - while they were being drawn.
+        const id = registerTexture({ width: 1, height: 1, rgba: new Uint8Array([1, 2, 3, 4]) });
+        const parted = {
+            ...newObjectOfType("mesh"),
+            type: "mesh",
+            origin: [0, 0, 0],
+            vertices: [],
+            indices: [],
+            parts: [{
+                vertices: [0, 0, 0, 1, 0, 0, 1, 1, 0],
+                indices: [0, 1, 2],
+                texCoords: [0, 0, 1, 0, 1, 1],
+                texture: id,
+            }],
+        } as unknown as ThreeDObject;
+
+        for (let i = 0; i < 3; i++) await getBuffersForShapes([parted]);
+        expect(getTextureSource(id)).toBeDefined();
     });
 });
 

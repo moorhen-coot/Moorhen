@@ -23,6 +23,7 @@ import {
     getTextureSource,
     glTextureFor,
     registerTexture,
+    sweepTextures,
     type TextureSource,
 } from "../../src/WebGLgComponents/textureRegistry";
 
@@ -153,6 +154,81 @@ describe("uploading", () => {
         const { gl } = fakeGl();
         const id = registerTexture({ width: 8, height: 8, rgba: new Uint8Array(4) });
         expect(glTextureFor(gl, id)).toBeNull();
+    });
+});
+
+/**
+ * Freeing what the scene no longer refers to.
+ *
+ * Without this an import of a fifteen-material model costs fifteen textures and importing it
+ * again costs fifteen more - the pixels are megabytes each, and a WebGLTexture is freed by
+ * deleteTexture rather than by the collector, so nothing ever reclaims them.
+ *
+ * Mark and sweep rather than reference counting, so these are about what survives a sweep rather
+ * than about counts being balanced.
+ */
+describe("sweeping unused textures", () => {
+    it("frees a texture nothing refers to", () => {
+        const id = registerTexture(oneByOne());
+        sweepTextures(new Set());              // the grace sweep
+        expect(getTextureSource(id)).toBeDefined();
+        sweepTextures(new Set());
+        expect(getTextureSource(id)).toBeUndefined();
+    });
+
+    it("keeps a texture the scene still refers to, however many sweeps pass", () => {
+        const id = registerTexture(oneByOne());
+        for (let i = 0; i < 5; i++) sweepTextures(new Set([id]));
+        expect(getTextureSource(id)).toBeDefined();
+    });
+
+    it("spares a texture registered since the last sweep", () => {
+        // loadGltfFile decodes the images and only then creates the object, so for a moment a
+        // texture is registered and referred to by nothing. A sweep landing in that window must
+        // not take it away.
+        const id = registerTexture(oneByOne());
+        sweepTextures(new Set());
+        expect(getTextureSource(id)).toBeDefined();
+    });
+
+    it("stops sparing it once a sweep has passed", () => {
+        // The grace is one sweep, not permanent - otherwise nothing registered and abandoned
+        // would ever be freed.
+        const id = registerTexture(oneByOne());
+        sweepTextures(new Set());
+        expect(sweepTextures(new Set())).toBe(1);
+        expect(getTextureSource(id)).toBeUndefined();
+    });
+
+    it("deletes the GPU copy, not just the pixels", () => {
+        // The expensive half. A WebGLTexture is not collected when the last reference to it goes;
+        // it has to be handed back with deleteTexture.
+        const { gl, calls } = fakeGl();
+        const id = registerTexture(oneByOne());
+        glTextureFor(gl, id);
+        sweepTextures(new Set());
+        sweepTextures(new Set());
+        expect(calls.filter(c => c.name === "deleteTexture")).toHaveLength(1);
+    });
+
+    it("frees several at once and says how many", () => {
+        const ids = [registerTexture(oneByOne()), registerTexture(oneByOne()), registerTexture(oneByOne())];
+        sweepTextures(new Set(ids));
+        expect(sweepTextures(new Set([ids[1]]))).toBe(2);
+        expect(getTextureSource(ids[1])).toBeDefined();
+        expect(getTextureSource(ids[0])).toBeUndefined();
+    });
+
+    it("re-uploads a texture that is registered again after being freed", () => {
+        // Freeing must not leave a stale entry that makes the next upload a no-op.
+        const { gl, createdCount } = fakeGl();
+        const id = registerTexture(oneByOne());
+        glTextureFor(gl, id);
+        sweepTextures(new Set());
+        sweepTextures(new Set());
+        registerTexture(oneByOne(), id);
+        expect(glTextureFor(gl, id)).toBeTruthy();
+        expect(createdCount()).toBe(2);
     });
 });
 

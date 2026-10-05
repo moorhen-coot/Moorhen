@@ -32,6 +32,7 @@ import { IDENTITY_ORIENTATION, PICK_POINTS_PER_INSTANCE, createMeshInstances } f
 import { DEFAULT_WIREFRAME_RADIUS, MeshObject, PathObject, ThreeDObject, meshParts } from '../store/threeDObjectsSlice'
 import { MOORHEN_3D_OBJECT_TAG_KIND } from '../utils/enums'
 import { wholeMeshPickInfo, wholeMeshPickInfoOfParts } from './wholeMeshPick'
+import { sweepTextures } from './textureRegistry'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 
@@ -1001,6 +1002,24 @@ export const getBuffersForShapes = async (
     pathMeshCache.forEach((_entry, id) => {
         if (!pathsSeen.has(id)) pathMeshCache.delete(id)
     })
+
+    // And the same for textures, which are far more expensive to leave behind: the pixels are
+    // megabytes each and the GPU copy is freed by deleteTexture rather than by the collector, so
+    // importing a fifteen-material model twice would cost thirty textures and keep them all.
+    //
+    // Gathered here rather than counted at every point an object can lose a texture - deletion,
+    // editing, clearing by tag, a session loaded over the top - because the scene has just been
+    // walked and one missed decrement would be a leak nothing reports.
+    const texturesInUse = new Set<string>()
+    threeDObjects.forEach(obj => {
+        if (obj.texture) texturesInUse.add(obj.texture)
+        if (obj.type === "mesh") {
+            meshParts(obj as MeshObject).forEach(part => {
+                if (part.texture) texturesInUse.add(part.texture)
+            })
+        }
+    })
+    sweepTextures(texturesInUse)
 
     return objects
 
