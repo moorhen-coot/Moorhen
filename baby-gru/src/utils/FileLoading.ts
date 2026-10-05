@@ -18,7 +18,9 @@ import { MoorhenMolecule } from "./MoorhenMolecule";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { modalKeys } from "./enums";
-import { gltfExternalUris, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
+import { decompressDracoGltf } from "./gltfDraco";
+import { createDracoDecode } from "./gltfDracoDecoder";
+import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
 // import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
@@ -514,17 +516,6 @@ export const loadGltfFile = async (
 ): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer();
 
-    // Asked before anything else, because tinygltf will not get far enough to answer it. Its
-    // post-parse pass rejects an index accessor with no bufferView - which is what a
-    // Draco-compressed file has - so the load fails with "accessor[3] invalid bufferView" and
-    // the importer's own checks, which run after a successful parse, never see the file. Naming
-    // the feature here is the difference between "your file is broken" and "Moorhen cannot do
-    // this yet".
-    const unsupported = gltfUnsupportedFeature(arrayBuffer);
-    if (unsupported) {
-        return Promise.reject(`${file.name}: ${unsupported}`);
-    }
-
     // A .gltf names its buffers and images as separate files, and they have to be in the
     // worker's filesystem under those names before tinygltf looks for them. They can only come
     // from the same selection, so they are gathered here and sent across with the file itself.
@@ -555,11 +546,63 @@ export const loadGltfFile = async (
         );
     }
 
+    // What actually goes to the worker. Unchanged for an ordinary file; for a compressed one,
+    // the rewritten document and the buffers it invented.
+    // Annotated, because the rewritten document comes from a TextEncoder and so is a
+    // Uint8Array over an ArrayBufferLike rather than over the ArrayBuffer this starts as.
+    let payload: Uint8Array<ArrayBufferLike> = new Uint8Array(arrayBuffer);
+    let payloadName = file.name;
+    let payloadSidecars = sidecars;
+
+    // Decompressed here rather than refused. It has to happen on this side: tinygltf's
+    // post-parse pass rejects an index accessor with no bufferView - exactly what Draco
+    // geometry has - so the file never parses and nothing in the importer gets a look at it.
+    //
+    // Asked before the decoder is fetched, so the 190 KB of WebAssembly is only downloaded for
+    // the files that need it. After this, `gltfUnsupportedFeature` below sees a plain document.
+    if (gltfIsDracoCompressed(arrayBuffer)) {
+        try {
+            const decode = await createDracoDecode(moorhenInstance.paths.urlPrefix);
+            const rebuilt = decompressDracoGltf(
+                arrayBuffer,
+                new Map(sidecars.map(sidecar => [sidecar.name, sidecar.data])),
+                decode
+            );
+            if (rebuilt) {
+                payload = rebuilt.gltf;
+                // Always .gltf now, whatever it arrived as: the rewrite emits JSON with its
+                // buffers as files rather than a binary chunk, and the worker picks its parser
+                // by extension.
+                payloadName = `${file.name.replace(/\.(gltf|glb)$/i, "")}.gltf`;
+                // The originals are still referenced - images, and any buffer that was already
+                // a file - so they go too, alongside the ones the rewrite created.
+                payloadSidecars = [...sidecars, ...rebuilt.sidecars];
+            }
+        } catch (e) {
+            // The reason is worth passing on verbatim: it names the attribute that was missing,
+            // the file that was not supplied, or that the decoder itself could not be fetched.
+            const reason = (e instanceof Error ? e.message : String(e ?? "")).trim();
+            return Promise.reject(
+                reason ? `${file.name}: ${reason}`
+                       : `${file.name}: the compressed geometry could not be decoded`
+            );
+        }
+    }
+
+    // Whatever is left that cannot be read - meshopt, sparse accessors - named rather than left
+    // to arrive as a puzzling parse failure.
+    const unsupported = gltfUnsupportedFeature(
+        payload.buffer.slice(payload.byteOffset, payload.byteOffset + payload.byteLength) as ArrayBuffer
+    );
+    if (unsupported) {
+        return Promise.reject(`${file.name}: ${unsupported}`);
+    }
+
     const reply = await moorhenInstance.commandCentre.cootCommand(
         {
             returnType: "status",
             command: "shim_load_gltf",
-            commandArgs: [new Uint8Array(arrayBuffer), file.name, sidecars],
+            commandArgs: [payload, payloadName, payloadSidecars],
         },
         true
     );
