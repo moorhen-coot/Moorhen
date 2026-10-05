@@ -4,6 +4,7 @@ import { vec3, mat4 } from 'gl-matrix';
 //import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from '../types/moorhen';
 import { vec3Create  } from './mgMaths.js';
+import type { BufferMaterial } from './textureRegistry';
 
 
 interface MGWebGLBuffer {
@@ -55,6 +56,21 @@ export class DisplayBuffer {
     triangleInstanceOrientations: number[][];
     triangleColours: number[][];
     triangleNormals: number[][];
+    /**
+     * Flat u,v per vertex, one array per sub-buffer.
+     *
+     * The GL buffer for these (triangleVertexTextureBuffer) and the attribute they feed
+     * (aVertexTexture, bound to location 3) both long predate anything filling them.
+     */
+    triangleTextureCoords: number[][];
+    /**
+     * What each sub-buffer is drawn with, beyond its vertex colours.
+     *
+     * Per sub-buffer rather than per buffer because that is the grain a material has: a glTF
+     * primitive carries exactly one, and a file with several becomes several sub-buffers of one
+     * object. Sparse - most sub-buffers have no entry, and that means "vertex colours alone".
+     */
+    materials: (BufferMaterial | undefined)[];
     primitiveSizes: number[][];
     bufferTypes: string[];
     customColour: [number,number,number,number] | null;
@@ -158,6 +174,8 @@ export class DisplayBuffer {
         this.triangleInstanceOrientations = [];
         this.triangleColours = [];
         this.triangleNormals = [];
+        this.triangleTextureCoords = [];
+        this.materials = [];
         this.primitiveSizes = [];
         this.bufferTypes = [];
         this.customColour = null;

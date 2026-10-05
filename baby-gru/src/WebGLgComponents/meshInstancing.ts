@@ -9,6 +9,7 @@
  */
 
 import type { ShapeMesh } from './shapeGeometry'
+import type { BufferMaterial } from './textureRegistry'
 
 /**
  * The identity orientation, used by primitives that are not rotated.
@@ -81,6 +82,15 @@ export type InstanceGroup = {
         sectionLevelRanges?: number[][][];
         sectionLevelPoints?: number[][][];
     }
+    /**
+     * What this group is drawn with beyond its per-instance colours.
+     *
+     * One per group, not per instance, because every instance in a group shares the mesh and is
+     * drawn in a single call - there is nowhere for a second texture to go. That is why the
+     * texture forms part of the group key at the call site: two shapes with different textures
+     * are different groups, however identical their geometry.
+     */
+    material?: BufferMaterial
     // Opaque labels for this group's sections, and the scheme they are in. Set by whichever
     // branch built the group; never read here.
     tags?: string[]
@@ -128,11 +138,22 @@ export const createMeshInstances = (instanceTagKind?: string) => {
         origin: number[],
         size: number[],
         orientation: number[],
-        colour: number[]
+        colour: number[],
+        /**
+         * What the group is drawn with, beyond colour.
+         *
+         * Taken from the first instance in a group and not compared afterwards, because the
+         * texture is expected to be part of the key: instances that disagree about their material
+         * belong in different groups, since a group is one draw call with one mesh. A caller that
+         * leaves the texture out of its key would silently have the first instance's texture
+         * apply to all of them.
+         */
+        material?: BufferMaterial
     ) => {
         let group = groups.get(key)
         if (!group) {
-            group = { mesh: buildMesh(), origins: [], sizes: [], orientations: [], colours: [] }
+            group = { mesh: buildMesh(), origins: [], sizes: [], orientations: [], colours: [],
+                      ...(material ? { material } : {}) }
             groups.set(key, group)
         }
         group.origins.push(...origin)
@@ -238,6 +259,13 @@ export const createMeshInstances = (instanceTagKind?: string) => {
                 vert_tri: [[group.mesh.vertices]],
                 idx_tri: [[group.mesh.idx]],
                 prim_types: [["TRIANGLES"]],
+                // Both or neither. Coordinates with no texture to look up leave the attribute
+                // enabled for nothing, and a texture with no coordinates would sample one texel
+                // and paint every instance a flat colour - which looks like a bug in the texture
+                // rather than in the mesh that has no mapping.
+                ...(group.material?.baseColourTexture && group.mesh.texCoords?.length
+                    ? { tex_tri: [[group.mesh.texCoords]], materials: [[group.material]] }
+                    : {}),
                 pick_info: {
                     ...(sectioned
                         ? {

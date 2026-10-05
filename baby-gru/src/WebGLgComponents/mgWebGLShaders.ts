@@ -1,3 +1,21 @@
+/**
+ * Locate the base colour texture uniforms on a program built from the triangle fragment shader.
+ *
+ * A function rather than two lines in each init, and called by every program that uses that
+ * fragment shader, so that the rule is simply "share the fragment shader, call this". The lines
+ * were originally pasted into initShaders alone, which left the instanced mesh program with the
+ * uniforms unlocated: the draw code guards on `!= null`, `undefined != null` is false, so the
+ * whole texture block was skipped and every instanced mesh drew in its plain colour. Nothing
+ * failed and nothing was logged.
+ *
+ * On WebGL1 the fragment shader declares neither, so both come back null and the same guards skip
+ * the block - which is the intended outcome, texturing being WebGL2-only here.
+ */
+const locateBaseColourTextureUniforms = (program, gl) => {
+    program.hasBaseColourTexture = gl.getUniformLocation(program, "hasBaseColourTexture");
+    program.baseColourTexture = gl.getUniformLocation(program, "baseColourTexture");
+};
+
 export function getShader(gl, str, type) {
 
     let shader;
@@ -1026,6 +1044,8 @@ export function initShaders(vertexShader, fragmentShader, gl) {
     shaderProgram.ssaoMultiviewWidthHeightRatio = gl.getUniformLocation(shaderProgram, "ssaoMultiviewWidthHeightRatio");
     shaderProgram.zoom = gl.getUniformLocation(shaderProgram, "zoom");
 
+    locateBaseColourTextureUniforms(shaderProgram, gl);
+
     return shaderProgram
 
 }
@@ -1130,6 +1150,8 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
 
     shaderProgramInstanced.ssaoMultiviewWidthHeightRatio = gl.getUniformLocation(shaderProgramInstanced, "ssaoMultiviewWidthHeightRatio");
     shaderProgramInstanced.zoom = gl.getUniformLocation(shaderProgramInstanced, "zoom");
+
+    locateBaseColourTextureUniforms(shaderProgramInstanced, gl);
 
     return shaderProgramInstanced
 
@@ -1380,6 +1402,12 @@ export function initThickLineNormalShaders(vertexShader, fragmentShader, gl) {
 
     shaderProgramThickLinesNormal.peelNumber = gl.getUniformLocation(shaderProgramThickLinesNormal, "peelNumber");
     shaderProgramThickLinesNormal.depthPeelSamplers = gl.getUniformLocation(shaderProgramThickLinesNormal, "depthPeelSamplers");
+
+    // Shares the triangle fragment shader, so it gets these too. Lit thick lines are never
+    // textured and their buffers carry no material, so the draw code will simply set the flag
+    // false - but following the rule everywhere beats deciding case by case which programs are
+    // exempt, which is how the instanced program came to be missed.
+    locateBaseColourTextureUniforms(shaderProgramThickLinesNormal, gl);
 
     return shaderProgramThickLinesNormal
 

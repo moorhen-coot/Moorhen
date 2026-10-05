@@ -547,13 +547,18 @@ export const getBuffersForShapes = async (
             // The mesh is a unit square, so the instance size gives the two side lengths. The z
             // component is forced to 1 rather than taken from scalexyz: the shape has no
             // thickness, and a zero z would collapse the two faces back onto each other.
+            //
+            // The texture is part of the key. A group is one instanced draw call sharing one
+            // mesh, so there is nowhere for a second texture to go - planes with different
+            // textures have to be different groups, identical geometry notwithstanding.
             addInstance(
-                "plane",
+                obj.texture ? `plane|${obj.texture}` : "plane",
                 getPlane,
                 obj.origin,
                 [obj.scalexyz[0], obj.scalexyz[1], 1],
                 obj.orientation,
-                colour
+                colour,
+                obj.texture ? { baseColourTexture: obj.texture } : undefined
             )
 
         } else if(obj.type==="disc"){
@@ -936,6 +941,13 @@ export const getBuffersForShapes = async (
             }
         }
 
+        // Texture coordinates and a material, only when the mesh has both and the coordinates
+        // describe these vertices. One pair per vertex is the whole requirement; a mismatch means
+        // the two disagree, and drawing it untextured is better than reading the attribute past
+        // the end of its buffer.
+        const hasTexCoords = mesh.texCoords?.length === count * 2
+        const textured = hasTexCoords && !!mesh.texture
+
         const pick_info = wholeMeshPickInfo(vertices)
         objects.push({
             prim_types: [["TRIANGLES"]],
@@ -943,6 +955,9 @@ export const getBuffersForShapes = async (
             vert_tri: [[vertices]],
             norm_tri: [[normals]],
             col_tri: [[colours]],
+            ...(textured
+                ? { tex_tri: [[mesh.texCoords]], materials: [[{ baseColourTexture: mesh.texture }]] }
+                : {}),
             ...(pick_info
                 ? { pick_info: { ...pick_info, instance_tags: [mesh.uniqueId], instance_tag_kind: tagKind } }
                 : {})

@@ -8,6 +8,22 @@ var triangle_fragment_shader_source = `#version 300 es\n
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
 
+    // The vertex shader has forwarded this for years with nothing on the other side to read it,
+    // so it was dropped at link time. Declaring it here is what connects aVertexTexture through.
+    in lowp vec2 vTexture;
+
+    // Multiplied into the vertex colour rather than replacing it, which is what glTF specifies
+    // for a baseColorTexture against its baseColorFactor: a white vertex colour shows the texture
+    // untouched and a coloured one tints it, so an object's colour stays meaningful.
+    //
+    // Only the RGB is taken. Alpha is left to the vertex colour, because transparency here is
+    // decided per buffer before anything is drawn - the depth-peel pass order depends on it - and
+    // a texture's alpha is not known until it is sampled. A texture with holes in it therefore
+    // draws them opaque for now, which is wrong but obvious, rather than half-working through the
+    // peel in a way that depends on draw order.
+    uniform bool hasBaseColourTexture;
+    uniform sampler2D baseColourTexture;
+
     in lowp vec4 ShadowCoord;
     uniform sampler2D ShadowMap;
     uniform sampler2D SSAOMap;
@@ -145,6 +161,9 @@ var triangle_fragment_shader_source = `#version 300 es\n
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);
 
       vec4 theColor = vec4(vColor);
+      if(hasBaseColourTexture){
+          theColor.rgb *= texture(baseColourTexture, vTexture).rgb;
+      }
 
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor*Idiff);
       color *= occ;
@@ -158,7 +177,9 @@ var triangle_fragment_shader_source = `#version 300 es\n
       }
 
       if(gl_FrontFacing!=true){
-          color = vec4(shad*vColor);
+          // theColor, not vColor, so a back face is textured too. Identical to the old line for
+          // anything untextured, since theColor is a copy of vColor until a texture modulates it.
+          color = vec4(shad*theColor);
       }
       if(doEdgeDetect){
 

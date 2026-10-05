@@ -5,7 +5,9 @@ import { newVector } from "../../utils/vectorFactories";
 import { useEffect, useState } from "react";
 import { setOrigin } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
-import { usePaths } from "../../InstanceManager";
+import { useMoorhenInstance, usePaths } from "../../InstanceManager";
+import { checkerboardTexture, registerTexture } from "../../WebGLgComponents/textureRegistry";
+import { centreOfObject } from "../../store/threeDObjectsSlice";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
 import {
@@ -31,6 +33,84 @@ import { MoorhenLinearProgress } from "../icons";
 
 
 
+/**
+ * A flat square carrying the test checkerboard, for checking the texture path by eye.
+ *
+ * The corner colours are the test. A checkerboard on its own is symmetric under a horizontal
+ * flip, a vertical flip and a transpose, so the commonest texture fault there is - an inverted V
+ * axis - would look entirely correct. With the quad in the xy plane and the default view looking
+ * down -z with +y up, the corners should read:
+ *
+ *     red    top-left        green  top-right
+ *     blue   bottom-left     yellow bottom-right
+ *
+ * Any other arrangement says what went wrong: red and blue swapped is a V flip, red and green
+ * swapped is a U flip, green and blue swapped is a transpose.
+ *
+ * The object's colour is white so the texture shows unmodulated - it multiplies the vertex
+ * colour, so any other colour would tint it.
+ */
+const addTexturedQuadTo = (moorhenInstance: ReturnType<typeof useMoorhenInstance>) => {
+    const texture = registerTexture(checkerboardTexture());
+    const half = 15;
+
+    const uniqueId = moorhenInstance.object.create({
+        type: "mesh",
+        colour: "#ffffff",
+        origin: [0, 0, 0],
+        vertices: [-half, -half, 0, half, -half, 0, half, half, 0, -half, half, 0],
+        indices: [0, 1, 2, 0, 2, 3],
+        normals: [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+        // Bottom-left, bottom-right, top-right, top-left - v increasing downwards, because v=0
+        // is the top of the image.
+        texCoords: [0, 1, 1, 1, 1, 0, 0, 0],
+        texture,
+        tags: { [TAG_SOURCE]: SOURCE_DEV_TEST },
+    });
+
+    const created = moorhenInstance.object.get(uniqueId);
+    if (created) {
+        const [x, y, z] = centreOfObject(created);
+        moorhenInstance.centerOnCoordinate(x, y, z);
+    }
+    return uniqueId;
+};
+
+/**
+ * Three planes sharing one texture, which is the instanced case.
+ *
+ * Three rather than one because one plane would be drawn instanced too and would look identical
+ * to the non-instanced quad - it would not show whether the texture coordinate is advancing per
+ * vertex or per instance. Three side by side do: if the attribute's divisor were wrong, each
+ * plane would be a single flat colour taken from one texel of its own, instead of three copies
+ * of the whole checkerboard.
+ *
+ * All three carry the same texture id, so they share a group and go out as one instanced draw -
+ * which is the thing being tested. Give one of them a different texture and it becomes a second
+ * group, because the texture is part of the group key.
+ */
+const addTexturedPlanesTo = (moorhenInstance: ReturnType<typeof useMoorhenInstance>) => {
+    const texture = registerTexture(checkerboardTexture());
+    const ids: string[] = [];
+
+    for (const x of [-22, 0, 22]) {
+        ids.push(moorhenInstance.object.create({
+            type: "plane",
+            colour: "#ffffff",
+            origin: [x, 0, 0],
+            scalexyz: [18, 18, 1],
+            texture,
+            tags: { [TAG_SOURCE]: SOURCE_DEV_TEST },
+        }));
+    }
+
+    const first = moorhenInstance.object.get(ids[0]);
+    if (first) {
+        moorhenInstance.centerOnCoordinate(0, 0, 0);
+    }
+    return ids;
+};
+
 export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
@@ -39,6 +119,15 @@ export const MoorhenDevMenu = () => {
     const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
 
     const dispatch = useDispatch();
+    const moorhenInstance = useMoorhenInstance();
+    const addTexturedQuad = () => {
+        addTexturedQuadTo(moorhenInstance);
+        document.body.click();
+    };
+    const addTexturedPlanes = () => {
+        addTexturedPlanesTo(moorhenInstance);
+        document.body.click();
+    };
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
     const toggleValidationPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");
@@ -339,6 +428,8 @@ export const MoorhenDevMenu = () => {
             >
                 2D Overlays
             </MoorhenMenuItem>
+            <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
+            <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
             <hr></hr>
             <MoorhenToggle
                 type="switch"

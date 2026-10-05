@@ -6,6 +6,7 @@ import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
+import { glTextureFor } from '../textureRegistry';
 
 /**
  * The hot render core - drawScene orchestrates the frame (framebuffer setup,
@@ -403,6 +404,61 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     }
                 }
 
+                // This sub-buffer's base colour texture, if it has one, on unit 4.
+                //
+                // Unit 4 because the whole of this loop assumes 0, 1 and 2 hold the shadow, SSAO
+                // and edge-detect maps, 3 is the depth peel, and 7 to 9 are the hover influence
+                // textures; 4 to 6 are the free ones. In particular unit 0 is bound to the shadow
+                // map once before this loop starts and only the uniform is re-set inside it, so
+                // binding anything there would silently turn shadows into nonsense.
+                //
+                // Bound per sub-buffer rather than once per frame because the binding does not
+                // survive a frame: the depth-peel passes and the screenshot path both recreate
+                // framebuffers, which leaves textures unbound on whatever unit was current.
+                //
+                // activeTexture is put back to 0 afterwards, and that is not tidiness. The text,
+                // circle and perfect-sphere-outline shaders declare uSampler and never assign it
+                // a unit, so they rely on 0 being current; and this loop leaves activeTexture on
+                // unit 9 after a hovered buffer, which is why it is set explicitly here too
+                // rather than assumed.
+                let boundBaseColourTexture: WebGLTexture | null = null;
+                if(theShader.hasBaseColourTexture!=null){
+                    const material = displayBuffers[idx].materials?.[j];
+                    const textureBuffer = displayBuffers[idx].triangleVertexTextureBuffer[j];
+                    // Instanced buffers included. The per-vertex attributes - position, normal,
+                    // colour and this one - are all pointed here, for both paths; bufferDraw
+                    // adds only the per-instance ones. So the coordinate is per mesh vertex and
+                    // shared between instances, which is exactly right: one mesh, one mapping,
+                    // one texture per group.
+                    //
+                    // Nothing sets a divisor on this attribute's location, so it stays at 0 and
+                    // advances per vertex. That matters because divisors are per-location global
+                    // state: location 3 is below the instance attributes at 4 to 9, which
+                    // restoreDivisor puts back after each instanced draw.
+                    const wanted = self.WEBGL2
+                        && !calculatingShadowMap
+                        && !self.drawingGBuffers
+                        && !self.stencilPass
+                        && !!material?.baseColourTexture
+                        && !!textureBuffer && textureBuffer.itemSize === 2
+                        && theShader.vertexTextureAttribute!=null && theShader.vertexTextureAttribute>-1;
+
+                    if(wanted) boundBaseColourTexture = glTextureFor(self.gl, material.baseColourTexture);
+
+                    if(boundBaseColourTexture){
+                        self.gl.uniform1i(theShader.baseColourTexture, 4);
+                        self.gl.activeTexture(self.gl.TEXTURE4);
+                        self.gl.bindTexture(self.gl.TEXTURE_2D, boundBaseColourTexture);
+                        self.gl.activeTexture(self.gl.TEXTURE0);
+                        self.gl.uniform1i(theShader.hasBaseColourTexture, 1);
+                    } else {
+                        // Set every time, not just when turning it off: this is a uniform on a
+                        // shared program, so a previous sub-buffer's texture would otherwise go
+                        // on being sampled by an untextured one.
+                        self.gl.uniform1i(theShader.hasBaseColourTexture, 0);
+                    }
+                }
+
                 for(let i = 0; i<16; i++)
                     self.gl.disableVertexAttribArray(i);
 
@@ -418,6 +474,17 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 self.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
                 self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
                 if (bufferTypes[j] !== "PERFECT_SPHERES") self.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, self.gl.FLOAT, false, 0, 0);
+
+                // Only when a texture was actually bound above. The attribute is declared in the
+                // mesh vertex shaders and bound to location 3, and the loop above has just
+                // disabled every array - so leaving it alone gives the shader the generic
+                // attribute value, which is what every untextured mesh has always had.
+                if(boundBaseColourTexture){
+                    self.gl.enableVertexAttribArray(theShader.vertexTextureAttribute);
+                    self.gl.bindBuffer(self.gl.ARRAY_BUFFER, displayBuffers[idx].triangleVertexTextureBuffer[j]);
+                    self.gl.vertexAttribPointer(theShader.vertexTextureAttribute, 2, self.gl.FLOAT, false, 0, 0);
+                }
+
                 self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
 
                 if(self.stencilPass){

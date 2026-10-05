@@ -33,6 +33,20 @@ interface ThreeDObjectBase {
      * leave the owner unable to clear its own on redraw.
      */
     locked?: boolean;
+    /**
+     * A texture id from the texture registry, multiplied into the object's colour.
+     *
+     * On the base type because carrying a texture is not a property of being a mesh: any shape
+     * whose geometry has a texture coordinate mapping can have one. Shapes whose generator has no
+     * sensible unwrapping ignore it and draw plain, which is most of them - there is no one right
+     * way to unwrap a torus, and an arbitrary choice would be worse than none.
+     *
+     * An id rather than the pixels, because image data has no business in the store: it would be
+     * copied on every reducer pass and written into every session. The consequence is that an id
+     * does not survive a session round trip, and an object whose texture has gone is drawn in its
+     * plain colour rather than failing.
+     */
+    texture?: string;
 }
 
 /**
@@ -381,6 +395,16 @@ export interface MeshObject extends ThreeDObjectBase {
     colours?: number[];
     /** Uniform scale applied about the mesh's own origin. Defaults to 1. */
     scale?: number;
+    /**
+     * Flat u,v per vertex. Ignored unless there is exactly one pair per vertex.
+     *
+     * Only a mesh carries its own coordinates, because only a mesh carries its own geometry. The
+     * described shapes get theirs from their generator, where one exists.
+     *
+     * (0,0) is the top-left of the image, which is glTF's convention and the one the texture
+     * registry uploads to match.
+     */
+    texCoords?: number[];
 }
 
 export type ThreeDObject =
