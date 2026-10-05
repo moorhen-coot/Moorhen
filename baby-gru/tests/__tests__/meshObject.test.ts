@@ -158,6 +158,55 @@ describe("drawing", () => {
     });
 });
 
+/**
+ * A mesh split into parts is still one object, so the two questions the handles ask - where is it
+ * and how big is it - have to be answered over all of it. Answering from the first part alone
+ * would put a multi-material model's centre off to one side of itself, and its extent short.
+ */
+describe("a mesh in several parts", () => {
+    const twoSquares = (): MeshObject => ({
+        ...newObjectOfType("mesh"),
+        origin: [0, 0, 0],
+        vertices: [],
+        indices: [],
+        parts: [
+            { vertices: [0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0], indices: [0, 1, 2, 0, 2, 3] },
+            { vertices: [10, 0, 0, 12, 0, 0, 12, 2, 0, 10, 2, 0], indices: [0, 1, 2, 0, 2, 3] },
+        ],
+    }) as MeshObject;
+
+    test("its centre is the mean over every part, not the first", () => {
+        // Eight vertices spanning x = 0 to 12, so the mean x is 6 - between the two squares.
+        // Taking only the first part would give 1.
+        const [x, y, z] = centreOfObject(twoSquares());
+        expect(x).toBeCloseTo(6);
+        expect(y).toBeCloseTo(1);
+        expect(z).toBeCloseTo(0);
+    });
+
+    test("its extent reaches the furthest part", () => {
+        const extent = extentOfObject(twoSquares());
+        // The furthest corner from (6,1,0) is (12,2,0) or (0,0,0): hypot(6,1) = 6.08.
+        expect(extent).toBeCloseTo(Math.hypot(6, 1));
+    });
+
+    test("origin and scale apply to every part alike", () => {
+        const scaled = { ...twoSquares(), origin: [100, 0, 0], scale: 2 } as MeshObject;
+        const [x] = centreOfObject(scaled);
+        expect(x).toBeCloseTo(100 + 6 * 2);
+    });
+
+    test("a one-piece mesh answers both exactly as before", () => {
+        // meshParts presents the flat fields as a single part, so nothing built before parts
+        // existed sees any change.
+        const plain = square();
+        expect(centreOfObject(plain)).toEqual(centreOfObject({ ...plain }));
+        const [x, y] = centreOfObject(plain);
+        expect(x).toBeCloseTo(1);
+        expect(y).toBeCloseTo(1);
+    });
+});
+
 describe("picking", () => {
     test("it is picked as one whole object, centred on its centroid", async () => {
         const buffers = await meshBuffers(square({ origin: [10, 0, 0] }));

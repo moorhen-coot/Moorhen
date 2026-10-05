@@ -21,6 +21,7 @@ import { modalKeys } from "./enums";
 import { decompressDracoGltf } from "./gltfDraco";
 import { createDracoDecode } from "./gltfDracoDecoder";
 import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
+import { gltfMaterialTextures } from "./gltfTextures";
 // import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
@@ -598,10 +599,19 @@ export const loadGltfFile = async (
         return Promise.reject(`${file.name}: ${unsupported}`);
     }
 
+    // Each material's image, decoded here rather than in the worker: the browser decodes a PNG in
+    // a line, and handing sixteen megabytes of pixels across the worker boundary per texture to
+    // avoid that would be a poor trade. A material with no image, or one we could not decode,
+    // simply gets no entry and its geometry draws in its base colour.
+    const textures = await gltfMaterialTextures(
+        payload.buffer.slice(payload.byteOffset, payload.byteOffset + payload.byteLength) as ArrayBuffer,
+        new Map(payloadSidecars.map(sidecar => [sidecar.name, sidecar.data]))
+    );
+
     const reply = await moorhenInstance.commandCentre.cootCommand(
         {
             returnType: "status",
-            command: "shim_load_gltf",
+            command: "shim_load_gltf_groups",
             commandArgs: [payload, payloadName, payloadSidecars],
         },
         true
@@ -636,18 +646,37 @@ export const loadGltfFile = async (
     // Array.from on an untyped buffer gives unknown[] without the annotation.
     const asNumbers = (data: ArrayLike<number> | undefined): number[] => Array.from(data ?? []);
 
-    const vertices = asNumbers(mesh.vert_tri?.[0]?.[0]);
-    const indices = asNumbers(mesh.idx_tri?.[0]?.[0]);
-    if (vertices.length === 0 || indices.length < 3) {
+    // One part per material, each with the texture that material named. One object still: the
+    // whole file is one thing to select, centre on and delete, which is why these are parts
+    // rather than objects of their own.
+    const parts = (mesh.groups ?? [])
+        .filter(group => group.vertices.length > 0 && group.indices.length >= 3)
+        .map(group => {
+            const texture = textures.get(group.material);
+            const vertexCount = group.vertices.length / 3;
+            return {
+                vertices: asNumbers(group.vertices),
+                indices: asNumbers(group.indices),
+                normals: asNumbers(group.normals),
+                colours: asNumbers(group.colours),
+                // Both or neither: coordinates with no texture leave the attribute enabled for
+                // nothing, and a texture with no coordinates would paint the part one flat colour.
+                ...(texture && group.texCoords.length === vertexCount * 2
+                    ? { texCoords: asNumbers(group.texCoords), texture }
+                    : {}),
+            };
+        });
+
+    if (parts.length === 0) {
         return Promise.reject(refusal(`${file.name} contained no triangles`));
     }
 
     const uniqueId = moorhenInstance.object.create({
         type: "mesh",
-        vertices,
-        indices,
-        normals: asNumbers(mesh.norm_tri?.[0]?.[0]),
-        colours: asNumbers(mesh.col_tri?.[0]?.[0]),
+        // Not read when parts are given, but the type asks for them.
+        vertices: [],
+        indices: [],
+        parts,
         // The file's own name, so a scene with several imports can be told apart, and a tag
         // saying where it came from, so every imported mesh can be found or cleared together.
         tags: { source: "gltf", file: file.name },

@@ -40,23 +40,38 @@ export type WholeMeshPickInfo = {
  * vertices, so a caller can attach the result unconditionally and an empty mesh simply stays
  * unpickable rather than producing a pick point at the origin.
  */
-export const wholeMeshPickInfo = (
-    vertices: number[] | Float32Array
+/**
+ * The same, for an object whose geometry arrives in several pieces.
+ *
+ * A mesh with several materials is drawn as several sub-buffers but picked as one object, so the
+ * centroid and the bounds have to span all of them. Taking the pieces rather than one array they
+ * have been joined into is not tidiness: joining them means copying every vertex of the model a
+ * second time, and the obvious way to do it - `all.push(...part)` - passes one argument per
+ * number. A chess set is 944,100 vertices, so that is 2.8 million arguments and an immediate
+ * "maximum call stack size exceeded".
+ */
+export const wholeMeshPickInfoOfParts = (
+    parts: (number[] | Float32Array)[]
 ): WholeMeshPickInfo | null => {
-    const count = Math.floor(vertices.length / 3);
-    if (count === 0) return null;
-
+    let count = 0;
     const total = [0, 0, 0];
     const low: [number, number, number] = [Infinity, Infinity, Infinity];
     const high: [number, number, number] = [-Infinity, -Infinity, -Infinity];
-    for (let v = 0; v < count; v++) {
-        for (let c = 0; c < 3; c++) {
-            const value = vertices[3 * v + c];
-            total[c] += value;
-            if (value < low[c]) low[c] = value;
-            if (value > high[c]) high[c] = value;
+
+    for (const vertices of parts) {
+        const vertexCount = Math.floor(vertices.length / 3);
+        for (let v = 0; v < vertexCount; v++) {
+            for (let c = 0; c < 3; c++) {
+                const value = vertices[3 * v + c];
+                total[c] += value;
+                if (value < low[c]) low[c] = value;
+                if (value > high[c]) high[c] = value;
+            }
         }
+        count += vertexCount;
     }
+
+    if (count === 0) return null;
 
     return {
         // One point, and it is the centre: the exact test decides whether the pointer is over
@@ -70,3 +85,7 @@ export const wholeMeshPickInfo = (
         highlight_whole: true,
     };
 };
+
+export const wholeMeshPickInfo = (
+    vertices: number[] | Float32Array
+): WholeMeshPickInfo | null => wholeMeshPickInfoOfParts([vertices]);

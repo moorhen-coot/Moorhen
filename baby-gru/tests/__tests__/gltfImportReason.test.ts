@@ -16,6 +16,7 @@
 import { loadGltfFile } from "../../src/utils/FileLoading";
 import type { MoorhenInstance } from "../../src/InstanceManager/MoorhenInstance";
 import { createDracoDecode } from "../../src/utils/gltfDracoDecoder";
+import { gltfMaterialTextures } from "../../src/utils/gltfTextures";
 import type { DracoDecode } from "../../src/utils/gltfDraco";
 
 // The real one fetches the decoder over HTTP from Moorhen's asset directory, which no test can
@@ -23,7 +24,14 @@ import type { DracoDecode } from "../../src/utils/gltfDraco";
 // gltfDracoReal.test.ts; what matters here is that the loader reaches for it at the right moment
 // and sends on what comes back.
 jest.mock("../../src/utils/gltfDracoDecoder", () => ({ createDracoDecode: jest.fn() }));
+
+// Decoding an image needs createImageBitmap and OffscreenCanvas, which jsdom has not. What the
+// resolution does is covered on its own in gltfTextures.test.ts; here the map it produces is
+// supplied directly, so these tests are about how the loader joins it to the geometry.
+jest.mock("../../src/utils/gltfTextures", () => ({ gltfMaterialTextures: jest.fn() }));
 const mockedCreateDracoDecode = createDracoDecode as jest.MockedFunction<typeof createDracoDecode>;
+const mockedGltfMaterialTextures =
+    gltfMaterialTextures as jest.MockedFunction<typeof gltfMaterialTextures>;
 
 /** A file object with just enough of the File interface for the function under test. */
 const fakeFile = (name: string, bytes?: ArrayBuffer): File =>
@@ -222,6 +230,105 @@ describe("a glTF whose buffer is in another file", () => {
 
         await loadGltfFile(file, instance, [file]).catch(() => undefined);
         expect(calls[0][2]).toEqual([]);
+    });
+});
+
+/**
+ * The importer returns one group per material, and each becomes one part of a single object.
+ *
+ * One object because the file is one thing to select, centre on and delete; several parts because
+ * a texture belongs to a material and a sub-buffer draws with one texture. What is checked here is
+ * that the material index is what joins the two halves - the geometry from the worker and the
+ * images decoded on this side.
+ */
+describe("a glTF with several materials", () => {
+    /** A worker reply with one group per material. */
+    const groups = (...spec: { material: number; textured?: boolean; vertices?: number }[]) => ({
+        status: 1,
+        name: "",
+        groups: spec.map(({ material, textured, vertices = 3 }) => ({
+            vertices: new Float32Array(vertices * 3),
+            normals: new Float32Array(vertices * 3),
+            colours: new Float32Array(vertices * 4),
+            indices: new Uint32Array([0, 1, 2]),
+            texCoords: textured ? new Float32Array(vertices * 2) : new Float32Array(0),
+            material,
+        })),
+    });
+
+    /** The object the loader created, from the spy on object.create. */
+    const createdObject = (calls: unknown[][]) => calls[0][0] as { parts: { texture?: string }[] };
+
+    const instanceCapturing = (result: unknown, textures: Map<number, string> = new Map()) => {
+        const created: unknown[][] = [];
+        const instance = {
+            paths,
+            commandCentre: {
+                cootCommand: async () => ({ data: { result: { status: "Completed", result } } }),
+            },
+            object: {
+                create: (...args: unknown[]) => { created.push(args); return "object-1"; },
+                get: () => undefined,
+            },
+            centerOnCoordinate: () => undefined,
+        } as unknown as MoorhenInstance;
+        mockedGltfMaterialTextures.mockResolvedValue(textures);
+        return { instance, created };
+    };
+
+    beforeEach(() => mockedGltfMaterialTextures.mockReset());
+
+    it("makes one part per group, inside one object", async () => {
+        const { instance, created } = instanceCapturing(groups({ material: 0 }, { material: 1 }));
+        await loadGltfFile(fakeFile("two.glb"), instance).catch(e => { throw e; });
+        expect(created).toHaveLength(1);
+        expect(createdObject(created).parts).toHaveLength(2);
+    });
+
+    it("gives each part the texture its own material named", async () => {
+        const { instance, created } = instanceCapturing(
+            groups({ material: 0, textured: true }, { material: 1, textured: true }),
+            new Map([[0, "tex-for-0"], [1, "tex-for-1"]])
+        );
+        await loadGltfFile(fakeFile("two.glb"), instance);
+        expect(createdObject(created).parts.map(p => p.texture)).toEqual(["tex-for-0", "tex-for-1"]);
+    });
+
+    it("leaves a part untextured when its material has no image", async () => {
+        // Materials are sparse: a scene may have one textured material among fifteen plain ones,
+        // and the plain ones must not pick up a neighbour's texture.
+        const { instance, created } = instanceCapturing(
+            groups({ material: 0, textured: true }, { material: 1, textured: true }),
+            new Map([[1, "tex-for-1"]])
+        );
+        await loadGltfFile(fakeFile("two.glb"), instance);
+        expect(createdObject(created).parts.map(p => p.texture)).toEqual([undefined, "tex-for-1"]);
+    });
+
+    it("drops the coordinates when there is not one pair per vertex", async () => {
+        // The attribute would be read past the end of its buffer otherwise.
+        const reply = groups({ material: 0, textured: true });
+        reply.groups[0].texCoords = new Float32Array(2);   // one pair for three vertices
+        const { instance, created } = instanceCapturing(reply, new Map([[0, "tex-for-0"]]));
+        await loadGltfFile(fakeFile("short.glb"), instance);
+        const part = createdObject(created).parts[0] as { texture?: string; texCoords?: number[] };
+        expect(part.texture).toBeUndefined();
+        expect(part.texCoords).toBeUndefined();
+    });
+
+    it("ignores a group with no geometry", async () => {
+        const reply = groups({ material: 0 }, { material: 1, vertices: 0 });
+        reply.groups[1].indices = new Uint32Array(0);
+        const { instance, created } = instanceCapturing(reply);
+        await loadGltfFile(fakeFile("one.glb"), instance);
+        expect(createdObject(created).parts).toHaveLength(1);
+    });
+
+    it("reports no triangles when every group was empty", async () => {
+        const { instance } = instanceCapturing({ status: 1, name: "", groups: [] });
+        await expect(loadGltfFile(fakeFile("empty.glb"), instance)).rejects.toContain(
+            "contained no triangles"
+        );
     });
 });
 

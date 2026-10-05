@@ -377,6 +377,27 @@ export const isWireframeableType = (type: string): type is WireframeableObjectTy
  * Vertices are in the mesh's own frame; `origin` places it in the scene and `scale` sizes it,
  * which is what lets a file in some other unit be made to fit without rewriting its numbers.
  */
+/**
+ * One piece of a mesh, drawn with one texture.
+ *
+ * The same fields a single-piece mesh keeps on the object itself, which is what lets `meshParts`
+ * present both as a list and spare every consumer from caring which it was given.
+ */
+export interface MeshPart {
+    /** Flat x,y,z per vertex. */
+    vertices: number[];
+    /** Triangle indices into this part's own `vertices` - three per triangle. */
+    indices: number[];
+    /** Flat x,y,z per vertex. Computed from the faces when absent. */
+    normals?: number[];
+    /** Flat r,g,b,a per vertex, each 0 to 1. The object's own colour when absent. */
+    colours?: number[];
+    /** Flat u,v per vertex. Ignored unless there is exactly one pair per vertex. */
+    texCoords?: number[];
+    /** A texture id. The object's own texture when absent. */
+    texture?: string;
+}
+
 export interface MeshObject extends ThreeDObjectBase {
     type: "mesh";
     /** Flat x,y,z per vertex. */
@@ -395,6 +416,19 @@ export interface MeshObject extends ThreeDObjectBase {
     colours?: number[];
     /** Uniform scale applied about the mesh's own origin. Defaults to 1. */
     scale?: number;
+    /**
+     * The mesh in several pieces, each with its own texture.
+     *
+     * For an import whose geometry is not all drawn the same way. A glTF primitive has exactly
+     * one material and a texture hangs off a material, so a file with fifteen of them cannot be
+     * one piece - but it should still be one object to select, centre on, recolour and delete,
+     * which is what the parts sit inside rather than becoming objects of their own.
+     *
+     * When this is present the flat fields above are not read: the object is its parts. Use
+     * `meshParts` rather than testing for it, so that a one-piece mesh and a many-piece one are
+     * the same shape to everything downstream.
+     */
+    parts?: MeshPart[];
     /**
      * Flat u,v per vertex. Ignored unless there is exactly one pair per vertex.
      *
@@ -444,21 +478,55 @@ export type ThreeDObject =
  * around its origin and have to be averaged. No rotation enters into it: a path has no
  * orientation, its points being the whole of where it is.
  */
+/**
+ * A mesh as a list of parts, whether or not it was described as one.
+ *
+ * A one-piece mesh is its flat fields read as a single part. Everything that walks a mesh goes
+ * through here, so nothing downstream has to ask which form it was handed - and a mesh that was
+ * one piece behaves exactly as it did before parts existed.
+ *
+ * A part's own texture wins over the object's, so a multi-material import can set them per part
+ * while a plain one sets a single texture on the object.
+ */
+export const meshParts = (obj: MeshObject): MeshPart[] => {
+    if (obj.parts && obj.parts.length > 0) {
+        return obj.parts.map(part => ({ ...part, texture: part.texture ?? obj.texture }));
+    }
+    return [{
+        vertices: obj.vertices,
+        indices: obj.indices,
+        normals: obj.normals,
+        colours: obj.colours,
+        texCoords: obj.texCoords,
+        texture: obj.texture,
+    }];
+};
+
 export const centreOfObject = (obj: ThreeDObject): [number, number, number] => {
     const midpoint = (a: number[], b: number[]): [number, number, number] =>
         [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
 
     if (obj.type === "cylinder") return midpoint(obj.origin, obj.end);
     if (obj.type === "cone") return midpoint(obj.origin, obj.top);
-    if (obj.type === "mesh" && obj.vertices.length >= 3) {
-        // The mean vertex, so centring goes to the middle of the mesh rather than to its
-        // placement point, which for an imported file is usually nowhere near it.
-        const count = obj.vertices.length / 3;
-        const scale = obj.scale ?? 1;
-        const mean = [0, 1, 2].map(
-            c => obj.vertices.reduce((total, x, i) => (i % 3 === c ? total + x : total), 0) / count
-        );
-        return [0, 1, 2].map(i => obj.origin[i] + mean[i] * scale) as [number, number, number];
+    if (obj.type === "mesh") {
+        // The mean vertex over every part, so centring goes to the middle of the mesh rather than
+        // to its placement point, which for an imported file is usually nowhere near it. Over
+        // every part because the parts are one object: centring on the first material's geometry
+        // would put a fifteen-material model off to one side of itself.
+        const totals = [0, 0, 0];
+        let count = 0;
+        for (const part of meshParts(obj)) {
+            for (let i = 0; i + 2 < part.vertices.length; i += 3) {
+                totals[0] += part.vertices[i];
+                totals[1] += part.vertices[i + 1];
+                totals[2] += part.vertices[i + 2];
+                count++;
+            }
+        }
+        if (count > 0) {
+            const scale = obj.scale ?? 1;
+            return [0, 1, 2].map(i => obj.origin[i] + (totals[i] / count) * scale) as [number, number, number];
+        }
     }
     if (obj.type === "path" && obj.points.length >= 3) {
         const count = obj.points.length / 3;
@@ -531,12 +599,14 @@ export const extentOfObject = (obj: ThreeDObject): number => {
             const centre = centreOfObject(obj);
             const scale = obj.scale ?? 1;
             let furthest = 0;
-            for (let i = 0; i + 2 < obj.vertices.length; i += 3) {
-                furthest = Math.max(furthest, Math.hypot(
-                    obj.origin[0] + obj.vertices[i] * scale - centre[0],
-                    obj.origin[1] + obj.vertices[i + 1] * scale - centre[1],
-                    obj.origin[2] + obj.vertices[i + 2] * scale - centre[2]
-                ));
+            for (const part of meshParts(obj)) {
+                for (let i = 0; i + 2 < part.vertices.length; i += 3) {
+                    furthest = Math.max(furthest, Math.hypot(
+                        obj.origin[0] + part.vertices[i] * scale - centre[0],
+                        obj.origin[1] + part.vertices[i + 1] * scale - centre[1],
+                        obj.origin[2] + part.vertices[i + 2] * scale - centre[2]
+                    ));
+                }
             }
             return furthest;
         }

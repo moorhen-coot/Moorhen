@@ -8,7 +8,7 @@
  * mismatch has to mean "draw it untextured" rather than "draw it and hope".
  */
 import { getBuffersForShapes } from "../../src/WebGLgComponents/threeDObjectsDraw";
-import { MeshObject, ThreeDObject } from "../../src/store/threeDObjectsSlice";
+import { MeshObject, MeshPart, ThreeDObject } from "../../src/store/threeDObjectsSlice";
 import { newObjectOfType } from "../../src/utils/threeDObjectFactories";
 import { getDisc, getPlane, getTetrahedron, getTorus } from "../../src/WebGLgComponents/shapeGeometry";
 
@@ -154,6 +154,159 @@ describe("texture coordinates on a generated shape", () => {
         ["torus", () => getTorus(0.3, 16, 16)],
     ])("leaves %s without coordinates rather than inventing a mapping", (_name, build) => {
         expect(build().texCoords).toBeUndefined();
+    });
+});
+
+/**
+ * A mesh in several pieces, each with its own texture.
+ *
+ * A glTF primitive has exactly one material and a texture hangs off a material, so a file with
+ * fifteen of them cannot be one piece. It should still be one object to select, centre on and
+ * delete, so the pieces are sub-buffers inside one buffer rather than objects of their own - and
+ * what is checked here is that they stay index-aligned and that the object is still picked whole.
+ */
+describe("a mesh in several parts", () => {
+    const twoParts = (overrides: Partial<MeshPart>[] = [{}, {}]): ThreeDObject => ({
+        ...newObjectOfType("mesh"),
+        type: "mesh",
+        origin: [0, 0, 0],
+        vertices: [],
+        indices: [],
+        parts: [
+            {
+                vertices: [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0],
+                indices: [0, 1, 2, 0, 2, 3],
+                ...overrides[0],
+            },
+            {
+                vertices: [10, 0, 0, 11, 0, 0, 11, 1, 0, 10, 1, 0],
+                indices: [0, 1, 2, 0, 2, 3],
+                ...overrides[1],
+            },
+        ],
+    } as ThreeDObject);
+
+    const emitParts = async (obj: ThreeDObject) =>
+        (await getBuffersForShapes([obj])) as {
+            prim_types: string[][];
+            vert_tri: number[][][];
+            idx_tri: number[][][];
+            tex_tri?: number[][][];
+            materials?: ({ baseColourTexture?: string } | undefined)[][];
+            pick_info?: { pick_bounds?: { low: number[]; high: number[] } };
+        }[];
+
+    it("is one buffer with one sub-buffer per part", async () => {
+        const buffers = await emitParts(twoParts());
+        expect(buffers).toHaveLength(1);
+        expect(buffers[0].prim_types[0]).toEqual(["TRIANGLES", "TRIANGLES"]);
+        expect(buffers[0].vert_tri[0]).toHaveLength(2);
+    });
+
+    it("keeps each part's indices in its own numbering", async () => {
+        // Each sub-buffer has its own vertex buffer, so the second part's indices start at 0
+        // again rather than being rebased as they would be in a merge.
+        const buffers = await emitParts(twoParts());
+        expect(buffers[0].idx_tri[0][1]).toEqual([0, 1, 2, 0, 2, 3]);
+    });
+
+    it("gives each part its own texture", async () => {
+        const buffers = await emitParts(twoParts([
+            { texCoords: SQUARE_UVS, texture: "tex-a" },
+            { texCoords: SQUARE_UVS, texture: "tex-b" },
+        ]));
+        expect(buffers[0].materials?.[0]).toEqual([
+            { baseColourTexture: "tex-a" },
+            { baseColourTexture: "tex-b" },
+        ]);
+    });
+
+    it("leaves a gap in step rather than shifting later parts' textures", async () => {
+        // An untextured part between textured ones must still occupy its slot. Omitting it would
+        // move every later part's texture onto the wrong sub-buffer, which draws something
+        // plausible and wrong.
+        const buffers = await emitParts(twoParts([
+            {},
+            { texCoords: SQUARE_UVS, texture: "tex-b" },
+        ]));
+        expect(buffers[0].materials?.[0]).toHaveLength(2);
+        expect(buffers[0].materials?.[0][0]).toBeUndefined();
+        expect(buffers[0].materials?.[0][1]).toEqual({ baseColourTexture: "tex-b" });
+        expect(buffers[0].tex_tri?.[0][0]).toEqual([]);
+    });
+
+    it("falls back to the object's texture for a part with none of its own", async () => {
+        const obj = twoParts([{ texCoords: SQUARE_UVS }, { texCoords: SQUARE_UVS, texture: "own" }]);
+        (obj as unknown as { texture: string }).texture = "shared";
+        const buffers = await emitParts(obj);
+        expect(buffers[0].materials?.[0][0]).toEqual({ baseColourTexture: "shared" });
+        expect(buffers[0].materials?.[0][1]).toEqual({ baseColourTexture: "own" });
+    });
+
+    it("is picked as one object spanning every part", async () => {
+        // The pick test works per object, so it has to be given both parts' vertices. Given only
+        // the first, the far half of a model would not be clickable at all.
+        const buffers = await emitParts(twoParts());
+        const bounds = buffers[0].pick_info?.pick_bounds;
+        expect(bounds).toBeDefined();
+        expect(bounds!.low[0]).toBeCloseTo(0);
+        expect(bounds!.high[0]).toBeCloseTo(11);
+    });
+
+    it("emits nothing for parts with no geometry", async () => {
+        const empty = {
+            ...newObjectOfType("mesh"),
+            type: "mesh",
+            origin: [0, 0, 0],
+            vertices: [],
+            indices: [],
+            parts: [{ vertices: [], indices: [] }],
+        } as unknown as ThreeDObject;
+        expect(await getBuffersForShapes([empty])).toEqual([]);
+    });
+
+    it("handles a mesh far too large to spread into a function call", async () => {
+        // The chess set is 944,100 vertices across fifteen materials. Gathering them for the pick
+        // test by joining the parts - `all.push(...part)` - passes one argument per number, and
+        // the engine's argument limit is a hundred thousand or so, so it threw RangeError before
+        // anything was drawn. 200,000 vertices per part is comfortably past that limit and still
+        // quick to build here.
+        const vertexCount = 200_000;
+        const bigPart = (offset: number) => {
+            const vertices = new Array<number>(vertexCount * 3);
+            for (let v = 0; v < vertexCount; v++) {
+                vertices[3 * v] = offset + (v % 100);
+                vertices[3 * v + 1] = v % 50;
+                vertices[3 * v + 2] = 0;
+            }
+            return { vertices, indices: [0, 1, 2] };
+        };
+
+        const big = {
+            ...newObjectOfType("mesh"),
+            type: "mesh",
+            origin: [0, 0, 0],
+            vertices: [],
+            indices: [],
+            parts: [bigPart(0), bigPart(1000)],
+        } as unknown as ThreeDObject;
+
+        const buffers = await emitParts(big);
+        expect(buffers[0].vert_tri[0]).toHaveLength(2);
+        // And the pick bounds still span both parts, so it is not merely surviving by skipping
+        // the work.
+        const bounds = buffers[0].pick_info?.pick_bounds;
+        expect(bounds!.low[0]).toBeCloseTo(0);
+        expect(bounds!.high[0]).toBeCloseTo(1099);
+    });
+
+    it("leaves a one-piece mesh exactly as it was", async () => {
+        // The whole point of meshParts: a mesh with no parts takes the path it always did, as one
+        // sub-buffer, so nothing built before parts existed changes.
+        const buffers = await emitParts(square({ texCoords: SQUARE_UVS, texture: "tex-1" }));
+        expect(buffers[0].prim_types[0]).toEqual(["TRIANGLES"]);
+        expect(buffers[0].vert_tri[0]).toHaveLength(1);
+        expect(buffers[0].materials?.[0][0]).toEqual({ baseColourTexture: "tex-1" });
     });
 });
 

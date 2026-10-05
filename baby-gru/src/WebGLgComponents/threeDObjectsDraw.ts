@@ -29,9 +29,9 @@ import {
     getTorusWireframe,
 } from './shapeGeometry'
 import { IDENTITY_ORIENTATION, PICK_POINTS_PER_INSTANCE, createMeshInstances } from './meshInstancing'
-import { DEFAULT_WIREFRAME_RADIUS, MeshObject, PathObject, ThreeDObject } from '../store/threeDObjectsSlice'
+import { DEFAULT_WIREFRAME_RADIUS, MeshObject, PathObject, ThreeDObject, meshParts } from '../store/threeDObjectsSlice'
 import { MOORHEN_3D_OBJECT_TAG_KIND } from '../utils/enums'
-import { wholeMeshPickInfo } from './wholeMeshPick'
+import { wholeMeshPickInfo, wholeMeshPickInfoOfParts } from './wholeMeshPick'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 
@@ -910,54 +910,86 @@ export const getBuffersForShapes = async (
     threeDObjects.filter(obj => obj.type === "mesh").forEach(obj => {
         const mesh = obj as MeshObject
         const scale = mesh.scale ?? 1
-        const count = Math.floor(mesh.vertices.length / 3)
-        if (count === 0 || mesh.indices.length < 3) return
 
-        // Placed here rather than by an instance transform, since there is no instance.
-        const vertices = new Array<number>(count * 3)
-        for (let v = 0; v < count; v++) {
-            for (let c = 0; c < 3; c++) {
-                vertices[3 * v + c] = mesh.origin[c] + mesh.vertices[3 * v + c] * scale
-            }
-        }
+        // One sub-buffer per part, because a texture belongs to a sub-buffer. A one-piece mesh
+        // comes back from meshParts as a single part, so it takes exactly the path it always did.
+        const prim_types: string[] = []
+        const idx_tri: number[][] = []
+        const vert_tri: number[][] = []
+        const norm_tri: number[][] = []
+        const col_tri: number[][] = []
+        const tex_tri: number[][] = []
+        const materials: ({ baseColourTexture?: string } | undefined)[] = []
+        // The pick test works on one object, not one sub-buffer, so it is given every part's
+        // vertices - otherwise a fifteen-material model would only be pickable where its first
+        // material happened to be. Kept as a list of parts rather than joined into one array:
+        // joining copies every vertex again, and doing it by spreading into push passes one
+        // argument per number, which for a chess set is 2.8 million of them and a blown stack.
+        const partVertices: number[][] = []
+        let anyTextured = false
 
-        const normals = mesh.normals?.length === count * 3
-            ? mesh.normals
-            : faceNormals(mesh.vertices, mesh.indices)
+        for (const part of meshParts(mesh)) {
+            const count = Math.floor(part.vertices.length / 3)
+            if (count === 0 || part.indices.length < 3) continue
 
-        let colours: number[]
-        if (mesh.colours?.length === count * 4) {
-            colours = mesh.colours
-        } else {
-            // No colours of its own, so the object's single colour stands for every vertex -
-            // which is what keeps a plain mesh recolourable as one thing.
-            const [r, g, b, a] = getObjectColour(mesh.colour)
-            colours = new Array<number>(count * 4)
+            // Placed here rather than by an instance transform, since there is no instance.
+            const vertices = new Array<number>(count * 3)
             for (let v = 0; v < count; v++) {
-                colours[4 * v] = r
-                colours[4 * v + 1] = g
-                colours[4 * v + 2] = b
-                colours[4 * v + 3] = a
+                for (let c = 0; c < 3; c++) {
+                    vertices[3 * v + c] = mesh.origin[c] + part.vertices[3 * v + c] * scale
+                }
             }
+
+            const normals = part.normals?.length === count * 3
+                ? part.normals
+                : faceNormals(part.vertices, part.indices)
+
+            let colours: number[]
+            if (part.colours?.length === count * 4) {
+                colours = part.colours
+            } else {
+                // No colours of its own, so the object's single colour stands for every vertex -
+                // which is what keeps a plain mesh recolourable as one thing.
+                const [r, g, b, a] = getObjectColour(mesh.colour)
+                colours = new Array<number>(count * 4)
+                for (let v = 0; v < count; v++) {
+                    colours[4 * v] = r
+                    colours[4 * v + 1] = g
+                    colours[4 * v + 2] = b
+                    colours[4 * v + 3] = a
+                }
+            }
+
+            // Texture coordinates and a material, only when the part has both and the coordinates
+            // describe its vertices. One pair per vertex is the whole requirement; a mismatch
+            // means the two disagree, and drawing it untextured is better than reading the
+            // attribute past the end of its buffer.
+            const textured = part.texCoords?.length === count * 2 && !!part.texture
+            if (textured) anyTextured = true
+
+            prim_types.push("TRIANGLES")
+            idx_tri.push(part.indices)
+            vert_tri.push(vertices)
+            norm_tri.push(normals)
+            col_tri.push(colours)
+            // Pushed for every part, textured or not, so that the arrays stay index-aligned with
+            // the sub-buffers. A gap would shift every later part's texture onto the wrong one.
+            tex_tri.push(textured ? part.texCoords! : [])
+            materials.push(textured ? { baseColourTexture: part.texture } : undefined)
+
+            partVertices.push(vertices)
         }
 
-        // Texture coordinates and a material, only when the mesh has both and the coordinates
-        // describe these vertices. One pair per vertex is the whole requirement; a mismatch means
-        // the two disagree, and drawing it untextured is better than reading the attribute past
-        // the end of its buffer.
-        const hasTexCoords = mesh.texCoords?.length === count * 2
-        const textured = hasTexCoords && !!mesh.texture
+        if (prim_types.length === 0) return
 
-        const pick_info = wholeMeshPickInfo(vertices)
+        const pick_info = wholeMeshPickInfoOfParts(partVertices)
         objects.push({
-            prim_types: [["TRIANGLES"]],
-            idx_tri: [[mesh.indices]],
-            vert_tri: [[vertices]],
-            norm_tri: [[normals]],
-            col_tri: [[colours]],
-            ...(textured
-                ? { tex_tri: [[mesh.texCoords]], materials: [[{ baseColourTexture: mesh.texture }]] }
-                : {}),
+            prim_types: [prim_types],
+            idx_tri: [idx_tri],
+            vert_tri: [vert_tri],
+            norm_tri: [norm_tri],
+            col_tri: [col_tri],
+            ...(anyTextured ? { tex_tri: [tex_tri], materials: [materials] } : {}),
             ...(pick_info
                 ? { pick_info: { ...pick_info, instance_tags: [mesh.uniqueId], instance_tag_kind: tagKind } }
                 : {})

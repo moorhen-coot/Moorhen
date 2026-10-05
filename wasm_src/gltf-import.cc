@@ -139,13 +139,7 @@ coot::simple_mesh_t LoadGltfModelFromMemory(tinygltf::Model& model, const std::v
  * models built by hand. All that happens here is the change of shape: three parallel float
  * arrays and an index list become vnc_vertex and g_triangle.
  */
-coot::simple_mesh_t LoadGltfModel(tinygltf::Model& model){
-
-    const moorhen_gltf::MeshData data = moorhen_gltf::modelToMeshData(model);
-    if (data.indices.empty()) {
-        return failedMesh(data.error.empty() ? "no triangles found" : data.error);
-    }
-
+static coot::simple_mesh_t meshDataToSimpleMesh(const moorhen_gltf::MeshData &data) {
     coot::simple_mesh_t mesh;
     mesh.status = 1;
     mesh.vertices.reserve(data.vertexCount());
@@ -162,10 +156,85 @@ coot::simple_mesh_t LoadGltfModel(tinygltf::Model& model){
         mesh.triangles.push_back(
             g_triangle(data.indices[3 * t], data.indices[3 * t + 1], data.indices[3 * t + 2]));
     }
+    return mesh;
+}
 
+coot::simple_mesh_t LoadGltfModel(tinygltf::Model& model){
+
+    const moorhen_gltf::MeshData data = moorhen_gltf::modelToMeshData(model);
+    if (data.indices.empty()) {
+        return failedMesh(data.error.empty() ? "no triangles found" : data.error);
+    }
+
+    const coot::simple_mesh_t mesh = meshDataToSimpleMesh(data);
     std::cout << "glTF: " << mesh.vertices.size() << " vertices, "
               << mesh.triangles.size() << " triangles" << std::endl;
     return mesh;
+}
+
+/**
+ * One material's worth of geometry, with what is needed to texture it.
+ *
+ * Three things rather than one, because simple_mesh_t has nowhere to put the other two: its
+ * vertex is position, normal and colour, and adding a field would be a change to Coot. So the
+ * coordinates travel beside the mesh rather than inside it, and the material is passed through
+ * as a bare index - what a material means, which image it names, is settled on the JavaScript
+ * side, which has to decode the images anyway and so already reads the material list.
+ *
+ * A vector of these is what an import returns: one element per material, in the order the
+ * materials are first met, each becoming one sub-buffer of the single imported object.
+ */
+struct MoorhenGltfMesh {
+    coot::simple_mesh_t mesh;
+    /** u,v per vertex, or empty when this material's geometry carried none. */
+    std::vector<float> texCoords;
+    /** The glTF material index, or -1 for a primitive that named no material. */
+    int material = -1;
+};
+
+/**
+ * Read a glTF or glb file as one mesh per material.
+ *
+ * Beside LoadGltFromFile rather than replacing it. Everything that only wants the geometry can go
+ * on calling that, and if this path turns out wrong there is something to fall back to.
+ *
+ * An empty result means the file could not be read. The reason is on the mesh of the single
+ * failed element, in its name, exactly as the merged call reports it - so a caller has one place
+ * to look whichever it used.
+ */
+std::vector<MoorhenGltfMesh> LoadGltfGroupsFromFile(const std::string &fn){
+    tinygltf::Model model;
+    tinygltf::TinyGLTF loader;
+    std::string err;
+    std::string warn;
+
+    const bool binary = fn.size() >= 4 && fn.substr(fn.size() - 4) == ".glb";
+    const bool result = binary
+        ? loader.LoadBinaryFromFile(&model, &err, &warn, fn, tinygltf::REQUIRE_VERSION)
+        : loader.LoadASCIIFromFile(&model, &err, &warn, fn, tinygltf::REQUIRE_VERSION);
+
+    if (!warn.empty()) std::cerr << "tinygltf warning: " << warn << '\n';
+    if (!err.empty())  std::cerr << "tinygltf error: " << err << '\n';
+
+    std::vector<MoorhenGltfMesh> groups;
+    if (!result) {
+        groups.push_back({failedMesh(err.empty() ? "tinygltf could not read the file" : err), {}, -1});
+        return groups;
+    }
+
+    const moorhen_gltf::MeshGroups extracted = moorhen_gltf::modelToMeshGroups(model);
+    if (extracted.groups.empty()) {
+        groups.push_back({failedMesh(extracted.error.empty() ? "no triangles found" : extracted.error), {}, -1});
+        return groups;
+    }
+
+    groups.reserve(extracted.groups.size());
+    for (const auto &group : extracted.groups) {
+        groups.push_back({meshDataToSimpleMesh(group), group.texCoords, group.material});
+    }
+
+    std::cout << "glTF: " << groups.size() << " material group(s)" << std::endl;
+    return groups;
 }
 
 /**
@@ -192,9 +261,36 @@ coot::simple_mesh_t LoadGltFromMemory(uintptr_t ptr, size_t size, const std::str
 #include <emscripten/bind.h>
 using namespace emscripten;
 
-// simple_mesh_t is already registered as a value_object in moorhen-types-wrappers.cc, so these
-// need nothing of their own - the mesh crosses by the binding that is already there.
+/**
+ * Copy a bound vector of floats into a JavaScript Float32Array.
+ *
+ * The same trick the mesh accessors in moorhen-wrappers-helpers.h use: a typed_memory_view over
+ * the C++ data, handed to the array's own `set`, so the whole thing moves in one memcpy rather
+ * than a million calls to a bound vector's `get`.
+ *
+ * Takes the vector rather than the struct holding it, deliberately. getPositionsFromSimpleMesh2
+ * and its siblings take a whole simple_mesh_t back from JavaScript, which means embind rebuilds
+ * the mesh - copying every vertex - on the way in. That is unavoidable when the data wanted is
+ * inside the mesh. Here it is beside it, so taking the vector alone skips that copy entirely.
+ */
+void getFloatsFromVector(const std::vector<float> &values, const emscripten::val &out){
+    const emscripten::val view{emscripten::typed_memory_view(values.size(), values.data())};
+    out.call<void>("set", view);
+}
+
+// simple_mesh_t is already registered as a value_object in moorhen-types-wrappers.cc, and
+// std::vector<float> as "VectorFloat" there too. Neither is registered again here: embind refuses
+// a duplicate registration at module load, and it does so with a message that names the type but
+// not the file, which would be a thoroughly unpleasant thing to debug.
 EMSCRIPTEN_BINDINGS(moorhen_gltf) {
+    value_object<MoorhenGltfMesh>("MoorhenGltfMesh")
+        .field("mesh", &MoorhenGltfMesh::mesh)
+        .field("texCoords", &MoorhenGltfMesh::texCoords)
+        .field("material", &MoorhenGltfMesh::material);
+    register_vector<MoorhenGltfMesh>("VectorMoorhenGltfMesh");
+
+    function("getFloatsFromVector", &getFloatsFromVector);
+    function("LoadGltfGroupsFromFile", &LoadGltfGroupsFromFile);
     function("LoadGltFromFile", &LoadGltFromFile);
     function("LoadGltFromMemory", &LoadGltFromMemory);
 }
@@ -208,6 +304,17 @@ int main(int argc, char *argv[]){
         if(mesh.status == 0) return 1;
         std::cout << mesh.vertices.size() << " vertices, "
                   << mesh.triangles.size() << " triangles" << std::endl;
+
+        // The grouped path over the same file. Printed in a form the offline suite can check, so
+        // that everything except the embind registration is exercised without a browser.
+        const std::vector<MoorhenGltfMesh> groups = LoadGltfGroupsFromFile(argv[1]);
+        std::cout << "groups " << groups.size() << std::endl;
+        for (const auto &group : groups) {
+            std::cout << "group material " << group.material
+                      << " vertices " << group.mesh.vertices.size()
+                      << " triangles " << group.mesh.triangles.size()
+                      << " texcoords " << group.texCoords.size() << std::endl;
+        }
         return 0;
     }
     return 1;

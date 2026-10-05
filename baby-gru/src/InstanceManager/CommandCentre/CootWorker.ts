@@ -1262,16 +1262,24 @@ type GltfSidecar = { name: string; data: Uint8Array }
  * JSON parser by looking at it, the comparison is case-sensitive, and a .GLB read as text fails
  * with a confusing complaint about invalid JSON.
  */
-const load_gltf = (
+/**
+ * Put a glTF and its sidecars in the module's filesystem, run something over it, and tidy up.
+ *
+ * Each import gets its own directory, with everything in it under the name the file actually has.
+ * Both halves matter. A .gltf keeps its buffers and images in separate files and refers to them by
+ * relative URI, so "scene.bin" has to exist under that exact name for tinygltf to find it. And the
+ * directory is what makes the real names safe to use: two imports of the same scene, or a scene
+ * whose buffer is called something as ordinary as "data.bin", cannot collide.
+ *
+ * Shared by the merged and the grouped readers, which differ only in what they call once the
+ * files are in place.
+ */
+const withGltfInFilesystem = <T>(
     fileData: ArrayBufferLike,
     name: string,
-    sidecars: GltfSidecar[] = []
-// The return type is spelt out, and deliberately requires status and name. simpleMeshToMeshData
-// returns the five buffer arrays and nothing else, so returning its result directly - which this
-// used to do, under a comment claiming it "carries status through" - silently dropped both. The
-// importer's reason then died here, one hop short of the person who needed it, and every failure
-// arrived as "contained no triangles". Requiring them makes that a compile error next time.
-): libcootApi.SimpleMeshJS & { status: number; name: string } => {
+    sidecars: GltfSidecar[],
+    read: (path: string) => T
+): T => {
     const directory = `gltf_${guid()}`
     const files: string[] = []
     const directories = new Set<string>([directory])
@@ -1304,18 +1312,15 @@ const load_gltf = (
         for (const sidecar of sidecars) write(sidecar.name, sidecar.data)
 
         const stem = (name.split("/").pop() || "model").replace(/\.(gltf|glb)$/i, "")
+        // The extension is normalised rather than preserved verbatim: tinygltf picks the binary or
+        // the JSON parser by looking at it, the comparison is case-sensitive, and a .GLB read as
+        // text fails with a confusing complaint about invalid JSON.
         const extension = name.toLowerCase().endsWith(".glb") ? ".glb" : ".gltf"
         // Always a usable path: the stem falls back to "model" and the extension is one of two
         // literals, so there is a filename here whatever the file was called.
         const path = write(`${stem}${extension}`, new Uint8Array(fileData))
 
-        const simpleMesh = cootModule.LoadGltFromFile(`./${path}`)
-        // Read before the conversion, which deletes the two vectors. These two are plain
-        // value_object fields rather than embind handles, so they survive that - but taking them
-        // first keeps the dependency obvious.
-        const status = simpleMesh.status
-        const meshName = simpleMesh.name
-        return { ...simpleMeshToMeshData(simpleMesh), status, name: meshName }
+        return read(`./${path}`)
     } finally {
         // Best effort, and deepest first. A directory left behind would leak for the lifetime of
         // the worker, but a throw in here would replace a real error - or a real result - with a
@@ -1327,6 +1332,108 @@ const load_gltf = (
             try { cootModule.FS.rmdir(path) } catch (_err) { /* not empty, or already gone */ }
         }
     }
+}
+
+/** One material's worth of an import, as flat arrays the main thread can put straight into a part. */
+type GltfGroupJS = {
+    vertices: Float32Array;
+    normals: Float32Array;
+    colours: Float32Array;
+    indices: Uint32Array;
+    /** Empty when this material's geometry carried no coordinates. */
+    texCoords: Float32Array;
+    /** The glTF material index, or -1. The main thread maps it to a texture. */
+    material: number;
+};
+
+/**
+ * Read a glTF as one mesh per material.
+ *
+ * Beside load_gltf rather than replacing it: everything that only wants geometry can go on using
+ * that, and if this path misbehaves there is something to fall back to.
+ *
+ * The material is passed through as the bare glTF index. What it means - which image, decoded how
+ * - is settled on the main thread, which has a browser to decode PNGs with and would otherwise be
+ * handed sixteen megabytes of pixels across the worker boundary for every texture.
+ */
+const load_gltf_groups = (
+    fileData: ArrayBufferLike,
+    name: string,
+    sidecars: GltfSidecar[] = []
+): { status: number; name: string; groups: GltfGroupJS[] } => {
+    return withGltfInFilesystem(fileData, name, sidecars, path => {
+        const groups = cootModule.LoadGltfGroupsFromFile(path)
+        try {
+            const out: GltfGroupJS[] = []
+            let status = 1
+            let meshName = ""
+
+            for (let i = 0; i < groups.size(); i++) {
+                const group = groups.get(i)
+                const mesh = group.mesh
+                // A failure arrives as a single group whose mesh says so, exactly as the merged
+                // call reports it - so there is one place to look whichever was used.
+                if (mesh.status === 0) {
+                    status = 0
+                    meshName = mesh.name
+                    mesh.vertices.delete()
+                    mesh.triangles.delete()
+                    group.texCoords.delete()
+                    break
+                }
+
+                const vertexCount = mesh.vertices.size()
+                const triangleCount = mesh.triangles.size()
+                const vertices = new Float32Array(vertexCount * 3)
+                const normals = new Float32Array(vertexCount * 3)
+                const colours = new Float32Array(vertexCount * 4)
+                const indices = new Uint32Array(triangleCount * 3)
+                cootModule.getPositionsFromSimpleMesh2(mesh, vertices)
+                cootModule.getNormalsFromSimpleMesh2(mesh, normals)
+                cootModule.getColoursFromSimpleMesh2(mesh, colours)
+                cootModule.getTriangleIndicesFromSimpleMesh2(mesh, indices)
+
+                // One memcpy rather than a call per element: a bound vector's `get` is a call
+                // across the boundary, and a large mesh has millions of these.
+                const texCoordCount = group.texCoords.size()
+                const texCoords = new Float32Array(texCoordCount)
+                if (texCoordCount > 0) cootModule.getFloatsFromVector(group.texCoords, texCoords)
+
+                // These are C++ objects behind handles, not collected with the JS wrapper. The
+                // mesh accessors above do not take ownership, so both are released here.
+                mesh.vertices.delete()
+                mesh.triangles.delete()
+                group.texCoords.delete()
+
+                out.push({ vertices, normals, colours, indices, texCoords, material: group.material })
+            }
+
+            return { status, name: meshName, groups: status === 0 ? [] : out }
+        } finally {
+            groups.delete()
+        }
+    })
+}
+
+const load_gltf = (
+    fileData: ArrayBufferLike,
+    name: string,
+    sidecars: GltfSidecar[] = []
+// The return type is spelt out, and deliberately requires status and name. simpleMeshToMeshData
+// returns the five buffer arrays and nothing else, so returning its result directly - which this
+// used to do, under a comment claiming it "carries status through" - silently dropped both. The
+// importer's reason then died here, one hop short of the person who needed it, and every failure
+// arrived as "contained no triangles". Requiring them makes that a compile error next time.
+): libcootApi.SimpleMeshJS & { status: number; name: string } => {
+    return withGltfInFilesystem(fileData, name, sidecars, path => {
+        const simpleMesh = cootModule.LoadGltFromFile(path)
+        // Read before the conversion, which deletes the two vectors. These two are plain
+        // value_object fields rather than embind handles, so they survive that - but taking them
+        // first keeps the dependency obvious.
+        const status = simpleMesh.status
+        const meshName = simpleMesh.name
+        return { ...simpleMeshToMeshData(simpleMesh), status, name: meshName }
+    })
 }
 
 const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolean) => {
@@ -1518,6 +1625,9 @@ const doCootCommand = (messageData: {
                 break
             case 'shim_load_gltf':
                 cootResult = load_gltf(...commandArgs as [ArrayBuffer, string, GltfSidecar[]])
+                break
+            case 'shim_load_gltf_groups':
+                cootResult = load_gltf_groups(...commandArgs as [ArrayBuffer, string, GltfSidecar[]])
                 break
             case 'shim_read_ccp4_map':
                 cootResult = read_ccp4_map(...commandArgs as [ArrayBuffer, string, boolean])

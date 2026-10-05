@@ -28,14 +28,15 @@
  *   length. Image URIs are left untouched, so textures resolve from the import directory exactly
  *   as they did.
  *
+ * Reading buffers and bufferViews is in gltfBuffers, shared with the rest of the glTF
+ * handling, so that all of it agrees about where a .glb chunk, a data: URI and a file beside
+ * the document are found.
+ *
  * The decoder itself is injected. Decoding is somebody else's library and a large WebAssembly
  * module; the rebuilding is ours and is where the mistakes would be, so it is kept separately
  * testable against geometry whose answer is known in advance.
  */
-
-const GLB_MAGIC = 0x46546c67; // "glTF"
-const CHUNK_JSON = 0x4e4f534a; // "JSON"
-const CHUNK_BIN = 0x004e4942; // "BIN\0"
+import { arrayAt, gltfBufferReader, splitGltf, type Json } from "./gltfBuffers";
 
 const COMPONENT_TYPE_FLOAT = 5126;
 const COMPONENT_TYPE_UNSIGNED_INT = 5125;
@@ -82,67 +83,6 @@ export type DecompressedGltf = {
 /** A prefix nothing in a real file will collide with, for the buffers this invents. */
 const SYNTHETIC_PREFIX = "__moorhen_";
 
-type Json = Record<string, unknown>;
-
-const asArray = (value: unknown): Json[] =>
-    Array.isArray(value) ? value.filter(e => e && typeof e === "object") as Json[] : [];
-
-/** The JSON and the binary chunk of either form of glTF. */
-const split = (bytes: ArrayBuffer): { json: Json; chunk: Uint8Array | null } | null => {
-    const data = new Uint8Array(bytes);
-    const isBinary = data.byteLength >= 20 &&
-        new DataView(data.buffer, data.byteOffset, data.byteLength).getUint32(0, true) === GLB_MAGIC;
-
-    if (!isBinary) {
-        try {
-            const parsed = JSON.parse(new TextDecoder().decode(data));
-            return parsed && typeof parsed === "object" ? { json: parsed, chunk: null } : null;
-        } catch {
-            return null;
-        }
-    }
-
-    const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-    let offset = 12;
-    let json: Json | null = null;
-    let chunk: Uint8Array | null = null;
-    while (offset + 8 <= data.byteLength) {
-        const length = view.getUint32(offset, true);
-        const kind = view.getUint32(offset + 4, true);
-        const start = offset + 8;
-        if (start + length > data.byteLength) break;
-        if (kind === CHUNK_JSON && json === null) {
-            try {
-                json = JSON.parse(new TextDecoder().decode(data.subarray(start, start + length)));
-            } catch {
-                return null;
-            }
-        } else if (kind === CHUNK_BIN && chunk === null) {
-            // Copied rather than referenced, because it becomes a file of its own.
-            chunk = data.slice(start, start + length);
-        }
-        offset = start + length + (((-length % 4) + 4) % 4);
-    }
-    return json ? { json, chunk } : null;
-};
-
-/** The bytes of a data: URI, or null if it is not one this can decode. */
-const dataUriBytes = (uri: string): Uint8Array | null => {
-    if (!uri.startsWith("data:")) return null;
-    const comma = uri.indexOf(",");
-    if (comma < 0) return null;
-    const payload = uri.slice(comma + 1);
-    if (!uri.slice(0, comma).includes(";base64")) return null;
-    try {
-        const binary = atob(payload);
-        const out = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i);
-        return out;
-    } catch {
-        return null;
-    }
-};
-
 /**
  * Rewrite a Draco-compressed glTF as a plain one.
  *
@@ -159,54 +99,20 @@ export const decompressDracoGltf = (
     available: Map<string, Uint8Array>,
     decode: DracoDecode
 ): DecompressedGltf | null => {
-    const parsed = split(bytes);
+    const parsed = splitGltf(bytes);
     if (!parsed) return null;
     const { json, chunk } = parsed;
 
-    const meshes = asArray(json.meshes);
-    const compressedPrimitives = meshes.flatMap(mesh => asArray(mesh.primitives))
+    const meshes = arrayAt(json, "meshes");
+    const compressedPrimitives = meshes.flatMap(mesh => arrayAt(mesh, "primitives"))
         .filter(primitive => {
             const extensions = primitive.extensions;
             return !!extensions && typeof extensions === "object" && DRACO_EXTENSION in extensions;
         });
     if (compressedPrimitives.length === 0) return null;
 
-    const buffers = asArray(json.buffers);
-    const bufferViews = asArray(json.bufferViews);
-    const accessors = asArray(json.accessors);
-
-    // A buffer's bytes, from the binary chunk, an embedded data: URI, or a file already read.
-    const bufferBytes = (index: number): Uint8Array => {
-        const buffer = buffers[index];
-        if (!buffer) throw new Error(`the file refers to buffer ${index}, which it does not define`);
-        const uri = buffer.uri;
-        if (typeof uri !== "string" || uri.length === 0) {
-            if (!chunk) throw new Error(`buffer ${index} has no uri and the file has no binary chunk`);
-            return chunk;
-        }
-        const embedded = dataUriBytes(uri);
-        if (embedded) return embedded;
-        let decoded = uri;
-        try {
-            decoded = decodeURIComponent(uri);
-        } catch { /* compare as written */ }
-        const supplied = available.get(decoded) ?? available.get(uri);
-        if (!supplied) throw new Error(`${decoded} is needed to decompress this file`);
-        return supplied;
-    };
-
-    const viewBytes = (index: unknown): Uint8Array => {
-        if (typeof index !== "number") throw new Error("the compressed data has no bufferView");
-        const view = bufferViews[index];
-        if (!view) throw new Error(`the file refers to bufferView ${index}, which it does not define`);
-        const data = bufferBytes(typeof view.buffer === "number" ? view.buffer : -1);
-        const start = typeof view.byteOffset === "number" ? view.byteOffset : 0;
-        const length = typeof view.byteLength === "number" ? view.byteLength : 0;
-        if (start + length > data.byteLength) {
-            throw new Error(`bufferView ${index} runs past the end of its buffer`);
-        }
-        return data.subarray(start, start + length);
-    };
+    const { viewBytes, buffers, bufferViews } = gltfBufferReader(parsed, available);
+    const accessors = arrayAt(json, "accessors");
 
     // Everything decoded goes here, and becomes one appended buffer. Collected as chunks and
     // joined once, so nothing is copied repeatedly as it grows.

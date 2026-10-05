@@ -1,6 +1,7 @@
 #ifndef MOORHEN_GLTF_MESH_HH
 #define MOORHEN_GLTF_MESH_HH
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstring>
@@ -396,6 +397,22 @@ namespace moorhen_gltf {
         std::vector<float> positions;   ///< x,y,z per vertex
         std::vector<float> normals;     ///< x,y,z per vertex
         std::vector<float> colours;     ///< r,g,b,a per vertex
+        /**
+         * u,v per vertex, or empty when nothing in this group was textured.
+         *
+         * Empty or exactly two per vertex, never anything between: a primitive with no TEXCOORD_0
+         * joining one that has them contributes zeroes, so the array stays in step with the
+         * vertices. A half-filled array would be read past its end by the attribute pointer.
+         */
+        std::vector<float> texCoords;
+        /**
+         * The glTF material index this group was drawn with, or -1 for none.
+         *
+         * The number is passed through rather than interpreted. What a material means - which
+         * image, what base colour - is settled on the JavaScript side, which has to decode the
+         * images anyway and so already reads the material list.
+         */
+        int material = -1;
         std::vector<unsigned int> indices;  ///< three per triangle
         /** What went wrong, if the result is empty when it should not be. */
         std::string error;
@@ -472,8 +489,23 @@ namespace moorhen_gltf {
         const auto colourIt = primitive.attributes.find("COLOR_0");
         if (colourIt != primitive.attributes.end()) colours = AccessorReader(model, colourIt->second);
 
+        // TEXCOORD_0 only. A second set exists for materials that use one map for colour and
+        // another for, say, occlusion, and nothing downstream has anywhere to put it yet.
+        AccessorReader texCoords;
+        const auto texCoordIt = primitive.attributes.find("TEXCOORD_0");
+        if (texCoordIt != primitive.attributes.end()) texCoords = AccessorReader(model, texCoordIt->second);
+
         const bool haveNormals = normals.ok() && normals.count() == positions.count();
         const bool haveColours = colours.ok() && colours.count() == positions.count();
+        const bool haveTexCoords = texCoords.ok() && texCoords.count() == positions.count();
+
+        // A group whose first primitive had no coordinates but whose second does would otherwise
+        // start the array part way through and put every pair against the wrong vertex. Filling
+        // the earlier vertices with zeroes keeps one pair per vertex, always.
+        if (haveTexCoords && mesh.texCoords.size() < mesh.vertexCount() * 2) {
+            mesh.texCoords.resize(mesh.vertexCount() * 2, 0.0f);
+        }
+        const bool writeTexCoords = haveTexCoords || !mesh.texCoords.empty();
         const std::array<float, 4> fallbackColour = materialColour(model, primitive.material);
         const std::array<double, 9> normalMatrix = normalTransform(transform);
 
@@ -501,6 +533,11 @@ namespace moorhen_gltf {
                 mesh.normals.insert(mesh.normals.end(), {0.0f, 0.0f, 0.0f});
             }
 
+            if (writeTexCoords) {
+                mesh.texCoords.push_back(haveTexCoords ? texCoords.get(v, 0) : 0.0f);
+                mesh.texCoords.push_back(haveTexCoords ? texCoords.get(v, 1) : 0.0f);
+            }
+
             if (haveColours) {
                 mesh.colours.push_back(colours.get(v, 0));
                 mesh.colours.push_back(colours.get(v, 1));
@@ -520,6 +557,7 @@ namespace moorhen_gltf {
                 mesh.positions.resize(firstVertex * 3);
                 mesh.normals.resize(firstVertex * 3);
                 mesh.colours.resize(firstVertex * 4);
+                if (!mesh.texCoords.empty()) mesh.texCoords.resize(firstVertex * 2);
                 return;
             }
             // indices.count(), not the position accessor's count. Taking the wrong one is what
@@ -543,9 +581,42 @@ namespace moorhen_gltf {
         if (!haveNormals) addFaceNormals(mesh, firstVertex, firstIndex);
     }
 
-    /** Walk a node and its children, accumulating their meshes. */
+    /**
+     * One MeshData per material, in the order the materials are first met.
+     *
+     * A glTF primitive is drawn with exactly one material, and a material is what a texture hangs
+     * off - so a file with several cannot be one mesh if any of them is textured. The grouping is
+     * by material rather than by primitive, because a scene like a chess set has thousands of
+     * primitives and fifteen materials, and one draw per primitive would be pointless.
+     *
+     * Everything the whole file has to say rather than one group - the modes that were skipped,
+     * the first error - stays here, since a primitive that was skipped belongs to no group.
+     */
+    struct MeshGroups {
+        std::vector<MeshData> groups;
+        unsigned int skippedModes = 0;
+        std::string error;
+
+        /** The group for a material, created on first use. */
+        MeshData &forMaterial(int material) {
+            for (auto &group : groups) {
+                if (group.material == material) return group;
+            }
+            groups.emplace_back();
+            groups.back().material = material;
+            return groups.back();
+        }
+
+        size_t triangleCount() const {
+            size_t total = 0;
+            for (const auto &group : groups) total += group.triangleCount();
+            return total;
+        }
+    };
+
+    /** Walk a node and its children, accumulating their meshes into their materials' groups. */
     inline void addNode(const tinygltf::Model &model, int nodeIndex,
-                        const Matrix &parent, MeshData &mesh, int depth = 0) {
+                        const Matrix &parent, MeshGroups &meshes, int depth = 0) {
         if (nodeIndex < 0 || nodeIndex >= static_cast<int>(model.nodes.size())) return;
         // A malformed file can describe a cycle; glTF forbids it, but nothing here can assume
         // the file is well formed.
@@ -556,10 +627,16 @@ namespace moorhen_gltf {
 
         if (node.mesh >= 0 && node.mesh < static_cast<int>(model.meshes.size())) {
             for (const auto &primitive : model.meshes[node.mesh].primitives) {
-                addPrimitive(model, primitive, here, mesh);
+                MeshData &group = meshes.forMaterial(primitive.material);
+                addPrimitive(model, primitive, here, group);
+                // Collected across the file: a skipped primitive joins no group, and the first
+                // real error is the one worth reporting.
+                meshes.skippedModes |= group.skippedModes;
+                group.skippedModes = 0;
+                if (meshes.error.empty() && !group.error.empty()) meshes.error = group.error;
             }
         }
-        for (int child : node.children) addNode(model, child, here, mesh, depth + 1);
+        for (int child : node.children) addNode(model, child, here, meshes, depth + 1);
     }
 
     /**
@@ -606,21 +683,21 @@ namespace moorhen_gltf {
     }
 
     /**
-     * Every mesh in the model, merged into one.
+     * Every mesh in the model, grouped by material.
      *
      * The scene's nodes are walked so that node transforms are applied. A model with no scenes
      * falls back to drawing every mesh at the origin, which is the best that can be done when
      * the file does not say where anything goes.
      */
-    inline MeshData modelToMeshData(const tinygltf::Model &model) {
-        MeshData mesh;
+    inline MeshGroups modelToMeshGroups(const tinygltf::Model &model) {
+        MeshGroups meshes;
 
         // Asked before anything is read, because two of the three do not fail - they succeed
         // with the wrong geometry, and there is no undoing that once it is in the scene.
         const std::string blocked = blockingFeature(model);
         if (!blocked.empty()) {
-            mesh.error = blocked;
-            return mesh;
+            meshes.error = blocked;
+            return meshes;
         }
 
         const int sceneIndex = (model.defaultScene >= 0 &&
@@ -630,20 +707,73 @@ namespace moorhen_gltf {
 
         if (sceneIndex >= 0) {
             for (int nodeIndex : model.scenes[sceneIndex].nodes) {
-                addNode(model, nodeIndex, identityMatrix(), mesh);
+                addNode(model, nodeIndex, identityMatrix(), meshes);
             }
         } else {
             for (const auto &m : model.meshes) {
                 for (const auto &primitive : m.primitives) {
-                    addPrimitive(model, primitive, identityMatrix(), mesh);
+                    MeshData &group = meshes.forMaterial(primitive.material);
+                    addPrimitive(model, primitive, identityMatrix(), group);
+                    meshes.skippedModes |= group.skippedModes;
+                    group.skippedModes = 0;
+                    if (meshes.error.empty() && !group.error.empty()) meshes.error = group.error;
                 }
             }
         }
 
-        if (mesh.indices.empty() && mesh.error.empty()) {
-            mesh.error = emptyReason(mesh, model);
+        // A material whose primitives all turned out to be unreadable leaves an empty group
+        // behind, which would become an empty draw buffer. Dropped here rather than guarded
+        // against everywhere downstream.
+        meshes.groups.erase(
+            std::remove_if(meshes.groups.begin(), meshes.groups.end(),
+                           [](const MeshData &group) { return group.indices.empty(); }),
+            meshes.groups.end());
+
+        if (meshes.groups.empty() && meshes.error.empty()) {
+            MeshData summary;
+            summary.skippedModes = meshes.skippedModes;
+            meshes.error = emptyReason(summary, model);
         }
-        return mesh;
+        return meshes;
+    }
+
+    /**
+     * Every mesh in the model, merged into one.
+     *
+     * The grouped form is what a textured import wants, since a texture belongs to a material;
+     * this is for everything that just wants the geometry, and for the callers that predate
+     * materials mattering. Merging is concatenation with the indices rebased - the groups are
+     * disjoint sets of vertices, so nothing has to be reconciled.
+     */
+    inline MeshData modelToMeshData(const tinygltf::Model &model) {
+        MeshGroups meshes = modelToMeshGroups(model);
+
+        MeshData merged;
+        merged.error = meshes.error;
+        merged.skippedModes = meshes.skippedModes;
+        // A merged mesh has no single material, and saying it has the first group's would be
+        // worse than saying it has none.
+        merged.material = meshes.groups.size() == 1 ? meshes.groups[0].material : -1;
+
+        // Only if every group has them. A merged array that is part real and part zeroes would
+        // texture some of the mesh and silently flatten the rest.
+        bool everyGroupTextured = !meshes.groups.empty();
+        for (const auto &group : meshes.groups) {
+            if (group.texCoords.size() != group.vertexCount() * 2) everyGroupTextured = false;
+        }
+
+        for (const auto &group : meshes.groups) {
+            const unsigned int base = static_cast<unsigned int>(merged.vertexCount());
+            merged.positions.insert(merged.positions.end(), group.positions.begin(), group.positions.end());
+            merged.normals.insert(merged.normals.end(), group.normals.begin(), group.normals.end());
+            merged.colours.insert(merged.colours.end(), group.colours.begin(), group.colours.end());
+            if (everyGroupTextured) {
+                merged.texCoords.insert(merged.texCoords.end(), group.texCoords.begin(), group.texCoords.end());
+            }
+            for (unsigned int index : group.indices) merged.indices.push_back(base + index);
+        }
+
+        return merged;
     }
 
 } // namespace moorhen_gltf

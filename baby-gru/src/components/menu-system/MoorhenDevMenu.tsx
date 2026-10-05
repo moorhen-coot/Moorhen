@@ -111,6 +111,50 @@ const addTexturedPlanesTo = (moorhenInstance: ReturnType<typeof useMoorhenInstan
     return ids;
 };
 
+/**
+ * One mesh object in two parts, each with a different texture.
+ *
+ * This is the shape a multi-material glTF will arrive in: one thing to select, centre on and
+ * delete, drawn as two sub-buffers because a texture belongs to a sub-buffer. The two
+ * checkerboards differ in how fine they are, so it is obvious at a glance that each part got its
+ * own texture rather than both getting the first one.
+ *
+ * Both still carry the corner markers, so a flip in either part is as visible as before. And
+ * because it is one object, clicking either square should select the whole thing - the pick
+ * bounds are computed over both parts, not just the first.
+ */
+const addTwoPartMeshTo = (moorhenInstance: ReturnType<typeof useMoorhenInstance>) => {
+    const coarse = registerTexture(checkerboardTexture(256, 4));
+    const fine = registerTexture(checkerboardTexture(256, 16));
+    const square = (x: number) => ({
+        vertices: [x - 10, -10, 0, x + 10, -10, 0, x + 10, 10, 0, x - 10, 10, 0],
+        indices: [0, 1, 2, 0, 2, 3],
+        normals: [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+        texCoords: [0, 1, 1, 1, 1, 0, 0, 0],
+    });
+
+    const uniqueId = moorhenInstance.object.create({
+        type: "mesh",
+        colour: "#ffffff",
+        origin: [0, 0, 0],
+        // The flat fields are not read when parts are given, but the type requires them.
+        vertices: [],
+        indices: [],
+        parts: [
+            { ...square(-11), texture: coarse },
+            { ...square(11), texture: fine },
+        ],
+        tags: { [TAG_SOURCE]: SOURCE_DEV_TEST },
+    });
+
+    const created = moorhenInstance.object.get(uniqueId);
+    if (created) {
+        const [x, y, z] = centreOfObject(created);
+        moorhenInstance.centerOnCoordinate(x, y, z);
+    }
+    return uniqueId;
+};
+
 export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
@@ -126,6 +170,10 @@ export const MoorhenDevMenu = () => {
     };
     const addTexturedPlanes = () => {
         addTexturedPlanesTo(moorhenInstance);
+        document.body.click();
+    };
+    const addTwoPartMesh = () => {
+        addTwoPartMeshTo(moorhenInstance);
         document.body.click();
     };
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
@@ -430,6 +478,7 @@ export const MoorhenDevMenu = () => {
             </MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
+            <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>
             <hr></hr>
             <MoorhenToggle
                 type="switch"
