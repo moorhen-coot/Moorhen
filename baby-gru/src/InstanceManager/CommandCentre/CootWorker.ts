@@ -1240,30 +1240,92 @@ const associate_data_mtz_file_with_map = (iMol: number, mtzData: { data: ArrayBu
 }
 
 
+/** A buffer or image file that a .gltf refers to by relative URI. */
+type GltfSidecar = { name: string; data: Uint8Array }
+
 /**
  * Read a glTF or glb file and return it as mesh data.
  *
- * Written to the module's filesystem first and loaded by path, which is deliberate: a .glb can
- * refer to buffers and images in files beside it, and only a path lets tinygltf resolve them.
- * The same reason read_ccp4_map below goes through a file rather than a string, and this follows
- * its pattern - a name nothing else will collide with, and an unlink in a finally so a failed
- * load does not leave the file behind.
+ * Each import gets its own directory, and everything goes into it under the name the file
+ * actually has. Both halves of that matter. A .gltf keeps its buffers and images in separate
+ * files and refers to them by relative URI, so "scene.bin" has to exist under that exact name
+ * for tinygltf to find it - which rules out the guid this used to rename the file to. And the
+ * directory is what makes the real names safe to use: two imports of the same scene, or a scene
+ * whose buffer is called something as ordinary as "data.bin", cannot collide.
  *
- * The extension is preserved because tinygltf chooses between the binary and the JSON parser by
- * looking at it; a .glb read as text fails with a confusing message about invalid JSON.
+ * (The C++ side has to co-operate, and until recently did not: it read the bytes itself and
+ * handed them to tinygltf's memory loaders with an empty base directory, so no external file
+ * could be resolved however the path was arranged. It now uses LoadASCIIFromFile and
+ * LoadBinaryFromFile, which derive the base directory from the path.)
+ *
+ * The extension is normalised rather than preserved verbatim: tinygltf picks the binary or the
+ * JSON parser by looking at it, the comparison is case-sensitive, and a .GLB read as text fails
+ * with a confusing complaint about invalid JSON.
  */
-const load_gltf = (fileData: ArrayBufferLike, name: string) => {
-    const theGuid = guid()
-    const extension = name.toLowerCase().endsWith(".glb") ? ".glb" : ".gltf"
-    const tempFilename = `./${theGuid}${extension}`
-    cootModule.FS_createDataFile(".", `${theGuid}${extension}`, new Uint8Array(fileData), true, true)
+const load_gltf = (
+    fileData: ArrayBufferLike,
+    name: string,
+    sidecars: GltfSidecar[] = []
+// The return type is spelt out, and deliberately requires status and name. simpleMeshToMeshData
+// returns the five buffer arrays and nothing else, so returning its result directly - which this
+// used to do, under a comment claiming it "carries status through" - silently dropped both. The
+// importer's reason then died here, one hop short of the person who needed it, and every failure
+// arrived as "contained no triangles". Requiring them makes that a compile error next time.
+): libcootApi.SimpleMeshJS & { status: number; name: string } => {
+    const directory = `gltf_${guid()}`
+    const files: string[] = []
+    const directories = new Set<string>([directory])
+    ensureCootModuleDirectory(directory)
+
+    /** Writes one file at a URI relative to the import directory, and returns its path. */
+    const write = (relative: string, data: Uint8Array): string | null => {
+        // "." and ".." are dropped rather than followed: a URI is not allowed to climb out of
+        // the directory it was loaded from, and a file that tries is not one to accommodate.
+        const parts = relative.split("/").filter(part => part.length > 0 && part !== "." && part !== "..")
+        const fileName = parts.pop()
+        if (!fileName) return null
+        const parent = [directory, ...parts].join("/")
+        if (parts.length > 0) {
+            ensureCootModuleDirectory(parent)
+            parts.reduce((path, part) => {
+                const next = `${path}/${part}`
+                directories.add(next)
+                return next
+            }, directory)
+        }
+        cootModule.FS_createDataFile(parent, fileName, data, true, true)
+        const path = `${parent}/${fileName}`
+        files.push(path)
+        return path
+    }
+
     try {
-        const simpleMesh = cootModule.LoadGltFromFile(tempFilename)
-        // simpleMeshToMeshData carries status through and deletes the embind handles, so a
-        // failed load arrives as status 0 rather than as an empty mesh that looks successful.
-        return simpleMeshToMeshData(simpleMesh)
+        // Sidecars first, so that they are in place before anything tries to read them.
+        for (const sidecar of sidecars) write(sidecar.name, sidecar.data)
+
+        const stem = (name.split("/").pop() || "model").replace(/\.(gltf|glb)$/i, "")
+        const extension = name.toLowerCase().endsWith(".glb") ? ".glb" : ".gltf"
+        // Always a usable path: the stem falls back to "model" and the extension is one of two
+        // literals, so there is a filename here whatever the file was called.
+        const path = write(`${stem}${extension}`, new Uint8Array(fileData))
+
+        const simpleMesh = cootModule.LoadGltFromFile(`./${path}`)
+        // Read before the conversion, which deletes the two vectors. These two are plain
+        // value_object fields rather than embind handles, so they survive that - but taking them
+        // first keeps the dependency obvious.
+        const status = simpleMesh.status
+        const meshName = simpleMesh.name
+        return { ...simpleMeshToMeshData(simpleMesh), status, name: meshName }
     } finally {
-        cootModule.FS_unlink(tempFilename)
+        // Best effort, and deepest first. A directory left behind would leak for the lifetime of
+        // the worker, but a throw in here would replace a real error - or a real result - with a
+        // complaint about tidying up.
+        for (const path of files) {
+            try { cootModule.FS_unlink(path) } catch (_err) { /* already gone */ }
+        }
+        for (const path of [...directories].sort((a, b) => b.length - a.length)) {
+            try { cootModule.FS.rmdir(path) } catch (_err) { /* not empty, or already gone */ }
+        }
     }
 }
 
@@ -1455,7 +1517,7 @@ const doCootCommand = (messageData: {
                 cootResult = auto_read_mtz(...commandArgs as [ArrayBuffer])
                 break
             case 'shim_load_gltf':
-                cootResult = load_gltf(...commandArgs as [ArrayBuffer, string])
+                cootResult = load_gltf(...commandArgs as [ArrayBuffer, string, GltfSidecar[]])
                 break
             case 'shim_read_ccp4_map':
                 cootResult = read_ccp4_map(...commandArgs as [ArrayBuffer, string, boolean])

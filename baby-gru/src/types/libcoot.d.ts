@@ -358,6 +358,16 @@ export namespace libcootApi {
     interface SimpleMeshT {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;
+        /** 1 if the mesh was built, 0 if it could not be. */
+        status: number;
+        /**
+         * What the mesh is, and - when status is 0 - why it is not.
+         *
+         * simple_mesh_t has no other field to put a reason in, so a failing generator writes one
+         * here. Both are plain value_object fields, so they are ordinary JavaScript values on
+         * this side and remain readable after the two vectors have been deleted.
+         */
+        name: string;
     }
     interface SimpleMeshJS {
         prim_types: [[string]];
@@ -367,6 +377,16 @@ export namespace libcootApi {
         additional_norm_tri?: [[number[] | Float32Array]];
         norm_tri: [[number[] | Float32Array]];
         col_tri: [[number[] | Float32Array]];
+        /**
+         * Carried through from simple_mesh_t by the callers that need it.
+         *
+         * simpleMeshToMeshData returns only the buffer arrays, so these are absent unless the
+         * worker function attaches them. A caller that has to tell a failure from an empty
+         * result - the glTF import, which must report which feature it could not read - needs
+         * them and says so in its own return type.
+         */
+        status?: number;
+        name?: string;
     }
     interface SymmetryData {
         cell: CellTranslation;
@@ -605,6 +625,8 @@ export namespace libcootApi {
         FS: {
             readFile(tempFilename: string, arg1: { encoding: string }): string | Uint8Array;
             mkdir: (arg0: string) => void;
+            /** Removes an empty directory. Throws if anything is still in it. */
+            rmdir: (arg0: string) => void;
         };
         FS_unlink(tempFilename: string): void;
         FS_createDataFile(arg0: string, arg1: string, arg2: Uint8Array | string, arg3: boolean, arg4: boolean, arg5?: boolean): void;

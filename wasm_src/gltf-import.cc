@@ -60,40 +60,40 @@ static coot::simple_mesh_t failedMesh(const std::string &why) {
     return mesh;
 }
 
+/**
+ * Read a glTF or glb from a path, letting tinygltf resolve anything beside it.
+ *
+ * tinygltf's own file loaders rather than reading the bytes here and handing them to the memory
+ * loaders, because the difference is the base directory. LoadASCIIFromFile and LoadBinaryFromFile
+ * each call GetBaseDir on the filename and pass the result through, which is what lets a .gltf
+ * find the "scene.bin" sitting next to it. Doing the read by hand and calling the memory loaders
+ * threw that away - it passed "." for a .glb and an empty string for a .gltf, so an external
+ * buffer could never be found whatever directory the file was actually in.
+ *
+ * A URI with a directory component in it ("textures/wood.png") resolves relative to the base
+ * directory like any other, so a file laid out in subdirectories works provided those
+ * subdirectories exist in the filesystem the caller prepared.
+ */
 coot::simple_mesh_t LoadGltfModelFromFile(const std::string& filename, tinygltf::Model& model){
-    std::vector<unsigned char> buffer;
-    std::string str;
+    tinygltf::TinyGLTF loader;
+    std::string err;
+    std::string warn;
 
-    if (filename.size() >= 4 && filename.substr(filename.size() - 4) == ".glb"){
-        std::ifstream is(filename, std::ios_base::binary);
-        if (is) {
-            // get length of file:
-            is.seekg (0, is.end);
-            int length = is.tellg();
-            is.seekg (0, is.beg);
+    // Chosen by extension, because the two formats need different parsers and tinygltf does not
+    // sniff. A .glb read as JSON fails with a confusing complaint about an invalid document.
+    const bool binary = filename.size() >= 4 && filename.substr(filename.size() - 4) == ".glb";
+    const bool result = binary
+        ? loader.LoadBinaryFromFile(&model, &err, &warn, filename, tinygltf::REQUIRE_VERSION)
+        : loader.LoadASCIIFromFile(&model, &err, &warn, filename, tinygltf::REQUIRE_VERSION);
 
+    if (!warn.empty()) std::cerr << "tinygltf warning: " << warn << '\n';
+    if (!err.empty())  std::cerr << "tinygltf error: " << err << '\n';
 
-            // read data as a block:
-            buffer.resize(length);
-            is.read(reinterpret_cast<char *>(&buffer.at(0)),length);
-
-            if (is){
-                std::cout << "all characters read successfully." << std::endl;
-            } else {
-                std::cout << "error: only " << is.gcount() << " could be read" << std::endl;
-                return failedMesh("file could not be read");
-            }
-            is.close();
-        }
-    } else {
-	std::ifstream file(filename.c_str());
-	std::stringstream sbuffer;
-	sbuffer << file.rdbuf();
-        str = sbuffer.str();
+    if (!result) {
+        return failedMesh(err.empty() ? "tinygltf could not read the file" : err);
     }
 
-    return  LoadGltfModelFromMemory(model, buffer, str);
-    
+    return LoadGltfModel(model);
 }
 
 coot::simple_mesh_t LoadGltfModelFromMemory(tinygltf::Model& model, const std::vector<unsigned char> &buffer, const std::string &str){

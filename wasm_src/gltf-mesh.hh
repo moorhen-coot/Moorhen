@@ -268,7 +268,112 @@ namespace moorhen_gltf {
         bool ok_ = false;
     };
 
-    /** A primitive's base colour, from its material, for use when it has no COLOR_0. */
+    /** A primitive mode by name, for a message that has to say what was skipped. */
+    inline const char *modeName(int mode) {
+        switch (mode) {
+            case TINYGLTF_MODE_POINTS: return "points";
+            case TINYGLTF_MODE_LINE: return "lines";
+            case TINYGLTF_MODE_LINE_LOOP: return "line loops";
+            case TINYGLTF_MODE_LINE_STRIP: return "line strips";
+            case TINYGLTF_MODE_TRIANGLES: return "triangles";
+            case TINYGLTF_MODE_TRIANGLE_STRIP: return "triangle strips";
+            case TINYGLTF_MODE_TRIANGLE_FAN: return "triangle fans";
+            default: return "an unrecognised mode";
+        }
+    }
+
+    /**
+     * Whether an extension could plausibly be why there is no geometry.
+     *
+     * Used only to decide which names are worth putting in front of someone whose import came
+     * back empty. Naming an irrelevant extension is not harmless - it sends them to look at the
+     * wrong thing - so the ones that cannot be the cause are filtered out.
+     *
+     * By prefix rather than by a list of exact names, because the KHR_materials_ family keeps
+     * growing and an enumeration would quietly go stale.
+     */
+    inline bool mayAffectGeometry(const std::string &extension) {
+        // Quantisation is the one that matters to get right. It is nearly always in
+        // extensionsRequired, and all it does is allow byte and short attributes where glTF
+        // would otherwise demand float - which AccessorReader already reads, with and without
+        // `normalized`. Treating it as a cause would blame it for files it loads perfectly.
+        if (extension == "KHR_mesh_quantization") return false;
+        // These change how a surface looks, not where it is. Appearance past a base colour does
+        // not survive into a simple_mesh_t anyway, so they are no worse than the texture support
+        // that is already missing.
+        if (extension.rfind("KHR_materials_", 0) == 0) return false;
+        if (extension.find("texture") != std::string::npos) return false;
+        if (extension == "KHR_lights_punctual") return false;
+        return true;
+    }
+
+    /** Whether a primitive's POSITION can actually be reached. */
+    inline bool positionReadable(const tinygltf::Model &model,
+                                 const tinygltf::Primitive &primitive) {
+        const auto it = primitive.attributes.find("POSITION");
+        if (it == primitive.attributes.end()) return false;
+        return AccessorReader(model, it->second).ok();
+    }
+
+    /**
+     * Why the geometry is out of reach before any of it is read, or "" if nothing is.
+     *
+     * These three are worth refusing up front rather than discovering afterwards, because two of
+     * them do not fail - they succeed with the wrong answer. A sparse accessor read without its
+     * substitution gives the base values, so part of the mesh sits where an earlier revision of
+     * the file put it; a meshopt bufferView read raw gives compressed bytes reinterpreted as
+     * floats, or zeroes from the fallback buffer. Either way something is drawn, it looks like a
+     * mesh, and nothing says it is wrong. Refusing with a reason is the lesser evil until they
+     * are implemented.
+     *
+     * Draco is the one that does fail, and failed misleadingly: tinygltf parses the file happily,
+     * leaves every accessor's bufferView at -1, and the import arrived as "no triangles found" -
+     * which reads as a complaint about the file rather than about Moorhen.
+     */
+    inline std::string blockingFeature(const tinygltf::Model &model) {
+        for (const auto &mesh : model.meshes) {
+            for (const auto &primitive : mesh.primitives) {
+                if (!primitive.extensions.count("KHR_draco_mesh_compression")) continue;
+                // Only when it is genuinely the obstacle. tinygltf leaves the extension in place
+                // after decoding it, so were TINYGLTF_ENABLE_DRACO ever switched on - or were the
+                // file decompressed before it got here - an unconditional test would start
+                // refusing files it had just successfully read.
+                if (!positionReadable(model, primitive)) {
+                    return "the geometry is Draco-compressed (KHR_draco_mesh_compression), "
+                           "which Moorhen cannot yet read";
+                }
+            }
+        }
+        for (const auto &view : model.bufferViews) {
+            if (view.extensions.count("EXT_meshopt_compression")) {
+                return "the geometry is meshopt-compressed (EXT_meshopt_compression), "
+                       "which Moorhen cannot yet read";
+            }
+        }
+        for (size_t a = 0; a < model.accessors.size(); a++) {
+            if (model.accessors[a].sparse.isSparse) {
+                // Kept short because this ends up in front of someone as a notification. Why it
+                // is refused rather than loaded is in the comment above, where it belongs.
+                return "accessor " + std::to_string(a) + " uses sparse storage, which Moorhen "
+                       "does not yet support";
+            }
+        }
+        return "";
+    }
+
+    /**
+     * What colour to use when a primitive has no COLOR_0.
+     *
+     * A material's baseColorFactor if it has one, since that is what the file asks for - even if
+     * it asks for white.
+     *
+     * With no material at all, grey rather than the white that glTF nominates as its default.
+     * Moorhen's background defaults to white and is user-settable, with black the other common
+     * choice; a mid grey is visible against either, where white against the default loads
+     * perfectly and appears to be nothing at all - a success indistinguishable from a failure.
+     * Spec-correct and invisible is the worse answer here, and a file that states no colour has
+     * no opinion to override.
+     */
     inline std::array<float, 4> materialColour(const tinygltf::Model &model, int materialIndex) {
         if (materialIndex >= 0 && materialIndex < static_cast<int>(model.materials.size())) {
             const auto &factor = model.materials[materialIndex].pbrMetallicRoughness.baseColorFactor;
@@ -277,8 +382,7 @@ namespace moorhen_gltf {
                         static_cast<float>(factor[2]), static_cast<float>(factor[3])};
             }
         }
-        // glTF's own default base colour factor is opaque white.
-        return {1.0f, 1.0f, 1.0f, 1.0f};
+        return {0.6f, 0.6f, 0.6f, 1.0f};
     }
 
     /**
@@ -295,6 +399,13 @@ namespace moorhen_gltf {
         std::vector<unsigned int> indices;  ///< three per triangle
         /** What went wrong, if the result is empty when it should not be. */
         std::string error;
+        /**
+         * One bit per TINYGLTF_MODE_ that was passed over.
+         *
+         * Kept so that a file of nothing but points or lines can say so. "No triangles found" is
+         * true of a point cloud and tells the person nothing they did not already know.
+         */
+        unsigned int skippedModes = 0;
         size_t vertexCount() const { return positions.size() / 3; }
         size_t triangleCount() const { return indices.size() / 3; }
     };
@@ -341,7 +452,12 @@ namespace moorhen_gltf {
 
         // Only triangle lists. Strips, fans, lines and points are skipped rather than guessed
         // at: drawing them as triangles would produce confident nonsense.
-        if (primitive.mode != TINYGLTF_MODE_TRIANGLES) return;
+        if (primitive.mode != TINYGLTF_MODE_TRIANGLES) {
+            if (primitive.mode >= TINYGLTF_MODE_POINTS && primitive.mode <= TINYGLTF_MODE_TRIANGLE_FAN) {
+                mesh.skippedModes |= 1u << primitive.mode;
+            }
+            return;
+        }
 
         const auto positionIt = primitive.attributes.find("POSITION");
         if (positionIt == primitive.attributes.end()) return;
@@ -447,6 +563,49 @@ namespace moorhen_gltf {
     }
 
     /**
+     * Why an extraction that found nothing found nothing.
+     *
+     * Every branch here starts from "no triangles found", which is the observation, and adds what
+     * can be said about the cause. A point cloud, a file of nothing but line sets, and a file
+     * whose geometry depends on an extension we do not implement are all different situations
+     * that used to arrive as the same four words.
+     */
+    inline std::string emptyReason(const MeshData &mesh, const tinygltf::Model &model) {
+        if (model.meshes.empty()) return "the file contains no meshes";
+
+        // Joined as a person would write it. The message is read by someone wondering what is
+        // wrong with their file, so "points and line strips" rather than "points, line strips".
+        const auto join = [](const std::vector<std::string> &items) {
+            std::string out;
+            for (size_t i = 0; i < items.size(); i++) {
+                if (i > 0) out += (i + 1 == items.size()) ? " and " : ", ";
+                out += items[i];
+            }
+            return out;
+        };
+
+        std::string why = "no triangles found";
+
+        std::vector<std::string> modes;
+        for (int mode = TINYGLTF_MODE_POINTS; mode <= TINYGLTF_MODE_TRIANGLE_FAN; mode++) {
+            if ((mesh.skippedModes & (1u << mode)) != 0) modes.push_back(modeName(mode));
+        }
+        if (!modes.empty()) {
+            why += "; the file draws only " + join(modes) + ", which Moorhen does not render";
+        }
+
+        std::vector<std::string> required;
+        for (const auto &extension : model.extensionsRequired) {
+            if (mayAffectGeometry(extension)) required.push_back(extension);
+        }
+        if (!required.empty()) {
+            why += "; it requires " + join(required) + ", which Moorhen does not implement";
+        }
+
+        return why;
+    }
+
+    /**
      * Every mesh in the model, merged into one.
      *
      * The scene's nodes are walked so that node transforms are applied. A model with no scenes
@@ -455,6 +614,14 @@ namespace moorhen_gltf {
      */
     inline MeshData modelToMeshData(const tinygltf::Model &model) {
         MeshData mesh;
+
+        // Asked before anything is read, because two of the three do not fail - they succeed
+        // with the wrong geometry, and there is no undoing that once it is in the scene.
+        const std::string blocked = blockingFeature(model);
+        if (!blocked.empty()) {
+            mesh.error = blocked;
+            return mesh;
+        }
 
         const int sceneIndex = (model.defaultScene >= 0 &&
                                 model.defaultScene < static_cast<int>(model.scenes.size()))
@@ -474,7 +641,7 @@ namespace moorhen_gltf {
         }
 
         if (mesh.indices.empty() && mesh.error.empty()) {
-            mesh.error = "no triangles found";
+            mesh.error = emptyReason(mesh, model);
         }
         return mesh;
     }
