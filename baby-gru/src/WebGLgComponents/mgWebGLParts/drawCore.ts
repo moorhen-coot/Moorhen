@@ -1,6 +1,7 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
+import { slabNearFar, viewportAspect } from './projection';
 import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
@@ -1353,16 +1354,23 @@ export function drawScene(self: MGWebGL) : void {
             }
         }
 
-        // Pick the discard-free programs when nothing needs a discard: the orthographic
-        // projection already clips the slab through its near and far planes, so the clip test
-        // in the shader can only agree with it, and the peel test only matters while peeling.
-        // Under perspective the projection uses fixed near/far instead, so the discards there
-        // are the only thing enforcing the slab and must stay. See the header of
-        // webgl-2/triangle-fragment-shader.js.
+        // Pick the discard-free programs when nothing needs a discard: the projection clips the
+        // slab through its own near and far planes, so the clip test in the shader can only
+        // agree with it, and the peel test only matters while peeling.
+        //
+        // Derived from the same inputs the projection itself uses rather than read from a flag
+        // GLrender sets, because GLrender runs after this - a flag would be a frame stale, and
+        // a stale "the hardware is clipping" is a front clip that silently stops working.
+        //
+        // slab.exact is false only when a perspective near plane had to be clamped to stay
+        // positive, which happens when the front clip is dragged to or behind the eye. The
+        // discards are then the only thing enforcing the slab, so the full programs are used.
         //
         // Swapped wholesale rather than chosen at each use, so the dozens of places that read
         // self.shaderProgram need no knowledge of this at all.
-        const useFastShaders = !self.doPerspectiveProjection && !self.doPeel;
+        const slabForShaders = slabNearFar(
+            self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, self.doPerspectiveProjection);
+        const useFastShaders = slabForShaders.exact && !self.doPeel;
         self.shaderProgram = useFastShaders ? self.shaderProgramFast : self.shaderProgramClip;
         self.shaderProgramInstanced = useFastShaders ? self.shaderProgramInstancedFast : self.shaderProgramInstancedClip;
         self.shaderProgramThickLinesNormal = useFastShaders ? self.shaderProgramThickLinesNormalFast : self.shaderProgramThickLinesNormalClip;
@@ -2260,12 +2268,21 @@ export function depthBlur(self: MGWebGL, invMat) {
         self.gl.uniformMatrix4fv(self.shaderProgramBlurX.pMatrixUniform, false, paintPMatrix);
         self.gl.uniformMatrix4fv(self.shaderProgramBlurX.mvMatrixUniform, false, paintMvMatrix);
 
-        let f = -(self.gl_clipPlane0[3]);
-        let b = Math.min(self.gl_clipPlane1[3],self.gl_fog_end);
-        if(self.doPerspectiveProjection){
-            f = 100
-            b = 270
-        }
+        // The near and far the projection is actually using, for both modes.
+        //
+        // This used to substitute a fixed 100 and 270 under perspective, to match the fixed
+        // near/far the perspective projection had then - except that its far was 1270, not 270,
+        // so the mapping below was already working from a depth range three times narrower than
+        // the real one. Now that perspective derives its planes from the slab like orthographic
+        // does, one expression serves both and there is nothing left to keep in step.
+        //
+        // What remains approximate under perspective: blurDepth is converted below into a
+        // linear fraction of the slab, while the depth buffer it is compared against is not
+        // linear in perspective. The focal plane therefore sits nearer the viewer than the
+        // slider implies. Correcting that means linearising the sampled depth in the blur
+        // shaders, which is a change to those shaders rather than to this arithmetic.
+        const { near: f, far: b } = slabNearFar(
+            self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, self.doPerspectiveProjection);
 
         const displayBuffers = self.store.getState().glRef.displayBuffers
         let min_x =  1e5;
@@ -2669,11 +2686,25 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             if(self.renderToTexture){
                 //FIXME - drawingGBuffers stanza?
                 if(self.doPerspectiveProjection){
-                    //FIXME - with  multiviews
-                    mat4.perspective(self.pMatrix, 1.0, 1.0, 100, 1270.0);
+                    // Aspect stays at 1.0. Measured, not derived: it is right on screen for both
+                    // plain and side-by-side capture, and deriving the aspect from the capture
+                    // viewport instead - (viewport * framebuffer / canvas), which gives 0.5 per
+                    // eye - visibly stretched the stereo screenshot. The arithmetic for that
+                    // viewport is not in dispute, so something downstream is already accounting
+                    // for it; the perspMult zoom applied to this matrix further down is the
+                    // obvious candidate and the two want untangling together, by eye, rather
+                    // than one of them being changed on its own.
+                    //
+                    // The near and far are a separate matter and do come from the slab: they
+                    // clip, they do not frame, so they cannot affect any of the above.
+                    const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, true);
+                    mat4.perspective(self.pMatrix, 1.0, 1.0, slab.near, slab.far);
                 } else {
-                    const f = self.gl_clipPlane0[3];
-                    const b = Math.min(self.gl_clipPlane1[3],self.gl_fog_end);
+                    const { near: f_, far: b } = slabNearFar(
+                        self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, false);
+                    // The call sites below were written against -f, so keep that spelling here
+                    // rather than touching four matrix calls: near is already -clipPlane0[3].
+                    const f = -f_;
                     if(self.currentViewport[2] > self.currentViewport[3]){
                         if(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo){
                             mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
@@ -2688,11 +2719,18 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                 }
             } else {
                 if(self.doPerspectiveProjection){
-                    mat4.perspective(self.pMatrix, 1.0, self.gl.viewportWidth / self.gl.viewportHeight, 100, 1270.0);
+                    // Two fixes in one line. The aspect came from the canvas rather than the
+                    // viewport, so every mode that divides the canvas - side-by-side and
+                    // cross-eyed stereo, three-way, multiview - was drawn stretched by exactly
+                    // the factor the viewport had been divided by. And the near and far were
+                    // fixed at 100 and 1270, so the slab was enforced only by the fragment
+                    // discards, which cost the program its early depth rejection and spread the
+                    // depth buffer over ten times the range the geometry occupies.
+                    const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, true);
+                    mat4.perspective(self.pMatrix, 1.0, viewportAspect(self.currentViewport), slab.near, slab.far);
                 } else {
-                    const b = Math.min(self.gl_clipPlane1[3],self.gl_fog_end);
-                    const f = self.gl_clipPlane0[3];
-                    mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
+                    const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, false);
+                    mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24, 24, slab.near, slab.far);
                 }
             }
 
@@ -2746,6 +2784,8 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
 
         if(self.doPerspectiveProjection){
             //FIXME - What is the justificatio of 5.7? (Approximately tan(acos(48./270.)), but not quite close enough)....
+            // The 1/ratio for landscape offscreen capture stays: it pairs with the aspect of
+            // 1.0 that path uses, and both are left as they were.
             let perspMult = 1.0;
             if(self.renderToTexture){
                 if(self.gl.viewportWidth > self.gl.viewportHeight){

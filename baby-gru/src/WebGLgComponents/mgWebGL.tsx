@@ -108,6 +108,7 @@ import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setO
 import { drawTransparent, drawImagesAndText, drawTexturedShapes, drawTextLabels, drawDistancesAndLabels, drawCircles, drawLineMeasures, drawCrosshairs, drawMouseTrack, drawFPSMeter, drawTextOverlays } from './mgWebGLParts/overlays'
 import { drawBuffer, drawMaxElementsUInt, setupModelViewTransformMatrixInteractive, drawTransformMatrixInteractive, drawTransformMatrix, drawTransformMatrixInteractivePMV, drawTransformMatrixPMV } from './mgWebGLParts/bufferDraw'
 import { drawPeel, drawTriangles, drawScene, applySymmetryMatrix, bindFramebufferDrawBuffers } from './mgWebGLParts/drawCore'
+import { pickHalfExtents } from './mgWebGLParts/projection'
 import { initInstanceState, initGraphicsContext, attachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
 import { getDeviceScale} from './webGLUtils'
 import { rayMeshHit } from './rayMesh'
@@ -1557,19 +1558,35 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         quat4Inverse(this.myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
-        const minX = (-24. * ratio * this.zoom);
-        const maxX = (24. * ratio * this.zoom);
-        const minY = (-24. * this.zoom);
-        const maxY = (24. * this.zoom);
         const fracX = 1.0 * x / this.gl.viewportWidth;
         const fracY = 1.0 * (y) / this.gl.viewportHeight;
-        const theX = minX + fracX * (maxX - minX);
-        const theY = maxY - fracY * (maxY - minY);
-        //let frontPos = vec3Create([theX,theY,-1000.0]);
-        //let backPos  = vec3Create([theX,theY,1000.0]);
-        //MN Changed to improve picking
-        const frontPos = vec3Create([theX, theY, -this.gl_clipPlane0[3] - this.fogClipOffset]);
-        const backPos = vec3Create([theX, theY, this.gl_clipPlane1[3] - this.fogClipOffset]);
+
+        // The slab offsets of the two ends of the ray, measured from the view centre.
+        const frontZ = -this.gl_clipPlane0[3] - this.fogClipOffset;
+        const backZ = this.gl_clipPlane1[3] - this.fogClipOffset;
+
+        // Where the cursor lands depends on how wide the view is at that depth, and under
+        // perspective that is not the same at the two ends of the ray. This used to use one pair
+        // of extents - the orthographic ones - for both ends and both projections, so in
+        // perspective the ray was built as though the view were orthographic and picking, hover,
+        // measurement and gizmo dragging all aimed slightly wrong.
+        //
+        // Orthographic is unchanged: pickHalfExtents returns 24*zoom by 24*zoom*ratio whatever
+        // depth it is given, which is exactly the two pairs of numbers that were here.
+        const atDepth = (slabZ: number) => {
+            const { halfWidth, halfHeight } =
+                pickHalfExtents(this.fogClipOffset + slabZ, this.zoom, ratio, this.doPerspectiveProjection);
+            return [
+                -halfWidth + fracX * 2 * halfWidth,
+                halfHeight - fracY * 2 * halfHeight,
+            ];
+        };
+
+        const [frontX, frontY] = atDepth(frontZ);
+        const [backX, backY] = atDepth(backZ);
+
+        const frontPos = vec3Create([frontX, frontY, frontZ]);
+        const backPos = vec3Create([backX, backY, backZ]);
         vec3.transformMat4(frontPos, frontPos, theMatrix);
         vec3.transformMat4(backPos, backPos, theMatrix);
         vec3.subtract(frontPos, frontPos, this.origin);
@@ -1799,18 +1816,25 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const modelPointArrayResultsFront = [];
         const modelPointArrayResultsBack = [];
 
-        //FIXME - This is hackery
-        let factor = 999.9;
-        if(this.doPerspectiveProjection){
-            factor = 99.9;
-        }
+        // unProject takes window depth, which runs 0 at the near plane to 1 at the far plane -
+        // it maps the value straight onto normalised device coordinates with inp[2]*2-1. Since
+        // the projection's near and far now are the slab, the two ends of the ray through the
+        // slab are simply 0 and 1, and the clip planes need not appear here at all.
+        //
+        // What was here divided a world distance by 999.9, or 99.9 under perspective, and called
+        // itself hackery. Working it through for a typical view it put the front endpoint at
+        // about 0.5 - half way through the slab rather than at its front - and the back endpoint
+        // slightly negative, i.e. in front of the near plane. The ray therefore ran from the
+        // middle of the slab towards the viewer: short, and the wrong way round.
+        const NEAR_PLANE_DEPTH = 0.0;
+        const FAR_PLANE_DEPTH = 1.0;
         let success = unProject(
-                x, yp, -(this.gl_clipPlane0[3]-this.fogClipOffset)/factor,
+                x, yp, NEAR_PLANE_DEPTH,
                 mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
                 viewportArray, modelPointArrayResultsFront);
 
         success = unProject(
-                x, yp, -(this.gl_clipPlane1[3]-this.fogClipOffset)/factor,
+                x, yp, FAR_PLANE_DEPTH,
                 mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
                 viewportArray, modelPointArrayResultsBack);
 

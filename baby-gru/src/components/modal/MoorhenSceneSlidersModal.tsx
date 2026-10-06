@@ -9,6 +9,8 @@ import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
 import {RootState } from '../../store/MoorhenReduxStore';
 import { MoorhenStack } from "../interface-base";
 import { MoorhenToggle, MoorhenSlider } from "../inputs";
+import { Bounds, boundsAround, mapSpan, sceneSpan } from "../../utils/sceneExtent";
+import { centreOfObject, extentOfObject } from "../../store/threeDObjectsSlice";
 import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
 import {
     setDepthBlurDepth,
@@ -133,9 +135,24 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const plotHeight = plotWidth *0.6
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const canvasRefWebGL = useRef<HTMLCanvasElement>(null)
+    /**
+     * The same canvas, held in state so that its arrival triggers a render.
+     *
+     * The ref is kept because the drawing code reaches for it from callbacks, where a ref is the
+     * right tool. What a ref cannot do is tell anything that it has been filled in, and the
+     * buffers are built during render - see myBuffers below.
+     */
+    const [glCanvas, setGlCanvas] = useState<HTMLCanvasElement | null>(null)
+    const attachGlCanvas = useCallback((element: HTMLCanvasElement | null) => {
+        canvasRefWebGL.current = element
+        setGlCanvas(element)
+    }, [])
 
     const spanScaling = 0.75
 
+    // For the scene span below: everything drawn counts towards it, not only the molecules.
+    const maps = useSelector((state: moorhen.State) => state.maps);
+    const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
     const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset);
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
     const quat = useSelector((state: moorhen.State) => state.glRef.quat)
@@ -160,54 +177,72 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
 
     const [grabbed, setGrabbed] = useState<GrabHandle>(GrabHandle.NONE)
 
-    let myBuffers:DisplayBuffer[]
-    myBuffers = useMemo(() => {
+    /**
+     * The scene's buffers, cloned into this widget's own GL context.
+     *
+     * glCanvas rather than canvasRefWebGL.current is the dependency, and that is the whole
+     * point. This runs during render, and a ref is not populated until the commit afterwards,
+     * so on the very first render the canvas does not exist yet and this returned an empty
+     * list. Neither of the old dependencies changes merely because the canvas has since
+     * appeared, so the list stayed empty and the view came up blank - until something replaced
+     * displayBuffers, which is why changing the zoom or the origin made it appear.
+     *
+     * Holding the canvas in state instead means its arrival is a render, and this runs again
+     * with a context to build into.
+     */
+    const myBuffers: DisplayBuffer[] = useMemo(() => {
 
-        if(!canvasRefWebGL)
+        if(!glCanvas)
             return []
 
-        if(!canvasRefWebGL.current)
-            return []
-
-        const canvasWebGL = canvasRefWebGL.current
-        const gl = canvasWebGL.getContext("webgl2")
+        const gl = glCanvas.getContext("webgl2")
 
         const clonedBuffers = cloneBuffers(displayBuffers,gl)
         buildBuffers(clonedBuffers,store,gl)
         return clonedBuffers
 
-    }, [displayBuffers,storeMolecules])
+    }, [glCanvas,displayBuffers,storeMolecules])
 
+    /**
+     * How far this widget's scale has to reach.
+     *
+     * Everything on screen counts, not only atoms. This used to measure the molecules alone and
+     * fall back to 9999 when there were none, so a scene holding a mesh, a primitive or a map
+     * got a widget spanning ten thousand angstroms and initial clip distances to match.
+     *
+     * Maps contribute their unit cell rather than their contour radius - see sceneExtent - so
+     * that changing how much of a map is drawn does not move the scale underfoot.
+     */
     const atomSpan = useMemo(() => {
-        let min_x =  1e5;
-        let max_x = -1e5;
-        let min_y =  1e5;
-        let max_y = -1e5;
-        let min_z =  1e5;
-        let max_z = -1e5;
+        // Accumulated in place rather than collected into an array: a large structure has
+        // hundreds of thousands of atoms and this runs whenever the buffers change.
         let haveAtoms = false;
+        const min: [number, number, number] = [Infinity, Infinity, Infinity];
+        const max: [number, number, number] = [-Infinity, -Infinity, -Infinity];
 
         displayBuffers.forEach(buffer => {
-            if (buffer.visible) {
-                if(buffer.atoms&&buffer.atoms.length>1)
-                    haveAtoms = true
+            if (buffer.visible && buffer.atoms) {
                 buffer.atoms.forEach(atom => {
-                    if(atom.x>max_x) max_x = atom.x;
-                    if(atom.x<min_x) min_x = atom.x;
-                    if(atom.y>max_y) max_y = atom.y;
-                    if(atom.y<min_y) min_y = atom.y;
-                    if(atom.z>max_z) max_z = atom.z;
-                    if(atom.z<min_z) min_z = atom.z;
+                    const p = [atom.x, atom.y, atom.z];
+                    if (!p.every(Number.isFinite)) return;
+                    haveAtoms = true;
+                    for (let i = 0; i < 3; i++) {
+                        if (p[i] < min[i]) min[i] = p[i];
+                        if (p[i] > max[i]) max[i] = p[i];
+                    }
                 })
             }
         })
 
-        let atom_span = 9999.0
-        if(haveAtoms){
-            atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
-        }
-        return atom_span
-    }, [displayBuffers])
+        // Atom coordinates and 3D object centres share a coordinate space, so they go in together
+        // and a scene with two things far apart gets a span covering both.
+        const positioned: (Bounds | null)[] = [haveAtoms ? { min, max } : null];
+        threeDObjects.forEach(obj => {
+            positioned.push(boundsAround(centreOfObject(obj), extentOfObject(obj)));
+        })
+
+        return sceneSpan({ positioned, sizes: maps.map(mapSpan) })
+    }, [displayBuffers, threeDObjects, maps])
 
     const drawGL = async (width,height) => {
 
@@ -779,16 +814,20 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         const sphereFragmentShader = getShader(gl, perfect_sphere_side_on_view_fragment_shader_source, "fragment");
         sphereProgramRef.current = initSideOnSphereShaders(sphereVertexShader,sphereFragmentShader,gl)
 
-        const clonedBuffers = cloneBuffers(displayBuffers,gl)
-        buildBuffers(clonedBuffers,store,gl)
-        myBuffers = clonedBuffers
+        // The buffers were also built here, and assigned to myBuffers. That assignment went into
+        // a render closure that had already returned, so it changed nothing anyone would later
+        // read - while still creating a full set of GL buffers that nothing freed. The memo
+        // above owns the buffers; this effect owns the programs.
         imageBuffersRef.current = buildDiskBuffers()
 
-    }, [])
+    }, [glCanvas])
 
+    // glCanvas is in here so that the first draw happens once the canvas exists and the shader
+    // programs have been created: without it this ran only before there was anything to draw
+    // into, and the next draw waited on an unrelated change.
     useEffect(() => {
         plotTheData()
-    }, [fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers])
+    }, [glCanvas,myBuffers,atomSpan,fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers])
 
 
     return (
@@ -798,7 +837,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
             <MoorhenStack gap={1} direction="vertical">
                 <div>
                 <figure style={{position: "relative", top: 0, left: 0, width: `${plotWidth}px`, height: `${plotHeight}px`, margin: "0px"}}>
-                <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRefWebGL}></canvas>
+                <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={attachGlCanvas}></canvas>
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRef}></canvas>
                 </figure>
                 </div>
