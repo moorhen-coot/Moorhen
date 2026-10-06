@@ -1872,7 +1872,32 @@ onmessage = function (e) {
     }
 
     if (e.data.message === 'coot_command') {
-        const result = doCootCommand(e.data)
-        postMessage(result)
+        // doCootCommand has its own try/catch, but anything thrown outside it --
+        // including a wasm trap that leaves the module aborted, or a result that
+        // cannot be structured-cloned -- would otherwise leave this message with
+        // no reply at all, and the caller's promise pending for ever.
+        let result
+        try {
+            result = doCootCommand(e.data)
+        } catch (err) {
+            result = {
+                messageId: e.data.messageId,
+                myTimeStamp: e.data.myTimeStamp,
+                message: e.data.message,
+                consoleMessage: `EXCEPTION RAISED IN ${e.data.command}, ${err}`,
+                result: { status: 'Exception' },
+            }
+        }
+        try {
+            postMessage(result)
+        } catch (err) {
+            postMessage({
+                messageId: e.data.messageId,
+                myTimeStamp: e.data.myTimeStamp,
+                message: e.data.message,
+                consoleMessage: `FAILED TO POST RESULT OF ${e.data.command}, ${err}`,
+                result: { status: 'Exception' },
+            })
+        }
     }
 }
