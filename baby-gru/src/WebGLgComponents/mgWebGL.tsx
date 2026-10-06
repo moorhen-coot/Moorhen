@@ -194,6 +194,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         clipCapPerfectSpheres: boolean;
         useOffScreenBuffers: boolean;
         blurSize: number;
+        /** Depth-peel layers; see setDepthPeelLayers. */
+        depthPeelLayers: number;
         blurDepth:number;
         gl_fog_start: null | number;
         doDrawClickedAtomLines: boolean;
@@ -629,6 +631,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     setBlurSize(blurSize) {
         this.blurSize = blurSize
         this.makeBlurBuffers(blurSize)
+    }
+
+    /**
+     * How many depth-peel layers transparency is resolved with.
+     *
+     * The buffers are not rebuilt here. drawPeel asks for the layers it wants on the next frame
+     * that needs them, and recreateDepthPeelBuffers reallocates when the count or the size has
+     * changed - so a scene with nothing transparent in it pays nothing for a change to this.
+     */
+    setDepthPeelLayers(layers: number) {
+        this.depthPeelLayers = Math.max(1, Math.round(layers))
     }
 
     makeBlurBuffers(blurSize) {
@@ -1290,8 +1303,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         createSimpleBlurOffScreeenBuffers(this)
     }
 
-    recreateDepthPeelBuffers(width,height){
-        recreateDepthPeelBuffers(this, width, height)
+    recreateDepthPeelBuffers(width,height,layers?:number){
+        recreateDepthPeelBuffers(this, width, height, layers)
     }
 
     recreateOffScreeenBuffers(width,height){

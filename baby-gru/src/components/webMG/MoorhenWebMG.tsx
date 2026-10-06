@@ -102,6 +102,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
+    const depthPeelLayers = useSelector((state: moorhen.State) => state.sceneSettings.depthPeelLayers)
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth)
     const atomLabelDepthMode = useSelector((state: moorhen.State) => state.labelSettings.atomLabelDepthMode)
     const mouseSensitivity = useSelector((state: moorhen.State) => state.mouseSettings.mouseSensitivity)
@@ -519,6 +520,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [depthBlurRadius])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDepthPeelLayers(depthPeelLayers)
+            glRef.current.drawScene()
+        }
+    }, [depthPeelLayers])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

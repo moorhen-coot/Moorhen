@@ -89,7 +89,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
 
       if(peelNumber>0) {
-          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
+          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
           float max_depth;
           max_depth = texture(depthPeelSamplers,tex_coord).r;
           if(gl_FragDepth <= max_depth || abs(gl_FragDepth - max_depth)<1e-6 ) {

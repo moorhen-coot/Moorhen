@@ -352,3 +352,34 @@ describe("waiting for the GPU", () => {
         expect(renderStatsText()).toContain("gpu wait");
     });
 });
+
+describe("reporting an interval with no frames", () => {
+    it("says so rather than printing zeroes that look like a measurement", () => {
+        // Seen for real: a stats line reading "0 draws | 0k tris | 0 state" while the scene was
+        // plainly being drawn. Nothing had been recorded in that second, and dividing by one
+        // turned an absence into a row of convincing zeroes.
+        const { gl } = fakeGl();
+        instrumentGl(gl as unknown as WebGLRenderingContext);
+        try {
+            expect(renderStatsText()).toBe("no frames drawn in the last interval");
+            expect(renderStatsText()).not.toMatch(/0 draws/);
+        } finally {
+            uninstrumentGl(gl as unknown as WebGLRenderingContext);
+        }
+    });
+
+    it("reports normally again once a frame arrives", () => {
+        const { gl } = fakeGl();
+        instrumentGl(gl as unknown as WebGLRenderingContext);
+        try {
+            renderStatsText();
+            recordFrame(5.0);
+            gl.drawElements(gl.TRIANGLES, 300, 0, 0);
+            const text = renderStatsText();
+            expect(text).toMatch(/1 draws/);
+            expect(text).toMatch(/draw 5\.00 ms/);
+        } finally {
+            uninstrumentGl(gl as unknown as WebGLRenderingContext);
+        }
+    });
+});

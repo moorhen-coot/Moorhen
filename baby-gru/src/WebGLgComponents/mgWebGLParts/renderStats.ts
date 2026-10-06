@@ -442,7 +442,18 @@ export const recordFrame = (drawSceneMs: number) => {
  */
 export const renderStatsText = (): string => {
     if (!renderStats.enabled) return "";
-    const frames = Math.max(1, renderStats.frames);
+
+    // No frames since the last report means there is nothing to average, and dividing by one
+    // instead would print a row of zeroes indistinguishable from a real measurement of a scene
+    // drawing nothing. Say which it is. It happens whenever the reporting interval lands in a
+    // gap - just after the counters were installed, or while the view is idle and nothing is
+    // asking to be redrawn.
+    if (renderStats.frames === 0) {
+        resetRenderStats();
+        return "no frames drawn in the last interval";
+    }
+
+    const frames = renderStats.frames;
     const draws = renderStats.drawCalls / frames;
     // Reported only when there are completed queries, so an absent extension or a driver that
     // keeps marking the clock disjoint says nothing rather than claiming zero.

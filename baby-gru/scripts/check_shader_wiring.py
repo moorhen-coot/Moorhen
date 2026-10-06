@@ -231,6 +231,22 @@ for name, init, vertexVar, fragmentVar in programs:
 WATCHED = {
     "hasBaseColourTexture": "locateBaseColourTextureUniforms",
     "baseColourTexture": "locateBaseColourTextureUniforms",
+    # The depth-peel layers used to be square, so a shader could use xSSAOScaling for both axes
+    # and look perfectly correct. Once the layers were sized to the canvas the two differ, and
+    # sampling the peel depth with the wrong y scaling makes background geometry drift up and
+    # down as the view changes. An unlocated uniform is a silent no-op that leaves the scaling
+    # at zero, which is worse than the bug it replaced.
+    "ySSAOScaling": None,
+    "xSSAOScaling": None,
+}
+
+# Some watched uniforms only matter to programs that use a particular feature. Several programs
+# share the text fragment shader and so declare the peel uniforms without ever peeling - they
+# never locate peelNumber, so the peel branch is dead in them and the scalings are irrelevant.
+# Requiring them there would be noise, and noise is how a check stops being read.
+REQUIRED_WHEN = {
+    "xSSAOScaling": "peelNumber",
+    "ySSAOScaling": "peelNumber",
 }
 
 SHADERS_FILE = ROOT / "mgWebGLShaders.ts"
@@ -265,7 +281,11 @@ if SHADERS_FILE.exists() and not failures:
         for uniform, helper in WATCHED.items():
             if not re.search(rf"uniform\s+\w+\s+{re.escape(uniform)}\s*;", sources):
                 continue
-            located = (f'"{uniform}"' in body) or (helper in body)
+            gate = REQUIRED_WHEN.get(uniform)
+            if gate is not None and f'"{gate}"' not in body:
+                continue
+            # helper is None for uniforms located directly rather than through a shared helper.
+            located = (f'"{uniform}"' in body) or (helper is not None and helper in body)
             if not located:
                 wiring_failures += 1
                 print(f"FAIL  {name:40s} {init} never locates {uniform}, "

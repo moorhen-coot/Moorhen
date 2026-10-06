@@ -220,21 +220,63 @@ export function createSimpleBlurOffScreeenBuffers(self: MGWebGL) {
 
 }
 
-export function recreateDepthPeelBuffers(self: MGWebGL, width,height) {
-        //Defines 4 off-screeen multisampled framebuffers and corresponding textures.
+/**
+ * Release every depth-peel layer.
+ *
+ * Gathered here because the layers are now rebuilt whenever the size or the count changes, and
+ * freeing five arrays by hand at each call site is how one of them gets forgotten. GL objects
+ * are not reclaimed with their JavaScript handles, so a missed delete is a leak that only shows
+ * up as memory pressure much later.
+ */
+export function deleteDepthPeelBuffers(self: MGWebGL) {
+    for (let i = 0; i < self.depthPeelFramebuffers.length; i++) {
+        if (self.depthPeelFramebuffers[i]) self.gl.deleteFramebuffer(self.depthPeelFramebuffers[i]);
+        if (self.depthPeelColorTextures[i]) self.gl.deleteTexture(self.depthPeelColorTextures[i]);
+        if (self.depthPeelDepthTextures[i]) self.gl.deleteTexture(self.depthPeelDepthTextures[i]);
+        if (self.depthPeelRenderbufferDepth?.[i]) self.gl.deleteRenderbuffer(self.depthPeelRenderbufferDepth[i]);
+        if (self.depthPeelRenderbufferColor?.[i]) self.gl.deleteRenderbuffer(self.depthPeelRenderbufferColor[i]);
+    }
+    self.depthPeelFramebuffers = [];
+    self.depthPeelColorTextures = [];
+    self.depthPeelDepthTextures = [];
+    self.depthPeelRenderbufferDepth = [];
+    self.depthPeelRenderbufferColor = [];
+}
+
+/**
+ * Allocate the depth-peeling layers, or reuse them if they already match.
+ *
+ * Rebuilt whenever the size or the number of layers changes, which the old version could not
+ * do: it returned early whenever any buffers existed at all, so a window resize left the layers
+ * at whatever size the window happened to be when transparency was first switched on.
+ *
+ * @param layers how many peels. One per depth of transparent surface the scene needs resolved;
+ *               several contour levels of the same field want more than a single surface does.
+ */
+export function recreateDepthPeelBuffers(self: MGWebGL, width, height, layers = 4) {
         //Requires depth_texture
-        //FIXME - Should be called after resize event
         if(self.depth_texture){
-            if(self.depthPeelFramebuffers.length===0&&width>0&&height>0){
-                console.log("Make depth peel buffers of size",width,height)
-                for(let i=0;i<4;i++){
+            const matches = self.depthPeelFramebuffers.length === layers
+                && self.depthPeelFramebuffers[0]?.width === width
+                && self.depthPeelFramebuffers[0]?.height === height;
+            if(!matches && width>0 && height>0){
+                deleteDepthPeelBuffers(self);
+                console.log("Make",layers,"depth peel buffers of size",width,height)
+                for(let i=0;i<layers;i++){
                     self.depthPeelFramebuffers[i] = self.gl.createFramebuffer();
                     self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.depthPeelFramebuffers[i]);
 
                     self.depthPeelColorTextures[i] = self.gl.createTexture();
                     self.depthPeelDepthTextures[i] = self.gl.createTexture();
-                    self.depthPeelRenderbufferDepth[i] = self.gl.createRenderbuffer();
-                    self.depthPeelRenderbufferColor[i] = self.gl.createRenderbuffer();
+
+                    // No renderbuffers. There used to be one for colour and one for depth: each
+                    // was attached, given storage, and then replaced on the same attachment
+                    // point by the texture below, so nothing ever read either of them. The
+                    // colour one asked for RGBA32F at MAX_SAMPLES, which is hundreds of
+                    // megabytes a layer for storage that was detached before anything drew into
+                    // it. The multisampling it was meant for was never finished - the FIXME
+                    // above it said as much, and completing it needs a blit, not a renderbuffer
+                    // nobody looks at.
 
                     self.depthPeelFramebuffers[i].width = width;
                     self.depthPeelFramebuffers[i].height = height;
@@ -245,17 +287,11 @@ export function recreateDepthPeelBuffers(self: MGWebGL, width,height) {
                     self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_S, self.gl.CLAMP_TO_EDGE);
                     self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_T, self.gl.CLAMP_TO_EDGE);
 
-                    self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, self.depthPeelRenderbufferColor[i]);
-                    self.gl.framebufferRenderbuffer(self.gl.FRAMEBUFFER, self.gl.COLOR_ATTACHMENT0, self.gl.RENDERBUFFER, self.depthPeelRenderbufferColor[i]);
-                    if (self.WEBGL2) {
-                        //FIXME - multismapling isn't actually working - need to blit to another buffer ...
-                        self.gl.renderbufferStorageMultisample(self.gl.RENDERBUFFER, self.gl.getParameter(self.gl.MAX_SAMPLES), self.gl.RGBA32F, width, height);
-                        //self.gl.renderbufferStorage(self.gl.RENDERBUFFER, self.gl.RGBA32F, width, height);
-                        self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.RGBA32F, width, height, 0, self.gl.RGBA, self.gl.FLOAT, null);
-                    } else {
-                        self.gl.renderbufferStorage(self.gl.RENDERBUFFER, self.gl.RGBA4, width, height);
-                        self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.RGBA, width, height, 0, self.gl.RGBA, self.gl.UNSIGNED_BYTE, null);
-                    }
+                    // Eight bits a channel, not RGBA32F. These hold shaded colour on its way to
+                    // an eight-bit framebuffer, so the extra precision was never visible, while
+                    // costing four times the memory and - since peeling is fill-bound - four
+                    // times the bandwidth on every write and every read back during compositing.
+                    self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.RGBA, width, height, 0, self.gl.RGBA, self.gl.UNSIGNED_BYTE, null);
                     self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.COLOR_ATTACHMENT0, self.gl.TEXTURE_2D, self.depthPeelColorTextures[i], 0);
 
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[i]);
@@ -264,13 +300,11 @@ export function recreateDepthPeelBuffers(self: MGWebGL, width,height) {
                     self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_S, self.gl.CLAMP_TO_EDGE);
                     self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_T, self.gl.CLAMP_TO_EDGE);
 
-                    self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, self.depthPeelRenderbufferDepth[i]);
-                    self.gl.framebufferRenderbuffer(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.RENDERBUFFER, self.depthPeelRenderbufferDepth[i]);
+                    // Depth stays at full precision: it is compared against between layers, and
+                    // that comparison is what decides which fragment belongs to which peel.
                     if (self.WEBGL2) {
-                        self.gl.renderbufferStorage(self.gl.RENDERBUFFER, self.gl.DEPTH_COMPONENT32F, width, height);
                         self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.DEPTH_COMPONENT32F, width, height, 0, self.gl.DEPTH_COMPONENT, self.gl.FLOAT, null);
                     } else {
-                        self.gl.renderbufferStorage(self.gl.RENDERBUFFER, self.gl.DEPTH_COMPONENT16, width, height);
                         self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.DEPTH_COMPONENT, width, height, 0, self.gl.DEPTH_COMPONENT, self.gl.UNSIGNED_INT, null);
                     }
                     self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.TEXTURE_2D, self.depthPeelDepthTextures[i], 0);

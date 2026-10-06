@@ -15,6 +15,7 @@ import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSph
 import {
     setDepthBlurDepth,
     setDepthBlurRadius,
+    setDepthPeelLayers,
     setResetClippingFogging,
     setUseOffScreenBuffers,
 } from "../../store/sceneSettingsSlice";
@@ -105,6 +106,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const clipStart = useSelector((state: moorhen.State) => state.sceneSettings.clipStart);
     const clipEnd = useSelector((state: moorhen.State) => state.sceneSettings.clipEnd);
     const blurSize = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
+    const depthPeelLayers = useSelector((state: moorhen.State) => state.sceneSettings.depthPeelLayers);
 
     const [useFog, setUseFog] = useState<boolean>(true);
     const [useClip, setUseClip] = useState<boolean>(true);
@@ -903,6 +905,17 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                     value={blurSize}
                     setValue={newValue => {
                         dispatch(setDepthBlurRadius(newValue))
+                    }}
+                    stepButtons={1}
+                    decimalPlaces={0}
+                />
+                <MoorhenSlider
+                    minVal={1.0}
+                    maxVal={8.0}
+                    sliderTitle="Transparency layers"
+                    value={depthPeelLayers}
+                    setValue={newValue => {
+                        dispatch(setDepthPeelLayers(newValue))
                     }}
                     stepButtons={1}
                     decimalPlaces={0}

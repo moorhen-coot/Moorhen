@@ -37,19 +37,25 @@ import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from
 
 export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
         let invMat
+            // Sized to the surface being drawn into rather than a fixed square.
+            //
+            // These were 2048x2048 on screen and 4096x4096 for capture, whatever the canvas. On
+            // a 1854x1468 canvas that meant every layer rendered 1.54 times the canvas area -
+            // and resampled in both directions at once, undersampling the width while
+            // oversampling the height - so it was blurrier and more expensive at the same time.
+            // Four layers came to six times an ordinary frame's pixels before anything was
+            // composited.
+            //
+            // recreateDepthPeelBuffers now rebuilds when the size or the count changes, so the
+            // explicit teardown that used to be needed when switching to capture has gone with
+            // it, along with the resize bug it hid: the old early-out left the layers at
+            // whatever size the window was when transparency was first turned on.
+            const peelLayers = self.depthPeelLayers ?? 4;
             if(self.renderToTexture) {
-                console.log("Delete the normal peel buffers")
-                for(let i=0;i<self.depthPeelFramebuffers.length;i++){
-                    self.gl.deleteFramebuffer(self.depthPeelFramebuffers[i]);
-                    self.gl.deleteRenderbuffer(self.depthPeelRenderbufferDepth[i]);
-                    self.gl.deleteRenderbuffer(self.depthPeelRenderbufferColor[i]);
-                    self.gl.deleteTexture(self.depthPeelColorTextures[i]);
-                    self.gl.deleteTexture(self.depthPeelDepthTextures[i]);
-                }
-                self.depthPeelFramebuffers = [];
-                self.recreateDepthPeelBuffers(4096,4096);
+                self.recreateDepthPeelBuffers(self.rttFramebuffer?.width ?? 4096,
+                                              self.rttFramebuffer?.height ?? 4096, peelLayers);
             } else {
-                self.recreateDepthPeelBuffers(2048,2048);
+                self.recreateDepthPeelBuffers(self.gl.viewportWidth, self.gl.viewportHeight, peelLayers);
             }
 
             if(doClear) self.gl.clear(self.gl.DEPTH_BUFFER_BIT|self.gl.COLOR_BUFFER_BIT);
@@ -69,7 +75,7 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                 self.doDepthPeelPass = true;
                 self.gl.disable(self.gl.BLEND);
                 self.gl.enable(self.gl.DEPTH_TEST);
-                for(let ipeel=0;ipeel<4;ipeel++){
+                for(let ipeel=0;ipeel<self.depthPeelFramebuffers.length;ipeel++){
                     self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.depthPeelFramebuffers[ipeel]);
                     self.gl.activeTexture(self.gl.TEXTURE0+depthPeelSampler0);
                     if(ipeel>0){
@@ -137,7 +143,10 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                 if(doClear) self.gl.clear(self.gl.DEPTH_BUFFER_BIT|self.gl.COLOR_BUFFER_BIT)
                 self.gl.uniform1i(theShader.depthPeelSamplers, 0);
                 self.gl.uniform1i(theShader.colorPeelSamplers, 1);
-                for(let ipeel=3;ipeel>=0;ipeel--){
+                // Back to front, so nearer layers blend over further ones. Driven by how many
+                // layers were actually allocated rather than a hardcoded four, which is what
+                // makes the count adjustable at all.
+                for(let ipeel=self.depthPeelFramebuffers.length-1;ipeel>=0;ipeel--){
                     self.gl.activeTexture(self.gl.TEXTURE0);
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[ipeel]);
                     self.gl.activeTexture(self.gl.TEXTURE1);
@@ -2691,9 +2700,9 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                     // viewport instead - (viewport * framebuffer / canvas), which gives 0.5 per
                     // eye - visibly stretched the stereo screenshot. The arithmetic for that
                     // viewport is not in dispute, so something downstream is already accounting
-                    // for it; the perspMult zoom applied to this matrix further down is the
-                    // obvious candidate and the two want untangling together, by eye, rather
-                    // than one of them being changed on its own.
+                    // for it - the perspMult zoom applied to this matrix further down. Captures
+                    // were checked by eye afterwards, plain and side-by-side stereo, and both
+                    // frame correctly as they stand. The pair works; leave it alone.
                     //
                     // The near and far are a separate matter and do come from the slab: they
                     // clip, they do not frame, so they cannot affect any of the above.

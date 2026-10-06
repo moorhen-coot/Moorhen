@@ -27,6 +27,15 @@ export const initialState: {
     doPerspectiveProjection: boolean;
     useOffScreenBuffers: boolean;
     depthBlurRadius: number;
+    /**
+     * How many depth-peel layers to resolve transparency with.
+     *
+     * One per depth of transparent surface that needs separating. A single closed surface wants
+     * two - its front and its back - while several contour levels of the same field drawn at
+     * once want one per level. Each layer is a further pass over the transparent geometry, so
+     * this is a direct trade of cost against how deep the transparency stays correct.
+     */
+    depthPeelLayers: number;
     depthBlurDepth: number;
     lightPosition: [number, number, number, number];
     ambient: [number, number, number, number];
@@ -106,6 +115,7 @@ export const initialState: {
     doAnaglyphStereo: false,
     doOutline: false,
     depthBlurRadius: 3.0,
+    depthPeelLayers: 4,
     depthBlurDepth: 0.5,
     height: 0,
     width: 0,
@@ -284,6 +294,10 @@ const sceneSettingsSlice = createSlice({
             state.depthBlurRadius = action.payload;
         },
         // API
+        setDepthPeelLayers: (state, action: PayloadAction<number>) => {
+            state.depthPeelLayers = action.payload;
+        },
+        // API
         setDepthBlurDepth: (state, action: PayloadAction<number>) => {
             state.depthBlurDepth = action.payload;
         },
@@ -391,6 +405,7 @@ export const {
     setDoSpin,
     setDoOutline,
     setDepthBlurRadius,
+    setDepthPeelLayers,
     setBackgroundColor,
     setDepthBlurDepth,
     setDrawAxes,

@@ -153,6 +153,7 @@ export function initInstanceState(self: MGWebGL): void {
     self.gFramebuffer = null;
     self.useOffScreenBuffers = false; //This means "doDepthBlur" and is historically named.
     self.blurSize = 3;
+    self.depthPeelLayers = 4;
     self.blurDepth = 0.2;
     self.offScreenReady = false;
     self.framebufferDrawBuffersReady = false;
