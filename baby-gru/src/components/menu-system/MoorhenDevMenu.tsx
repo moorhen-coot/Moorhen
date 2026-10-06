@@ -1,4 +1,4 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
 import { v4 as uuidv4 } from "uuid";
 import { newVector } from "../../utils/vectorFactories";
@@ -8,6 +8,13 @@ import { RootState, setShownBottomPanel } from "@/store";
 import { useMoorhenInstance, usePaths } from "../../InstanceManager";
 import { checkerboardTexture, registerTexture } from "../../WebGLgComponents/textureRegistry";
 import { centreOfObject } from "../../store/threeDObjectsSlice";
+import {
+    instrumentGl,
+    measuredTrianglesPerFrame,
+    renderStats,
+    triangleBreakdownText,
+    uninstrumentGl,
+} from "../../WebGLgComponents/mgWebGLParts/renderStats";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
 import {
@@ -176,6 +183,16 @@ export const MoorhenDevMenu = () => {
         addTwoPartMeshTo(moorhenInstance);
         document.body.click();
     };
+
+    // Separate from the FPS meter on purpose. Counting adds a wrapper call to every GL call, so
+    // having it on changes the frame time it is reporting - the comparison worth making is the
+    // meter alone against the meter with this on, which needs them to be two switches.
+    const [countingDraws, setCountingDraws] = useState<boolean>(renderStats.enabled);
+    const [syncingGpu, setSyncingGpu] = useState<boolean>(renderStats.syncGpu);
+    const glCtx = useSelector((state: RootState) => state.glRef.glCtx);
+    // The buffers are read on demand rather than subscribed to: this is a one-shot report, and
+    // selecting the buffer list would re-render this menu every time any of them changed.
+    const store = useStore<RootState>();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
     const toggleValidationPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");
@@ -479,6 +496,37 @@ export const MoorhenDevMenu = () => {
             <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>
+            <MoorhenToggle
+                type="switch"
+                checked={countingDraws}
+                label="Count draws and GL state (needs the FPS meter on)"
+                onChange={() => {
+                    if (!glCtx) return;
+                    if (countingDraws) uninstrumentGl(glCtx);
+                    else instrumentGl(glCtx);
+                    setCountingDraws(!countingDraws);
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={syncingGpu}
+                label="Wait for the GPU each frame (slow; diagnostic only)"
+                onChange={() => {
+                    renderStats.syncGpu = !syncingGpu;
+                    setSyncingGpu(!syncingGpu);
+                }}
+            />
+            <MoorhenMenuItem
+                onClick={() => {
+                    const buffers = store.getState().glRef.displayBuffers ?? [];
+                    console.log(
+                        "Triangles by representation\n" +
+                        triangleBreakdownText(buffers, measuredTrianglesPerFrame())
+                    );
+                }}
+            >
+                Log triangles by representation
+            </MoorhenMenuItem>
             <hr></hr>
             <MoorhenToggle
                 type="switch"

@@ -7,6 +7,7 @@ import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
 import { glTextureFor } from '../textureRegistry';
+import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
 
 /**
  * The hot render core - drawScene orchestrates the frame (framebuffer setup,
@@ -1307,6 +1308,11 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
 export function drawScene(self: MGWebGL) : void {
 
+        // Only read when the counters are installed, so an uninstrumented frame pays for one
+        // branch and nothing else.
+        const drawSceneStart = renderStats.enabled ? performance.now() : 0;
+        if(renderStats.enabled) beginGpuTimer(self.gl as WebGL2RenderingContext);
+
         if(self.renderToTexture&&(!self.screenshotBuffersReady))
             self.initTextureFramebuffer();
 
@@ -1329,6 +1335,37 @@ export function drawScene(self: MGWebGL) : void {
 
         if(!self.animating) self.props.onQuatChanged(self.myQuat)
         self.props.setDrawQuat(self.myQuat)
+
+        // Decided here, before theShaders is built, because the shader variant chosen below
+        // depends on it and that list must already hold the right programs. It used to be
+        // computed further down; nothing between there and here reads it.
+        self.doPeel = false;
+        if(self.doOrderIndependentTransparency){
+            for (let idx = 0; idx < displayBuffers.length && !self.doPeel; idx++) {
+                if (displayBuffers[idx].visible) {
+                    const triangleVertexIndexBuffer = displayBuffers[idx].triangleVertexIndexBuffer;
+                    for (let j = 0; j < triangleVertexIndexBuffer.length&& !self.doPeel; j++) {
+                        if (displayBuffers[idx].transparent&&!displayBuffers[idx].isHoverBuffer) {
+                            self.doPeel = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Pick the discard-free programs when nothing needs a discard: the orthographic
+        // projection already clips the slab through its near and far planes, so the clip test
+        // in the shader can only agree with it, and the peel test only matters while peeling.
+        // Under perspective the projection uses fixed near/far instead, so the discards there
+        // are the only thing enforcing the slab and must stay. See the header of
+        // webgl-2/triangle-fragment-shader.js.
+        //
+        // Swapped wholesale rather than chosen at each use, so the dozens of places that read
+        // self.shaderProgram need no knowledge of this at all.
+        const useFastShaders = !self.doPerspectiveProjection && !self.doPeel;
+        self.shaderProgram = useFastShaders ? self.shaderProgramFast : self.shaderProgramClip;
+        self.shaderProgramInstanced = useFastShaders ? self.shaderProgramInstancedFast : self.shaderProgramInstancedClip;
+        self.shaderProgramThickLinesNormal = useFastShaders ? self.shaderProgramThickLinesNormalFast : self.shaderProgramThickLinesNormalClip;
 
         const theShaders = [
             self.shaderProgram,
@@ -1428,20 +1465,6 @@ export function drawScene(self: MGWebGL) : void {
 
         const f = self.gl_clipPlane0[3]+self.fogClipOffset;
         const b = Math.min(self.gl_clipPlane1[3],self.gl_fog_end);
-
-        self.doPeel = false;
-        if(self.doOrderIndependentTransparency){
-            for (let idx = 0; idx < displayBuffers.length && !self.doPeel; idx++) {
-                if (displayBuffers[idx].visible) {
-                    const triangleVertexIndexBuffer = displayBuffers[idx].triangleVertexIndexBuffer;
-                    for (let j = 0; j < triangleVertexIndexBuffer.length&& !self.doPeel; j++) {
-                        if (displayBuffers[idx].transparent&&!displayBuffers[idx].isHoverBuffer) {
-                            self.doPeel = true;
-                        }
-                    }
-                }
-            }
-        }
 
         if (self.doEdgeDetect&&self.WEBGL2) {
 
@@ -1886,9 +1909,21 @@ export function drawScene(self: MGWebGL) : void {
             depthBlur(self, invMat);
         }
 
+        if(renderStats.enabled){
+            endGpuTimer(self.gl as WebGL2RenderingContext);
+            // Before the drawScene time is taken, so that a frame measured with the sync on
+            // reports the whole cost of getting the picture finished rather than only the cost
+            // of asking for it.
+            waitForGpu(self.gl as WebGL2RenderingContext);
+            recordFrame(performance.now() - drawSceneStart);
+        }
+
         if(self.showFPS){
             self.nFrames += 1;
             const thisTime = performance.now();
+            // The interval between the ends of successive frames, so this is the whole frame -
+            // drawScene plus everything outside it. Compared against the drawScene time above,
+            // that is what says whether the renderer is where the time goes at all.
             const mspf = thisTime - self.prevTime;
             self.mspfArray.push(mspf);
             if(self.mspfArray.length>200) self.mspfArray.shift();

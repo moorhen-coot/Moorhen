@@ -66,11 +66,20 @@ text = MAIN.read_text()
 # ---- import name -> file ---------------------------------------------------------------------
 # import {foo_shader_source as foo_shader_source_webgl2} from './webgl-2/foo.js';
 # import {foo_shader_source} from './webgl-1/foo.js';
+#
+# One import may bring in several names - the triangle fragment shader exports a variant without
+# the clip and peel discards alongside the full one. An earlier version of this regex expected a
+# single name between the braces, so adding the second silently unresolved BOTH, taking the six
+# programs that share that fragment shader out of the check without failing.
 imports = {}
-for match in re.finditer(
-        r"import\s*\{\s*(\w+)(?:\s+as\s+(\w+))?\s*\}\s*from\s*['\"]([^'\"]+)['\"]", text):
-    original, alias, path = match.group(1), match.group(2), match.group(3)
-    imports[alias or original] = path
+for match in re.finditer(r"import\s*\{([^}]*)\}\s*from\s*['\"]([^'\"]+)['\"]", text):
+    names, path = match.group(1), match.group(2)
+    for clause in names.split(","):
+        parts = clause.strip().split()
+        if not parts:
+            continue
+        # "foo" or "foo as bar"; the imported name is what the rest of the file refers to.
+        imports[parts[-1]] = path
 
 # ---- local variable -> imported name --------------------------------------------------------
 # The WEBGL2 branch reassigns the webgl1 defaults, so later assignments win - which matches the
@@ -160,8 +169,20 @@ for name, init, vertexVar, fragmentVar in programs:
               f"{'vertex' if vertexPath is None else 'fragment'} source")
         unresolved += 1
         continue
-    # Only the GL ES 3.0 shaders have this rule; the webgl-1 ones use attribute/varying and are
-    # linked leniently.
+    # A program cannot mix generations - GL ES 1.0 and 3.0 shaders will not link together - so
+    # resolving to one of each means the parsing above went wrong, not that the program is a
+    # WebGL1 one. Worth failing on, because the symptom is otherwise invisible: the program is
+    # quietly skipped by the webgl-1 test below and the run still passes, just covering less.
+    # That is exactly how six programs slipped out of this check when a second name was added to
+    # the triangle fragment shader's import and the webgl-1 source was picked up instead.
+    if ("webgl-2" in vertexPath) != ("webgl-2" in fragmentPath):
+        print(f"FAIL  {name:40s} mixes GL generations: "
+              f"vertex {vertexPath}, fragment {fragmentPath}")
+        failures += 1
+        continue
+
+    # Only the GL ES 3.0 shaders have the strict rule; the webgl-1 ones use attribute/varying and
+    # are linked leniently.
     if "webgl-2" not in vertexPath or "webgl-2" not in fragmentPath:
         continue
 
@@ -258,7 +279,13 @@ if wiring_failures:
     print(f"{wiring_failures} unreachable uniform(s).")
     sys.exit(1)
 if unresolved:
-    print(f"{unresolved} program(s) could not be resolved - the check does not cover them")
+    # A failure, not a note. An unresolved program is one this check is silently not covering,
+    # and silence is the only way this script can be wrong in a way that matters: it would pass
+    # while the thing it exists to catch went unchecked. That is exactly what happened when a
+    # second name was added to the triangle fragment shader's import.
+    print(f"FAIL  {unresolved} program(s) could not be resolved - the check does not cover them,")
+    print("      so it cannot tell you whether they link. Fix the parsing above, or the wiring.")
+    sys.exit(1)
 if failures:
     print(f"{failures} program(s) would fail to link.")
     sys.exit(1)

@@ -92,6 +92,16 @@ export class DisplayBuffer {
     textColours: number[];
     isHoverBuffer: boolean;
     id: string;
+    /**
+     * What made this buffer, for attributing a frame's cost back to a representation.
+     *
+     * Descriptive only: nothing in the renderer branches on it, and a buffer without one is
+     * still drawn exactly the same. It exists because the draw loop sees a flat list of
+     * buffers and cannot say which of them is the ribbons, so "1.1M triangles" is a number
+     * with nowhere to go. Set where buffers are produced rather than derived at draw time,
+     * since that is the only place that still knows.
+     */
+    statsLabel?: string;
     multiViewGroup: number;
     clickTol: number;
     doStencil: boolean;

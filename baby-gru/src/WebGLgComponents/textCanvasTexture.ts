@@ -33,6 +33,13 @@ export class TextCanvasTexture {
     textureCache: Dictionary<Dictionary<Dictionary<number[]>>>;
     shader: webGL.ShaderTextInstanced;
     store: Store<RootState>;
+    /**
+     * What the atlas currently holds, or null when that is unknown.
+     *
+     * Null rather than an empty string so that "nothing has been drawn yet" and "the atlas holds
+     * no text" are distinguishable: the first must rebuild, the second need not.
+     */
+    contentKey: string | null = null;
 
     constructor(gl,ext,instanced_ext,shader,width=1024,height=4096, store: Store<RootState>) {
         this.gl = gl
@@ -131,7 +138,15 @@ export class TextCanvasTexture {
         }
     }
 
-    recreateBigTextureBuffers() {
+    /**
+     * Push the per-instance data to GL, and the glyph atlas with it unless told otherwise.
+     *
+     * uploadAtlas defaults to true so that every existing caller behaves exactly as before. Only
+     * the per-frame overlay path passes false, and only when beginFrame has just confirmed the
+     * atlas is unchanged. The buffers below are a few hundred bytes and are rewritten every
+     * frame regardless; the texture is 6 MB and is the whole reason this parameter exists.
+     */
+    recreateBigTextureBuffers(uploadAtlas = true) {
         const bigTextureTexCoords  = [0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
         const bigTexturePositions  = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0 ]
         const bigTextureIdxs = [0,1,2,0,2,3]
@@ -161,11 +176,13 @@ export class TextCanvasTexture {
             this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(bigTextureIdxs), this.gl.STATIC_DRAW);
         }
 
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.canvasBig);
+        if (uploadAtlas) {
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.canvasBig);
+        }
 
     }
 
@@ -238,6 +255,23 @@ export class TextCanvasTexture {
             return this.textureCache[textColour][font.toLowerCase()][t];
         }
 
+        // A single string wider than the atlas cannot be laid out: fillText would run past the
+        // right edge and the texture coordinates below would exceed 1.0, which CLAMP_TO_EDGE
+        // turns into a smear of the last column rather than into anything readable. Shrinking the
+        // font to fit keeps it legible and, more to the point, keeps it obviously a string.
+        if(width > this.canvasBig.width){
+            const shrunk = Math.max(1, Math.floor(parseInt(font) * this.canvasBig.width / width * 0.98));
+            const smallerFont = font.replace(/^\s*\d+/, String(shrunk));
+            console.warn(`text too wide for the glyph atlas (${Math.round(width)} > ${this.canvasBig.width}); `
+                         + `drawn at ${shrunk}px instead`);
+            this.contextBig.font = smallerFont;
+            textMetric = this.contextBig.measureText(t);
+            actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent + 2;
+            actualBoundingBoxRight = textMetric.actualBoundingBoxRight;
+            actualBoundingBoxDescent = textMetric.actualBoundingBoxDescent;
+            width = textMetric.width;
+        }
+
         if(this.bigTextureCurrentBaseLine+actualHeight>this.canvasBig.height){
             this.bigTextureCurrentBaseLine = 0;
             this.bigTextureCurrentWidth += this.maxCurrentColumnWidth;
@@ -264,17 +298,73 @@ export class TextCanvasTexture {
         this.contextBig.clearRect(0, 0, this.canvasBig.width, this.canvasBig.height);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.canvasBig);
-        this.nBigTextures = 0
-        this.nBigTexturesInt = 0;
-        this.refI = {};
         this.textureCache = {};
         this.bigTextureCurrentBaseLine = 0;
         this.bigTextureCurrentWidth = 0;
         this.maxCurrentColumnWidth = 0;
+        // The atlas no longer holds what any remembered key described, so the next frame must
+        // rebuild. This matters because clearBigTexture is public and called from elsewhere:
+        // without it, an outside clear would be followed by a frame that skipped the upload and
+        // drew from an atlas that had just been wiped.
+        this.contentKey = null;
+        this.resetInstances();
+    }
+
+    /**
+     * Drop the per-instance arrays, keeping the rasterised glyphs.
+     *
+     * This is the half of clearBigTexture that has to happen every frame. Where each label sits
+     * changes as the view moves, so the origins, offsets, scalings and screen offsets are rebuilt
+     * from scratch each time; the pixels of the glyphs themselves do not change and are the
+     * expensive part to recreate.
+     */
+    resetInstances() {
+        this.nBigTextures = 0;
+        this.nBigTexturesInt = 0;
+        this.refI = {};
         this.bigTextureTexOrigins = []
         this.bigTextureTexOffsets = []
         this.bigTextureScalings   = []
         this.bigTextureScreenOffsets = []
+    }
+
+    /** The text colour the atlas would currently rasterise with, from the background. */
+    currentTextColour(): string {
+        const background_colour = this.store.getState().sceneSettings.backgroundColor;
+        const bright_y = background_colour[0] * 0.299 + background_colour[1] * 0.587 + background_colour[2] * 0.114;
+        return bright_y < 0.5 ? "white" : "black";
+    }
+
+    /**
+     * A key over everything that decides what the atlas looks like.
+     *
+     * Font, text and colour, in order. Order is part of it because it decides the layout: the
+     * same strings packed in a different sequence get different texture coordinates, so treating
+     * two orderings as equal would leave every label showing its neighbour's glyphs.
+     *
+     * The separators are control characters rather than anything that can appear in a label,
+     * so that ["a", "b"] cannot collide with ["a b"].
+     */
+    contentKeyFor(items: { text: string, font: string }[], textColour?: string): string {
+        const colour = textColour ?? this.currentTextColour();
+        return colour + "\u0002" + items.map(i => i.font + "\u0000" + i.text).join("\u0001");
+    }
+
+    /**
+     * Begin a frame's worth of text, rebuilding the atlas only if the content has changed.
+     *
+     * Returns whether a rebuild happened, which the caller passes to recreateBigTextureBuffers
+     * so that the texture upload is skipped too. Returning it rather than storing a flag keeps
+     * the two halves of the decision impossible to get out of step.
+     */
+    beginFrame(contentKey: string): boolean {
+        if (this.contentKey !== null && contentKey === this.contentKey) {
+            this.resetInstances();
+            return false;
+        }
+        this.clearBigTexture();
+        this.contentKey = contentKey;
+        return true;
     }
 
     removeBigTextureTextImages(textObjects,uuid=null) {

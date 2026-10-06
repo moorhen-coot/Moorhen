@@ -824,6 +824,9 @@ export class MoorhenMap {
         }
         const t2 = performance.now();
         if (print_timing) console.log("Finished setupContourBuffers", t2 - t1);
+        // Labelled here rather than in each of the three branches above, which is the one point
+        // they all converge on. Descriptive only - see DisplayBuffer.statsLabel.
+        newBuffers.forEach(buf => { buf.statsLabel = this.isDifference ? "map (difference)" : "map"; });
         this.store.dispatch(setDisplayBuffers([...oldBuffers, ...newBuffers]));
     }
 

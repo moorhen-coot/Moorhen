@@ -538,6 +538,7 @@ export class MoleculeRepresentation {
         if (this.buffers) {
             this.buffers.forEach(buf => {
                 buf.multiViewGroup = this.parentMolecule.molNo;
+                buf.statsLabel = this.style;
             });
             this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers, ...newBuffers]));
         } else {

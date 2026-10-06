@@ -495,6 +495,7 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
         theBuffer.textNormals = oldBuffer.textNormals ? oldBuffer.textNormals.slice() : null
         theBuffer.textColours = oldBuffer.textColours ? oldBuffer.textColours.slice() : null
         theBuffer.isHoverBuffer = oldBuffer.isHoverBuffer
+        theBuffer.statsLabel = oldBuffer.statsLabel
         theBuffer.multiViewGroup = oldBuffer.multiViewGroup
         theBuffer.clickTol = oldBuffer.clickTol
         theBuffer.doStencil = oldBuffer.doStencil

@@ -38,7 +38,7 @@ import { circles_fragment_shader_source as circles_fragment_shader_source_webgl2
 import { circles_vertex_shader_source as circles_vertex_shader_source_webgl2 } from './webgl-2/circle-vertex-shader.js';
 import { thick_lines_vertex_shader_source as thick_lines_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-vertex-shader.js';
 import { thick_lines_normal_vertex_shader_source as thick_lines_normal_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-normal-vertex-shader.js';
-import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl2 } from './webgl-2/triangle-fragment-shader.js';
+import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl2, triangle_fragment_shader_source_fast as triangle_fragment_shader_source_fast_webgl2 } from './webgl-2/triangle-fragment-shader.js';
 import { fxaa_shader_source as fxaa_shader_source_webgl2 } from './webgl-2/fxaa.js';
 import { fxaa_shader_source as fxaa_shader_source_webgl1 } from './webgl-1/fxaa.js';
 import { triangle_vertex_shader_source as triangle_vertex_shader_source_webgl2 } from './webgl-2/triangle-vertex-shader.js';
@@ -102,6 +102,7 @@ import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWay
 import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, initTextureFramebuffer } from './mgWebGLParts/framebuffers'
 import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
 import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWebGLParts/postProcessUniformBuffers'
+import { renderStatsText } from './mgWebGLParts/renderStats'
 import { doRightClick, doClick, doHover, doWheel, doMouseUpMeasure, doMouseDownMeasure, doMouseMoveMeasure, doMouseUp, doMiddleClick, doDoubleClick, doMouseMove, doMouseDown, handleKeyUp, handleKeyDown } from './mgWebGLParts/eventHandlers'
 import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setOrientationAndZoomFrame, setOrientationAndZoomAnimated, setOrientationAnimated, setOriginOrientationAndZoomFrame, setViewAnimated, setOriginOrientationAndZoomAnimated, drawOriginAndZoomFrame, setOriginAndZoomAnimated, setOriginAnimated, drawOriginFrame, drawZoomFrame, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
 import { drawTransparent, drawImagesAndText, drawTexturedShapes, drawTextLabels, drawDistancesAndLabels, drawCircles, drawLineMeasures, drawCrosshairs, drawMouseTrack, drawFPSMeter, drawTextOverlays } from './mgWebGLParts/overlays'
@@ -247,6 +248,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         fpsText: string;
         measurePointsArray: any[];
         mspfArray: number[];
+        renderStatsText: string;
         ssaoRadius: number;
         ssaoBias: number;
         radius: number;
@@ -377,7 +379,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         screenZ: number;
         shaderProgramTextured: webGL.MGWebGLTextureQuadShader;
         shaderProgramDepthPeelAccum: webGL.MGWebGLShaderDepthPeelAccum;
+        /**
+         * The triangle program currently in use: one of the two variants below.
+         *
+         * Swapped once per frame in drawScene rather than at each of the three dozen places
+         * that reach for it, because the choice is a property of the whole pass - the
+         * projection mode and whether depth peeling is running - and never varies within one.
+         */
         shaderProgram: webGL.ShaderTriangles;
+        /** With the clip and peel discards. Correct under any projection. */
+        shaderProgramClip: webGL.ShaderTriangles;
+        /** Without them. Only valid when the projection itself clips the slab. */
+        shaderProgramFast: webGL.ShaderTriangles;
         shaderProgramGBuffers: webGL.ShaderGBuffersTriangles;
         shaderProgramGBuffersInstanced: webGL.ShaderGBuffersTrianglesInstanced;
         shaderProgramGBuffersPerfectSpheres: webGL.ShaderGBuffersPerfectSpheres;
@@ -391,6 +404,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shaderProgramCircles: webGL.ShaderCircles;
         shaderProgramImages: webGL.ShaderImages;
         shaderProgramInstanced: webGL.ShaderTrianglesInstanced;
+        shaderProgramInstancedClip: webGL.ShaderTrianglesInstanced;
+        shaderProgramInstancedFast: webGL.ShaderTrianglesInstanced;
         shaderProgramInstancedOutline: webGL.ShaderTrianglesInstanced;
         shaderProgramInstancedShadow: webGL.ShaderTrianglesInstanced;
         shaderProgramLines: webGL.MGWebGLShader;
@@ -406,6 +421,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shaderProgramTextInstanced: webGL.ShaderTextInstanced;
         shaderProgramThickLines: webGL.ShaderThickLines;
         shaderProgramThickLinesNormal: webGL.ShaderThickLinesNormal;
+        shaderProgramThickLinesNormalClip: webGL.ShaderThickLinesNormal;
+        shaderProgramThickLinesNormalFast: webGL.ShaderThickLinesNormal;
         shaderProgramTwoDShapes: webGL.ShaderTwodShapes;
         shaderDepthShadowProgramPerfectSpheres: webGL.ShaderPerfectSpheres;
         shinyBack: boolean;
@@ -534,6 +551,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.prevTime = performance.now();
         this.fpsText = "";
         this.mspfArray = [];
+        this.renderStatsText = "";
         this.pointsArray = [];
         this.mouseTrackPoints = [];
         this.hoverSize = 0.27;
@@ -553,6 +571,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const avg = (sum / this.mspfArray.length) || 0;
             const fps = 1.0/avg * 1000;
             this.fpsText = avg.toFixed(2)+" ms/frame (" + (fps).toFixed(0)+" fps) ["+this.canvas.width+" x "+this.canvas.height+"]";
+            // Kept separate rather than appended, because each string becomes one entry in the
+            // glyph atlas and one wider than the atlas cannot be laid out.
+            this.renderStatsText = renderStatsText();
             }, 1000);
 
         //Set to false to use WebGL 1
@@ -855,6 +876,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl1;
         let thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl1;
         let triangle_fragment_shader_source = triangle_fragment_shader_source_webgl1+fxaa_shader_source_webgl1;
+        // WebGL1 has no discard-free variant, so the fast program is simply the same program:
+        // correct, and no slower than it is today. Only the WebGL2 path below splits them.
+        let triangle_fragment_shader_source_fast = triangle_fragment_shader_source;
         let triangle_vertex_shader_source = triangle_vertex_shader_source_webgl1;
         let twod_fragment_shader_source = twod_fragment_shader_source_webgl1;
         let twod_vertex_shader_source = twod_vertex_shader_source_webgl1;
@@ -897,6 +921,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl2;
             thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl2;
             triangle_fragment_shader_source = triangle_fragment_shader_source_webgl2+fxaa_shader_source_webgl2;
+            triangle_fragment_shader_source_fast = triangle_fragment_shader_source_fast_webgl2+fxaa_shader_source_webgl2;
             triangle_vertex_shader_source = triangle_vertex_shader_source_webgl2;
             twod_fragment_shader_source = twod_fragment_shader_source_webgl2;
             twod_vertex_shader_source = twod_vertex_shader_source_webgl2;
@@ -914,6 +939,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         vertexShader = getShader(this.gl, triangle_vertex_shader_source, "vertex");
         const vertexShaderInstanced = getShader(this.gl, triangle_instanced_vertex_shader_source, "vertex");
         fragmentShader = getShader(this.gl, triangle_fragment_shader_source, "fragment");
+        const fragmentShaderFast = getShader(this.gl, triangle_fragment_shader_source_fast, "fragment");
         gBufferFragmentShader = getShader(this.gl, triangle_gbuffer_fragment_shader_source, "fragment");
         gBufferInstancedVertexShader = getShader(this.gl, triangle_instanced_gbuffer_vertex_shader_source, "vertex");
         gBufferTwodVertexShader = getShader(this.gl, twod_gbuffer_vertex_shader_source, "vertex");
@@ -965,7 +991,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramSimpleBlurX = initSimpleBlurXShader(blurVertexShader, simpleBlurXFragmentShader, this.gl, this.WEBGL2);
         this.shaderProgramSimpleBlurY = initSimpleBlurYShader(blurVertexShader, simpleBlurYFragmentShader, this.gl, this.WEBGL2);
         this.shaderProgramThickLines = initThickLineShaders(thickLineVertexShader, lineFragmentShader, this.gl);
-        this.shaderProgramThickLinesNormal = initThickLineNormalShaders(thickLineNormalVertexShader, fragmentShader, this.gl);
+        this.shaderProgramThickLinesNormalClip = initThickLineNormalShaders(thickLineNormalVertexShader, fragmentShader, this.gl);
+        this.shaderProgramThickLinesNormalFast = initThickLineNormalShaders(thickLineNormalVertexShader, fragmentShaderFast, this.gl);
+        this.shaderProgramThickLinesNormal = this.shaderProgramThickLinesNormalClip;
         this.shaderProgramPointSpheres = initPointSpheresShaders(pointSpheresVertexShader, pointSpheresFragmentShader, this.gl);
         this.shaderProgramTwoDShapes = initTwoDShapesShaders(twoDShapesVertexShader, twoDShapesFragmentShader, this.gl);
         this.shaderProgramImages = initImageShaders(twoDShapesVertexShader, textFragmentShader, this.gl);
@@ -981,9 +1009,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute, this.gl);
         this.shaderProgramCircles = initCirclesShaders(circlesVertexShader, circlesFragmentShader, this.gl);
         this.gl.disableVertexAttribArray(this.shaderProgramCircles.vertexTextureAttribute);
-        this.shaderProgram = initShaders(vertexShader, fragmentShader, this.gl);
+        // Three programs share this fragment shader, so all three need both variants. The
+        // discard-free ones are selected per frame in drawScene; see the header of
+        // webgl-2/triangle-fragment-shader.js for why they exist. Each program carries its own
+        // uniform locations, so the pair are interchangeable at draw time.
+        this.shaderProgramClip = initShaders(vertexShader, fragmentShader, this.gl);
+        this.shaderProgramFast = initShaders(vertexShader, fragmentShaderFast, this.gl);
+        this.shaderProgram = this.shaderProgramClip;
         this.shaderProgramOutline = initOutlineShaders(vertexShader, flatColourFragmentShader, this.gl);
-        this.shaderProgramInstanced = initShadersInstanced(vertexShaderInstanced, fragmentShader, this.gl);
+        this.shaderProgramInstancedClip = initShadersInstanced(vertexShaderInstanced, fragmentShader, this.gl);
+        this.shaderProgramInstancedFast = initShadersInstanced(vertexShaderInstanced, fragmentShaderFast, this.gl);
+        this.shaderProgramInstanced = this.shaderProgramInstancedClip;
         this.shaderProgramGBuffersInstanced = initGBufferShadersInstanced(gBufferInstancedVertexShader, gBufferFragmentShader, this.gl);
         this.shaderProgramGBuffersPerfectSpheres = initGBufferShadersPerfectSphere(gBufferTwodVertexShader, gBufferPerfectSphereFragmentShader, this.gl);
         this.shaderProgramGBuffersThickLinesNormal = initGBufferThickLineNormalShaders(gBufferThickLineNormalVertexShader, gBufferFragmentShader, this.gl);
