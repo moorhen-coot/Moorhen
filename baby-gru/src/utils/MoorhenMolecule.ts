@@ -2552,7 +2552,10 @@ export class MoorhenMolecule {
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
     async SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string, redraw: boolean = true): Promise<void> {
-        this.commandCentre.cootCommand(
+        // This was previously fire-and-forget: a failure in coot was neither awaited
+        // nor inspected, so the caller carried on redrawing a molecule that had not
+        // moved and had no way to report the failure.
+        const response = await this.commandCentre.cootCommand(
             {
                 command: "SSM_superpose",
                 returnType: "superpose_results",
@@ -2561,6 +2564,10 @@ export class MoorhenMolecule {
             },
             true
         );
+
+        if (response?.data?.result?.status === "Exception") {
+            return Promise.reject(new Error(response.data.consoleMessage ?? "SSM superposition failed"));
+        }
 
         this.setAtomsDirty(true);
         if (redraw) {

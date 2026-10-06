@@ -146,18 +146,26 @@ export const MoorhenSuperposeStructuresModal = (props: ModalComponentProps) => {
 
         setBusy(true);
 
-        if (algorithmSelectRef.current.value === "ssm") {
-            await movMolecule.SSMSuperpose(movChainSelectRef.current.value, refMolecule.molNo, refChainSelectRef.current.value);
-        } else {
-            await movMolecule.lsqkbSuperpose(refMolecule.molNo, lsqkbResidueRanges, lsqkbModeRef.current);
-        }
+        try {
+            if (algorithmSelectRef.current.value === "ssm") {
+                await movMolecule.SSMSuperpose(movChainSelectRef.current.value, refMolecule.molNo, refChainSelectRef.current.value);
+            } else {
+                await movMolecule.lsqkbSuperpose(refMolecule.molNo, lsqkbResidueRanges, lsqkbModeRef.current);
+            }
 
-        if (makeCopyOfMovStructCheckRef.current.checked) {
-            dispatch(addMolecule(movMolecule));
-        }
+            if (makeCopyOfMovStructCheckRef.current.checked) {
+                dispatch(addMolecule(movMolecule));
+            }
 
-        setBusy(false);
-        dispatch(hideModal(modalKeys.SUPERPOSE_MODELS));
+            dispatch(hideModal(modalKeys.SUPERPOSE_MODELS));
+        } catch (err) {
+            // Without this the overlay spinner is never dismissed and the modal is
+            // stuck behind it, with no indication of what went wrong.
+            console.error("Superposition failed", err);
+            dispatch(enqueueSnackbar({ message: "Superposition failed, see the console for details", variant: "error" }));
+        } finally {
+            setBusy(false);
+        }
     }, [molecules, lsqkbResidueRanges]);
 
     const handleModelChange = (evt: number, isReferenceModel: boolean) => {
