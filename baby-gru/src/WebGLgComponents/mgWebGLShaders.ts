@@ -617,6 +617,8 @@ export function initTextInstancedShaders(vertexShader, fragmentShader, gl) {
     shaderProgramTextInstanced.peelNumber = gl.getUniformLocation(shaderProgramTextInstanced, "peelNumber");
     shaderProgramTextInstanced.depthPeelSamplers = gl.getUniformLocation(shaderProgramTextInstanced, "depthPeelSamplers");
 
+    shaderProgramTextInstanced.opaqueDepthSampler = gl.getUniformLocation(shaderProgramTextInstanced, "opaqueDepthSampler");
+    shaderProgramTextInstanced.haveOpaqueDepth = gl.getUniformLocation(shaderProgramTextInstanced, "haveOpaqueDepth");
     return shaderProgramTextInstanced
 
 }
@@ -896,6 +898,8 @@ export function initShadersDepthPeelAccum(vertexShader, fragmentShader, gl) {
     shaderProgramDepthPeelAccum.pMatrixUniform = gl.getUniformLocation(shaderProgramDepthPeelAccum, "uPMatrix");
     shaderProgramDepthPeelAccum.peelNumber = gl.getUniformLocation(shaderProgramDepthPeelAccum, "peelNumber");
     shaderProgramDepthPeelAccum.depthPeelSamplers = gl.getUniformLocation(shaderProgramDepthPeelAccum, "depthPeelSamplers");
+    shaderProgramDepthPeelAccum.opaqueDepthSampler = gl.getUniformLocation(shaderProgramDepthPeelAccum, "opaqueDepthSampler");
+    shaderProgramDepthPeelAccum.haveOpaqueDepth = gl.getUniformLocation(shaderProgramDepthPeelAccum, "haveOpaqueDepth");
     shaderProgramDepthPeelAccum.xSSAOScaling = gl.getUniformLocation(shaderProgramDepthPeelAccum, "xSSAOScaling");
     shaderProgramDepthPeelAccum.ySSAOScaling = gl.getUniformLocation(shaderProgramDepthPeelAccum, "ySSAOScaling");
     shaderProgramDepthPeelAccum.colorPeelSamplers = gl.getUniformLocation(shaderProgramDepthPeelAccum, "colorPeelSamplers");
@@ -1041,6 +1045,8 @@ export function initShaders(vertexShader, fragmentShader, gl) {
     shaderProgram.peelNumber = gl.getUniformLocation(shaderProgram, "peelNumber");
     shaderProgram.depthPeelSamplers = gl.getUniformLocation(shaderProgram, "depthPeelSamplers");
 
+    shaderProgram.opaqueDepthSampler = gl.getUniformLocation(shaderProgram, "opaqueDepthSampler");
+    shaderProgram.haveOpaqueDepth = gl.getUniformLocation(shaderProgram, "haveOpaqueDepth");
     shaderProgram.ssaoMultiviewWidthHeightRatio = gl.getUniformLocation(shaderProgram, "ssaoMultiviewWidthHeightRatio");
     shaderProgram.zoom = gl.getUniformLocation(shaderProgram, "zoom");
 
@@ -1148,6 +1154,8 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
     shaderProgramInstanced.peelNumber = gl.getUniformLocation(shaderProgramInstanced, "peelNumber");
     shaderProgramInstanced.depthPeelSamplers = gl.getUniformLocation(shaderProgramInstanced, "depthPeelSamplers");
 
+    shaderProgramInstanced.opaqueDepthSampler = gl.getUniformLocation(shaderProgramInstanced, "opaqueDepthSampler");
+    shaderProgramInstanced.haveOpaqueDepth = gl.getUniformLocation(shaderProgramInstanced, "haveOpaqueDepth");
     shaderProgramInstanced.ssaoMultiviewWidthHeightRatio = gl.getUniformLocation(shaderProgramInstanced, "ssaoMultiviewWidthHeightRatio");
     shaderProgramInstanced.zoom = gl.getUniformLocation(shaderProgramInstanced, "zoom");
 
@@ -1403,6 +1411,8 @@ export function initThickLineNormalShaders(vertexShader, fragmentShader, gl) {
     shaderProgramThickLinesNormal.peelNumber = gl.getUniformLocation(shaderProgramThickLinesNormal, "peelNumber");
     shaderProgramThickLinesNormal.depthPeelSamplers = gl.getUniformLocation(shaderProgramThickLinesNormal, "depthPeelSamplers");
 
+    shaderProgramThickLinesNormal.opaqueDepthSampler = gl.getUniformLocation(shaderProgramThickLinesNormal, "opaqueDepthSampler");
+    shaderProgramThickLinesNormal.haveOpaqueDepth = gl.getUniformLocation(shaderProgramThickLinesNormal, "haveOpaqueDepth");
     // Shares the triangle fragment shader, so it gets these too. Lit thick lines are never
     // textured and their buffers carry no material, so the draw code will simply set the flag
     // false - but following the rule everywhere beats deciding case by case which programs are
@@ -1461,6 +1471,8 @@ export function initThickLineShaders(vertexShader, fragmentShader, gl) {
     shaderProgramThickLines.peelNumber = gl.getUniformLocation(shaderProgramThickLines, "peelNumber");
     shaderProgramThickLines.depthPeelSamplers = gl.getUniformLocation(shaderProgramThickLines, "depthPeelSamplers");
 
+    shaderProgramThickLines.opaqueDepthSampler = gl.getUniformLocation(shaderProgramThickLines, "opaqueDepthSampler");
+    shaderProgramThickLines.haveOpaqueDepth = gl.getUniformLocation(shaderProgramThickLines, "haveOpaqueDepth");
     return shaderProgramThickLines
 
 }
@@ -1511,6 +1523,8 @@ export function initLineShaders(vertexShader, fragmentShader, gl) {
     shaderProgramLines.peelNumber = gl.getUniformLocation(shaderProgramLines, "peelNumber");
     shaderProgramLines.depthPeelSamplers = gl.getUniformLocation(shaderProgramLines, "depthPeelSamplers");
 
+    shaderProgramLines.opaqueDepthSampler = gl.getUniformLocation(shaderProgramLines, "opaqueDepthSampler");
+    shaderProgramLines.haveOpaqueDepth = gl.getUniformLocation(shaderProgramLines, "haveOpaqueDepth");
     return shaderProgramLines
 
 }
@@ -1719,6 +1733,8 @@ export function initPerfectSphereShaders(vertexShader, fragmentShader, gl) {
     shaderProgramPerfectSpheres.peelNumber = gl.getUniformLocation(shaderProgramPerfectSpheres, "peelNumber");
     shaderProgramPerfectSpheres.depthPeelSamplers = gl.getUniformLocation(shaderProgramPerfectSpheres, "depthPeelSamplers");
 
+    shaderProgramPerfectSpheres.opaqueDepthSampler = gl.getUniformLocation(shaderProgramPerfectSpheres, "opaqueDepthSampler");
+    shaderProgramPerfectSpheres.haveOpaqueDepth = gl.getUniformLocation(shaderProgramPerfectSpheres, "haveOpaqueDepth");
     shaderProgramPerfectSpheres.ssaoMultiviewWidthHeightRatio = gl.getUniformLocation(shaderProgramPerfectSpheres, "ssaoMultiviewWidthHeightRatio");
     shaderProgramPerfectSpheres.zoom = gl.getUniformLocation(shaderProgramPerfectSpheres, "zoom");
 

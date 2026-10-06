@@ -161,6 +161,7 @@ export {
     setDoOutline,
     setDepthBlurRadius,
     setDepthPeelLayers,
+    setPeelOpaqueSeparately,
     setBackgroundColor,
     setDepthBlurDepth,
     setDrawAxes,

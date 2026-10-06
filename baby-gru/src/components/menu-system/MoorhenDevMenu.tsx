@@ -16,6 +16,7 @@ import {
     uninstrumentGl,
 } from "../../WebGLgComponents/mgWebGLParts/renderStats";
 import { setUseGemmi } from "../../store/generalStatesSlice";
+import { setPeelOpaqueSeparately } from "../../store/sceneSettingsSlice";
 import { showModal } from "../../store/modalsSlice";
 import {
     addCallback,
@@ -190,6 +191,7 @@ export const MoorhenDevMenu = () => {
     const [countingDraws, setCountingDraws] = useState<boolean>(renderStats.enabled);
     const [syncingGpu, setSyncingGpu] = useState<boolean>(renderStats.syncGpu);
     const glCtx = useSelector((state: RootState) => state.glRef.glCtx);
+    const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately);
     // The buffers are read on demand rather than subscribed to: this is a one-shot report, and
     // selecting the buffer list would re-render this menu every time any of them changed.
     const store = useStore<RootState>();
@@ -514,6 +516,14 @@ export const MoorhenDevMenu = () => {
                 onChange={() => {
                     renderStats.syncGpu = !syncingGpu;
                     setSyncingGpu(!syncingGpu);
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={peelOpaqueSeparately}
+                label="Draw opaque geometry once when depth peeling"
+                onChange={() => {
+                    dispatch(setPeelOpaqueSeparately(!peelOpaqueSeparately));
                 }}
             />
             <MoorhenMenuItem

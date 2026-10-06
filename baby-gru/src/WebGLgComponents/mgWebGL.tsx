@@ -196,6 +196,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         blurSize: number;
         /** Depth-peel layers; see setDepthPeelLayers. */
         depthPeelLayers: number;
+        /**
+         * Whether the opaque scene is drawn once into peel layer 0 instead of into every layer.
+         *
+         * A switch rather than simply the new behaviour, because the two paths should produce
+         * the same picture and the only way to be sure of that is to look at them side by side.
+         */
+        peelOpaqueSeparately: boolean;
+        /**
+         * What the current peel layer accepts: true for transparent buffers, false for opaque,
+         * null when not peeling and everything is drawn as usual.
+         */
+        peelTransparentOnly: boolean | null;
         blurDepth:number;
         gl_fog_start: null | number;
         doDrawClickedAtomLines: boolean;

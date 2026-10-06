@@ -20,6 +20,8 @@ var text_fragment_shader_source = `#version 300 es\n
 
     uniform int peelNumber;
     uniform sampler2D depthPeelSamplers;
+    uniform bool haveOpaqueDepth;
+    uniform sampler2D opaqueDepthSampler;
     uniform float xSSAOScaling;
     uniform float ySSAOScaling;
 
@@ -33,6 +35,13 @@ var text_fragment_shader_source = `#version 300 es\n
       if(dot(eyePos, clipPlane1)<0.0){
        discard;
       }
+      if(haveOpaqueDepth) {
+          vec2 opaque_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
+          if(gl_FragCoord.z > texture(opaqueDepthSampler,opaque_coord).r) {
+              discard;
+          }
+      }
+
 
       if(peelNumber>0) {
           vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);

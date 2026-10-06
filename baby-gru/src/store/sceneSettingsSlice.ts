@@ -36,6 +36,14 @@ export const initialState: {
      * this is a direct trade of cost against how deep the transparency stays correct.
      */
     depthPeelLayers: number;
+    /**
+     * Whether the opaque scene is drawn once while depth peeling, rather than into every layer.
+     *
+     * Deliberately not in the persisted preferences: it exists so the two paths can be compared
+     * on screen, and it should come back on after a reload rather than leaving someone stuck on
+     * the slow path because they once turned it off.
+     */
+    peelOpaqueSeparately: boolean;
     depthBlurDepth: number;
     lightPosition: [number, number, number, number];
     ambient: [number, number, number, number];
@@ -116,6 +124,7 @@ export const initialState: {
     doOutline: false,
     depthBlurRadius: 3.0,
     depthPeelLayers: 4,
+    peelOpaqueSeparately: true,
     depthBlurDepth: 0.5,
     height: 0,
     width: 0,
@@ -298,6 +307,10 @@ const sceneSettingsSlice = createSlice({
             state.depthPeelLayers = action.payload;
         },
         // API
+        setPeelOpaqueSeparately: (state, action: PayloadAction<boolean>) => {
+            state.peelOpaqueSeparately = action.payload;
+        },
+        // API
         setDepthBlurDepth: (state, action: PayloadAction<number>) => {
             state.depthBlurDepth = action.payload;
         },
@@ -406,6 +419,7 @@ export const {
     setDoOutline,
     setDepthBlurRadius,
     setDepthPeelLayers,
+    setPeelOpaqueSeparately,
     setBackgroundColor,
     setDepthBlurDepth,
     setDrawAxes,

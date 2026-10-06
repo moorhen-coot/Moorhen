@@ -34,6 +34,22 @@ const clipAndPeelDiscards = `
        discard;
       }
 
+      // Transparent geometry hidden behind the opaque scene.
+      //
+      // When the opaque scene is drawn once into its own layer rather than into every peel
+      // layer, this is what stops transparent fragments behind it surviving. It cannot be done
+      // by seeding the layer's depth buffer with the opaque depth instead: the compositing step
+      // decides whether a layer drew anything at all by testing that same depth against 1.0, so
+      // an opaque depth sitting in it makes every covered pixel look drawn, and the layer's
+      // background colour washes over the opaque surface. That is what white ribbons under a
+      // transparent surface looked like.
+      if(haveOpaqueDepth) {
+          vec2 opaque_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
+          if(gl_FragCoord.z > texture(opaqueDepthSampler,opaque_coord).r) {
+              discard;
+          }
+      }
+
       if(peelNumber>0) {
           vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
           float max_depth;
@@ -120,6 +136,9 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
 
     uniform int peelNumber;
     uniform sampler2D depthPeelSamplers;
+    /** The opaque scene's depth, when it is drawn separately from the peel layers. */
+    uniform bool haveOpaqueDepth;
+    uniform sampler2D opaqueDepthSampler;
 
     uniform float zoom;
 

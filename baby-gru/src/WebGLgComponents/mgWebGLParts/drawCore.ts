@@ -65,6 +65,8 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
 
                 self.gl.enable(self.gl.DEPTH_TEST);
                 const depthPeelSampler0 = 3;
+                // Units 0-4 and 7-9 are taken; see the sampler assignments through drawCore.
+                const opaqueDepthUnit = 5;
 
                 theShaders.forEach(shader => {
                         self.gl.useProgram(shader);
@@ -75,21 +77,75 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                 self.doDepthPeelPass = true;
                 self.gl.disable(self.gl.BLEND);
                 self.gl.enable(self.gl.DEPTH_TEST);
+                // Layer 0 is the opaque scene; layers 1 upwards peel the transparent geometry.
+                //
+                // Every layer used to receive the entire scene, so the opaque geometry - which
+                // for a molecule with a contoured map around it is most of the triangles - was
+                // drawn once per layer to no purpose. Peeling only resolves transparency; the
+                // opaque surface behind it is the same in every layer.
+                //
+                // No shader change was needed for this. Each transparent layer starts with the
+                // opaque layer's depth blitted into it, so the ordinary depth test rejects
+                // anything behind the opaque surface, and the peel test in the shader only has
+                // to handle what it was always for: rejecting fragments nearer than the
+                // previous transparent layer. The first transparent layer has no previous
+                // layer, so it runs with the peel test off and keeps the nearest transparent
+                // fragment in front of opaque.
+                // blitFramebuffer is WebGL2 only, and the depth copy is what makes this work,
+                // so a WebGL1 context keeps the old behaviour of drawing everything into every
+                // layer. Correct either way; only the faster path needs the newer API.
+                const separateOpaque = self.peelOpaqueSeparately && self.WEBGL2;
                 for(let ipeel=0;ipeel<self.depthPeelFramebuffers.length;ipeel++){
+                    const isOpaqueLayer = separateOpaque && ipeel === 0;
+                    self.peelTransparentOnly = separateOpaque ? !isOpaqueLayer : null;
+
                     self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.depthPeelFramebuffers[ipeel]);
+
+                    // The opaque depth goes to the shader as its own texture, not into this
+                    // layer's depth buffer. Seeding the depth buffer was the obvious thing and
+                    // it was wrong: compositing decides whether a layer drew anything by
+                    // testing its depth against 1.0, so opaque depth sitting in it made every
+                    // covered pixel look drawn and the layer's background washed over the
+                    // opaque surface.
+                    const showOpaqueDepth = separateOpaque && !isOpaqueLayer;
+                    theShaders.forEach(shader => {
+                            self.gl.useProgram(shader);
+                            self.gl.uniform1i(shader.opaqueDepthSampler, opaqueDepthUnit);
+                            self.gl.uniform1i(shader.haveOpaqueDepth, showOpaqueDepth ? 1 : 0);
+                            })
+                    self.gl.activeTexture(self.gl.TEXTURE0+opaqueDepthUnit);
+                    self.gl.bindTexture(self.gl.TEXTURE_2D,
+                                        showOpaqueDepth ? self.depthPeelDepthTextures[0] : null);
+
+                    // Which layer's depth the peel test compares against, and whether it runs at
+                    // all. Peeling transparent geometry separately shifts the numbering by one:
+                    // layer 1 is the first transparent layer and has nothing before it.
+                    // The layer whose depth this one peels against is always the one before it.
+                    // What shifts when opaque takes layer 0 is the peel *number* the shader is
+                    // told - layer 1 becomes the first transparent layer and so has nothing
+                    // before it - and conflating the two made layer 1 compare against its own
+                    // depth texture rather than the previous layer's.
+                    const previousLayer = ipeel - 1;
+                    const peelNumber = separateOpaque ? ipeel - 1 : ipeel;
+
                     self.gl.activeTexture(self.gl.TEXTURE0+depthPeelSampler0);
-                    if(ipeel>0){
-                        self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[ipeel-1]);
+                    if(peelNumber>0){
+                        self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[previousLayer]);
                     } else {
                         self.gl.bindTexture(self.gl.TEXTURE_2D, null)
                     }
                     theShaders.forEach(shader => {
                             self.gl.useProgram(shader);
-                            self.gl.uniform1i(shader.peelNumber,ipeel);
+                            self.gl.uniform1i(shader.peelNumber,peelNumber);
                             })
                     invMat = GLrender(self, false,doClear,ratioMult);
                     self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
                 }
+                self.peelTransparentOnly = null;
+                theShaders.forEach(shader => {
+                        self.gl.useProgram(shader);
+                        self.gl.uniform1i(shader.haveOpaqueDepth, 0);
+                        })
 
                 self.doDepthPeelPass = false;
                 theShaders.forEach(shader => {
@@ -146,7 +202,19 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                 // Back to front, so nearer layers blend over further ones. Driven by how many
                 // layers were actually allocated rather than a hardcoded four, which is what
                 // makes the count adjustable at all.
-                for(let ipeel=self.depthPeelFramebuffers.length-1;ipeel>=0;ipeel--){
+                //
+                // With the opaque scene in layer 0, that layer is the furthest thing there is -
+                // every transparent fragment kept is in front of it - so it goes down first and
+                // the transparent layers blend over it in descending order. Compositing it last,
+                // as the single loop below used to, would paint the opaque surface on top of
+                // the transparency in front of it.
+                const compositeOrder: number[] = [];
+                if (separateOpaque) compositeOrder.push(0);
+                for (let ipeel = self.depthPeelFramebuffers.length - 1;
+                     ipeel >= (separateOpaque ? 1 : 0); ipeel--) {
+                    compositeOrder.push(ipeel);
+                }
+                for(const ipeel of compositeOrder){
                     self.gl.activeTexture(self.gl.TEXTURE0);
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[ipeel]);
                     self.gl.activeTexture(self.gl.TEXTURE1);
@@ -268,12 +336,26 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
             const primitiveSizes = displayBuffers[idx].primitiveSizes;
 
+            // What this pass is willing to draw.
+            //
+            // Without peeling, transparent buffers are skipped entirely - the old behaviour.
+            // While peeling, each layer takes one kind or the other: layer 0 is the opaque
+            // scene and the rest peel the transparent geometry. Drawing everything into every
+            // layer, which is what used to happen, meant the opaque geometry - most of the
+            // triangles in a molecule with a map contoured around it - was rendered once per
+            // layer for a result that was identical each time.
+            const isTransparent = displayBuffers[idx].transparent && !self.drawingGBuffers
+                                  && !displayBuffers[idx].isHoverBuffer;
+            if (displayBuffers[idx].transparent && !self.drawingGBuffers) {
+                if(!self.doPeel)
+                    continue;
+            }
+            if (self.peelTransparentOnly !== null && self.peelTransparentOnly !== undefined
+                && self.peelTransparentOnly !== isTransparent) {
+                continue;
+            }
+
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                if (displayBuffers[idx].transparent&&!self.drawingGBuffers) {
-                    //console.log("Not doing normal drawing way ....");
-                    if(!self.doPeel)
-                        continue;
-                }
                 let theShader;
                 let scaleZ = false;
 

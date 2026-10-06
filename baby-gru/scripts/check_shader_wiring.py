@@ -238,6 +238,10 @@ WATCHED = {
     # at zero, which is worse than the bug it replaced.
     "ySSAOScaling": None,
     "xSSAOScaling": None,
+    # The opaque depth a transparent peel layer tests against. Unlocated, the uniform1i calls
+    # are silent no-ops and transparent geometry behind the opaque scene stops being rejected.
+    "opaqueDepthSampler": None,
+    "haveOpaqueDepth": None,
 }
 
 # Some watched uniforms only matter to programs that use a particular feature. Several programs
@@ -247,6 +251,8 @@ WATCHED = {
 REQUIRED_WHEN = {
     "xSSAOScaling": "peelNumber",
     "ySSAOScaling": "peelNumber",
+    "opaqueDepthSampler": "peelNumber",
+    "haveOpaqueDepth": "peelNumber",
 }
 
 SHADERS_FILE = ROOT / "mgWebGLShaders.ts"

@@ -36,8 +36,14 @@ describe("the fast triangle fragment shader", () => {
     });
 
     it("leaves the full variant with its discards", () => {
-        // Two clip plane tests and one depth peel test.
-        expect(occurrences(slow, "discard;")).toBe(3);
+        // Two clip plane tests, the opaque-depth test a transparent peel layer uses, and the
+        // depth peel test itself.
+        expect(occurrences(slow, "discard;")).toBe(4);
+    });
+
+    it("drops the opaque-depth test, which only a transparent peel layer needs", () => {
+        expect(slow).toMatch(/haveOpaqueDepth/);
+        expect(fast).not.toMatch(/if\(haveOpaqueDepth\)/);
     });
 
     it("drops the clip plane tests, which the projection already enforces", () => {
@@ -74,7 +80,7 @@ describe("the fast triangle fragment shader", () => {
         const removed = tailOf(slow).slice(0, tailOf(slow).length - tailOf(fast).length);
         expect(removed).toMatch(/clipPlane0/);
         expect(removed).toMatch(/peelNumber/);
-        expect(occurrences(removed, "discard;")).toBe(3);
+        expect(occurrences(removed, "discard;")).toBe(4);
     });
 
     it("keeps the lighting, fog and texture work identical", () => {
