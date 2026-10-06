@@ -78,7 +78,7 @@ const EdgeDetectPanel = () => {
                 minVal={0.1}
                 maxVal={10.0}
                 scale="linear"
-                sliderTitle="Depth threshold"
+                sliderTitle="Depth threshold (Å)"
                 value={edgeDetectDepthThreshold}
                 setValue={val => dispatch(setEdgeDetectDepthThreshold(val))}
                 stepButtons={0.1}

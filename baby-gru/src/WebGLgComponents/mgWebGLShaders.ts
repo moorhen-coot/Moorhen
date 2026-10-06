@@ -224,7 +224,6 @@ export function initEdgeDetectShader(vertexShaderEdgeDetect, fragmentShaderEdgeD
     shaderProgramEdgeDetect.gNormalTexture = gl.getUniformLocation(shaderProgramEdgeDetect, "gNormal");
 
     shaderProgramEdgeDetect.zoom = gl.getUniformLocation(shaderProgramEdgeDetect, "zoom");
-    shaderProgramEdgeDetect.depthBufferSize = gl.getUniformLocation(shaderProgramEdgeDetect, "depthBufferSize");
 
     shaderProgramEdgeDetect.depthThreshold = gl.getUniformLocation(shaderProgramEdgeDetect, "depthThreshold");
     shaderProgramEdgeDetect.normalThreshold = gl.getUniformLocation(shaderProgramEdgeDetect, "normalThreshold");
@@ -232,7 +231,9 @@ export function initEdgeDetectShader(vertexShaderEdgeDetect, fragmentShaderEdgeD
     shaderProgramEdgeDetect.scaleNormal = gl.getUniformLocation(shaderProgramEdgeDetect, "scaleNormal");
     shaderProgramEdgeDetect.xPixelOffset = gl.getUniformLocation(shaderProgramEdgeDetect, "xPixelOffset");
     shaderProgramEdgeDetect.yPixelOffset = gl.getUniformLocation(shaderProgramEdgeDetect, "yPixelOffset");
-    shaderProgramEdgeDetect.depthFactor = gl.getUniformLocation(shaderProgramEdgeDetect, "depthFactor");
+    shaderProgramEdgeDetect.clipNear = gl.getUniformLocation(shaderProgramEdgeDetect, "clipNear");
+    shaderProgramEdgeDetect.clipFar = gl.getUniformLocation(shaderProgramEdgeDetect, "clipFar");
+    shaderProgramEdgeDetect.perspectiveProjection = gl.getUniformLocation(shaderProgramEdgeDetect, "perspectiveProjection");
 
     return shaderProgramEdgeDetect
 

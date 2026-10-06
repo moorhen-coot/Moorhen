@@ -1592,7 +1592,6 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.uniform1i(self.shaderProgramEdgeDetect.gPositionTexture,0);
             self.gl.uniform1i(self.shaderProgramEdgeDetect.gNormalTexture,1);
             self.gl.uniform1f(self.shaderProgramEdgeDetect.zoom,self.zoom);
-            self.gl.uniform1f(self.shaderProgramEdgeDetect.depthBufferSize,(f+b)*2.);
 
             self.gl.uniform1f(self.shaderProgramEdgeDetect.depthThreshold,self.depthThreshold);
             self.gl.uniform1f(self.shaderProgramEdgeDetect.normalThreshold,self.normalThreshold);
@@ -1605,11 +1604,16 @@ export function drawScene(self: MGWebGL) : void {
             }
             self.gl.uniform1f(self.shaderProgramEdgeDetect.xPixelOffset, 2.0/self.edgeDetectFramebuffer.width/ratio);
             self.gl.uniform1f(self.shaderProgramEdgeDetect.yPixelOffset, 2.0/self.edgeDetectFramebuffer.height/ratio);
-            if(self.doPerspectiveProjection){
-                self.gl.uniform1f(self.shaderProgramEdgeDetect.depthFactor, 1.0/80.0);
-            } else {
-                self.gl.uniform1f(self.shaderProgramEdgeDetect.depthFactor, 1.0);
-            }
+            // The slab, so the shader can turn clip-space depth back into angstroms. This
+            // replaces the depthFactor of 1/80 or 1 that used to be set here: that number was
+            // standing in for the difference between the two projections' depth encodings, and
+            // with the depth linearised there is a real conversion instead of a guess.
+            const edgeSlab = slabNearFar(
+                self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, self.doPerspectiveProjection);
+            self.gl.uniform1f(self.shaderProgramEdgeDetect.clipNear, edgeSlab.near);
+            self.gl.uniform1f(self.shaderProgramEdgeDetect.clipFar, edgeSlab.far);
+            self.gl.uniform1i(self.shaderProgramEdgeDetect.perspectiveProjection,
+                              self.doPerspectiveProjection ? 1 : 0);
 
             self.gl.activeTexture(self.gl.TEXTURE0);
             self.gl.bindTexture(self.gl.TEXTURE_2D, self.gBufferPositionTexture);
