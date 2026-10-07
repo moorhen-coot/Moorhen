@@ -107,7 +107,7 @@ export const initialState: {
     edgeDetectNormalThreshold: 0.5,
     edgeDetectDepthScale: 2.0,
     edgeDetectNormalScale: 0.0,
-    ssaoRadius: 0.4,
+    ssaoRadius: 2.0,
     ssaoBias: 1.0,
     resetClippingFogging: true,
     clipCap: true,

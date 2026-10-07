@@ -272,9 +272,9 @@ export function initSSAOShader(vertexShaderSSAO, fragmentShaderSSAO, gl, WEBGL2)
     shaderProgramSSAO.texNoiseTexture = gl.getUniformLocation(shaderProgramSSAO, "texNoise");
     shaderProgramSSAO.zoom = gl.getUniformLocation(shaderProgramSSAO, "zoom");
     shaderProgramSSAO.radius = gl.getUniformLocation(shaderProgramSSAO, "radius");
-    shaderProgramSSAO.bias = gl.getUniformLocation(shaderProgramSSAO, "bias");
-    shaderProgramSSAO.depthFactor = gl.getUniformLocation(shaderProgramSSAO, "depthFactor");
-    shaderProgramSSAO.depthBufferSize = gl.getUniformLocation(shaderProgramSSAO, "depthBufferSize");
+    shaderProgramSSAO.bias = gl.getUniformLocation(shaderProgramSSAO, "occlusionStrength");
+    shaderProgramSSAO.sceneProjection = gl.getUniformLocation(shaderProgramSSAO, "sceneProjection");
+    shaderProgramSSAO.sceneProjectionInverse = gl.getUniformLocation(shaderProgramSSAO, "sceneProjectionInverse");
     shaderProgramSSAO.tileScale_x = gl.getUniformLocation(shaderProgramSSAO, "tileScale_x");
     shaderProgramSSAO.tileScale_y = gl.getUniformLocation(shaderProgramSSAO, "tileScale_y");
     shaderProgramSSAO.tileScaleBase_x = gl.getUniformLocation(shaderProgramSSAO, "tileScaleBase_x");

@@ -118,21 +118,21 @@ const OcclusionPanel = () => {
 
             <MoorhenSlider
                 minVal={0.0}
-                maxVal={2.0}
+                maxVal={10.0}
                 scale="linear"
                 isDisabled={!doSSAO}
-                sliderTitle="Occlusion radius"
+                sliderTitle="Occlusion radius (Å)"
                 value={ssaoRadius}
                 setValue={val => dispatch(setSsaoRadius(val))}
-                stepButtons={0.1}
+                stepButtons={0.5}
                 decimalPlaces={1}
             />
             <MoorhenSlider
                 minVal={0.0}
-                maxVal={1.0}
+                maxVal={4.0}
                 scale="linear"
                 isDisabled={!doSSAO}
-                sliderTitle="Occlusion effect"
+                sliderTitle="Occlusion strength"
                 value={ssaoBias}
                 setValue={val => dispatch(setSsaoBias(val))}
                 stepButtons={0.1}

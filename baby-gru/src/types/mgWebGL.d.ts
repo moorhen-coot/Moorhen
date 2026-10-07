@@ -261,11 +261,11 @@ export namespace webGL {
         gNormalTexture: WebGLUniformLocation;
         texNoiseTexture: WebGLUniformLocation;
         zoom: WebGLUniformLocation | null;
-        depthBufferSize: WebGLUniformLocation | null;
         samples: WebGLUniformLocation | null;
         radius: WebGLUniformLocation | null;
         bias: WebGLUniformLocation | null;
-        depthFactor: WebGLUniformLocation | null;
+        sceneProjection: WebGLUniformLocation | null;
+        sceneProjectionInverse: WebGLUniformLocation | null;
         tileScale_x: WebGLUniformLocation | null;
         tileScale_y: WebGLUniformLocation | null;
         tileScaleBase_x: WebGLUniformLocation | null;

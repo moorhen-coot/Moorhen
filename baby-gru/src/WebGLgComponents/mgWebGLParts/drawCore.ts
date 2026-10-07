@@ -1670,14 +1670,19 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.uniform1i(self.shaderProgramSSAO.gNormalTexture,1);
             self.gl.uniform1i(self.shaderProgramSSAO.texNoiseTexture,2);
 
-            self.gl.uniform1f(self.shaderProgramSSAO.depthBufferSize,b+f);
-            if(self.doPerspectiveProjection){
-                self.gl.uniform1f(self.shaderProgramSSAO.depthFactor,1.0/80.0);
-                self.gl.uniform1f(self.shaderProgramSSAO.radius,self.ssaoRadius*2.0);
-            } else {
-                self.gl.uniform1f(self.shaderProgramSSAO.depthFactor,1.0);
-                self.gl.uniform1f(self.shaderProgramSSAO.radius,self.ssaoRadius/self.zoom);
-            }
+            // The scene's own projection and its inverse. The shader needs the inverse to turn
+            // the clip-space g-buffer back into eye space, and the forward matrix to find where
+            // a sample point lands on screen - it used to project with the fullscreen quad's
+            // matrix, which only resembled the right answer for an orthographic scene.
+            self.gl.uniformMatrix4fv(self.shaderProgramSSAO.sceneProjection, false, self.pMatrix);
+            const ssaoProjectionInverse = mat4.create();
+            mat4.invert(ssaoProjectionInverse, self.pMatrix);
+            self.gl.uniformMatrix4fv(self.shaderProgramSSAO.sceneProjectionInverse, false, ssaoProjectionInverse);
+
+            // In angstroms, the same under either projection. The *2.0 and /zoom that used to be
+            // here were compensating for a radius applied to a clip-space position, which is
+            // why the usable range of the slider was so narrow.
+            self.gl.uniform1f(self.shaderProgramSSAO.radius,self.ssaoRadius);
 
             self.gl.uniform1f(self.shaderProgramSSAO.bias,self.ssaoBias);
             self.gl.activeTexture(self.gl.TEXTURE0);
