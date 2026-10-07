@@ -5,6 +5,8 @@ var render_framebuffer_fragment_shader_source = `#version 300 es\n
     uniform sampler2D inFocus;
     uniform sampler2D blurred;
     uniform sampler2D depth;
+    uniform sampler2D depth2;
+    uniform bool haveDepth2;
     uniform float blurDepth;
 
     out vec4 fragColor;
@@ -23,11 +25,13 @@ var render_framebuffer_fragment_shader_source = `#version 300 es\n
         // smoothstep also flattens at both ends, so near the clip planes the value barely responds to
         // depth at all, which is where a user puts the plane when they want everything blurred.
 
-        vec4 position = texture(depth, out_TexCoord0);
         vec4 focusColor = texture(inFocus, out_TexCoord0);
         vec4 blurColor = texture(blurred, out_TexCoord0);
 
-        float blur = min(position.x,1.0);
+        // Same fallback as the blur passes: under peeling the depth sampler holds opaque only, so
+        // a pixel showing nothing but a transparent surface would read as empty background.
+        float blur = min(texture(depth, out_TexCoord0).x, 1.0);
+        if(haveDepth2 && blur >= 0.9999) blur = min(texture(depth2, out_TexCoord0).x, 1.0);
 
         if(blur>blurDepth){
             float frac = (blur-blurDepth)/(1.0 - blurDepth);

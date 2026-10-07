@@ -247,6 +247,20 @@ const sceneSettingsSlice = createSlice({
             state.doPerspectiveProjection = action.payload;
         },
         // API
+        /* Move the eye towards or away from the view centre, in angstroms. This is what sets how
+           strongly a perspective view converges: close in, the far side of a molecule shrinks
+           markedly; far off, the view approaches orthographic. The framing stays put, because the
+           projection's scale is derived from the same distance, so this is a dolly zoom rather
+           than a zoom. Fog moves with the eye so that it stays where it was on the molecule.
+           Clip needs no adjustment, being measured from the centre already. No effect under
+           orthographic projection. */
+        setPerspectiveEyeDistance: (state, action: PayloadAction<number>) => {
+            const delta = action.payload - state.fogClipOffset;
+            state.fogClipOffset = action.payload;
+            state.fogStart += delta;
+            state.fogEnd += delta;
+        },
+        // API
         setUseOffScreenBuffers: (state, action: PayloadAction<boolean>) => {
             state.useOffScreenBuffers = action.payload;
         },
@@ -428,6 +442,7 @@ export const {
     setDepthBlurDepth,
     setDrawAxes,
     setDoPerspectiveProjection,
+    setPerspectiveEyeDistance,
     setHeight,
     setWidth,
     setGlViewportHeight,

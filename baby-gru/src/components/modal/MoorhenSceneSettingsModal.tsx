@@ -7,6 +7,8 @@ import {
     setBackgroundColor,
     setClipCap,
     setDepthBlurDepth,
+    setDoPerspectiveProjection,
+    setPerspectiveEyeDistance,
     setDepthBlurRadius,
     setDoEdgeDetect,
     setDoSSAO,
@@ -21,6 +23,7 @@ import {
     setUseOffScreenBuffers,setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd , setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
+import { MAX_EYE_DISTANCE, MIN_EYE_DISTANCE } from "../../WebGLgComponents/mgWebGLParts/projection";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
@@ -137,6 +140,37 @@ const OcclusionPanel = () => {
                 setValue={val => dispatch(setSsaoBias(val))}
                 stepButtons={0.1}
                 decimalPlaces={1}
+            />
+        </MoorhenStack>
+    );
+};
+
+const PerspectivePanel = () => {
+    const dispatch = useDispatch();
+    const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection);
+    const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset);
+
+    return (
+        <MoorhenStack direction="vertical" card={true}>
+            <MoorhenToggle
+                type="switch"
+                checked={doPerspectiveProjection}
+                onChange={() => {
+                    dispatch(setDoPerspectiveProjection(!doPerspectiveProjection));
+                }}
+                label="Perspective projection"
+            />
+
+            <MoorhenSlider
+                minVal={MIN_EYE_DISTANCE}
+                maxVal={MAX_EYE_DISTANCE}
+                scale="linear"
+                isDisabled={!doPerspectiveProjection}
+                sliderTitle="Eye distance (Å) — closer converges more"
+                value={fogClipOffset}
+                setValue={val => dispatch(setPerspectiveEyeDistance(val))}
+                stepButtons={25}
+                decimalPlaces={0}
             />
         </MoorhenStack>
     );
@@ -457,6 +491,7 @@ export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "ve
                 <LightingPanel />
                 {isWebGL2 && !newSlidersMode && <DepthBlurPanel />}
                 <OcclusionPanel />
+                <PerspectivePanel />
             </MoorhenStack>
         </MoorhenStack>
     );

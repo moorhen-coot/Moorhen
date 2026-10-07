@@ -166,6 +166,7 @@ export {
     setDepthBlurDepth,
     setDrawAxes,
     setDoPerspectiveProjection,
+    setPerspectiveEyeDistance,
     setHeight,
     setWidth,
     setGlViewportHeight,

@@ -8,7 +8,6 @@ import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOu
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
 import {
-    setDoPerspectiveProjection,
     setDoSpin,
     setDrawAxes,
     setDrawCrosshairs,
@@ -918,13 +917,6 @@ export const subMenuMap: SubMenuMap = {
                 action: setDrawEnvBOcc,
                 label: "Show env. temp factors and occ.",
                 description: "Display on screen B factors and occupancies values",
-            },
-            {
-                id: "perspective-projection",
-                type: "preferenceSwitch",
-                selector: (state: RootState) => state.sceneSettings.doPerspectiveProjection,
-                action: setDoPerspectiveProjection,
-                label: "Perspective projection",
             },
             {
                 id: "spin-view",

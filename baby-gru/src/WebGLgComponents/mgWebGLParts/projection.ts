@@ -88,20 +88,34 @@ export const ORTHO_HALF_HEIGHT = 24.0;
 /** The perspective field of view Moorhen uses, in radians. */
 export const PERSPECTIVE_FOV = 1.0;
 
+/** How close and how far the eye may be placed from the view centre, in angstroms. */
+export const MIN_EYE_DISTANCE = 50.0;
+export const MAX_EYE_DISTANCE = 1000.0;
+
 /**
  * The divisor applied to the perspective projection's x and y scale.
  *
- * Long carried as an unexplained 5.7, with a comment asking what justified it. It is the
- * constant that makes a perspective view frame the same thing an orthographic one does at the
- * view centre: at a distance of fogClipOffset (250),
+ * Long carried as an unexplained 5.7. It is the number that makes a perspective view frame the
+ * same thing an orthographic one does at the view centre:
  *
- *     250 * tan(PERSPECTIVE_FOV / 2) / ORTHO_HALF_HEIGHT  =  5.690
+ *     eyeDistance * tan(PERSPECTIVE_FOV / 2) / ORTHO_HALF_HEIGHT
  *
- * so the two agree where the molecule sits and diverge either side of it, which is exactly what
- * switching projection should look like. Kept at the value the renderer has always used rather
- * than sharpened to the derived one, since changing it would move every perspective view very
- * slightly for no benefit.
+ * which at the historical eye distance of 250 gives 5.690.
+ *
+ * It takes the eye distance rather than a constant because that distance is what sets how strongly
+ * a perspective view converges, and it is adjustable. Deriving the divisor from it holds the
+ * framing still at the view centre while the convergence changes - a dolly zoom. With the divisor
+ * fixed instead, moving the eye would simply rescale the picture.
+ *
+ * Note what this is *not*: a field-of-view control. At a fixed eye distance with the framing held,
+ * the field of view cancels out of the projection entirely - the tan in mat4.perspective against
+ * the tan here - and changing it does nothing whatsoever. Only the eye distance moves the
+ * geometry, which is why PERSPECTIVE_FOV stays a constant.
  */
+export const perspectiveScale = (eyeDistance: number): number =>
+    eyeDistance * Math.tan(PERSPECTIVE_FOV / 2) / ORTHO_HALF_HEIGHT;
+
+/** What perspectiveScale was fixed at before the field of view could be changed. */
 export const PERSPECTIVE_SCALE = 5.7;
 
 /**
@@ -113,15 +127,17 @@ export const PERSPECTIVE_SCALE = 5.7;
  * and picking, hover, measurement and gizmo dragging all build their ray this way.
  *
  * @param depth  distance in front of the eye, i.e. fogClipOffset plus the slab offset
+ * @param eyeDistance  the distance the two projections are made to agree at
  */
 export const pickHalfExtents = (
     depth: number,
     zoom: number,
     aspect: number,
     perspective: boolean,
+    eyeDistance: number = 250,
 ): { halfWidth: number, halfHeight: number } => {
     const halfHeight = perspective
-        ? depth * Math.tan(PERSPECTIVE_FOV / 2) * zoom / PERSPECTIVE_SCALE
+        ? depth * Math.tan(PERSPECTIVE_FOV / 2) * zoom / perspectiveScale(eyeDistance)
         : ORTHO_HALF_HEIGHT * zoom;
     return { halfWidth: halfHeight * aspect, halfHeight };
 };
@@ -145,6 +161,20 @@ export const viewportAspect = (viewport: ArrayLike<number> | null | undefined): 
     if (!(width > 0) || !(height > 0)) return 1.0;
     return width / height;
 };
+
+/**
+ * The clip plane w values after the eye has moved by `delta` towards or away from the scene.
+ *
+ * set_clip_range stores the planes as absolute distances from the eye, so moving the eye without
+ * moving them leaves the slab behind and slices the molecule open. Shifting both by the same amount
+ * keeps the slab where it was relative to the view centre, which is where the user put it.
+ */
+export const clipPlanesAfterEyeMove = (
+    clipPlane0W: number,
+    clipPlane1W: number,
+    delta: number,
+): { clipPlane0W: number; clipPlane1W: number } =>
+    ({ clipPlane0W: clipPlane0W - delta, clipPlane1W: clipPlane1W + delta });
 
 /**
  * The clip slab expressed as offsets from the view centre, negative towards the viewer.

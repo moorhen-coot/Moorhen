@@ -1,7 +1,7 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
-import { slabNearFar, viewportAspect, focalPlaneDepth} from './projection';
+import { slabNearFar, viewportAspect, focalPlaneDepth, perspectiveScale, PERSPECTIVE_FOV} from './projection';
 import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
@@ -34,6 +34,24 @@ import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from
 // ============================================================================
 // SECTION 1 - GEOMETRY & FRAME
 // ============================================================================
+
+
+/**
+ * The nearest transparent layer's depth texture, or null when there is no such thing.
+ *
+ * The blur passes read the opaque layer's depth, which under peelOpaqueSeparately is layer 0. A
+ * pixel showing only a transparent surface therefore has no depth at all there - the buffer still
+ * holds its cleared 1.0 - and the blur treats it as empty background. This supplies layer 1, the
+ * nearest transparent layer, as a fallback for exactly those pixels.
+ *
+ * Without peelOpaqueSeparately, layer 0 already holds whatever is frontmost including transparent
+ * geometry, so there is nothing to fall back to and this returns null.
+ */
+function transparentDepthLayer(self: MGWebGL): WebGLTexture | null {
+    const canFallBack = self.doPeel && self.peelOpaqueSeparately && self.WEBGL2
+        && self.depthPeelDepthTextures && self.depthPeelDepthTextures.length > 1;
+    return canFallBack ? self.depthPeelDepthTextures[1] : null;
+}
 
 export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
         let invMat
@@ -1942,6 +1960,11 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.focussedTexture,0);
             self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.blurredTexture,1);
             self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.depthTexture,2);
+        self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.depthTexture2,3);
+        self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.haveDepth2, transparentDepthLayer(self) ? 1 : 0);
+        self.gl.activeTexture(self.gl.TEXTURE3);
+        self.gl.bindTexture(self.gl.TEXTURE_2D,
+            transparentDepthLayer(self));
 
             self.gl.activeTexture(self.gl.TEXTURE0);
             self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttTextureDepth);
@@ -1967,6 +1990,8 @@ export function drawScene(self: MGWebGL) : void {
 
             self.gl.disableVertexAttribArray(self.shaderProgramRenderFrameBuffer.vertexTextureAttribute);
 
+            self.gl.activeTexture(self.gl.TEXTURE3);
+            self.gl.bindTexture(self.gl.TEXTURE_2D, null);
             self.gl.activeTexture(self.gl.TEXTURE2);
             self.gl.bindTexture(self.gl.TEXTURE_2D, null);
             self.gl.activeTexture(self.gl.TEXTURE1);
@@ -2341,6 +2366,11 @@ export function depthBlur(self: MGWebGL, invMat) {
 
         self.gl.uniform1i(self.shaderProgramBlurX.inputTexture,0);
         self.gl.uniform1i(self.shaderProgramBlurX.depthTexture,1);
+        self.gl.uniform1i(self.shaderProgramBlurX.depthTexture2,3);
+        self.gl.uniform1i(self.shaderProgramBlurX.haveDepth2, transparentDepthLayer(self) ? 1 : 0);
+        self.gl.activeTexture(self.gl.TEXTURE3);
+        self.gl.bindTexture(self.gl.TEXTURE_2D,
+            transparentDepthLayer(self));
 
         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebufferBlurX);
 
@@ -2435,6 +2465,11 @@ export function depthBlur(self: MGWebGL, invMat) {
 
         self.gl.uniform1i(self.shaderProgramBlurY.inputTexture,0);
         self.gl.uniform1i(self.shaderProgramBlurY.depthTexture,1);
+        self.gl.uniform1i(self.shaderProgramBlurY.depthTexture2,3);
+        self.gl.uniform1i(self.shaderProgramBlurY.haveDepth2, transparentDepthLayer(self) ? 1 : 0);
+        self.gl.activeTexture(self.gl.TEXTURE3);
+        self.gl.bindTexture(self.gl.TEXTURE_2D,
+            transparentDepthLayer(self));
 
         self.gl.enableVertexAttribArray(self.shaderProgramBlurY.vertexTextureAttribute);
         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebufferBlurY);
@@ -2507,6 +2542,12 @@ export function depthBlur(self: MGWebGL, invMat) {
         } else {
             self.gl.bindTexture(self.gl.TEXTURE_2D, self.offScreenDepthTexture);
         }
+
+        // The nearest transparent layer, for pixels the opaque depth above says are empty.
+        self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.depthTexture2,3);
+        self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.haveDepth2, transparentDepthLayer(self) ? 1 : 0);
+        self.gl.activeTexture(self.gl.TEXTURE3);
+        self.gl.bindTexture(self.gl.TEXTURE_2D, transparentDepthLayer(self));
 
         for(let i = 0; i<16; i++)
             self.gl.disableVertexAttribArray(i);
@@ -2788,7 +2829,7 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                     // The near and far are a separate matter and do come from the slab: they
                     // clip, they do not frame, so they cannot affect any of the above.
                     const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, true);
-                    mat4.perspective(self.pMatrix, 1.0, 1.0, slab.near, slab.far);
+                    mat4.perspective(self.pMatrix, PERSPECTIVE_FOV, 1.0, slab.near, slab.far);
                 } else {
                     const { near: f_, far: b } = slabNearFar(
                         self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, false);
@@ -2817,7 +2858,7 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                     // discards, which cost the program its early depth rejection and spread the
                     // depth buffer over ten times the range the geometry occupies.
                     const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, true);
-                    mat4.perspective(self.pMatrix, 1.0, viewportAspect(self.currentViewport), slab.near, slab.far);
+                    mat4.perspective(self.pMatrix, PERSPECTIVE_FOV, viewportAspect(self.currentViewport), slab.near, slab.far);
                 } else {
                     const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, false);
                     mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24, 24, slab.near, slab.far);
@@ -2882,7 +2923,10 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                     perspMult = 1.0 / ratio;
                 }
             }
-            mat4.scale(self.pMatrix, self.pMatrix, [perspMult * 5.7 / self.zoom, perspMult * 5.7 / self.zoom, 1.0]);
+            // Derived from the eye distance rather than fixed at 5.7, so moving the eye changes
+            // how strongly the view converges while the framing stays put. See perspectiveScale.
+            const pScale = perspectiveScale(self.fogClipOffset);
+            mat4.scale(self.pMatrix, self.pMatrix, [perspMult * pScale / self.zoom, perspMult * pScale / self.zoom, 1.0]);
         } else {
             mat4.scale(self.pMatrix, self.pMatrix, [1. / self.zoom, 1. / self.zoom, 1.0]);
         }

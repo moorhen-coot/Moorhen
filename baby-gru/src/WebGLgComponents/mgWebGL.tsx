@@ -108,7 +108,7 @@ import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setO
 import { drawTransparent, drawImagesAndText, drawTexturedShapes, drawTextLabels, drawDistancesAndLabels, drawCircles, drawLineMeasures, drawCrosshairs, drawMouseTrack, drawFPSMeter, drawTextOverlays } from './mgWebGLParts/overlays'
 import { drawBuffer, drawMaxElementsUInt, setupModelViewTransformMatrixInteractive, drawTransformMatrixInteractive, drawTransformMatrix, drawTransformMatrixInteractivePMV, drawTransformMatrixPMV } from './mgWebGLParts/bufferDraw'
 import { drawPeel, drawTriangles, drawScene, applySymmetryMatrix, bindFramebufferDrawBuffers } from './mgWebGLParts/drawCore'
-import { pickHalfExtents } from './mgWebGLParts/projection'
+import { pickHalfExtents, clipPlanesAfterEyeMove} from './mgWebGLParts/projection'
 import { initInstanceState, initGraphicsContext, attachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
 import { getDeviceScale} from './webGLUtils'
 import { rayMeshHit } from './rayMesh'
@@ -817,7 +817,26 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         bindSSAOBuffers(this)
     }
 
+    /**
+     * Move the eye towards or away from the view centre.
+     *
+     * The clip planes have to come too. set_clip_range stores them as absolute distances from the
+     * eye - `gl_clipPlane0[3] = -fogClipOffset - clipStart` - so they only stay put relative to the
+     * molecule if they are shifted by the same amount the eye moved. Leaving them behind slices the
+     * molecule open, because the geometry moves to a new distance while the planes do not.
+     *
+     * Doing it here rather than by re-running set_clip_range from React: that effect depends on
+     * [clipStart, clipEnd] and would need both a new dependency and to run *after* this.fogClipOffset
+     * had been updated, since it reads it. Two effects in the right order is a thing that breaks
+     * quietly later; shifting the planes alongside the value they were derived from does not.
+     */
     setFogClipOffset(fogClipOffset: number) {
+        if (this.gl_clipPlane0 && this.gl_clipPlane1) {
+            const shifted = clipPlanesAfterEyeMove(
+                this.gl_clipPlane0[3], this.gl_clipPlane1[3], fogClipOffset - this.fogClipOffset)
+            this.gl_clipPlane0[3] = shifted.clipPlane0W
+            this.gl_clipPlane1[3] = shifted.clipPlane1W
+        }
         this.fogClipOffset = fogClipOffset
     }
 
@@ -1604,7 +1623,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         // depth it is given, which is exactly the two pairs of numbers that were here.
         const atDepth = (slabZ: number) => {
             const { halfWidth, halfHeight } =
-                pickHalfExtents(this.fogClipOffset + slabZ, this.zoom, ratio, this.doPerspectiveProjection);
+                pickHalfExtents(this.fogClipOffset + slabZ, this.zoom, ratio, this.doPerspectiveProjection,
+                                this.fogClipOffset);
             return [
                 -halfWidth + fracX * 2 * halfWidth,
                 halfHeight - fracY * 2 * halfHeight,

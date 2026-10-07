@@ -164,6 +164,8 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         blurredTexture: WebGLUniformLocation;
         depthTexture: WebGLUniformLocation;
+    depthTexture2: WebGLUniformLocation;
+    haveDepth2: WebGLUniformLocation;
         focussedTexture: WebGLUniformLocation;
         blurDepth: WebGLUniformLocation;
     }
@@ -243,6 +245,8 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         inputTexture: WebGLUniformLocation;
         depthTexture: WebGLUniformLocation;
+    depthTexture2: WebGLUniformLocation;
+    haveDepth2: WebGLUniformLocation;
         blurSize: WebGLUniformLocation;
         blurDepth: WebGLUniformLocation;
         blurCoeffs: WebGLUniformLocation | null;
@@ -292,6 +296,8 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         inputTexture: WebGLUniformLocation;
         depthTexture: WebGLUniformLocation;
+    depthTexture2: WebGLUniformLocation;
+    haveDepth2: WebGLUniformLocation;
         blurSize: WebGLUniformLocation;
         blurDepth: WebGLUniformLocation;
         blurCoeffs: WebGLUniformLocation | null;

@@ -317,6 +317,8 @@ export function initBlurXShader(vertexShaderBlurX, fragmentShaderBlurX, gl, WEBG
     }
 
     shaderProgramBlurX.depthTexture = gl.getUniformLocation(shaderProgramBlurX, "depth");
+    shaderProgramBlurX.depthTexture2 = gl.getUniformLocation(shaderProgramBlurX, "depth2");
+    shaderProgramBlurX.haveDepth2 = gl.getUniformLocation(shaderProgramBlurX, "haveDepth2");
     shaderProgramBlurX.inputTexture = gl.getUniformLocation(shaderProgramBlurX, "shader0");
 
     return shaderProgramBlurX
@@ -356,6 +358,8 @@ export function initBlurYShader(vertexShaderBlurY, fragmentShaderBlurY, gl, WEBG
     }
 
     shaderProgramBlurY.depthTexture = gl.getUniformLocation(shaderProgramBlurY, "depth");
+    shaderProgramBlurY.depthTexture2 = gl.getUniformLocation(shaderProgramBlurY, "depth2");
+    shaderProgramBlurY.haveDepth2 = gl.getUniformLocation(shaderProgramBlurY, "haveDepth2");
     shaderProgramBlurY.inputTexture = gl.getUniformLocation(shaderProgramBlurY, "shader0");
 
     return shaderProgramBlurY
@@ -495,6 +499,8 @@ export function initRenderFrameBufferShaders(vertexShaderRenderFrameBuffer, frag
     shaderProgramRenderFrameBuffer.focussedTexture = gl.getUniformLocation(shaderProgramRenderFrameBuffer, "inFocus");
     shaderProgramRenderFrameBuffer.blurredTexture = gl.getUniformLocation(shaderProgramRenderFrameBuffer, "blurred");
     shaderProgramRenderFrameBuffer.depthTexture = gl.getUniformLocation(shaderProgramRenderFrameBuffer, "depth");
+    shaderProgramRenderFrameBuffer.depthTexture2 = gl.getUniformLocation(shaderProgramRenderFrameBuffer, "depth2");
+    shaderProgramRenderFrameBuffer.haveDepth2 = gl.getUniformLocation(shaderProgramRenderFrameBuffer, "haveDepth2");
     shaderProgramRenderFrameBuffer.blurDepth = gl.getUniformLocation(shaderProgramRenderFrameBuffer, "blurDepth");
 
     return shaderProgramRenderFrameBuffer
