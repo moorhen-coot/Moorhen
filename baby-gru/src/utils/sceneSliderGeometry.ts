@@ -30,8 +30,9 @@ export type HandleId = "clipStart" | "clipEnd" | "fogStart" | "fogEnd" | "blurDe
  * positive away from it. The component converts its four differently-shaped values into this one
  * convention, which is what lets the hit test and the range fit treat them uniformly.
  *
- * Depth blur is the exception and carries no offset: it is stored as a fraction of the plot, so it
- * is on the plot by construction and takes no part in the range fit.
+ * Depth blur is stored as a fraction of the clip slab rather than as a distance, so the component
+ * converts it with blurOffset below before building its handle. Every handle therefore reaches
+ * this module in the same terms, and none of them is a special case.
  */
 export interface Handle {
     id: HandleId;
@@ -63,7 +64,7 @@ export const MIN_HALF_RANGE = 1.0;
 export function plotHalfRange(sceneHalfRange: number, handles: Handle[]): number {
     let needed = Math.abs(sceneHalfRange);
     for (const handle of handles) {
-        if (handle.visible && handle.id !== "blurDepth") {
+        if (handle.visible) {
             needed = Math.max(needed, Math.abs(handle.offset));
         }
     }
@@ -80,9 +81,8 @@ export function offsetOfPixel(pixel: number, halfRange: number, width: number): 
     return (pixel / (width * 0.5) - 1.0) * halfRange;
 }
 
-/** Where a handle is drawn. Depth blur is a fraction of the plot rather than a distance. */
-export function pixelOfHandle(handle: Handle, halfRange: number, width: number, blurDepth: number): number {
-    if (handle.id === "blurDepth") return blurDepth * width;
+/** Where a handle is drawn. */
+export function pixelOfHandle(handle: Handle, halfRange: number, width: number): number {
     return pixelOfOffset(handle.offset, halfRange, width);
 }
 
@@ -99,7 +99,6 @@ export function handleAtPixel(
     handles: Handle[],
     halfRange: number,
     width: number,
-    blurDepth: number,
     tolerance: number = GRAB_TOLERANCE_PX,
 ): HandleId | null {
     let best: HandleId | null = null;
@@ -107,7 +106,7 @@ export function handleAtPixel(
 
     for (const handle of handles) {
         if (!handle.visible) continue;
-        const distance = Math.abs(pixel - pixelOfHandle(handle, halfRange, width, blurDepth));
+        const distance = Math.abs(pixel - pixelOfHandle(handle, halfRange, width));
         if (distance <= tolerance && distance < bestDistance) {
             best = handle.id;
             bestDistance = distance;

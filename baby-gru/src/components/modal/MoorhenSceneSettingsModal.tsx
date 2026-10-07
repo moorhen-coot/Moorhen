@@ -250,14 +250,14 @@ const DepthBlurPanel = () => {
 
             <MoorhenSlider
                 isDisabled={!useOffScreenBuffers}
-                minVal={0.4}
-                maxVal={0.6}
+                minVal={-100.0}
+                maxVal={100.0}
                 scale="linear"
-                sliderTitle="Blur depth"
+                sliderTitle="Blur beyond (Å from centre)"
                 value={depthBlurDepth}
                 setValue={val => dispatch(setDepthBlurDepth(val))}
-                stepButtons={0.0001}
-                decimalPlaces={4}
+                stepButtons={1}
+                decimalPlaces={1}
             />
             <MoorhenSlider
                 isDisabled={!useOffScreenBuffers}

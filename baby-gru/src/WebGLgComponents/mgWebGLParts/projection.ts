@@ -145,3 +145,52 @@ export const viewportAspect = (viewport: ArrayLike<number> | null | undefined): 
     if (!(width > 0) || !(height > 0)) return 1.0;
     return width / height;
 };
+
+/**
+ * The clip slab expressed as offsets from the view centre, negative towards the viewer.
+ *
+ * slabNearFar returns distances from the eye, which is what a projection matrix wants. Anything
+ * positioned relative to what the user is looking at - the focal plane, the side-on widget's
+ * handles - wants them relative to the centre of the view instead. Both ends are the same
+ * subtraction; neither is negated.
+ *
+ * The negation is worth warning about, because the obvious reading of the code says otherwise.
+ * set_clip_range stores `gl_clipPlane0[3] = -fogClipOffset - clipStart`, which looks as though a
+ * larger clipStart pushes the near plane further away. It does not: MoorhenWebMG calls it as
+ * `set_clip_range(-clipStart, clipEnd)`, negating the near distance on the way in. So the stored w
+ * is `-fogClipOffset + clipStart`, slabNearFar's near is `fogClipOffset - clipStart`, and the near
+ * plane sits clipStart *in front of* the centre - which is what the side-on widget has always
+ * drawn and what execAutoClipFogByZoom means by setting clip and fog from one fieldDepthFront.
+ */
+export const slabOffsets = (near: number, far: number, fogClipOffset: number): {
+    nearOffset: number;
+    farOffset: number;
+} => ({ nearOffset: near - fogClipOffset, farOffset: far - fogClipOffset });
+
+/**
+ * Where a focal plane given in angstroms falls as a fraction of the slab, 0 at the near plane and
+ * 1 at the far one.
+ *
+ * This is the one conversion the depth blur needs, and it runs in a single direction: the stored
+ * setting is a distance, and the shaders want a depth-buffer value, so the renderer converts.
+ *
+ * The setting is a distance rather than a fraction because a fraction needs something to be a
+ * fraction of, and nothing on offer is stable. It was once a fraction of the side-on widget's
+ * plot, which moved whenever that widget's scale did. Making it a fraction of the slab instead
+ * only moved the problem: switching Clip off sets the slab to 1.5 * the scene span in each
+ * direction, so the whole useful range of the control collapsed into a few percent near the
+ * middle, and a value saved with Clip on meant something else entirely with Clip off.
+ *
+ * An angstrom is an angstrom under every one of those.
+ */
+export const focalPlaneFraction = (
+    offset: number,
+    nearOffset: number,
+    farOffset: number,
+): number => {
+    const span = farOffset - nearOffset;
+    // A slab of no depth has no meaningful fraction; the middle keeps the blur from flipping to
+    // all-or-nothing on a degenerate frame.
+    if (Math.abs(span) < 1e-9) return 0.5;
+    return Math.min(1.0, Math.max(0.0, (offset - nearOffset) / span));
+};

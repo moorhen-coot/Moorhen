@@ -10,14 +10,24 @@ var render_framebuffer_fragment_shader_source = `#version 300 es\n
     out vec4 fragColor;
 
     void main(void) {
-        float minDistance = 0.0;
-        float maxDistance = 1.0;
+        // The depth as the buffer holds it, with no curve applied.
+        //
+        // This was smoothstep(0.0, 1.0, depth), while blurDepth - the threshold it is compared
+        // against - is a plain linear fraction of the slab. Comparing a curved value against a
+        // straight one puts the focal plane somewhere other than where it was asked for: the error is
+        // zero at the middle of the slab and grows towards either end, reaching about 0.09 of the
+        // slab, which on a 135 angstrom slab is some 12 angstroms. Worse, the sign is unhelpful - a
+        // plane set in front of the scene is pushed backwards, so the frontmost geometry stayed sharp
+        // when all of it should have blurred.
+        //
+        // smoothstep also flattens at both ends, so near the clip planes the value barely responds to
+        // depth at all, which is where a user puts the plane when they want everything blurred.
 
         vec4 position = texture(depth, out_TexCoord0);
         vec4 focusColor = texture(inFocus, out_TexCoord0);
         vec4 blurColor = texture(blurred, out_TexCoord0);
 
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
+        float blur = min(position.x,1.0);
 
         if(blur>blurDepth){
             float frac = (blur-blurDepth)/(1.0 - blurDepth);

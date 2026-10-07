@@ -1,7 +1,7 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
-import { slabNearFar, viewportAspect } from './projection';
+import { slabNearFar, viewportAspect, slabOffsets, focalPlaneFraction} from './projection';
 import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
@@ -178,8 +178,7 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                     self.gl.uniform1f(theShader.ySSAOScaling, 1.0/self.rttFramebuffer.height );
                 } else {
                     if(self.useOffScreenBuffers&&self.WEBGL2){
-                        if(!self.offScreenReady)
-                            self.recreateOffScreeenBuffers(self.canvas.width,self.canvas.height);
+                        self.ensureOffScreeenBuffers(self.canvas.width,self.canvas.height);
                         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebuffer);
                     }
                     self.gl.viewport(0, 0, self.gl.viewportWidth, self.gl.viewportHeight);
@@ -2368,21 +2367,16 @@ export function depthBlur(self: MGWebGL, invMat) {
         self.gl.uniformMatrix4fv(self.shaderProgramBlurX.pMatrixUniform, false, paintPMatrix);
         self.gl.uniformMatrix4fv(self.shaderProgramBlurX.mvMatrixUniform, false, paintMvMatrix);
 
-        // The near and far the projection is actually using, for both modes.
+        // blurDepth is a distance in angstroms from the view centre; the shaders compare against a
+        // depth buffer. This is the only place that conversion happens, and it runs one way.
         //
-        // This used to substitute a fixed 100 and 270 under perspective, to match the fixed
-        // near/far the perspective projection had then - except that its far was 1270, not 270,
-        // so the mapping below was already working from a depth range three times narrower than
-        // the real one. Now that perspective derives its planes from the slab like orthographic
-        // does, one expression serves both and there is nothing left to keep in step.
-        //
-        // What remains approximate under perspective: blurDepth is converted below into a
-        // linear fraction of the slab, while the depth buffer it is compared against is not
-        // linear in perspective. The focal plane therefore sits nearer the viewer than the
-        // slider implies. Correcting that means linearising the sampled depth in the blur
-        // shaders, which is a change to those shaders rather than to this arithmetic.
-        const { near: f, far: b } = slabNearFar(
+        // What remains approximate under perspective: the fraction is linear in distance while the
+        // depth buffer is not, so the focal plane sits nearer the viewer than the setting implies.
+        // Correcting that means linearising the sampled depth in the blur shaders, which is a
+        // change to those shaders rather than to anything here.
+        const slab = slabNearFar(
             self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, self.doPerspectiveProjection);
+        const { nearOffset, farOffset } = slabOffsets(slab.near, slab.far, self.fogClipOffset);
 
         const displayBuffers = self.store.getState().glRef.displayBuffers
         let min_x =  1e5;
@@ -2409,13 +2403,14 @@ export function depthBlur(self: MGWebGL, invMat) {
         atom_span = Math.min(1000.0,atom_span);
         self.atom_span = atom_span;
 
-        //console.log("In blur",f.toFixed(2),b.toFixed(2),self.blurDepth.toFixed(2))
-        const fPrime = f-self.fogClipOffset
-        const bPrime = b-self.fogClipOffset
-        //NB The 1.5 scaling is because it is 2 * 0.75 where 0.75 is scaling in the new widget.
-        const fPrimeFrac = fPrime/(1.5*atom_span)+0.5
-        const bPrimeFrac = bPrime/(1.5*atom_span)+0.5
-        const fracDepth = (self.blurDepth-fPrimeFrac)/(bPrimeFrac-fPrimeFrac)
+        // This used to reconstruct the side-on widget's pixel scale from a magic 1.5, "because it
+        // is 2 * 0.75 where 0.75 is scaling in the new widget". The signs in that arithmetic were
+        // right; the coupling was not. The widget's scale stopped being 0.75 * atom_span once it
+        // measured maps and 3D objects too, and this atom_span is atoms only, so it was never the
+        // widget's number in the first place. A renderer should not have to know a widget's pixel
+        // scale to do its job, which is why the setting is now a distance and this is the only
+        // conversion.
+        const fracDepth = focalPlaneFraction(self.blurDepth, nearOffset, farOffset)
 
         self.gl.uniform1f(self.shaderProgramBlurX.blurDepth,fracDepth);
         self.gl.uniform1f(self.shaderProgramBlurX.blurSize,blurSizeX);
@@ -2604,8 +2599,7 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
         }
 
         if (calculatingShadowMap) {
-            if(!self.offScreenReady)
-                self.recreateOffScreeenBuffers(self.canvas.width,self.canvas.height);
+            self.ensureOffScreeenBuffers(self.canvas.width,self.canvas.height);
             if(!self.screenshotBuffersReady)
                 self.initTextureFramebuffer();
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebufferDepth);
@@ -2688,8 +2682,7 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
         } else {
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
             if(self.useOffScreenBuffers&&self.WEBGL2){
-                if(!self.offScreenReady)
-                    self.recreateOffScreeenBuffers(self.canvas.width,self.canvas.height);
+                self.ensureOffScreeenBuffers(self.canvas.width,self.canvas.height);
                 self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebuffer);
             }
             self.gl.viewport(self.currentViewport[0], self.currentViewport[1], self.currentViewport[2], self.currentViewport[3]);

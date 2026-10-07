@@ -27,8 +27,18 @@ void main() {
     int M = nsteps;
     int N = 2 * M + 1;
 
-    float minDistance = 0.0;
-    float maxDistance = 1.0;
+    // The depth as the buffer holds it, with no curve applied.
+    //
+    // This was smoothstep(0.0, 1.0, depth), while blurDepth - the threshold it is compared
+    // against - is a plain linear fraction of the slab. Comparing a curved value against a
+    // straight one puts the focal plane somewhere other than where it was asked for: the error is
+    // zero at the middle of the slab and grows towards either end, reaching about 0.09 of the
+    // slab, which on a 135 angstrom slab is some 12 angstroms. Worse, the sign is unhelpful - a
+    // plane set in front of the scene is pushed backwards, so the frontmost geometry stayed sharp
+    // when all of it should have blurred.
+    //
+    // smoothstep also flattens at both ends, so near the clip planes the value barely responds to
+    // depth at all, which is where a user puts the plane when they want everything blurred.
 
     vec2 u_direction = vec2(0.0,blurSize*.5);
 
@@ -39,7 +49,7 @@ void main() {
     for (int i = 0; i < N && i < 4; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
+        float blur = min(position.x,1.0);
         if(blur>blurDepth){
             sum += row0[i] * texture(shader0, tc);
         } else {
@@ -49,7 +59,7 @@ void main() {
     for (int i = 4; i < N && i < 8; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
+        float blur = min(position.x,1.0);
         if(blur>blurDepth){
             sum += row1[i-4] * texture(shader0, tc);
         } else {
@@ -59,7 +69,7 @@ void main() {
     for (int i = 8; i < N && i < 12; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
+        float blur = min(position.x,1.0);
         if(blur>blurDepth){
             sum += row2[i-8] * texture(shader0, tc);
         } else {
@@ -69,7 +79,7 @@ void main() {
     for (int i = 12; i < N && i < 16; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
+        float blur = min(position.x,1.0);
         if(blur>blurDepth){
             sum += row3[i-12] * texture(shader0, tc);
         } else {
@@ -79,7 +89,7 @@ void main() {
     for (int i = 16; i < N && i < 20; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
+        float blur = min(position.x,1.0);
         if(blur>blurDepth){
             sum += row4[i-16] * texture(shader0, tc);
         } else {
@@ -89,7 +99,7 @@ void main() {
     for (int i = 20; i < N && i < 24; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
+        float blur = min(position.x,1.0);
         if(blur>blurDepth){
             sum += row5[i-20] * texture(shader0, tc);
         } else {
@@ -99,7 +109,7 @@ void main() {
     for (int i = 24; i < N && i < 28; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
+        float blur = min(position.x,1.0);
         if(blur>blurDepth){
             sum += row6[i-24] * texture(shader0, tc);
         } else {
@@ -109,7 +119,7 @@ void main() {
     for (int i = 28; i < N && i < 32; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
+        float blur = min(position.x,1.0);
         if(blur>blurDepth){
             sum += row7[i-28] * texture(shader0, tc);
         } else {
@@ -119,7 +129,7 @@ void main() {
     for (int i = 32; i < N && i < 36; i++) {
         vec2 tc = out_TexCoord0 + u_direction * float(i - M);
         vec4 position = texture(depth, tc);
-        float blur = smoothstep ( minDistance , maxDistance , min(position.x,1.0));
+        float blur = min(position.x,1.0);
         if(blur>blurDepth){
             sum += row8[i-32] * texture(shader0, tc);
         } else {

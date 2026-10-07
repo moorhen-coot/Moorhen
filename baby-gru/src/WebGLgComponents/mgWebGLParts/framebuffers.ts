@@ -338,6 +338,35 @@ export function recreateDepthPeelBuffers(self: MGWebGL, width, height, layers = 
         }
 }
 
+/**
+ * Whether the off-screen buffers need rebuilding before they can be drawn into at this size.
+ *
+ * Pure, and separate from the GL work, because the condition is the part that was wrong. The draw
+ * path asked only "are they ready", and resize() rebuilt them only when depth blur was already
+ * switched on. So resizing the canvas with blur off - which includes opening a side panel, since
+ * that narrows the canvas - left buffers at the old size, still flagged ready. Switching blur on
+ * then rendered the scene into a framebuffer of the wrong shape and the picture came out squashed.
+ *
+ * Comparing the dimensions catches that however the size changed, including routes that never
+ * reach resize() at all.
+ */
+export function offScreenBuffersStale(
+    ready: boolean,
+    framebuffer: { width?: number; height?: number } | null | undefined,
+    width: number,
+    height: number,
+): boolean {
+    if (!ready || !framebuffer) return true;
+    return framebuffer.width !== width || framebuffer.height !== height;
+}
+
+/** Rebuild the off-screen buffers if they are missing, not ready, or the wrong size. */
+export function ensureOffScreeenBuffers(self: MGWebGL, width: number, height: number) {
+    if (offScreenBuffersStale(self.offScreenReady, self.offScreenFramebuffer, width, height)) {
+        recreateOffScreeenBuffers(self, width, height);
+    }
+}
+
 export function recreateOffScreeenBuffers(self: MGWebGL, width,height) {
         // This defines an off-screeen multisampled framebuffer and an off-screen framebuffer and texture to blit to.
         if(!self.offScreenFramebuffer){

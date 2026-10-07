@@ -158,6 +158,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset);
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
     const quat = useSelector((state: moorhen.State) => state.glRef.quat)
+    const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
 
     const programRef = useRef<null | SideOnProgram>(null);
     const programInstancedRef = useRef<null | SideOnProgramInstanced>(null);
@@ -256,8 +257,8 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         { id: "clipEnd", offset: clipEnd, visible: useClip },
         { id: "fogStart", offset: -(fogClipOffset - gl_fog_start), visible: useFog },
         { id: "fogEnd", offset: gl_fog_end - fogClipOffset, visible: useFog },
-        { id: "blurDepth", offset: 0, visible: useOffScreenBuffers },
-    ], [clipStart, clipEnd, gl_fog_start, gl_fog_end, fogClipOffset, useClip, useFog, useOffScreenBuffers])
+        { id: "blurDepth", offset: depthBlurDepth, visible: useOffScreenBuffers },
+    ], [clipStart, clipEnd, gl_fog_start, gl_fog_end, fogClipOffset, depthBlurDepth, useClip, useFog, useOffScreenBuffers])
 
     /**
      * Half the plot's extent, in angstroms.
@@ -275,9 +276,9 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     /** Where each handle is drawn, by id. */
     const handlePixels = useMemo(() => {
         const pixels = {} as Record<HandleId, number>
-        handles.forEach(h => { pixels[h.id] = pixelOfHandle(h, plotRange, plotWidth, depthBlurDepth) })
+        handles.forEach(h => { pixels[h.id] = pixelOfHandle(h, plotRange, plotWidth) })
         return pixels
-    }, [handles, plotRange, plotWidth, depthBlurDepth])
+    }, [handles, plotRange, plotWidth])
 
     /** The offset a handle must not cross, or null when it has no partner. */
     const partnerOffset = (id: HandleId): number | null => {
@@ -575,19 +576,29 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         ctx.clearRect(0,0,canvas.width,canvas.height)
         ctx.fillStyle = "#77777700"
         ctx.fillRect(0,0,canvas.width,canvas.height)
-        ctx.fillStyle = "#00222244"
-        ctx.fillRect(0,0,clipStartPos,canvas.height)
-        ctx.fillRect(clipEndPos,0,canvas.width-clipStartPos,canvas.height)
+        // Only when clipping is actually on. These two fills sat outside the useFog/useClip tests
+        // that gate the handle lines, so switching Clip off left the clipped-out region still
+        // shaded - the plot went on showing a slab that was no longer being applied.
+        if(useClip){
+            ctx.fillStyle = "#00222244"
+            ctx.fillRect(0,0,clipStartPos,canvas.height)
+            // canvas.width - clipEndPos. It read canvas.width - clipStartPos, so the shaded band
+            // started in the right place but ran on past the edge by the width of the near side.
+            ctx.fillRect(clipEndPos,0,canvas.width-clipEndPos,canvas.height)
+        }
 
+        if(useFog){
+            const fogGradient = ctx.createLinearGradient(fogStartPos, 0, fogEndPos, 0)
+            fogGradient.addColorStop(0, "#ffffff00");
+            fogGradient.addColorStop(1, "#ffffffff");
 
-        const fogGradient = ctx.createLinearGradient(fogStartPos, 0, fogEndPos, 0)
-        fogGradient.addColorStop(0, "#ffffff00");
-        fogGradient.addColorStop(1, "#ffffffff");
-
-        ctx.fillStyle = fogGradient
-        const fogDrawStart = Math.max(fogStartPos,clipStartPos)
-        const fogDrawWidth = Math.min(fogEndPos,clipEndPos)-fogDrawStart
-        ctx.fillRect(fogDrawStart,0,fogDrawWidth,canvas.height)
+            ctx.fillStyle = fogGradient
+            // Fog is only visible where the slab is, so the band stops at the clip planes - but
+            // only when those planes are in force.
+            const fogDrawStart = useClip ? Math.max(fogStartPos,clipStartPos) : fogStartPos
+            const fogDrawEnd = useClip ? Math.min(fogEndPos,clipEndPos) : fogEndPos
+            ctx.fillRect(fogDrawStart,0,fogDrawEnd-fogDrawStart,canvas.height)
+        }
 
         let hovering = false
         let drawText = ""
@@ -629,7 +640,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                 ctx.strokeStyle = "white"
                 ctx.lineWidth = 4
                 hovering = true
-                drawText = "Blur depth "+depthBlurDepth.toFixed(2)
+                drawText = "Blur from " + depthBlurDepth.toFixed(1)
             } else {
                 ctx.strokeStyle = "lightblue"
                 ctx.lineWidth = 3
@@ -747,12 +758,12 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         // Nearest visible handle, rather than the first one in a fixed order that happened to be
         // within five pixels. Hidden handles are skipped too: fog that has been switched off used
         // to sit at whatever edge its 998/999 clamped to and swallow clicks meant for clip.
-        setGrabbed(handleAtPixel(x, handles, plotRange, plotWidth, depthBlurDepth))
+        setGrabbed(handleAtPixel(x, handles, plotRange, plotWidth))
 
         setClickX(x)
         setClickY(y)
 
-    },[handles, plotRange, plotWidth, depthBlurDepth])
+    },[handles, plotRange, plotWidth])
 
     const handleMouseMove = useCallback((evt) => {
 
@@ -765,7 +776,10 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         if(grabbed && mouseHeldDown){
 
             if(grabbed === "blurDepth"){
-                dispatch(setDepthBlurDepth(Math.min(1.0, Math.max(0.0, x / plotWidth))))
+                // A distance, like every other handle. No partner to stay clear of: the focal
+                // plane may sit anywhere, including outside the slab, where it simply means
+                // everything visible is on one side of it.
+                dispatch(setDepthBlurDepth(offsetOfPixel(x, plotRange, plotWidth)))
             } else {
                 // Clamp the value, do not gate the dispatch. The old code only dispatched when the
                 // pointer was past the partner's drawn pixel, so a partner pinned at the edge of

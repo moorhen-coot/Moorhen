@@ -125,7 +125,11 @@ export const initialState: {
     depthBlurRadius: 3.0,
     depthPeelLayers: 4,
     peelOpaqueSeparately: true,
-    depthBlurDepth: 0.5,
+    // Where the depth blur starts, in angstroms from the view centre; negative is towards the
+    // viewer. Zero puts it on the rotation centre, which is what you are usually looking at.
+    // This was a 0 to 1 fraction, so a saved value lands a fraction of an angstrom from centre -
+    // near enough to the old "middle" that nothing jumps.
+    depthBlurDepth: 0.0,
     height: 0,
     width: 0,
     GlViewportHeight: 0,

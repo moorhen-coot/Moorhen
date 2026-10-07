@@ -99,7 +99,7 @@ import { DisplayBuffer } from './displayBuffer'
 import { buildBuffers, appendOtherData } from './buildBuffers'
 import { Camera } from './mgWebGLParts/camera'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './mgWebGLParts/viewTransforms'
-import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, initTextureFramebuffer } from './mgWebGLParts/framebuffers'
+import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, ensureOffScreeenBuffers, initTextureFramebuffer } from './mgWebGLParts/framebuffers'
 import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
 import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWebGLParts/postProcessUniformBuffers'
 import { renderStatsText } from './mgWebGLParts/renderStats'
@@ -1317,6 +1317,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     recreateDepthPeelBuffers(width,height,layers?:number){
         recreateDepthPeelBuffers(this, width, height, layers)
+    }
+
+    ensureOffScreeenBuffers(width,height){
+        ensureOffScreeenBuffers(this, width, height)
     }
 
     recreateOffScreeenBuffers(width,height){

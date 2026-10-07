@@ -51,7 +51,7 @@ describe("plot range", () => {
         const handles = handlesFrom(1000, 1000, -748, 749);
         const range = plotHalfRange(30, handles);
         for (const h of handles) {
-            const pixel = pixelOfHandle(h, range, WIDTH, 0.5);
+            const pixel = pixelOfHandle(h, range, WIDTH);
             expect(pixel).toBeGreaterThan(0);
             expect(pixel).toBeLessThan(WIDTH);
         }
@@ -88,29 +88,29 @@ describe("picking a handle up", () => {
     it("finds a handle under the pointer", () => {
         const handles = handlesFrom(20, 20, 10, 30);
         const range = plotHalfRange(40, handles);
-        const target = pixelOfHandle(handles[0], range, WIDTH, 0.5);
-        expect(handleAtPixel(target, handles, range, WIDTH, 0.5)).toBe("clipStart");
+        const target = pixelOfHandle(handles[0], range, WIDTH);
+        expect(handleAtPixel(target, handles, range, WIDTH)).toBe("clipStart");
     });
 
     it("returns nothing when the pointer is nowhere near one", () => {
         const handles = handlesFrom(20, 20, 10, 30);
         const range = plotHalfRange(40, handles);
-        expect(handleAtPixel(WIDTH / 2, handles, range, WIDTH, 0.5)).toBeNull();
+        expect(handleAtPixel(WIDTH / 2, handles, range, WIDTH)).toBeNull();
     });
 
     it("takes the nearest handle, not the first in the list", () => {
         // clipStart is listed first but fogStart is the one under the pointer.
         const handles = handlesFrom(20, 30, 10, 30);
         const range = plotHalfRange(40, handles);
-        const target = pixelOfHandle(handles[2], range, WIDTH, 0.5);
-        expect(handleAtPixel(target, handles, range, WIDTH, 0.5)).toBe("fogStart");
+        const target = pixelOfHandle(handles[2], range, WIDTH);
+        expect(handleAtPixel(target, handles, range, WIDTH)).toBe("fogStart");
     });
 
     it("will not pick up a handle that is switched off", () => {
         const handles = handlesFrom(20, 20, 10, 30, true, false);
         const range = plotHalfRange(40, handles);
-        const fogPixel = pixelOfHandle(handles[2], range, WIDTH, 0.5);
-        expect(handleAtPixel(fogPixel, handles, range, WIDTH, 0.5)).not.toBe("fogStart");
+        const fogPixel = pixelOfHandle(handles[2], range, WIDTH);
+        expect(handleAtPixel(fogPixel, handles, range, WIDTH)).not.toBe("fogStart");
     });
 
     it("keeps the back fog handle reachable when clip is set far out", () => {
@@ -119,12 +119,12 @@ describe("picking a handle up", () => {
         const handles = handlesFrom(1000, 1000, 0, 100);
         const range = plotHalfRange(30, handles);
 
-        const clipEndPixel = pixelOfHandle(handles[1], range, WIDTH, 0.5);
-        const fogEndPixel = pixelOfHandle(handles[3], range, WIDTH, 0.5);
+        const clipEndPixel = pixelOfHandle(handles[1], range, WIDTH);
+        const fogEndPixel = pixelOfHandle(handles[3], range, WIDTH);
 
         expect(Math.abs(clipEndPixel - fogEndPixel)).toBeGreaterThan(GRAB_TOLERANCE_PX);
-        expect(handleAtPixel(fogEndPixel, handles, range, WIDTH, 0.5)).toBe("fogEnd");
-        expect(handleAtPixel(clipEndPixel, handles, range, WIDTH, 0.5)).toBe("clipEnd");
+        expect(handleAtPixel(fogEndPixel, handles, range, WIDTH)).toBe("fogEnd");
+        expect(handleAtPixel(clipEndPixel, handles, range, WIDTH)).toBe("clipEnd");
     });
 
     it("keeps all four distinguishable across spans that used to push them off the plot", () => {
@@ -132,8 +132,8 @@ describe("picking a handle up", () => {
             const handles = handlesFrom(50, 60, 20, 80);
             const range = plotHalfRange(span, handles);
             for (const h of handles) {
-                const pixel = pixelOfHandle(h, range, WIDTH, 0.5);
-                expect(handleAtPixel(pixel, handles, range, WIDTH, 0.5)).toBe(h.id);
+                const pixel = pixelOfHandle(h, range, WIDTH);
+                expect(handleAtPixel(pixel, handles, range, WIDTH)).toBe(h.id);
             }
         }
     });
@@ -175,3 +175,4 @@ describe("constraining a drag", () => {
         expect(gapPx).toBeGreaterThan(GRAB_TOLERANCE_PX);
     });
 });
+
