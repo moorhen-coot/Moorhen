@@ -10,6 +10,16 @@ import {RootState } from '../../store/MoorhenReduxStore';
 import { MoorhenStack } from "../interface-base";
 import { MoorhenToggle, MoorhenSlider } from "../inputs";
 import { Bounds, boundsAround, mapSpan, sceneSpan } from "../../utils/sceneExtent";
+import {
+    Handle,
+    HandleId,
+    constrainOffset,
+    handleAtPixel,
+    offsetOfPixel,
+    partnerOf,
+    pixelOfHandle,
+    plotHalfRange,
+} from "../../utils/sceneSliderGeometry";
 import { centreOfObject, extentOfObject } from "../../store/threeDObjectsSlice";
 import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
 import {
@@ -44,16 +54,6 @@ const getOffsetRect = (elem: HTMLCanvasElement) => {
     const left = box.left + scrollLeft - clientLeft
 
     return { top: Math.round(top), left: Math.round(left) }
-}
-
-enum GrabHandle
-{
- NONE,
- CLIP_START,
- CLIP_END,
- FOG_START,
- FOG_END,
- BLUR_DEPTH,
 }
 
 interface MGWebGLBuffer {
@@ -177,7 +177,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const [releaseY, setReleaseY] = useState<number>(-1)
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
 
-    const [grabbed, setGrabbed] = useState<GrabHandle>(GrabHandle.NONE)
+    const [grabbed, setGrabbed] = useState<HandleId | null>(null)
 
     /**
      * The scene's buffers, cloned into this widget's own GL context.
@@ -246,6 +246,46 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         return sceneSpan({ positioned, sizes: maps.map(mapSpan) })
     }, [displayBuffers, threeDObjects, maps])
 
+    /**
+     * Each handle as a signed distance from the view centre, which is the one convention the
+     * geometry helpers work in. Clip and fog store their near edge as a positive distance towards
+     * the viewer, so those are negated.
+     */
+    const handles: Handle[] = useMemo(() => [
+        { id: "clipStart", offset: -clipStart, visible: useClip },
+        { id: "clipEnd", offset: clipEnd, visible: useClip },
+        { id: "fogStart", offset: -(fogClipOffset - gl_fog_start), visible: useFog },
+        { id: "fogEnd", offset: gl_fog_end - fogClipOffset, visible: useFog },
+        { id: "blurDepth", offset: 0, visible: useOffScreenBuffers },
+    ], [clipStart, clipEnd, gl_fog_start, gl_fog_end, fogClipOffset, useClip, useFog, useOffScreenBuffers])
+
+    /**
+     * Half the plot's extent, in angstroms.
+     *
+     * The scene span is the floor, not the answer: the range also stretches to contain every
+     * visible handle. Handles used to be clamped to the edge when their value fell outside the
+     * scene, and because the clamped pixel was then used to hit-test and to guard the drag, two
+     * handles off the same end became one unreachable pixel. Fitting the range instead means
+     * nothing is ever off the plot, so neither failure has anywhere to happen.
+     */
+    const plotRange = useMemo(
+        () => plotHalfRange(atomSpan * spanScaling, handles),
+        [atomSpan, handles])
+
+    /** Where each handle is drawn, by id. */
+    const handlePixels = useMemo(() => {
+        const pixels = {} as Record<HandleId, number>
+        handles.forEach(h => { pixels[h.id] = pixelOfHandle(h, plotRange, plotWidth, depthBlurDepth) })
+        return pixels
+    }, [handles, plotRange, plotWidth, depthBlurDepth])
+
+    /** The offset a handle must not cross, or null when it has no partner. */
+    const partnerOffset = (id: HandleId): number | null => {
+        const partner = partnerOf(id)
+        if (!partner) return null
+        return handles.find(h => h.id === partner)?.offset ?? null
+    }
+
     const drawGL = async (width,height) => {
 
         if(!canvasRefWebGL)
@@ -266,7 +306,9 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         const screenZ = vec3.create();
         vec3.set(screenZ,0,0,1)
         const pMatrix = mat4.create();
-        mat4.ortho(pMatrix, -atomSpan * spanScaling, atomSpan * spanScaling, -atomSpan * spanScaling * height/width, atomSpan * spanScaling * height/width, 0.1, 1000.0);
+        // plotRange, not the scene span: the 2D overlay is drawn to the same range, and the handles
+        // would no longer line up with the molecule behind them if these two disagreed.
+        mat4.ortho(pMatrix, -plotRange, plotRange, -plotRange * height/width, plotRange * height/width, 0.1, 1000.0);
 
         const theMatrix = quatToMat4(quat);
 
@@ -518,15 +560,15 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         const canvas = canvasRef.current
         const ctx = canvas.getContext("2d")
 
-        const scale = atomSpan * spanScaling
-
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
-        const clipStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - clipStart / scale * plotWidth * .5,1))
-        const clipEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + clipEnd / scale * plotWidth * .5,1))
-        const fogStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - fogStart / scale * plotWidth * .5,1))
-        const fogEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + fogEnd / scale * plotWidth * .5,1))
-        const depthBlurDepthPos = depthBlurDepth * plotWidth
+
+        // No clamping here any more. The range was fitted to these, so they are already on the plot.
+        const clipStartPos = handlePixels.clipStart
+        const clipEndPos = handlePixels.clipEnd
+        const fogStartPos = handlePixels.fogStart
+        const fogEndPos = handlePixels.fogEnd
+        const depthBlurDepthPos = handlePixels.blurDepth
 
         ctx.save()
 
@@ -553,7 +595,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         canvas.style.cursor = "auto"
 
         if(useFog){
-            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_START)&&Math.abs(moveX-fogStartPos)<5&&!hovering){
+            if((grabbed===null||grabbed==="fogStart")&&Math.abs(moveX-fogStartPos)<5&&!hovering){
                 ctx.strokeStyle = "white"
                 ctx.lineWidth = 4
                 hovering = true
@@ -567,7 +609,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
             ctx.lineTo(fogStartPos,canvas.height)
             ctx.stroke()
 
-            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_END)&&Math.abs(moveX-fogEndPos)<5&&!hovering){
+            if((grabbed===null||grabbed==="fogEnd")&&Math.abs(moveX-fogEndPos)<5&&!hovering){
                 ctx.strokeStyle = "white"
                 ctx.lineWidth = 4
                 hovering = true
@@ -583,7 +625,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         }
 
         if(useOffScreenBuffers){
-            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.BLUR_DEPTH)&&Math.abs(moveX-depthBlurDepthPos)<5&&!hovering){
+            if((grabbed===null||grabbed==="blurDepth")&&Math.abs(moveX-depthBlurDepthPos)<5&&!hovering){
                 ctx.strokeStyle = "white"
                 ctx.lineWidth = 4
                 hovering = true
@@ -600,7 +642,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         }
 
         if(useClip){
-            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_START)&&Math.abs(moveX-clipStartPos)<5&&!hovering){
+            if((grabbed===null||grabbed==="clipStart")&&Math.abs(moveX-clipStartPos)<5&&!hovering){
                 ctx.strokeStyle = "white"
                     ctx.lineWidth = 4
                     hovering = true
@@ -614,7 +656,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                 ctx.lineTo(clipStartPos,canvas.height)
                 ctx.stroke()
 
-                if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_END)&&Math.abs(moveX-clipEndPos)<5&&!hovering){
+                if((grabbed===null||grabbed==="clipEnd")&&Math.abs(moveX-clipEndPos)<5&&!hovering){
                     ctx.strokeStyle = "white"
                         ctx.lineWidth = 4
                         hovering = true
@@ -695,42 +737,22 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         return [x,y]
     }
 
-    const handleMouseDown = (evt) => {
+    const handleMouseDown = useCallback((evt) => {
 
         if(!canvasRef||!canvasRef.current) return
 
         const [x,y] = getXY(evt)
 
         setMouseHeldDown(true)
-
-        const scale = atomSpan * spanScaling
-
-        const fogStart = fogClipOffset - gl_fog_start
-        const fogEnd = gl_fog_end - fogClipOffset
-        const clipStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - clipStart / scale * plotWidth * .5,1))
-        const clipEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + clipEnd / scale * plotWidth * .5,1))
-        const fogStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - fogStart / scale * plotWidth * .5,1))
-        const fogEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + fogEnd / scale * plotWidth * .5,1))
-        const depthBlurDepthPos = depthBlurDepth * plotWidth
-
-        if(Math.abs(x-clipStartPos)<5){
-            setGrabbed(GrabHandle.CLIP_START)
-        } else if(Math.abs(x-clipEndPos)<5){
-            setGrabbed(GrabHandle.CLIP_END)
-        } else if(Math.abs(x-fogStartPos)<5){
-            setGrabbed(GrabHandle.FOG_START)
-        } else if(Math.abs(x-fogEndPos)<5){
-            setGrabbed(GrabHandle.FOG_END)
-        } else if(Math.abs(x-depthBlurDepthPos)<5 && useOffScreenBuffers){
-            setGrabbed(GrabHandle.BLUR_DEPTH)
-        } else {
-            setGrabbed(GrabHandle.NONE)
-        }
+        // Nearest visible handle, rather than the first one in a fixed order that happened to be
+        // within five pixels. Hidden handles are skipped too: fog that has been switched off used
+        // to sit at whatever edge its 998/999 clamped to and swallow clicks meant for clip.
+        setGrabbed(handleAtPixel(x, handles, plotRange, plotWidth, depthBlurDepth))
 
         setClickX(x)
         setClickY(y)
 
-    }
+    },[handles, plotRange, plotWidth, depthBlurDepth])
 
     const handleMouseMove = useCallback((evt) => {
 
@@ -738,67 +760,67 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
 
         const [x,y] = getXY(evt)
 
-        const scale = atomSpan * spanScaling
+        // Without this a release outside the canvas never reaches handleMouseUp, and the handle
+        // then follows the pointer around with no button held down.
+        if(grabbed && mouseHeldDown){
 
-        const fogStart = fogClipOffset - gl_fog_start
-        const fogEnd = gl_fog_end - fogClipOffset
-        const clipStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - clipStart / scale * plotWidth * .5,1))
-        const clipEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + clipEnd / scale * plotWidth * .5,1))
-        const fogStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - fogStart / scale * plotWidth * .5,1))
-        const fogEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + fogEnd / scale * plotWidth * .5,1))
+            if(grabbed === "blurDepth"){
+                dispatch(setDepthBlurDepth(Math.min(1.0, Math.max(0.0, x / plotWidth))))
+            } else {
+                // Clamp the value, do not gate the dispatch. The old code only dispatched when the
+                // pointer was past the partner's drawn pixel, so a partner pinned at the edge of
+                // the plot made that test impossible to satisfy and the handle silently froze.
+                const partner = partnerOffset(grabbed)
+                const wanted = offsetOfPixel(x, plotRange, plotWidth)
+                const offset = partner === null
+                    ? wanted
+                    : constrainOffset(grabbed, wanted, partner, plotRange, plotWidth)
 
-        if(grabbed===GrabHandle.CLIP_START){
-            const newValue = (plotWidth * 0.5 - x) * scale / plotWidth / 0.5
-            if(x<clipEndPos) dispatch(setClipStart(newValue))
-        } else if(grabbed===GrabHandle.CLIP_END){
-            const newValue = (x - plotWidth * 0.5) * scale / plotWidth / 0.5
-            if(x>clipStartPos) dispatch(setClipEnd(newValue))
-        } else if(grabbed===GrabHandle.FOG_START){
-            const newValue = (plotWidth * 0.5 -x) * scale / plotWidth / 0.5
-            if(x<fogEndPos) dispatch(setFogStart(fogClipOffset - newValue))
-        } else if(grabbed===GrabHandle.FOG_END){
-            const newValue = (x - plotWidth * 0.5) * scale / plotWidth / 0.5
-            if(x>fogStartPos) dispatch(setFogEnd(newValue + fogClipOffset))
-        } else if(grabbed===GrabHandle.BLUR_DEPTH){
-            if(useOffScreenBuffers){
-                const newValue = x / plotWidth
-                dispatch(setDepthBlurDepth(newValue))
+                switch(grabbed){
+                    case "clipStart": dispatch(setClipStart(-offset)); break
+                    case "clipEnd":   dispatch(setClipEnd(offset)); break
+                    case "fogStart":  dispatch(setFogStart(fogClipOffset + offset)); break
+                    case "fogEnd":    dispatch(setFogEnd(fogClipOffset + offset)); break
+                }
             }
         }
 
         setMoveX(x)
         setMoveY(y)
 
-    },[mouseHeldDown,clickX,clickY,releaseX,releaseY])
+    },[grabbed, mouseHeldDown, handles, plotRange, plotWidth, fogClipOffset, dispatch])
 
-    const handleMouseUp = useCallback(async(evt) => {
+    const releaseGrab = useCallback((evt) => {
 
         setMouseHeldDown(false)
+        setGrabbed(null)
 
         if(!canvasRef||!canvasRef.current) return
 
         const [x,y] = getXY(evt)
         setReleaseX(x)
         setReleaseY(y)
-        setGrabbed(GrabHandle.NONE)
 
-    },[clickX,clickY,releaseX,releaseY])
+    },[])
 
     useEffect(() => {
 
-        canvasRef.current.addEventListener("mousemove", handleMouseMove , false)
-        canvasRef.current.addEventListener("mousedown", handleMouseDown , false)
-        canvasRef.current.addEventListener("mouseup", handleMouseUp , false)
+        const canvas = canvasRef.current
+        if(!canvas) return
+
+        canvas.addEventListener("mousemove", handleMouseMove , false)
+        canvas.addEventListener("mousedown", handleMouseDown , false)
+        canvas.addEventListener("mouseup", releaseGrab , false)
+        canvas.addEventListener("mouseleave", releaseGrab , false)
 
         return () => {
-            if (canvasRef.current !== null) {
-                canvasRef.current.removeEventListener("mousemove", handleMouseMove)
-                canvasRef.current.removeEventListener("mousedown", handleMouseDown)
-                canvasRef.current.removeEventListener("mouseup", handleMouseUp)
-            }
+            canvas.removeEventListener("mousemove", handleMouseMove)
+            canvas.removeEventListener("mousedown", handleMouseDown)
+            canvas.removeEventListener("mouseup", releaseGrab)
+            canvas.removeEventListener("mouseleave", releaseGrab)
         }
 
-    }, [canvasRef, handleMouseMove,handleMouseUp,handleMouseDown])
+    }, [handleMouseMove, releaseGrab, handleMouseDown])
 
     useEffect(() => {
 
@@ -829,7 +851,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     // into, and the next draw waited on an unrelated change.
     useEffect(() => {
         plotTheData()
-    }, [glCanvas,myBuffers,atomSpan,fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers])
+    }, [glCanvas,myBuffers,atomSpan,plotRange,handles,grabbed,fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers])
 
 
     return (
