@@ -1,4 +1,5 @@
 import Fasta from "biojs-io-fasta";
+import { centreOfObject } from "../store/threeDObjectsSlice";
 import pako from "pako";
 import type { Dispatch, Store } from "redux";
 import { MoorhenInstance } from "@/InstanceManager";
@@ -17,6 +18,10 @@ import { MoorhenMolecule } from "./MoorhenMolecule";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { modalKeys } from "./enums";
+import { decompressDracoGltf } from "./gltfDraco";
+import { createDracoDecode } from "./gltfDracoDecoder";
+import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
+import { gltfMaterialTextures } from "./gltfTextures";
 // import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
@@ -490,6 +495,210 @@ const pdbqtToPdb = (pdbqtString: string) => {
     return pdbLines;
 };
 
+
+/**
+ * Read a glTF or glb file and add it to the scene as a single 3D object.
+ *
+ * A mesh rather than a molecule: nothing is known about its chemistry, so it is not a
+ * MoorhenMolecule and does not appear in the molecule list. It becomes one ThreeDObject, which
+ * makes it one thing to select, centre on, recolour and delete - the same treatment a cavity
+ * gets, and the reason the whole file is merged into one mesh on the way out of Coot.
+ *
+ * @param file - The .gltf or .glb file to read.
+ * @param moorhenInstance - The instance to add the mesh to.
+ * @param alsoSelected - The other files chosen at the same time, from which the buffers and
+ *     images a .gltf refers to are taken. A self-contained .glb needs none of them.
+ * @returns The uniqueId of the new object.
+ */
+export const loadGltfFile = async (
+    file: File,
+    moorhenInstance: MoorhenInstance,
+    alsoSelected: File[] = []
+): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+
+    // A .gltf names its buffers and images as separate files, and they have to be in the
+    // worker's filesystem under those names before tinygltf looks for them. They can only come
+    // from the same selection, so they are gathered here and sent across with the file itself.
+    const sidecars: { name: string; data: Uint8Array }[] = [];
+    const missing: string[] = [];
+    for (const uri of gltfExternalUris(arrayBuffer)) {
+        // Matched on the full URI first, so that a selection made by choosing a folder - where a
+        // File's name is the leaf but the layout is known - still resolves "textures/wood.png";
+        // then on the leaf alone, which is what a flat multi-file pick gives.
+        const leaf = uri.split("/").pop();
+        const match = isRemoteUri(uri)
+            ? undefined
+            : alsoSelected.find(other => other.name === uri) ??
+              alsoSelected.find(other => other.name === leaf);
+        if (!match) {
+            missing.push(uri);
+            continue;
+        }
+        sidecars.push({ name: uri, data: new Uint8Array(await match.arrayBuffer()) });
+    }
+    if (missing.length > 0) {
+        // Named, because "could not load" would leave someone staring at a file that is perfectly
+        // fine. Nothing is fetched for them: a viewer that quietly went to the network for a file
+        // dragged in from a desktop would be doing something nobody asked for.
+        return Promise.reject(
+            `${file.name} needs ${missing.join(", ")}, which ${missing.length === 1 ? "was" : "were"}` +
+            ` not opened with it - select the glTF and its other files together`
+        );
+    }
+
+    // What actually goes to the worker. Unchanged for an ordinary file; for a compressed one,
+    // the rewritten document and the buffers it invented.
+    // Annotated, because the rewritten document comes from a TextEncoder and so is a
+    // Uint8Array over an ArrayBufferLike rather than over the ArrayBuffer this starts as.
+    let payload: Uint8Array<ArrayBufferLike> = new Uint8Array(arrayBuffer);
+    let payloadName = file.name;
+    let payloadSidecars = sidecars;
+
+    // Decompressed here rather than refused. It has to happen on this side: tinygltf's
+    // post-parse pass rejects an index accessor with no bufferView - exactly what Draco
+    // geometry has - so the file never parses and nothing in the importer gets a look at it.
+    //
+    // Asked before the decoder is fetched, so the 190 KB of WebAssembly is only downloaded for
+    // the files that need it. After this, `gltfUnsupportedFeature` below sees a plain document.
+    if (gltfIsDracoCompressed(arrayBuffer)) {
+        try {
+            const decode = await createDracoDecode(moorhenInstance.paths.urlPrefix);
+            const rebuilt = decompressDracoGltf(
+                arrayBuffer,
+                new Map(sidecars.map(sidecar => [sidecar.name, sidecar.data])),
+                decode
+            );
+            if (rebuilt) {
+                payload = rebuilt.gltf;
+                // Always .gltf now, whatever it arrived as: the rewrite emits JSON with its
+                // buffers as files rather than a binary chunk, and the worker picks its parser
+                // by extension.
+                payloadName = `${file.name.replace(/\.(gltf|glb)$/i, "")}.gltf`;
+                // The originals are still referenced - images, and any buffer that was already
+                // a file - so they go too, alongside the ones the rewrite created.
+                payloadSidecars = [...sidecars, ...rebuilt.sidecars];
+            }
+        } catch (e) {
+            // The reason is worth passing on verbatim: it names the attribute that was missing,
+            // the file that was not supplied, or that the decoder itself could not be fetched.
+            const reason = (e instanceof Error ? e.message : String(e ?? "")).trim();
+            return Promise.reject(
+                reason ? `${file.name}: ${reason}`
+                       : `${file.name}: the compressed geometry could not be decoded`
+            );
+        }
+    }
+
+    // Whatever is left that cannot be read - meshopt, sparse accessors - named rather than left
+    // to arrive as a puzzling parse failure.
+    const unsupported = gltfUnsupportedFeature(
+        payload.buffer.slice(payload.byteOffset, payload.byteOffset + payload.byteLength) as ArrayBuffer
+    );
+    if (unsupported) {
+        return Promise.reject(`${file.name}: ${unsupported}`);
+    }
+
+    // Each material's image, decoded here rather than in the worker: the browser decodes a PNG in
+    // a line, and handing sixteen megabytes of pixels across the worker boundary per texture to
+    // avoid that would be a poor trade. A material with no image, or one we could not decode,
+    // simply gets no entry and its geometry draws in its base colour.
+    const textures = await gltfMaterialTextures(
+        payload.buffer.slice(payload.byteOffset, payload.byteOffset + payload.byteLength) as ArrayBuffer,
+        new Map(payloadSidecars.map(sidecar => [sidecar.name, sidecar.data]))
+    );
+
+    const reply = await moorhenInstance.commandCentre.cootCommand(
+        {
+            returnType: "status",
+            command: "shim_load_gltf_groups",
+            commandArgs: [payload, payloadName, payloadSidecars],
+        },
+        true
+    );
+
+    if (reply.data.result?.status === "Exception") {
+        return Promise.reject(reply.data.result.consoleMessage);
+    }
+    const mesh = reply.data.result?.result;
+
+    /**
+     * How a failure is worded, wherever it is noticed.
+     *
+     * The reason travels in the mesh's name, because status and name are the only two channels a
+     * simple_mesh_t has. Every rejection below goes through here so that the reason cannot be
+     * dropped by whichever check happens to fire first - which is exactly what went wrong once:
+     * the status check was right, the worker was not forwarding `status` at all, and so a named
+     * reason fell through to a generic "contained no triangles".
+     */
+    const refusal = (fallback: string): string => {
+        const reason = mesh?.name?.replace(/^glTF import failed:\s*/, "").trim();
+        return reason ? `${file.name}: ${reason}` : fallback;
+    };
+
+    // status 0 is Coot saying it could not build the mesh, which is a different thing from a
+    // file that legitimately contained no triangles - and both are failures to report here.
+    if (!mesh || mesh.status === 0) {
+        return Promise.reject(refusal(`No mesh could be read from ${file.name}`));
+    }
+
+    // The buffers arrive as typed arrays; the object type wants plain number arrays, and
+    // Array.from on an untyped buffer gives unknown[] without the annotation.
+    const asNumbers = (data: ArrayLike<number> | undefined): number[] => Array.from(data ?? []);
+
+    // One part per material, each with the texture that material named. One object still: the
+    // whole file is one thing to select, centre on and delete, which is why these are parts
+    // rather than objects of their own.
+    const parts = (mesh.groups ?? [])
+        .filter(group => group.vertices.length > 0 && group.indices.length >= 3)
+        .map(group => {
+            const texture = textures.get(group.material);
+            const vertexCount = group.vertices.length / 3;
+            return {
+                vertices: asNumbers(group.vertices),
+                indices: asNumbers(group.indices),
+                normals: asNumbers(group.normals),
+                colours: asNumbers(group.colours),
+                // Both or neither: coordinates with no texture leave the attribute enabled for
+                // nothing, and a texture with no coordinates would paint the part one flat colour.
+                ...(texture && group.texCoords.length === vertexCount * 2
+                    ? { texCoords: asNumbers(group.texCoords), texture }
+                    : {}),
+            };
+        });
+
+    if (parts.length === 0) {
+        return Promise.reject(refusal(`${file.name} contained no triangles`));
+    }
+
+    const uniqueId = moorhenInstance.object.create({
+        type: "mesh",
+        // Not read when parts are given, but the type asks for them.
+        vertices: [],
+        indices: [],
+        parts,
+        // The file's own name, so a scene with several imports can be told apart, and a tag
+        // saying where it came from, so every imported mesh can be found or cleared together.
+        tags: { source: "gltf", file: file.name },
+    });
+
+    // Look at it, rather than leaving it wherever the camera happened to be. An imported mesh
+    // carries the coordinates its author gave it, which for a file from another program is
+    // usually nowhere near the current view - so without this a successful import looks like
+    // nothing happening.
+    //
+    // The centroid, not the origin: centreOfObject averages the vertices for a mesh, because
+    // an imported file's placement point is rarely in the middle of its geometry.
+    const created = moorhenInstance.object.get(uniqueId);
+    if (created) {
+        const [x, y, z] = centreOfObject(created);
+        // Unnegated: centerOnCoordinate takes the point to look at and negates it itself.
+        moorhenInstance.centerOnCoordinate(x, y, z);
+    }
+
+    return uniqueId;
+};
+
 export const autoOpenFiles = async (
     files: File[],
     moorhenInstance: MoorhenInstance,
@@ -537,6 +746,24 @@ export const autoOpenFiles = async (
     const moleculesCreated: MoorhenMolecule[] = [];
     const mapsCreated: MoorhenMap[] = [];
     const returnValues: { type: "molecule" | "map"; uniqueID: string; molNo: number; fileName: string }[] = [];
+
+    // Names that belong to a glTF in this selection. Collected only so that the fall-through at
+    // the end of the loop does not report a buffer or a texture as a file Moorhen did not
+    // recognise - loadGltfFile picks them up itself, from the same array.
+    const gltfSidecarNames = new Set<string>();
+    for (const file of files) {
+        if (!/\.(gltf|glb)$/i.test(file.name)) continue;
+        try {
+            for (const uri of gltfExternalUris(await file.arrayBuffer())) {
+                gltfSidecarNames.add(uri);
+                const leaf = uri.split("/").pop();
+                if (leaf) gltfSidecarNames.add(leaf);
+            }
+        } catch (e) {
+            // Unreadable, or not glTF at all. The load itself will say so properly.
+            console.warn(e);
+        }
+    }
 
     for (const file of files) {
         //Structures
@@ -607,6 +834,22 @@ export const autoOpenFiles = async (
                 dispatch(enqueueSnackbar({ message: `Failed to load session ${file.name}`, variant: "warning" }));
             }
             break; //We only load the first session.
+        } else if (file.name.toLowerCase().endsWith(".gltf") || file.name.toLowerCase().endsWith(".glb")) {
+            try {
+                // The whole selection, not just this file: a .gltf takes its buffers and images
+                // from whatever was opened alongside it.
+                await loadGltfFile(file, moorhenInstance, files);
+            } catch (e) {
+                // Shown rather than only logged. The rejection names the unsupported feature, and
+                // a console message is not where someone who has just dragged a file in is
+                // looking. A rejection with no message still gets the generic wording.
+                const reason = (e instanceof Error ? e.message : String(e ?? "")).trim();
+                dispatch(enqueueSnackbar({
+                    message: reason || `Failed to load mesh ${file.name}`,
+                    variant: "warning"
+                }));
+                console.warn(e);
+            }
         } else if (file.name.endsWith(".json")) {
             try {
                 const fileContents = await file.text();
@@ -668,6 +911,10 @@ export const autoOpenFiles = async (
             } finally {
                 document.body.click();
             }
+        } else if (gltfSidecarNames.has(file.name)) {
+            // A buffer or an image belonging to a glTF opened alongside it. Already loaded with
+            // it, so saying "unknown file type" here would be both wrong and alarming.
+            console.log(`${file.name} loaded as part of a glTF in the same selection`);
         } else {
             console.log("File unknown file type, skipping... " + file.name);
         }

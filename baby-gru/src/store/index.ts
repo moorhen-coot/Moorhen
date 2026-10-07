@@ -160,6 +160,8 @@ export {
     setDoSpin,
     setDoOutline,
     setDepthBlurRadius,
+    setDepthPeelLayers,
+    setPeelOpaqueSeparately,
     setBackgroundColor,
     setDepthBlurDepth,
     setDrawAxes,

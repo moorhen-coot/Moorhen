@@ -56,6 +56,14 @@ export type ShapeMesh = {
     vertices: number[];
     normals: number[];
     idx: number[];
+    /**
+     * Flat u,v per vertex, for the generators that have a sensible mapping.
+     *
+     * Absent for most of them, and deliberately so: there is no one right way to unwrap a torus
+     * or an icosahedron, and an arbitrary choice would be worse than none. A shape without these
+     * draws untextured however its object is set up.
+     */
+    texCoords?: number[];
 };
 
 type Vec3 = [number, number, number];
@@ -344,12 +352,20 @@ const FLAT_FACE_SEPARATION = 5e-4;
  * `ring` is the outline counter-clockwise seen from +z; `reverse` flips it for the -z face so that
  * each face is wound counter-clockwise when seen from its own side.
  */
-const pushFlatFace = (mesh: ShapeMesh, ring: [number, number][], z: number, normal: Vec3, reverse: boolean) => {
+const pushFlatFace = (
+    mesh: ShapeMesh,
+    ring: [number, number][],
+    z: number,
+    normal: Vec3,
+    reverse: boolean,
+    uv?: (x: number, y: number) => [number, number]
+) => {
     const ordered = reverse ? [...ring].reverse() : ring;
     const base = mesh.vertices.length / 3;
     ordered.forEach(([x, y]) => {
         mesh.vertices.push(x, y, z);
         mesh.normals.push(...normal);
+        if (uv) mesh.texCoords.push(...uv(x, y));
     });
     for (let i = 1; i < ordered.length - 1; i++) {
         mesh.idx.push(base, base + i, base + i + 1);
@@ -358,12 +374,20 @@ const pushFlatFace = (mesh: ShapeMesh, ring: [number, number][], z: number, norm
 
 /**
  * A flat, double-sided convex polygon in the xy plane, centred on the origin.
- * @param {[number, number][]} ring - the outline, counter-clockwise seen from +z
+ *
+ * @param ring - the outline, counter-clockwise seen from +z
+ * @param uvFront - maps a corner to a texture coordinate for the +z face. The -z face is mirrored
+ *     in x from it, so that the image reads the right way round from whichever side is being
+ *     looked at rather than appearing backwards from behind.
  */
-const doubleSidedPolygon = (ring: [number, number][]): ShapeMesh => {
-    const mesh: ShapeMesh = { vertices: [], normals: [], idx: [] };
-    pushFlatFace(mesh, ring, FLAT_FACE_SEPARATION, [0, 0, 1], false);
-    pushFlatFace(mesh, ring, -FLAT_FACE_SEPARATION, [0, 0, -1], true);
+const doubleSidedPolygon = (
+    ring: [number, number][],
+    uvFront?: (x: number, y: number) => [number, number]
+): ShapeMesh => {
+    const mesh: ShapeMesh = { vertices: [], normals: [], idx: [], ...(uvFront ? { texCoords: [] } : {}) };
+    pushFlatFace(mesh, ring, FLAT_FACE_SEPARATION, [0, 0, 1], false, uvFront);
+    pushFlatFace(mesh, ring, -FLAT_FACE_SEPARATION, [0, 0, -1], true,
+                 uvFront && ((x, y) => uvFront(-x, y)));
     return mesh;
 };
 
@@ -372,12 +396,17 @@ const doubleSidedPolygon = (ring: [number, number][]): ShapeMesh => {
  * the instance size gives its two side lengths directly. Double-sided.
  */
 export const getPlane = (): ShapeMesh =>
-    doubleSidedPolygon([
-        [-0.5, -0.5],
-        [0.5, -0.5],
-        [0.5, 0.5],
-        [-0.5, 0.5],
-    ]);
+    doubleSidedPolygon(
+        [
+            [-0.5, -0.5],
+            [0.5, -0.5],
+            [0.5, 0.5],
+            [-0.5, 0.5],
+        ],
+        // The square maps to the whole image. v is 0.5 - y rather than y + 0.5 because v = 0 is
+        // the top of the image, so increasing y - upwards - has to decrease v.
+        (x, y) => [x + 0.5, 0.5 - y]
+    );
 
 /**
  * A filled circle of radius 1 in the xy plane, centred on the origin, so the instance size gives

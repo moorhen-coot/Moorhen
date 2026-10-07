@@ -53,6 +53,7 @@ import {
     setDefaultBondSmoothness,
     setDepthBlurDepth,
     setDepthBlurRadius,
+    setDepthPeelLayers,
     setDoEdgeDetect,
     setDoOutline,
     setDoPerspectiveProjection,
@@ -400,6 +401,12 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         valueSetter: setElementsIndicesRestrict,
         selector: (state: RootState) => state.glRef.elementsIndicesRestrict,
         defaultValue: false,
+    },
+    52: {
+        label: "depthPeelLayers",
+        valueSetter: setDepthPeelLayers,
+        selector: (state: RootState) => state.sceneSettings.depthPeelLayers,
+        defaultValue: sceneSettingsInitialState.depthPeelLayers,
     },
 };
 

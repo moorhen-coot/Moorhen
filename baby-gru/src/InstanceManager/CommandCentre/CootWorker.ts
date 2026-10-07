@@ -694,6 +694,24 @@ const stringArrayToJSArray = (stringArray: emscriptem.vector<string>) => {
     return returnResult;
 }
 
+
+/**
+ * Read an exported mesh file back out of the module filesystem, and unlink it.
+ *
+ * The same three lines stood at the end of all four exporters. One copy, because a detail that
+ * has to be right in four places eventually is not - which is how a field added to MoorhenVector
+ * reached none of its three constructors.
+ *
+ * Nothing is corrected here. Moorhen's glTF exports are inside-out by the glTF convention, but
+ * the fix is applied on the main thread, where it can be a module: this worker is loaded as a
+ * classic script, so anything it imports would be emitted as a runtime `import` and fail.
+ */
+const readExportedMeshFile = (fileName: string): ArrayBufferLike => {
+    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
+    cootModule.FS_unlink(fileName)
+    return fileContents.buffer
+}
+
 const export_map_as_mesh_file = (imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileType: string) => {
     let fn
     let suffix
@@ -708,9 +726,7 @@ const export_map_as_mesh_file = (imol: number, x: number, y: number, z: number, 
     }
     const fileName = `${guid()}.${suffix}`
     molecules_container[fn](imol, x, y, z, radius, contourLevel, fileName)
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 }
 
 const export_metaballs_as_mesh_file = (imol: number, cid: string, gridSize: number, radius: number, isoLevel: number, fileType: string) => {
@@ -733,9 +749,7 @@ const export_metaballs_as_mesh_file = (imol: number, cid: string, gridSize: numb
     }
 
     molecules_container[fn](imol, cid, gridSize, radius, isoLevel, fileName)
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 
 }
 
@@ -758,14 +772,22 @@ const export_molecular_representation_as_mesh_file = (imol: number, cid: string,
     }
 
     molecules_container[fn](imol, cid, colourScheme, style, ssUsageScheme, fileName)
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 }
 
 const export_molecule_as_mesh_file = (
+    // showAnisoAsEmpty sits between showOrtep and drawHydrogens because that is the order
+    // getBondArgs produces, which in turn follows coot's get_bonds_mesh_instanced. It was
+    // missing here, so every argument after it arrived one place early: fileType fell off the
+    // end and this function received drawMissingLoops in its place, matched none of "gltf",
+    // "obj" or "3mf", and returned null. The caller only does `if (gltfData) doDownload(...)`,
+    // so that was a silent nothing - no file, no error.
+    //
+    // The three flags are taken and not passed on: export_model_molecule_as_gltf has no use for
+    // them. They are in the signature so that the arguments line up.
     imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number,
-    atomRadius: number, showAniso: boolean, showOrtep: boolean,  drawHydrogens: boolean, bondSmoothness: number, drawMissingResidues: boolean, fileType: string
+    atomRadius: number, showAniso: boolean, showOrtep: boolean, showAnisoAsEmpty: boolean,
+    drawHydrogens: boolean, bondSmoothness: number, drawMissingResidues: boolean, fileType: string
 ) => {
     let fn
     let fileName
@@ -795,9 +817,7 @@ const export_molecule_as_mesh_file = (
         drawMissingResidues,
         fileName
     )
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 }
 
 const symmetryToJSData = (symmetryDataPair: libcootApi.PairType<libcootApi.SymmetryData, emscriptem.vector<number[][]>>) => {
@@ -1302,6 +1322,206 @@ const associate_data_mtz_file_with_map = (iMol: number, mtzData: { data: ArrayBu
     return mtzFilename
 }
 
+
+/** A buffer or image file that a .gltf refers to by relative URI. */
+type GltfSidecar = { name: string; data: Uint8Array }
+
+/**
+ * Read a glTF or glb file and return it as mesh data.
+ *
+ * Each import gets its own directory, and everything goes into it under the name the file
+ * actually has. Both halves of that matter. A .gltf keeps its buffers and images in separate
+ * files and refers to them by relative URI, so "scene.bin" has to exist under that exact name
+ * for tinygltf to find it - which rules out the guid this used to rename the file to. And the
+ * directory is what makes the real names safe to use: two imports of the same scene, or a scene
+ * whose buffer is called something as ordinary as "data.bin", cannot collide.
+ *
+ * (The C++ side has to co-operate, and until recently did not: it read the bytes itself and
+ * handed them to tinygltf's memory loaders with an empty base directory, so no external file
+ * could be resolved however the path was arranged. It now uses LoadASCIIFromFile and
+ * LoadBinaryFromFile, which derive the base directory from the path.)
+ *
+ * The extension is normalised rather than preserved verbatim: tinygltf picks the binary or the
+ * JSON parser by looking at it, the comparison is case-sensitive, and a .GLB read as text fails
+ * with a confusing complaint about invalid JSON.
+ */
+/**
+ * Put a glTF and its sidecars in the module's filesystem, run something over it, and tidy up.
+ *
+ * Each import gets its own directory, with everything in it under the name the file actually has.
+ * Both halves matter. A .gltf keeps its buffers and images in separate files and refers to them by
+ * relative URI, so "scene.bin" has to exist under that exact name for tinygltf to find it. And the
+ * directory is what makes the real names safe to use: two imports of the same scene, or a scene
+ * whose buffer is called something as ordinary as "data.bin", cannot collide.
+ *
+ * Shared by the merged and the grouped readers, which differ only in what they call once the
+ * files are in place.
+ */
+const withGltfInFilesystem = <T>(
+    fileData: ArrayBufferLike,
+    name: string,
+    sidecars: GltfSidecar[],
+    read: (path: string) => T
+): T => {
+    const directory = `gltf_${guid()}`
+    const files: string[] = []
+    const directories = new Set<string>([directory])
+    ensureCootModuleDirectory(directory)
+
+    /** Writes one file at a URI relative to the import directory, and returns its path. */
+    const write = (relative: string, data: Uint8Array): string | null => {
+        // "." and ".." are dropped rather than followed: a URI is not allowed to climb out of
+        // the directory it was loaded from, and a file that tries is not one to accommodate.
+        const parts = relative.split("/").filter(part => part.length > 0 && part !== "." && part !== "..")
+        const fileName = parts.pop()
+        if (!fileName) return null
+        const parent = [directory, ...parts].join("/")
+        if (parts.length > 0) {
+            ensureCootModuleDirectory(parent)
+            parts.reduce((path, part) => {
+                const next = `${path}/${part}`
+                directories.add(next)
+                return next
+            }, directory)
+        }
+        cootModule.FS_createDataFile(parent, fileName, data, true, true)
+        const path = `${parent}/${fileName}`
+        files.push(path)
+        return path
+    }
+
+    try {
+        // Sidecars first, so that they are in place before anything tries to read them.
+        for (const sidecar of sidecars) write(sidecar.name, sidecar.data)
+
+        const stem = (name.split("/").pop() || "model").replace(/\.(gltf|glb)$/i, "")
+        // The extension is normalised rather than preserved verbatim: tinygltf picks the binary or
+        // the JSON parser by looking at it, the comparison is case-sensitive, and a .GLB read as
+        // text fails with a confusing complaint about invalid JSON.
+        const extension = name.toLowerCase().endsWith(".glb") ? ".glb" : ".gltf"
+        // Always a usable path: the stem falls back to "model" and the extension is one of two
+        // literals, so there is a filename here whatever the file was called.
+        const path = write(`${stem}${extension}`, new Uint8Array(fileData))
+
+        return read(`./${path}`)
+    } finally {
+        // Best effort, and deepest first. A directory left behind would leak for the lifetime of
+        // the worker, but a throw in here would replace a real error - or a real result - with a
+        // complaint about tidying up.
+        for (const path of files) {
+            try { cootModule.FS_unlink(path) } catch (_err) { /* already gone */ }
+        }
+        for (const path of [...directories].sort((a, b) => b.length - a.length)) {
+            try { cootModule.FS.rmdir(path) } catch (_err) { /* not empty, or already gone */ }
+        }
+    }
+}
+
+/** One material's worth of an import, as flat arrays the main thread can put straight into a part. */
+type GltfGroupJS = {
+    vertices: Float32Array;
+    normals: Float32Array;
+    colours: Float32Array;
+    indices: Uint32Array;
+    /** Empty when this material's geometry carried no coordinates. */
+    texCoords: Float32Array;
+    /** The glTF material index, or -1. The main thread maps it to a texture. */
+    material: number;
+};
+
+/**
+ * Read a glTF as one mesh per material.
+ *
+ * Beside load_gltf rather than replacing it: everything that only wants geometry can go on using
+ * that, and if this path misbehaves there is something to fall back to.
+ *
+ * The material is passed through as the bare glTF index. What it means - which image, decoded how
+ * - is settled on the main thread, which has a browser to decode PNGs with and would otherwise be
+ * handed sixteen megabytes of pixels across the worker boundary for every texture.
+ */
+const load_gltf_groups = (
+    fileData: ArrayBufferLike,
+    name: string,
+    sidecars: GltfSidecar[] = []
+): { status: number; name: string; groups: GltfGroupJS[] } => {
+    return withGltfInFilesystem(fileData, name, sidecars, path => {
+        const groups = cootModule.LoadGltfGroupsFromFile(path)
+        try {
+            const out: GltfGroupJS[] = []
+            let status = 1
+            let meshName = ""
+
+            for (let i = 0; i < groups.size(); i++) {
+                const group = groups.get(i)
+                const mesh = group.mesh
+                // A failure arrives as a single group whose mesh says so, exactly as the merged
+                // call reports it - so there is one place to look whichever was used.
+                if (mesh.status === 0) {
+                    status = 0
+                    meshName = mesh.name
+                    mesh.vertices.delete()
+                    mesh.triangles.delete()
+                    group.texCoords.delete()
+                    break
+                }
+
+                const vertexCount = mesh.vertices.size()
+                const triangleCount = mesh.triangles.size()
+                const vertices = new Float32Array(vertexCount * 3)
+                const normals = new Float32Array(vertexCount * 3)
+                const colours = new Float32Array(vertexCount * 4)
+                const indices = new Uint32Array(triangleCount * 3)
+                // The vectors, not the mesh. A simple_mesh_t is a value_object and crosses by
+                // copy, so handing the whole mesh back makes embind rebuild it - every vertex -
+                // on the way in; a registered vector crosses by reference and costs nothing.
+                cootModule.getPositionsFromVertices(mesh.vertices, vertices)
+                cootModule.getNormalsFromVertices(mesh.vertices, normals)
+                cootModule.getColoursFromVertices(mesh.vertices, colours)
+                cootModule.getTriangleIndicesFromTriangles(mesh.triangles, indices)
+
+                // One memcpy rather than a call per element: a bound vector's `get` is a call
+                // across the boundary, and a large mesh has millions of these.
+                const texCoordCount = group.texCoords.size()
+                const texCoords = new Float32Array(texCoordCount)
+                if (texCoordCount > 0) cootModule.getFloatsFromVector(group.texCoords, texCoords)
+
+                // These are C++ objects behind handles, not collected with the JS wrapper. The
+                // mesh accessors above do not take ownership, so both are released here.
+                mesh.vertices.delete()
+                mesh.triangles.delete()
+                group.texCoords.delete()
+
+                out.push({ vertices, normals, colours, indices, texCoords, material: group.material })
+            }
+
+            return { status, name: meshName, groups: status === 0 ? [] : out }
+        } finally {
+            groups.delete()
+        }
+    })
+}
+
+const load_gltf = (
+    fileData: ArrayBufferLike,
+    name: string,
+    sidecars: GltfSidecar[] = []
+// The return type is spelt out, and deliberately requires status and name. simpleMeshToMeshData
+// returns the five buffer arrays and nothing else, so returning its result directly - which this
+// used to do, under a comment claiming it "carries status through" - silently dropped both. The
+// importer's reason then died here, one hop short of the person who needed it, and every failure
+// arrived as "contained no triangles". Requiring them makes that a compile error next time.
+): libcootApi.SimpleMeshJS & { status: number; name: string } => {
+    return withGltfInFilesystem(fileData, name, sidecars, path => {
+        const simpleMesh = cootModule.LoadGltFromFile(path)
+        // Read before the conversion, which deletes the two vectors. These two are plain
+        // value_object fields rather than embind handles, so they survive that - but taking them
+        // first keeps the dependency obvious.
+        const status = simpleMesh.status
+        const meshName = simpleMesh.name
+        return { ...simpleMeshToMeshData(simpleMesh), status, name: meshName }
+    })
+}
+
 const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolean) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mapData)
@@ -1489,6 +1709,12 @@ const doCootCommand = (messageData: {
             case 'shim_auto_read_mtz':
                 cootResult = auto_read_mtz(...commandArgs as [ArrayBuffer])
                 break
+            case 'shim_load_gltf':
+                cootResult = load_gltf(...commandArgs as [ArrayBuffer, string, GltfSidecar[]])
+                break
+            case 'shim_load_gltf_groups':
+                cootResult = load_gltf_groups(...commandArgs as [ArrayBuffer, string, GltfSidecar[]])
+                break
             case 'shim_read_ccp4_map':
                 cootResult = read_ccp4_map(...commandArgs as [ArrayBuffer, string, boolean])
                 break
@@ -1505,7 +1731,7 @@ const doCootCommand = (messageData: {
                 cootResult = export_map_as_mesh_file(...commandArgs as [number, number, number, number, number, number, string])
                 break
             case 'shim_export_molecule_as_mesh_file':
-                cootResult = export_molecule_as_mesh_file(...commandArgs as [number, string, string, boolean, number, number, boolean, boolean, boolean, number, boolean, string])
+                cootResult = export_molecule_as_mesh_file(...commandArgs as [number, string, string, boolean, number, number, boolean, boolean, boolean, boolean, number, boolean, string])
                 break
             case 'shim_export_molecular_representation_as_mesh_file':
                 cootResult = export_molecular_representation_as_mesh_file(...commandArgs as [number, string, string, string, number, string])

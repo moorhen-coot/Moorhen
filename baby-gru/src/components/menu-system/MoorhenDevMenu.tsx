@@ -1,12 +1,22 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
 import { v4 as uuidv4 } from "uuid";
 import { newVector } from "../../utils/vectorFactories";
 import { useEffect, useState } from "react";
 import { setOrigin } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
-import { usePaths } from "../../InstanceManager";
+import { useMoorhenInstance, usePaths } from "../../InstanceManager";
+import { checkerboardTexture, registerTexture } from "../../WebGLgComponents/textureRegistry";
+import { centreOfObject } from "../../store/threeDObjectsSlice";
+import {
+    instrumentGl,
+    measuredTrianglesPerFrame,
+    renderStats,
+    triangleBreakdownText,
+    uninstrumentGl,
+} from "../../WebGLgComponents/mgWebGLParts/renderStats";
 import { setUseGemmi } from "../../store/generalStatesSlice";
+import { setPeelOpaqueSeparately } from "../../store/sceneSettingsSlice";
 import { showModal } from "../../store/modalsSlice";
 import {
     addCallback,
@@ -31,6 +41,128 @@ import { MoorhenLinearProgress } from "../icons";
 
 
 
+/**
+ * A flat square carrying the test checkerboard, for checking the texture path by eye.
+ *
+ * The corner colours are the test. A checkerboard on its own is symmetric under a horizontal
+ * flip, a vertical flip and a transpose, so the commonest texture fault there is - an inverted V
+ * axis - would look entirely correct. With the quad in the xy plane and the default view looking
+ * down -z with +y up, the corners should read:
+ *
+ *     red    top-left        green  top-right
+ *     blue   bottom-left     yellow bottom-right
+ *
+ * Any other arrangement says what went wrong: red and blue swapped is a V flip, red and green
+ * swapped is a U flip, green and blue swapped is a transpose.
+ *
+ * The object's colour is white so the texture shows unmodulated - it multiplies the vertex
+ * colour, so any other colour would tint it.
+ */
+const addTexturedQuadTo = (moorhenInstance: ReturnType<typeof useMoorhenInstance>) => {
+    const texture = registerTexture(checkerboardTexture());
+    const half = 15;
+
+    const uniqueId = moorhenInstance.object.create({
+        type: "mesh",
+        colour: "#ffffff",
+        origin: [0, 0, 0],
+        vertices: [-half, -half, 0, half, -half, 0, half, half, 0, -half, half, 0],
+        indices: [0, 1, 2, 0, 2, 3],
+        normals: [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+        // Bottom-left, bottom-right, top-right, top-left - v increasing downwards, because v=0
+        // is the top of the image.
+        texCoords: [0, 1, 1, 1, 1, 0, 0, 0],
+        texture,
+        tags: { [TAG_SOURCE]: SOURCE_DEV_TEST },
+    });
+
+    const created = moorhenInstance.object.get(uniqueId);
+    if (created) {
+        const [x, y, z] = centreOfObject(created);
+        moorhenInstance.centerOnCoordinate(x, y, z);
+    }
+    return uniqueId;
+};
+
+/**
+ * Three planes sharing one texture, which is the instanced case.
+ *
+ * Three rather than one because one plane would be drawn instanced too and would look identical
+ * to the non-instanced quad - it would not show whether the texture coordinate is advancing per
+ * vertex or per instance. Three side by side do: if the attribute's divisor were wrong, each
+ * plane would be a single flat colour taken from one texel of its own, instead of three copies
+ * of the whole checkerboard.
+ *
+ * All three carry the same texture id, so they share a group and go out as one instanced draw -
+ * which is the thing being tested. Give one of them a different texture and it becomes a second
+ * group, because the texture is part of the group key.
+ */
+const addTexturedPlanesTo = (moorhenInstance: ReturnType<typeof useMoorhenInstance>) => {
+    const texture = registerTexture(checkerboardTexture());
+    const ids: string[] = [];
+
+    for (const x of [-22, 0, 22]) {
+        ids.push(moorhenInstance.object.create({
+            type: "plane",
+            colour: "#ffffff",
+            origin: [x, 0, 0],
+            scalexyz: [18, 18, 1],
+            texture,
+            tags: { [TAG_SOURCE]: SOURCE_DEV_TEST },
+        }));
+    }
+
+    const first = moorhenInstance.object.get(ids[0]);
+    if (first) {
+        moorhenInstance.centerOnCoordinate(0, 0, 0);
+    }
+    return ids;
+};
+
+/**
+ * One mesh object in two parts, each with a different texture.
+ *
+ * This is the shape a multi-material glTF will arrive in: one thing to select, centre on and
+ * delete, drawn as two sub-buffers because a texture belongs to a sub-buffer. The two
+ * checkerboards differ in how fine they are, so it is obvious at a glance that each part got its
+ * own texture rather than both getting the first one.
+ *
+ * Both still carry the corner markers, so a flip in either part is as visible as before. And
+ * because it is one object, clicking either square should select the whole thing - the pick
+ * bounds are computed over both parts, not just the first.
+ */
+const addTwoPartMeshTo = (moorhenInstance: ReturnType<typeof useMoorhenInstance>) => {
+    const coarse = registerTexture(checkerboardTexture(256, 4));
+    const fine = registerTexture(checkerboardTexture(256, 16));
+    const square = (x: number) => ({
+        vertices: [x - 10, -10, 0, x + 10, -10, 0, x + 10, 10, 0, x - 10, 10, 0],
+        indices: [0, 1, 2, 0, 2, 3],
+        normals: [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+        texCoords: [0, 1, 1, 1, 1, 0, 0, 0],
+    });
+
+    const uniqueId = moorhenInstance.object.create({
+        type: "mesh",
+        colour: "#ffffff",
+        origin: [0, 0, 0],
+        // The flat fields are not read when parts are given, but the type requires them.
+        vertices: [],
+        indices: [],
+        parts: [
+            { ...square(-11), texture: coarse },
+            { ...square(11), texture: fine },
+        ],
+        tags: { [TAG_SOURCE]: SOURCE_DEV_TEST },
+    });
+
+    const created = moorhenInstance.object.get(uniqueId);
+    if (created) {
+        const [x, y, z] = centreOfObject(created);
+        moorhenInstance.centerOnCoordinate(x, y, z);
+    }
+    return uniqueId;
+};
+
 export const MoorhenDevMenu = () => {
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
@@ -39,6 +171,30 @@ export const MoorhenDevMenu = () => {
     const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
 
     const dispatch = useDispatch();
+    const moorhenInstance = useMoorhenInstance();
+    const addTexturedQuad = () => {
+        addTexturedQuadTo(moorhenInstance);
+        document.body.click();
+    };
+    const addTexturedPlanes = () => {
+        addTexturedPlanesTo(moorhenInstance);
+        document.body.click();
+    };
+    const addTwoPartMesh = () => {
+        addTwoPartMeshTo(moorhenInstance);
+        document.body.click();
+    };
+
+    // Separate from the FPS meter on purpose. Counting adds a wrapper call to every GL call, so
+    // having it on changes the frame time it is reporting - the comparison worth making is the
+    // meter alone against the meter with this on, which needs them to be two switches.
+    const [countingDraws, setCountingDraws] = useState<boolean>(renderStats.enabled);
+    const [syncingGpu, setSyncingGpu] = useState<boolean>(renderStats.syncGpu);
+    const glCtx = useSelector((state: RootState) => state.glRef.glCtx);
+    const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately);
+    // The buffers are read on demand rather than subscribed to: this is a one-shot report, and
+    // selecting the buffer list would re-render this menu every time any of them changed.
+    const store = useStore<RootState>();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
     const toggleValidationPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");
@@ -338,6 +494,48 @@ export const MoorhenDevMenu = () => {
                 }}
             >
                 2D Overlays
+            </MoorhenMenuItem>
+            <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
+            <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
+            <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>
+            <MoorhenToggle
+                type="switch"
+                checked={countingDraws}
+                label="Count draws and GL state (needs the FPS meter on)"
+                onChange={() => {
+                    if (!glCtx) return;
+                    if (countingDraws) uninstrumentGl(glCtx);
+                    else instrumentGl(glCtx);
+                    setCountingDraws(!countingDraws);
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={syncingGpu}
+                label="Wait for the GPU each frame (slow; diagnostic only)"
+                onChange={() => {
+                    renderStats.syncGpu = !syncingGpu;
+                    setSyncingGpu(!syncingGpu);
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={peelOpaqueSeparately}
+                label="Draw opaque geometry once when depth peeling"
+                onChange={() => {
+                    dispatch(setPeelOpaqueSeparately(!peelOpaqueSeparately));
+                }}
+            />
+            <MoorhenMenuItem
+                onClick={() => {
+                    const buffers = store.getState().glRef.displayBuffers ?? [];
+                    console.log(
+                        "Triangles by representation\n" +
+                        triangleBreakdownText(buffers, measuredTrianglesPerFrame())
+                    );
+                }}
+            >
+                Log triangles by representation
             </MoorhenMenuItem>
             <hr></hr>
             <MoorhenToggle

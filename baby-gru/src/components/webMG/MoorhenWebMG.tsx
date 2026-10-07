@@ -102,6 +102,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
+    const depthPeelLayers = useSelector((state: moorhen.State) => state.sceneSettings.depthPeelLayers)
+    const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately)
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth)
     const atomLabelDepthMode = useSelector((state: moorhen.State) => state.labelSettings.atomLabelDepthMode)
     const mouseSensitivity = useSelector((state: moorhen.State) => state.mouseSettings.mouseSensitivity)
@@ -198,12 +200,16 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         dispatch(setLabelBuffers([...owned, ...others]))
     }, [store, dispatch])
 
-    const buildDisplayBuffers = useCallback((objects: any[]): DisplayBuffer[] => {
+    // statsLabel is descriptive only - see DisplayBuffer.statsLabel. It is passed in because this
+    // helper serves both vectors and 3D objects, and by the time the buffers exist neither is
+    // distinguishable from the other.
+    const buildDisplayBuffers = useCallback((objects: any[], statsLabel?: string): DisplayBuffer[] => {
         let newBuffers: DisplayBuffer[] = []
         objects
             .filter(object => typeof object !== 'undefined' && object !== null)
             .forEach(object => {
                 const a = appendOtherData(object, store, true)
+                a.forEach(buffer => { buffer.statsLabel = statsLabel })
                 newBuffers = [...newBuffers, ...a]
                 buildBuffers(a, store)
             })
@@ -227,7 +233,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             const retiredLabels = vectorLabelBuffersRef.current
             retired.forEach(buffer => buffer.clearBuffers())
 
-            vectorBuffersRef.current = buildDisplayBuffers(objects)
+            vectorBuffersRef.current = buildDisplayBuffers(objects, "vectors")
             vectorLabelBuffersRef.current = newLabelBuffers ?? []
 
             publishDisplayBuffers(new Set(retired.map(buffer => buffer.id)))
@@ -251,7 +257,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             const retired = threeDObjectsBuffersRef.current
             retired.forEach(buffer => buffer.clearBuffers())
 
-            threeDObjectsBuffersRef.current = buildDisplayBuffers(objects)
+            threeDObjectsBuffersRef.current = buildDisplayBuffers(objects, "3D objects")
 
             publishDisplayBuffers(new Set(retired.map(buffer => buffer.id)))
         }
@@ -515,6 +521,20 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [depthBlurRadius])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDepthPeelLayers(depthPeelLayers)
+            glRef.current.drawScene()
+        }
+    }, [depthPeelLayers])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.peelOpaqueSeparately = peelOpaqueSeparately
+            glRef.current.drawScene()
+        }
+    }, [peelOpaqueSeparately])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

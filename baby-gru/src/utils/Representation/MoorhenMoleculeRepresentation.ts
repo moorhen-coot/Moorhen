@@ -1,4 +1,5 @@
 import { batch } from "react-redux";
+import { correctExportedGltf } from "../gltfWinding";
 import { appendOtherData, buildBuffers } from "../../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../../store/glRefSlice";
 import { enqueueSnackbar  } from '@/store';
@@ -586,6 +587,7 @@ export class MoleculeRepresentation {
         if (this.buffers) {
             this.buffers.forEach(buf => {
                 buf.multiViewGroup = this.parentMolecule.molNo;
+                buf.statsLabel = this.style;
             });
             this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers, ...newBuffers]));
         } else {
@@ -1574,7 +1576,17 @@ export class MoleculeRepresentation {
      * @param {string} name - The name of the representation style
      * @returns {any[]} An array of arguments passed to libcoot API
      */
-    getBondArgs(name: string): [string, boolean, number, number, boolean, boolean, boolean, number] {
+    /**
+     * The bond arguments, in the order coot's get_bonds_mesh_instanced takes them:
+     * mode, isDark, bondWidth, atomRadius, showAniso, showOrtep, showAnisoAsEmpty,
+     * drawHydrogens, smoothness.
+     *
+     * Nine, not eight. This was annotated as an eight-tuple and cast to it, so the extra one
+     * was invisible to the compiler - and a consumer that spread it into a function expecting
+     * eight had every later argument arrive one place early, with no error anywhere. That is
+     * what stopped bonds, spheres, CAs and ligands exporting as glTF.
+     */
+    getBondArgs(name: string): [string, boolean, number, number, boolean, boolean, boolean, boolean, number] {
         const bondSettings: (string | boolean | number)[] = [
             name === "VdwSpheres" ? "VDW-BALLS" : name === "CAs" ? "CA+LIGANDS" : "COLOUR-BY-CHAIN-AND-DICTIONARY",
             this.parentMolecule.isDarkBackground,
@@ -1604,7 +1616,7 @@ export class MoleculeRepresentation {
                 this.bondOptions.smoothness
             );
         }
-        return bondSettings as [string, boolean, number, number, boolean, boolean, boolean, number];
+        return bondSettings as [string, boolean, number, number, boolean, boolean, boolean, boolean, number];
     }
 
     /**
@@ -2143,6 +2155,20 @@ export class MoleculeRepresentation {
         await this.applyColourRules();
 
         let gltfData: ArrayBuffer;
+        /**
+         * Whether this export needs its winding reversed and normals negated.
+         *
+         * Per path, not for everything, because Coot's generators do not agree with each other.
+         * Measured on real exports: metaballs come out inside-out by the glTF convention (signed
+         * volume -101.7), while M2T (+822.6) and coot bonds (+166.6) come out standard. Applying
+         * one rule to all of them inverts whichever were already right - which is precisely what
+         * a first attempt at this did to M2T, on the strength of a single sample that turned out
+         * to be metaballs misread as a surface.
+         *
+         * Left false for any path not actually measured. Being faithful to a generator that is
+         * already correct costs nothing; "correcting" one that was right breaks it.
+         */
+        let windingIsInverted = false;
         if (!(this.style === "MetaBalls") && (this.styleIsCootBondRepresentation || this.styleIsCombinedRepresentation)) {
             const bondArgs = this.getBondArgs(this.style);
             const state = this.parentMolecule.store.getState();
@@ -2183,9 +2209,28 @@ export class MoleculeRepresentation {
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;
             gltfData = result.data.result.result;
+            // Measured: export_metaballs_as_gltf produces an inside-out mesh.
+            windingIsInverted = true;
         } else {
             console.warn(`Unable to export molecule representation of style ${this.style} as mesh file`);
         }
-        return gltfData;
+        // Moorhen's glTF exports are inside-out by the glTF convention: Coot's meshes are wound
+        // clockwise seen from outside, Moorhen compensates on screen by asking for "mesh_perm3",
+        // and the exporters write the Coot mesh verbatim - so the compensation never reaches the
+        // file. Corrected here rather than in Coot, whose meshes have assorted histories, and
+        // here rather than in the worker, which is loaded as a classic script and so cannot
+        // import a module.
+        if (!gltfData) {
+            // Silence here is the old behaviour and is hard to act on: the caller only does
+            // `if (gltfData) doDownload(...)`, so a representation Coot cannot export produces
+            // no file and no message. Whatever the reason, say so.
+            console.warn(
+                `Export of ${this.parentMolecule?.name ?? "molecule"} representation "${this.style}" ` +
+                `as ${fileType} produced nothing. If the worker reported an exception it will be ` +
+                `logged above this line.`
+            );
+            return gltfData;
+        }
+        return fileType === "gltf" && windingIsInverted ? correctExportedGltf(gltfData) : gltfData;
     }
 }

@@ -369,7 +369,24 @@ export namespace libcootApi {
         vertex_owner_other?: emscriptem.vector<number>;
         vertex_owner_weight?: emscriptem.vector<number>;
         owners?: emscriptem.vector<string>;
+        name?: string;
     }
+    /**
+     * One material's worth of an imported glTF.
+     *
+     * Three separate things because simple_mesh_t has nowhere to put the other two: its vertex is
+     * position, normal and colour, and adding a field would be a change to Coot. So the texture
+     * coordinates travel beside the mesh, and the material is a bare glTF index - what it means,
+     * and which image it names, is worked out on this side, which has to decode the images anyway.
+     */
+    interface MoorhenGltfMeshT {
+        mesh: SimpleMeshT;
+        /** u,v per vertex, or empty when this material's geometry carried none. */
+        texCoords: emscriptem.vector<number>;
+        /** The glTF material index, or -1 for a primitive that named no material. */
+        material: number;
+    }
+
     interface SimpleMeshJS {
         prim_types: [[string]];
         useIndices?: [[boolean]];
@@ -387,6 +404,7 @@ export namespace libcootApi {
         vertex_owners_other?: Uint32Array;
         vertex_owner_weights?: Float32Array;
         owners?: string[];
+        name?: string;
     }
     interface SymmetryData {
         cell: CellTranslation;
@@ -600,6 +618,33 @@ export namespace libcootApi {
         three_letter_code: string;
     };
     type CootModule = {
+        /**
+         * Read a glTF or glb file from the module's filesystem and return it as one mesh.
+         *
+         * By path rather than from a string, because a .glb may refer to buffers or images in
+         * files beside it and only a path lets those be resolved. `status` is 0 and `name`
+         * carries the reason when the file could not be read.
+         */
+        LoadGltFromFile(fileName: string): SimpleMeshT;
+        /**
+         * The same file as one mesh per material.
+         *
+         * A glTF primitive is drawn with exactly one material, and a texture hangs off a
+         * material - so a file with several cannot be one mesh if any of them is textured. Each
+         * element becomes one sub-buffer of the single imported object.
+         *
+         * A failure comes back as one element whose `mesh.status` is 0, with the reason in its
+         * `mesh.name`, exactly as LoadGltFromFile reports it.
+         */
+        LoadGltfGroupsFromFile(fileName: string): emscriptem.vector<MoorhenGltfMeshT>;
+        /**
+         * Copy a bound vector of floats into a Float32Array, in one memcpy.
+         *
+         * The array must already be at least as long as the vector. Reading a bound vector with
+         * `get` instead is a call per element, which for a mesh of a million vertices is not a
+         * reasonable thing to do.
+         */
+        getFloatsFromVector(values: emscriptem.vector<number>, out: Float32Array): void;
         unpackCootDataFile(arg0: string, arg1: boolean, arg2: string, arg3: string): number;
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
         get_mmcif_string_from_gemmi_struct(arg0: gemmi.Structure): string;
@@ -617,6 +662,8 @@ export namespace libcootApi {
         FS: {
             readFile(tempFilename: string, arg1: { encoding: string }): string | Uint8Array;
             mkdir: (arg0: string) => void;
+            /** Removes an empty directory. Throws if anything is still in it. */
+            rmdir: (arg0: string) => void;
         };
         FS_unlink(tempFilename: string): void;
         FS_createDataFile(arg0: string, arg1: string, arg2: Uint8Array | string, arg3: boolean, arg4: boolean, arg5?: boolean): void;

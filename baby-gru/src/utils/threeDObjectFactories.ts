@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import {
     DEFAULT_WIREFRAME_RADIUS,
+    MeshObject,
     Matrix4x4,
     ThreeDObject,
     AnnulusObject,
@@ -355,6 +356,33 @@ export const newTorusObject = (): TorusObject => ({
     major_radius: 1.0,
     minor_radius: 0.2
 });
+
+/**
+ * A default mesh: a unit tetrahedron, so that `create({ type: "mesh" })` gives something you can
+ * see rather than an invisible object waiting to be filled in - the same reasoning as the
+ * two-point default path.
+ */
+export const newMeshObject = (): MeshObject => ({
+    uniqueId: uuidv4(),
+    type: "mesh",
+    colour: "#ff0000ff",
+    origin: [0, 0, 0],
+    scale: 1,
+    vertices: [
+        1, 1, 1,
+        1, -1, -1,
+        -1, 1, -1,
+        -1, -1, 1
+    ],
+    indices: [
+        0, 2, 1,
+        0, 1, 3,
+        0, 3, 2,
+        1, 2, 3
+    ]
+});
+
+
 /**
  * The factories by shape name, so a caller holding a `type` string can make one without a
  * 26-way switch.
@@ -389,6 +417,7 @@ export const OBJECT_FACTORIES: { [K in ThreeDObject["type"]]: () => Extract<Thre
     capsule: newCapsuleObject,
     helix: newHelixObject,
     path: newPathObject,
+    mesh: newMeshObject,
     torus: newTorusObject,
 };
 

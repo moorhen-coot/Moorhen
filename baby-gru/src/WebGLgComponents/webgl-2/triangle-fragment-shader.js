@@ -1,4 +1,66 @@
-var triangle_fragment_shader_source = `#version 300 es\n
+/*
+ * Two variants of one shader, differing only in whether they can discard.
+ *
+ * A fragment shader that can discard forces the hardware to run it before resolving depth,
+ * because the shader might yet decide the fragment does not exist. Early depth rejection is
+ * therefore switched off for the whole program - not just where the discard sits, but
+ * everywhere, since the compiler only sees that discard is reachable. On a ribbon model you
+ * look through ten or more layers, so this is the difference between shading the visible
+ * surface and shading all of it. It is worth about 8% on an immediate-mode renderer and 40%
+ * on Apple's tile-based hardware, where hidden-surface removal is the entire architecture.
+ *
+ * The discards here were doing two jobs, and neither needs doing in the common case:
+ *
+ *   The clip planes are the front and back of the view slab, always view-aligned - (0,0,-1,d0)
+ *   and (0,0,1,d1). The orthographic projection already passes exactly those as its near and
+ *   far (see the mat4.ortho call in drawCore), so the hardware clips the slab before the
+ *   fragment shader is reached and this test can only ever agree with it. Under perspective
+ *   the projection uses fixed near/far instead, so there the test is still doing real work.
+ *
+ *   The depth peel test is genuine, but only runs during peeling, which only happens when
+ *   something transparent is in the scene.
+ *
+ * So the fast variant drops both and is used whenever the projection is orthographic and
+ * nothing is being peeled, which includes ordinary model building with clipping switched on.
+ *
+ * Composed from one body with a flag rather than derived from the other by string surgery, so
+ * the two cannot drift apart as the shader is edited.
+ */
+const clipAndPeelDiscards = `
+      if(dot(eyePos, clipPlane0)<0.0){
+       discard;
+      }
+      if(dot(eyePos, clipPlane1)<0.0){
+       discard;
+      }
+
+      // Transparent geometry hidden behind the opaque scene.
+      //
+      // When the opaque scene is drawn once into its own layer rather than into every peel
+      // layer, this is what stops transparent fragments behind it surviving. It cannot be done
+      // by seeding the layer's depth buffer with the opaque depth instead: the compositing step
+      // decides whether a layer drew anything at all by testing that same depth against 1.0, so
+      // an opaque depth sitting in it makes every covered pixel look drawn, and the layer's
+      // background colour washes over the opaque surface. That is what white ribbons under a
+      // transparent surface looked like.
+      if(haveOpaqueDepth) {
+          vec2 opaque_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
+          if(gl_FragCoord.z > texture(opaqueDepthSampler,opaque_coord).r) {
+              discard;
+          }
+      }
+
+      if(peelNumber>0) {
+          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
+          float max_depth;
+          max_depth = texture(depthPeelSamplers,tex_coord).r;
+          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 || gl_FrontFacing!=true ) {
+              discard;
+          }
+      }
+`;
+
+const triangle_fragment_shader_body = (discards) => `#version 300 es\n
 
     precision mediump float;
 
@@ -7,6 +69,22 @@ var triangle_fragment_shader_source = `#version 300 es\n
     in lowp vec4 vColor;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
+
+    // The vertex shader has forwarded this for years with nothing on the other side to read it,
+    // so it was dropped at link time. Declaring it here is what connects aVertexTexture through.
+    in lowp vec2 vTexture;
+
+    // Multiplied into the vertex colour rather than replacing it, which is what glTF specifies
+    // for a baseColorTexture against its baseColorFactor: a white vertex colour shows the texture
+    // untouched and a coloured one tints it, so an object's colour stays meaningful.
+    //
+    // Only the RGB is taken. Alpha is left to the vertex colour, because transparency here is
+    // decided per buffer before anything is drawn - the depth-peel pass order depends on it - and
+    // a texture's alpha is not known until it is sampled. A texture with holes in it therefore
+    // draws them opaque for now, which is wrong but obvious, rather than half-working through the
+    // peel in a way that depends on draw order.
+    uniform bool hasBaseColourTexture;
+    uniform sampler2D baseColourTexture;
 
     in lowp vec4 ShadowCoord;
     uniform sampler2D ShadowMap;
@@ -58,6 +136,9 @@ var triangle_fragment_shader_source = `#version 300 es\n
 
     uniform int peelNumber;
     uniform sampler2D depthPeelSamplers;
+    /** The opaque scene's depth, when it is drawn separately from the peel layers. */
+    uniform bool haveOpaqueDepth;
+    uniform sampler2D opaqueDepthSampler;
 
     uniform float zoom;
 
@@ -75,23 +156,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
     }
 
     void main(void) {
-
-      if(dot(eyePos, clipPlane0)<0.0){
-       discard;
-      }
-      if(dot(eyePos, clipPlane1)<0.0){
-       discard;
-      }
-
-      if(peelNumber>0) {
-          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
-          float max_depth;
-          max_depth = texture(depthPeelSamplers,tex_coord).r;
-          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 || gl_FrontFacing!=true ) {
-              discard;
-          }
-      }
-
+${discards ? clipAndPeelDiscards : ""}
       float shad = 1.0;
       if(doShadows){
           if(shadowQuality==0){
@@ -145,6 +210,9 @@ var triangle_fragment_shader_source = `#version 300 es\n
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);
 
       vec4 theColor = vec4(vColor);
+      if(hasBaseColourTexture){
+          theColor.rgb *= texture(baseColourTexture, vTexture).rgb;
+      }
 
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor*Idiff);
       color *= occ;
@@ -158,7 +226,9 @@ var triangle_fragment_shader_source = `#version 300 es\n
       }
 
       if(gl_FrontFacing!=true){
-          color = vec4(shad*vColor);
+          // theColor, not vColor, so a back face is textured too. Identical to the old line for
+          // anything untextured, since theColor is a copy of vColor until a texture modulates it.
+          color = vec4(shad*theColor);
       }
       if(doEdgeDetect){
 
@@ -200,4 +270,13 @@ var triangle_fragment_shader_source = `#version 300 es\n
     }
 `;
 
-export {triangle_fragment_shader_source};
+/** With the clip and peel discards: correct everywhere, and slower everywhere. */
+const triangle_fragment_shader_source = triangle_fragment_shader_body(true);
+
+/**
+ * Without them: for an orthographic projection with no depth peeling, where the hardware
+ * already clips the slab via the projection's near and far planes.
+ */
+const triangle_fragment_shader_source_fast = triangle_fragment_shader_body(false);
+
+export {triangle_fragment_shader_source, triangle_fragment_shader_source_fast};

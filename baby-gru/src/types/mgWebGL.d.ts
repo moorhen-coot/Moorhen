@@ -277,14 +277,15 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         gPositionTexture: WebGLUniformLocation;
         gNormalTexture: WebGLUniformLocation;
-        depthBufferSize: WebGLUniformLocation | null;
         depthThreshold: WebGLUniformLocation | null;
         normalThreshold: WebGLUniformLocation | null;
         scaleDepth: WebGLUniformLocation | null;
         scaleNormal: WebGLUniformLocation | null;
         xPixelOffset: WebGLUniformLocation | null;
         yPixelOffset: WebGLUniformLocation | null;
-        depthFactor: WebGLUniformLocation | null;
+        clipNear: WebGLUniformLocation | null;
+        clipFar: WebGLUniformLocation | null;
+        perspectiveProjection: WebGLUniformLocation | null;
         zoom: WebGLUniformLocation | null;
     }
 
