@@ -1,7 +1,7 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
-import { slabNearFar, viewportAspect, slabOffsets, focalPlaneFraction} from './projection';
+import { slabNearFar, viewportAspect, focalPlaneDepth} from './projection';
 import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
@@ -2369,14 +2369,10 @@ export function depthBlur(self: MGWebGL, invMat) {
 
         // blurDepth is a distance in angstroms from the view centre; the shaders compare against a
         // depth buffer. This is the only place that conversion happens, and it runs one way.
-        //
-        // What remains approximate under perspective: the fraction is linear in distance while the
-        // depth buffer is not, so the focal plane sits nearer the viewer than the setting implies.
-        // Correcting that means linearising the sampled depth in the blur shaders, which is a
-        // change to those shaders rather than to anything here.
+        // focalPlaneDepth knows how each projection writes depth, so perspective is exact now
+        // rather than a few angstroms shy.
         const slab = slabNearFar(
             self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, self.doPerspectiveProjection);
-        const { nearOffset, farOffset } = slabOffsets(slab.near, slab.far, self.fogClipOffset);
 
         const displayBuffers = self.store.getState().glRef.displayBuffers
         let min_x =  1e5;
@@ -2410,7 +2406,8 @@ export function depthBlur(self: MGWebGL, invMat) {
         // widget's number in the first place. A renderer should not have to know a widget's pixel
         // scale to do its job, which is why the setting is now a distance and this is the only
         // conversion.
-        const fracDepth = focalPlaneFraction(self.blurDepth, nearOffset, farOffset)
+        const fracDepth = focalPlaneDepth(
+            self.blurDepth, slab.near, slab.far, self.fogClipOffset, self.doPerspectiveProjection)
 
         self.gl.uniform1f(self.shaderProgramBlurX.blurDepth,fracDepth);
         self.gl.uniform1f(self.shaderProgramBlurX.blurSize,blurSizeX);

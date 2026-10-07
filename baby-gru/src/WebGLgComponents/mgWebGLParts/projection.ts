@@ -194,3 +194,43 @@ export const focalPlaneFraction = (
     if (Math.abs(span) < 1e-9) return 0.5;
     return Math.min(1.0, Math.max(0.0, (offset - nearOffset) / span));
 };
+
+/**
+ * The depth-buffer value a focal plane given in angstroms corresponds to.
+ *
+ * The blur shaders sample the depth buffer and compare against this, so it has to be in the
+ * buffer's own terms - and those differ between the two projections.
+ *
+ * Orthographic writes depth linearly across the slab, so the fraction of the distance is the
+ * answer. Perspective divides by distance, so equal steps in angstroms are not equal steps in the
+ * buffer: it spends most of its range close to the near plane. The exact relation for the matrix
+ * gl-matrix builds is
+ *
+ *     z = far * (d - near) / (d * (far - near))
+ *
+ * which is 0 at the near plane and 1 at the far one, as the linear form is, but bows between them.
+ * Sending the linear fraction under perspective put the plane a few angstroms nearer the viewer
+ * than asked - about 3 angstroms out of a 60 angstrom slab, worst around the middle where people
+ * actually put it.
+ *
+ * `offset` is measured from the view centre, which sits at fogClipOffset from the eye because the
+ * modelview matrix is translated by -fogClipOffset before anything is drawn.
+ */
+export const focalPlaneDepth = (
+    offset: number,
+    near: number,
+    far: number,
+    fogClipOffset: number,
+    perspective: boolean,
+): number => {
+    const span = far - near;
+    if (Math.abs(span) < 1e-9) return 0.5;
+
+    const distance = fogClipOffset + offset;
+    if (!perspective) return Math.min(1.0, Math.max(0.0, (distance - near) / span));
+
+    // Behind the eye, or on it, has no perspective depth. Everything drawn is in front of the
+    // near plane anyway, so the front of the buffer is the honest answer.
+    if (!(distance > 1e-6)) return 0.0;
+    return Math.min(1.0, Math.max(0.0, (far * (distance - near)) / (distance * span)));
+};
