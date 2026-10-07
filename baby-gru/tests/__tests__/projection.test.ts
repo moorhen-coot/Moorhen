@@ -14,8 +14,13 @@ import { describe, expect, it } from "@jest/globals";
 import {
     MIN_PERSPECTIVE_NEAR,
     ORTHO_HALF_HEIGHT,
+    MAX_EYE_DISTANCE,
+    clipPlanesAfterEyeMove,
+    slabOffsets,
+    MIN_EYE_DISTANCE,
     PERSPECTIVE_FOV,
     PERSPECTIVE_SCALE,
+    perspectiveScale,
     pickHalfExtents,
     slabNearFar,
     viewportAspect,
@@ -187,9 +192,20 @@ describe("pickHalfExtents", () => {
         });
 
         it("follows the renderer's own projection constants", () => {
+            // The divisor is derived from the eye distance now that the eye can be moved, so
+            // this reads perspectiveScale rather than the 5.7 the renderer used to hard-code. The
+            // two differ by 0.17%, which is the one-off shift that came with making it adjustable;
+            // the test below holds that difference to where it was measured.
             const depth = 377;
             expect(pickHalfExtents(depth, 1, RATIO, true).halfHeight)
-                .toBeCloseTo(depth * Math.tan(PERSPECTIVE_FOV / 2) / PERSPECTIVE_SCALE, 10);
+                .toBeCloseTo(depth * Math.tan(PERSPECTIVE_FOV / 2) / perspectiveScale(FOG_CLIP_OFFSET), 10);
+        });
+
+        it("sits within a fifth of a percent of what the old fixed 5.7 gave", () => {
+            const depth = 377;
+            const now = pickHalfExtents(depth, 1, RATIO, true).halfHeight;
+            const before = depth * Math.tan(PERSPECTIVE_FOV / 2) / PERSPECTIVE_SCALE;
+            expect(Math.abs(now - before) / before).toBeLessThan(0.002);
         });
 
         it("keeps width and height in the viewport's aspect", () => {
@@ -200,5 +216,97 @@ describe("pickHalfExtents", () => {
         it("collapses to nothing at the eye rather than going negative", () => {
             expect(pickHalfExtents(0, 1, RATIO, true).halfHeight).toBe(0);
         });
+    });
+});
+
+describe("the adjustable eye distance", () => {
+    const RATIO = 2768 / 1448;
+
+    it("reproduces the hand-tuned 5.7 at the historical eye distance", () => {
+        // The old constant was 5.7 and the derivation gives 5.690, so views composed before this
+        // became adjustable shift by 0.17%. Worth knowing, not worth worrying about.
+        expect(perspectiveScale(250)).toBeCloseTo(5.69, 2);
+        expect(Math.abs(perspectiveScale(250) - PERSPECTIVE_SCALE) / PERSPECTIVE_SCALE).toBeLessThan(0.002);
+    });
+
+    it("scales with the eye distance, which is what holds the framing still", () => {
+        expect(perspectiveScale(100)).toBeLessThan(perspectiveScale(250));
+        expect(perspectiveScale(250)).toBeLessThan(perspectiveScale(800));
+        expect(perspectiveScale(500) / perspectiveScale(250)).toBeCloseTo(2, 9);
+    });
+
+    it("frames the same thing as orthographic at the view centre, at every eye distance", () => {
+        for (const eye of [50, 120, 250, 600, 1000]) {
+            const persp = pickHalfExtents(eye, 1.0, RATIO, true, eye);
+            const ortho = pickHalfExtents(eye, 1.0, RATIO, false, eye);
+            expect(persp.halfHeight).toBeCloseTo(ortho.halfHeight, 9);
+        }
+    });
+
+    it("converges more strongly the closer the eye is", () => {
+        // How much smaller a feature 40 A behind the centre appears than one 40 A in front: the
+        // whole point of the control. This is the quantity that did not move when the slider was
+        // a field of view, because at a fixed eye distance the angle cancels out of the matrix.
+        const foreshortening = (eye: number) =>
+            pickHalfExtents(eye + 40, 1, RATIO, true, eye).halfHeight
+            / pickHalfExtents(eye - 40, 1, RATIO, true, eye).halfHeight;
+
+        expect(foreshortening(100)).toBeGreaterThan(foreshortening(250));
+        expect(foreshortening(250)).toBeGreaterThan(foreshortening(1000));
+        // And a distant eye tends towards orthographic, where the ratio is exactly 1.
+        expect(foreshortening(1000)).toBeLessThan(1.09);
+        expect(foreshortening(100)).toBeGreaterThan(1.5);
+    });
+
+    it("stays within the range the slider offers", () => {
+        expect(MIN_EYE_DISTANCE).toBeGreaterThan(0);
+        expect(MAX_EYE_DISTANCE).toBeGreaterThan(MIN_EYE_DISTANCE);
+    });
+});
+
+describe("moving the eye", () => {
+    const FOG_END = 100000;
+
+    /** The slab as the renderer sees it, after set_clip_range and then an eye move. */
+    const slabAfterMove = (clipStart: number, clipEnd: number, from: number, to: number) => {
+        // set_clip_range(-clipStart, clipEnd), as MoorhenWebMG calls it.
+        let clipPlane0W = -from - (-clipStart);
+        let clipPlane1W = from + clipEnd;
+        ({ clipPlane0W, clipPlane1W } = clipPlanesAfterEyeMove(clipPlane0W, clipPlane1W, to - from));
+        const { near, far } = slabNearFar(clipPlane0W, clipPlane1W, FOG_END, false);
+        return slabOffsets(near, far, to);
+    };
+
+    it("carries the clip slab with it, so the molecule is not sliced open", () => {
+        // The reported fault: the planes stayed at their old absolute distances while the geometry
+        // moved to a new one, cutting the front off the molecule.
+        for (const eye of [50, 144, 250, 393, 1000]) {
+            const { nearOffset, farOffset } = slabAfterMove(20, 40, 250, eye);
+            expect(nearOffset).toBeCloseTo(-20, 9);
+            expect(farOffset).toBeCloseTo(40, 9);
+        }
+    });
+
+    it("leaves the slab untouched when the eye does not move", () => {
+        const { nearOffset, farOffset } = slabAfterMove(15, 35, 250, 250);
+        expect(nearOffset).toBeCloseTo(-15, 9);
+        expect(farOffset).toBeCloseTo(35, 9);
+    });
+
+    it("is reversible, so dragging the slider back and forth does not drift", () => {
+        let clipPlane0W = -250 + 20;
+        let clipPlane1W = 250 + 40;
+        const before = { clipPlane0W, clipPlane1W };
+        for (const [from, to] of [[250, 80], [80, 640], [640, 137], [137, 250]]) {
+            ({ clipPlane0W, clipPlane1W } = clipPlanesAfterEyeMove(clipPlane0W, clipPlane1W, to - from));
+        }
+        expect(clipPlane0W).toBeCloseTo(before.clipPlane0W, 9);
+        expect(clipPlane1W).toBeCloseTo(before.clipPlane1W, 9);
+    });
+
+    it("keeps an asymmetric slab asymmetric, rather than centring it", () => {
+        const { nearOffset, farOffset } = slabAfterMove(5, 90, 250, 120);
+        expect(nearOffset).toBeCloseTo(-5, 9);
+        expect(farOffset).toBeCloseTo(90, 9);
     });
 });

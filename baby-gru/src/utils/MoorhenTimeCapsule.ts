@@ -31,6 +31,7 @@ import {
     addTextOverlay,
     emptyOverlays, setBackgroundColor,
     setDepthBlurDepth,
+    setPerspectiveEyeDistance,
     setDepthBlurRadius,
     setDoEdgeDetect,
     setDoPerspectiveProjection,
@@ -156,6 +157,7 @@ export type viewDataSession = {
         normalThreshold: number;
     };
     doPerspectiveProjection: boolean;
+    eyeDistance?: number;
     blur: { enabled: boolean; depth: number; radius: number };
 };
 
@@ -534,6 +536,7 @@ export class MoorhenTimeCapsule {
             clipEnd: clipEnd,
             quat4: [quat[0], quat[1], quat[2], quat[3]],
             doPerspectiveProjection: doPerspectiveProjection,
+            eyeDistance: fogClipOffset,
             edgeDetection: {
                 enabled: doEdgeDetect,
                 depthScale: depthScale,
@@ -1122,6 +1125,9 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setDepthBlurRadius, sessionData.viewData.blur.radius);
         guardedDispatch(setUseOffScreenBuffers, sessionData.viewData.blur.enabled);
         guardedDispatch(setDoPerspectiveProjection, sessionData.viewData.doPerspectiveProjection ?? false);
+        // Optional: sessions written before the eye could be moved simply keep the default. This
+        // runs before the fog is restored below, since moving the eye shifts the fog with it.
+        guardedDispatch(setPerspectiveEyeDistance, sessionData.viewData.eyeDistance ?? 250);
 
 
         // Set connected maps and molecules if any

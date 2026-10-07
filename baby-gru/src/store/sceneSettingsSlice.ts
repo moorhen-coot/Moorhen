@@ -107,7 +107,7 @@ export const initialState: {
     edgeDetectNormalThreshold: 0.5,
     edgeDetectDepthScale: 2.0,
     edgeDetectNormalScale: 0.0,
-    ssaoRadius: 0.4,
+    ssaoRadius: 2.0,
     ssaoBias: 1.0,
     resetClippingFogging: true,
     clipCap: true,
@@ -125,7 +125,11 @@ export const initialState: {
     depthBlurRadius: 3.0,
     depthPeelLayers: 4,
     peelOpaqueSeparately: true,
-    depthBlurDepth: 0.5,
+    // Where the depth blur starts, in angstroms from the view centre; negative is towards the
+    // viewer. Zero puts it on the rotation centre, which is what you are usually looking at.
+    // This was a 0 to 1 fraction, so a saved value lands a fraction of an angstrom from centre -
+    // near enough to the old "middle" that nothing jumps.
+    depthBlurDepth: 0.0,
     height: 0,
     width: 0,
     GlViewportHeight: 0,
@@ -241,6 +245,20 @@ const sceneSettingsSlice = createSlice({
         // API
         setDoPerspectiveProjection: (state, action: PayloadAction<boolean>) => {
             state.doPerspectiveProjection = action.payload;
+        },
+        // API
+        /* Move the eye towards or away from the view centre, in angstroms. This is what sets how
+           strongly a perspective view converges: close in, the far side of a molecule shrinks
+           markedly; far off, the view approaches orthographic. The framing stays put, because the
+           projection's scale is derived from the same distance, so this is a dolly zoom rather
+           than a zoom. Fog moves with the eye so that it stays where it was on the molecule.
+           Clip needs no adjustment, being measured from the centre already. No effect under
+           orthographic projection. */
+        setPerspectiveEyeDistance: (state, action: PayloadAction<number>) => {
+            const delta = action.payload - state.fogClipOffset;
+            state.fogClipOffset = action.payload;
+            state.fogStart += delta;
+            state.fogEnd += delta;
         },
         // API
         setUseOffScreenBuffers: (state, action: PayloadAction<boolean>) => {
@@ -424,6 +442,7 @@ export const {
     setDepthBlurDepth,
     setDrawAxes,
     setDoPerspectiveProjection,
+    setPerspectiveEyeDistance,
     setHeight,
     setWidth,
     setGlViewportHeight,

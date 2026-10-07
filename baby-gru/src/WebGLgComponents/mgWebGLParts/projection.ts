@@ -88,20 +88,34 @@ export const ORTHO_HALF_HEIGHT = 24.0;
 /** The perspective field of view Moorhen uses, in radians. */
 export const PERSPECTIVE_FOV = 1.0;
 
+/** How close and how far the eye may be placed from the view centre, in angstroms. */
+export const MIN_EYE_DISTANCE = 50.0;
+export const MAX_EYE_DISTANCE = 1000.0;
+
 /**
  * The divisor applied to the perspective projection's x and y scale.
  *
- * Long carried as an unexplained 5.7, with a comment asking what justified it. It is the
- * constant that makes a perspective view frame the same thing an orthographic one does at the
- * view centre: at a distance of fogClipOffset (250),
+ * Long carried as an unexplained 5.7. It is the number that makes a perspective view frame the
+ * same thing an orthographic one does at the view centre:
  *
- *     250 * tan(PERSPECTIVE_FOV / 2) / ORTHO_HALF_HEIGHT  =  5.690
+ *     eyeDistance * tan(PERSPECTIVE_FOV / 2) / ORTHO_HALF_HEIGHT
  *
- * so the two agree where the molecule sits and diverge either side of it, which is exactly what
- * switching projection should look like. Kept at the value the renderer has always used rather
- * than sharpened to the derived one, since changing it would move every perspective view very
- * slightly for no benefit.
+ * which at the historical eye distance of 250 gives 5.690.
+ *
+ * It takes the eye distance rather than a constant because that distance is what sets how strongly
+ * a perspective view converges, and it is adjustable. Deriving the divisor from it holds the
+ * framing still at the view centre while the convergence changes - a dolly zoom. With the divisor
+ * fixed instead, moving the eye would simply rescale the picture.
+ *
+ * Note what this is *not*: a field-of-view control. At a fixed eye distance with the framing held,
+ * the field of view cancels out of the projection entirely - the tan in mat4.perspective against
+ * the tan here - and changing it does nothing whatsoever. Only the eye distance moves the
+ * geometry, which is why PERSPECTIVE_FOV stays a constant.
  */
+export const perspectiveScale = (eyeDistance: number): number =>
+    eyeDistance * Math.tan(PERSPECTIVE_FOV / 2) / ORTHO_HALF_HEIGHT;
+
+/** What perspectiveScale was fixed at before the field of view could be changed. */
 export const PERSPECTIVE_SCALE = 5.7;
 
 /**
@@ -113,15 +127,17 @@ export const PERSPECTIVE_SCALE = 5.7;
  * and picking, hover, measurement and gizmo dragging all build their ray this way.
  *
  * @param depth  distance in front of the eye, i.e. fogClipOffset plus the slab offset
+ * @param eyeDistance  the distance the two projections are made to agree at
  */
 export const pickHalfExtents = (
     depth: number,
     zoom: number,
     aspect: number,
     perspective: boolean,
+    eyeDistance: number = 250,
 ): { halfWidth: number, halfHeight: number } => {
     const halfHeight = perspective
-        ? depth * Math.tan(PERSPECTIVE_FOV / 2) * zoom / PERSPECTIVE_SCALE
+        ? depth * Math.tan(PERSPECTIVE_FOV / 2) * zoom / perspectiveScale(eyeDistance)
         : ORTHO_HALF_HEIGHT * zoom;
     return { halfWidth: halfHeight * aspect, halfHeight };
 };
@@ -144,4 +160,107 @@ export const viewportAspect = (viewport: ArrayLike<number> | null | undefined): 
     // matrix finite for the frame or two before the layout settles.
     if (!(width > 0) || !(height > 0)) return 1.0;
     return width / height;
+};
+
+/**
+ * The clip plane w values after the eye has moved by `delta` towards or away from the scene.
+ *
+ * set_clip_range stores the planes as absolute distances from the eye, so moving the eye without
+ * moving them leaves the slab behind and slices the molecule open. Shifting both by the same amount
+ * keeps the slab where it was relative to the view centre, which is where the user put it.
+ */
+export const clipPlanesAfterEyeMove = (
+    clipPlane0W: number,
+    clipPlane1W: number,
+    delta: number,
+): { clipPlane0W: number; clipPlane1W: number } =>
+    ({ clipPlane0W: clipPlane0W - delta, clipPlane1W: clipPlane1W + delta });
+
+/**
+ * The clip slab expressed as offsets from the view centre, negative towards the viewer.
+ *
+ * slabNearFar returns distances from the eye, which is what a projection matrix wants. Anything
+ * positioned relative to what the user is looking at - the focal plane, the side-on widget's
+ * handles - wants them relative to the centre of the view instead. Both ends are the same
+ * subtraction; neither is negated.
+ *
+ * The negation is worth warning about, because the obvious reading of the code says otherwise.
+ * set_clip_range stores `gl_clipPlane0[3] = -fogClipOffset - clipStart`, which looks as though a
+ * larger clipStart pushes the near plane further away. It does not: MoorhenWebMG calls it as
+ * `set_clip_range(-clipStart, clipEnd)`, negating the near distance on the way in. So the stored w
+ * is `-fogClipOffset + clipStart`, slabNearFar's near is `fogClipOffset - clipStart`, and the near
+ * plane sits clipStart *in front of* the centre - which is what the side-on widget has always
+ * drawn and what execAutoClipFogByZoom means by setting clip and fog from one fieldDepthFront.
+ */
+export const slabOffsets = (near: number, far: number, fogClipOffset: number): {
+    nearOffset: number;
+    farOffset: number;
+} => ({ nearOffset: near - fogClipOffset, farOffset: far - fogClipOffset });
+
+/**
+ * Where a focal plane given in angstroms falls as a fraction of the slab, 0 at the near plane and
+ * 1 at the far one.
+ *
+ * This is the one conversion the depth blur needs, and it runs in a single direction: the stored
+ * setting is a distance, and the shaders want a depth-buffer value, so the renderer converts.
+ *
+ * The setting is a distance rather than a fraction because a fraction needs something to be a
+ * fraction of, and nothing on offer is stable. It was once a fraction of the side-on widget's
+ * plot, which moved whenever that widget's scale did. Making it a fraction of the slab instead
+ * only moved the problem: switching Clip off sets the slab to 1.5 * the scene span in each
+ * direction, so the whole useful range of the control collapsed into a few percent near the
+ * middle, and a value saved with Clip on meant something else entirely with Clip off.
+ *
+ * An angstrom is an angstrom under every one of those.
+ */
+export const focalPlaneFraction = (
+    offset: number,
+    nearOffset: number,
+    farOffset: number,
+): number => {
+    const span = farOffset - nearOffset;
+    // A slab of no depth has no meaningful fraction; the middle keeps the blur from flipping to
+    // all-or-nothing on a degenerate frame.
+    if (Math.abs(span) < 1e-9) return 0.5;
+    return Math.min(1.0, Math.max(0.0, (offset - nearOffset) / span));
+};
+
+/**
+ * The depth-buffer value a focal plane given in angstroms corresponds to.
+ *
+ * The blur shaders sample the depth buffer and compare against this, so it has to be in the
+ * buffer's own terms - and those differ between the two projections.
+ *
+ * Orthographic writes depth linearly across the slab, so the fraction of the distance is the
+ * answer. Perspective divides by distance, so equal steps in angstroms are not equal steps in the
+ * buffer: it spends most of its range close to the near plane. The exact relation for the matrix
+ * gl-matrix builds is
+ *
+ *     z = far * (d - near) / (d * (far - near))
+ *
+ * which is 0 at the near plane and 1 at the far one, as the linear form is, but bows between them.
+ * Sending the linear fraction under perspective put the plane a few angstroms nearer the viewer
+ * than asked - about 3 angstroms out of a 60 angstrom slab, worst around the middle where people
+ * actually put it.
+ *
+ * `offset` is measured from the view centre, which sits at fogClipOffset from the eye because the
+ * modelview matrix is translated by -fogClipOffset before anything is drawn.
+ */
+export const focalPlaneDepth = (
+    offset: number,
+    near: number,
+    far: number,
+    fogClipOffset: number,
+    perspective: boolean,
+): number => {
+    const span = far - near;
+    if (Math.abs(span) < 1e-9) return 0.5;
+
+    const distance = fogClipOffset + offset;
+    if (!perspective) return Math.min(1.0, Math.max(0.0, (distance - near) / span));
+
+    // Behind the eye, or on it, has no perspective depth. Everything drawn is in front of the
+    // near plane anyway, so the front of the buffer is the honest answer.
+    if (!(distance > 1e-6)) return 0.0;
+    return Math.min(1.0, Math.max(0.0, (far * (distance - near)) / (distance * span)));
 };
