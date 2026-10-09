@@ -12,8 +12,15 @@
  * tell you the work was wasted, which is why it survived so long.
  *
  * So these tests assert on the GL and canvas calls rather than on what the atlas looks like:
- * that an unchanged frame uploads nothing and rasterises nothing, that a changed one does both,
- * and - the part that keeps this honest - that the text is still right afterwards.
+ * what gets rasterised, what gets uploaded, and - the part that keeps this honest - that the text
+ * is still right afterwards.
+ *
+ * The contract has since moved on once more. Keying the rebuild on the content stopped the waste
+ * on an *unchanged* frame, but a frame where one label out of fifty differed still threw away all
+ * fifty rasterised strings and re-uploaded the atlas twice. Now the glyphs persist and only the
+ * pixels that were newly drawn are sent, with texSubImage2D. So several tests below changed from
+ * "rebuilds when X changes" to "rasterises only the part of X that is new", which is the whole
+ * point of the exercise.
  */
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
@@ -37,6 +44,11 @@ class FakeContext2D {
     }
     fillText(text: string) {
         this.fillTextCalls.push({ text, font: this.font, colour: this.fillStyle });
+    }
+    getImageDataCalls: { x: number; y: number; w: number; h: number }[] = [];
+    getImageData(x: number, y: number, w: number, h: number) {
+        this.getImageDataCalls.push({ x, y, w, h });
+        return { width: w, height: h, data: new Uint8ClampedArray(w * h * 4) };
     }
     clearRect() { this.clearRectCalls++; }
     fillRect() { this.fillRectCalls++; }
@@ -63,6 +75,7 @@ const makeGl = () => {
         bindTexture: jest.fn(),
         texParameteri: jest.fn(),
         texImage2D: jest.fn(),
+        texSubImage2D: jest.fn(),
         createBuffer: jest.fn(() => ({})),
         bindBuffer: jest.fn(),
         bufferData: jest.fn(),
@@ -100,16 +113,18 @@ describe("text atlas rebuilding", () => {
         gl.texImage2D.mockClear();
     });
 
-    it("uploads the atlas on the first frame, because there is nothing cached yet", () => {
-        expect(drawFrame(atlas, ["43 fps"])).toBe(true);
-        expect(gl.texImage2D).toHaveBeenCalled();
+    it("sends the new glyphs on the first frame, as a region rather than the whole atlas", () => {
+        expect(drawFrame(atlas, ["43 fps"])).toBe(false);
+        expect(gl.texSubImage2D).toHaveBeenCalledTimes(1);
+        expect(gl.texImage2D).not.toHaveBeenCalled();
     });
 
     it("uploads nothing on a second frame with the same text", () => {
         drawFrame(atlas, ["43 fps"]);
-        gl.texImage2D.mockClear();
+        gl.texSubImage2D.mockClear();
 
-        expect(drawFrame(atlas, ["43 fps"])).toBe(false);
+        drawFrame(atlas, ["43 fps"]);
+        expect(gl.texSubImage2D).not.toHaveBeenCalled();
         expect(gl.texImage2D).not.toHaveBeenCalled();
     });
 
@@ -128,43 +143,67 @@ describe("text atlas rebuilding", () => {
         expect(atlas.bigTextureTexOrigins[0]).toEqual([17, 0, 0]);
     });
 
-    it("rebuilds when the text changes", () => {
-        drawFrame(atlas, ["43 fps"]);
-        gl.texImage2D.mockClear();
+    it("rasterises only the string that changed, keeping the rest", () => {
+        // The point of the whole thing. One label differing used to discard every other glyph.
+        drawFrame(atlas, ["43 fps", "61 draws", "1ibm"]);
+        const before = atlas.contextBig.fillTextCalls.length;
+        gl.texSubImage2D.mockClear();
 
-        expect(drawFrame(atlas, ["44 fps"])).toBe(true);
-        expect(gl.texImage2D).toHaveBeenCalled();
-        expect(atlas.contextBig.fillTextCalls.map(c => c.text)).toContain("44 fps");
+        drawFrame(atlas, ["44 fps", "61 draws", "1ibm"]);
+        expect(atlas.contextBig.fillTextCalls.length).toBe(before + 1);
+        expect(atlas.contextBig.fillTextCalls.at(-1).text).toBe("44 fps");
+        expect(gl.texSubImage2D).toHaveBeenCalledTimes(1);
+        expect(gl.texImage2D).not.toHaveBeenCalled();
     });
 
-    it("rebuilds when a string is added", () => {
+    it("uploads a small region, not the whole atlas", () => {
         drawFrame(atlas, ["43 fps"]);
-        gl.texImage2D.mockClear();
-        expect(drawFrame(atlas, ["43 fps", "61 draws"])).toBe(true);
-        expect(gl.texImage2D).toHaveBeenCalled();
+        atlas.contextBig.getImageDataCalls.length = 0;
+
+        drawFrame(atlas, ["44 fps"]);
+        const region = atlas.contextBig.getImageDataCalls.at(-1);
+        expect(region.w * region.h).toBeLessThan(0.01 * atlas.canvasBig.width * atlas.canvasBig.height);
     });
 
-    it("rebuilds when a string is removed", () => {
+    it("rasterises only the new string when one is added", () => {
+        drawFrame(atlas, ["43 fps"]);
+        const before = atlas.contextBig.fillTextCalls.length;
+
         drawFrame(atlas, ["43 fps", "61 draws"]);
-        gl.texImage2D.mockClear();
-        expect(drawFrame(atlas, ["43 fps"])).toBe(true);
+        expect(atlas.contextBig.fillTextCalls.length).toBe(before + 1);
     });
 
-    it("rebuilds when the same strings arrive in a different order", () => {
-        // Order decides atlas layout, so the texture coordinates differ even though the set does
-        // not. Treating these as equal would leave every label showing its neighbour's glyphs.
+    it("does nothing at all when a string is removed", () => {
+        drawFrame(atlas, ["43 fps", "61 draws"]);
+        const before = atlas.contextBig.fillTextCalls.length;
+        gl.texSubImage2D.mockClear();
+
+        drawFrame(atlas, ["43 fps"]);
+        expect(atlas.contextBig.fillTextCalls.length).toBe(before);
+        expect(gl.texSubImage2D).not.toHaveBeenCalled();
+    });
+
+    it("no longer cares what order the strings arrive in", () => {
+        // This used to force a full rebuild, because the packing order decided the texture
+        // coordinates. Each string now keeps the slot it was first given, so the order is free.
         drawFrame(atlas, ["alpha", "beta"]);
-        gl.texImage2D.mockClear();
-        expect(drawFrame(atlas, ["beta", "alpha"])).toBe(true);
+        const before = atlas.contextBig.fillTextCalls.length;
+        gl.texSubImage2D.mockClear();
+
+        drawFrame(atlas, ["beta", "alpha"]);
+        expect(atlas.contextBig.fillTextCalls.length).toBe(before);
+        expect(gl.texSubImage2D).not.toHaveBeenCalled();
     });
 
-    it("rebuilds when only the font changes", () => {
-        atlas.beginFrame(atlas.contentKeyFor([{ text: "A", font: "20px helvetica" }]));
-        atlas.addBigTextureTextImage({ text: "A", font: "20px helvetica", x: 0, y: 0, z: 0 });
-        gl.texImage2D.mockClear();
+    it("treats the same text in a different font as a different glyph", () => {
+        drawFrame(atlas, ["A"]);
+        const before = atlas.contextBig.fillTextCalls.length;
 
-        const rebuilt = atlas.beginFrame(atlas.contentKeyFor([{ text: "A", font: "40px helvetica" }]));
-        expect(rebuilt).toBe(true);
+        atlas.beginFrame(atlas.contentKeyFor([{ text: "A", font: "40px helvetica" }]));
+        atlas.addBigTextureTextImage({ text: "A", font: "40px helvetica", x: 0, y: 0, z: 0 });
+        atlas.recreateBigTextureBuffers();
+
+        expect(atlas.contextBig.fillTextCalls.length).toBe(before + 1);
     });
 
     it("rebuilds when the text colour flips with the background", () => {
@@ -182,15 +221,32 @@ describe("text atlas rebuilding", () => {
         expect(two).not.toEqual(one);
     });
 
-    it("rebuilds after an unrelated caller clears the atlas", () => {
-        // clearBigTexture is public and called from elsewhere. If it left the key standing, the
-        // next frame would skip the upload and draw from an atlas that had just been wiped.
+    it("re-rasterises after an unrelated caller clears the atlas", () => {
+        // clearBigTexture is public and called from elsewhere. It wipes the canvas, the cache and
+        // the packing, so the next frame has to draw everything again - and would otherwise be
+        // drawing from an atlas that had just been emptied.
         drawFrame(atlas, ["43 fps"]);
-        atlas.clearBigTexture();
-        gl.texImage2D.mockClear();
+        const before = atlas.contextBig.fillTextCalls.length;
 
-        expect(drawFrame(atlas, ["43 fps"])).toBe(true);
-        expect(gl.texImage2D).toHaveBeenCalled();
+        atlas.clearBigTexture();
+        drawFrame(atlas, ["43 fps"]);
+
+        expect(atlas.contextBig.fillTextCalls.length).toBe(before + 1);
+        expect(gl.texSubImage2D).toHaveBeenCalled();
+    });
+
+    it("starts from an empty atlas on the frame after it fills up", () => {
+        // A string that cannot be placed is skipped for one frame rather than drawn with somebody
+        // else's coordinates; the wipe happens at the next frame boundary, where no label is
+        // already holding a slot that is about to move.
+        const small = new TextCanvasTexture(gl, true, true, {}, 64, 64, store);
+        small.beginFrame(small.contentKeyFor([{ text: "far too wide to fit", font: "20px helvetica" }]));
+        small.addBigTextureTextImage({ text: "far too wide to fit", font: "20px helvetica", x: 0, y: 0, z: 0 });
+
+        expect(small.atlasFull).toBe(true);
+        expect(small.bigTextureTexOrigins.length).toBe(0);
+        expect(small.beginFrame("anything")).toBe(true);
+        expect(small.atlasFull).toBe(false);
     });
 
     it("keeps the instance arrays from growing frame on frame", () => {
