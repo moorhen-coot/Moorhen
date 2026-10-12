@@ -361,9 +361,20 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             // layer, which is what used to happen, meant the opaque geometry - most of the
             // triangles in a molecule with a map contoured around it - was rendered once per
             // layer for a result that was identical each time.
+            // Hover buffers sit outside the peeling system in both directions. They are already
+            // excluded from turning peeling on - one hovered atom should not push a whole scene
+            // into depth peeling - and so they must also be excluded from being suppressed by it
+            // being off, or they fall through the gap between the two and are never drawn at all.
+            //
+            // That is what used to happen: in a fully opaque scene the golden balls were excluded
+            // from the mechanism that would have drawn them and from the thing that would have
+            // switched that mechanism on, so hover feedback was simply invisible. It only became
+            // apparent once edge detection worked, because the balls still reached the g-buffer
+            // (see below) and the edges of spheres nobody had drawn appeared in mid air.
             const isTransparent = displayBuffers[idx].transparent && !self.drawingGBuffers
                                   && !displayBuffers[idx].isHoverBuffer;
-            if (displayBuffers[idx].transparent && !self.drawingGBuffers) {
+            if (displayBuffers[idx].transparent && !displayBuffers[idx].isHoverBuffer
+                && !self.drawingGBuffers) {
                 if(!self.doPeel)
                     continue;
             }
