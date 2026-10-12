@@ -303,7 +303,7 @@ export interface CreateRepresentationParams {
      * Ignored in edit mode; a new ID is generated if omitted or already used on the molecule.
      */
     uniqueId?: string;
-    /** Whether the representation is drawn on screen (default true). Hidden reps are only drawn on first show(). */
+    /** Whether the representation is drawn on screen (default true). Hidden reps are still drawn, then hidden. */
     visible?: boolean;
     /** The visibility toggle shown in the UI, which can differ from `visible` when the whole molecule is hidden (default true). */
     interfaceVisible?: boolean;
@@ -606,8 +606,10 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         if (!molecule.defaultColourRules) {
             await molecule.fetchDefaultColourRules();
         }
-        // Hidden reps skip drawing; show() builds the buffers the first time it is called.
-        if (visible) await representation.draw();
+        // Always draw so the buffers exist (molecule-level code such as drawBiomolecule and
+        // toggleSymmetry assumes every representation has them), then hide if requested.
+        await representation.draw();
+        if (!visible) representation.hide();
         molecule.representations.push(representation);
         await molecule.drawSymmetry(false);
         molecule.drawBiomolecule(false);
