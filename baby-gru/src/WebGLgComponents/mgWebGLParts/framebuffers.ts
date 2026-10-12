@@ -261,7 +261,6 @@ export function recreateDepthPeelBuffers(self: MGWebGL, width, height, layers = 
                 && self.depthPeelFramebuffers[0]?.height === height;
             if(!matches && width>0 && height>0){
                 deleteDepthPeelBuffers(self);
-                console.log("Make",layers,"depth peel buffers of size",width,height)
                 for(let i=0;i<layers;i++){
                     self.depthPeelFramebuffers[i] = self.gl.createFramebuffer();
                     self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.depthPeelFramebuffers[i]);

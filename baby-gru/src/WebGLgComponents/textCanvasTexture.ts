@@ -1,3 +1,4 @@
+import { AtlasPacker } from "./atlasPacker";
 import { RootState } from '@/store/MoorhenReduxStore';
 import { webGL } from '../types/mgWebGL';
 import { Store } from '@reduxjs/toolkit';
@@ -19,9 +20,18 @@ export class TextCanvasTexture {
     bigTextureScreenOffsets: number[][];
     canvasBig: OffscreenCanvas;
     contextBig: OffscreenCanvasRenderingContext2D;
-    bigTextureCurrentBaseLine: number;
-    bigTextureCurrentWidth: number;
-    maxCurrentColumnWidth: number;
+    /** Where each rasterised string sits. Replaces the three cursor fields it used to carry. */
+    packer: AtlasPacker;
+
+    /**
+     * Set when a string could not be placed, so the next frame starts from an empty atlas.
+     *
+     * Deferred rather than compacted on the spot: strings already added this frame have had their
+     * texture coordinates pushed into the instance arrays, and rebuilding underneath them would
+     * leave every one of those labels pointing at a slot that had moved. One frame missing one
+     * label, on the rare occasion the atlas fills, is the cheaper mistake.
+     */
+    atlasFull = false;
     bigTextTex: WebGLTexture;
     bigTextureTexOffsetsBuffer: WebGLBuffer;
     bigTextureTextInstanceOriginBuffer: WebGLBuffer;
@@ -55,9 +65,7 @@ export class TextCanvasTexture {
         this.bigTextureScreenOffsets = []
         this.canvasBig = new OffscreenCanvas(width,Math.min(height,this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE)))
         this.contextBig = this.canvasBig.getContext("2d");
-        this.bigTextureCurrentBaseLine = 0;
-        this.bigTextureCurrentWidth = 0;
-        this.maxCurrentColumnWidth = 0;
+        this.packer = new AtlasPacker(this.canvasBig.width, this.canvasBig.height);
         this.contextBig.fillStyle = "#00000000";
         this.contextBig.fillRect(0, 0, this.canvasBig.width, this.canvasBig.height);
         this.bigTextTex = this.gl.createTexture();
@@ -65,6 +73,9 @@ export class TextCanvasTexture {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        // Give the texture its storage up front. Uploads are incremental now, and texSubImage2D
+        // has nothing to write into unless the full extent has been allocated at least once.
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.canvasBig);
         this.bigTextureTexOffsetsBuffer = this.gl.createBuffer();
         this.bigTextureTextInstanceOriginBuffer = this.gl.createBuffer();
         this.bigTextureTextInstanceSizeBuffer = this.gl.createBuffer();
@@ -146,7 +157,14 @@ export class TextCanvasTexture {
      * atlas is unchanged. The buffers below are a few hundred bytes and are rewritten every
      * frame regardless; the texture is 6 MB and is the whole reason this parameter exists.
      */
-    recreateBigTextureBuffers(uploadAtlas = true) {
+    /**
+     * Rebuild the per-instance buffers, and send whatever glyphs are new.
+     *
+     * @param forceFullUpload re-send the entire atlas rather than the dirty region. Only wanted
+     *                        when something outside has invalidated the texture; the default
+     *                        incremental path is correct for every ordinary frame.
+     */
+    recreateBigTextureBuffers(forceFullUpload = false) {
         const bigTextureTexCoords  = [0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
         const bigTexturePositions  = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0 ]
         const bigTextureIdxs = [0,1,2,0,2,3]
@@ -176,17 +194,57 @@ export class TextCanvasTexture {
             this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(bigTextureIdxs), this.gl.STATIC_DRAW);
         }
 
-        if (uploadAtlas) {
+        if (forceFullUpload) {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
             this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.canvasBig);
+            this.packer.clearDirty();
+        } else {
+            this.uploadDirtyRegion();
         }
 
     }
 
-    addImageToBigTexture(t : string, textColour : string, font : string, imgData: ImageData) : number[] {
+    /**
+     * Send only the part of the atlas that has been drawn into since the last upload.
+     *
+     * This is the point of the whole exercise. The atlas used to go up in full whenever its
+     * content changed - 8 MB for a 1024x2048 one, twice over, because clearBigTexture uploaded the
+     * blank canvas first - and it changed whenever any single label did. A new label is a few
+     * hundred pixels square.
+     *
+     * getImageData rather than handing texSubImage2D the canvas directly: the form that takes a
+     * canvas uploads the whole of it at an offset, with no way to crop the source, so the region
+     * has to be read out first. For a small rectangle that read is cheap, and it is the only way
+     * to upload less than everything.
+     */
+    private uploadDirtyRegion() {
+        const region = this.packer.dirtyRegion;
+        if (region === null) return;
+
+        // Text metrics are fractional, so the region is too. Round outwards - getImageData wants
+        // integers, and rounding inwards would shave a column of pixels off the glyph that was
+        // just drawn.
+        const x = Math.max(0, Math.floor(region.x));
+        const y = Math.max(0, Math.floor(region.y));
+        const right = Math.min(this.canvasBig.width, Math.ceil(region.x + region.w));
+        const bottom = Math.min(this.canvasBig.height, Math.ceil(region.y + region.h));
+        const w = right - x;
+        const h = bottom - y;
+        if (w <= 0 || h <= 0) {
+            this.packer.clearDirty();
+            return;
+        }
+
+        const imageData = this.contextBig.getImageData(x, y, w, h);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
+        this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, x, y, this.gl.RGBA, this.gl.UNSIGNED_BYTE, imageData);
+        this.packer.clearDirty();
+    }
+
+    addImageToBigTexture(t : string, textColour : string, font : string, imgData: ImageData) : number[] | null {
         this.contextBig.textBaseline = "alphabetic";
         this.contextBig.font = font;
 
@@ -208,28 +266,21 @@ export class TextCanvasTexture {
             return this.textureCache[textColour][font.toLowerCase()][t];
         }
 
-        if(this.bigTextureCurrentBaseLine+actualHeight>this.canvasBig.height){
-            this.bigTextureCurrentBaseLine = 0;
-            this.bigTextureCurrentWidth += this.maxCurrentColumnWidth;
-            this.maxCurrentColumnWidth = 0;
+        // topInset 0: the image path never had the one-pixel inset the text path uses.
+        const placed = this.packer.place(width, actualHeight, actualBoundingBoxRight, 0);
+        if(placed === null){
+            this.atlasFull = true;
+            return null;
         }
-        const x1 = this.bigTextureCurrentWidth / this.canvasBig.width;
-        const y1 = (this.bigTextureCurrentBaseLine)/ this.canvasBig.height;
-        this.bigTextureCurrentBaseLine += actualHeight;
-        const x2 = x1 + actualBoundingBoxRight / this.canvasBig.width;
-        const y2 = this.bigTextureCurrentBaseLine / this.canvasBig.height;
 
         this.contextBig.fillStyle = textColour;
-        this.contextBig.putImageData(imgData, this.bigTextureCurrentWidth, this.bigTextureCurrentBaseLine-actualHeight);
+        this.contextBig.putImageData(imgData, placed.x, placed.baseline-actualHeight);
 
-        if(width>this.maxCurrentColumnWidth){
-            this.maxCurrentColumnWidth = width;
-        }
-        this.textureCache[textColour][font.toLowerCase()][t] = [x1,y1,x2,y2];
-        return [x1,y1,x2,y2]
+        this.textureCache[textColour][font.toLowerCase()][t] = placed.texCoords;
+        return placed.texCoords
     }
 
-    addTextToBigTexture(t : string, textColour : string, font : string) : number[] {
+    addTextToBigTexture(t : string, textColour : string, font : string) : number[] | null {
 
         this.contextBig.textBaseline = "alphabetic";
         this.contextBig.font = font;
@@ -272,25 +323,17 @@ export class TextCanvasTexture {
             width = textMetric.width;
         }
 
-        if(this.bigTextureCurrentBaseLine+actualHeight>this.canvasBig.height){
-            this.bigTextureCurrentBaseLine = 0;
-            this.bigTextureCurrentWidth += this.maxCurrentColumnWidth;
-            this.maxCurrentColumnWidth = 0;
+        const placed = this.packer.place(width, actualHeight, actualBoundingBoxRight, 1);
+        if(placed === null){
+            this.atlasFull = true;
+            return null;
         }
-        const x1 = this.bigTextureCurrentWidth / this.canvasBig.width;
-        const y1 = (this.bigTextureCurrentBaseLine + 1)/ this.canvasBig.height;
-        this.bigTextureCurrentBaseLine += actualHeight;
-        const x2 = x1 + actualBoundingBoxRight / this.canvasBig.width;
-        const y2 = this.bigTextureCurrentBaseLine / this.canvasBig.height;
 
         this.contextBig.fillStyle = textColour;
-        this.contextBig.fillText(t, this.bigTextureCurrentWidth, this.bigTextureCurrentBaseLine-actualBoundingBoxDescent, width);
+        this.contextBig.fillText(t, placed.x, placed.baseline-actualBoundingBoxDescent, width);
 
-        if(width>this.maxCurrentColumnWidth){
-            this.maxCurrentColumnWidth = width;
-        }
-        this.textureCache[textColour][font.toLowerCase()][t] = [x1,y1,x2,y2];
-        return [x1,y1,x2,y2]
+        this.textureCache[textColour][font.toLowerCase()][t] = placed.texCoords;
+        return placed.texCoords
     }
 
     clearBigTexture() {
@@ -299,9 +342,10 @@ export class TextCanvasTexture {
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.canvasBig);
         this.textureCache = {};
-        this.bigTextureCurrentBaseLine = 0;
-        this.bigTextureCurrentWidth = 0;
-        this.maxCurrentColumnWidth = 0;
+        this.packer.reset();
+        // The whole atlas has just gone up blank, so there is nothing outstanding to upload.
+        this.packer.clearDirty();
+        this.atlasFull = false;
         // The atlas no longer holds what any remembered key described, so the next frame must
         // rebuild. This matters because clearBigTexture is public and called from elsewhere:
         // without it, an outside clear would be followed by a frame that skipped the upload and
@@ -351,20 +395,28 @@ export class TextCanvasTexture {
     }
 
     /**
-     * Begin a frame's worth of text, rebuilding the atlas only if the content has changed.
+     * Begin a frame's worth of text.
      *
-     * Returns whether a rebuild happened, which the caller passes to recreateBigTextureBuffers
-     * so that the texture upload is skipped too. Returning it rather than storing a flag keeps
-     * the two halves of the decision impossible to get out of step.
+     * The rasterised glyphs are kept. Only the per-instance arrays are dropped, because where each
+     * label sits changes as the view moves while its pixels do not - and a string already in the
+     * atlas costs a dictionary lookup rather than a re-rasterise and a multi-megabyte upload.
+     *
+     * This used to wipe the atlas whenever the content differed at all, so one label changing out
+     * of fifty threw away the other forty-nine. The content key is still recorded, but it no
+     * longer decides anything: what to upload is now answered by which pixels were drawn into.
+     *
+     * The one case that still wipes is an atlas that filled up. Returns whether that happened, so
+     * the caller can ask for a full upload rather than an incremental one.
      */
     beginFrame(contentKey: string): boolean {
-        if (this.contentKey !== null && contentKey === this.contentKey) {
-            this.resetInstances();
-            return false;
+        if (this.atlasFull) {
+            this.clearBigTexture();
+            this.contentKey = contentKey;
+            return true;
         }
-        this.clearBigTexture();
+        this.resetInstances();
         this.contentKey = contentKey;
-        return true;
+        return false;
     }
 
     removeBigTextureTextImages(textObjects,uuid=null) {
@@ -432,6 +484,11 @@ export class TextCanvasTexture {
         } else {
             t = this.addTextToBigTexture(textObject.text,colour,textObject.font);
         }
+
+        // No room left. The atlas is wiped at the start of the next frame, so this label is absent
+        // for one frame rather than drawn with somebody else's texture coordinates.
+        if(t === null) return;
+
         const s = [48 * (t[2]-t[0]) * (this.canvasBig.width / this.canvasBig.height), 48 * (t[3]-t[1]), 1.0];
         this.bigTextureTexOrigins.push(o);
         this.bigTextureTexOffsets.push([t[0], t[2]-t[0], t[1], t[3]-t[1]]);

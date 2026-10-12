@@ -107,8 +107,16 @@ export const initialState: {
     edgeDetectNormalThreshold: 0.5,
     edgeDetectDepthScale: 2.0,
     edgeDetectNormalScale: 0.0,
-    ssaoRadius: 2.0,
-    ssaoBias: 1.0,
+    // Judged by eye on a molecular surface, then checked against a ribosome gaussian surface.
+    // The radius is in angstroms now that the occlusion test works in eye space, so it means
+    // something physical: how far away a neighbouring surface still shades this one. At 2.0 it
+    // only caught the gaps between adjacent atoms, which reads as texture rather than depth.
+    //
+    // Large structures want more than this - the ribosome looks best nearer 10 angstroms and
+    // strength 3, because its cavities are correspondingly bigger. A single default cannot suit
+    // both, and these are the values that look right on the common case.
+    ssaoRadius: 5.0,
+    ssaoBias: 1.3,
     resetClippingFogging: true,
     clipCap: true,
     doPerspectiveProjection: false,
