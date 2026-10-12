@@ -8,10 +8,15 @@ import "./VideoRecording.css";
 
 export const VideoRecording = () => {
     const [time, setTime] = useState<string>("0:00:00");
-    const [name, setName] = useState<string>("moorhen_video");
 
     const startDate = useRef<number | null>(null);
     const videoRecorderRef = useMoorhenInstance().getVideoRecorderRef();
+
+    // Seeded from the recorder rather than repeated here. The two used to disagree - the box said
+    // "moorhen_video" while the recorder's own default was "moorhen", and setVideoName only ran if
+    // the user edited the field - so a recording nobody renamed arrived under a different name
+    // from the one on screen.
+    const [name, setName] = useState<string>(() => videoRecorderRef.current?.getVideoName() ?? "moorhen_video");
     const dispatch = useDispatch();
     const [isRecording, setIsRecording] = useState<boolean>(false);
 
