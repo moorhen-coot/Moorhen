@@ -54,7 +54,6 @@ export const MoorhenNOERestraints = () => {
                 }
                 }
 
-                console.log(allConvertedData)
                 const newVectors = []
                 allConvertedData.forEach(row => {
                     
@@ -71,8 +70,6 @@ export const MoorhenNOERestraints = () => {
                     newVectors.push(newNOEVector)
                 })
 
-                console.log(newVectors)
-                
             // }
                 }
             };
