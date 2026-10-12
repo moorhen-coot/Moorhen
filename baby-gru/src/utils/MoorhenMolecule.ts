@@ -1315,13 +1315,23 @@ export class MoorhenMolecule {
      * Draw the molecule with a particular style. If the molecule atoms are marked as "dirty" then fetch new atoms.
      * @param {string} style - The style that will be drawn
      */
+    private findDefaultRepresentation(style: moorhen.RepresentationStyles): moorhen.MoleculeRepresentation | undefined {
+        // Identify this molecule's own representation by style and the isCustom flag,
+        // not by cid. Callers used to compare against a hardcoded whole-molecule cid
+        // literal, but the representation builder derives the cid it actually stores
+        // from the style and its options -- a whole-molecule CBs representation is
+        // stored with a different cid again when waters are excluded. The literal
+        // therefore never matched, so every redraw built an additional representation
+        // and left the previous one's buffers in the scene.
+        return this.representations.find(item => item.style === style && !item.isCustom);
+    }
+
     async fetchIfDirtyAndDraw(style: moorhen.RepresentationStyles): Promise<void> {
         if (this.atomsDirty) {
             await this.updateAtoms();
         }
 
-        const cid = "/*/*/*/*:*";
-        const representation = this.representations.find(item => item.style === style && item.cid === cid);
+        const representation = this.findDefaultRepresentation(style);
         if (representation) {
             await this.redrawRepresentation(representation.uniqueId);
         } else {
@@ -1568,8 +1578,9 @@ export class MoorhenMolecule {
         try {
             if (style === "ligands") {
                 representation = this.representations.find(item => item.style === style);
+            } else if (!cid) {
+                representation = this.findDefaultRepresentation(style);
             } else {
-                if (!cid) cid = "/*/*/*/*:*";
                 representation = this.representations.find(item => item.style === style && item.cid === cid);
             }
             if (representation) {
@@ -1599,8 +1610,9 @@ export class MoorhenMolecule {
         try {
             if (style === "ligands") {
                 representation = this.representations.find(item => item.style === style);
+            } else if (!cid) {
+                representation = this.findDefaultRepresentation(style);
             } else {
-                if (!cid) cid = "/*/*/*/*:*";
                 representation = this.representations.find(item => item.style === style && item.cid === cid);
             }
             if (representation) {
