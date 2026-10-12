@@ -10,6 +10,7 @@ import { MenuFromItems } from "./MenuFromItems";
 import { MoorhenSearchBar } from "./SearchBar";
 import "./main-menu.css";
 import { useMenuHook } from "./menuHook";
+import { UserSceneSelector } from "./SceneSelector/UserSceneSelector";
 
 export const MoorhenMainMenu = memo(() => {
     const isOpen = useSelector((state: RootState) => state.globalUI.isMainMenuOpen);
@@ -101,7 +102,6 @@ export const MoorhenMainMenu = memo(() => {
             pointer-events: auto;            
             */}
 
-            <MoorhenSearchBar />
             <div className="moorhen__main-menu">
                 <button className="moorhen__main-menu-toggle" onClick={handleMainMenuToggle}>
                     {isOpen ? (
@@ -118,6 +118,10 @@ export const MoorhenMainMenu = memo(() => {
                         <MoorhenClickAwayListener onClickAway={event => handleClickAway(event)}>{subMenu}</MoorhenClickAwayListener>
                     ) : null}
                 </div>
+            </div>
+            <div className="moorhen__top-horizontal-container">
+                <MoorhenSearchBar />
+                <UserSceneSelector />
             </div>
         </div>
     );

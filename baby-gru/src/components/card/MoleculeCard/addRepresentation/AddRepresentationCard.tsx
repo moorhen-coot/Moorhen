@@ -33,8 +33,14 @@ export const AddCustomRepresentationCard = memo(
         onApply?: () => void;
     }) {
         const store = useStore<RootState>();
-        const existingParams = props.representation ? extractRepresentationParams(props.representation) : undefined;
-        const ncsColourRuleRef = useRef<null | ColourRule>(existingParams?.ncsColourRule ?? null);
+        // Only used for initial values, so snapshot once rather than on every render
+        const [existingParams] = useState(() => (props.representation ? extractRepresentationParams(props.representation) : undefined));
+        const [initialNcsColourRule] = useState(() =>
+            existingParams?.ncsColourRule
+                ? ColourRule.initFromDataObject(existingParams.ncsColourRule, props.molecule.commandCentre, props.molecule)
+                : null
+        );
+        const ncsColourRuleRef = useRef<null | ColourRule>(initialNcsColourRule);
 
         const [ruleType, setRuleType] = useState<ResidueSelectionRuleType>(
             existingParams?.ruleType ?? "molecule"

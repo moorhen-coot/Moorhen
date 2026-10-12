@@ -13,6 +13,16 @@
     left: 0.5rem;
 }
 
+.moorhen__top-horizontal-container {
+    position: absolute;
+    top: 1rem;
+    left: 8rem;
+    display: flex;
+    flex-direction: row;
+    direction:ltr;
+    gap: 1rem;
+}
+
 .moorhen__main-menu {
     position: absolute;
     z-index: var(--z-menu);

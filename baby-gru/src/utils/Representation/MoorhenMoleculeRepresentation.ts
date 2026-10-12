@@ -7,8 +7,8 @@ import { libcootApi } from "../../types/libcoot";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
-import { createRepresentation } from "./RepresentationBuilder";
-import type { BuildRepresentationParams, CreateRepresentationParams } from "./RepresentationBuilder";
+import { createRepresentation, extractRepresentationParams } from "./RepresentationBuilder";
+import type { BuildRepresentationParams, CreateRepresentationParams, RepresentationBackup } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
@@ -249,6 +249,15 @@ export class MoleculeRepresentation {
     public edit(params: Omit<CreateRepresentationParams, "molecule" | "existingRepresentation">)  {createRepresentation({...params, molecule: this.parentMolecule, existingRepresentation: this })}
 
     /**
+     * Snapshot everything needed to rebuild this representation as plain, JSON-serialisable data
+     * (no molecule or colour rule references). Pass it to MoleculeRepresentation.create() with a
+     * molecule, or to the instance API's representation.create() with the molecule uid.
+     */
+    public backup(): RepresentationBackup {
+        return extractRepresentationParams(this);
+    }
+
+    /**
      * A method to set M2T style parameters for this molecule representation
      * @param {m2tParameters} m2tParams - The new M2T parameters
      */
@@ -322,6 +331,19 @@ export class MoleculeRepresentation {
             this.bondOptions = bondOptions;
         } else {
             this.useDefaultBondOptions = true;
+        }
+    }
+
+    /**
+     * A method to set gaussian surface settings for this molecule representation
+     * @param {gaussianSurfSettings} settings - The new gaussian surface settings
+     */
+    setGaussianSurfaceSettings(settings: gaussianSurfSettings) {
+        if (settings) {
+            this.useDefaultGaussianSurfaceSettings = false;
+            this.gaussianSurfaceSettings = settings;
+        } else {
+            this.useDefaultGaussianSurfaceSettings = true;
         }
     }
 

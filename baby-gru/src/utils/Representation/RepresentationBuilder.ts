@@ -1,8 +1,8 @@
 import { moorhen } from "@/types/moorhen";
 import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
 import type { MoorhenMolecule } from "../MoorhenMolecule";
-import { getMultiColourRuleArgs, parseCid } from "../utils";
-import { MoleculeRepresentation, RepresentationStyles, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
+import { getMultiColourRuleArgs } from "../utils";
+import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
 
 /** The supported ways a representation selection can be built. */
 export type RepresentationRuleType = "ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood";
@@ -283,21 +283,39 @@ export interface CreateRepresentationParams {
     colourMode?: string;
     colour?: string;
     applyColourToNonCarbonAtoms?: boolean;
-    ncsColourRule?: ColourRule | null;
+    /** A ColourRule, or its serialised form (ColourRule.objectify()) */
+    ncsColourRule?: ColourRule | moorhen.ColourRuleObject | null;
+    /**
+     * Exact colour rules to apply, in serialised form (e.g. from MoleculeRepresentation.backup()). When
+     * provided, these are used instead of building a rule from colourMode/colour; null means default colours.
+     */
+    colourRules?: moorhen.ColourRuleObject[] | null;
     /** Representation-related options */
     isCustom?: boolean;
     bondOptions?: moorhen.cootBondOptions | null;
     m2tParams?: m2tParameters | null;
     residueEnvironmentOptions?: residueEnvironmentOptions | null;
+    gaussianSurfaceSettings?: gaussianSurfSettings | null;
     nonCustomOpacity?: number | null;
     hbondedTo?: boolean;
+    /**
+     * Unique ID for the new representation (e.g. to restore one from MoleculeRepresentation.backup()).
+     * Ignored in edit mode; a new ID is generated if omitted or already used on the molecule.
+     */
+    uniqueId?: string;
+    /** Whether the representation is drawn on screen (default true). Hidden reps are only drawn on first show(). */
+    visible?: boolean;
+    /** The visibility toggle shown in the UI, which can differ from `visible` when the whole molecule is hidden (default true). */
+    interfaceVisible?: boolean;
 }
 
 /**
- * The parameters of a MoleculeRepresentation that can be extracted and reused
- * (e.g. to pre-populate the edit dialog, or as fallback defaults in edit mode).
+ * A plain-data (JSON-serialisable) snapshot of everything needed to rebuild a representation
+ * (see extractRepresentationParams / MoleculeRepresentation.backup()). Holds no object references:
+ * pass it with a molecule (or a molecule uid via the instance API) to create(), or use it to
+ * pre-populate the edit dialog.
  */
-export interface ExtractedRepresentationParams {
+export interface RepresentationBackup {
     representationStyle: RepresentationStyles;
     ruleType: RepresentationRuleType;
     cid: string;
@@ -315,11 +333,17 @@ export interface ExtractedRepresentationParams {
     colourMode: string;
     colour: string;
     applyColourToNonCarbonAtoms: boolean;
-    ncsColourRule: ColourRule | null;
+    ncsColourRule: moorhen.ColourRuleObject | null;
+    colourRules: moorhen.ColourRuleObject[] | null;
     bondOptions: moorhen.cootBondOptions | null;
     m2tParams: m2tParameters | null;
     residueEnvironmentOptions: residueEnvironmentOptions | null;
+    gaussianSurfaceSettings: gaussianSurfSettings | null;
     nonCustomOpacity: number | null;
+    uniqueId: string;
+    isCustom: boolean;
+    visible: boolean;
+    interfaceVisible: boolean;
 }
 
 /**
@@ -340,42 +364,68 @@ export interface BuildRepresentationParams {
 }
 
 /**
- * Read the parameters off an existing representation so they can be reused in
- * edit mode (pre-populating the edit dialog, or as defaults when some creation
- * options are omitted). Values stored in `representation.buildParams` (the
- * snapshot taken at build time) are preferred for fields that would otherwise
- * be lossy to reconstruct; all other fields are read from live state.
+ * Build-time snapshot for a representation created directly from a CID selection
+ * (e.g. MoorhenMolecule.addRepresentation), derived from its current state.
  */
-export function extractRepresentationParams(representation: MoleculeRepresentation): ExtractedRepresentationParams {
-    const colourRule = representation.colourRules?.[0] ?? null;
-    const snapshot = representation.buildParams;
-    const colourMode = snapshot?.colourMode ?? (colourRule?.isMultiColourRule ? (colourRule?.ruleType ?? "custom") : "custom");
-    const parsedCid = snapshot ? null : parseCid(representation.cid);
+export function cidBuildParams(representation: MoleculeRepresentation): BuildRepresentationParams {
+    const colourRule = representation.useDefaultColourRules ? null : (representation.colourRules?.[0] ?? null);
+    const colourMode = colourRule?.isMultiColourRule ? colourRule.ruleType : "custom";
+    return {
+        // A whole-molecule CID is the default selection, so keep it as a "molecule" rule
+        ruleType: representation.cid === "/*/*/*/*:*" ? "molecule" : "cid",
+        colourMode,
+        ncsColourRule: colourMode === "mol-symm" ? colourRule : null,
+        notHOH: representation.cid?.includes("(!HOH)") ?? false,
+        notH: representation.cid?.includes("[!H]") ?? false,
+        sideChainOnly: representation.cid?.includes("!O,C,N") ?? false,
+        chainName: null,
+        sequenceResidueRange: null,
+    };
+}
+
+/**
+ * Snapshot everything needed to rebuild a representation, as plain JSON-serialisable data
+ * (option objects are deep-copied and colour rules serialised). Used to pre-populate the edit
+ * dialog, as fallback defaults in edit mode, and as a backup that can be passed back to create().
+ * Values stored in `representation.buildParams` (the snapshot taken at build time) are used for
+ * fields that would otherwise be lossy to reconstruct; all other fields are read from live state.
+ */
+export function extractRepresentationParams(representation: MoleculeRepresentation): RepresentationBackup {
+    const colourRule = representation.useDefaultColourRules ? null : (representation.colourRules?.[0] ?? null);
+    // Reps built via createRepresentation/addRepresentation always have buildParams; anything
+    // else (e.g. drawn straight from meshes) is treated as built from its exact CID selection.
+    const snapshot = representation.buildParams ?? cidBuildParams(representation);
+    const copy = <T>(obj: T): T => (obj ? structuredClone(obj) : obj);
 
     return {
         representationStyle: representation.style,
-        ruleType:
-            snapshot?.ruleType ?? (representation.restrictToNeighbours ? "neighbourhood" : representation.interfaceOption.selectionType),
+        ruleType: snapshot.ruleType,
         cid: representation.cid,
-        chainName: snapshot?.chainName ?? (parsedCid && parsedCid.chain !== "*" ? parsedCid.chain : null),
-        sequenceResidueRange: snapshot?.sequenceResidueRange ?? parsedCid?.residueRange ?? null,
-        notHOH: snapshot?.notHOH ?? representation.cid.includes("(!HOH)"),
-        notH: snapshot?.notH ?? representation.cid.includes("[!H]"),
-        sideChainOnly: snapshot?.sideChainOnly ?? representation.cid.includes("!O,C,N"),
+        chainName: snapshot.chainName,
+        sequenceResidueRange: copy(snapshot.sequenceResidueRange),
+        notHOH: snapshot.notHOH,
+        notH: snapshot.notH,
+        sideChainOnly: snapshot.sideChainOnly,
         restrictToNeighbours: representation.restrictToNeighbours,
         excludeNeighbours: representation.excludeNeighbours,
         neighboursCid: representation.neighboursCid,
         neighboursDistance: representation.neighboursDistance,
         hbondedTo: representation.hbondedTo,
         useDefaultColours: representation.useDefaultColourRules,
-        colourMode,
-        colour: !representation.useDefaultColourRules && colourRule && !colourRule.isMultiColourRule ? colourRule.color : "",
-        applyColourToNonCarbonAtoms: !representation.useDefaultColourRules && colourRule ? colourRule.applyColourToNonCarbonAtoms : false,
-        ncsColourRule: colourMode === "mol-symm" ? (snapshot?.ncsColourRule ?? colourRule) : null,
-        bondOptions: representation.useDefaultBondOptions ? null : representation.bondOptions,
-        m2tParams: representation.useDefaultM2tParams ? null : representation.m2tParams,
-        residueEnvironmentOptions: representation.useDefaultResidueEnvironmentOptions ? null : representation.residueEnvironmentOptions,
+        colourMode: snapshot.colourMode,
+        colour: colourRule && !colourRule.isMultiColourRule ? colourRule.color : "",
+        applyColourToNonCarbonAtoms: colourRule ? colourRule.applyColourToNonCarbonAtoms : false,
+        ncsColourRule: snapshot.colourMode === "mol-symm" ? ((snapshot.ncsColourRule ?? colourRule)?.objectify() ?? null) : null,
+        colourRules: representation.useDefaultColourRules ? null : representation.colourRules.map(rule => rule.objectify()),
+        bondOptions: representation.useDefaultBondOptions ? null : copy(representation.bondOptions),
+        m2tParams: representation.useDefaultM2tParams ? null : copy(representation.m2tParams),
+        residueEnvironmentOptions: representation.useDefaultResidueEnvironmentOptions ? null : copy(representation.residueEnvironmentOptions),
+        gaussianSurfaceSettings: representation.useDefaultGaussianSurfaceSettings ? null : copy(representation.gaussianSurfaceSettings),
         nonCustomOpacity: representation.nonCustomOpacity,
+        uniqueId: representation.uniqueId,
+        isCustom: representation.isCustom,
+        visible: representation.visible,
+        interfaceVisible: representation.interfaceOption.visible ?? representation.visible,
     };
 }
 
@@ -422,7 +472,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         colour = existingParams?.colour ?? "",
         useDefaultColours = colour === "" ? (existingParams?.useDefaultColours ?? true) : false,
         applyColourToNonCarbonAtoms = existingParams?.applyColourToNonCarbonAtoms ?? false,
-        ncsColourRule = existingParams?.ncsColourRule ?? null,
+        ncsColourRule: ncsColourRuleInput = existingParams?.ncsColourRule ?? null,
         isCustom = true,
         bondOptions = existingParams?.bondOptions ?? undefined,
         m2tParams = existingParams?.m2tParams ?? undefined,
@@ -431,6 +481,13 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         hbondedTo = existingParams?.hbondedTo ?? false,
         existingRepresentation,
     } = params;
+    // ncsColourRule may come in serialised form (e.g. from a backup)
+    let ncsColourRule: ColourRule | null = null;
+    if (ncsColourRuleInput instanceof ColourRule) {
+        ncsColourRule = ncsColourRuleInput;
+    } else if (ncsColourRuleInput) {
+        ncsColourRule = ColourRule.initFromDataObject(ncsColourRuleInput, molecule.commandCentre, molecule);
+    }
 
     // Explicitly-provided CID-related params take precedence; otherwise fall back
     // to the existing selection type in edit mode (or "molecule" for new reps).
@@ -471,7 +528,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         return null;
     }
 
-    const colourRule = await buildColourRule({
+    const colourRule = params.colourRules !== undefined ? undefined : await buildColourRule({
         useDefaultColours,
         colourMode,
         ruleType: ruleType !== "neighbourhood" ? ruleType : "molecule",
@@ -490,6 +547,13 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     const representation = existingRepresentation ?? new MoleculeRepresentation(representationStyle, cidSelection, molecule.commandCentre);
 
     if (!isEdit) {
+        if (params.uniqueId) {
+            if (molecule.representations.some(rep => rep.uniqueId === params.uniqueId)) {
+                console.warn(`Representation uniqueId ${params.uniqueId} is already in use, a new one will be generated`);
+            } else {
+                representation.uniqueId = params.uniqueId;
+            }
+        }
         representation.setParentMolecule(molecule);
         representation.isCustom = isCustom;
     } else {
@@ -504,13 +568,21 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     representation.neighboursCid = neighboursCid;
     representation.hbondedTo = hbondedTo;
     representation.hbondedToCid = neighboursCid;
-    representation.colourRules = colourRule ? [colourRule] : null;
+    representation.colourRules =
+        params.colourRules !== undefined
+            ? params.colourRules?.map(data => ColourRule.initFromDataObject(data, molecule.commandCentre, molecule))
+            : colourRule
+              ? [colourRule]
+              : null;
+    if (params.gaussianSurfaceSettings !== undefined) {
+        representation.setGaussianSurfaceSettings(params.gaussianSurfaceSettings);
+    }
     representation.setBondOptions(bondOptions);
     representation.setM2tParams(m2tParams);
     representation.setResidueEnvOptions(residueEnvironmentOptions);
     representation.setNonCustomOpacity(nonCustomOpacity);
     representation.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
-    representation.interfaceOption.visible = true;
+    representation.interfaceOption.visible = params.interfaceVisible ?? true;
     // Snapshot the params that would be lossy to reconstruct later, so edit mode
     // can reuse the exact original values (see extractRepresentationParams).
     representation.buildParams = {
@@ -524,15 +596,18 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         sequenceResidueRange,
     };
 
+    const visible = params.visible ?? true;
     if (isEdit) {
         await representation.redraw();
+        if (!visible) representation.hide();
     } else {
         // Commit the representation to the molecule (previously done by the instance
         // path of MoorhenMolecule.addRepresentation, which is now deprecated).
         if (!molecule.defaultColourRules) {
             await molecule.fetchDefaultColourRules();
         }
-        await representation.draw();
+        // Hidden reps skip drawing; show() builds the buffers the first time it is called.
+        if (visible) await representation.draw();
         molecule.representations.push(representation);
         await molecule.drawSymmetry(false);
         molecule.drawBiomolecule(false);

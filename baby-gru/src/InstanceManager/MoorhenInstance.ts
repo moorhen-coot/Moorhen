@@ -62,6 +62,9 @@ export type moleculeChangeAction = "new" | "add" | "delete" | "modify" | "refine
  *
  * @extends StoreExtension
  */
+
+export const DEFAULT_REPRESENTATION_STYLE = "ribbons-and-ligands";
+
 export class MoorhenInstance extends StoreExtension {
     private _defaultStyle:
         | "CAs"
@@ -69,7 +72,7 @@ export class MoorhenInstance extends StoreExtension {
         | "CRs"
         | "ribbons-and-ligands"
         | "ribbons-and-side-chains"
-        | "site-and-ribbons" = "ribbons-and-ligands";
+        | "site-and-ribbons" = DEFAULT_REPRESENTATION_STYLE;
     private _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
     private _commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
@@ -749,6 +752,17 @@ export class MoorhenInstance extends StoreExtension {
                 } else {
                     return null;
                 }
+            },
+
+            getList(moleculeUid: string): MoleculeRepresentation[] {
+                const molecule = moorhenInstance.getMolecule(moleculeUid);
+                if (!molecule) {
+                    return [];
+                }
+                const representations = moorhenInstance.store.getState().molecules.customRepresentations.filter(
+                    (rep: MoleculeRepresentation) => rep.parentMolecule.uniqueId === molecule.uniqueId)
+                return representations;
+        
             },
 
             /**

@@ -15,6 +15,7 @@ import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule, ColourRuleType } from "./MoorhenColourRule";
 import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
+import { cidBuildParams } from "./Representation/RepresentationBuilder";
 import {
     centreOnGemmiAtoms,
     doDownload,
@@ -1540,6 +1541,7 @@ export class MoorhenMolecule {
         representation.hbondedTo = hbondedTo;
         representation.neighboursDistance = neighboursDistance;
         representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
+        representation.buildParams = cidBuildParams(representation);
 
         await representation.draw();
         this.representations.push(representation);
