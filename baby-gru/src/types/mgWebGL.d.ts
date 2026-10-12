@@ -377,6 +377,15 @@ export namespace webGL {
         //render off-screen at a size that does not depend on the window
         drawScene(): void;
         myQuat: quat4;
+        zoom: number;
+        /**
+         * Set while a camera animation is in flight. MoorhenMovieSpike also sets it while driving
+         * the camera itself, because setOriginOrientationAndZoomAnimated declines to start when it
+         * is - which is what stops the reconciling effect in MoorhenWebMG fighting a movie.
+         */
+        animating: boolean;
+        set_clip_range(clipStart: number, clipEnd: number, update?: boolean): void;
+        set_fog_range(fogStart: number, fogEnd: number, update?: boolean): void;
         setDrawingBufferSize(width: number, height: number): void;
     }
 }
