@@ -26,6 +26,7 @@ import {
     readGemmiCifDocument,
     readGemmiStructure,
 } from "./utils";
+import { ZOOM_DIVISOR, moleculeDiameter } from "./moleculeExtent";
 import { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
 import { MoleculeToSeqViewerSequences } from "@/components/sequence-viewer/utils";
 import { MoorhenInstance } from "@/InstanceManager/index";
@@ -1110,7 +1111,6 @@ export class MoorhenMolecule {
                 this.loadMissingMonomers(),
                 this.checkHasGlycans(),
                 this.fetchDefaultColourRules(),
-                this.getMoleculeDiameter(),
             ]);
             return this;
         } catch (err) {
@@ -1297,11 +1297,10 @@ export class MoorhenMolecule {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete();
         }
-        const [_hasGlycans, coordString, _diameter] = await Promise.all([
-            this.checkHasGlycans(),
-            this.getAtoms(),
-            this.getMoleculeDiameter(),
-        ]);
+        // The diameter used to be fetched here too, on every atom update. It fed only the initial
+        // zoom, which now measures the atoms directly, so this is one fewer round trip to the
+        // worker after every modification.
+        const [_hasGlycans, coordString] = await Promise.all([this.checkHasGlycans(), this.getAtoms()]);
         try {
             this.updateGemmiStructure(coordString);
         } catch (err) {
@@ -1430,17 +1429,27 @@ export class MoorhenMolecule {
             return;
         }
 
+        // The centre first, because the extent is measured from it and these can be a few million
+        // atoms. centreOnGemmiAtoms returns the negated mean, which is what the origin wants.
+        const selectionCentre = centreOnGemmiAtoms(selectionAtoms);
+
         let zoomLevel: number;
         if (selectionCid === "/*/*/*/*" || selectionCid === "//") {
-            if (this.moleculeDiameter === null) {
-                this.moleculeDiameter = await this.getMoleculeDiameter();
-            }
-            zoomLevel = this.moleculeDiameter / 40;
+            // Measured from the atoms rather than asked of coot. get_molecule_diameter samples a
+            // thousand random pairs from a global stream that nothing seeds, so its answer depended
+            // on what else had drawn random numbers first - and since zoom sets clipStart, the front
+            // clip plane moved with it between one load and the next. See utils/moleculeExtent.
+            this.moleculeDiameter = moleculeDiameter(selectionAtoms, [
+                -selectionCentre[0],
+                -selectionCentre[1],
+                -selectionCentre[2],
+            ]);
+            // A single atom has no extent. Falling back to the same zoom a residue selection uses
+            // beats dividing zero by the divisor; coot returned -1 here, which was worse.
+            zoomLevel = this.moleculeDiameter > 0 ? this.moleculeDiameter / ZOOM_DIVISOR : 0.4;
         } else {
             zoomLevel = 0.4;
         }
-
-        const selectionCentre = centreOnGemmiAtoms(selectionAtoms);
         if (doSetZoom) {
             this.store.dispatch(setOrigin(selectionCentre));
             this.store.dispatch(setZoom(zoomLevel));
