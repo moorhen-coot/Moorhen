@@ -101,8 +101,11 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                 if(self.renderToTexture) {
                     if(!self.screenshotBuffersReady)
                         self.initTextureFramebuffer();
-                    console.log("Binding rttFramebuffer in depth peel accumulate",self.rttFramebuffer);
-                    if(!(self.offScreenFramebuffer)||(self.offScreenFramebuffer.width!=self.rttFramebuffer.width)){
+                    // Height as well as width: the render-to-texture buffer used to be square, so
+                    // comparing one dimension was enough. It is not once a movie can ask for 16:9.
+                    if(!(self.offScreenFramebuffer)
+                        ||(self.offScreenFramebuffer.width!=self.rttFramebuffer.width)
+                        ||(self.offScreenFramebuffer.height!=self.rttFramebuffer.height)){
                         self.offScreenReady = false
                         self.recreateOffScreeenBuffers(self.rttFramebuffer.width,self.rttFramebuffer.height);
                     }
@@ -1636,9 +1639,6 @@ export function drawScene(self: MGWebGL) : void {
         }
 
         if(self.renderToTexture&&!self.useOffScreenBuffers) {
-            console.log("SCREENSHOT")
-            const width_ratio = self.gl.viewportWidth / self.rttFramebuffer.width;
-            const height_ratio = self.gl.viewportHeight / self.rttFramebuffer.height;
             if (self.WEBGL2) {
                 if(self.doPeel){
                      self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.offScreenFramebuffer);
@@ -1657,8 +1657,14 @@ export function drawScene(self: MGWebGL) : void {
                 }
                 self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.rttFramebufferColor);
             }
-            const pixels = new Uint8Array(self.gl.viewportWidth / width_ratio * self.gl.viewportHeight / height_ratio * 4);
-            self.gl.readPixels(0, 0, self.gl.viewportWidth / width_ratio, self.gl.viewportHeight / height_ratio, self.gl.RGBA, self.gl.UNSIGNED_BYTE, pixels);
+            // The whole render-to-texture buffer. This was written as
+            // `viewportWidth / (viewportWidth / rttFramebuffer.width)`, which is the same number
+            // by algebra but not necessarily in floating point - at an awkward size it can come
+            // back a fraction under and silently drop a column.
+            const readWidth = self.rttFramebuffer.width;
+            const readHeight = self.rttFramebuffer.height;
+            const pixels = new Uint8Array(readWidth * readHeight * 4);
+            self.gl.readPixels(0, 0, readWidth, readHeight, self.gl.RGBA, self.gl.UNSIGNED_BYTE, pixels);
             self.pixel_data = pixels;
         }
 
@@ -2171,10 +2177,6 @@ export function depthBlur(self: MGWebGL, invMat) {
         self.drawTextOverlays(invMat);
 
         if(self.renderToTexture) {
-            console.log("SCREENSHOT MkII !");
-
-            const width_ratio = self.gl.viewportWidth / self.rttFramebuffer.width;
-            const height_ratio = self.gl.viewportHeight / self.rttFramebuffer.height;
             if (self.WEBGL2) {
                 self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.rttFramebuffer);
                 self.gl.bindFramebuffer(self.gl.DRAW_FRAMEBUFFER, self.rttFramebufferColor);
@@ -2195,8 +2197,9 @@ export function depthBlur(self: MGWebGL, invMat) {
                 self.offScreenReady = false
             }
             self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.rttFramebufferColor);
-            const pixels = new Uint8Array(self.gl.viewportWidth / width_ratio * self.gl.viewportHeight / height_ratio * 4);
-            self.gl.readPixels(0, 0, self.gl.viewportWidth / width_ratio, self.gl.viewportHeight / height_ratio, self.gl.RGBA, self.gl.UNSIGNED_BYTE, pixels);
+            // The whole render-to-texture buffer; see the note on the other readback above.
+            const pixels = new Uint8Array(self.rttFramebuffer.width * self.rttFramebuffer.height * 4);
+            self.gl.readPixels(0, 0, self.rttFramebuffer.width, self.rttFramebuffer.height, self.gl.RGBA, self.gl.UNSIGNED_BYTE, pixels);
             self.pixel_data = pixels;
             self.recreateOffScreeenBuffers(self.canvas.width,self.canvas.height);
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
@@ -2413,6 +2416,11 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             self.gl.cullFace(self.gl.BACK);
             if(self.renderToTexture){
                 //FIXME - drawingGBuffers stanza?
+                //
+                // The square extents below are deliberate and are half of a pair: this renders
+                // into a square buffer and takeScreenShot afterwards crops an aspect-correct band
+                // out of it. Neither half makes sense alone - give this projection a non-square
+                // buffer and the picture comes out stretched.
                 if(self.doPerspectiveProjection){
                     //FIXME - with  multiviews
                     mat4.perspective(self.pMatrix, 1.0, 1.0, 100, 1270.0);

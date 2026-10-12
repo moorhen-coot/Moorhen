@@ -21,6 +21,8 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 
 import { readGzippedTextFile } from "../../utils/utils";
+import { describeEncoderSupport, downloadMovie, recordSpinToMp4 } from "../../utils/MoorhenMovieSpike";
+import { useMoorhenInstance } from "../../InstanceManager";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
@@ -53,6 +55,66 @@ const newVector = () => {
 };
 
 export const MoorhenDevMenu = () => {
+    // --- MP4 spike. See utils/MoorhenMovieSpike.ts; this is a harness, not a feature. ---
+    const [spinMovieStatus, setSpinMovieStatus] = useState<string>("");
+    const [spinMovieBusy, setSpinMovieBusy] = useState<boolean>(false);
+    // The ScreenRecorder is borrowed purely because it already holds glRef; the spike needs the
+    // WebGL component and nothing else, and this avoids threading a new ref through for a test.
+    const videoRecorderRef = useMoorhenInstance().getVideoRecorderRef();
+
+    const checkEncoderSupport = async () => {
+        const glRef = videoRecorderRef.current?.glRef;
+        const canvas = glRef?.current?.getCanvasRef()?.current;
+        if (!canvas) {
+            setSpinMovieStatus("No canvas yet");
+            return;
+        }
+        // Mediabunny names codec families, not profile/level strings - it picks those itself.
+        const codecs = ["avc", "hevc", "vp9", "av1", "vp8"] as const;
+        const lines: string[] = [];
+        for (const codec of codecs) {
+            const { detail } = await describeEncoderSupport(canvas.width, canvas.height, codec);
+            lines.push(detail);
+        }
+        console.log(lines.join("\n"));
+        setSpinMovieStatus(`${canvas.width}x${canvas.height}: see console for ${codecs.length} codecs`);
+    };
+
+    const exportSpinMovie = async (size?: { width: number; height: number }) => {
+        const glRef = videoRecorderRef.current?.glRef;
+        if (!glRef?.current) {
+            setSpinMovieStatus("No WebGL component yet");
+            return;
+        }
+        setSpinMovieBusy(true);
+        setSpinMovieStatus("Rendering frame 0...");
+        try {
+            const result = await recordSpinToMp4(glRef, {
+                ...size,
+                onProgress: (done, total) => {
+                    if (done % 10 === 0 || done === total) setSpinMovieStatus(`Rendering frame ${done} of ${total}...`);
+                },
+            });
+            downloadMovie(result.blob);
+            const movieSeconds = result.frames / result.fps;
+            const summary =
+                `${result.frames} frames, ${result.width}x${result.height}, ${result.codec}, ` +
+                `${(result.blob.size / 1e6).toFixed(1)} MB, ` +
+                `${movieSeconds.toFixed(1)}s of movie in ${result.elapsedSeconds.toFixed(1)}s of rendering ` +
+                `(${(result.frames / result.elapsedSeconds).toFixed(1)} fps while encoding)`;
+            // Also to the console: the panel's status line disappears with the menu, and this is
+            // the number worth comparing between machines.
+            console.log(`[movie spike] ${summary}`);
+            setSpinMovieStatus(summary);
+        } catch (err) {
+            console.error(err);
+            setSpinMovieStatus(`Failed: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+            setSpinMovieBusy(false);
+        }
+    };
+    // --- end MP4 spike ---
+
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
@@ -319,6 +381,17 @@ export const MoorhenDevMenu = () => {
     return (
         <MoorhenStack>
             {/* <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem> */}
+            <MoorhenStack card>
+                MP4 spike
+                <span style={{ fontSize: "0.8rem" }}>{spinMovieStatus}</span>
+                <MoorhenButton onClick={checkEncoderSupport}>What will this machine encode?</MoorhenButton>
+                <MoorhenButton onClick={() => exportSpinMovie()} disabled={spinMovieBusy}>
+                    {spinMovieBusy ? "Rendering..." : "Export 360° spin as MP4 (window size)"}
+                </MoorhenButton>
+                <MoorhenButton onClick={() => exportSpinMovie({ width: 1920, height: 1080 })} disabled={spinMovieBusy}>
+                    {spinMovieBusy ? "Rendering..." : "Export 360° spin as MP4 (1920×1080)"}
+                </MoorhenButton>
+            </MoorhenStack>
             Origin: x: {origin[0].toFixed(1)} y: {origin[1].toFixed(1)} z: {origin[2].toFixed(1)}
             <MoorhenStack card>
                 set Origin

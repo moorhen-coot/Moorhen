@@ -393,8 +393,49 @@ export function recreateOffScreeenBuffers(self: MGWebGL, width,height) {
         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
 }
 
+/**
+ * Free everything initTextureFramebuffer made.
+ *
+ * Nothing used to, and initTextureFramebuffer runs more than once: resize() clears
+ * screenshotBuffersReady, and the next render that wants the texture rebuilds the lot. So every
+ * window resize stranded two framebuffers, three textures and the renderbuffers - at 4096x4096
+ * that is around 100 MB of GPU memory per resize, held until the context died.
+ *
+ * The renderbuffers used to be local consts, so they could not have been freed even by a caller
+ * that wanted to. They are kept on the instance now for that reason alone.
+ */
+export function deleteTextureFramebuffer(self: MGWebGL) : void {
+        if (!self.gl) return;
+
+        (self.rttRenderbuffers ?? []).forEach(buffer => { if (buffer) self.gl.deleteRenderbuffer(buffer) });
+        self.rttRenderbuffers = [];
+
+        [self.rttFramebuffer, self.rttFramebufferColor, self.rttFramebufferDepth]
+            .forEach(buffer => { if (buffer) self.gl.deleteFramebuffer(buffer) });
+        [self.rttTexture, self.rttDepthTexture, self.rttTextureDepth]
+            .forEach(texture => { if (texture) self.gl.deleteTexture(texture) });
+
+        self.rttFramebuffer = null;
+        self.rttFramebufferColor = null;
+        self.rttFramebufferDepth = null;
+        self.rttTexture = null;
+        self.rttDepthTexture = null;
+        self.rttTextureDepth = null;
+        self.screenshotBuffersReady = false;
+}
+
+/**
+ * Build the render-to-texture buffers: a square as large as the hardware allows, up to 4096.
+ *
+ * Screenshots render into this and then crop an aspect-correct band out of it, which is why the
+ * projection built for this path uses square extents. The two halves only make sense together.
+ */
 export function initTextureFramebuffer(self: MGWebGL) : void {
 
+        // Whatever is already here is about to be replaced; this runs again after every resize.
+        deleteTextureFramebuffer(self);
+
+        self.rttRenderbuffers = [];
         self.rttFramebuffer = self.gl.createFramebuffer();
         self.rttFramebufferColor = self.gl.createFramebuffer();
 
@@ -421,6 +462,7 @@ export function initTextureFramebuffer(self: MGWebGL) : void {
 
         if (self.WEBGL2) {
             const renderbufferDepth = self.gl.createRenderbuffer();
+            self.rttRenderbuffers.push(renderbufferDepth);
             self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, renderbufferDepth);
             self.gl.framebufferRenderbuffer(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.RENDERBUFFER, renderbufferDepth);
             self.gl.renderbufferStorageMultisample(self.gl.RENDERBUFFER,
@@ -429,6 +471,7 @@ export function initTextureFramebuffer(self: MGWebGL) : void {
                                     self.rttFramebuffer.width,
                                     self.rttFramebuffer.height);
             const renderbuffer = self.gl.createRenderbuffer();
+            self.rttRenderbuffers.push(renderbuffer);
             self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, renderbuffer);
             self.gl.framebufferRenderbuffer(self.gl.FRAMEBUFFER, self.gl.COLOR_ATTACHMENT0, self.gl.RENDERBUFFER, renderbuffer);
             self.gl.renderbufferStorageMultisample(self.gl.RENDERBUFFER,
@@ -444,6 +487,7 @@ export function initTextureFramebuffer(self: MGWebGL) : void {
         } else {
             self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.COLOR_ATTACHMENT0, self.gl.TEXTURE_2D, self.rttTexture, 0);
             const renderbuffer = self.gl.createRenderbuffer();
+            self.rttRenderbuffers.push(renderbuffer);
             self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, renderbuffer);
             self.gl.framebufferRenderbuffer(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.RENDERBUFFER, renderbuffer);
             //Sigh. Maybe DEPTH_STENCIL? Is anyone actually stuck on WebGL1?
@@ -476,6 +520,7 @@ export function initTextureFramebuffer(self: MGWebGL) : void {
                 self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.DEPTH_COMPONENT, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height, 0, self.gl.DEPTH_COMPONENT, self.gl.UNSIGNED_SHORT, null);
             }
             const renderbufferCol = self.gl.createRenderbuffer();
+            self.rttRenderbuffers.push(renderbufferCol);
             self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, renderbufferCol);
             self.gl.renderbufferStorage(self.gl.RENDERBUFFER, self.gl.RGBA4, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height);
             self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.TEXTURE_2D, self.rttTextureDepth, 0);

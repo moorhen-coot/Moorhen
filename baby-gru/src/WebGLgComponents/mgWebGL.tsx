@@ -373,6 +373,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         rttTexture: WebGLTexture;
         rttDepthTexture: WebGLTexture;
         rttTextureDepth: WebGLTexture;
+        /** Kept so they can be freed when the render-to-texture buffers are rebuilt at a new size. */
+        rttRenderbuffers: WebGLRenderbuffer[];
         screenZ: number;
         shaderProgramTextured: webGL.MGWebGLTextureQuadShader;
         shaderProgramDepthPeelAccum: webGL.MGWebGLShaderDepthPeelAccum;
@@ -488,6 +490,47 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     setupThreeWayTransformations() : void {
         setupThreeWayTransformations(this)
+    }
+
+    /**
+     * Render at a given size without changing how large the canvas looks on the page.
+     *
+     * A canvas has two sizes: the CSS box it occupies, and the drawing buffer WebGL actually
+     * renders into. resize() ties them together, because for normal use they should agree. A movie
+     * wants them apart: the output resolution should not depend on how the user happened to arrange
+     * their browser, but the window should stay where it is while the export runs.
+     *
+     * Everything else follows from the buffer size by itself - the projection takes its aspect from
+     * gl.viewportWidth/Height, so the frame is composed for the output rather than cropped or
+     * stretched to it, and frames can be captured straight off the canvas with no read back.
+     *
+     * While this is in effect the canvas on screen shows the movie's shape squeezed into the
+     * window's box, which looks distorted. That is the browser scaling the buffer into the CSS box,
+     * not a fault in the frames.
+     */
+    setDrawingBufferSize(width: number, height: number) : void {
+        this.canvas.width = Math.floor(width);
+        this.canvas.height = Math.floor(height);
+
+        // Deliberately not this.canvas.style: that is what keeps the page layout still.
+        this.dispatch(setCanvasSize([this.canvas.width,this.canvas.height]))
+        this.gl.viewportWidth = this.canvas.width;
+        this.gl.viewportHeight = this.canvas.height;
+
+        this.setupThreeWayTransformations()
+        this.setupStereoTransformations()
+        this.multiWayViewports = []
+
+        if(this.useOffScreenBuffers&&this.WEBGL2){
+            this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
+        }
+        if(this.edgeDetectFramebuffer){
+            this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
+            this.edgeDetectFramebuffer = null;
+        }
+
+        this.silhouetteBufferReady = false;
+        this.screenshotBuffersReady = false;
     }
 
     resize(width: number, height: number) : void {

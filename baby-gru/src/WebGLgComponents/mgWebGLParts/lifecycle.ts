@@ -157,6 +157,7 @@ export function initInstanceState(self: MGWebGL): void {
     self.offScreenReady = false;
     self.framebufferDrawBuffersReady = false;
     self.screenshotBuffersReady = false;
+    self.rttRenderbuffers = [];
 
     self.edgeDetectFramebufferSize = 2048;
     self.gBuffersFramebufferSize = 2048;
