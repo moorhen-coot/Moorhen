@@ -98,12 +98,13 @@ import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
 import { buildBuffers, appendOtherData } from './buildBuffers'
 import { Camera } from './mgWebGLParts/camera'
+import type { CameraController, CameraTarget, MoveResult, Transition } from './cameraController'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './mgWebGLParts/viewTransforms'
 import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, initTextureFramebuffer } from './mgWebGLParts/framebuffers'
 import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
 import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWebGLParts/postProcessUniformBuffers'
 import { doRightClick, doClick, doHover, doWheel, doMouseUpMeasure, doMouseDownMeasure, doMouseMoveMeasure, doMouseUp, doMiddleClick, doDoubleClick, doMouseMove, doMouseDown, handleKeyUp, handleKeyDown } from './mgWebGLParts/eventHandlers'
-import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setOrientationAndZoomFrame, setOrientationAndZoomAnimated, setOrientationAnimated, setOriginOrientationAndZoomFrame, setViewAnimated, setOriginOrientationAndZoomAnimated, drawOriginAndZoomFrame, setOriginAndZoomAnimated, setOriginAnimated, drawOriginFrame, drawZoomFrame, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
+import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setOrientationAndZoomFrame, setOrientationAndZoomAnimated, setOrientationAnimated, moveCameraTo, stopPumpingCamera, setViewAnimated, setOriginOrientationAndZoomAnimated, drawOriginAndZoomFrame, setOriginAndZoomAnimated, setOriginAnimated, drawOriginFrame, drawZoomFrame, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
 import { drawTransparent, drawImagesAndText, drawTexturedShapes, drawTextLabels, drawDistancesAndLabels, drawCircles, drawLineMeasures, drawCrosshairs, drawMouseTrack, drawFPSMeter, drawTextOverlays } from './mgWebGLParts/overlays'
 import { drawBuffer, drawMaxElementsUInt, setupModelViewTransformMatrixInteractive, drawTransformMatrixInteractive, drawTransformMatrix, drawTransformMatrixInteractivePMV, drawTransformMatrixPMV } from './mgWebGLParts/bufferDraw'
 import { drawPeel, drawTriangles, drawScene, applySymmetryMatrix, bindFramebufferDrawBuffers } from './mgWebGLParts/drawCore'
@@ -170,12 +171,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         store: Store<RootState>;
         dispatch: Dispatch<any>;
 
-        // Core view state now lives in a Camera collaborator. The accessors below
-        // present the same `myQuat` / `zoom` / `origin` / `fogClipOffset` interface
-        // that internal code and external consumers (glRef.current.*) already use.
-        // Getters return the LIVE objects so in-place mutation (e.g.
+        // Core view state lives in a Camera collaborator, which is now a facade over a
+        // CameraController. The accessors below present the same `myQuat` / `zoom` / `origin` /
+        // `fogClipOffset` interface that internal code and external consumers (glRef.current.*)
+        // already use. Getters return the LIVE objects so in-place mutation (e.g.
         // quat4.multiply(this.myQuat, this.myQuat, …)) keeps working unchanged.
         private _camera: Camera = new Camera();
+        /** The camera controller. Nothing drives it yet; see mgWebGLParts/camera.ts. */
+        get cameraController(): CameraController { return this._camera.controller; }
         get myQuat(): quat4 { return this._camera.quat; }
         set myQuat(q: quat4) { this._camera.quat = q; }
         get zoom(): number { return this._camera.zoom; }
@@ -259,6 +262,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         gl:  any;
         canvasRef: any;
         animating: boolean;
+        /**
+         * The outstanding requestAnimationFrame of the camera pump, or null when nothing is moving.
+         * Held so that overlapping requests do not pump the scene at twice the frame rate.
+         */
+        cameraPumpHandle: number | null;
+        /**
+         * The time, in seconds, the camera is advanced to on the next draw. Null means wall clock.
+         *
+         * A movie export sets it to i/fps before asking for each frame, so every frame is kept and
+         * the output runs at its authored speed however long rendering took. Nothing else sets it.
+         */
+        cameraTime: number | null;
         doDepthPeelPass: boolean;
         environmentRadius: number;
         edgeDetectFramebufferSize : number;
@@ -601,6 +616,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.WEBGL2 = false;
         this.state = { width: this.props.width, height: this.props.height,  hover_point: -1, hoveridx: -1, hoverIndices: [] };
         this.animating = false
+        this.cameraPumpHandle = null
+        this.cameraTime = null
         this.canvasRef = React.createRef();
         this.keysDown = {};
         this.atomLabelDepthMode = false;
@@ -824,6 +841,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         initGraphicsContext(this)
         attachCanvasListeners(this)
         initGraphics(this)
+    }
+
+    componentWillUnmount() {
+        // The camera pump holds a requestAnimationFrame that calls drawScene. Left running, it
+        // would draw into a torn-down GL context on the next frame.
+        stopPumpingCamera(this)
     }
 
     initializeShaders() : void {
@@ -1144,8 +1167,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
     }
 
-    setOriginOrientationAndZoomFrame(oo,d,qOld, qNew, oldZoom, zoomDelta, iframe) {
-        setOriginOrientationAndZoomFrame(this, oo, d, qOld, qNew, oldZoom, zoomDelta, iframe)
+    /**
+     * Put the camera somewhere, over whatever time the caller asks for.
+     *
+     * `{ kind: "instant" }` is the operation that did not exist before. See moveCameraTo.
+     */
+    moveCameraTo(target: CameraTarget, transition: Transition): Promise<MoveResult> {
+        return moveCameraTo(this, target, transition)
     }
 
     setViewAnimated(o,q,z) {

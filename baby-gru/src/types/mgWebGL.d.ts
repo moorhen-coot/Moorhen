@@ -7,6 +7,7 @@ import { RootState } from "@/store";
 //import * as mat4 from 'gl-matrix/mat4';
 //import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "./moorhen";
+import type { CameraController, CameraTarget, MoveResult, Transition } from "../WebGLgComponents/cameraController";
 
 export namespace webGL {
     interface MGWebGLRenderingContext extends WebGLRenderingContext {
@@ -379,11 +380,27 @@ export namespace webGL {
         myQuat: quat4;
         zoom: number;
         /**
-         * Set while a camera animation is in flight. MoorhenMovieSpike also sets it while driving
-         * the camera itself, because setOriginOrientationAndZoomAnimated declines to start when it
-         * is - which is what stops the reconciling effect in MoorhenWebMG fighting a movie.
+         * Set while a camera move is in flight. MoorhenMovieSpike also sets it while driving the
+         * camera itself, because moveCameraTo declines to start when it is - which is what stops
+         * the reconciling effect in MoorhenWebMG fighting a movie. Acquiring a "movie" driver on
+         * the camera controller is the better way to say the same thing, and will replace it.
          */
         animating: boolean;
+        /**
+         * The camera. Owns where the view is; see WebGLgComponents/cameraController.
+         */
+        cameraController: CameraController;
+        /**
+         * Put the camera somewhere, over whatever time the caller asks for. A transition of
+         * `{ kind: "instant" }` moves it with no animation at all, which is what an export wants.
+         */
+        moveCameraTo(target: CameraTarget, transition: Transition): Promise<MoveResult>;
+        /**
+         * The time, in seconds, the camera is advanced to on the next draw; null means wall clock.
+         * An export sets it to i/fps before each frame so that no frame is dropped and the output
+         * runs at its authored speed however long rendering took.
+         */
+        cameraTime: number | null;
         set_clip_range(clipStart: number, clipEnd: number, update?: boolean): void;
         set_fog_range(fogStart: number, fogEnd: number, update?: boolean): void;
         setDrawingBufferSize(width: number, height: number): void;

@@ -1,6 +1,7 @@
 import * as quat4 from 'gl-matrix/quat';
 import { createXQuatFromDX, createYQuatFromDY, quatSlerp } from '../quatUtils';
 import type { MGWebGL } from '../mgWebGL';
+import type { CameraTarget, MoveResult, Transition } from '../cameraController';
 
 /**
  * Camera animation drivers — the requestAnimationFrame loops that tween the
@@ -18,6 +19,104 @@ import type { MGWebGL } from '../mgWebGL';
  *
  * `self` is the live MGWebGL instance (type-only import avoids a runtime cycle).
  */
+
+/**
+ * How long a centring move takes.
+ *
+ * The old loop counted 15 frames, which is a quarter of a second at 60 Hz and longer than that on
+ * a scene that draws slowly. This is a quarter of a second of wall-clock time whatever the frame
+ * rate, dropping frames instead of stretching. Same length when the scene is fast, consistent when
+ * it is not.
+ */
+export const CENTRING_SECONDS = 0.25;
+
+/**
+ * Advance the camera to the moment this frame represents. Called by drawScene, before it draws.
+ *
+ * `moving` is two field tests, so an idle scene pays nothing and the wall clock is not even read.
+ *
+ * THE CLOCK IS AN ARGUMENT, AND THAT IS THE POINT
+ *
+ * It is the whole reason a live preview and a movie export can share this path. The live app passes
+ * wall-clock time, so a slow frame means the camera has moved further by the time it is drawn - the
+ * move keeps its duration and loses frames, which is what a person watching wants. An export sets
+ * `cameraTime` to i/fps before asking for each frame, so nothing is dropped however long rendering
+ * took, and the file runs at the speed it was authored at. Same camera, same arithmetic, different
+ * clock. Discovering that distinction empirically cost a day; it is one line here.
+ */
+export function advanceCamera(self: MGWebGL) {
+    if(!self.cameraController.moving) return
+    self.cameraController.tick(self.cameraTime ?? performance.now() / 1000)
+}
+
+/**
+ * Keep asking for frames while the camera is moving.
+ *
+ * The camera itself has no loop: drawScene advances it, so something has to keep calling drawScene
+ * for as long as there is anything to advance. That is all this is. It is reentrancy-guarded by
+ * `cameraPumpHandle` so that two overlapping requests do not pump the scene at twice the rate.
+ *
+ * A movie export does not use it — the export owns its clock and asks for each frame itself, which
+ * is the answer to "who ticks during an export": the renderer always does, and the export decides
+ * when a frame happens and what time it happens at.
+ */
+export function pumpCamera(self: MGWebGL) {
+    if(self.cameraPumpHandle !== null) return
+    self.cameraPumpHandle = requestAnimationFrame(() => {
+        self.cameraPumpHandle = null
+        self.drawScene()
+        if(self.cameraController.moving) pumpCamera(self)
+    })
+}
+
+/** Stop the pump. Called on unmount; harmless if nothing is pumping. */
+export function stopPumpingCamera(self: MGWebGL) {
+    if(self.cameraPumpHandle === null) return
+    cancelAnimationFrame(self.cameraPumpHandle)
+    self.cameraPumpHandle = null
+}
+
+/**
+ * Put the camera somewhere, over whatever time the caller asks for.
+ *
+ * This is the operation that did not exist before: `{ kind: "instant" }` sets the camera without
+ * animating to it, which is what a movie, a session restore and an API caller all actually want.
+ * Animation is now an argument rather than a precondition.
+ *
+ * IT DEFERS RATHER THAN FIGHTS
+ *
+ * Its only caller today is MoorhenWebMG's reconciling effect, which cannot tell "the user asked to
+ * centre here" from "the store and the renderer have drifted apart". So it declines while anything
+ * else is driving: a movie or another move in progress means the *store* is out of date, not that
+ * the camera is wrong. That is the same judgement the old `if (self.animating) return` made, and
+ * the same one `settle` makes in the controller.
+ *
+ * `animating` is checked alongside the driver because the movie spike still sets it by hand. When
+ * the spike acquires a driver of its own, the first half of that test goes.
+ */
+export function moveCameraTo(self: MGWebGL, target: CameraTarget, transition: Transition): Promise<MoveResult> {
+    if(self.animating || self.cameraController.driver !== null) {
+        return Promise.resolve({ completed: false })
+    }
+
+    const driver = self.cameraController.acquire("centring")
+
+    if(transition.kind === "instant") {
+        driver.set(target)
+        driver.release()
+        self.drawScene()
+        return Promise.resolve({ completed: true })
+    }
+
+    self.animating = true
+    const arrived = driver.moveTo(target, transition)
+    pumpCamera(self)
+    return arrived.then(result => {
+        self.animating = false
+        driver.release()
+        return result
+    })
+}
 
 export function doSpinTestFrame(self: MGWebGL) {
     const xQ = createXQuatFromDX(0);
@@ -75,55 +174,40 @@ export function setOrientationAnimated(self: MGWebGL, q) {
     requestAnimationFrame(() => setOrientationFrame(self, oldQuat, q, 1))
 }
 
-export function setOriginOrientationAndZoomFrame(self: MGWebGL, oo, d, qOld, qNew, oldZoom, zoomDelta, iframe) {
-    const frac = iframe / self.nAnimationFrames;
-    const newQuat = quatSlerp(qOld, qNew, frac)
-    if(isNaN(newQuat[0])||isNaN(newQuat[1])||isNaN(newQuat[2])||isNaN(newQuat[3])){
-        console.log("Something's gone wrong!!!!!!!!!!!!!")
-        console.log(newQuat)
-        console.log(qOld)
-        console.log(qNew)
-        console.log(frac)
-    }
-    quat4.set(self.myQuat, newQuat[0], newQuat[1], newQuat[2], newQuat[3])
-    self.zoom = oldZoom + iframe * zoomDelta
-    self.origin = [oo[0]+iframe*d[0], oo[1]+iframe*d[1], oo[2]+iframe*d[2]];
-    self.drawScene()
-    if(iframe < self.nAnimationFrames){
-        requestAnimationFrame(() => setOriginOrientationAndZoomFrame(self, oo, d, qOld, qNew, oldZoom, zoomDelta, iframe + 1))
-        return
-    }
-    self.animating = false
-    self.handleOriginUpdated(true)
-    const zoomChanged = new CustomEvent("zoomChanged", { detail: { oldZoom, newZoom: self.zoom } })
-    document.dispatchEvent(zoomChanged)
-}
-
 export function setViewAnimated(self: MGWebGL, o, q, z) {
     setOriginOrientationAndZoomAnimated(self, o, q, z)
 }
 
+/**
+ * Centre, orient and zoom, smoothly. The move the user sees whenever anything re-centres the view.
+ *
+ * Its observable contract is unchanged: it declines while something else is driving, it ends at the
+ * target, and on arrival it calls handleOriginUpdated and dispatches `zoomChanged`, which is what
+ * autoClipFogByZoom and the map recontouring hang off. What changed is underneath — fifteen
+ * recursive requestAnimationFrame calls holding their own interpolation state have become one move
+ * held by the camera, advanced by drawScene.
+ *
+ * TWO DIFFERENCES WORTH NAMING, BOTH DELIBERATE
+ *
+ * The motion now eases in and out instead of running at constant speed, because it is sampled by
+ * the same code that samples a movie, and that code eases. On a quarter-second move it reads as a
+ * slightly softer landing.
+ *
+ * And the duration is now wall-clock rather than a frame count, so a heavy scene gets a move of the
+ * same length with fewer frames in it, rather than a longer move.
+ */
 export function setOriginOrientationAndZoomAnimated(self: MGWebGL, o: number[], q: quat4, z: number): void {
-    if(self.animating) return
-    self.nAnimationFrames = 15;
-    const old_x = self.origin[0]
-    const old_y = self.origin[1]
-    const old_z = self.origin[2]
-    const new_x = o[0]
-    const new_y = o[1]
-    const new_z = o[2]
-    const DX = new_x - old_x
-    const DY = new_y - old_y
-    const DZ = new_z - old_z
-    const dx = DX/self.nAnimationFrames
-    const dy = DY/self.nAnimationFrames
-    const dz = DZ/self.nAnimationFrames
-    const oldQuat = quat4.create();
-    const oldZoom = self.zoom;
-    const zoomDelta = (z - self.zoom) / self.nAnimationFrames
-    quat4.set(oldQuat, self.myQuat[0], self.myQuat[1], self.myQuat[2], self.myQuat[3])
-    self.animating = true
-    requestAnimationFrame(() => setOriginOrientationAndZoomFrame(self, [old_x, old_y, old_z], [dx, dy, dz], oldQuat, q, oldZoom, zoomDelta, 1))
+    const oldZoom = self.zoom
+    moveCameraTo(self, {
+        origin: [o[0], o[1], o[2]],
+        quat: [q[0], q[1], q[2], q[3]],
+        zoom: z,
+    }, { kind: "ease", seconds: CENTRING_SECONDS }).then(result => {
+        if(!result.completed) return
+        self.handleOriginUpdated(true)
+        const zoomChanged = new CustomEvent("zoomChanged", { detail: { oldZoom, newZoom: self.zoom } })
+        document.dispatchEvent(zoomChanged)
+    })
 }
 
 export function setOriginAndZoomAnimated(self: MGWebGL, newOrigin: [number, number, number], newZoom: number) {

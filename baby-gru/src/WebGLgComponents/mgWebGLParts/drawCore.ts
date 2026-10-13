@@ -5,6 +5,7 @@ import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
+import { advanceCamera } from './cameraAnimations';
 
 /**
  * The hot render core - drawScene orchestrates the frame (framebuffer setup,
@@ -1089,6 +1090,11 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
     }
 
 export function drawScene(self: MGWebGL) : void {
+
+        // The camera is advanced here, immediately before anything reads it, rather than from a
+        // loop of its own: one clock, and the frame always shows where the camera is *now* rather
+        // than where some other loop last left it. See advanceCamera.
+        advanceCamera(self)
 
         if(self.renderToTexture&&(!self.screenshotBuffersReady))
             self.initTextureFramebuffer();

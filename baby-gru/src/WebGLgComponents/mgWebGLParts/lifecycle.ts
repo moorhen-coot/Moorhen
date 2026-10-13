@@ -48,14 +48,16 @@ export function initInstanceState(self: MGWebGL): void {
     self.mouseDown_y = null;
     self.dx = null;
     self.dy = null;
-    self.myQuat = null;
+    // myQuat and zoom are no longer nulled here. The Camera collaborator starts them at the exact
+    // values phase 2 below goes on to assign - the identity-ish quaternion (0, 0, 0, -1) and zoom
+    // 1.0 - so nothing that could read them in between sees a different number than it would have.
+    // Nothing does read them in between, and nothing in the codebase ever tested them for null.
     self.mouseDown = null;
     self.measurePointsArray = [];
     self.measureHit = null;
     self.measureButton = -1;
     self.measureDownPos = {x:-1,y:-1};
     self.mouseMoved = null;
-    self.zoom = null;
     self.ext = null;
     self.drawBuffersExt = null;
     self.instanced_ext = null;
