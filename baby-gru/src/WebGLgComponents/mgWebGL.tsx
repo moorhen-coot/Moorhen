@@ -1249,6 +1249,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return moveCameraTo(this, target, transition)
     }
 
+    /**
+     * Turn the view by a relative rotation. What a mouse drag does.
+     *
+     * Goes through the camera rather than multiplying `myQuat` in place, so that a drag arriving
+     * during a centring move accumulates and is applied on arrival instead of being overwritten by
+     * the move's next frame.
+     */
+    turnCameraBy(delta: [number, number, number, number]) {
+        this._camera.controller.turnBy(delta)
+    }
+
     setViewAnimated(o,q,z) {
         setViewAnimated(this, o, q, z)
     }

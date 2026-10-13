@@ -313,6 +313,23 @@ export class CameraController {
         this.notify();
     }
 
+    /**
+     * Turn the camera by a relative rotation. What the mouse does.
+     *
+     * Not a driver operation, deliberately. Acquiring would supersede whatever was running, and
+     * the rule is the opposite: a move that has been asked for should finish, and a nudge of the
+     * mouse on the way must not stop the camera arriving where it was sent. So a turn that lands
+     * during a move accumulates and is applied when the move does.
+     *
+     * That is strictly better than what happened before, which was that a drag during a centring
+     * animation wrote the quaternion and the animation's next frame wrote over it - the input was
+     * not deferred, it was lost. The cost is a possible visible step on arrival, bounded by how
+     * far the mouse moved in a quarter of a second.
+     */
+    turnBy(delta: Quat): void {
+        this.driverTurnBy(delta);
+    }
+
     /** Advance to a moment in time. Called by the renderer before it draws. */
     tick(seconds: number): void {
         if (this.sampler) {

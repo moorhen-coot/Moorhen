@@ -396,6 +396,11 @@ export namespace webGL {
          */
         moveCameraTo(target: CameraTarget, transition: Transition): Promise<MoveResult>;
         /**
+         * Turn the view by a relative rotation. A turn arriving during a move accumulates and is
+         * applied when the move lands, so a nudge of the mouse cannot stop the camera arriving.
+         */
+        turnCameraBy(delta: [number, number, number, number]): void;
+        /**
          * The time, in seconds, the camera is advanced to on the next draw; null means wall clock.
          * An export sets it to i/fps before each frame so that no frame is dropped and the output
          * runs at its authored speed however long rendering took.

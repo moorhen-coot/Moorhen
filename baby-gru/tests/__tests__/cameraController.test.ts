@@ -221,6 +221,34 @@ describe("a turn arriving during a move", () => {
         const angle = quat4.getAngle(quat4.fromValues(...identity), quat4.fromValues(...camera.state.quat));
         expect((angle * 180) / Math.PI).toBeCloseTo(45, 4);
     });
+
+    it("does not need a driver, because the mouse must not supersede a move", () => {
+        // The mouse turns the camera through this, not through a driver. Acquiring one would
+        // supersede whatever was running, and the rule is the opposite: a move that has been asked
+        // for should finish, and a nudge on the way must not stop the camera arriving.
+        const camera = new CameraController(startingAt({ zoom: 1 }));
+        const centring = camera.acquire("centring");
+        const arrived = centring.moveTo({ zoom: 4 }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+
+        camera.turnBy(turnAboutY(30));
+        expect(camera.driver).toBe("centring");
+        expect(camera.moving).toBe(true);
+
+        camera.tick(1);
+        expect(camera.state.zoom).toBeCloseTo(4, 10);
+        const angle = quat4.getAngle(quat4.fromValues(...identity), quat4.fromValues(...camera.state.quat));
+        expect((angle * 180) / Math.PI).toBeCloseTo(30, 3);
+        return expect(arrived).resolves.toEqual({ completed: true });
+    });
+
+    it("turns at once when nothing is moving, which is the ordinary drag", () => {
+        const camera = new CameraController(startingAt());
+        camera.turnBy(turnAboutY(15));
+        camera.turnBy(turnAboutY(15));
+        const angle = quat4.getAngle(quat4.fromValues(...identity), quat4.fromValues(...camera.state.quat));
+        expect((angle * 180) / Math.PI).toBeCloseTo(30, 4);
+    });
 });
 
 describe("driving frame by frame", () => {

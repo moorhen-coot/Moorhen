@@ -128,7 +128,7 @@ export function doSpinTestFrame(self: MGWebGL) {
     const xQ = createXQuatFromDX(0);
     const yQ = createYQuatFromDY(1);
     quat4.multiply(xQ, xQ, yQ);
-    quat4.multiply(self.myQuat, self.myQuat, xQ);
+    self.turnCameraBy(xQ);
     self.drawScene()
     if(self.doSpin)
         requestAnimationFrame(() => doSpinTestFrame(self));
