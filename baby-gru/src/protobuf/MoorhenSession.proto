@@ -281,6 +281,17 @@ message ViewDataSession {
   EdgeDetection edgeDetection = 17;
   Blur blur = 18;
   bool doPerspectiveProjection = 19;
+  // Distance from the eye to the view centre - sceneSettings.fogClipOffset.
+  //
+  // Without this, fogStart and fogEnd are distances from an eye whose position is not recorded,
+  // so they can only be read back against an assumed 250. That was right until the perspective
+  // eye-distance control made the eye movable.
+  //
+  // `optional` is load-bearing, not decoration. A proto3 float has no explicit presence, so an
+  // absent one decodes as 0 rather than undefined - and `?? 250` on the restore side would never
+  // fire. Every older session would arrive claiming an eye at the origin, and fog measured from
+  // an eye at 0 is not slightly wrong, it is nowhere.
+  optional float eyeDistance = 20;
 }
 
 message Ssao {
