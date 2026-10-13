@@ -1,11 +1,15 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
+import { slabNearFar, viewportAspect, focalPlaneDepth, perspectiveScale, PERSPECTIVE_FOV} from './projection';
 import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 import { advanceCamera } from './cameraAnimations';
+import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
+import { glTextureFor } from '../textureRegistry';
+import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
 
 /**
  * The hot render core - drawScene orchestrates the frame (framebuffer setup,
@@ -32,21 +36,45 @@ import { advanceCamera } from './cameraAnimations';
 // SECTION 1 - GEOMETRY & FRAME
 // ============================================================================
 
+
+/**
+ * The nearest transparent layer's depth texture, or null when there is no such thing.
+ *
+ * The blur passes read the opaque layer's depth, which under peelOpaqueSeparately is layer 0. A
+ * pixel showing only a transparent surface therefore has no depth at all there - the buffer still
+ * holds its cleared 1.0 - and the blur treats it as empty background. This supplies layer 1, the
+ * nearest transparent layer, as a fallback for exactly those pixels.
+ *
+ * Without peelOpaqueSeparately, layer 0 already holds whatever is frontmost including transparent
+ * geometry, so there is nothing to fall back to and this returns null.
+ */
+function transparentDepthLayer(self: MGWebGL): WebGLTexture | null {
+    const canFallBack = self.doPeel && self.peelOpaqueSeparately && self.WEBGL2
+        && self.depthPeelDepthTextures && self.depthPeelDepthTextures.length > 1;
+    return canFallBack ? self.depthPeelDepthTextures[1] : null;
+}
+
 export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
         let invMat
+            // Sized to the surface being drawn into rather than a fixed square.
+            //
+            // These were 2048x2048 on screen and 4096x4096 for capture, whatever the canvas. On
+            // a 1854x1468 canvas that meant every layer rendered 1.54 times the canvas area -
+            // and resampled in both directions at once, undersampling the width while
+            // oversampling the height - so it was blurrier and more expensive at the same time.
+            // Four layers came to six times an ordinary frame's pixels before anything was
+            // composited.
+            //
+            // recreateDepthPeelBuffers now rebuilds when the size or the count changes, so the
+            // explicit teardown that used to be needed when switching to capture has gone with
+            // it, along with the resize bug it hid: the old early-out left the layers at
+            // whatever size the window was when transparency was first turned on.
+            const peelLayers = self.depthPeelLayers ?? 4;
             if(self.renderToTexture) {
-                console.log("Delete the normal peel buffers")
-                for(let i=0;i<self.depthPeelFramebuffers.length;i++){
-                    self.gl.deleteFramebuffer(self.depthPeelFramebuffers[i]);
-                    self.gl.deleteRenderbuffer(self.depthPeelRenderbufferDepth[i]);
-                    self.gl.deleteRenderbuffer(self.depthPeelRenderbufferColor[i]);
-                    self.gl.deleteTexture(self.depthPeelColorTextures[i]);
-                    self.gl.deleteTexture(self.depthPeelDepthTextures[i]);
-                }
-                self.depthPeelFramebuffers = [];
-                self.recreateDepthPeelBuffers(4096,4096);
+                self.recreateDepthPeelBuffers(self.rttFramebuffer?.width ?? 4096,
+                                              self.rttFramebuffer?.height ?? 4096, peelLayers);
             } else {
-                self.recreateDepthPeelBuffers(2048,2048);
+                self.recreateDepthPeelBuffers(self.gl.viewportWidth, self.gl.viewportHeight, peelLayers);
             }
 
             if(doClear) self.gl.clear(self.gl.DEPTH_BUFFER_BIT|self.gl.COLOR_BUFFER_BIT);
@@ -56,6 +84,8 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
 
                 self.gl.enable(self.gl.DEPTH_TEST);
                 const depthPeelSampler0 = 3;
+                // Units 0-4 and 7-9 are taken; see the sampler assignments through drawCore.
+                const opaqueDepthUnit = 5;
 
                 theShaders.forEach(shader => {
                         self.gl.useProgram(shader);
@@ -66,21 +96,75 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                 self.doDepthPeelPass = true;
                 self.gl.disable(self.gl.BLEND);
                 self.gl.enable(self.gl.DEPTH_TEST);
-                for(let ipeel=0;ipeel<4;ipeel++){
+                // Layer 0 is the opaque scene; layers 1 upwards peel the transparent geometry.
+                //
+                // Every layer used to receive the entire scene, so the opaque geometry - which
+                // for a molecule with a contoured map around it is most of the triangles - was
+                // drawn once per layer to no purpose. Peeling only resolves transparency; the
+                // opaque surface behind it is the same in every layer.
+                //
+                // No shader change was needed for this. Each transparent layer starts with the
+                // opaque layer's depth blitted into it, so the ordinary depth test rejects
+                // anything behind the opaque surface, and the peel test in the shader only has
+                // to handle what it was always for: rejecting fragments nearer than the
+                // previous transparent layer. The first transparent layer has no previous
+                // layer, so it runs with the peel test off and keeps the nearest transparent
+                // fragment in front of opaque.
+                // blitFramebuffer is WebGL2 only, and the depth copy is what makes this work,
+                // so a WebGL1 context keeps the old behaviour of drawing everything into every
+                // layer. Correct either way; only the faster path needs the newer API.
+                const separateOpaque = self.peelOpaqueSeparately && self.WEBGL2;
+                for(let ipeel=0;ipeel<self.depthPeelFramebuffers.length;ipeel++){
+                    const isOpaqueLayer = separateOpaque && ipeel === 0;
+                    self.peelTransparentOnly = separateOpaque ? !isOpaqueLayer : null;
+
                     self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.depthPeelFramebuffers[ipeel]);
+
+                    // The opaque depth goes to the shader as its own texture, not into this
+                    // layer's depth buffer. Seeding the depth buffer was the obvious thing and
+                    // it was wrong: compositing decides whether a layer drew anything by
+                    // testing its depth against 1.0, so opaque depth sitting in it made every
+                    // covered pixel look drawn and the layer's background washed over the
+                    // opaque surface.
+                    const showOpaqueDepth = separateOpaque && !isOpaqueLayer;
+                    theShaders.forEach(shader => {
+                            self.gl.useProgram(shader);
+                            self.gl.uniform1i(shader.opaqueDepthSampler, opaqueDepthUnit);
+                            self.gl.uniform1i(shader.haveOpaqueDepth, showOpaqueDepth ? 1 : 0);
+                            })
+                    self.gl.activeTexture(self.gl.TEXTURE0+opaqueDepthUnit);
+                    self.gl.bindTexture(self.gl.TEXTURE_2D,
+                                        showOpaqueDepth ? self.depthPeelDepthTextures[0] : null);
+
+                    // Which layer's depth the peel test compares against, and whether it runs at
+                    // all. Peeling transparent geometry separately shifts the numbering by one:
+                    // layer 1 is the first transparent layer and has nothing before it.
+                    // The layer whose depth this one peels against is always the one before it.
+                    // What shifts when opaque takes layer 0 is the peel *number* the shader is
+                    // told - layer 1 becomes the first transparent layer and so has nothing
+                    // before it - and conflating the two made layer 1 compare against its own
+                    // depth texture rather than the previous layer's.
+                    const previousLayer = ipeel - 1;
+                    const peelNumber = separateOpaque ? ipeel - 1 : ipeel;
+
                     self.gl.activeTexture(self.gl.TEXTURE0+depthPeelSampler0);
-                    if(ipeel>0){
-                        self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[ipeel-1]);
+                    if(peelNumber>0){
+                        self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[previousLayer]);
                     } else {
                         self.gl.bindTexture(self.gl.TEXTURE_2D, null)
                     }
                     theShaders.forEach(shader => {
                             self.gl.useProgram(shader);
-                            self.gl.uniform1i(shader.peelNumber,ipeel);
+                            self.gl.uniform1i(shader.peelNumber,peelNumber);
                             })
                     invMat = GLrender(self, false,doClear,ratioMult);
                     self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
                 }
+                self.peelTransparentOnly = null;
+                theShaders.forEach(shader => {
+                        self.gl.useProgram(shader);
+                        self.gl.uniform1i(shader.haveOpaqueDepth, 0);
+                        })
 
                 self.doDepthPeelPass = false;
                 theShaders.forEach(shader => {
@@ -116,8 +200,7 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                     self.gl.uniform1f(theShader.ySSAOScaling, 1.0/self.rttFramebuffer.height );
                 } else {
                     if(self.useOffScreenBuffers&&self.WEBGL2){
-                        if(!self.offScreenReady)
-                            self.recreateOffScreeenBuffers(self.canvas.width,self.canvas.height);
+                        self.ensureOffScreeenBuffers(self.canvas.width,self.canvas.height);
                         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebuffer);
                     }
                     self.gl.viewport(0, 0, self.gl.viewportWidth, self.gl.viewportHeight);
@@ -137,7 +220,22 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                 if(doClear) self.gl.clear(self.gl.DEPTH_BUFFER_BIT|self.gl.COLOR_BUFFER_BIT)
                 self.gl.uniform1i(theShader.depthPeelSamplers, 0);
                 self.gl.uniform1i(theShader.colorPeelSamplers, 1);
-                for(let ipeel=3;ipeel>=0;ipeel--){
+                // Back to front, so nearer layers blend over further ones. Driven by how many
+                // layers were actually allocated rather than a hardcoded four, which is what
+                // makes the count adjustable at all.
+                //
+                // With the opaque scene in layer 0, that layer is the furthest thing there is -
+                // every transparent fragment kept is in front of it - so it goes down first and
+                // the transparent layers blend over it in descending order. Compositing it last,
+                // as the single loop below used to, would paint the opaque surface on top of
+                // the transparency in front of it.
+                const compositeOrder: number[] = [];
+                if (separateOpaque) compositeOrder.push(0);
+                for (let ipeel = self.depthPeelFramebuffers.length - 1;
+                     ipeel >= (separateOpaque ? 1 : 0); ipeel--) {
+                    compositeOrder.push(ipeel);
+                }
+                for(const ipeel of compositeOrder){
                     self.gl.activeTexture(self.gl.TEXTURE0);
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[ipeel]);
                     self.gl.activeTexture(self.gl.TEXTURE1);
@@ -155,10 +253,29 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
         return invMat
     }
 
+/**
+ * The slice of the depth range given to buffers that must not be hidden.
+ *
+ * Small enough that anything drawn in it beats ordinary scene geometry, large enough that such
+ * buffers are still depth-tested properly against one another.
+ */
+const ON_TOP_DEPTH_RANGE = 0.02
+
 export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
         const displayBuffers = self.store.getState().glRef.displayBuffers
         const hoverSize = self.store.getState().glRef.hoverSize
+        // A section lit from outside the 3D view - the sequence viewer, say. Read once per draw
+        // rather than per buffer, and already resolved to a buffer and an index so that nothing
+        // here has to know what it stands for.
+        const hoveredSection = self.store.getState().hoveringStates.hoveredSection
+
+        // How much of a sectioned mesh counts as one thing at this zoom. Settled once per draw
+        // and kept on the renderer, so that the highlight below and the pick in doMouseUp agree
+        // - and so that the hysteresis has somewhere to remember what it last decided. Zoom
+        // changes redraw, which is what keeps this current. The viewport does not come into it:
+        // see visibleHeight for why resizing the window must not change the grain.
+        self.pickLevel = levelForHeight(visibleHeight(self.zoom), self.pickLevel)
 
         const bright_y = self.background_colour[0] * 0.299 + self.background_colour[1] * 0.587 + self.background_colour[2] * 0.114;
 
@@ -167,7 +284,42 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttTextureDepth);
         }
 
-        for (let idx = 0; idx < displayBuffers.length; idx++) {
+        /**
+         * Buffers that have to be seen whatever they are inside go last, with the depth buffer
+         * wiped first so that nothing already drawn can hide them.
+         *
+         * The manipulation handles are the case: they hang off an object's centre, which for a
+         * backbone trace is in the middle of the tangle, so the one at the very centre is buried
+         * in geometry and invisible however large it is drawn.
+         *
+         * Done by squeezing them into the nearest sliver of the depth range, so they win almost
+         * every depth comparison against the scene while still being tested normally against
+         * each other - the far side of a ring must not show through the near side, which is why
+         * the depth test cannot simply be switched off.
+         *
+         * An earlier attempt cleared the depth buffer instead. That made everything else vanish:
+         * the passes that run afterwards - ambient occlusion, edge detection, depth blur - read
+         * the depth buffer to work out what the scene looked like, and a cleared one tells them
+         * there is nothing there. Only the handles' own pixels may be touched.
+         *
+         * The sort is stable, so everything else keeps the order it had.
+         */
+        const onTop = (idx: number) => !!displayBuffers[idx].alwaysOnTop
+        const anyOnTop = displayBuffers.some(buffer => buffer.alwaysOnTop)
+        const drawOrder = displayBuffers.map((_buffer, i) => i)
+        if (anyOnTop) drawOrder.sort((a, b) => Number(onTop(a)) - Number(onTop(b)))
+        // Not while building a shadow map or the geometry buffers: those record where things
+        // really are, and a handle pretending to be at the front would be wrong in both.
+        const mayDrawOnTop = anyOnTop && !calculatingShadowMap && !self.drawingGBuffers
+        let nearRangeSet = false
+
+        for (let n = 0; n < drawOrder.length; n++) {
+            const idx = drawOrder[n]
+
+            if (mayDrawOnTop && !nearRangeSet && onTop(idx)) {
+                self.gl.depthRange(0.0, ON_TOP_DEPTH_RANGE);
+                nearRangeSet = true;
+            }
 
             if (!displayBuffers[idx].visible) {
                 continue;
@@ -205,12 +357,26 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
             const primitiveSizes = displayBuffers[idx].primitiveSizes;
 
+            // What this pass is willing to draw.
+            //
+            // Without peeling, transparent buffers are skipped entirely - the old behaviour.
+            // While peeling, each layer takes one kind or the other: layer 0 is the opaque
+            // scene and the rest peel the transparent geometry. Drawing everything into every
+            // layer, which is what used to happen, meant the opaque geometry - most of the
+            // triangles in a molecule with a map contoured around it - was rendered once per
+            // layer for a result that was identical each time.
+            const isTransparent = displayBuffers[idx].transparent && !self.drawingGBuffers
+                                  && !displayBuffers[idx].isHoverBuffer;
+            if (displayBuffers[idx].transparent && !self.drawingGBuffers) {
+                if(!self.doPeel)
+                    continue;
+            }
+            if (self.peelTransparentOnly !== null && self.peelTransparentOnly !== undefined
+                && self.peelTransparentOnly !== isTransparent) {
+                continue;
+            }
+
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                if (displayBuffers[idx].transparent&&!self.drawingGBuffers) {
-                    //console.log("Not doing normal drawing way ....");
-                    if(!self.doPeel)
-                        continue;
-                }
                 let theShader;
                 let scaleZ = false;
 
@@ -241,6 +407,68 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 self.gl.useProgram(theShader);
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
+
+                // Instanced buffers highlight a whole instance rather than a region of the mesh,
+                // because the mesh is shared between instances and gl_VertexID cannot tell them
+                // apart. -1 disables it.
+                //
+                // hover_point is an index into pick_points. An instance may offer several of them
+                // so that a long or hollow shape is hoverable over its whole extent, so
+                // pick_point_instances maps that index back to the instance it belongs to. Without
+                // it the two are the same thing, which is the one-point-per-instance case.
+                //
+                // A buffer cannot be both kinds: the smooth mesh path is never instanced, so the
+                // presence of an instance origin buffer is enough to tell the two apart.
+                // A mesh divided into sections highlights one of them instead of the whole
+                // instance, so the two are mutually exclusive: section_ranges present means the
+                // range does the work and uHoveredInstance stays off.
+                // The grain the view is at. Still indexed by section, so everything below is
+                // unchanged except which array it reads: at the finest level this is the same
+                // array, and at coarser ones a section's neighbours light with it. That is why
+                // both the pointer hover and a hover driven from the sequence viewer widen
+                // together without either of them knowing about zoom.
+                const allLevels = displayBuffers[idx].pick_info?.section_level_ranges
+                const sectionRanges = allLevels?.[self.pickLevel]
+                    ?? displayBuffers[idx].pick_info?.section_ranges
+                const isHovered = idx === self.state.hoveridx && self.state.hover_point>-1
+
+                if(theShader.uHoveredInstance){
+                    let hoveredInstance = -1
+                    if(!sectionRanges && isHovered && displayBuffers[idx].triangleInstanceOriginBuffer[j]){
+                        const pickPointInstances = displayBuffers[idx].pick_info?.pick_point_instances
+                        hoveredInstance = pickPointInstances ? pickPointInstances[self.state.hover_point] ?? -1 : self.state.hover_point
+                    }
+                    self.gl.uniform1i(theShader.uHoveredInstance, hoveredInstance);
+                }
+
+                // The section's vertices are a contiguous range because each section owns its own
+                // copies of the rings it shares with its neighbours, so the shader can light it
+                // with a pair of bounds and the edge lands exactly on the boundary ring.
+                if(theShader.uHighlightFrom && theShader.uHighlightTo){
+                    let from = -1
+                    let to = -1
+                    if(sectionRanges && isHovered && displayBuffers[idx].triangleInstanceOriginBuffer[j]){
+                        const sections = displayBuffers[idx].pick_info?.pick_point_sections
+                        const section = sections ? sections[self.state.hover_point] ?? -1 : -1
+                        if(section > -1 && sectionRanges[section]){
+                            from = sectionRanges[section][0]
+                            to = sectionRanges[section][1]
+                        }
+                    } else if(
+                        sectionRanges && hoveredSection
+                        && displayBuffers[idx].id === hoveredSection.bufferId
+                        && displayBuffers[idx].triangleInstanceOriginBuffer[j]
+                        && sectionRanges[hoveredSection.section]
+                    ){
+                        // The mouse is not on this buffer, but something else has asked for one
+                        // of its sections. The pointer wins where both have an opinion.
+                        from = sectionRanges[hoveredSection.section][0]
+                        to = sectionRanges[hoveredSection.section][1]
+                    }
+                    self.gl.uniform1i(theShader.uHighlightFrom, from);
+                    self.gl.uniform1i(theShader.uHighlightTo, to);
+                }
+
                 if(theShader.uPointTex !== null){
                     self.gl.uniform1i(theShader.uPointTex, 7);
                 }
@@ -290,6 +518,61 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     }
                 }
 
+                // This sub-buffer's base colour texture, if it has one, on unit 4.
+                //
+                // Unit 4 because the whole of this loop assumes 0, 1 and 2 hold the shadow, SSAO
+                // and edge-detect maps, 3 is the depth peel, and 7 to 9 are the hover influence
+                // textures; 4 to 6 are the free ones. In particular unit 0 is bound to the shadow
+                // map once before this loop starts and only the uniform is re-set inside it, so
+                // binding anything there would silently turn shadows into nonsense.
+                //
+                // Bound per sub-buffer rather than once per frame because the binding does not
+                // survive a frame: the depth-peel passes and the screenshot path both recreate
+                // framebuffers, which leaves textures unbound on whatever unit was current.
+                //
+                // activeTexture is put back to 0 afterwards, and that is not tidiness. The text,
+                // circle and perfect-sphere-outline shaders declare uSampler and never assign it
+                // a unit, so they rely on 0 being current; and this loop leaves activeTexture on
+                // unit 9 after a hovered buffer, which is why it is set explicitly here too
+                // rather than assumed.
+                let boundBaseColourTexture: WebGLTexture | null = null;
+                if(theShader.hasBaseColourTexture!=null){
+                    const material = displayBuffers[idx].materials?.[j];
+                    const textureBuffer = displayBuffers[idx].triangleVertexTextureBuffer[j];
+                    // Instanced buffers included. The per-vertex attributes - position, normal,
+                    // colour and this one - are all pointed here, for both paths; bufferDraw
+                    // adds only the per-instance ones. So the coordinate is per mesh vertex and
+                    // shared between instances, which is exactly right: one mesh, one mapping,
+                    // one texture per group.
+                    //
+                    // Nothing sets a divisor on this attribute's location, so it stays at 0 and
+                    // advances per vertex. That matters because divisors are per-location global
+                    // state: location 3 is below the instance attributes at 4 to 9, which
+                    // restoreDivisor puts back after each instanced draw.
+                    const wanted = self.WEBGL2
+                        && !calculatingShadowMap
+                        && !self.drawingGBuffers
+                        && !self.stencilPass
+                        && !!material?.baseColourTexture
+                        && !!textureBuffer && textureBuffer.itemSize === 2
+                        && theShader.vertexTextureAttribute!=null && theShader.vertexTextureAttribute>-1;
+
+                    if(wanted) boundBaseColourTexture = glTextureFor(self.gl, material.baseColourTexture);
+
+                    if(boundBaseColourTexture){
+                        self.gl.uniform1i(theShader.baseColourTexture, 4);
+                        self.gl.activeTexture(self.gl.TEXTURE4);
+                        self.gl.bindTexture(self.gl.TEXTURE_2D, boundBaseColourTexture);
+                        self.gl.activeTexture(self.gl.TEXTURE0);
+                        self.gl.uniform1i(theShader.hasBaseColourTexture, 1);
+                    } else {
+                        // Set every time, not just when turning it off: this is a uniform on a
+                        // shared program, so a previous sub-buffer's texture would otherwise go
+                        // on being sampled by an untextured one.
+                        self.gl.uniform1i(theShader.hasBaseColourTexture, 0);
+                    }
+                }
+
                 for(let i = 0; i<16; i++)
                     self.gl.disableVertexAttribArray(i);
 
@@ -305,6 +588,17 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 self.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
                 self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
                 if (bufferTypes[j] !== "PERFECT_SPHERES") self.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, self.gl.FLOAT, false, 0, 0);
+
+                // Only when a texture was actually bound above. The attribute is declared in the
+                // mesh vertex shaders and bound to location 3, and the loop above has just
+                // disabled every array - so leaving it alone gives the shader the generic
+                // attribute value, which is what every untextured mesh has always had.
+                if(boundBaseColourTexture){
+                    self.gl.enableVertexAttribArray(theShader.vertexTextureAttribute);
+                    self.gl.bindBuffer(self.gl.ARRAY_BUFFER, displayBuffers[idx].triangleVertexTextureBuffer[j]);
+                    self.gl.vertexAttribPointer(theShader.vertexTextureAttribute, 2, self.gl.FLOAT, false, 0, 0);
+                }
+
                 self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
 
                 if(self.stencilPass){
@@ -979,7 +1273,28 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         // frame and take the rest of the draw with it.
         const hoveredBuffer = self.state.hoveridx>-1 ? displayBuffers[self.state.hoveridx] : undefined
 
-        if(drawingVisibleImage && hoveredBuffer && self.state.hover_point>-1){
+        // Only the smooth mesh highlight can be drawn by this pass, and it is the only thing that
+        // should be: the pass uses the non-instanced program and a non-instanced draw, so pointing
+        // it at an instanced buffer would put a single untransformed copy of the shared mesh at
+        // the world origin. The instanced shapes highlight themselves during the main draw
+        // instead, via uHoveredInstance, so requiring the influence textures here keeps them out.
+        const hoveredHasInfluenceTextures = !!hoveredBuffer?.pick_info?.influence_weights_texture
+            && !!hoveredBuffer?.pick_info?.influence_point_indexes_texture
+            && !!hoveredBuffer?.pick_info?.influence_index_offsets_texture
+
+        // A mesh that is one whole thing - a cavity - wants the same overlay with no falloff.
+        //
+        // It can use this pass for the same reason a smooth mesh can: it is not instanced. What
+        // it lacks is the influence data, and it does not need it. Leaving uHoveredPoint at the
+        // sentinel makes the vertex shader take its other branch and set vHighlight to 1
+        // everywhere, which gives full alpha across the mesh - and no ring, since the ring is a
+        // contour of the influence field and a constant field has no contour. So the whole
+        // thing lights solid orange with no shader change at all.
+        const hoveredWholeMesh = !hoveredHasInfluenceTextures
+            && !!hoveredBuffer?.pick_info?.highlight_whole
+
+        if(drawingVisibleImage && hoveredBuffer && self.state.hover_point>-1
+           && (hoveredHasInfluenceTextures || hoveredWholeMesh)){
             //TODO - We don't really need to do self.draw at all. This could be done in the
             //       general drawing above.
             const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
@@ -996,6 +1311,9 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                  const influence_index_offsets_width = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_width
                  const theShader = self.shaderProgram
                  self.gl.useProgram(theShader)
+                 // Only for the smooth-mesh case; the whole-mesh one has no such textures and
+                 // must not be handed undefined ones.
+                 if(hoveredHasInfluenceTextures){
                  if(theShader.uPointTex !== null){
                      self.gl.uniform1i(theShader.uPointTex, 7);
                      self.gl.activeTexture(self.gl.TEXTURE7);
@@ -1014,7 +1332,12 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                      self.gl.bindTexture(self.gl.TEXTURE_2D, influence_index_offsets_texture);
                      self.gl.uniform1ui(theShader.uOffsetTexWidth, influence_index_offsets_width);
                  }
-                 self.gl.uniform1ui(theShader.uHoveredPoint, self.state.hover_point);
+                 }
+                 // The sentinel the vertex shader compares against: anything at or above it
+                 // means "not hovering a particular point", which is the branch that sets
+                 // vHighlight to 1 for every vertex. That is precisely the whole-mesh case.
+                 self.gl.uniform1ui(theShader.uHoveredPoint,
+                                    hoveredWholeMesh ? 0xFFFFFFFF : self.state.hover_point);
                  self.hoverBuffer ??= self.gl.createBuffer()
                  self.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
                  self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])
@@ -1087,13 +1410,26 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
             }
         }
+
+        // Put the depth range back for whatever is drawn next. Left compressed, it would pull
+        // every later pass towards the viewer, which is the sort of fault that shows up
+        // somewhere else entirely.
+        if (nearRangeSet) {
+            self.gl.depthRange(0.0, 1.0);
+        }
     }
 
 export function drawScene(self: MGWebGL) : void {
 
+        // Only read when the counters are installed, so an uninstrumented frame pays for one
+        // branch and nothing else.
+        const drawSceneStart = renderStats.enabled ? performance.now() : 0;
+        if(renderStats.enabled) beginGpuTimer(self.gl as WebGL2RenderingContext);
+
         // The camera is advanced here, immediately before anything reads it, rather than from a
         // loop of its own: one clock, and the frame always shows where the camera is *now* rather
-        // than where some other loop last left it. See advanceCamera.
+        // than where some other loop last left it. Inside the timer, because advancing the camera
+        // is part of the frame's work. See advanceCamera.
         advanceCamera(self)
 
         if(self.renderToTexture&&(!self.screenshotBuffersReady))
@@ -1122,6 +1458,44 @@ export function drawScene(self: MGWebGL) : void {
         // so that a rotation does not re-render the 2D overlay sixty times a second.
         if(!self.animating) self.props.onQuatChanged([self.myQuat[0], self.myQuat[1], self.myQuat[2], self.myQuat[3]])
         self.props.setDrawQuat(self.myQuat)
+
+        // Decided here, before theShaders is built, because the shader variant chosen below
+        // depends on it and that list must already hold the right programs. It used to be
+        // computed further down; nothing between there and here reads it.
+        self.doPeel = false;
+        if(self.doOrderIndependentTransparency){
+            for (let idx = 0; idx < displayBuffers.length && !self.doPeel; idx++) {
+                if (displayBuffers[idx].visible) {
+                    const triangleVertexIndexBuffer = displayBuffers[idx].triangleVertexIndexBuffer;
+                    for (let j = 0; j < triangleVertexIndexBuffer.length&& !self.doPeel; j++) {
+                        if (displayBuffers[idx].transparent&&!displayBuffers[idx].isHoverBuffer) {
+                            self.doPeel = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Pick the discard-free programs when nothing needs a discard: the projection clips the
+        // slab through its own near and far planes, so the clip test in the shader can only
+        // agree with it, and the peel test only matters while peeling.
+        //
+        // Derived from the same inputs the projection itself uses rather than read from a flag
+        // GLrender sets, because GLrender runs after this - a flag would be a frame stale, and
+        // a stale "the hardware is clipping" is a front clip that silently stops working.
+        //
+        // slab.exact is false only when a perspective near plane had to be clamped to stay
+        // positive, which happens when the front clip is dragged to or behind the eye. The
+        // discards are then the only thing enforcing the slab, so the full programs are used.
+        //
+        // Swapped wholesale rather than chosen at each use, so the dozens of places that read
+        // self.shaderProgram need no knowledge of this at all.
+        const slabForShaders = slabNearFar(
+            self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, self.doPerspectiveProjection);
+        const useFastShaders = slabForShaders.exact && !self.doPeel;
+        self.shaderProgram = useFastShaders ? self.shaderProgramFast : self.shaderProgramClip;
+        self.shaderProgramInstanced = useFastShaders ? self.shaderProgramInstancedFast : self.shaderProgramInstancedClip;
+        self.shaderProgramThickLinesNormal = useFastShaders ? self.shaderProgramThickLinesNormalFast : self.shaderProgramThickLinesNormalClip;
 
         const theShaders = [
             self.shaderProgram,
@@ -1222,20 +1596,6 @@ export function drawScene(self: MGWebGL) : void {
         const f = self.gl_clipPlane0[3]+self.fogClipOffset;
         const b = Math.min(self.gl_clipPlane1[3],self.gl_fog_end);
 
-        self.doPeel = false;
-        if(self.doOrderIndependentTransparency){
-            for (let idx = 0; idx < displayBuffers.length && !self.doPeel; idx++) {
-                if (displayBuffers[idx].visible) {
-                    const triangleVertexIndexBuffer = displayBuffers[idx].triangleVertexIndexBuffer;
-                    for (let j = 0; j < triangleVertexIndexBuffer.length&& !self.doPeel; j++) {
-                        if (displayBuffers[idx].transparent&&!displayBuffers[idx].isHoverBuffer) {
-                            self.doPeel = true;
-                        }
-                    }
-                }
-            }
-        }
-
         if (self.doEdgeDetect&&self.WEBGL2) {
 
             const ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
@@ -1263,7 +1623,6 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.uniform1i(self.shaderProgramEdgeDetect.gPositionTexture,0);
             self.gl.uniform1i(self.shaderProgramEdgeDetect.gNormalTexture,1);
             self.gl.uniform1f(self.shaderProgramEdgeDetect.zoom,self.zoom);
-            self.gl.uniform1f(self.shaderProgramEdgeDetect.depthBufferSize,(f+b)*2.);
 
             self.gl.uniform1f(self.shaderProgramEdgeDetect.depthThreshold,self.depthThreshold);
             self.gl.uniform1f(self.shaderProgramEdgeDetect.normalThreshold,self.normalThreshold);
@@ -1276,11 +1635,16 @@ export function drawScene(self: MGWebGL) : void {
             }
             self.gl.uniform1f(self.shaderProgramEdgeDetect.xPixelOffset, 2.0/self.edgeDetectFramebuffer.width/ratio);
             self.gl.uniform1f(self.shaderProgramEdgeDetect.yPixelOffset, 2.0/self.edgeDetectFramebuffer.height/ratio);
-            if(self.doPerspectiveProjection){
-                self.gl.uniform1f(self.shaderProgramEdgeDetect.depthFactor, 1.0/80.0);
-            } else {
-                self.gl.uniform1f(self.shaderProgramEdgeDetect.depthFactor, 1.0);
-            }
+            // The slab, so the shader can turn clip-space depth back into angstroms. This
+            // replaces the depthFactor of 1/80 or 1 that used to be set here: that number was
+            // standing in for the difference between the two projections' depth encodings, and
+            // with the depth linearised there is a real conversion instead of a guess.
+            const edgeSlab = slabNearFar(
+                self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, self.doPerspectiveProjection);
+            self.gl.uniform1f(self.shaderProgramEdgeDetect.clipNear, edgeSlab.near);
+            self.gl.uniform1f(self.shaderProgramEdgeDetect.clipFar, edgeSlab.far);
+            self.gl.uniform1i(self.shaderProgramEdgeDetect.perspectiveProjection,
+                              self.doPerspectiveProjection ? 1 : 0);
 
             self.gl.activeTexture(self.gl.TEXTURE0);
             self.gl.bindTexture(self.gl.TEXTURE_2D, self.gBufferPositionTexture);
@@ -1337,14 +1701,19 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.uniform1i(self.shaderProgramSSAO.gNormalTexture,1);
             self.gl.uniform1i(self.shaderProgramSSAO.texNoiseTexture,2);
 
-            self.gl.uniform1f(self.shaderProgramSSAO.depthBufferSize,b+f);
-            if(self.doPerspectiveProjection){
-                self.gl.uniform1f(self.shaderProgramSSAO.depthFactor,1.0/80.0);
-                self.gl.uniform1f(self.shaderProgramSSAO.radius,self.ssaoRadius*2.0);
-            } else {
-                self.gl.uniform1f(self.shaderProgramSSAO.depthFactor,1.0);
-                self.gl.uniform1f(self.shaderProgramSSAO.radius,self.ssaoRadius/self.zoom);
-            }
+            // The scene's own projection and its inverse. The shader needs the inverse to turn
+            // the clip-space g-buffer back into eye space, and the forward matrix to find where
+            // a sample point lands on screen - it used to project with the fullscreen quad's
+            // matrix, which only resembled the right answer for an orthographic scene.
+            self.gl.uniformMatrix4fv(self.shaderProgramSSAO.sceneProjection, false, self.pMatrix);
+            const ssaoProjectionInverse = mat4.create();
+            mat4.invert(ssaoProjectionInverse, self.pMatrix);
+            self.gl.uniformMatrix4fv(self.shaderProgramSSAO.sceneProjectionInverse, false, ssaoProjectionInverse);
+
+            // In angstroms, the same under either projection. The *2.0 and /zoom that used to be
+            // here were compensating for a radius applied to a clip-space position, which is
+            // why the usable range of the slider was so narrow.
+            self.gl.uniform1f(self.shaderProgramSSAO.radius,self.ssaoRadius);
 
             self.gl.uniform1f(self.shaderProgramSSAO.bias,self.ssaoBias);
             self.gl.activeTexture(self.gl.TEXTURE0);
@@ -1605,6 +1974,11 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.focussedTexture,0);
             self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.blurredTexture,1);
             self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.depthTexture,2);
+        self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.depthTexture2,3);
+        self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.haveDepth2, transparentDepthLayer(self) ? 1 : 0);
+        self.gl.activeTexture(self.gl.TEXTURE3);
+        self.gl.bindTexture(self.gl.TEXTURE_2D,
+            transparentDepthLayer(self));
 
             self.gl.activeTexture(self.gl.TEXTURE0);
             self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttTextureDepth);
@@ -1630,6 +2004,8 @@ export function drawScene(self: MGWebGL) : void {
 
             self.gl.disableVertexAttribArray(self.shaderProgramRenderFrameBuffer.vertexTextureAttribute);
 
+            self.gl.activeTexture(self.gl.TEXTURE3);
+            self.gl.bindTexture(self.gl.TEXTURE_2D, null);
             self.gl.activeTexture(self.gl.TEXTURE2);
             self.gl.bindTexture(self.gl.TEXTURE_2D, null);
             self.gl.activeTexture(self.gl.TEXTURE1);
@@ -1682,9 +2058,21 @@ export function drawScene(self: MGWebGL) : void {
             depthBlur(self, invMat);
         }
 
+        if(renderStats.enabled){
+            endGpuTimer(self.gl as WebGL2RenderingContext);
+            // Before the drawScene time is taken, so that a frame measured with the sync on
+            // reports the whole cost of getting the picture finished rather than only the cost
+            // of asking for it.
+            waitForGpu(self.gl as WebGL2RenderingContext);
+            recordFrame(performance.now() - drawSceneStart);
+        }
+
         if(self.showFPS){
             self.nFrames += 1;
             const thisTime = performance.now();
+            // The interval between the ends of successive frames, so this is the whole frame -
+            // drawScene plus everything outside it. Compared against the drawScene time above,
+            // that is what says whether the renderer is where the time goes at all.
             const mspf = thisTime - self.prevTime;
             self.mspfArray.push(mspf);
             if(self.mspfArray.length>200) self.mspfArray.shift();
@@ -1995,6 +2383,11 @@ export function depthBlur(self: MGWebGL, invMat) {
 
         self.gl.uniform1i(self.shaderProgramBlurX.inputTexture,0);
         self.gl.uniform1i(self.shaderProgramBlurX.depthTexture,1);
+        self.gl.uniform1i(self.shaderProgramBlurX.depthTexture2,3);
+        self.gl.uniform1i(self.shaderProgramBlurX.haveDepth2, transparentDepthLayer(self) ? 1 : 0);
+        self.gl.activeTexture(self.gl.TEXTURE3);
+        self.gl.bindTexture(self.gl.TEXTURE_2D,
+            transparentDepthLayer(self));
 
         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebufferBlurX);
 
@@ -2021,12 +2414,12 @@ export function depthBlur(self: MGWebGL, invMat) {
         self.gl.uniformMatrix4fv(self.shaderProgramBlurX.pMatrixUniform, false, paintPMatrix);
         self.gl.uniformMatrix4fv(self.shaderProgramBlurX.mvMatrixUniform, false, paintMvMatrix);
 
-        let f = -(self.gl_clipPlane0[3]);
-        let b = Math.min(self.gl_clipPlane1[3],self.gl_fog_end);
-        if(self.doPerspectiveProjection){
-            f = 100
-            b = 270
-        }
+        // blurDepth is a distance in angstroms from the view centre; the shaders compare against a
+        // depth buffer. This is the only place that conversion happens, and it runs one way.
+        // focalPlaneDepth knows how each projection writes depth, so perspective is exact now
+        // rather than a few angstroms shy.
+        const slab = slabNearFar(
+            self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, self.doPerspectiveProjection);
 
         const displayBuffers = self.store.getState().glRef.displayBuffers
         let min_x =  1e5;
@@ -2053,13 +2446,15 @@ export function depthBlur(self: MGWebGL, invMat) {
         atom_span = Math.min(1000.0,atom_span);
         self.atom_span = atom_span;
 
-        //console.log("In blur",f.toFixed(2),b.toFixed(2),self.blurDepth.toFixed(2))
-        const fPrime = f-self.fogClipOffset
-        const bPrime = b-self.fogClipOffset
-        //NB The 1.5 scaling is because it is 2 * 0.75 where 0.75 is scaling in the new widget.
-        const fPrimeFrac = fPrime/(1.5*atom_span)+0.5
-        const bPrimeFrac = bPrime/(1.5*atom_span)+0.5
-        const fracDepth = (self.blurDepth-fPrimeFrac)/(bPrimeFrac-fPrimeFrac)
+        // This used to reconstruct the side-on widget's pixel scale from a magic 1.5, "because it
+        // is 2 * 0.75 where 0.75 is scaling in the new widget". The signs in that arithmetic were
+        // right; the coupling was not. The widget's scale stopped being 0.75 * atom_span once it
+        // measured maps and 3D objects too, and this atom_span is atoms only, so it was never the
+        // widget's number in the first place. A renderer should not have to know a widget's pixel
+        // scale to do its job, which is why the setting is now a distance and this is the only
+        // conversion.
+        const fracDepth = focalPlaneDepth(
+            self.blurDepth, slab.near, slab.far, self.fogClipOffset, self.doPerspectiveProjection)
 
         self.gl.uniform1f(self.shaderProgramBlurX.blurDepth,fracDepth);
         self.gl.uniform1f(self.shaderProgramBlurX.blurSize,blurSizeX);
@@ -2087,6 +2482,11 @@ export function depthBlur(self: MGWebGL, invMat) {
 
         self.gl.uniform1i(self.shaderProgramBlurY.inputTexture,0);
         self.gl.uniform1i(self.shaderProgramBlurY.depthTexture,1);
+        self.gl.uniform1i(self.shaderProgramBlurY.depthTexture2,3);
+        self.gl.uniform1i(self.shaderProgramBlurY.haveDepth2, transparentDepthLayer(self) ? 1 : 0);
+        self.gl.activeTexture(self.gl.TEXTURE3);
+        self.gl.bindTexture(self.gl.TEXTURE_2D,
+            transparentDepthLayer(self));
 
         self.gl.enableVertexAttribArray(self.shaderProgramBlurY.vertexTextureAttribute);
         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebufferBlurY);
@@ -2159,6 +2559,12 @@ export function depthBlur(self: MGWebGL, invMat) {
         } else {
             self.gl.bindTexture(self.gl.TEXTURE_2D, self.offScreenDepthTexture);
         }
+
+        // The nearest transparent layer, for pixels the opaque depth above says are empty.
+        self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.depthTexture2,3);
+        self.gl.uniform1i(self.shaderProgramRenderFrameBuffer.haveDepth2, transparentDepthLayer(self) ? 1 : 0);
+        self.gl.activeTexture(self.gl.TEXTURE3);
+        self.gl.bindTexture(self.gl.TEXTURE_2D, transparentDepthLayer(self));
 
         for(let i = 0; i<16; i++)
             self.gl.disableVertexAttribArray(i);
@@ -2245,8 +2651,7 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
         }
 
         if (calculatingShadowMap) {
-            if(!self.offScreenReady)
-                self.recreateOffScreeenBuffers(self.canvas.width,self.canvas.height);
+            self.ensureOffScreeenBuffers(self.canvas.width,self.canvas.height);
             if(!self.screenshotBuffersReady)
                 self.initTextureFramebuffer();
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebufferDepth);
@@ -2329,8 +2734,7 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
         } else {
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
             if(self.useOffScreenBuffers&&self.WEBGL2){
-                if(!self.offScreenReady)
-                    self.recreateOffScreeenBuffers(self.canvas.width,self.canvas.height);
+                self.ensureOffScreeenBuffers(self.canvas.width,self.canvas.height);
                 self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebuffer);
             }
             self.gl.viewport(self.currentViewport[0], self.currentViewport[1], self.currentViewport[2], self.currentViewport[3]);
@@ -2432,11 +2836,25 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                 // out of it. Neither half makes sense alone - give this projection a non-square
                 // buffer and the picture comes out stretched.
                 if(self.doPerspectiveProjection){
-                    //FIXME - with  multiviews
-                    mat4.perspective(self.pMatrix, 1.0, 1.0, 100, 1270.0);
+                    // Aspect stays at 1.0. Measured, not derived: it is right on screen for both
+                    // plain and side-by-side capture, and deriving the aspect from the capture
+                    // viewport instead - (viewport * framebuffer / canvas), which gives 0.5 per
+                    // eye - visibly stretched the stereo screenshot. The arithmetic for that
+                    // viewport is not in dispute, so something downstream is already accounting
+                    // for it - the perspMult zoom applied to this matrix further down. Captures
+                    // were checked by eye afterwards, plain and side-by-side stereo, and both
+                    // frame correctly as they stand. The pair works; leave it alone.
+                    //
+                    // The near and far are a separate matter and do come from the slab: they
+                    // clip, they do not frame, so they cannot affect any of the above.
+                    const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, true);
+                    mat4.perspective(self.pMatrix, PERSPECTIVE_FOV, 1.0, slab.near, slab.far);
                 } else {
-                    const f = self.gl_clipPlane0[3];
-                    const b = Math.min(self.gl_clipPlane1[3],self.gl_fog_end);
+                    const { near: f_, far: b } = slabNearFar(
+                        self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, false);
+                    // The call sites below were written against -f, so keep that spelling here
+                    // rather than touching four matrix calls: near is already -clipPlane0[3].
+                    const f = -f_;
                     if(self.currentViewport[2] > self.currentViewport[3]){
                         if(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo){
                             mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
@@ -2451,11 +2869,18 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                 }
             } else {
                 if(self.doPerspectiveProjection){
-                    mat4.perspective(self.pMatrix, 1.0, self.gl.viewportWidth / self.gl.viewportHeight, 100, 1270.0);
+                    // Two fixes in one line. The aspect came from the canvas rather than the
+                    // viewport, so every mode that divides the canvas - side-by-side and
+                    // cross-eyed stereo, three-way, multiview - was drawn stretched by exactly
+                    // the factor the viewport had been divided by. And the near and far were
+                    // fixed at 100 and 1270, so the slab was enforced only by the fragment
+                    // discards, which cost the program its early depth rejection and spread the
+                    // depth buffer over ten times the range the geometry occupies.
+                    const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, true);
+                    mat4.perspective(self.pMatrix, PERSPECTIVE_FOV, viewportAspect(self.currentViewport), slab.near, slab.far);
                 } else {
-                    const b = Math.min(self.gl_clipPlane1[3],self.gl_fog_end);
-                    const f = self.gl_clipPlane0[3];
-                    mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
+                    const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, false);
+                    mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24, 24, slab.near, slab.far);
                 }
             }
 
@@ -2509,13 +2934,18 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
 
         if(self.doPerspectiveProjection){
             //FIXME - What is the justificatio of 5.7? (Approximately tan(acos(48./270.)), but not quite close enough)....
+            // The 1/ratio for landscape offscreen capture stays: it pairs with the aspect of
+            // 1.0 that path uses, and both are left as they were.
             let perspMult = 1.0;
             if(self.renderToTexture){
                 if(self.gl.viewportWidth > self.gl.viewportHeight){
                     perspMult = 1.0 / ratio;
                 }
             }
-            mat4.scale(self.pMatrix, self.pMatrix, [perspMult * 5.7 / self.zoom, perspMult * 5.7 / self.zoom, 1.0]);
+            // Derived from the eye distance rather than fixed at 5.7, so moving the eye changes
+            // how strongly the view converges while the framing stays put. See perspectiveScale.
+            const pScale = perspectiveScale(self.fogClipOffset);
+            mat4.scale(self.pMatrix, self.pMatrix, [perspMult * pScale / self.zoom, perspMult * pScale / self.zoom, 1.0]);
         } else {
             mat4.scale(self.pMatrix, self.pMatrix, [1. / self.zoom, 1. / self.zoom, 1.0]);
         }

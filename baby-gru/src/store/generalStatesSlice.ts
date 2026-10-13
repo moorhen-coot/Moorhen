@@ -20,6 +20,7 @@ const initialState: {
     activeMap: MoorhenMap;
     theme: string;
     residueSelection: ResidueSelection;
+    selectedThreeDObjectId: string | null;
     isShowingTomograms: boolean;
     isAnimatingTrajectory: boolean;
     isChangingRotamers: boolean;
@@ -48,6 +49,7 @@ const initialState: {
     theme: "flatly",
 
     showHoverInfo: true,
+    selectedThreeDObjectId: null,
     residueSelection: {
         molecule: null,
         first: null,
@@ -151,6 +153,15 @@ const generalStatesSlice = createSlice({
                 label: null,
             };
         },
+        /**
+         * Which 3D object is showing manipulation handles, or none.
+         *
+         * Here rather than in the objects themselves: it is a property of what the interface is
+         * doing, not of the object, and has no business being saved into a session.
+         */
+        setSelectedThreeDObject: (state, action: PayloadAction<string | null>) => {
+            state.selectedThreeDObjectId = action.payload;
+        },
         setResidueSelection: (state, action: PayloadAction<ResidueSelection>) => {
             state.residueSelection = action.payload as unknown as typeof state.residueSelection; 
         },
@@ -190,6 +201,7 @@ const generalStatesSlice = createSlice({
 });
 
 export const {
+    setSelectedThreeDObject,
     setActiveMap,
     setViewOnly,
     setTheme,

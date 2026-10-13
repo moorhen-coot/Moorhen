@@ -103,6 +103,25 @@ export function doClick(self: MGWebGL, event) {
     self.drawScene();
 }
 
+/**
+ * The label a picked buffer gives to the whole instance under the cursor, or null.
+ *
+ * The instance channel, not the section one: a path labels its sections with the residues they
+ * stand for, and separately labels itself with the object it belongs to. This asks the second
+ * question. As everywhere else here, the string is passed on unread.
+ */
+function pickedInstanceTag(
+    displayBuffers, bufferIndex: number, pickIndex: number
+): { tag: string; kind: string; bufferId: string } | null {
+    const pickInfo = bufferIndex > -1 ? displayBuffers[bufferIndex]?.pick_info : null
+    if (!pickInfo?.instance_tags || !pickInfo.instance_tag_kind || pickIndex < 0) return null
+    // A shape offers many pick points, so the reported index is not the instance index.
+    const instance = pickInfo.pick_point_instances?.[pickIndex] ?? pickIndex
+    const tag = pickInfo.instance_tags[instance]
+    if (!tag) return null
+    return { tag, kind: pickInfo.instance_tag_kind, bufferId: displayBuffers[bufferIndex].id }
+}
+
 export function doHover(self: MGWebGL, event) {
 
     if (self.hoverDebounceTimeout) {
@@ -112,11 +131,37 @@ export function doHover(self: MGWebGL, event) {
     self.hoverDebounceTimeout = setTimeout(() => {
         const displayBuffers = self.store.getState().glRef.displayBuffers
         if (self.props.onAtomHovered) {
+        /**
+         * Set the hover state, and draw once it has actually landed.
+         *
+         * This was three separate setState calls per branch with nothing asking for a redraw
+         * afterwards, so the frame on screen was drawn from whatever hover state had been
+         * committed earlier - which is to say the previous hover. With one smooth mesh that is
+         * invisible, because the lag is within a single object. With twenty separate
+         * buffers it can light a different object from the one under the cursor, and leaves the
+         * last one lit after the pointer has moved off everything.
+         *
+         * Drawing from the setState callback is what fixes it: the draw then happens after the
+         * new value is committed rather than racing it.
+         *
+         * Skipping an update that changes nothing matters as much: hovering about within one
+         * object reports the same thing many times a second, and redrawing the scene for each
+         * of those would cost far more than the highlight is worth.
+         */
+        const setHover = (hoveridx: number, hover_point: number, hoverIndices: number[]) => {
+            const held = self.state.hoverIndices ?? []
+            if (self.state.hoveridx === hoveridx
+                && self.state.hover_point === hover_point
+                && held.length === hoverIndices.length
+                && hoverIndices.every((v, i) => held[i] === v)) {
+                return
+            }
+            self.setState({ hoveridx, hover_point, hoverIndices }, () => self.drawScene())
+        }
+
             const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
             if(minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.influence_weights_texture && displayBuffers[minidx_pi].pick_info.influence_point_indexes_texture && displayBuffers[minidx_pi].pick_info.influence_index_offsets_texture && displayBuffers[minidx_pi].pick_info.pick_points){
-                self.setState({ hoveridx: minidx_pi })
-                self.setState({ hover_point: minj_pi })
-                self.setState({ hoverIndices: [] })
+                setHover(minidx_pi, minj_pi, [])
             } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj_pi].length>0) {
                 //Hmm, I am worried, could triangleIndexs.length > 1 ?
                 const completeHoverIndices = []
@@ -125,13 +170,15 @@ export function doHover(self: MGWebGL, event) {
                     completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+1])
                     completeHoverIndices.push(displayBuffers[minidx_pi].triangleIndexs[0][3*idx+2])
                 })
-                self.setState({ hoveridx: minidx_pi })
-                self.setState({ hover_point: -1 })
-                self.setState({ hoverIndices: completeHoverIndices })
+                setHover(minidx_pi, -1, completeHoverIndices)
+            } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.pick_points) {
+                // A buffer offering only pick_points, with no per-vertex influence data and no
+                // triangle lists: the instanced shapes, where one pick point stands for one whole
+                // instance. hover_point is then the instance index, which the instanced vertex
+                // shader compares against gl_InstanceID.
+                setHover(minidx_pi, minj_pi, [])
             } else {
-                self.setState({ hoveridx: -1 })
-                self.setState({ hover_point: -1 })
-                self.setState({ hoverIndices: [] })
+                setHover(-1, -1, [])
             }
             if (minidx > -1) {
                 self.props.onAtomHovered({ atom: displayBuffers[minidx].atoms[minj], buffer: displayBuffers[minidx] });
@@ -139,6 +186,26 @@ export function doHover(self: MGWebGL, event) {
             else {
                 self.props.onAtomHovered(null)
             }
+
+            // A buffer may label its pickable pieces with strings that mean nothing here. Report
+            // the one under the cursor and let whoever understands the scheme act on it.
+            //
+            // An atom under the cursor takes precedence: the two pick channels are independent,
+            // so both can find something at once, and this is the renderer saying which of its
+            // own answers wins. Reported after onAtomHovered, which has already cleared the
+            // hover state on the way past when there is no atom - so a labelled piece fills the
+            // gap rather than fighting over it.
+            if (self.props.onSectionHovered) {
+                const atomHasIt = minidx > -1
+                const pickInfo = (!atomHasIt && minidx_pi > -1) ? displayBuffers[minidx_pi].pick_info : null
+                const tag = (pickInfo?.pick_point_tags && minj_pi > -1)
+                    ? pickInfo.pick_point_tags[minj_pi]
+                    : null
+                self.props.onSectionHovered(
+                    tag ? { kind: pickInfo.pick_tag_kind, tag: tag, buffer: displayBuffers[minidx_pi] } : null
+                )
+            }
+
             self.drawScene();
         }
         self.hoverDebounceTimeout = null;
@@ -233,6 +300,15 @@ export function doMouseMoveMeasure(self: MGWebGL, evt) {
 }
 
 export function doMouseUp(self: MGWebGL, event) {
+    if (self.pointerClaim) {
+        document.dispatchEvent(new CustomEvent("handleGrabEnd", { detail: { ...self.pointerClaim } }))
+        self.pointerClaim = null
+        self.mouseDown = false
+        // Nothing else on the way out: no centring, and no hover recomputed from a pointer that
+        // has been busy dragging.
+        return
+    }
+
     const displayBuffers = self.store.getState().glRef.displayBuffers
     const event_x = event.pageX;
     const event_y = event.pageY;
@@ -256,6 +332,21 @@ export function doMouseUp(self: MGWebGL, event) {
                         //self.setOriginAnimated([-atx, -aty, -atz], true);
                         self.props.onOriginChanged([-atx, -aty, -atz])
                     }
+                } else {
+                    // No atom there, but perhaps a mesh - which may stand for nothing, so there
+                    // is no cid to centre on, only a position. The pick has already been done
+                    // above: minidx_pi and minj_pi are the other half of its answer.
+                    //
+                    // Atoms keep precedence, as they do when hovering: where both are under the
+                    // pointer, the atom is the finer thing to have been aiming at.
+                    const claimsPointer = minidx_pi > -1
+                        && !!displayBuffers[minidx_pi]?.pick_info?.claims_pointer
+                    const meshPosition = claimsPointer
+                        ? null
+                        : pickedMeshPosition(displayBuffers, minidx_pi, minj_pi, self.pickLevel)
+                    if(meshPosition){
+                        self.props.onOriginChanged([-meshPosition[0], -meshPosition[1], -meshPosition[2]])
+                    }
                 }
             }
         } else if (self.reContourMapOnlyOnMouseUp) {
@@ -263,9 +354,82 @@ export function doMouseUp(self: MGWebGL, event) {
         }
     } else if (event.altKey && event.shiftKey && self.reContourMapOnlyOnMouseUp) {
         self.handleOriginUpdated(true)
+    } else if (event.button === 0 && clickWasFree(self)) {
+        // Report what was clicked, for anyone who can make sense of the label.
+        //
+        // Here rather than in doClick because doClick runs on mousedown, and a press is not yet
+        // a click: turning the view starts with a press on whatever happens to be under the
+        // pointer, usually empty space. Reporting then would rewrite the selection every time
+        // the camera moved. The same small-movement test the centring above uses tells the two
+        // apart. A press on a manipulation handle never reaches here at all - the claim at the
+        // top of this function has already returned.
+        if (Math.abs(event_x - self.mouseDown_x) < 5 && Math.abs(event_y - self.mouseDown_y) < 5) {
+            const [minidx, , , , , , , minidx_pi, minj_pi] = self.getAtomFomMouseXY(event, self)
+            // Atoms take precedence, as they do when hovering and when centring: where both are
+            // under the pointer, the atom is the finer thing to have been aiming at.
+            if (minidx < 0) {
+                const picked = pickedInstanceTag(displayBuffers, minidx_pi, minj_pi)
+                document.dispatchEvent(new CustomEvent("meshClicked", {
+                    // Null for empty space, and null too for a mesh carrying no label of its
+                    // own. Both say the same thing to a listener: nothing of yours was clicked.
+                    detail: picked ?? { tag: null, kind: null, bufferId: null }
+                }))
+            }
+        }
     }
     self.mouseDown = false;
     self.doHover(event, self);
+}
+
+/**
+ * Whether a click means only itself.
+ *
+ * Each of these shortcuts already gives a click a meaning - label an atom, measure to it, take
+ * it as one end of a residue range - and a click cannot mean two things at once.
+ */
+function clickWasFree(self: MGWebGL): boolean {
+    return !self.keysDown['label_atom']
+        && !self.keysDown['measure_distances']
+        && !self.keysDown['residue_selection']
+}
+
+/**
+ * Where on a mesh a pick landed, in scene coordinates, or null if it did not land on one.
+ *
+ * A buffer divided into sections gives the section that was picked, so that a trace centres on
+ * the residue pointed at rather than on the middle of the whole chain. Anything else gives the
+ * centre of the instance, which is the first pick point it offers - the rest are scattered over
+ * its surface to make it hoverable, and centring on one of those would put the view on the
+ * shape's edge.
+ *
+ * A position rather than an identity, because a mesh need not stand for anything at all.
+ *
+ * `level` says how much of a sectioned mesh counts as one thing at the current zoom: centring
+ * lands on the middle of whatever is highlighted, so pulled back far enough it goes to the
+ * middle of a whole chain rather than of the residue happening to be under the pointer.
+ */
+function pickedMeshPosition(
+    displayBuffers, bufferIndex: number, pickIndex: number, level: number = 0
+): number[] | null {
+    const pickInfo = bufferIndex > -1 ? displayBuffers[bufferIndex]?.pick_info : null;
+    if (!pickInfo?.pick_points || pickIndex < 0) {
+        return null;
+    }
+    // A section's aim point at this grain, when the mesh offers coarser ones.
+    const section = pickInfo.pick_point_sections?.[pickIndex];
+    const coarse = section !== undefined
+        ? pickInfo.section_level_points?.[level]?.[section]
+        : undefined;
+    if (coarse) return coarse;
+    let index = pickIndex;
+    if (!pickInfo.pick_point_sections) {
+        const instances = pickInfo.pick_point_instances;
+        if (instances) {
+            const first = instances.indexOf(instances[pickIndex]);
+            if (first > -1) index = first;
+        }
+    }
+    return pickInfo.pick_points[index] ?? null;
 }
 
 export function doMiddleClick(self: MGWebGL, evt) {
@@ -288,6 +452,15 @@ export function doDoubleClick(self: MGWebGL, event) {
 }
 
 export function doMouseMove(self: MGWebGL, event) {
+    // A claimed drag never reaches the camera.
+    if (self.pointerClaim) {
+        self.mouseMoved = true
+        document.dispatchEvent(new CustomEvent("handleGrabMove", {
+            detail: { ...self.pointerClaim, ...pointerRay(self, event) }
+        }))
+        return
+    }
+
     const activeMoleculeMotion = (self.activeMolecule != null) && (self.activeMolecule.representations.length > 0) && !self.keysDown['residue_camera_wiggle'];
 
     const centreOfMass = function (atoms) {
@@ -313,31 +486,7 @@ export function doMouseMove(self: MGWebGL, event) {
     if(self.trackMouse)
         requestAnimationFrame(self.mouseMoveAnimateTrack.bind(self, true, 20))
 
-    if (true) {
-        let x;
-        let y;
-        const e = event;
-        if (e.pageX || e.pageY) {
-            x = e.pageX;
-            y = e.pageY;
-        }
-        else {
-            x = e.clientX;
-            y = e.clientY;
-        }
-
-        const c = self.canvasRef.current;
-        const offset = getOffsetRect(c);
-
-        x -= offset.left;
-        y -= offset.top;
-        x *= getDeviceScale();
-        y *= getDeviceScale();
-
-        self.gl_cursorPos[0] = x;
-        self.gl_cursorPos[1] = self.canvas.height - y;
-        self.props.cursorPositionChanged(x/getDeviceScale(), y/getDeviceScale()) //I am updating this in real window coords
-    }
+    updateCursorPosition(self, event)
     if (!self.mouseDown) {
         self.init_x = event.pageX;
         self.init_y = event.pageY;
@@ -529,6 +678,75 @@ export function doMouseMove(self: MGWebGL, event) {
     self.drawScene();
 }
 
+/**
+ * The label of whatever has taken the pointer at this position, or null.
+ *
+ * A buffer may declare that it wants pointer events for itself - the manipulation handles do -
+ * and this is the whole of what the renderer knows about that. It reports a label it does not
+ * interpret, and stops driving the camera; someone else decides what the label means.
+ */
+function pointerClaimAt(self: MGWebGL, event): { tag: string; bufferId: string } | null {
+    const displayBuffers = self.store.getState().glRef.displayBuffers
+    if (!displayBuffers || displayBuffers.length === 0) return null
+    const [, , , , , , , minidx_pi, minj_pi] = self.getAtomFomMouseXY(event, self)
+    const pickInfo = minidx_pi > -1 ? displayBuffers[minidx_pi]?.pick_info : null
+
+    if (minidx_pi < 0 || minj_pi < 0) return null
+    if (!pickInfo?.claims_pointer || !pickInfo.pick_point_tags) return null
+    const tag = pickInfo.pick_point_tags[minj_pi]
+    return tag ? { tag, bufferId: displayBuffers[minidx_pi].id } : null
+}
+
+/**
+ * Record where the pointer is, in the renderer's own terms.
+ *
+ * Everything that turns a screen position into a scene position reads gl_cursorPos rather than
+ * the event - getFrontAndBackPos takes an event argument and ignores it entirely - so anything
+ * that wants a ray has to make sure this is current first.
+ */
+function updateCursorPosition(self: MGWebGL, event) {
+    let x;
+    let y;
+    const e = event;
+    if (e.pageX || e.pageY) {
+        x = e.pageX;
+        y = e.pageY;
+    }
+    else {
+        x = e.clientX;
+        y = e.clientY;
+    }
+
+    const c = self.canvasRef.current;
+    const offset = getOffsetRect(c);
+
+    x -= offset.left;
+    y -= offset.top;
+    x *= getDeviceScale();
+    y *= getDeviceScale();
+
+    self.gl_cursorPos[0] = x;
+    self.gl_cursorPos[1] = self.canvas.height - y;
+    self.props.cursorPositionChanged(x/getDeviceScale(), y/getDeviceScale()) //I am updating this in real window coords
+}
+
+/**
+ * The pointer as a ray through the scene.
+ *
+ * Named for what getFrontAndBackPos actually returns - front first, then back. The blob-fitting
+ * double click labels the same two the other way round, which does no harm there and would do
+ * none here either, both ends describing one line, but the honest names are cheaper to read.
+ */
+function pointerRay(self: MGWebGL, event) {
+    // The ray is built from the recorded cursor position, so that has to be current first.
+    updateCursorPosition(self, event)
+    const frontAndBack = self.getFrontAndBackPos(event)
+    return {
+        front: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
+        back: [frontAndBack[1][0], frontAndBack[1][1], frontAndBack[1][2]],
+    }
+}
+
 export function doMouseDown(self: MGWebGL, event) {
     self.init_x = event.pageX;
     self.init_y = event.pageY;
@@ -539,6 +757,21 @@ export function doMouseDown(self: MGWebGL, event) {
     self.mouseMoved = false;
     if (event.button === 1) {
         event.preventDefault();
+    }
+
+    // Before the camera gets any of this: has something claimed the pointer? If so the drag
+    // belongs to it, and the view must not turn underneath it.
+    self.pointerClaim = null
+    if (event.button === 0 && !self.keysDown['residue_selection']) {
+        const claim = pointerClaimAt(self, event)
+        if (claim) {
+            self.pointerClaim = claim
+            self.mouseDown = false
+            document.dispatchEvent(new CustomEvent("handleGrabStart", {
+                detail: { ...claim, ...pointerRay(self, event) }
+            }))
+            event.preventDefault()
+        }
     }
 }
 

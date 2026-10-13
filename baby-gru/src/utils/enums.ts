@@ -420,3 +420,42 @@ export const railSpecies = [
     "Yellow Rail",
     "Yellow-breasted Crake",
 ];
+
+/**
+ * Tag scheme for mesh sections that stand for atoms:
+ *
+ *     <molecule uniqueId>|<chain id>|<residue number>|<atom cid>
+ *
+ * The first three fields are a normalised residue key, for matching; the fourth is a CID to hand
+ * to the hover state, for display. Both are carried because CIDs come in more than one shape -
+ * the sequence viewer writes "/0/A/36" while an atom hover writes "/5a3h/A/36(GLY)/CA" - so
+ * matching on the CID itself would depend on where the hover came from. Parsing every tag to
+ * compare them would be correct but costs a pass over every section each time the display
+ * buffers are rebuilt, which is once a frame while a 3D object is being dragged.
+ *
+ * Lives here rather than with either end of it: the 3D object code must not know what an atom is,
+ * and the molecular code must not know what a section is. The generator that labels a path and
+ * the bridges that read the label are the only things that agree on this string.
+ */
+export const MOORHEN_ATOM_TAG_KIND = "moorhen-atom";
+
+/** The residue key the first three fields of such a tag make up. */
+export const moorhenAtomTagKey = (moleculeUniqueId: string, chainId: string, residueNumber: number | string) =>
+    `${moleculeUniqueId}|${chainId}|${parseInt(String(residueNumber))}`;
+
+/**
+ * Tag scheme for manipulation handles, written "<action>|<axis>" - "translate|x", "rotate|z".
+ *
+ * A separate scheme from the atom one so that the bridges which turn a section hover into an
+ * atom hover pass over these without a second thought, which is what the kind field is for.
+ */
+export const MOORHEN_GIZMO_TAG_KIND = "moorhen-gizmo";
+
+/**
+ * Tag scheme naming a whole 3D object, written as its uniqueId.
+ *
+ * On the instance channel rather than the section one, and so able to sit alongside the atom
+ * tags a path already carries: a path's sections say which residue each piece stands for, while
+ * its instance says which object all of it belongs to. Clicking asks the second question.
+ */
+export const MOORHEN_3D_OBJECT_TAG_KIND = "moorhen-3d-object";

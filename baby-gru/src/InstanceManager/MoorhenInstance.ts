@@ -7,6 +7,30 @@ import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
 import { addCustomRepresentation, removeCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
+import {
+    addObject,
+    emptyObjects,
+    removeObjectById,
+    removeObjectsByTag,
+    updateObject,
+    ThreeDObject
+} from "@/store/threeDObjectsSlice";
+import {
+    addVector,
+    emptyVectors,
+    removeVectorById,
+    removeVectorsByTag,
+    MoorhenVector
+} from "@/store/vectorsSlice";
+import { matchesTags, Tags } from "@/utils/tags";
+import { newVector } from "@/utils/vectorFactories";
+import {
+    newObjectOfType,
+    OBJECT_TYPES,
+    AllowedObjectKeys,
+    ThreeDObjectCreateParams
+} from "@/utils/threeDObjectFactories";
+import { v4 as uuidv4 } from "uuid";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/FileLoading";
 import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
@@ -611,6 +635,330 @@ export class MoorhenInstance extends StoreExtension {
     public getMapList(): MoorhenMap[] {
         const state = this.store.getState();
         return state.maps;
+    }
+
+    /**
+     * 3D object API for this instance.
+     *
+     * Lets you get, create, edit and delete the geometric shapes - spheres, cylinders,
+     * arcs, paths, polyhedra and the rest - drawn in the 3D view alongside the molecules.
+     * Each object's `uniqueId` is its handle, as a representation's is.
+     *
+     * Unlike a representation, an object is plain data rather than an instance of a class:
+     * it goes into the store, and the viewer draws whatever it finds there. So there is no
+     * separate step to draw or redraw one, and no async work - these methods return as soon
+     * as the store has been updated.
+     *
+     * @example
+     * const uid = instance.object.create({ type: "sphere", origin: [10, 0, 0], radius: 5 });
+     * instance.object.edit(uid, { colour: "#00ff00ff", wireframe: true });
+     * instance.object.delete(uid);
+     */
+    public get object() {
+        const moorhenInstance = this;
+        return {
+            /**
+             * The shape names that {@link create} accepts.
+             * @example
+             * console.log(instance.object.types); // ["sphere", "cylinder", "cone", ...]
+             */
+            get types(): ThreeDObject["type"][] {
+                return OBJECT_TYPES;
+            },
+
+            /**
+             * Get a 3D object by its unique ID.
+             * @param uniqueId - The unique identifier of the object.
+             * @returns The matching object, or null if there is no such object.
+             * @example
+             * const sphere = instance.object.get(uid);
+             */
+            get(uniqueId: string): ThreeDObject | null {
+                const state = moorhenInstance.store.getState();
+                return state.threeDObjects.objects.find(obj => obj.uniqueId === uniqueId) ?? null;
+            },
+
+            /**
+             * Get the 3D objects currently in the scene, in the order they were added.
+             *
+             * @param tags - Optional filter. An object must carry all the pairs given to be
+             * included, so `{ source: "myApp" }` returns everything that application drew and
+             * adding another pair narrows it further. Omit it for everything.
+             * @returns The matching objects. Treat the list as read-only: change an object
+             * through {@link edit} rather than by mutating what comes back, or the viewer will
+             * not hear about it.
+             * @example
+             * instance.object.list().forEach(obj => console.log(obj.type, obj.uniqueId));
+             * instance.object.list({ source: "myApp" }).length;
+             */
+            list(tags?: Tags): ThreeDObject[] {
+                const all = moorhenInstance.store.getState().threeDObjects.objects;
+                return tags ? all.filter(obj => matchesTags(obj, tags)) : all;
+            },
+
+            /**
+             * Create a 3D object and draw it.
+             *
+             * `type` is the only required field. Everything else falls back to that shape's
+             * default, so `{ type: "sphere" }` is a complete request and gives a unit sphere
+             * at the origin. Because the object types form a discriminated union, naming the
+             * type narrows the rest of the fields: a "sphere" takes `radius`, a "cylinder"
+             * takes `end` and `radius`, a "torus" takes `major_radius` and `minor_radius`.
+             *
+             * Any `uniqueId` in `params` is ignored - the new object always gets a fresh one,
+             * so two calls with the same parameters give two objects rather than one.
+             *
+             * @param params - The shape to make, plus any fields to override its defaults.
+             * @param params.type - One of {@link types}.
+             * @returns The unique ID of the new object, which is its handle for
+             * {@link get}, {@link edit} and {@link delete}. Null if `type` is not a
+             * known shape.
+             * @example
+             * const uid = instance.object.create({
+             *     type: "cylinder",
+             *     origin: [0, 0, 0],
+             *     end: [0, 20, 0],
+             *     radius: 2,
+             *     colour: "#3366ffff"
+             * });
+             */
+            create<P extends ThreeDObjectCreateParams>(
+                params: P & { [Key in Exclude<keyof P, AllowedObjectKeys<P>>]: never }
+            ): string | null {
+                if (!params || !(OBJECT_TYPES as readonly string[]).includes(params.type)) {
+                    console.warn(
+                        `3D object type "${params?.type}" is not one of ${OBJECT_TYPES.join(", ")}.`
+                    );
+                    return null;
+                }
+                // The default first, then the caller's fields over the top, then a fresh id
+                // last so that a uniqueId passed in cannot displace it.
+                const object = {
+                    ...newObjectOfType(params.type),
+                    ...params,
+                    uniqueId: uuidv4()
+                } as ThreeDObject;
+                moorhenInstance.dispatch(addObject(object));
+                return object.uniqueId;
+            },
+
+            /**
+             * Edit an existing 3D object in place.
+             *
+             * A partial update: fields left out keep their current value. The object's
+             * `type` and `uniqueId` cannot be changed - to turn a sphere into a cube,
+             * delete it and create the cube, which also makes it clear in a session that
+             * two different objects were involved.
+             *
+             * @param uniqueId - Unique ID of the object to edit.
+             * @param params - The fields to change.
+             * @returns True if the object was found and updated, otherwise false.
+             * @example
+             * instance.object.edit(uid, { radius: 8, colour: "#ff0000ff" });
+             */
+            edit(uniqueId: string, params: Partial<Omit<ThreeDObject, "type" | "uniqueId">>): boolean {
+                const existing = this.get(uniqueId);
+                if (!existing) {
+                    return false;
+                }
+                // Locked means locked, `locked` itself included. One rule rather than two, and
+                // nothing is lost by it: an owner that wants a locked object changed deletes it
+                // and creates the replacement, which is what a redraw does anyway.
+                if (existing.locked) {
+                    return false;
+                }
+                // updateObject replaces the stored object wholesale, so the merge happens
+                // here; without it, an edit of one field would drop every other.
+                const { type: _ignoredType, uniqueId: _ignoredId, ...changes } = params as Record<string, unknown>;
+                moorhenInstance.dispatch(updateObject({ ...existing, ...changes } as ThreeDObject));
+                return true;
+            },
+
+            /**
+             * Delete a 3D object, removing it from the scene.
+             * @param uniqueId - Unique ID of the object to delete.
+             * @returns True if the object was found and deleted, otherwise false.
+             * @example
+             * const deleted = instance.object.delete(uid);
+             */
+            delete(uniqueId: string): boolean {
+                if (!this.get(uniqueId)) {
+                    return false;
+                }
+                moorhenInstance.dispatch(removeObjectById(uniqueId));
+                return true;
+            },
+
+            /**
+             * Delete 3D objects in bulk. Molecules and maps are untouched.
+             *
+             * This is how whatever created a group of objects disposes of them: tag them on the
+             * way in, and clear by that tag rather than having to remember their ids. A custom
+             * representation that redraws itself wants exactly this.
+             *
+             * @param tags - Optional filter, with the same meaning as in {@link list}. Omit it
+             * to clear everything. An empty object - `{}` - clears nothing rather than
+             * everything, so a tag object that came out empty by accident cannot wipe the
+             * scene; pass no argument to mean all of them.
+             * @returns The number of objects removed.
+             * @example
+             * instance.object.clear({ source: "myApp" });   // just that application's
+             * instance.object.clear();                      // all of them
+             */
+            clear(tags?: Tags): number {
+                if (tags === undefined) {
+                    const count = this.list().length;
+                    moorhenInstance.dispatch(emptyObjects());
+                    return count;
+                }
+                // An empty query is the one place the two conventions pull apart. As a filter,
+                // {} matches everything, which is the identity you want from an optional
+                // argument; as a destructive query it must match nothing. Removal is guarded in
+                // the reducer, so without this the count returned would claim objects had gone
+                // that had not.
+                if (Object.keys(tags).length === 0) {
+                    return 0;
+                }
+                const count = this.list(tags).length;
+                moorhenInstance.dispatch(removeObjectsByTag(tags));
+                return count;
+            }
+        };
+    }
+
+    /**
+     * Vector API for this instance.
+     *
+     * Vectors are the arrows, dashed lines and distance labels drawn between atoms or points -
+     * XH-pi interactions, NOE restraints, and anything an application wants to point at
+     * something with.
+     *
+     * This extends rather than replaces what the generated store API already offered. Everything
+     * from there is still here, so `addVector(wholeVector)` and the rest keep working; the
+     * additions are the shape the 3D object API uses - `type`-free defaults, a returned handle,
+     * tag filtering - so that the two read alike.
+     *
+     * Overriding the getter rather than adding a second namespace is deliberate. The generated
+     * methods are grouped by slice name, which gives `instance.vectors`; a curated
+     * `instance.vector` beside it would be one keystroke apart and do something different.
+     *
+     * @example
+     * const uid = instance.vectors.create({ xTo: 10, yTo: 5, tags: { source: "myApp" } });
+     * instance.vectors.edit(uid, { labelText: "3.4 A", labelMode: "middle" });
+     * instance.vectors.clear({ source: "myApp" });
+     */
+    public get vectors() {
+        const moorhenInstance = this;
+        // The generated per-reducer methods, kept as the low-level route.
+        const generated = super.vectors;
+        return {
+            ...generated,
+
+            /**
+             * Get a vector by its unique ID.
+             * @param uniqueId - The unique identifier of the vector.
+             * @returns The matching vector, or null if there is no such vector.
+             */
+            get(uniqueId: string): MoorhenVector | null {
+                const state = moorhenInstance.store.getState();
+                return state.vectors.vectorsList.find(v => v.uniqueId === uniqueId) ?? null;
+            },
+
+            /**
+             * Get the vectors currently in the scene, in the order they were added.
+             * @param tags - Optional filter; a vector must carry all the pairs given.
+             * @returns The matching vectors, to be treated as read-only.
+             */
+            list(tags?: Tags): MoorhenVector[] {
+                const all = moorhenInstance.store.getState().vectors.vectorsList;
+                return tags ? all.filter(v => matchesTags(v, tags)) : all;
+            },
+
+            /**
+             * Create a vector and draw it.
+             *
+             * Every field is optional: what is left out takes its default, so
+             * `create({ xTo: 10 })` is a complete request. Any `uniqueId` passed is ignored and
+             * a fresh one minted, so two identical calls give two vectors rather than one.
+             *
+             * A field that does not exist on a vector is a compile error, whether it is written
+             * at the call site or arrives in a variable.
+             *
+             * @param params - Fields to set, in place of their defaults.
+             * @returns The unique ID of the new vector, which is its handle for {@link get},
+             * {@link edit} and {@link delete}.
+             */
+            create<P extends Partial<Omit<MoorhenVector, "uniqueId">>>(
+                params: P & { [K in Exclude<keyof P, keyof MoorhenVector>]: never } = {} as never
+            ): string {
+                const vector = { ...newVector(params as Partial<MoorhenVector>), uniqueId: uuidv4() };
+                moorhenInstance.dispatch(addVector(vector));
+                return vector.uniqueId;
+            },
+
+            /**
+             * Edit an existing vector in place.
+             *
+             * A partial update: fields left out keep their current value. `uniqueId` cannot be
+             * changed.
+             *
+             * @param uniqueId - Unique ID of the vector to edit.
+             * @param params - The fields to change.
+             * @returns True if the vector was found and updated, otherwise false.
+             */
+            edit(uniqueId: string, params: Partial<Omit<MoorhenVector, "uniqueId">>): boolean {
+                const existing = this.get(uniqueId);
+                if (!existing) {
+                    return false;
+                }
+                // As for objects: a locked vector is not edited, `locked` included.
+                if (existing.locked) {
+                    return false;
+                }
+                const { uniqueId: _ignored, ...changes } = params as Record<string, unknown>;
+                // There is no update reducer for vectors, so this is a remove and re-add. The
+                // vector keeps its id, so handles held elsewhere stay valid; it does move to the
+                // end of the list, which affects nothing but draw order between vectors.
+                moorhenInstance.dispatch(removeVectorById(uniqueId));
+                moorhenInstance.dispatch(addVector({ ...existing, ...changes } as MoorhenVector));
+                return true;
+            },
+
+            /**
+             * Delete a vector.
+             * @param uniqueId - Unique ID of the vector to delete.
+             * @returns True if the vector was found and deleted, otherwise false.
+             */
+            delete(uniqueId: string): boolean {
+                if (!this.get(uniqueId)) {
+                    return false;
+                }
+                moorhenInstance.dispatch(removeVectorById(uniqueId));
+                return true;
+            },
+
+            /**
+             * Delete vectors in bulk.
+             * @param tags - Optional filter, as in {@link list}. Omit it to clear everything;
+             * `{}` clears nothing rather than everything.
+             * @returns The number of vectors removed.
+             */
+            clear(tags?: Tags): number {
+                if (tags === undefined) {
+                    const count = this.list().length;
+                    moorhenInstance.dispatch(emptyVectors());
+                    return count;
+                }
+                // See the note on object.clear: {} matches everything as a filter and nothing as
+                // a destructive query, so the count has to follow the removal, not the filter.
+                if (Object.keys(tags).length === 0) {
+                    return 0;
+                }
+                const count = this.list(tags).length;
+                moorhenInstance.dispatch(removeVectorsByTag(tags));
+                return count;
+            }
+        };
     }
 
     /**

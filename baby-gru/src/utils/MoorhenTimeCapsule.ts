@@ -34,6 +34,7 @@ import {
     addTextOverlay,
     emptyOverlays, setBackgroundColor,
     setDepthBlurDepth,
+    setPerspectiveEyeDistance,
     setDepthBlurRadius,
     setDoEdgeDetect,
     setDoPerspectiveProjection,
@@ -57,6 +58,8 @@ import type {
     Overlay2DTextFrac,
 } from "../store/overlaysSlice";
 import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
+import { ThreeDObject, addObject, emptyObjects } from "../store/threeDObjectsSlice";
+import { withMigratedTags } from "./tags";
 import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
@@ -180,6 +183,7 @@ export type backupSession = {
     dataIsEmbedded: boolean;
     vectorData?: MoorhenVector[];
     overlay2dData?: Overlay2DSessionData;
+    threeDObjectData?: ThreeDObject[];
 };
 
 export type Overlay2DSessionData = {
@@ -188,6 +192,10 @@ export type Overlay2DSessionData = {
     textFracPath2D: Overlay2DTextFrac[];
     latexFracPath2D: Overlay2DLatexSrcFrac[];
     imageFracPath2D: Overlay2DImageSrcFrac[];
+};
+
+export type Moorhen3DObjectSessionData = {
+    objects: ThreeDObject[];
 };
 
 /**
@@ -219,6 +227,13 @@ export class MoorhenTimeCapsule {
     store: MoorhenReduxStoreType;
     onIsBusyChange: (arg0: boolean) => void;
 
+    /**
+     * Session versions older than the current one that can still be loaded. Add the outgoing
+     * version here when bumping `this.version`, and drop any version whose format can no longer
+     * be read.
+     */
+    static readonly supportedLegacyVersions: string[] = ["v21", "v22", "v23"];
+
     constructor(
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
         mapsRef: React.RefObject<moorhen.Map[]>,
@@ -233,7 +248,7 @@ export class MoorhenTimeCapsule {
         this.modificationCount = 0;
         this.modificationCountBackupThreshold = 5;
         this.maxBackupCount = 10;
-        this.version = "v23";
+        this.version = "v24";
         this.disableBackups = false;
         this.storageInstance = null;
         this.onIsBusyChange = null;
@@ -563,6 +578,7 @@ export class MoorhenTimeCapsule {
         };
 
         const vectorData: MoorhenVector[] = this.store.getState().vectors.vectorsList;
+        const threeDObjectData: ThreeDObject[] = this.store.getState().threeDObjects.objects;
 
         const overlay2dData: Overlay2DSessionData = {
             fracPath2D: this.store.getState().overlays.fracPathOverlayList,
@@ -582,6 +598,7 @@ export class MoorhenTimeCapsule {
             dataIsEmbedded: embedData,
             overlay2dData: overlay2dData,
             vectorData: vectorData,
+            threeDObjectData: threeDObjectData,
         };
 
         return session;
@@ -804,11 +821,8 @@ export class MoorhenTimeCapsule {
         if (!sessionData) {
             return -1;
         } else if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
-            if (
-                (timeCapsuleRef.current.version === "v23" && sessionData.version !== "v22" && sessionData.version !== "v21") ||
-                timeCapsuleRef.current.version !== "v23"
-            ) {
-                console.warn("Outdated session backup version, wont load...");
+            if (!MoorhenTimeCapsule.supportedLegacyVersions.includes(sessionData.version)) {
+                console.warn(`Outdated session backup version (${sessionData.version}), wont load...`);
                 return -1;
             }
         }
@@ -1036,10 +1050,27 @@ export class MoorhenTimeCapsule {
             dispatch(setActiveMap(newMaps[sessionData.activeMapIndex]));
         }
 
+        // A session saved before tags were a field has them written into the uniqueId instead,
+        // so they are recovered on the way in. One-way, by design: nothing writes a tag into an
+        // identifier any more, and a session written now is not expected to group correctly in
+        // an older Moorhen. Anything already tagged is left alone.
+        //
+        // The XPID form needs the molecule ids to be separable from the rest of the identifier,
+        // which is why they are collected first.
+        const knownMoleculeIds = (sessionData.moleculeData ?? []).map(m => m.uniqueId).filter(Boolean);
+
+        // Load 3D objects
+        dispatch(emptyObjects());
+        if (sessionData.threeDObjectData) {
+            withMigratedTags(sessionData.threeDObjectData, knownMoleculeIds).forEach(d => {
+                dispatch(addObject(d));
+            });
+        }
+
         // Load vectors
         dispatch(emptyVectors());
         if (sessionData.vectorData) {
-            sessionData.vectorData.forEach(d => {
+            withMigratedTags(sessionData.vectorData, knownMoleculeIds).forEach(d => {
                 dispatch(addVector(d));
             });
         }
@@ -1124,6 +1155,11 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setDepthBlurRadius, sessionData.viewData.blur.radius);
         guardedDispatch(setUseOffScreenBuffers, sessionData.viewData.blur.enabled);
         guardedDispatch(setDoPerspectiveProjection, sessionData.viewData.doPerspectiveProjection ?? false);
+        // The eye distance is restored with the rest of the camera further up, through
+        // cameraFromSession, which also applies the "a session without one means 250" rule. The
+        // dispatch that used to be here said it ran before the fog was restored, and after this
+        // merge it would have run after - so it goes rather than being left to mean the opposite
+        // of what it says.
 
 
         // Set connected maps and molecules if any

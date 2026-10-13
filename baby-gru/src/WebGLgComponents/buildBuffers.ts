@@ -480,6 +480,10 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
         theBuffer.triangleInstanceSizes = oldBuffer.symmetryMatrices ? oldBuffer.triangleInstanceSizes.slice() : null
         theBuffer.triangleColours = oldBuffer.triangleColours ? oldBuffer.triangleColours.slice() : null
         theBuffer.triangleNormals = oldBuffer.triangleNormals ? oldBuffer.triangleNormals.slice() : null
+        theBuffer.triangleTextureCoords = oldBuffer.triangleTextureCoords ? oldBuffer.triangleTextureCoords.slice() : []
+        // Materials are plain data referring to textures by id, so the clone shares the textures
+        // rather than duplicating them - which is the point of the registry holding the pixels.
+        theBuffer.materials = oldBuffer.materials ? oldBuffer.materials.slice() : []
         theBuffer.primitiveSizes = oldBuffer.primitiveSizes ? oldBuffer.primitiveSizes.slice() : null
         theBuffer.bufferTypes = oldBuffer.bufferTypes ? oldBuffer.bufferTypes.slice() : null
         //theBuffer.customColour = oldBuffer.customColour.slice() as [number,number,number,number] | null
@@ -491,6 +495,7 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
         theBuffer.textNormals = oldBuffer.textNormals ? oldBuffer.textNormals.slice() : null
         theBuffer.textColours = oldBuffer.textColours ? oldBuffer.textColours.slice() : null
         theBuffer.isHoverBuffer = oldBuffer.isHoverBuffer
+        theBuffer.statsLabel = oldBuffer.statsLabel
         theBuffer.multiViewGroup = oldBuffer.multiViewGroup
         theBuffer.clickTol = oldBuffer.clickTol
         theBuffer.doStencil = oldBuffer.doStencil
@@ -813,6 +818,28 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootSt
                     gl.bindBuffer(gl.ARRAY_BUFFER, displayBuffers[idx].triangleVertexPositionBuffer[j]);
                     gl.bufferData(gl.ARRAY_BUFFER, triangleVertices, gl.STATIC_DRAW);
                     displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
+
+                    // Texture coordinates, when this sub-buffer has them. Uploaded only if there
+                    // is one pair per vertex: a shorter array would be read past the end by the
+                    // attribute pointer, and a longer one means the data does not describe this
+                    // geometry. Either way, leaving the buffer empty draws it untextured, which
+                    // is the same as any other mesh.
+                    const texCoords = displayBuffers[idx].triangleTextureCoords?.[j]
+                    const textureBuffer = displayBuffers[idx].triangleVertexTextureBuffer[j]
+                    if (texCoords && textureBuffer && texCoords.length === (triangleVertices.length / 3) * 2) {
+                        const asFloats = ArrayBuffer.isView(texCoords)
+                            ? texCoords as unknown as Float32Array
+                            : new Float32Array(texCoords)
+                        gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
+                        gl.bufferData(gl.ARRAY_BUFFER, asFloats, gl.STATIC_DRAW);
+                        textureBuffer.itemSize = 2;
+                        textureBuffer.numItems = asFloats.length / 2;
+                    } else if (textureBuffer && texCoords && texCoords.length > 0) {
+                        console.warn(`texture coordinates for sub-buffer ${j} describe ` +
+                                     `${texCoords.length / 2} vertices, not ${triangleVertices.length / 3}`)
+                        textureBuffer.itemSize = 0;
+                        textureBuffer.numItems = 0;
+                    }
                     if(doColour){
                         gl.bindBuffer(gl.ARRAY_BUFFER, displayBuffers[idx].triangleColourBuffer[j]);
                         gl.bufferData(gl.ARRAY_BUFFER, triangleColours, gl.STATIC_DRAW);

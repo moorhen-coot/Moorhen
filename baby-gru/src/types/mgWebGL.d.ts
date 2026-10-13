@@ -165,6 +165,8 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         blurredTexture: WebGLUniformLocation;
         depthTexture: WebGLUniformLocation;
+    depthTexture2: WebGLUniformLocation;
+    haveDepth2: WebGLUniformLocation;
         focussedTexture: WebGLUniformLocation;
         blurDepth: WebGLUniformLocation;
     }
@@ -244,6 +246,8 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         inputTexture: WebGLUniformLocation;
         depthTexture: WebGLUniformLocation;
+    depthTexture2: WebGLUniformLocation;
+    haveDepth2: WebGLUniformLocation;
         blurSize: WebGLUniformLocation;
         blurDepth: WebGLUniformLocation;
         blurCoeffs: WebGLUniformLocation | null;
@@ -262,11 +266,11 @@ export namespace webGL {
         gNormalTexture: WebGLUniformLocation;
         texNoiseTexture: WebGLUniformLocation;
         zoom: WebGLUniformLocation | null;
-        depthBufferSize: WebGLUniformLocation | null;
         samples: WebGLUniformLocation | null;
         radius: WebGLUniformLocation | null;
         bias: WebGLUniformLocation | null;
-        depthFactor: WebGLUniformLocation | null;
+        sceneProjection: WebGLUniformLocation | null;
+        sceneProjectionInverse: WebGLUniformLocation | null;
         tileScale_x: WebGLUniformLocation | null;
         tileScale_y: WebGLUniformLocation | null;
         tileScaleBase_x: WebGLUniformLocation | null;
@@ -277,14 +281,15 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         gPositionTexture: WebGLUniformLocation;
         gNormalTexture: WebGLUniformLocation;
-        depthBufferSize: WebGLUniformLocation | null;
         depthThreshold: WebGLUniformLocation | null;
         normalThreshold: WebGLUniformLocation | null;
         scaleDepth: WebGLUniformLocation | null;
         scaleNormal: WebGLUniformLocation | null;
         xPixelOffset: WebGLUniformLocation | null;
         yPixelOffset: WebGLUniformLocation | null;
-        depthFactor: WebGLUniformLocation | null;
+        clipNear: WebGLUniformLocation | null;
+        clipFar: WebGLUniformLocation | null;
+        perspectiveProjection: WebGLUniformLocation | null;
         zoom: WebGLUniformLocation | null;
     }
 
@@ -292,6 +297,8 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         inputTexture: WebGLUniformLocation;
         depthTexture: WebGLUniformLocation;
+    depthTexture2: WebGLUniformLocation;
+    haveDepth2: WebGLUniformLocation;
         blurSize: WebGLUniformLocation;
         blurDepth: WebGLUniformLocation;
         blurCoeffs: WebGLUniformLocation | null;
@@ -346,6 +353,8 @@ export namespace webGL {
     interface MGWebGLPropsInterface {
         reContourMapOnlyOnMouseUp: boolean | null;
         onAtomHovered: (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => void;
+        // A hover on a labelled piece of a mesh. The label is opaque to the renderer.
+        onSectionHovered?: (identifier: { buffer: { id: string }; kind: string; tag: string }) => void;
         onKeyPress: (event: KeyboardEvent) => boolean | Promise<boolean>;
         onZoomChanged: (newZoom: number) => void;
         onOriginChanged: (newOrigin: [number, number, number]) => void;

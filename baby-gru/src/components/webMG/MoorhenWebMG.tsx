@@ -1,10 +1,12 @@
-import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
+import { useEffect, useCallback, forwardRef, useState, useReducer, useRef } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import * as quat4 from 'gl-matrix/quat';
 import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { buildBuffers, appendOtherData, } from '../../WebGLgComponents/buildBuffers'
 import { getVectorsBuffers } from '../../WebGLgComponents/vectorsDraw'
+import { getThreeDObjectsBuffers } from '../../WebGLgComponents/threeDObjectsDraw'
+import { getGizmoBuffers } from '../../WebGLgComponents/gizmoDraw'
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import type { ActionButtonSettings } from '../context-menu/MoorhenContextMenu';
 import { useCommandCentre, useMoorhenInstance } from '../../InstanceManager';
@@ -19,6 +21,9 @@ import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
+import { HighlightHoveredSection } from './HoverSection';
+import { DragHandles } from './DragHandles';
+import { SelectClickedObject } from './SelectObject';
 
 
 interface MoorhenWebMGPropsInterface {
@@ -27,6 +32,7 @@ interface MoorhenWebMGPropsInterface {
     viewOnly: boolean;
     urlPrefix: string;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
+    onSectionHovered?: (identifier: { buffer: { id: string; }; kind: string; tag: string; }) => void;
 }
 
 const intialDefaultActionButtonSettings: ActionButtonSettings = {
@@ -96,6 +102,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
+    const depthPeelLayers = useSelector((state: moorhen.State) => state.sceneSettings.depthPeelLayers)
+    const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately)
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth)
     const atomLabelDepthMode = useSelector((state: moorhen.State) => state.labelSettings.atomLabelDepthMode)
     const mouseSensitivity = useSelector((state: moorhen.State) => state.mouseSettings.mouseSensitivity)
@@ -137,47 +145,152 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
 
     const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
-    const displayBuffers = useSelector((state: moorhen.State) => state.glRef.displayBuffers)
-    const [vectorBuffers, setVectorBuffers] = useState<DisplayBuffer[]>([])
-    const [vectorLabelBuffers, setVectorLabelBuffers] = useState<any>([])
+    const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
+    // No selector for displayBuffers: the rebuilds read it from the store at dispatch time
+    // instead, so subscribing here would only re-render this component on every publish - which
+    // is now once per animation frame while a 3D object is being dragged.
+    // Held in refs rather than state because a rebuild can start before React has re-rendered -
+    // notably now that a 3D object can change on every animation frame while a control is
+    // dragged. A stale read here would clear the wrong buffers and leak the new ones.
+    const vectorBuffersRef = useRef<DisplayBuffer[]>([])
+    const vectorLabelBuffersRef = useRef<any[]>([])
+    const gizmoBuffersRef = useRef<any[]>([])
+    const threeDObjectsBuffersRef = useRef<DisplayBuffer[]>([])
     const shortcutsBlocked = useSelector((state: RootState) => state.globalUI.areShortcutsBlocked)
 
-    useEffect(() => {
-        const dispatchVectorsBuffers = async() => {
-        if(glRef !== null && typeof glRef !== 'function') {
+    /**
+     * Publish the display buffers this component owns, keeping everything it does not.
+     *
+     * Composed from the refs and the live store at dispatch time, never from a value captured
+     * when an effect ran. That is the whole trick to making the two rebuilds independent: if each
+     * captured `displayBuffers` up front, both would dispatch a list missing the other's buffers,
+     * and whichever landed second would erase the other's work. A session load, which populates
+     * vectors and 3D objects in the same commit, hits that every time - and which of the two
+     * disappears just depends on which rebuild happens to finish first.
+     *
+     * @param {Set<string>} droppedIds - ids this rebuild has just retired
+     */
+    const publishDisplayBuffers = useCallback((droppedIds: Set<string>) => {
+        const owned = [...threeDObjectsBuffersRef.current, ...vectorBuffersRef.current, ...gizmoBuffersRef.current]
+        const ownedIds = new Set(owned.map(buffer => buffer.id))
+        const others = (store.getState().glRef.displayBuffers ?? []).filter(
+            buffer => !ownedIds.has(buffer.id) && !droppedIds.has(buffer.id)
+        )
+        // Ours go last, leaving everything else where it already was. Hover state is held as an
+        // *index* into this array, so putting ours first would renumber every molecule and
+        // metaballs buffer each time a 3D object was added or removed - and a 3D object can now
+        // change on every animation frame. Appending keeps those indices stable.
+        dispatch(setDisplayBuffers([...others, ...owned]))
+    }, [store, dispatch])
 
-            let oldLabelBuffers = labelBuffers
-            vectorLabelBuffers.forEach((buffer) => {
-                oldLabelBuffers = oldLabelBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
-            })
+    /**
+     * The same for label buffers, which only the vectors produce here.
+     *
+     * Note these are identified by `uuid`, not `id` - that is what MoorhenMoleculeRepresentation
+     * uses when it prunes them, and what getVectorsBuffers actually sets.
+     *
+     * @param {Set<string>} droppedUuids - uuids this rebuild has just retired
+     */
+    const publishLabelBuffers = useCallback((droppedUuids: Set<string>) => {
+        const owned = vectorLabelBuffersRef.current
+        const ownedUuids = new Set(owned.map(buffer => buffer.uuid))
+        const others = (store.getState().glRef.labelBuffers ?? []).filter(
+            buffer => !ownedUuids.has(buffer.uuid) && !droppedUuids.has(buffer.uuid)
+        )
+        dispatch(setLabelBuffers([...owned, ...others]))
+    }, [store, dispatch])
 
-            let oldBuffers = displayBuffers
-            vectorBuffers.forEach((buffer) => {
-                buffer.clearBuffers()
-                oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
-            })
-
-            const [objects,newLabelBuffers] = await getVectorsBuffers(store)
-
-            let newBuffers = []
-            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                const a = appendOtherData(object, store, true);
-                newBuffers = [...newBuffers,...a]
+    // statsLabel is descriptive only - see DisplayBuffer.statsLabel. It is passed in because this
+    // helper serves both vectors and 3D objects, and by the time the buffers exist neither is
+    // distinguishable from the other.
+    const buildDisplayBuffers = useCallback((objects: any[], statsLabel?: string): DisplayBuffer[] => {
+        let newBuffers: DisplayBuffer[] = []
+        objects
+            .filter(object => typeof object !== 'undefined' && object !== null)
+            .forEach(object => {
+                const a = appendOtherData(object, store, true)
+                a.forEach(buffer => { buffer.statsLabel = statsLabel })
+                newBuffers = [...newBuffers, ...a]
                 buildBuffers(a, store)
             })
+        return newBuffers
+    }, [store])
 
-            setVectorBuffers(newBuffers)
-            setVectorLabelBuffers(newLabelBuffers)
-            dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
-            dispatch(setLabelBuffers([...newLabelBuffers,...oldLabelBuffers]))
+    // Vectors rebuild only when the vector list changes. This is the expensive side: it runs gemmi
+    // atom selections and awaits MathJax for any LaTeX label, so it must not be dragged along by
+    // an unrelated 3D object edit.
+    useEffect(() => {
+        if (glRef === null || typeof glRef === 'function') return
+        let superseded = false
+
+        const rebuildVectors = async () => {
+            const [objects, newLabelBuffers] = await getVectorsBuffers(store)
+            // Bail before creating anything if a newer rebuild has started, so there is nothing
+            // left orphaned. The old buffers stay in the refs for that newer run to clear.
+            if (superseded) return
+
+            const retired = vectorBuffersRef.current
+            const retiredLabels = vectorLabelBuffersRef.current
+            retired.forEach(buffer => buffer.clearBuffers())
+
+            vectorBuffersRef.current = buildDisplayBuffers(objects, "vectors")
+            vectorLabelBuffersRef.current = newLabelBuffers ?? []
+
+            publishDisplayBuffers(new Set(retired.map(buffer => buffer.id)))
+            publishLabelBuffers(new Set(retiredLabels.map(buffer => buffer.uuid)))
         }
+
+        rebuildVectors()
+        return () => { superseded = true }
+    }, [vectorsList, glRef, store, buildDisplayBuffers, publishDisplayBuffers, publishLabelBuffers])
+
+    // 3D objects rebuild only when they change, which is now potentially every animation frame
+    // while one of them is being dragged in the editor.
+    useEffect(() => {
+        if (glRef === null || typeof glRef === 'function') return
+        let superseded = false
+
+        const rebuildThreeDObjects = async () => {
+            const objects = await getThreeDObjectsBuffers(store)
+            if (superseded) return
+
+            const retired = threeDObjectsBuffersRef.current
+            retired.forEach(buffer => buffer.clearBuffers())
+
+            threeDObjectsBuffersRef.current = buildDisplayBuffers(objects, "3D objects")
+
+            publishDisplayBuffers(new Set(retired.map(buffer => buffer.id)))
         }
-        dispatchVectorsBuffers()
-    }, [vectorsList])
+
+        rebuildThreeDObjects()
+        return () => { superseded = true }
+    }, [threeDObjects, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
+
+    // The manipulation handles rebuild on their own, so that neither editing an object nor
+    // dragging a handle drags the other along with it. Zoom is a dependency because the handles
+    // are a constant size on screen, which means a changing size in the world.
+    const selectedThreeDObjectId = useSelector((state: moorhen.State) => state.generalStates.selectedThreeDObjectId)
+    useEffect(() => {
+        if (glRef === null || typeof glRef === 'function') return
+        let superseded = false
+
+        const rebuildGizmo = async () => {
+            const objects = await getGizmoBuffers(store)
+            if (superseded) return
+
+            const retired = gizmoBuffersRef.current
+            retired.forEach(buffer => buffer.clearBuffers())
+
+            gizmoBuffersRef.current = buildDisplayBuffers(objects)
+
+            publishDisplayBuffers(new Set(retired.map(buffer => buffer.id)))
+        }
+
+        rebuildGizmo()
+        return () => { superseded = true }
+    }, [selectedThreeDObjectId, threeDObjects, zoom, backgroundColor, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
 
     const commandCentre = useCommandCentre()
-
-
 
     /**
      * The camera re-derives the slab itself now, under its slab policy, so this no longer has to
@@ -412,6 +525,20 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [depthBlurRadius])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDepthPeelLayers(depthPeelLayers)
+            glRef.current.drawScene()
+        }
+    }, [depthPeelLayers])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.peelOpaqueSeparately = peelOpaqueSeparately
+            glRef.current.drawScene()
+        }
+    }, [peelOpaqueSeparately])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -762,6 +889,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
+                    onSectionHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onSectionHovered : null}
                     onKeyPress={onKeyPress}
                     onZoomChanged={onZoomChanged}
                     onOriginChanged={onOriginChanged}
@@ -795,6 +923,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     setDefaultActionButtonSettings={setDefaultActionButtonSettings}
                 />}
                 <DrawHoverAtom />
+                <HighlightHoveredSection />
+                <DragHandles />
+                <SelectClickedObject />
             </>
 });
 

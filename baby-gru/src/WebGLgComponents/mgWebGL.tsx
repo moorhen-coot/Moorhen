@@ -39,7 +39,7 @@ import { circles_fragment_shader_source as circles_fragment_shader_source_webgl2
 import { circles_vertex_shader_source as circles_vertex_shader_source_webgl2 } from './webgl-2/circle-vertex-shader.js';
 import { thick_lines_vertex_shader_source as thick_lines_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-vertex-shader.js';
 import { thick_lines_normal_vertex_shader_source as thick_lines_normal_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-normal-vertex-shader.js';
-import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl2 } from './webgl-2/triangle-fragment-shader.js';
+import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl2, triangle_fragment_shader_source_fast as triangle_fragment_shader_source_fast_webgl2 } from './webgl-2/triangle-fragment-shader.js';
 import { fxaa_shader_source as fxaa_shader_source_webgl2 } from './webgl-2/fxaa.js';
 import { fxaa_shader_source as fxaa_shader_source_webgl1 } from './webgl-1/fxaa.js';
 import { triangle_vertex_shader_source as triangle_vertex_shader_source_webgl2 } from './webgl-2/triangle-vertex-shader.js';
@@ -93,7 +93,7 @@ import { triangle_instanced_gbuffer_vertex_shader_source as triangle_instanced_g
 import { twod_gbuffer_vertex_shader_source as twod_gbuffer_vertex_shader_source_webgl1 } from './webgl-1/twodshapes-gbuffer-vertex-shader.js';
 import { perfect_sphere_gbuffer_fragment_shader_source as perfect_sphere_gbuffer_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-gbuffer-fragment-shader.js';
 import { thick_lines_normal_gbuffer_vertex_shader_source as thick_lines_normal_gbuffer_vertex_shader_source_webgl1 } from './webgl-1/thick-lines-normal-gbuffer-vertex-shader.js';
-import { DistanceBetweenPointAndLine, DihedralAngle, NormalizeVec3, vec3Cross, vec3Add, vec3Subtract, vec3Create  } from './mgMaths.js';
+import { DistanceBetweenPointAndLine, DistanceBetweenLineAndPolyline, DihedralAngle, NormalizeVec3, vec3Cross, vec3Add, vec3Subtract, vec3Create  } from './mgMaths.js';
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
@@ -102,16 +102,19 @@ import { Camera } from './mgWebGLParts/camera'
 import type { CameraController, CameraState, CameraTarget, MoveResult, Transition } from './cameraController'
 import { clipOffsets, fogOffsets, slabFromCamera } from './slab'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './mgWebGLParts/viewTransforms'
-import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, initTextureFramebuffer } from './mgWebGLParts/framebuffers'
+import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, ensureOffScreeenBuffers, initTextureFramebuffer } from './mgWebGLParts/framebuffers'
 import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
 import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWebGLParts/postProcessUniformBuffers'
+import { renderStatsText } from './mgWebGLParts/renderStats'
 import { doRightClick, doClick, doHover, doWheel, doMouseUpMeasure, doMouseDownMeasure, doMouseMoveMeasure, doMouseUp, doMiddleClick, doDoubleClick, doMouseMove, doMouseDown, handleKeyUp, handleKeyDown } from './mgWebGLParts/eventHandlers'
 import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationAndZoomAnimated, setOrientationAnimated, moveCameraTo, stopPumpingCamera, setViewAnimated, setOriginOrientationAndZoomAnimated, setOriginAndZoomAnimated, setOriginAnimated, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
 import { drawTransparent, drawImagesAndText, drawTexturedShapes, drawTextLabels, drawDistancesAndLabels, drawCircles, drawLineMeasures, drawCrosshairs, drawMouseTrack, drawFPSMeter, drawTextOverlays } from './mgWebGLParts/overlays'
 import { drawBuffer, drawMaxElementsUInt, setupModelViewTransformMatrixInteractive, drawTransformMatrixInteractive, drawTransformMatrix, drawTransformMatrixInteractivePMV, drawTransformMatrixPMV } from './mgWebGLParts/bufferDraw'
 import { drawPeel, drawTriangles, drawScene, applySymmetryMatrix, bindFramebufferDrawBuffers } from './mgWebGLParts/drawCore'
+import { pickHalfExtents } from './mgWebGLParts/projection'
 import { initInstanceState, initGraphicsContext, attachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
 import { getDeviceScale} from './webGLUtils'
+import { rayMeshHit } from './rayMesh'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
 import { Root } from 'react-dom/client';
@@ -196,6 +199,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         clipCapPerfectSpheres: boolean;
         useOffScreenBuffers: boolean;
         blurSize: number;
+        /** Depth-peel layers; see setDepthPeelLayers. */
+        depthPeelLayers: number;
+        /**
+         * Whether the opaque scene is drawn once into peel layer 0 instead of into every layer.
+         *
+         * A switch rather than simply the new behaviour, because the two paths should produce
+         * the same picture and the only way to be sure of that is to look at them side by side.
+         */
+        peelOpaqueSeparately: boolean;
+        /**
+         * What the current peel layer accepts: true for transparent buffers, false for opaque,
+         * null when not peeling and everything is drawn as usual.
+         */
+        peelTransparentOnly: boolean | null;
         blurDepth:number;
         gl_fog_start: null | number;
         doDrawClickedAtomLines: boolean;
@@ -251,6 +268,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         fpsText: string;
         measurePointsArray: any[];
         mspfArray: number[];
+        renderStatsText: string;
         ssaoRadius: number;
         ssaoBias: number;
         radius: number;
@@ -397,7 +415,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         screenZ: number;
         shaderProgramTextured: webGL.MGWebGLTextureQuadShader;
         shaderProgramDepthPeelAccum: webGL.MGWebGLShaderDepthPeelAccum;
+        /**
+         * The triangle program currently in use: one of the two variants below.
+         *
+         * Swapped once per frame in drawScene rather than at each of the three dozen places
+         * that reach for it, because the choice is a property of the whole pass - the
+         * projection mode and whether depth peeling is running - and never varies within one.
+         */
         shaderProgram: webGL.ShaderTriangles;
+        /** With the clip and peel discards. Correct under any projection. */
+        shaderProgramClip: webGL.ShaderTriangles;
+        /** Without them. Only valid when the projection itself clips the slab. */
+        shaderProgramFast: webGL.ShaderTriangles;
         shaderProgramGBuffers: webGL.ShaderGBuffersTriangles;
         shaderProgramGBuffersInstanced: webGL.ShaderGBuffersTrianglesInstanced;
         shaderProgramGBuffersPerfectSpheres: webGL.ShaderGBuffersPerfectSpheres;
@@ -411,6 +440,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shaderProgramCircles: webGL.ShaderCircles;
         shaderProgramImages: webGL.ShaderImages;
         shaderProgramInstanced: webGL.ShaderTrianglesInstanced;
+        shaderProgramInstancedClip: webGL.ShaderTrianglesInstanced;
+        shaderProgramInstancedFast: webGL.ShaderTrianglesInstanced;
         shaderProgramInstancedOutline: webGL.ShaderTrianglesInstanced;
         shaderProgramInstancedShadow: webGL.ShaderTrianglesInstanced;
         shaderProgramLines: webGL.MGWebGLShader;
@@ -426,6 +457,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shaderProgramTextInstanced: webGL.ShaderTextInstanced;
         shaderProgramThickLines: webGL.ShaderThickLines;
         shaderProgramThickLinesNormal: webGL.ShaderThickLinesNormal;
+        shaderProgramThickLinesNormalClip: webGL.ShaderThickLinesNormal;
+        shaderProgramThickLinesNormalFast: webGL.ShaderThickLinesNormal;
         shaderProgramTwoDShapes: webGL.ShaderTwodShapes;
         shaderDepthShadowProgramPerfectSpheres: webGL.ShaderPerfectSpheres;
         shinyBack: boolean;
@@ -595,6 +628,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.prevTime = performance.now();
         this.fpsText = "";
         this.mspfArray = [];
+        this.renderStatsText = "";
         this.pointsArray = [];
         this.mouseTrackPoints = [];
         this.hoverSize = 0.27;
@@ -614,6 +648,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const avg = (sum / this.mspfArray.length) || 0;
             const fps = 1.0/avg * 1000;
             this.fpsText = avg.toFixed(2)+" ms/frame (" + (fps).toFixed(0)+" fps) ["+this.canvas.width+" x "+this.canvas.height+"]";
+            // Kept separate rather than appended, because each string becomes one entry in the
+            // glyph atlas and one wider than the atlas cannot be laid out.
+            this.renderStatsText = renderStatsText();
             }, 1000);
 
         //Set to false to use WebGL 1
@@ -671,6 +708,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     setBlurSize(blurSize) {
         this.blurSize = blurSize
         this.makeBlurBuffers(blurSize)
+    }
+
+    /**
+     * How many depth-peel layers transparency is resolved with.
+     *
+     * The buffers are not rebuilt here. drawPeel asks for the layers it wants on the next frame
+     * that needs them, and recreateDepthPeelBuffers reallocates when the count or the size has
+     * changed - so a scene with nothing transparent in it pays nothing for a change to this.
+     */
+    setDepthPeelLayers(layers: number) {
+        this.depthPeelLayers = Math.max(1, Math.round(layers))
     }
 
     makeBlurBuffers(blurSize) {
@@ -835,13 +883,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     /**
-     * Move the eye.
+     * Move the eye towards or away from the view centre.
      *
-     * The slab stays where it is relative to the scene, and the absolute clip and fog distances
-     * move with the eye. That is the point of the eye distance being part of the camera: how
-     * strongly the view converges is a property of the viewer's position, and pulling the eye back
-     * from 250 to 400 should not drag the fog 150A into the foreground - which is what keeping the
-     * absolutes fixed used to do, because the renderer had nowhere to record what the slab meant.
+     * Both sides of this merge fix the same bug, and the other side's diagnosis was exactly right:
+     * clip and fog were stored as absolute distances from the eye, so moving the eye left them
+     * behind and sliced the molecule open. It compensated by shifting the clip planes by however
+     * far the eye had moved - clipPlanesAfterEyeMove - which put clip back where it belonged.
+     *
+     * This side removes the need for the compensation instead. The camera holds all four
+     * boundaries as offsets from the view centre, so nothing is left behind when the eye moves and
+     * there is nothing to shift: the absolute distances the shaders want are re-derived from those
+     * offsets on every frame. It also covers fog, which the shifting fixed only for clip - fog was
+     * still absolute, so it still slid 150A forward when the eye went from 250 to 400.
+     *
+     * clipPlanesAfterEyeMove therefore has nothing left to compensate for and no callers. It is
+     * left in projection.ts with its tests rather than deleted here, because removing it is a
+     * decision about the other branch's code and not a merge resolution.
      */
     setFogClipOffset(fogClipOffset: number) {
         this.setCameraSlab({ eyeDistance: fogClipOffset })
@@ -964,6 +1021,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl1;
         let thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl1;
         let triangle_fragment_shader_source = triangle_fragment_shader_source_webgl1+fxaa_shader_source_webgl1;
+        // WebGL1 has no discard-free variant, so the fast program is simply the same program:
+        // correct, and no slower than it is today. Only the WebGL2 path below splits them.
+        let triangle_fragment_shader_source_fast = triangle_fragment_shader_source;
         let triangle_vertex_shader_source = triangle_vertex_shader_source_webgl1;
         let twod_fragment_shader_source = twod_fragment_shader_source_webgl1;
         let twod_vertex_shader_source = twod_vertex_shader_source_webgl1;
@@ -1006,6 +1066,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl2;
             thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl2;
             triangle_fragment_shader_source = triangle_fragment_shader_source_webgl2+fxaa_shader_source_webgl2;
+            triangle_fragment_shader_source_fast = triangle_fragment_shader_source_fast_webgl2+fxaa_shader_source_webgl2;
             triangle_vertex_shader_source = triangle_vertex_shader_source_webgl2;
             twod_fragment_shader_source = twod_fragment_shader_source_webgl2;
             twod_vertex_shader_source = twod_vertex_shader_source_webgl2;
@@ -1023,6 +1084,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         vertexShader = getShader(this.gl, triangle_vertex_shader_source, "vertex");
         const vertexShaderInstanced = getShader(this.gl, triangle_instanced_vertex_shader_source, "vertex");
         fragmentShader = getShader(this.gl, triangle_fragment_shader_source, "fragment");
+        const fragmentShaderFast = getShader(this.gl, triangle_fragment_shader_source_fast, "fragment");
         gBufferFragmentShader = getShader(this.gl, triangle_gbuffer_fragment_shader_source, "fragment");
         gBufferInstancedVertexShader = getShader(this.gl, triangle_instanced_gbuffer_vertex_shader_source, "vertex");
         gBufferTwodVertexShader = getShader(this.gl, twod_gbuffer_vertex_shader_source, "vertex");
@@ -1074,7 +1136,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramSimpleBlurX = initSimpleBlurXShader(blurVertexShader, simpleBlurXFragmentShader, this.gl, this.WEBGL2);
         this.shaderProgramSimpleBlurY = initSimpleBlurYShader(blurVertexShader, simpleBlurYFragmentShader, this.gl, this.WEBGL2);
         this.shaderProgramThickLines = initThickLineShaders(thickLineVertexShader, lineFragmentShader, this.gl);
-        this.shaderProgramThickLinesNormal = initThickLineNormalShaders(thickLineNormalVertexShader, fragmentShader, this.gl);
+        this.shaderProgramThickLinesNormalClip = initThickLineNormalShaders(thickLineNormalVertexShader, fragmentShader, this.gl);
+        this.shaderProgramThickLinesNormalFast = initThickLineNormalShaders(thickLineNormalVertexShader, fragmentShaderFast, this.gl);
+        this.shaderProgramThickLinesNormal = this.shaderProgramThickLinesNormalClip;
         this.shaderProgramPointSpheres = initPointSpheresShaders(pointSpheresVertexShader, pointSpheresFragmentShader, this.gl);
         this.shaderProgramTwoDShapes = initTwoDShapesShaders(twoDShapesVertexShader, twoDShapesFragmentShader, this.gl);
         this.shaderProgramImages = initImageShaders(twoDShapesVertexShader, textFragmentShader, this.gl);
@@ -1090,9 +1154,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute, this.gl);
         this.shaderProgramCircles = initCirclesShaders(circlesVertexShader, circlesFragmentShader, this.gl);
         this.gl.disableVertexAttribArray(this.shaderProgramCircles.vertexTextureAttribute);
-        this.shaderProgram = initShaders(vertexShader, fragmentShader, this.gl);
+        // Three programs share this fragment shader, so all three need both variants. The
+        // discard-free ones are selected per frame in drawScene; see the header of
+        // webgl-2/triangle-fragment-shader.js for why they exist. Each program carries its own
+        // uniform locations, so the pair are interchangeable at draw time.
+        this.shaderProgramClip = initShaders(vertexShader, fragmentShader, this.gl);
+        this.shaderProgramFast = initShaders(vertexShader, fragmentShaderFast, this.gl);
+        this.shaderProgram = this.shaderProgramClip;
         this.shaderProgramOutline = initOutlineShaders(vertexShader, flatColourFragmentShader, this.gl);
-        this.shaderProgramInstanced = initShadersInstanced(vertexShaderInstanced, fragmentShader, this.gl);
+        this.shaderProgramInstancedClip = initShadersInstanced(vertexShaderInstanced, fragmentShader, this.gl);
+        this.shaderProgramInstancedFast = initShadersInstanced(vertexShaderInstanced, fragmentShaderFast, this.gl);
+        this.shaderProgramInstanced = this.shaderProgramInstancedClip;
         this.shaderProgramGBuffersInstanced = initGBufferShadersInstanced(gBufferInstancedVertexShader, gBufferFragmentShader, this.gl);
         this.shaderProgramGBuffersPerfectSpheres = initGBufferShadersPerfectSphere(gBufferTwodVertexShader, gBufferPerfectSphereFragmentShader, this.gl);
         this.shaderProgramGBuffersThickLinesNormal = initGBufferThickLineNormalShaders(gBufferThickLineNormalVertexShader, gBufferFragmentShader, this.gl);
@@ -1399,8 +1471,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         createSimpleBlurOffScreeenBuffers(this)
     }
 
-    recreateDepthPeelBuffers(width,height){
-        recreateDepthPeelBuffers(this, width, height)
+    recreateDepthPeelBuffers(width,height,layers?:number){
+        recreateDepthPeelBuffers(this, width, height, layers)
+    }
+
+    ensureOffScreeenBuffers(width,height){
+        ensureOffScreeenBuffers(this, width, height)
     }
 
     recreateOffScreeenBuffers(width,height){
@@ -1664,19 +1740,36 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         quat4Inverse(this.myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
         const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
-        const minX = (-24. * ratio * this.zoom);
-        const maxX = (24. * ratio * this.zoom);
-        const minY = (-24. * this.zoom);
-        const maxY = (24. * this.zoom);
         const fracX = 1.0 * x / this.gl.viewportWidth;
         const fracY = 1.0 * (y) / this.gl.viewportHeight;
-        const theX = minX + fracX * (maxX - minX);
-        const theY = maxY - fracY * (maxY - minY);
-        //let frontPos = vec3Create([theX,theY,-1000.0]);
-        //let backPos  = vec3Create([theX,theY,1000.0]);
-        //MN Changed to improve picking
-        const frontPos = vec3Create([theX, theY, -this.gl_clipPlane0[3] - this.fogClipOffset]);
-        const backPos = vec3Create([theX, theY, this.gl_clipPlane1[3] - this.fogClipOffset]);
+
+        // The slab offsets of the two ends of the ray, measured from the view centre.
+        const frontZ = -this.gl_clipPlane0[3] - this.fogClipOffset;
+        const backZ = this.gl_clipPlane1[3] - this.fogClipOffset;
+
+        // Where the cursor lands depends on how wide the view is at that depth, and under
+        // perspective that is not the same at the two ends of the ray. This used to use one pair
+        // of extents - the orthographic ones - for both ends and both projections, so in
+        // perspective the ray was built as though the view were orthographic and picking, hover,
+        // measurement and gizmo dragging all aimed slightly wrong.
+        //
+        // Orthographic is unchanged: pickHalfExtents returns 24*zoom by 24*zoom*ratio whatever
+        // depth it is given, which is exactly the two pairs of numbers that were here.
+        const atDepth = (slabZ: number) => {
+            const { halfWidth, halfHeight } =
+                pickHalfExtents(this.fogClipOffset + slabZ, this.zoom, ratio, this.doPerspectiveProjection,
+                                this.fogClipOffset);
+            return [
+                -halfWidth + fracX * 2 * halfWidth,
+                halfHeight - fracY * 2 * halfHeight,
+            ];
+        };
+
+        const [frontX, frontY] = atDepth(frontZ);
+        const [backX, backY] = atDepth(backZ);
+
+        const frontPos = vec3Create([frontX, frontY, frontZ]);
+        const backPos = vec3Create([backX, backY, backZ]);
         vec3.transformMat4(frontPos, frontPos, theMatrix);
         vec3.transformMat4(backPos, backPos, theMatrix);
         vec3.subtract(frontPos, frontPos, this.origin);
@@ -1906,18 +1999,25 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const modelPointArrayResultsFront = [];
         const modelPointArrayResultsBack = [];
 
-        //FIXME - This is hackery
-        let factor = 999.9;
-        if(this.doPerspectiveProjection){
-            factor = 99.9;
-        }
+        // unProject takes window depth, which runs 0 at the near plane to 1 at the far plane -
+        // it maps the value straight onto normalised device coordinates with inp[2]*2-1. Since
+        // the projection's near and far now are the slab, the two ends of the ray through the
+        // slab are simply 0 and 1, and the clip planes need not appear here at all.
+        //
+        // What was here divided a world distance by 999.9, or 99.9 under perspective, and called
+        // itself hackery. Working it through for a typical view it put the front endpoint at
+        // about 0.5 - half way through the slab rather than at its front - and the back endpoint
+        // slightly negative, i.e. in front of the near plane. The ray therefore ran from the
+        // middle of the slab towards the viewer: short, and the wrong way round.
+        const NEAR_PLANE_DEPTH = 0.0;
+        const FAR_PLANE_DEPTH = 1.0;
         let success = unProject(
-                x, yp, -(this.gl_clipPlane0[3]-this.fogClipOffset)/factor,
+                x, yp, NEAR_PLANE_DEPTH,
                 mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
                 viewportArray, modelPointArrayResultsFront);
 
         success = unProject(
-                x, yp, -(this.gl_clipPlane1[3]-this.fogClipOffset)/factor,
+                x, yp, FAR_PLANE_DEPTH,
                 mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
                 viewportArray, modelPointArrayResultsBack);
 
@@ -1929,6 +2029,19 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let minj = -1;
 
         let mindist_pi = 100000.0;
+        // Whether the winning pick candidate is one the cursor is actually over, and how near the
+        // eye it is. Together these let two candidates that both contain the ray be separated by
+        // depth, which their distance to it cannot do.
+        let bestIsHit_pi = false;
+        let bestDepth_pi = -Infinity;
+        // A buffer that takes the pointer for itself outranks anything else under the cursor:
+        // a handle drawn over an object has to be grabbable, not lost behind it.
+        let bestClaims_pi = false;
+        // Where two handles overlap, one may say it should be the one taken. Depth cannot settle
+        // it: an arrow pointing towards the viewer collapses onto the middle of its own gizmo and
+        // its tip is nearer the eye than anything at the centre, so the small handle underneath
+        // becomes unreachable at exactly the angles where it is most wanted.
+        let bestPriority_pi = 0;
         let minx_pi = 100000.0;
         let miny_pi = 100000.0;
         let minz_pi = 100000.0;
@@ -1942,42 +2055,165 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //TODO- Do not ignore non-atom hovering with symmetry.
         let minsym_pi = -1;
 
-        let clickTol = 3.65 * this.zoom;
+        const defaultClickTol = 3.65 * this.zoom;
 
         for (let idx = 0; idx < displayBuffers.length; idx++) {
+            // Per buffer, and computed before anything uses it. This used to be one variable
+            // carried across the whole loop and reassigned part way through each iteration, so a
+            // buffer's own tolerance never reached its own pick points and then leaked into every
+            // buffer processed after it - which made picking depend on display-buffer order.
+            const clickTol = displayBuffers[idx].clickTol ? displayBuffers[idx].clickTol : defaultClickTol;
+
             if(displayBuffers[idx].pick_info&&displayBuffers[idx].visible){
-                if(displayBuffers[idx].pick_info.pick_points){
+                // A mesh that asks to be tested exactly is not measured against sample points
+                // at all: the ray is intersected with its own triangles, which the buffer
+                // already keeps on this side for building its GL buffers from.
+                //
+                // The answer slots into the rule below without changing any of it. An
+                // intersection reports a distance of zero and the depth of the point where the
+                // ray enters, so two meshes the pointer is genuinely over are separated by
+                // depth - the nearer wins, which is what occlusion means - while a mesh the
+                // ray misses is not a candidate at all and cannot win on a near miss.
+                //
+                // This replaces a sampled approximation with a tolerance that had no right
+                // value: too generous and something merely nearby stole the pick, too tight and
+                // something behind could be picked through what was in front of it.
+                if(displayBuffers[idx].pick_info.pick_exact){
+                    const verts = displayBuffers[idx].triangleVertices?.[0]
+                    const tris = displayBuffers[idx].triangleIndexs?.[0]
+                    if(verts && tris && tris.length > 2){
+                        const hit = rayMeshHit(
+                            verts, tris,
+                            modelPointArrayResultsFront, modelPointArrayResultsBack,
+                            displayBuffers[idx].pick_info.pick_bounds
+                        )
+                        if(hit){
+                            // The chord the ray cuts through the mesh, in eye space, where a
+                            // larger z is nearer the viewer.
+                            //
+                            // Which end of it faces the viewer cannot be assumed from the order
+                            // of the two unprojected points: the one named "front" is in fact
+                            // the farther of the two. Nor can how far along the ray the mesh
+                            // lies be judged from them - they straddle only part of the visible
+                            // depth - so what is visible is decided here, against the clip
+                            // planes themselves.
+                            const entryTrans = vec3Create([0, 0, 0]);
+                            const exitTrans = vec3Create([0, 0, 0]);
+                            vec3.transformMat4(entryTrans, vec3Create(hit.entry.point), mvMatrix);
+                            vec3.transformMat4(exitTrans, vec3Create(hit.exit.point), mvMatrix);
+                            const nearestZ = Math.max(entryTrans[2], exitTrans[2]);
+                            const farthestZ = Math.min(entryTrans[2], exitTrans[2]);
+                            // Some of the chord has to lie within the slab for any of the mesh
+                            // to be on screen here...
+                            const onScreen = nearestZ > -this.gl_clipPlane1[3]
+                                          && farthestZ < this.gl_clipPlane0[3];
+                            // ...and the nearest part of it that is, which is the clip plane
+                            // itself where the front of the pocket has been cut away and you
+                            // are looking at its inside.
+                            const depth = Math.min(nearestZ, this.gl_clipPlane0[3]);
+                            const claimsPointer = !!displayBuffers[idx].pick_info.claims_pointer
+                            const priority = displayBuffers[idx].pick_info.pick_priority ?? 0
+                            const claimsThis = claimsPointer;
+                            const beatsBest =
+                                claimsThis !== bestClaims_pi ? claimsThis
+                                : (claimsThis && priority !== bestPriority_pi) ? priority > bestPriority_pi
+                                : bestIsHit_pi ? depth > bestDepth_pi
+                                : true;
+                            if(beatsBest && onScreen){
+                                minidx_pi = idx;
+                                // Pick point zero is the centroid, which is what centring wants
+                                // however the mesh was hit.
+                                minj_pi = 0;
+                                mindist_pi = 0;
+                                bestIsHit_pi = true;
+                                bestDepth_pi = depth;
+                                bestClaims_pi = claimsThis;
+                                bestPriority_pi = priority;
+                            }
+                        }
+                    }
+                } else if(displayBuffers[idx].pick_info.pick_points){
+                    const pickSpans = displayBuffers[idx].pick_info.pick_spans
+                    // How near a candidate has to be to count as under the cursor rather than
+                    // merely nearby. A tube supplies its own radius; anything that does not keeps
+                    // the plain nearest-to-the-ray rule.
+                    const pickRadius = displayBuffers[idx].pick_info.pick_radius
+                    const claimsPointer = !!displayBuffers[idx].pick_info.claims_pointer
+                    // Only consulted between two claimed hits; everything else is unranked.
+                    const priority = displayBuffers[idx].pick_info.pick_priority ?? 0
                     for (let j = 0; j < displayBuffers[idx].pick_info.pick_points.length; j++) {
                         const atx = displayBuffers[idx].pick_info.pick_points[j][0];
                         const aty = displayBuffers[idx].pick_info.pick_points[j][1];
                         const atz = displayBuffers[idx].pick_info.pick_points[j][2];
                         const p = vec3Create([atx, aty, atz]);
 
-                        const dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
+                        // A pick point is only a fair stand-in for something small. Where a buffer
+                        // offers the extent of each pickable piece as a polyline, measure against
+                        // that instead: a long section is then picked anywhere along it rather
+                        // than only near its middle, and cannot win from behind just because its
+                        // midpoint happens to lie nearer the ray.
+                        const span = pickSpans ? pickSpans[j] : null
+                        let distance
+                        let testPoint = p
+                        if (span && span.length >= 6) {
+                            const [spanDistance, closest] = DistanceBetweenLineAndPolyline(
+                                modelPointArrayResultsFront, modelPointArrayResultsBack, span
+                            );
+                            if (spanDistance >= 0 && closest) {
+                                distance = spanDistance;
+                                testPoint = vec3Create(closest);
+                            } else {
+                                distance = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p)[0];
+                            }
+                        } else {
+                            distance = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p)[0];
+                        }
 
+                        // Clipped on the point actually measured, which for a span is the nearest
+                        // point of the piece rather than its middle.
                         const atPosTrans = vec3Create([0, 0, 0]);
-                        vec3.transformMat4(atPosTrans, p, mvMatrix);
+                        vec3.transformMat4(atPosTrans, testPoint, mvMatrix);
                         const azDot = this.gl_clipPlane0[3]-atPosTrans[2];
                         const bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
 
+                        // Eye space looks down -z, so the larger z is the nearer the viewer.
+                        const depth = atPosTrans[2];
+                        const isHit = pickRadius !== undefined && distance <= pickRadius;
+
+                        // Two pieces that both contain the ray score the same zero, and distance
+                        // alone then picks whichever happened to come first - which is how a
+                        // section behind wins. Where both are pieces the cursor is over, let the
+                        // nearer to the eye take it; in every other case the old rule stands, so
+                        // nothing that does not supply a radius behaves differently.
+                        // A claim only outranks while the cursor is genuinely on the thing;
+                        // otherwise a handle anywhere within the click tolerance would swallow
+                        // every pick in the scene. Where neither claims, the rule is as before.
+                        const claimsThis = claimsPointer && isHit;
+                        const beatsBest =
+                            claimsThis !== bestClaims_pi ? claimsThis
+                            : (claimsThis && priority !== bestPriority_pi) ? priority > bestPriority_pi
+                            : (isHit && bestIsHit_pi) ? depth > bestDepth_pi
+                            : distance < mindist_pi;
+
                         if (
-                                dpl[0] < clickTol //* targetFactor //clickTol modified to reflect proximity to rptation origin
-                                && dpl[0] < mindist_pi //closest click seen
+                                distance < clickTol //* targetFactor //clickTol modified to reflect proximity to rptation origin
+                                && beatsBest
                                 && azDot > 0 //Beyond near clipping plane
                                 && bzDot > 0 //In front of far clipping plan
                            ) {
                             minidx_pi = idx;
                             minj_pi = j;
-                            mindist_pi = dpl[0];
+                            mindist_pi = distance;
+                            bestIsHit_pi = isHit;
+                            bestDepth_pi = depth;
+                            bestClaims_pi = claimsPointer && isHit;
+                            bestPriority_pi = priority;
                         }
                     }
                 }
             }
             if (!displayBuffers[idx].visible) {
                 continue;
-            }
-            if(displayBuffers[idx].clickTol){
-                clickTol = displayBuffers[idx].clickTol;
             }
             for (let j = 0; j < displayBuffers[idx].atoms.length; j++) {
 
@@ -2039,6 +2275,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     hoverDebounceTimeout: NodeJS.Timeout | null = null;
+    /**
+     * The label a buffer claimed the pointer with, while a drag on it is in progress.
+     *
+     * Opaque here. The renderer's only interest is that while this is set, the pointer belongs
+     * to whoever claimed it and must not turn the camera.
+     */
+    pointerClaim: { tag: string; bufferId: string } | null = null;
+
+    /**
+     * How much of a sectioned mesh counts as one thing at the current zoom.
+     *
+     * Written once per draw and read by the highlight and by the pick, so that the two never
+     * disagree. It also carries the hysteresis: the decision depends on what it was last time,
+     * which is why it is remembered here rather than worked out afresh at each use.
+     */
+    pickLevel: number = 0;
 
     doHover(event, self) {
         doHover(this, event)
