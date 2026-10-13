@@ -66,6 +66,27 @@ const INITIAL_CAMERA: CameraState = {
     fogBack: 1000.0,
 };
 
+/**
+ * Take a copy of an assigned array, of the same kind, so the camera owns its own storage.
+ *
+ * THE CAMERA'S ARRAYS ARE THE CAMERA'S
+ *
+ * The per-frame paths write the quaternion and origin in place, so whatever array the camera holds
+ * had better be writable and had better not be shared with anyone who assumes otherwise. Adopting
+ * a caller's array breaks both halves of that.
+ *
+ * It broke concretely: Redux Toolkit freezes state in development, so once a camera array had been
+ * dispatched into the store it could never be written again, and the next frame of the next move
+ * threw "Cannot assign to read only property '0'". The leak was in both directions - a store-owned
+ * array arriving through `setOrigin`, and the camera's own array leaving through `onOriginChanged`
+ * and being frozen where it lay. Copying here closes the way in; the dispatch sites copy on the way
+ * out.
+ *
+ * A typed array copies as a typed array, so a Float32Array assigned by MGWebGL stays one.
+ */
+const ownCopy = <T extends ArrayLike<number>>(values: T): T =>
+    (ArrayBuffer.isView(values) ? (values as any).slice() : Array.from(values as ArrayLike<number>)) as T;
+
 export class Camera {
 
     /**
@@ -82,15 +103,22 @@ export class Camera {
         return this.controller.liveState.quat as unknown as quat4;
     }
     set quat(q: quat4) {
-        this.controller.liveState.quat = q as unknown as CameraState["quat"];
+        this.controller.liveState.quat = ownCopy(q) as unknown as CameraState["quat"];
     }
 
-    /** Zoom factor. */
+    /**
+     * Zoom factor.
+     *
+     * Written through the controller rather than straight into the state, because the slab follows
+     * zoom under the auto policy and the two must not be allowed to disagree even briefly. Every
+     * `self.zoom = x` in the renderer therefore re-derives clip and fog, which is what makes the
+     * old zoomChanged -> autoClipFogByZoom -> store -> set_clip_range round trip unnecessary.
+     */
     get zoom(): number {
         return this.controller.liveState.zoom;
     }
     set zoom(z: number) {
-        this.controller.liveState.zoom = z;
+        this.controller.writeLive({ zoom: z });
     }
 
     /** Rotation / translation centre in world coordinates. Negated, per setOrigin's convention. */
@@ -98,7 +126,7 @@ export class Camera {
         return this.controller.liveState.origin;
     }
     set origin(o: [number, number, number]) {
-        this.controller.liveState.origin = o;
+        this.controller.liveState.origin = ownCopy(o) as [number, number, number];
     }
 
     /**

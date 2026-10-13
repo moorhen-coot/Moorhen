@@ -84,6 +84,7 @@ const fakeRenderer = (controller: CameraController) => ({
     get zoom(): number { return controller.state.zoom; },
     drawScene: jest.fn(function (this: any) { advanceCamera(this as any); }),
     handleOriginUpdated: jest.fn(),
+    applySlabToRenderer: jest.fn(),
 });
 
 let frames: FakeFrames;
@@ -312,6 +313,21 @@ describe("the clock", () => {
         const self = fakeRenderer(new CameraController(startingAt()));
         advanceCamera(self as any);
         expect(performance.now).not.toHaveBeenCalled();
+    });
+
+    it("brings the clip planes and fog up to date on every frame, moving or not", () => {
+        // They are derived from the camera rather than stored beside it, and this is the one place
+        // that derives them. Unconditional, so a frame cannot be drawn against a stale slab - the
+        // alternative being to work out which of the writers forgot to say so.
+        const self = fakeRenderer(new CameraController(startingAt()));
+
+        advanceCamera(self as any);
+        expect(self.applySlabToRenderer).toHaveBeenCalledTimes(1);
+
+        moveCameraTo(self as any, { zoom: 5 }, { kind: "ease", seconds: CENTRING_SECONDS });
+        frames.step(0);
+        frames.step(CENTRING_SECONDS);
+        expect(self.applySlabToRenderer).toHaveBeenCalledTimes(3);
     });
 });
 

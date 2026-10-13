@@ -45,8 +45,14 @@ export const CENTRING_SECONDS = 0.25;
  * clock. Discovering that distinction empirically cost a day; it is one line here.
  */
 export function advanceCamera(self: MGWebGL) {
-    if(!self.cameraController.moving) return
-    self.cameraController.tick(self.cameraTime ?? performance.now() / 1000)
+    if(self.cameraController.moving) {
+        self.cameraController.tick(self.cameraTime ?? performance.now() / 1000)
+    }
+    // Unconditionally, and after the tick: the clip planes and fog the shaders read are derived
+    // from the camera rather than stored alongside it, so this is where they are brought up to
+    // date. Four assignments. Doing it every frame rather than only when something moved means a
+    // frame cannot be drawn with a stale slab, which is cheaper than working out who forgot.
+    self.applySlabToRenderer()
 }
 
 /**
@@ -255,7 +261,8 @@ export function drawOriginFrame(self: MGWebGL, oo, d, iframe){
         requestAnimationFrame(() => drawOriginFrame(self, oo, d, iframe + 1))
     } else {
         self.handleOriginUpdated(true)
-        self.props.onOriginChanged(self.origin)
+        // A copy; onOriginChanged reaches Redux, which freezes what it is given.
+        self.props.onOriginChanged([self.origin[0], self.origin[1], self.origin[2]])
     }
 }
 

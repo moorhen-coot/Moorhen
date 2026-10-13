@@ -242,6 +242,28 @@ export class CameraController {
         return this.current;
     }
 
+    /**
+     * MIGRATION SCAFFOLDING, the writing half. Set part of the live state, with the slab policy
+     * applied and listeners told.
+     *
+     * The difference from assigning through `liveState` is the policy. Zoom and the slab are
+     * coupled, so a zoom that did not re-derive the slab would leave the two disagreeing until
+     * something else happened to put them right - which is what the zoomChanged -> autoClipFogByZoom
+     * round trip was for, and what made the slab a second writer. Writing through here is what lets
+     * that round trip go.
+     *
+     * `writeLive({})` applies the policy without changing anything, which is what to call after
+     * switching the policy itself on.
+     *
+     * Unlike `settle` it does not defer to an active driver, because its callers are the renderer's
+     * own direct writes, which have always landed unconditionally. Those become drivers in the last
+     * slice, and this goes with them.
+     */
+    writeLive(part: CameraTarget): void {
+        this.current = this.applySlab(mergeLive(this.current, part));
+        this.notify();
+    }
+
     get driver(): DriverName | null {
         return this.activeDriver?.active ? this.activeDriver.name : null;
     }

@@ -285,6 +285,53 @@ describe("the slab", () => {
         expect(camera.state.clipFront).toBe(3);
         expect(camera.state.clipBack).toBe(9);
     });
+
+    it("follows a zoom written straight through, which is how the renderer writes it", () => {
+        // `self.zoom = x` happens all over MGWebGL - the wheel, the animation frames, setZoom. If
+        // those did not re-derive, zoom and the slab would disagree until something else happened
+        // to put them right, which is exactly what the zoomChanged round trip existed to do.
+        const camera = new CameraController(startingAt(),
+            { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 });
+        camera.writeLive({ zoom: 2 });
+        expect(camera.state.clipFront).toBe(16);
+        expect(camera.state.fogBack).toBe(42);
+    });
+
+    it("re-derives on an empty write, which is how the switch is turned on", () => {
+        // Flipping "Reset clip and fog on zoom" should snap the slab to the current zoom there and
+        // then, not leave it stale until the next time something moves.
+        const camera = new CameraController(startingAt({ zoom: 3, clipFront: 99, clipBack: 99 }));
+        camera.slabPolicy = { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 };
+        camera.writeLive({});
+        expect(camera.state.clipFront).toBe(24);
+        expect(camera.state.clipBack).toBe(63);
+        expect(camera.state.zoom).toBe(3);
+    });
+
+    it("leaves a written slab alone under manual, so the sliders still work", () => {
+        const camera = new CameraController(startingAt(), { kind: "manual" });
+        camera.writeLive({ clipFront: 5, clipBack: 6 });
+        expect(camera.state.clipFront).toBe(5);
+        expect(camera.state.clipBack).toBe(6);
+    });
+
+    it("overwrites a written slab under auto, which is why those sliders are disabled", () => {
+        const camera = new CameraController(startingAt({ zoom: 1 }),
+            { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 });
+        camera.writeLive({ clipFront: 5, clipBack: 6 });
+        expect(camera.state.clipFront).toBe(8);
+        expect(camera.state.clipBack).toBe(21);
+    });
+
+    it("writes through regardless of who is driving, unlike settle", () => {
+        // These are the renderer's own direct writes, which have always landed unconditionally.
+        // They become a driver in the last slice; until then, dropping one would leave the slab
+        // describing a zoom the camera is no longer at.
+        const camera = new CameraController(startingAt());
+        camera.acquire("movie");
+        camera.writeLive({ zoom: 7 });
+        expect(camera.state.zoom).toBe(7);
+    });
 });
 
 describe("telling the world", () => {

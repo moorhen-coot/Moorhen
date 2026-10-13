@@ -1116,7 +1116,11 @@ export function drawScene(self: MGWebGL) : void {
             console.log(self.myQuat)
         }
 
-        if(!self.animating) self.props.onQuatChanged(self.myQuat)
+        // A copy: onQuatChanged dispatches into Redux, which freezes what it is given, and the
+        // camera writes this array in place on every frame of every move. setDrawQuat is React
+        // state rather than Redux and does not freeze, and it is deliberately given the live array
+        // so that a rotation does not re-render the 2D overlay sixty times a second.
+        if(!self.animating) self.props.onQuatChanged([self.myQuat[0], self.myQuat[1], self.myQuat[2], self.myQuat[3]])
         self.props.setDrawQuat(self.myQuat)
 
         const theShaders = [

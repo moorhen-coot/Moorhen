@@ -174,14 +174,13 @@ export function initInstanceState(self: MGWebGL): void {
 
     self.gl_clipPlane0 = new Float32Array(4);
     self.gl_clipPlane1 = new Float32Array(4);
+    // The plane normals; the W components come from the camera, via applySlabToRenderer below.
     self.gl_clipPlane1[0] = 0.0;
     self.gl_clipPlane1[1] = 0.0;
     self.gl_clipPlane1[2] = 1.0;
-    self.gl_clipPlane1[3] = 1000.0;
     self.gl_clipPlane0[0] = 0.0;
     self.gl_clipPlane0[1] = 0.0;
     self.gl_clipPlane0[2] = -1.0;
-    self.gl_clipPlane0[3] = -0.0;
     self.gl_clipPlane2 = new Float32Array(4);
     self.gl_clipPlane3 = new Float32Array(4);
     self.gl_clipPlane4 = new Float32Array(4);
@@ -201,8 +200,8 @@ export function initInstanceState(self: MGWebGL): void {
 
 
     self.gl_nClipPlanes = 0;
-    self.gl_fog_start = self.fogClipOffset;
-    self.gl_fog_end = 1000+self.fogClipOffset;
+    // Fog and the clip plane W components are derived from the camera, not set here.
+    self.applySlabToRenderer();
 
     self.origin = [0.0, 0.0, 0.0];
 
@@ -448,8 +447,8 @@ export function initGraphics(self: MGWebGL): void {
     self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.RGBA, self.gl.RGBA, self.gl.UNSIGNED_BYTE, self.circleCtx.canvas);
 
     self.gl_nClipPlanes = 0;
-    self.gl_fog_start = self.fogClipOffset;
-    self.gl_fog_end = 1000+self.fogClipOffset;
+    // Fog and the clip plane W components are derived from the camera, not set here.
+    self.applySlabToRenderer();
     //self.gl.lineWidth(2.0);
     self.gl.blendFuncSeparate(self.gl.SRC_ALPHA, self.gl.ONE_MINUS_SRC_ALPHA, self.gl.ONE, self.gl.ONE_MINUS_SRC_ALPHA);
     self.gl.enable(self.gl.BLEND);

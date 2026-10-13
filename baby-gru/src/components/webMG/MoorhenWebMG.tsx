@@ -179,10 +179,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
 
 
+    /**
+     * The camera re-derives the slab itself now, under its slab policy, so this no longer has to
+     * dispatch autoClipFogByZoom and wait for the answer to come back round through the store.
+     *
+     * The listener stays because `zoomChanged` is a public event that code outside Moorhen may be
+     * listening for, and because removing it is a separate decision from this one.
+     */
     const handleZoomChanged = useCallback(evt => {
-        if (resetClippingFogging) {
-            dispatch(autoClipFogByZoom())
-        }
     }, [glRef, resetClippingFogging])
 
     const handleGoToBlobDoubleClick = useCallback(async (evt) => {
@@ -425,9 +429,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const handleWindowResized = useCallback(() => {
         if (glRef !== null && typeof glRef !== 'function') {
-            if (resetClippingFogging) {
-                dispatch(autoClipFogByZoom())
-            }
+            // No autoClipFogByZoom dispatch: the slab follows zoom inside the camera, and resizing
+            // does not change the zoom, so there was never anything to re-derive here.
             glRef.current.resize(width, height)
             glRef.current.drawScene()
         }
@@ -564,8 +567,35 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [labelBuffers, glRef])
 
+    /**
+     * How the slab follows the camera: the switch the user sees as "Reset clip and fog on zoom".
+     *
+     * It used to be a listener - a zoomChanged event, a dispatch, a reducer recomputing four
+     * numbers, two effects pushing them back into the renderer. It is now a policy the camera
+     * applies as part of writing its own state, so the coupling between zoom and the slab is
+     * declared in one place instead of implied by a round trip. The depths are the 8 and 21 that
+     * execAutoClipFogByZoom used.
+     *
+     * `writeLive({})` re-derives without changing anything, which is what the switch needs: turning
+     * it on should snap the slab to the current zoom immediately rather than at the next move.
+     */
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.cameraController.slabPolicy = resetClippingFogging
+                ? { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 }
+                : { kind: "manual" }
+            glRef.current.cameraController.writeLive({})
+            glRef.current.drawScene()
+        }
+    }, [resetClippingFogging, glRef])
+
+    // These two are reconciliation now rather than the way the slab is set: the camera owns it and
+    // echoes it back here. They skip when the renderer already agrees, which is what keeps the echo
+    // and the effect from chasing each other over a last-bit difference.
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            const camera = glRef.current.cameraController.state
+            if (Math.abs(camera.clipFront - clipStart) < 1e-9 && Math.abs(camera.clipBack - clipEnd) < 1e-9) return
             glRef.current.set_clip_range(-clipStart, clipEnd)
             glRef.current.drawScene()
         }
@@ -573,6 +603,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            const camera = glRef.current.cameraController.state
+            if (Math.abs(camera.eyeDistance - camera.fogFront - fogStart) < 1e-9 &&
+                Math.abs(camera.eyeDistance + camera.fogBack - fogEnd) < 1e-9) return
             glRef.current.set_fog_range(fogStart, fogEnd)
             glRef.current.drawScene()
         }
