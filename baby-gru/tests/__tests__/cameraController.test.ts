@@ -1,0 +1,355 @@
+/**
+ * The camera controller: who owns the camera, and what happens when two things want it.
+ *
+ * The tests that matter are the ones that pin the behaviours the old arrangement got wrong -
+ * reconciliation deferring to an active driver, a move finishing rather than being interrupted,
+ * a turn during a move being kept rather than discarded, and the slab following zoom from inside
+ * the single writer rather than by a listener. Those are the loop and the lost-input bugs stated
+ * as expectations, so they cannot come back quietly.
+ */
+import { describe, expect, it, jest } from "@jest/globals";
+import * as quat4 from "gl-matrix/quat";
+import { CameraController, CameraState, Quat } from "../../src/WebGLgComponents/cameraController";
+
+const identity: Quat = [0, 0, 0, 1];
+
+const startingAt = (overrides: Partial<CameraState> = {}): CameraState => ({
+    quat: identity,
+    origin: [0, 0, 0],
+    zoom: 1,
+    eyeDistance: 250,
+    // Offsets from the view centre now, all four of them - see CameraState.
+    clipFront: 8,
+    clipBack: 21,
+    fogFront: 8,
+    fogBack: 21,
+    ...overrides,
+});
+
+const turnAboutY = (degrees: number): Quat => {
+    const q = quat4.create();
+    quat4.setAxisAngle(q, [0, 1, 0], (degrees * Math.PI) / 180);
+    return [...q] as Quat;
+};
+
+describe("holding a camera", () => {
+    it("starts where it was put", () => {
+        const camera = new CameraController(startingAt({ zoom: 3 }));
+        expect(camera.state.zoom).toBe(3);
+        expect(camera.driver).toBeNull();
+        expect(camera.moving).toBe(false);
+    });
+
+    it("does not hand out its insides", () => {
+        const initial = startingAt();
+        const camera = new CameraController(initial);
+        initial.origin[0] = 99;
+        expect(camera.state.origin[0]).toBe(0);
+    });
+
+    it("leaves unnamed fields strictly alone", () => {
+        // The reason a target is partial: "zoom in but stay put" should not require restating
+        // the orientation, nor reading it first in order to pass it back unchanged.
+        const camera = new CameraController(startingAt({ zoom: 1, origin: [5, 6, 7] }));
+        camera.acquire("api").set({ zoom: 4 });
+        expect(camera.state.zoom).toBe(4);
+        expect(camera.state.origin).toEqual([5, 6, 7]);
+    });
+});
+
+describe("settle, which is what reconciliation becomes", () => {
+    it("agrees with the store when nobody is driving", () => {
+        const camera = new CameraController(startingAt());
+        camera.settle({ zoom: 2 });
+        expect(camera.state.zoom).toBe(2);
+    });
+
+    it("defers to an active driver", () => {
+        // The loop, stated as an expectation. A move in progress means the store is out of date,
+        // not that the camera is wrong - so reconciliation must not pull it back.
+        const camera = new CameraController(startingAt());
+        const movie = camera.acquire("movie");
+        movie.set({ zoom: 5 });
+
+        camera.settle({ zoom: 1 });
+
+        expect(camera.state.zoom).toBe(5);
+        movie.release();
+    });
+
+    it("agrees again once the driver lets go", () => {
+        const camera = new CameraController(startingAt());
+        const movie = camera.acquire("movie");
+        movie.set({ zoom: 5 });
+        movie.release();
+
+        camera.settle({ zoom: 1 });
+        expect(camera.state.zoom).toBe(1);
+    });
+});
+
+describe("moving", () => {
+    it("arrives, and not before", () => {
+        const camera = new CameraController(startingAt({ zoom: 1 }));
+        camera.acquire("centring").moveTo({ zoom: 2 }, { kind: "ease", seconds: 1 });
+
+        camera.tick(100);              // the clock's origin is wherever the first tick lands
+        expect(camera.state.zoom).toBeCloseTo(1, 6);
+
+        camera.tick(100.5);
+        expect(camera.state.zoom).toBeGreaterThan(1);
+        expect(camera.state.zoom).toBeLessThan(2);
+
+        camera.tick(101);
+        expect(camera.state.zoom).toBeCloseTo(2, 6);
+    });
+
+    it("takes its time from the caller, not from a clock of its own", () => {
+        // Why export and preview can share everything: one passes wall-clock, the other i/fps.
+        const camera = new CameraController(startingAt({ zoom: 1 }));
+        camera.acquire("movie").moveTo({ zoom: 2 }, { kind: "ease", seconds: 1 });
+
+        camera.tick(0);
+        camera.tick(0.5);
+        const halfway = camera.state.zoom;
+
+        const other = new CameraController(startingAt({ zoom: 1 }));
+        other.acquire("movie").moveTo({ zoom: 2 }, { kind: "ease", seconds: 1 });
+        other.tick(1000);
+        other.tick(1000.5);
+
+        expect(other.state.zoom).toBeCloseTo(halfway, 10);
+    });
+
+    it("resolves when it arrives", async () => {
+        const camera = new CameraController(startingAt());
+        const arrival = camera.acquire("centring").moveTo({ zoom: 2 }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+        camera.tick(1);
+        await expect(arrival).resolves.toEqual({ completed: true });
+    });
+
+    it("is instant when asked to be", async () => {
+        // The operation that did not exist, and the reason a movie had to fight the renderer.
+        const camera = new CameraController(startingAt({ zoom: 1 }));
+        const done = await camera.acquire("api").moveTo({ zoom: 7 }, { kind: "instant" });
+        expect(camera.state.zoom).toBe(7);
+        expect(done).toEqual({ completed: true });
+        expect(camera.moving).toBe(false);
+    });
+
+    it("interpolates the orientation, not just the numbers", () => {
+        const camera = new CameraController(startingAt());
+        camera.acquire("centring").moveTo({ quat: turnAboutY(90) }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+        camera.tick(0.5);
+        const halfway = quat4.fromValues(...camera.state.quat);
+        const angle = (quat4.getAngle(quat4.fromValues(...identity), halfway) * 180) / Math.PI;
+        expect(angle).toBeGreaterThan(10);
+        expect(angle).toBeLessThan(80);
+    });
+});
+
+describe("two things wanting the camera", () => {
+    it("lets the newcomer take it", async () => {
+        const camera = new CameraController(startingAt({ zoom: 1 }));
+        const centring = camera.acquire("centring");
+        const arrival = centring.moveTo({ zoom: 5 }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+
+        const movie = camera.acquire("movie");
+        await expect(arrival).resolves.toEqual({ completed: false });
+        expect(centring.active).toBe(false);
+        expect(camera.driver).toBe("movie");
+        movie.release();
+    });
+
+    it("ignores a superseded driver still holding its handle", () => {
+        const camera = new CameraController(startingAt({ zoom: 1 }));
+        const stale = camera.acquire("centring");
+        camera.acquire("movie").set({ zoom: 5 });
+
+        stale.set({ zoom: 99 });
+        expect(camera.state.zoom).toBe(5);
+    });
+
+    it("reports who is driving", () => {
+        const camera = new CameraController(startingAt());
+        expect(camera.driver).toBeNull();
+        const user = camera.acquire("user");
+        expect(camera.driver).toBe("user");
+        user.release();
+        expect(camera.driver).toBeNull();
+    });
+});
+
+describe("a turn arriving during a move", () => {
+    it("is kept and applied on arrival, not discarded", () => {
+        // Today a drag during a centring animation is silently lost: both write the quaternion
+        // and the animation writes last. Accidental motion must not stop the camera arriving, but
+        // deliberate motion should not vanish either.
+        const camera = new CameraController(startingAt());
+        const centring = camera.acquire("centring");
+        centring.moveTo({ zoom: 2 }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+
+        centring.turnBy(turnAboutY(30));
+        const duringMove = quat4.getAngle(quat4.fromValues(...identity), quat4.fromValues(...camera.state.quat));
+        expect((duringMove * 180) / Math.PI).toBeCloseTo(0, 4);
+
+        camera.tick(1);
+        const afterArrival = quat4.getAngle(quat4.fromValues(...identity), quat4.fromValues(...camera.state.quat));
+        expect((afterArrival * 180) / Math.PI).toBeCloseTo(30, 3);
+    });
+
+    it("accumulates several turns", () => {
+        const camera = new CameraController(startingAt());
+        const centring = camera.acquire("centring");
+        centring.moveTo({ zoom: 2 }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+        centring.turnBy(turnAboutY(20));
+        centring.turnBy(turnAboutY(20));
+        camera.tick(1);
+
+        const total = quat4.getAngle(quat4.fromValues(...identity), quat4.fromValues(...camera.state.quat));
+        expect((total * 180) / Math.PI).toBeCloseTo(40, 3);
+    });
+
+    it("applies immediately when nothing is moving", () => {
+        const camera = new CameraController(startingAt());
+        camera.acquire("user").turnBy(turnAboutY(45));
+        const angle = quat4.getAngle(quat4.fromValues(...identity), quat4.fromValues(...camera.state.quat));
+        expect((angle * 180) / Math.PI).toBeCloseTo(45, 4);
+    });
+});
+
+describe("driving frame by frame", () => {
+    it("asks the driver where to be", () => {
+        const camera = new CameraController(startingAt());
+        const movie = camera.acquire("movie");
+        movie.drive(seconds => ({ zoom: 1 + seconds }));
+
+        camera.tick(0);
+        expect(camera.state.zoom).toBe(1);
+        camera.tick(2);
+        expect(camera.state.zoom).toBe(3);
+        movie.release();
+    });
+
+    it("stops being asked once released", () => {
+        const camera = new CameraController(startingAt());
+        const movie = camera.acquire("movie");
+        const sample = jest.fn(() => ({ zoom: 9 }));
+        movie.drive(sample);
+        camera.tick(0);
+        movie.release();
+        camera.tick(1);
+        expect(sample).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe("the slab", () => {
+    it("is left alone under a manual policy", () => {
+        const camera = new CameraController(startingAt({ clipFront: 8, clipBack: 21 }), { kind: "manual" });
+        camera.acquire("api").set({ zoom: 4 });
+        expect(camera.state.clipFront).toBe(8);
+        expect(camera.state.clipBack).toBe(21);
+    });
+
+    it("follows zoom under an auto policy, from inside the one writer", () => {
+        // autoClipFogByZoom as a policy rather than a listener: no event round trip, so no second
+        // writer and nothing to reconcile.
+        const camera = new CameraController(startingAt(),
+            { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 });
+        camera.acquire("api").set({ zoom: 2 });
+        expect(camera.state.clipFront).toBe(16);
+        expect(camera.state.clipBack).toBe(42);
+    });
+
+    it("keeps following through a move, not only at its end", () => {
+        const camera = new CameraController(startingAt(),
+            { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 });
+        camera.acquire("centring").moveTo({ zoom: 3 }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+        camera.tick(0.5);
+        expect(camera.state.clipFront).toBeCloseTo(camera.state.zoom * 8, 6);
+        camera.tick(1);
+        expect(camera.state.clipFront).toBeCloseTo(24, 6);
+    });
+
+    it("can be switched, as a session restore must", () => {
+        const camera = new CameraController(startingAt(),
+            { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 });
+        camera.slabPolicy = { kind: "manual" };
+        camera.acquire("session").set({ zoom: 5, clipFront: 3, clipBack: 9 });
+        expect(camera.state.clipFront).toBe(3);
+        expect(camera.state.clipBack).toBe(9);
+    });
+});
+
+describe("telling the world", () => {
+    it("says so when the camera comes to rest, not every frame", () => {
+        const camera = new CameraController(startingAt());
+        const heard = jest.fn();
+        camera.subscribe(heard);
+
+        camera.acquire("centring").moveTo({ zoom: 2 }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+        camera.tick(0.25);
+        camera.tick(0.5);
+        camera.tick(0.75);
+        expect(heard).not.toHaveBeenCalled();
+
+        camera.tick(1);
+        expect(heard).toHaveBeenCalledTimes(1);
+    });
+
+    it("says so immediately for a set, which has no duration", () => {
+        const camera = new CameraController(startingAt());
+        const heard = jest.fn();
+        camera.subscribe(heard);
+        camera.acquire("api").set({ zoom: 3 });
+        expect(heard).toHaveBeenCalledTimes(1);
+    });
+
+    it("says so when a driven sequence is released", () => {
+        const camera = new CameraController(startingAt());
+        const heard = jest.fn();
+        camera.subscribe(heard);
+        const movie = camera.acquire("movie");
+        movie.drive(seconds => ({ zoom: 1 + seconds }));
+        camera.tick(0);
+        camera.tick(5);
+        expect(heard).not.toHaveBeenCalled();
+        movie.release();
+        expect(heard).toHaveBeenCalledTimes(1);
+    });
+
+    it("stops telling an unsubscribed listener", () => {
+        const camera = new CameraController(startingAt());
+        const heard = jest.fn();
+        const stop = camera.subscribe(heard);
+        stop();
+        camera.acquire("api").set({ zoom: 3 });
+        expect(heard).not.toHaveBeenCalled();
+    });
+});
+
+describe("ticking when there is nothing to do", () => {
+    it("changes nothing", () => {
+        const camera = new CameraController(startingAt({ zoom: 2 }));
+        camera.tick(0);
+        camera.tick(10);
+        expect(camera.state.zoom).toBe(2);
+    });
+
+    it("is harmless after everything has finished", () => {
+        const camera = new CameraController(startingAt());
+        camera.acquire("centring").moveTo({ zoom: 2 }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+        camera.tick(1);
+        camera.tick(2);
+        camera.tick(3);
+        expect(camera.state.zoom).toBeCloseTo(2, 6);
+    });
+});
