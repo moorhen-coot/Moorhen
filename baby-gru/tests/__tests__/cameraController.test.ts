@@ -323,6 +323,52 @@ describe("the slab", () => {
         expect(camera.state.clipBack).toBe(21);
     });
 
+    it("is not touched by a move that was never asked to change it", () => {
+        // The bug. An eased move is a two-keyframe movie built from the whole camera, so it carried
+        // clip and fog whether or not anyone asked - and the next frame quietly put back a value a
+        // slider had just set. A move is not wrong to end where it was told; it was wrong to have
+        // an opinion about fields nobody mentioned.
+        const camera = new CameraController(startingAt({ zoom: 1, clipFront: 8, clipBack: 21 }),
+            { kind: "manual" });
+        camera.acquire("centring").moveTo({ zoom: 5 }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+
+        camera.writeLive({ clipFront: 99, clipBack: 123 });   // a slider, mid-move
+        camera.tick(0.5);
+        expect(camera.state.clipFront).toBe(99);
+        expect(camera.state.clipBack).toBe(123);
+
+        camera.tick(1);
+        expect(camera.state.clipFront).toBe(99);
+        expect(camera.state.zoom).toBeCloseTo(5, 10);
+    });
+
+    it("is carried by a movie, whose keyframes were authored on purpose", () => {
+        const camera = new CameraController(startingAt({ clipFront: 8 }), { kind: "manual" });
+        const movie = {
+            keyframes: [
+                { quat: quat4.fromValues(0, 0, 0, 1), origin: [0, 0, 0] as [number, number, number],
+                  zoom: 1, clipStart: 8, clipEnd: 21, fogStart: 8, fogEnd: 21 },
+                { quat: quat4.fromValues(0, 0, 0, 1), origin: [0, 0, 0] as [number, number, number],
+                  zoom: 1, clipStart: 40, clipEnd: 60, fogStart: 40, fogEnd: 60 },
+            ],
+            segments: [{ seconds: 1, motion: { kind: "move" as const } }],
+        };
+        camera.acquire("movie").moveTo({}, { kind: "path", movie });
+        camera.tick(0);
+        camera.tick(1);
+        expect(camera.state.clipFront).toBeCloseTo(40, 6);
+        expect(camera.state.fogBack).toBeCloseTo(60, 6);
+    });
+
+    it("applies an eye distance at once, since no path can interpolate one", () => {
+        // Better than dropping it silently, which is what naming a field the keyframes have no
+        // slot for used to do.
+        const camera = new CameraController(startingAt({ eyeDistance: 250 }), { kind: "manual" });
+        camera.acquire("api").moveTo({ eyeDistance: 400, zoom: 3 }, { kind: "ease", seconds: 1 });
+        expect(camera.state.eyeDistance).toBe(400);
+    });
+
     it("writes through regardless of who is driving, unlike settle", () => {
         // These are the renderer's own direct writes, which have always landed unconditionally.
         // They become a driver in the last slice; until then, dropping one would leave the slab

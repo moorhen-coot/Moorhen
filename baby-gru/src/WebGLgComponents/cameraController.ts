@@ -195,11 +195,27 @@ const easeMovie = (from: CameraState, to: CameraState, seconds: number): Movie =
     segments: [{ seconds: Math.max(0, seconds), motion: { kind: "move" } }],
 });
 
+/** Everything a camera path can interpolate. The eye distance is not among them - see below. */
+const PATH_FIELDS = ["quat", "origin", "zoom", "clipFront", "clipBack", "fogFront", "fogBack"] as const;
+type PathField = typeof PATH_FIELDS[number];
+
 interface ActiveMove {
     movie: Movie;
     /** Set on the first tick after the move begins, so the caller's clock sets the origin of time. */
     startedAt: number | null;
     duration: number;
+    /**
+     * Which fields this move may write.
+     *
+     * A move only touches what it was asked to change. Without this, every eased move wrote the
+     * whole camera, because a two-keyframe movie is built from the full state and so carries clip
+     * and fog whether or not anyone asked it to - so dragging a fog slider during a centring move
+     * had the next frame quietly put it back. The move is not wrong to end where it was told; it
+     * was wrong to have an opinion about fields nobody mentioned.
+     *
+     * A movie is different: its keyframes are authored, so everything in them is intended.
+     */
+    writes: ReadonlySet<PathField>;
     settle: (result: MoveResult) => void;
 }
 
@@ -311,16 +327,16 @@ export class CameraController {
         const elapsed = seconds - this.move.startedAt;
 
         const sample = sampleMovie(this.move.movie, Math.min(elapsed, this.move.duration));
-        this.current = this.applySlab({
-            ...this.current,
-            quat: writeQuat(this.current.quat, sample.quat),
-            origin: writeVec3(this.current.origin, sample.origin),
-            zoom: sample.zoom,
-            clipFront: sample.clipStart,
-            clipBack: sample.clipEnd,
-            fogFront: sample.fogStart,
-            fogBack: sample.fogEnd,
-        });
+        const writes = this.move.writes;
+        const next: CameraState = { ...this.current };
+        if (writes.has("quat")) next.quat = writeQuat(this.current.quat, sample.quat);
+        if (writes.has("origin")) next.origin = writeVec3(this.current.origin, sample.origin);
+        if (writes.has("zoom")) next.zoom = sample.zoom;
+        if (writes.has("clipFront")) next.clipFront = sample.clipStart;
+        if (writes.has("clipBack")) next.clipBack = sample.clipEnd;
+        if (writes.has("fogFront")) next.fogFront = sample.fogStart;
+        if (writes.has("fogBack")) next.fogBack = sample.fogEnd;
+        this.current = this.applySlab(next);
 
         if (elapsed >= this.move.duration) {
             const settle = this.move.settle;
@@ -364,18 +380,32 @@ export class CameraController {
         this.abandonMove();
 
         if (transition.kind === "path") {
+            // An authored movie means every field in its keyframes, which is the whole point of
+            // having authored them.
             const duration = transition.movie.segments.reduce((t, s) => t + Math.max(0, s.seconds), 0);
             return new Promise(resolve => {
-                this.move = { movie: transition.movie, startedAt: null, duration, settle: resolve };
+                this.move = {
+                    movie: transition.movie, startedAt: null, duration,
+                    writes: new Set(PATH_FIELDS), settle: resolve,
+                };
             });
         }
 
+        // The eye distance is not something a camera path can interpolate - cameraPath's keyframes
+        // have no slot for it - so a move that names it applies it at once rather than dropping it
+        // silently. Animating the eye would mean widening the keyframe, and nothing wants that yet.
+        if (target.eyeDistance !== undefined) {
+            this.current = this.applySlab(mergeLive(this.current, { eyeDistance: target.eyeDistance }));
+        }
+
         const destination = merge(this.current, target);
+        const writes = new Set(PATH_FIELDS.filter(field => target[field] !== undefined));
         return new Promise(resolve => {
             this.move = {
                 movie: easeMovie(this.current, destination, transition.seconds),
                 startedAt: null,
                 duration: Math.max(0, transition.seconds),
+                writes,
                 settle: resolve,
             };
         });

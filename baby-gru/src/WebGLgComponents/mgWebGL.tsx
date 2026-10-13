@@ -106,7 +106,7 @@ import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBu
 import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
 import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWebGLParts/postProcessUniformBuffers'
 import { doRightClick, doClick, doHover, doWheel, doMouseUpMeasure, doMouseDownMeasure, doMouseMoveMeasure, doMouseUp, doMiddleClick, doDoubleClick, doMouseMove, doMouseDown, handleKeyUp, handleKeyDown } from './mgWebGLParts/eventHandlers'
-import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setOrientationAndZoomFrame, setOrientationAndZoomAnimated, setOrientationAnimated, moveCameraTo, stopPumpingCamera, setViewAnimated, setOriginOrientationAndZoomAnimated, drawOriginAndZoomFrame, setOriginAndZoomAnimated, setOriginAnimated, drawOriginFrame, drawZoomFrame, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
+import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationAndZoomAnimated, setOrientationAnimated, moveCameraTo, stopPumpingCamera, setViewAnimated, setOriginOrientationAndZoomAnimated, setOriginAndZoomAnimated, setOriginAnimated, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
 import { drawTransparent, drawImagesAndText, drawTexturedShapes, drawTextLabels, drawDistancesAndLabels, drawCircles, drawLineMeasures, drawCrosshairs, drawMouseTrack, drawFPSMeter, drawTextOverlays } from './mgWebGLParts/overlays'
 import { drawBuffer, drawMaxElementsUInt, setupModelViewTransformMatrixInteractive, drawTransformMatrixInteractive, drawTransformMatrix, drawTransformMatrixInteractivePMV, drawTransformMatrixPMV } from './mgWebGLParts/bufferDraw'
 import { drawPeel, drawTriangles, drawScene, applySymmetryMatrix, bindFramebufferDrawBuffers } from './mgWebGLParts/drawCore'
@@ -1189,14 +1189,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.drawScene();
     }
 
-    setOrientationFrame(qOld, qNew, iframe) {
-        setOrientationFrame(this, qOld, qNew, iframe)
-    }
-
-    setOrientationAndZoomFrame(qOld, qNew, oldZoom, zoomDelta, iframe) {
-        setOrientationAndZoomFrame(this, qOld, qNew, oldZoom, zoomDelta, iframe)
-    }
-
     setOrientationAndZoomAnimated(q,z) {
         setOrientationAndZoomAnimated(this, q, z)
     }
@@ -1278,16 +1270,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         setOriginAndZoomAnimated(this, newOrigin, newZoom)
     }
 
-    drawOriginAndZoomFrame(oldOrigin: [number, number, number], oldZoom: number, deltaOrigin: [number, number, number], deltaZoom: number, iframe: number) {
-        drawOriginAndZoomFrame(this, oldOrigin, oldZoom, deltaOrigin, deltaZoom, iframe)
-    }
-
     setOriginAnimated(oldOrigin: number[]) : void {
         setOriginAnimated(this, oldOrigin)
-    }
-
-    drawOriginFrame(oo,d,iframe){
-        drawOriginFrame(this, oo, d, iframe)
     }
 
     setOrigin(o: [number, number, number], doDrawScene=true, dispatchEvent=true) : void {
@@ -1358,10 +1342,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         document.dispatchEvent(wheelContourChanged);
 
         if (drawScene) this.drawScene();
-    }
-
-    drawZoomFrame(oldZoom: number, newZoom: number, iframe: number) {
-        drawZoomFrame(this, oldZoom, newZoom, iframe)
     }
 
     setZoomAnimated(newZoom: number) {
