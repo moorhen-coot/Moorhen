@@ -77,6 +77,27 @@ describe("an old session, with no eye distance recorded", () => {
     });
 });
 
+describe("an eye distance that cannot be real", () => {
+    it("falls back rather than putting the eye at the origin", () => {
+        // The field crosses a protobuf boundary. A proto3 float without explicit presence decodes
+        // as 0 when absent, so if the `optional` were ever dropped from the .proto every older
+        // session would arrive claiming an eye at zero - and fog measured from there is nowhere.
+        expect(cameraFromSession(defaultSession({ eyeDistance: 0 })).eyeDistance).toBe(LEGACY_EYE_DISTANCE);
+        expect(cameraFromSession(defaultSession({ eyeDistance: -5 })).eyeDistance).toBe(LEGACY_EYE_DISTANCE);
+    });
+
+    it("reads such a file exactly as it would have before the field existed", () => {
+        const withZero = cameraFromSession(defaultSession({ eyeDistance: 0 }));
+        const withNothing = cameraFromSession(defaultSession());
+        expect(withZero).toEqual(withNothing);
+    });
+
+    it("treats null the same, which is what protobufjs hands back for an absent optional", () => {
+        expect(cameraFromSession(defaultSession({ eyeDistance: null as unknown as number })).eyeDistance)
+            .toBe(LEGACY_EYE_DISTANCE);
+    });
+});
+
 describe("a session that records its eye distance", () => {
     it("uses it instead of the legacy assumption", () => {
         const camera = cameraFromSession(defaultSession({

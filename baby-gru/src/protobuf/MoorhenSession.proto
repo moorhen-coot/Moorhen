@@ -235,6 +235,14 @@ message ViewDataSession {
   EdgeDetection edgeDetection = 17;
   Blur blur = 18;
   bool doPerspectiveProjection = 19;
+  // Distance from the eye to the view centre, the renderer's old fogClipOffset.
+  //
+  // `optional` is load-bearing, not decoration. fogStart and fogEnd are measured from the eye, so
+  // a session that does not carry this can only be read against an assumed 250 - which was right
+  // until the perspective eye-distance control made it movable. Without explicit presence a plain
+  // proto3 float would decode as 0 for every older file, and fog measured from an eye at 0 is not
+  // slightly wrong, it is nowhere. See LEGACY_EYE_DISTANCE in utils/sessionCamera.ts.
+  optional float eyeDistance = 20;
 }
 
 message Ssao {

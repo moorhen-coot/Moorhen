@@ -64,7 +64,14 @@ export interface SessionCamera {
  * Everything comes back as an offset from the view centre, and the eye distance is explicit.
  */
 export function cameraFromSession(session: SessionCamera): CameraState {
-    const eyeDistance = session.eyeDistance ?? LEGACY_EYE_DISTANCE;
+    // Not just `?? LEGACY_EYE_DISTANCE`. The field crosses a protobuf boundary, and a float
+    // without explicit presence decodes as 0 when absent rather than as undefined - so a toolchain
+    // change, or anyone dropping the `optional` from the .proto, would silently hand every older
+    // session an eye at the origin. Fog measured from an eye at 0 is not slightly wrong, it is
+    // nowhere. There is no eye distance at or below zero worth honouring, so treat one as absent.
+    const eyeDistance = session.eyeDistance && session.eyeDistance > 0
+        ? session.eyeDistance
+        : LEGACY_EYE_DISTANCE;
 
     return {
         quat: [session.quat4[0], session.quat4[1], session.quat4[2], session.quat4[3]] as Quat,

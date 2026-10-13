@@ -589,6 +589,28 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [resetClippingFogging, glRef])
 
+    /**
+     * THE EYE MUST BE RECONCILED BEFORE THE SLAB. THIS EFFECT STAYS ABOVE THE NEXT TWO.
+     *
+     * The store records fog as absolute distances from the eye, so interpreting a saved fog against
+     * the wrong eye puts it in the wrong place. Restoring a session dispatches the eye and the fog
+     * in the same batch, and React runs effects in declaration order: with these the other way
+     * round, a session saved with the eye at 400 restores its fog measured against 250 and lands
+     * roughly 150A adrift - which is the bug this whole slice exists to fix, re-introduced one line
+     * lower down.
+     *
+     * Dragging the eye-distance slider works either way round, and that is why the order is easy to
+     * get wrong without noticing: there the camera keeps its offsets, echoes the new absolute fog
+     * back here, and the slab effects then agree and do nothing.
+     */
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            if (Math.abs(glRef.current.cameraController.state.eyeDistance - fogClipOffset) < 1e-9) return
+            glRef.current.setFogClipOffset(fogClipOffset)
+            glRef.current.drawScene()
+        }
+    }, [fogClipOffset, glRef])
+
     // These two are reconciliation now rather than the way the slab is set: the camera owns it and
     // echoes it back here. They skip when the renderer already agrees, which is what keeps the echo
     // and the effect from chasing each other over a last-bit difference.
@@ -610,13 +632,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [fogStart, fogEnd, glRef])
-
-    useEffect(() => {
-        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.setFogClipOffset(fogClipOffset)
-            glRef.current.drawScene()
-        }
-    }, [fogClipOffset, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
