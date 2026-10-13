@@ -72,6 +72,10 @@ export default tseslint.config(
     },
     rules: {
       ...pluginReactHooks.configs["recommended-latest"].rules,
+      // Flags mutating the imperative MoorhenInstance returned by useMoorhenInstance(), which is intended
+      "react-hooks/immutability": "off",
+      // Reading refs during render is often harmless here (refs set once), but can hide stale values
+      "react-hooks/refs": "warn",
     },
   },
 

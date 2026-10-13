@@ -2,6 +2,9 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { BottomPanelIDs, SidePanelIDs } from "@/components/panels";
 import { ShownControl } from "@/components/snack-bars/PopupControls/PopupControlList";
 
+/** A scene preset listed in the scene selector (see MoorhenInstance.userScene) */
+export type UserScene = { id: string; name: string };
+
 
 const initialState: {
     busy: boolean;
@@ -17,6 +20,9 @@ const initialState: {
     controlLocked: number | null;
     selectionToolsActive: boolean;
     clickAwayListenerPauseCount: number;
+    userScenes: UserScene[];
+    selectedScene: string;
+    isSceneChanging: boolean;
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
@@ -31,6 +37,12 @@ const initialState: {
     controlLocked: null,
     selectionToolsActive: false,
     clickAwayListenerPauseCount: 0,
+    userScenes: [
+        { id: "Default", name: "Default" },
+        { id: "Model Building", name: "Model Building" },
+    ],
+    selectedScene: "Default",
+    isSceneChanging: false,
 };
 
 const globalUISlice = createSlice({
@@ -107,6 +119,23 @@ const globalUISlice = createSlice({
         resumeClickAwayListener: state => {
             state.clickAwayListenerPauseCount = Math.max(0, state.clickAwayListenerPauseCount - 1);
         },
+        // Scene presets: driven by MoorhenInstance.userScene, which also restores the representations
+        addUserScene: (state, action: PayloadAction<UserScene>) => {
+            state.userScenes.push(action.payload);
+        },
+        removeUserScene: (state, action: PayloadAction<string>) => {
+            state.userScenes = state.userScenes.filter(scene => scene.id !== action.payload);
+        },
+        renameUserScene: (state, action: PayloadAction<{ id: string; name: string }>) => {
+            const scene = state.userScenes.find(scene => scene.id === action.payload.id);
+            if (scene) scene.name = action.payload.name;
+        },
+        setSelectedScene: (state, action: PayloadAction<string>) => {
+            state.selectedScene = action.payload;
+        },
+        setSceneChanging: (state, action: PayloadAction<boolean>) => {
+            state.isSceneChanging = action.payload;
+        },
     }
 });
 
@@ -126,5 +155,10 @@ export const {
     closeResidueSelectionTools,
     pauseClickAwayListener,
     resumeClickAwayListener,
+    addUserScene,
+    removeUserScene,
+    renameUserScene,
+    setSelectedScene,
+    setSceneChanging,
 } = globalUISlice.actions;
 export default globalUISlice.reducer;

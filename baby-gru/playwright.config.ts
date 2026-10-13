@@ -30,7 +30,7 @@ export default defineConfig({
     ],
     webServer: {
         command: "npm run start:webcomponent:e2e",
-        port: 5173,
+        port: 5174,
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,
         stdout: "pipe",

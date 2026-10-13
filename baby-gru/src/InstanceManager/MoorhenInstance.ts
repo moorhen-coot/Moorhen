@@ -21,6 +21,7 @@ import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
+import { MoorhenUserSceneManager } from "./UserSceneManager";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
 import type { AppDispatch, MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 
@@ -91,6 +92,7 @@ export class MoorhenInstance extends StoreExtension {
     private _webComponent: MoorhenWebComponent | null = null;
     private readyCallbacks: Array<() => void | Promise<void>> = [];
     private preferencesUnsubscribe: (() => void) | null = null;
+    private _userScene: MoorhenUserSceneManager;
 
     /**
      * Create a new Moorhen instance.
@@ -125,6 +127,7 @@ export class MoorhenInstance extends StoreExtension {
         this.preferences = new Preferences();
         this._menuSystem = menuSystem || null;
         this.containerRef = containerRef;
+        this._userScene = new MoorhenUserSceneManager(this);
     }
 
     /**
@@ -614,6 +617,16 @@ export class MoorhenInstance extends StoreExtension {
     public getMapList(): MoorhenMap[] {
         const state = this.store.getState();
         return state.maps;
+    }
+
+    /**
+     * Scene presets API for this instance: switch between, create, rename and delete
+     * named sets of representations (see {@link MoorhenUserSceneManager}).
+     * @example
+     * await instance.userScene.select("Model Building");
+     */
+    public get userScene(): MoorhenUserSceneManager {
+        return this._userScene;
     }
 
     /**

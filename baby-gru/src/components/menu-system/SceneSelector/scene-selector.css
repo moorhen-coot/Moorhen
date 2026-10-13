@@ -41,3 +41,7 @@
     padding: 0.5rem 1rem;
     cursor: pointer;
 }
+
+.moorhen__scene-selector-number {
+    font-size: 1.2rem;
+}

@@ -92,6 +92,7 @@ import MatSymSwipeRight from "./MatSymSwipeRight.svg"
 import MatSymZoomIn from "./MatSymZoomIn.svg"
 import MatSymZoomOut from "./MatSymZoomOut.svg"
 import MatSymWallpaperSlideshow from "./MatSymWallpaperSlideshow.svg"
+import MatSymBuild from "./MatSymBuild.svg"
 
 export const moorhenSVGs = {"MatSymAdd": MatSymAdd,
  "MatSymAlbum": MatSymAlbum,
@@ -187,6 +188,7 @@ export const moorhenSVGs = {"MatSymAdd": MatSymAdd,
  "MatSymZoomIn": MatSymZoomIn,
  "MatSymZoomOut": MatSymZoomOut,
  "MatSymWallpaperSlideshow": MatSymWallpaperSlideshow,
+ "MatSymBuild": MatSymBuild,
  }
 
 export type MoorhenSVG = "MatSymAdd" |
@@ -282,4 +284,5 @@ export type MoorhenSVG = "MatSymAdd" |
  "MatSymSwipeRight" |
  "MatSymZoomIn" |
  "MatSymZoomOut" |
- "MatSymWallpaperSlideshow"
+ "MatSymWallpaperSlideshow" |
+ "MatSymBuild"

@@ -1,79 +1,37 @@
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState } from "react";
-import { DEFAULT_REPRESENTATION_STYLE } from "@/InstanceManager/MoorhenInstance";
 import { MoorhenIcon } from "@/components/icons";
+import { MoorhenButton, MoorhenPopoverButton, MoorhenTextInput } from "@/components/inputs";
 import { useMoorhenInstance } from "@/hooks";
-import { setMainMenuOpen } from "@/store";
-import type { RepresentationBackup } from "@/utils/Representation/RepresentationBuilder";
+import { RootState, setMainMenuOpen } from "@/store";
 import { MoorhenMenuItem, MoorhenPopover, MoorhenStack, MoorhenTooltip } from "../../interface-base";
 import "./scene-selector.css";
 
-const userScenes = ["Default", "Model Building"] as const;
-type Scene = (typeof userScenes)[number];
-
-type SceneBackupEntry = { moleculeUniqueId: string; params: RepresentationBackup };
-
 export const UserSceneSelector = () => {
-    const [scene, setScene] = useState<Scene>("Default");
+    const userScenes = useSelector((state: RootState) => state.globalUI.userScenes);
+    const selectedScene = useSelector((state: RootState) => state.globalUI.selectedScene);
+    const isSceneChanging = useSelector((state: RootState) => state.globalUI.isSceneChanging);
     const [isShown, setIsShown] = useState<boolean>(false);
+    const [renameInputValue, setRenameInputValue] = useState<string>("");
     const buttonRef = useRef<HTMLButtonElement>(null);
     const moorhenInstance = useMoorhenInstance();
     const dispatch = useDispatch();
-
-    const [representationBackup, setRepresentationBackup] = useState<SceneBackupEntry[]>([]);
-
-    const deleteCustomRepresentations = async () => {
-        for (const molecule of moorhenInstance.getMoleculeList()) {
-            for (const representation of moorhenInstance.representation.getList(molecule.uniqueId)) {
-                await moorhenInstance.representation.delete(representation.uniqueId);
-            }
-        }
-    };
-
-    const handleSceneChange = async (newScene: Scene) => {
-        if (newScene === scene) return;
-        setScene(newScene);
-
-        if (newScene === "Default") {
-            // eslint-disable-next-line
-            moorhenInstance.representation.defaultStyle = DEFAULT_REPRESENTATION_STYLE;
-            await deleteCustomRepresentations();
-            for (const { moleculeUniqueId, params } of representationBackup) {
-                // The molecule may have been closed while in the model building scene
-                if (!moorhenInstance.getMolecule(moleculeUniqueId)) continue;
-                await moorhenInstance.representation.create(
-                    moleculeUniqueId,
-                    params as Parameters<typeof moorhenInstance.representation.create>[1]
-                );
-            }
-            setRepresentationBackup([]);
-        }
-        if (newScene === "Model Building") {
-            // eslint-disable-next-line
-            moorhenInstance.representation.defaultStyle = "CBs";
-            // Back up every molecule before deleting anything
-            const backup: SceneBackupEntry[] = [];
-            for (const molecule of moorhenInstance.getMoleculeList()) {
-                for (const representation of moorhenInstance.representation.getList(molecule.uniqueId)) {
-                    backup.push({ moleculeUniqueId: molecule.uniqueId, params: representation.backup() });
-                }
-            }
-            setRepresentationBackup(backup);
-            await deleteCustomRepresentations();
-            for (const molecule of moorhenInstance.getMoleculeList()) {
-                // deleteExisting would also remove the non-custom reps, so don't let the wizard delete
-                await moorhenInstance.representation.wizard(molecule.uniqueId, "bonds", false);
-            }
-        }
-    };
 
     const handleClick = () => {
         setIsShown(!isShown);
         dispatch(setMainMenuOpen(false));
     };
 
+    const handleNewScene = () => {
+        moorhenInstance.userScene.create();
+        document.body.click();
+    };
+
+    const sceneName = userScenes.find(userScene => userScene.id === selectedScene)?.name ?? selectedScene;
+    const sceneCustomNumber = selectedScene.startsWith("custom-") ? parseInt(selectedScene.split("-")[1]) : null;
+
     const link = (
-        <MoorhenTooltip tooltip={`Scene selector: ${scene}`} placement="bottom">
+        <MoorhenTooltip tooltip={`Scene selector: ${sceneName}`} placement="bottom">
             <button
                 ref={buttonRef}
                 className={`moorhen__main-menu-button moorhen__scene-selector${isShown ? " open" : ""}`}
@@ -82,6 +40,7 @@ export const UserSceneSelector = () => {
                 aria-expanded={isShown}
             >
                 <MoorhenIcon moorhenSVG={`MatSymWallpaperSlideshow`} alt="Scene Presets" size="medium" />
+                <div className="moorhen__scene-selector-number">{sceneCustomNumber}</div>
             </button>
         </MoorhenTooltip>
     );
@@ -97,18 +56,38 @@ export const UserSceneSelector = () => {
         >
             <MoorhenStack className="moorhen__scene-selector-menu" role="menu">
                 <div className="moorhen__submenu-title">Change Scene Preset</div>
-                {userScenes.map(s => (
-                    <MoorhenMenuItem
-                        key={s}
-                        selected={s === scene}
-                        onClick={() => {
-                            handleSceneChange(s);
-                            setIsShown(false);
-                        }}
-                    >
-                        {s}
-                    </MoorhenMenuItem>
+                {userScenes.map(userScene => (
+                    <MoorhenStack direction="line" key={userScene.id}>
+                        <MoorhenMenuItem
+                            disabled={isSceneChanging}
+                            selected={userScene.id === selectedScene}
+                            onClick={() => {
+                                moorhenInstance.userScene.select(userScene.id);
+                                setIsShown(false);
+                            }}
+                        >
+                            {userScene.name}
+                        </MoorhenMenuItem>
+                        {userScene.id.startsWith("custom-") && (
+                            <>
+                                <MoorhenPopoverButton type="icon-only" icon="MatSymDelete" tooltip="Delete this scene">
+                                    <MoorhenButton variant="danger" onClick={() => moorhenInstance.userScene.delete(userScene.id)}>
+                                        Delete This Scene
+                                    </MoorhenButton>
+                                </MoorhenPopoverButton>
+                                <MoorhenPopoverButton type="icon-only" icon="MatSymEdit">
+                                    <MoorhenTextInput 
+                                    text={renameInputValue} setText={setRenameInputValue}/>
+                                    <MoorhenButton onClick={() => moorhenInstance.userScene.rename(userScene.id, renameInputValue)}>
+                                        Apply
+                                    </MoorhenButton>
+
+                                </MoorhenPopoverButton>
+                            </>
+                        )}
+                    </MoorhenStack>
                 ))}
+                <MoorhenButton tooltip="New Custom Scene" disabled={isSceneChanging} onClick={handleNewScene} type="icon-only" icon="MatSymAdd" />
             </MoorhenStack>
         </MoorhenPopover>
     );
