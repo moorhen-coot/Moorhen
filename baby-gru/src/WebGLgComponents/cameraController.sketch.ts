@@ -1,8 +1,18 @@
 /**
- * SKETCH - the camera's contract. Types and rationale only; nothing implements this yet.
+ * SKETCH - the camera's contract, written to be argued with before any code moved.
  *
- * It exists to be argued with before any code moves. The open questions at the bottom are the
- * parts I am least sure about, and two of them change the shape rather than the detail.
+ * IT IS NOW BUILT, AND THIS FILE IS NO LONGER THE AUTHORITY
+ *
+ * cameraController.ts is. This is kept for the reasoning, which is the part that does not survive
+ * in the code: why the camera had no owner, why animating meant two things at once, and why each
+ * decision went the way it did. Where the two disagree about what exists, the implementation is
+ * right and this is out of date.
+ *
+ * Three things did not survive contact, and are corrected where they appear below: decision 6 was
+ * wrong about the code, decision 2's mechanism moved off the driver, and the open question at the
+ * bottom is answered. CameraState also gained `eyeDistance`, which the sketch's version lacks, and
+ * its four boundaries are offsets from the view centre rather than the mixture of conventions the
+ * renderer used.
  *
  * WHAT IT IS FOR
  *
@@ -233,6 +243,11 @@ export interface CameraController {
  * 2. A MOVE FINISHES. User rotation during one accumulates and is applied on arrival, via turnBy.
  *    Accidental mouse motion must not stop the camera reaching where it was sent.
  *
+ *    AS BUILT: turnBy is on the controller, not on a driver. The sketch had the mouse acquire a
+ *    "user" driver and turn through that, which is self-defeating - acquiring supersedes whatever
+ *    is running, so the first twitch of the mouse would cancel the very move this decision says
+ *    must finish. A turn needs no claim on the camera precisely because it defers to one.
+ *
  * 3. THE ECHO happens when the camera comes to rest - on settle, not per frame. Cheapest and
  *    safest, no React cost during motion, nothing stale once anything stops. A live echo can be
  *    added later if measurement says it is affordable; starting there and retreating would be the
@@ -248,11 +263,26 @@ export interface CameraController {
  *
  * 5. `drive` STAYS, and `path` is expressed in terms of it internally. One mechanism, two ways in.
  *
- * 6. STEREO DERIVES, IT DOES NOT DICTATE. The two eye views are a pure function of CameraState,
- *    computed where the projection is built. Nothing writes back per eye. This has to be checked
- *    against the existing side-by-side and cross-eyed paths rather than assumed - if either mutates
- *    the camera mid-frame today, that is a defect to fix in the migration rather than a constraint
- *    on this contract.
+ * 6. STEREO DERIVES, IT DOES NOT DICTATE - ASPIRED TO, NOT TRUE. The two eye views should be a
+ *    pure function of CameraState, computed where the projection is built, with nothing writing
+ *    back per eye. The sketch said this had to be checked against the existing side-by-side and
+ *    cross-eyed paths rather than assumed. It was not checked before the work was called done, and
+ *    when it finally was, the paths turned out to dictate.
+ *
+ *    WHAT THE CODE DOES: the multi-view, three-way and stereo branches of drawCore save origQuat
+ *    and origOrigin, assign self.myQuat and self.origin per view, draw, and write the originals
+ *    back - six sites, plus another save/restore pair around the anaglyph render.
+ *
+ *    It is not a bug today. Those writes happen inside drawScene after advanceCamera, and the
+ *    restore puts back exactly what the tick set, so a move and a stereo render coexist. Two
+ *    things follow anyway. A camera displaced mid-frame is only correct while every path restores
+ *    it on every exit, which is an invariant nobody is checking. And since the Camera facade now
+ *    copies an assigned array rather than adopting it, each of those assignments allocates, on a
+ *    per-view per-frame path - small, and unmeasured, which is not the same as free.
+ *
+ *    Making this true means building the per-eye view matrix from CameraState where the projection
+ *    is assembled, and leaving the camera alone. That is a change to drawCore, not to this
+ *    contract, and it was out of scope for the migration.
  *
  * 7. SESSION RESTORE. With auto-clip on, the slab is derived from the restored zoom and the saved
  *    clip and fog are ignored; with it off, the saved values are honoured. One rule, no special
@@ -265,11 +295,24 @@ export interface CameraController {
  *    trade, since the saved state was internally inconsistent, but it should be released as a
  *    known change and not discovered by whoever saved it.
  *
- * STILL OPEN
+ * ANSWERED
  *
- * A. WHO TICKS DURING AN EXPORT? The renderer ticks the controller before drawing, which is right
- *    for the live app. An export drives the clock itself. So either the export calls tick(i/fps)
- *    before asking for a draw - fine, but then two callers can tick - or `drive` implies the
- *    caller owns the clock and the renderer's tick becomes a no-op while a movie holds the camera.
- *    The second is tidier and needs saying explicitly in the contract.
+ * A. WHO TICKS DURING AN EXPORT? Neither of the two options the sketch offered. The renderer
+ *    always ticks, and the *time* is what the export controls: MGWebGL carries a `cameraTime`
+ *    which is null for wall-clock and set to i/fps by an export before it asks for each frame.
+ *    One ticker, one line in advanceCamera, and no mode where the renderer's tick means nothing.
+ *
+ *    The question was better than the answers in it. Both options assumed the conflict was over
+ *    who calls tick, when it was only ever over whose clock it reads.
+ *
+ * WHAT IS STILL SCAFFOLDING
+ *
+ * `liveState` and `writeLive` are the migration's unfinished edge - the live state with none of
+ * the rules applied, so the renderer's direct writes still land while call sites move across.
+ * Everything inside the renderer now goes through the camera; the last caller reaching past it is
+ * MoorhenMovieSpike, which writes gl.myQuat in five places and sets gl.animating by hand, and is
+ * why moveCameraTo still consults `animating`. When that goes, so do these, and the promise at the
+ * top of cameraController.ts about a single writer stops being an intention.
+ *
+ * `drive` is implemented and tested and has no caller. It is what a movie export would use.
  * ------------------------------------------------------------------------------------------- */
