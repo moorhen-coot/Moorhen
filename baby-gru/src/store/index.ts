@@ -225,7 +225,10 @@ export {
     setClipEnd,
     setZoom,
     autoClipFogByZoom,
+    applySceneSettingsSnapshot,
+    getSceneSettingsSnapshot,
 }  from "./sceneSettingsSlice";
+export type { SceneSettingsSnapshot } from "./sceneSettingsSlice";
 export { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString }  from "./vectorsSlice";
 export { setSeqViewerOption, setValidationOption, setShownBottomPanel }  from "./bottomPanelsSlice";
 export {
@@ -245,6 +248,7 @@ export {
     pauseClickAwayListener,
     resumeClickAwayListener,
     addUserScene,
+    addUserSnapshot,
     removeUserScene,
     renameUserScene,
     setSelectedScene,

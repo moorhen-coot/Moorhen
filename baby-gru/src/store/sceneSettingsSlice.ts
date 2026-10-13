@@ -119,6 +119,59 @@ export const initialState: {
     specifyMultiViewRowsColumns: false,
 };
 
+export type SceneSettingsState = typeof initialState;
+
+/**
+ * Fields that describe the viewport, camera or app theme rather than the look of a scene, so they
+ * are not saved in scene presets.
+ */
+const NON_SCENE_KEYS = ["height", "width", "GlViewportHeight", "GlViewportWidth", "origin", "zoom", "isDark"] as const;
+
+/** Fog and clipping planes: only saved when they are set by hand (resetClippingFogging off), else they follow the zoom */
+const FOG_CLIP_KEYS: readonly string[] = ["fogStart", "fogEnd", "clipStart", "clipEnd"];
+
+/** The scene settings saved in a scene preset: only the values that differ from the defaults */
+export type SceneSettingsSnapshot = Partial<Omit<SceneSettingsState, (typeof NON_SCENE_KEYS)[number]>>;
+
+type SceneKey = keyof SceneSettingsSnapshot;
+
+const sceneKeys = (Object.keys(initialState) as (keyof SceneSettingsState)[]).filter(
+    key => !(NON_SCENE_KEYS as readonly string[]).includes(key)
+) as SceneKey[];
+
+const isSameValue = (a: unknown, b: unknown): boolean => {
+    if (Array.isArray(a) && Array.isArray(b)) {
+        return a.length === b.length && a.every((value, i) => value === b[i]);
+    }
+    return a === b;
+};
+
+/** Whether a value can be stored in `key` (same type as its default), to reject malformed injected scenes */
+const isValidValue = (key: SceneKey, value: unknown): boolean => {
+    const defaultValue = initialState[key];
+    if (Array.isArray(defaultValue)) {
+        return Array.isArray(value) && value.length === defaultValue.length && value.every(item => typeof item === typeof defaultValue[0]);
+    }
+    return typeof value === typeof defaultValue;
+};
+
+/**
+ * Snapshot the scene settings for a scene preset. Only values that differ from the defaults are
+ * kept, so a snapshot stays valid when settings are added to or removed from the store.
+ * @param sceneSettings - The current `sceneSettings` state.
+ */
+export const getSceneSettingsSnapshot = (sceneSettings: SceneSettingsState): SceneSettingsSnapshot => {
+    const snapshot: Record<string, unknown> = {};
+    for (const key of sceneKeys) {
+        if (sceneSettings.resetClippingFogging && FOG_CLIP_KEYS.includes(key)) continue;
+        const value = sceneSettings[key];
+        if (!isSameValue(value, initialState[key])) {
+            snapshot[key] = Array.isArray(value) ? [...value] : value;
+        }
+    }
+    return snapshot as SceneSettingsSnapshot;
+};
+
 const sceneSettingsSlice = createSlice({
     name: "sceneSettings",
     initialState: initialState,
@@ -366,6 +419,23 @@ const sceneSettingsSlice = createSlice({
         autoClipFogByZoom: (state) => {
             execAutoClipFogByZoom(state);
         },
+        /* Apply a scene preset snapshot (see getSceneSettingsSnapshot). Settings missing from the
+        snapshot go back to their default, unknown or malformed entries are ignored, and the
+        viewport, camera and theme are left untouched. Fog and clipping are recomputed from the
+        zoom unless the snapshot turns resetClippingFogging off. */
+        applySceneSettingsSnapshot: (state, action: PayloadAction<SceneSettingsSnapshot>) => {
+            const snapshot = action.payload ?? {};
+            const target = state as Record<SceneKey, unknown>;
+            for (const key of sceneKeys) {
+                const value = snapshot[key];
+                const useSaved = Object.hasOwn(snapshot, key) && isValidValue(key, value);
+                const newValue = useSaved ? value : initialState[key];
+                // Leave unchanged values alone: a new array reference would re-trigger renderer effects
+                if (isSameValue(target[key], newValue)) continue;
+                target[key] = Array.isArray(newValue) ? [...newValue] : newValue;
+            }
+            if (state.resetClippingFogging) execAutoClipFogByZoom(state);
+        },
 
     },
 });
@@ -426,6 +496,7 @@ export const {
     setClipEnd,
     setZoom,
     autoClipFogByZoom,
+    applySceneSettingsSnapshot,
 } = sceneSettingsSlice.actions;
 
 export default sceneSettingsSlice.reducer;

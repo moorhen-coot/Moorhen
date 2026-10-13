@@ -8,6 +8,8 @@ export type InitPreferencePersistenceArgs = {
     dispatch: AppDispatch;
     localStorageInstance: Preferences;
     onUserPreferencesChange?: (key: string, value: unknown) => void;
+    /** Called once all preferences are restored, before `userPreferencesMounted`, with the labels restored from storage */
+    onRestored?: (restoredLabels: string[]) => void;
 };
 
 /**
@@ -45,11 +47,13 @@ const valuesEqual = (a: unknown, b: unknown): boolean => {
  * @returns an unsubscribe function that stops the store subscription (call on cleanup).
  */
 export const initPreferencePersistence = (args: InitPreferencePersistenceArgs): (() => void) => {
-    const { store, dispatch, localStorageInstance, onUserPreferencesChange } = args;
+    const { store, dispatch, localStorageInstance, onUserPreferencesChange, onRestored } = args;
     const preferences = Object.values(PREFERENCES_MAP);
     const previousValues = new Map<string, unknown>();
     let hasRestored = false;
     let pendingRestores = preferences.length;
+    // Labels of the preferences restored from local storage (explicit user choices), as opposed to defaults
+    const restoredLabels: string[] = [];
 
     const persist = (pref: PreferenceEntry, value: unknown) => {
         if (valuesEqual(value, pref.defaultValue)) {
@@ -79,6 +83,7 @@ export const initPreferencePersistence = (args: InitPreferencePersistenceArgs): 
         const state = store.getState();
         preferences.forEach(pref => previousValues.set(pref.label, pref.selector(state)));
         hasRestored = true;
+        onRestored?.(restoredLabels);
         dispatch(setUserPreferencesMounted(true));
     };
 
@@ -103,6 +108,7 @@ export const initPreferencePersistence = (args: InitPreferencePersistenceArgs): 
                         const prefVersion = pref.version ?? 1;
                         if (storedVersion >= prefVersion && storedValue !== null && storedValue !== undefined) {
                             dispatch(pref.valueSetter(storedValue));
+                            restoredLabels.push(pref.label);
                         } else {
                             // Stale version (the default changed since this was saved) or unusable value
                             localStorageInstance.localStorageInstance.removeItem(pref.label);

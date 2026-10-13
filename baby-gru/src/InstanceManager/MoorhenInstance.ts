@@ -297,11 +297,16 @@ export class MoorhenInstance extends StoreExtension {
         if (this.preferencesUnsubscribe) {
             this.preferencesUnsubscribe();
         }
+        // Needed by userScene before startInstance runs
+        this.store = store;
+        this.dispatch = dispatch;
         this.preferencesUnsubscribe = initPreferencePersistence({
             store,
             dispatch,
             localStorageInstance: this.preferences,
             onUserPreferencesChange,
+            // The starting scene's preset sits under the saved preferences: it only sets what the user has not saved
+            onRestored: restoredLabels => this.userScene.applyStartupScene(restoredLabels),
         });
         return this.preferencesUnsubscribe;
     }
