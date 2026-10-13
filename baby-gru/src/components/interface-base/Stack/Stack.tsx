@@ -1,3 +1,4 @@
+import { AriaRole } from "react";
 import "./moorhen-stack.css";
 
 type MoorhenStackType = {
@@ -16,6 +17,7 @@ type MoorhenStackType = {
     ref?: React.RefObject<HTMLDivElement>;
     flex?: 1 | 0;
     overflow?: "auto" | "hidden" | "visible" | "scroll" | "clip";
+    role?: AriaRole;
 };
 
 export const MoorhenStack = (props: MoorhenStackType) => {
@@ -34,6 +36,7 @@ export const MoorhenStack = (props: MoorhenStackType) => {
         ref = null,
         flex = 1,
         overflow = "visible",
+        role = null, 
     } = props;
 
     let mainClass = inputGrid
@@ -60,9 +63,11 @@ export const MoorhenStack = (props: MoorhenStackType) => {
                 justifyContent: justify,
                 alignItems: align,
                 overflow: overflow,
+                
                 ...style,
             }}
             ref={ref}
+            role={role}
         >
             {children}
         </div>

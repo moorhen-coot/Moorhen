@@ -1,8 +1,11 @@
+import { useDispatch } from "react-redux";
 import { useRef, useState } from "react";
 import { DEFAULT_REPRESENTATION_STYLE } from "@/InstanceManager/MoorhenInstance";
+import { MoorhenIcon } from "@/components/icons";
 import { useMoorhenInstance } from "@/hooks";
+import { setMainMenuOpen } from "@/store";
 import type { RepresentationBackup } from "@/utils/Representation/RepresentationBuilder";
-import { MoorhenMenuItem, MoorhenPopover } from "../../interface-base";
+import { MoorhenMenuItem, MoorhenPopover, MoorhenStack, MoorhenTooltip } from "../../interface-base";
 import "./scene-selector.css";
 
 const userScenes = ["Default", "Model Building"] as const;
@@ -15,10 +18,10 @@ export const UserSceneSelector = () => {
     const [isShown, setIsShown] = useState<boolean>(false);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const moorhenInstance = useMoorhenInstance();
+    const dispatch = useDispatch();
 
     const [representationBackup, setRepresentationBackup] = useState<SceneBackupEntry[]>([]);
 
-    // Only custom reps are swapped between scenes; non-custom ones are left untouched
     const deleteCustomRepresentations = async () => {
         for (const molecule of moorhenInstance.getMoleculeList()) {
             for (const representation of moorhenInstance.representation.getList(molecule.uniqueId)) {
@@ -64,16 +67,23 @@ export const UserSceneSelector = () => {
         }
     };
 
+    const handleClick = () => {
+        setIsShown(!isShown);
+        dispatch(setMainMenuOpen(false));
+    };
+
     const link = (
-        <button
-            ref={buttonRef}
-            className={`moorhen__main-menu-button moorhen__scene-selector${isShown ? " open" : ""}`}
-            onClick={() => setIsShown(!isShown)}
-            aria-haspopup="menu"
-            aria-expanded={isShown}
-        >
-            Scene: {scene}
-        </button>
+        <MoorhenTooltip tooltip={`Scene selector: ${scene}`} placement="bottom">
+            <button
+                ref={buttonRef}
+                className={`moorhen__main-menu-button moorhen__scene-selector${isShown ? " open" : ""}`}
+                onClick={handleClick}
+                aria-haspopup="menu"
+                aria-expanded={isShown}
+            >
+                <MoorhenIcon moorhenSVG={`MatSymWallpaperSlideshow`} alt="Scene Presets" size="medium" />
+            </button>
+        </MoorhenTooltip>
     );
 
     return (
@@ -85,7 +95,8 @@ export const UserSceneSelector = () => {
             popoverPlacement="bottom-left"
             type="custom"
         >
-            <div className="moorhen__scene-selector-menu" role="menu">
+            <MoorhenStack className="moorhen__scene-selector-menu" role="menu">
+                <div className="moorhen__submenu-title">Change Scene Preset</div>
                 {userScenes.map(s => (
                     <MoorhenMenuItem
                         key={s}
@@ -98,7 +109,7 @@ export const UserSceneSelector = () => {
                         {s}
                     </MoorhenMenuItem>
                 ))}
-            </div>
+            </MoorhenStack>
         </MoorhenPopover>
     );
 };

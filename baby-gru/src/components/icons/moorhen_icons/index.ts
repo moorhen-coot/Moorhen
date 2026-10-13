@@ -83,6 +83,7 @@ import MatSymCopyAll from "./MatSymCopyAll.svg"
 import MatSymCrisisAlert from "./MatSymCrisisAlert.svg"
 import MatSymFlipCamera from "./MatSymFlipCamera.svg"
 import MatSymMerge from "./MatSymMerge.svg"
+import MatSymReplay from "./MatSymReplay.svg"
 import MatSymRotate90Cw from "./MatSymRotate90Cw.svg"
 import MatSymSave from "./MatSymSave.svg"
 import MatSymSaveClock from "./MatSymSaveClock.svg"
@@ -90,7 +91,7 @@ import MatSymSwapVert from "./MatSymSwapVert.svg"
 import MatSymSwipeRight from "./MatSymSwipeRight.svg"
 import MatSymZoomIn from "./MatSymZoomIn.svg"
 import MatSymZoomOut from "./MatSymZoomOut.svg"
-import MatSymReplay from "./MatSymReplay.svg"
+import MatSymWallpaperSlideshow from "./MatSymWallpaperSlideshow.svg"
 
 export const moorhenSVGs = {"MatSymAdd": MatSymAdd,
  "MatSymAlbum": MatSymAlbum,
@@ -177,6 +178,7 @@ export const moorhenSVGs = {"MatSymAdd": MatSymAdd,
  "MatSymCrisisAlert": MatSymCrisisAlert,
  "MatSymFlipCamera": MatSymFlipCamera,
  "MatSymMerge": MatSymMerge,
+ "MatSymReplay": MatSymReplay,
  "MatSymRotate90Cw": MatSymRotate90Cw,
  "MatSymSave": MatSymSave,
  "MatSymSaveClock": MatSymSaveClock,
@@ -184,7 +186,7 @@ export const moorhenSVGs = {"MatSymAdd": MatSymAdd,
  "MatSymSwipeRight": MatSymSwipeRight,
  "MatSymZoomIn": MatSymZoomIn,
  "MatSymZoomOut": MatSymZoomOut,
- "MatSymReplay": MatSymReplay,
+ "MatSymWallpaperSlideshow": MatSymWallpaperSlideshow,
  }
 
 export type MoorhenSVG = "MatSymAdd" |
@@ -272,6 +274,7 @@ export type MoorhenSVG = "MatSymAdd" |
  "MatSymCrisisAlert" |
  "MatSymFlipCamera" |
  "MatSymMerge" |
+ "MatSymReplay" |
  "MatSymRotate90Cw" |
  "MatSymSave" |
  "MatSymSaveClock" |
@@ -279,4 +282,4 @@ export type MoorhenSVG = "MatSymAdd" |
  "MatSymSwipeRight" |
  "MatSymZoomIn" |
  "MatSymZoomOut" |
- "MatSymReplay"
+ "MatSymWallpaperSlideshow"
