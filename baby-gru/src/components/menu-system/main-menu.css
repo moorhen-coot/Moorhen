@@ -120,6 +120,7 @@
     justify-content: left;
     font-size: 1rem;
     outline: none;
+    cursor: pointer;
 }
 
 .moorhen__main-menu-toggle {

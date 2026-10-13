@@ -33,9 +33,8 @@ export const UserSceneSelector = () => {
     const sceneCustomNumber =
         selectedScene.startsWith("custom-") || isSnapshotShown ? parseInt(selectedScene.split("-")[1]) : null;
 
-    let sceneIcon: "MatSymBuild" | "MatSymPhotoCam" | "MatSymWallpaperSlideshow" = "MatSymWallpaperSlideshow";
-    if (selectedScene === "Model Building") sceneIcon = "MatSymBuild";
-    else if (isSnapshotShown) sceneIcon = "MatSymPhotoCam";
+    let sceneIcon: "MatSymPhotoCam" | "MatSymWallpaperSlideshow" = "MatSymWallpaperSlideshow";
+    if (isSnapshotShown) sceneIcon = "MatSymPhotoCam";
 
     const link = (
         <MoorhenTooltip tooltip={`Scene selector: ${sceneName}`} placement="bottom">
@@ -48,6 +47,7 @@ export const UserSceneSelector = () => {
             >
                 <MoorhenIcon moorhenSVG={sceneIcon} alt="Scene Presets" size="medium" />
                 <div className="moorhen__scene-selector-number">{sceneCustomNumber}</div>
+                {(selectedScene === "Model Building") && <MoorhenIcon moorhenSVG="MatSymBuild" size="small" />} 
             </button>
         </MoorhenTooltip>
     );
@@ -55,6 +55,7 @@ export const UserSceneSelector = () => {
     const extraControls = (id: string) => {
         if (id.startsWith("custom-") || id.startsWith("snapshot-")) {
             const kind = id.startsWith("snapshot-") ? "Snapshot" : "Scene";
+            const name = [...userScenes, ...userSnapshots].find(userScene => userScene.id === id)?.name ?? id;
             return (
                 <>
                     <MoorhenPopoverButton type="icon-only" icon="MatSymDelete" tooltip={`Delete this ${kind.toLowerCase()}`}>
@@ -62,7 +63,7 @@ export const UserSceneSelector = () => {
                             Delete This {kind}
                         </MoorhenButton>
                     </MoorhenPopoverButton>
-                    <MoorhenPopoverButton type="icon-only" icon="MatSymEdit">
+                    <MoorhenPopoverButton type="icon-only" icon="MatSymEdit" extraOnClick={() => setRenameInputValue(name)} tooltip={`Rename this ${kind.toLowerCase()}`}>
                         <MoorhenTextInput text={renameInputValue} setText={setRenameInputValue} />
                         <MoorhenButton onClick={() => moorhenInstance.userScene.rename(id, renameInputValue)}>Apply</MoorhenButton>
                     </MoorhenPopoverButton>
@@ -84,6 +85,7 @@ export const UserSceneSelector = () => {
             <MoorhenMenuItem
                 disabled={isSceneChanging}
                 selected={userScene.id === selectedScene}
+                style={{ flex: 1 }}
                 onClick={() => {
                     moorhenInstance.userScene.select(userScene.id);
                     setIsShown(false);
@@ -104,8 +106,8 @@ export const UserSceneSelector = () => {
             popoverPlacement="bottom-left"
             type="custom"
         >
-            <MoorhenStack className="moorhen__scene-selector-menu" role="menu">
-                <div className="moorhen__submenu-title">Change Scene Preset</div>
+            <MoorhenStack className="moorhen__scene-selector-menu" role="menu" style={{ maxHeight: "80vh", overflowY: "auto" }}>
+                <div className="moorhen__submenu-title">Scenes</div>
                 {userScenes.map(sceneItem)}
                 <MoorhenButton
                     tooltip="New Custom Scene"
