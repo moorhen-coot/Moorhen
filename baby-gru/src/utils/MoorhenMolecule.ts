@@ -1463,15 +1463,21 @@ export class MoorhenMolecule {
      * Draw molecule from a given mesh
      * @param {string} style - Indicate the style to be drawn
      * @param {any[]} meshObjects - The mesh obects that will be drawn
-     * @param {string} [cid] - The new buffer CID selection
+     * @param {string} [cid] - The new buffer CID selection; if omitted, the molecule's own representation of this style is reused
      */
     async drawWithStyleFromMesh(
         style: moorhen.RepresentationStyles,
         meshObjects: any[],
-        cid: string = "/*/*/*/*",
+        cid?: string,
         fetchAtomBuffers: boolean = false
     ): Promise<void> {
-        let representation = this.representations.find(item => item.style === style && item.cid === cid);
+        // Without an explicit cid, draw into the same representation fetchIfDirtyAndDraw() uses.
+        // Matching on a literal cid here created a second representation, so drag/refine frames
+        // and the final redraw updated different ones and the stale one was left as a ghost.
+        let representation = cid
+            ? this.representations.find(item => item.style === style && item.cid === cid)
+            : this.findDefaultRepresentation(style);
+        cid = representation?.cid ?? cid ?? "/*/*/*/*";
         if (!representation) {
             representation = new MoleculeRepresentation(style, cid, this.commandCentre);
             representation.setParentMolecule(this);

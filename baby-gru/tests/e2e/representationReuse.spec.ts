@@ -48,4 +48,37 @@ test.describe("molecule representation reuse", () => {
         expect(counts.hiddenVisible, "hide() must find the representation and hide it").toBe(false);
         expect(counts.shownVisible, "show() must find the representation and show it").toBe(true);
     });
+
+    test("drawing from a mesh reuses the representation fetchIfDirtyAndDraw uses", async ({ page }) => {
+        test.setTimeout(240_000);
+
+        const moorhen = await startAndGetInstance(page);
+        await moorhen.loadFiles([{ url: "https://files.rcsb.org/download/1hck.pdb", filename: "1hck.pdb" }]);
+
+        // Drag Atoms and animateRefine() draw each frame with drawWithStyleFromMesh() and
+        // finish with fetchIfDirtyAndDraw(). If the two pick different representations,
+        // the one not updated last stays on screen as a ghost when dragging stops.
+        const counts = await page.evaluate(async targetId => {
+            const host = document.getElementById(targetId) as any;
+            const instance = await host.getMoorhenInstance();
+            const molecule = instance.getMoleculeList()[0];
+            const countCBs = () => molecule.representations.filter((r: any) => r.style === "CBs" && !r.isCustom).length;
+
+            await molecule.fetchIfDirtyAndDraw("CBs");
+            const afterFetch = countCBs();
+            await molecule.drawWithStyleFromMesh("CBs", []);
+            await molecule.drawWithStyleFromMesh("CBs", []);
+            const afterMesh = countCBs();
+            await molecule.fetchIfDirtyAndDraw("CBs");
+            const afterFinal = countCBs();
+
+            return { afterFetch, afterMesh, afterFinal };
+        }, moorhen.elementId);
+
+        console.log(`representation counts: ${JSON.stringify(counts)}`);
+
+        expect(counts.afterFetch).toBe(1);
+        expect(counts.afterMesh, "drawWithStyleFromMesh must reuse the existing representation").toBe(1);
+        expect(counts.afterFinal, "the final redraw must not add a representation").toBe(1);
+    });
 });
