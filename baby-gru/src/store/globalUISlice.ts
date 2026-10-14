@@ -2,9 +2,6 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { BottomPanelIDs, SidePanelIDs } from "@/components/panels";
 import { ShownControl } from "@/components/snack-bars/PopupControls/PopupControlList";
 
-/** A scene preset listed in the scene selector (see MoorhenInstance.userScene) */
-export type UserScene = { id: string; name: string };
-
 
 const initialState: {
     busy: boolean;
@@ -20,12 +17,6 @@ const initialState: {
     controlLocked: number | null;
     selectionToolsActive: boolean;
     clickAwayListenerPauseCount: number;
-    userScenes: UserScene[];
-    /** Immutable snapshots of a scene, including the camera (listed under the scenes) */
-    userSnapshots: UserScene[];
-    /** The id of the scene or snapshot currently shown */
-    selectedScene: string;
-    isSceneChanging: boolean;
 } = {
     busy: false,
     isTimeCapsuleBusy: false,
@@ -40,13 +31,6 @@ const initialState: {
     controlLocked: null,
     selectionToolsActive: false,
     clickAwayListenerPauseCount: 0,
-    userScenes: [
-        { id: "Default", name: "Default" },
-        { id: "Model Building", name: "Model Building" },
-    ],
-    userSnapshots: [],
-    selectedScene: "Default",
-    isSceneChanging: false,
 };
 
 const globalUISlice = createSlice({
@@ -123,29 +107,6 @@ const globalUISlice = createSlice({
         resumeClickAwayListener: state => {
             state.clickAwayListenerPauseCount = Math.max(0, state.clickAwayListenerPauseCount - 1);
         },
-        // Scene presets: driven by MoorhenInstance.userScene, which also restores the representations
-        addUserScene: (state, action: PayloadAction<UserScene>) => {
-            state.userScenes.push(action.payload);
-        },
-        addUserSnapshot: (state, action: PayloadAction<UserScene>) => {
-            state.userSnapshots.push(action.payload);
-        },
-        /* Remove a scene or a snapshot */
-        removeUserScene: (state, action: PayloadAction<string>) => {
-            state.userScenes = state.userScenes.filter(scene => scene.id !== action.payload);
-            state.userSnapshots = state.userSnapshots.filter(snapshot => snapshot.id !== action.payload);
-        },
-        /* Rename a scene or a snapshot */
-        renameUserScene: (state, action: PayloadAction<{ id: string; name: string }>) => {
-            const scene = [...state.userScenes, ...state.userSnapshots].find(scene => scene.id === action.payload.id);
-            if (scene) scene.name = action.payload.name;
-        },
-        setSelectedScene: (state, action: PayloadAction<string>) => {
-            state.selectedScene = action.payload;
-        },
-        setSceneChanging: (state, action: PayloadAction<boolean>) => {
-            state.isSceneChanging = action.payload;
-        },
     }
 });
 
@@ -165,11 +126,5 @@ export const {
     closeResidueSelectionTools,
     pauseClickAwayListener,
     resumeClickAwayListener,
-    addUserScene,
-    addUserSnapshot,
-    removeUserScene,
-    renameUserScene,
-    setSelectedScene,
-    setSceneChanging,
 } = globalUISlice.actions;
 export default globalUISlice.reducer;

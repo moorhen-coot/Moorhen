@@ -1229,6 +1229,7 @@ export class MoorhenInstance extends StoreExtension {
         if (timeCapsuleConfig?.modificationCountBackupThreshold) {
             newTimeCapsule.modificationCountBackupThreshold = timeCapsuleConfig?.modificationCountBackupThreshold;
         }
+        newTimeCapsule.getSceneData = () => JSON.stringify(this.userScene.exportState());
         await newTimeCapsule.init();
         this.setTimeCapsule(newTimeCapsule);
         if (externalTimeCapsuleRef) {

@@ -8,10 +8,10 @@ import { MoorhenMenuItem, MoorhenPopover, MoorhenStack, MoorhenTooltip } from ".
 import "./scene-selector.css";
 
 export const UserSceneSelector = () => {
-    const userScenes = useSelector((state: RootState) => state.globalUI.userScenes);
-    const userSnapshots = useSelector((state: RootState) => state.globalUI.userSnapshots);
-    const selectedScene = useSelector((state: RootState) => state.globalUI.selectedScene);
-    const isSceneChanging = useSelector((state: RootState) => state.globalUI.isSceneChanging);
+    const userScenes = useSelector((state: RootState) => state.userScenes.scenes);
+    const userSnapshots = useSelector((state: RootState) => state.userScenes.snapshots);
+    const selectedScene = useSelector((state: RootState) => state.userScenes.selectedScene);
+    const isSceneChanging = useSelector((state: RootState) => state.userScenes.isSceneChanging);
     const [isShown, setIsShown] = useState<boolean>(false);
     const [renameInputValue, setRenameInputValue] = useState<string>("");
     const buttonRef = useRef<HTMLButtonElement>(null);

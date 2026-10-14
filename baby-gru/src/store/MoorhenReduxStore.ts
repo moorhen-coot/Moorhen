@@ -24,6 +24,7 @@ import sharedSessionReducer from "./sharedSessionSlice";
 import shortcutSettingsReducer from "./shortCutsSlice";
 import sliceNDiceReducer from "./sliceNDiceSlice";
 import snackBarsReducer from "./snackbarSlice";
+import userScenesReducer from "./userScenesSlice";
 import vectorsReducer from "./vectorsSlice";
 
 export const reducers = {
@@ -52,6 +53,7 @@ export const reducers = {
     bottomPanels: bottomPanelsReducer,
     vectors: vectorsReducer,
     snackBars: snackBarsReducer,
+    userScenes: userScenesReducer,
 };
 
 // Infer RootState directly from reducers object structure (no runtime dependency)

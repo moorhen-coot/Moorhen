@@ -81,7 +81,9 @@ export const ManageSession = () => {
                     moorhenInstance,
                 );
             }
-            if (status === -1) {
+            if (status === MoorhenTimeCapsule.NEWER_VERSION_STATUS) {
+                dispatch(enqueueSnackbar({ message: MoorhenTimeCapsule.NEWER_VERSION_MESSAGE, variant: "warning" }));
+            } else if (status === -1) {
                 dispatch(enqueueSnackbar({ message: "Failed to read backup (deprecated format)", variant: "warning" }));
             }
         } catch (err) {

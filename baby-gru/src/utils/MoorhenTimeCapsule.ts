@@ -61,6 +61,7 @@ import { MoorhenMolecule } from "./MoorhenMolecule";
 import { m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
 import { guid } from "./utils";
 import { MoorhenInstance } from "@/InstanceManager";
+import { USER_SCENE_FORMAT_VERSION, type UserSceneState } from "@/InstanceManager/UserSceneManager";
 import { Root } from "protobufjs";
 
 export interface backupKey {
@@ -167,6 +168,11 @@ export type backupSession = {
     dataIsEmbedded: boolean;
     vectorData?: MoorhenVector[];
     overlay2dData?: Overlay2DSessionData;
+    /**
+     * The scenes and snapshots (JSON of a UserSceneState). The fields above describe the scene shown
+     * when the session was saved; sessions saved without it load into the "Default" scene.
+     */
+    sceneData?: string;
 };
 
 export type Overlay2DSessionData = {
@@ -205,6 +211,12 @@ export class MoorhenTimeCapsule {
     storageInstance: LocalForage;
     store: MoorhenReduxStoreType;
     onIsBusyChange: (arg0: boolean) => void;
+    /** Provides the scenes to save in sessions (set by MoorhenInstance) */
+    getSceneData: (() => string) | null = null;
+
+    /** Status returned by the session loaders for a session saved by a more recent version of Moorhen */
+    static readonly NEWER_VERSION_STATUS = -2;
+    static readonly NEWER_VERSION_MESSAGE = "This session file is for a more recent version of Moorhen, open it at moorhen.org";
 
     constructor(
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
@@ -561,6 +573,8 @@ export class MoorhenTimeCapsule {
             overlay2dData: overlay2dData,
             vectorData: vectorData,
         };
+        const sceneData = this.getSceneData?.();
+        if (sceneData) session.sceneData = sceneData;
 
         return session;
     }
@@ -781,7 +795,29 @@ export class MoorhenTimeCapsule {
 
         if (!sessionData) {
             return -1;
-        } else if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
+        }
+        // Versions are "v<number>": refuse sessions from a more recent Moorhen with a clear message
+        const versionNumber = (version: unknown) => parseInt(String(version).replace(/^v/, ""));
+        if (versionNumber(sessionData.version) > versionNumber(timeCapsuleRef.current.version)) {
+            console.warn(MoorhenTimeCapsule.NEWER_VERSION_MESSAGE);
+            return MoorhenTimeCapsule.NEWER_VERSION_STATUS;
+        }
+        let sceneState: UserSceneState | null = null;
+        if (sessionData.sceneData) {
+            try {
+                sceneState = JSON.parse(sessionData.sceneData);
+            } catch (error) {
+                console.warn("Ignoring unreadable scene data in session", error);
+            }
+            if (sceneState?.formatVersion > USER_SCENE_FORMAT_VERSION) {
+                console.warn(MoorhenTimeCapsule.NEWER_VERSION_MESSAGE);
+                return MoorhenTimeCapsule.NEWER_VERSION_STATUS;
+            }
+        }
+        // Loading deletes every molecule: let a running scene switch finish first
+        await moorhenInstance.userScene.waitUntilIdle();
+
+        if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
             if (
                 (timeCapsuleRef.current.version === "v23" && sessionData.version !== "v22" && sessionData.version !== "v21") ||
                 timeCapsuleRef.current.version !== "v23"
@@ -1130,6 +1166,13 @@ export class MoorhenTimeCapsule {
                 dispatch(setConnectedMoleculeMolNo(molecule));
                 dispatch(enableUpdatingMaps());
             });
+        }
+
+        // What the session restored above is the selected scene; restore the others around it
+        if (sceneState) {
+            moorhenInstance.userScene.importState(sceneState);
+        } else {
+            moorhenInstance.userScene.resetForLegacySession();
         }
 
         timeCapsuleRef.current.setBusy(false);

@@ -247,14 +247,17 @@ export {
     closeResidueSelectionTools,
     pauseClickAwayListener,
     resumeClickAwayListener,
+}  from "./globalUISlice";
+export {
     addUserScene,
     addUserSnapshot,
     removeUserScene,
     renameUserScene,
     setSelectedScene,
     setSceneChanging,
-}  from "./globalUISlice";
-export type { UserScene } from "./globalUISlice";
+    setUserSceneState,
+}  from "./userScenesSlice";
+export type { UserScene } from "./userScenesSlice";
 export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
 
 // Export store configuration and types
