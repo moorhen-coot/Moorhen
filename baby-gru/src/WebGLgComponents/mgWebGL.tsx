@@ -182,6 +182,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         // already use. Getters return the LIVE objects so in-place mutation (e.g.
         // quat4.multiply(this.myQuat, this.myQuat, …)) keeps working unchanged.
         private _camera: Camera = new Camera();
+        /**
+         * Whether objects can be faded in and out.
+         *
+         * The fade is a shader uniform, and only the WebGL2 shaders declare it - so on a WebGL1
+         * context an object stays solid however its opacity is animated. Asked rather than
+         * inferred, so a movie's UI can say that plainly instead of appearing to work.
+         */
+        get supportsObjectFading(): boolean { return this.WEBGL2 === true; }
+
         /** The camera controller. Nothing drives it yet; see mgWebGLParts/camera.ts. */
         get cameraController(): CameraController { return this._camera.controller; }
         get myQuat(): quat4 { return this._camera.quat; }

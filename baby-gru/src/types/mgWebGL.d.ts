@@ -122,6 +122,8 @@ export namespace webGL {
         shadowQuality: WebGLUniformLocation;
         pixelZoom: WebGLUniformLocation;
         specularPower: WebGLUniformLocation;
+        /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
+        alphaMultiplier: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
         shinyBack: WebGLUniformLocation;
     }
@@ -200,6 +202,8 @@ export namespace webGL {
         doPerspective: WebGLUniformLocation;
         clipCap: WebGLUniformLocation;
         specularPower: WebGLUniformLocation;
+        /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
+        alphaMultiplier: WebGLUniformLocation;
         scaleMatrix: WebGLUniformLocation;
         ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
         zoom: WebGLUniformLocation;
@@ -207,6 +211,8 @@ export namespace webGL {
 
     interface ShaderTriangles extends MGWebGLShader {
         specularPower: WebGLUniformLocation;
+        /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
+        alphaMultiplier: WebGLUniformLocation;
         shinyBack: WebGLUniformLocation;
         backColour: WebGLUniformLocation;
         defaultColour: WebGLUniformLocation;
@@ -400,6 +406,11 @@ export namespace webGL {
         /**
          * The camera. Owns where the view is; see WebGLgComponents/cameraController.
          */
+        /**
+         * Whether objects can be faded in and out. False on a WebGL1 context, where the
+         * shaders have no fade uniform and an object stays solid however it is animated.
+         */
+        supportsObjectFading: boolean;
         cameraController: CameraController;
         /**
          * Put the camera somewhere, over whatever time the caller asks for. A transition of

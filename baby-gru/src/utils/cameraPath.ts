@@ -107,9 +107,16 @@ export interface SceneKeyframe {
     diffuse?: Vec4;
     specular?: Vec4;
     specularPower?: number;
-    /** Depth-of-field: where the focal plane sits, and how wide the blur is. */
+    /**
+     * Depth of field: where the focal plane sits.
+     *
+     * The radius is not here, though it is just as much a quantity. Setting it calls
+     * makeBlurBuffers, which reallocates the blur framebuffers - cheap for a slider someone drags
+     * now and then, ruinous sixty times a second. It lives in the movie's settings instead, and
+     * the half that carries the expression anyway is this one: what is in focus, not how soft the
+     * rest is.
+     */
     blurDepth?: number;
-    blurRadius?: number;
 }
 
 /** What happens between one keyframe and the next. */
@@ -334,7 +341,7 @@ const blendScene = (from: Keyframe, to: Keyframe, t: number): SceneKeyframe => {
     const b = to.scene ?? {};
     const blended: SceneKeyframe = {};
 
-    const number = (key: "specularPower" | "blurDepth" | "blurRadius") => {
+    const number = (key: "specularPower" | "blurDepth") => {
         const x = a[key] ?? b[key];
         const y = b[key] ?? a[key];
         if (x === undefined || y === undefined) return;
@@ -347,7 +354,7 @@ const blendScene = (from: Keyframe, to: Keyframe, t: number): SceneKeyframe => {
         blended[key] = [0, 1, 2, 3].map(i => x[i] + (y[i] - x[i]) * t) as Vec4;
     };
 
-    (["specularPower", "blurDepth", "blurRadius"] as const).forEach(number);
+    (["specularPower", "blurDepth"] as const).forEach(number);
     (["backgroundColor", "lightPosition", "ambient", "diffuse", "specular"] as const).forEach(vector);
     return blended;
 };

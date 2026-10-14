@@ -1047,6 +1047,9 @@ export function initShaders(vertexShader, fragmentShader, gl) {
     shaderProgram.light_colours_diffuse = gl.getUniformLocation(shaderProgram, "light_colours_diffuse");
 
     shaderProgram.specularPower = gl.getUniformLocation(shaderProgram, "specularPower");
+    // Null on a WebGL1 context, whose shaders have no such uniform; the per-buffer set
+    // below is guarded, so fading is simply absent there rather than broken. See objectFade.
+    shaderProgram.alphaMultiplier = gl.getUniformLocation(shaderProgram, "alphaMultiplier");
     shaderProgram.screenZ = gl.getUniformLocation(shaderProgram, "screenZFrag");
 
     shaderProgram.peelNumber = gl.getUniformLocation(shaderProgram, "peelNumber");
@@ -1156,6 +1159,9 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
     shaderProgramInstanced.light_colours_diffuse = gl.getUniformLocation(shaderProgramInstanced, "light_colours_diffuse");
 
     shaderProgramInstanced.specularPower = gl.getUniformLocation(shaderProgramInstanced, "specularPower");
+    // Null on a WebGL1 context, whose shaders have no such uniform; the per-buffer set
+    // below is guarded, so fading is simply absent there rather than broken. See objectFade.
+    shaderProgramInstanced.alphaMultiplier = gl.getUniformLocation(shaderProgramInstanced, "alphaMultiplier");
     shaderProgramInstanced.screenZ = gl.getUniformLocation(shaderProgramInstanced, "screenZFrag");
 
     shaderProgramInstanced.peelNumber = gl.getUniformLocation(shaderProgramInstanced, "peelNumber");
@@ -1414,6 +1420,9 @@ export function initThickLineNormalShaders(vertexShader, fragmentShader, gl) {
     shaderProgramThickLinesNormal.light_colours_diffuse = gl.getUniformLocation(shaderProgramThickLinesNormal, "light_colours_diffuse");
 
     shaderProgramThickLinesNormal.specularPower = gl.getUniformLocation(shaderProgramThickLinesNormal, "specularPower");
+    // Null on a WebGL1 context, whose shaders have no such uniform; the per-buffer set
+    // below is guarded, so fading is simply absent there rather than broken. See objectFade.
+    shaderProgramThickLinesNormal.alphaMultiplier = gl.getUniformLocation(shaderProgramThickLinesNormal, "alphaMultiplier");
 
     shaderProgramThickLinesNormal.peelNumber = gl.getUniformLocation(shaderProgramThickLinesNormal, "peelNumber");
     shaderProgramThickLinesNormal.depthPeelSamplers = gl.getUniformLocation(shaderProgramThickLinesNormal, "depthPeelSamplers");
@@ -1725,6 +1734,9 @@ export function initPerfectSphereShaders(vertexShader, fragmentShader, gl) {
     shaderProgramPerfectSpheres.light_colours_diffuse = gl.getUniformLocation(shaderProgramPerfectSpheres, "light_colours_diffuse");
 
     shaderProgramPerfectSpheres.specularPower = gl.getUniformLocation(shaderProgramPerfectSpheres, "specularPower");
+    // Null on a WebGL1 context, whose shaders have no such uniform; the per-buffer set
+    // below is guarded, so fading is simply absent there rather than broken. See objectFade.
+    shaderProgramPerfectSpheres.alphaMultiplier = gl.getUniformLocation(shaderProgramPerfectSpheres, "alphaMultiplier");
 
     shaderProgramPerfectSpheres.clipPlane0 = gl.getUniformLocation(shaderProgramPerfectSpheres, "clipPlane0");
     shaderProgramPerfectSpheres.clipPlane1 = gl.getUniformLocation(shaderProgramPerfectSpheres, "clipPlane1");

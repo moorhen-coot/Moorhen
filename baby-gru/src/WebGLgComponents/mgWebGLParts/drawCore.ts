@@ -7,6 +7,8 @@ import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 import { advanceCamera } from './cameraAnimations';
+import { isInvisible, shouldCastShadow } from '../objectFade';
+import { beginDepthOnlyPass } from '../shadowPass';
 import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
 import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
@@ -250,6 +252,11 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
             }
             self.gl.activeTexture(self.gl.TEXTURE0);
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
+            // The composite above runs with the depth test off, as a fullscreen quad must. Leaving
+            // it off outlived the frame: the next frame begins with the shadow pass, and a pass
+            // that renders depth with the test disabled writes no depth at all, so the shadow map
+            // came out empty whenever anything in the scene was transparent. See shadowPass.ts.
+            self.gl.enable(self.gl.DEPTH_TEST);
         return invMat
     }
 
@@ -322,6 +329,24 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             }
 
             if (!displayBuffers[idx].visible) {
+                continue;
+            }
+
+            // What a fade has done to this buffer. Two separate decisions, both cheap, and both
+            // wrong in a visible way if skipped - see objectFade.
+            //
+            // Faded to nothing: drawing it costs a full pass through the vertex shader, the
+            // rasteriser and a peeling layer to contribute no pixels at all. A movie that fades
+            // four molecules out should get faster, not carry their cost to the end.
+            //
+            // Faded at all: it stops casting a shadow. An object that has half vanished while its
+            // shadow stays solid on the floor is the most obvious way to make a fade look wrong.
+            const bufferFade = displayBuffers[idx].alphaMultiplier ?? 1.0;
+            if (isInvisible(bufferFade)) {
+                continue;
+            }
+            if (calculatingShadowMap
+                && !shouldCastShadow(true, bufferFade, displayBuffers[idx].transparent)) {
                 continue;
             }
             if(self.doStenciling){
@@ -405,6 +430,12 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.useProgram(theShader);
+
+                // Null on a WebGL1 context, and on the shadow and g-buffer programs, which have no
+                // such uniform; the guard is what makes fading simply absent there.
+                if (theShader.alphaMultiplier != null) {
+                    self.gl.uniform1f(theShader.alphaMultiplier, bufferFade);
+                }
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
 
@@ -700,6 +731,9 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 0.0, 0.0, 0.0, 1.0,
                 );
                 self.gl.useProgram(program);
+                if (program.alphaMultiplier != null) {
+                    self.gl.uniform1f(program.alphaMultiplier, bufferFade);
+                }
                 self.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                 self.setMatrixUniforms(program);
                 self.gl.disableVertexAttribArray(program.vertexColourAttribute);
@@ -2661,6 +2695,10 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                 self.initTextureFramebuffer();
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebufferDepth);
             self.gl.viewport(0, 0, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height);
+            // This is the first pass of the frame, so it starts with whatever the last frame left
+            // behind. The shadow map is only as good as the depth it writes, so it says what it
+            // needs rather than hoping.
+            beginDepthOnlyPass(self.gl);
         } else if(self.drawingGBuffers) {
             const width_ratio = self.gl.viewportWidth / self.gFramebuffer.width;
             const height_ratio = self.gl.viewportHeight / self.gFramebuffer.height;
