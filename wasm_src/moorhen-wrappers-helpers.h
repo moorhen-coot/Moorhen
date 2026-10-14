@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <cstdio>
 #include <string.h>
 #include <errno.h>
 #include <zlib.h>
@@ -31,6 +32,7 @@
 #include <cctype>
 #include <gemmi/mmdb.hpp>
 #include <gemmi/mmcif.hpp>
+
 #include <gemmi/to_mmcif.hpp>
 #include <gemmi/to_cif.hpp>
 #include <gemmi/read_cif.hpp>
@@ -440,8 +442,16 @@ struct moorhen_hbond {
 
 };
 
-coot::simple_mesh_t GenerateMoorhenMetaBalls(mmdb::Manager *molHnd, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4);
-coot::simple_mesh_t GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads=4);
+struct PickableMesh {
+    coot::simple_mesh_t mesh;
+    std::vector<std::vector<unsigned>> point_triangles;
+    std::vector<std::array<float,3>> pick_points;
+    std::vector<unsigned> influence_index_offsets;
+    std::vector<unsigned> influence_point_indexes;
+    std::vector<float> influence_weights;
+};
+
+std::pair<coot::simple_mesh_t,std::vector<std::vector<std::pair<unsigned,float>>>> GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads=4);
 
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
 bool isSugar(const std::string &resName);
@@ -452,8 +462,13 @@ class molecules_container_js : public molecules_container_t {
         }
 
         std::string get_validation(int imol){
-            mmdb::Manager *mol = get_mol(imol);
-            auto st = gemmi::copy_from_mmdb(mol);
+            // mmdb::Manager *mol = get_mol(imol);
+            // auto st = gemmi::copy_from_mmdb(mol);
+
+            writePDBASCII(imol, "temp.pdb");
+            auto st = gemmi::read_structure_file("temp.pdb");
+            std::remove("temp.pdb");
+
             size_t model_index = 0;
             std::map<gemmi::Atom*, std::vector<double>> atom_zs;
             std::map<gemmi::Atom*, std::vector<double>> atom_zs_bonds;
@@ -482,6 +497,7 @@ class molecules_container_js : public molecules_container_t {
             monlib.read_monomer_lib(monomer_dir, resnames, logger);
             auto hchange = gemmi::HydrogenChange::NoChange;
             auto reorder = false;
+
             auto topo = gemmi::prepare_topology(st, monlib, model_index, hchange, reorder);
             std::vector<gemmi::Topo::Bond> outlier_bonds;
             std::vector<gemmi::Topo::Angle> outlier_angles;
@@ -618,7 +634,7 @@ class molecules_container_js : public molecules_container_t {
                 }
                 root[chain.name] = chain_json;
             }
-            
+
             std::string outlierstring = "Outliers: ";
             for (const auto& bond : outlier_bonds) {
                     outlierstring += "Bond ";
@@ -635,7 +651,7 @@ class molecules_container_js : public molecules_container_t {
 
             Json::StreamWriterBuilder builder;
             const std::string json_string = Json::writeString(builder, root);
-            
+
             return json_string;
         }
 
@@ -830,12 +846,44 @@ class molecules_container_js : public molecules_container_t {
             return results;
         }
 
-        coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4) {
+        PickableMesh DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, int n_threads=4) {
             //FIXME - pass in against_a_dark_background
             bool against_a_dark_background = false;
             coot::instanced_mesh_t spheres_mesh = get_bonds_mesh_for_selection_instanced(imol,cid_str,"VDW-BALLS",against_a_dark_background,0.1, 1.0, false, false, false, true, 1);
 
-            return GenerateMoorhenMetaBallsCootInstancedMesh(spheres_mesh,gridSize,radius,isoLevel,n_threads);
+            //This is the coot mesh and list of associations with the input spheres.
+            //Now how we map this onto the spheres when hovering is an as-yet unanswered question.
+            auto mesh_assoc = GenerateMoorhenMetaBallsCootInstancedMesh(spheres_mesh,gridSize,radius,isoLevel,n_threads);
+
+            std::vector<std::array<float,3>> points;
+            const auto geom = spheres_mesh.geom;
+            for(const auto &inst : geom){
+                const auto &As = inst.instancing_data_A;
+                for(const auto &inst_data : As){
+                    const auto &instDataPosition = inst_data.position;
+                    const float atomMult = inst_data.size[0];
+                    std::array<float,3> point{instDataPosition[0],instDataPosition[1],instDataPosition[2]};
+                    points.push_back(point);
+                }
+            }
+
+            PickableMesh pick_mesh;
+            pick_mesh.mesh = mesh_assoc.first;
+            //pick_mesh.pick_weights = mesh_assoc.second;
+            //pick_mesh.point_triangles = mesh_assoc.second;
+            pick_mesh.pick_points = points;
+
+            unsigned total_offset = 0;
+            for(const auto& influences: mesh_assoc.second){
+                for(const auto& aninfluence: influences){
+                    pick_mesh.influence_weights.push_back(aninfluence.second);
+                    pick_mesh.influence_point_indexes.push_back(aninfluence.first);
+                }
+                pick_mesh.influence_index_offsets.push_back(total_offset+influences.size());
+                total_offset += influences.size();
+            }
+
+            return pick_mesh;
         }
 
         std::pair<std::string, std::string> mol_text_to_pdb(const std::string &mol_text_cpp, const std::string &TLC, int nconf, int maxIters, bool keep_orig_coords, bool minimize) {
@@ -1567,24 +1615,24 @@ std::array<float,3> find_density_center_of_mass(
      }
 
      void export_metaballs_as_gltf(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
+         PickableMesh sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as .glb
          bool as_binary = true; // test the extension of file_name
          float gltf_pbr_roughness = 0.2;
          float gltf_pbr_metalicity = 0.0;
-         sm.export_to_gltf(file_name, gltf_pbr_roughness, gltf_pbr_metalicity, as_binary);
+         sm.mesh.export_to_gltf(file_name, gltf_pbr_roughness, gltf_pbr_metalicity, as_binary);
      }
 
      void export_metaballs_as_obj(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
+         PickableMesh sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as .obj
-         write_simple_mesh_to_obj_file(sm,file_name);
+         write_simple_mesh_to_obj_file(sm.mesh,file_name);
      }
 
      void export_metaballs_as_3mf_xml(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel, const std::string &file_name) {
-         coot::simple_mesh_t sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
+         PickableMesh sm = DrawMoorhenMetaBalls(imol, cid_str, gridSize, radius, isoLevel);
          //Now write this mesh as 3mf xml
-         write_simple_mesh_to_3mf_xml_file(sm,file_name);
+         write_simple_mesh_to_3mf_xml_file(sm.mesh,file_name);
      }
 
 };
@@ -1839,6 +1887,28 @@ inline emscripten::val getNormalsFromSimpleMesh(const coot::simple_mesh_t &m){
     }
 
     return float32ArrayFromVector(floatArray);
+
+}
+
+inline void getFloat32ArrayFromVector(const std::vector<float> &v, const emscripten::val &eval){
+    std::vector<float> floatArray;
+    floatArray.reserve(v.size());
+
+    for(const auto &val : v){
+        floatArray.push_back(val);
+    }
+    setFloat32ArrayFromVector(floatArray,eval);
+
+}
+
+inline void getUint32ArrayFromVector(const std::vector<unsigned> &v, const emscripten::val &eval){
+    std::vector<unsigned> unsignedArray;
+    unsignedArray.reserve(v.size());
+
+    for(const auto &val : v){
+        unsignedArray.push_back(val);
+    }
+    setUint32ArrayFromVector(unsignedArray,eval);
 
 }
 

@@ -1,9 +1,18 @@
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MoorhenInstanceProvider } from "../../../src/InstanceManager";
 import { MoorhenButton } from "../../../src/components/inputs/MoorhenButton/MoorhenButton";
 import { mockMenuSystem, renderWithinInstance } from "../testUtils";
+
+jest.mock("../../../src/components/interface-base/Popovers/Tooltip", () => ({
+    MoorhenTooltip: ({ tooltip, placement, link }) => (
+        <div data-testid="moorhen-tooltip" data-placement={placement}>
+            {link}
+            <div>{tooltip}</div>
+        </div>
+    ),
+}));
 
 describe("MoorhenButton", () => {
     test("renders with label", () => {
@@ -17,6 +26,31 @@ describe("MoorhenButton", () => {
         renderWithinInstance(<MoorhenButton label="Clickable" onClick={onClick} />);
         await user.click(screen.getByRole("button", { name: /clickable/i }));
         expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    test("calls mouse event handlers", () => {
+        const onMouseDown = jest.fn();
+        const onMouseUp = jest.fn();
+        const onMouseEnter = jest.fn();
+        const onMouseLeave = jest.fn();
+        renderWithinInstance(
+            <MoorhenButton
+                label="Mouse handlers"
+                onMouseDown={onMouseDown}
+                onMouseUp={onMouseUp}
+                onMouseEnter={onMouseEnter}
+                onMouseLeave={onMouseLeave}
+            />
+        );
+        const button = screen.getByRole("button", { name: /mouse handlers/i });
+        fireEvent.mouseDown(button);
+        fireEvent.mouseUp(button);
+        fireEvent.mouseEnter(button);
+        fireEvent.mouseLeave(button);
+        expect(onMouseDown).toHaveBeenCalledTimes(1);
+        expect(onMouseUp).toHaveBeenCalledTimes(1);
+        expect(onMouseEnter).toHaveBeenCalledTimes(1);
+        expect(onMouseLeave).toHaveBeenCalledTimes(1);
     });
 
     test("does not call onClick when disabled", async () => {
@@ -52,6 +86,27 @@ describe("MoorhenButton", () => {
         expect(button).toHaveStyle("background-color: blue");
     });
 
+    test("supports id, value, and ariaLabel", () => {
+        renderWithinInstance(<MoorhenButton label="Hidden label" id="button-id" value="button-value" ariaLabel="Accessible label" />);
+        const button = screen.getByRole("button", { name: /accessible label/i });
+        expect(button).toHaveAttribute("id", "button-id");
+        expect(button).toHaveValue("button-value");
+    });
+
+    test("applies icon size and iconStyle", () => {
+        renderWithinInstance(
+            <MoorhenButton
+                label="Sized icon"
+                icon="MatSymKeyboardArrowDown"
+                size="lg"
+                iconStyle={{ width: "24px", height: "24px" }}
+            />
+        );
+        const icon = screen.getByLabelText("MatSymKeyboardArrowDown");
+        expect(icon.className).toContain("large");
+        expect(icon).toHaveStyle({ width: "24px", height: "24px" });
+    });
+
     test("renders with variant primary", () => {
         renderWithinInstance(<MoorhenButton label="Primary" variant="primary" />);
         const button = screen.getByRole("button", { name: /primary/i });
@@ -73,9 +128,27 @@ describe("MoorhenButton", () => {
     test("renders tooltip text", () => {
         renderWithinInstance(
             <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
-                <MoorhenButton label="TooltipBtn" tooltip="Useful tooltip" />
+                <MoorhenButton label="TooltipBtn" tooltip="Useful tooltip" tooltipPlacement="left" />
             </MoorhenInstanceProvider>
         );
+        expect(screen.getByTestId("moorhen-tooltip")).toHaveAttribute("data-placement", "left");
+        expect(screen.getByText("Useful tooltip")).toBeInTheDocument();
         expect(screen.getByText("TooltipBtn")).toBeInTheDocument();
+    });
+
+    test("renders disabled tooltip content", () => {
+        renderWithinInstance(
+            <MoorhenInstanceProvider menuSystem={mockMenuSystem}>
+                <MoorhenButton label="Disabled tooltip" tooltip="Base tooltip" disabledTooltip="Disabled details" disabled={true} />
+            </MoorhenInstanceProvider>
+        );
+        expect(screen.getByRole("button", { name: /disabled tooltip/i })).toBeDisabled();
+        expect(screen.getByText(/Disabled details/i)).toBeInTheDocument();
+    });
+
+    test("renders toggle buttons with checked state", () => {
+        renderWithinInstance(<MoorhenButton type="toggle" checked={true} label="Toggle" />);
+        const button = screen.getByRole("button", { name: /toggle/i });
+        expect(button.className).toContain("moorhen__button__toggle-checked");
     });
 });

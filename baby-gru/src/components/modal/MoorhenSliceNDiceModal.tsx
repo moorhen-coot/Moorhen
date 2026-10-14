@@ -15,7 +15,7 @@ import {
     setThresholdType,
 } from "../../store/sliceNDiceSlice";
 import { moorhen } from "../../types/moorhen";
-import { ColourRule } from "../../utils/MoorhenColourRule";
+import { ColourRule, ColourRulePropertyType } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx, findConsecutiveRanges, getMultiColourRuleArgs, hslToHex } from "../../utils/utils";
 import { MoorhenIcon, MoorhenSpinner } from "../icons";
@@ -134,7 +134,7 @@ export const MoorhenSliceNDiceModal = () => {
     const prevSelectedMoleculeRef = useRef<moorhen.Molecule>(null);
     const isBusy = useRef<boolean>(false);
     const isDirty = useRef<boolean>(false);
-    const thresholdTypeRef = useRef<string>("af2-plddt");
+    const thresholdTypeRef = useRef<"af2-plddt" | "b-factor-norm">("af2-plddt");
 
     const [selectedMolNo, setSelectedMolNo] = useState<number>(null);
     const [busy, setBusy] = useState<boolean>(false);
@@ -162,11 +162,11 @@ export const MoorhenSliceNDiceModal = () => {
     const dispatch = useDispatch();
 
     const setColourRule = useCallback(
-        async (molecule: moorhen.Molecule, colourRuleType: string) => {
+        async (molecule: moorhen.Molecule, colourRuleType: ColourRulePropertyType) => {
             const newColourRule = new ColourRule(colourRuleType, "/*/*/*/*", "#ffffff", commandCentre.current, true);
             newColourRule.setLabel(colourRuleType === "af2-plddt" ? "PLDDT" : "B-Factor");
             const ruleArgs = await getMultiColourRuleArgs(molecule, colourRuleType);
-            newColourRule.setArgs([ruleArgs]);
+            newColourRule.multiColourData = ruleArgs;
             newColourRule.setParentMolecule(molecule);
             molecule.defaultColourRules = [newColourRule];
             return newColourRule;
@@ -352,7 +352,6 @@ export const MoorhenSliceNDiceModal = () => {
                 const colorHue = Math.floor(index * 40 + Math.floor(Math.random() * 6));
                 const selectedColour = isDark ? hslToHex(colorHue, 80, 70) : hslToHex(colorHue, 50, 50);
                 const newColourRule = new ColourRule("cid", "/*/*/*/*", selectedColour, commandCentre.current);
-                newColourRule.setArgs(["/*/*/*/*", selectedColour]);
                 newColourRule.setParentMolecule(newMolecule);
                 newMolecule.defaultColourRules = [newColourRule];
                 newMolecule.setAtomsDirty(true);

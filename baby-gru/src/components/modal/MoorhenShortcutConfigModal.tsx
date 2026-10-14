@@ -130,7 +130,7 @@ export const MoorhenShortcutConfigModal = (props: ModalComponentProps) => {
         </OverlayModal>
     );
     const modalFooter = (
-        <>
+        <MoorhenStack direction="line" >
             <MoorhenButton variant="secondary" onClick={restoreDefaults}>
                 Restore Defaults
             </MoorhenButton>
@@ -140,7 +140,7 @@ export const MoorhenShortcutConfigModal = (props: ModalComponentProps) => {
             <MoorhenButton variant="danger" onClick={cancelChanges}>
                 Cancel
             </MoorhenButton>{" "}
-        </>
+        </MoorhenStack>
     );
 
     return (

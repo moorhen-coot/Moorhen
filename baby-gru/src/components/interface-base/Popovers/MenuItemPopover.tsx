@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { MoorhenPopover } from "..";
+import { MoorhenPopover, PanelErrorBoundary } from "..";
 import { MoorhenMenuItem } from "../MenuItems/MenuItem";
 
 type MoorhenMenuItemPopoverProps = {
@@ -37,7 +37,9 @@ export const MoorhenMenuItemPopover = (props: MoorhenMenuItemPopoverProps) => {
 
     return (
         <MoorhenPopover popoverPlacement={popoverPlacement} isShown={isShown} setIsShown={setIsShown} link={menuItem} linkRef={menuItemRef} style={popoverStyle}>
-            {children ? children : popoverContent}
+            <PanelErrorBoundary panelName={props.menuItemTitle ?? menuItemText}>
+                {children ? children : popoverContent}
+            </PanelErrorBoundary>
         </MoorhenPopover>
     );
 };

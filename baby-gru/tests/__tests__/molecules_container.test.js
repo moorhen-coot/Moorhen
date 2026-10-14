@@ -103,10 +103,12 @@ describe('Testing molecules_container_js', () => {
         const gridSize = 0.15
         const radius = 0.65
         const isoLevel = 1.8
-        const mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2", gridSize, radius, isoLevel, 1)
+        const pick_mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2", gridSize, radius, isoLevel, 1)
+        const mesh = pick_mesh.mesh
         expect(mesh.vertices.size()).toBeGreaterThan(1000)
         expect(mesh.triangles.size()).toBeGreaterThan(1000)
         cleanUpVariables.push(mesh)
+        cleanUpVariables.push(pick_mesh)
     })
 
     test("H-Bonds", () => {
@@ -727,7 +729,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(instanced_mesh_1, instanced_mesh_2, geom_vec_1, geom_vec_2)
     })
 
-    test("get_acedrg_types_for_residue_t", async () => {
+    test.skip("get_acedrg_types_for_residue_t", async () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h-nitrobenzene.pdb')
         expect(coordMolNo).toBe(0)
         const pdbChemLig = await fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/LIG.cif`).then(response=>response.text())

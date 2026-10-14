@@ -125,8 +125,8 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
             }
         }
         if(vec.coordsMode==="atoms"){
-            if(vec.molFromUniqueId!==undefined&&vec.cidTo.length>0){
-                const toMol = molecules.find(mol => mol.uniqueId === vec.molFromUniqueId)
+            if(vec.molToUniqueId!==undefined&&vec.cidTo.length>0){
+                const toMol = molecules.find(mol => mol.uniqueId === vec.molToUniqueId)
                 if(toMol){
                     let toAtoms
                     let nToAtoms = 0

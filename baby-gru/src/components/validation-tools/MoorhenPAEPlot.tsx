@@ -623,7 +623,7 @@ export const MoorhenPAEPlot = (props: MoorhenPAEProps) => {
         <>
             {!props.isDocked && (
                 <MoorhenStack style={{ marginBottom: "0.5rem" }}>
-                    DataSource
+                    Data Source
                     <MoorhenStack direction="row">
                         <MoorhenToggle
                             inline

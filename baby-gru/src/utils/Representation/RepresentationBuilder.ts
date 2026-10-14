@@ -1,5 +1,5 @@
 import { moorhen } from "@/types/moorhen";
-import { ColourRule } from "../MoorhenColourRule";
+import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
 import type { MoorhenMolecule } from "../MoorhenMolecule";
 import { getMultiColourRuleArgs, parseCid } from "../utils";
 import { MoleculeRepresentation, RepresentationStyles, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
@@ -188,14 +188,13 @@ export async function buildColourRule(params: BuildColourRuleParams): Promise<Co
     switch (colourMode) {
         case "custom":
             colourRule = new ColourRule(
-                ruleType !== "neighbourhood" ? ruleType : "molecule",
+                (ruleType !== "neighbourhood" ? ruleType : "molecule") as ColourRuleType,
                 colourRuleCid,
                 colour,
                 molecule.commandCentre,
                 false,
                 applyColourToNonCarbonAtoms
             );
-            colourRule.setArgs([colourRuleCid, colour]);
             colourRule.setParentMolecule(molecule);
             break;
         case "mol-symm":
@@ -210,11 +209,12 @@ export async function buildColourRule(params: BuildColourRuleParams): Promise<Co
         case "b-factor":
         case "b-factor-norm":
         case "electrostatics":
+        case "RMSF":
         case "af2-plddt": {
             colourRule = new ColourRule(colourMode, "/*/*/*/*:*", "#ffffff", molecule.commandCentre, true, applyColourToNonCarbonAtoms);
             colourRule.setLabel(getColourModeLabel(colourMode));
             const ruleArgs = await getMultiColourRuleArgs(molecule, colourMode);
-            colourRule.setArgs([ruleArgs]);
+            colourRule.multiColourData = ruleArgs;
             colourRule.setParentMolecule(molecule);
             break;
         }
@@ -242,6 +242,8 @@ function getColourModeLabel(colourMode: string): string {
             return "PLDDT";
         case "electrostatics":
             return "Electrostatics";
+        case "RMSF":
+            return "RMSF";
         default:
             return "";
     }
@@ -502,8 +504,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     representation.neighboursCid = neighboursCid;
     representation.hbondedTo = hbondedTo;
     representation.hbondedToCid = neighboursCid;
-    representation.setUseDefaultColourRules(!colourRule);
-    representation.setColourRules(colourRule ? [colourRule] : null);
+    representation.colourRules = colourRule ? [colourRule] : null;
     representation.setBondOptions(bondOptions);
     representation.setM2tParams(m2tParams);
     representation.setResidueEnvOptions(residueEnvironmentOptions);

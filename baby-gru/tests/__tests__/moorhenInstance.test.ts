@@ -517,9 +517,20 @@ describe('Session Loading', () => {
 // ==============================
 describe('Camera / View Controls', () => {
 
-    test('centerOnCoordinate dispatches setOrigin', () => {
+    test('centerOnCoordinate centres on the coordinate it is given', () => {
         const dispatchSpy = jest.spyOn(moorhenInstance, 'dispatch');
         moorhenInstance.centerOnCoordinate(1.0, 2.0, 3.0);
+        // The store holds the negative of the point being looked at, so asking to centre on
+        // (1, 2, 3) has to set the origin to (-1, -2, -3). This previously asserted the
+        // unnegated value, which locked in a method that centred on the wrong side of zero.
+        expect(dispatchSpy).toHaveBeenCalledWith(setOrigin([-1.0, -2.0, -3.0]));
+    });
+
+    test('...and asking for the origin directly is left alone', () => {
+        // The distinction the bug above blurred: setOrigin takes the stored convention and
+        // must not negate, centerOnCoordinate takes a point and must.
+        const dispatchSpy = jest.spyOn(moorhenInstance, 'dispatch');
+        moorhenInstance.dispatch(setOrigin([1.0, 2.0, 3.0]));
         expect(dispatchSpy).toHaveBeenCalledWith(setOrigin([1.0, 2.0, 3.0]));
     });
 

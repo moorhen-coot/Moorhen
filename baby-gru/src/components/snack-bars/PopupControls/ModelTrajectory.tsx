@@ -7,7 +7,7 @@ import { setIsAnimatingTrajectory } from "@/store/generalStatesSlice";
 import { setShownControl } from "@/store/globalUISlice";
 import { hideMolecule, showMolecule } from "@/store/moleculesSlice";
 import { moorhen } from "@/types/moorhen";
-import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
+import { MoleculeRepresentation, PickableMesh } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { MoorhenButton, MoorhenNumberInput, MoorhenSlider } from "@/components/inputs";
 import { MoorhenLinearProgress } from "@/components/icons";
 import useStateWithRef from "@/hooks/useStateWithRef";
@@ -17,7 +17,7 @@ export const ModelTrajectory = () => {
 
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const representationRef = useRef<null | moorhen.MoleculeRepresentation>(null);
-    const framesRef = useRef<null | moorhen.DisplayObject[][]>([]);
+    const framesRef = useRef<PickableMesh[][]>([]);
 
     const [busyComputingFrames, setBusyComputingFrames] = useState<boolean>(true);
     const [nFrames, setNFrames] = useState<number>(0);
@@ -35,7 +35,7 @@ export const ModelTrajectory = () => {
     const commandCentre = useCommandCentre();
 
     const computeFrames = async (molecule: moorhen.Molecule, representation: moorhen.MoleculeRepresentation) => {
-        const frames: moorhen.DisplayObject[][] = [];
+        const frames: PickableMesh[][] = [];
         const multiModelMolecules = await molecule.splitMultiModels(false);
 
         const nSteps = multiModelMolecules.length;
@@ -46,7 +46,7 @@ export const ModelTrajectory = () => {
             iMolecule.setAtomsDirty(true);
             await iMolecule.updateAtoms();
             representation.setParentMolecule(iMolecule);
-            representation.setColourRules(molecule.defaultColourRules);
+            representation.colourRules = molecule.defaultColourRules;
             await representation.applyColourRules();
             const meshObjects = await representation.getBufferObjects();
             frames.push(meshObjects);
@@ -78,7 +78,7 @@ export const ModelTrajectory = () => {
                 return;
             }
             representationRef.current.deleteBuffers();
-            await representation.buildBuffers(frame);
+            representation.buildBuffers(frame);
         };
 
         void buildCurrentFrame();
@@ -106,7 +106,7 @@ export const ModelTrajectory = () => {
             setNFrames(framesRef.current.length);
             setBusyComputingFrames(false);
             dispatch(hideMolecule(selectedMolecule));
-            await representationRef.current.buildBuffers(framesRef.current[0]);
+            representationRef.current.buildBuffers(framesRef.current[0]);
         };
         loadFrames();
     }, []);

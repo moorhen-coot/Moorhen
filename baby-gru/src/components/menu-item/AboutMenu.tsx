@@ -27,15 +27,18 @@ export const About = () => {
             <p>Moorhen is a molecular graphics program based on the Coot desktop program.</p>
             <p>Authors:</p>
             <ul>
-                <li>Paul Emsley</li>
+                <li>Clément Dégut</li>
                 <li>Filomeno Sanchez</li>
-                <li>Martin Noble</li>
+                <li>Paul Emsley</li>
                 <li>Stuart McNicholas</li>
+                <li>Martin Noble</li>
                 <li>Lucrezia Catapano</li>
                 <li>Paul Bond</li>
                 <li>Jordan Dialpuri</li>
                 <li>Jakub Smulski</li>
-                <li>Clément Dégut</li>
+                <li>Shuai Wang</li>
+                <li>Adam Simkin</li>
+                <li>Toby King</li>
             </ul>
             <p>
                 This is Moorhen v{version} ({is64Bit ? "64" : "32"}-bit)

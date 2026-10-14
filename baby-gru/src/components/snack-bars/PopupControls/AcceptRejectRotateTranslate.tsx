@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MoorhenButton } from "@/components/inputs";
-import { useControlLock } from "@/hooks";
+import { useControlLock, useMoorhenInstance } from "@/hooks";
 import { RootState, setShownControl, unlockControls } from "@/store";
 import { setIsRotatingAtoms } from "../../../store/generalStatesSlice";
 import { setActiveMolecule } from "../../../store/glRefSlice";
@@ -14,6 +14,8 @@ import { MoorhenStack } from "../../interface-base";
 export const AcceptRejectRotateTranslate = () => {
     const controlKey = useControlLock();
     const dispatch = useDispatch();
+
+    const moorhenInstance = useMoorhenInstance();
 
     const activeMolecule = useSelector((state: RootState) => state.glRef.activeMolecule);
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
@@ -44,6 +46,8 @@ export const AcceptRejectRotateTranslate = () => {
                 molecule.drawResidueSelection(cid);
             }
             dispatch(setShownControl(null));
+        if (acceptTransform) {
+        moorhenInstance.triggerMoleculeChanged(molecule.uniqueId, "refine");}
         },
         [fragmentMoleculeRef]
     );
@@ -136,6 +140,7 @@ export const AcceptRejectRotateTranslate = () => {
                     onClick={async () => {
                         await stopRotateTranslate(true);
                     }}
+
                 />
 
                 <MoorhenButton

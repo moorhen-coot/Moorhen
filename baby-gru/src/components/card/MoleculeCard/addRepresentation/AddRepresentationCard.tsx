@@ -39,7 +39,7 @@ export const AddCustomRepresentationCard = memo(
         const [ruleType, setRuleType] = useState<ResidueSelectionRuleType>(
             existingParams?.ruleType ?? "molecule"
         );
-        const [representationStyle, setRepresentationStyle] = useState<moorhen.RepresentationStyles>(existingParams?.representationStyle ?? "CBs");
+        const [representationStyle, setRepresentationStyle] = useState<RepresentationStyles>(existingParams?.representationStyle ?? "CBs");
 
         const [restrictToNeighbours, setRestrictToNeighbours] = useState<boolean>(existingParams?.restrictToNeighbours ?? false);
         const [hbondedTo, setHbondedTo] = useState<boolean>(existingParams?.hbondedTo ?? false);
@@ -256,7 +256,7 @@ export const AddCustomRepresentationCard = memo(
                         adaptBondOOF={adaptBondOOF}
                         setAdaptBondOOF={setAdaptBondOOF}
                     />
-                    {representationStyle !== "adaptativeBonds" && (
+                    {(representationStyle !== "adaptativeBonds" && representationStyle !== "cavities") && (
                         <ResidueSelectionSection
                             ruleType={ruleType}
                             setRuleType={setRuleType}

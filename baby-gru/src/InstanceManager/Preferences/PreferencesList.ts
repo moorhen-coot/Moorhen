@@ -403,8 +403,8 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
     },
 };
 
-type PreferenceLabel = (typeof PREFERENCES_MAP)[keyof typeof PREFERENCES_MAP]["label"];
-type PreferenceDefaultValue<L extends PreferenceLabel> = Extract<
+export type PreferenceLabel = (typeof PREFERENCES_MAP)[keyof typeof PREFERENCES_MAP]["label"];
+export type PreferenceDefaultValue<L extends PreferenceLabel> = Extract<
     (typeof PREFERENCES_MAP)[keyof typeof PREFERENCES_MAP],
     { label: L }
 >["defaultValue"];

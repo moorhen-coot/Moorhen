@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { MoorhenButton, MoorhenPopoverButton } from "@/components/inputs";
 import { PanelErrorBoundary } from "@/components/interface-base";
 
@@ -27,11 +27,12 @@ export const BaseSequenceViewerTab = ({
     onExpandClick,
     infoCard,
 }: BaseSequenceViewerTabProps) => {
+
     return (
         <PanelErrorBoundary>
             <div className={`moorhen__bottom-panel-tab ${isActiveTab ? "" : "background"}`}>
                 {isActiveTab && configPanel && <MoorhenPopoverButton size="small">{configPanel}</MoorhenPopoverButton>}
-                <button className="moorhen__bottom-panel-button" onClick={onTitleClick}>
+                <button className={`moorhen__bottom-panel-button ${isActiveTab ? "" : "background"}`} onClick={onTitleClick}>
                     &nbsp;&nbsp;{titleText}&nbsp;&nbsp;
                 </button>
                 {isActiveTab && showExpandButton && onExpandClick && (
