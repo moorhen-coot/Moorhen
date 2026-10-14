@@ -1311,13 +1311,23 @@ export class MoorhenMolecule {
      * Draw the molecule with a particular style. If the molecule atoms are marked as "dirty" then fetch new atoms.
      * @param {string} style - The style that will be drawn
      */
+    private findDefaultRepresentation(style: moorhen.RepresentationStyles): moorhen.MoleculeRepresentation | undefined {
+        // Identify this molecule's own representation by style and the isCustom flag,
+        // not by cid. Callers used to compare against a hardcoded whole-molecule cid
+        // literal, but the representation builder derives the cid it actually stores
+        // from the style and its options -- a whole-molecule CBs representation is
+        // stored with a different cid again when waters are excluded. The literal
+        // therefore never matched, so every redraw built an additional representation
+        // and left the previous one's buffers in the scene.
+        return this.representations.find(item => item.style === style && !item.isCustom);
+    }
+
     async fetchIfDirtyAndDraw(style: moorhen.RepresentationStyles): Promise<void> {
         if (this.atomsDirty) {
             await this.updateAtoms();
         }
 
-        const cid = "/*/*/*/*:*";
-        const representation = this.representations.find(item => item.style === style && item.cid === cid);
+        const representation = this.findDefaultRepresentation(style);
         if (representation) {
             await this.redrawRepresentation(representation.uniqueId);
         } else {
@@ -1449,15 +1459,21 @@ export class MoorhenMolecule {
      * Draw molecule from a given mesh
      * @param {string} style - Indicate the style to be drawn
      * @param {any[]} meshObjects - The mesh obects that will be drawn
-     * @param {string} [cid] - The new buffer CID selection
+     * @param {string} [cid] - The new buffer CID selection; if omitted, the molecule's own representation of this style is reused
      */
     async drawWithStyleFromMesh(
         style: moorhen.RepresentationStyles,
         meshObjects: any[],
-        cid: string = "/*/*/*/*",
+        cid?: string,
         fetchAtomBuffers: boolean = false
     ): Promise<void> {
-        let representation = this.representations.find(item => item.style === style && item.cid === cid);
+        // Without an explicit cid, draw into the same representation fetchIfDirtyAndDraw() uses.
+        // Matching on a literal cid here created a second representation, so drag/refine frames
+        // and the final redraw updated different ones and the stale one was left as a ghost.
+        let representation = cid
+            ? this.representations.find(item => item.style === style && item.cid === cid)
+            : this.findDefaultRepresentation(style);
+        cid = representation?.cid ?? cid ?? "/*/*/*/*";
         if (!representation) {
             representation = new MoleculeRepresentation(style, cid, this.commandCentre);
             representation.setParentMolecule(this);
@@ -1564,8 +1580,9 @@ export class MoorhenMolecule {
         try {
             if (style === "ligands") {
                 representation = this.representations.find(item => item.style === style);
+            } else if (!cid) {
+                representation = this.findDefaultRepresentation(style);
             } else {
-                if (!cid) cid = "/*/*/*/*:*";
                 representation = this.representations.find(item => item.style === style && item.cid === cid);
             }
             if (representation) {
@@ -1595,8 +1612,9 @@ export class MoorhenMolecule {
         try {
             if (style === "ligands") {
                 representation = this.representations.find(item => item.style === style);
+            } else if (!cid) {
+                representation = this.findDefaultRepresentation(style);
             } else {
-                if (!cid) cid = "/*/*/*/*:*";
                 representation = this.representations.find(item => item.style === style && item.cid === cid);
             }
             if (representation) {
