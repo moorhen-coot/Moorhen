@@ -259,16 +259,20 @@ export const MoorhenDevMenu = () => {
         const atoms = await molecule.gemmiAtomsForCid(ligand.cid);
         if (!atoms?.length) return { error: `No atoms for ${ligand.cid}` } as const;
 
-        const scene = store.getState().sceneSettings;
+        // The slab comes from the camera, which holds it as offsets from the view centre - the
+        // same convention a keyframe uses. It used to be read from the store, which holds clip
+        // relative and fog absolute, so a keyframe built here disagreed with one built by the
+        // controller's asKeyframe while both claimed to be the same type.
+        const camera = gl.cameraController.state;
         const movie = buildLigandTour(
             {
                 quat: gl.myQuat,
                 origin: [...gl.origin] as [number, number, number],
                 zoom: gl.zoom,
-                clipStart: scene.clipStart,
-                clipEnd: scene.clipEnd,
-                fogStart: scene.fogStart,
-                fogEnd: scene.fogEnd,
+                clipFront: camera.clipFront,
+                clipBack: camera.clipBack,
+                fogFront: camera.fogFront,
+                fogBack: camera.fogBack,
             },
             atoms);
 

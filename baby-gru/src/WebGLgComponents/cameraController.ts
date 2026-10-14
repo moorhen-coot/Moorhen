@@ -181,13 +181,12 @@ const asKeyframe = (state: CameraState) => ({
     quat: quat4.fromValues(...state.quat),
     origin: [...state.origin] as Vec3,
     zoom: state.zoom,
-    // cameraPath speaks of clipStart/clipEnd/fogStart/fogEnd; here they carry offsets from the
-    // view centre rather than the store's mixed conventions. The names are cameraPath's, the
-    // meaning is this file's, and nothing in between cares which.
-    clipStart: state.clipFront,
-    clipEnd: state.clipBack,
-    fogStart: state.fogFront,
-    fogEnd: state.fogBack,
+    // Both sides now call these what they are: offsets from the view centre. cameraPath used to
+    // borrow the renderer's names for absolute distances, which meant this comment had to exist.
+    clipFront: state.clipFront,
+    clipBack: state.clipBack,
+    fogFront: state.fogFront,
+    fogBack: state.fogBack,
 });
 
 const easeMovie = (from: CameraState, to: CameraState, seconds: number): Movie => ({
@@ -349,10 +348,10 @@ export class CameraController {
         if (writes.has("quat")) next.quat = writeQuat(this.current.quat, sample.quat);
         if (writes.has("origin")) next.origin = writeVec3(this.current.origin, sample.origin);
         if (writes.has("zoom")) next.zoom = sample.zoom;
-        if (writes.has("clipFront")) next.clipFront = sample.clipStart;
-        if (writes.has("clipBack")) next.clipBack = sample.clipEnd;
-        if (writes.has("fogFront")) next.fogFront = sample.fogStart;
-        if (writes.has("fogBack")) next.fogBack = sample.fogEnd;
+        if (writes.has("clipFront")) next.clipFront = sample.clipFront;
+        if (writes.has("clipBack")) next.clipBack = sample.clipBack;
+        if (writes.has("fogFront")) next.fogFront = sample.fogFront;
+        if (writes.has("fogBack")) next.fogBack = sample.fogBack;
         this.current = this.applySlab(next);
 
         if (elapsed >= this.move.duration) {

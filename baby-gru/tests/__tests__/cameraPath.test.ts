@@ -12,10 +12,14 @@ import {
     CameraKeyframe, Movie, Vec3, easeInOut, movieDuration, sampleMovie,
 } from "../../src/utils/cameraPath";
 
-const keyframe = (origin: Vec3, zoom = 1, degreesAboutY = 0, visible?: string[]): CameraKeyframe => {
+const keyframe = (
+    origin: Vec3, zoom = 1, degreesAboutY = 0, opacity?: Record<string, number>
+): CameraKeyframe => {
     const q = quat4.create();
     quat4.setAxisAngle(q, [0, 1, 0], (degreesAboutY * Math.PI) / 180);
-    return { quat: q, origin, zoom, clipStart: 8, clipEnd: 21, fogStart: 242, fogEnd: 271, visible };
+    // Offsets from the view centre, which is what these four have always held - the default slab
+    // at zoom 1, as execAutoClipFogByZoom would derive it.
+    return { quat: q, origin, zoom, clipFront: 8, clipBack: 21, fogFront: 8, fogBack: 21, opacity };
 };
 
 /** How far the camera moves per second at a moment, by finite difference. */
@@ -217,40 +221,76 @@ describe("rock", () => {
     });
 });
 
-describe("visibility", () => {
+describe("opacity", () => {
+    // A ligand fading in while the ribbons fade out, which is the thing opacity exists for and
+    // the thing a visible/hidden flag could not express at all.
     const movie: Movie = {
         keyframes: [
-            keyframe([0, 0, 0], 1, 0, ["ribbons"]),
-            keyframe([10, 0, 0], 1, 0, ["ribbons", "ligand"]),
-            keyframe([20, 0, 0], 1, 0, ["ligand"]),
+            keyframe([0, 0, 0], 1, 0, { ribbons: 1, ligand: 0 }),
+            keyframe([10, 0, 0], 1, 0, { ribbons: 0, ligand: 1 }),
         ],
-        segments: [{ seconds: 2, motion: { kind: "move" } }, { seconds: 2, motion: { kind: "move" } }],
+        segments: [{ seconds: 2, motion: { kind: "move" } }],
     };
 
-    it("holds the departing keyframe's set until the next is reached", () => {
-        expect(sampleMovie(movie, 0).visible).toEqual(["ribbons"]);
-        expect(sampleMovie(movie, 1.9).visible).toEqual(["ribbons"]);
+    it("ends where the keyframes say", () => {
+        expect(sampleMovie(movie, 0).opacity).toEqual({ ribbons: 1, ligand: 0 });
+        expect(sampleMovie(movie, 2).opacity).toEqual({ ribbons: 0, ligand: 1 });
     });
 
-    it("switches as a keyframe is reached, never between two", () => {
-        expect(sampleMovie(movie, 2).visible).toEqual(["ribbons", "ligand"]);
-        expect(sampleMovie(movie, 4).visible).toEqual(["ligand"]);
+    it("is somewhere in between on the way, in both directions at once", () => {
+        const half = sampleMovie(movie, 1).opacity;
+        expect(half.ligand).toBeGreaterThan(0);
+        expect(half.ligand).toBeLessThan(1);
+        expect(half.ribbons).toBeCloseTo(1 - half.ligand, 10);
     });
 
-    it("inherits from earlier when a keyframe does not say", () => {
-        const sparse: Movie = {
-            keyframes: [keyframe([0, 0, 0], 1, 0, ["ribbons"]), keyframe([10, 0, 0]), keyframe([20, 0, 0])],
+    it("never leaves the range, where a spline would", () => {
+        // The reason this one interpolates straight while everything else is splined. Fading in
+        // and out again is 0, 1, 0 - exactly the shape a Catmull-Rom overshoots at both ends, so
+        // an object would go more than solid and then less than invisible.
+        const inAndOut: Movie = {
+            keyframes: [
+                keyframe([0, 0, 0], 1, 0, { ligand: 0 }),
+                keyframe([10, 0, 0], 1, 0, { ligand: 1 }),
+                keyframe([20, 0, 0], 1, 0, { ligand: 0 }),
+            ],
             segments: [{ seconds: 2, motion: { kind: "move" } }, { seconds: 2, motion: { kind: "move" } }],
         };
-        expect(sampleMovie(sparse, 3).visible).toEqual(["ribbons"]);
+        for (let t = 0; t <= 4; t += 0.05) {
+            const { ligand } = sampleMovie(inAndOut, t).opacity;
+            expect(ligand).toBeGreaterThanOrEqual(0);
+            expect(ligand).toBeLessThanOrEqual(1);
+        }
     });
 
-    it("is empty when nothing ever says otherwise", () => {
+    it("holds a value the other end does not mention, rather than fading from nothing", () => {
+        // "From here it is this solid", not "ghost it in". A keyframe that says nothing about an
+        // object is not asserting that it was invisible a moment ago.
+        const late: Movie = {
+            keyframes: [keyframe([0, 0, 0]), keyframe([10, 0, 0], 1, 0, { ligand: 0.5 })],
+            segments: [{ seconds: 2, motion: { kind: "move" } }],
+        };
+        expect(sampleMovie(late, 0).opacity.ligand).toBe(0.5);
+        expect(sampleMovie(late, 1).opacity.ligand).toBe(0.5);
+    });
+
+    it("leaves a camera-only movie with nothing to apply", () => {
+        // A tour that only moves the camera must not hide the scene by implication. Anything
+        // absent from the sample is left as the scene has it.
         const movie: Movie = {
             keyframes: [keyframe([0, 0, 0]), keyframe([1, 0, 0])],
             segments: [{ seconds: 1, motion: { kind: "move" } }],
         };
-        expect(sampleMovie(movie, 0.5).visible).toEqual([]);
+        expect(sampleMovie(movie, 0.5).opacity).toEqual({});
+    });
+
+    it("holds the departing keyframe's opacities through a spin or a rock", () => {
+        // The camera turns; nothing is travelling between two keyframes, so nothing fades.
+        const held: Movie = {
+            keyframes: [keyframe([0, 0, 0], 1, 0, { ligand: 0.25 }), keyframe([0, 0, 0], 1, 0, { ligand: 1 })],
+            segments: [{ seconds: 2, motion: { kind: "spin", turns: 1 } }],
+        };
+        expect(sampleMovie(held, 1).opacity).toEqual({ ligand: 0.25 });
     });
 });
 
@@ -284,7 +324,9 @@ describe("a movie that mixes motions", () => {
     it("never produces a value that is not a number", () => {
         for (let t = 0; t <= 10; t += 0.05) {
             const sample = sampleMovie(movie, t);
-            [...sample.origin, sample.zoom, sample.clipStart, sample.clipEnd, sample.fogStart, sample.fogEnd]
+            [...sample.origin, sample.zoom,
+             sample.clipFront, sample.clipBack, sample.fogFront, sample.fogBack,
+             ...Object.values(sample.opacity)]
                 .forEach(value => expect(Number.isFinite(value)).toBe(true));
             sample.quat.forEach(value => expect(Number.isFinite(value)).toBe(true));
             expect(quat4.length(sample.quat)).toBeCloseTo(1, 6);

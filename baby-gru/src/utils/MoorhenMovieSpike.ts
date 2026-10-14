@@ -267,8 +267,17 @@ const applyCamera = (gl: webGL.MGWebGL, sample: CameraSample) => {
     quat4.copy(gl.myQuat, sample.quat);
     gl.origin = [...sample.origin] as [number, number, number];
     gl.zoom = sample.zoom;
-    gl.set_clip_range(-sample.clipStart, sample.clipEnd);
-    gl.set_fog_range(sample.fogStart, sample.fogEnd);
+    // A sample's slab is offsets from the view centre; set_fog_range wants absolute distances from
+    // the eye, so the conversion has to happen here. It used to pass the offsets straight in,
+    // which worked only because the dev menu captured the store's absolute fog in the first place
+    // - two wrongs, in a type that claimed to hold one thing.
+    const eyeDistance = gl.cameraController.state.eyeDistance;
+    gl.set_clip_range(-sample.clipFront, sample.clipBack);
+    gl.set_fog_range(eyeDistance - sample.fogFront, eyeDistance + sample.fogBack);
+
+    // NOTE: under auto-clip this is immediately re-derived from zoom and thrown away, because the
+    // slab policy applies to every camera write. A movie that authors its own slab has to put the
+    // policy in manual for its duration, which is the next slice's job.
 };
 
 /**

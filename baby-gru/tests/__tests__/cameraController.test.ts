@@ -10,6 +10,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import * as quat4 from "gl-matrix/quat";
 import { CameraController, CameraState, Quat } from "../../src/WebGLgComponents/cameraController";
+import type { Movie } from "../../src/utils/cameraPath";
 
 const identity: Quat = [0, 0, 0, 1];
 
@@ -373,12 +374,15 @@ describe("the slab", () => {
 
     it("is carried by a movie, whose keyframes were authored on purpose", () => {
         const camera = new CameraController(startingAt({ clipFront: 8 }), { kind: "manual" });
-        const movie = {
+        // Annotated, so the compiler checks it. Unannotated, this literal kept its old field
+        // names through a rename of CameraKeyframe without tsc saying a word, and only the
+        // assertion below noticed.
+        const movie: Movie = {
             keyframes: [
                 { quat: quat4.fromValues(0, 0, 0, 1), origin: [0, 0, 0] as [number, number, number],
-                  zoom: 1, clipStart: 8, clipEnd: 21, fogStart: 8, fogEnd: 21 },
+                  zoom: 1, clipFront: 8, clipBack: 21, fogFront: 8, fogBack: 21 },
                 { quat: quat4.fromValues(0, 0, 0, 1), origin: [0, 0, 0] as [number, number, number],
-                  zoom: 1, clipStart: 40, clipEnd: 60, fogStart: 40, fogEnd: 60 },
+                  zoom: 1, clipFront: 40, clipBack: 60, fogFront: 40, fogBack: 60 },
             ],
             segments: [{ seconds: 1, motion: { kind: "move" as const } }],
         };
