@@ -1,7 +1,8 @@
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useRef, useState } from "react";
 import { MoorhenIcon } from "@/components/icons";
-import { hexToRGB, rgbToHex } from "@/utils/utils";
+import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
+import { hexToRGBA, rgbaToHex } from "@/utils/utils";
 import { moorhen } from "../../../types/moorhen";
 import type { ColourRule } from "../../../utils/MoorhenColourRule";
 import { MoorhenButton, MoorhenColourPicker, MoorhenPopoverButton, MoorhenSelect } from "../../inputs";
@@ -112,7 +113,10 @@ export const MoorhenColourRuleCard = (props: {
 
     const busyRedrawing = useRef<boolean>(false);
     const isDirty = useRef<boolean>(false);
-    const [colour, setColour] = useState(hexToRGB(rule.color));
+    const [colour, setColour] = useState<RGBAColour>(() => {
+        const [r, g, b, a] = hexToRGBA(rule.color);
+        return [r, g, b, a / 255];
+    });
 
     const redrawIfDirty = () => {
         if (isDirty.current) {
@@ -125,10 +129,8 @@ export const MoorhenColourRuleCard = (props: {
         }
     };
 
-    const handleColourChangeDefault = (color: [number, number, number]) => {
-        console.log(rule.color);
-        rule.setColor(rgbToHex(color[0], color[1], color[2]));
-        console.log(rule.color);
+    const handleColourChangeDefault = (color: RGBAColour) => {
+        rule.setColor(rgbaToHex(color[0], color[1], color[2], color.length === 4 ? color[3] : 1));
         isDirty.current = true;
         if (!busyRedrawing.current) {
             redrawIfDirty();
@@ -145,7 +147,7 @@ export const MoorhenColourRuleCard = (props: {
                 </label>
                 <div style={{ display: "flex", justifyContent: "right", alignItems: "center" }}>
                     {!rule.isMultiColourRule ? (
-                        <MoorhenColourPicker colour={colour} setColour={handleColourChangeDefault} style={{ marginRight: "0.2rem" }} />
+                        <MoorhenColourPicker colour={colour} useAlpha setColour={handleColourChangeDefault} style={{ marginRight: "0.2rem" }} />
                     ) : rule.propertyType === "secondary-structure" ? (
                         <MoorhenIcon moorhenSVG="SecondaryStructure" size="medium" />
                     ) : rule.propertyType === "jones-rainbow" ? (
