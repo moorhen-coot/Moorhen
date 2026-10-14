@@ -9,12 +9,12 @@
 import { describe, expect, it } from "@jest/globals";
 import * as quat4 from "gl-matrix/quat";
 import {
-    CameraKeyframe, Movie, Vec3, easeInOut, movieDuration, sampleMovie,
+    Keyframe, Movie, Vec3, easeInOut, movieDuration, sampleMovie,
 } from "../../src/utils/cameraPath";
 
 const keyframe = (
     origin: Vec3, zoom = 1, degreesAboutY = 0, opacity?: Record<string, number>
-): CameraKeyframe => {
+): Keyframe => {
     const q = quat4.create();
     quat4.setAxisAngle(q, [0, 1, 0], (degreesAboutY * Math.PI) / 180);
     // Offsets from the view centre, which is what these four have always held - the default slab

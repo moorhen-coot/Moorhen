@@ -37,7 +37,7 @@
 import * as quat4 from "gl-matrix/quat";
 import { BufferTarget, CanvasSource, Mp4OutputFormat, Output, VideoCodec, canEncodeVideo } from "mediabunny";
 import { createYQuatFromDY } from "../WebGLgComponents/quatUtils";
-import { CameraSample, Movie, movieDuration, sampleMovie } from "./cameraPath";
+import { MovieSample, Movie, movieDuration, sampleMovie } from "./cameraPath";
 import { holdCameraForMovie } from "./movieCamera";
 import type { webGL } from "../types/mgWebGL";
 

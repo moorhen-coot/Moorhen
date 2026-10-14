@@ -26,7 +26,7 @@
 
 import * as mat3 from "gl-matrix/mat3";
 import * as quat4 from "gl-matrix/quat";
-import { CameraKeyframe, Movie, Vec3 } from "./cameraPath";
+import { Keyframe, Movie, Vec3 } from "./cameraPath";
 import { Point3, principalAxes } from "./principalAxes";
 import { slabForZoom } from "../WebGLgComponents/slab";
 
@@ -94,9 +94,9 @@ export const orientationLookingAt = (right: Vec3, upInit: Vec3): quat4.quat => {
 /** The keyframe that frames a group of atoms nicely. */
 export const keyframeFacing = (
     atoms: ArrayLike<Point3>,
-    template: CameraKeyframe,
+    template: Keyframe,
     marginFactor = DEFAULTS.marginFactor,
-): CameraKeyframe => {
+): Keyframe => {
     const { centre, axes, extents } = principalAxes(atoms);
 
     // The view centre is the negated position, which is the convention setOrigin and
@@ -152,7 +152,7 @@ const turnedBy = (base: quat4.quat, turns: number): quat4.quat => {
  * @param atoms    the ligand
  */
 export function buildLigandTour(
-    current: CameraKeyframe,
+    current: Keyframe,
     atoms: ArrayLike<Point3>,
     options: LigandTourOptions = {},
 ): Movie {
@@ -162,7 +162,7 @@ export function buildLigandTour(
     // Where the turn leaves the camera. A half turn does not come back to where it started, so the
     // keyframe after a spin has to be the turned orientation - otherwise the following move would
     // snap back through 180 degrees.
-    const departure: CameraKeyframe = { ...arrival, quat: turnedBy(arrival.quat, turns) };
+    const departure: Keyframe = { ...arrival, quat: turnedBy(arrival.quat, turns) };
 
     return {
         keyframes: [current, arrival, departure, current],

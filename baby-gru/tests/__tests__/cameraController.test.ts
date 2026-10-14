@@ -375,7 +375,7 @@ describe("the slab", () => {
     it("is carried by a movie, whose keyframes were authored on purpose", () => {
         const camera = new CameraController(startingAt({ clipFront: 8 }), { kind: "manual" });
         // Annotated, so the compiler checks it. Unannotated, this literal kept its old field
-        // names through a rename of CameraKeyframe without tsc saying a word, and only the
+        // names through a rename of Keyframe without tsc saying a word, and only the
         // assertion below noticed.
         const movie: Movie = {
             keyframes: [

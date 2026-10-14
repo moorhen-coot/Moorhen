@@ -22,7 +22,7 @@
  * a function rather than as a comment.
  */
 
-import { CameraSample, Movie, sampleMovie } from "./cameraPath";
+import { MovieSample, Movie, sampleMovie } from "./cameraPath";
 import type { CameraState, CameraTarget, CameraController, SlabPolicy } from "../WebGLgComponents/cameraController";
 
 /** A movie's hold on the camera. Release it in a `finally`. */
@@ -54,7 +54,7 @@ export interface CameraHost {
 }
 
 /** A sampled movie frame, as a target for the camera. Opacity is not the camera's business. */
-export const cameraTargetFrom = (sample: CameraSample): CameraTarget => ({
+export const cameraTargetFrom = (sample: MovieSample): CameraTarget => ({
     quat: [sample.quat[0], sample.quat[1], sample.quat[2], sample.quat[3]],
     origin: [sample.origin[0], sample.origin[1], sample.origin[2]],
     zoom: sample.zoom,

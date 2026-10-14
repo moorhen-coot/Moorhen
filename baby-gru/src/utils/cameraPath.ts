@@ -42,7 +42,7 @@ import * as quat4 from "gl-matrix/quat";
 export type Vec3 = [number, number, number];
 
 /** Where the camera is, and how solid the things it looks at are. */
-export interface CameraKeyframe {
+export interface Keyframe {
     /** View orientation, as the renderer's myQuat. */
     quat: quat4.quat;
     origin: Vec3;
@@ -72,6 +72,44 @@ export interface CameraKeyframe {
      * keyframes at 0; this rule is what makes a hand-written movie behave sensibly anyway.
      */
     opacity?: Record<string, number>;
+    /**
+     * The rest of the scene at this keyframe, interpolated between keyframes like everything else.
+     *
+     * QUANTITIES LIVE HERE; MODES LIVE ON THE MOVIE
+     *
+     * A light's position and a background colour are quantities: halfway between two of them means
+     * something, so they belong on a keyframe. Whether shadows are on is a mode - there is no
+     * halfway between on and off - so it belongs to the movie as a whole, set once and applied
+     * throughout. SSAO and edge detection go with it: their parameters are quantities, but they
+     * describe a feature that is either running or not, and animating one while the other switches
+     * is more confusion than anyone asked for.
+     *
+     * Blur splits along that line rather than against it. Whether the off-screen buffers are used
+     * at all is the movie's; how deep and how wide the blur is are the keyframe's.
+     */
+    scene?: SceneKeyframe;
+}
+
+/** A colour or a position, as the store holds them. */
+export type Vec4 = [number, number, number, number];
+
+/**
+ * The scene's quantities at a keyframe. Every field optional, and absent means not animated.
+ *
+ * That is the same rule as opacity, and for the same reason: a movie that only moves the camera
+ * must leave the scene it is shown in alone, not assert a lighting rig it never chose. A keyframe
+ * captured from a live scene fills all of these in; one written by hand or generated need not.
+ */
+export interface SceneKeyframe {
+    backgroundColor?: Vec4;
+    lightPosition?: Vec4;
+    ambient?: Vec4;
+    diffuse?: Vec4;
+    specular?: Vec4;
+    specularPower?: number;
+    /** Depth-of-field: where the focal plane sits, and how wide the blur is. */
+    blurDepth?: number;
+    blurRadius?: number;
 }
 
 /** What happens between one keyframe and the next. */
@@ -91,22 +129,24 @@ export interface Segment {
 }
 
 export interface Movie {
-    keyframes: CameraKeyframe[];
+    keyframes: Keyframe[];
     /** One per gap between keyframes, so there is always one fewer than there are keyframes. */
     segments: Segment[];
 }
 
-export interface CameraSample {
+export interface MovieSample {
     quat: quat4.quat;
     origin: Vec3;
     zoom: number;
-    /** Offsets from the view centre, as in CameraKeyframe. */
+    /** Offsets from the view centre, as in Keyframe. */
     clipFront: number;
     clipBack: number;
     fogFront: number;
     fogBack: number;
     /** Only the objects this movie animates; anything absent is left as the scene has it. */
     opacity: Record<string, number>;
+    /** Only the scene quantities this movie animates; likewise. */
+    scene: SceneKeyframe;
 }
 
 const SPIN_DEFAULTS = { turns: 1, axis: "y" as const };
@@ -270,7 +310,7 @@ const locate = (movie: Movie, seconds: number): { index: number; u: number } => 
  * should do.
  */
 const blendOpacity = (
-    from: CameraKeyframe, to: CameraKeyframe, t: number
+    from: Keyframe, to: Keyframe, t: number
 ): Record<string, number> => {
     const blended: Record<string, number> = {};
     for (const id of new Set([...Object.keys(from.opacity ?? {}), ...Object.keys(to.opacity ?? {})])) {
@@ -281,7 +321,38 @@ const blendOpacity = (
     return blended;
 };
 
-const sampleOf = (keyframe: CameraKeyframe, quat: quat4.quat): CameraSample => ({
+/**
+ * Blend the scene quantities, by the same rules as opacity.
+ *
+ * A field only one keyframe mentions holds that value rather than being interpolated from nothing,
+ * and a field neither mentions is absent from the result, so whoever applies it leaves the scene's
+ * own value alone. Straight lines, not splines: a colour channel is bounded like an opacity, and
+ * a Catmull-Rom through three colours can leave the gamut on the way between them.
+ */
+const blendScene = (from: Keyframe, to: Keyframe, t: number): SceneKeyframe => {
+    const a = from.scene ?? {};
+    const b = to.scene ?? {};
+    const blended: SceneKeyframe = {};
+
+    const number = (key: "specularPower" | "blurDepth" | "blurRadius") => {
+        const x = a[key] ?? b[key];
+        const y = b[key] ?? a[key];
+        if (x === undefined || y === undefined) return;
+        blended[key] = x + (y - x) * t;
+    };
+    const vector = (key: "backgroundColor" | "lightPosition" | "ambient" | "diffuse" | "specular") => {
+        const x = a[key] ?? b[key];
+        const y = b[key] ?? a[key];
+        if (!x || !y) return;
+        blended[key] = [0, 1, 2, 3].map(i => x[i] + (y[i] - x[i]) * t) as Vec4;
+    };
+
+    (["specularPower", "blurDepth", "blurRadius"] as const).forEach(number);
+    (["backgroundColor", "lightPosition", "ambient", "diffuse", "specular"] as const).forEach(vector);
+    return blended;
+};
+
+const sampleOf = (keyframe: Keyframe, quat: quat4.quat): MovieSample => ({
     quat,
     origin: [...keyframe.origin] as Vec3,
     zoom: keyframe.zoom,
@@ -290,6 +361,7 @@ const sampleOf = (keyframe: CameraKeyframe, quat: quat4.quat): CameraSample => (
     fogFront: keyframe.fogFront,
     fogBack: keyframe.fogBack,
     opacity: { ...(keyframe.opacity ?? {}) },
+    scene: { ...(keyframe.scene ?? {}) },
 });
 
 /**
@@ -297,7 +369,7 @@ const sampleOf = (keyframe: CameraKeyframe, quat: quat4.quat): CameraSample => (
  *
  * @param seconds  from the start; clamped to the movie's length at both ends
  */
-export function sampleMovie(movie: Movie, seconds: number): CameraSample {
+export function sampleMovie(movie: Movie, seconds: number): MovieSample {
     if (movie.keyframes.length === 0) throw new Error("A movie needs at least one keyframe");
     if (movie.keyframes.length === 1 || movie.segments.length === 0) {
         const only = movie.keyframes[0];
@@ -352,7 +424,7 @@ export function sampleMovie(movie: Movie, seconds: number): CameraSample {
                 to.quat, eased);
             quat4.normalize(orientation, orientation);
 
-            const spline = (pick: (keyframe: CameraKeyframe) => number) =>
+            const spline = (pick: (keyframe: Keyframe) => number) =>
                 catmullRom(
                     before ? pick(before) : reflect(pick(from), pick(to)),
                     pick(from), pick(to),
@@ -374,6 +446,7 @@ export function sampleMovie(movie: Movie, seconds: number): CameraSample {
                 // Eased like the rest of the move, so a fade keeps step with the camera, but
                 // blended straight rather than splined. See blendOpacity.
                 opacity: blendOpacity(from, to, eased),
+                scene: blendScene(from, to, eased),
             };
         }
     }

@@ -13,13 +13,13 @@
  */
 import { describe, expect, it } from "@jest/globals";
 import * as quat4 from "gl-matrix/quat";
-import { CameraKeyframe } from "../../src/utils/cameraPath";
+import { Keyframe } from "../../src/utils/cameraPath";
 import { buildLigandTour } from "../../src/utils/ligandTour";
 import { Point3 } from "../../src/utils/principalAxes";
 import { slabForZoom } from "../../src/WebGLgComponents/slab";
 
 /** A wide view of a whole protein: zoomed out, with the slab that implies. */
-const wideView = (): CameraKeyframe => ({
+const wideView = (): Keyframe => ({
     quat: quat4.fromValues(0, 0, 0, -1),
     origin: [-30, -30, -30],
     zoom: 3,
