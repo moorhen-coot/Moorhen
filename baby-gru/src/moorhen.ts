@@ -17,6 +17,7 @@ export { MoorhenMap } from "./utils/MoorhenMap";
 export { getMultiColourRuleArgs } from "./utils/utils";
 export { CommandCentre } from "./InstanceManager/CommandCentre";
 export { CootCommandWrapper } from "./InstanceManager/CommandCentre/CootCommandWrapper";
+export { CootCommandError, throwIfCootFailed } from "./InstanceManager/CommandCentre/CootCommandError";
 export { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule";
 export { MoorhenMoleculeSelect } from "./components/inputs";
 export { MoorhenMapSelect } from "./components/inputs/Selector/MoorhenMapSelect";
