@@ -28,6 +28,7 @@ import * as mat3 from "gl-matrix/mat3";
 import * as quat4 from "gl-matrix/quat";
 import { CameraKeyframe, Movie, Vec3 } from "./cameraPath";
 import { Point3, principalAxes } from "./principalAxes";
+import { slabForZoom } from "../WebGLgComponents/slab";
 
 export interface LigandTourOptions {
     /** Seconds to fly in, and the same again to fly back out. */
@@ -120,6 +121,17 @@ export const keyframeFacing = (
         quat: orientationLookingAt(axes[1], axes[0]),
         origin,
         zoom,
+        // The slab has to come with the zoom.
+        //
+        // A movie holds the camera with the slab policy in manual, so whatever its keyframes say
+        // about clip and fog is final. Spreading the template left every keyframe carrying the
+        // slab of the view the tour started from, so flying in from a whole protein to a ligand -
+        // a change of zoom by a factor of thirty - kept the slab of the wide view throughout.
+        //
+        // It looked right before only by accident: the policy used to be left on auto, which
+        // re-derived the slab from zoom on every write and so quietly overwrote the constant one
+        // these keyframes were asserting. The movie is authoritative now, so it has to be right.
+        ...slabForZoom(zoom),
     };
 };
 

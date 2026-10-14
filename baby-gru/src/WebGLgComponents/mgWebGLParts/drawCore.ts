@@ -1452,11 +1452,16 @@ export function drawScene(self: MGWebGL) : void {
             console.log(self.myQuat)
         }
 
+        // Not while the camera is being driven. This used to test `animating`, which meant "a
+        // centring move is running" and so missed a movie entirely - the spike had to set the flag
+        // by hand to get the same effect. `moving` is the condition that was always meant: a move
+        // or a movie is in flight, and the store will hear about it when the camera comes to rest.
+        //
         // A copy: onQuatChanged dispatches into Redux, which freezes what it is given, and the
         // camera writes this array in place on every frame of every move. setDrawQuat is React
         // state rather than Redux and does not freeze, and it is deliberately given the live array
         // so that a rotation does not re-render the 2D overlay sixty times a second.
-        if(!self.animating) self.props.onQuatChanged([self.myQuat[0], self.myQuat[1], self.myQuat[2], self.myQuat[3]])
+        if(!self.cameraController.moving) self.props.onQuatChanged([self.myQuat[0], self.myQuat[1], self.myQuat[2], self.myQuat[3]])
         self.props.setDrawQuat(self.myQuat)
 
         // Decided here, before theShaders is built, because the shader variant chosen below

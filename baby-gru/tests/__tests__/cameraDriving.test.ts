@@ -254,16 +254,18 @@ describe("deferring rather than fighting", () => {
         expect(frames.queued).toBe(0);
     });
 
-    it("declines while `animating` is set by hand", async () => {
-        // How MoorhenMovieSpike keeps the effect out of the way today. It goes when the spike
-        // acquires a driver of its own; until then it has to keep working.
+    it("no longer consults `animating`, which only ever stood in for ownership", () => {
+        // It used to decline while this flag was set, because a movie had no way to say it owned
+        // the camera and set it by hand instead. A movie now acquires a driver, and asking who is
+        // driving is the whole question - so a stale flag cannot silently swallow a move.
         const self = fakeRenderer(new CameraController(startingAt({ zoom: 1 })));
         self.animating = true;
 
-        const result = await moveCameraTo(self as any, { zoom: 5 }, { kind: "ease", seconds: 1 });
+        moveCameraTo(self as any, { zoom: 5 }, { kind: "ease", seconds: CENTRING_SECONDS });
+        frames.step(0);
+        frames.step(CENTRING_SECONDS);
 
-        expect(result.completed).toBe(false);
-        expect(self.cameraController.state.zoom).toBe(1);
+        expect(self.cameraController.state.zoom).toBeCloseTo(5, 10);
     });
 
     it("declines a second move while the first is still running", async () => {

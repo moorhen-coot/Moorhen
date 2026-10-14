@@ -97,11 +97,12 @@ export function stopPumpingCamera(self: MGWebGL) {
  * the camera is wrong. That is the same judgement the old `if (self.animating) return` made, and
  * the same one `settle` makes in the controller.
  *
- * `animating` is checked alongside the driver because the movie spike still sets it by hand. When
- * the spike acquires a driver of its own, the first half of that test goes.
+ * It used to check `animating` as well, because a movie had no way to say it owned the camera and
+ * set that flag by hand instead. A movie now acquires a driver, so asking who is driving is the
+ * whole question - and `animating` is left to mean one thing rather than two.
  */
 export function moveCameraTo(self: MGWebGL, target: CameraTarget, transition: Transition): Promise<MoveResult> {
-    if(self.animating || self.cameraController.driver !== null) {
+    if(self.cameraController.driver !== null) {
         return Promise.resolve({ completed: false })
     }
 

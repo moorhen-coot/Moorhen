@@ -389,10 +389,12 @@ export namespace webGL {
         myQuat: quat4;
         zoom: number;
         /**
-         * Set while a camera move is in flight. MoorhenMovieSpike also sets it while driving the
-         * camera itself, because moveCameraTo declines to start when it is - which is what stops
-         * the reconciling effect in MoorhenWebMG fighting a movie. Acquiring a "movie" driver on
-         * the camera controller is the better way to say the same thing, and will replace it.
+         * True while a centring move is in flight. Informational only.
+         *
+         * @deprecated Read `cameraController.moving`, which covers a movie as well as a move, or
+         * `cameraController.driver` to ask who is moving the camera. Setting this no longer does
+         * anything: it used to make moveCameraTo decline, which was a flag standing in for
+         * ownership, and ownership is now something the camera can be asked about directly.
          */
         animating: boolean;
         /**

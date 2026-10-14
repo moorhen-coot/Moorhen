@@ -1,6 +1,7 @@
 import { useEffect, useCallback, forwardRef, useState, useReducer, useRef } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import * as quat4 from 'gl-matrix/quat';
+import { FIELD_DEPTH_FRONT, FIELD_DEPTH_BACK } from '../../WebGLgComponents/slab';
 import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { buildBuffers, appendOtherData, } from '../../WebGLgComponents/buildBuffers'
@@ -709,7 +710,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
             glRef.current.cameraController.slabPolicy = resetClippingFogging
-                ? { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 }
+                ? { kind: "auto", fieldDepthFront: FIELD_DEPTH_FRONT, fieldDepthBack: FIELD_DEPTH_BACK }
                 : { kind: "manual" }
             glRef.current.cameraController.writeLive({})
             glRef.current.drawScene()

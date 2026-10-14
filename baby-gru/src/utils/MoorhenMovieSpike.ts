@@ -38,6 +38,7 @@ import * as quat4 from "gl-matrix/quat";
 import { BufferTarget, CanvasSource, Mp4OutputFormat, Output, VideoCodec, canEncodeVideo } from "mediabunny";
 import { createYQuatFromDY } from "../WebGLgComponents/quatUtils";
 import { CameraSample, Movie, movieDuration, sampleMovie } from "./cameraPath";
+import { holdCameraForMovie } from "./movieCamera";
 import type { webGL } from "../types/mgWebGL";
 
 export interface SpinMovieOptions {
@@ -194,8 +195,11 @@ export async function recordSpinToMp4(
     output.addVideoTrack(source);
     await output.start();
 
-    // Put the view back exactly as it was, however this ends.
-    const originalQuat = quat4.clone(gl.myQuat);
+    // The camera is held for the duration and handed back however this ends.
+    const hold = holdCameraForMovie(gl);
+    // A plain spin rather than a sampled Movie, so this turns the quaternion itself and hands each
+    // result to the camera. Its own copy, because the camera's array is the camera's.
+    const spinning = quat4.clone(gl.cameraController.state.quat as unknown as quat4.quat);
     const step = createYQuatFromDY(degreesPerFrame);
     let finalised = false;
     const cover = showCover("Rendering spin", options.coverOpacity ?? 1);
@@ -204,8 +208,8 @@ export async function recordSpinToMp4(
         const frameDuration = 1 / fps;
 
         for (let i = 0; i < frames; i++) {
-            gl.animating = true;   // see applyCamera: keeps the reconciling effect out of the way
-            quat4.multiply(gl.myQuat, gl.myQuat, step);
+            quat4.multiply(spinning, spinning, step);
+            hold.set({ quat: [spinning[0], spinning[1], spinning[2], spinning[3]] });
             gl.drawScene();
             cover.update(i + 1, frames);
 
@@ -232,8 +236,7 @@ export async function recordSpinToMp4(
     } finally {
         // Back to the window's own resolution before anything else draws.
         if (resizing) gl.setDrawingBufferSize(originalBufferWidth, originalBufferHeight);
-        quat4.copy(gl.myQuat, originalQuat);
-        gl.animating = false;
+        hold.release();
         gl.drawScene();
         // After the restoring draw, so the cover never lifts on a frame from the movie.
         cover.remove();
@@ -242,43 +245,6 @@ export async function recordSpinToMp4(
     }
 }
 
-/**
- * Put a sampled camera onto the renderer.
- *
- * These are the fields the existing animation drivers in cameraAnimations.ts write directly, so a
- * movie frame sets them the same way. Clip and fog go through their setters because those store
- * absolute distances from the eye and have their own arithmetic.
- */
-const applyCamera = (gl: webGL.MGWebGL, sample: CameraSample) => {
-    // Claim the camera.
-    //
-    // MoorhenWebMG has an effect on [zoom, quat, originState] that keeps the renderer agreeing
-    // with the store, closing any gap with setOriginOrientationAndZoomAnimated. Writing the camera
-    // directly, as a movie must, opens exactly such a gap - and the resulting animation ends by
-    // calling handleOriginUpdated, which pushes the renderer's origin back into the store, which
-    // re-runs the effect, which finds we have moved on again. Fifteen frames each, back to back,
-    // for as long as the movie lasts, with its interpolated camera interleaved with ours.
-    //
-    // That entry point already declines to start while `animating` is set, so saying so is enough.
-    // It is re-asserted every frame because an animation already in flight clears it on the way
-    // out, which would otherwise let the next one in.
-    gl.animating = true;
-
-    quat4.copy(gl.myQuat, sample.quat);
-    gl.origin = [...sample.origin] as [number, number, number];
-    gl.zoom = sample.zoom;
-    // A sample's slab is offsets from the view centre; set_fog_range wants absolute distances from
-    // the eye, so the conversion has to happen here. It used to pass the offsets straight in,
-    // which worked only because the dev menu captured the store's absolute fog in the first place
-    // - two wrongs, in a type that claimed to hold one thing.
-    const eyeDistance = gl.cameraController.state.eyeDistance;
-    gl.set_clip_range(-sample.clipFront, sample.clipBack);
-    gl.set_fog_range(eyeDistance - sample.fogFront, eyeDistance + sample.fogBack);
-
-    // NOTE: under auto-clip this is immediately re-derived from zoom and thrown away, because the
-    // slab policy applies to every camera write. A movie that authors its own slab has to put the
-    // policy in manual for its duration, which is the next slice's job.
-};
 
 /**
  * Render a movie at a fixed cadence and encode it.
@@ -331,17 +297,20 @@ export async function recordMovieToMp4(
     output.addVideoTrack(source);
     await output.start();
 
-    // The view is borrowed for the duration and handed back as it was.
-    const originalQuat = quat4.clone(gl.myQuat);
-    const originalOrigin = [...gl.origin] as [number, number, number];
-    const originalZoom = gl.zoom;
+    // The camera is borrowed for the duration and handed back as it was, with the slab policy put
+    // in manual so the movie's own clip and fog survive. See movieCamera.
+    const hold = holdCameraForMovie(gl);
+    hold.play(movie);
     let finalised = false;
     const cover = showCover("Rendering movie", options.coverOpacity ?? 1);
 
     try {
         const frameDuration = 1 / fps;
         for (let i = 0; i < frames; i++) {
-            applyCamera(gl, sampleMovie(movie, i * frameDuration));
+            // The camera reads this rather than the wall clock, so every frame is kept and the
+            // file runs at its authored speed however long rendering took. drawScene advances the
+            // camera to it; nothing here touches myQuat, origin or zoom.
+            gl.cameraTime = i * frameDuration;
             gl.drawScene();
             await source.add(i * frameDuration, frameDuration);
             cover.update(i + 1, frames);
@@ -358,10 +327,10 @@ export async function recordMovieToMp4(
         };
     } finally {
         if (resizing) gl.setDrawingBufferSize(originalBufferWidth, originalBufferHeight);
-        quat4.copy(gl.myQuat, originalQuat);
-        gl.origin = originalOrigin;
-        gl.zoom = originalZoom;
-        gl.animating = false;
+        // Back to the wall clock before the camera is handed back, or the restoring draw would
+        // advance it to the last frame's time instead of now.
+        gl.cameraTime = null;
+        hold.release();
         gl.drawScene();
         // After the restoring draw, so the cover never lifts on a frame from the movie.
         cover.remove();
@@ -458,10 +427,16 @@ export function previewMovie(
     const total = movieDuration(movie);
     const startedAt = performance.now();
 
-    // The view is borrowed and handed back, as the export does.
-    const originalQuat = quat4.clone(gl.myQuat);
-    const originalOrigin = [...gl.origin] as [number, number, number];
-    const originalZoom = gl.zoom;
+    // The camera is held for the duration, which is what used to need a flag and a diagnostic.
+    //
+    // A long-standing puzzle lived here: the preview bounced in and out while the exported file of
+    // the same movie was perfectly smooth. The cause was that nothing owned the camera, so a store
+    // effect could centre it between our frames; the apparatus that found it - a shadowed `zoom`
+    // accessor logging stack traces on foreign writes, and a count of frames where the camera had
+    // moved behind our back - is gone, because a driver makes the thing it was looking for
+    // impossible rather than merely unlikely. Reconciliation now defers, by construction.
+    const hold = holdCameraForMovie(gl);
+    hold.play(movie);
 
     let drawnFrames = 0;
     let request = 0;
@@ -469,83 +444,26 @@ export function previewMovie(
     const finished = new Promise<{ drawnFrames: number; elapsedSeconds: number; stopped: boolean }>(
         resolve => { settle = resolve; });
 
-    const restore = () => {
-        writingOurselves = true;
-        quat4.copy(gl.myQuat, originalQuat);
-        gl.origin = originalOrigin;
-        gl.zoom = originalZoom;
-        writingOurselves = false;
-        // Hand the camera back before drawing, so the store and the renderer agree again and
-        // MoorhenWebMG's reconciling effect has nothing to correct.
-        gl.animating = false;
-        gl.drawScene();
-    };
-
     let done = false;
     const end = (stopped: boolean) => {
         if (done) return;
         done = true;
         if (request) cancelAnimationFrame(request);
-        unshadow();
-        console.log(`[movie spike] preview drew ${drawnFrames} frames; the camera was changed by `
-            + `something else between ${interference} of them${firstInterference ? ` (first: ${firstInterference})` : ""}`);
-        restore();
+        hold.release();
+        gl.drawScene();
         settle({ drawnFrames, elapsedSeconds: (performance.now() - startedAt) / 1000, stopped });
-    };
-
-    // Diagnostic: did anything move the camera between our frames?
-    //
-    // A preview that bounces while the exported file is smooth means the frames we draw are right
-    // and something else is drawing in between with a different camera. Comparing what we left
-    // behind against what we find says so, but not who did it - so for the duration of a preview
-    // the zoom accessor is shadowed with one that logs a stack trace whenever it is written by
-    // anyone other than us. The shadow is an own property, so deleting it uncovers the prototype's
-    // accessor again and leaves no trace.
-    let appliedZoom: number | null = null;
-    let interference = 0;
-    let firstInterference = "";
-
-    let writingOurselves = false;
-    let foreignWrites = 0;
-    const accessor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(gl), "zoom");
-    if (accessor?.get && accessor?.set) {
-        Object.defineProperty(gl, "zoom", {
-            configurable: true,
-            get: () => accessor.get.call(gl),
-            set: (value: number) => {
-                if (!writingOurselves && foreignWrites < 3) {
-                    foreignWrites++;
-                    console.log(`[movie spike] zoom set to ${value} by something else:\n`
-                        + new Error().stack);
-                }
-                accessor.set.call(gl, value);
-            },
-        });
-    }
-    const unshadow = () => {
-        if (accessor?.get && accessor?.set) delete (gl as unknown as Record<string, unknown>).zoom;
     };
 
     const tick = () => {
         if (done) return;
 
-        if (appliedZoom !== null && Math.abs(gl.zoom - appliedZoom) > 1e-9) {
-            interference++;
-            if (!firstInterference) {
-                firstInterference = `left zoom ${appliedZoom.toFixed(4)}, found ${gl.zoom.toFixed(4)}`;
-            }
-        }
-
-        const elapsed = (performance.now() - startedAt) / 1000;
-        // Where the camera should be at this instant, not at the next frame in sequence. That is
-        // what makes it drop frames rather than fall behind.
-        const sample = sampleMovie(movie, Math.min(elapsed, total));
-        writingOurselves = true;
-        applyCamera(gl, sample);
-        writingOurselves = false;
-        appliedZoom = sample.zoom;
+        // No camera arithmetic here at all. drawScene advances the camera to the wall clock, the
+        // movie's sampler says where that is, and this loop only decides when to draw - which is
+        // the whole difference between preview and export.
         gl.drawScene();
         drawnFrames++;
+
+        const elapsed = (performance.now() - startedAt) / 1000;
         options.onProgress?.(Math.min(elapsed, total), total);
 
         if (elapsed >= total) end(false);
