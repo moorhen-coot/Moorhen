@@ -371,6 +371,16 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             // switched that mechanism on, so hover feedback was simply invisible. It only became
             // apparent once edge detection worked, because the balls still reached the g-buffer
             // (see below) and the edges of spheres nobody had drawn appeared in mid air.
+            //
+            // The gap opened when the two buffer loops became one. Ordinary geometry was drawn by
+            // a loop that carried this skip, and PERFECT_SPHERES by a separate later loop that
+            // carried no transparency test at all - so the ball, which is perfect spheres, had
+            // never faced it. Merging them brought it under a test it fails every time: it is
+            // transparent, and nothing else in an opaque scene is there to turn peeling on.
+            //
+            // Hover buffers are the only casualty, which is why exempting them is the whole fix.
+            // Any other transparent buffer makes doPeel true by its own existence, so it is never
+            // reached by the skip below.
             const isTransparent = displayBuffers[idx].transparent && !self.drawingGBuffers
                                   && !displayBuffers[idx].isHoverBuffer;
             if (displayBuffers[idx].transparent && !displayBuffers[idx].isHoverBuffer
