@@ -545,6 +545,32 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(resSpec)
     })
 
+    test('undo restores the right molecule when two molecules have been edited', () => {
+        // Every molecule used to back up to coot-backup/placeholder-<n>, so the
+        // second molecule's backup overwrote the first's, and undo() on the
+        // first molecule loaded the second (patches/coot-undo-backup-per-molecule.patch).
+        const imolA = molecules_container.read_pdb('./5a3h.pdb')
+        const imolB = molecules_container.read_pdb('./tm-A.pdb')
+        const nAtomsA = molecules_container.get_number_of_atoms(imolA)
+        const nAtomsB = molecules_container.get_number_of_atoms(imolB)
+        expect(nAtomsA).not.toBe(nAtomsB)
+
+        molecules_container.delete_using_cid(imolA, "//A/10", "RESIDUE")
+        molecules_container.delete_using_cid(imolB, "//A/20", "RESIDUE")
+        const nAtomsAEdited = molecules_container.get_number_of_atoms(imolA)
+        const nAtomsBEdited = molecules_container.get_number_of_atoms(imolB)
+        expect(nAtomsAEdited).toBeLessThan(nAtomsA)
+        expect(nAtomsBEdited).toBeLessThan(nAtomsB)
+
+        molecules_container.undo(imolA)
+        expect(molecules_container.get_number_of_atoms(imolA)).toBe(nAtomsA)
+        expect(molecules_container.get_number_of_atoms(imolB)).toBe(nAtomsBEdited)
+
+        molecules_container.undo(imolB)
+        expect(molecules_container.get_number_of_atoms(imolB)).toBe(nAtomsB)
+        expect(molecules_container.get_number_of_atoms(imolA)).toBe(nAtomsA)
+    })
+
     test.skip('flip_peptide by residue spec', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo).toBe(0)
