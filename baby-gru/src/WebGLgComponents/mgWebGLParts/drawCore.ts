@@ -392,7 +392,27 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             // layer for a result that was identical each time.
             const isTransparent = displayBuffers[idx].transparent && !self.drawingGBuffers
                                   && !displayBuffers[idx].isHoverBuffer;
-            if (displayBuffers[idx].transparent && !self.drawingGBuffers) {
+            // A hover ball is see-through on purpose - its colour is [1, 0.5, 0, 0.35] - but it
+            // is not transparent geometry in the sense this skip means.
+            //
+            // THE REGRESSION THIS FIXES
+            //
+            // This renderer used to walk its buffers twice: one loop for ordinary geometry, which
+            // carried this skip, and a separate later loop for PERFECT_SPHERES, which carried no
+            // transparency test at all. The hover ball is drawn as perfect spheres, so it was
+            // never subject to the skip and was simply always drawn. Merging the two loops into
+            // one brought it under a test it had never faced, and it fails that test every time:
+            // it is transparent, and the scan that decides whether to peel deliberately refuses
+            // to let a hover buffer switch peeling on - so doPeel is false precisely when the
+            // ball is the only transparent thing in the scene. Nothing but bonds on screen, and
+            // the ball was built on every hover and drawn on none of them.
+            //
+            // Hover buffers are the only casualty, which is why exempting them is the whole fix:
+            // any other transparent buffer makes doPeel true by its own existence, so it is never
+            // reached by this skip. The exemption also puts this line in step with the two places
+            // that already make it - the doPeel scan, and isTransparent just above.
+            if (displayBuffers[idx].transparent && !self.drawingGBuffers
+                && !displayBuffers[idx].isHoverBuffer) {
                 if(!self.doPeel)
                     continue;
             }
