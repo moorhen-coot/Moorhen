@@ -1,4 +1,3 @@
-import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
 import { useSelector, useStore } from "react-redux";
 import { memo, useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { ResidueRangeSelector } from "@/components/inputs/ResidueRange";
@@ -6,13 +5,11 @@ import { RootState } from "@/store/MoorhenReduxStore";
 import { useCommandCentre } from "../../../InstanceManager";
 import { moorhen } from "../../../types/moorhen";
 import { ColourRule, ColourRulePropertyType, ColourRuleSelectionType } from "../../../utils/MoorhenColourRule";
-import { cidToSpec, convertRemToPx, getMultiColourRuleArgs } from "../../../utils/utils";
-import { MoorhenButton, MoorhenSelect, MoorhenToggle } from "../../inputs";
+import { cidToSpec, getMultiColourRuleArgs, hexToRGBA, rgbaToHex } from "../../../utils/utils";
+import { MoorhenButton, MoorhenColourPicker, MoorhenSelect, MoorhenToggle } from "../../inputs";
 import { MoorhenCidInputForm } from "../../inputs/Cid/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../../inputs/Selector/MoorhenChainSelect";
 import { MoorhenInfoCard, MoorhenStack } from "../../interface-base";
-import { MoorhenColorSwatch } from "../../misc/MoorhenColorSwatch";
-import { MoorhenSequenceViewer, moorhenSequenceToSeqViewer } from "../../sequence-viewer";
 import { MoorhenColourRuleCard } from "./ColourRuleCard";
 
 type colourRuleChange = {
@@ -92,21 +89,21 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
         setCid(evt.target.value);
     };
 
-    const handleColourCircleClick = (color: string) => {
-        try {
-            setSelectedColour(color);
-        } catch (err) {
-            console.log("err", err);
-        }
-    };
+    // const handleColourCircleClick = (color: string) => {
+    //     try {
+    //         setSelectedColour(color);
+    //     } catch (err) {
+    //         console.log("err", err);
+    //     }
+    // };
 
-    const handleColorChange = (color: string) => {
-        try {
-            setSelectedColour(color);
-        } catch (err) {
-            console.log("err", err);
-        }
-    };
+    // const handleColorChange = (color: string) => {
+    //     try {
+    //         setSelectedColour(color);
+    //     } catch (err) {
+    //         console.log("err", err);
+    //     }
+    // };
 
     useEffect(() => {
         const setIntialRules = async () => {
@@ -343,12 +340,17 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                             <option value={"af2-plddt"} key={"af2-plddt"}>
                                 AF2 PLDDT
                             </option>
+                        {props.molecule.numberOfModels > 1 && (
+                          <option value={"RMSF"} key={"RMSF"}>
+                                RMSF
+                            </option>
+                        )}
                         </MoorhenSelect>
                     )}
                 </MoorhenStack>
                 {ruleType !== "property" && (
                     <MoorhenStack direction="vertical" style={{ display: "flex", justifyContent: "center" }} gap={2}>
-                        <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
+                        {/* <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
                             <HexAlphaColorPicker color={selectedColour} onChange={handleColorChange} />
                         </div>
                         <div
@@ -366,7 +368,15 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
                         <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
                             <div className="moorhen-hex-input-decorator">#</div>
                             <HexColorInput className="moorhen-hex-input" color={selectedColour} onChange={handleColorChange} />
-                        </div>
+                        </div> */}
+                        <MoorhenColourPicker
+                            colour={hexToRGBA(selectedColour)}
+                            setColour={(c) => setSelectedColour(rgbaToHex(c[0], c[1], c[2], c[3]))}
+                            useAlpha={true}
+                            hexFormat
+                            label="Select colour"
+                            asPopoverButton={false}
+                        />
                     </MoorhenStack>
                 )}
             </MoorhenStack>

@@ -4,7 +4,7 @@ import { getMathJaxSVG } from '../utils/mathJaxUtils';
 import { RootState } from "../store/MoorhenReduxStore";
 import { Store } from "redux";
 
-interface ImageFrac2D {
+export interface ImageFrac2D {
     x: number
     y: number
     width: number

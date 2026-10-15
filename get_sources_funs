@@ -144,7 +144,8 @@ getmmdb2() {
         tar xf mmdb2-$mmdb_release.tar.gz &&\
         rm -f mmdb2 &&\
         ln -s mmdb2-$mmdb_release mmdb2 &&\
-        patch -p0 < ../patches/mmdb-emsdk500.patch || fail "Failed to download, unpack and patch mmdb2"
+        patch -p0 < ../patches/mmdb-emsdk500.patch &&\
+        patch -p0 < ../patches/mmdb-label-atom-id.patch || fail "Failed to download, unpack and patch mmdb2"
     fi
     echo
 }
@@ -361,6 +362,31 @@ getgsl() {
 }
 
 
+# Patches to the pinned coot commit, for fixes not yet upstream. Paths in
+# git -C are relative to coot-1.0, hence ../../patches.
+coot_patches="coot-undo-backup-per-molecule.patch"
+
+applycootpatches() {
+    for p in $coot_patches; do
+        if git -C coot-1.0 apply -p0 --reverse --check ../../patches/$p 2>/dev/null; then
+            echo "coot patch $p already applied"
+        else
+            git -C coot-1.0 apply -p0 ../../patches/$p &&\
+            echo "Applied coot patch $p" || fail "Failed to apply coot patch $p"
+        fi
+    done
+}
+
+# Take the patches back out so that checking out another commit is not
+# blocked by local modifications.
+unapplycootpatches() {
+    for p in $coot_patches; do
+        if git -C coot-1.0 apply -p0 --reverse --check ../../patches/$p 2>/dev/null; then
+            git -C coot-1.0 apply -p0 --reverse ../../patches/$p
+        fi
+    done
+}
+
 getcoot() {
     cdcheckout
     if [ -r coot-1.0 ]; then
@@ -375,6 +401,7 @@ getcoot() {
             echo "Using existing coot-1.0"
         else
             echo "Checking-out existent coot-1.0 to a different version ($(git -C coot-1.0 rev-parse --short=10 main) -> $coot_commit)"
+            unapplycootpatches
             git -C coot-1.0 fetch &&\
             git -C coot-1.0 checkout $coot_commit &&\
             echo Using checked-out coot-1.0 || fail "Failed to checkout coot-1.0"
@@ -385,6 +412,7 @@ getcoot() {
         git -C coot-1.0 fetch origin &&\
         git -C coot-1.0 checkout $coot_commit || fail "Failed to clone and checkout coot-1.0"
     fi
+    applycootpatches
     echo
 }
 

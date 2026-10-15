@@ -1,4 +1,5 @@
 import { Store } from "@reduxjs/toolkit";
+import { correctExportedGltf } from "./gltfWinding";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setOrigin, setRequestDrawScene, setZoom } from "../store";
@@ -53,7 +54,7 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
 
 export type BasicMapHeaderInfo = {}
 
-type mapHeaderInfo = {
+export type mapHeaderInfo = {
     spacegroup: string;
     cell: libcootApi.mapCellJS;
     resolution: number;
@@ -823,6 +824,9 @@ export class MoorhenMap {
         }
         const t2 = performance.now();
         if (print_timing) console.log("Finished setupContourBuffers", t2 - t1);
+        // Labelled here rather than in each of the three branches above, which is the one point
+        // they all converge on. Descriptive only - see DisplayBuffer.statsLabel.
+        newBuffers.forEach(buf => { buf.statsLabel = this.isDifference ? "map (difference)" : "map"; });
         this.store.dispatch(setDisplayBuffers([...oldBuffers, ...newBuffers]));
     }
 
@@ -1441,10 +1445,15 @@ export class MoorhenMap {
     async getVerticesHistogram(map2: number, nBins: number = 200): Promise<libcootApi.HistogramInfoJS> {
         let posX: number, posY: number, posZ: number;
         if (this.isOriginLocked) {
+            // Negated, not made positive. Both drawOrigin and mapCentre are stored the same way
+            // round as the scene origin - the negative of the point they refer to - so the way
+            // back is a sign change. Math.abs happens to agree whenever that point lies in the
+            // positive octant, and silently queries the wrong place for anything that does not,
+            // which a structure with negative coordinates does on at least one axis.
             const origin = this.drawOrigin ?? this.mapCentre;
-            posX = Math.abs(origin[0]);
-            posY = Math.abs(origin[1]);
-            posZ = Math.abs(origin[2]);
+            posX = -origin[0];
+            posY = -origin[1];
+            posZ = -origin[2];
         } else {
             [posX, posY, posZ] = this.store.getState().sceneSettings.origin.map(coord => -coord) as [number, number, number];
         }
@@ -1542,7 +1551,22 @@ export class MoorhenMap {
             },
             false
         )) as moorhen.WorkerResponse<ArrayBuffer>;
-        return result.data.result.result;
+        // Moorhen's glTF exports are inside-out by the glTF convention: Coot's meshes are wound
+        // clockwise seen from outside, Moorhen compensates on screen by asking for "mesh_perm3",
+        // and the exporters write the Coot mesh verbatim - so the compensation never reaches the
+        // file. Corrected here rather than in Coot, whose meshes have assorted histories, and
+        // here rather than in the worker, which is loaded as a classic script and so cannot
+        // import a module.
+        const exported = result.data.result.result;
+        if (!exported) {
+            console.warn(`Export of map ${this.name} as ${fileType} produced nothing.`);
+            return exported;
+        }
+        // Measured: export_map_molecule_as_gltf produces an inside-out mesh (signed volume
+        // -227.0 on a 23,027-triangle contour, with every triangle's normals agreeing with that
+        // winding). The same is true of metaballs and not of M2T or bonds, so the correction is
+        // applied per path rather than to every glTF export.
+        return fileType === "gltf" ? correctExportedGltf(exported) : exported;
     }
 
 

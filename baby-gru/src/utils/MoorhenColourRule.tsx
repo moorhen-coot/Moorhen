@@ -12,7 +12,7 @@ const propertyTypes: ColourRulePropertyType[] = [
     "jones-rainbow",
     "mol-symm",
     "property",
-    "RMSD",
+    "RMSF",
     "secondary-structure"
 ];
 export type ColourRulePropertyType =
@@ -24,7 +24,7 @@ export type ColourRulePropertyType =
     | "jones-rainbow"
     | "mol-symm"
     | "property"
-    | "RMSD"
+    | "RMSF"
     | "secondary-structure";
 
 export type ColourRuleType = ColourRuleSelectionType | ColourRulePropertyType;

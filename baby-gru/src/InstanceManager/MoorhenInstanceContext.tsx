@@ -11,7 +11,7 @@ interface MoorhenInstanceContextType {
 const MoorhenInstanceContext = createContext<MoorhenInstanceContextType | null>(null);
 
 // Provider props interface
-interface MoorhenInstanceProviderProps {
+export interface MoorhenInstanceProviderProps {
     children: ReactNode;
     menuSystem: MoorhenMenuSystem;
 }

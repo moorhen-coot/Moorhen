@@ -1,0 +1,18 @@
+--- mmdb2/mmdb2/mmdb_atom.cpp
++++ mmdb2/mmdb2/mmdb_atom.cpp
+@@ -1285,7 +1285,14 @@
+ 
+ 
+   void  Atom::SetAtomName ( const AtomName atomName )  {
+-    strcpy ( name,atomName );
++    strcpy ( name         ,atomName );
++    // Keep the mmCIF name in step with the PDB one. The 6-argument overload
++    // above and the PDB reader both set label_atom_id alongside name; this
++    // overload did not, so atoms created in memory (rather than read from a
++    // file) reached the mmCIF writers with an empty label_atom_id and were
++    // written with a blank atom name. PDB output was unaffected because it
++    // writes `name`.
++    strcpy ( label_atom_id,atomName );
+   }
+ 
+ 
