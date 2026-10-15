@@ -4,6 +4,7 @@ import { vec3, mat4 } from 'gl-matrix';
 //import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from '../types/moorhen';
 import { vec3Create  } from './mgMaths.js';
+import type { BufferMaterial } from './textureRegistry';
 
 
 interface MGWebGLBuffer {
@@ -12,7 +13,23 @@ interface MGWebGLBuffer {
 }
 
 export class DisplayBuffer {
-    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][]}
+    // pick_point_instances maps a pick_points index back to the instance that owns it, for
+    // instanced geometry where one instance may offer several pick points. Absent means one point
+    // per instance, so the two indices coincide.
+    //
+    // pick_point_sections and section_ranges are the finer-grained pair: a mesh whose parts are
+    // separately hoverable maps the picked index to a section, and the section to the half-open
+    // range of vertex ids that the shader lights. Present only for a mesh that is the sole
+    // instance of itself, since a vertex id says nothing about which instance is being drawn.
+    //
+    // instance_tags names whole instances rather than sections - a separate channel with its own
+    // kind, so a mesh can answer both "which piece is this" and "which thing is it part of" in
+    // two different schemes at once.
+    //
+    // section_level_ranges and section_level_points are coarser readings of the same sections,
+    // each indexed by section exactly as section_ranges is, so a consumer swaps one level's
+    // array in and its existing section index still means something. Level 0 repeats the finest.
+    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][], pick_point_instances?:number[], pick_point_sections?:number[], section_ranges?:number[][], section_level_ranges?:number[][][], section_level_points?:number[][][], pick_spans?:number[][], pick_radius?:number, pick_point_tags?:string[], pick_tag_kind?:string, instance_tags?:string[], instance_tag_kind?:string, claims_pointer?:boolean, pick_priority?:number, highlight_whole?:boolean, pick_exact?:boolean, pick_bounds?:{low:[number,number,number],high:[number,number,number]}}
     origin: number[];
     visible: boolean;
     name_label: string;
@@ -39,6 +56,21 @@ export class DisplayBuffer {
     triangleInstanceOrientations: number[][];
     triangleColours: number[][];
     triangleNormals: number[][];
+    /**
+     * Flat u,v per vertex, one array per sub-buffer.
+     *
+     * The GL buffer for these (triangleVertexTextureBuffer) and the attribute they feed
+     * (aVertexTexture, bound to location 3) both long predate anything filling them.
+     */
+    triangleTextureCoords: number[][];
+    /**
+     * What each sub-buffer is drawn with, beyond its vertex colours.
+     *
+     * Per sub-buffer rather than per buffer because that is the grain a material has: a glTF
+     * primitive carries exactly one, and a file with several becomes several sub-buffers of one
+     * object. Sparse - most sub-buffers have no entry, and that means "vertex colours alone".
+     */
+    materials: (BufferMaterial | undefined)[];
     primitiveSizes: number[][];
     bufferTypes: string[];
     customColour: [number,number,number,number] | null;
@@ -60,9 +92,21 @@ export class DisplayBuffer {
     textColours: number[];
     isHoverBuffer: boolean;
     id: string;
+    /**
+     * What made this buffer, for attributing a frame's cost back to a representation.
+     *
+     * Descriptive only: nothing in the renderer branches on it, and a buffer without one is
+     * still drawn exactly the same. It exists because the draw loop sees a flat list of
+     * buffers and cannot say which of them is the ribbons, so "1.1M triangles" is a number
+     * with nowhere to go. Set where buffers are produced rather than derived at draw time,
+     * since that is the only place that still knows.
+     */
+    statsLabel?: string;
     multiViewGroup: number;
     clickTol: number;
     doStencil: boolean;
+    // uses gl.depthRange
+    alwaysOnTop: boolean;
 
     constructor() {
         this.visible = true;
@@ -140,6 +184,8 @@ export class DisplayBuffer {
         this.triangleInstanceOrientations = [];
         this.triangleColours = [];
         this.triangleNormals = [];
+        this.triangleTextureCoords = [];
+        this.materials = [];
         this.primitiveSizes = [];
         this.bufferTypes = [];
         this.customColour = null;
@@ -162,6 +208,7 @@ export class DisplayBuffer {
         this.atoms = [];
         this.clickTol = null;
         this.doStencil = false;
+        this.alwaysOnTop = false;
     }
 
     setTransformMatrix(transformMatrix) {

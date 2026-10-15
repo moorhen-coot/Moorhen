@@ -8,7 +8,6 @@ import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOu
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
 import {
-    setDoPerspectiveProjection,
     setDoSpin,
     setDrawAxes,
     setDrawCrosshairs,
@@ -531,6 +530,12 @@ export const subMenuMap: SubMenuMap = {
                 type: "showModal",
                 modal: "json-validation",
             },
+            {
+                id: "fourier-shell-correlation",
+                label: "Fourier shell correlation...",
+                type: "showModal",
+                modal: "fourier-shell-correlation",
+            },
         ],
     },
     "map-tools": {
@@ -628,6 +633,12 @@ export const subMenuMap: SubMenuMap = {
                 label: "2D objects...",
                 type: "showPanel",
                 panel: "overlay2DObjects",
+            },
+            {
+                id: "3DObjects",
+                label: "3D objects...",
+                type: "showPanel",
+                panel: "3DObjects",
             },
         ],
     },
@@ -912,13 +923,6 @@ export const subMenuMap: SubMenuMap = {
                 action: setDrawEnvBOcc,
                 label: "Show env. temp factors and occ.",
                 description: "Display on screen B factors and occupancies values",
-            },
-            {
-                id: "perspective-projection",
-                type: "preferenceSwitch",
-                selector: (state: RootState) => state.sceneSettings.doPerspectiveProjection,
-                action: setDoPerspectiveProjection,
-                label: "Perspective projection",
             },
             {
                 id: "spin-view",

@@ -53,9 +53,11 @@ import {
     setDefaultBondSmoothness,
     setDepthBlurDepth,
     setDepthBlurRadius,
+    setDepthPeelLayers,
     setDoEdgeDetect,
     setDoOutline,
     setDoPerspectiveProjection,
+    setPerspectiveEyeDistance,
     setDoSSAO,
     setDoShadow,
     setDoShadowDepthDebug,
@@ -401,6 +403,18 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         selector: (state: RootState) => state.glRef.elementsIndicesRestrict,
         defaultValue: false,
     },
+    52: {
+        label: "depthPeelLayers",
+        valueSetter: setDepthPeelLayers,
+        selector: (state: RootState) => state.sceneSettings.depthPeelLayers,
+        defaultValue: sceneSettingsInitialState.depthPeelLayers,
+    },
+    53: {
+        label: "fogClipOffset",
+        valueSetter: setPerspectiveEyeDistance,
+        selector: (state: RootState) => state.sceneSettings.fogClipOffset,
+        defaultValue: sceneSettingsInitialState.fogClipOffset,
+    },
 };
 
 export type PreferenceLabel = (typeof PREFERENCES_MAP)[keyof typeof PREFERENCES_MAP]["label"];
@@ -420,5 +434,6 @@ export type PreferencesValues = {
 const test: PreferencesValues = {
     version: "1.0.0",
     doPerspectiveProjection: true,
+    fogClipOffset: true,
     // Add other preference values here
 };

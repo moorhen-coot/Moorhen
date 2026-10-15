@@ -502,6 +502,16 @@ export function drawMouseTrack(self: MGWebGL) {
     self.gl.depthFunc(self.gl.LESS)
 }
 
+/**
+ * How far up the meter is drawn from the bottom of the view, in the 48-unit ortho the overlays
+ * use.
+ *
+ * The bottom strip of the canvas is covered by the sequence and validation panels, so a meter
+ * sitting at the very bottom edge is partly hidden by them. Applied to the histogram and to the
+ * text lines together, so they stay as one block.
+ */
+const FPS_METER_LIFT = 5.0;
+
 export function drawFPSMeter(self: MGWebGL) {
 
     self.gl.depthFunc(self.gl.ALWAYS);
@@ -541,15 +551,17 @@ export function drawFPSMeter(self: MGWebGL) {
     self.gl.uniform3fv(self.shaderProgramThickLines.screenZ, screenZ);
 
     const hitchometerColours = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
+    const top = -11.4 + FPS_METER_LIFT;
+    const bottom = -21.6 + FPS_METER_LIFT;
     const hitchometerVertices = [
-        -22.9, -11.4, 0.0,
-        -12.7, -11.4, 0.0,
-        -22.9, -21.6, 0.0,
-        -12.7, -21.6, 0.0,
-        -22.9, -11.4, 0.0,
-        -22.9, -21.6, 0.0,
-        -12.7, -11.4, 0.0,
-        -12.7, -21.6, 0.0,
+        -22.9, top, 0.0,
+        -12.7, top, 0.0,
+        -22.9, bottom, 0.0,
+        -12.7, bottom, 0.0,
+        -22.9, top, 0.0,
+        -22.9, bottom, 0.0,
+        -12.7, top, 0.0,
+        -12.7, bottom, 0.0,
 
     ];
 
@@ -559,8 +571,8 @@ export function drawFPSMeter(self: MGWebGL) {
 
         const l = mspf / 200.0 * 10.0;
         const x = -22.8 + i/20.;
-        const y1 = -21.5;
-        const y2 = -21.5 + l;
+        const y1 = -21.5 + FPS_METER_LIFT;
+        const y2 = -21.5 + FPS_METER_LIFT + l;
         const z = 0.0;
         hitchometerVertices.push(x,y1,z,x,y2,z);
         if(mspf<17){
@@ -627,7 +639,16 @@ export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=
         textColour = "white";
     }
 
-    self.measureText2DCanvasTexture.clearBigTexture()
+    // Gathered here and emitted at the end, rather than written into the atlas as they are found.
+    //
+    // This runs every frame, and it used to begin by wiping the glyph atlas - which threw away the
+    // rasterisation cache and re-uploaded a 768x2048 canvas, 6 MB, twice a frame, whether or not a
+    // character had changed. On an empty scene with nothing loaded that was most of the frame.
+    //
+    // Collecting first is what makes the difference: the set of strings has to be known before the
+    // atlas is touched, because that is what decides whether it needs rebuilding at all. The
+    // positions below still change every frame - they follow the view - and are still recomputed.
+    const items: { font: string, text: string, x: number, y: number, z: number }[] = [];
 
     const drawString = (s, xpos, ypos, zpos, font, threeD) => {
         if(font) self.textCtx.font = font;
@@ -636,12 +657,7 @@ export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=
         vec3.transformMat4(axesOffset, axesOffset, invMat);
 
         const xyzOff = self.origin.map((coord, iCoord) => -coord + self.zoom * axesOffset[iCoord]);
-        const base_x = xyzOff[0];
-        const base_y = xyzOff[1];
-        const base_z = xyzOff[2];
-
-        self.measureText2DCanvasTexture.addBigTextureTextImage({font:font,text:s,x:base_x,y:base_y,z:base_z})
-
+        items.push({font:font, text:s, x:xyzOff[0], y:xyzOff[1], z:xyzOff[2]})
     }
 
     self.textLegends.forEach(label => {
@@ -654,7 +670,15 @@ export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=
     if(window.devicePixelRatio){
         fontMult *= window.devicePixelRatio
     }
-    if(self.showFPS) drawString(self.fpsText, -23.5*ratio, -23.5, 0.0, (fontMult * 20 * font_scale).toFixed(0)+"px helvetica", false);
+    if(self.showFPS){
+        const font = (fontMult * 20 * font_scale).toFixed(0)+"px helvetica";
+        drawString(self.fpsText, -23.5*ratio, -23.5 + FPS_METER_LIFT, 0.0, font, false);
+        // On its own line rather than appended. The glyph atlas packs each string into a column
+        // of its 1024-pixel width, so one long line runs off the edge and its texture coordinates
+        // pass 1.0 - which CLAMP_TO_EDGE then smears into a row of stripes.
+        if(self.renderStatsText)
+            drawString(self.renderStatsText, -23.5*ratio, -23.5 + FPS_METER_LIFT - 2.0, 0.0, font, false);
+    }
 
     let lastPoint = null;
     let lastLastPoint = null;
@@ -698,7 +722,13 @@ export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=
         })
     })
 
-    self.measureText2DCanvasTexture.recreateBigTextureBuffers();
+    // The colour is left to contentKeyFor, which reads it from the store exactly as
+    // addBigTextureTextImage does below. Passing the local textColour instead would key on one
+    // colour while rasterising with another, and a background change would then not redraw.
+    const atlas = self.measureText2DCanvasTexture;
+    const rebuilt = atlas.beginFrame(atlas.contentKeyFor(items));
+    items.forEach(item => atlas.addBigTextureTextImage(item));
+    atlas.recreateBigTextureBuffers(rebuilt);
 
     self.gl.useProgram(self.shaderProgramTextInstanced);
     self.setMatrixUniforms(self.shaderProgramTextInstanced);
