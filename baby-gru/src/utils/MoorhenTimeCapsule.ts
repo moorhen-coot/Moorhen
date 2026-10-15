@@ -66,6 +66,7 @@ import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
 import { guid } from "./utils";
+import { representationIdForRestore } from "./sessionRepresentation";
 import { MoorhenInstance } from "@/InstanceManager";
 import { Root } from "protobufjs";
 
@@ -86,6 +87,13 @@ export type moleculeSessionData = {
     coordString: string;
     coordFormat: moorhen.coorFormats;
     representations: {
+        /**
+         * The representation's identity, so that it survives a reload.
+         *
+         * Absent in sessions written before the field existed; those keep the guid minted on
+         * restore, which is what has always happened.
+         */
+        uniqueId: string;
         cid: string;
         style: moorhen.RepresentationStyles;
         isCustom: boolean;
@@ -450,6 +458,7 @@ export class MoorhenTimeCapsule {
                     .filter(item => item.visible)
                     .map(item => {
                         return {
+                            uniqueId: item.uniqueId,
                             cid: item.cid,
                             style: item.style,
                             isCustom: item.isCustom,
@@ -828,6 +837,11 @@ export class MoorhenTimeCapsule {
         }
         timeCapsuleRef.current.setBusy(true);
 
+        // Ids handed out to restored representations, so that a file carrying a duplicate - one
+        // stitched together from two sessions, say - cannot make two representations answer to
+        // the same name. See representationIdForRestore.
+        const representationIdsTaken = new Set<string>();
+
         // Delete current scene
         molecules.forEach(molecule => {
             molecule.delete();
@@ -952,6 +966,14 @@ export class MoorhenTimeCapsule {
                         item.hbondedTo,
                         item.neighboursDistance
                     );
+                    // Its identity, back as it was saved. A session written before the format
+                    // carried this keeps the guid minted a moment ago, which is what has always
+                    // happened.
+                    representation.uniqueId = representationIdForRestore(
+                        item.uniqueId, representationIdsTaken, representation.uniqueId,
+                    );
+                    representationIdsTaken.add(representation.uniqueId);
+
                     if (item.isCustom) {
                         dispatch(addCustomRepresentation(representation));
                     }
