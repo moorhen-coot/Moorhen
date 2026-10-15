@@ -72,24 +72,35 @@ test.describe("Coot command error handling", () => {
         expect(next.pendingAfter).toBe(0);
     });
 
-    test("a failure in a non-command message (get_mtz_data) still gets a reply", async ({ page }) => {
-        test.setTimeout(120_000);
-        const moorhen = await startAndGetInstance(page);
+    // Messages handled in the worker outside doCootCommand. Before the worker-wide guard,
+    // each of these threw with no reply, so its promise hung and its message stayed pending.
+    const failingMessages = [
+        { name: "get_mtz_data", kwargs: { message: "get_mtz_data", fileName: "/does/not/exist.mtz", molNo: -1 } },
+        { name: "get_map", kwargs: { message: "get_map", molNo: 999 } },
+        { name: "delete_file_name", kwargs: { message: "delete_file_name", fileName: "/does/not/exist.txt" } },
+    ];
 
-        // Reading a file that does not exist throws in the worker outside doCootCommand.
-        // Before the worker-wide guard this message got no reply and its promise hung.
-        const outcome = await moorhen.page.evaluate(async targetId => {
-            const host = document.getElementById(targetId) as unknown as { getMoorhenInstance: () => Promise<{ commandCentre: any }> };
-            const commandCentre = (await host.getMoorhenInstance()).commandCentre;
-            const reply = await Promise.race([
-                commandCentre.postMessage({ message: "get_mtz_data", fileName: "/does/not/exist.mtz", molNo: -1 }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("No reply to get_mtz_data within 10s")), 10_000)),
-            ]);
-            return { status: reply.data.result?.status, consoleMessage: reply.data.consoleMessage, pendingAfter: commandCentre.activeMessages.length };
-        }, "moorhen-test");
+    for (const { name, kwargs } of failingMessages) {
+        test(`a failing ${name} message still gets a reply`, async ({ page }) => {
+            test.setTimeout(120_000);
+            const moorhen = await startAndGetInstance(page);
 
-        expect(outcome.status).toBe("Exception");
-        expect(outcome.consoleMessage).toContain("get_mtz_data");
-        expect(outcome.pendingAfter).toBe(0);
-    });
+            const outcome = await moorhen.page.evaluate(
+                async ({ targetId, kwargs }) => {
+                    const host = document.getElementById(targetId) as unknown as { getMoorhenInstance: () => Promise<{ commandCentre: any }> };
+                    const commandCentre = (await host.getMoorhenInstance()).commandCentre;
+                    const reply = await Promise.race([
+                        commandCentre.postMessage(kwargs),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error(`No reply to ${kwargs.message} within 10s`)), 10_000)),
+                    ]);
+                    return { status: reply.data.result?.status, consoleMessage: reply.data.consoleMessage, pendingAfter: commandCentre.activeMessages.length };
+                },
+                { targetId: "moorhen-test", kwargs }
+            );
+
+            expect(outcome.status).toBe("Exception");
+            expect(outcome.consoleMessage).toContain(name);
+            expect(outcome.pendingAfter).toBe(0);
+        });
+    }
 });
