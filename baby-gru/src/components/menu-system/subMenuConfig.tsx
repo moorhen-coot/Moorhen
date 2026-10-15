@@ -634,6 +634,12 @@ export const subMenuMap: SubMenuMap = {
                 type: "showPanel",
                 panel: "3DObjects",
             },
+            {
+                id: "movie",
+                label: "Movie...",
+                type: "showPanel",
+                panel: "movie",
+            },
         ],
     },
     ligand: {
