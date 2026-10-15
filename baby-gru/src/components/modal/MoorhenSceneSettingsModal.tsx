@@ -27,7 +27,7 @@ import { hexToRGB, rgbToHex } from "../../utils/utils";
 import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
-import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
+import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSwatch";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { MoorhenSlidersSettings } from "./MoorhenSceneSlidersModal";
 
