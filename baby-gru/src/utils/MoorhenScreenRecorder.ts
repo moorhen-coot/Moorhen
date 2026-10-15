@@ -14,33 +14,127 @@ interface ImageFrac2D {
     zIndex: number;
 }
 
+/** Frames per second requested from the canvas. */
+const CAPTURE_FPS = 30;
+
+export type VideoQuality = "low" | "medium" | "high";
+
+/**
+ * Bits spent per pixel per frame for each quality preset, from which the bitrate is derived.
+ *
+ * A fixed bitrate cannot suit both a small window and a 4K one: the same number is wasteful for
+ * the first and blocky for the second. Moorhen's thin bonds and map mesh are the first thing to
+ * break up when bits run short, and Firefox's realtime VP8 encoder needs noticeably more than
+ * Chrome's for the same result. At 1080p these come to roughly 9, 25 and 62 Mbps. VP9 encoders
+ * (Chrome) spend only what the content needs, so they often stay well below the request.
+ *
+ * It replaces a literal 25000000000 carrying the comment "2.5Mbps". That was ten thousand times
+ * its stated intent; browsers clamp the request, so it had been harmless, but nobody reading it
+ * could tell what was meant.
+ */
+const BITS_PER_PIXEL_PER_FRAME: Record<VideoQuality, number> = {
+    low: 0.15,
+    medium: 0.4,
+    high: 1.0,
+};
+
+const MIN_BITRATE = 4_000_000;
+// Keeps a 4K canvas on "high" (~250 Mbps uncapped) to a file size people can still handle.
+const MAX_BITRATE = 160_000_000;
+
+/**
+ * Container and codec, in order of preference, filtered by what the browser admits to.
+ *
+ * The recorder used to be constructed with no mimeType at all, so it encoded with whatever the
+ * browser defaults to - VP8 or VP9 - while the resulting Blob was labelled h264. Nothing checked
+ * that any of it was supported.
+ */
+const PREFERRED_MIME_TYPES = [
+    "video/webm;codecs=vp9",
+    "video/webm;codecs=vp8",
+    "video/webm",
+    "video/mp4",
+];
+
 export class ScreenRecorder  {
 
-    rec: MediaRecorder;
+    rec: MediaRecorder | null = null;
     chunks: Blob[];
     canvasRef: React.RefObject<HTMLCanvasElement>;
     glRef: React.RefObject<webGL.MGWebGL>;
     store: Store<RootState>;
     _isRecording: boolean;
-    videoName = "moorhen";
+    videoName = "moorhen_video";
+    videoQuality: VideoQuality = "medium";
+    private recordedMimeType = "";
 
     constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>, store: Store<RootState>){
         this.glRef = glRef; // BUG FIX: assign glRef
         this.chunks = [];
         this.store = store;
         this.canvasRef = canvasRef
-        const stream = this.canvasRef.current.captureStream(30)
-
-        const options = {
-          videoBitsPerSecond: 25000000000 // 2.5Mbps
-        }
-
-        this.rec = new MediaRecorder(stream,options)
         this._isRecording = false;
     }
 
+    /** The first preferred type this browser will actually record, or "" to let it choose. */
+    private pickMimeType = (): string => {
+        if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported) return "";
+        return PREFERRED_MIME_TYPES.find(type => MediaRecorder.isTypeSupported(type)) ?? "";
+    }
+
+    /** The file extension matching whatever was actually recorded. */
+    private extensionForMimeType = (mimeType: string): string =>
+        mimeType.startsWith("video/mp4") ? "mp4" : "webm";
+
+    /**
+     * Build a recorder around the canvas as it is now.
+     *
+     * Done per recording rather than once at construction. captureStream binds to the canvas at
+     * the size it has when called, and the canvas is resized whenever the window is - so a
+     * recorder built on mount was working from a stale track for every recording after the first
+     * resize, which browsers handle anywhere between gracefully and a truncated file.
+     *
+     * Resizing *during* a recording is still not survivable: the track changes size underneath an
+     * encoder that has already written a header. Only a resize between recordings is fixed here.
+     */
+    private createRecorder = (): MediaRecorder | null => {
+        const canvas = this.canvasRef?.current;
+        if (!canvas) {
+            console.warn("Attempted to record the screen before the canvas existed...");
+            return null;
+        }
+
+        const stream = canvas.captureStream(CAPTURE_FPS);
+        const pixels = Math.max(1, canvas.width * canvas.height);
+        const bitrate = Math.round(
+            Math.min(MAX_BITRATE, Math.max(MIN_BITRATE, pixels * CAPTURE_FPS * BITS_PER_PIXEL_PER_FRAME[this.videoQuality])));
+
+        // isTypeSupported saying yes does not guarantee the constructor will accept it at this
+        // resolution and bitrate, so a refusal falls back to letting the browser choose rather
+        // than failing the recording. Not doing that would be a regression: before any of this
+        // negotiation existed, a recorder was always constructed.
+        const mimeType = this.pickMimeType();
+        const attempts: MediaRecorderOptions[] = mimeType
+            ? [{ mimeType, videoBitsPerSecond: bitrate }, { videoBitsPerSecond: bitrate }, {}]
+            : [{ videoBitsPerSecond: bitrate }, {}];
+
+        for (const options of attempts) {
+            try {
+                const recorder = new MediaRecorder(stream, options);
+                // What the browser settled on, which is not always what was asked for.
+                this.recordedMimeType = recorder.mimeType || options.mimeType || "";
+                return recorder;
+            } catch (err) {
+                console.warn("Video recorder rejected", options, err);
+            }
+        }
+
+        console.warn("Could not start a video recorder for this canvas");
+        return null;
+    }
+
     stopRecording = () => {
-        if (this._isRecording) {
+        if (this._isRecording && this.rec) {
             this.rec.stop();
             this._isRecording = false;
         } else {
@@ -78,13 +172,18 @@ export class ScreenRecorder  {
             console.warn('Screen recording already taking place!')
             return
         }
+
+        const recorder = this.createRecorder();
+        if (!recorder) return;
+        this.rec = recorder;
+
         this.chunks = [];
         this.rec.ondataavailable = (e) => {
             this.chunks.push(e.data);
         }
         // only when the recorder stops, we construct a complete Blob from all the chunks
-        this.rec.onstop = (e) =>
-            this.downloadVideo(new Blob(this.chunks, { type: "video/webm;codecs=h264" }));
+        this.rec.onstop = () =>
+            this.downloadVideo(new Blob(this.chunks, { type: this.recordedMimeType || undefined }));
         this._isRecording = true;
         this.rec.start();
     }
@@ -93,8 +192,18 @@ export class ScreenRecorder  {
         this.videoName = name;
     }
 
+    /** So the popup can show the name the file will actually be given. */
+    getVideoName = () => this.videoName;
+
+    /** Takes effect from the next recording: the bitrate is fixed when a recording starts. */
+    setVideoQuality = (quality: VideoQuality) => {
+        this.videoQuality = quality;
+    }
+
+    getVideoQuality = () => this.videoQuality;
+
     downloadVideo = async (blob: Blob) => {
-        doDownload([blob], `${this.videoName}.webm`);
+        doDownload([blob], `${this.videoName}.${this.extensionForMimeType(this.recordedMimeType)}`);
     }
 
     takeScreenShot = async(filename: string, doTransparentBackground: boolean = false) => {
