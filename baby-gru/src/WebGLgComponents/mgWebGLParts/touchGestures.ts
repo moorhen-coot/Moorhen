@@ -21,6 +21,7 @@ import { MGWebGL } from '../mgWebGL';
  *   twist         → z-rotate    (shiftKey)                         → myQuat
  *   pinch         → zoom        (setZoom(zoom*factor), like wheel) → zoom
  *   tap                         → doClick (on press, as the mouse does)
+ *   double-tap                  → doDoubleClick (centre on atom)
  *   long-press (1000ms, still)  → doRightClick (context menu)
  *
  * Notes carried over from the earlier use-gesture prototype:
@@ -28,11 +29,14 @@ import { MGWebGL } from '../mgWebGL';
  *     callback until movement exceeds a threshold, so `doClick` never runs on
  *     the initial press and `currentlyDraggedAtom` is not set before drag
  *     events arrive, breaking atom dragging.
- *   - Plain hover (no button down) is not delivered by DragGesture, so a
- *     separate `!mouseDown`-guarded pointermove listener keeps atom hover alive.
+ *   - Mouse hover needs nothing here: the native mousemove listener in
+ *     attachCanvasListeners already drives doMouseMove / doHover.
  */
 
 const TAP_MAX_PX = 3;
+const TAP_MAX_MS = 300;
+const DOUBLE_TAP_MS = 300;
+const DOUBLE_TAP_PX = 20;
 const LONG_PRESS_MS = 1000;
 const TWIST_DEADZONE_RAD = 0.001;
 
@@ -60,7 +64,7 @@ function syntheticEvent(
 
 /**
  * Attach the touch-gesture recognisers to the canvas. Returns a teardown
- * function that destroys the recognisers and removes the hover listener.
+ * function that destroys the recognisers.
  */
 export function attachTouchGestures(self: MGWebGL): () => void {
     const canvas = self.canvas;
@@ -69,15 +73,7 @@ export function attachTouchGestures(self: MGWebGL): () => void {
     // pan / pinch-zoom and cancels them, so the recognisers never see a drag.
     canvas.style.touchAction = 'none';
 
-    // --- hover: DragGesture only fires during drags, so drive doHover from a
-    //     plain pointermove when no gesture/drag is active (restores atom hover).
-    const onPointerMove = (evt: PointerEvent) => {
-        if (evt.pointerType === 'touch') return; // touch has no hover
-        if (!self.mouseDown) {
-            self.doMouseMove(evt, self);
-        }
-    };
-    canvas.addEventListener('pointermove', onPointerMove, false);
+    let lastTap: { time: number; x: number; y: number } | null = null;
 
     let longPressTimer: ReturnType<typeof setTimeout> | null = null;
     const clearLongPress = () => {
@@ -97,6 +93,7 @@ export function attachTouchGestures(self: MGWebGL): () => void {
                 pinching,
                 movement: [mx, my],
                 xy: [x, y],
+                elapsedTime,
                 event,
             } = state;
 
@@ -119,6 +116,12 @@ export function attachTouchGestures(self: MGWebGL): () => void {
                 clearLongPress();
                 return;
             }
+
+            // Stops the browser following a tap with emulated mouse events,
+            // which would reach the native listeners and click a second time.
+            // Touch only: on a mouse, cancelling pointerdown would suppress
+            // the native mousedown / mousemove / mouseup.
+            if (event?.cancelable) event.preventDefault();
 
             if (first) {
                 const down = syntheticEvent(self, x, y, { button: 0, buttons: 1 });
@@ -147,6 +150,28 @@ export function attachTouchGestures(self: MGWebGL): () => void {
                     // a second one here would undo toggles such as atom labels.
                     self.doMouseUp(up, self);
                 }
+
+                // The browser's own dblclick is suppressed along with the
+                // emulated mouse events, so recognise the double-tap here.
+                const isTap =
+                    elapsedTime < TAP_MAX_MS &&
+                    Math.abs(mx) < TAP_MAX_PX &&
+                    Math.abs(my) < TAP_MAX_PX;
+                if (!isTap) {
+                    lastTap = null;
+                } else if (
+                    lastTap &&
+                    performance.now() - lastTap.time < DOUBLE_TAP_MS &&
+                    Math.hypot(x - lastTap.x, y - lastTap.y) < DOUBLE_TAP_PX
+                ) {
+                    lastTap = null;
+                    // doDoubleClick reads the cursor position, not the event,
+                    // and a tap never moved it: a buttonless move updates it.
+                    self.doMouseMove(syntheticEvent(self, x, y), self);
+                    self.doDoubleClick(up, self);
+                } else {
+                    lastTap = { time: performance.now(), x, y };
+                }
             } else {
                 // ongoing 1-finger move → rotate (buttons:1, no modifiers).
                 if (Math.abs(mx) > TAP_MAX_PX || Math.abs(my) > TAP_MAX_PX) {
@@ -165,9 +190,6 @@ export function attachTouchGestures(self: MGWebGL): () => void {
             // Not `preventScrollAxis`: it holds the drag back for 250ms and
             // aborts it as a page scroll if the finger moves before then, so
             // quick drags and taps never reached the handlers.
-            // preventDefault on touchstart also stops the browser following a
-            // tap with emulated mouse events, which would click a second time.
-            preventDefault: true,
             eventOptions: { passive: false },
         }
     );
@@ -260,12 +282,15 @@ export function attachTouchGestures(self: MGWebGL): () => void {
         {
             pointer: { touch: true },
             eventOptions: { passive: false },
+            // Otherwise ctrl+wheel (and trackpad pinch, which arrives as
+            // ctrl+wheel) runs this handler as well as doWheel: it zooms on
+            // top of set_map_contour's ctrl+scroll and holds mouseDown true.
+            pinchOnWheel: false,
         }
     );
 
     return () => {
         clearLongPress();
-        canvas.removeEventListener('pointermove', onPointerMove, false);
         drag.destroy();
         pinch.destroy();
     };
