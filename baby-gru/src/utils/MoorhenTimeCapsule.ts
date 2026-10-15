@@ -1,12 +1,15 @@
 import { AnyAction, Dispatch, Store } from "@reduxjs/toolkit";
 import { batch } from "react-redux";
 import { moorhensession } from "../protobuf/MoorhenSession";
+import { cameraFromSession, sessionFromCamera } from "./sessionCamera";
+import { slabFromCamera } from "../WebGLgComponents/slab";
 import { setActiveMap } from "../store/generalStatesSlice";
 import {
     setAmbient,
     setClipEnd,
     setClipStart,
     setDiffuse,
+    setFogClipOffset,
     setFogEnd,
     setFogStart,
     setLightPosition,
@@ -146,6 +149,16 @@ export type viewDataSession = {
     doDrawClickedAtomLines: boolean;
     clipStart: number;
     clipEnd: number;
+    /**
+     * Distance from the eye to the view centre, the renderer's old `fogClipOffset`.
+     *
+     * Optional because sessions written before this field exists do not have it. `fogStart` and
+     * `fogEnd` are measured from the eye, so without it they could only be read back against an
+     * assumed 250 - which was right until the perspective eye-distance control made it movable.
+     * See LEGACY_EYE_DISTANCE: 250 is not a guess for an older file, it is the only value for
+     * which that file's fog numbers ever meant what they said.
+     */
+    eyeDistance?: number;
     quat4: any[];
     shadows: boolean;
     ssao: { enabled: boolean; radius: number; bias: number };
@@ -157,7 +170,6 @@ export type viewDataSession = {
         normalThreshold: number;
     };
     doPerspectiveProjection: boolean;
-    eyeDistance?: number;
     blur: { enabled: boolean; depth: number; radius: number };
 };
 
@@ -497,13 +509,21 @@ export class MoorhenTimeCapsule {
         const specularPower = this.store.getState().sceneSettings.specularPower;
         const zoom = this.store.getState().sceneSettings.zoom;
         const quat = this.store.getState().glRef.quat;
-        const fogClipOffset = this.store.getState().sceneSettings.fogClipOffset;
-        const fogStart = this.store.getState().sceneSettings.fogStart;
-        const fogEnd = this.store.getState().sceneSettings.fogEnd;
-        //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
-        //Now we multiply by -1 at save and restore for compatibility with old status files.
-        const clipStart = this.store.getState().sceneSettings.clipStart * -1;
-        const clipEnd = this.store.getState().sceneSettings.clipEnd;
+        // The camera's conventions, translated to the session's by sessionCamera.ts - which is also
+        // what reads them back. The session stores fog as absolute distances from the eye while
+        // clip is relative to the view centre and negated; keeping both directions of that in one
+        // tested module is the point. `eyeDistance` is new, and is the field whose absence meant
+        // fog was saved against an eye whose position was not.
+        const { fogStart, fogEnd, clipStart, clipEnd, eyeDistance } = sessionFromCamera({
+            quat: [quat[0], quat[1], quat[2], quat[3]],
+            origin: this.store.getState().sceneSettings.origin,
+            zoom,
+            eyeDistance: this.store.getState().sceneSettings.fogClipOffset,
+            clipFront: this.store.getState().sceneSettings.clipStart,
+            clipBack: this.store.getState().sceneSettings.clipEnd,
+            fogFront: this.store.getState().sceneSettings.fogClipOffset - this.store.getState().sceneSettings.fogStart,
+            fogBack: this.store.getState().sceneSettings.fogEnd - this.store.getState().sceneSettings.fogClipOffset,
+        });
 
         const doShadow = this.store.getState().sceneSettings.doShadow;
         const doSSAO = this.store.getState().sceneSettings.doSSAO;
@@ -534,9 +554,9 @@ export class MoorhenTimeCapsule {
             doDrawClickedAtomLines: false, // This is unused as far as I can tell
             clipStart: clipStart,
             clipEnd: clipEnd,
+            eyeDistance: eyeDistance,
             quat4: [quat[0], quat[1], quat[2], quat[3]],
             doPerspectiveProjection: doPerspectiveProjection,
-            eyeDistance: fogClipOffset,
             edgeDetection: {
                 enabled: doEdgeDetect,
                 depthScale: depthScale,
@@ -1103,12 +1123,22 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setLightPosition, sessionData.viewData.lightPosition);
         guardedDispatch(setSpecularPower, sessionData.viewData.specularPower);
         guardedDispatch(setZoom, sessionData.viewData.zoom);
-        guardedDispatch(setFogStart, sessionData.viewData.fogStart);
-        guardedDispatch(setFogEnd, sessionData.viewData.fogEnd);
-        //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
-        //Now we multiply by -1 at save and restore for compatibility with old status files.
-        guardedDispatch(setClipStart, sessionData.viewData.clipStart * -1);
-        guardedDispatch(setClipEnd, sessionData.viewData.clipEnd);
+
+        // The camera as the file describes it: fog turned from absolute distances into offsets from
+        // the view centre, the clip negation undone, and an eye distance that an older file does
+        // not carry and so is assumed to be the historical 250. The store still holds the old
+        // shapes - absolute fog, positive clip - so they are turned straight back; the value of
+        // going through here is that one tested module owns both directions of the conversion.
+        //
+        // The eye is dispatched before the fog. MoorhenWebMG reconciles them in that order for the
+        // same reason: fog read against the wrong eye lands in the wrong place.
+        const restoredCamera = cameraFromSession(sessionData.viewData);
+        const restoredSlab = slabFromCamera(restoredCamera);
+        guardedDispatch(setFogClipOffset, restoredCamera.eyeDistance);
+        guardedDispatch(setFogStart, restoredSlab.fogStart);
+        guardedDispatch(setFogEnd, restoredSlab.fogEnd);
+        guardedDispatch(setClipStart, restoredCamera.clipFront);
+        guardedDispatch(setClipEnd, restoredCamera.clipBack);
         guardedDispatch(setQuat, sessionData.viewData.quat4);
         guardedDispatch(setBackgroundColor, sessionData.viewData.backgroundColor);
         guardedDispatch(setEdgeDetectDepthScale, sessionData.viewData.edgeDetection.depthScale);
@@ -1125,9 +1155,11 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setDepthBlurRadius, sessionData.viewData.blur.radius);
         guardedDispatch(setUseOffScreenBuffers, sessionData.viewData.blur.enabled);
         guardedDispatch(setDoPerspectiveProjection, sessionData.viewData.doPerspectiveProjection ?? false);
-        // Optional: sessions written before the eye could be moved simply keep the default. This
-        // runs before the fog is restored below, since moving the eye shifts the fog with it.
-        guardedDispatch(setPerspectiveEyeDistance, sessionData.viewData.eyeDistance ?? 250);
+        // The eye distance is restored with the rest of the camera further up, through
+        // cameraFromSession, which also applies the "a session without one means 250" rule. The
+        // dispatch that used to be here said it ran before the fog was restored, and after this
+        // merge it would have run after - so it goes rather than being left to mean the opposite
+        // of what it says.
 
 
         // Set connected maps and molecules if any
