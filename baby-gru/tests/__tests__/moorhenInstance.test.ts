@@ -731,3 +731,109 @@ describe('StoreExtension inherited API', () => {
         expect(callback).toHaveBeenCalledWith(true);
     });
 });
+
+// ==============================
+// files.loadMtz
+// ==============================
+describe('files.loadMtz', () => {
+    const mtzPath = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz');
+    let originalFetch: any;
+    let fetchCalls: string[];
+    let mtzBytes: Buffer;
+
+    const cloudMaps = () => [
+        {
+            name: 'map',
+            columns: { F: 'FWT', PHI: 'PHWT', Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE' },
+            isDifference: false,
+            calcStructFact: true,
+            active: true,
+        },
+        {
+            name: 'diff-map',
+            columns: { F: 'DELFWT', PHI: 'PHDELWT' },
+            isDifference: true,
+            style: { positiveColour: { r: 0, g: 1, b: 0 }, negativeColour: { r: 1, g: 0, b: 0 } },
+        },
+    ];
+
+    beforeEach(() => {
+        originalFetch = (global as any).fetch;
+        fetchCalls = [];
+        mtzBytes = fs.readFileSync(mtzPath);
+        (global as any).fetch = async (url: string) => {
+            fetchCalls.push(url);
+            const body = new Uint8Array(mtzBytes);
+            return { ok: true, status: 200, statusText: 'OK', arrayBuffer: async () => body.buffer };
+        };
+    });
+
+    afterEach(() => {
+        (global as any).fetch = originalFetch;
+    });
+
+    test('loads map and diff-map from one fetch, with columns, colours and active map', async () => {
+        const callback = jest.fn();
+        moorhenInstance.files.newFilesLoadedCallback(callback);
+
+        const result = await moorhenInstance.files.loadMtz('/data/job/5a3h_sigmaa.mtz', cloudMaps(), 'cloud');
+
+        expect(fetchCalls).toHaveLength(1);
+        expect(result.map(item => item.type)).toEqual(['map', 'map']);
+        expect(callback).toHaveBeenCalledWith(result, 'cloud');
+
+        const map = moorhenInstance.getMap(result[0].uniqueID);
+        const diffMap = moorhenInstance.getMap(result[1].uniqueID);
+        expect(map.name).toBe('map');
+        expect(diffMap.name).toBe('diff-map');
+        expect(map.selectedColumns).toMatchObject({ F: 'FWT', PHI: 'PHWT' });
+        expect(diffMap.selectedColumns).toMatchObject({ F: 'DELFWT', PHI: 'PHDELWT' });
+        expect(map.isDifference).toBe(false);
+        expect(diffMap.isDifference).toBe(true);
+        expect(map.hasReflectionData).toBe(true);
+        expect(diffMap.hasReflectionData).toBe(false);
+
+        const state = MoorhenReduxStore.getState();
+        expect(state.generalStates.activeMap.uniqueId).toBe(map.uniqueId);
+        expect(state.mapContourSettings.positiveMapColours.find(item => item.molNo === diffMap.molNo)?.rgb).toEqual({ r: 0, g: 1, b: 0 });
+        expect(state.mapContourSettings.negativeMapColours.find(item => item.molNo === diffMap.molNo)?.rgb).toEqual({ r: 1, g: 0, b: 0 });
+    });
+
+    test('applies defaults: name, isDifference, calcStructFact', async () => {
+        const result = await moorhenInstance.files.loadMtz('/data/5a3h_sigmaa.mtz', [
+            { columns: { F: 'FWT', PHI: 'PHWT' } },
+            { columns: { F: 'FWT', PHI: 'PHWT', Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE' } },
+        ]);
+        const map = moorhenInstance.getMap(result[0].uniqueID);
+        expect(map.name).toBe('5a3h_sigmaa-FWT');
+        expect(map.isDifference).toBe(false);
+        expect(map.hasReflectionData).toBe(false);
+        expect(moorhenInstance.getMap(result[1].uniqueID).hasReflectionData).toBe(true);
+    });
+
+    test('a missing column rejects with the available columns and sends nothing to the worker', async () => {
+        const commandsBefore = commandCentre.commandHistory.length;
+        await expect(
+            moorhenInstance.files.loadMtz('/data/5a3h_sigmaa.mtz', [{ name: 'map', columns: { F: 'FWT', PHI: 'NOPE' } }])
+        ).rejects.toThrow(/map: PHI="NOPE".*Available columns: .*FWT \(F\).*PHWT \(P\)/);
+        expect(commandCentre.commandHistory.length).toBe(commandsBefore);
+    });
+
+    test('missing reflection columns load the map without reflection data', async () => {
+        const result = await moorhenInstance.files.loadMtz('/data/5a3h_sigmaa.mtz', [
+            { name: 'map', columns: { F: 'FWT', PHI: 'PHWT', Fobs: 'F', SigFobs: 'SIGF', FreeR: 'FREE' }, calcStructFact: true },
+        ]);
+        expect(result).toHaveLength(1);
+        const map = moorhenInstance.getMap(result[0].uniqueID);
+        expect(map.hasReflectionData).toBe(false);
+        expect(commandCentre.commandHistory.map((kwargs: any) => kwargs.command)).not.toContain('shim_associate_data_mtz_file_with_map');
+    });
+
+    test('loadMtz without maps matches loadFiles auto-read', async () => {
+        const result = await moorhenInstance.files.loadMtz('/data/auto/5a3h_sigmaa.mtz');
+        expect(result).toHaveLength(2);
+        expect(moorhenInstance.getMap(result[0].uniqueID).isDifference).toBeFalsy();
+        expect(moorhenInstance.getMap(result[1].uniqueID).isDifference).toBeTruthy();
+        expect(MoorhenReduxStore.getState().generalStates.activeMap.uniqueId).toBe(result[0].uniqueID);
+    });
+});

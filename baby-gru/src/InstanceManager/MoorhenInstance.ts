@@ -9,6 +9,8 @@ import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } fro
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/FileLoading";
+import { loadMtzMaps } from "@/utils/MtzLoading";
+import type { MtzMapRequest } from "@/utils/MtzLoading";
 import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { runPictureWizard } from "@/utils/Representation/PictureWizard";
 import type { PictureWizardType } from "@/utils/Representation/PictureWizard";
@@ -498,6 +500,36 @@ export class MoorhenInstance extends StoreExtension {
                     callbacks.callback(createdObjects as LoadFilesResult, origin ?? "unknown");
                 }
                 return createdObjects as LoadFilesResult;
+            },
+
+            /**
+             * Load one or more maps from a single MTZ file, with explicitly chosen columns and display options.
+             *
+             * The file is fetched once for all maps, and every requested column is checked against its
+             * header before anything is sent to Coot. A missing `F` or `PHI` column rejects the call with a
+             * message listing the available columns; a missing `Fobs`/`SigFobs`/`FreeR` column only gives a
+             * warning, and the map is loaded without reflection data.
+             *
+             * Active map: the first map requested with `active: true` becomes active; otherwise the first
+             * map does, unless a map is already active.
+             *
+             * @param source - A URL or a `File`.
+             * @param maps - The maps to read. If omitted, the maps are detected automatically, exactly as when
+             * the file is passed to `loadFiles`.
+             * @param origin - Optional label forwarded to subscribers registered via `newFilesLoadedCallback`.
+             * @returns A promise resolving to a {@link LoadFilesResult}, one entry per map in request order.
+             * @example
+             * await instance.files.loadMtz("job/output.mtz", [
+             *   { name: "map", columns: { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP", FreeR: "FreeR_flag" }, active: true },
+             *   { name: "diff-map", columns: { F: "DELFWT", PHI: "PHDELWT" }, isDifference: true },
+             * ]);
+             */
+            async loadMtz(source: string | URL | File, maps?: MtzMapRequest[], origin?: string): Promise<LoadFilesResult> {
+                const createdObjects = await loadMtzMaps(moorhenInstance, source, maps);
+                for (const callbacks of Object.values(filesLoadedCallbacks)) {
+                    callbacks.callback(createdObjects, origin ?? "unknown");
+                }
+                return createdObjects;
             },
 
             /**
