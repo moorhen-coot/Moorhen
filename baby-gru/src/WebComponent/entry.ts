@@ -11,3 +11,4 @@ export type {
     MainMenuEntryJSX,
 } from "../components/menu-system/mainMenuConfig";
 export type { LoadFilesResult } from "../InstanceManager/MoorhenInstance";
+export type { MtzMapRequest } from "../utils/MtzLoading";
