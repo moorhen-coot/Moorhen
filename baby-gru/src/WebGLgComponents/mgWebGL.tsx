@@ -6,6 +6,9 @@ import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { setDisplayBuffers, setCanvasSize } from "../store/glRefSlice"
 import { setClipStart, setClipEnd, setFogStart, setFogEnd } from "../store/sceneSettingsSlice"
+import { setOrigin as setStoreOrigin, setZoom as setStoreZoom } from "../store/sceneSettingsSlice"
+import { setQuat as setStoreQuat } from "../store/glRefSlice"
+import { isSilent, viewEcho } from "./viewEcho"
 import { parseAtomInfoLabel, guid, gemmiAtomPairsToCylindersInfo } from '../utils/utils';
 import  { unProject } from './GLU.js';
 
@@ -937,7 +940,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         initGraphicsContext(this)
         attachCanvasListeners(this)
         initGraphics(this)
-        this.unsubscribeCamera = this._camera.controller.subscribe(() => this.echoSlabToStore())
+        this.unsubscribeCamera = this._camera.controller.subscribe(() => {
+            this.echoSlabToStore()
+            this.echoViewToStore()
+        })
     }
 
     componentWillUnmount() {
@@ -973,6 +979,38 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (!same(scene.clipEnd, camera.clipBack)) this.dispatch(setClipEnd(camera.clipBack))
         if (!same(scene.fogStart, slab.fogStart)) this.dispatch(setFogStart(slab.fogStart))
         if (!same(scene.fogEnd, slab.fogEnd)) this.dispatch(setFogEnd(slab.fogEnd))
+    }
+
+    /**
+     * Tell the store where the view ended up.
+     *
+     * The companion to echoSlabToStore, and for the same reason: the camera owns the view, the
+     * store keeps a copy, and the copy has to stay current or MoorhenWebMG's reconciling effect
+     * will see a disagreement and resolve it the wrong way - easing the camera back to a stale
+     * value a moment after something put it somewhere.
+     *
+     * THIS REPLACES A RULE NOBODY COULD KNOW
+     *
+     * The copy used to be kept current by individual movers calling onOriginChanged,
+     * onZoomChanged and onQuatChanged by hand. Every mover written since had to rediscover that
+     * rule by watching the view slide away, and three features found it the hard way. Subscribed
+     * here it applies to any way of moving the camera, including ones not yet written.
+     *
+     * The decision is in viewEcho, so the equality guard that stops the store and the camera
+     * chasing each other can be reasoned about and tested without a renderer.
+     */
+    echoViewToStore() {
+        const state = this.store.getState()
+        const echo = viewEcho(this._camera.controller.state, {
+            origin: state.sceneSettings.origin,
+            quat: state.glRef.quat,
+            zoom: state.sceneSettings.zoom,
+        })
+        if (isSilent(echo)) return
+
+        if (echo.origin) this.dispatch(setStoreOrigin(echo.origin))
+        if (echo.quat) this.dispatch(setStoreQuat(echo.quat))
+        if (echo.zoom !== undefined) this.dispatch(setStoreZoom(echo.zoom))
     }
 
     initializeShaders() : void {

@@ -429,19 +429,6 @@ export function previewMovie(
          * the movie undoing itself.
          */
         restoreView?: boolean;
-        /**
-         * Called once the movie has stopped, while the camera is still held.
-         *
-         * The window between releasing the hold and the caller's own code running is not empty:
-         * MoorhenWebMG's reconciling effect compares the store against the renderer whenever it
-         * runs, and eases the camera back to the store on any disagreement. A caller that waits
-         * for `finished` and only then puts the store in step has already lost that race - the
-         * camera visibly travels to the old view and back again.
-         *
-         * Running here instead closes it. The effect compares at the moment it runs, so once the
-         * store agrees it has nothing to do whenever that turns out to be.
-         */
-        onEnd?: () => void;
     } = {},
 ): PreviewHandle {
 
@@ -473,8 +460,6 @@ export function previewMovie(
         if (done) return;
         done = true;
         if (request) cancelAnimationFrame(request);
-        // Before the release, deliberately. See onEnd.
-        options.onEnd?.();
         hold.release();
         gl.drawScene();
         settle({ drawnFrames, elapsedSeconds: (performance.now() - startedAt) / 1000, stopped });

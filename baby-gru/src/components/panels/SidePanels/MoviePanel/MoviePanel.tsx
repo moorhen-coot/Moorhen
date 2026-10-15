@@ -23,7 +23,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { MoorhenStack } from "@/components/interface-base";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenTextInput } from "@/components/inputs";
 import { MoorhenNumberInput } from "@/components/inputs";
-import { RootState, setOrigin, setQuat, setZoom } from "@/store";
+import { RootState } from "@/store";
 import {
     addObjectToMovie, appendKeyframe, removeKeyframe, removeObjectFromMovie, reorderKeyframe,
     selectKeyframe, setMovieName, spreadSceneFromKeyframe, updateKeyframe, updateMotion,
@@ -86,27 +86,6 @@ export const MoviePanel = () => {
     const segments = document.path.segments;
     const problems = movieProblems(document);
     const movieObjects = animatedObjects(document);
-
-    /**
-     * Leave the store agreeing with where the camera actually is.
-     *
-     * MoorhenWebMG keeps a reconciling effect on [zoom, quat, origin] that compares the store
-     * against the renderer and, on any disagreement, *eases the camera back to the store*. So a
-     * programmatic move that does not update the store does not move the camera: it moves it and
-     * is then animated back a moment later.
-     *
-     * This is the half of the camera migration that has not happened yet. The controller's
-     * `settle` exists to replace that effect with one that defers to whoever is driving, and
-     * nothing calls it yet - so until it does, every mover here has to end with this. One function
-     * rather than two copies, so that it is one thing to delete when settle lands.
-     */
-    const agreeWithCamera = useCallback(() => {
-        const camera = glRef?.current?.cameraController.state;
-        if (!camera) return;
-        dispatch(setOrigin([camera.origin[0], camera.origin[1], camera.origin[2]]));
-        dispatch(setQuat([camera.quat[0], camera.quat[1], camera.quat[2], camera.quat[3]]));
-        dispatch(setZoom(camera.zoom));
-    }, [glRef, dispatch]);
 
     const capture = useCallback(() => {
         if (!hostInputs) return null;
@@ -178,9 +157,6 @@ export const MoviePanel = () => {
             controller.slabPolicy = previousPolicy;
         }
 
-        // After the move rather than before, so that when the reconciling effect runs the store
-        // and the camera already agree and it has nothing to do. See agreeWithCamera.
-        agreeWithCamera();
     };
 
     const play = async () => {
@@ -203,9 +179,6 @@ export const MoviePanel = () => {
                 // and snapping back to wherever Play was pressed reads as the movie undoing
                 // itself.
                 restoreView: false,
-                // While the camera is still held, so the reconciling effect never gets a chance
-                // to see the store disagreeing and ease the view back.
-                onEnd: agreeWithCamera,
                 onProgress: (seconds, total) =>
                     setStatus(`Playing ${seconds.toFixed(1)}s of ${total.toFixed(1)}s`),
             });
