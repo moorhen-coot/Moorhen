@@ -35,6 +35,13 @@ import { modalKeys } from "../../utils/enums";
 import { readGzippedTextFile } from "../../utils/utils";
 import { PreviewHandle, describeEncoderSupport, downloadMovie, previewMovie, recordMovieToMp4, recordSpinToMp4 } from "../../utils/MoorhenMovieSpike";
 import { buildLigandTour } from "../../utils/ligandTour";
+import { MOVIE_EXTENSION, MovieFileError, packMovie, unpackMovie } from "../../utils/movieContainer";
+import { DEFAULT_OUTPUT, documentDuration, documentFrameCount, emptyMovie, movieProblems } from "../../utils/movieDocument";
+import type { MovieDocument } from "../../utils/movieDocument";
+import { movieSceneFrom } from "../../utils/movieSceneSettings";
+import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule";
+import { moorhensession } from "../../protobuf/MoorhenSession";
+import { doDownload } from "../../utils/utils";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
@@ -345,6 +352,140 @@ export const MoorhenDevMenu = () => {
         }
     };
     // --- end MP4 spike ---
+
+    // --- Movie document and .mhm container. Also a harness, but of the real format rather than
+    // the spike's: it exercises movieDocument, movieContainer and the session seam end to end,
+    // so that the panel in #162 is wiring something already known to work. ---
+    const [movieStatus, setMovieStatus] = useState<string>("No movie built yet");
+    const [movieBusy, setMovieBusy] = useState<boolean>(false);
+    // The document under test. A ref rather than state: nothing renders from it except the status
+    // line, which is set explicitly, and a re-render per keystroke of a 1920x1080 movie is waste.
+    const movieRef = useRef<MovieDocument | null>(null);
+    const openMovieInputRef = useRef<HTMLInputElement | null>(null);
+
+    const describeMovie = (document: MovieDocument, prefix: string) => {
+        const problems = movieProblems(document);
+        const summary =
+            `${prefix}: "${document.name}", ${document.path.keyframes.length} keyframes, ` +
+            `${documentDuration(document).toFixed(1)}s, ${documentFrameCount(document)} frames at ` +
+            `${document.output.fps}fps, ${document.output.width}x${document.output.height}`;
+        return problems.length > 0 ? `${summary} - PROBLEMS: ${problems.join("; ")}` : summary;
+    };
+
+    /**
+     * The ligand tour, as a movie document in the saveable format.
+     *
+     * The same path the spike builds, wrapped in the scene and output settings that make it a
+     * document rather than a bare camera path - which is the whole difference between something
+     * that can be previewed and something that can be saved and reopened.
+     */
+    const buildMovieDocument = async () => {
+        const built = await buildCurrentLigandTour();
+        if ("error" in built) {
+            setMovieStatus(built.error);
+            return;
+        }
+
+        const document = emptyMovie(`Ligand tour - ${built.label}`);
+        document.path = built.movie;
+        document.scene = movieSceneFrom(
+            store.getState().sceneSettings,
+            built.glRef.current.cameraController.state.eyeDistance);
+        document.output = { ...DEFAULT_OUTPUT };
+
+        movieRef.current = document;
+        setMovieStatus(describeMovie(document, "Built"));
+    };
+
+    /**
+     * The movie and the scene it was authored against, as one file.
+     *
+     * With the session embedded, because that is the case worth proving: a movie that opens on a
+     * machine which has never seen the data. fetchSession and the protobuf encode here are the
+     * same three lines ManageSession uses to write a .pb, which is what makes the session entry
+     * in the container something loadSessionFromArrayBuffer can read back without ceremony.
+     */
+    const saveMovieFile = async () => {
+        const document = movieRef.current;
+        if (!document) {
+            setMovieStatus("Build a movie first");
+            return;
+        }
+        setMovieBusy(true);
+        try {
+            setMovieStatus("Fetching the session...");
+            const timeCapsule = moorhenInstance.getTimeCapsuleRef().current;
+            const sessionData = await timeCapsule.fetchSession(true);
+            const sessionBytes = moorhensession.Session
+                .encode(moorhensession.Session.fromObject(sessionData)).finish();
+
+            setMovieStatus("Packing...");
+            const blob = await packMovie(
+                { movie: document, session: sessionBytes },
+                { type: "blob", writtenBy: "MoorhenDevMenu" }) as Blob;
+
+            doDownload([blob], `moorhen_movie${MOVIE_EXTENSION}`);
+            setMovieStatus(
+                `Saved ${(blob.size / 1e6).toFixed(2)} MB ` +
+                `(session ${(sessionBytes.length / 1e6).toFixed(2)} MB before compression)`);
+        } catch (err) {
+            console.error(err);
+            setMovieStatus(`Failed: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+            setMovieBusy(false);
+        }
+    };
+
+    /**
+     * A movie file, opened and played.
+     *
+     * The round trip, which is the point of the exercise: if the session restores and the movie
+     * plays over it, the format carries everything it needs to. The session is restored first and
+     * waited for, since previewing a camera path over a scene that is still loading would say
+     * nothing about either.
+     */
+    const openMovieFile = async (file: File) => {
+        setMovieBusy(true);
+        try {
+            setMovieStatus(`Opening ${file.name}...`);
+            const container = await unpackMovie(await file.arrayBuffer());
+            movieRef.current = container.movie;
+
+            if (container.session) {
+                setMovieStatus("Restoring the session the movie was made with...");
+                const status = await MoorhenTimeCapsule.loadSessionFromArrayBuffer(
+                    container.session.buffer as ArrayBuffer, moorhenInstance);
+                if (status === -1) {
+                    setMovieStatus("The movie opened, but its session would not load");
+                    return;
+                }
+            }
+
+            setMovieStatus(describeMovie(container.movie,
+                container.session ? "Opened with its session" : "Opened (no session in the file)"));
+
+            const glRef = videoRecorderRef.current?.glRef;
+            if (!glRef?.current) return;
+            const handle = previewMovie(glRef, container.movie.path, {
+                onProgress: (seconds, total) =>
+                    setMovieStatus(`Playing: ${seconds.toFixed(1)}s of ${total.toFixed(1)}s`),
+            });
+            previewRef.current = handle;
+            await handle.finished;
+            setMovieStatus(describeMovie(container.movie, "Played"));
+        } catch (err) {
+            console.error(err);
+            // A MovieFileError already says which thing was wrong with the file; anything else is
+            // a surprise and deserves to look like one.
+            setMovieStatus(err instanceof MovieFileError
+                ? err.message
+                : `Failed: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+            previewRef.current = null;
+            setMovieBusy(false);
+        }
+    };
+    // --- end movie document harness ---
 
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
@@ -657,6 +798,32 @@ export const MoorhenDevMenu = () => {
                 <MoorhenButton onClick={exportLigandTour} disabled={spinMovieBusy}>
                     {spinMovieBusy ? "Rendering..." : "Export ligand tour as MP4"}
                 </MoorhenButton>
+            </MoorhenStack>
+            <MoorhenStack card>
+                Movie document (.mhm)
+                <span style={{ fontSize: "0.8rem" }}>{movieStatus}</span>
+                <MoorhenButton onClick={buildMovieDocument} disabled={movieBusy}>
+                    Build ligand tour as a movie document
+                </MoorhenButton>
+                <MoorhenButton onClick={saveMovieFile} disabled={movieBusy}>
+                    {movieBusy ? "Working..." : "Save movie with its session (.mhm)"}
+                </MoorhenButton>
+                <MoorhenButton onClick={() => openMovieInputRef.current?.click()} disabled={movieBusy}>
+                    {movieBusy ? "Working..." : "Open a .mhm, restore its session, play it"}
+                </MoorhenButton>
+                <input
+                    ref={openMovieInputRef}
+                    type="file"
+                    accept={MOVIE_EXTENSION}
+                    style={{ display: "none" }}
+                    onChange={event => {
+                        const file = event.target.files?.[0];
+                        // Cleared so that choosing the same file twice still fires a change,
+                        // which is exactly what re-testing a round trip wants to do.
+                        event.target.value = "";
+                        if (file) void openMovieFile(file);
+                    }}
+                />
             </MoorhenStack>
             Origin: x: {origin[0].toFixed(1)} y: {origin[1].toFixed(1)} z: {origin[2].toFixed(1)}
             <MoorhenStack card>
