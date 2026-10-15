@@ -418,7 +418,31 @@ export interface PreviewHandle {
 export function previewMovie(
     glRef: React.RefObject<webGL.MGWebGL>,
     movie: Movie,
-    options: { onProgress?: (seconds: number, total: number) => void } = {},
+    options: {
+        onProgress?: (seconds: number, total: number) => void;
+        /**
+         * Put the view back where it was when the preview started.
+         *
+         * True for a preview button, whose whole contract is "show me this and give me my view
+         * back". False when the playing *is* the work - a movie panel, where landing on the last
+         * keyframe is the point, and being yanked back to wherever Play was pressed looks like
+         * the movie undoing itself.
+         */
+        restoreView?: boolean;
+        /**
+         * Called once the movie has stopped, while the camera is still held.
+         *
+         * The window between releasing the hold and the caller's own code running is not empty:
+         * MoorhenWebMG's reconciling effect compares the store against the renderer whenever it
+         * runs, and eases the camera back to the store on any disagreement. A caller that waits
+         * for `finished` and only then puts the store in step has already lost that race - the
+         * camera visibly travels to the old view and back again.
+         *
+         * Running here instead closes it. The effect compares at the moment it runs, so once the
+         * store agrees it has nothing to do whenever that turns out to be.
+         */
+        onEnd?: () => void;
+    } = {},
 ): PreviewHandle {
 
     const gl = glRef?.current;
@@ -435,7 +459,7 @@ export function previewMovie(
     // accessor logging stack traces on foreign writes, and a count of frames where the camera had
     // moved behind our back - is gone, because a driver makes the thing it was looking for
     // impossible rather than merely unlikely. Reconciliation now defers, by construction.
-    const hold = holdCameraForMovie(gl);
+    const hold = holdCameraForMovie(gl, options.restoreView ?? true);
     hold.play(movie);
 
     let drawnFrames = 0;
@@ -449,6 +473,8 @@ export function previewMovie(
         if (done) return;
         done = true;
         if (request) cancelAnimationFrame(request);
+        // Before the release, deliberately. See onEnd.
+        options.onEnd?.();
         hold.release();
         gl.drawScene();
         settle({ drawnFrames, elapsedSeconds: (performance.now() - startedAt) / 1000, stopped });

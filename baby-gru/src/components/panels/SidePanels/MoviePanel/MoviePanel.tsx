@@ -23,7 +23,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { MoorhenStack } from "@/components/interface-base";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenTextInput } from "@/components/inputs";
 import { MoorhenNumberInput } from "@/components/inputs";
-import { RootState } from "@/store";
+import { RootState, setOrigin, setQuat, setZoom } from "@/store";
 import {
     addObjectToMovie, appendKeyframe, removeKeyframe, removeObjectFromMovie, reorderKeyframe,
     selectKeyframe, setMovieName, spreadSceneFromKeyframe, updateKeyframe, updateMotion,
@@ -34,7 +34,6 @@ import { documentDuration, documentFrameCount, movieProblems } from "@/utils/mov
 import { animatedObjects } from "@/utils/movieEditing";
 import { captureKeyframe } from "@/utils/sceneKeyframe";
 import { fadeableObjects, sceneHostFrom, type NamedFadeable, type SceneHostInputs } from "@/utils/sceneHostAdapter";
-import { holdCameraForMovie } from "@/utils/movieCamera";
 import { previewMovie, type PreviewHandle } from "@/utils/MoorhenMovieSpike";
 import type { Motion } from "@/utils/cameraPath";
 import { SidePanelContainer } from "../utils/SidePanelContainer";
@@ -88,6 +87,27 @@ export const MoviePanel = () => {
     const problems = movieProblems(document);
     const movieObjects = animatedObjects(document);
 
+    /**
+     * Leave the store agreeing with where the camera actually is.
+     *
+     * MoorhenWebMG keeps a reconciling effect on [zoom, quat, origin] that compares the store
+     * against the renderer and, on any disagreement, *eases the camera back to the store*. So a
+     * programmatic move that does not update the store does not move the camera: it moves it and
+     * is then animated back a moment later.
+     *
+     * This is the half of the camera migration that has not happened yet. The controller's
+     * `settle` exists to replace that effect with one that defers to whoever is driving, and
+     * nothing calls it yet - so until it does, every mover here has to end with this. One function
+     * rather than two copies, so that it is one thing to delete when settle lands.
+     */
+    const agreeWithCamera = useCallback(() => {
+        const camera = glRef?.current?.cameraController.state;
+        if (!camera) return;
+        dispatch(setOrigin([camera.origin[0], camera.origin[1], camera.origin[2]]));
+        dispatch(setQuat([camera.quat[0], camera.quat[1], camera.quat[2], camera.quat[3]]));
+        dispatch(setZoom(camera.zoom));
+    }, [glRef, dispatch]);
+
     const capture = useCallback(() => {
         if (!hostInputs) return null;
         return captureKeyframe(sceneHostFrom(hostInputs));
@@ -120,12 +140,30 @@ export const MoviePanel = () => {
      */
     const goTo = (index: number) => {
         const keyframe = keyframes[index];
-        if (!keyframe || !glRef?.current) return;
+        const gl = glRef?.current;
+        if (!keyframe || !gl) return;
         dispatch(selectKeyframe(index));
 
-        const hold = holdCameraForMovie(glRef.current, false);
+        // Through moveCameraTo rather than a movie hold, which is what this used to do and was
+        // wrong twice over.
+        //
+        // A hold *acquires* the camera, and acquiring supersedes whatever was driving it. That is
+        // right for a movie, which is meant to take over, and wrong for a button that should put
+        // the view somewhere and get out of the way - it cancelled any move in flight and left the
+        // camera between owners. moveCameraTo instead declines when another driver is active.
+        //
+        // And its instant branch redraws. The hold did not, so the camera was moved and the screen
+        // was not: the view only caught up when something else happened to cause a frame, which
+        // from the outside looked like the button doing nothing until the mouse entered the canvas.
+        const controller = gl.cameraController;
+        const previousPolicy = controller.slabPolicy;
+        // The keyframe's own slab, not one re-derived from its zoom by the auto policy. The policy
+        // is a plain field that is consulted on the next write, so putting it back straight away
+        // costs nothing here and leaves the user's auto-clip setting in force for whatever they do
+        // next.
+        controller.slabPolicy = { kind: "manual" };
         try {
-            hold.set({
+            gl.moveCameraTo({
                 // Copied element by element: these come out of Redux, which freezes state in
                 // development, and the camera writes its arrays in place.
                 quat: [keyframe.quat[0], keyframe.quat[1], keyframe.quat[2], keyframe.quat[3]],
@@ -135,10 +173,14 @@ export const MoviePanel = () => {
                 clipBack: keyframe.clipBack,
                 fogFront: keyframe.fogFront,
                 fogBack: keyframe.fogBack,
-            });
+            }, { kind: "instant" });
         } finally {
-            hold.release();
+            controller.slabPolicy = previousPolicy;
         }
+
+        // After the move rather than before, so that when the reconciling effect runs the store
+        // and the camera already agree and it has nothing to do. See agreeWithCamera.
+        agreeWithCamera();
     };
 
     const play = async () => {
@@ -156,6 +198,14 @@ export const MoviePanel = () => {
         }
         try {
             const handle = previewMovie(glRef, document.path, {
+                // Stay where the movie ends. The spike's preview button restores the view by
+                // default, which is right for "show me this once"; here the playing is the work,
+                // and snapping back to wherever Play was pressed reads as the movie undoing
+                // itself.
+                restoreView: false,
+                // While the camera is still held, so the reconciling effect never gets a chance
+                // to see the store disagreeing and ease the view back.
+                onEnd: agreeWithCamera,
                 onProgress: (seconds, total) =>
                     setStatus(`Playing ${seconds.toFixed(1)}s of ${total.toFixed(1)}s`),
             });
