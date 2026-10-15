@@ -1,0 +1,724 @@
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { matchesTags, Tags } from "../utils/tags";
+
+export type Position3D = [number, number, number];
+export type Scale3D = [number, number, number];
+export type Matrix4x4 = [number, number, number, number,
+                           number, number, number, number,
+                           number, number, number, number,
+                           number, number, number, number,
+                          ];
+
+interface ThreeDObjectBase {
+    uniqueId: string;
+    origin: Position3D;
+    colour: string;
+    /**
+     * Who made this object, and how it should group. See utils/tags.
+     *
+     * Optional because an object restored from a session saved before this existed has none, and
+     * because an object nobody needs to group does not need one.
+     */
+    tags?: Tags;
+    /**
+     * Whether this may be changed in place.
+     *
+     * Set by whatever owns it - a custom representation, say - to mean "this geometry follows
+     * from something else, so editing it here would only put the two out of step". The API's
+     * `edit` does nothing to a locked item, including to this field, and the drag handles are
+     * not offered for one.
+     *
+     * Deleting is deliberately still allowed. An owner that redraws recreates what it owns, so a
+     * deletion is self-correcting rather than something to defend against, and refusing it would
+     * leave the owner unable to clear its own on redraw.
+     */
+    locked?: boolean;
+    /**
+     * A texture id from the texture registry, multiplied into the object's colour.
+     *
+     * On the base type because carrying a texture is not a property of being a mesh: any shape
+     * whose geometry has a texture coordinate mapping can have one. Shapes whose generator has no
+     * sensible unwrapping ignore it and draw plain, which is most of them - there is no one right
+     * way to unwrap a torus, and an arbitrary choice would be worse than none.
+     *
+     * An id rather than the pixels, because image data has no business in the store: it would be
+     * copied on every reducer pass and written into every session. The consequence is that an id
+     * does not survive a session round trip, and an object whose texture has gone is drawn in its
+     * plain colour rather than failing.
+     */
+    texture?: string;
+}
+
+/**
+ * Shapes that can be drawn as a wireframe rather than as a surface.
+ *
+ * How the wires are found differs by shape. A flat-sided solid has real edges, recovered from the
+ * mesh as its creases (see getWireframe). A curved shape has no creases to recover - every edge of
+ * a sphere's triangulation is one - so its wires are stated parametrically instead, as hoops
+ * following the surface (see getEllipsoidWireframe), which also decouples wire density from
+ * tessellation.
+ *
+ * Deliberately not on ThreeDObjectBase: a disc and a plane are the two shapes left out, because
+ * each has nothing but an outline, so a wireframe of one would throw the shape away rather than
+ * reveal it. An annulus is flat too but has two rims with a surface between them, so it earns a
+ * cage of its own.
+ */
+interface Wireframeable {
+    wireframe: boolean;
+    /**
+     * Tube radius of the wires, in scene units. An absolute thickness rather than a proportion of
+     * the shape, so that a large object and a small one wireframed side by side look drawn with
+     * the same pen.
+     *
+     * Optional because an object restored from a session saved before this existed has no value
+     * for it, in which case DEFAULT_WIREFRAME_RADIUS stands in.
+     */
+    wireframe_radius?: number;
+}
+
+/**
+ * The tube radius used when an object does not give one, in scene units. Chosen to match what the
+ * wires of a football of scale 16 came out as when thickness was 2% of the shape's own radius,
+ * which is where this started.
+ */
+export const DEFAULT_WIREFRAME_RADIUS = 0.16;
+
+export interface SphereObject extends ThreeDObjectBase, Wireframeable {
+    type: "sphere";
+    radius: number;
+}
+
+export interface CylinderObject extends ThreeDObjectBase, Wireframeable {
+    type: "cylinder";
+    end: Position3D;
+    radius: number;
+}
+
+export interface ConeObject extends ThreeDObjectBase, Wireframeable {
+    type: "cone";
+    top: Position3D;
+    radius: number;
+}
+
+// The shapes below are positioned like the closed solids rather than like a cylinder: `origin` is
+// the centre of the shape and `orientation` turns it, with `height` giving its extent along the
+// shape's own z axis. Defining them by a start and end point would pin down that axis but leave
+// the rotation about it unspecified, so there would be no way to turn a square prism on the spot.
+export interface FrustumObject extends ThreeDObjectBase, Wireframeable {
+    type: "frustum";
+    orientation: Matrix4x4;
+    bottom_radius: number;
+    top_radius: number;
+    height: number;
+}
+
+export interface FlatSidedFrustumObject extends ThreeDObjectBase, Wireframeable {
+    type: "flatfrustum";
+    orientation: Matrix4x4;
+    bottom_radius: number;
+    top_radius: number;
+    height: number;
+    n_sides: number;
+}
+
+export interface PrismObject extends ThreeDObjectBase, Wireframeable {
+    type: "prism";
+    orientation: Matrix4x4;
+    radius: number;
+    height: number;
+    n_sides: number;
+}
+
+export interface PyramidObject extends ThreeDObjectBase, Wireframeable {
+    type: "pyramid";
+    orientation: Matrix4x4;
+    radius: number;
+    height: number;
+    n_sides: number;
+}
+
+export interface CubeObject extends ThreeDObjectBase, Wireframeable {
+    type: "cube";
+    orientation: Matrix4x4;
+    scale: number;
+}
+
+export interface CuboidObject extends ThreeDObjectBase, Wireframeable {
+    type: "cuboid";
+    orientation: Matrix4x4;
+    scalexyz: Scale3D;
+}
+
+/** A sphere with independent x, y and z semi-axes; equal axes give a sphere. */
+export interface EllipsoidObject extends ThreeDObjectBase, Wireframeable {
+    type: "ellipsoid";
+    orientation: Matrix4x4;
+    scalexyz: Scale3D;
+}
+
+/**
+ * A flat rectangle. The x and y components of `scalexyz` are its side lengths; z is unused, since
+ * the shape has no thickness.
+ */
+export interface PlaneObject extends ThreeDObjectBase {
+    type: "plane";
+    orientation: Matrix4x4;
+    scalexyz: Scale3D;
+}
+
+/** A flat filled circle. */
+export interface DiscObject extends ThreeDObjectBase {
+    type: "disc";
+    orientation: Matrix4x4;
+    radius: number;
+}
+
+/** A flat ring: a disc with a concentric hole. `radius` is the outer radius. */
+export interface AnnulusObject extends ThreeDObjectBase, Wireframeable {
+    type: "annulus";
+    orientation: Matrix4x4;
+    radius: number;
+    inner_radius: number;
+}
+
+export interface TetrahedronObject extends ThreeDObjectBase, Wireframeable {
+    type: "tetrahedron";
+    orientation: Matrix4x4;
+    scale: number;
+}
+
+export interface OctahedronObject extends ThreeDObjectBase, Wireframeable {
+    type: "octahedron";
+    orientation:Matrix4x4;
+    scale: number;
+}
+
+export interface DodecahedronObject extends ThreeDObjectBase, Wireframeable {
+    type: "dodecahedron";
+    orientation: Matrix4x4;
+    scale: number;
+}
+
+export interface IcosahedronObject extends ThreeDObjectBase, Wireframeable {
+    type: "icosahedron";
+    orientation: Matrix4x4;
+    scale: number;
+}
+
+export interface FootballObject extends ThreeDObjectBase, Wireframeable {
+    type: "football";
+    orientation: Matrix4x4;
+    scale: number;
+}
+
+/** A truncated octahedron: 8 hexagons and 6 squares. A BCC periodic boundary cell. */
+export interface TruncatedOctahedronObject extends ThreeDObjectBase, Wireframeable {
+    type: "truncatedoctahedron";
+    orientation: Matrix4x4;
+    scale: number;
+}
+
+/** A cuboctahedron: 8 triangles and 6 squares - a cube with its corners cut back. */
+export interface CuboctahedronObject extends ThreeDObjectBase, Wireframeable {
+    type: "cuboctahedron";
+    orientation: Matrix4x4;
+    scale: number;
+}
+
+/** A rhombic dodecahedron: 12 rhombic faces. An FCC periodic boundary cell. */
+export interface RhombicDodecahedronObject extends ThreeDObjectBase, Wireframeable {
+    type: "rhombicdodecahedron";
+    orientation: Matrix4x4;
+    scale: number;
+}
+
+/** A cylinder with hemispherical ends. `height` is the total end-to-end length. */
+export interface CapsuleObject extends ThreeDObjectBase, Wireframeable {
+    type: "capsule";
+    orientation: Matrix4x4;
+    radius: number;
+    height: number;
+}
+
+/**
+ * A tube following a helical path - an arc that rises. `major_radius` is the coil radius,
+ * `minor_radius` the tube radius, `height` the total rise and `sweep_angle` the total angle in
+ * degrees, so 720 is two turns.
+ */
+export interface HelixObject extends ThreeDObjectBase, Wireframeable {
+    type: "helix";
+    orientation: Matrix4x4;
+    major_radius: number;
+    minor_radius: number;
+    height: number;
+    sweep_angle: number;
+}
+
+/**
+ * A segment of a torus. `sweep_angle` is in degrees; a full 360 gives a closed ring. The
+ * orientation decides where the arc starts, so there is no separate start angle.
+ */
+export interface ArcObject extends ThreeDObjectBase, Wireframeable {
+    type: "arc";
+    orientation: Matrix4x4;
+    major_radius: number;
+    minor_radius: number;
+    sweep_angle: number;
+}
+
+/**
+ * A tube following an explicit list of points - the one shape whose geometry is data rather than
+ * parameters, and so the one that can hold anything: a CA trace, a curve through other objects,
+ * an imported path.
+ *
+ * It stores exactly what tubesAlongPaths consumes and nothing more. `points` is flat x, y, z
+ * triples relative to `origin`, and `run_starts` the point index at which each separate strand
+ * begins, so one path can hold several disconnected runs.
+ *
+ * Deliberately has no orientation, unlike every other shape here. A rotation is already
+ * expressible in the points, so storing one as well would be two ways of saying where the
+ * geometry is, and every consumer would have to remember to combine them - the sort of
+ * redundancy that is only ever noticed when one of them forgets. How the points were arrived at - from
+ * which molecule, smoothed or raw - is deliberately not recorded: that belongs to whatever
+ * generated them, and baking it in here would make the primitive about CA traces instead of
+ * about paths.
+ *
+ * Not Wireframeable: a path is already a line, so there is nothing to reduce it to.
+ */
+export interface PathObject extends ThreeDObjectBase {
+    type: "path";
+    points: number[];
+    run_starts: number[];
+    radius: number;
+    /**
+     * Bore radius. Zero draws a solid rod; anything between zero and `radius` makes it a pipe,
+     * with a lit surface down the inside and flat rings closing the ends. Shares the protobuf
+     * field the annulus uses, since it means the same thing.
+     */
+    inner_radius: number;
+    /**
+     * How many stored points make up one hoverable section, so that smoothing does not change
+     * what a section means: a CA trace splined four ways still highlights one residue at a time,
+     * while a hand-built path highlights point to point at a stride of 1.
+     */
+    point_stride: number;
+    /**
+     * One opaque label per section, and what scheme they are written in.
+     *
+     * Nothing in the 3D object code reads these - not the geometry, not the draw path, not the
+     * pick test. They are carried from whatever generated the path through to whatever consumes
+     * a hover, and only the two ends agree on what they mean. That is what keeps a path a path:
+     * the CA generator can label its sections with atom identifiers without the primitive
+     * acquiring any notion of an atom.
+     *
+     * `tag_kind` names the scheme so a consumer can recognise its own and ignore the rest.
+     */
+    section_tags: string[];
+    tag_kind: string;
+}
+
+export interface TorusObject extends ThreeDObjectBase, Wireframeable {
+    type: "torus";
+    orientation: Matrix4x4;
+    major_radius: number;
+    minor_radius: number;
+}
+
+/**
+ * The types that extend Wireframeable. Kept as a runtime list as well as a type so that the UI
+ * and the draw code can ask "does this shape take a wireframe?" without relying on the field
+ * being present on the object: objects restored from a session saved before `wireframe` existed
+ * have no such key, and a `"wireframe" in obj` test would exclude them for ever.
+ */
+export const WIREFRAMEABLE_TYPES = [
+    "sphere",
+    "ellipsoid",
+    "cylinder",
+    "cone",
+    "frustum",
+    "torus",
+    "arc",
+    "helix",
+    "capsule",
+    "annulus",
+    "flatfrustum",
+    "prism",
+    "pyramid",
+    "cube",
+    "cuboid",
+    "tetrahedron",
+    "octahedron",
+    "dodecahedron",
+    "icosahedron",
+    "football",
+    "truncatedoctahedron",
+    "cuboctahedron",
+    "rhombicdodecahedron"
+] as const;
+
+export type WireframeableObjectType = typeof WIREFRAMEABLE_TYPES[number];
+
+export const isWireframeableType = (type: string): type is WireframeableObjectType =>
+    (WIREFRAMEABLE_TYPES as readonly string[]).includes(type);
+
+/**
+ * A mesh given as geometry rather than as parameters.
+ *
+ * Every other shape here is described and built: a sphere is a radius, a cuboid three lengths.
+ * This one carries its own triangles, so it can hold anything - a glTF import, a surface from
+ * some other program, geometry generated by a script.
+ *
+ * It is the one shape that does NOT go through the mesh instancer, and the reason is colour.
+ * Instancing gives one colour per instance, which is right for a thousand identical spheres and
+ * wrong for a mesh whose vertices are individually coloured. So a mesh is emitted as a plain
+ * buffer with its own per-vertex colours, the same way a molecular surface or a cavity is, and
+ * is picked as one whole object by the same machinery.
+ *
+ * Vertices are in the mesh's own frame; `origin` places it in the scene and `scale` sizes it,
+ * which is what lets a file in some other unit be made to fit without rewriting its numbers.
+ */
+/**
+ * One piece of a mesh, drawn with one texture.
+ *
+ * The same fields a single-piece mesh keeps on the object itself, which is what lets `meshParts`
+ * present both as a list and spare every consumer from caring which it was given.
+ */
+export interface MeshPart {
+    /** Flat x,y,z per vertex. */
+    vertices: number[];
+    /** Triangle indices into this part's own `vertices` - three per triangle. */
+    indices: number[];
+    /** Flat x,y,z per vertex. Computed from the faces when absent. */
+    normals?: number[];
+    /** Flat r,g,b,a per vertex, each 0 to 1. The object's own colour when absent. */
+    colours?: number[];
+    /** Flat u,v per vertex. Ignored unless there is exactly one pair per vertex. */
+    texCoords?: number[];
+    /** A texture id. The object's own texture when absent. */
+    texture?: string;
+}
+
+export interface MeshObject extends ThreeDObjectBase {
+    type: "mesh";
+    /** Flat x,y,z per vertex. */
+    vertices: number[];
+    /** Triangle indices into `vertices` - three per triangle. */
+    indices: number[];
+    /**
+     * Flat x,y,z per vertex. Computed from the faces when absent, which is what a file with no
+     * NORMAL attribute needs.
+     */
+    normals?: number[];
+    /**
+     * Flat r,g,b,a per vertex, each 0 to 1. When absent every vertex takes the object's own
+     * `colour`, so a mesh with no colours of its own is still recolourable as a unit.
+     */
+    colours?: number[];
+    /** Uniform scale applied about the mesh's own origin. Defaults to 1. */
+    scale?: number;
+    /**
+     * The mesh in several pieces, each with its own texture.
+     *
+     * For an import whose geometry is not all drawn the same way. A glTF primitive has exactly
+     * one material and a texture hangs off a material, so a file with fifteen of them cannot be
+     * one piece - but it should still be one object to select, centre on, recolour and delete,
+     * which is what the parts sit inside rather than becoming objects of their own.
+     *
+     * When this is present the flat fields above are not read: the object is its parts. Use
+     * `meshParts` rather than testing for it, so that a one-piece mesh and a many-piece one are
+     * the same shape to everything downstream.
+     */
+    parts?: MeshPart[];
+    /**
+     * Flat u,v per vertex. Ignored unless there is exactly one pair per vertex.
+     *
+     * Only a mesh carries its own coordinates, because only a mesh carries its own geometry. The
+     * described shapes get theirs from their generator, where one exists.
+     *
+     * (0,0) is the top-left of the image, which is glTF's convention and the one the texture
+     * registry uploads to match.
+     */
+    texCoords?: number[];
+}
+
+export type ThreeDObject =
+            | SphereObject
+            | CylinderObject
+            | ConeObject
+            | FrustumObject
+            | FlatSidedFrustumObject
+            | PrismObject
+            | PyramidObject
+            | CubeObject
+            | CuboidObject
+            | EllipsoidObject
+            | PlaneObject
+            | DiscObject
+            | AnnulusObject
+            | ArcObject
+            | CapsuleObject
+            | HelixObject
+            | TetrahedronObject
+            | OctahedronObject
+            | DodecahedronObject
+            | IcosahedronObject
+            | FootballObject
+            | TruncatedOctahedronObject
+            | CuboctahedronObject
+            | RhombicDodecahedronObject
+            | TorusObject
+            | PathObject
+            | MeshObject;
+
+/**
+ * Where an object sits, for centring the view on it or hanging handles off it.
+ *
+ * Every shape carries an origin, and for all but three that is its centre by construction. A
+ * cylinder and a cone are pinned by their two end points instead, and a path's points are spread
+ * around its origin and have to be averaged. No rotation enters into it: a path has no
+ * orientation, its points being the whole of where it is.
+ */
+/**
+ * A mesh as a list of parts, whether or not it was described as one.
+ *
+ * A one-piece mesh is its flat fields read as a single part. Everything that walks a mesh goes
+ * through here, so nothing downstream has to ask which form it was handed - and a mesh that was
+ * one piece behaves exactly as it did before parts existed.
+ *
+ * A part's own texture wins over the object's, so a multi-material import can set them per part
+ * while a plain one sets a single texture on the object.
+ */
+export const meshParts = (obj: MeshObject): MeshPart[] => {
+    if (obj.parts && obj.parts.length > 0) {
+        return obj.parts.map(part => ({ ...part, texture: part.texture ?? obj.texture }));
+    }
+    return [{
+        vertices: obj.vertices,
+        indices: obj.indices,
+        normals: obj.normals,
+        colours: obj.colours,
+        texCoords: obj.texCoords,
+        texture: obj.texture,
+    }];
+};
+
+export const centreOfObject = (obj: ThreeDObject): [number, number, number] => {
+    const midpoint = (a: number[], b: number[]): [number, number, number] =>
+        [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+
+    if (obj.type === "cylinder") return midpoint(obj.origin, obj.end);
+    if (obj.type === "cone") return midpoint(obj.origin, obj.top);
+    if (obj.type === "mesh") {
+        // The mean vertex over every part, so centring goes to the middle of the mesh rather than
+        // to its placement point, which for an imported file is usually nowhere near it. Over
+        // every part because the parts are one object: centring on the first material's geometry
+        // would put a fifteen-material model off to one side of itself.
+        const totals = [0, 0, 0];
+        let count = 0;
+        for (const part of meshParts(obj)) {
+            for (let i = 0; i + 2 < part.vertices.length; i += 3) {
+                totals[0] += part.vertices[i];
+                totals[1] += part.vertices[i + 1];
+                totals[2] += part.vertices[i + 2];
+                count++;
+            }
+        }
+        if (count > 0) {
+            const scale = obj.scale ?? 1;
+            return [0, 1, 2].map(i => obj.origin[i] + (totals[i] / count) * scale) as [number, number, number];
+        }
+    }
+    if (obj.type === "path" && obj.points.length >= 3) {
+        const count = obj.points.length / 3;
+        const mean = [0, 1, 2].map(
+            c => obj.points.reduce((total, x, i) => (i % 3 === c ? total + x : total), 0) / count
+        );
+        return [0, 1, 2].map(i => obj.origin[i] + mean[i]) as [number, number, number];
+    }
+    return [...obj.origin];
+};
+
+/**
+ * Roughly how far an object reaches from its centre.
+ *
+ * Only ever used to keep something else clear of it - the manipulation handles - so it errs
+ * generously and does not trouble itself with exact bounds. A closed polyhedron is normalised to
+ * a circumradius of half its scale; a box reaches to its corner, which is further than its face.
+ */
+export const extentOfObject = (obj: ThreeDObject): number => {
+    const largest = (values: number[]) => Math.max(...values.map(Math.abs));
+    const CORNER = Math.sqrt(3) / 2;
+
+    switch (obj.type) {
+        case "sphere":
+        case "disc":
+            return obj.radius;
+        case "annulus":
+            return obj.radius;
+        case "cylinder":
+            return Math.hypot(...obj.end.map((c, i) => (c - obj.origin[i]) / 2)) + obj.radius;
+        case "cone":
+            return Math.hypot(...obj.top.map((c, i) => (c - obj.origin[i]) / 2)) + obj.radius;
+        case "frustum":
+        case "flatfrustum":
+            return Math.max(obj.bottom_radius, obj.top_radius, obj.height / 2);
+        case "prism":
+        case "pyramid":
+            return Math.max(obj.radius, obj.height / 2);
+        case "capsule":
+            return Math.max(obj.height / 2, obj.radius);
+        case "torus":
+        case "arc":
+            return obj.major_radius + obj.minor_radius;
+        case "helix":
+            return Math.max(obj.major_radius + obj.minor_radius, obj.height / 2);
+        case "cube":
+            return obj.scale * CORNER;
+        case "cuboid":
+            return largest(obj.scalexyz) * CORNER;
+        case "ellipsoid":
+        case "plane":
+            return largest(obj.scalexyz);
+        case "path": {
+            const centre = centreOfObject(obj);
+            let furthest = 0;
+            for (let i = 0; i + 2 < obj.points.length; i += 3) {
+                furthest = Math.max(furthest, Math.hypot(
+                    obj.origin[0] + obj.points[i] - centre[0],
+                    obj.origin[1] + obj.points[i + 1] - centre[1],
+                    obj.origin[2] + obj.points[i + 2] - centre[2]
+                ));
+            }
+            return furthest + obj.radius;
+        }
+        case "mesh": {
+            // The furthest vertex from the centre. Linear in the size of the mesh, where every
+            // other case here is arithmetic on a handful of numbers - but it is only asked for
+            // the object the handles are currently on, so it is paid once per selection rather
+            // than once per object per frame. Worth revisiting if that ever stops being true.
+            const centre = centreOfObject(obj);
+            const scale = obj.scale ?? 1;
+            let furthest = 0;
+            for (const part of meshParts(obj)) {
+                for (let i = 0; i + 2 < part.vertices.length; i += 3) {
+                    furthest = Math.max(furthest, Math.hypot(
+                        obj.origin[0] + part.vertices[i] * scale - centre[0],
+                        obj.origin[1] + part.vertices[i + 1] * scale - centre[1],
+                        obj.origin[2] + part.vertices[i + 2] * scale - centre[2]
+                    ));
+                }
+            }
+            return furthest;
+        }
+        default:
+            // The closed polyhedra, all normalised to a circumradius of half their scale.
+            return ("scale" in obj ? obj.scale : 1) / 2;
+    }
+};
+
+/**
+ * The shapes that have no orientation, because something else already says which way they face.
+ *
+ * A sphere looks the same whichever way it is turned; a cylinder and a cone are pinned by their
+ * two end points; a path's points are the whole of where it is and how it lies.
+ *
+ * Kept as the short list rather than the long one, since almost everything does have an
+ * orientation and a list of twenty-odd would be the easier of the two to let fall out of date.
+ */
+const UNORIENTED_TYPES = ["sphere", "cylinder", "cone", "path"] as const;
+
+/**
+ * Whether a shape has an orientation to turn, and so is worth giving rotation handles.
+ *
+ * Decided by the type, not by whether the object happens to carry the field - the same reason
+ * `wireframe` is decided by WIREFRAMEABLE_TYPES. An object restored from a session saved before
+ * a field was removed still has it, and `"orientation" in obj` believed it: a path from an old
+ * session came back with rotation rings that turned an orientation nothing reads, since the path
+ * branch of the draw code passes the identity regardless. Asking the type cannot be fooled by
+ * stale data in either direction.
+ */
+export const hasOrientation = (obj: ThreeDObject): boolean =>
+    !(UNORIENTED_TYPES as readonly string[]).includes(obj.type);
+
+const initialState: {
+    objects: ThreeDObject[];
+
+} = {
+    objects: []
+};
+
+const threeDObjectsSlice = createSlice({
+    name: "threeDObjects",
+    initialState: initialState,
+    reducers: {
+
+        addObject: (state, action: PayloadAction<ThreeDObject>) => {
+            state.objects.push(action.payload);
+        },
+        removeObject: (state, action: PayloadAction<ThreeDObject>) => {
+            state.objects = state.objects.filter(
+                item => item.uniqueId !== action.payload.uniqueId
+            );
+        },
+        updateObject: (state, action: PayloadAction<ThreeDObject>) => {
+            const index = state.objects.findIndex(
+                obj => obj.uniqueId === action.payload.uniqueId
+            );
+            if (index !== -1) {
+                // The lock is enforced here rather than only in the public API, because this is
+                // the one place an object changes: the objects dialog dispatches this directly,
+                // and so could anything added later. A rule checked at every caller is a rule
+                // that gets missed by the next caller.
+                //
+                // `locked` is not exempt from itself, so nothing unlocks an object in place;
+                // whatever owns it deletes and recreates, which is what a redraw does anyway.
+                if (state.objects[index].locked) {
+                    return;
+                }
+                state.objects[index] = action.payload;
+            }
+        },
+        removeObjectById: (state, action: PayloadAction<string>) => {
+            state.objects = state.objects.filter(
+                item => item.uniqueId !== action.payload
+            );
+        },
+        /**
+         * Remove every object carrying all of the given tags.
+         *
+         * Deliberately carries no export marker for scripts/CreateStoreExport.py. 3D objects
+         * reach the public API through the curated `instance.object` namespace rather than
+         * through generated per-reducer methods, so that there is one name for them, not two.
+         *
+         * The marker is not written out here even as prose: the generator looks for it anywhere
+         * in a line, so naming it inside a comment is enough to have the comment generated as
+         * though it were a reducer.
+         *
+         * An empty query removes nothing. matchesTags({}, {}) is true, which is what you want
+         * from an optional filter and emphatically not what you want from a remover; emptyObjects
+         * is how to mean all of them.
+         */
+        removeObjectsByTag: (state, action: PayloadAction<Tags>) => {
+            const query = action.payload;
+            if (!query || Object.keys(query).length === 0) {
+                return;
+            }
+            state.objects = state.objects.filter(item => !matchesTags(item, query));
+        },
+        emptyObjects: state => {
+            state.objects = []
+        },
+    }
+});
+
+export const {
+    addObject,
+    removeObject,
+    removeObjectById,
+    removeObjectsByTag,
+    updateObject,
+    emptyObjects,
+
+} = threeDObjectsSlice.actions;
+
+export default threeDObjectsSlice.reducer;

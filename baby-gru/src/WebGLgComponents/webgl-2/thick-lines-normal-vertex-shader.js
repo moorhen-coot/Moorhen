@@ -20,6 +20,16 @@ var thick_lines_normal_vertex_shader_source = `#version 300 es\n
 
     out float vHighlight;
 
+    // Only to satisfy the fragment shader, which is shared with the mesh programs and declares a
+    // matching input for base colour texturing. A fragment input with no vertex output of the
+    // same name and type is a link-time error in GLSL ES 3.0, and leaving this out broke this
+    // program - not the mesh ones - the moment the fragment shader gained the input.
+    //
+    // Lit thick lines are not textured and are not meant to be: the texture work is for the mesh
+    // and instanced-mesh paths. Zero here, and the fragment shader never samples because
+    // hasBaseColourTexture is false for anything that is not a textured mesh sub-buffer.
+    out lowp vec2 vTexture;
+
     void main(void) {
 
         vec4 theVert = aVertexPosition;
@@ -30,6 +40,7 @@ var thick_lines_normal_vertex_shader_source = `#version 300 es\n
         vec3 lineY = lineSize * normalize(cross(aVertexNormal,screenZ));
 
         gl_Position =  uPMatrix * vec4(lineY+aVertexPosition.xyz,1.0);
+        vTexture = vec2(0.0, 0.0);
         vColor = aVertexColour;
         vNormal = -aVertexRealNormal;
         if(dot(vNormal,screenZ)<0.0)
