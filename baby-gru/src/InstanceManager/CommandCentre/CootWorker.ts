@@ -618,6 +618,19 @@ const stringArrayToJSArray = (stringArray: emscriptem.vector<string>) => {
     return returnResult;
 }
 
+const fscResultToJSArray = (numberPairsVector: emscriptem.vector<libcootApi.PairType<number, number>>) : {x:number,y:number}[] => {
+    const res = []
+    const arrSize = numberPairsVector.size()
+    for(let i = 0; i < arrSize; i++) {
+        const resPair = numberPairsVector.get(i)
+        const first = resPair.first
+        const second = resPair.second
+        res.push({x:first,y:second})
+    }
+    numberPairsVector.delete()
+    return res
+}
+
 
 /**
  * Read an exported mesh file back out of the module filesystem, and unlink it.
@@ -1712,6 +1725,9 @@ const doCootCommand = (messageData: {
             case 'mmrrcc_stats':
                 returnResult = mmrrccStatsToJSArray(cootResult)
                 break;
+            case 'fsc_result':
+                returnResult = fscResultToJSArray(cootResult)
+                break;
             case 'colour_rules':
                 returnResult = colourRulesToJSArray(cootResult)
                 break;
@@ -2095,7 +2111,32 @@ onmessage = function (e) {
     }
 
     if (e.data.message === 'coot_command') {
-        const result = doCootCommand(e.data)
-        postMessage(result)
+        // doCootCommand has its own try/catch, but anything thrown outside it --
+        // including a wasm trap that leaves the module aborted, or a result that
+        // cannot be structured-cloned -- would otherwise leave this message with
+        // no reply at all, and the caller's promise pending for ever.
+        let result
+        try {
+            result = doCootCommand(e.data)
+        } catch (err) {
+            result = {
+                messageId: e.data.messageId,
+                myTimeStamp: e.data.myTimeStamp,
+                message: e.data.message,
+                consoleMessage: `EXCEPTION RAISED IN ${e.data.command}, ${err}`,
+                result: { status: 'Exception' },
+            }
+        }
+        try {
+            postMessage(result)
+        } catch (err) {
+            postMessage({
+                messageId: e.data.messageId,
+                myTimeStamp: e.data.myTimeStamp,
+                message: e.data.message,
+                consoleMessage: `FAILED TO POST RESULT OF ${e.data.command}, ${err}`,
+                result: { status: 'Exception' },
+            })
+        }
     }
 }
