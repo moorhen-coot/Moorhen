@@ -1372,7 +1372,7 @@ const describeError = (err: any): string => {
         return message.filter(Boolean).join(': ')
     }
     if (typeof message === 'string' && message.length > 0) {
-        return message
+        return err?.name ? `${err.name}: ${message}` : message
     }
     return String(err)
 }
