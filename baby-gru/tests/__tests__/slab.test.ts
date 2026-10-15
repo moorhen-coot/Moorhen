@@ -9,6 +9,7 @@
  */
 import { describe, expect, it } from "@jest/globals";
 import { clipOffsets, fogOffsets, slabFromCamera, SlabSource } from "../../src/WebGLgComponents/slab";
+import { CameraController } from "../../src/WebGLgComponents/cameraController";
 
 /** What set_clip_range and set_fog_range did, copied from mgWebGL before this change. */
 const asTheRendererDidIt = (eyeDistance: number, clipStart: number, clipEnd: number, fogStart: number, fogEnd: number) => ({
@@ -97,5 +98,60 @@ describe("moving the eye", () => {
         expect(far.fogStart - far.clipPlane1W).toBeCloseTo(near.fogStart - near.clipPlane1W, 10);
         expect(far.fogStart).toBe(392);   // still 8 in front of the centre
         expect(near.fogStart).toBe(242);  // likewise
+    });
+});
+
+/**
+ * When the auto policy is allowed to act.
+ *
+ * The setting is "reset clip and fog on zoom", and the review of the camera PR found that it had
+ * quietly become "reset clip and fog on anything at all". That made three ways of setting the slab
+ * by hand - the keyboard shortcuts, the scene-slider handles and the scripting API - accept a
+ * value and overwrite it in the same breath, with the keyboard shortcut still raising its toast.
+ */
+describe("the auto slab policy", () => {
+    const auto = { kind: "auto" as const, fieldDepthFront: 8, fieldDepthBack: 21 };
+    const start = {
+        quat: [0, 0, 0, 1] as [number, number, number, number],
+        origin: [0, 0, 0] as [number, number, number],
+        zoom: 1, eyeDistance: 250,
+        clipFront: 8, clipBack: 21, fogFront: 8, fogBack: 21,
+    };
+
+    it("re-derives the slab when the zoom changes", () => {
+        const controller = new CameraController(start, auto);
+        controller.writeLive({ zoom: 2 });
+        expect(controller.state.clipFront).toBeCloseTo(16, 6);
+        expect(controller.state.clipBack).toBeCloseTo(42, 6);
+    });
+
+    it("leaves a hand-set clip alone when the zoom has not moved", () => {
+        // The keyboard shortcuts, the slider handles and the scripting API all land here.
+        const controller = new CameraController(start, auto);
+        controller.writeLive({ clipFront: 3, clipBack: 5 });
+        expect(controller.state.clipFront).toBe(3);
+        expect(controller.state.clipBack).toBe(5);
+    });
+
+    it("leaves the slab alone when the camera only rotates", () => {
+        // turnBy writes like anything else, so an unguarded policy re-derived on every drag event.
+        const controller = new CameraController(start, auto);
+        controller.writeLive({ clipFront: 3 });
+        controller.turnBy([0, 0.3827, 0, 0.9239]);
+        expect(controller.state.clipFront).toBe(3);
+    });
+
+    it("lets an explicit slab win even when the zoom moves in the same write", () => {
+        // Someone naming clip and zoom together is not asking for clip to be derived from zoom.
+        const controller = new CameraController(start, auto);
+        controller.writeLive({ zoom: 4, clipFront: 3, clipBack: 5 });
+        expect(controller.state.clipFront).toBe(3);
+        expect(controller.state.zoom).toBe(4);
+    });
+
+    it("still does nothing under a manual policy", () => {
+        const controller = new CameraController(start, { kind: "manual" });
+        controller.writeLive({ zoom: 2 });
+        expect(controller.state.clipFront).toBe(8);
     });
 });

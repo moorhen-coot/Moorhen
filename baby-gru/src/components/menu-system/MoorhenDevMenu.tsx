@@ -2,7 +2,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
 import { v4 as uuidv4 } from "uuid";
 import { newVector } from "../../utils/vectorFactories";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { setOrigin } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
 import { useMoorhenInstance, usePaths } from "../../InstanceManager";
@@ -33,8 +33,6 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 
 import { readGzippedTextFile } from "../../utils/utils";
-import { PreviewHandle, describeEncoderSupport, downloadMovie, previewMovie, recordMovieToMp4, recordSpinToMp4 } from "../../utils/MoorhenMovieSpike";
-import { buildLigandTour } from "../../utils/ligandTour";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
@@ -166,181 +164,9 @@ const addTwoPartMeshTo = (moorhenInstance: ReturnType<typeof useMoorhenInstance>
 };
 
 export const MoorhenDevMenu = () => {
-    // --- MP4 spike. See utils/MoorhenMovieSpike.ts; this is a harness, not a feature. ---
-    const [spinMovieStatus, setSpinMovieStatus] = useState<string>("");
-    const [spinMovieBusy, setSpinMovieBusy] = useState<boolean>(false);
-    // The ScreenRecorder is borrowed purely because it already holds glRef; the spike needs the
-    // WebGL component and nothing else, and this avoids threading a new ref through for a test.
-    const videoRecorderRef = useMoorhenInstance().getVideoRecorderRef();
-    // Read, not subscribed, for both of the things below that want it: the movie wants the values
-    // at the moment the button is pressed, and the buffer report is one-shot - selecting the
-    // buffer list would re-render this menu every time any of them changed.
+    // Read, not subscribed: the buffer report is one-shot, and selecting the buffer list would
+    // re-render this menu every time any of them changed.
     const store = useStore<RootState>();
-    // A running preview, so the same button can stop it.
-    const previewRef = useRef<PreviewHandle | null>(null);
-    // Lets the canvas be watched during an export, to judge whether it still lurches.
-    const [seeThroughCover, setSeeThroughCover] = useState<boolean>(false);
-
-    const checkEncoderSupport = async () => {
-        const glRef = videoRecorderRef.current?.glRef;
-        const canvas = glRef?.current?.getCanvasRef()?.current;
-        if (!canvas) {
-            setSpinMovieStatus("No canvas yet");
-            return;
-        }
-        // Mediabunny names codec families, not profile/level strings - it picks those itself.
-        const codecs = ["avc", "hevc", "vp9", "av1", "vp8"] as const;
-        const lines: string[] = [];
-        for (const codec of codecs) {
-            const { detail } = await describeEncoderSupport(canvas.width, canvas.height, codec);
-            lines.push(detail);
-        }
-        console.log(lines.join("\n"));
-        setSpinMovieStatus(`${canvas.width}x${canvas.height}: see console for ${codecs.length} codecs`);
-    };
-
-    const exportSpinMovie = async (size?: { width: number; height: number }) => {
-        const glRef = videoRecorderRef.current?.glRef;
-        if (!glRef?.current) {
-            setSpinMovieStatus("No WebGL component yet");
-            return;
-        }
-        setSpinMovieBusy(true);
-        setSpinMovieStatus("Rendering frame 0...");
-        try {
-            const result = await recordSpinToMp4(glRef, {
-                ...size,
-                coverOpacity: seeThroughCover ? 0.12 : 1,
-                onProgress: (done, total) => {
-                    if (done % 10 === 0 || done === total) setSpinMovieStatus(`Rendering frame ${done} of ${total}...`);
-                },
-            });
-            downloadMovie(result.blob);
-            const movieSeconds = result.frames / result.fps;
-            const summary =
-                `${result.frames} frames, ${result.width}x${result.height}, ${result.codec}, ` +
-                `${(result.blob.size / 1e6).toFixed(1)} MB, ` +
-                `${movieSeconds.toFixed(1)}s of movie in ${result.elapsedSeconds.toFixed(1)}s of rendering ` +
-                `(${(result.frames / result.elapsedSeconds).toFixed(1)} fps while encoding)`;
-            // Also to the console: the panel's status line disappears with the menu, and this is
-            // the number worth comparing between machines.
-            console.log(`[movie spike] ${summary}`);
-            setSpinMovieStatus(summary);
-        } catch (err) {
-            console.error(err);
-            setSpinMovieStatus(`Failed: ${err instanceof Error ? err.message : String(err)}`);
-        } finally {
-            setSpinMovieBusy(false);
-        }
-    };
-    /**
-     * Fly in to the first ligand of the first molecule, turn around it, fly back out.
-     *
-     * The starting keyframe is read from the live renderer and the store rather than from defaults,
-     * so the movie begins exactly where the view is when the button is pressed and ends there too.
-     */
-    /**
-     * The ligand tour for whatever is loaded, starting from the view as it is right now.
-     *
-     * Shared by preview and export so the two cannot drift: a preview that showed a different
-     * movie from the one that gets written would be worse than having no preview.
-     */
-    const buildCurrentLigandTour = async () => {
-        const glRef = videoRecorderRef.current?.glRef;
-        const gl = glRef?.current;
-        if (!gl) return { error: "No WebGL component yet" } as const;
-
-        const molecule = store.getState().molecules.moleculeList[0];
-        if (!molecule) return { error: "Load a molecule first" } as const;
-
-        const ligand = molecule.ligands?.[0];
-        if (!ligand) return { error: `No ligands in ${molecule.name}` } as const;
-
-        const atoms = await molecule.gemmiAtomsForCid(ligand.cid);
-        if (!atoms?.length) return { error: `No atoms for ${ligand.cid}` } as const;
-
-        const scene = store.getState().sceneSettings;
-        const movie = buildLigandTour(
-            {
-                quat: gl.myQuat,
-                origin: [...gl.origin] as [number, number, number],
-                zoom: gl.zoom,
-                clipStart: scene.clipStart,
-                clipEnd: scene.clipEnd,
-                fogStart: scene.fogStart,
-                fogEnd: scene.fogEnd,
-            },
-            atoms);
-
-        return { glRef, movie, label: `${ligand.cid} (${atoms.length} atoms)` } as const;
-    };
-
-    const previewLigandTour = async () => {
-        if (previewRef.current) {
-            previewRef.current.stop();
-            return;
-        }
-        setSpinMovieStatus("Finding a ligand...");
-        const built = await buildCurrentLigandTour();
-        if ("error" in built) {
-            setSpinMovieStatus(built.error);
-            return;
-        }
-        setSpinMovieBusy(true);
-        try {
-            const handle = previewMovie(built.glRef, built.movie, {
-                onProgress: (seconds, total) =>
-                    setSpinMovieStatus(`Previewing ${built.label}: ${seconds.toFixed(1)}s of ${total.toFixed(1)}s`),
-            });
-            previewRef.current = handle;
-            const result = await handle.finished;
-            const expected = Math.round(result.elapsedSeconds * 60);
-            setSpinMovieStatus(
-                `${result.stopped ? "Stopped after" : "Previewed"} ${result.elapsedSeconds.toFixed(1)}s, ` +
-                `${result.drawnFrames} frames drawn ` +
-                `(${(result.drawnFrames / Math.max(result.elapsedSeconds, 1e-6)).toFixed(0)} fps; ` +
-                `a 60 Hz display would have shown ${expected})`);
-        } finally {
-            previewRef.current = null;
-            setSpinMovieBusy(false);
-        }
-    };
-
-    const exportLigandTour = async () => {
-        setSpinMovieStatus("Finding a ligand...");
-        const built = await buildCurrentLigandTour();
-        if ("error" in built) {
-            setSpinMovieStatus(built.error);
-            return;
-        }
-        const { glRef, movie } = built;
-
-        setSpinMovieBusy(true);
-        try {
-            setSpinMovieStatus(`Touring ${built.label}...`);
-            const result = await recordMovieToMp4(glRef, movie, {
-                width: 1920,
-                height: 1080,
-                coverOpacity: seeThroughCover ? 0.12 : 1,
-                onProgress: (done, total) => {
-                    if (done % 10 === 0 || done === total) setSpinMovieStatus(`Rendering frame ${done} of ${total}...`);
-                },
-            });
-            downloadMovie(result.blob, "moorhen_ligand_tour.mp4");
-            const summary =
-                `${built.label}: ${result.frames} frames, ${result.width}x${result.height}, ` +
-                `${(result.blob.size / 1e6).toFixed(1)} MB, ` +
-                `${(result.frames / result.fps).toFixed(1)}s of movie in ${result.elapsedSeconds.toFixed(1)}s`;
-            console.log(`[movie spike] ${summary}`);
-            setSpinMovieStatus(summary);
-        } catch (err) {
-            console.error(err);
-            setSpinMovieStatus(`Failed: ${err instanceof Error ? err.message : String(err)}`);
-        } finally {
-            setSpinMovieBusy(false);
-        }
-    };
-    // --- end MP4 spike ---
 
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
@@ -632,28 +458,6 @@ export const MoorhenDevMenu = () => {
     return (
         <MoorhenStack>
             {/* <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem> */}
-            <MoorhenStack card>
-                MP4 spike
-                <span style={{ fontSize: "0.8rem" }}>{spinMovieStatus}</span>
-                <MoorhenButton onClick={checkEncoderSupport}>What will this machine encode?</MoorhenButton>
-                <MoorhenToggle
-                    label="Watch the canvas while recording"
-                    checked={seeThroughCover}
-                    onChange={() => setSeeThroughCover(value => !value)}
-                />
-                <MoorhenButton onClick={() => exportSpinMovie()} disabled={spinMovieBusy}>
-                    {spinMovieBusy ? "Rendering..." : "Export 360° spin as MP4 (window size)"}
-                </MoorhenButton>
-                <MoorhenButton onClick={() => exportSpinMovie({ width: 1920, height: 1080 })} disabled={spinMovieBusy}>
-                    {spinMovieBusy ? "Rendering..." : "Export 360° spin as MP4 (1920×1080)"}
-                </MoorhenButton>
-                <MoorhenButton onClick={previewLigandTour} disabled={spinMovieBusy && !previewRef.current}>
-                    {previewRef.current ? "Stop preview" : "Preview ligand tour"}
-                </MoorhenButton>
-                <MoorhenButton onClick={exportLigandTour} disabled={spinMovieBusy}>
-                    {spinMovieBusy ? "Rendering..." : "Export ligand tour as MP4"}
-                </MoorhenButton>
-            </MoorhenStack>
             Origin: x: {origin[0].toFixed(1)} y: {origin[1].toFixed(1)} z: {origin[2].toFixed(1)}
             <MoorhenStack card>
                 set Origin

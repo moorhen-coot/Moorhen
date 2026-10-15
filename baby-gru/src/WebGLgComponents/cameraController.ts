@@ -196,6 +196,11 @@ const easeMovie = (from: CameraState, to: CameraState, seconds: number): Movie =
 });
 
 /** Everything a camera path can interpolate. The eye distance is not among them - see below. */
+/** Whether a write names the slab itself, in which case the auto policy stands aside. */
+const touchesSlab = (target: CameraTarget): boolean =>
+    target.clipFront !== undefined || target.clipBack !== undefined
+    || target.fogFront !== undefined || target.fogBack !== undefined;
+
 const PATH_FIELDS = ["quat", "origin", "zoom", "clipFront", "clipBack", "fogFront", "fogBack"] as const;
 type PathField = typeof PATH_FIELDS[number];
 
@@ -268,15 +273,33 @@ export class CameraController {
      * round trip was for, and what made the slab a second writer. Writing through here is what lets
      * that round trip go.
      *
-     * `writeLive({})` applies the policy without changing anything, which is what to call after
-     * switching the policy itself on.
+     * To apply the policy after switching it on, call `reapplySlab`: an empty write now changes
+     * nothing, because the policy only acts when the zoom moves.
      *
      * Unlike `settle` it does not defer to an active driver, because its callers are the renderer's
      * own direct writes, which have always landed unconditionally. Those become drivers in the last
      * slice, and this goes with them.
      */
     writeLive(part: CameraTarget): void {
-        this.current = this.applySlab(mergeLive(this.current, part));
+        this.current = this.applySlab(mergeLive(this.current, part), touchesSlab(part));
+        this.notify();
+    }
+
+    /**
+     * Apply the auto policy now, whatever the zoom is doing.
+     *
+     * The one thing `writeLive({})` used to be for. Now that the policy only acts when the zoom
+     * moves - so that a hand-set clip survives, as it always did - an empty write means what it
+     * says and changes nothing, and turning the switch on needs to ask explicitly.
+     */
+    reapplySlab(): void {
+        if (this.slabPolicy.kind === "manual") return;
+        const { fieldDepthFront, fieldDepthBack } = this.slabPolicy;
+        const front = this.current.zoom * fieldDepthFront;
+        const back = this.current.zoom * fieldDepthBack;
+        this.current = {
+            ...this.current, clipFront: front, clipBack: back, fogFront: front, fogBack: back,
+        };
         this.notify();
     }
 
@@ -309,7 +332,7 @@ export class CameraController {
      */
     settle(target: CameraTarget): void {
         if (this.activeDriver?.active) return;
-        this.current = this.applySlab(mergeLive(this.current, target));
+        this.current = this.applySlab(mergeLive(this.current, target), touchesSlab(target));
         this.notify();
     }
 
@@ -353,7 +376,7 @@ export class CameraController {
         if (writes.has("clipBack")) next.clipBack = sample.clipEnd;
         if (writes.has("fogFront")) next.fogFront = sample.fogStart;
         if (writes.has("fogBack")) next.fogBack = sample.fogEnd;
-        this.current = this.applySlab(next);
+        this.current = this.applySlab(next, writes.has("clipFront"));
 
         if (elapsed >= this.move.duration) {
             const settle = this.move.settle;
@@ -382,7 +405,7 @@ export class CameraController {
     /** @internal */
     driverSet(target: CameraTarget): void {
         this.move = null;
-        this.current = this.applySlab(mergeLive(this.current, target));
+        this.current = this.applySlab(mergeLive(this.current, target), touchesSlab(target));
         this.applyPendingTurn();
         this.notify();
     }
@@ -497,8 +520,28 @@ export class CameraController {
     }
 
     /** The slab, derived from zoom when the policy says so. One writer, no event round trip. */
-    private applySlab(state: CameraState): CameraState {
+    /**
+     * The auto policy, applied only where it was ever meant to apply.
+     *
+     * The setting is called "reset clip and fog on zoom", and that is exactly what it used to do:
+     * the old autoClipFogByZoom ran when the zoom changed and at no other time, so a clip set by
+     * hand - from the keyboard shortcuts, the scene-slider handles, or the scripting API - stood
+     * until the next zoom.
+     *
+     * Applying it on every write instead made all three of those useless, and silently: the value
+     * was accepted, overwritten in the same breath, and the keyboard shortcut still announced
+     * itself with a toast. A rotation re-derived the slab too, since turnBy writes like anything
+     * else.
+     *
+     * @param wroteSlab  the write named clip or fog itself. Then it wins outright, even if the
+     *                   zoom moved in the same write - someone setting the slab explicitly is not
+     *                   asking for it to be derived.
+     */
+    private applySlab(state: CameraState, wroteSlab = false): CameraState {
         if (this.slabPolicy.kind === "manual") return state;
+        if (wroteSlab) return state;
+        // `this.current` is still the pre-write state here: every caller assigns the result.
+        if (state.zoom === this.current.zoom) return state;
         const { fieldDepthFront, fieldDepthBack } = this.slabPolicy;
         // Expressed as offsets from the centre, fog and clip are the same two distances. The old
         // derivation looked like four numbers because two of them were measured from the eye.

@@ -1452,11 +1452,28 @@ export function drawScene(self: MGWebGL) : void {
             console.log(self.myQuat)
         }
 
-        // A copy: onQuatChanged dispatches into Redux, which freezes what it is given, and the
-        // camera writes this array in place on every frame of every move. setDrawQuat is React
-        // state rather than Redux and does not freeze, and it is deliberately given the live array
-        // so that a rotation does not re-render the 2D overlay sixty times a second.
-        if(!self.animating) self.props.onQuatChanged([self.myQuat[0], self.myQuat[1], self.myQuat[2], self.myQuat[3]])
+        // A copy, and only when it has actually changed.
+        //
+        // The copy is needed because onQuatChanged dispatches into Redux, which freezes what it is
+        // given, while the camera writes this array in place on every frame of every move. But a
+        // fresh array every frame is a fresh *reference* every frame, so every selector reading
+        // the stored quaternion re-renders - MoorhenWebMG, the scene sliders, the 3D objects
+        // dialog - sixty times a second during a drag. This previously passed the live array,
+        // which Redux saw as unchanged and which therefore cost nothing; the copy fixed the
+        // freezing and paid for it in re-renders.
+        //
+        // Comparing against what the store already holds gets both: the store is never handed an
+        // array the renderer will mutate, and it is only handed one when the view has really
+        // turned. A drag dispatches once per distinct orientation, which is what it did before.
+        //
+        // setDrawQuat is React state rather than Redux, does not freeze, and is deliberately given
+        // the live array so that a rotation does not re-render the 2D overlay either.
+        if(!self.animating){
+            const stored = self.store.getState().glRef.quat
+            const turned = !stored || [0,1,2,3].some(
+                i => !(Math.abs(self.myQuat[i] - stored[i]) < 1e-9))
+            if(turned) self.props.onQuatChanged([self.myQuat[0], self.myQuat[1], self.myQuat[2], self.myQuat[3]])
+        }
         self.props.setDrawQuat(self.myQuat)
 
         // Decided here, before theShaders is built, because the shader variant chosen below
