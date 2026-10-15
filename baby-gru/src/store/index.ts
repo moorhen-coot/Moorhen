@@ -270,5 +270,15 @@ export {
 }  from "./moleculeMapUpdateSlice";
 export { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings }  from "./mouseSettings";
 
+export {
+    setMovieDocument, setMovieName, setMovieFileName, newMovie,
+    selectKeyframe,
+    appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
+    updateSegment, updateMotion,
+    spreadSceneFromKeyframe, updateMovieScene, updateMovieOutput,
+    updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
+    type MovieState,
+} from "./movieSlice";
+
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";
