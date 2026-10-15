@@ -24,8 +24,9 @@ This suite targets the standalone web component page in `webcomponent.html`.
 
 ## Optimization
 
-- Playwright now starts the server with `start:webcomponent:e2e`, which runs a lightweight prep phase.
-- Worker and protobuf generation are skipped when generated files already exist.
+- Playwright starts the server with `start:webcomponent:e2e`, on port 5199 (override with `MOORHEN_E2E_PORT`), so it never collides with a dev server on vite's default 5173. `--strictPort` makes it fail rather than drift to another port.
+- The prep phase re-transpiles the worker and runs `build-webcomponent-dev` (about 40 s), because the web component page serves its assets from `dist/public`: without it, tests would run against whatever wasm and worker were last built there. Protobuf generation is skipped when the generated file already exists.
+- If you rebuild the wasm or change the worker, restart the e2e server so `dist/public` is refreshed.
 - For fastest local iteration, prewarm once in terminal A:
    - `npm run start:webcomponent:e2e`
 - Then run tests in terminal B (Playwright will reuse the existing server):
