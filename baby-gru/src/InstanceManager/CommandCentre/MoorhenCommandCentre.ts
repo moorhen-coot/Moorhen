@@ -34,6 +34,8 @@ export type WorkerMessage = {
     consoleMessage?: string;
     messageId: string;
     handler: (reply: WorkerResponse) => void;
+    /** Settles the command's promise when no reply can arrive (worker error). */
+    reject?: (reason?: unknown) => void;
     kwargs: cootCommandKwargs;
 };
 
@@ -106,6 +108,17 @@ export class CommandCentre {
         this.isClosed = false;
         this.cootWorker = new Worker(`${this.urlPrefix}/wasm/CootWorker.js`);
         this.cootWorker.onmessage = this.handleMessage.bind(this);
+        // A worker that errors, or a reply that cannot be deserialised, would
+        // otherwise leave every in-flight command pending for ever -- and with it
+        // the global busy state, which is what makes the app look frozen.
+        this.cootWorker.onerror = event => {
+            console.error("Error in coot worker", event);
+            this.failActiveMessages("The coot worker reported an error");
+        };
+        this.cootWorker.onmessageerror = event => {
+            console.error("Could not deserialise a reply from the coot worker", event);
+            this.failActiveMessages("A reply from the coot worker could not be deserialised");
+        };
         const fileResponse = await fetch(`${this.urlPrefix}/data.tar.gz`);
         const fileData = await fileResponse.arrayBuffer();
         await this.postMessage({ message: "CootInitialize", data: { cootData: new Uint8Array(fileData) } });
@@ -141,6 +154,24 @@ export class CommandCentre {
         return reply => {
             resolve(reply);
         };
+    }
+
+    /**
+     * Fail every in-flight command. Used when the worker itself errors or a reply
+     * can never arrive: without this the entries stay in activeMessages for ever,
+     * which keeps the global busy state (and its spinner) switched on permanently.
+     */
+    failActiveMessages(reason: string) {
+        const pending = this.activeMessages;
+        this.activeMessages = [];
+        pending.forEach(message => {
+            if (message.reject) {
+                message.reject(new Error(`${reason} (command: ${message.kwargs?.command ?? message.kwargs?.message})`));
+            }
+        });
+        if (this.onActiveMessagesChanged) {
+            this.onActiveMessagesChanged(this.activeMessages);
+        }
     }
 
     async cootCommand(kwargs: cootCommandKwargs, doJournal: boolean = true): Promise<WorkerResponse> {
@@ -220,7 +251,9 @@ export class CommandCentre {
         const messageId = uuidv4();
         return new Promise((resolve, reject) => {
             const handler = $this.makeHandler(resolve);
-            this.activeMessages.push({ messageId, handler, kwargs });
+            // Keep the reject alongside the handler so failActiveMessages() can settle
+            // this promise if the reply never comes.
+            this.activeMessages.push({ messageId, handler, reject, kwargs });
             if (this.onActiveMessagesChanged) {
                 this.onActiveMessagesChanged(this.activeMessages);
             }
