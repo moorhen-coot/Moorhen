@@ -41,7 +41,7 @@ export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
             </SidePanelContainer>
         )
     },
-    movie: { icon: "menuVectors", label: "Movie", panelContent: <MoviePanel /> },
+    movie: { icon: "clapperboard", label: "Movie", panelContent: <MoviePanel /> },
     sceneSettings: {
         icon: "MatSymVisibility",
         label: "SceneSettings",
