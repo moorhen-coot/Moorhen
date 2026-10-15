@@ -1507,7 +1507,7 @@ export function drawScene(self: MGWebGL) : void {
         }
 
         // Not while the camera is being driven. This used to test `animating`, which meant "a
-        // centring move is running" and so missed a movie entirely - the spike had to set the flag
+        // centring move is running" and so missed a movie entirely - the movie code had to set the flag
         // by hand to get the same effect. `moving` is the condition that was always meant: a move
         // or a movie is in flight, and the store will hear about it when the camera comes to rest.
         //

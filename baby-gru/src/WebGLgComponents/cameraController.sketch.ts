@@ -310,7 +310,7 @@ export interface CameraController {
  * `liveState` and `writeLive` are the migration's unfinished edge - the live state with none of
  * the rules applied, so the renderer's direct writes still land while call sites move across.
  * Everything inside the renderer now goes through the camera; the last caller reaching past it is
- * MoorhenMovieSpike, which writes gl.myQuat in five places and sets gl.animating by hand, and is
+ * the movie player, which wrote gl.myQuat in five places and set gl.animating by hand, and is
  * why moveCameraTo still consults `animating`. When that goes, so do these, and the promise at the
  * top of cameraController.ts about a single writer stops being an intention.
  *

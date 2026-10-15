@@ -34,7 +34,7 @@ import { documentDuration, documentFrameCount, movieProblems } from "@/utils/mov
 import { animatedObjects } from "@/utils/movieEditing";
 import { captureKeyframe } from "@/utils/sceneKeyframe";
 import { fadeableObjects, sceneHostFrom, type NamedFadeable, type SceneHostInputs } from "@/utils/sceneHostAdapter";
-import { downloadMovie, previewMovie, recordMovieToMp4, type PreviewHandle } from "@/utils/MoorhenMovieSpike";
+import { downloadMovie, previewMovie, recordMovieToMp4, type PreviewHandle } from "@/utils/moviePlayer";
 import { MOVIE_EXTENSION, MovieFileError, packMovie, unpackMovie } from "@/utils/movieContainer";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
 import { moorhensession } from "@/protobuf/MoorhenSession";
@@ -185,7 +185,7 @@ export const MoviePanel = () => {
         }
         try {
             const handle = previewMovie(glRef, document.path, {
-                // Stay where the movie ends. The spike's preview button restores the view by
+                // Stay where the movie ends. previewMovie restores the view by
                 // default, which is right for "show me this once"; here the playing is the work,
                 // and snapping back to wherever Play was pressed reads as the movie undoing
                 // itself.

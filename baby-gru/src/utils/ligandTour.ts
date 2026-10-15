@@ -3,8 +3,19 @@
  *
  * This exists to exercise cameraPath against a real molecule rather than against test fixtures -
  * the arithmetic can be right and the result still look wrong, and only a real ligand in a real
- * scene will say which. It is a spike, not a feature: a real movie editor would let someone place
- * these keyframes by hand rather than computing them.
+ * scene will say which. Nothing calls it now that the movie panel lets keyframes be placed by
+ * hand, and it is kept because automatic tours are worth having, not because this one is finished.
+ *
+ * WHAT HAS TO CHANGE BEFORE IT IS A FEATURE
+ *
+ * It assumes it is starting from a wide view of the whole structure. Run it from one, and it reads
+ * well: the camera flies in from a sensible distance and returns there. Run it when the view is
+ * already zoomed in somewhere, and parts one and three become strange - the "fly in" starts closer
+ * than it ends, and the return lands back on a close-up that tells the viewer nothing.
+ *
+ * The honest fix is not to capture the starting view at all. A tour should frame its own opening,
+ * from the extent of the thing being toured, and treat the live camera as where to blend in from
+ * rather than as the shot to return to.
  *
  * The three parts are:
  *

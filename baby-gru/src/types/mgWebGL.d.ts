@@ -389,7 +389,7 @@ export namespace webGL {
         //These 2 are used in MoorhenVercelBuild
         origin: [number, number, number];
         background_colour: [number, number, number, number];
-        //These are used in MoorhenMovieSpike, which steps the view a frame at a time and can
+        //These are used in moviePlayer, which steps the view a frame at a time and can
         //render off-screen at a size that does not depend on the window
         drawScene(): void;
         myQuat: quat4;

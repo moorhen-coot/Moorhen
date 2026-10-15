@@ -1,29 +1,32 @@
 /**
- * SPIKE - fixed-cadence MP4 export, to find out whether authored-timing video works in the browser.
+ * Playing a movie - to the screen, or to a file.
  *
- * Not a feature. It exists to answer one question on real machines: can WebCodecs encode Moorhen's
- * canvas into a smooth MP4 whose frames are spaced exactly 1/fps apart, however long each frame
- * took to render?
+ * Both are the same traversal of the same movie at two different clocks, and keeping that true is
+ * what makes a preview worth trusting. previewMovie runs on the wall clock and draws whatever
+ * frames it can; recordMovieToMp4 steps the clock by 1/fps and draws every one. Neither computes
+ * a camera: the movie's sampler says where the camera is at a given second, the camera controller
+ * is handed that second, and drawScene does the rest.
  *
- * WHY THIS IS NOT HOW THE EXISTING RECORDER WORKS
+ * WHY NOT THE EXISTING RECORDER
  *
  * File -> Record a video uses canvas.captureStream(30) into a MediaRecorder, which samples the
  * canvas on the browser's own clock. Nothing says "this is frame 7". If a ribosome frame takes
- * 400ms, that frame occupies 400ms of the video. Here each frame is handed to the encoder with a
- * timestamp we choose, so render time and playback time are unrelated - which is the whole point
- * of a movie feature and the thing MediaRecorder cannot do at all.
+ * 400ms, that frame occupies 400ms of the video, and a heavy scene produces a lurching file that
+ * no amount of patience fixes. Here each frame is handed to the encoder with a timestamp chosen
+ * in advance, so render time and playback time are unrelated. That is the whole point of having a
+ * movie feature rather than a screen recorder, and it is the one thing MediaRecorder cannot do.
  *
- * KNOWN LIMITATIONS OF THE SPIKE
+ * KNOWN LIMITATIONS
  *
  * - Only the WebGL canvas is captured. The axes, scale bar and other 2D chrome live on separate
- *   overlay canvases stacked above it, and takeScreenShot composites them by hand. A real feature
- *   would have to do the same; this deliberately does not, to keep the question narrow.
- * - Everything is held in memory until the end, so a long movie at a large canvas size will be
+ *   overlay canvases stacked above it, which takeScreenShot composites by hand; this does not.
+ * - Everything is held in memory until the end, so a long movie at a large output size will be
  *   unhappy. ArrayBufferTarget is the simplest target; StreamTarget exists for later.
+ *
  * WHAT MEDIABUNNY TOOK OVER
  *
- * The first version of this drove WebCodecs directly: a VideoEncoder, a VideoFrame per frame with
- * an explicit microsecond timestamp, manual close() to release GPU memory, a loop watching
+ * The first version drove WebCodecs directly: a VideoEncoder, a VideoFrame per frame with an
+ * explicit microsecond timestamp, manual close() to release GPU memory, a loop watching
  * encodeQueueSize for backpressure, and mp4-muxer to assemble the file. Mediabunny's CanvasSource
  * does all of that behind one call - `add(timestampInSeconds, durationInSeconds)`, whose returned
  * promise is the backpressure signal. Timestamps are seconds here, not microseconds.
@@ -34,14 +37,12 @@
  * to show what it actually picked.
  */
 
-import * as quat4 from "gl-matrix/quat";
 import { BufferTarget, CanvasSource, Mp4OutputFormat, Output, VideoCodec, canEncodeVideo } from "mediabunny";
-import { createYQuatFromDY } from "../WebGLgComponents/quatUtils";
-import { MovieSample, Movie, movieDuration, sampleMovie } from "./cameraPath";
+import { Movie, movieDuration } from "./cameraPath";
 import { holdCameraForMovie } from "./movieCamera";
 import type { webGL } from "../types/mgWebGL";
 
-export interface SpinMovieOptions {
+export interface MovieRenderOptions {
     /** Frames per second of the finished file. */
     fps?: number;
     /** How many frames to render. The default is one degree per frame, so a full turn. */
@@ -78,7 +79,7 @@ export interface SpinMovieOptions {
     onProgress?: (framesDone: number, framesTotal: number) => void;
 }
 
-export interface SpinMovieResult {
+export interface MovieRenderResult {
     blob: Blob;
     width: number;
     height: number;
@@ -131,134 +132,17 @@ export const describeEncoderSupport = async (
 };
 
 /**
- * Render a spin and encode it at a fixed cadence.
- *
- * The orientation is restored afterwards, so running this leaves the view where it found it.
- */
-export async function recordSpinToMp4(
-    glRef: React.RefObject<webGL.MGWebGL>,
-    options: SpinMovieOptions = {},
-): Promise<SpinMovieResult> {
-
-    const { fps, frames, degreesPerFrame, bitrate, codec } = { ...DEFAULTS, ...options };
-
-    const gl = glRef?.current;
-    if (!gl) throw new Error("No WebGL component to record from");
-    if (!webCodecsAvailable()) throw new Error("WebCodecs VideoEncoder is not available in this browser");
-
-    const canvas = gl.getCanvasRef()?.current;
-    if (!canvas) throw new Error("No canvas to record from");
-
-    // A canvas is whatever size the window is, and H.264 encoders commonly refuse odd dimensions.
-    const width = evenDown(options.width ?? canvas.width);
-    const height = evenDown(options.height ?? canvas.height);
-
-    // Asking for a size renders at that size by changing the drawing buffer, leaving the canvas
-    // the same size on the page. Scaling window-shaped frames instead would have to letterbox,
-    // crop or distort, none of which preserves what was composed.
-    //
-    // The first attempt at this rendered into the render-to-texture buffer and read the pixels
-    // back. It worked and was ten times slower - 3.1 frames per second against 32.7 - because that
-    // buffer is multisampled at the hardware maximum, getPixelData draws the scene twice, and the
-    // pixels went GPU to CPU and back again to be encoded. Resizing the drawing buffer has none of
-    // those costs: one draw, no read back, and frames captured straight off the canvas.
-    const resizing = options.width !== undefined || options.height !== undefined;
-
-    const support = await describeEncoderSupport(width, height, codec, fps, bitrate);
-    if (!support.supported) throw new Error(`This machine will not encode that: ${support.detail}`);
-
-    const started = performance.now();
-
-    const output = new Output({
-        // Metadata at the front so the file plays without being fully fetched. 'in-memory' keeps
-        // every chunk until finalize, which is fine for a short movie and is the thing to revisit
-        // first when a long one runs out of memory - 'fragmented' streams instead.
-        format: new Mp4OutputFormat({ fastStart: "in-memory" }),
-        target: new BufferTarget(),
-    });
-
-    // The drawing buffer has to be the output size before the source is created: mediabunny takes
-    // the frame dimensions from the canvas, and a later change would be a size change mid-track.
-    const originalBufferWidth = canvas.width;
-    const originalBufferHeight = canvas.height;
-    if (resizing) gl.setDrawingBufferSize(width, height);
-
-    const source = new CanvasSource(canvas, {
-        codec,
-        bitrate,
-        // One key frame a second: enough for scrubbing without inflating the file.
-        keyFrameInterval: 1,
-        // Mediabunny picks the profile and level itself, and that choice is what differs between
-        // machines, so say which one it made.
-        onEncoderConfig: config => console.log("[movie spike] encoder config", config),
-    });
-    output.addVideoTrack(source);
-    await output.start();
-
-    // The camera is held for the duration and handed back however this ends.
-    const hold = holdCameraForMovie(gl);
-    // A plain spin rather than a sampled Movie, so this turns the quaternion itself and hands each
-    // result to the camera. Its own copy, because the camera's array is the camera's.
-    const spinning = quat4.clone(gl.cameraController.state.quat as unknown as quat4.quat);
-    const step = createYQuatFromDY(degreesPerFrame);
-    let finalised = false;
-    const cover = showCover("Rendering spin", options.coverOpacity ?? 1);
-
-    try {
-        const frameDuration = 1 / fps;
-
-        for (let i = 0; i < frames; i++) {
-            quat4.multiply(spinning, spinning, step);
-            hold.set({ quat: [spinning[0], spinning[1], spinning[2], spinning[3]] });
-            gl.drawScene();
-            cover.update(i + 1, frames);
-
-            // Must be the same task as the draw: the context is created without
-            // preserveDrawingBuffer, so the drawing buffer is cleared the moment we yield to the
-            // browser. CanvasSource.add captures synchronously before its promise settles, which
-            // is why awaiting it afterwards is safe.
-            //
-            // Timestamps are seconds, and they are the whole point: frame i sits at i/fps however
-            // long it took to render.
-            await source.add(i * frameDuration, frameDuration);
-
-            options.onProgress?.(i + 1, frames);
-        }
-
-        await output.finalize();
-        finalised = true;
-
-        return {
-            blob: new Blob([output.target.buffer], { type: "video/mp4" }),
-            width, height, frames, fps, codec,
-            elapsedSeconds: (performance.now() - started) / 1000,
-        };
-    } finally {
-        // Back to the window's own resolution before anything else draws.
-        if (resizing) gl.setDrawingBufferSize(originalBufferWidth, originalBufferHeight);
-        hold.release();
-        gl.drawScene();
-        // After the restoring draw, so the cover never lifts on a frame from the movie.
-        cover.remove();
-        // An output left started holds its encoder and its buffers; cancel releases them.
-        if (!finalised) await output.cancel().catch(() => { /* already failing; do not mask it */ });
-    }
-}
-
-
-/**
  * Render a movie at a fixed cadence and encode it.
  *
- * The same machinery as the spin export, but the camera for each frame comes from sampleMovie
- * rather than from a rotation applied to a held view. Everything that made the spin work -
- * timestamps chosen rather than observed, the drawing buffer sized to the output - applies here
- * unchanged, which is the point of having kept them separate.
+ * Timestamps are chosen rather than observed, and the drawing buffer is sized to the output, so
+ * the file's timing is the movie's own rather than whatever the machine managed while rendering.
+ * That is the whole difference between an export and a screen recording.
  */
 export async function recordMovieToMp4(
     glRef: React.RefObject<webGL.MGWebGL>,
     movie: Movie,
-    options: SpinMovieOptions = {},
-): Promise<SpinMovieResult> {
+    options: MovieRenderOptions = {},
+): Promise<MovieRenderResult> {
 
     const { fps, bitrate, codec } = { ...DEFAULTS, ...options };
 
@@ -292,7 +176,7 @@ export async function recordMovieToMp4(
         codec,
         bitrate,
         keyFrameInterval: 1,
-        onEncoderConfig: config => console.log("[movie spike] encoder config", config),
+        onEncoderConfig: config => console.log("[movie] encoder config", config),
     });
     output.addVideoTrack(source);
     await output.start();
@@ -487,7 +371,7 @@ export function previewMovie(
 }
 
 /** Hand the finished file to the browser's downloader. */
-export const downloadMovie = (blob: Blob, filename = "moorhen_spin.mp4") => {
+export const downloadMovie = (blob: Blob, filename = "moorhen_movie.mp4") => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.download = filename;

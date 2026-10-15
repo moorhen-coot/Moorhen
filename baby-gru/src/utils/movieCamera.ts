@@ -18,7 +18,7 @@
  * noticed because no movie had authored a slab yet.
  *
  * And the view goes back exactly as it was, however the movie ends - finished, cancelled, or
- * thrown out of. The three copies of that restore logic in the spike are the reason this exists as
+ * thrown out of. The three copies of that restore logic it replaced are the reason this exists as
  * a function rather than as a comment.
  */
 
