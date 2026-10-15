@@ -846,7 +846,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.occludeDiffuse = doOccludeDiffuse;
     }
 
-    setShadowDepthDebug(doShadowDebug) {
+    /**
+     * Show the shadow map itself instead of the scene.
+     *
+     * No UI reaches this - it is set from a preference, or from the console - and that is
+     * deliberate. It is a debugging view, and an invaluable one: it is what finally localised a
+     * shadow bug that three plausible explanations had failed to, by showing that the map was
+     * simply empty.
+     *
+     * The body of this was missing, so the preference and the MoorhenWebMG effect that reads it
+     * both ran and did nothing.
+     *
+     * Shadows have to be on for there to be a map to look at, which drawScene's gate already
+     * requires. Switching them on here would be the convenient thing and the wrong one: a
+     * debugging view should not quietly change the setting it is there to inspect.
+     */
+    setShadowDepthDebug(doShadowDebug: boolean) {
+        this.doShadowDepthDebug = doShadowDebug;
     }
 
     componentDidUpdate(oldProps) {
