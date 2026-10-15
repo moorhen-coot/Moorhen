@@ -1511,11 +1511,22 @@ export function drawScene(self: MGWebGL) : void {
         // by hand to get the same effect. `moving` is the condition that was always meant: a move
         // or a movie is in flight, and the store will hear about it when the camera comes to rest.
         //
-        // A copy: onQuatChanged dispatches into Redux, which freezes what it is given, and the
-        // camera writes this array in place on every frame of every move. setDrawQuat is React
-        // state rather than Redux and does not freeze, and it is deliberately given the live array
-        // so that a rotation does not re-render the 2D overlay sixty times a second.
-        if(!self.cameraController.moving) self.props.onQuatChanged([self.myQuat[0], self.myQuat[1], self.myQuat[2], self.myQuat[3]])
+        // The store's copy of the orientation is not sent from here any more.
+        //
+        // It used to be, once per drawn frame, and that was expensive in a way that did not show
+        // up until recently: Redux freezes what it is given while the camera writes this array in
+        // place, so the dispatch had to send a *copy* - and a fresh array every frame is a fresh
+        // reference every frame, so every selector reading the stored quaternion re-rendered sixty
+        // times a second throughout a drag. MoorhenWebMG, the scene sliders and the 3D objects
+        // dialog all read it.
+        //
+        // echoViewToStore now sends it, from the camera's own subscription, and only when the
+        // value has actually changed. That fires when the camera is turned, set, released or
+        // arrives - never per frame of a move, which is the same restraint the `!moving` guard
+        // here was expressing. One echo, in one place, for every way of moving the camera.
+        //
+        // setDrawQuat stays: it is React state rather than Redux, does not freeze, and is
+        // deliberately given the live array so that a rotation does not re-render the 2D overlay.
         self.props.setDrawQuat(self.myQuat)
 
         // Decided here, before theShaders is built, because the shader variant chosen below

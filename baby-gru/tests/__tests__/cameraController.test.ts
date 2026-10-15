@@ -326,15 +326,24 @@ describe("the slab", () => {
         expect(camera.state.fogBack).toBe(42);
     });
 
-    it("re-derives on an empty write, which is how the switch is turned on", () => {
+    it("re-derives when asked, which is how the switch is turned on", () => {
         // Flipping "Reset clip and fog on zoom" should snap the slab to the current zoom there and
-        // then, not leave it stale until the next time something moves.
+        // then, not leave it stale until the next time something moves. This used to be spelt
+        // writeLive({}), back when the policy applied to every write; now that it only applies
+        // when the zoom moves, an empty write means what it says and the switch asks explicitly.
         const camera = new CameraController(startingAt({ zoom: 3, clipFront: 99, clipBack: 99 }));
         camera.slabPolicy = { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 };
-        camera.writeLive({});
+        camera.reapplySlab();
         expect(camera.state.clipFront).toBe(24);
         expect(camera.state.clipBack).toBe(63);
         expect(camera.state.zoom).toBe(3);
+    });
+
+    it("changes nothing on an empty write", () => {
+        const camera = new CameraController(startingAt({ zoom: 3, clipFront: 99, clipBack: 99 }),
+            { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 });
+        camera.writeLive({});
+        expect(camera.state.clipFront).toBe(99);
     });
 
     it("leaves a written slab alone under manual, so the sliders still work", () => {
@@ -344,12 +353,30 @@ describe("the slab", () => {
         expect(camera.state.clipBack).toBe(6);
     });
 
-    it("overwrites a written slab under auto, which is why those sliders are disabled", () => {
+    it("keeps a written slab under auto too, until the next zoom", () => {
+        // This test used to assert the opposite, and the opposite was a regression found in review
+        // of the camera PR: "reset clip and fog on zoom" had quietly become "reset clip and fog on
+        // anything", so the keyboard shortcuts, the scene-slider handles and the scripting API all
+        // had their values accepted and overwritten in the same breath - the shortcut still
+        // raising its toast about it. On main the hand-set value stood until the next zoom, and it
+        // does again.
         const camera = new CameraController(startingAt({ zoom: 1 }),
             { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 });
         camera.writeLive({ clipFront: 5, clipBack: 6 });
-        expect(camera.state.clipFront).toBe(8);
-        expect(camera.state.clipBack).toBe(21);
+        expect(camera.state.clipFront).toBe(5);
+        expect(camera.state.clipBack).toBe(6);
+
+        camera.writeLive({ zoom: 2 });
+        expect(camera.state.clipFront).toBe(16);
+    });
+
+    it("leaves the slab alone when the camera only rotates", () => {
+        // turnBy writes like anything else, so an unguarded policy re-derived on every drag event.
+        const camera = new CameraController(startingAt({ zoom: 1 }),
+            { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 });
+        camera.writeLive({ clipFront: 3 });
+        camera.turnBy([0, 0.3827, 0, 0.9239]);
+        expect(camera.state.clipFront).toBe(3);
     });
 
     it("is not touched by a move that was never asked to change it", () => {

@@ -26,15 +26,19 @@ import { MoorhenNumberInput } from "@/components/inputs";
 import { RootState } from "@/store";
 import {
     addObjectToMovie, appendKeyframe, removeKeyframe, removeObjectFromMovie, reorderKeyframe,
-    selectKeyframe, setMovieName, spreadSceneFromKeyframe, updateKeyframe, updateMotion,
-    updateObjectOpacity, updateSegment,
+    selectKeyframe, setMovieDocument, setMovieFileName, setMovieName, spreadSceneFromKeyframe,
+    updateKeyframe, updateMotion, updateMovieOutput, updateObjectOpacity, updateSegment,
 } from "@/store";
 import { useMoorhenInstance } from "@/InstanceManager";
 import { documentDuration, documentFrameCount, movieProblems } from "@/utils/movieDocument";
 import { animatedObjects } from "@/utils/movieEditing";
 import { captureKeyframe } from "@/utils/sceneKeyframe";
 import { fadeableObjects, sceneHostFrom, type NamedFadeable, type SceneHostInputs } from "@/utils/sceneHostAdapter";
-import { previewMovie, type PreviewHandle } from "@/utils/MoorhenMovieSpike";
+import { downloadMovie, previewMovie, recordMovieToMp4, type PreviewHandle } from "@/utils/MoorhenMovieSpike";
+import { MOVIE_EXTENSION, MovieFileError, packMovie, unpackMovie } from "@/utils/movieContainer";
+import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { moorhensession } from "@/protobuf/MoorhenSession";
+import { doDownload } from "@/utils/utils";
 import type { Motion } from "@/utils/cameraPath";
 import { SidePanelContainer } from "../utils/SidePanelContainer";
 
@@ -47,6 +51,9 @@ export const MoviePanel = () => {
 
     const document = useSelector((state: RootState) => state.movie.document);
     const selected = useSelector((state: RootState) => state.movie.selected);
+    // The file this movie was last saved to or opened from. Shown rather than merely recorded:
+    // once a movie can be saved and reopened, "which one am I editing" is a real question.
+    const fileName = useSelector((state: RootState) => state.movie.fileName);
     const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
     const threeDObjects = useSelector((state: RootState) => state.threeDObjects.objects);
     const displayBuffers = useSelector((state: RootState) => state.glRef.displayBuffers);
@@ -56,6 +63,10 @@ export const MoviePanel = () => {
     // A ref alone would not re-render, so the button would stay saying "Play" while playing.
     const previewRef = useRef<PreviewHandle | null>(null);
     const [playing, setPlaying] = useState<boolean>(false);
+    // Saving, opening and exporting all take long enough to need the panel to say so, and none of
+    // them should be startable twice.
+    const [busy, setBusy] = useState<boolean>(false);
+    const openInputRef = useRef<HTMLInputElement | null>(null);
     const glRef = moorhenInstance.getVideoRecorderRef().current?.glRef;
 
     /**
@@ -189,6 +200,123 @@ export const MoviePanel = () => {
         } finally {
             previewRef.current = null;
             setPlaying(false);
+        }
+    };
+
+    /**
+     * The movie and the scene it was authored against, as one file.
+     *
+     * The session goes in. A movie without one is a few kilobytes of camera path that needs the
+     * right scene already open to mean anything; with one it opens anywhere, which is what makes
+     * it a saved movie rather than a note to self. The three lines that fetch and encode the
+     * session are the ones ManageSession uses to write a .pb, so what lands in the container is
+     * exactly what loadSessionFromArrayBuffer reads back.
+     */
+    const saveMovie = async () => {
+        setBusy(true);
+        try {
+            setStatus("Fetching the session...");
+            const timeCapsule = moorhenInstance.getTimeCapsuleRef().current;
+            const sessionData = await timeCapsule.fetchSession(true);
+            const sessionBytes = moorhensession.Session
+                .encode(moorhensession.Session.fromObject(sessionData)).finish();
+
+            setStatus("Packing...");
+            const blob = await packMovie(
+                { movie: document, session: sessionBytes },
+                { type: "blob", writtenBy: "Moorhen" }) as Blob;
+
+            const name = (document.name || "moorhen_movie").replace(/[^\w.-]+/g, "_");
+            doDownload([blob], `${name}${MOVIE_EXTENSION}`);
+            dispatch(setMovieFileName(`${name}${MOVIE_EXTENSION}`));
+            setStatus(`Saved ${(blob.size / 1e6).toFixed(2)} MB`);
+        } catch (err) {
+            console.error(err);
+            setStatus(`Could not save: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    /**
+     * A movie file, opened.
+     *
+     * The session is restored first and waited for. Loading the document without its scene would
+     * leave a movie whose keyframes name objects that are not there, and whose camera path tours
+     * whatever happens to be open - which looks like the file being wrong rather than being early.
+     */
+    const openMovie = async (file: File) => {
+        setBusy(true);
+        try {
+            setStatus(`Opening ${file.name}...`);
+            const container = await unpackMovie(await file.arrayBuffer());
+
+            if (container.session) {
+                setStatus("Restoring the scene the movie was made with...");
+                const status = await MoorhenTimeCapsule.loadSessionFromArrayBuffer(
+                    container.session.buffer as ArrayBuffer, moorhenInstance);
+                if (status === -1) {
+                    setStatus("The movie opened, but its scene would not load");
+                    return;
+                }
+            }
+
+            dispatch(setMovieDocument(container.movie));
+            dispatch(setMovieFileName(file.name));
+            setStatus(container.session
+                ? `Opened ${file.name} with its scene`
+                : `Opened ${file.name}. It carries no scene, so it will play over this one.`);
+        } catch (err) {
+            console.error(err);
+            // A MovieFileError already says which thing is wrong with the file; anything else is a
+            // surprise and should look like one.
+            setStatus(err instanceof MovieFileError
+                ? err.message
+                : `Could not open: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    /**
+     * The movie, rendered out as an MP4.
+     *
+     * Refused outright when the document has problems, rather than started and failed somewhere in
+     * the middle: an odd output width is rejected by some encoders and silently cropped by others,
+     * and finding that out after waiting for a render is the worst way to learn it.
+     */
+    const exportMovie = async () => {
+        if (problems.length > 0) {
+            setStatus(`Cannot export: ${problems.join("; ")}`);
+            return;
+        }
+        if (!glRef?.current) {
+            setStatus("No 3D view yet");
+            return;
+        }
+        setBusy(true);
+        try {
+            const result = await recordMovieToMp4(glRef, document.path, {
+                width: document.output.width,
+                height: document.output.height,
+                fps: document.output.fps,
+                onProgress: (done, total) => {
+                    if (done % 10 === 0 || done === total) {
+                        setStatus(`Rendering frame ${done} of ${total}...`);
+                    }
+                },
+            });
+            const name = (document.name || "moorhen_movie").replace(/[^\w.-]+/g, "_");
+            downloadMovie(result.blob, `${name}.mp4`);
+            setStatus(
+                `${result.frames} frames, ${result.width}x${result.height}, ` +
+                `${(result.blob.size / 1e6).toFixed(1)} MB, rendered in ` +
+                `${result.elapsedSeconds.toFixed(1)}s`);
+        } catch (err) {
+            console.error(err);
+            setStatus(`Could not export: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+            setBusy(false);
         }
     };
 
@@ -329,6 +457,7 @@ export const MoviePanel = () => {
                 <div style={{ fontSize: "0.8rem" }}>
                     {keyframes.length} keyframes · {documentDuration(document).toFixed(1)}s ·{" "}
                     {documentFrameCount(document)} frames at {document.output.fps}fps
+                    {fileName && <> · {fileName}</>}
                 </div>
                 {problems.length > 0 && (
                     <div style={{ fontSize: "0.8rem", color: "var(--moorhen-warning, #b26a00)" }}>
@@ -341,6 +470,49 @@ export const MoviePanel = () => {
                     <MoorhenButton onClick={addFromView}>Add keyframe from this view</MoorhenButton>
                     <MoorhenButton onClick={play}>{playing ? "Stop" : "Play"}</MoorhenButton>
                 </div>
+
+                <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }}>
+                    <MoorhenButton onClick={saveMovie} disabled={busy}>Save…</MoorhenButton>
+                    <MoorhenButton onClick={() => openInputRef.current?.click()} disabled={busy}>
+                        Open…
+                    </MoorhenButton>
+                    <MoorhenButton onClick={exportMovie} disabled={busy || problems.length > 0}>
+                        Export MP4…
+                    </MoorhenButton>
+                </div>
+                <input
+                    ref={openInputRef}
+                    type="file"
+                    accept={MOVIE_EXTENSION}
+                    style={{ display: "none" }}
+                    onChange={event => {
+                        const file = event.target.files?.[0];
+                        // Cleared so that choosing the same file twice still fires a change, which
+                        // is exactly what reopening a movie you have just saved wants to do.
+                        event.target.value = "";
+                        if (file) void openMovie(file);
+                    }}
+                />
+
+                <details>
+                    <summary style={{ cursor: "pointer", fontSize: "0.85rem" }}>Output</summary>
+                    {/* Folded away because these are set once and then left alone, while the
+                        keyframe list below is where the work happens. */}
+                    <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
+                        <MoorhenNumberInput
+                            label="fps" width="4rem" value={document.output.fps}
+                            setValue={fps => { dispatch(updateMovieOutput({ fps })); }}
+                        />
+                        <MoorhenNumberInput
+                            label="width" width="5rem" value={document.output.width}
+                            setValue={width => { dispatch(updateMovieOutput({ width })); }}
+                        />
+                        <MoorhenNumberInput
+                            label="height" width="5rem" value={document.output.height}
+                            setValue={height => { dispatch(updateMovieOutput({ height })); }}
+                        />
+                    </div>
+                </details>
 
                 {!glRef?.current?.supportsObjectFading && (
                     <div style={{ fontSize: "0.8rem", color: "var(--moorhen-warning, #b26a00)" }}>

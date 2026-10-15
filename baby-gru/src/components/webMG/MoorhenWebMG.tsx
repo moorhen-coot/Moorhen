@@ -704,15 +704,17 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
      * declared in one place instead of implied by a round trip. The depths are the 8 and 21 that
      * execAutoClipFogByZoom used.
      *
-     * `writeLive({})` re-derives without changing anything, which is what the switch needs: turning
-     * it on should snap the slab to the current zoom immediately rather than at the next move.
+     * `reapplySlab` is what the switch needs: turning it on should snap the slab to the current
+     * zoom immediately rather than at the next move. The policy itself only acts when the zoom
+     * changes, so that a clip set by hand - from the keyboard shortcuts, the slider handles or the
+     * scripting API - stands until the next zoom, as it always did.
      */
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
             glRef.current.cameraController.slabPolicy = resetClippingFogging
                 ? { kind: "auto", fieldDepthFront: FIELD_DEPTH_FRONT, fieldDepthBack: FIELD_DEPTH_BACK }
                 : { kind: "manual" }
-            glRef.current.cameraController.writeLive({})
+            glRef.current.cameraController.reapplySlab()
             glRef.current.drawScene()
         }
     }, [resetClippingFogging, glRef])
