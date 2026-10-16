@@ -412,3 +412,29 @@ describe("tearing down", () => {
         expect(() => stopPumpingCamera(self as any)).not.toThrow();
     });
 });
+
+describe("a tick that happens inside a tick", () => {
+    it("is refused, so a sampler's side effects cannot advance the clock", () => {
+        // A driven movie's sampler runs from inside drawScene. Anything it does that causes
+        // another draw - and asking for a redraw after changing the scene is an ordinary thing to
+        // do - would tick again, sample at a later time, and recurse. Nothing in a fade converges,
+        // because every nested sample differs from the last, so a whole segment could be consumed
+        // inside one animation frame: the fade appeared to be skipped entirely.
+        const camera = new CameraController(startingAt());
+        const driver = camera.acquire("movie");
+        const times: number[] = [];
+
+        driver.drive(seconds => {
+            times.push(seconds);
+            // What a scene write that asks for a redraw amounts to, from in here.
+            camera.tick(seconds + 0.5);
+            return { zoom: 1 + seconds };
+        });
+
+        camera.tick(0);
+
+        expect(times).toEqual([0]);
+        expect(camera.state.zoom).toBe(1);
+        driver.release();
+    });
+});

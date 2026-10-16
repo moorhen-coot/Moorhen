@@ -194,7 +194,6 @@ export interface CameraController {
      * This is what MoorhenWebMG's effect becomes. The deference is the whole point: a movie or a
      * drag in progress means the store is out of date, not that the camera is wrong.
      */
-    settle(target: CameraTarget): void;
 
     /**
      * Advance to a moment in time.

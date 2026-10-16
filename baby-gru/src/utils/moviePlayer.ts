@@ -38,11 +38,17 @@
  */
 
 import { BufferTarget, CanvasSource, Mp4OutputFormat, Output, VideoCodec, canEncodeVideo } from "mediabunny";
-import { Movie, movieDuration } from "./cameraPath";
+import { Movie, MovieSample, movieDuration } from "./cameraPath";
 import { holdCameraForMovie } from "./movieCamera";
 import type { webGL } from "../types/mgWebGL";
 
 export interface MovieRenderOptions {
+    /**
+     * Called with each sampled frame, for everything that is not the camera. The export runs on
+     * a fixed cadence rather than the wall clock, so this is called once per encoded frame - which
+     * is what makes a fade land on exactly the frames it was authored for.
+     */
+    onSample?: (sample: MovieSample) => void;
     /** Frames per second of the finished file. */
     fps?: number;
     /** How many frames to render. The default is one degree per frame, so a full turn. */
@@ -184,7 +190,7 @@ export async function recordMovieToMp4(
     // The camera is borrowed for the duration and handed back as it was, with the slab policy put
     // in manual so the movie's own clip and fog survive. See movieCamera.
     const hold = holdCameraForMovie(gl);
-    hold.play(movie);
+    hold.play(movie, options.onSample);
     let finalised = false;
     const cover = showCover("Rendering movie", options.coverOpacity ?? 1);
 
@@ -313,6 +319,14 @@ export function previewMovie(
          * the movie undoing itself.
          */
         restoreView?: boolean;
+        /**
+         * Called with each sampled frame, for everything that is not the camera - the object
+         * fades, and in time the scene's quantities.
+         *
+         * The player does not know what a fade is, deliberately: it hands over the sample and the
+         * caller decides what in the scene it describes.
+         */
+        onSample?: (sample: MovieSample) => void;
     } = {},
 ): PreviewHandle {
 
@@ -331,7 +345,7 @@ export function previewMovie(
     // moved behind our back - is gone, because a driver makes the thing it was looking for
     // impossible rather than merely unlikely. Reconciliation now defers, by construction.
     const hold = holdCameraForMovie(gl, options.restoreView ?? true);
-    hold.play(movie);
+    hold.play(movie, options.onSample);
 
     let drawnFrames = 0;
     let request = 0;

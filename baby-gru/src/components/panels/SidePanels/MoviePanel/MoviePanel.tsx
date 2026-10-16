@@ -32,14 +32,14 @@ import {
 import { useMoorhenInstance } from "@/InstanceManager";
 import { documentDuration, documentFrameCount, movieProblems } from "@/utils/movieDocument";
 import { animatedObjects } from "@/utils/movieEditing";
-import { captureKeyframe } from "@/utils/sceneKeyframe";
+import { applySample, captureKeyframe } from "@/utils/sceneKeyframe";
 import { fadeableObjects, sceneHostFrom, type NamedFadeable, type SceneHostInputs } from "@/utils/sceneHostAdapter";
 import { downloadMovie, previewMovie, recordMovieToMp4, type PreviewHandle } from "@/utils/moviePlayer";
 import { MOVIE_EXTENSION, MovieFileError, packMovie, unpackMovie } from "@/utils/movieContainer";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
 import { moorhensession } from "@/protobuf/MoorhenSession";
 import { doDownload } from "@/utils/utils";
-import type { Motion } from "@/utils/cameraPath";
+import type { Motion, MovieSample } from "@/utils/cameraPath";
 import { SidePanelContainer } from "../utils/SidePanelContainer";
 
 const MOTIONS: Motion["kind"][] = ["move", "hold", "spin", "rock"];
@@ -97,6 +97,40 @@ export const MoviePanel = () => {
     const segments = document.path.segments;
     const problems = movieProblems(document);
     const movieObjects = animatedObjects(document);
+
+    /**
+     * What to do with each frame of a playing movie, beyond the camera.
+     *
+     * applySample is what puts the fades on the scene, and until now nothing called it outside its
+     * tests: playback drove the camera and dropped the opacity half of every sample on the floor,
+     * so an authored fade was saved correctly, reloaded correctly, and never seen.
+     *
+     * The fadeable list is gathered once, when play starts, rather than on every frame. Rebuilding
+     * it per frame means walking every molecule's representations and filtering the display buffers
+     * sixty times a second, which is the sort of thing this renderer is careful not to do - and the
+     * set of objects cannot change while a movie is playing anyway.
+     */
+    const playbackApplier = useCallback(() => {
+        if (!hostInputs) return undefined;
+
+        // No redraw from inside a fade, which is not an optimisation but a correctness fix.
+        //
+        // A sample is produced from *inside* drawScene: the renderer ticks the camera at the top
+        // of a frame, the controller asks the movie's sampler where to be, and this runs. Setting
+        // an opacity normally asks for a redraw - right when a slider moves, catastrophic here,
+        // because that redraw re-enters drawScene, which ticks again, which samples again at a
+        // slightly later time. During a fade every nested sample differs from the last, so the
+        // "unchanged, skip it" guard never fires and the recursion only unwinds once the fade
+        // stops changing. A whole segment was being consumed inside one animation frame, which
+        // looked like the fade-in being skipped with the odd frame of it flashing past.
+        //
+        // The player draws every frame itself, so there is nothing to ask for.
+        const quiet: SceneHostInputs = { ...hostInputs, redraw: () => { /* the player draws */ } };
+        const host = sceneHostFrom(quiet);
+        const objects = fadeableObjects(quiet);
+        const frozen = { ...host, fadeable: () => objects };
+        return (sample: MovieSample) => applySample(frozen, sample);
+    }, [hostInputs]);
 
     const capture = useCallback(() => {
         if (!hostInputs) return null;
@@ -168,6 +202,17 @@ export const MoviePanel = () => {
             controller.slabPolicy = previousPolicy;
         }
 
+        // And the fades. Opening a keyframe should show the keyframe, not its camera angle over
+        // whatever the scene happens to be faded to - otherwise judging a fade means pressing Play
+        // and watching it go past.
+        //
+        // Only what this keyframe names, which is the rule playback follows too: an object the
+        // movie says nothing about is the scene's business, not the movie's.
+        const fades = keyframe.opacity ?? {};
+        fadeable.forEach(object => {
+            const wanted = fades[object.id];
+            if (wanted !== undefined && object.opacity !== wanted) object.setOpacity(wanted);
+        });
     };
 
     const play = async () => {
@@ -185,6 +230,7 @@ export const MoviePanel = () => {
         }
         try {
             const handle = previewMovie(glRef, document.path, {
+                onSample: playbackApplier(),
                 // Stay where the movie ends. previewMovie restores the view by
                 // default, which is right for "show me this once"; here the playing is the work,
                 // and snapping back to wherever Play was pressed reads as the movie undoing
@@ -297,6 +343,7 @@ export const MoviePanel = () => {
         setBusy(true);
         try {
             const result = await recordMovieToMp4(glRef, document.path, {
+                onSample: playbackApplier(),
                 width: document.output.width,
                 height: document.output.height,
                 fps: document.output.fps,
@@ -332,71 +379,134 @@ export const MoviePanel = () => {
             <div
                 key={index}
                 className="moorhen__movie-keyframe"
+                // The whole card opens the frame. A "Go to" button beside "Update" and "Delete"
+                // read as a third thing you might do to the keyframe, when it is really the one
+                // thing you do with it; clicking the card is what people try first anyway.
+                onClick={() => goTo(index)}
                 style={{
                     border: isSelected ? "2px solid var(--moorhen-primary, #3f51b5)" : "1px solid #ccc",
                     borderRadius: "6px", padding: "0.5rem", marginBottom: "0.25rem",
+                    cursor: isSelected ? "default" : "pointer",
                 }}
             >
                 <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
                     <strong style={{ flex: 1 }}>Keyframe {index + 1}</strong>
-                    <MoorhenButton onClick={() => goTo(index)}>Go to</MoorhenButton>
-                    <MoorhenButton onClick={() => updateFromView(index)}>Update</MoorhenButton>
-                    <MoorhenButton onClick={() => dispatch(removeKeyframe(index))}>Delete</MoorhenButton>
+                    {/* Buttons inside a clickable card have to stop the click reaching it, or
+                        deleting a keyframe would first open it. */}
+                    <MoorhenButton onClick={event => { event.stopPropagation(); updateFromView(index); }}>
+                        Update
+                    </MoorhenButton>
+                    <MoorhenButton
+                        variant="danger"
+                        onClick={event => { event.stopPropagation(); dispatch(removeKeyframe(index)); }}
+                    >
+                        Delete
+                    </MoorhenButton>
                 </div>
 
                 <div style={{ fontSize: "0.75rem", opacity: 0.75 }}>
                     zoom {keyframe.zoom.toFixed(3)} · centre{" "}
-                    {keyframe.origin.map(value => (-value).toFixed(1)).join(", ")} · clip{" "}
-                    {keyframe.clipFront.toFixed(0)}/{keyframe.clipBack.toFixed(0)} · fog{" "}
-                    {keyframe.fogFront.toFixed(0)}/{keyframe.fogBack.toFixed(0)}
+                    {keyframe.origin.map(value => (-value).toFixed(1)).join(", ")}
                 </div>
 
                 {isSelected && (
                     <MoorhenStack>
-                        <div style={{ display: "flex", gap: "0.25rem" }}>
-                            <MoorhenButton onClick={() => dispatch(spreadSceneFromKeyframe(index))}>
-                                Apply this frame&apos;s scene to all
+                        <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
+                            <MoorhenButton onClick={event => { event.stopPropagation(); dispatch(spreadSceneFromKeyframe(index)); }}>
+                                Scene to all
                             </MoorhenButton>
-                            {index > 0 && (
-                                <MoorhenButton onClick={() => dispatch(reorderKeyframe({ from: index, to: index - 1 }))}>
-                                    Move up
-                                </MoorhenButton>
-                            )}
-                            {index < keyframes.length - 1 && (
-                                <MoorhenButton onClick={() => dispatch(reorderKeyframe({ from: index, to: index + 1 }))}>
-                                    Move down
-                                </MoorhenButton>
-                            )}
+                            <span style={{ flex: 1 }} />
+                            <MoorhenButton
+                                type="icon-only"
+                                icon="MatSymArrowUpward"
+                                disabled={index === 0}
+                                onClick={event => { event.stopPropagation(); dispatch(reorderKeyframe({ from: index, to: index - 1 })); }}
+                            />
+                            <MoorhenButton
+                                type="icon-only"
+                                icon="MatSymArrowDownward"
+                                disabled={index === keyframes.length - 1}
+                                onClick={event => { event.stopPropagation(); dispatch(reorderKeyframe({ from: index, to: index + 1 })); }}
+                            />
                         </div>
 
                         {faded.map(id => (
-                            <div key={id} style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                            <div key={id} style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}
+                                 onClick={event => event.stopPropagation()}>
                                 <MoorhenSlider
                                     sliderTitle={fadeableById.get(id)?.label ?? `${id.slice(0, 8)} (not in this scene)`}
                                     minVal={0}
                                     maxVal={1}
                                     decimalPlaces={2}
                                     value={keyframe.opacity?.[id] ?? 1}
-                                    setValue={value =>
-                                        dispatch(updateObjectOpacity({ index, id, value: value as number }))}
+                                    setValue={value => {
+                                        // Present at every keyframe first, solid where it is not
+                                        // already mentioned. An object the movie animates at one
+                                        // keyframe and not the next is not interpolated between
+                                        // them - it is set at one and left alone at the other - so
+                                        // fading it here and saying nothing elsewhere means it
+                                        // simply stays faded for the rest of the movie. Filling
+                                        // the gaps with 1 is what makes this a fade rather than a
+                                        // one-way change, and introduceObject only fills gaps, so
+                                        // keyframes that already say something keep saying it.
+                                        dispatch(addObjectToMovie({ id, value: 1 }));
+                                        dispatch(updateObjectOpacity({ index, id, value: value as number }));
+                                        // And show it. The slider edits the movie, which is a
+                                        // description of what will happen later; without this the
+                                        // control appeared to do nothing until you pressed Play.
+                                        // The keyframe being edited is the one on screen, so
+                                        // applying it live is both honest and what you want.
+                                        fadeableById.get(id)?.setOpacity(value as number);
+                                    }}
                                 />
-                                <MoorhenButton onClick={() => dispatch(removeObjectFromMovie(id))}>×</MoorhenButton>
+                                <MoorhenButton
+                                    type="icon-only"
+                                    icon="MatSymClose"
+                                    variant="danger"
+                                    onClick={event => {
+                                        event.stopPropagation();
+                                        // Out of the movie entirely, so the scene has it back:
+                                        // put it back to solid rather than leaving it wherever the
+                                        // fade had got to.
+                                        dispatch(removeObjectFromMovie(id));
+                                        fadeableById.get(id)?.setOpacity(1);
+                                    }}
+                                />
                             </div>
                         ))}
 
+                        {/* Wrapped rather than given its own handler: MoorhenSelect takes no
+                            onClick, and a select inside a clickable card must not re-open it. */}
+                        <div onClick={event => event.stopPropagation()}>
+                        {/* An empty picker is indistinguishable from a broken one, so say which.
+                            There are two ways to have nothing to offer and they want different
+                            answers. */}
+                        {fadeable.length === 0 ? (
+                            <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+                                {glRef?.current?.supportsObjectFading === false
+                                    ? "This browser is using WebGL1, where objects cannot be faded."
+                                    : "Nothing here can be faded yet. Load a molecule, or add a mesh object."}
+                            </span>
+                        ) : fadeable.every(object => movieObjects.includes(object.id)) ? (
+                            <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+                                Every object in the scene is already in the movie.
+                            </span>
+                        ) : (
                         <MoorhenSelect
                             label="Fade an object"
                             value=""
                             onChange={event => {
                                 const id = event.target.value;
                                 if (!id) return;
-                                // Introduced at zero everywhere, then set to whatever it is now at
-                                // this keyframe - so adding an object does not change what the
-                                // movie looks like here, and does hide it in the frames before.
-                                dispatch(addObjectToMovie({ id, value: 0 }));
-                                dispatch(updateObjectOpacity({
-                                    index, id, value: fadeableById.get(id)?.opacity ?? 1,
-                                }));
+                                // Introduced at the opacity it has right now, at every keyframe,
+                                // so that picking an object changes nothing about how the movie
+                                // looks. It used to go in at zero everywhere, which meant
+                                // choosing an object made it vanish from every keyframe but this
+                                // one - a surprising amount to happen on a selection.
+                                //
+                                // Every keyframe, because an object the movie mentions at one and
+                                // not the next is not interpolated between them.
+                                dispatch(addObjectToMovie({ id, value: fadeableById.get(id)?.opacity ?? 1 }));
                             }}
                         >
                             <option value="">Choose...</option>
@@ -406,6 +516,8 @@ export const MoviePanel = () => {
                                     <option key={object.id} value={object.id}>{object.label}</option>
                                 ))}
                         </MoorhenSelect>
+                        )}
+                        </div>
                     </MoorhenStack>
                 )}
             </div>
@@ -466,19 +578,21 @@ export const MoviePanel = () => {
                 )}
                 {status && <div style={{ fontSize: "0.8rem", opacity: 0.8 }}>{status}</div>}
 
-                <div style={{ display: "flex", gap: "0.25rem" }}>
-                    <MoorhenButton onClick={addFromView}>Add keyframe from this view</MoorhenButton>
-                    <MoorhenButton onClick={play}>{playing ? "Stop" : "Play"}</MoorhenButton>
-                </div>
+                {/* Three jobs, three groups, in the order they are done: build the movie, watch
+                    it, then get it out. Lumping Play in with "Add keyframe" and Export in with
+                    the file buttons made each row a list of unrelated things. */}
+                <MoorhenButton onClick={addFromView}>Add keyframe from this view</MoorhenButton>
 
-                <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }}>
-                    <MoorhenButton onClick={saveMovie} disabled={busy}>Save…</MoorhenButton>
-                    <MoorhenButton onClick={() => openInputRef.current?.click()} disabled={busy}>
-                        Open…
-                    </MoorhenButton>
+                <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
+                    <MoorhenButton onClick={play}>{playing ? "Stop" : "Play"}</MoorhenButton>
                     <MoorhenButton onClick={exportMovie} disabled={busy || problems.length > 0}>
                         Export MP4…
                     </MoorhenButton>
+                    <span style={{ flex: 1 }} />
+                    <MoorhenButton onClick={() => openInputRef.current?.click()} disabled={busy}>
+                        Open…
+                    </MoorhenButton>
+                    <MoorhenButton onClick={saveMovie} disabled={busy}>Save…</MoorhenButton>
                 </div>
                 <input
                     ref={openInputRef}

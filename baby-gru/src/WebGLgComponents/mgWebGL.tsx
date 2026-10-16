@@ -8,7 +8,7 @@ import { setDisplayBuffers, setCanvasSize } from "../store/glRefSlice"
 import { setClipStart, setClipEnd, setFogStart, setFogEnd } from "../store/sceneSettingsSlice"
 import { setOrigin as setStoreOrigin, setZoom as setStoreZoom } from "../store/sceneSettingsSlice"
 import { setQuat as setStoreQuat } from "../store/glRefSlice"
-import { isSilent, viewEcho } from "./viewEcho"
+import { isSilent, viewDifference } from "./viewEcho"
 import { parseAtomInfoLabel, guid, gemmiAtomPairsToCylindersInfo } from '../utils/utils';
 import  { unProject } from './GLU.js';
 
@@ -1001,7 +1001,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
      */
     echoViewToStore() {
         const state = this.store.getState()
-        const echo = viewEcho(this._camera.controller.state, {
+        const echo = viewDifference(this._camera.controller.state, {
             origin: state.sceneSettings.origin,
             quat: state.glRef.quat,
             zoom: state.sceneSettings.zoom,

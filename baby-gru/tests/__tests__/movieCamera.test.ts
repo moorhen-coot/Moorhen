@@ -11,6 +11,13 @@ import { CameraController, CameraState } from "../../src/WebGLgComponents/camera
 import { Movie } from "../../src/utils/cameraPath";
 import { cameraTargetFrom, holdCameraForMovie } from "../../src/utils/movieCamera";
 
+/** A keyframe at a given zoom, with the slab a movie would have authored. */
+const keyframeAt = (zoom: number) => ({
+    quat: [0, 0, 0, 1] as [number, number, number, number],
+    origin: [0, 0, 0] as [number, number, number],
+    zoom, clipFront: 8, clipBack: 21, fogFront: 8, fogBack: 21,
+});
+
 const startingAt = (overrides: Partial<CameraState> = {}): CameraState => ({
     quat: [0, 0, 0, -1],
     origin: [0, 0, 0],
@@ -45,12 +52,43 @@ describe("holding the camera", () => {
         const controller = new CameraController(startingAt());
         const hold = holdCameraForMovie({ cameraController: controller });
 
+        // `driver` being set is the whole of it: moveCameraTo, which is how a store change reaches
+        // the camera, declines while anyone holds it.
         expect(controller.driver).toBe("movie");
-        controller.settle({ zoom: 99 });
-        expect(controller.state.zoom).toBe(1);
 
         hold.release();
         expect(controller.driver).toBeNull();
+    });
+
+    it("reports each sampled frame, which is how the fades reach the scene", () => {
+        // The camera is only half of a movie. applySample puts the opacities on the scene, and it
+        // needs the same sample at the same instant - so the hold hands it over at the one place
+        // the movie is sampled rather than letting a second sampler run on its own clock.
+        //
+        // Without this the opacity half of every frame was computed and dropped: a fade saved and
+        // reloaded perfectly, and never once seen.
+        const controller = new CameraController(startingAt());
+        const hold = holdCameraForMovie({ cameraController: controller });
+        const seen: number[] = [];
+
+        hold.play(
+            {
+                keyframes: [
+                    { ...keyframeAt(1), opacity: { surface: 0 } },
+                    { ...keyframeAt(2), opacity: { surface: 1 } },
+                ],
+                segments: [{ seconds: 1, motion: { kind: "move" } }],
+            },
+            sample => seen.push(sample.opacity.surface),
+        );
+
+        controller.tick(0);
+        controller.tick(1);
+
+        expect(seen).toHaveLength(2);
+        expect(seen[0]).toBeCloseTo(0, 6);
+        expect(seen[1]).toBeCloseTo(1, 6);
+        hold.release();
     });
 
     it("puts the slab policy in manual, and gives it back", () => {

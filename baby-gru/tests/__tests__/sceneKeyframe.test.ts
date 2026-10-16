@@ -69,11 +69,26 @@ describe("capturing a keyframe", () => {
         expect(frame.quat).not.toBe(CAMERA.quat);
     });
 
-    it("records every fadeable object, not only the faded ones", () => {
-        // A keyframe captured from a live scene is complete. Recording only what happened to be
-        // translucent would let everything else drift between keyframes.
+    it("records only the objects that are actually faded", () => {
+        // This used to record every fadeable object, including the solid ones. In the panel that
+        // meant every keyframe listed every representation at 1.00, saying nothing, and left the
+        // "fade an object" picker with nothing to offer - it offers what the movie does not yet
+        // animate, and the movie claimed to animate everything.
         const frame = captureKeyframe(hostWith([fadeable("ribbons"), fadeable("surface", 0.4)]));
-        expect(frame.opacity).toEqual({ ribbons: 1, surface: 0.4 });
+        expect(frame.opacity).toEqual({ surface: 0.4 });
+    });
+
+    it("says nothing about opacity when nothing is faded", () => {
+        // Absent already means "not animated, left as the scene has it", which is exactly true of
+        // a solid object. Recording it would be a line to say "unchanged".
+        const frame = captureKeyframe(hostWith([fadeable("ribbons"), fadeable("bonds")]));
+        expect(frame.opacity).toEqual({});
+    });
+
+    it("does not mistake an interpolator's near-miss for a fade", () => {
+        // The same 0.99 threshold the renderer uses to decide whether a buffer is transparent.
+        const frame = captureKeyframe(hostWith([fadeable("ribbons", 0.999999)]));
+        expect(frame.opacity).toEqual({});
     });
 
     it("takes a copy of the scene, so later edits do not rewrite history", () => {
@@ -145,21 +160,32 @@ describe("applying a sample", () => {
 });
 
 describe("a captured keyframe, applied back", () => {
-    it("puts the scene back as it was", () => {
+    it("puts back the camera, the scene, and the fades it recorded", () => {
         // The round trip that the movie panel's "update this keyframe" depends on.
         const surface = fadeable("surface", 0.4);
-        const ribbons = fadeable("ribbons", 1);
-        const host = hostWith([surface, ribbons], { specularPower: 32 });
+        const host = hostWith([surface], { specularPower: 32 });
         const frame = captureKeyframe(host);
 
         surface.setOpacity(1);
-        ribbons.setOpacity(0);
         host.scene.write({ specularPower: 8 });
 
         applySample(host, { ...frame, opacity: frame.opacity!, scene: frame.scene! } as MovieSample);
 
         expect(surface.opacity).toBe(0.4);
-        expect(ribbons.opacity).toBe(1);
         expect(host.scene.read().specularPower).toBe(32);
+    });
+
+    it("leaves alone an object that was solid when the keyframe was taken", () => {
+        // Not an omission: a solid object is one the movie does not animate, and the rule for an
+        // object a movie says nothing about is that the scene keeps it. Fading it afterwards is
+        // the user's business, and a keyframe captured before they did so has no opinion on it.
+        const ribbons = fadeable("ribbons", 1);
+        const host = hostWith([ribbons]);
+        const frame = captureKeyframe(host);
+
+        ribbons.setOpacity(0.2);
+        applySample(host, { ...frame, opacity: frame.opacity ?? {}, scene: {} } as MovieSample);
+
+        expect(ribbons.opacity).toBe(0.2);
     });
 });

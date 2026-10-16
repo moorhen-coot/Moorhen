@@ -24,7 +24,7 @@
  */
 
 import type { CameraState } from "../WebGLgComponents/cameraController";
-import { clampFade } from "../WebGLgComponents/objectFade";
+import { clampFade, isFaded } from "../WebGLgComponents/objectFade";
 import type { Keyframe, MovieSample, SceneKeyframe, Vec3 } from "./cameraPath";
 
 /**
@@ -88,20 +88,32 @@ export interface SceneHost {
 /**
  * The scene as a keyframe.
  *
- * Complete, deliberately. Every field of a keyframe is optional, and absent means "this movie does
- * not animate that" - a rule that lets a hand-written camera tour leave the lighting alone. But a
- * keyframe *captured* from a live scene has an answer for everything, and recording only some of
- * it would produce a movie that holds the camera to account and lets the scene drift with whatever
- * the user last touched.
+ * The camera and the scene's quantities are recorded in full: they have one value each, that value
+ * is always interesting, and a movie that held the camera to account while letting the lighting
+ * drift with whatever the user last touched would be worse than useless.
  *
- * The one exception is an empty scene: with nothing fadeable in it the opacity map is empty, which
- * says the same thing either way.
+ * OPACITY IS RECORDED ONLY WHERE SOMETHING IS ACTUALLY FADED
+ *
+ * This used to record every fadeable object, on the same "a captured keyframe has an answer for
+ * everything" reasoning. In the panel that was plainly wrong. Every keyframe listed every
+ * representation of every molecule, all sitting at 1.00, so the list was long and said nothing -
+ * and because the picker offers objects the movie does not yet animate, there were never any left
+ * to offer and "Fade an object" was permanently empty.
+ *
+ * Absent already means the right thing: not animated, so left as the scene has it. An object at
+ * full opacity is exactly that. Recording it added a row to the UI and a line to the file to say
+ * "unchanged", and converted a design of "only what differs, with a picker for the rest" into
+ * "everything, always".
+ *
+ * An object that is faded *anywhere* is still present at every keyframe, because introduceObject
+ * puts it in all of them - which is what makes a fade interpolate rather than jump.
  */
 export const captureKeyframe = (host: SceneHost): Keyframe => {
     const camera = host.cameraState();
     const opacity: Record<string, number> = {};
     host.fadeable().forEach(object => {
-        opacity[object.id] = clampFade(object.opacity);
+        const fade = clampFade(object.opacity);
+        if (isFaded(fade)) opacity[object.id] = fade;
     });
 
     return {

@@ -185,10 +185,18 @@ export function setObjectOpacity(
  * so an opacity set in a single frame does not produce a fade, it produces a jump followed by
  * whatever the scene happened to be doing.
  *
- * It is also the answer to a molecule loaded after a movie was started. Its representations did
- * not exist when the earlier keyframes were captured, so nothing refers to them; introduced at
- * zero they are invisible until some keyframe says otherwise, instead of being present from the
- * first frame of a movie made before they arrived.
+ * WHAT VALUE TO INTRODUCE IT AT
+ *
+ * The caller's choice, and the panel passes the opacity the object has right now - so bringing an
+ * object under the movie's control changes nothing about how the movie looks, and the author then
+ * edits the keyframes they care about. Zero was the original default, on the reasoning that a
+ * molecule loaded after a movie was started should stay invisible until some keyframe says
+ * otherwise. It reads badly in use: choosing an object from a picker made it disappear from every
+ * keyframe but the one in front of you.
+ *
+ * Only the gaps are filled. A keyframe that already says something about this object keeps saying
+ * it, which is what lets this be called defensively before setting a single keyframe's opacity -
+ * the fades already authored are safe.
  */
 export function introduceObject(
     document: MovieDocument, id: string, value = 0,

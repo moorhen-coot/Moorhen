@@ -14,9 +14,10 @@
  * that fought it, and the fight sustained itself because each animation announced its arrival into
  * the store and re-triggered the reconciliation.
  *
- * Here the live value has exactly one writer, so there is nothing to reconcile. `settle` is how
- * stored state asks to be agreed with, and it defers to anyone actively driving - a move in
- * progress means the store is out of date, not that the camera is wrong.
+ * Here the live value has exactly one writer, so there is nothing to reconcile. Stored state asks
+ * to be agreed with by going through a driver - moveCameraTo, which declines outright while
+ * somebody else holds the camera. A move in progress means the store is out of date, not that the
+ * camera is wrong, and `driver` is what says so.
  *
  * THE CLOCK IS AN ARGUMENT
  *
@@ -259,7 +260,7 @@ export class CameraController {
      * a dispatch per view per frame on the hot path.
      *
      * So: writes that nothing should hear about come through here. Writes that move the view go
-     * through `writeLive`, a driver, or `settle`. The distinction is the point, and the test is
+     * through `writeLive` or a driver. The distinction is the point, and the test is
      * simple - would it be a lie to tell the rest of the application that the camera is here?
      *
      * Nothing outside the Camera facade in mgWebGLParts/camera.ts should touch it.
@@ -285,9 +286,9 @@ export class CameraController {
      * To apply the policy after switching it on, call `reapplySlab`: an empty write now changes
      * nothing, because the policy only acts when the zoom moves.
      *
-     * Unlike `settle` it does not defer to an active driver, because its callers have always
-     * landed unconditionally. Whether they should - whether a slab drag during a movie ought to
-     * win or wait - is a real question, and not one this answers.
+     * It does not defer to an active driver: its callers have always landed unconditionally.
+     * Whether they should - whether a slab drag during a movie ought to win or wait - is a real
+     * question, and not one this answers.
      */
     writeLive(part: CameraTarget): void {
         this.current = this.applySlab(mergeLive(this.current, part), touchesSlab(part));
@@ -335,17 +336,6 @@ export class CameraController {
     }
 
     /**
-     * Agree with a stored value, unless somebody is actively driving.
-     *
-     * This is what the reconciling effect becomes. The deference is the point.
-     */
-    settle(target: CameraTarget): void {
-        if (this.activeDriver?.active) return;
-        this.current = this.applySlab(mergeLive(this.current, target), touchesSlab(target));
-        this.notify();
-    }
-
-    /**
      * Turn the camera by a relative rotation. What the mouse does.
      *
      * Not a driver operation, deliberately. Acquiring would supersede whatever was running, and
@@ -364,6 +354,31 @@ export class CameraController {
 
     /** Advance to a moment in time. Called by the renderer before it draws. */
     tick(seconds: number): void {
+        // A tick that happens inside a tick advances the camera by the length of its own side
+        // effects, which is never what anyone meant.
+        //
+        // The sampler of a driven movie runs here, from inside drawScene. If anything it does
+        // causes another draw - and asking the renderer to redraw after changing the scene is an
+        // ordinary thing to do - that draw ticks again, samples again at a slightly later time,
+        // and does it all once more. Nothing in a fade converges, because every nested sample
+        // differs from the one before, so an entire segment could be consumed inside a single
+        // animation frame. That cost an afternoon, and the comment it taught us is not a defence:
+        // the next person to write to the scene from a sampler should not have to know.
+        //
+        // Returning is right rather than queueing. The outer tick is still in progress and will
+        // finish with the time it was given; a nested one has nothing to add.
+        if (this.ticking) return;
+        this.ticking = true;
+        try {
+            this.tickOnce(seconds);
+        } finally {
+            this.ticking = false;
+        }
+    }
+
+    private ticking = false;
+
+    private tickOnce(seconds: number): void {
         if (this.sampler) {
             // A driven sequence owns the clock; it is told the time and says where to be.
             this.current = this.applySlab(mergeLive(this.current, this.sampler(seconds)));

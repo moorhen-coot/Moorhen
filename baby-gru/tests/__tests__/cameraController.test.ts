@@ -58,34 +58,35 @@ describe("holding a camera", () => {
     });
 });
 
-describe("settle, which is what reconciliation becomes", () => {
-    it("agrees with the store when nobody is driving", () => {
+describe("who holds the camera, which is what reconciliation consults", () => {
+    // These used to be written against `settle`, a method whose whole purpose was to express
+    // deference. It was deleted because nothing ever called it: reconciliation goes through
+    // moveCameraTo, which asks `driver` and declines when the answer is not null. The property
+    // being protected is the same one - a move in progress means the store is out of date, not
+    // that the camera is wrong - so it is now asserted against the thing the real code reads.
+
+    it("names nobody when the camera is free, so reconciliation may act", () => {
         const camera = new CameraController(startingAt());
-        camera.settle({ zoom: 2 });
-        expect(camera.state.zoom).toBe(2);
+        expect(camera.driver).toBeNull();
     });
 
-    it("defers to an active driver", () => {
-        // The loop, stated as an expectation. A move in progress means the store is out of date,
-        // not that the camera is wrong - so reconciliation must not pull it back.
+    it("names the holder while a driver is active, so reconciliation stands aside", () => {
         const camera = new CameraController(startingAt());
         const movie = camera.acquire("movie");
         movie.set({ zoom: 5 });
 
-        camera.settle({ zoom: 1 });
-
+        expect(camera.driver).toBe("movie");
         expect(camera.state.zoom).toBe(5);
         movie.release();
     });
 
-    it("agrees again once the driver lets go", () => {
+    it("names nobody again once the driver lets go", () => {
         const camera = new CameraController(startingAt());
         const movie = camera.acquire("movie");
         movie.set({ zoom: 5 });
         movie.release();
 
-        camera.settle({ zoom: 1 });
-        expect(camera.state.zoom).toBe(1);
+        expect(camera.driver).toBeNull();
     });
 });
 
@@ -428,7 +429,7 @@ describe("the slab", () => {
         expect(camera.state.eyeDistance).toBe(400);
     });
 
-    it("writes through regardless of who is driving, unlike settle", () => {
+    it("writes through regardless of who is driving", () => {
         // These are the renderer's own direct writes, which have always landed unconditionally.
         // They become a driver in the last slice; until then, dropping one would leave the slab
         // describing a zoom the camera is no longer at.

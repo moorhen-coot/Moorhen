@@ -35,7 +35,7 @@ export interface CameraHold {
      * what the renderer puts in `cameraTime`. Time is rebased on the first tick, so a sampler
      * always sees a movie starting at zero whichever clock it is being shown.
      */
-    play(movie: Movie): void;
+    play(movie: Movie, onSample?: (sample: MovieSample) => void): void;
     /**
      * Put the camera somewhere directly, for a movie that computes its own frames rather than
      * sampling a Movie - a plain spin, say.
@@ -88,11 +88,19 @@ export function holdCameraForMovie(host: CameraHost, restoreView = true): Camera
     let released = false;
 
     return {
-        play(movie: Movie) {
+        play(movie: Movie, onSample?: (sample: MovieSample) => void) {
             let startedAt: number | null = null;
             driver.drive(seconds => {
                 if (startedAt === null) startedAt = seconds;
-                return cameraTargetFrom(sampleMovie(movie, seconds - startedAt));
+                const sample = sampleMovie(movie, seconds - startedAt);
+                // Everything else in the frame: the fades, and in time the scene's quantities.
+                //
+                // Here rather than in the caller's draw loop because this is the one place the
+                // movie is sampled. A second sampler on another clock would drift from this one,
+                // and the whole reason preview and export agree is that they differ only in which
+                // clock is handed to the controller.
+                onSample?.(sample);
+                return cameraTargetFrom(sample);
             });
         },
 

@@ -156,6 +156,17 @@ describe("objects the movie animates", () => {
         expect(document.path.keyframes.map(k => k.opacity?.surface)).toEqual([0, 0, 0]);
     });
 
+    it("fills only the gaps, so authored fades survive being introduced again", () => {
+        // The panel calls this defensively before setting one keyframe's opacity, to guarantee the
+        // object is present at every keyframe - without which a fade set at one keyframe and
+        // nowhere else is not interpolated, it is simply set and then left, and the object stays
+        // faded for the rest of the movie.
+        let document = setObjectOpacity(movieOf(3), 1, "surface", 0.5);
+        document = introduceObject(document, "surface", 1);
+
+        expect(document.path.keyframes.map(k => k.opacity?.surface)).toEqual([1, 0.5, 1]);
+    });
+
     it("introduces a late arrival invisible, so it does not appear from the first frame", () => {
         // A molecule loaded after the movie was started: its representations did not exist when
         // the earlier keyframes were captured, so nothing refers to them.
