@@ -7,9 +7,9 @@
  */
 import { describe, expect, it } from "@jest/globals";
 import {
-    DEFAULT_SEGMENT_SECONDS, addKeyframe, animatedObjects, applySceneToAll, deleteKeyframe,
-    introduceObject, moveKeyframe, releaseObject, replaceKeyframe, setMotion, setObjectOpacity,
-    setSegment,
+    DEFAULT_SEGMENT_SECONDS, addKeyframe, animatedObjects, applySceneToAll, cloneKeyframe,
+    deleteKeyframe, hasTrailingSegment, introduceObject, moveKeyframe, releaseObject,
+    removeTrailingSegment, replaceKeyframe, setMotion, setObjectOpacity, setSegment,
 } from "../../src/utils/movieEditing";
 import { emptyMovie } from "../../src/utils/movieDocument";
 import type { MovieDocument } from "../../src/utils/movieDocument";
@@ -197,5 +197,109 @@ describe("objects the movie animates", () => {
         let document = setObjectOpacity(movieOf(3), 2, "surface", 1);
         document = setObjectOpacity(document, 0, "ribbons", 1);
         expect(animatedObjects(document)).toEqual(["ribbons", "surface"]);
+    });
+});
+
+/**
+ * A motion at the end of the movie.
+ *
+ * A segment says what happens *from* the keyframe it starts at, and for a hold, spin or rock that
+ * means the camera stays put and the movie cuts to the next shot afterwards - which is how those
+ * have always behaved in the middle of a path. Allowing one in the last slot applies the same rule
+ * at the end, so a movie can be a single shot that spins, or a tour that finishes by turning.
+ */
+describe("a trailing motion", () => {
+    const spin = { kind: "spin" as const, turns: 1, axis: "y" as const };
+
+    it("can be the whole movie, one keyframe and a spin", () => {
+        const document = setSegment(movieOf(1), 0, { seconds: 5, motion: spin });
+        expect(document.path.keyframes).toHaveLength(1);
+        expect(document.path.segments).toHaveLength(1);
+        expect(hasTrailingSegment(document)).toBe(true);
+    });
+
+    it("survives appending a keyframe, becoming the connector into it", () => {
+        // The trailing spin keeps spinning where it always did; the movie then cuts to the new
+        // shot, which is exactly what a spin does anywhere else in a path.
+        let document = setSegment(movieOf(1), 0, { seconds: 5, motion: spin });
+        document = addKeyframe(document, frameAt(9));
+
+        expect(zooms(document)).toEqual([0, 9]);
+        expect(document.path.segments).toHaveLength(1);
+        expect(document.path.segments[0].motion).toEqual(spin);
+        expect(hasTrailingSegment(document)).toBe(false);
+    });
+
+    it("comes back when that keyframe is deleted, which is what makes it an undo", () => {
+        // The reason for this design rather than one where the trailing motion follows the end of
+        // the movie: adding a keyframe and deleting it again gets you back exactly where you were.
+        const before = setSegment(movieOf(1), 0, { seconds: 5, motion: spin });
+        const after = deleteKeyframe(addKeyframe(before, frameAt(9)), 1);
+
+        expect(after.path.keyframes).toHaveLength(1);
+        expect(after.path.segments).toHaveLength(1);
+        expect(after.path.segments[0]).toEqual({ seconds: 5, motion: spin });
+    });
+
+    it("is created by editing the slot past the last gap", () => {
+        // Two keyframes have one gap; the second slot is the trailing one.
+        const document = setSegment(movieOf(2), 1, { seconds: 4, motion: spin });
+        expect(document.path.segments).toHaveLength(2);
+        expect(document.path.segments[1]).toEqual({ seconds: 4, motion: spin });
+    });
+
+    it("refuses a slot that is not a gap and not the end", () => {
+        const document = movieOf(2);
+        expect(setSegment(document, 5, { seconds: 1 })).toEqual(document);
+    });
+
+    it("can be taken away again, leaving the movie to end on its last keyframe", () => {
+        // The panel offers the trailing slot as a dropdown, so whatever a choice there adds it
+        // must also be able to remove - otherwise "spin at the end" is a decision that can only
+        // be unmade by deleting the keyframe.
+        const document = setSegment(movieOf(2), 1, { seconds: 4, motion: spin });
+        const ended = removeTrailingSegment(document);
+
+        expect(ended.path.keyframes).toHaveLength(2);
+        expect(ended.path.segments).toHaveLength(1);
+        expect(hasTrailingSegment(ended)).toBe(false);
+    });
+
+    it("is the only segment removing can touch", () => {
+        // A connector is not the panel's to delete this way: the gap it spans still exists.
+        const document = movieOf(3);
+        expect(removeTrailingSegment(document)).toEqual(document);
+    });
+
+    it("is what a lost connector turns into, when it was worth keeping", () => {
+        // Deleting the last keyframe of a movie that ended by spinning into it: the spin was the
+        // way *to* a shot that is now gone, but a spin stands perfectly well on its own, so it
+        // stays as the new ending rather than being thrown away with the keyframe.
+        let document = setSegment(movieOf(2), 1, { seconds: 4, motion: spin });
+        document = deleteKeyframe(document, 1);
+
+        expect(document.path.keyframes).toHaveLength(1);
+        expect(document.path.segments).toEqual([{ seconds: 4, motion: spin }]);
+    });
+});
+
+describe("cloning a keyframe", () => {
+    it("puts an identical shot immediately after it", () => {
+        // What a spin-then-continue needs: the spin ends where it began, so the next leg has to
+        // start from the same place or the movie cuts.
+        const document = cloneKeyframe(movieOf(2), 0);
+        expect(zooms(document)).toEqual([0, 0, 1]);
+    });
+
+    it("copies the arrays rather than sharing them", () => {
+        // Both keyframes are in Redux, which freezes them; a shared origin array would make
+        // editing one edit the other, or throw.
+        const document = cloneKeyframe(movieOf(1), 0);
+        expect(document.path.keyframes[1].origin).not.toBe(document.path.keyframes[0].origin);
+        expect(document.path.keyframes[1].quat).not.toBe(document.path.keyframes[0].quat);
+    });
+
+    it("ignores a keyframe that is not there", () => {
+        expect(cloneKeyframe(movieOf(2), 7)).toEqual(movieOf(2));
     });
 });

@@ -25,9 +25,10 @@ import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenTextInput } from "@
 import { MoorhenNumberInput } from "@/components/inputs";
 import { RootState } from "@/store";
 import {
-    addObjectToMovie, appendKeyframe, removeKeyframe, removeObjectFromMovie, reorderKeyframe,
-    selectKeyframe, setMovieDocument, setMovieFileName, setMovieName, spreadSceneFromKeyframe,
-    updateKeyframe, updateMotion, updateMovieOutput, updateObjectOpacity, updateSegment,
+    addObjectToMovie, appendKeyframe, clearTrailingMotion, duplicateKeyframe, removeKeyframe,
+    removeObjectFromMovie, reorderKeyframe, selectKeyframe, setMovieDocument, setMovieFileName,
+    setMovieName, spreadSceneFromKeyframe, updateKeyframe, updateMotion, updateMovieOutput,
+    updateObjectOpacity, updateSegment,
 } from "@/store";
 import { useMoorhenInstance } from "@/InstanceManager";
 import { documentDuration, documentFrameCount, movieProblems } from "@/utils/movieDocument";
@@ -235,8 +236,10 @@ export const MoviePanel = () => {
             setStatus("No 3D view yet");
             return;
         }
-        if (keyframes.length < 2) {
-            setStatus("A movie needs at least two keyframes");
+        // Segments, not keyframes: one keyframe with a motion under it is a movie - that is what
+        // the trailing slot is for - and a list of keyframes with nothing between them is not.
+        if (segments.length === 0) {
+            setStatus("Nothing to play yet. Add a keyframe to move to, or a motion to end on.");
             return;
         }
         try {
@@ -269,24 +272,32 @@ export const MoviePanel = () => {
      * session are the ones ManageSession uses to write a .pb, so what lands in the container is
      * exactly what loadSessionFromArrayBuffer reads back.
      */
+    /** A file name from the movie's name, safe on every platform this lands on. */
+    const baseName = () => (document.name || "moorhen_movie").replace(/[^\w.-]+/g, "_");
+
+    /** Fetch the session, pack it with the document, and hand the user the file. */
+    const writeMovieFile = async (name: string): Promise<number> => {
+        setStatus("Fetching the session...");
+        const timeCapsule = moorhenInstance.getTimeCapsuleRef().current;
+        const sessionData = await timeCapsule.fetchSession(true);
+        const sessionBytes = moorhensession.Session
+            .encode(moorhensession.Session.fromObject(sessionData)).finish();
+
+        setStatus("Packing...");
+        const blob = await packMovie(
+            { movie: document, session: sessionBytes },
+            { type: "blob", writtenBy: "Moorhen" }) as Blob;
+
+        doDownload([blob], `${name}${MOVIE_EXTENSION}`);
+        dispatch(setMovieFileName(`${name}${MOVIE_EXTENSION}`));
+        return blob.size;
+    };
+
     const saveMovie = async () => {
         setBusy(true);
         try {
-            setStatus("Fetching the session...");
-            const timeCapsule = moorhenInstance.getTimeCapsuleRef().current;
-            const sessionData = await timeCapsule.fetchSession(true);
-            const sessionBytes = moorhensession.Session
-                .encode(moorhensession.Session.fromObject(sessionData)).finish();
-
-            setStatus("Packing...");
-            const blob = await packMovie(
-                { movie: document, session: sessionBytes },
-                { type: "blob", writtenBy: "Moorhen" }) as Blob;
-
-            const name = (document.name || "moorhen_movie").replace(/[^\w.-]+/g, "_");
-            doDownload([blob], `${name}${MOVIE_EXTENSION}`);
-            dispatch(setMovieFileName(`${name}${MOVIE_EXTENSION}`));
-            setStatus(`Saved ${(blob.size / 1e6).toFixed(2)} MB`);
+            const size = await writeMovieFile(baseName());
+            setStatus(`Saved ${(size / 1e6).toFixed(2)} MB`);
         } catch (err) {
             console.error(err);
             setStatus(`Could not save: ${err instanceof Error ? err.message : String(err)}`);
@@ -364,12 +375,33 @@ export const MoviePanel = () => {
                     }
                 },
             });
-            const name = (document.name || "moorhen_movie").replace(/[^\w.-]+/g, "_");
+            const name = baseName();
             downloadMovie(result.blob, `${name}.mp4`);
+
+            // And the movie file beside it, unasked.
+            //
+            // An MP4 is a finished thing that cannot be edited back into the movie that made it.
+            // Rendering is also exactly the moment someone discovers a shot they want two seconds
+            // longer - so the version that produced this MP4, scene and all, is worth having
+            // without having had the foresight to press Save first. It is a few megabytes against
+            // a render that just took minutes.
+            let saved = "";
+            try {
+                setStatus("Saving the movie beside it...");
+                const size = await writeMovieFile(name);
+                saved = `, saved as ${name}${MOVIE_EXTENSION} (${(size / 1e6).toFixed(1)} MB)`;
+            } catch (err) {
+                // The MP4 is already written and downloaded. Failing to also save the editable
+                // version is worth saying, and not worth reporting as a failed export.
+                console.error(err);
+                saved = `. The movie file could not be saved alongside it: `
+                    + `${err instanceof Error ? err.message : String(err)}`;
+            }
+
             setStatus(
                 `${result.frames} frames, ${result.width}x${result.height}, ` +
                 `${(result.blob.size / 1e6).toFixed(1)} MB, rendered in ` +
-                `${result.elapsedSeconds.toFixed(1)}s`);
+                `${result.elapsedSeconds.toFixed(1)}s${saved}`);
         } catch (err) {
             console.error(err);
             setStatus(`Could not export: ${err instanceof Error ? err.message : String(err)}`);
@@ -406,6 +438,13 @@ export const MoviePanel = () => {
                         deleting a keyframe would first open it. */}
                     <MoorhenButton onClick={event => { event.stopPropagation(); updateFromView(index); }}>
                         Update
+                    </MoorhenButton>
+                    {/* A second keyframe exactly here. The companion to a motion that ends where
+                        it began: after a spin the camera is back where it started, so carrying on
+                        somewhere else needs a keyframe at that same place to leave from. Cloning
+                        is how you get one without having to put the view back by hand. */}
+                    <MoorhenButton onClick={event => { event.stopPropagation(); dispatch(duplicateKeyframe(index)); }}>
+                        Clone
                     </MoorhenButton>
                     <MoorhenButton
                         variant="danger"
@@ -551,9 +590,23 @@ export const MoviePanel = () => {
         );
     };
 
+    /**
+     * What happens from this keyframe onwards.
+     *
+     * Shown under every keyframe, the last one included, which is the point. A segment used to
+     * appear only where there was a keyframe after it, so "spin here for five seconds" was
+     * reachable only by adding a keyframe nobody wanted, and a movie that is one shot spinning
+     * could not be expressed at all - the control for it existed but had nowhere to appear.
+     *
+     * Under the last keyframe the row starts empty and offers "ends here", because a movie that
+     * stops when its last shot arrives is the ordinary case and should not have to be chosen.
+     * `move` is disabled there: a move is defined by where it is going, and there is nowhere.
+     */
     const segmentRow = (index: number) => {
         const segment = segments[index];
-        if (!segment) return null;
+        const isTrailing = index === keyframes.length - 1;
+        if (!segment && !isTrailing) return null;
+
         return (
             <div
                 key={`segment-${index}`}
@@ -563,23 +616,45 @@ export const MoviePanel = () => {
                     borderLeft: "3px solid #bbb",
                 }}
             >
-                <MoorhenNumberInput
-                    label="s"
-                    width="4rem"
-                    decimalDigits={1}
-                    value={segment.seconds}
-                    setValue={value => {
-                        dispatch(updateSegment({ index, change: { seconds: value } }));
-                    }}
-                />
+                {segment && (
+                    <MoorhenNumberInput
+                        label="s"
+                        width="4rem"
+                        decimalDigits={1}
+                        value={segment.seconds}
+                        setValue={value => {
+                            dispatch(updateSegment({ index, change: { seconds: value } }));
+                        }}
+                    />
+                )}
                 <MoorhenSelect
                     inline
-                    value={segment.motion.kind}
-                    onChange={event =>
-                        dispatch(updateMotion({ index, motion: { kind: event.target.value } as Motion }))}
+                    value={segment?.motion.kind ?? ""}
+                    onChange={event => {
+                        const kind = event.target.value;
+                        // The empty choice is only offered at the end, and it is how a trailing
+                        // motion is taken away again: whatever this dropdown can add, it has to be
+                        // able to remove.
+                        if (!kind) dispatch(clearTrailingMotion());
+                        else dispatch(updateMotion({ index, motion: { kind } as Motion }));
+                    }}
                 >
-                    {MOTIONS.map(kind => <option key={kind} value={kind}>{kind}</option>)}
+                    {isTrailing && <option value="">ends here</option>}
+                    {MOTIONS.map(kind => (
+                        <option
+                            key={kind}
+                            value={kind}
+                            // A move needs a destination. Left visible rather than filtered out so
+                            // that the four motions are always the same four in the same order.
+                            disabled={isTrailing && kind === "move"}
+                        >
+                            {kind}
+                        </option>
+                    ))}
                 </MoorhenSelect>
+                {isTrailing && segment && (
+                    <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>then ends</span>
+                )}
             </div>
         );
     };
@@ -667,7 +742,7 @@ export const MoviePanel = () => {
                     : keyframes.map((_, index) => (
                         <div key={`frame-${index}`}>
                             {keyframeCard(index)}
-                            {index < segments.length && segmentRow(index)}
+                            {segmentRow(index)}
                         </div>
                     ))}
             </MoorhenStack>

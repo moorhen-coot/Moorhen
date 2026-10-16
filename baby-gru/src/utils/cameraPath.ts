@@ -391,7 +391,10 @@ const sampleOf = (keyframe: Keyframe, quat: quat4.quat): MovieSample => ({
  */
 export function sampleMovie(movie: Movie, seconds: number): MovieSample {
     if (movie.keyframes.length === 0) throw new Error("A movie needs at least one keyframe");
-    if (movie.keyframes.length === 1 || movie.segments.length === 0) {
+    // One keyframe and no segments is a still. One keyframe *with* a segment is a movie - a spin
+    // or a rock about a single held view - and used to be treated as a still too, which is why a
+    // one-shot spin could not be made at all.
+    if (movie.segments.length === 0) {
         const only = movie.keyframes[0];
         return sampleOf(only, quat4.clone(only.quat));
     }

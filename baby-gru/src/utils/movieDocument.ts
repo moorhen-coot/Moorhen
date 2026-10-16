@@ -132,9 +132,13 @@ export function movieProblems(document: MovieDocument): string[] {
     const { keyframes, segments } = document.path;
 
     if (keyframes.length === 0) problems.push("The movie has no keyframes.");
-    else if (segments.length !== Math.max(0, keyframes.length - 1)) {
-        problems.push(`${keyframes.length} keyframes need ${Math.max(0, keyframes.length - 1)} `
-            + `segments between them, but there are ${segments.length}.`);
+    else if (segments.length !== keyframes.length - 1 && segments.length !== keyframes.length) {
+        // One per gap, optionally plus one more: a motion at the end with nowhere to go, which is
+        // what a movie that finishes by spinning on the spot - or that is only a spin - consists
+        // of. See hasTrailingSegment.
+        problems.push(`${keyframes.length} keyframes allow ${keyframes.length - 1} segments `
+            + `between them, or ${keyframes.length} with a motion at the end, `
+            + `but there are ${segments.length}.`);
     }
 
     if (segments.some(segment => !(segment.seconds > 0))) {

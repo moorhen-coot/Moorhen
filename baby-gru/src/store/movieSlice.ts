@@ -27,8 +27,9 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Keyframe, Motion, Segment } from "../utils/cameraPath";
 import { type MovieDocument, type MovieOutputSettings, type MovieSceneSettings, emptyMovie } from "../utils/movieDocument";
 import {
-    addKeyframe, applySceneToAll, deleteKeyframe, introduceObject, moveKeyframe, releaseObject,
-    replaceKeyframe, setObjectOpacity, setSceneSettings, setSegment,
+    addKeyframe, applySceneToAll, cloneKeyframe, deleteKeyframe, introduceObject, moveKeyframe,
+    releaseObject, removeTrailingSegment, replaceKeyframe, setObjectOpacity, setSceneSettings,
+    setSegment,
 } from "../utils/movieEditing";
 
 export interface MovieState {
@@ -99,6 +100,14 @@ export const movieSlice = createSlice({
             state.document = deleteKeyframe(state.document, action.payload);
             clampSelection(state);
         },
+        duplicateKeyframe: (state, action: PayloadAction<number>) => {
+            state.document = cloneKeyframe(state.document, action.payload);
+            // Select the copy, not the original. The reason to clone is to carry on from here, so
+            // the new one is what the next edit is meant for - and with two identical cards in the
+            // list, a selection left on the first is simply misleading about which is which.
+            state.selected = Math.min(
+                action.payload + 1, state.document.path.keyframes.length - 1);
+        },
         reorderKeyframe: (state, action: PayloadAction<{ from: number; to: number }>) => {
             state.document = moveKeyframe(state.document, action.payload.from, action.payload.to);
             state.selected = action.payload.to;
@@ -109,6 +118,10 @@ export const movieSlice = createSlice({
         },
         updateMotion: (state, action: PayloadAction<{ index: number; motion: Motion }>) => {
             state.document = setSegment(state.document, action.payload.index, { motion: action.payload.motion });
+        },
+        /** End on the last keyframe rather than on a motion. See removeTrailingSegment. */
+        clearTrailingMotion: state => {
+            state.document = removeTrailingSegment(state.document);
         },
 
         spreadSceneFromKeyframe: (state, action: PayloadAction<number>) => {
@@ -140,7 +153,8 @@ export const {
     setMovieDocument, setMovieName, setMovieFileName, newMovie,
     selectKeyframe,
     appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
-    updateSegment, updateMotion,
+    duplicateKeyframe,
+    updateSegment, updateMotion, clearTrailingMotion,
     spreadSceneFromKeyframe, updateMovieScene, updateMovieOutput,
     updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
 } = movieSlice.actions;

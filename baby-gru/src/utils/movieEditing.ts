@@ -30,6 +30,22 @@ const newSegment = (seconds = DEFAULT_SEGMENT_SECONDS): Segment => ({
     motion: { kind: "move" },
 });
 
+/**
+ * Whether the movie ends with a motion that has nowhere to go.
+ *
+ * A segment describes what happens *from* the keyframe it starts at. For a move that means going
+ * to the next one; for a hold, spin or rock the camera stays where it is and the movie cuts to the
+ * next keyframe afterwards - which is how those have always behaved mid-path. Allowing one in the
+ * last slot is therefore not a new idea, only the same one applied at the end: it is what lets a
+ * movie be a single keyframe that spins, or a tour that finishes by turning on the spot.
+ *
+ * So `segments.length` is either `keyframes.length - 1` (every segment connects two keyframes) or
+ * `keyframes.length` (the last one has no destination).
+ */
+export const hasTrailingSegment = (document: MovieDocument): boolean =>
+    document.path.segments.length === document.path.keyframes.length
+    && document.path.keyframes.length > 0;
+
 /** A shallow copy deep enough that nothing shared with the old document can be written through. */
 const withPath = (
     document: MovieDocument, keyframes: Keyframe[], segments: Segment[],
@@ -50,6 +66,8 @@ export function addKeyframe(
     const segments = [...document.path.segments];
     const index = at === undefined ? keyframes.length : Math.max(0, Math.min(at, keyframes.length));
 
+    const wasTrailing = hasTrailingSegment(document);
+
     keyframes.splice(index, 0, keyframe);
 
     if (keyframes.length === 1) return withPath(document, keyframes, segments);
@@ -57,7 +75,14 @@ export function addKeyframe(
     if (index === 0) {
         segments.unshift(newSegment());
     } else if (index >= keyframes.length - 1) {
-        segments.push(newSegment());
+        // Appending onto a movie that ended with a trailing motion needs no new segment: the
+        // trailing one becomes the connector into the new keyframe. It keeps its own motion, so a
+        // spin still spins where it always did and the movie then cuts to the new shot - exactly
+        // what a spin does anywhere else in a path.
+        //
+        // That also makes deleting the new keyframe an undo: the segment goes back to being
+        // trailing, and nothing has been renegotiated behind the author's back.
+        if (!wasTrailing) segments.push(newSegment());
     } else {
         // Splitting a gap: the segment that used to span it becomes two, sharing its time.
         const split = segments[index - 1];
@@ -81,6 +106,7 @@ export function deleteKeyframe(document: MovieDocument, index: number): MovieDoc
     const segments = [...document.path.segments];
     if (index < 0 || index >= keyframes.length) return document;
 
+    const wasTrailing = hasTrailingSegment(document);
     keyframes.splice(index, 1);
 
     if (keyframes.length === 0) {
@@ -89,7 +115,22 @@ export function deleteKeyframe(document: MovieDocument, index: number): MovieDoc
     if (index === 0) {
         segments.shift();
     } else if (index === keyframes.length) {
-        segments.pop();
+        // The last keyframe went. Exactly one segment has to go with it, and which one depends on
+        // what the final segment meant.
+        if (wasTrailing) {
+            // The trailing motion belonged to the keyframe just deleted, but it is the connector
+            // that has genuinely lost its purpose: it led to a shot that no longer exists. Keep
+            // the motion, now trailing from the new last keyframe.
+            segments.splice(segments.length - 2, 1);
+        } else if (segments[segments.length - 1]?.motion.kind === "move") {
+            // A move with nowhere to go means nothing, and leaving it would pad the movie with a
+            // silent few seconds of nothing happening. This is the ordinary case and the ordinary
+            // answer: deleting the last shot shortens the movie.
+            segments.pop();
+        }
+        // Anything else - a hold, a spin, a rock - stands on its own, so it stays as the trailing
+        // motion. That is what makes appending a keyframe and deleting it again a true undo of
+        // each other for a movie that ended by spinning.
     } else {
         const before = segments[index - 1];
         const after = segments[index];
@@ -128,14 +169,59 @@ export function moveKeyframe(
     return withPath(document, keyframes, [...document.path.segments]);
 }
 
-/** How long a segment runs, and what happens during it. */
+/**
+ * How long a segment runs, and what happens during it.
+ *
+ * Editing the slot just past the end creates the trailing motion. The panel shows that row for
+ * every keyframe including the last, because "hold for three seconds here" was previously only
+ * discoverable by adding a keyframe you did not want - and a movie that is one shot, spinning, had
+ * no way to exist at all.
+ */
 export function setSegment(
     document: MovieDocument, index: number, change: Partial<Segment>,
 ): MovieDocument {
-    if (index < 0 || index >= document.path.segments.length) return document;
     const segments = [...document.path.segments];
-    segments[index] = { ...segments[index], ...change };
+    const creatingTrailing = index === segments.length && index === document.path.keyframes.length - 1;
+    if (index < 0 || (index >= segments.length && !creatingTrailing)) return document;
+
+    segments[index] = { ...(segments[index] ?? newSegment()), ...change };
     return withPath(document, [...document.path.keyframes], segments);
+}
+
+/**
+ * A second keyframe exactly where one already is.
+ *
+ * The companion to a trailing motion. "Add keyframe from this view" captures wherever the camera
+ * happens to be now; cloning says "start again from precisely here", which is what a shot that
+ * spins and then carries on somewhere else needs - the spin ends where it began, so the next leg
+ * has to start from the same place or the movie cuts.
+ *
+ * The thumbnail comes with it, since it is a picture of a view that has not changed.
+ */
+export function cloneKeyframe(document: MovieDocument, index: number): MovieDocument {
+    const original = document.path.keyframes[index];
+    if (!original) return document;
+    return addKeyframe(document, {
+        ...original,
+        origin: [...original.origin] as Keyframe["origin"],
+        quat: [...original.quat] as Keyframe["quat"],
+        ...(original.opacity ? { opacity: { ...original.opacity } } : {}),
+        ...(original.scene ? { scene: { ...original.scene } } : {}),
+    }, index + 1);
+}
+
+/**
+ * Take the trailing motion away, leaving the movie to end on its last keyframe.
+ *
+ * The inverse of creating one through `setSegment`, and needed because the panel offers the
+ * trailing slot as a dropdown: anything a choice adds, the same dropdown has to be able to remove,
+ * or "spin at the end" becomes a decision that cannot be unmade without deleting the keyframe.
+ *
+ * A no-op when there is no trailing segment, so it can never eat a connector.
+ */
+export function removeTrailingSegment(document: MovieDocument): MovieDocument {
+    if (!hasTrailingSegment(document)) return document;
+    return withPath(document, [...document.path.keyframes], document.path.segments.slice(0, -1));
 }
 
 /** What happens during a segment, as the motion dropdown changes it. */
