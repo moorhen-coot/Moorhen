@@ -477,6 +477,20 @@ describe("telling the world", () => {
         expect(heard).toHaveBeenCalledTimes(1);
     });
 
+    it("says so for a direct write, which is what setQuat depends on", () => {
+        // MGWebGL.setQuat writes through writeLive rather than through the silent `myQuat` setter,
+        // and the reason is this notification. The store's copy of the orientation is kept current
+        // by echoViewToStore on this subscription; a write that did not notify would turn the view
+        // and leave the store believing otherwise - whereupon MoorhenWebMG's reconciling effect
+        // would ease the camera back to where it thought it was.
+        const camera = new CameraController(startingAt());
+        const heard = jest.fn();
+        camera.subscribe(heard);
+        camera.writeLive({ quat: [0, 0.3827, 0, 0.9239] });
+        expect(heard).toHaveBeenCalledTimes(1);
+        expect(camera.state.quat[1]).toBeCloseTo(0.3827, 6);
+    });
+
     it("stops telling an unsubscribed listener", () => {
         const camera = new CameraController(startingAt());
         const heard = jest.fn();

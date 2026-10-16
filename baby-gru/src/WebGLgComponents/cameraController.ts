@@ -246,25 +246,35 @@ export class CameraController {
     }
 
     /**
-     * MIGRATION SCAFFOLDING. The live state, writable, with none of the rules applied.
+     * The live state, writable, with none of the rules applied and nobody told.
      *
-     * MGWebGL writes the camera in about forty places, many of them by mutating the quaternion in
-     * place - `quat4.multiply(self.myQuat, self.myQuat, xQ)`. Those cannot all become drivers in
-     * one commit, and a slice that tried would be unreviewable. So the renderer's `myQuat`, `zoom`,
-     * `origin` and `fogClipOffset` accessors read and write *through here*, which makes this object
-     * the single home for the live camera without yet making it the single writer.
+     * This began as migration scaffolding - the renderer wrote the camera in dozens of places and
+     * they could not all become drivers in one commit - and a survey of what is left found that
+     * most of those are gone, but that the remainder are not a backlog. They are the per-frame
+     * scratch writes in drawCore: multi-view and the stereo modes save the quaternion and origin,
+     * set a value for one view, draw it, and put the originals back, all within a single frame.
      *
-     * Nothing that is not the Camera facade in mgWebGLParts/camera.ts should touch it. Every write
-     * that moves to a driver is one fewer user; when the last goes, so does this, and the promise
-     * in the file header above becomes true rather than intended.
+     * Those must stay silent, and that is a design decision rather than an unpaid debt. A per-eye
+     * camera is not where the view is; echoing one to the store would be wrong as well as costing
+     * a dispatch per view per frame on the hot path.
+     *
+     * So: writes that nothing should hear about come through here. Writes that move the view go
+     * through `writeLive`, a driver, or `settle`. The distinction is the point, and the test is
+     * simple - would it be a lie to tell the rest of the application that the camera is here?
+     *
+     * Nothing outside the Camera facade in mgWebGLParts/camera.ts should touch it.
      */
     get liveState(): CameraState {
         return this.current;
     }
 
     /**
-     * MIGRATION SCAFFOLDING, the writing half. Set part of the live state, with the slab policy
-     * applied and listeners told.
+     * Set part of the live state, with the slab policy applied and listeners told.
+     *
+     * The renderer's own direct writes: a zoom, a slab, an orientation handed in through setQuat.
+     * Distinct from `liveState` above in that somebody hears about it - which is how the store's
+     * copy of the view stays current, and therefore how MoorhenWebMG's reconciling effect is kept
+     * from easing the camera back to a value it only believes because nobody told it otherwise.
      *
      * The difference from assigning through `liveState` is the policy. Zoom and the slab are
      * coupled, so a zoom that did not re-derive the slab would leave the two disagreeing until
@@ -275,9 +285,9 @@ export class CameraController {
      * To apply the policy after switching it on, call `reapplySlab`: an empty write now changes
      * nothing, because the policy only acts when the zoom moves.
      *
-     * Unlike `settle` it does not defer to an active driver, because its callers are the renderer's
-     * own direct writes, which have always landed unconditionally. Those become drivers in the last
-     * slice, and this goes with them.
+     * Unlike `settle` it does not defer to an active driver, because its callers have always
+     * landed unconditionally. Whether they should - whether a slab drag during a movie ought to
+     * win or wait - is a real question, and not one this answers.
      */
     writeLive(part: CameraTarget): void {
         this.current = this.applySlab(mergeLive(this.current, part), touchesSlab(part));
