@@ -343,4 +343,27 @@ describe("BAK: backups", () => {
             expect([...host.backups.values()]).toEqual([{ type: "version", serNo: 0, data: version }]);
         });
     });
+
+    // Extra (not a spec row): cleanupUnusedDataFiles used to keep only the data files of the first backup key, so the
+    // maps and reflection data of every other backup were deleted as orphans
+    test("BAK-16 (extra) data files used by any backup are kept, only orphans are removed", async () => {
+        const session = (serNo: string, dateTime: string, mapName: string, mtzName: string) =>
+            ({ ...automaticKey(), serNo, dateTime, mapNames: [mapName], mtzNames: [mtzName], data: "session" }) as CloudBackup;
+        const data = (type: "mapData" | "mtzData", name: string) => ({ type, name, serNo: name, data: "[]" }) as unknown as CloudBackup;
+        for (const backup of [
+            session("first", "1000", "map-a", "./mtz-a.mtz"),
+            session("second", "2000", "map-b", "./mtz-b.mtz"),
+            data("mapData", "map-a"),
+            data("mtzData", "./mtz-a.mtz"),
+            data("mapData", "map-b"),
+            data("mtzData", "./mtz-b.mtz"),
+            data("mapData", "map-orphan"),
+        ]) {
+            await host.callbacks.save(backup);
+        }
+        const timeCapsule = new MoorhenTimeCapsule(null, null, null, null);
+        timeCapsule.storageInstance = host.backupStorage;
+        await timeCapsule.cleanupUnusedDataFiles();
+        expect([...host.backups.keys()].sort()).toEqual(["./mtz-a.mtz", "./mtz-b.mtz", "first", "map-a", "map-b", "second"]);
+    });
 });
