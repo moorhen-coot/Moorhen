@@ -88,6 +88,19 @@ export interface Keyframe {
      * at all is the movie's; how deep and how wide the blur is are the keyframe's.
      */
     scene?: SceneKeyframe;
+    /**
+     * A small picture of this shot, as a data URL.
+     *
+     * Not camera path arithmetic, and it sits here anyway. The alternative - a parallel list of
+     * images beside the keyframes - has to be kept in step by hand through every add, delete and
+     * reorder, and the first time it slips the panel shows one shot and goes to another. Carried
+     * on the keyframe it is simply part of the thing it depends on.
+     *
+     * Optional throughout: a hand-written movie has none, an older file has none, and a keyframe
+     * whose picture could not be taken has none. Nothing but the panel reads it, and the panel
+     * falls back to the numbers.
+     */
+    thumbnail?: string;
 }
 
 /** A colour or a position, as the store holds them. */

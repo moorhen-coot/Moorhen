@@ -33,6 +33,7 @@ import { useMoorhenInstance } from "@/InstanceManager";
 import { documentDuration, documentFrameCount, movieProblems } from "@/utils/movieDocument";
 import { animatedObjects } from "@/utils/movieEditing";
 import { applySample, captureKeyframe } from "@/utils/sceneKeyframe";
+import { drawThenCapture } from "@/utils/keyframeThumbnail";
 import { fadeableObjects, sceneHostFrom, type NamedFadeable, type SceneHostInputs } from "@/utils/sceneHostAdapter";
 import { downloadMovie, previewMovie, recordMovieToMp4, type PreviewHandle } from "@/utils/moviePlayer";
 import { MOVIE_EXTENSION, MovieFileError, packMovie, unpackMovie } from "@/utils/movieContainer";
@@ -132,10 +133,20 @@ export const MoviePanel = () => {
         return (sample: MovieSample) => applySample(frozen, sample);
     }, [hostInputs]);
 
+    /**
+     * The scene as a keyframe, picture and all.
+     *
+     * The picture is taken here rather than inside captureKeyframe because captureKeyframe knows
+     * nothing about canvases - it takes a host of plain values so it can be tested without a
+     * renderer, and a DOM dependency would end that.
+     */
     const capture = useCallback(() => {
         if (!hostInputs) return null;
-        return captureKeyframe(sceneHostFrom(hostInputs));
-    }, [hostInputs]);
+        const keyframe = captureKeyframe(sceneHostFrom(hostInputs));
+        const gl = glRef?.current;
+        const thumbnail = gl ? drawThenCapture(gl) : undefined;
+        return thumbnail ? { ...keyframe, thumbnail } : keyframe;
+    }, [hostInputs, glRef]);
 
     const addFromView = () => {
         const keyframe = capture();
@@ -404,10 +415,26 @@ export const MoviePanel = () => {
                     </MoorhenButton>
                 </div>
 
-                <div style={{ fontSize: "0.75rem", opacity: 0.75 }}>
-                    zoom {keyframe.zoom.toFixed(3)} · centre{" "}
-                    {keyframe.origin.map(value => (-value).toFixed(1)).join(", ")}
-                </div>
+                {keyframe.thumbnail ? (
+                    <img
+                        src={keyframe.thumbnail}
+                        alt={`Keyframe ${index + 1}`}
+                        // Full width of the card, its own aspect ratio, and never a drag target -
+                        // the card beneath it is what responds to a click.
+                        style={{
+                            display: "block", width: "100%", height: "auto",
+                            borderRadius: "4px", pointerEvents: "none",
+                        }}
+                        draggable={false}
+                    />
+                ) : (
+                    // A movie written by hand, opened from an older file, or a shot whose picture
+                    // could not be taken. The numbers are poor but they are not nothing.
+                    <div style={{ fontSize: "0.75rem", opacity: 0.75 }}>
+                        zoom {keyframe.zoom.toFixed(3)} · centre{" "}
+                        {keyframe.origin.map(value => (-value).toFixed(1)).join(", ")}
+                    </div>
+                )}
 
                 {isSelected && (
                     <MoorhenStack>
