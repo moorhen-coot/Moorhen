@@ -677,7 +677,8 @@ export class MoorhenTimeCapsule {
         try {
             const sortedKeys = await this.getSortedKeys();
             if (sortedKeys && sortedKeys.length > 0) {
-                const lastBackupKey = sortedKeys[sortedKeys.length - 1];
+                // getSortedKeys lists the newest backup first
+                const lastBackupKey = sortedKeys[0];
                 const backup = await this.retrieveBackup(JSON.stringify(lastBackupKey));
                 return backup;
             }

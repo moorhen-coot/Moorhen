@@ -290,11 +290,8 @@ describe("BAK: backups", () => {
     });
 
     // Extra (not a spec row): CCP4 Cloud restores through the time capsule, and ErrorBoundary's crash recovery
-    // calls retrieveLastBackup.
-    // BUG: retrieveLastBackup returns the OLDEST backup. getSortedKeys sorts newest first (ascending sort then
-    // .reverse()), and retrieveLastBackup takes the last element (src/utils/MoorhenTimeCapsule.ts,
-    // retrieveLastBackup / getSortedKeys).
-    test.failing("BAK-15 (extra) retrieveLastBackup returns the most recent backup", async () => {
+    // calls retrieveLastBackup. getSortedKeys lists the newest first, so the most recent backup is its first entry.
+    test("BAK-15 (extra) retrieveLastBackup returns the most recent backup", async () => {
         const older = { ...automaticKey(), serNo: "older", dateTime: "1000" };
         const newer = { ...automaticKey(), serNo: "newer", dateTime: "2000" };
         await host.callbacks.save({ ...older, data: "older session" } as CloudBackup);
