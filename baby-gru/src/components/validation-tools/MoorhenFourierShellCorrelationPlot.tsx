@@ -105,8 +105,11 @@ export const MoorhenFourierShellCorrelationPlot = () => {
 
         const tooltipFontSize = 12
 
-        const canvas = document.getElementById("fsc-chart-canvas") as HTMLCanvasElement
-        const ctx = canvas.getContext("2d")
+        // A ref, not document.getElementById: inside the web component the canvas is in a shadow root
+        const ctx = canvasRef.current?.getContext("2d")
+        if (!ctx) {
+            return;
+        }
 
         const threshold = 0.143;
         const freq2 = findCrossing(plotData);

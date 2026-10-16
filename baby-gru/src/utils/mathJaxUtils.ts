@@ -1,6 +1,7 @@
 export const getMathJaxSVG = async (input:string) => {
     const mj = window.MathJax
     if(mj){
+        // eslint-disable-next-line no-restricted-properties -- MathJax's offscreen output lives on document.body
         const output = document.getElementById('mathjaxout');
         output.innerHTML = '';
         output.style.width = "0"
