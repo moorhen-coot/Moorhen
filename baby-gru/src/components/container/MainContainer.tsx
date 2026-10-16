@@ -305,7 +305,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
             dispatch(setAllowMergeFittedLigand(allowMergeFittedLigand));
 
             if (!userPreferencesMounted) {
-                return;
+                return false;
             }
 
             //moorhenInstance.setMoleculesAndMapsRefs(timeCapsuleMoleculeRef, timeCapsuleMapRef);
@@ -343,9 +343,11 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 console.log("Parsed Shortcuts", json, "keys", Object.keys(json));
             }
             if (!window.MathJax) setTimeout(() => loadMathjax(`${urlPrefix}`), 500);
+            return true;
         };
-        startupEffect().then(() => {
-            if (props.onInitialisationCompleted) {
+        startupEffect().then(started => {
+            // Only once start-up has actually run, not for the early return before preferences are mounted
+            if (started && props.onInitialisationCompleted) {
                 props.onInitialisationCompleted();
             }
         });

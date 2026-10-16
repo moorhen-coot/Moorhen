@@ -175,10 +175,13 @@ export const MoorhenMMRRCCPlot = () => {
         const tooltipFontSize = 12;
         const axisLabelsFontSize = convertViewtoPx(70, height) / 60;
 
-        const containerBody = document.getElementById("mmrrcc-container-body");
+        // Refs, not document.getElementById: inside the web component these are in a shadow root
+        const containerBody = containerBodyRef.current;
+        const ctx = canvasRef.current?.getContext("2d");
+        if (!containerBody || !ctx) {
+            return;
+        }
         containerBody.style.width = labels.length * barWidth + "px";
-        const canvas = document.getElementById("mmrrcc-chart-canvas") as HTMLCanvasElement;
-        const ctx = canvas.getContext("2d");
 
         const scales = {
             x: {

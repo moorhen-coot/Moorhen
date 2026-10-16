@@ -9,6 +9,8 @@ import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } fro
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/FileLoading";
+import { loadMtzMaps } from "@/utils/MtzLoading";
+import type { MtzMapRequest } from "@/utils/MtzLoading";
 import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { runPictureWizard } from "@/utils/Representation/PictureWizard";
 import type { PictureWizardType } from "@/utils/Representation/PictureWizard";
@@ -21,6 +23,7 @@ import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
+import { startStoreSyncs } from "./StoreSync";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
 import type { AppDispatch, MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 
@@ -39,6 +42,15 @@ export type LoadFilesResult = {
     molNo: number;
     fileName: string;
 }[];
+
+/**
+ * User preferences as exchanged with a host application: what Moorhen keeps in its preference storage,
+ * i.e. only the preferences that differ from their default, each as `{ version, value }`.
+ */
+export type StoredPreferences = {
+    format: "moorhen-1.0";
+    entries: { [label: string]: { version: number; value: unknown } };
+};
 
 type moleculeChangeAction = "new" | "add" | "delete" | "modify" | "refine";
 
@@ -79,7 +91,9 @@ export class MoorhenInstance extends StoreExtension {
     private videoRecorderRef: React.RefObject<ScreenRecorder | null>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
     private containerRef: React.RefObject<HTMLDivElement> = null;
-    private preferences: Preferences;
+    private _preferences: Preferences;
+    private _preferencesRestore: (() => Promise<void>) | null = null;
+    private _preferencesChangeCallbacks = new Set<(stored: StoredPreferences) => void>();
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     private _cootCommand: CootCommandWrapper;
@@ -88,6 +102,7 @@ export class MoorhenInstance extends StoreExtension {
     private _webComponent: MoorhenWebComponent | null = null;
     private readyCallbacks: Array<() => void | Promise<void>> = [];
     private preferencesUnsubscribe: (() => void) | null = null;
+    private storeSyncsUnsubscribe: (() => void) | null = null;
 
     /**
      * Create a new Moorhen instance.
@@ -119,7 +134,7 @@ export class MoorhenInstance extends StoreExtension {
         if (externalCommandCentre) {
             this.setCommandCentre(externalCommandCentre);
         }
-        this.preferences = new Preferences();
+        this._preferences = new Preferences();
         this._menuSystem = menuSystem || null;
         this.containerRef = containerRef;
     }
@@ -266,7 +281,7 @@ export class MoorhenInstance extends StoreExtension {
      * The user {@link Preferences} object for this instance.
      */
     public getPreferences(): Preferences {
-        return this.preferences;
+        return this._preferences;
     }
 
     /**
@@ -291,12 +306,19 @@ export class MoorhenInstance extends StoreExtension {
         if (this.preferencesUnsubscribe) {
             this.preferencesUnsubscribe();
         }
-        this.preferencesUnsubscribe = initPreferencePersistence({
+        const persistence = initPreferencePersistence({
             store,
             dispatch,
-            localStorageInstance: this.preferences,
-            onUserPreferencesChange,
+            localStorageInstance: this._preferences,
+            onUserPreferencesChange: (key, value) => {
+                onUserPreferencesChange?.(key, value);
+                if (this._preferencesChangeCallbacks.size > 0) {
+                    this.preferences.export().then(stored => this._preferencesChangeCallbacks.forEach(callback => callback(stored)));
+                }
+            },
         });
+        this._preferencesRestore = persistence.restore;
+        this.preferencesUnsubscribe = persistence;
         return this.preferencesUnsubscribe;
     }
 
@@ -428,7 +450,7 @@ export class MoorhenInstance extends StoreExtension {
                 origin?: string
             ): Promise<LoadFilesResult> {
                 let filesArray: File[] = [];
-                const getFileFromURL = async (url: string | URL, filename?: string): Promise<File> => {
+                const getFileFromURL = async (url: string | URL, filename?: string): Promise<File | null> => {
                     const urlString = url instanceof URL ? url.toString() : url;
 
                     // Handle Node.js file system paths or it bugs in testing
@@ -452,8 +474,15 @@ export class MoorhenInstance extends StoreExtension {
                         }
                     }
                     const response = await fetch(urlString);
-                    const blob = await response.blob();
                     const finalFilename = filename || urlString.split("/").pop() || "downloaded_file";
+                    // Skip a failed download rather than passing an empty file to Coot
+                    if (!response.ok) {
+                        const message = `Could not fetch ${finalFilename} (${response.status} ${response.statusText})`;
+                        console.warn(`${message} from ${urlString}`);
+                        moorhenInstance.snackbar.enqueueSnackbar({ message, variant: "warning" });
+                        return null;
+                    }
+                    const blob = await response.blob();
                     return new File([blob], finalFilename, { type: blob.type });
                 };
                 const defaultBondSmoothness = store.getState().sceneSettings.defaultBondSmoothness;
@@ -488,6 +517,7 @@ export class MoorhenInstance extends StoreExtension {
                     }
                 }
 
+                filesArray = filesArray.filter(Boolean);
                 console.log("Files to load: ", filesArray);
 
                 const createdObjects = await execWhenReady(() =>
@@ -498,6 +528,36 @@ export class MoorhenInstance extends StoreExtension {
                     callbacks.callback(createdObjects as LoadFilesResult, origin ?? "unknown");
                 }
                 return createdObjects as LoadFilesResult;
+            },
+
+            /**
+             * Load one or more maps from a single MTZ file, with explicitly chosen columns and display options.
+             *
+             * The file is fetched once for all maps, and every requested column is checked against its
+             * header before anything is sent to Coot. A missing `F` or `PHI` column rejects the call with a
+             * message listing the available columns; a missing `Fobs`/`SigFobs`/`FreeR` column only gives a
+             * warning, and the map is loaded without reflection data.
+             *
+             * Active map: the first map requested with `active: true` becomes active; otherwise the first
+             * map does, unless a map is already active.
+             *
+             * @param source - A URL or a `File`.
+             * @param maps - The maps to read. If omitted, the maps are detected automatically, exactly as when
+             * the file is passed to `loadFiles`.
+             * @param origin - Optional label forwarded to subscribers registered via `newFilesLoadedCallback`.
+             * @returns A promise resolving to a {@link LoadFilesResult}, one entry per map in request order.
+             * @example
+             * await instance.files.loadMtz("job/output.mtz", [
+             *   { name: "map", columns: { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP", FreeR: "FreeR_flag" }, active: true },
+             *   { name: "diff-map", columns: { F: "DELFWT", PHI: "PHDELWT" }, isDifference: true },
+             * ]);
+             */
+            async loadMtz(source: string | URL | File, maps?: MtzMapRequest[], origin?: string): Promise<LoadFilesResult> {
+                const createdObjects = await loadMtzMaps(moorhenInstance, source, maps);
+                for (const callbacks of Object.values(filesLoadedCallbacks)) {
+                    callbacks.callback(createdObjects, origin ?? "unknown");
+                }
+                return createdObjects;
             },
 
             /**
@@ -549,6 +609,48 @@ export class MoorhenInstance extends StoreExtension {
                 return () => {
                     delete filesLoadedCallbacks[callbackUID];
                 };
+            },
+        };
+    }
+
+    /**
+     * Preferences API for host applications that store the user preferences themselves.
+     */
+    public get preferences() {
+        const moorhenInstance = this;
+        const storage = this._preferences.localStorageInstance;
+        return {
+            /**
+             * Replace the stored preferences with `stored` and apply them, at any time. Anything that is not
+             * a {@link StoredPreferences} object is ignored. Does not fire `onChange`.
+             */
+            async import(stored: unknown): Promise<void> {
+                const preferences = stored as StoredPreferences;
+                if (preferences?.format !== "moorhen-1.0" || typeof preferences.entries !== "object" || !preferences.entries) {
+                    return;
+                }
+                await storage.clear();
+                await Promise.all(Object.entries(preferences.entries).map(([label, entry]) => storage.setItem(label, entry)));
+                await moorhenInstance._preferencesRestore?.();
+            },
+
+            /** The stored preferences, in the format accepted by `import` */
+            async export(): Promise<StoredPreferences> {
+                const entries: StoredPreferences["entries"] = {};
+                await storage.iterate((entry: { version: number; value: unknown }, label: string) => {
+                    entries[label] = entry;
+                });
+                return { format: "moorhen-1.0", entries };
+            },
+
+            /**
+             * Call `callback` with the exported preferences after every stored change, including a preference
+             * set back to its default.
+             * @returns A function that unregisters the callback.
+             */
+            onChange(callback: (stored: StoredPreferences) => void): () => void {
+                moorhenInstance._preferencesChangeCallbacks.add(callback);
+                return () => moorhenInstance._preferencesChangeCallbacks.delete(callback);
             },
         };
     }
@@ -1223,6 +1325,8 @@ export class MoorhenInstance extends StoreExtension {
         }
 
         this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
+        this.storeSyncsUnsubscribe?.();
+        this.storeSyncsUnsubscribe = startStoreSyncs(this);
         this.dispatch(setGlobalInstanceReady(true));
         this.ready = true;
         await Promise.all(this.readyCallbacks.map(callback => callback()));
@@ -1242,6 +1346,8 @@ export class MoorhenInstance extends StoreExtension {
             this.preferencesUnsubscribe();
             this.preferencesUnsubscribe = null;
         }
+        this.storeSyncsUnsubscribe?.();
+        this.storeSyncsUnsubscribe = null;
         if (this._commandCentre) {
             this.commandCentre.close();
             this._commandCentre = undefined;

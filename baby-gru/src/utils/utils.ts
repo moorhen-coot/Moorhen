@@ -315,18 +315,22 @@ export const readGzippedDataFile = async (source: File): Promise<ArrayBuffer> =>
     return gUnZippeData;
 };
 
-const downloadFile = (file: File, fileName: string) => {
-    const url = window.URL.createObjectURL(file);
-
+/**
+ * Download `href` (an object or data URL) as `fileName`, through a temporary link on document.body. Never look a
+ * download link up by id: inside the web component the app is in a shadow root.
+ */
+export const downloadUrl = (href: string, fileName: string) => {
     const link = document.createElement("a");
     link.download = fileName;
-    link.href = url;
-
+    link.href = href;
     document.body.appendChild(link);
-
     link.click();
+    link.remove();
+};
 
-    link.parentNode.removeChild(link);
+const downloadFile = (file: File, fileName: string) => {
+    const url = window.URL.createObjectURL(file);
+    downloadUrl(url, fileName);
     window.URL.revokeObjectURL(url);
 };
 

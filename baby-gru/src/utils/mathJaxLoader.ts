@@ -24,6 +24,7 @@ export const loadMathjax = async (src: string) => {
     }
 
     // Ensure the mathjaxout div exists
+    // eslint-disable-next-line no-restricted-properties -- MathJax's offscreen output lives on document.body, not in Moorhen's tree
     let output = document.getElementById("mathjaxout");
     if (!output) {
         output = document.createElement("div");
@@ -37,6 +38,7 @@ export const loadMathjax = async (src: string) => {
         // This is a dummy render with MathJax which seems to be necessary to make sure that \color works
         // properly with loaded sessions.
         const input = String.raw`{\displaystyle \sum_{i}^{\infty} \Pi{\sqrt{\pi}\sqrt{\pi}}{\color{blue}Hello}}`;
+        // eslint-disable-next-line no-restricted-properties -- MathJax's offscreen output lives on document.body
         const output = document.getElementById("mathjaxout");
         if (output) {
             output.innerHTML = "";

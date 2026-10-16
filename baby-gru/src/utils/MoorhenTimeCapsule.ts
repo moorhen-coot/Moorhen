@@ -623,13 +623,14 @@ export class MoorhenTimeCapsule {
         const allKeyStrings = await this.storageInstance.keys();
         const allKeys: backupKey[] = allKeyStrings.map((keyString: string) => JSON.parse(keyString));
         const backupKeys = allKeys.filter((key: backupKey) => ["automatic", "manual"].includes(key.type));
-        const [usedNames] = [...backupKeys.map((key: backupKey) => [...key.mtzNames, ...key.mapNames])];
+        // Data files used by any backup, not only the first one
+        const usedNames = new Set(backupKeys.flatMap((key: backupKey) => [...(key.mtzNames ?? []), ...(key.mapNames ?? [])]));
 
         await Promise.all(
             allKeys
                 .filter((key: backupKey) => ["mtzData", "mapData"].includes(key.type))
                 .map((key: backupKey) => {
-                    if (typeof usedNames === "undefined" || !usedNames.includes(key.name)) {
+                    if (!usedNames.has(key.name)) {
                         return this.removeBackup(JSON.stringify(key));
                     }
                     return Promise.resolve();
@@ -677,7 +678,8 @@ export class MoorhenTimeCapsule {
         try {
             const sortedKeys = await this.getSortedKeys();
             if (sortedKeys && sortedKeys.length > 0) {
-                const lastBackupKey = sortedKeys[sortedKeys.length - 1];
+                // getSortedKeys lists the newest backup first
+                const lastBackupKey = sortedKeys[0];
                 const backup = await this.retrieveBackup(JSON.stringify(lastBackupKey));
                 return backup;
             }
