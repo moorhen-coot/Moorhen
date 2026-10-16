@@ -107,6 +107,37 @@ export default tseslint.config(
       ],
     },
   },
+  // Moorhen also runs inside <moorhen-web-component>, where the whole UI is in a shadow root. There, these
+  // document-level lookups cannot see Moorhen's elements (they return null, or the host element).
+  {
+    files: ["src/**/*.{js,jsx,ts,tsx}"],
+    ignores: [
+      "src/index.tsx", // mounts the app into the host page
+      "src/WebComponent/utils/**", // host-page hooks that look up the <moorhen-web-component> element itself
+      "src/utils/shadowDom.ts", // the shadow-aware helpers below
+      "src/utils/tex-svg.js", // vendored MathJax bundle
+      "src/LhasaReact/**", // separate project copied in at build time; its lookups need fixing there
+    ],
+    rules: {
+      "no-restricted-properties": [
+        "error",
+        ...["getElementById", "querySelector", "querySelectorAll", "getElementsByClassName", "getElementsByTagName", "getElementsByName"].map(
+          property => ({
+            object: "document",
+            property,
+            message:
+              "Cannot see inside the web component's shadow root. Use a React ref for an element this component renders, or node.getRootNode() for one rendered elsewhere.",
+          })
+        ),
+        ...["activeElement", "elementFromPoint", "elementsFromPoint"].map(property => ({
+          object: "document",
+          property,
+          message:
+            "Stops at the web component's host element. Use getDeepActiveElement / getEventOrigin from src/utils/shadowDom.ts.",
+        })),
+      ],
+    },
+  },
   {
     settings: {
       react: {

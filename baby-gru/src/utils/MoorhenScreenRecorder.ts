@@ -3,6 +3,7 @@ import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
 import { getMathJaxSVG } from '../utils/mathJaxUtils';
 import { RootState } from "../store/MoorhenReduxStore";
 import { Store } from "redux";
+import { doDownload, downloadUrl } from "./utils";
 
 interface ImageFrac2D {
     x: number
@@ -93,16 +94,7 @@ export class ScreenRecorder  {
     }
 
     downloadVideo = async (blob: Blob) => {
-        const url = URL.createObjectURL(blob);
-        let link: any = document.getElementById('download_video_link');
-        if (!link) {
-            link = document.createElement('a');
-            link.id = 'download_video_link';
-            document.body.appendChild(link);
-        }
-        link.download = `${this.videoName}.webm`;
-        link.href = url;
-        link.click();
+        doDownload([blob], `${this.videoName}.webm`);
     }
 
     takeScreenShot = async(filename: string, doTransparentBackground: boolean = false) => {
@@ -207,15 +199,7 @@ export class ScreenRecorder  {
             drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,3, this.store)
             drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,4, this.store)
 
-            let link: any = document.getElementById('download_image_link');
-            if (!link) {
-                link = document.createElement('a');
-                link.id = 'download_image_link';
-                document.body.appendChild(link);
-            }
-            link.download = filename;
-            link.href = saveCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-            link.click();
+            downloadUrl(saveCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream"), filename);
         })
     }
 }
