@@ -187,6 +187,9 @@ describe("BAK: backups", () => {
      * (src/utils/MoorhenCloudTimeCapsule.ts): version serNo 0, mtzData serNo "<uid>-mtz" from "./<uid>.mtz",
      * mapData serNo = name, byte arrays as JSON arrays, session = key fields + data. Coot's map sampling rate was
      * lowered to 1.0 while generating, only to keep the map entries small (~9.7 MB total, mostly the MTZ bytes).
+     *
+     * The fixture is tied to the time capsule version (MoorhenTimeCapsule.version): any other version clears all
+     * backups at start-up (BAK-14), so regenerate it whenever that version changes. Currently v24.
      */
     test("BAK-12 legacy backups are listed by the time capsule and restore the molecule and maps", async () => {
         // gzipped to keep the repository small (about 9 MB uncompressed)
