@@ -474,7 +474,7 @@ export class MoorhenInstance extends StoreExtension {
                 origin?: string
             ): Promise<LoadFilesResult> {
                 let filesArray: File[] = [];
-                const getFileFromURL = async (url: string | URL, filename?: string): Promise<File> => {
+                const getFileFromURL = async (url: string | URL, filename?: string): Promise<File | null> => {
                     const urlString = url instanceof URL ? url.toString() : url;
 
                     // Handle Node.js file system paths or it bugs in testing
@@ -498,8 +498,15 @@ export class MoorhenInstance extends StoreExtension {
                         }
                     }
                     const response = await fetch(urlString);
-                    const blob = await response.blob();
                     const finalFilename = filename || urlString.split("/").pop() || "downloaded_file";
+                    // Skip a failed download rather than passing an empty file to Coot
+                    if (!response.ok) {
+                        const message = `Could not fetch ${finalFilename} (${response.status} ${response.statusText})`;
+                        console.warn(`${message} from ${urlString}`);
+                        moorhenInstance.snackbar.enqueueSnackbar({ message, variant: "warning" });
+                        return null;
+                    }
+                    const blob = await response.blob();
                     return new File([blob], finalFilename, { type: blob.type });
                 };
                 const defaultBondSmoothness = store.getState().sceneSettings.defaultBondSmoothness;
@@ -534,6 +541,7 @@ export class MoorhenInstance extends StoreExtension {
                     }
                 }
 
+                filesArray = filesArray.filter(Boolean);
                 console.log("Files to load: ", filesArray);
 
                 const createdObjects = await execWhenReady(() =>

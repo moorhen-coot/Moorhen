@@ -57,13 +57,9 @@ describe("MOL: molecules", () => {
         expect(cloud.instance.getMolecule(result[0].uniqueID)?.uniqueId).toBe(result[0].uniqueID);
     });
 
-    // BUG: files.loadFiles never checks response.ok when fetching a URL, so a 404 becomes an empty "molecule.pdb"
-    // that is passed to Coot (src/InstanceManager/MoorhenInstance.ts, getFileFromURL in files.loadFiles).
-    // loadFiles resolves with no molecule, but a Coot C++ exception (`Exception {}`) is thrown afterwards from
-    // work loadFiles does not await, so it escapes the host's error handling.
-    // SKIPPED, not test.failing: Jest reports an exception that escapes on its own separately from the test's
-    // result, so test.failing cannot invert it, and it would leak into the next test. Unskip once fixed.
-    test.skip("MOL-07 a URL that 404s adds no molecule and does not throw", async () => {
+    // A failed download is skipped with a warning; before, the empty file reached Coot and its exception escaped
+    // loadFiles after it had resolved. The flush lets any such late exception surface inside this test.
+    test("MOL-07 a URL that 404s adds no molecule and does not throw", async () => {
         const result = await cloud.instance.files.loadFiles({ url: jobUrl("missing.pdb"), filename: "molecule.pdb" }, "cloud");
         await flush(200);
         expect((result ?? []).filter(item => item.type === "molecule")).toHaveLength(0);
