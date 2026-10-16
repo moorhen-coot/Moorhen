@@ -244,4 +244,13 @@ describe("PRF: preferences", () => {
         expect(sent.length).toBeGreaterThan(0);
         expect(sent[sent.length - 1].commandArgs).toEqual([2.5]);
     });
+
+    test("PRF-16 (extra) an imported defaultBackgroundColor recolours the current view", async () => {
+        // Not a spec row: preferences imported after start-up must reach the view, as PRF-15 does for Coot
+        const stored = moorhen10();
+        await cloud.instance.preferences.import(stored);
+        const imported = stored.entries.defaultBackgroundColor.value;
+        expect(cloud.store.getState().sceneSettings.defaultBackgroundColor).toEqual(imported);
+        expect(cloud.store.getState().sceneSettings.backgroundColor).toEqual(imported);
+    });
 });
