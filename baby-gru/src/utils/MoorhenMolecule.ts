@@ -1071,16 +1071,12 @@ export class MoorhenMolecule {
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
     async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<moorhen.Molecule> {
-        const pdbRegex = /.pdb$/;
-        const entRegex = /.ent$/;
-        const cifRegex = /.cif$/;
-        const mmcifRegex = /.mmcif$/;
-
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete();
         }
 
-        this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
+        // One pattern, so ".mmcif" is not first stripped as ".cif" (which left "name.m")
+        this.name = name.replace(/\.(pdb|ent|mmcif|cif)$/, "");
 
         try {
             const state = this.store.getState();
