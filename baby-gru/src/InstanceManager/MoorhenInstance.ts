@@ -66,6 +66,15 @@ export type LoadFilesResult = {
     fileName: string;
 }[];
 
+/**
+ * User preferences as exchanged with a host application: what Moorhen keeps in its preference storage,
+ * i.e. only the preferences that differ from their default, each as `{ version, value }`.
+ */
+export type StoredPreferences = {
+    format: "moorhen-1.0";
+    entries: { [label: string]: { version: number; value: unknown } };
+};
+
 export type moleculeChangeAction = "new" | "add" | "delete" | "modify" | "refine";
 
 /**
@@ -105,7 +114,9 @@ export class MoorhenInstance extends StoreExtension {
     private videoRecorderRef: React.RefObject<ScreenRecorder | null>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
     private containerRef: React.RefObject<HTMLDivElement> = null;
-    private preferences: Preferences;
+    private _preferences: Preferences;
+    private _preferencesRestore: (() => Promise<void>) | null = null;
+    private _preferencesChangeCallbacks = new Set<(stored: StoredPreferences) => void>();
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     private _cootCommand: CootCommandWrapper;
@@ -145,7 +156,7 @@ export class MoorhenInstance extends StoreExtension {
         if (externalCommandCentre) {
             this.setCommandCentre(externalCommandCentre);
         }
-        this.preferences = new Preferences();
+        this._preferences = new Preferences();
         this._menuSystem = menuSystem || null;
         this.containerRef = containerRef;
     }
@@ -292,7 +303,7 @@ export class MoorhenInstance extends StoreExtension {
      * The user {@link Preferences} object for this instance.
      */
     public getPreferences(): Preferences {
-        return this.preferences;
+        return this._preferences;
     }
 
     /**
@@ -317,12 +328,19 @@ export class MoorhenInstance extends StoreExtension {
         if (this.preferencesUnsubscribe) {
             this.preferencesUnsubscribe();
         }
-        this.preferencesUnsubscribe = initPreferencePersistence({
+        const persistence = initPreferencePersistence({
             store,
             dispatch,
-            localStorageInstance: this.preferences,
-            onUserPreferencesChange,
+            localStorageInstance: this._preferences,
+            onUserPreferencesChange: (key, value) => {
+                onUserPreferencesChange?.(key, value);
+                if (this._preferencesChangeCallbacks.size > 0) {
+                    this.preferences.export().then(stored => this._preferencesChangeCallbacks.forEach(callback => callback(stored)));
+                }
+            },
         });
+        this._preferencesRestore = persistence.restore;
+        this.preferencesUnsubscribe = persistence;
         return this.preferencesUnsubscribe;
     }
 
@@ -605,6 +623,48 @@ export class MoorhenInstance extends StoreExtension {
                 return () => {
                     delete filesLoadedCallbacks[callbackUID];
                 };
+            },
+        };
+    }
+
+    /**
+     * Preferences API for host applications that store the user preferences themselves.
+     */
+    public get preferences() {
+        const moorhenInstance = this;
+        const storage = this._preferences.localStorageInstance;
+        return {
+            /**
+             * Replace the stored preferences with `stored` and apply them, at any time. Anything that is not
+             * a {@link StoredPreferences} object is ignored. Does not fire `onChange`.
+             */
+            async import(stored: unknown): Promise<void> {
+                const preferences = stored as StoredPreferences;
+                if (preferences?.format !== "moorhen-1.0" || typeof preferences.entries !== "object" || !preferences.entries) {
+                    return;
+                }
+                await storage.clear();
+                await Promise.all(Object.entries(preferences.entries).map(([label, entry]) => storage.setItem(label, entry)));
+                await moorhenInstance._preferencesRestore?.();
+            },
+
+            /** The stored preferences, in the format accepted by `import` */
+            async export(): Promise<StoredPreferences> {
+                const entries: StoredPreferences["entries"] = {};
+                await storage.iterate((entry: { version: number; value: unknown }, label: string) => {
+                    entries[label] = entry;
+                });
+                return { format: "moorhen-1.0", entries };
+            },
+
+            /**
+             * Call `callback` with the exported preferences after every stored change, including a preference
+             * set back to its default.
+             * @returns A function that unregisters the callback.
+             */
+            onChange(callback: (stored: StoredPreferences) => void): () => void {
+                moorhenInstance._preferencesChangeCallbacks.add(callback);
+                return () => moorhenInstance._preferencesChangeCallbacks.delete(callback);
             },
         };
     }

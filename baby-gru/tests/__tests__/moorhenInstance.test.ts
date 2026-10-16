@@ -6,7 +6,8 @@ import { MockMoorhenInstance } from '../__mocks__/mockMoorhenInstance';
 import { setOrigin } from '@/store/sceneSettingsSlice';
 import { setActiveMap, setDevMode, setDisableFileUpload } from '@/store/generalStatesSlice';
 import { setEnableTimeCapsule } from '@/store/backupSettingsSlice';
-import { setBackgroundColor } from '@/store/sceneSettingsSlice';
+import { setBackgroundColor, setDefaultBondSmoothness } from '@/store/sceneSettingsSlice';
+import { createCallbackBackupStorage } from '@/WebComponent/ccp4cloud/backupStorage';
 import { MoorhenTimeCapsule } from '@/utils/MoorhenTimeCapsule';
 import React from 'react';
 
@@ -846,5 +847,53 @@ describe('files.loadMtz', () => {
         expect(moorhenInstance.getMap(result[0].uniqueID).isDifference).toBeFalsy();
         expect(moorhenInstance.getMap(result[1].uniqueID).isDifference).toBeTruthy();
         expect(MoorhenReduxStore.getState().generalStates.activeMap.uniqueId).toBe(result[0].uniqueID);
+    });
+});
+
+
+// ==============================
+// Host APIs (web component)
+// ==============================
+describe('Host APIs', () => {
+    const testData = (fileName: string) => path.join(__dirname, '..', 'test_data', fileName);
+    const flush = () => new Promise(resolve => setTimeout(resolve, 20));
+
+    test('preferences: import applies entries, ignores other formats, onChange fires on reset to default', async () => {
+        const unsubscribe = moorhenInstance.initPreferences(MoorhenReduxStore, MoorhenReduxStore.dispatch);
+        await flush();
+        const onChange = jest.fn();
+        moorhenInstance.preferences.onChange(onChange);
+
+        await moorhenInstance.preferences.import({ version: 'v41', defaultBondSmoothness: 3 });
+        expect(MoorhenReduxStore.getState().sceneSettings.defaultBondSmoothness).toBe(2);
+
+        await moorhenInstance.preferences.import({ format: 'moorhen-1.0', entries: { defaultBondSmoothness: { version: 2, value: 3 } } });
+        await flush();
+        expect(MoorhenReduxStore.getState().sceneSettings.defaultBondSmoothness).toBe(3);
+        expect(onChange).not.toHaveBeenCalled();
+        expect((await moorhenInstance.preferences.export()).entries).toEqual({ defaultBondSmoothness: { version: 2, value: 3 } });
+
+        MoorhenReduxStore.dispatch(setDefaultBondSmoothness(2));
+        await flush();
+        expect(onChange).toHaveBeenCalledWith({ format: 'moorhen-1.0', entries: {} });
+        unsubscribe();
+    });
+
+    test('createCallbackBackupStorage keeps the cloud backup format', async () => {
+        const backups: any[] = [];
+        const storage = createCallbackBackupStorage({
+            save: async backup => { backups.push(backup); },
+            load: async serNo => backups.find(backup => backup.serNo === serNo),
+            remove: async serNo => { backups.splice(backups.findIndex(backup => backup.serNo === serNo), 1); },
+            list: async () => [...backups],
+        });
+        await storage.setItem(JSON.stringify({ type: 'version' }), '1.0');
+        await storage.setItem(JSON.stringify({ type: 'mtzData', name: './abc.mtz' }), new Uint8Array([1, 2]) as any);
+        expect(backups.map(backup => backup.serNo)).toEqual([0, 'abc-mtz']);
+        expect(backups[1].data).toBe('[1,2]');
+        expect(await storage.getItem(JSON.stringify({ type: 'mtzData', name: './abc.mtz' }))).toEqual(new Uint8Array([1, 2]));
+        expect(await storage.keys()).toHaveLength(2);
+        await storage.clear();
+        expect(backups).toHaveLength(0);
     });
 });
