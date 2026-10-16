@@ -26,8 +26,7 @@ import { MoorhenNumberInput } from "@/components/inputs";
 import { RootState } from "@/store";
 import {
     addObjectToMovie, appendKeyframe, clearTrailingMotion, duplicateKeyframe, removeKeyframe,
-    removeObjectFromMovie, reorderKeyframe, selectKeyframe, setMovieDocument, setMovieFileName,
-    setMovieName, spreadSceneFromKeyframe, updateKeyframe, updateMotion, updateMovieOutput,
+    removeObjectFromMovie, reorderKeyframe, selectKeyframe, setMovieFileName, setMovieName, spreadSceneFromKeyframe, updateKeyframe, updateMotion, updateMovieOutput,
     updateObjectOpacity, updateSegment,
 } from "@/store";
 import { useMoorhenInstance } from "@/InstanceManager";
@@ -37,8 +36,8 @@ import { applySample, captureKeyframe } from "@/utils/sceneKeyframe";
 import { drawThenCapture } from "@/utils/keyframeThumbnail";
 import { fadeableObjects, sceneHostFrom, type NamedFadeable, type SceneHostInputs } from "@/utils/sceneHostAdapter";
 import { downloadMovie, previewMovie, recordMovieToMp4, type PreviewHandle } from "@/utils/moviePlayer";
-import { MOVIE_EXTENSION, MovieFileError, packMovie, unpackMovie } from "@/utils/movieContainer";
-import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { MOVIE_EXTENSION, packMovie } from "@/utils/movieContainer";
+import { openMovieFile } from "@/utils/openMovieFile";
 import { moorhensession } from "@/protobuf/MoorhenSession";
 import { doDownload } from "@/utils/utils";
 import type { Motion, MovieSample } from "@/utils/cameraPath";
@@ -309,38 +308,14 @@ export const MoviePanel = () => {
     /**
      * A movie file, opened.
      *
-     * The session is restored first and waited for. Loading the document without its scene would
-     * leave a movie whose keyframes name objects that are not there, and whose camera path tours
-     * whatever happens to be open - which looks like the file being wrong rather than being early.
+     * The work is in openMovieFile, shared with File -> Open and with dropping a .mhm on the
+     * window, so that all three ways in restore the scene, load the document and show the panel in
+     * the same order. This button only has to say what happened.
      */
     const openMovie = async (file: File) => {
         setBusy(true);
         try {
-            setStatus(`Opening ${file.name}...`);
-            const container = await unpackMovie(await file.arrayBuffer());
-
-            if (container.session) {
-                setStatus("Restoring the scene the movie was made with...");
-                const status = await MoorhenTimeCapsule.loadSessionFromArrayBuffer(
-                    container.session.buffer as ArrayBuffer, moorhenInstance);
-                if (status === -1) {
-                    setStatus("The movie opened, but its scene would not load");
-                    return;
-                }
-            }
-
-            dispatch(setMovieDocument(container.movie));
-            dispatch(setMovieFileName(file.name));
-            setStatus(container.session
-                ? `Opened ${file.name} with its scene`
-                : `Opened ${file.name}. It carries no scene, so it will play over this one.`);
-        } catch (err) {
-            console.error(err);
-            // A MovieFileError already says which thing is wrong with the file; anything else is a
-            // surprise and should look like one.
-            setStatus(err instanceof MovieFileError
-                ? err.message
-                : `Could not open: ${err instanceof Error ? err.message : String(err)}`);
+            setStatus((await openMovieFile(file, moorhenInstance, setStatus)).message);
         } finally {
             setBusy(false);
         }
