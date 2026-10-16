@@ -449,13 +449,9 @@ describe("WEB: web component and menu", () => {
             expect(countEntries(instanceRef.current.menuSystem, "Exit")).toBe(1);
         });
 
-        // Not a spec row: found while writing WEB-10. A host that starts Moorhen twice in the same page (or two
-        // instances) gets its Exit entry twice, because the menu map is shared.
-        // BUG: MoorhenMenuSystem's constructor does `this.mainMenuMap = MainMenu`
-        // (src/components/menu-system/MenuSystem.ts:10), aliasing the module-level MainMenu object
-        // (src/components/menu-system/mainMenuConfig.tsx), and addMainMenu mutates it in place. Every
-        // MoorhenMenuSystem therefore shares one main menu, and entries persist across instances/remounts.
-        test.failing("WEB-10 (extra) Exit entries do not accumulate across menu systems / remounts", () => {
+        // Not a spec row: found while writing WEB-10. Each MoorhenMenuSystem must work on its own copy of the default
+        // menus, so a host that starts Moorhen twice in the same page (or two instances) gets one Exit entry each.
+        test("WEB-10 (extra) Exit entries do not accumulate across menu systems / remounts", () => {
             const first = new MoorhenMenuSystem();
             first.addMainMenu(exitEntry(jest.fn()));
             const second = new MoorhenMenuSystem();
