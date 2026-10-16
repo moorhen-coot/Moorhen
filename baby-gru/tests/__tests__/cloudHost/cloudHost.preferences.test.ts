@@ -236,16 +236,7 @@ describe("PRF: preferences", () => {
         expect(callback).toHaveBeenCalledTimes(1);
     });
 
-    // BUG: nothing in the instance path sends the imported sampling rate to Coot. The only senders of
-    // set_map_sampling_rate are MainContainer's startupEffect (src/components/container/MainContainer.tsx:333,
-    // cootAPIHelpers.setSamplingRate), which runs once when userPreferencesMounted first becomes true, and the
-    // MapContourSettings menu item when the user picks a rate. preferences.import
-    // (src/InstanceManager/MoorhenInstance.ts, `get preferences()` -> import) only re-runs the persistence restore,
-    // which dispatches setUserPreferencesMounted(true) again; the flag is already true, so the effect does not re-run
-    // even with React mounted. CCP4 Cloud imports after start-up, so its stored sampling rate reaches the store but
-    // never Coot, and maps loaded afterwards use the start-up rate. This is a real gap, not a harness limitation
-    // (the harness does not run React, but the React path would not send it either).
-    test.failing("PRF-15 an imported defaultMapSamplingRate is sent to Coot with set_map_sampling_rate", async () => {
+    test("PRF-15 an imported defaultMapSamplingRate is sent to Coot with set_map_sampling_rate", async () => {
         const mark = cloud.commandCentre.commands.length;
         await cloud.instance.preferences.import(moorhen10());
         await flush(100);

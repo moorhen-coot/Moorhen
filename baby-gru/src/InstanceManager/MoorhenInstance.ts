@@ -47,6 +47,7 @@ import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
+import { startStoreSyncs } from "./StoreSync";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
 import type { AppDispatch, MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 
@@ -125,6 +126,7 @@ export class MoorhenInstance extends StoreExtension {
     private _webComponent: MoorhenWebComponent | null = null;
     private readyCallbacks: Array<() => void | Promise<void>> = [];
     private preferencesUnsubscribe: (() => void) | null = null;
+    private storeSyncsUnsubscribe: (() => void) | null = null;
 
     /**
      * Create a new Moorhen instance.
@@ -1669,6 +1671,8 @@ export class MoorhenInstance extends StoreExtension {
         }
 
         this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
+        this.storeSyncsUnsubscribe?.();
+        this.storeSyncsUnsubscribe = startStoreSyncs(this);
         this.dispatch(setGlobalInstanceReady(true));
         this.ready = true;
         await Promise.all(this.readyCallbacks.map(callback => callback()));
@@ -1688,6 +1692,8 @@ export class MoorhenInstance extends StoreExtension {
             this.preferencesUnsubscribe();
             this.preferencesUnsubscribe = null;
         }
+        this.storeSyncsUnsubscribe?.();
+        this.storeSyncsUnsubscribe = null;
         if (this._commandCentre) {
             this.commandCentre.close();
             this._commandCentre = undefined;
