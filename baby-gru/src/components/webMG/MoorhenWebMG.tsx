@@ -1,6 +1,7 @@
 import { useEffect, useCallback, forwardRef, useState, useReducer, useRef } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import * as quat4 from 'gl-matrix/quat';
+import { FIELD_DEPTH_FRONT, FIELD_DEPTH_BACK } from '../../WebGLgComponents/slab';
 import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { buildBuffers, appendOtherData, } from '../../WebGLgComponents/buildBuffers'
@@ -21,6 +22,7 @@ import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
+import { isSilent, viewDifference } from "../../WebGLgComponents/viewEcho";
 import { HighlightHoveredSection } from './HoverSection';
 import { DragHandles } from './DragHandles';
 import { SelectClickedObject } from './SelectObject';
@@ -292,10 +294,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const commandCentre = useCommandCentre()
 
+    /**
+     * The camera re-derives the slab itself now, under its slab policy, so this no longer has to
+     * dispatch autoClipFogByZoom and wait for the answer to come back round through the store.
+     *
+     * The listener stays because `zoomChanged` is a public event that code outside Moorhen may be
+     * listening for, and because removing it is a separate decision from this one.
+     */
     const handleZoomChanged = useCallback(evt => {
-        if (resetClippingFogging) {
-            dispatch(autoClipFogByZoom())
-        }
     }, [glRef, resetClippingFogging])
 
     const handleGoToBlobDoubleClick = useCallback(async (evt) => {
@@ -552,9 +558,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const handleWindowResized = useCallback(() => {
         if (glRef !== null && typeof glRef !== 'function') {
-            if (resetClippingFogging) {
-                dispatch(autoClipFogByZoom())
-            }
+            // No autoClipFogByZoom dispatch: the slab follows zoom inside the camera, and resizing
+            // does not change the zoom, so there was never anything to re-derive here.
             glRef.current.resize(width, height)
             glRef.current.drawScene()
         }
@@ -691,8 +696,59 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [labelBuffers, glRef])
 
+    /**
+     * How the slab follows the camera: the switch the user sees as "Reset clip and fog on zoom".
+     *
+     * It used to be a listener - a zoomChanged event, a dispatch, a reducer recomputing four
+     * numbers, two effects pushing them back into the renderer. It is now a policy the camera
+     * applies as part of writing its own state, so the coupling between zoom and the slab is
+     * declared in one place instead of implied by a round trip. The depths are the 8 and 21 that
+     * execAutoClipFogByZoom used.
+     *
+     * `reapplySlab` is what the switch needs: turning it on should snap the slab to the current
+     * zoom immediately rather than at the next move. The policy itself only acts when the zoom
+     * changes, so that a clip set by hand - from the keyboard shortcuts, the slider handles or the
+     * scripting API - stands until the next zoom, as it always did.
+     */
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.cameraController.slabPolicy = resetClippingFogging
+                ? { kind: "auto", fieldDepthFront: FIELD_DEPTH_FRONT, fieldDepthBack: FIELD_DEPTH_BACK }
+                : { kind: "manual" }
+            glRef.current.cameraController.reapplySlab()
+            glRef.current.drawScene()
+        }
+    }, [resetClippingFogging, glRef])
+
+    /**
+     * THE EYE MUST BE RECONCILED BEFORE THE SLAB. THIS EFFECT STAYS ABOVE THE NEXT TWO.
+     *
+     * The store records fog as absolute distances from the eye, so interpreting a saved fog against
+     * the wrong eye puts it in the wrong place. Restoring a session dispatches the eye and the fog
+     * in the same batch, and React runs effects in declaration order: with these the other way
+     * round, a session saved with the eye at 400 restores its fog measured against 250 and lands
+     * roughly 150A adrift - which is the bug this whole slice exists to fix, re-introduced one line
+     * lower down.
+     *
+     * Dragging the eye-distance slider works either way round, and that is why the order is easy to
+     * get wrong without noticing: there the camera keeps its offsets, echoes the new absolute fog
+     * back here, and the slab effects then agree and do nothing.
+     */
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            if (Math.abs(glRef.current.cameraController.state.eyeDistance - fogClipOffset) < 1e-9) return
+            glRef.current.setFogClipOffset(fogClipOffset)
+            glRef.current.drawScene()
+        }
+    }, [fogClipOffset, glRef])
+
+    // These two are reconciliation now rather than the way the slab is set: the camera owns it and
+    // echoes it back here. They skip when the renderer already agrees, which is what keeps the echo
+    // and the effect from chasing each other over a last-bit difference.
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            const camera = glRef.current.cameraController.state
+            if (Math.abs(camera.clipFront - clipStart) < 1e-9 && Math.abs(camera.clipBack - clipEnd) < 1e-9) return
             glRef.current.set_clip_range(-clipStart, clipEnd)
             glRef.current.drawScene()
         }
@@ -700,17 +756,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            const camera = glRef.current.cameraController.state
+            if (Math.abs(camera.eyeDistance - camera.fogFront - fogStart) < 1e-9 &&
+                Math.abs(camera.eyeDistance + camera.fogBack - fogEnd) < 1e-9) return
             glRef.current.set_fog_range(fogStart, fogEnd)
             glRef.current.drawScene()
         }
     }, [fogStart, fogEnd, glRef])
-
-    useEffect(() => {
-        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.setFogClipOffset(fogClipOffset)
-            glRef.current.drawScene()
-        }
-    }, [fogClipOffset, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
@@ -810,27 +862,32 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         dispatch(setCursorPosition([x,y]))
     })
 
+    /**
+     * Reconciliation: the store asks for a view, and the camera eases to it.
+     *
+     * The comparison is viewDifference, which is the same function the camera's own echo uses to
+     * decide what the store needs told - asked here in the other direction. That is deliberate.
+     * The two have to agree on when a difference counts, and they used to agree only because the
+     * same 1e-5 had been typed in both places: if the echo ever became the slacker of the two, a
+     * difference it never reported would still be large enough for this effect to act on, and the
+     * view would ease back a moment after something moved it. Sharing the function makes the
+     * tolerance a fact rather than a coincidence.
+     *
+     * Easing, not jumping, and through moveCameraTo - which declines outright while a driver holds
+     * the camera. So a movie is not disturbed by a store change arriving mid-playback.
+     */
     useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            let doOrigin = false
-            let doQuat = false
-            let doZoom = false
-            if(Math.abs(originState[0]-glRef.current.origin[0])>1e-5||Math.abs(originState[1]-glRef.current.origin[1])>1e-5||Math.abs(originState[2]-glRef.current.origin[2])>1e-5){
-                doOrigin = true
-            }
-            if(Math.abs(quat[0]-glRef.current.myQuat[0])>1e-5||Math.abs(quat[1]-glRef.current.myQuat[1])>1e-5||Math.abs(quat[2]-glRef.current.myQuat[2])>1e-5||Math.abs(quat[3]-glRef.current.myQuat[3])>1e-5){
-                doQuat = true
-            }
-            //if(glRef.current.animating) doQuat = false
-            if(Math.abs(zoom-glRef.current.zoom)>1e-5){
-                doZoom = true
-            }
+        if(glRef !== null && typeof glRef !== 'function' && glRef.current) {
             if(isNaN(quat[0])||isNaN(quat[1])||isNaN(quat[2])||isNaN(quat[3])){
                 console.log(quat)
                 console.log(originState)
                 console.log(zoom)
+                return
             }
-            if(doOrigin||doQuat||doZoom){
+            const wanted = viewDifference(
+                { origin: originState, quat, zoom },
+                { origin: glRef.current.origin, quat: glRef.current.myQuat, zoom: glRef.current.zoom })
+            if(!isSilent(wanted)){
                 glRef.current.setOriginOrientationAndZoomAnimated(originState,quat,zoom)
             }
         }

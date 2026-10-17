@@ -562,7 +562,7 @@ export function doMouseMove(self: MGWebGL, event) {
         const frac_x = 2.0*(getDeviceScale()*(event.pageX - offset.left)/self.gl.viewportWidth - 0.5);
         const frac_y = -2.0*(getDeviceScale()*(event.pageY - offset.top)/self.gl.viewportHeight - 0.5);
         const zQ = createZQuatFromDX(frac_x*self.dy + frac_y*self.dx);
-        quat4.multiply(self.myQuat, self.myQuat, zQ);
+        self.turnCameraBy(zQ);
 
     } else if (event.buttons === 1) {
 
@@ -618,7 +618,7 @@ export function doMouseMove(self: MGWebGL, event) {
             return
 
         } else if (!activeMoleculeMotion) {
-            quat4.multiply(self.myQuat, self.myQuat, xQ);
+            self.turnCameraBy(xQ);
         } else {
             // ###############
             //TODO - Move all this somewhere else ...

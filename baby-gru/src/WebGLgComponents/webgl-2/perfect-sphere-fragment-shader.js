@@ -5,6 +5,9 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
 
     in lowp vec4 vColor;
+
+    // A fade applied to the whole buffer; see DisplayBuffer.alphaMultiplier and objectFade.
+    uniform float alphaMultiplier;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
     in lowp vec2 vTexture;
@@ -220,6 +223,9 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
             discard;
         }
       }
+
+      // Last, and after the clip cap's own assignment, so a capped sphere fades with the rest.
+      fragColor.a *= alphaMultiplier;
     }
 `;
 

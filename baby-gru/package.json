@@ -129,6 +129,7 @@
         "html-react-parser": "^5.2.6",
         "jszip": "^3.10.1",
         "localforage": "^1.10.0",
+        "mediabunny": "^1.61.3",
         "notistack": "^3.0.2",
         "npm": "^11.15.0",
         "pako": "^2.1.0",

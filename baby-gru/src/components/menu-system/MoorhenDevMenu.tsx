@@ -164,6 +164,10 @@ const addTwoPartMeshTo = (moorhenInstance: ReturnType<typeof useMoorhenInstance>
 };
 
 export const MoorhenDevMenu = () => {
+    // Read, not subscribed: the buffer report is one-shot, and selecting the buffer list would
+    // re-render this menu every time any of them changed.
+    const store = useStore<RootState>();
+
     const [overlaysOn, setOverlaysOn] = useState<boolean>(false);
     const [vectorsOn, setVectorsOn] = useState<boolean>(false);
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
@@ -192,9 +196,6 @@ export const MoorhenDevMenu = () => {
     const [syncingGpu, setSyncingGpu] = useState<boolean>(renderStats.syncGpu);
     const glCtx = useSelector((state: RootState) => state.glRef.glCtx);
     const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately);
-    // The buffers are read on demand rather than subscribed to: this is a one-shot report, and
-    // selecting the buffer list would re-render this menu every time any of them changed.
-    const store = useStore<RootState>();
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
     const toggleValidationPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");

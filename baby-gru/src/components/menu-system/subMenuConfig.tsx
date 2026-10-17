@@ -163,6 +163,12 @@ export const subMenuMap: SubMenuMap = {
                 label: "Screenshot",
                 action: setShownControl({ name: "screenshot" }),
             },
+            {
+                id: "movie",
+                label: "Movie...",
+                type: "showPanel",
+                panel: "movie",
+            },
 
             // {
             //     id: "auto-open-mtz",

@@ -6,6 +6,9 @@ import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
+import { advanceCamera } from './cameraAnimations';
+import { isInvisible, shouldCastShadow } from '../objectFade';
+import { beginDepthOnlyPass } from '../shadowPass';
 import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
 import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
@@ -185,8 +188,11 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                 if(self.renderToTexture) {
                     if(!self.screenshotBuffersReady)
                         self.initTextureFramebuffer();
-                    console.log("Binding rttFramebuffer in depth peel accumulate",self.rttFramebuffer);
-                    if(!(self.offScreenFramebuffer)||(self.offScreenFramebuffer.width!=self.rttFramebuffer.width)){
+                    // Height as well as width: the render-to-texture buffer used to be square, so
+                    // comparing one dimension was enough. It is not once a movie can ask for 16:9.
+                    if(!(self.offScreenFramebuffer)
+                        ||(self.offScreenFramebuffer.width!=self.rttFramebuffer.width)
+                        ||(self.offScreenFramebuffer.height!=self.rttFramebuffer.height)){
                         self.offScreenReady = false
                         self.recreateOffScreeenBuffers(self.rttFramebuffer.width,self.rttFramebuffer.height);
                     }
@@ -246,6 +252,11 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
             }
             self.gl.activeTexture(self.gl.TEXTURE0);
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
+            // The composite above runs with the depth test off, as a fullscreen quad must. Leaving
+            // it off outlived the frame: the next frame begins with the shadow pass, and a pass
+            // that renders depth with the test disabled writes no depth at all, so the shadow map
+            // came out empty whenever anything in the scene was transparent. See shadowPass.ts.
+            self.gl.enable(self.gl.DEPTH_TEST);
         return invMat
     }
 
@@ -318,6 +329,24 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             }
 
             if (!displayBuffers[idx].visible) {
+                continue;
+            }
+
+            // What a fade has done to this buffer. Two separate decisions, both cheap, and both
+            // wrong in a visible way if skipped - see objectFade.
+            //
+            // Faded to nothing: drawing it costs a full pass through the vertex shader, the
+            // rasteriser and a peeling layer to contribute no pixels at all. A movie that fades
+            // four molecules out should get faster, not carry their cost to the end.
+            //
+            // Faded at all: it stops casting a shadow. An object that has half vanished while its
+            // shadow stays solid on the floor is the most obvious way to make a fade look wrong.
+            const bufferFade = displayBuffers[idx].alphaMultiplier ?? 1.0;
+            if (isInvisible(bufferFade)) {
+                continue;
+            }
+            if (calculatingShadowMap
+                && !shouldCastShadow(true, bufferFade, displayBuffers[idx].transparent)) {
                 continue;
             }
             if(self.doStenciling){
@@ -421,6 +450,12 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.useProgram(theShader);
+
+                // Null on a WebGL1 context, and on the shadow and g-buffer programs, which have no
+                // such uniform; the guard is what makes fading simply absent there.
+                if (theShader.alphaMultiplier != null) {
+                    self.gl.uniform1f(theShader.alphaMultiplier, bufferFade);
+                }
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
 
@@ -716,6 +751,9 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 0.0, 0.0, 0.0, 1.0,
                 );
                 self.gl.useProgram(program);
+                if (program.alphaMultiplier != null) {
+                    self.gl.uniform1f(program.alphaMultiplier, bufferFade);
+                }
                 self.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                 self.setMatrixUniforms(program);
                 self.gl.disableVertexAttribArray(program.vertexColourAttribute);
@@ -1442,6 +1480,12 @@ export function drawScene(self: MGWebGL) : void {
         const drawSceneStart = renderStats.enabled ? performance.now() : 0;
         if(renderStats.enabled) beginGpuTimer(self.gl as WebGL2RenderingContext);
 
+        // The camera is advanced here, immediately before anything reads it, rather than from a
+        // loop of its own: one clock, and the frame always shows where the camera is *now* rather
+        // than where some other loop last left it. Inside the timer, because advancing the camera
+        // is part of the frame's work. See advanceCamera.
+        advanceCamera(self)
+
         if(self.renderToTexture&&(!self.screenshotBuffersReady))
             self.initTextureFramebuffer();
 
@@ -1462,7 +1506,27 @@ export function drawScene(self: MGWebGL) : void {
             console.log(self.myQuat)
         }
 
-        if(!self.animating) self.props.onQuatChanged(self.myQuat)
+        // Not while the camera is being driven. This used to test `animating`, which meant "a
+        // centring move is running" and so missed a movie entirely - the movie code had to set the flag
+        // by hand to get the same effect. `moving` is the condition that was always meant: a move
+        // or a movie is in flight, and the store will hear about it when the camera comes to rest.
+        //
+        // The store's copy of the orientation is not sent from here any more.
+        //
+        // It used to be, once per drawn frame, and that was expensive in a way that did not show
+        // up until recently: Redux freezes what it is given while the camera writes this array in
+        // place, so the dispatch had to send a *copy* - and a fresh array every frame is a fresh
+        // reference every frame, so every selector reading the stored quaternion re-rendered sixty
+        // times a second throughout a drag. MoorhenWebMG, the scene sliders and the 3D objects
+        // dialog all read it.
+        //
+        // echoViewToStore now sends it, from the camera's own subscription, and only when the
+        // value has actually changed. That fires when the camera is turned, set, released or
+        // arrives - never per frame of a move, which is the same restraint the `!moving` guard
+        // here was expressing. One echo, in one place, for every way of moving the camera.
+        //
+        // setDrawQuat stays: it is React state rather than Redux, does not freeze, and is
+        // deliberately given the live array so that a rotation does not re-render the 2D overlay.
         self.props.setDrawQuat(self.myQuat)
 
         // Decided here, before theShaders is built, because the shader variant chosen below
@@ -2031,9 +2095,6 @@ export function drawScene(self: MGWebGL) : void {
         }
 
         if(self.renderToTexture&&!self.useOffScreenBuffers) {
-            console.log("SCREENSHOT")
-            const width_ratio = self.gl.viewportWidth / self.rttFramebuffer.width;
-            const height_ratio = self.gl.viewportHeight / self.rttFramebuffer.height;
             if (self.WEBGL2) {
                 if(self.doPeel){
                      self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.offScreenFramebuffer);
@@ -2052,8 +2113,14 @@ export function drawScene(self: MGWebGL) : void {
                 }
                 self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.rttFramebufferColor);
             }
-            const pixels = new Uint8Array(self.gl.viewportWidth / width_ratio * self.gl.viewportHeight / height_ratio * 4);
-            self.gl.readPixels(0, 0, self.gl.viewportWidth / width_ratio, self.gl.viewportHeight / height_ratio, self.gl.RGBA, self.gl.UNSIGNED_BYTE, pixels);
+            // The whole render-to-texture buffer. This was written as
+            // `viewportWidth / (viewportWidth / rttFramebuffer.width)`, which is the same number
+            // by algebra but not necessarily in floating point - at an awkward size it can come
+            // back a fraction under and silently drop a column.
+            const readWidth = self.rttFramebuffer.width;
+            const readHeight = self.rttFramebuffer.height;
+            const pixels = new Uint8Array(readWidth * readHeight * 4);
+            self.gl.readPixels(0, 0, readWidth, readHeight, self.gl.RGBA, self.gl.UNSIGNED_BYTE, pixels);
             self.pixel_data = pixels;
         }
 
@@ -2596,10 +2663,6 @@ export function depthBlur(self: MGWebGL, invMat) {
         self.drawTextOverlays(invMat);
 
         if(self.renderToTexture) {
-            console.log("SCREENSHOT MkII !");
-
-            const width_ratio = self.gl.viewportWidth / self.rttFramebuffer.width;
-            const height_ratio = self.gl.viewportHeight / self.rttFramebuffer.height;
             if (self.WEBGL2) {
                 self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.rttFramebuffer);
                 self.gl.bindFramebuffer(self.gl.DRAW_FRAMEBUFFER, self.rttFramebufferColor);
@@ -2620,8 +2683,9 @@ export function depthBlur(self: MGWebGL, invMat) {
                 self.offScreenReady = false
             }
             self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.rttFramebufferColor);
-            const pixels = new Uint8Array(self.gl.viewportWidth / width_ratio * self.gl.viewportHeight / height_ratio * 4);
-            self.gl.readPixels(0, 0, self.gl.viewportWidth / width_ratio, self.gl.viewportHeight / height_ratio, self.gl.RGBA, self.gl.UNSIGNED_BYTE, pixels);
+            // The whole render-to-texture buffer; see the note on the other readback above.
+            const pixels = new Uint8Array(self.rttFramebuffer.width * self.rttFramebuffer.height * 4);
+            self.gl.readPixels(0, 0, self.rttFramebuffer.width, self.rttFramebuffer.height, self.gl.RGBA, self.gl.UNSIGNED_BYTE, pixels);
             self.pixel_data = pixels;
             self.recreateOffScreeenBuffers(self.canvas.width,self.canvas.height);
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
@@ -2662,6 +2726,10 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                 self.initTextureFramebuffer();
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebufferDepth);
             self.gl.viewport(0, 0, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height);
+            // This is the first pass of the frame, so it starts with whatever the last frame left
+            // behind. The shadow map is only as good as the depth it writes, so it says what it
+            // needs rather than hoping.
+            beginDepthOnlyPass(self.gl);
         } else if(self.drawingGBuffers) {
             const width_ratio = self.gl.viewportWidth / self.gFramebuffer.width;
             const height_ratio = self.gl.viewportHeight / self.gFramebuffer.height;
@@ -2836,6 +2904,11 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             self.gl.cullFace(self.gl.BACK);
             if(self.renderToTexture){
                 //FIXME - drawingGBuffers stanza?
+                //
+                // The square extents below are deliberate and are half of a pair: this renders
+                // into a square buffer and takeScreenShot afterwards crops an aspect-correct band
+                // out of it. Neither half makes sense alone - give this projection a non-square
+                // buffer and the picture comes out stretched.
                 if(self.doPerspectiveProjection){
                     // Aspect stays at 1.0. Measured, not derived: it is right on screen for both
                     // plain and side-by-side capture, and deriving the aspect from the capture
