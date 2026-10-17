@@ -29,6 +29,7 @@ __pycache__/
 .env.test.local
 .env.production.local
 .vscode
+.roadmaps
 
 npm-debug.log*
 yarn-debug.log*

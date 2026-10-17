@@ -536,6 +536,12 @@ export const subMenuMap: SubMenuMap = {
                 type: "showModal",
                 modal: "json-validation",
             },
+            {
+                id: "fourier-shell-correlation",
+                label: "Fourier shell correlation...",
+                type: "showModal",
+                modal: "fourier-shell-correlation",
+            },
         ],
     },
     "map-tools": {

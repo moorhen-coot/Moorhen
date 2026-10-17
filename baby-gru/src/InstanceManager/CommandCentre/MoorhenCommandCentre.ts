@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { History } from "../../utils/MoorhenHistory";
+import { CootCommandError, commandName, throwIfCootFailed } from "./CootCommandError";
 
 export type WorkerResponse<T = any> = {
     data: WorkerResult<T>;
@@ -34,6 +35,8 @@ export type WorkerMessage = {
     consoleMessage?: string;
     messageId: string;
     handler: (reply: WorkerResponse) => void;
+    /** Rejects the command's promise with a CootCommandError when no reply can arrive. */
+    reject?: (reason?: unknown) => void;
     kwargs: cootCommandKwargs;
 };
 
@@ -106,9 +109,31 @@ export class CommandCentre {
         this.isClosed = false;
         this.cootWorker = new Worker(`${this.urlPrefix}/wasm/CootWorker.js`);
         this.cootWorker.onmessage = this.handleMessage.bind(this);
+        // The worker replies to every message itself, including with an Exception status
+        // when a command throws, so an error event does not mean a reply was lost: the
+        // worker keeps processing its queue. Only fail pending commands if the worker
+        // errors before it has initialised (e.g. the script failed to load), since then
+        // no reply will ever come.
+        let workerInitialised = false;
+        this.cootWorker.onerror = event => {
+            console.error("Error in coot worker", event);
+            if (!workerInitialised) {
+                this.failActiveMessages(this.activeMessages, "The coot worker failed to start");
+            }
+        };
+        // A reply that cannot be deserialised carries no messageId. The worker handles
+        // messages one at a time and replies in order, so the lost reply belongs to the
+        // oldest pending message; fail only that one; later replies still arrive.
+        this.cootWorker.onmessageerror = event => {
+            console.error("Could not deserialise a reply from the coot worker", event);
+            this.failActiveMessages(this.activeMessages.slice(0, 1), "A reply from the coot worker could not be deserialised");
+        };
         const fileResponse = await fetch(`${this.urlPrefix}/data.tar.gz`);
         const fileData = await fileResponse.arrayBuffer();
-        await this.postMessage({ message: "CootInitialize", data: { cootData: new Uint8Array(fileData) } });
+        const initKwargs = { message: "CootInitialize", data: { cootData: new Uint8Array(fileData) } };
+        const initReply = await this.postMessage(initKwargs);
+        workerInitialised = true;
+        throwIfCootFailed(initReply, initKwargs);
         if (this.onCootInitialized) {
             this.onCootInitialized();
         }
@@ -141,6 +166,24 @@ export class CommandCentre {
         return reply => {
             resolve(reply);
         };
+    }
+
+    /**
+     * Reject the given in-flight commands and drop them from activeMessages, for when
+     * their reply can never arrive. Without this they stay pending for ever, which keeps
+     * the global busy state (and its spinner) switched on permanently.
+     */
+    failActiveMessages(messages: WorkerMessage[], reason: string) {
+        if (messages.length === 0) {
+            return;
+        }
+        this.activeMessages = this.activeMessages.filter(message => !messages.includes(message));
+        messages.forEach(message => {
+            message.reject?.(new CootCommandError(commandName(message.kwargs), reason));
+        });
+        if (this.onActiveMessagesChanged) {
+            this.onActiveMessagesChanged(this.activeMessages);
+        }
     }
 
     async cootCommand(kwargs: cootCommandKwargs, doJournal: boolean = true): Promise<WorkerResponse> {
@@ -220,7 +263,9 @@ export class CommandCentre {
         const messageId = uuidv4();
         return new Promise((resolve, reject) => {
             const handler = $this.makeHandler(resolve);
-            this.activeMessages.push({ messageId, handler, kwargs });
+            // Keep the reject alongside the handler so failActiveMessages() can settle
+            // this promise if the reply never comes.
+            this.activeMessages.push({ messageId, handler, reject, kwargs });
             if (this.onActiveMessagesChanged) {
                 this.onActiveMessagesChanged(this.activeMessages);
             }
