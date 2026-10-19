@@ -18,6 +18,8 @@ export default tseslint.config(
       // Lhasa, a separate project copied in at build time. It also looks elements up on document, which breaks
       // inside the web component's shadow root; that needs fixing in Lhasa itself.
       "src/LhasaReact/**",
+      // Vendored, minified MathJax bundle
+      "src/utils/tex-svg.js",
     ],
   },
 
@@ -107,6 +109,9 @@ export default tseslint.config(
     files: ["**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
+      // MoorhenInstance API getters return objects whose methods need both the instance (aliased)
+      // and the API object itself (`this`)
+      "@typescript-eslint/no-this-alias": ["error", { allowedNames: ["moorhenInstance"] }],
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
