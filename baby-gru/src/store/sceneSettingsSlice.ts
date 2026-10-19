@@ -27,6 +27,23 @@ export const initialState: {
     doPerspectiveProjection: boolean;
     useOffScreenBuffers: boolean;
     depthBlurRadius: number;
+    /**
+     * How many depth-peel layers to resolve transparency with.
+     *
+     * One per depth of transparent surface that needs separating. A single closed surface wants
+     * two - its front and its back - while several contour levels of the same field drawn at
+     * once want one per level. Each layer is a further pass over the transparent geometry, so
+     * this is a direct trade of cost against how deep the transparency stays correct.
+     */
+    depthPeelLayers: number;
+    /**
+     * Whether the opaque scene is drawn once while depth peeling, rather than into every layer.
+     *
+     * Deliberately not in the persisted preferences: it exists so the two paths can be compared
+     * on screen, and it should come back on after a reload rather than leaving someone stuck on
+     * the slow path because they once turned it off.
+     */
+    peelOpaqueSeparately: boolean;
     depthBlurDepth: number;
     lightPosition: [number, number, number, number];
     ambient: [number, number, number, number];
@@ -90,8 +107,16 @@ export const initialState: {
     edgeDetectNormalThreshold: 0.5,
     edgeDetectDepthScale: 2.0,
     edgeDetectNormalScale: 0.0,
-    ssaoRadius: 0.4,
-    ssaoBias: 1.0,
+    // Judged by eye on a molecular surface, then checked against a ribosome gaussian surface.
+    // The radius is in angstroms now that the occlusion test works in eye space, so it means
+    // something physical: how far away a neighbouring surface still shades this one. At 2.0 it
+    // only caught the gaps between adjacent atoms, which reads as texture rather than depth.
+    //
+    // Large structures want more than this - the ribosome looks best nearer 10 angstroms and
+    // strength 3, because its cavities are correspondingly bigger. A single default cannot suit
+    // both, and these are the values that look right on the common case.
+    ssaoRadius: 5.0,
+    ssaoBias: 1.3,
     resetClippingFogging: true,
     clipCap: true,
     doPerspectiveProjection: false,
@@ -106,7 +131,13 @@ export const initialState: {
     doAnaglyphStereo: false,
     doOutline: false,
     depthBlurRadius: 3.0,
-    depthBlurDepth: 0.5,
+    depthPeelLayers: 4,
+    peelOpaqueSeparately: true,
+    // Where the depth blur starts, in angstroms from the view centre; negative is towards the
+    // viewer. Zero puts it on the rotation centre, which is what you are usually looking at.
+    // This was a 0 to 1 fraction, so a saved value lands a fraction of an angstrom from centre -
+    // near enough to the old "middle" that nothing jumps.
+    depthBlurDepth: 0.0,
     height: 0,
     width: 0,
     GlViewportHeight: 0,
@@ -277,6 +308,20 @@ const sceneSettingsSlice = createSlice({
             state.doPerspectiveProjection = action.payload;
         },
         // API
+        /* Move the eye towards or away from the view centre, in angstroms. This is what sets how
+           strongly a perspective view converges: close in, the far side of a molecule shrinks
+           markedly; far off, the view approaches orthographic. The framing stays put, because the
+           projection's scale is derived from the same distance, so this is a dolly zoom rather
+           than a zoom. Fog moves with the eye so that it stays where it was on the molecule.
+           Clip needs no adjustment, being measured from the centre already. No effect under
+           orthographic projection. */
+        setPerspectiveEyeDistance: (state, action: PayloadAction<number>) => {
+            const delta = action.payload - state.fogClipOffset;
+            state.fogClipOffset = action.payload;
+            state.fogStart += delta;
+            state.fogEnd += delta;
+        },
+        // API
         setUseOffScreenBuffers: (state, action: PayloadAction<boolean>) => {
             state.useOffScreenBuffers = action.payload;
         },
@@ -335,6 +380,14 @@ const sceneSettingsSlice = createSlice({
         // API
         setDepthBlurRadius: (state, action: PayloadAction<number>) => {
             state.depthBlurRadius = action.payload;
+        },
+        // API
+        setDepthPeelLayers: (state, action: PayloadAction<number>) => {
+            state.depthPeelLayers = action.payload;
+        },
+        // API
+        setPeelOpaqueSeparately: (state, action: PayloadAction<boolean>) => {
+            state.peelOpaqueSeparately = action.payload;
         },
         // API
         setDepthBlurDepth: (state, action: PayloadAction<number>) => {
@@ -461,10 +514,13 @@ export const {
     setDoSpin,
     setDoOutline,
     setDepthBlurRadius,
+    setDepthPeelLayers,
+    setPeelOpaqueSeparately,
     setBackgroundColor,
     setDepthBlurDepth,
     setDrawAxes,
     setDoPerspectiveProjection,
+    setPerspectiveEyeDistance,
     setHeight,
     setWidth,
     setGlViewportHeight,

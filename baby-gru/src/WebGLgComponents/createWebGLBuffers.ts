@@ -51,6 +51,26 @@ const createRealNormalBuffer = (tri,theBuffer,gl) => { //Where "Real" is open to
     theBuffer.triangleVertexRealNormalBuffer[theBuffer.triangleVertexRealNormalBuffer.length - 1].numItems = 0;
 }
 
+/**
+ * Texture coordinates for one sub-buffer.
+ *
+ * Copied rather than referenced, and counted in pairs, matching how the normal and colour
+ * buffers are built next door. numItems is the vertex count so that it can be compared with the
+ * position buffer's - a mismatch means the file disagrees with itself and the attribute is left
+ * unfed rather than read short.
+ */
+const createTextureCoordBuffer = (tex,theBuffer,gl) => {
+    theBuffer.triangleTextureCoords.push([]);
+    theBuffer.triangleVertexTextureBuffer.push(gl.createBuffer());
+    const at = theBuffer.triangleVertexTextureBuffer.length - 1;
+    theBuffer.triangleVertexTextureBuffer[at].numItems = 0;
+    for (let j = 0; j < tex.length; j++) {
+        theBuffer.triangleTextureCoords[theBuffer.triangleTextureCoords.length - 1].push(parseFloat(tex[j]));
+        theBuffer.triangleVertexTextureBuffer[at].numItems++;
+    }
+    theBuffer.triangleVertexTextureBuffer[at].numItems /= 2;
+}
+
 const createNormalBuffer = (norm,theBuffer,gl) => {
     theBuffer.triangleNormals.push([]);
     theBuffer.triangleVertexNormalBuffer.push(gl.createBuffer());
@@ -318,12 +338,38 @@ export const createWebGLBuffers = (jsondata: any, idat: number, gl): DisplayBuff
     if(jsondata.doStencil){
         theBuffer.doStencil = jsondata.doStencil;
     }
+    if(jsondata.alwaysOnTop){
+        theBuffer.alwaysOnTop = jsondata.alwaysOnTop;
+    }
 
     if(jsondata.norm_tri){
         const rssentries = jsondata.norm_tri[idat];
         const norms = rssentries;
         for (let i = 0; i < norms.length; i++) {
             createNormalBuffer(norms[i],theBuffer,gl);
+        }
+    }
+
+    // Texture coordinates, one array per sub-buffer, in the same [[...]] shape as the rest. The
+    // GL buffer and the attribute have been in place for years with nothing feeding them; this is
+    // the feed. Absent for everything that is not textured, which is almost everything.
+    if(jsondata.tex_tri){
+        const rssentries = jsondata.tex_tri[idat];
+        if(rssentries){
+            for (let i = 0; i < rssentries.length; i++) {
+                createTextureCoordBuffer(rssentries[i],theBuffer,gl);
+            }
+        }
+    }
+
+    // Materials are per sub-buffer and sparse: an entry of undefined, or no entry at all, means
+    // "vertex colours alone". Stored by index so that it lines up with bufferTypes.
+    if(jsondata.materials){
+        const rssentries = jsondata.materials[idat];
+        if(rssentries){
+            for (let i = 0; i < rssentries.length; i++) {
+                theBuffer.materials[i] = rssentries[i];
+            }
         }
     }
 
@@ -471,6 +517,9 @@ export const createWebGLBuffers = (jsondata: any, idat: number, gl): DisplayBuff
     }
     if(jsondata.doStencil){
         theBuffer.doStencil = jsondata.doStencil;
+    }
+    if(jsondata.alwaysOnTop){
+        theBuffer.alwaysOnTop = jsondata.alwaysOnTop;
     }
     if(jsondata.pick_info){
         if(jsondata.pick_info.influence_weights && jsondata.pick_info.influence_point_indexes && jsondata.pick_info.influence_index_offsets && jsondata.pick_info.pick_points){

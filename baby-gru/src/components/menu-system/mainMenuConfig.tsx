@@ -38,7 +38,15 @@ export type MainMenuEntryJSX = {
     align?: number;
 } & Icon;
 
-export type MainMenuType = MainMenuEntrySubMenu | MainMenuEntryModal | MainMenuEntryJSX | MainMenuEntryPanel;
+/** Runs `action` once per click and closes the menu, so non-React hosts can add buttons */
+export type MainMenuEntryAction = {
+    type: "action";
+    label: string;
+    ariaLabel?: string;
+    action: () => void;
+} & Icon;
+
+export type MainMenuType = MainMenuEntrySubMenu | MainMenuEntryModal | MainMenuEntryJSX | MainMenuEntryPanel | MainMenuEntryAction;
 
 export type MainMenuMap = {
     [key: number]: MainMenuType;

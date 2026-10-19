@@ -608,7 +608,12 @@ if (EMSCRIPTEN)
     message(STATUS "Emscripten version: ${EMCC_VERSION}")
 endif()
 
-add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc ${coot_src}/lhasa/embind.cpp)
+add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc gltf-import.cc ${coot_src}/lhasa/embind.cpp)
+
+# No TINYGLTF_IMPLEMENTATION here. libcoot already compiles tinygltf's function bodies, in
+# coot-utils/gltf-export.cc, so defining it again for this file produces a second copy of every
+# one of them and wasm-ld reports a few hundred duplicate symbols. This file needs the
+# declarations only, which is what including tiny_gltf.h without the define gives.
 if(${MEMORY64} MATCHES "1")
 target_compile_definitions(moorhen PUBLIC _MOORHEN_MEMORY64_)
 if(${EMCC_VERSION} VERSION_GREATER 6.0.1)

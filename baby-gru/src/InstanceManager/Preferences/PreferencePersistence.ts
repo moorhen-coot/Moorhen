@@ -8,7 +8,10 @@ export type InitPreferencePersistenceArgs = {
     dispatch: AppDispatch;
     localStorageInstance: Preferences;
     onUserPreferencesChange?: (key: string, value: unknown) => void;
-    /** Called once all preferences are restored, before `userPreferencesMounted`, with the labels restored from storage */
+    /**
+     * Called once the first restore is done, before `userPreferencesMounted`, with the labels of the
+     * preferences restored from storage (explicit user choices, as opposed to defaults)
+     */
     onRestored?: (restoredLabels: string[]) => void;
 };
 
@@ -44,24 +47,29 @@ const valuesEqual = (a: unknown, b: unknown): boolean => {
  * Once all preferences have been restored, `userPreferencesMounted` is dispatched so the rest of
  * the application can proceed (see MainContainer's startup effect).
  *
- * @returns an unsubscribe function that stops the store subscription (call on cleanup).
+ * `onUserPreferencesChange` is called once a change has been written to storage, including when a
+ * preference is set back to its default (its stored entry is removed).
+ *
+ * @returns an unsubscribe function that stops the store subscription (call on cleanup). Its `restore`
+ * method re-applies whatever is in storage to the store (used to import preferences after start-up);
+ * changes made by a restore are not persisted again and do not call `onUserPreferencesChange`.
  */
-export const initPreferencePersistence = (args: InitPreferencePersistenceArgs): (() => void) => {
+export const initPreferencePersistence = (
+    args: InitPreferencePersistenceArgs
+): (() => void) & { restore: () => Promise<void> } => {
     const { store, dispatch, localStorageInstance, onUserPreferencesChange, onRestored } = args;
     const preferences = Object.values(PREFERENCES_MAP);
     const previousValues = new Map<string, unknown>();
     let hasRestored = false;
-    let pendingRestores = preferences.length;
-    // Labels of the preferences restored from local storage (explicit user choices), as opposed to defaults
-    const restoredLabels: string[] = [];
 
     const persist = (pref: PreferenceEntry, value: unknown) => {
         if (valuesEqual(value, pref.defaultValue)) {
             // Value matches the code default - remove any stored value so that future default
             // changes propagate automatically.
-            localStorageInstance.localStorageInstance.removeItem(pref.label).catch(err =>
-                console.error(`Error removing ${pref.label} from local storage:`, err)
-            );
+            localStorageInstance.localStorageInstance
+                .removeItem(pref.label)
+                .then(_ => onUserPreferencesChange?.(pref.label, value))
+                .catch(err => console.error(`Error removing ${pref.label} from local storage:`, err));
             return;
         }
         localStorageInstance.localStorageInstance
@@ -83,53 +91,65 @@ export const initPreferencePersistence = (args: InitPreferencePersistenceArgs): 
         const state = store.getState();
         preferences.forEach(pref => previousValues.set(pref.label, pref.selector(state)));
         hasRestored = true;
-        onRestored?.(restoredLabels);
         dispatch(setUserPreferencesMounted(true));
     };
 
-    if (preferences.length === 0) {
-        finishRestore();
-    } else {
-        // --- Restore existing preferences (or apply defaults) ---
-        preferences.forEach(pref => {
-            localStorageInstance.localStorageInstance
-                .getItem(pref.label)
-                .then(stored => {
-                    if (stored === null || stored === undefined) {
-                        applyDefault(pref);
-                    } else if (
-                        typeof stored === "object" &&
-                        !Array.isArray(stored) &&
-                        "value" in stored &&
-                        "version" in stored
-                    ) {
-                        const storedVersion = (stored as { version: number }).version;
-                        const storedValue = (stored as { value: unknown }).value;
-                        const prefVersion = pref.version ?? 1;
-                        if (storedVersion >= prefVersion && storedValue !== null && storedValue !== undefined) {
-                            dispatch(pref.valueSetter(storedValue));
-                            restoredLabels.push(pref.label);
-                        } else {
-                            // Stale version (the default changed since this was saved) or unusable value
-                            localStorageInstance.localStorageInstance.removeItem(pref.label);
-                            applyDefault(pref);
-                        }
+    // --- Restore existing preferences (or apply defaults) ---
+    // Resolves to true when the value came from storage
+    const restorePreference = (pref: PreferenceEntry): Promise<boolean> =>
+        localStorageInstance.localStorageInstance
+            .getItem(pref.label)
+            .then(stored => {
+                if (stored === null || stored === undefined) {
+                    applyDefault(pref);
+                    return false;
+                } else if (
+                    typeof stored === "object" &&
+                    !Array.isArray(stored) &&
+                    "value" in stored &&
+                    "version" in stored
+                ) {
+                    const storedVersion = (stored as { version: number }).version;
+                    const storedValue = (stored as { value: unknown }).value;
+                    const prefVersion = pref.version ?? 1;
+                    if (storedVersion >= prefVersion && storedValue !== null && storedValue !== undefined) {
+                        dispatch(pref.valueSetter(storedValue));
+                        return true;
                     } else {
-                        // Legacy plain value (old format, no version) - it was auto-saved by the old
-                        // persistence system and cannot be trusted as a user choice, so reset to default.
+                        // Stale version (the default changed since this was saved) or unusable value
                         localStorageInstance.localStorageInstance.removeItem(pref.label);
                         applyDefault(pref);
+                        return false;
                     }
-                })
-                .catch(err => console.error(`Error retrieving ${pref.label} from local storage:`, err))
-                .finally(() => {
-                    pendingRestores -= 1;
-                    if (pendingRestores === 0) {
-                        finishRestore();
-                    }
-                });
+                } else {
+                    // Legacy plain value (old format, no version) - it was auto-saved by the old
+                    // persistence system and cannot be trusted as a user choice, so reset to default.
+                    localStorageInstance.localStorageInstance.removeItem(pref.label);
+                    applyDefault(pref);
+                    return false;
+                }
+            })
+            .catch(err => {
+                console.error(`Error retrieving ${pref.label} from local storage:`, err);
+                return false;
+            });
+
+    let restoring: Promise<void> = Promise.resolve();
+    let isFirstRestore = true;
+    const restore = (): Promise<void> => {
+        restoring = restoring.then(async () => {
+            hasRestored = false;
+            const fromStorage = await Promise.all(preferences.map(restorePreference));
+            // Only at start-up: a later import of preferences must not re-apply start-up state
+            if (isFirstRestore) {
+                isFirstRestore = false;
+                onRestored?.(preferences.filter((_, i) => fromStorage[i]).map(pref => pref.label));
+            }
+            finishRestore();
         });
-    }
+        return restoring;
+    };
+    restore();
 
     // --- Persist deviations on any subsequent store change ---
     const unsubscribe = store.subscribe(() => {
@@ -144,5 +164,5 @@ export const initPreferencePersistence = (args: InitPreferencePersistenceArgs): 
         });
     });
 
-    return unsubscribe;
+    return Object.assign(unsubscribe, { restore });
 };

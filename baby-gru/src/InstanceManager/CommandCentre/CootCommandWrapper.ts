@@ -1,3 +1,41 @@
+/*
+ * CootCommandWrapper: the future typed API for every coot command.
+ *
+ * The goal is for all code to call coot through this wrapper instead of
+ * `commandCentre.cootCommand(...)` directly, so that every command has typed
+ * arguments, a typed return value, and consistent error reporting.
+ *
+ * What the layers below already guarantee:
+ *  - The worker (CootWorker.ts) replies to every message exactly once. If coot
+ *    throws, the reply has `result.status === "Exception"`; it never goes silent.
+ *  - The command centre rejects with a CootCommandError only when no reply can
+ *    arrive (the worker failed to start, or a reply could not be deserialised).
+ *  - CootCommandError and throwIfCootFailed (CootCommandError.ts) are the shared
+ *    way to turn an Exception reply into a thrown error.
+ *
+ * What should be added here:
+ *  1. A private helper that every method goes through, e.g.
+ *
+ *       private async run<T>(kwargs: cootCommandKwargs, doJournal: boolean): Promise<T> {
+ *           const reply = await this.cootCommand(kwargs, doJournal);
+ *           throwIfCootFailed(reply, kwargs);
+ *           return reply.data.result.result as T;
+ *       }
+ *
+ *     so a failed command always throws a CootCommandError naming the command,
+ *     and callers never have to inspect a WorkerResponse.
+ *  2. Methods return the typed result (e.g. `Promise<number>`), not WorkerResponse.
+ *  3. Where coot reports failure through its return value rather than by
+ *     throwing (e.g. -1 for a molecule number, 0 for a status), the method
+ *     checks for it and throws a CootCommandError too. Only the wrapper knows
+ *     what each command's failure value is.
+ *  4. Callers that want to tell the user (snackbar, modal) catch
+ *     CootCommandError; everything else lets it propagate so the failure at
+ *     least reaches the console with the command name.
+ *  5. Migrate gradually: wrap commands as they are touched, and move their
+ *     call sites off `commandCentre.cootCommand`. Changing a method's return
+ *     type from WorkerResponse is a breaking change for its callers.
+ */
 import { libcootApi } from "@/types/libcoot";
 import { WorkerResponse, cootCommandKwargs } from "./MoorhenCommandCentre";
 

@@ -20,9 +20,16 @@ export const MapOriginListener = (props: { drawMap(): void, mapUID: string }) =>
 
     const handleMouseMove = () => {
 
-    if (map.isEM && map.dataOrigin === "mtz" && map.isOriginLocked) {
+    const headerInfo = () => {
+        try {
+            return map.headerInfo ?? map.getSimpleHeaderInfo();
+        } catch {
+            return null;
+        }
+    };
+    const cell = map.isEM && map.dataOrigin === "mtz" && map.isOriginLocked ? headerInfo()?.cell : undefined;
+    if (cell) {
         const drawOrigin = map.drawOrigin;
-        const cell = map.headerInfo.cell;
         const currentCell = { a: [drawOrigin[0] - cell.a / 2, drawOrigin[0] + cell.a / 2], b: [drawOrigin[1] - cell.b / 2, drawOrigin[1] + cell.b / 2], c: [drawOrigin[2] - cell.c / 2, drawOrigin[2] + cell.c / 2] };
         isDrawOriginInCell = isInRange(origin[0], currentCell.a[0], currentCell.a[1]) && isInRange(origin[1], currentCell.b[0], currentCell.b[1]) && isInRange(origin[2], currentCell.c[0], currentCell.c[1]);
         console.log(`Current draw origin: ${drawOrigin}, current cell: ${JSON.stringify(currentCell)}, is draw origin in cell: ${isDrawOriginInCell}`);

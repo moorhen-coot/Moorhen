@@ -153,6 +153,9 @@ export function initInstanceState(self: MGWebGL): void {
     self.gFramebuffer = null;
     self.useOffScreenBuffers = false; //This means "doDepthBlur" and is historically named.
     self.blurSize = 3;
+    self.depthPeelLayers = 4;
+    self.peelOpaqueSeparately = true;
+    self.peelTransparentOnly = null;
     self.blurDepth = 0.2;
     self.offScreenReady = false;
     self.framebufferDrawBuffersReady = false;
@@ -302,6 +305,25 @@ export function attachCanvasListeners(self: MGWebGL): void {
         self.canvas.addEventListener("mouseleave",
             function (evt) {
                 document.onkeydown = function (evt2) {
+                }
+
+                // Nothing here is hovered once the pointer has gone. Without this the last thing
+                // it touched stays lit for as long as the mouse is away, and because a pointer
+                // hover takes precedence over one driven from outside the view, it also stops the
+                // sequence viewer from lighting anything: the stale highlight simply wins.
+                //
+                // The pending hover goes too. doHover is debounced, so a move made just before
+                // leaving would otherwise fire after this and put the highlight straight back.
+                if (self.hoverDebounceTimeout) {
+                    clearTimeout(self.hoverDebounceTimeout);
+                    self.hoverDebounceTimeout = null;
+                }
+                const wasHovering = self.state.hoveridx > -1
+                    || self.state.hover_point > -1
+                    || (self.state.hoverIndices?.length ?? 0) > 0;
+                if (wasHovering) {
+                    self.setState({ hoveridx: -1, hover_point: -1, hoverIndices: [] });
+                    self.drawScene();
                 }
             },
             false);

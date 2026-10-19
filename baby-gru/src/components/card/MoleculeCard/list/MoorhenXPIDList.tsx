@@ -1,5 +1,6 @@
 import { MoorhenLinearProgress } from "@/components/icons"
 import { useDispatch, useSelector } from "react-redux";
+import { SOURCE_XPID, TAG_MOLECULE, TAG_SOURCE } from "../../../../utils/tags";
 import { useEffect, useRef, useState } from "react";
 import { MoorhenButton, MoorhenColourPicker } from "@/components/inputs";
 import { MoorhenAccordion, MoorhenInfoCard, MoorhenStack } from "@/components/interface-base";
@@ -152,6 +153,13 @@ export const MoorhenXPIDList = (props: {
                     molFromUniqueId: "",
                     molToUniqueId: "",
                     uniqueId: key,
+                    // The uniqueId above still carries the __TAG_XPID_ prefix, and deliberately
+                    // so: it is content-addressed from the interaction and compared with === a
+                    // few lines up, which is how an interaction already drawn is recognised and
+                    // keeps its colour. These tags take over the other job the prefix was doing,
+                    // which is letting MoleculeCard find every XPID vector for this molecule
+                    // without matching substrings of identifiers.
+                    tags: { [TAG_SOURCE]: SOURCE_XPID, [TAG_MOLECULE]: props.molecule.uniqueId },
                     vectorColour: interactionColour,
                     textColour: { r: 0, g: 0, b: 0 },
                     radius: XPID_DEFAULT_VECTOR_RADIUS,
@@ -334,7 +342,11 @@ export const MoorhenXPIDList = (props: {
                                 dispatch(removeVectors(xpidVectorsList))
                                 const visVectors = xpidVectorsList.filter((vec,vecIdx) => newVisList[vecIdx])
                                 dispatch(addVectors(visVectors))
-                                moorhenGlobalInstance.centerOnCoordinate(-xpi.X_xyz_x,-xpi.X_xyz_y,-xpi.X_xyz_z)
+                                // Unnegated. centerOnCoordinate takes the point to look at and
+                                // negates it itself to get the origin; this call was written
+                                // when the caller had to do that, so it was negating twice and
+                                // centring on the point reflected through the world origin.
+                                moorhenGlobalInstance.centerOnCoordinate(xpi.X_xyz_x, xpi.X_xyz_y, xpi.X_xyz_z)
                             }}
                             type="icon-only"
                             icon="MatSymFilterFocus"

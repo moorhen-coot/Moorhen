@@ -85,6 +85,10 @@ export const MoorhenMainMenu = memo(() => {
                 } else if (menu.type === "panel") {
                     setActiveMenu(null);
                     dispatch(setShownSidePanel(menu.panel));
+                } else if (menu.type === "action") {
+                    setActiveMenu(null);
+                    dispatch(setMainMenuOpen(false));
+                    menu.action();
                 }
             };
             return <MainMenuButton key={key} icon={menu.icon} label={menu.label} ariaLabel={menu.ariaLabel} onClick={onClick} />;

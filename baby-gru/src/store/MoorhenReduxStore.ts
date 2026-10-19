@@ -18,6 +18,7 @@ import moleculesReducer from "./moleculesSlice";
 import mouseSettingsReducer from "./mouseSettings";
 import mrParseSliceReducer from "./mrParseSlice";
 import overlaysSliceReducer from "./overlaysSlice";
+import threeDObjectsSliceReducer from "./threeDObjectsSlice";
 import refinementSettingsReducer from "./refinementSettingsSlice";
 import sceneSettingsReducer from "./sceneSettingsSlice";
 import sharedSessionReducer from "./sharedSessionSlice";
@@ -48,6 +49,7 @@ export const reducers = {
     mrParse: mrParseSliceReducer,
     glRef: glRefSliceReducer,
     overlays: overlaysSliceReducer,
+    threeDObjects: threeDObjectsSliceReducer,
     menus: menusReducer,
     globalUI: globalUISliceReducer,
     bottomPanels: bottomPanelsReducer,
