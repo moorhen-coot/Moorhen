@@ -1,5 +1,6 @@
 @import "../../../colors.css";
 
+:host,
 :root {
     --moorhen-slider-thumb-size: 20px;
     --moorhen-slider-track-height: 8px;
