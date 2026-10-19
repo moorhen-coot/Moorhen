@@ -128,7 +128,7 @@ describe("MTZ: maps", () => {
         expect(map.hasReflectionData).toBe(false);
     });
 
-    test("MTZ-09 mislabelled Fobs/SigFobs (absent from the file) warn and load without reflection data", async () => {
+    test("MTZ-09 mislabelled Fobs/SigFobs (absent from the file) load without reflection data, with a neutral note", async () => {
         const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
         try {
             const result = await cloud.instance.files.loadMtz(jobUrl(SIGMAA), [
@@ -138,13 +138,15 @@ describe("MTZ: maps", () => {
             expect(result).toHaveLength(2);
             expect(cloud.instance.getMap(result[0].uniqueID).hasReflectionData).toBe(false);
             expect(warn).toHaveBeenCalledWith(expect.stringContaining('Fobs="F"'));
-            expect(snackbars().some(snackbar => snackbar.variant === "warning" && snackbar.message.includes('SigFobs="SIGF"'))).toBe(true);
+            // The user gets a plain note, not a warning: the maps are fine, only live updates and R-factors are unavailable
+            expect(snackbars().some(snackbar => snackbar.variant === "info" && /Live map updates and R-factors.*\bmap\b.*SIGF/.test(snackbar.message))).toBe(true);
+            expect(snackbars().some(snackbar => snackbar.variant === "warning" || snackbar.variant === "error")).toBe(false);
         } finally {
             warn.mockRestore();
         }
     });
 
-    test("MTZ-10 FreeR requested on a file without FreeR warns and loads without reflection data", async () => {
+    test("MTZ-10 FreeR requested on a file without FreeR loads without reflection data, with a neutral note", async () => {
         const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
         try {
             const result = await cloud.instance.files.loadMtz(jobUrl(NO_FREE), [
@@ -154,7 +156,8 @@ describe("MTZ: maps", () => {
             expect(result).toHaveLength(2);
             expect(cloud.instance.getMap(result[0].uniqueID).hasReflectionData).toBe(false);
             expect(warn).toHaveBeenCalledWith(expect.stringContaining('FreeR="FREE"'));
-            expect(snackbars().some(snackbar => snackbar.variant === "warning" && snackbar.message.includes('FreeR="FREE"'))).toBe(true);
+            expect(snackbars().some(snackbar => snackbar.variant === "info" && /Live map updates and R-factors.*\bmap\b.*FREE/.test(snackbar.message))).toBe(true);
+            expect(snackbars().some(snackbar => snackbar.variant === "warning" || snackbar.variant === "error")).toBe(false);
         } finally {
             warn.mockRestore();
         }

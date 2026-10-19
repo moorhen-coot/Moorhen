@@ -84,11 +84,23 @@ export const loadMtzMaps = async (
         instance.dispatch(enqueueSnackbar({ message, variant: "error" }));
         throw new Error(`${message}. Available columns: ${available}`);
     }
-    const missingReflectionColumns = findMissing(["Fobs", "SigFobs", "FreeR"]);
+    const reflectionRoles = ["Fobs", "SigFobs", "FreeR"] as const;
+    const missingReflectionColumns = findMissing([...reflectionRoles]);
     if (missingReflectionColumns.length > 0) {
-        const message = `Missing columns in ${file.name}: ${missingReflectionColumns.join(", ")}, loading without reflection data`;
-        instance.dispatch(enqueueSnackbar({ message, variant: "warning" }));
-        console.warn(`${message}. Available columns: ${available}`);
+        // The maps load and display fine; only live map updates and R-factors need the reflection data. Tell the
+        // user plainly, keep the details for the console
+        const affected = requests.filter(request =>
+            reflectionRoles.some(role => request.columns[role] && !labels.has(request.columns[role]))
+        );
+        const missingLabels = [
+            ...new Set(affected.flatMap(request => reflectionRoles.map(role => request.columns[role]).filter(label => label && !labels.has(label)))),
+        ];
+        const mapNames = affected.map(request => request.name ?? request.columns.F).join(", ");
+        const message = `Live map updates and R-factors are not available for ${mapNames}: ${file.name} has no ${missingLabels.join(", ")} column${missingLabels.length > 1 ? "s" : ""}`;
+        instance.dispatch(enqueueSnackbar({ message, variant: "info" }));
+        console.warn(
+            `Loading without reflection data, columns not in ${file.name}: ${missingReflectionColumns.join(", ")}. Available columns: ${available}`
+        );
     }
     const hasReflectionColumns = (request: MtzMapRequest) =>
         ["Fobs", "SigFobs", "FreeR"].every(role => labels.has(request.columns[role as "Fobs" | "SigFobs" | "FreeR"]));
