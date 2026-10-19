@@ -15,7 +15,9 @@ export default tseslint.config(
       "playwright-report/**",
       "test-results/**",
       "public/**",
-      "src/components/LhasaReact/**",
+      // Lhasa, a separate project copied in at build time. It also looks elements up on document, which breaks
+      // inside the web component's shadow root; that needs fixing in Lhasa itself.
+      "src/LhasaReact/**",
     ],
   },
 
@@ -116,7 +118,6 @@ export default tseslint.config(
       "src/WebComponent/utils/**", // host-page hooks that look up the <moorhen-web-component> element itself
       "src/utils/shadowDom.ts", // the shadow-aware helpers below
       "src/utils/tex-svg.js", // vendored MathJax bundle
-      "src/LhasaReact/**", // separate project copied in at build time; its lookups need fixing there
     ],
     rules: {
       "no-restricted-properties": [

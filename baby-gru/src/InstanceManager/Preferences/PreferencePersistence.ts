@@ -121,10 +121,14 @@ export const initPreferencePersistence = (
             })
             .catch(err => console.error(`Error retrieving ${pref.label} from local storage:`, err));
 
-    const restore = async () => {
-        hasRestored = false;
-        await Promise.all(preferences.map(restorePreference));
-        finishRestore();
+    let restoring: Promise<void> = Promise.resolve();
+    const restore = (): Promise<void> => {
+        restoring = restoring.then(async () => {
+            hasRestored = false;
+            await Promise.all(preferences.map(restorePreference));
+            finishRestore();
+        });
+        return restoring;
     };
     restore();
 
