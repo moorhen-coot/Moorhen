@@ -253,4 +253,19 @@ describe("PRF: preferences", () => {
         expect(cloud.store.getState().sceneSettings.defaultBackgroundColor).toEqual(imported);
         expect(cloud.store.getState().sceneSettings.backgroundColor).toEqual(imported);
     });
+
+    test("PRF-17 (extra) an import while the start-up restore is still running wins, and fires no onChange", async () => {
+        // Not a spec row: a host imports as soon as it has the instance, possibly while preferences are still
+        // being restored. Start a fresh restore and import without waiting for it.
+        const onChange = jest.fn();
+        cloud.instance.preferences.onChange(onChange);
+        const unsubscribe = cloud.instance.initPreferences(cloud.store, cloud.store.dispatch);
+        const stored = moorhen10();
+        await cloud.instance.preferences.import(stored);
+        await new Promise(resolve => setTimeout(resolve, 50));
+        expect(cloud.store.getState().mapContourSettings.defaultMapSamplingRate).toBe(stored.entries.defaultMapSamplingRate.value);
+        expect(await cloud.instance.preferences.export()).toEqual(stored);
+        expect(onChange).not.toHaveBeenCalled();
+        unsubscribe();
+    });
 });

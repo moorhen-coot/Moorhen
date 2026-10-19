@@ -366,4 +366,23 @@ describe("BAK: backups", () => {
         await timeCapsule.cleanupUnusedDataFiles();
         expect([...host.backups.keys()].sort()).toEqual(["./mtz-a.mtz", "./mtz-b.mtz", "first", "map-a", "map-b", "second"]);
     });
+
+    // Extra (not a spec row): a backup whose entry the host no longer has (e.g. data files removed by the old
+    // cleanupUnusedDataFiles bug) reads as null, like LocalForage, instead of throwing on undefined
+    test("BAK-17 (extra) a missing backup reads as null for every key type", async () => {
+        const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+        try {
+            for (const key of [
+                { type: "version" },
+                { type: "mtzData", name: "./gone.mtz" },
+                { type: "mapData", name: "gone-map" },
+                { ...automaticKey(), serNo: "gone-session" },
+            ]) {
+                await expect(host.backupStorage.getItem(JSON.stringify(key))).resolves.toBeNull();
+            }
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining("gone-session"));
+        } finally {
+            warn.mockRestore();
+        }
+    });
 });

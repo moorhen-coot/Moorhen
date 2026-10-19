@@ -56,21 +56,27 @@ export function createCallbackBackupStorage(callbacks: BackupStorageCallbacks): 
             }
             return callbacks.save(backup) as Promise<string>;
         },
-
-        async getItem(keyString: string): Promise<string | Uint8Array | ArrayBuffer> {
+W
+        async getItem(keyString: string): Promise<string | Uint8Array | ArrayBuffer | null> {
             const key = JSON.parse(keyString);
-            if (key.type === "version") {
-                const backup = (await callbacks.load(0)) as CloudBackup | undefined;
-                return backup?.data;
-            } else if (key.type === "mtzData") {
-                const backup = (await callbacks.load(mtzSerNo(key.name))) as CloudBackup;
-                return new Uint8Array(JSON.parse(backup.data));
-            } else if (key.type === "mapData") {
-                const backup = (await callbacks.load(key.name)) as CloudBackup;
-                return new Uint8Array(JSON.parse(backup.data)).buffer;
-            } else {
-                const backup = (await callbacks.load(key.serNo)) as CloudBackup;
+            const load = async (serNo: string | number): Promise<string | null> => {
+                const backup = (await callbacks.load(serNo)) as CloudBackup | undefined;
+                if (!backup) {
+                    if (key.type !== "version") console.warn(`CCP4 Cloud backup not found: ${key.type} ${serNo}`);
+                    return null;
+                }
                 return backup.data;
+            };
+            if (key.type === "version") {
+                return load(0);
+            } else if (key.type === "mtzData") {
+                const data = await load(mtzSerNo(key.name));
+                return data === null ? null : new Uint8Array(JSON.parse(data));
+            } else if (key.type === "mapData") {
+                const data = await load(key.name);
+                return data === null ? null : new Uint8Array(JSON.parse(data)).buffer;
+            } else {
+                return load(key.serNo);
             }
         },
 
