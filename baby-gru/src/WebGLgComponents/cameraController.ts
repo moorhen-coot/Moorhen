@@ -404,7 +404,7 @@ export class CameraController {
 
     /** @internal */
     driverSet(target: CameraTarget): void {
-        this.move = null;
+        this.abandonMove();
         this.current = this.applySlab(mergeLive(this.current, target), touchesSlab(target));
         this.applyPendingTurn();
         this.notify();

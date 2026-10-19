@@ -129,6 +129,17 @@ describe("moving", () => {
         await expect(arrival).resolves.toEqual({ completed: true });
     });
 
+    it("settles as incomplete when the same driver sets over it", async () => {
+        // Otherwise the first caller waits forever - and moveCameraTo never releases its driver.
+        const camera = new CameraController(startingAt());
+        const centring = camera.acquire("centring");
+        const arrival = centring.moveTo({ zoom: 2 }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+        centring.set({ zoom: 5 });
+        await expect(arrival).resolves.toEqual({ completed: false });
+        expect(camera.state.zoom).toBe(5);
+    });
+
     it("is instant when asked to be", async () => {
         // The operation that did not exist, and the reason a movie had to fight the renderer.
         const camera = new CameraController(startingAt({ zoom: 1 }));

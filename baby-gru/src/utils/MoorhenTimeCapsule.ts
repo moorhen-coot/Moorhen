@@ -1132,13 +1132,23 @@ export class MoorhenTimeCapsule {
         //
         // The eye is dispatched before the fog. MoorhenWebMG reconciles them in that order for the
         // same reason: fog read against the wrong eye lands in the wrong place.
-        const restoredCamera = cameraFromSession(sessionData.viewData);
+        //
+        // A file missing any of these fields must still restore the rest, as it did when each one
+        // went through guardedDispatch on its own. Origin and quat are only placeholders here - they
+        // are restored separately - and a fog or clip computed from a missing field comes out NaN,
+        // which is turned back into "absent" so guardedDispatch skips it.
+        const restoredCamera = cameraFromSession({
+            ...sessionData.viewData,
+            origin: sessionData.viewData.origin ?? [0, 0, 0],
+            quat4: sessionData.viewData.quat4 ?? [0, 0, 0, 1],
+        });
         const restoredSlab = slabFromCamera(restoredCamera);
+        const finiteOrAbsent = (value: number) => (Number.isFinite(value) ? value : undefined);
         guardedDispatch(setFogClipOffset, restoredCamera.eyeDistance);
-        guardedDispatch(setFogStart, restoredSlab.fogStart);
-        guardedDispatch(setFogEnd, restoredSlab.fogEnd);
-        guardedDispatch(setClipStart, restoredCamera.clipFront);
-        guardedDispatch(setClipEnd, restoredCamera.clipBack);
+        guardedDispatch(setFogStart, finiteOrAbsent(restoredSlab.fogStart));
+        guardedDispatch(setFogEnd, finiteOrAbsent(restoredSlab.fogEnd));
+        guardedDispatch(setClipStart, finiteOrAbsent(restoredCamera.clipFront));
+        guardedDispatch(setClipEnd, finiteOrAbsent(restoredCamera.clipBack));
         guardedDispatch(setQuat, sessionData.viewData.quat4);
         guardedDispatch(setBackgroundColor, sessionData.viewData.backgroundColor);
         guardedDispatch(setEdgeDetectDepthScale, sessionData.viewData.edgeDetection.depthScale);
