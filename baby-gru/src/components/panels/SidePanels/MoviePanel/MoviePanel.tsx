@@ -21,7 +21,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { MoorhenStack } from "@/components/interface-base";
-import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenTextInput } from "@/components/inputs";
+import { MoorhenButton, MoorhenPopoverButton, MoorhenSelect, MoorhenSlider, MoorhenTextInput } from "@/components/inputs";
 import { MoorhenNumberInput } from "@/components/inputs";
 import { RootState } from "@/store";
 import {
@@ -41,6 +41,8 @@ import { openMovieFile } from "@/utils/openMovieFile";
 import { moorhensession } from "@/protobuf/MoorhenSession";
 import { doDownload } from "@/utils/utils";
 import type { Motion, MovieSample } from "@/utils/cameraPath";
+import { DEFAULT_QUALITY } from "@/utils/videoBitrate";
+import type { VideoQuality } from "@/utils/videoBitrate";
 import { SidePanelContainer } from "../utils/SidePanelContainer";
 
 const MOTIONS: Motion["kind"][] = ["move", "hold", "spin", "rock"];
@@ -344,6 +346,7 @@ export const MoviePanel = () => {
                 width: document.output.width,
                 height: document.output.height,
                 fps: document.output.fps,
+                quality: document.output.quality ?? DEFAULT_QUALITY,
                 onProgress: (done, total) => {
                     if (done % 10 === 0 || done === total) {
                         setStatus(`Rendering frame ${done} of ${total}...`);
@@ -636,31 +639,104 @@ export const MoviePanel = () => {
 
     return (
         <SidePanelContainer title="Movie">
-            <MoorhenStack>
-                <MoorhenTextInput
-                    label="Name"
-                    text={document.name}
-                    setText={name => dispatch(setMovieName(name))}
-                />
+            {/* The panel's own breathing room. The container puts no padding inside the title
+                bar's sibling, so without this the name box sits flush against the grey heading
+                and reads as part of it. */}
+            {/* One stack with a gap, rather than seven hand-rolled flex divs with none. The stack
+                sets no gap by default, so every child used to sit flush against the next and the
+                spacing came from whatever ad-hoc margin each happened to carry - which is why the
+                name box touched the heading and the buttons touched the first keyframe. */}
+            <MoorhenStack gap="0.6rem" style={{ padding: "0.6rem 0.5rem 0 0.5rem" }}>
+                <MoorhenStack direction="row" align="center" gap="0.25rem" flex={0}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <MoorhenTextInput
+                            label="Name"
+                            text={document.name}
+                            setText={name => dispatch(setMovieName(name))}
+                        />
+                    </div>
+                    {/* A popover rather than something that unfolds in place. A gear says
+                        "settings live elsewhere", and MoorhenPopoverButton defaults its icon to
+                        this very gear - so a popover is what this codebase already means by one.
+                        The four fields are real inputs inside it, so nothing about editing them
+                        gets harder, and the panel below does not jump about when it opens. */}
+                    <MoorhenPopoverButton
+                        icon="MatSymSettings"
+                        // No `label`: MoorhenButton renders one as text inside the button whatever
+                        // its type, which would put "Output" beside the gear. The error boundary
+                        // falls back to the tooltip for its name.
+                        tooltip="Output settings"
+                        popoverPlacement="bottom"
+                        popoverContent={
+                            <MoorhenStack gap="0.75rem" style={{ padding: "0.25rem" }}>
+                                {/* `integer` rather than decimalDigits={0}: all three of these
+                                    are counts of whole things - frames and pixels - and the prop
+                                    says so, as well as stepping the spinners by one instead of by
+                                    a hundredth. They were reading "1920.00 pixels". */}
+                                <MoorhenStack direction="row" align="center" gap="0.25rem" flex={0}>
+                                    <MoorhenNumberInput
+                                        label="fps" width="4rem" integer value={document.output.fps}
+                                        setValue={fps => { dispatch(updateMovieOutput({ fps })); }}
+                                    />
+                                    <MoorhenNumberInput
+                                        label="width" width="5rem" integer value={document.output.width}
+                                        setValue={width => { dispatch(updateMovieOutput({ width })); }}
+                                    />
+                                    <MoorhenNumberInput
+                                        label="height" width="5rem" integer value={document.output.height}
+                                        setValue={height => { dispatch(updateMovieOutput({ height })); }}
+                                    />
+                                </MoorhenStack>
+                                {/* The same three presets as "Record the screen", and the same
+                                    arithmetic behind them: the bitrate is worked out from the
+                                    frame, so raising the size above raises the bits to go with it. */}
+                                <MoorhenSelect
+                                    label="Quality"
+                                    value={document.output.quality ?? DEFAULT_QUALITY}
+                                    onChange={event =>
+                                        dispatch(updateMovieOutput({ quality: event.target.value as VideoQuality }))}
+                                >
+                                    <option value="low">Low (smaller file)</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High (larger file)</option>
+                                </MoorhenSelect>
+                            </MoorhenStack>
+                        }
+                    />
+                </MoorhenStack>
 
-                <div style={{ fontSize: "0.8rem" }}>
-                    {keyframes.length} keyframes · {documentDuration(document).toFixed(1)}s ·{" "}
-                    {documentFrameCount(document)} frames at {document.output.fps}fps
-                    {fileName && <> · {fileName}</>}
-                </div>
+                {/* Two lines rather than one long one: what the movie is, then where it lives.
+                    Run together they were a single run of small print that nobody reads. */}
+                <MoorhenStack gap="0.15rem" flex={0}>
+                    <div style={{ fontSize: "0.95rem" }}>
+                        {keyframes.length} keyframes · {documentDuration(document).toFixed(1)}s ·{" "}
+                        {documentFrameCount(document)} frames at {document.output.fps}fps
+                    </div>
+                    <div style={{ fontSize: "0.95rem", opacity: 0.7, textAlign: "right" }}
+                         title={fileName ? "The file this movie was last saved to or opened from" : undefined}>
+                        {fileName ?? "Not saved yet"}
+                    </div>
+                </MoorhenStack>
+
                 {problems.length > 0 && (
-                    <div style={{ fontSize: "0.8rem", color: "var(--moorhen-warning, #b26a00)" }}>
+                    <div style={{ fontSize: "0.85rem", color: "var(--moorhen-warning, #b26a00)" }}>
                         {problems.join("; ")}
                     </div>
                 )}
-                {status && <div style={{ fontSize: "0.8rem", opacity: 0.8 }}>{status}</div>}
+                {status && <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>{status}</div>}
 
                 {/* Three jobs, three groups, in the order they are done: build the movie, watch
                     it, then get it out. Lumping Play in with "Add keyframe" and Export in with
-                    the file buttons made each row a list of unrelated things. */}
-                <MoorhenButton onClick={addFromView}>Add keyframe from this view</MoorhenButton>
+                    the file buttons made each row a list of unrelated things.
 
-                <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
+                    "Add keyframe from this view" said where the shot comes from, which is the one
+                    thing the button cannot help being - there is nowhere else it could come from.
+                    The tooltip keeps the explanation for anyone who wants it. */}
+                <MoorhenButton onClick={addFromView} tooltip="Capture the current view as a new keyframe">
+                    Add keyframe
+                </MoorhenButton>
+
+                <MoorhenStack direction="row" align="center" gap="0.25rem" flex={0}>
                     <MoorhenButton onClick={play}>{playing ? "Stop" : "Play"}</MoorhenButton>
                     <MoorhenButton onClick={exportMovie} disabled={busy || problems.length > 0}>
                         Export MP4…
@@ -670,7 +746,8 @@ export const MoviePanel = () => {
                         Open…
                     </MoorhenButton>
                     <MoorhenButton onClick={saveMovie} disabled={busy}>Save…</MoorhenButton>
-                </div>
+                </MoorhenStack>
+
                 <input
                     ref={openInputRef}
                     type="file"
@@ -685,25 +762,7 @@ export const MoviePanel = () => {
                     }}
                 />
 
-                <details>
-                    <summary style={{ cursor: "pointer", fontSize: "0.85rem" }}>Output</summary>
-                    {/* Folded away because these are set once and then left alone, while the
-                        keyframe list below is where the work happens. */}
-                    <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
-                        <MoorhenNumberInput
-                            label="fps" width="4rem" value={document.output.fps}
-                            setValue={fps => { dispatch(updateMovieOutput({ fps })); }}
-                        />
-                        <MoorhenNumberInput
-                            label="width" width="5rem" value={document.output.width}
-                            setValue={width => { dispatch(updateMovieOutput({ width })); }}
-                        />
-                        <MoorhenNumberInput
-                            label="height" width="5rem" value={document.output.height}
-                            setValue={height => { dispatch(updateMovieOutput({ height })); }}
-                        />
-                    </div>
-                </details>
+
 
                 {!glRef?.current?.supportsObjectFading && (
                     <div style={{ fontSize: "0.8rem", color: "var(--moorhen-warning, #b26a00)" }}>
@@ -712,6 +771,9 @@ export const MoviePanel = () => {
                     </div>
                 )}
 
+                {/* The list of shots is the other half of the panel, so it starts with a visible
+                    break rather than butting straight up against the buttons. */}
+                <MoorhenStack gap="0.25rem" style={{ marginTop: "0.5rem" }}>
                 {keyframes.length === 0
                     ? <span>No keyframes yet. Set up a view and add one.</span>
                     : keyframes.map((_, index) => (
@@ -720,6 +782,7 @@ export const MoviePanel = () => {
                             {segmentRow(index)}
                         </div>
                     ))}
+                </MoorhenStack>
             </MoorhenStack>
         </SidePanelContainer>
     );

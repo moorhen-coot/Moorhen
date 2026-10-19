@@ -9,7 +9,7 @@
  *
  * WHY NOT THE EXISTING RECORDER
  *
- * File -> Record a video uses canvas.captureStream(30) into a MediaRecorder, which samples the
+ * File -> Record the screen uses canvas.captureStream(30) into a MediaRecorder, which samples the
  * canvas on the browser's own clock. Nothing says "this is frame 7". If a ribosome frame takes
  * 400ms, that frame occupies 400ms of the video, and a heavy scene produces a lurching file that
  * no amount of patience fixes. Here each frame is handed to the encoder with a timestamp chosen
@@ -40,6 +40,8 @@
 import { BufferTarget, CanvasSource, Mp4OutputFormat, Output, VideoCodec, canEncodeVideo } from "mediabunny";
 import { Movie, MovieSample, movieDuration } from "./cameraPath";
 import { holdCameraForMovie } from "./movieCamera";
+import { DEFAULT_QUALITY, bitrateFor } from "./videoBitrate";
+import type { VideoQuality } from "./videoBitrate";
 import type { webGL } from "../types/mgWebGL";
 
 export interface MovieRenderOptions {
@@ -55,8 +57,14 @@ export interface MovieRenderOptions {
     frames?: number;
     /** Degrees of rotation per frame. */
     degreesPerFrame?: number;
-    /** Encoder bitrate in bits per second. */
+    /**
+     * Encoder bitrate in bits per second. Given explicitly it is used as it stands; otherwise it
+     * is derived from `quality` and the frame, which is almost always what you want - see
+     * videoBitrate for why a flat number cannot suit both a window and a 4K render.
+     */
     bitrate?: number;
+    /** Which preset to derive the bitrate from, when `bitrate` is not given. */
+    quality?: VideoQuality;
     /**
      * Which codec family to encode with. 'avc' is H.264, which is the only one supported on every
      * browser tested so far - Safari refuses av1 - and the only one that plays in PowerPoint.
@@ -100,7 +108,6 @@ const DEFAULTS = {
     fps: 30,
     frames: 360,
     degreesPerFrame: 1,
-    bitrate: 12_000_000,
     codec: "avc" as VideoCodec,
 };
 
@@ -121,7 +128,10 @@ export const webCodecsAvailable = (): boolean => typeof VideoEncoder !== "undefi
  */
 export const describeEncoderSupport = async (
     width: number, height: number, codec: VideoCodec = DEFAULTS.codec,
-    fps = DEFAULTS.fps, bitrate = DEFAULTS.bitrate,
+    fps = DEFAULTS.fps,
+    // The same frame-derived rate the export itself would ask for, so a probe answers the question
+    // that is actually going to be asked rather than one about some other bitrate.
+    bitrate = bitrateFor(DEFAULT_QUALITY, width, height, fps),
 ): Promise<{ supported: boolean; detail: string }> => {
     if (!webCodecsAvailable()) return { supported: false, detail: "WebCodecs is not available in this browser" };
     try {
@@ -150,7 +160,7 @@ export async function recordMovieToMp4(
     options: MovieRenderOptions = {},
 ): Promise<MovieRenderResult> {
 
-    const { fps, bitrate, codec } = { ...DEFAULTS, ...options };
+    const { fps, codec } = { ...DEFAULTS, ...options };
 
     const gl = glRef?.current;
     if (!gl) throw new Error("No WebGL component to record from");
@@ -164,6 +174,13 @@ export async function recordMovieToMp4(
     const resizing = options.width !== undefined || options.height !== undefined;
 
     const frames = Math.max(1, Math.round(movieDuration(movie) * fps));
+
+    // Derived from the frame unless the caller insisted on a number. This used to be a flat
+    // 12 Mbps whatever the output size, which is about half of "medium" at 1080p and a third of
+    // "low" at 4K - so asking the Output panel for 4K produced a visibly broken-up file with
+    // nothing to say why.
+    const bitrate = options.bitrate
+        ?? bitrateFor(options.quality ?? DEFAULT_QUALITY, width, height, fps);
 
     const support = await describeEncoderSupport(width, height, codec, fps, bitrate);
     if (!support.supported) throw new Error(`This machine will not encode that: ${support.detail}`);

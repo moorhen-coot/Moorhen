@@ -34,7 +34,8 @@ export const LoadFiles = () => {
             <span className="moorhen__input__label-menu">Open Files</span>
             <MoorhenFileInput
                 /* .bin is here for glTF: a .gltf keeps its geometry in a separate buffer file,
-                   and both have to be selected together or the .gltf has nothing to read. */
+                   and both have to be selected together or the .gltf has nothing to read.
+                   .mhm is a movie: a camera path and the session it was authored against. */
                 accept=".pdb, .mmcif, .cif, .ent, .mol, .mtz, .map, .pb, .mrc, .ccp4, .nef, .gltf, .glb, .bin, .gz, .mhm"
                 multiple={true}
                 isLoading={isLoading}

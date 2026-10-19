@@ -23,6 +23,8 @@
  */
 
 import { Movie, movieDuration } from "./cameraPath";
+import { DEFAULT_QUALITY } from "./videoBitrate";
+import type { VideoQuality } from "./videoBitrate";
 
 /**
  * The scene's modes, fixed for the length of a movie.
@@ -67,6 +69,12 @@ export interface MovieOutputSettings {
     /** The drawing buffer the movie is rendered at, independent of the window. */
     width: number;
     height: number;
+    /**
+     * How many bits the encoder is given, as one of the three presets shared with "Record a
+     * video". Optional: a movie written before this existed simply gets the default, which is
+     * what it was always encoded at.
+     */
+    quality?: VideoQuality;
 }
 
 export interface MovieDocument {
@@ -82,6 +90,7 @@ export const DEFAULT_OUTPUT: MovieOutputSettings = {
     fps: 30,
     width: 1920,
     height: 1080,
+    quality: DEFAULT_QUALITY,
 };
 
 /**

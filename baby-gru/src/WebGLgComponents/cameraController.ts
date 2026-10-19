@@ -2,8 +2,7 @@
  * The camera: one owner, transitions as data, drivers that say who is moving it.
  *
  * Pure. No GL, no store, no React - it is told the time and says where the camera is, and the
- * renderer draws that. The design and the reasoning behind each decision are in
- * cameraController.sketch.ts; this file implements it.
+ * renderer draws that.
  *
  * WHY IT EXISTS
  *

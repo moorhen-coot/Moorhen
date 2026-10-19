@@ -3,6 +3,8 @@ import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
 import { getMathJaxSVG } from '../utils/mathJaxUtils';
 import { RootState } from "../store/MoorhenReduxStore";
 import { Store } from "redux";
+import { DEFAULT_QUALITY, bitrateFor } from "./videoBitrate";
+import type { VideoQuality } from "./videoBitrate";
 
 export interface ImageFrac2D {
     x: number
@@ -16,30 +18,12 @@ export interface ImageFrac2D {
 /** Frames per second requested from the canvas. */
 const CAPTURE_FPS = 30;
 
-export type VideoQuality = "low" | "medium" | "high";
-
 /**
- * Bits spent per pixel per frame for each quality preset, from which the bitrate is derived.
- *
- * A fixed bitrate cannot suit both a small window and a 4K one: the same number is wasteful for
- * the first and blocky for the second. Moorhen's thin bonds and map mesh are the first thing to
- * break up when bits run short, and Firefox's realtime VP8 encoder needs noticeably more than
- * Chrome's for the same result. At 1080p these come to roughly 9, 25 and 62 Mbps. VP9 encoders
- * (Chrome) spend only what the content needs, so they often stay well below the request.
- *
- * It replaces a literal 25000000000 carrying the comment "2.5Mbps". That was ten thousand times
- * its stated intent; browsers clamp the request, so it had been harmless, but nobody reading it
- * could tell what was meant.
+ * Re-exported so `import type { VideoQuality } from ".../MoorhenScreenRecorder"` keeps working.
+ * The presets and the arithmetic now live in videoBitrate, shared with the movie export - see
+ * there for why a bitrate has to scale with the frame.
  */
-const BITS_PER_PIXEL_PER_FRAME: Record<VideoQuality, number> = {
-    low: 0.15,
-    medium: 0.4,
-    high: 1.0,
-};
-
-const MIN_BITRATE = 4_000_000;
-// Keeps a 4K canvas on "high" (~250 Mbps uncapped) to a file size people can still handle.
-const MAX_BITRATE = 160_000_000;
+export type { VideoQuality } from "./videoBitrate";
 
 /**
  * Container and codec, in order of preference, filtered by what the browser admits to.
@@ -64,7 +48,7 @@ export class ScreenRecorder  {
     store: Store<RootState>;
     _isRecording: boolean;
     videoName = "moorhen_video";
-    videoQuality: VideoQuality = "medium";
+    videoQuality: VideoQuality = DEFAULT_QUALITY;
     private recordedMimeType = "";
 
     constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>, store: Store<RootState>){
@@ -104,9 +88,7 @@ export class ScreenRecorder  {
         }
 
         const stream = canvas.captureStream(CAPTURE_FPS);
-        const pixels = Math.max(1, canvas.width * canvas.height);
-        const bitrate = Math.round(
-            Math.min(MAX_BITRATE, Math.max(MIN_BITRATE, pixels * CAPTURE_FPS * BITS_PER_PIXEL_PER_FRAME[this.videoQuality])));
+        const bitrate = bitrateFor(this.videoQuality, canvas.width, canvas.height, CAPTURE_FPS);
 
         // isTypeSupported saying yes does not guarantee the constructor will accept it at this
         // resolution and bitrate, so a refusal falls back to letting the browser choose rather
