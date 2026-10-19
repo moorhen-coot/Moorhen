@@ -56,7 +56,9 @@ export function createCallbackBackupStorage(callbacks: BackupStorageCallbacks): 
             }
             return callbacks.save(backup) as Promise<string>;
         },
-W
+
+        // Like LocalForage, a missing backup gives null rather than an error (e.g. a job whose data files were
+        // removed by an older time capsule)
         async getItem(keyString: string): Promise<string | Uint8Array | ArrayBuffer | null> {
             const key = JSON.parse(keyString);
             const load = async (serNo: string | number): Promise<string | null> => {
