@@ -131,6 +131,17 @@ describe("moving", () => {
         await expect(arrival).resolves.toEqual({ completed: true });
     });
 
+    it("settles as incomplete when the same driver sets over it", async () => {
+        // Otherwise the first caller waits forever - and moveCameraTo never releases its driver.
+        const camera = new CameraController(startingAt());
+        const centring = camera.acquire("centring");
+        const arrival = centring.moveTo({ zoom: 2 }, { kind: "ease", seconds: 1 });
+        camera.tick(0);
+        centring.set({ zoom: 5 });
+        await expect(arrival).resolves.toEqual({ completed: false });
+        expect(camera.state.zoom).toBe(5);
+    });
+
     it("is instant when asked to be", async () => {
         // The operation that did not exist, and the reason a movie had to fight the renderer.
         const camera = new CameraController(startingAt({ zoom: 1 }));
@@ -355,12 +366,11 @@ describe("the slab", () => {
     });
 
     it("keeps a written slab under auto too, until the next zoom", () => {
-        // This test used to assert the opposite, and the opposite was a regression found in review
-        // of the camera PR: "reset clip and fog on zoom" had quietly become "reset clip and fog on
-        // anything", so the keyboard shortcuts, the scene-slider handles and the scripting API all
-        // had their values accepted and overwritten in the same breath - the shortcut still
-        // raising its toast about it. On main the hand-set value stood until the next zoom, and it
-        // does again.
+        // This test used to assert the opposite, and the opposite was a regression: "reset clip and
+        // fog on zoom" had quietly become "reset clip and fog on anything", so the keyboard
+        // shortcuts, the scene-slider handles and the scripting API all had their values accepted
+        // and overwritten in the same breath - the shortcut still raising its toast about it. On
+        // main the hand-set value stood until the next zoom, and it does again.
         const camera = new CameraController(startingAt({ zoom: 1 }),
             { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 });
         camera.writeLive({ clipFront: 5, clipBack: 6 });

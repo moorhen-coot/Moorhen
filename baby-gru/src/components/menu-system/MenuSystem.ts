@@ -7,7 +7,8 @@ export class MoorhenMenuSystem {
     private listeners: Set<() => void> = new Set();
 
     constructor() {
-        this.mainMenuMap = MainMenu;
+        // Copies, so changes made through one menu system never reach the module defaults or other instances
+        this.mainMenuMap = { ...MainMenu };
         this.createSubMenu();
     }
 
@@ -84,7 +85,9 @@ export class MoorhenMenuSystem {
      * @param subMenuMap - An object mapping submenu IDs to submenu definitions to be added.
      */
     public addSubmenu = (subMenuMap: SubMenuMap) => {
-        Object.assign(this.subMenuMap, subMenuMap);
+        Object.entries(subMenuMap).forEach(([id, subMenu]) => {
+            this.subMenuMap[id] = { ...subMenu, items: [...subMenu.items] };
+        });
         this.checkUniqueIds();
         this.notifyListeners();
     };
@@ -103,7 +106,7 @@ export class MoorhenMenuSystem {
     public addToExistingSubmenu = (MenuItems: MenuItemType[], subMenu: string, top: boolean = false) => {
         if (this.subMenuMap[subMenu]) {
             if (top) this.subMenuMap[subMenu].items = MenuItems.concat(this.subMenuMap[subMenu].items);
-            this.subMenuMap[subMenu].items = this.subMenuMap[subMenu].items.concat(MenuItems);
+            else this.subMenuMap[subMenu].items = this.subMenuMap[subMenu].items.concat(MenuItems);
         } else {
             console.warn(`Moorhen MenuSystem: could not find submenu ${subMenu} to add items to.`);
         }

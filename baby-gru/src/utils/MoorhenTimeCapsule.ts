@@ -671,13 +671,14 @@ export class MoorhenTimeCapsule {
         const allKeyStrings = await this.storageInstance.keys();
         const allKeys: backupKey[] = allKeyStrings.map((keyString: string) => JSON.parse(keyString));
         const backupKeys = allKeys.filter((key: backupKey) => ["automatic", "manual"].includes(key.type));
-        const [usedNames] = [...backupKeys.map((key: backupKey) => [...key.mtzNames, ...key.mapNames])];
+        // Data files used by any backup, not only the first one
+        const usedNames = new Set(backupKeys.flatMap((key: backupKey) => [...(key.mtzNames ?? []), ...(key.mapNames ?? [])]));
 
         await Promise.all(
             allKeys
                 .filter((key: backupKey) => ["mtzData", "mapData"].includes(key.type))
                 .map((key: backupKey) => {
-                    if (typeof usedNames === "undefined" || !usedNames.includes(key.name)) {
+                    if (!usedNames.has(key.name)) {
                         return this.removeBackup(JSON.stringify(key));
                     }
                     return Promise.resolve();
@@ -725,7 +726,8 @@ export class MoorhenTimeCapsule {
         try {
             const sortedKeys = await this.getSortedKeys();
             if (sortedKeys && sortedKeys.length > 0) {
-                const lastBackupKey = sortedKeys[sortedKeys.length - 1];
+                // getSortedKeys lists the newest backup first
+                const lastBackupKey = sortedKeys[0];
                 const backup = await this.retrieveBackup(JSON.stringify(lastBackupKey));
                 return backup;
             }
@@ -1154,13 +1156,23 @@ export class MoorhenTimeCapsule {
         //
         // The eye is dispatched before the fog. MoorhenWebMG reconciles them in that order for the
         // same reason: fog read against the wrong eye lands in the wrong place.
-        const restoredCamera = cameraFromSession(sessionData.viewData);
+        //
+        // A file missing any of these fields must still restore the rest, as it did when each one
+        // went through guardedDispatch on its own. Origin and quat are only placeholders here - they
+        // are restored separately - and a fog or clip computed from a missing field comes out NaN,
+        // which is turned back into "absent" so guardedDispatch skips it.
+        const restoredCamera = cameraFromSession({
+            ...sessionData.viewData,
+            origin: sessionData.viewData.origin ?? [0, 0, 0],
+            quat4: sessionData.viewData.quat4 ?? [0, 0, 0, 1],
+        });
         const restoredSlab = slabFromCamera(restoredCamera);
+        const finiteOrAbsent = (value: number) => (Number.isFinite(value) ? value : undefined);
         guardedDispatch(setFogClipOffset, restoredCamera.eyeDistance);
-        guardedDispatch(setFogStart, restoredSlab.fogStart);
-        guardedDispatch(setFogEnd, restoredSlab.fogEnd);
-        guardedDispatch(setClipStart, restoredCamera.clipFront);
-        guardedDispatch(setClipEnd, restoredCamera.clipBack);
+        guardedDispatch(setFogStart, finiteOrAbsent(restoredSlab.fogStart));
+        guardedDispatch(setFogEnd, finiteOrAbsent(restoredSlab.fogEnd));
+        guardedDispatch(setClipStart, finiteOrAbsent(restoredCamera.clipFront));
+        guardedDispatch(setClipEnd, finiteOrAbsent(restoredCamera.clipBack));
         guardedDispatch(setQuat, sessionData.viewData.quat4);
         guardedDispatch(setBackgroundColor, sessionData.viewData.backgroundColor);
         guardedDispatch(setEdgeDetectDepthScale, sessionData.viewData.edgeDetection.depthScale);

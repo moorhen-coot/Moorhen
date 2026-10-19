@@ -8,13 +8,14 @@ import { MoorhenReduxStoreType, enqueueSnackbar, setSeqViewerOption, setShownBot
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setValidationJson } from "../store/jsonValidation";
-import { addMap, addMapList } from "../store/mapsSlice";
+import { addMap } from "../store/mapsSlice";
 import { showModal } from "../store/modalsSlice";
 import { addCustomRepresentation, addMoleculeList } from "../store/moleculesSlice";
 import { setAfJson, setEsmJson, setHomologsJson, setMrParseModels, setTargetSequence } from "../store/mrParseSlice";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
+import { loadMtzMaps } from "./MtzLoading";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { modalKeys } from "./enums";
@@ -818,16 +819,7 @@ export const autoOpenFiles = async (
                 returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
             }
         } else if (file.name.endsWith(".mtz")) {
-            const newMaps = await MoorhenMap.autoReadMtz(file, moorhenInstance);
-            for (const map in newMaps) {
-                returnValues.push({ type: "map", uniqueID: newMaps[map].uniqueId, molNo: newMaps[map].molNo, fileName: file.name });
-            }
-            if (newMaps.length === 0) {
-                dispatch(enqueueSnackbar({ message: `Failed to read mtz file ${file.name}`, variant: "warning" }));
-            } else {
-                dispatch(addMapList(newMaps));
-                dispatch(setActiveMap(newMaps[0]));
-            }
+            returnValues.push(...(await loadMtzMaps(moorhenInstance, file)));
         } else if (file.name.endsWith(".pb")) {
             //Session file
             try {

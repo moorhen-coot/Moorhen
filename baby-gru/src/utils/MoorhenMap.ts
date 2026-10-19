@@ -1311,6 +1311,7 @@ export class MoorhenMap {
         if (headerInfo === undefined) {
             throw new Error("Header info is not defined");
         }
+        this.headerInfo = headerInfo;
 
         this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
         console.log("headerInfo", headerInfo);

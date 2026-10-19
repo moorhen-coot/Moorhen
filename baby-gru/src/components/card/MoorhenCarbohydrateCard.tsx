@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { moorhen } from "../../types/moorhen";
 import { privateer } from "../../types/privateer";
+import { doDownload } from "../../utils/utils";
 import { MoorhenButton } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 
@@ -31,20 +32,9 @@ export const MoorhenCarbohydrateCard = (props: { carbohydrate: privateer.Results
                     </MoorhenButton>
                     <MoorhenButton
                         onClick={() => {
-                            let link: any = document.getElementById("download_svg_link");
-                            if (!link) {
-                                link = document.createElement("a");
-                                link.id = "download_svg_link";
-                                document.body.appendChild(link);
-                            }
                             //I think this is a bug in the privateer SVG (perhaps)
-                            const file = new Blob([carbohydrate.svg.replace("width=100%", 'width="100%"')], {
-                                type: "image/svg+xml",
-                            });
-                            link.href = URL.createObjectURL(file);
-                            console.log(carbohydrate);
-                            link.download = carbohydrate.id.replace(/\//g, "_") + ".svg";
-                            link.click();
+                            const svg = carbohydrate.svg.replace("width=100%", 'width="100%"');
+                            doDownload([svg], carbohydrate.id.replace(/\//g, "_") + ".svg");
                         }}
                         icon="MatSymFileDownload"
                     >

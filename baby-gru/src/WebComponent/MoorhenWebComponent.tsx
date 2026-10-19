@@ -3,6 +3,7 @@ import React from "react";
 import type { MoorhenInstance } from "@/InstanceManager";
 import { MoorhenProvider } from "@/components/MoorhenProvider";
 import { MoorhenContainer } from "@/components/container";
+import type { LocalStorageInstance } from "@/InstanceManager/Preferences/MoorhenPreferences";
 
 export class MoorhenWebComponent extends HTMLElement {
     private _moorhenInstanceRef: React.RefObject<MoorhenInstance | null>;
@@ -95,7 +96,7 @@ export class MoorhenWebComponent extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ["width", "height", "url-prefix", "disable-file-uploads", "view-only"];
+        return ["width", "height", "url-prefix", "disable-file-uploads", "view-only", "monomer-library", "allow-scripting"];
     }
 
     private _disableFileUploads: boolean = false;
@@ -120,12 +121,52 @@ export class MoorhenWebComponent extends HTMLElement {
         this._triggerUpdate("view-only", String(value), String(oldValue));
     }
 
+    // Start-up settings: read once when the element is connected, so set them before appending it
+    private _monomerLibraryPath: string | undefined = undefined;
+    private _allowScripting: boolean | undefined = undefined;
+    private _backupStorage: LocalStorageInstance | undefined = undefined;
+
+    private _canSetStartupProperty(name: string): boolean {
+        if (this._reactRoot) {
+            console.warn(`moorhen-web-component: ${name} is only read at start-up, set it before appending the element`);
+            return false;
+        }
+        return true;
+    }
+
+    get monomerLibraryPath(): string | undefined {
+        return this._monomerLibraryPath;
+    }
+
+    set monomerLibraryPath(value: string | undefined) {
+        if (this._canSetStartupProperty("monomerLibraryPath")) this._monomerLibraryPath = value;
+    }
+
+    get allowScripting(): boolean | undefined {
+        return this._allowScripting;
+    }
+
+    set allowScripting(value: boolean | undefined) {
+        if (this._canSetStartupProperty("allowScripting")) this._allowScripting = value;
+    }
+
+    /** Where time capsule backups are kept, e.g. from `createCallbackBackupStorage`. Property only */
+    get backupStorage(): LocalStorageInstance | undefined {
+        return this._backupStorage;
+    }
+
+    set backupStorage(value: LocalStorageInstance | undefined) {
+        if (this._canSetStartupProperty("backupStorage")) this._backupStorage = value;
+    }
+
     public attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
         if (name === "width") this.width = newValue;
         if (name === "height") this.height = newValue;
         if (name === "url-prefix") this.urlPrefix = newValue ?? "MoorhenAssets";
         if (name === "disable-file-uploads") this.disableFileUploads = newValue === "true";
         if (name === "view-only") this.viewOnly = newValue === "true";
+        if (name === "monomer-library") this.monomerLibraryPath = newValue ?? undefined;
+        if (name === "allow-scripting") this.allowScripting = newValue === "true";
     }
     // --------------------------------
     private _triggerUpdate(name: string, newValue: string, oldValue: string) {
@@ -148,6 +189,9 @@ export class MoorhenWebComponent extends HTMLElement {
                     disableFileUploads={this.disableFileUploads}
                     viewOnly={this.viewOnly}
                     parentElementRef={this._parentElementRef}
+                    monomerLibraryPath={this._monomerLibraryPath}
+                    allowScripting={this._allowScripting}
+                    backupStorageInstance={this._backupStorage}
                 />
             </MoorhenProvider>
         );
@@ -238,4 +282,6 @@ export interface MoorhenWebComponentAttributes extends React.HTMLAttributes<HTML
     "url-prefix"?: string;
     "disable-file-uploads"?: boolean;
     "view-only"?: boolean;
+    "monomer-library"?: string;
+    "allow-scripting"?: boolean;
 }
