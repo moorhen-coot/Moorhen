@@ -5,6 +5,7 @@ import * as mat4 from 'gl-matrix/mat4';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { setDisplayBuffers, setCanvasSize } from "../store/glRefSlice"
+import { setClipStart, setClipEnd, setFogStart, setFogEnd } from "../store/sceneSettingsSlice"
 import { parseAtomInfoLabel, guid, gemmiAtomPairsToCylindersInfo } from '../utils/utils';
 import  { unProject } from './GLU.js';
 
@@ -98,17 +99,19 @@ import { TextCanvasTexture } from './textCanvasTexture'
 import { DisplayBuffer } from './displayBuffer'
 import { buildBuffers, appendOtherData } from './buildBuffers'
 import { Camera } from './mgWebGLParts/camera'
+import type { CameraController, CameraState, CameraTarget, MoveResult, Transition } from './cameraController'
+import { clipOffsets, fogOffsets, slabFromCamera } from './slab'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './mgWebGLParts/viewTransforms'
 import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, ensureOffScreeenBuffers, initTextureFramebuffer } from './mgWebGLParts/framebuffers'
 import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
 import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWebGLParts/postProcessUniformBuffers'
 import { renderStatsText } from './mgWebGLParts/renderStats'
 import { doRightClick, doClick, doHover, doWheel, doMouseUpMeasure, doMouseDownMeasure, doMouseMoveMeasure, doMouseUp, doMiddleClick, doDoubleClick, doMouseMove, doMouseDown, handleKeyUp, handleKeyDown } from './mgWebGLParts/eventHandlers'
-import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationFrame, setOrientationAndZoomFrame, setOrientationAndZoomAnimated, setOrientationAnimated, setOriginOrientationAndZoomFrame, setViewAnimated, setOriginOrientationAndZoomAnimated, drawOriginAndZoomFrame, setOriginAndZoomAnimated, setOriginAnimated, drawOriginFrame, drawZoomFrame, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
+import { doSpinTestFrame, startSpinTest, stopSpinTest, setOrientationAndZoomAnimated, setOrientationAnimated, moveCameraTo, stopPumpingCamera, setViewAnimated, setOriginOrientationAndZoomAnimated, setOriginAndZoomAnimated, setOriginAnimated, setZoomAnimated } from './mgWebGLParts/cameraAnimations'
 import { drawTransparent, drawImagesAndText, drawTexturedShapes, drawTextLabels, drawDistancesAndLabels, drawCircles, drawLineMeasures, drawCrosshairs, drawMouseTrack, drawFPSMeter, drawTextOverlays } from './mgWebGLParts/overlays'
 import { drawBuffer, drawMaxElementsUInt, setupModelViewTransformMatrixInteractive, drawTransformMatrixInteractive, drawTransformMatrix, drawTransformMatrixInteractivePMV, drawTransformMatrixPMV } from './mgWebGLParts/bufferDraw'
 import { drawPeel, drawTriangles, drawScene, applySymmetryMatrix, bindFramebufferDrawBuffers } from './mgWebGLParts/drawCore'
-import { pickHalfExtents, clipPlanesAfterEyeMove} from './mgWebGLParts/projection'
+import { pickHalfExtents } from './mgWebGLParts/projection'
 import { initInstanceState, initGraphicsContext, attachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
 import { getDeviceScale} from './webGLUtils'
 import { rayMeshHit } from './rayMesh'
@@ -173,12 +176,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         store: Store<RootState>;
         dispatch: Dispatch<any>;
 
-        // Core view state now lives in a Camera collaborator. The accessors below
-        // present the same `myQuat` / `zoom` / `origin` / `fogClipOffset` interface
-        // that internal code and external consumers (glRef.current.*) already use.
-        // Getters return the LIVE objects so in-place mutation (e.g.
+        // Core view state lives in a Camera collaborator, which is now a facade over a
+        // CameraController. The accessors below present the same `myQuat` / `zoom` / `origin` /
+        // `fogClipOffset` interface that internal code and external consumers (glRef.current.*)
+        // already use. Getters return the LIVE objects so in-place mutation (e.g.
         // quat4.multiply(this.myQuat, this.myQuat, …)) keeps working unchanged.
         private _camera: Camera = new Camera();
+        /** The camera controller. Nothing drives it yet; see mgWebGLParts/camera.ts. */
+        get cameraController(): CameraController { return this._camera.controller; }
         get myQuat(): quat4 { return this._camera.quat; }
         set myQuat(q: quat4) { this._camera.quat = q; }
         get zoom(): number { return this._camera.zoom; }
@@ -277,6 +282,20 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         gl:  any;
         canvasRef: any;
         animating: boolean;
+        /**
+         * The outstanding requestAnimationFrame of the camera pump, or null when nothing is moving.
+         * Held so that overlapping requests do not pump the scene at twice the frame rate.
+         */
+        cameraPumpHandle: number | null;
+        /**
+         * The time, in seconds, the camera is advanced to on the next draw. Null means wall clock.
+         *
+         * A movie export sets it to i/fps before asking for each frame, so every frame is kept and
+         * the output runs at its authored speed however long rendering took. Nothing else sets it.
+         */
+        cameraTime: number | null;
+        /** Detaches the store echo on unmount. */
+        unsubscribeCamera: (() => void) | null;
         doDepthPeelPass: boolean;
         environmentRadius: number;
         edgeDetectFramebufferSize : number;
@@ -391,6 +410,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         rttTexture: WebGLTexture;
         rttDepthTexture: WebGLTexture;
         rttTextureDepth: WebGLTexture;
+        /** Kept so they can be freed when the render-to-texture buffers are rebuilt at a new size. */
+        rttRenderbuffers: WebGLRenderbuffer[];
         screenZ: number;
         shaderProgramTextured: webGL.MGWebGLTextureQuadShader;
         shaderProgramDepthPeelAccum: webGL.MGWebGLShaderDepthPeelAccum;
@@ -523,6 +544,47 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         setupThreeWayTransformations(this)
     }
 
+    /**
+     * Render at a given size without changing how large the canvas looks on the page.
+     *
+     * A canvas has two sizes: the CSS box it occupies, and the drawing buffer WebGL actually
+     * renders into. resize() ties them together, because for normal use they should agree. A movie
+     * wants them apart: the output resolution should not depend on how the user happened to arrange
+     * their browser, but the window should stay where it is while the export runs.
+     *
+     * Everything else follows from the buffer size by itself - the projection takes its aspect from
+     * gl.viewportWidth/Height, so the frame is composed for the output rather than cropped or
+     * stretched to it, and frames can be captured straight off the canvas with no read back.
+     *
+     * While this is in effect the canvas on screen shows the movie's shape squeezed into the
+     * window's box, which looks distorted. That is the browser scaling the buffer into the CSS box,
+     * not a fault in the frames.
+     */
+    setDrawingBufferSize(width: number, height: number) : void {
+        this.canvas.width = Math.floor(width);
+        this.canvas.height = Math.floor(height);
+
+        // Deliberately not this.canvas.style: that is what keeps the page layout still.
+        this.dispatch(setCanvasSize([this.canvas.width,this.canvas.height]))
+        this.gl.viewportWidth = this.canvas.width;
+        this.gl.viewportHeight = this.canvas.height;
+
+        this.setupThreeWayTransformations()
+        this.setupStereoTransformations()
+        this.multiWayViewports = []
+
+        if(this.useOffScreenBuffers&&this.WEBGL2){
+            this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
+        }
+        if(this.edgeDetectFramebuffer){
+            this.gl.deleteFramebuffer(this.edgeDetectFramebuffer);
+            this.edgeDetectFramebuffer = null;
+        }
+
+        this.silhouetteBufferReady = false;
+        this.screenshotBuffersReady = false;
+    }
+
     resize(width: number, height: number) : void {
 
         const theWidth = width;
@@ -595,6 +657,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.WEBGL2 = false;
         this.state = { width: this.props.width, height: this.props.height,  hover_point: -1, hoveridx: -1, hoverIndices: [] };
         this.animating = false
+        this.cameraPumpHandle = null
+        this.cameraTime = null
+        this.unsubscribeCamera = null
         this.canvasRef = React.createRef();
         this.keysDown = {};
         this.atomLabelDepthMode = false;
@@ -820,24 +885,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     /**
      * Move the eye towards or away from the view centre.
      *
-     * The clip planes have to come too. set_clip_range stores them as absolute distances from the
-     * eye - `gl_clipPlane0[3] = -fogClipOffset - clipStart` - so they only stay put relative to the
-     * molecule if they are shifted by the same amount the eye moved. Leaving them behind slices the
-     * molecule open, because the geometry moves to a new distance while the planes do not.
+     * Both sides of this merge fix the same bug, and the other side's diagnosis was exactly right:
+     * clip and fog were stored as absolute distances from the eye, so moving the eye left them
+     * behind and sliced the molecule open. It compensated by shifting the clip planes by however
+     * far the eye had moved - clipPlanesAfterEyeMove - which put clip back where it belonged.
      *
-     * Doing it here rather than by re-running set_clip_range from React: that effect depends on
-     * [clipStart, clipEnd] and would need both a new dependency and to run *after* this.fogClipOffset
-     * had been updated, since it reads it. Two effects in the right order is a thing that breaks
-     * quietly later; shifting the planes alongside the value they were derived from does not.
+     * This side removes the need for the compensation instead. The camera holds all four
+     * boundaries as offsets from the view centre, so nothing is left behind when the eye moves and
+     * there is nothing to shift: the absolute distances the shaders want are re-derived from those
+     * offsets on every frame. It also covers fog, which the shifting fixed only for clip - fog was
+     * still absolute, so it still slid 150A forward when the eye went from 250 to 400.
+     *
+     * clipPlanesAfterEyeMove therefore has nothing left to compensate for and no callers. It is
+     * left in projection.ts with its tests rather than deleted here, because removing it is a
+     * decision about the other branch's code and not a merge resolution.
      */
     setFogClipOffset(fogClipOffset: number) {
-        if (this.gl_clipPlane0 && this.gl_clipPlane1) {
-            const shifted = clipPlanesAfterEyeMove(
-                this.gl_clipPlane0[3], this.gl_clipPlane1[3], fogClipOffset - this.fogClipOffset)
-            this.gl_clipPlane0[3] = shifted.clipPlane0W
-            this.gl_clipPlane1[3] = shifted.clipPlane1W
-        }
-        this.fogClipOffset = fogClipOffset
+        this.setCameraSlab({ eyeDistance: fogClipOffset })
     }
 
     componentDidMount() {
@@ -848,6 +912,42 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         initGraphicsContext(this)
         attachCanvasListeners(this)
         initGraphics(this)
+        this.unsubscribeCamera = this._camera.controller.subscribe(() => this.echoSlabToStore())
+    }
+
+    componentWillUnmount() {
+        // The camera pump holds a requestAnimationFrame that calls drawScene. Left running, it
+        // would draw into a torn-down GL context on the next frame.
+        stopPumpingCamera(this)
+        this.unsubscribeCamera?.()
+        this.unsubscribeCamera = null
+    }
+
+    /**
+     * Tell the store where the slab ended up.
+     *
+     * The camera owns the slab now, so the store's copy is an echo kept for the things that read it
+     * rather than drive it: the two slider modals, and the session writer. Without this they would
+     * describe a slab the renderer stopped using the moment auto-clip re-derived it.
+     *
+     * It fires when the camera comes to rest, not per frame - a move settles once on arrival, a
+     * zoom settles immediately - so there is no React cost during motion.
+     *
+     * The equality guard is what stops it looping. The store's clip and fog feed two effects in
+     * MoorhenWebMG that write straight back here, and converting absolute fog to an offset and back
+     * is not always exact to the last bit. Comparing before dispatching means a value that differs
+     * only in its last place is left alone rather than chasing itself around the loop.
+     */
+    echoSlabToStore() {
+        const scene = this.store.getState().sceneSettings
+        const camera = this._camera.controller.state
+        const slab = slabFromCamera(camera)
+        const same = (a: number, b: number) => Math.abs(a - b) < 1e-9
+
+        if (!same(scene.clipStart, camera.clipFront)) this.dispatch(setClipStart(camera.clipFront))
+        if (!same(scene.clipEnd, camera.clipBack)) this.dispatch(setClipEnd(camera.clipBack))
+        if (!same(scene.fogStart, slab.fogStart)) this.dispatch(setFogStart(slab.fogStart))
+        if (!same(scene.fogEnd, slab.fogEnd)) this.dispatch(setFogEnd(slab.fogEnd))
     }
 
     initializeShaders() : void {
@@ -1093,16 +1193,52 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return theseBuffers;
     }
 
+    /**
+     * Write the camera's slab into the four values the shaders read.
+     *
+     * The camera holds offsets from the view centre; `gl_clipPlane0[3]`, `gl_clipPlane1[3]`,
+     * `gl_fog_start` and `gl_fog_end` are the same slab measured from the eye, which is what the
+     * uniforms want. They are derived, not stored: nothing should assign them directly any more,
+     * because the next frame would overwrite it. Write the camera instead.
+     *
+     * Called on every draw, and by each setter below so that code reading the absolutes between a
+     * setter and the next draw sees the new slab rather than the old one.
+     */
+    applySlabToRenderer() {
+        const slab = slabFromCamera(this._camera.controller.liveState)
+        if (this.gl_clipPlane0) this.gl_clipPlane0[3] = slab.clipPlane0W
+        if (this.gl_clipPlane1) this.gl_clipPlane1[3] = slab.clipPlane1W
+        this.gl_fog_start = slab.fogStart
+        this.gl_fog_end = slab.fogEnd
+    }
+
     setFog(fog) {
-        this.gl_fog_start = this.fogClipOffset + fog[0];
-        this.gl_fog_end = this.fogClipOffset + fog[1];
+        this.setCameraSlab({ fogFront: -fog[0], fogBack: fog[1] })
         this.drawScene();
     }
 
     setSlab(slab) {
-        this.gl_clipPlane0[3] = -this.fogClipOffset + slab[0] * 0.5 + slab[1];
-        this.gl_clipPlane1[3] = this.fogClipOffset + slab[0] * 0.5 - slab[1];
+        // The eye distance cancels out of both: this always described a slab about the centre.
+        this.setCameraSlab({
+            clipFront: slab[0] * 0.5 + slab[1],
+            clipBack: slab[0] * 0.5 - slab[1],
+        })
         this.drawScene();
+    }
+
+    /**
+     * Put part of the slab on the camera and re-derive. The one way the slab is written.
+     *
+     * Not through `settle`, which stands aside for an active driver: these are the renderer's own
+     * direct writes and have always landed unconditionally. They become a driver in the last slice.
+     *
+     * The slab policy is applied here, so under auto-clip a manual write is immediately re-derived
+     * from zoom. That is why the clip and fog sliders are disabled while auto-clip is on - the
+     * alternative being a control that silently does nothing.
+     */
+    private setCameraSlab(part: Partial<CameraState>) {
+        this._camera.controller.writeLive(part)
+        this.applySlabToRenderer()
     }
 
     setQuat(q: quat4) : void {
@@ -1125,14 +1261,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.drawScene();
     }
 
-    setOrientationFrame(qOld, qNew, iframe) {
-        setOrientationFrame(this, qOld, qNew, iframe)
-    }
-
-    setOrientationAndZoomFrame(qOld, qNew, oldZoom, zoomDelta, iframe) {
-        setOrientationAndZoomFrame(this, qOld, qNew, oldZoom, zoomDelta, iframe)
-    }
-
     setOrientationAndZoomAnimated(q,z) {
         setOrientationAndZoomAnimated(this, q, z)
     }
@@ -1145,7 +1273,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         const displayBuffers = this.store.getState().glRef.displayBuffers
         if(doDispatch){
             //FIXME - This might have to go ...
-            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
+            // A copy: a listener that retained or froze this would take the camera's origin with it.
+            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: [this.origin[0], this.origin[1], this.origin[2]]} })
             document.dispatchEvent(originUpdateEvent);
         }
         if(this.drawEnvBOcc) {
@@ -1183,8 +1312,24 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
     }
 
-    setOriginOrientationAndZoomFrame(oo,d,qOld, qNew, oldZoom, zoomDelta, iframe) {
-        setOriginOrientationAndZoomFrame(this, oo, d, qOld, qNew, oldZoom, zoomDelta, iframe)
+    /**
+     * Put the camera somewhere, over whatever time the caller asks for.
+     *
+     * `{ kind: "instant" }` is the operation that did not exist before. See moveCameraTo.
+     */
+    moveCameraTo(target: CameraTarget, transition: Transition): Promise<MoveResult> {
+        return moveCameraTo(this, target, transition)
+    }
+
+    /**
+     * Turn the view by a relative rotation. What a mouse drag does.
+     *
+     * Goes through the camera rather than multiplying `myQuat` in place, so that a drag arriving
+     * during a centring move accumulates and is applied on arrival instead of being overwritten by
+     * the move's next frame.
+     */
+    turnCameraBy(delta: [number, number, number, number]) {
+        this._camera.controller.turnBy(delta)
     }
 
     setViewAnimated(o,q,z) {
@@ -1208,16 +1353,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         setOriginAndZoomAnimated(this, newOrigin, newZoom)
     }
 
-    drawOriginAndZoomFrame(oldOrigin: [number, number, number], oldZoom: number, deltaOrigin: [number, number, number], deltaZoom: number, iframe: number) {
-        drawOriginAndZoomFrame(this, oldOrigin, oldZoom, deltaOrigin, deltaZoom, iframe)
-    }
-
     setOriginAnimated(oldOrigin: number[]) : void {
         setOriginAnimated(this, oldOrigin)
-    }
-
-    drawOriginFrame(oo,d,iframe){
-        drawOriginFrame(this, oo, d, iframe)
     }
 
     setOrigin(o: [number, number, number], doDrawScene=true, dispatchEvent=true) : void {
@@ -1227,7 +1364,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.drawScene();
         }
         this.handleOriginUpdated(dispatchEvent)
-        this.props.onOriginChanged(o)
+        // A copy, never the camera's own array. This is called with `this.origin` from
+        // componentDidUpdate, and onOriginChanged dispatches into Redux, which freezes what it is
+        // given - leaving the camera unable to write its own origin ever again. See ownCopy in
+        // mgWebGLParts/camera.ts.
+        this.props.onOriginChanged([this.origin[0], this.origin[1], this.origin[2]])
     }
 
     setAmbientLightNoUpdate(r:number, g:number, b:number) : void {
@@ -1284,10 +1425,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         document.dispatchEvent(wheelContourChanged);
 
         if (drawScene) this.drawScene();
-    }
-
-    drawZoomFrame(oldZoom: number, newZoom: number, iframe: number) {
-        drawZoomFrame(this, oldZoom, newZoom, iframe)
     }
 
     setZoomAnimated(newZoom: number) {
@@ -1402,16 +1539,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (typeof (this.gl) === 'undefined') {
             return;
         }
-        this.gl_clipPlane0[3] = -this.fogClipOffset - clipStart;
-        this.gl_clipPlane1[3] = this.fogClipOffset + clipEnd;
+        this.setCameraSlab(clipOffsets(clipStart, clipEnd));
         if (update)
             this.drawScene();
     }
 
     set_fog_range(fogStart: number, fogEnd: number, update?: boolean) : void {
-        this.gl_fog_start = fogStart;
-        this.gl_fog_end = fogEnd;
-        //console.log("Fog "+this.gl_fog_start+" "+this.gl_fog_end);
+        this.setCameraSlab(fogOffsets(this.fogClipOffset, fogStart, fogEnd));
         if (typeof (this.gl) === 'undefined') {
             return;
         }

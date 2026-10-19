@@ -45,6 +45,11 @@ const EdgeDetectPanel = () => {
 
     return (
         <MoorhenStack direction="vertical" card={true}>
+            {/* All four are disabled while auto-clip is on: the camera re-derives the slab from
+                zoom as part of writing its own state, so a value set here would be overwritten
+                before it was drawn. A control that silently does nothing is worse than one that
+                says it is unavailable. The sliders modal already disables its fog and clip
+                toggles on the same condition. */}
             <MoorhenToggle
                 type="switch"
                 checked={doEdgeDetect}
