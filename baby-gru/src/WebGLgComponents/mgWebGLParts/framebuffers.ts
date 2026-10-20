@@ -1,5 +1,6 @@
 import { setRttFramebufferSize } from "../../store/glRefSlice"
 import type { MGWebGL } from '../mgWebGL';
+import type { webGL } from "../../types/mgWebGL";
 
 /**
  * Framebuffer / offscreen-buffer setup. These methods create and resize the
@@ -241,6 +242,139 @@ export function deleteDepthPeelBuffers(self: MGWebGL) {
     self.depthPeelDepthTextures = [];
     self.depthPeelRenderbufferDepth = [];
     self.depthPeelRenderbufferColor = [];
+    deleteDepthPeelResolveBuffer(self);
+}
+
+/**
+ * Multisampling for the opaque peel layer.
+ *
+ * As soon as anything in the scene is transparent, the whole scene is drawn through the depth-peel
+ * layers instead of straight to the canvas, and those layers are ordinary single-sample textures.
+ * So making one object transparent switched antialiasing off for everything else - most visibly
+ * on map mesh, which is a mass of one-pixel lines. The FXAA in the compositing shader could not
+ * make up for it: it only runs where the layer drew something, so it can never add coverage to
+ * the pixels beside a line, which is the whole of what antialiasing a thin line means.
+ *
+ * Only the opaque layer is multisampled. It holds nearly everything on screen, and is drawn exactly
+ * once, so it costs about what the canvas's own multisampling costs when nothing is transparent.
+ * The transparent layers stay single-sample: they are composited at partial opacity, where aliasing
+ * shows far less, and multisampling them too would multiply the cost by the layer count.
+ */
+
+/** Memory allowed for the multisampled opaque layer, colour and depth over all samples. */
+export const PEEL_MSAA_BUDGET_BYTES = 256 * 1024 * 1024;
+
+/** What browsers give the canvas by default. More costs fill rate without being visible. */
+export const PEEL_MSAA_MAX_SAMPLES = 4;
+
+/** RGBA8 colour plus DEPTH_COMPONENT32F depth, per sample per pixel. */
+const PEEL_MSAA_BYTES_PER_SAMPLE = 8;
+
+/**
+ * How many samples to give the opaque peel layer at this size, or 0 for none.
+ *
+ * Bounded by memory as well as by the hardware, because the layers follow the render target: on
+ * screen that is the canvas, around 90 MB at 4 samples on a large Retina window, but a 4096x4096
+ * capture would want over 500 MB at 4 samples on top of the capture buffers themselves, so it gets
+ * 2. Past the budget the count drops, and below 2 there is no point multisampling at all.
+ *
+ * @param supported sample counts the implementation supports for both formats, in any order.
+ */
+export function peelResolveSamples(width: number, height: number, supported: readonly number[]): number {
+    if (!(width > 0 && height > 0)) return 0;
+    const affordable = Math.floor(PEEL_MSAA_BUDGET_BYTES / (width * height * PEEL_MSAA_BYTES_PER_SAMPLE));
+    const wanted = Math.min(PEEL_MSAA_MAX_SAMPLES, affordable);
+    const usable = supported.filter(n => n >= 2 && n <= wanted);
+    return usable.length > 0 ? Math.max(...usable) : 0;
+}
+
+/** Sample counts both RGBA8 and DEPTH_COMPONENT32F renderbuffers support here. Asked once. */
+function peelSupportedSamples(self: MGWebGL): number[] {
+    if (!self.depthPeelMSAASupported) {
+        const gl = self.gl as WebGL2RenderingContext;
+        const colour = Array.from(gl.getInternalformatParameter(gl.RENDERBUFFER, gl.RGBA8, gl.SAMPLES) ?? []) as number[];
+        const depth = Array.from(gl.getInternalformatParameter(gl.RENDERBUFFER, gl.DEPTH_COMPONENT32F, gl.SAMPLES) ?? []) as number[];
+        self.depthPeelMSAASupported = colour.filter(n => depth.includes(n));
+    }
+    return self.depthPeelMSAASupported;
+}
+
+export function deleteDepthPeelResolveBuffer(self: MGWebGL) {
+    if (self.depthPeelMSAAFramebuffer) self.gl.deleteFramebuffer(self.depthPeelMSAAFramebuffer);
+    if (self.depthPeelMSAAColor) self.gl.deleteRenderbuffer(self.depthPeelMSAAColor);
+    if (self.depthPeelMSAADepth) self.gl.deleteRenderbuffer(self.depthPeelMSAADepth);
+    self.depthPeelMSAAFramebuffer = null;
+    self.depthPeelMSAAColor = null;
+    self.depthPeelMSAADepth = null;
+    self.depthPeelMSAASamples = 0;
+}
+
+/**
+ * Make sure the multisampled opaque-layer buffer exists at this size, and say whether it can be
+ * used. False means draw layer 0 single-sample as before: WebGL1, too large for the budget, or an
+ * implementation that will not build it. A failed build is remembered for that size so it is not
+ * retried every frame.
+ */
+export function ensureDepthPeelResolveBuffer(self: MGWebGL, width: number, height: number): boolean {
+    if (!self.WEBGL2) return false;
+    const gl = self.gl as WebGL2RenderingContext;
+    const samples = peelResolveSamples(width, height, peelSupportedSamples(self));
+    const key = `${width}x${height}x${samples}`;
+
+    const fb = self.depthPeelMSAAFramebuffer;
+    if (fb && fb.width === width && fb.height === height && self.depthPeelMSAASamples === samples) return true;
+    deleteDepthPeelResolveBuffer(self);
+    if (samples === 0 || self.depthPeelMSAAFailed === key) return false;
+
+    const framebuffer = gl.createFramebuffer() as webGL.MGWebGLFrameBuffer;
+    framebuffer.width = width;
+    framebuffer.height = height;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+
+    const colour = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, colour);
+    gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.RGBA8, width, height);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, colour);
+
+    // 32F to match the layer depth textures it resolves into; a depth blit needs identical formats.
+    const depth = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, depth);
+    gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.DEPTH_COMPONENT32F, width, height);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth);
+
+    const complete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    self.depthPeelMSAAFramebuffer = framebuffer;
+    self.depthPeelMSAAColor = colour;
+    self.depthPeelMSAADepth = depth;
+    self.depthPeelMSAASamples = samples;
+    if (!complete) {
+        console.warn(`Multisampled opaque peel layer incomplete at ${key}; transparency will be drawn without antialiasing.`);
+        deleteDepthPeelResolveBuffer(self);
+        self.depthPeelMSAAFailed = key;
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Resolve the multisampled opaque layer into a peel layer's colour and depth textures.
+ *
+ * The depth resolve keeps one sample per pixel, chosen by the implementation. That only matters at
+ * silhouette edges, where it decides by a pixel whether transparent geometry counts as behind the
+ * opaque surface - the same choice a single-sample layer would have made anyway.
+ */
+export function resolveDepthPeelResolveBuffer(self: MGWebGL, target: webGL.MGWebGLFrameBuffer) {
+    const gl = self.gl as WebGL2RenderingContext;
+    const source = self.depthPeelMSAAFramebuffer;
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, source);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, target);
+    gl.blitFramebuffer(0, 0, source.width, source.height, 0, 0, target.width, target.height,
+                       gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
 }
 
 /**
@@ -290,7 +424,12 @@ export function recreateDepthPeelBuffers(self: MGWebGL, width, height, layers = 
                     // an eight-bit framebuffer, so the extra precision was never visible, while
                     // costing four times the memory and - since peeling is fill-bound - four
                     // times the bandwidth on every write and every read back during compositing.
-                    self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.RGBA, width, height, 0, self.gl.RGBA, self.gl.UNSIGNED_BYTE, null);
+                    //
+                    // Sized RGBA8 on WebGL2 rather than unsized RGBA: layer 0 is filled by resolving
+                    // a multisampled RGBA8 renderbuffer into it (see ensureDepthPeelResolveBuffer),
+                    // and a multisample resolve requires the two formats to be identical.
+                    self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.WEBGL2 ? (self.gl as WebGL2RenderingContext).RGBA8 : self.gl.RGBA,
+                                       width, height, 0, self.gl.RGBA, self.gl.UNSIGNED_BYTE, null);
                     self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.COLOR_ATTACHMENT0, self.gl.TEXTURE_2D, self.depthPeelColorTextures[i], 0);
 
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[i]);

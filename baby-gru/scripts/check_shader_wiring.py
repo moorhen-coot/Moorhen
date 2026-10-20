@@ -242,6 +242,9 @@ WATCHED = {
     # are silent no-ops and transparent geometry behind the opaque scene stops being rejected.
     "opaqueDepthSampler": None,
     "haveOpaqueDepth": None,
+    # Whether the composite draws the multisampled opaque layer as it is. Unlocated, the layer goes
+    # through the depth gate and FXAA, and its antialiased edges are cut off again.
+    "resolvedLayer": None,
 }
 
 # Some watched uniforms only matter to programs that use a particular feature. Several programs

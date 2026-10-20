@@ -910,6 +910,7 @@ export function initShadersDepthPeelAccum(vertexShader, fragmentShader, gl) {
     shaderProgramDepthPeelAccum.xSSAOScaling = gl.getUniformLocation(shaderProgramDepthPeelAccum, "xSSAOScaling");
     shaderProgramDepthPeelAccum.ySSAOScaling = gl.getUniformLocation(shaderProgramDepthPeelAccum, "ySSAOScaling");
     shaderProgramDepthPeelAccum.colorPeelSamplers = gl.getUniformLocation(shaderProgramDepthPeelAccum, "colorPeelSamplers");
+    shaderProgramDepthPeelAccum.resolvedLayer = gl.getUniformLocation(shaderProgramDepthPeelAccum, "resolvedLayer");
 
     return shaderProgramDepthPeelAccum
 

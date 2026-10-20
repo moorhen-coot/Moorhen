@@ -10,6 +10,7 @@ import { advanceCamera } from './cameraAnimations';
 import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
 import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
+import { ensureDepthPeelResolveBuffer, resolveDepthPeelResolveBuffer } from './framebuffers';
 
 /**
  * The hot render core - drawScene orchestrates the frame (framebuffer setup,
@@ -114,11 +115,19 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                 // so a WebGL1 context keeps the old behaviour of drawing everything into every
                 // layer. Correct either way; only the faster path needs the newer API.
                 const separateOpaque = self.peelOpaqueSeparately && self.WEBGL2;
+                // The opaque layer is drawn multisampled and resolved into layer 0, so that
+                // transparency elsewhere in the scene does not cost the opaque geometry its
+                // antialiasing. See ensureDepthPeelResolveBuffer. Only possible when the opaque
+                // scene has a layer of its own.
+                const msaaOpaque = separateOpaque && ensureDepthPeelResolveBuffer(self,
+                    self.depthPeelFramebuffers[0].width, self.depthPeelFramebuffers[0].height);
                 for(let ipeel=0;ipeel<self.depthPeelFramebuffers.length;ipeel++){
                     const isOpaqueLayer = separateOpaque && ipeel === 0;
                     self.peelTransparentOnly = separateOpaque ? !isOpaqueLayer : null;
+                    const drawMultisampled = isOpaqueLayer && msaaOpaque;
 
-                    self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.depthPeelFramebuffers[ipeel]);
+                    self.gl.bindFramebuffer(self.gl.FRAMEBUFFER,
+                        drawMultisampled ? self.depthPeelMSAAFramebuffer : self.depthPeelFramebuffers[ipeel]);
 
                     // The opaque depth goes to the shader as its own texture, not into this
                     // layer's depth buffer. Seeding the depth buffer was the obvious thing and
@@ -158,6 +167,7 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                             self.gl.uniform1i(shader.peelNumber,peelNumber);
                             })
                     invMat = GLrender(self, false,doClear,ratioMult);
+                    if(drawMultisampled) resolveDepthPeelResolveBuffer(self, self.depthPeelFramebuffers[0]);
                     self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
                 }
                 self.peelTransparentOnly = null;
@@ -241,6 +251,11 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                     self.gl.activeTexture(self.gl.TEXTURE1);
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelColorTextures[ipeel]);
                     self.gl.uniform1i(theShader.peelNumber,ipeel);
+                    // A resolved layer already carries its antialiased edges blended with the
+                    // background, so it is drawn as it is: no depth gate, which would cut those
+                    // edges off wherever the resolved depth sample happened to be background, and
+                    // no FXAA on top of real multisampling.
+                    self.gl.uniform1i(theShader.resolvedLayer, (msaaOpaque && ipeel === 0) ? 1 : 0);
                     if (self.ext) {
                         self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
                     } else {
