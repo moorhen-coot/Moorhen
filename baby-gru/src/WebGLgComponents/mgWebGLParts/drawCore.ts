@@ -1534,12 +1534,16 @@ export function drawScene(self: MGWebGL) : void {
         self.shaderProgramInstanced = useFastShaders ? self.shaderProgramInstancedFast : self.shaderProgramInstancedClip;
         self.shaderProgramThickLinesNormal = useFastShaders ? self.shaderProgramThickLinesNormalFast : self.shaderProgramThickLinesNormalClip;
 
+        // Every program that can draw into a peel layer. The two line programs were missing, so
+        // they never got the peel uniforms and a transparent map mesh appeared in every layer.
         const theShaders = [
             self.shaderProgram,
             self.shaderProgramInstanced,
             self.shaderProgramThickLinesNormal,
             self.shaderProgramPerfectSpheres,
-            self.shaderProgramTextInstanced
+            self.shaderProgramTextInstanced,
+            self.shaderProgramThickLines,
+            self.shaderProgramLines
         ];
 
         theShaders.forEach(shader => {

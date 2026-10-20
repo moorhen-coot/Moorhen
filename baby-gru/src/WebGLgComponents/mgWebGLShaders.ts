@@ -1480,6 +1480,8 @@ export function initThickLineShaders(vertexShader, fragmentShader, gl) {
 
     shaderProgramThickLines.opaqueDepthSampler = gl.getUniformLocation(shaderProgramThickLines, "opaqueDepthSampler");
     shaderProgramThickLines.haveOpaqueDepth = gl.getUniformLocation(shaderProgramThickLines, "haveOpaqueDepth");
+    shaderProgramThickLines.xSSAOScaling = gl.getUniformLocation(shaderProgramThickLines, "xSSAOScaling");
+    shaderProgramThickLines.ySSAOScaling = gl.getUniformLocation(shaderProgramThickLines, "ySSAOScaling");
     return shaderProgramThickLines
 
 }
@@ -1532,6 +1534,8 @@ export function initLineShaders(vertexShader, fragmentShader, gl) {
 
     shaderProgramLines.opaqueDepthSampler = gl.getUniformLocation(shaderProgramLines, "opaqueDepthSampler");
     shaderProgramLines.haveOpaqueDepth = gl.getUniformLocation(shaderProgramLines, "haveOpaqueDepth");
+    shaderProgramLines.xSSAOScaling = gl.getUniformLocation(shaderProgramLines, "xSSAOScaling");
+    shaderProgramLines.ySSAOScaling = gl.getUniformLocation(shaderProgramLines, "ySSAOScaling");
     return shaderProgramLines
 
 }
