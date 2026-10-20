@@ -2,6 +2,12 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
     precision mediump float;
 
+    // GLSL ES 3.00 gives a fragment shader no default precision for sampler2DShadow - unlike
+    // sampler2D - so leaving it out is a compile error, not a warning: "No precision specified".
+    // highp because the comparison is against a 24-bit depth texture over a range now fitted to
+    // the scene, where mediump's ~16 bits would quantise the very differences being tested.
+    precision highp sampler2DShadow;
+
     vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
 
     in lowp vec4 vColor;
@@ -33,8 +39,8 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     in mediump mat4 projMatrix;
     in float size_v;
 
-    in lowp vec4 ShadowCoord;
-    uniform sampler2D ShadowMap;
+    in highp vec4 ShadowCoord;
+    uniform sampler2DShadow ShadowMap;
     uniform sampler2D SSAOMap;
     uniform sampler2D edgeDetectMap;
     uniform float xPixelOffset;
@@ -60,14 +66,20 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     out vec4 fragColor;
 
     float lookup(vec2 offSet){
-      vec2 resolution;
-      resolution.x = xSSAOScaling/zoom/10.;
-      resolution.y = ySSAOScaling/zoom/10.;
-      float shad = 1.0;
-      float bias = 0.005;
-      if(texture(ShadowMap, ShadowCoord.xy+offSet*resolution ).x < ShadowCoord.z-bias)
-          shad = texture(ShadowMap, ShadowCoord.xy+offSet*resolution ).x - (ShadowCoord.z-bias);
-      return shad;
+      // Offsets in shadow-map texels. xPixelOffset and yPixelOffset are 1/width and 1/height of
+      // the shadow texture, already set from rttFramebufferDepth - this used to offset by
+      // xSSAOScaling/zoom instead, a scale borrowed from SSAO with no relation to the shadow
+      // map's resolution, so the kernel's footprint changed as you zoomed and bore no fixed
+      // relationship to a texel.
+      vec2 uv = ShadowCoord.xy + offSet * vec2(xPixelOffset, yPixelOffset);
+      // One fetch does the comparison and blends the four texels around it: the unit returns the
+      // fraction of that 2x2 the fragment is in front of. 1.0 is fully lit, as before.
+      //
+      // The bias is in normalised depth, so what it means in angstrom depends on the light's
+      // near-to-far range. That range used to be a fixed 0.1 to 1000 whatever the scene, making
+      // this about 5 A - wider than an alpha helix, which is why shadows sat away from their
+      // casters. Now that the range is fitted to the scene it comes to well under one.
+      return texture(ShadowMap, vec3(uv, ShadowCoord.z - 0.005));
     }
 
     void main(void) {

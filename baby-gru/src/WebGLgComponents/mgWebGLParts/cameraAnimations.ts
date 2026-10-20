@@ -89,19 +89,31 @@ export function stopPumpingCamera(self: MGWebGL) {
  * animating to it, which is what a movie, a session restore and an API caller all actually want.
  * Animation is now an argument rather than a precondition.
  *
- * IT DEFERS RATHER THAN FIGHTS
+ * IT DEFERS TO OTHERS, AND SUPERSEDES ITSELF
  *
  * Its only caller today is MoorhenWebMG's reconciling effect, which cannot tell "the user asked to
- * centre here" from "the store and the renderer have drifted apart". So it declines while anything
- * else is driving: a movie or another move in progress means the *store* is out of date, not that
- * the camera is wrong. That is the same judgement the old `if (self.animating) return` made, and
- * the same one `settle` makes in the controller.
+ * centre here" from "the store and the renderer have drifted apart". So it declines while somebody
+ * *else* is driving: a movie running means the *store* is out of date, not that the camera is
+ * wrong. That is the same judgement the old `if (self.animating) return` made, and the same one
+ * `settle` makes in the controller.
  *
- * `animating` is checked alongside the driver because the movie spike still sets it by hand. When
- * the spike acquires a driver of its own, the first half of that test goes.
+ * A centring move already in flight is the one case that is not deference but self-conflict, and it
+ * supersedes instead. Declining there was a quiet way to lose a view: nothing retries a declined
+ * move, and the effect that asked only re-fires when the stored camera changes again, so the scene
+ * stayed where the previous move left it until the user happened to touch the mouse. A molecule
+ * centred twice inside the quarter-second a move takes - which is what loading one does - therefore
+ * drew nothing at all until the camera was wiggled, and the second centring was the one that
+ * mattered. Between two requests from the same source the later one is simply the better one.
+ *
+ * `animating` with nothing holding the camera is checked separately because the movie spike still
+ * sets it by hand. When the spike acquires a driver of its own, that test goes.
  */
 export function moveCameraTo(self: MGWebGL, target: CameraTarget, transition: Transition): Promise<MoveResult> {
-    if(self.animating || self.cameraController.driver !== null) {
+    const driving = self.cameraController.driver
+    if(driving !== null && driving !== "centring") {
+        return Promise.resolve({ completed: false })
+    }
+    if(driving === null && self.animating) {
         return Promise.resolve({ completed: false })
     }
 
@@ -118,7 +130,11 @@ export function moveCameraTo(self: MGWebGL, target: CameraTarget, transition: Tr
     const arrived = driver.moveTo(target, transition)
     pumpCamera(self)
     return arrived.then(result => {
-        self.animating = false
+        // Only the move that still holds the camera clears the flag. A superseded move settles
+        // *after* its replacement has set it, and clearing it there would announce that a move
+        // still in progress had finished - which drawScene reads as permission to echo the
+        // quaternion into the store, and that echo re-enters this function mid-move.
+        if(driver.active) self.animating = false
         driver.release()
         return result
     })
