@@ -979,6 +979,21 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             for(let i = 0; i<16; i++)
                 self.gl.disableVertexAttribArray(i);
 
+            // The fade, for lines as for everything else.
+            //
+            // Not optional here, the way it is for a program that has no such uniform. The
+            // thick-lines-normal programs are built from the *triangle* fragment shader (see
+            // MGWebGL.initShaders: thickLineNormalVertexShader paired with fragmentShader and
+            // fragmentShaderFast), so they declare `alphaMultiplier` whether or not anyone
+            // remembers that they do - and a float uniform nobody writes is 0.0, not 1.0. Leaving
+            // it unset multiplied every lit line's alpha by zero, so lit-lines maps simply did not
+            // appear, while mesh and surface were untouched because they are drawn by other
+            // programs. Nothing in the picture says "uniform": the lines are not dim, they are
+            // absent.
+            if (shaderProgramThickLinesNormal.alphaMultiplier != null) {
+                self.gl.uniform1f(shaderProgramThickLinesNormal.alphaMultiplier, bufferFade);
+            }
+
             self.gl.uniform1i(shaderProgramThickLinesNormal.shinyBack, true);
             self.setLightUniforms(shaderProgramThickLinesNormal);
             self.gl.uniform3fv(shaderProgramThickLinesNormal.screenZ, self.screenZ);

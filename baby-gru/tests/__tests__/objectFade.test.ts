@@ -7,6 +7,8 @@
  * has gone, or a movie that fades four molecules away and keeps paying for them to the end.
  */
 import { describe, expect, it } from "@jest/globals";
+import { readFileSync } from "fs";
+import { join } from "path";
 import {
     INVISIBLE_BELOW, OPAQUE_ABOVE,
     clampFade, isFaded, isInvisible, shouldCastShadow, shouldDraw,
@@ -125,5 +127,59 @@ describe("a buffer being faded", () => {
 
     it("starts solid", () => {
         expect(new DisplayBuffer().alphaMultiplier).toBe(1);
+    });
+});
+
+/**
+ * Where the fade meets the programs that read it.
+ *
+ * A source scan, because the thing that went wrong is a property of the wiring rather than of any
+ * one frame, and no GL context will tell you about it: **a float uniform nobody has written is
+ * 0.0**. The thick-lines-normal programs are built from the triangle fragment shader, so they
+ * inherited `alphaMultiplier` the moment it was added there, while the draw code set it only on
+ * the triangle and sphere programs. Every lit line was multiplied by zero and lit-lines maps
+ * simply did not appear - mesh and surface untouched, nothing logged, nothing in the picture
+ * suggesting a uniform.
+ */
+describe("the fade uniform's wiring", () => {
+    const read = (path: string) =>
+        readFileSync(join(__dirname, "../../src", path), "utf8");
+
+    const shaders = read("WebGLgComponents/mgWebGLShaders.ts");
+    const drawCore = read("WebGLgComponents/mgWebGLParts/drawCore.ts");
+
+    it("is located only through the helper that also gives it a value", () => {
+        // A bare lookup leaves the program declaring the uniform and nobody writing it, which is
+        // the zero that makes geometry vanish.
+        expect(shaders).not.toMatch(/\.alphaMultiplier\s*=\s*gl\.getUniformLocation\(\s*shaderProgram/);
+        expect(shaders.match(/locateAlphaMultiplier\(/g)?.length ?? 0).toBeGreaterThanOrEqual(4);
+    });
+
+    it("starts at 1.0, so a program nobody writes to is solid rather than absent", () => {
+        const helper = shaders.slice(shaders.indexOf("const locateAlphaMultiplier"));
+        expect(helper.slice(0, 400)).toMatch(/uniform1f\([^,]*alphaMultiplier,\s*1\.0\)/);
+    });
+
+    it("is written for lines as well as triangles and spheres", () => {
+        // Three draw paths, three writes. The lines one was the one that was missing.
+        expect(drawCore).toMatch(/uniform1f\(\s*theShader\.alphaMultiplier/);
+        expect(drawCore).toMatch(/uniform1f\(\s*program\.alphaMultiplier/);
+        expect(drawCore).toMatch(/uniform1f\(\s*shaderProgramThickLinesNormal\.alphaMultiplier/);
+    });
+
+    it("notices if a program built from the triangle fragment shader stops being covered", () => {
+        // The trap is inheritance: pair a vertex shader with `fragmentShader` and the program
+        // declares the fade whether or not its draw path knows. If this list grows, the new
+        // program needs a write of its own in drawCore.
+        const mgWebGL = read("WebGLgComponents/mgWebGL.tsx");
+        const sharers = [...mgWebGL.matchAll(
+            /this\.(shaderProgram\w*)\s*=\s*init\w+\(\s*\w+,\s*fragmentShader(?:Fast)?,\s*this\.gl\s*\)/g)]
+            .map(match => match[1]);
+
+        expect(new Set(sharers)).toEqual(new Set([
+            "shaderProgramClip", "shaderProgramFast",
+            "shaderProgramInstancedClip", "shaderProgramInstancedFast",
+            "shaderProgramThickLinesNormalClip", "shaderProgramThickLinesNormalFast",
+        ]));
     });
 });
