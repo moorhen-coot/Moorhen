@@ -74,14 +74,44 @@ function shadowCasterBounds(self: MGWebGL, displayBuffers: any[]): ShadowCasterB
 }
 
 /**
+ * WHO OWNS WHICH TEXTURE UNIT
+ *
+ * Written down because getting it wrong does not look like a texture bug. A sampler uniform that
+ * is never assigned reads as unit 0, and two samplers of *different types* on one unit - a
+ * sampler2D and a sampler2DShadow, say - fail draw-time validation outright, so every draw in the
+ * frame is discarded and the screen goes empty. There is nothing in the picture to point at the
+ * unit, and the console says only "Two textures of different types use the same sampler location".
+ *
+ *   0  the general-purpose unit: peel layers, text and circle canvases, G-buffers, post-process
+ *      inputs. Bound and rebound twenty-odd times a frame.
+ *   1  second input to the two-input passes: colour peel, normals, blurred colour.
+ *   2  third input: SSAO noise, depth for the depth-of-field composite.
+ *   3  DEPTH_PEEL_TEXTURE_UNIT, and the second depth texture of the blur passes.
+ *   4  glTF base colour.
+ *   5  OPAQUE_DEPTH_TEXTURE_UNIT.
+ *   6  SHADOW_TEXTURE_UNIT.
+ *   7-9 the G-buffer attachments during the SSAO pass.
+ */
+
+/**
  * Texture unit the shadow map is read from during the lit pass.
  *
- * Its own unit, not the shared unit 0. The comparison sampler below has to stay bound for as long
- * as the shadow map is being read, and unit 0 is bound and rebound twenty-odd times a frame for
- * peel layers, textures and G-buffers - a sampler with depth comparison turned on would corrupt
- * every one of those reads. Units 5 and 6 are the only ones this renderer never touches.
+ * Its own unit, not the shared unit 0: the comparison sampler below has to stay bound for as long
+ * as the shadow map is being read, and a sampler with depth comparison turned on would corrupt
+ * every ordinary read made through the same unit.
+ *
+ * It was 5 to begin with, on the strength of a comment three hundred lines down saying units 0-4
+ * and 7-9 were taken. 5 is the opaque depth the peel pass reads, which only exists while something
+ * is transparent - so solid geometry vanished the moment anything was given an opacity below 1,
+ * and was fine the rest of the time. Hence the table above.
  */
-const SHADOW_TEXTURE_UNIT = 5;
+const SHADOW_TEXTURE_UNIT = 6;
+
+/** Where the previous peel layer's depth is read from. */
+const DEPTH_PEEL_TEXTURE_UNIT = 3;
+
+/** Where the opaque layer's depth is read from while peeling the transparent layers. */
+const OPAQUE_DEPTH_TEXTURE_UNIT = 5;
 
 /**
  * A sampler that does the depth comparison in the texture unit.
@@ -204,9 +234,10 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
             if(self.depthPeelFramebuffers.length>0&&self.depthPeelFramebuffers[0].width>0&&self.depthPeelFramebuffers[0].height>0){
 
                 self.gl.enable(self.gl.DEPTH_TEST);
-                const depthPeelSampler0 = 3;
-                // Units 0-4 and 7-9 are taken; see the sampler assignments through drawCore.
-                const opaqueDepthUnit = 5;
+                // Named at the top of this file, with the rest of the unit allocation, rather
+                // than here - a unit chosen locally is a unit the next reader cannot find.
+                const depthPeelSampler0 = DEPTH_PEEL_TEXTURE_UNIT;
+                const opaqueDepthUnit = OPAQUE_DEPTH_TEXTURE_UNIT;
 
                 theShaders.forEach(shader => {
                         self.gl.useProgram(shader);
