@@ -866,7 +866,13 @@ export class MoorhenTimeCapsule {
             sessionData.mapData?.map(async storedMapData => {
                 if (sessionData.includesAdditionalMapData) {
                     if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
-                        return MoorhenMap.loadToCootFromMapData(storedMapData.mapData, storedMapData.name, storedMapData.isDifference, moorhenInstance);
+                        return MoorhenMap.loadToCootFromMapData(
+                            storedMapData.mapData,
+                            storedMapData.name,
+                            storedMapData.isDifference,
+                            moorhenInstance,
+                            storedMapData.uniqueId
+                        );
                     } else {
                         if (fetchExternalUrl) {
 
