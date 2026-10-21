@@ -110,6 +110,44 @@ function shadowCasterBounds(self: MGWebGL, displayBuffers: any[]): ShadowCasterB
  */
 const SHADOW_TEXTURE_UNIT = 6;
 
+/**
+ * Everything a program built from the triangle fragment shader has to be told, per draw.
+ *
+ * ONE PLACE, BECAUSE THE LIST KEEPS GROWING AND THE PROGRAMS ARE NOT OBVIOUS
+ *
+ * `mgWebGL.initShaders` pairs that one fragment shader with three different vertex shaders, so it
+ * backs six programs: the triangle pair, the instanced pair, **and the thick-lines-normal pair**.
+ * Nothing in the shader source says so - you have to read the `init*Shaders(vertexShader,
+ * fragmentShader, gl)` call sites to find out - and the lines programs are the ones everybody
+ * forgets, because "lines" does not sound like something drawn with the triangle shader. (It is:
+ * lines are triangles here, for thickness.)
+ *
+ * Both uniforms below have now gone missing on the lines program once each, in separate pieces of
+ * work, and both times the result was that lit lines vanished completely while everything else
+ * looked perfect:
+ *
+ *   - `alphaMultiplier` unwritten is **0.0**, so every fragment's alpha is multiplied by zero.
+ *   - `ShadowMap` unassigned is unit **0**, and unit 0 holds ordinary colour textures. A
+ *     `sampler2DShadow` sharing a unit with a `sampler2D` fails draw-time validation outright -
+ *     "Two textures of different types use the same sampler location" - and every draw in the
+ *     frame is discarded. It was only ever safe before because `ShadowMap` was a plain
+ *     `sampler2D` like its neighbours.
+ *
+ * Neither failure resembles a uniform from the outside, and neither is logged anywhere obvious.
+ * So the rule is mechanical: if you draw with a program built from the triangle fragment shader,
+ * call this immediately after `useProgram`, and if you add a uniform to that shader, add it here.
+ *
+ * @param program must already be the current program; these are uniform writes.
+ */
+function setTriangleFragmentUniforms(self: MGWebGL, program: any, alphaMultiplier: number): void {
+    if (program.ShadowMap != null) {
+        self.gl.uniform1i(program.ShadowMap, SHADOW_TEXTURE_UNIT);
+    }
+    if (program.alphaMultiplier != null) {
+        self.gl.uniform1f(program.alphaMultiplier, alphaMultiplier);
+    }
+}
+
 /** Where the previous peel layer's depth is read from. */
 const DEPTH_PEEL_TEXTURE_UNIT = 3;
 
@@ -629,12 +667,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.useProgram(theShader);
-
-                // Null on a WebGL1 context, and on the shadow and g-buffer programs, which have no
-                // such uniform; the guard is what makes fading simply absent there.
-                if (theShader.alphaMultiplier != null) {
-                    self.gl.uniform1f(theShader.alphaMultiplier, bufferFade);
-                }
+                setTriangleFragmentUniforms(self, theShader, bufferFade);
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
 
@@ -710,16 +743,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.uniform1i(theShader.doShadows, false);
-                // The shadow sampler's unit, set whether or not shadows are being drawn.
-                //
-                // A sampler uniform that is never assigned reads as unit 0, and unit 0 carries
-                // ordinary colour textures. ShadowMap is a sampler2DShadow, and a shadow sampler
-                // sharing a unit with a plain sampler2D fails draw-time validation outright:
-                // "Two textures of different types use the same sampler location". Every draw is
-                // then discarded and nothing appears at all. It only used to be safe because
-                // ShadowMap was a sampler2D like its neighbours.
-                if(theShader.ShadowMap != null)
-                    self.gl.uniform1i(theShader.ShadowMap, SHADOW_TEXTURE_UNIT);
+                // ShadowMap's unit is set by setTriangleFragmentUniforms above, unconditionally.
                 if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
                     self.gl.uniform1f(theShader.xPixelOffset, 1.0/self.rttFramebufferDepth.width);
                     self.gl.uniform1f(theShader.yPixelOffset, 1.0/self.rttFramebufferDepth.height);
@@ -939,9 +963,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 0.0, 0.0, 0.0, 1.0,
                 );
                 self.gl.useProgram(program);
-                if (program.alphaMultiplier != null) {
-                    self.gl.uniform1f(program.alphaMultiplier, bufferFade);
-                }
+                setTriangleFragmentUniforms(self, program, bufferFade);
                 self.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                 self.setMatrixUniforms(program);
                 self.gl.disableVertexAttribArray(program.vertexColourAttribute);
@@ -956,16 +978,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 if(program.offsetAttribute!=null) self.gl.enableVertexAttribArray(program.offsetAttribute);
                 if(program.sizeAttribute!=null) self.gl.enableVertexAttribArray(program.sizeAttribute);
                 if(program.doShadows!=null) self.gl.uniform1i(program.doShadows, false);
-                // The shadow sampler's unit, set whether or not shadows are being drawn.
-                //
-                // A sampler uniform that is never assigned reads as unit 0, and unit 0 carries
-                // ordinary colour textures. ShadowMap is a sampler2DShadow, and a shadow sampler
-                // sharing a unit with a plain sampler2D fails draw-time validation outright:
-                // "Two textures of different types use the same sampler location". Every draw is
-                // then discarded and nothing appears at all. It only used to be safe because
-                // ShadowMap was a sampler2D like its neighbours.
-                if(program.ShadowMap != null)
-                    self.gl.uniform1i(program.ShadowMap, SHADOW_TEXTURE_UNIT);
+                // ShadowMap's unit is set by setTriangleFragmentUniforms above, unconditionally.
                 if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
                     self.gl.activeTexture(self.gl.TEXTURE0 + SHADOW_TEXTURE_UNIT);
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttTextureDepth);
@@ -1181,20 +1194,9 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             for(let i = 0; i<16; i++)
                 self.gl.disableVertexAttribArray(i);
 
-            // The fade, for lines as for everything else.
-            //
-            // Not optional here, the way it is for a program that has no such uniform. The
-            // thick-lines-normal programs are built from the *triangle* fragment shader (see
-            // MGWebGL.initShaders: thickLineNormalVertexShader paired with fragmentShader and
-            // fragmentShaderFast), so they declare `alphaMultiplier` whether or not anyone
-            // remembers that they do - and a float uniform nobody writes is 0.0, not 1.0. Leaving
-            // it unset multiplied every lit line's alpha by zero, so lit-lines maps simply did not
-            // appear, while mesh and surface were untouched because they are drawn by other
-            // programs. Nothing in the picture says "uniform": the lines are not dim, they are
-            // absent.
-            if (shaderProgramThickLinesNormal.alphaMultiplier != null) {
-                self.gl.uniform1f(shaderProgramThickLinesNormal.alphaMultiplier, bufferFade);
-            }
+            // Lit lines are drawn with the triangle fragment shader, so they need everything a
+            // triangle needs. This line has now had to be restored twice; see the helper.
+            setTriangleFragmentUniforms(self, shaderProgramThickLinesNormal, bufferFade);
 
             self.gl.uniform1i(shaderProgramThickLinesNormal.shinyBack, true);
             self.setLightUniforms(shaderProgramThickLinesNormal);
