@@ -23,12 +23,20 @@ import {
 } from "./metaballsGrid";
 import {
     COUNT_TRIANGLES_WGSL, COUNT_VERTICES_WGSL, EMIT_TRIANGLES_WGSL, EMIT_VERTICES_WGSL, FIELD_BOXES_WGSL, FIELD_BRICK, FIELD_COLUMNS_WGSL,
-    FIELD_DIRECT_WGSL, FIELD_NEAR_WGSL, INFLUENCES_WGSL, ITEM_WORKGROUP, SMOOTH_WGSL, TOTALS_WGSL,
+    FIELD_DIRECT_WGSL, FIELD_NEAR_WGSL, FIELD_ROWS_WGSL, INFLUENCES_WGSL, ITEM_WORKGROUP, SMOOTH_WGSL, TOTALS_WGSL,
 } from "./metaballsShaders";
 
 // Spec values; the DOM typings have the WebGPU interfaces but not these globals.
 const MAP_READ = 0x0001, COPY_SRC = 0x0004, COPY_DST = 0x0008, UNIFORM = 0x0040, STORAGE = 0x0080;
 const MAP_MODE_READ = 0x0001;
+
+/**
+ * How many workgroups the row-sum and near-field kernels start; each loops over rows or bricks.
+ * Enough to fill a large GPU, few enough that zeroing their workgroup memory at the start (which
+ * WebGPU requires, and Firefox does with one thread) is not a cost.
+ */
+const ROW_WORKGROUPS = 4096;
+const BRICK_WORKGROUPS = 16384;
 
 export interface MetaBallsInput {
     /** x, y, z, radius per point. */
@@ -53,6 +61,12 @@ export interface MetaBallsOptions {
      * voxel of its box, a thread per voxel. The same field to within float rounding.
      */
     splitField?: boolean;
+    /**
+     * Hand the mesh over as Moorhen draws it - normals reversed, each triangle (a, c, b), as the
+     * worker's PickableMeshPerm conversion does - rather than as metaballs.cc makes it. Done in
+     * the kernels, so there is no pass over the arrays afterwards.
+     */
+    pickable?: boolean;
 }
 
 /** What GenerateMeshFromPoints returns, in typed arrays, minus the parts nothing reads. */
@@ -68,6 +82,8 @@ export interface MetaBallsMesh {
     influenceWeights: Float32Array;
     /** Grid edge of each vertex: ((z * ny + y) * nx + x) * 3 + axis. Only when asked for. */
     keys?: Uint32Array;
+    /** True when normals and winding are already Moorhen's (MetaBallsOptions.pickable). */
+    pickable?: boolean;
     grid: MetaBallsGrid | null;
     timings: MetaBallsTimings;
 }
@@ -87,9 +103,9 @@ export interface MetaBallsTimings {
     countWaitMs: number;
     /** Vertices, triangles, normals and colours, until the influence total is back. */
     emitWaitMs: number;
-    /** Influences, then copying the slab back and mapping it. */
+    /** Influences, then copying the slab back, mapping it and copying it into the output. */
     readbackWaitMs: number;
-    /** JavaScript putting the slabs together into the final arrays. */
+    /** Growing the output arrays when a slab does not fit. */
     assembleMs: number;
     /**
      * GPU time per kernel, summed over slabs, from timestamp queries. Absent when the device
@@ -106,23 +122,34 @@ const EMPTY = (grid: MetaBallsGrid | null, totalMs: number): MetaBallsMesh => ({
 });
 
 /**
- * Slab results, kept as they arrive and joined once at the end: one copy, into an array of the
- * exact size, or none at all when there was only one slab.
+ * One output array, which each slab's results are copied into straight from the mapped GPU
+ * buffer - the one copy they need. It is sized up front from an estimate of the whole mesh, and
+ * grows if a slab does not fit, to the size the slabs so far suggest. The result is a view of the
+ * filled part, or a trimmed copy if the estimate was far too generous.
  */
-class Chunks<T extends Float32Array | Uint32Array> {
-    private readonly parts: T[] = [];
+class Output<T extends Float32Array | Uint32Array> {
+    private data: T;
     private length = 0;
-    constructor(private readonly make: (n: number) => T) {}
-    append(chunk: T): void {
-        this.parts.push(chunk);
-        this.length += chunk.length;
+    /** `guess`: the expected final length, allocated now. */
+    constructor(private readonly make: (n: number) => T, private readonly view: (b: ArrayBuffer) => T, guess: number) {
+        this.data = make(Math.max(0, Math.ceil(guess)));
+    }
+    /** Room for `more` values; `expected` is the guess at the final total. */
+    reserve(more: number, expected: number): void {
+        const need = this.length + more;
+        if (need <= this.data.length) return;
+        const grown = this.make(Math.max(need, Math.ceil(expected), Math.ceil(this.data.length * 1.5)));
+        grown.set(this.data.subarray(0, this.length));
+        this.data = grown;
+    }
+    append(range: ArrayBuffer): void {
+        const values = this.view(range);
+        this.data.set(values, this.length);
+        this.length += values.length;
     }
     result(): T {
-        if (this.parts.length === 1) return this.parts[0];
-        const out = this.make(this.length);
-        let at = 0;
-        for (const part of this.parts) { out.set(part, at); at += part.length; }
-        return out;
+        const filled = this.data.subarray(0, this.length) as T;
+        return this.data.length > 1.25 * this.length + 4096 ? filled.slice() as T : filled;
     }
 }
 
@@ -181,7 +208,7 @@ class PassTimer {
     }
 }
 
-type Kernel = "fieldBoxes" | "fieldColumns" | "fieldNear" | "fieldDirect" | "countVertices" | "countTriangles" | "emitVertices" | "emitTriangles"
+type Kernel = "fieldBoxes" | "fieldColumns" | "fieldRows" | "fieldNear" | "fieldDirect" | "countVertices" | "countTriangles" | "emitVertices" | "emitTriangles"
     | "smooth" | "influences" | "totalsVT" | "totalsI";
 
 export class GpuMetaBalls {
@@ -204,6 +231,7 @@ export class GpuMetaBalls {
         const kernels: [Kernel, string, string][] = [
             ["fieldBoxes", FIELD_BOXES_WGSL, "main"],
             ["fieldColumns", FIELD_COLUMNS_WGSL, "main"],
+            ["fieldRows", FIELD_ROWS_WGSL, "main"],
             ["fieldNear", FIELD_NEAR_WGSL, "main"],
             ["fieldDirect", FIELD_DIRECT_WGSL, "main"],
             ["countVertices", COUNT_VERTICES_WGSL, "main"],
@@ -295,39 +323,42 @@ export class GpuMetaBalls {
         const fixedBits = fieldFixedPointBits(input.points, bins, grid.cell);
         const split = (options.splitField ?? true) && fixedBits >= 20;
 
-        // The box pass's difference array is a row wider than the grid; it lives in the vertex
-        // count and offset buffers, which are free until the field is done.
-        const rowPoints = (nx + 1) * ny;
         const largestBuffer = Math.min(this.device.limits.maxStorageBufferBindingSize, this.device.limits.maxBufferSize);
-        const budget = Math.min(options.maxSlabPoints ?? 16_000_000, Math.floor((largestBuffer / 4) * plane / rowPoints));
+        const budget = Math.min(options.maxSlabPoints ?? 16_000_000, Math.floor(largestBuffer / 4));
         const depth = slabDepth(grid, budget);
         const slabPlanes = depth + 2;
         const field = keep(this.storage("field", slabPlanes * plane * 4, COPY_SRC | COPY_DST));
         // The last two field planes of a slab are the first two of the next.
         const carry = keep(this.storage("field carry", 2 * plane * 4, COPY_SRC | COPY_DST));
         const edgeMask = keep(this.storage("edge mask", slabPlanes * plane * 4));
-        const vertexCount = keep(this.storage("vertex count", slabPlanes * rowPoints * 4, COPY_DST));
-        const vertexOffset = keep(this.storage("vertex offset", slabPlanes * rowPoints * 4));
+        // Also the box sums' difference array, which is done with before the counting starts.
+        const vertexCount = keep(this.storage("vertex count", slabPlanes * plane * 4, COPY_DST));
+        const vertexOffset = keep(this.storage("vertex offset", slabPlanes * plane * 4));
         const triangleCount = keep(this.storage("triangle count", depth * cellPlane * 4));
         const triangleOffset = keep(this.storage("triangle offset", depth * cellPlane * 4));
         const totals = keep(this.storage("totals", 16, COPY_SRC));
         const totalsRead = keep(this.device.createBuffer({ label: "totals readback", size: 16, usage: MAP_READ | COPY_DST }));
-        const params = keep(this.device.createBuffer({ label: "metaballs params", size: 32 * 4, usage: UNIFORM | COPY_DST }));
+        const params = keep(this.device.createBuffer({ label: "metaballs params", size: 36 * 4, usage: UNIFORM | COPY_DST }));
         const setupMs = performance.now() - started;
 
-        const positionsOut = new Chunks(n => new Float32Array(n));
-        const normalsOut = new Chunks(n => new Float32Array(n));
-        const coloursOut = new Chunks(n => new Float32Array(n));
-        const indicesOut = new Chunks(n => new Uint32Array(n));
-        const endsOut = new Chunks(n => new Uint32Array(n));
-        const inflPointsOut = new Chunks(n => new Uint32Array(n));
-        const inflWeightsOut = new Chunks(n => new Float32Array(n));
-        const keysOut = options.withKeys ? new Chunks(n => new Uint32Array(n)) : null;
+        // MetaBalls make close to 280 vertices per point, with two triangles and two influences
+        // per vertex (1df7, 4dfr, 5a3h, 1ibm all within a few per cent): size for a little more.
+        const vertexGuess = 300 * pointCount;
+        const floats = (perVertex: number) => new Output(n => new Float32Array(n), b => new Float32Array(b), perVertex * vertexGuess);
+        const uints = (perVertex: number) => new Output(n => new Uint32Array(n), b => new Uint32Array(b), perVertex * vertexGuess);
+        const positionsOut = floats(3);
+        const normalsOut = floats(3);
+        const coloursOut = floats(4);
+        const indicesOut = uints(6);
+        const endsOut = uints(1);
+        const inflPointsOut = uints(2);
+        const inflWeightsOut = floats(2);
+        const keysOut = options.withKeys ? uints(1) : null;
         this.timer = this.device.features.has("timestamp-query") ? new PassTimer(this.device) : null;
         const scanTimestamps = this.timer ? (label: string) => this.timer.writes(label) : undefined;
-        const fieldScanTimestamps = this.timer ? () => this.timer.writes("fieldScan") : undefined;
 
         let vertexBase = 0;
+        let triangleBase = 0;
         let influenceBase = 0;
         let slabs = 0;
         let countWaitMs = 0, emitWaitMs = 0, readbackWaitMs = 0, assembleMs = 0;
@@ -349,7 +380,7 @@ export class GpuMetaBalls {
                 const fzCount = Math.max(0, fieldPlanes - fieldFirst);
                 const [kStart, kEnd] = fzCount > 0 ? slabPointRange(bins, grid, fz0, fz0 + fzCount) : [0, 0];
                 const writeParams = (vertexCountForSlab: number) => {
-                    const buf = new ArrayBuffer(32 * 4);
+                    const buf = new ArrayBuffer(36 * 4);
                     const fl = new Float32Array(buf);
                     const u = new Uint32Array(buf);
                     fl.set([grid.min[0], grid.min[1], grid.min[2], grid.cell], 0);
@@ -359,6 +390,7 @@ export class GpuMetaBalls {
                     u.set([zs, fieldPlanes, countPlanes, cellPlanes, ownedPlanes, vertexBase, vertexCountForSlab, pointCount], 16);
                     u.set([fz0, fzCount, fieldFirst, kStart, kEnd - kStart, zSpan], 24);
                     fl[30] = 2 ** fixedBits; fl[31] = 2 ** -fixedBits;
+                    u.set([influenceBase, options.pickable ? 1 : 0], 32);
                     this.device.queue.writeBuffer(params, 0, buf);
                 };
                 writeParams(0);
@@ -367,15 +399,15 @@ export class GpuMetaBalls {
                 let encoder = this.device.createCommandEncoder({ label: "metaballs slab count" });
                 if (fieldFirst > 0) encoder.copyBufferToBuffer(carry, 0, field, 0, 2 * plane * 4);
                 if (fzCount > 0 && split) {
-                    // Boxes: corners into the difference array, summed along x by one long scan
-                    // and along y per column, then the near points' corrections, one workgroup
-                    // per brick.
-                    encoder.clearBuffer(vertexCount, 0, fzCount * rowPoints * 4);
+                    // Boxes: corners into the difference array, summed along y per column and
+                    // then along x per row into the field; then the near points' corrections,
+                    // one workgroup per brick.
+                    encoder.clearBuffer(vertexCount, 0, fzCount * plane * 4);
                     this.dispatch(encoder, "fieldBoxes", params, [points, boxes, vertexCount], (kEnd - kStart) * zSpan);
-                    this.scan.encode(encoder, vertexCount, vertexOffset, fzCount * rowPoints, 0, fieldScanTimestamps);
-                    this.dispatch(encoder, "fieldColumns", params, [vertexCount, vertexOffset, field], nx * fzCount);
+                    this.dispatch(encoder, "fieldColumns", params, [vertexCount], nx * fzCount);
+                    this.dispatch(encoder, "fieldRows", params, [vertexCount, field], Math.min(ny * fzCount, ROW_WORKGROUPS) * ITEM_WORKGROUP);
                     const bricks = Math.ceil(nx / FIELD_BRICK) * Math.ceil(ny / FIELD_BRICK) * Math.ceil(fzCount / FIELD_BRICK);
-                    this.dispatch(encoder, "fieldNear", params, [points, binStart, field], bricks * ITEM_WORKGROUP);
+                    this.dispatch(encoder, "fieldNear", params, [points, binStart, field], Math.min(bricks, BRICK_WORKGROUPS) * ITEM_WORKGROUP);
                 } else if (fzCount > 0) {
                     this.dispatch(encoder, "fieldDirect", params, [points, binStart, field, boxes], fzCount * plane);
                 }
@@ -429,47 +461,44 @@ export class GpuMetaBalls {
                     emitWaitMs += since();
                     this.scan.releaseTransient();
 
-                    // 3. Influences, then read the slab back.
+                    // 3. Influences, and each vertex's END in the whole mesh's influence list
+                    // (in place of its count), then read the slab back.
                     const inflPoints = slabBuffer("influence points", influenceTotal * 4);
                     const inflWeights = slabBuffer("influence weights", influenceTotal * 4);
                     encoder = this.device.createCommandEncoder({ label: "metaballs slab influences" });
-                    if (vertexTotal > 0 && influenceTotal > 0) {
+                    if (vertexTotal > 0) {
                         this.dispatch(encoder, "influences", params,
                             [points, pointIds, binStart, positions, inflOffset, inflCount, inflPoints, inflWeights], vertexTotal);
                     }
-                    const reads = [
-                        this.readback(encoder, positions, vertexTotal * 12),
-                        this.readback(encoder, normals, vertexTotal * 12),
-                        this.readback(encoder, vColours, vertexTotal * 16),
-                        this.readback(encoder, indices, triangleTotal * 12),
-                        this.readback(encoder, inflCount, vertexTotal * 4),
-                        this.readback(encoder, inflOffset, vertexTotal * 4),
-                        this.readback(encoder, inflPoints, influenceTotal * 4),
-                        this.readback(encoder, inflWeights, influenceTotal * 4),
-                        keysOut ? this.readback(encoder, keys, vertexTotal * 4) : null,
-                    ];
+                    // Make room in the outputs for this slab, sized by what the slabs so far
+                    // suggest the whole will need.
+                    const expect = (done: number, more: number) => (done + more) * (nz / ze) * 1.1;
                     since();
-                    this.device.queue.submit([encoder.finish()]);
-                    const [pos, nrm, col, idx, cnt, off, ip, iw, ky] = await Promise.all(reads.map(r => r ? r() : Promise.resolve(null)));
-                    readbackWaitMs += since();
-
-                    positionsOut.append(new Float32Array(pos));
-                    normalsOut.append(new Float32Array(nrm));
-                    coloursOut.append(new Float32Array(col));
-                    indicesOut.append(new Uint32Array(idx));
-                    // DrawMoorhenMetaBalls keeps the END of each vertex's run, counting from the
-                    // start of the whole mesh.
-                    const counts = new Uint32Array(cnt);
-                    const offsets = new Uint32Array(off);
-                    const ends = new Uint32Array(vertexTotal);
-                    for (let i = 0; i < vertexTotal; i++) ends[i] = influenceBase + offsets[i] + counts[i];
-                    endsOut.append(ends);
-                    inflPointsOut.append(new Uint32Array(ip));
-                    inflWeightsOut.append(new Float32Array(iw));
-                    if (keysOut && ky) keysOut.append(new Uint32Array(ky));
-                    vertexBase += vertexTotal;
-                    influenceBase += influenceTotal;
+                    positionsOut.reserve(vertexTotal * 3, expect(vertexBase, vertexTotal) * 3);
+                    normalsOut.reserve(vertexTotal * 3, expect(vertexBase, vertexTotal) * 3);
+                    coloursOut.reserve(vertexTotal * 4, expect(vertexBase, vertexTotal) * 4);
+                    endsOut.reserve(vertexTotal, expect(vertexBase, vertexTotal));
+                    keysOut?.reserve(vertexTotal, expect(vertexBase, vertexTotal));
+                    indicesOut.reserve(triangleTotal * 3, expect(triangleBase, triangleTotal) * 3);
+                    inflPointsOut.reserve(influenceTotal, expect(influenceBase, influenceTotal));
+                    inflWeightsOut.reserve(influenceTotal, expect(influenceBase, influenceTotal));
                     assembleMs += since();
+                    const reads = [
+                        this.readback(encoder, positions, vertexTotal * 12, positionsOut),
+                        this.readback(encoder, normals, vertexTotal * 12, normalsOut),
+                        this.readback(encoder, vColours, vertexTotal * 16, coloursOut),
+                        this.readback(encoder, indices, triangleTotal * 12, indicesOut),
+                        this.readback(encoder, inflCount, vertexTotal * 4, endsOut),
+                        this.readback(encoder, inflPoints, influenceTotal * 4, inflPointsOut),
+                        this.readback(encoder, inflWeights, influenceTotal * 4, inflWeightsOut),
+                        keysOut ? this.readback(encoder, keys, vertexTotal * 4, keysOut) : null,
+                    ];
+                    this.device.queue.submit([encoder.finish()]);
+                    await Promise.all(reads.map(r => r ? r() : Promise.resolve()));
+                    readbackWaitMs += since();
+                    vertexBase += vertexTotal;
+                    triangleBase += triangleTotal;
+                    influenceBase += influenceTotal;
                 } finally {
                     slab.forEach(b => b.destroy());
                 }
@@ -489,6 +518,7 @@ export class GpuMetaBalls {
             influencePoints: inflPointsOut.result(),
             influenceWeights: inflWeightsOut.result(),
             keys: keysOut?.result(),
+            pickable: options.pickable ?? false,
             grid,
         };
         assembleMs += since();
@@ -496,7 +526,10 @@ export class GpuMetaBalls {
         this.timer = null;
         return {
             ...result,
-            timings: { totalMs: performance.now() - started, slabs, field: split ? "split" : "plain", setupMs, countWaitMs, emitWaitMs, readbackWaitMs, assembleMs, gpuMs },
+            timings: {
+                totalMs: performance.now() - started, slabs, field: split ? "split" : "plain",
+                setupMs, countWaitMs, emitWaitMs, readbackWaitMs, assembleMs, gpuMs,
+            },
         };
     }
 
@@ -553,17 +586,20 @@ export class GpuMetaBalls {
         return values;
     }
 
-    /** Copy `bytes` of `source` into a staging buffer; the returned function maps and returns them. */
-    private readback(encoder: GPUCommandEncoder, source: GPUBuffer, bytes: number): () => Promise<ArrayBuffer> {
-        if (bytes === 0) return () => Promise.resolve(new ArrayBuffer(0));
+    /**
+     * Copy `bytes` of `source` into a staging buffer; the returned function maps it and appends
+     * it to `out`, straight from the mapped range.
+     */
+    private readback<T extends Float32Array | Uint32Array>(encoder: GPUCommandEncoder, source: GPUBuffer, bytes: number,
+                                                           out: Output<T>): () => Promise<void> {
+        if (bytes === 0) return () => Promise.resolve();
         const staging = this.device.createBuffer({ size: bytes, usage: MAP_READ | COPY_DST });
         encoder.copyBufferToBuffer(source, 0, staging, 0, bytes);
         return async () => {
             await staging.mapAsync(MAP_MODE_READ);
-            const copy = staging.getMappedRange().slice(0);
+            out.append(staging.getMappedRange());
             staging.unmap();
             staging.destroy();
-            return copy;
         };
     }
 }

@@ -136,6 +136,19 @@ describe("to and from Coot's shapes", () => {
         expect(data.pick_info.influence_index_offsets).toBe(mesh.influenceEnds);
         expect(data.pick_info.pick_points).toEqual([[1, 2, 3]]);
     });
+
+    it("passes a mesh the kernels already made pickable through as it is", () => {
+        const mesh = {
+            positions: new Float32Array(9), normals: new Float32Array([0, 0, -1, 0, 0, -1, 0, 0, -1]),
+            colours: new Float32Array(12), indices: new Uint32Array([0, 2, 1]),
+            influenceEnds: new Uint32Array(3), influencePoints: new Uint32Array(0), influenceWeights: new Float32Array(0),
+            pickable: true, grid: null, timings: { totalMs: 0, slabs: 1, setupMs: 0 },
+        } as MetaBallsMesh;
+        const data = metaballsMeshData(mesh, []);
+        expect(data.idx_tri[0][0]).toBe(mesh.indices);
+        expect(data.norm_tri[0][0]).toBe(mesh.normals);
+        expect(data.pick_info.influence_index_offsets).toBe(mesh.influenceEnds);
+    });
 });
 
 describe("the split field", () => {

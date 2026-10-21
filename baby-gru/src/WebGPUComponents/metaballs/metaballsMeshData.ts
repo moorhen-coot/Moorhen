@@ -75,10 +75,23 @@ export interface MetaBallsMeshData {
 /**
  * The GPU mesh as the worker would have handed it over for "PickableMeshPerm".
  *
- * An empty mesh is passed through empty, as the C++ leaves coot_mesh empty when there is nothing
- * to draw.
+ * A mesh made with `pickable` already has the reversed normals and winding, and its arrays are
+ * used as they are; otherwise they are converted here. An empty mesh is passed through empty, as
+ * the C++ leaves coot_mesh empty when there is nothing to draw.
  */
 export function metaballsMeshData(mesh: MetaBallsMesh, pickPoints: number[][]): MetaBallsMeshData {
+    const pick_info = {
+        influence_weights: mesh.influenceWeights,
+        influence_index_offsets: mesh.influenceEnds,
+        influence_point_indexes: mesh.influencePoints,
+        pick_points: pickPoints,
+    };
+    if (mesh.pickable) {
+        return {
+            prim_types: [["TRIANGLES"]], idx_tri: [[mesh.indices]], vert_tri: [[mesh.positions]],
+            norm_tri: [[mesh.normals]], col_tri: [[mesh.colours]], pick_info,
+        };
+    }
     const normals = new Float32Array(mesh.normals.length);
     for (let i = 0; i < normals.length; i++) normals[i] = -mesh.normals[i];
     const indices = new Uint32Array(mesh.indices.length);
@@ -93,11 +106,6 @@ export function metaballsMeshData(mesh: MetaBallsMesh, pickPoints: number[][]): 
         vert_tri: [[mesh.positions]],
         norm_tri: [[normals]],
         col_tri: [[mesh.colours]],
-        pick_info: {
-            influence_weights: mesh.influenceWeights,
-            influence_index_offsets: mesh.influenceEnds,
-            influence_point_indexes: mesh.influencePoints,
-            pick_points: pickPoints,
-        },
+        pick_info,
     };
 }

@@ -39,6 +39,8 @@ struct Params {
     kStart: u32, kCount: u32, zSpan: u32,
     // Fixed point for the box sums: 2^bits and 2^-bits.
     fixedScale: f32, fixedInv: f32,
+    // Influences before this slab's; 1 to emit the mesh as Moorhen draws it (see pickable).
+    influenceBase: u32, pickable: u32, pad0: u32, pad1: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: Params;
@@ -80,7 +82,7 @@ const FIELD_CANDIDATES = 448;
  *                       + (sum over points nearer than 3.46 A of their term minus w)
  *
  * The first sum is a sum of boxes, which needs no distances at all: per plane, each box is a
- * rectangle, added as +w/-w at its four corners and summed out along x and then y. It is done
+ * rectangle, added as +w/-w at its four corners and summed out along y and then x. It is done
  * in fixed point, so that those sums are exact; the scale is chosen on the CPU so the largest
  * possible total fits (fieldFixedPointBits). The second sum visits about a fifth of the points
  * fill_field does. The near kernel subtracts the same fixed-point w it was given, so for near
@@ -101,9 +103,9 @@ fn farWeightFixed(r: f32) -> u32 {
 
 /**
  * Part 1a: one thread per (point, plane of its box): the four corners of the point's rectangle
- * on that plane, into a difference array of planes (nx + 1) wide, so that a corner one past the
- * last column still has somewhere to go and every row's corners sum to zero. Only the points
- * whose box can reach the slab are visited: P.kStart .. P.kStart + P.kCount - 1.
+ * on that plane, into a difference array laid out like the field. A corner one past the last
+ * column or row is left out: nothing after it is summed. Only the points whose box can reach the
+ * slab are visited: P.kStart .. P.kStart + P.kCount - 1.
  */
 export const FIELD_BOXES_WGSL = COMMON + FIELD_FIXED + /* wgsl */ `
 @group(1) @binding(0) var<storage, read> points: array<vec4f>;
@@ -126,28 +128,21 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
     let y0 = by & 0xffffu; let y1 = (by >> 16u) + 1u;
     if (x0 >= x1 || y0 >= y1) { return; }
     let q = farWeightFixed(points[k].w);
-    let row = P.nx + 1u;
-    let base = (z - P.fz0) * P.ny * row;
+    let base = (z - P.fz0) * P.ny * P.nx;
     // Two's complement: adding 0 - q subtracts q, and the sums come out exact whatever the
     // partial sums do on the way.
-    atomicAdd(&diff[base + y0 * row + x0], q);
-    atomicAdd(&diff[base + y0 * row + x1], 0u - q);
+    atomicAdd(&diff[base + y0 * P.nx + x0], q);
+    if (x1 < P.nx) { atomicAdd(&diff[base + y0 * P.nx + x1], 0u - q); }
     if (y1 < P.ny) {
-        atomicAdd(&diff[base + y1 * row + x0], 0u - q);
-        atomicAdd(&diff[base + y1 * row + x1], q);
+        atomicAdd(&diff[base + y1 * P.nx + x0], 0u - q);
+        if (x1 < P.nx) { atomicAdd(&diff[base + y1 * P.nx + x1], q); }
     }
 }
 `;
 
-/**
- * Part 1b: one thread per column (x, plane). The difference array has been through an
- * exclusive scan as one long array (rows sum to zero, so that is a scan of each row), which
- * plus the difference itself is the sum along x. Summing that along y gives the boxes' total.
- */
+/** Part 1b: one thread per column (x, plane), summing the difference array along y in place. */
 export const FIELD_COLUMNS_WGSL = COMMON + /* wgsl */ `
-@group(1) @binding(0) var<storage, read> diff: array<u32>;
-@group(1) @binding(1) var<storage, read> scanned: array<u32>;
-@group(1) @binding(2) var<storage, read_write> field: array<f32>;
+@group(1) @binding(0) var<storage, read_write> diff: array<u32>;
 
 @compute @workgroup_size(${ITEM_WORKGROUP})
 fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u,
@@ -156,12 +151,88 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
     if (t >= P.nx * P.fzCount) { return; }
     let lz = t / P.nx;
     let ix = t - lz * P.nx;
-    let row = P.nx + 1u;
     var sum = 0u;
     for (var iy = 0u; iy < P.ny; iy++) {
-        let i = (lz * P.ny + iy) * row + ix;
-        sum += scanned[i] + diff[i];
-        field[((P.fieldFirst + lz) * P.ny + iy) * P.nx + ix] = -P.isoLevel + f32(bitcast<i32>(sum)) * P.fixedInv;
+        let i = (lz * P.ny + iy) * P.nx + ix;
+        sum += diff[i];
+        diff[i] = sum;
+    }
+}
+`;
+
+/** Workgroup size, and values per thread, of the row-sum kernel. */
+const ROW_THREADS = 256;
+const ROW_PER_THREAD = 4;
+
+/**
+ * Part 1c: rows (y, plane), a workgroup at a time: the column sums summed along x - a scan of
+ * the row in workgroup memory, a chunk of 1024 at a time - which is the boxes' total, written to
+ * the field as -isoLevel + total * 2^-bits.
+ *
+ * Each workgroup takes every FIELD_GROUPS-th row (WebGPU zeroes workgroup memory each time a
+ * workgroup starts, and Firefox does that with one thread, so starting one per row was costly
+ * there). Items for the dispatch are workgroups * 64, so that dispatch() makes that many.
+ */
+export const FIELD_ROWS_WGSL = COMMON + /* wgsl */ `
+@group(1) @binding(0) var<storage, read> sums: array<u32>;
+@group(1) @binding(1) var<storage, read_write> field: array<f32>;
+
+const THREADS = ${ROW_THREADS}u;
+const PER = ${ROW_PER_THREAD}u;
+const CHUNK = ${ROW_THREADS * ROW_PER_THREAD}u;
+var<workgroup> chunk: array<u32, CHUNK>;
+var<workgroup> part: array<u32, THREADS>;
+
+@compute @workgroup_size(${ROW_THREADS})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u,
+        @builtin(num_workgroups) nwg: vec3u) {
+    for (var row = wid.y * nwg.x + wid.x; row < P.ny * P.fzCount; row += nwg.x * nwg.y) {
+        sumRow(lid.x, row);
+    }
+}
+
+fn sumRow(lane: u32, row: u32) {
+    let lz = row / P.ny;
+    let iy = row - lz * P.ny;
+    let src = row * P.nx;
+    let dst = ((P.fieldFirst + lz) * P.ny + iy) * P.nx;
+    var carry = 0u;
+    for (var x0 = 0u; x0 < P.nx; x0 += CHUNK) {
+        // In coalesced, then each thread takes PER neighbours.
+        for (var k = 0u; k < PER; k++) {
+            let j = k * THREADS + lane;
+            var v = 0u;
+            if (x0 + j < P.nx) { v = sums[src + x0 + j]; }
+            chunk[j] = v;
+        }
+        workgroupBarrier();
+        var own: array<u32, ${ROW_PER_THREAD}>;
+        var s = 0u;
+        for (var k = 0u; k < PER; k++) {
+            s += chunk[lane * PER + k];
+            own[k] = s;
+        }
+        part[lane] = s;
+        for (var step = 1u; step < THREADS; step = step << 1u) {
+            workgroupBarrier();
+            var v = part[lane];
+            if (lane >= step) { v += part[lane - step]; }
+            workgroupBarrier();
+            part[lane] = v;
+        }
+        workgroupBarrier();
+        var before = carry;
+        if (lane > 0u) { before += part[lane - 1u]; }
+        for (var k = 0u; k < PER; k++) { chunk[lane * PER + k] = before + own[k]; }
+        carry += part[THREADS - 1u];
+        workgroupBarrier();
+        for (var k = 0u; k < PER; k++) {
+            let j = k * THREADS + lane;
+            if (x0 + j < P.nx) {
+                field[dst + x0 + j] = -P.isoLevel + f32(bitcast<i32>(chunk[j])) * P.fixedInv;
+            }
+        }
+        workgroupBarrier();
     }
 }
 `;
@@ -176,7 +247,8 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
  * the same order. A brick no point comes near - most of the box around a large structure - stops
  * after the count. One with more points than fit is done in rounds.
  *
- * Items for the dispatch are bricks * 64, so that dispatch() makes one workgroup per brick.
+ * Each workgroup takes every n-th brick, n being the number of workgroups (see FIELD_ROWS_WGSL
+ * for why). Items for the dispatch are workgroups * 64, so that dispatch() makes that many.
  */
 export const FIELD_NEAR_WGSL = COMMON + FIELD_FIXED + /* wgsl */ `
 @group(1) @binding(0) var<storage, read> points: array<vec4f>;
@@ -202,12 +274,18 @@ fn nearBrick(p: vec4f, lo: vec3f, hi: vec3f) -> bool {
 @compute @workgroup_size(64)
 fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u,
         @builtin(num_workgroups) nwg: vec3u) {
-    // Everything up to the barriers depends on the workgroup only, so it is uniform.
-    let brick = wid.y * nwg.x + wid.x;
     let bricksX = (P.nx + BRICK - 1u) / BRICK;
     let bricksY = (P.ny + BRICK - 1u) / BRICK;
     let bricksZ = (P.fzCount + BRICK - 1u) / BRICK;
-    if (brick >= bricksX * bricksY * bricksZ) { return; }
+    for (var brick = wid.y * nwg.x + wid.x; brick < bricksX * bricksY * bricksZ; brick += nwg.x * nwg.y) {
+        nearBrickField(lid.x, brick, bricksX, bricksY);
+    }
+}
+
+fn nearBrickField(lane: u32, brick: u32, bricksX: u32, bricksY: u32) {
+    // Everything up to the barriers depends on the workgroup only, so it is uniform.
+    // The previous brick's last reads of workgroup memory are done.
+    workgroupBarrier();
     let bz = brick / (bricksX * bricksY);
     let brem = brick - bz * bricksX * bricksY;
     let by = brem / bricksX;
@@ -229,18 +307,18 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
 
     // 1. Count the points near the brick, in this thread's share of the bins.
     var mine = 0u;
-    for (var t = lid.x; t < nbins; t += 64u) {
-        let tz = t / (nbx * nby);
-        let tr = t - tz * nbx * nby;
+    for (var bt = lane; bt < nbins; bt += 64u) {
+        let tz = bt / (nbx * nby);
+        let tr = bt - tz * nbx * nby;
         let ty = tr / nbx;
         let b = binIndex(bx0 + tr - ty * nbx, by0 + ty, bz0 + tz);
         for (var k = binStart[b]; k < binStart[b + 1u]; k++) {
             if (nearBrick(points[k], lo, hi)) { mine++; }
         }
     }
-    threadOffset[lid.x] = mine;
+    threadOffset[lane] = mine;
     workgroupBarrier();
-    if (lid.x == 0u) {
+    if (lane == 0u) {
         var running = 0u;
         for (var i = 0u; i < 64u; i++) {
             let c = threadOffset[i];
@@ -252,12 +330,12 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
     let total = workgroupUniformLoad(&candTotal);
     // Nothing near: the boxes' total is the field.
     if (total == 0u) { return; }
-    let first = threadOffset[lid.x];
+    let first = threadOffset[lane];
 
     // This thread's grid point.
-    let ix = ix0 + (lid.x % BRICK);
-    let iy = iy0 + ((lid.x / BRICK) % BRICK);
-    let lz = lz0 + lid.x / (BRICK * BRICK);
+    let ix = ix0 + (lane % BRICK);
+    let iy = iy0 + ((lane / BRICK) % BRICK);
+    let lz = lz0 + lane / (BRICK * BRICK);
     let valid = ix < P.nx && iy < P.ny && lz < P.fzCount;
     let index = ((P.fieldFirst + lz) * P.ny + iy) * P.nx + ix;
     // float x = min_x + ix * cell_x;
@@ -270,9 +348,9 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
     // 2. In rounds of CAP: gather the points into workgroup memory, then each voxel uses them.
     for (var r0 = 0u; r0 < total; r0 += CAP) {
         var pos = first;
-        for (var t = lid.x; t < nbins; t += 64u) {
-            let tz = t / (nbx * nby);
-            let tr = t - tz * nbx * nby;
+        for (var bt = lane; bt < nbins; bt += 64u) {
+            let tz = bt / (nbx * nby);
+            let tr = bt - tz * nbx * nby;
             let ty = tr / nbx;
             let b = binIndex(bx0 + tr - ty * nbx, by0 + ty, bz0 + tz);
             for (var k = binStart[b]; k < binStart[b + 1u]; k++) {
@@ -531,7 +609,10 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
         let point = ((lz + e.z) * P.ny + (cy + e.y)) * P.nx + (cx + e.x);
         let mask = edgeMask[point];
         let rank = countOneBits(mask & ((1u << e.w) - 1u));
-        indices[base + i] = P.vertexBase + vertexOffset[point] + rank;
+        // Moorhen draws the triangles wound the other way round: (a, c, b).
+        var slot = i;
+        if (P.pickable != 0u && i % 3u != 0u) { slot = i + 3u - 2u * (i % 3u); }
+        indices[base + slot] = P.vertexBase + vertexOffset[point] + rank;
     }
 }
 `;
@@ -611,7 +692,9 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
     }
     if (totFrac > 1e-4) { colour = colour * (1.0 / totFrac); }
     let n = vec3f(fdx - f, fdy - f, fdz - f);
-    let normal = n / length(n);
+    var normal = n / length(n);
+    // smooth_mesh's normals point into the surface; Moorhen draws them reversed.
+    if (P.pickable != 0u) { normal = -normal; }
     normals[3u * i] = normal.x;
     normals[3u * i + 1u] = normal.y;
     normals[3u * i + 2u] = normal.z;
@@ -627,7 +710,9 @@ export const INFLUENCES_WGSL = COMMON + /* wgsl */ `
 @group(1) @binding(2) var<storage, read> binStart: array<u32>;
 @group(1) @binding(3) var<storage, read> positions: array<f32>;
 @group(1) @binding(4) var<storage, read> influenceOffset: array<u32>;
-@group(1) @binding(5) var<storage, read> influenceCount: array<u32>;
+// In: how many influences each vertex has. Out: the END of its run in the whole mesh's list, as
+// DrawMoorhenMetaBalls packs it.
+@group(1) @binding(5) var<storage, read_write> influenceCount: array<u32>;
 @group(1) @binding(6) var<storage, read_write> influencePoints: array<u32>;
 @group(1) @binding(7) var<storage, read_write> influenceWeights: array<f32>;
 ${SMOOTH_COMMON}
@@ -641,6 +726,7 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
     // The count pass decided how many slots this vertex has. Recomputing the same test should
     // agree with it, but the two are separate shaders, so never write past what it allotted.
     let end = slot + influenceCount[i];
+    influenceCount[i] = P.influenceBase + end;
     let c = P.cutoff;
     let bx0 = binCoord(v.x - c - 0.01, P.binX, P.binNx); let bx1 = binCoord(v.x + c + 0.01, P.binX, P.binNx);
     let by0 = binCoord(v.y - c - 0.01, P.binY, P.binNy); let by1 = binCoord(v.y + c + 0.01, P.binY, P.binNy);

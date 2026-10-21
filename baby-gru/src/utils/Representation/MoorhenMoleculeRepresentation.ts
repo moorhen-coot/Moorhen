@@ -1830,7 +1830,7 @@ export class MoleculeRepresentation {
         const spheresMs = performance.now() - started;
         const { input, pickPoints } = metaballsInputFromSpheres(response.data.result.result as never, METABALLS_RADIUS);
         const mesh = await generator.generate(input, {
-            gridSize: METABALLS_GRID_SIZE, isoLevel: METABALLS_ISO_LEVEL, splitField: gpuMetaBallsSetting.splitField,
+            gridSize: METABALLS_GRID_SIZE, isoLevel: METABALLS_ISO_LEVEL, splitField: gpuMetaBallsSetting.splitField, pickable: true,
         });
         const grid = mesh.grid ? mesh.grid.n.join("x") : "none";
         const t = mesh.timings;
