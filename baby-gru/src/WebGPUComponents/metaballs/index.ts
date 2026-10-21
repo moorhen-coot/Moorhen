@@ -3,7 +3,7 @@
  *
  * Off by default: it is a test path, behind a dev-menu toggle, until it has been tried on real
  * structures in real browsers. When it is on and WebGPU is available, getMetaBallBuffers uses it;
- * otherwise, or if it fails, Coot's DrawMoorhenMetaBalls is used as before.
+ * otherwise, or if it fails, Moorhen's own C++ (DrawMoorhenMetaBalls, in the WASM) is used as before.
  */
 import { GpuMetaBalls } from "./gpuMetaBalls";
 

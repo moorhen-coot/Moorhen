@@ -122,7 +122,8 @@ class Chunks<T extends Float32Array | Uint32Array> {
 class PassTimer {
     private static readonly CAPACITY = 1024;
     private readonly querySet: GPUQuerySet;
-    private readonly labels: string[] = [];
+    private labels: string[] = [];
+    private readonly totals: Record<string, number> = {};
     constructor(private readonly device: GPUDevice) {
         this.querySet = device.createQuerySet({ type: "timestamp", count: PassTimer.CAPACITY });
     }
@@ -133,11 +134,17 @@ class PassTimer {
         this.labels.push(label);
         return { querySet: this.querySet, beginningOfPassWriteIndex: i, endOfPassWriteIndex: i + 1 };
     }
-    /** GPU ms per label. */
-    async read(): Promise<Record<string, number>> {
+    /** Over half full: a slab has roughly 30 passes, so empty it before the next one. */
+    get needsDrain(): boolean {
+        return this.labels.length * 4 > PassTimer.CAPACITY;
+    }
+    /**
+     * Add what has been recorded to the totals and start again from the first query. Only call
+     * when every pass recorded so far has finished.
+     */
+    async drain(): Promise<void> {
         const count = this.labels.length * 2;
-        const totals: Record<string, number> = {};
-        if (count === 0) { this.querySet.destroy(); return totals; }
+        if (count === 0) return;
         const resolve = this.device.createBuffer({ size: count * 8, usage: 0x0200 /* QUERY_RESOLVE */ | COPY_SRC });
         const read = this.device.createBuffer({ size: count * 8, usage: MAP_READ | COPY_DST });
         const encoder = this.device.createCommandEncoder();
@@ -148,13 +155,21 @@ class PassTimer {
         const times = new BigUint64Array(read.getMappedRange());
         this.labels.forEach((label, k) => {
             const ns = Number(times[2 * k + 1] - times[2 * k]);
-            totals[label] = (totals[label] ?? 0) + (ns > 0 ? ns / 1e6 : 0);
+            this.totals[label] = (this.totals[label] ?? 0) + (ns > 0 ? ns / 1e6 : 0);
         });
         read.unmap();
         read.destroy();
         resolve.destroy();
-        this.querySet.destroy();
-        return totals;
+        this.labels = [];
+    }
+    /** GPU ms per label over the whole run; the timer is finished with afterwards. */
+    async read(): Promise<Record<string, number>> {
+        try {
+            await this.drain();
+            return this.totals;
+        } finally {
+            this.querySet.destroy();
+        }
     }
 }
 
@@ -296,6 +311,8 @@ export class GpuMetaBalls {
         const since = () => { const now = performance.now(); const d = now - mark; mark = now; return d; };
         try {
             for (let zs = 0; zs < nz; zs += depth) {
+                // Everything submitted so far has been waited for, so the timer can be emptied.
+                if (this.timer?.needsDrain) await this.timer.drain();
                 slabs++;
                 const ze = Math.min(zs + depth, nz);
                 const fieldPlanes = Math.min(ze + 1, nz - 1) - zs + 1;
