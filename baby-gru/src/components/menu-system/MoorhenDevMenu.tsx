@@ -196,7 +196,7 @@ export const MoorhenDevMenu = () => {
     const [countingDraws, setCountingDraws] = useState<boolean>(renderStats.enabled);
     const [syncingGpu, setSyncingGpu] = useState<boolean>(renderStats.syncGpu);
     const [gpuMetaBalls, setGpuMetaBalls] = useState<boolean>(gpuMetaBallsSetting.enabled);
-    const [tiledField, setTiledField] = useState<boolean>(gpuMetaBallsSetting.tiledField);
+    const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
     const glCtx = useSelector((state: RootState) => state.glRef.glCtx);
     const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately);
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
@@ -518,11 +518,11 @@ export const MoorhenDevMenu = () => {
             />
             <MoorhenToggle
                 type="switch"
-                checked={tiledField}
-                label="GPU MetaBalls: tiled field kernel (off = one thread per grid point)"
+                checked={splitField}
+                label="GPU MetaBalls: split field (off = the plain sum, one thread per grid point)"
                 onChange={() => {
-                    gpuMetaBallsSetting.tiledField = !tiledField;
-                    setTiledField(!tiledField);
+                    gpuMetaBallsSetting.splitField = !splitField;
+                    setSplitField(!splitField);
                 }}
             />
             <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>

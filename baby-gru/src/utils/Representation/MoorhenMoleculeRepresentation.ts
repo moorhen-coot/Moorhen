@@ -1830,14 +1830,14 @@ export class MoleculeRepresentation {
         const spheresMs = performance.now() - started;
         const { input, pickPoints } = metaballsInputFromSpheres(response.data.result.result as never, METABALLS_RADIUS);
         const mesh = await generator.generate(input, {
-            gridSize: METABALLS_GRID_SIZE, isoLevel: METABALLS_ISO_LEVEL, tiledField: gpuMetaBallsSetting.tiledField,
+            gridSize: METABALLS_GRID_SIZE, isoLevel: METABALLS_ISO_LEVEL, splitField: gpuMetaBallsSetting.splitField,
         });
         const grid = mesh.grid ? mesh.grid.n.join("x") : "none";
         const t = mesh.timings;
         const other = t.totalMs - t.setupMs - t.countWaitMs - t.emitWaitMs - t.readbackWaitMs - t.assembleMs;
         console.log(`GPU MetaBalls: ${pickPoints.length} points, grid ${grid}, ${mesh.positions.length / 3} vertices, ` +
             `${mesh.indices.length / 3} triangles; spheres from Coot ${spheresMs.toFixed(0)} ms, ` +
-            `GPU ${t.totalMs.toFixed(0)} ms in ${t.slabs} slab(s), ${gpuMetaBallsSetting.tiledField ? "tiled" : "direct"} field: ` +
+            `GPU ${t.totalMs.toFixed(0)} ms in ${t.slabs} slab(s), ${t.field ?? "no"} field: ` +
             `setup ${t.setupMs.toFixed(0)}, ` +
             `count ${t.countWaitMs.toFixed(0)}, emit ${t.emitWaitMs.toFixed(0)}, readback ${t.readbackWaitMs.toFixed(0)}, ` +
             `assemble ${t.assembleMs.toFixed(0)}, other ${other.toFixed(0)}` +

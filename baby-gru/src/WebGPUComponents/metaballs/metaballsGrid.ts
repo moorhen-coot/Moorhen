@@ -113,8 +113,9 @@ export function metaballRadius(radius: number, size: number): number {
  *
  * The GPU path works through the grid a slab of planes at a time, so its memory is bounded by
  * the slab rather than by the molecule. Each slab holds two planes beyond its own (the next
- * slab's first plane and the one after, for the edges between them), which is the overhead the
- * minimum of 8 keeps small.
+ * slab's first plane and the one after, for the edges between them). Their field is handed on to
+ * the next slab rather than worked out again, so the cost of those planes is memory, and the
+ * minimum of 8 keeps that small.
  */
 export function slabDepth(grid: MetaBallsGrid, maxSlabPoints: number): number {
     const plane = grid.n[0] * grid.n[1];
@@ -145,4 +146,74 @@ export function pointIndexBoxes(points: Float32Array, grid: MetaBallsGrid, order
         }
     }
     return boxes;
+}
+
+/** The most grid planes any point's index box spans (pointIndexBoxes' layout). */
+export function boxZSpan(boxes: Uint32Array): number {
+    let span = 0;
+    for (let k = 2; k < boxes.length; k += 3) {
+        const lo = boxes[k] & 0xffff, hi = boxes[k] >>> 16;
+        if (hi >= lo) span = Math.max(span, hi - lo + 1);
+    }
+    return span;
+}
+
+/**
+ * The range of binned points ([start, end) in `bins.order` order) that can have a box reaching
+ * planes z0 .. z1 - 1. Bins are numbered z-major, so that is one run. Generous at the ends: the
+ * shader tests each point's box exactly.
+ */
+export function slabPointRange(bins: PointBins, grid: MetaBallsGrid, z0: number, z1: number): [number, number] {
+    const reach = METABALLS_FIELD_CUTOFF + 2 * grid.cell;
+    const zLo = grid.min[2] + z0 * grid.cell - reach;
+    const zHi = grid.min[2] + (z1 - 1) * grid.cell + reach;
+    const [dx, dy, dz] = bins.dims;
+    const b0 = Math.min(dz - 1, Math.max(0, Math.floor((zLo - bins.origin[2]) / bins.size)));
+    const b1 = Math.min(dz - 1, Math.max(0, Math.floor((zHi - bins.origin[2]) / bins.size)));
+    return [bins.start[b0 * dx * dy], bins.start[(b1 + 1) * dx * dy]];
+}
+
+/**
+ * Fractional bits for the fixed-point box sums of the split field: as many as possible (up to
+ * 28) while the largest sum any voxel could have still fits a signed 32-bit integer with a
+ * factor of two to spare.
+ *
+ * The bound: a point's box only reaches voxels within cutoff + cell of it on each axis, so a
+ * voxel's points lie in the bins within that reach, plus one, of its own (7 x 7 x 7 with the
+ * usual bins, (cutoff + cell) / 2 wide);
+ * the largest such window sum of rr / 30 is at least every voxel's total. Usually 26-28 bits,
+ * which rounds each point's w by at most 2^-27..2^-29 against the float32 field's ~1e-7.
+ *
+ * Returns fewer than 20 only for a pile of points far denser than any structure; the caller
+ * then uses the plain field kernel instead.
+ */
+export function fieldFixedPointBits(points: Float32Array, bins: PointBins, cell: number): number {
+    const [dx, dy, dz] = bins.dims;
+    const reach = Math.ceil((METABALLS_FIELD_CUTOFF + cell) / bins.size) + 1;
+    let sums = new Float64Array(dx * dy * dz);
+    for (let b = 0; b < sums.length; b++) {
+        for (let k = bins.start[b]; k < bins.start[b + 1]; k++) {
+            const r = points[4 * bins.order[k] + 3];
+            sums[b] += (r * r) / 30;
+        }
+    }
+    // Window sums along each axis in turn, from running totals.
+    const window = (length: number, stride: number, lines: (emit: (base: number) => void) => void) => {
+        const out = new Float64Array(sums.length);
+        const run = new Float64Array(length + 1);
+        lines(base => {
+            for (let i = 0; i < length; i++) run[i + 1] = run[i] + sums[base + i * stride];
+            for (let i = 0; i < length; i++) {
+                out[base + i * stride] = run[Math.min(length, i + reach + 1)] - run[Math.max(0, i - reach)];
+            }
+        });
+        sums = out;
+    };
+    window(dx, 1, emit => { for (let z = 0; z < dz; z++) for (let y = 0; y < dy; y++) emit((z * dy + y) * dx); });
+    window(dy, dx, emit => { for (let z = 0; z < dz; z++) for (let x = 0; x < dx; x++) emit(z * dy * dx + x); });
+    window(dz, dx * dy, emit => { for (let y = 0; y < dy; y++) for (let x = 0; x < dx; x++) emit(y * dx + x); });
+    let most = 0;
+    for (let b = 0; b < sums.length; b++) most = Math.max(most, sums[b]);
+    if (most <= 0) return 28;
+    return Math.max(0, Math.min(28, Math.floor(Math.log2(2 ** 30 / most))));
 }

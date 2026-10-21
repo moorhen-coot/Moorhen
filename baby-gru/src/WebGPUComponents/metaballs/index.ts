@@ -20,7 +20,7 @@ export const METABALLS_RADIUS = 0.67;
 export const METABALLS_ISO_LEVEL = 1.8;
 
 /** The dev-menu switch. Read when a MetaBalls representation is (re)built. */
-export const gpuMetaBallsSetting = { enabled: false, tiledField: true };
+export const gpuMetaBallsSetting = { enabled: false, splitField: true };
 
 let shared: Promise<GpuMetaBalls | null> | null = null;
 

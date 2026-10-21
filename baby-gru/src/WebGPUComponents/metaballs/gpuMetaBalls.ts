@@ -17,10 +17,13 @@
  */
 import { GpuScan, dispatchSize } from "./gpuScan";
 import { MC_TRIANGLE_TABLE } from "./mcTable";
-import { METABALLS_FIELD_CUTOFF, MetaBallsGrid, binPoints, metaballsGrid, pointIndexBoxes, slabDepth } from "./metaballsGrid";
 import {
-    COUNT_TRIANGLES_WGSL, COUNT_VERTICES_WGSL, EMIT_TRIANGLES_WGSL, EMIT_VERTICES_WGSL, FIELD_BRICK, FIELD_DIRECT_WGSL, FIELD_WGSL,
-    INFLUENCES_WGSL, ITEM_WORKGROUP, SMOOTH_WGSL, TOTALS_WGSL,
+    METABALLS_FIELD_CUTOFF, MetaBallsGrid, binPoints, boxZSpan, fieldFixedPointBits, metaballsGrid, pointIndexBoxes, slabDepth,
+    slabPointRange,
+} from "./metaballsGrid";
+import {
+    COUNT_TRIANGLES_WGSL, COUNT_VERTICES_WGSL, EMIT_TRIANGLES_WGSL, EMIT_VERTICES_WGSL, FIELD_BOXES_WGSL, FIELD_BRICK, FIELD_COLUMNS_WGSL,
+    FIELD_DIRECT_WGSL, FIELD_NEAR_WGSL, INFLUENCES_WGSL, ITEM_WORKGROUP, SMOOTH_WGSL, TOTALS_WGSL,
 } from "./metaballsShaders";
 
 // Spec values; the DOM typings have the WebGPU interfaces but not these globals.
@@ -39,14 +42,17 @@ export interface MetaBallsOptions {
     isoLevel: number;
     /** Also return each vertex's grid edge, for comparing with the C++ mesh. */
     withKeys?: boolean;
-    /** Grid points per slab; bounds GPU memory at about 16 bytes per point. Default 8M. */
+    /**
+     * Grid points per slab; GPU memory is about 25 bytes per point. Default 16M (~400 MB), and
+     * never more than the device's largest storage buffer allows.
+     */
     maxSlabPoints?: number;
     /**
-     * Which field kernel: the tiled one (default), which shares each brick's atoms through
-     * workgroup memory, or the direct one, a thread per point. Same field either way, summed in a
-     * different order.
+     * Which field calculation: split (default) into box sums plus a correction from the points
+     * within 3.46 A (see FIELD_BOXES_WGSL), or the plain one, every point's full term at every
+     * voxel of its box, a thread per voxel. The same field to within float rounding.
      */
-    tiledField?: boolean;
+    splitField?: boolean;
 }
 
 /** What GenerateMeshFromPoints returns, in typed arrays, minus the parts nothing reads. */
@@ -73,6 +79,8 @@ export interface MetaBallsMesh {
 export interface MetaBallsTimings {
     totalMs: number;
     slabs: number;
+    /** Which field calculation ran (see MetaBallsOptions.splitField). */
+    field?: "split" | "plain";
     /** Grid, binning, uploads and buffer creation. */
     setupMs: number;
     /** Field, crossings, triangle counts and their scans, until the totals are back. */
@@ -173,7 +181,7 @@ class PassTimer {
     }
 }
 
-type Kernel = "field" | "fieldDirect" | "countVertices" | "countTriangles" | "emitVertices" | "emitTriangles"
+type Kernel = "fieldBoxes" | "fieldColumns" | "fieldNear" | "fieldDirect" | "countVertices" | "countTriangles" | "emitVertices" | "emitTriangles"
     | "smooth" | "influences" | "totalsVT" | "totalsI";
 
 export class GpuMetaBalls {
@@ -194,7 +202,9 @@ export class GpuMetaBalls {
     static async create(device: GPUDevice): Promise<GpuMetaBalls> {
         const started = performance.now();
         const kernels: [Kernel, string, string][] = [
-            ["field", FIELD_WGSL, "main"],
+            ["fieldBoxes", FIELD_BOXES_WGSL, "main"],
+            ["fieldColumns", FIELD_COLUMNS_WGSL, "main"],
+            ["fieldNear", FIELD_NEAR_WGSL, "main"],
             ["fieldDirect", FIELD_DIRECT_WGSL, "main"],
             ["countVertices", COUNT_VERTICES_WGSL, "main"],
             ["countTriangles", COUNT_TRIANGLES_WGSL, "main"],
@@ -277,19 +287,32 @@ export class GpuMetaBalls {
         const colours = keep(this.upload("colours", sortedColours, STORAGE));
         const pointIds = keep(this.upload("point ids", bins.order, STORAGE));
         const binStart = keep(this.upload("bin start", bins.start, STORAGE));
-        const boxes = keep(this.upload("point boxes", pointIndexBoxes(input.points, grid, bins.order), STORAGE));
+        const pointBoxes = pointIndexBoxes(input.points, grid, bins.order);
+        const boxes = keep(this.upload("point boxes", pointBoxes, STORAGE));
+        const zSpan = boxZSpan(pointBoxes);
+        // Too dense for the fixed-point box sums to keep their precision (no real structure is):
+        // the plain field instead.
+        const fixedBits = fieldFixedPointBits(input.points, bins, grid.cell);
+        const split = (options.splitField ?? true) && fixedBits >= 20;
 
-        const depth = slabDepth(grid, options.maxSlabPoints ?? 8_000_000);
+        // The box pass's difference array is a row wider than the grid; it lives in the vertex
+        // count and offset buffers, which are free until the field is done.
+        const rowPoints = (nx + 1) * ny;
+        const largestBuffer = Math.min(this.device.limits.maxStorageBufferBindingSize, this.device.limits.maxBufferSize);
+        const budget = Math.min(options.maxSlabPoints ?? 16_000_000, Math.floor((largestBuffer / 4) * plane / rowPoints));
+        const depth = slabDepth(grid, budget);
         const slabPlanes = depth + 2;
-        const field = keep(this.storage("field", slabPlanes * plane * 4));
+        const field = keep(this.storage("field", slabPlanes * plane * 4, COPY_SRC | COPY_DST));
+        // The last two field planes of a slab are the first two of the next.
+        const carry = keep(this.storage("field carry", 2 * plane * 4, COPY_SRC | COPY_DST));
         const edgeMask = keep(this.storage("edge mask", slabPlanes * plane * 4));
-        const vertexCount = keep(this.storage("vertex count", slabPlanes * plane * 4));
-        const vertexOffset = keep(this.storage("vertex offset", slabPlanes * plane * 4));
+        const vertexCount = keep(this.storage("vertex count", slabPlanes * rowPoints * 4, COPY_DST));
+        const vertexOffset = keep(this.storage("vertex offset", slabPlanes * rowPoints * 4));
         const triangleCount = keep(this.storage("triangle count", depth * cellPlane * 4));
         const triangleOffset = keep(this.storage("triangle offset", depth * cellPlane * 4));
         const totals = keep(this.storage("totals", 16, COPY_SRC));
         const totalsRead = keep(this.device.createBuffer({ label: "totals readback", size: 16, usage: MAP_READ | COPY_DST }));
-        const params = keep(this.device.createBuffer({ label: "metaballs params", size: 24 * 4, usage: UNIFORM | COPY_DST }));
+        const params = keep(this.device.createBuffer({ label: "metaballs params", size: 32 * 4, usage: UNIFORM | COPY_DST }));
         const setupMs = performance.now() - started;
 
         const positionsOut = new Chunks(n => new Float32Array(n));
@@ -302,6 +325,7 @@ export class GpuMetaBalls {
         const keysOut = options.withKeys ? new Chunks(n => new Uint32Array(n)) : null;
         this.timer = this.device.features.has("timestamp-query") ? new PassTimer(this.device) : null;
         const scanTimestamps = this.timer ? (label: string) => this.timer.writes(label) : undefined;
+        const fieldScanTimestamps = this.timer ? () => this.timer.writes("fieldScan") : undefined;
 
         let vertexBase = 0;
         let influenceBase = 0;
@@ -319,8 +343,13 @@ export class GpuMetaBalls {
                 const countPlanes = Math.min(ze, nz - 1) - zs + 1;
                 const cellPlanes = Math.max(0, Math.min(ze, nz - 1) - zs);
                 const ownedPlanes = ze - zs;
+                // The planes whose field this slab works out; the two before come from the last.
+                const fieldFirst = zs > 0 ? 2 : 0;
+                const fz0 = zs + fieldFirst;
+                const fzCount = Math.max(0, fieldPlanes - fieldFirst);
+                const [kStart, kEnd] = fzCount > 0 ? slabPointRange(bins, grid, fz0, fz0 + fzCount) : [0, 0];
                 const writeParams = (vertexCountForSlab: number) => {
-                    const buf = new ArrayBuffer(24 * 4);
+                    const buf = new ArrayBuffer(32 * 4);
                     const fl = new Float32Array(buf);
                     const u = new Uint32Array(buf);
                     fl.set([grid.min[0], grid.min[1], grid.min[2], grid.cell], 0);
@@ -328,19 +357,29 @@ export class GpuMetaBalls {
                     fl.set([bins.origin[0], bins.origin[1], bins.origin[2], bins.size], 8);
                     u.set(bins.dims, 12); fl[15] = METABALLS_FIELD_CUTOFF;
                     u.set([zs, fieldPlanes, countPlanes, cellPlanes, ownedPlanes, vertexBase, vertexCountForSlab, pointCount], 16);
+                    u.set([fz0, fzCount, fieldFirst, kStart, kEnd - kStart, zSpan], 24);
+                    fl[30] = 2 ** fixedBits; fl[31] = 2 ** -fixedBits;
                     this.device.queue.writeBuffer(params, 0, buf);
                 };
                 writeParams(0);
 
                 // 1. Field, crossings, triangle counts, offsets; read back how many of each.
                 let encoder = this.device.createCommandEncoder({ label: "metaballs slab count" });
-                if (options.tiledField ?? true) {
-                    // One workgroup per brick of the slab's field planes.
-                    const bricks = Math.ceil(nx / FIELD_BRICK) * Math.ceil(ny / FIELD_BRICK) * Math.ceil(fieldPlanes / FIELD_BRICK);
-                    this.dispatch(encoder, "field", params, [points, binStart, field, boxes], bricks * ITEM_WORKGROUP);
-                } else {
-                    this.dispatch(encoder, "fieldDirect", params, [points, binStart, field, boxes], fieldPlanes * plane);
+                if (fieldFirst > 0) encoder.copyBufferToBuffer(carry, 0, field, 0, 2 * plane * 4);
+                if (fzCount > 0 && split) {
+                    // Boxes: corners into the difference array, summed along x by one long scan
+                    // and along y per column, then the near points' corrections, one workgroup
+                    // per brick.
+                    encoder.clearBuffer(vertexCount, 0, fzCount * rowPoints * 4);
+                    this.dispatch(encoder, "fieldBoxes", params, [points, boxes, vertexCount], (kEnd - kStart) * zSpan);
+                    this.scan.encode(encoder, vertexCount, vertexOffset, fzCount * rowPoints, 0, fieldScanTimestamps);
+                    this.dispatch(encoder, "fieldColumns", params, [vertexCount, vertexOffset, field], nx * fzCount);
+                    const bricks = Math.ceil(nx / FIELD_BRICK) * Math.ceil(ny / FIELD_BRICK) * Math.ceil(fzCount / FIELD_BRICK);
+                    this.dispatch(encoder, "fieldNear", params, [points, binStart, field], bricks * ITEM_WORKGROUP);
+                } else if (fzCount > 0) {
+                    this.dispatch(encoder, "fieldDirect", params, [points, binStart, field, boxes], fzCount * plane);
                 }
+                if (ze < nz) encoder.copyBufferToBuffer(field, depth * plane * 4, carry, 0, 2 * plane * 4);
                 this.dispatch(encoder, "countVertices", params, [field, edgeMask, vertexCount], countPlanes * plane);
                 if (cellPlanes > 0) {
                     this.dispatch(encoder, "countTriangles", params, [field, this.table, triangleCount], cellPlanes * cellPlane);
@@ -457,7 +496,7 @@ export class GpuMetaBalls {
         this.timer = null;
         return {
             ...result,
-            timings: { totalMs: performance.now() - started, slabs, setupMs, countWaitMs, emitWaitMs, readbackWaitMs, assembleMs, gpuMs },
+            timings: { totalMs: performance.now() - started, slabs, field: split ? "split" : "plain", setupMs, countWaitMs, emitWaitMs, readbackWaitMs, assembleMs, gpuMs },
         };
     }
 

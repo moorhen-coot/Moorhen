@@ -13,7 +13,10 @@ import { describe, expect, it } from "@jest/globals";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { MC_TRIANGLE_TABLE } from "../../src/WebGPUComponents/metaballs/mcTable";
-import { binPoints, metaballRadius, metaballsGrid, slabDepth } from "../../src/WebGPUComponents/metaballs/metaballsGrid";
+import {
+    METABALLS_FIELD_CUTOFF, binPoints, boxZSpan, fieldFixedPointBits, metaballRadius, metaballsGrid, pointIndexBoxes, slabDepth,
+    slabPointRange,
+} from "../../src/WebGPUComponents/metaballs/metaballsGrid";
 import { metaballsInputFromSpheres, metaballsMeshData } from "../../src/WebGPUComponents/metaballs/metaballsMeshData";
 import type { MetaBallsMesh } from "../../src/WebGPUComponents/metaballs/gpuMetaBalls";
 
@@ -132,5 +135,102 @@ describe("to and from Coot's shapes", () => {
         expect(data.vert_tri[0][0]).toBe(mesh.positions);
         expect(data.pick_info.influence_index_offsets).toBe(mesh.influenceEnds);
         expect(data.pick_info.pick_points).toEqual([[1, 2, 3]]);
+    });
+});
+
+describe("the split field", () => {
+    const f = Math.fround;
+    const points = points1df7();
+    const grid = metaballsGrid(points, 0.2, 1.8);
+    const bins = binPoints(points, grid, (METABALLS_FIELD_CUTOFF + grid.cell) / 2);
+    const boxes = pointIndexBoxes(points, grid, bins.order);
+    const count = points.length / 4;
+    const box = (k: number, a: number) => [boxes[3 * k + a] & 0xffff, boxes[3 * k + a] >>> 16];
+    const coord = (i: number, a: number) => f(grid.min[a] + f(i * grid.cell));
+    const smoothstep = (v: number) => { const t = Math.min(1, Math.max(0, f(v / 12))); return f(f(t * t) * f(3 - f(2 * t))); };
+    // What fill_field adds for the k-th binned point at a voxel, or null outside its box.
+    const term = (k: number, v: number[]) => {
+        const i = bins.order[k];
+        const d = [0, 1, 2].map(a => f(coord(v[a], a) - points[4 * i + a]));
+        const d2 = f(f(f(d[0] * d[0]) + f(d[1] * d[1])) + f(d[2] * d[2]));
+        return { d2, value: d2 < 1e-6 ? 0 : f(f(points[4 * i + 3] * points[4 * i + 3]) * f(1 / f(smoothstep(d2) * 30))) };
+    };
+    const inBox = (k: number, v: number[]) => [0, 1, 2].every(a => v[a] >= box(k, a)[0] && v[a] <= box(k, a)[1]);
+
+    it("finds every point whose box reaches a run of planes", () => {
+        expect(boxZSpan(boxes)).toBe(51);
+        for (const [z0, z1] of [[0, 10], [100, 120], [grid.n[2] - 5, grid.n[2]]]) {
+            const [start, end] = slabPointRange(bins, grid, z0, z1);
+            for (let k = 0; k < count; k++) {
+                const [lo, hi] = box(k, 2);
+                if (lo < z1 && hi >= z0) {
+                    expect(k).toBeGreaterThanOrEqual(start);
+                    expect(k).toBeLessThan(end);
+                }
+            }
+        }
+    });
+
+    it("chooses a fixed-point scale that no voxel's box sum can overflow", () => {
+        const bits = fieldFixedPointBits(points, bins, grid.cell);
+        expect(bits).toBeGreaterThanOrEqual(20);
+        expect(bits).toBeLessThanOrEqual(28);
+        // The fullest voxels are inside the protein; sample a line through the middle.
+        let most = 0;
+        const mid = grid.n.map(n => Math.floor(n / 2));
+        for (let x = 0; x < grid.n[0]; x += 2) {
+            let sum = 0;
+            for (let k = 0; k < count; k++) {
+                const r = points[4 * bins.order[k] + 3];
+                if (inBox(k, [x, mid[1], mid[2]])) sum += (r * r) / 30;
+            }
+            most = Math.max(most, sum);
+        }
+        expect(most).toBeGreaterThan(0);
+        expect(most * 2 ** bits).toBeLessThan(2 ** 31);
+        // A heap of points in one place is too much for it, and the caller falls back.
+        const heap = new Float32Array(4 * 200_000);
+        for (let i = 0; i < 200_000; i++) heap[4 * i + 3] = 0.67;
+        const heapGrid = metaballsGrid(heap, 0.2, 1.8);
+        expect(fieldFixedPointBits(heap, binPoints(heap, heapGrid, 2.6), 0.2)).toBeLessThan(20);
+    });
+
+    it("adds up to fill_field's sum: boxes in fixed point, plus the near points' corrections", () => {
+        const bits = fieldFixedPointBits(points, bins, grid.cell);
+        const q = (k: number) => {
+            const r = points[4 * bins.order[k] + 3];
+            return Math.round(f(f(f(r * r) * f(1 / 30)) * 2 ** bits));
+        };
+        let worst = 0, near = 0, far = 0;
+        const centre = grid.n.map(n => Math.floor(n / 2));
+        for (let dz = -6; dz <= 6; dz += 6) for (let dy = -10; dy <= 10; dy++) for (let dx = -10; dx <= 10; dx++) {
+            const v = [centre[0] + dx, centre[1] + dy, centre[2] + dz];
+            let plain = f(-1.8);
+            let boxSum = 0;
+            let correction = 0;
+            for (let k = 0; k < count; k++) {
+                const { d2, value } = term(k, v);
+                if (d2 < 12) {
+                    // Near points are always inside their box: the kernel does not check.
+                    expect(inBox(k, v)).toBe(true);
+                }
+                if (!inBox(k, v)) continue;
+                plain = f(plain + value);
+                boxSum += q(k);
+                if (d2 < 12) {
+                    near++;
+                    correction = f(correction + f(value - f(q(k) / 2 ** bits)));
+                } else {
+                    far++;
+                    expect(value).toBe(f(f(points[4 * bins.order[k] + 3] ** 2) * f(1 / 30)));
+                }
+            }
+            const split = f(f(-1.8 + f(boxSum / 2 ** bits)) + correction);
+            worst = Math.max(worst, Math.abs(split - plain) / Math.max(1, Math.abs(plain)));
+        }
+        expect(near).toBeGreaterThan(0);
+        expect(far).toBeGreaterThan(near);
+        // float32 rounding of the two sums, not a difference in what is summed.
+        expect(worst).toBeLessThan(2e-6);
     });
 });
