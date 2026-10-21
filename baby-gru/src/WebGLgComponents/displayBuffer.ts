@@ -96,7 +96,20 @@ export class DisplayBuffer {
     transformOriginInteractive: number[];
     symopnums: number[];
     supplementary: any;
-    isDirty: boolean;
+    /**
+     * Counts the times this buffer has been marked dirty: bumped by every `isDirty = true`.
+     *
+     * isDirty itself belongs to the WebGL renderer, which clears it once it has uploaded the new
+     * data, so anything else drawing the same buffers cannot tell from it that the data changed.
+     * This lets it: keep the number you last uploaded at, and upload again when it moves.
+     */
+    dataVersion = 0;
+    private _isDirty = true;
+    get isDirty(): boolean { return this._isDirty; }
+    set isDirty(dirty: boolean) {
+        if (dirty) this.dataVersion++;
+        this._isDirty = dirty;
+    }
     textNormalBuffer: MGWebGLBuffer[] | null;
     textPositionBuffer: MGWebGLBuffer[] | null;
     textColourBuffer: MGWebGLBuffer[] | null;

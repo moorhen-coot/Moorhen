@@ -431,5 +431,21 @@ export namespace webGL {
         set_clip_range(clipStart: number, clipEnd: number, update?: boolean): void;
         set_fog_range(fogStart: number, fogEnd: number, update?: boolean): void;
         setDrawingBufferSize(width: number, height: number): void;
+        /**
+         * Be told after every frame drawn; returns the unsubscribe. Used by the WebGPU preview,
+         * which also reads the camera, slab and lighting fields below.
+         */
+        onFrameDrawn(listener: () => void): () => void;
+        fogClipOffset: number;
+        gl_clipPlane0: ArrayLike<number>;
+        gl_clipPlane1: ArrayLike<number>;
+        gl_fog_start: number | null;
+        gl_fog_end: number;
+        doPerspectiveProjection: boolean;
+        light_positions: ArrayLike<number>;
+        light_colours_ambient: ArrayLike<number>;
+        light_colours_diffuse: ArrayLike<number>;
+        light_colours_specular: ArrayLike<number>;
+        specularPower: number;
     }
 }

@@ -31,7 +31,8 @@ export const modalKeys = Object.freeze({
     SCENE_SLIDERS: "scene-sliders",
     CONKIT: "conkit",
     NOE: "NOE",
-    FSC : "fourier-shell-correlation"
+    FSC : "fourier-shell-correlation",
+    WEBGPU_PREVIEW: "webgpu-preview"
 });
 
 

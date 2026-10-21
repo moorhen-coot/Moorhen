@@ -1736,6 +1736,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     drawScene() : void {
         drawScene(this)
+        this.frameListeners.forEach(listener => listener())
+    }
+
+    private frameListeners = new Set<() => void>();
+
+    /**
+     * Be told after every frame this renderer draws. Returns the function that stops it.
+     *
+     * For anything that shows the same scene elsewhere - the WebGPU preview - and so needs to
+     * know when the camera or the scene has changed without hooking every place that changes
+     * them: they all end in drawScene. Listeners run synchronously inside it, so they should
+     * only note that a frame happened and do their own work later.
+     */
+    onFrameDrawn(listener: () => void): () => void {
+        this.frameListeners.add(listener)
+        return () => { this.frameListeners.delete(listener) }
     }
 
     bindFramebufferDrawBuffers() {
