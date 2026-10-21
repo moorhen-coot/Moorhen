@@ -268,18 +268,41 @@ describe("deferring rather than fighting", () => {
         expect(self.cameraController.state.zoom).toBeCloseTo(5, 10);
     });
 
-    it("declines a second move while the first is still running", async () => {
+    it("supersedes a centring move of its own rather than declining it", async () => {
+        // Deference is for other drivers. Two centring requests are the same source asking
+        // twice, and the later one is the better one - it is what the store holds now.
+        //
+        // Declining instead lost the second view outright: nothing retries a declined move, and
+        // the reconciling effect only re-fires when the stored camera changes again. Loading a
+        // molecule centres it twice inside the quarter second a move takes, so the view stayed
+        // where the first move put it - off the structure, showing nothing - until the user
+        // nudged the mouse and the effect ran once more.
         const self = fakeRenderer(new CameraController(startingAt({ zoom: 1 })));
 
         const first = moveCameraTo(self as any, { zoom: 5 }, { kind: "ease", seconds: CENTRING_SECONDS });
-        const second = await moveCameraTo(self as any, { zoom: 100 }, { kind: "ease", seconds: CENTRING_SECONDS });
+        const second = moveCameraTo(self as any, { zoom: 100 }, { kind: "ease", seconds: CENTRING_SECONDS });
 
-        expect(second.completed).toBe(false);
+        expect((await first).completed).toBe(false);
 
         frames.step(0);
         frames.step(CENTRING_SECONDS);
-        expect((await first).completed).toBe(true);
-        expect(self.cameraController.state.zoom).toBeCloseTo(5, 10);
+        expect((await second).completed).toBe(true);
+        expect(self.cameraController.state.zoom).toBeCloseTo(100, 10);
+    });
+
+    it("keeps `animating` set when the move it replaced settles", async () => {
+        // The superseded move's continuation runs after the replacement has already set the flag.
+        // Clearing it there would say the camera had come to rest while it was still moving, and
+        // drawScene reads exactly that as permission to echo the quaternion into the store - an
+        // echo that re-enters the reconciliation mid-move, which is the fight this whole design
+        // exists to end.
+        const self = fakeRenderer(new CameraController(startingAt({ zoom: 1 })));
+
+        const first = moveCameraTo(self as any, { zoom: 5 }, { kind: "ease", seconds: CENTRING_SECONDS });
+        moveCameraTo(self as any, { zoom: 100 }, { kind: "ease", seconds: CENTRING_SECONDS });
+        await first;
+
+        expect(self.animating).toBe(true);
     });
 });
 

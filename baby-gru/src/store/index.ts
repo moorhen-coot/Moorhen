@@ -157,6 +157,7 @@ export {
     setUseOffScreenBuffers,
     setDoShadowDepthDebug,
     setDoShadow,
+    setShadowMapQuality,
     setDoSpin,
     setDoOutline,
     setDepthBlurRadius,

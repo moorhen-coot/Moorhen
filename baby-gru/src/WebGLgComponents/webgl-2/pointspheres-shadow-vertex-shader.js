@@ -19,7 +19,7 @@ var pointspheres_shadow_vertex_shader_source = `#version 300 es\n
     out lowp vec4 eyePos;
 
     uniform mat4 TextureMatrix;
-    out lowp vec4 ShadowCoord;
+    out highp vec4 ShadowCoord;
 
     void main(void) {
 
