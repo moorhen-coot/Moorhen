@@ -23,7 +23,7 @@ var twod_vertex_shadow_shader_source = `#version 300 es\n
     uniform vec3 offset;
 
     uniform mat4 TextureMatrix;
-    out lowp vec4 ShadowCoord;
+    out highp vec4 ShadowCoord;
 
     void main(void) {
 

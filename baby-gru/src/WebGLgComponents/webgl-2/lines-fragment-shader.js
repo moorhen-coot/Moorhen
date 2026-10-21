@@ -19,10 +19,12 @@ var lines_fragment_shader_source = `#version 300 es\n
     uniform int nClipPlanes;
 
     uniform int peelNumber;
-    uniform sampler2D depthPeelSamplers;
+    // highp for the same reason as in the triangle shader: samplers default to lowp, and Chrome on
+    // Mesa then runs the depth comparisons in 16 bits and dots transparent surfaces.
+    uniform highp sampler2D depthPeelSamplers;
     /** The opaque scene's depth, when it is drawn separately from the peel layers. */
     uniform bool haveOpaqueDepth;
-    uniform sampler2D opaqueDepthSampler;
+    uniform highp sampler2D opaqueDepthSampler;
     uniform float xSSAOScaling;
     uniform float ySSAOScaling;
 
@@ -56,7 +58,7 @@ var lines_fragment_shader_source = `#version 300 es\n
 
       if(peelNumber>0) {
           vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
-          float max_depth;
+          highp float max_depth;
           max_depth = texture(depthPeelSamplers,tex_coord).r;
           if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
               discard;

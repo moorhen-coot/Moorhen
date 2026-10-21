@@ -31,7 +31,7 @@ var perfect_sphere_outline_fragment_shader_source = `#version 300 es\n
     in mediump mat4 projMatrix;
     in float size_v;
 
-    in lowp vec4 ShadowCoord;
+    in highp vec4 ShadowCoord;
     uniform sampler2D ShadowMap;
     uniform float xPixelOffset;
     uniform float yPixelOffset;

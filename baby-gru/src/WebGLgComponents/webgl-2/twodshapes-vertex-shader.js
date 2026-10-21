@@ -22,7 +22,7 @@ var twod_vertex_shader_source = `#version 300 es\n
     out mediump mat4 projMatrix;
     out lowp vec3 v;
     out float size_v;
-    out lowp vec4 ShadowCoord;
+    out highp vec4 ShadowCoord;
 
     out lowp vec4 eyePos;
 
