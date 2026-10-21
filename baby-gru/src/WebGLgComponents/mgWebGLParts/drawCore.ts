@@ -10,7 +10,7 @@ import { advanceCamera } from './cameraAnimations';
 import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
 import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
-import { fitShadowFrustum, lightAxes, radiusAbout } from '../shadowFrustum';
+import { fitShadowFrustum, lightAxes, radiusAbout, softShadowRegion } from '../shadowFrustum';
 
 /** A bounding box over the shadow casters, with the diagonal the rest of the renderer calls the atom span. */
 interface ShadowCasterBounds {
@@ -675,6 +675,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         self.gl.uniform1i(theShader.shadowQuality, 1);
                     else
                         self.gl.uniform1i(theShader.shadowQuality, 0);
+                    self.gl.uniform1f(theShader.shadowSoftness, self.shadowRegion?.radiusTexels ?? 0);
                 }
                 if(theShader.doSSAO!=null) self.gl.uniform1i(theShader.doSSAO, self.doSSAO);
                 if(theShader.doEdgeDetect!=null) self.gl.uniform1i(theShader.doEdgeDetect, self.doEdgeDetect);
@@ -925,6 +926,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         self.gl.uniform1i(program.shadowQuality, 1);
                     else
                         self.gl.uniform1i(program.shadowQuality, 0);
+                    self.gl.uniform1f(program.shadowSoftness, self.shadowRegion?.radiusTexels ?? 0);
                 }
                 if(program.doSSAO!=null) self.gl.uniform1i(program.doSSAO, self.doSSAO);
                 if(program.doEdgeDetect!=null) self.gl.uniform1i(program.doEdgeDetect, self.doEdgeDetect);
@@ -2011,8 +2013,12 @@ export function drawScene(self: MGWebGL) : void {
             //FIXME - This is all following mgfbo.cc
             self.textureMatrix = mat4.create();
             mat4.identity(self.textureMatrix);
-            mat4.translate(self.textureMatrix, self.textureMatrix, [0.5, 0.5, 0.5]);
-            mat4.scale(self.textureMatrix, self.textureMatrix, [0.5, 0.5, 0.5]);
+            // Clip space to the corner of the map the shadow pass drew into: all of it, unless
+            // a soft shadow asked for less.
+            const usedX = self.shadowRegion ? self.shadowRegion.width / self.rttFramebufferDepth.width : 1;
+            const usedY = self.shadowRegion ? self.shadowRegion.height / self.rttFramebufferDepth.height : 1;
+            mat4.translate(self.textureMatrix, self.textureMatrix, [0.5 * usedX, 0.5 * usedY, 0.5]);
+            mat4.scale(self.textureMatrix, self.textureMatrix, [0.5 * usedX, 0.5 * usedY, 0.5]);
             mat4.multiply(self.textureMatrix, self.textureMatrix, self.pMatrix);
             mat4.multiply(self.textureMatrix, self.textureMatrix, self.mvMatrix);
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
@@ -3053,6 +3059,16 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             // eye ended up, so it has to be told. It read atom_span before, which was this
             // distance until the frustum started being fitted to the view.
             self.shadowEyeDistance = frustum.eyeDistance;
+
+            // A soft shadow is drawn into only as much of the map as its blur needs, so that the
+            // blur is always the same few texels - see softShadowRegion. More texels in screenshots,
+            // where the filter can afford more taps. The viewport set when this framebuffer was
+            // bound above is replaced; the clear still covers the whole texture, so the unused
+            // part reads as lit.
+            const mapSize = self.rttFramebufferDepth.width;
+            self.shadowRegion = softShadowRegion(frustum, self.shadowSoftness, mapSize,
+                                                 self.renderToTexture ? 7.5 : 4);
+            self.gl.viewport(0, 0, self.shadowRegion.width, self.shadowRegion.height);
 
             self.gl.disable(self.gl.CULL_FACE);
             self.gl.cullFace(self.gl.FRONT);

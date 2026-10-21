@@ -181,3 +181,60 @@ export function radiusAbout(
     }
     return Math.sqrt(worst);
 }
+
+/** The part of the shadow map a soft shadow is rendered into, and how wide its filter is. */
+export interface ShadowMapRegion {
+    /** Texels used across the map's x axis, from its left edge. */
+    width: number;
+    /** Texels used up its y axis, from its bottom edge. */
+    height: number;
+    /** Filter radius in texels of the region. 0 for a hard edge. */
+    radiusTexels: number;
+}
+
+/**
+ * The softest shadow offered, in angstrom.
+ *
+ * Past this the penumbra is wider than the gaps between atoms, so it smears neighbouring shadows
+ * together rather than softening any edge, and the map it calls for is coarse enough to lose
+ * small casters outright. Found by eye.
+ */
+export const MAX_SHADOW_SOFTNESS = 1;
+
+/** Below this a filter cannot hide the staircase of the texels it reads. */
+export const MIN_SOFT_RADIUS_TEXELS = 1.5;
+
+/**
+ * How much of the shadow map a soft shadow needs, so that its filter is always the same few texels.
+ *
+ * A filter wide in texels costs taps; one narrow in texels shows the map's staircase through the
+ * blur. But a blurred shadow has no use for detail finer than its blur, so instead of widening the
+ * filter as the softness grows in texels, the map is rendered coarser until the softness is
+ * `targetTexels` again. The shadow pass draws into the corner of the texture this returns, which
+ * also makes it cheaper; nothing is reallocated. The texels stay square in angstrom whatever the
+ * frustum's aspect, so the penumbra comes out round.
+ *
+ * Zoomed out, the softness can be under `targetTexels` even at the map's full size. The map then
+ * stays full size and the radius goes as low as {@link MIN_SOFT_RADIUS_TEXELS} - a texel is a few
+ * screen pixels at that zoom, so the edge is still smooth on screen.
+ *
+ * @param softness - penumbra radius in angstrom. 0 or less leaves the map whole and hard.
+ * @param mapSize - texels along each side of the square shadow texture.
+ * @param targetTexels - the filter radius, in texels, to aim for.
+ */
+export function softShadowRegion(
+    frustum: Pick<ShadowFrustum, "halfWidth" | "halfHeight">,
+    softness: number,
+    mapSize: number,
+    targetTexels: number,
+): ShadowMapRegion {
+    if (!(softness > 0) || !(mapSize > 0)) return { width: mapSize, height: mapSize, radiusTexels: 0 };
+    const spanX = 2 * frustum.halfWidth, spanY = 2 * frustum.halfHeight;
+    // Never finer than the full map allows on its coarser axis, or that axis would run out of map.
+    const texel = Math.max(softness / targetTexels, Math.max(spanX, spanY) / mapSize);
+    return {
+        width: Math.min(mapSize, Math.max(1, Math.ceil(spanX / texel))),
+        height: Math.min(mapSize, Math.max(1, Math.ceil(spanY / texel))),
+        radiusTexels: Math.max(MIN_SOFT_RADIUS_TEXELS, softness / texel),
+    };
+}

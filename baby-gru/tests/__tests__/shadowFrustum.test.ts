@@ -7,7 +7,8 @@
  */
 import { describe, expect, it } from "@jest/globals";
 import {
-    MIN_HALF_EXTENT, SHADOW_NEAR, fitShadowFrustum, lightAxes, radiusAbout,
+    MIN_HALF_EXTENT, MIN_SOFT_RADIUS_TEXELS, SHADOW_NEAR, fitShadowFrustum, lightAxes, radiusAbout,
+    softShadowRegion,
 } from "../../src/WebGLgComponents/shadowFrustum";
 
 /** Light straight down the view axis: light space is eye space, so the fit is unrotated. */
@@ -145,5 +146,41 @@ describe("measuring the casters", () => {
     it("counts a box that does not contain the centre at all", () => {
         const radius = radiusAbout([0, 0, 0], [100, 100, 100], [110, 110, 110]);
         expect(radius).toBeCloseTo(Math.sqrt(3 * 110 * 110), 6);
+    });
+});
+
+describe("sizing the shadow map to a soft shadow", () => {
+    const square = { halfWidth: 25, halfHeight: 25 };
+
+    it("leaves the map whole and the edge hard at no softness", () => {
+        expect(softShadowRegion(square, 0, 2048, 4)).toEqual({ width: 2048, height: 2048, radiusTexels: 0 });
+    });
+
+    it("coarsens the map until the softness is the target in texels", () => {
+        // 50 A across, 1 A of softness at 4 texels: 0.25 A texels, so 200 of them.
+        const region = softShadowRegion(square, 1, 2048, 4);
+        expect(region.width).toBe(200);
+        expect(region.height).toBe(200);
+        expect(region.radiusTexels).toBeCloseTo(4, 6);
+    });
+
+    it("keeps the same filter radius at any zoom", () => {
+        const close = softShadowRegion({ halfWidth: 10, halfHeight: 10 }, 1, 2048, 4);
+        const far = softShadowRegion({ halfWidth: 100, halfHeight: 100 }, 1, 2048, 4);
+        expect(close.radiusTexels).toBeCloseTo(4, 6);
+        expect(far.radiusTexels).toBeCloseTo(4, 6);
+        expect(far.width).toBeGreaterThan(close.width);
+    });
+
+    it("stops at the full map when zoomed out, with a floor on the radius", () => {
+        // 400 A across a 1024 map is 0.39 A a texel; 0.1 A of softness is a quarter of one.
+        const region = softShadowRegion({ halfWidth: 200, halfHeight: 200 }, 0.1, 1024, 4);
+        expect(region.width).toBe(1024);
+        expect(region.radiusTexels).toBe(MIN_SOFT_RADIUS_TEXELS);
+    });
+
+    it("keeps texels square in angstrom on a wide frustum", () => {
+        const region = softShadowRegion({ halfWidth: 40, halfHeight: 20 }, 1, 2048, 4);
+        expect(region.width / region.height).toBeCloseTo(2, 2);
     });
 });
