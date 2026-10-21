@@ -19,7 +19,14 @@ var lines_fragment_shader_source = `#version 300 es\n
     uniform int nClipPlanes;
 
     uniform int peelNumber;
+    // highp for the same reason as in the triangle shader: samplers default to lowp, and Chrome on
+    // Mesa then runs the depth comparisons in 16 bits and dots transparent surfaces.
     uniform highp sampler2D depthPeelSamplers;
+    /** The opaque scene's depth, when it is drawn separately from the peel layers. */
+    uniform bool haveOpaqueDepth;
+    uniform highp sampler2D opaqueDepthSampler;
+    uniform float xSSAOScaling;
+    uniform float ySSAOScaling;
 
     out vec4 fragColor;
 
@@ -33,8 +40,22 @@ var lines_fragment_shader_source = `#version 300 es\n
           discard;
       }
 
-      /*
-      //FIXME - Boo no scaling in this shader...
+      // The same two tests as the triangle shader, and needed for the same reasons. This shader
+      // draws the map mesh (via the thick-lines program). With the peel test commented out, every
+      // transparent layer kept the same nearest lines, so four layers composited one mesh three
+      // times over: a mesh at 0.8 opacity came out nearly opaque, and heavier than the same mesh
+      // at 1.0. Without the opaque-depth test, transparent lines behind opaque geometry survived
+      // in their layer and were composited on top of it.
+      //
+      // No gl_FrontFacing test, unlike triangles: a thick line is a screen-aligned quad whose
+      // winding says nothing about which side of anything it is on.
+      if(haveOpaqueDepth) {
+          vec2 opaque_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
+          if(gl_FragCoord.z > texture(opaqueDepthSampler,opaque_coord).r) {
+              discard;
+          }
+      }
+
       if(peelNumber>0) {
           vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
           highp float max_depth;
@@ -43,7 +64,6 @@ var lines_fragment_shader_source = `#version 300 es\n
               discard;
           }
       }
-      */
 
       float FogFragCoord = abs(eyePos.z/eyePos.w);
       float fogFactor = (fog_end - FogFragCoord)/(fog_end - fog_start);

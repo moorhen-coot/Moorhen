@@ -407,6 +407,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         offScreenRenderbufferDepth: WebGLRenderbuffer;
         depthPeelRenderbufferColor: WebGLRenderbuffer[];
         depthPeelRenderbufferDepth: WebGLRenderbuffer[];
+        /** The multisampled buffer the opaque peel layer is drawn into; see ensureDepthPeelResolveBuffer. */
+        depthPeelMSAAFramebuffer: webGL.MGWebGLFrameBuffer | null;
+        depthPeelMSAAColor: WebGLRenderbuffer | null;
+        depthPeelMSAADepth: WebGLRenderbuffer | null;
+        depthPeelMSAASamples: number;
+        depthPeelMSAASupported: number[] | null;
+        depthPeelMSAAFailed: string | null;
         offScreenTexture: WebGLTexture;
         pMatrix: Float32Array;
         pmvMatrix: Float32Array;
@@ -645,6 +652,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.depthPeelDepthTextures = [];
         this.depthPeelRenderbufferDepth = [];
         this.depthPeelRenderbufferColor = [];
+        this.depthPeelMSAAFramebuffer = null;
+        this.depthPeelMSAAColor = null;
+        this.depthPeelMSAADepth = null;
+        this.depthPeelMSAASamples = 0;
+        this.depthPeelMSAASupported = null;
+        this.depthPeelMSAAFailed = null;
         this.currentViewport = [0,0, 400,400];
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
         this.store = props.store;

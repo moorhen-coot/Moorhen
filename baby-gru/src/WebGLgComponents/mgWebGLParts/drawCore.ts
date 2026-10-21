@@ -7,9 +7,11 @@ import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 import { advanceCamera } from './cameraAnimations';
+import { beginDepthOnlyPass } from '../shadowPass';
 import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
 import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
+import { ensureDepthPeelResolveBuffer, resolveDepthPeelResolveBuffer } from './framebuffers';
 import { fitShadowFrustum, lightAxes, radiusAbout } from '../shadowFrustum';
 
 /** A bounding box over the shadow casters, with the diagonal the rest of the renderer calls the atom span. */
@@ -266,11 +268,19 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                 // so a WebGL1 context keeps the old behaviour of drawing everything into every
                 // layer. Correct either way; only the faster path needs the newer API.
                 const separateOpaque = self.peelOpaqueSeparately && self.WEBGL2;
+                // The opaque layer is drawn multisampled and resolved into layer 0, so that
+                // transparency elsewhere in the scene does not cost the opaque geometry its
+                // antialiasing. See ensureDepthPeelResolveBuffer. Only possible when the opaque
+                // scene has a layer of its own.
+                const msaaOpaque = separateOpaque && ensureDepthPeelResolveBuffer(self,
+                    self.depthPeelFramebuffers[0].width, self.depthPeelFramebuffers[0].height);
                 for(let ipeel=0;ipeel<self.depthPeelFramebuffers.length;ipeel++){
                     const isOpaqueLayer = separateOpaque && ipeel === 0;
                     self.peelTransparentOnly = separateOpaque ? !isOpaqueLayer : null;
+                    const drawMultisampled = isOpaqueLayer && msaaOpaque;
 
-                    self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.depthPeelFramebuffers[ipeel]);
+                    self.gl.bindFramebuffer(self.gl.FRAMEBUFFER,
+                        drawMultisampled ? self.depthPeelMSAAFramebuffer : self.depthPeelFramebuffers[ipeel]);
 
                     // The opaque depth goes to the shader as its own texture, not into this
                     // layer's depth buffer. Seeding the depth buffer was the obvious thing and
@@ -310,6 +320,7 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                             self.gl.uniform1i(shader.peelNumber,peelNumber);
                             })
                     invMat = GLrender(self, false,doClear,ratioMult);
+                    if(drawMultisampled) resolveDepthPeelResolveBuffer(self, self.depthPeelFramebuffers[0]);
                     self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
                 }
                 self.peelTransparentOnly = null;
@@ -393,6 +404,11 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                     self.gl.activeTexture(self.gl.TEXTURE1);
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelColorTextures[ipeel]);
                     self.gl.uniform1i(theShader.peelNumber,ipeel);
+                    // A resolved layer already carries its antialiased edges blended with the
+                    // background, so it is drawn as it is: no depth gate, which would cut those
+                    // edges off wherever the resolved depth sample happened to be background, and
+                    // no FXAA on top of real multisampling.
+                    self.gl.uniform1i(theShader.resolvedLayer, (msaaOpaque && ipeel === 0) ? 1 : 0);
                     if (self.ext) {
                         self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
                     } else {
@@ -402,6 +418,11 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
             }
             self.gl.activeTexture(self.gl.TEXTURE0);
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
+            // The composite above runs with the depth test off, as a fullscreen quad must. Leaving
+            // it off outlived the frame: the next frame begins with the shadow pass, and a pass
+            // that renders depth with the test disabled writes no depth at all, so the shadow map
+            // came out empty whenever anything in the scene was transparent. See shadowPass.ts.
+            self.gl.enable(self.gl.DEPTH_TEST);
         return invMat
     }
 
@@ -545,6 +566,14 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             if (displayBuffers[idx].transparent && !self.drawingGBuffers
                 && !displayBuffers[idx].isHoverBuffer) {
                 if(!self.doPeel)
+                    continue;
+                // Nor does it cast a shadow. The shadow map holds one depth per texel and nothing
+                // about opacity, so a transparent surface could only cast a solid one: a 0.67
+                // molecular surface would put everything inside it in full shadow. Without
+                // peeling, the skip above already kept it out; with peeling on, it used to reach
+                // the shadow pass. video_record_take_three makes the same rule for faded objects
+                // (shouldCastShadow in objectFade.ts), and the two agree once that branch lands.
+                if(calculatingShadowMap)
                     continue;
             }
             if (self.peelTransparentOnly !== null && self.peelTransparentOnly !== undefined
@@ -1713,12 +1742,16 @@ export function drawScene(self: MGWebGL) : void {
         self.shaderProgramInstanced = useFastShaders ? self.shaderProgramInstancedFast : self.shaderProgramInstancedClip;
         self.shaderProgramThickLinesNormal = useFastShaders ? self.shaderProgramThickLinesNormalFast : self.shaderProgramThickLinesNormalClip;
 
+        // Every program that can draw into a peel layer. The two line programs were missing, so
+        // they never got the peel uniforms and a transparent map mesh appeared in every layer.
         const theShaders = [
             self.shaderProgram,
             self.shaderProgramInstanced,
             self.shaderProgramThickLinesNormal,
             self.shaderProgramPerfectSpheres,
-            self.shaderProgramTextInstanced
+            self.shaderProgramTextInstanced,
+            self.shaderProgramThickLines,
+            self.shaderProgramLines
         ];
 
         theShaders.forEach(shader => {
@@ -2872,6 +2905,10 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                 self.initTextureFramebuffer();
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebufferDepth);
             self.gl.viewport(0, 0, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height);
+            // This is the first pass of the frame, so it starts with whatever the last frame left
+            // behind. The shadow map is only as good as the depth it writes, so it says what it
+            // needs rather than hoping.
+            beginDepthOnlyPass(self.gl);
         } else if(self.drawingGBuffers) {
             const width_ratio = self.gl.viewportWidth / self.gFramebuffer.width;
             const height_ratio = self.gl.viewportHeight / self.gFramebuffer.height;
