@@ -40,11 +40,11 @@ const updateValidationData = async (moorhenInstance: MoorhenInstance, molecule: 
             };
 
 
-            const geoValidationData = await moorhenInstance.cootCommand.getGeoValidationData(molecule.molNo);
+            const geoValidationData = await moorhenInstance.workerCommand.getGeoValidationData(molecule.molNo);
             addValidationDataToSeqViewerSequences(sequences, geoValidationData, "Geometry", undefined, undefined, scaleRMSZ);
             // console.log(geoValidationData);
 
-            const BValidationData = await moorhenInstance.cootCommand.getBValidationData(molecule.molNo);
+            const BValidationData = await moorhenInstance.workerCommand.getBValidationData(molecule.molNo);
             addValidationDataToSeqViewerSequences(sequences, BValidationData, "B Factor", "mpl Viridis", undefined, (value) => { return Math.min(value / 100 , 1); });
 
             if (!skipDensity) {
@@ -66,7 +66,7 @@ const updateValidationData = async (moorhenInstance: MoorhenInstance, molecule: 
                     true,              
                 );
 
-                const newCootDensityCorrelationData = await moorhenInstance.cootCommand.getDensityCorrelationAnalysis(
+                const newCootDensityCorrelationData = await moorhenInstance.workerCommand.getDensityCorrelationAnalysis(
                     molecule.molNo,
                     map
                 );
@@ -79,7 +79,7 @@ const updateValidationData = async (moorhenInstance: MoorhenInstance, molecule: 
                     
                 );
 
-                const qScore = await moorhenInstance.cootCommand.getQScore(molecule.molNo, map);
+                const qScore = await moorhenInstance.workerCommand.getQScore(molecule.molNo, map);
                 addValidationDataToSeqViewerSequences(
                     sequences,
                     cootValidationDataToSeqViewer(qScore, "Q Score"),

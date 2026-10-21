@@ -199,7 +199,9 @@ describe('Construction & Readiness', () => {
         const externalCC = commandCentre;
         const instance = new MoorhenInstance(React.createRef<HTMLDivElement>(), null, externalCC);
         expect(instance.commandCentre).toBe(externalCC);
-        expect(instance.cootCommand).toBeDefined();
+        expect(instance.workerCommand).toBeDefined();
+        // Deprecated name, same wrapper
+        expect(instance.cootCommand).toBe(instance.workerCommand);
     });
 
     test('isReady after startInstance', () => {
@@ -278,9 +280,9 @@ describe('Command Centre', () => {
         expect(moorhenInstance.getCommandCentreRef().current).toBe(newCC);
     });
 
-    test('cootCommand wrapper delegates to commandCentre', async () => {
+    test('workerCommand wrapper delegates to commandCentre', async () => {
         // Spy on commandCentre.cootCommand BEFORE creating the instance,
-        // because CootCommandWrapper captures a bound reference in the constructor.
+        // because WorkerWrapper captures a bound reference in the constructor.
         // Note: startInstance internally calls set_max_number_of_simple_mesh_vertices(10000000),
         // so our test call will be the *second* invocation.
         const freshCC = new MockMoorhenCommandCentre(molecules_container, cootModule);
@@ -292,7 +294,7 @@ describe('Command Centre', () => {
             React.createRef(),
             MoorhenReduxStore,
         );
-        await instance.cootCommand.set_max_number_of_simple_mesh_vertices(5000000);
+        await instance.workerCommand.set_max_number_of_simple_mesh_vertices(5000000);
         expect(spy).toHaveBeenCalledTimes(2);
         // Last call should be our test call with 5000000
         const lastCallArg = spy.mock.calls[1][0];

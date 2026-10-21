@@ -30,7 +30,7 @@ export const DedustMap = () => {
             return;
         }
 
-        const result = await moorhenInstance.cootCommand.dedust_map(mapNo);
+        const result = await moorhenInstance.workerCommand.dedust_map(mapNo);
 
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result;

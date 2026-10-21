@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import { Dispatch, UnknownAction } from "redux";
 import { useMemo } from "react";
-import { ResidueValidationData, ValidationData } from "@/InstanceManager/CommandCentre/CootCommandWrapper";
+import { ResidueValidationData, ValidationData } from "@/InstanceManager/CommandCentre/WorkerWrapper";
 import { setShownControl } from "@/store/globalUISlice";
 import { libcootApi } from "@/types/libcoot";
 import { RootState } from "../../store/MoorhenReduxStore";

@@ -30,9 +30,9 @@ export const AddWaters = () => {
         const moleculeMolNo = parseInt(moleculeSelectRef.current.value);
         const mapMolNo = parseInt(mapSelectRef.current.value);
 
-        await moorhenInstance.cootCommand.set_add_waters_sigma_cutoff(sigmaMapRef.current);
+        await moorhenInstance.workerCommand.set_add_waters_sigma_cutoff(sigmaMapRef.current);
         console.log("Set sigma to ", sigmaMapRef.current);
-        const result = await moorhenInstance.cootCommand.add_water(moleculeMolNo, mapMolNo);
+        const result = await moorhenInstance.workerCommand.add_water(moleculeMolNo, mapMolNo);
         const added = result.data.result.result;
         dispatch(enqueueSnackbar({ message: `Added ${added} water molecules`, variant: "success" }));
         document.body.click();

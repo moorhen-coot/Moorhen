@@ -45,7 +45,7 @@ import type { CreateRepresentationParams, PublicRepresentationStyles } from "@/u
 import { guid } from "@/utils/utils";
 import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
-import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
+import { WorkerWrapper } from "./CommandCentre/WorkerWrapper";
 import { StoreExtension } from "./StoreExtension";
 import { startStoreSyncs } from "./StoreSync";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
@@ -120,7 +120,7 @@ export class MoorhenInstance extends StoreExtension {
     private _preferencesChangeCallbacks = new Set<(stored: StoredPreferences) => void>();
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
-    private _cootCommand: CootCommandWrapper;
+    private _workerCommand: WorkerWrapper;
     private _menuSystem: MoorhenMenuSystem;
     private ready: boolean = false;
     private _webComponent: MoorhenWebComponent | null = null;
@@ -217,13 +217,20 @@ export class MoorhenInstance extends StoreExtension {
     public setCommandCentre(commandCentre: CommandCentre): void {
         this._commandCentre = commandCentre;
         this.commandCentreRef.current = commandCentre;
-        this._cootCommand = new CootCommandWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
+        this._workerCommand = new WorkerWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
     }
     /**
-     * The low-level wrapper used to send commands to the Coot worker.
+     * The typed API to send commands to the worker, queued and sent one at a time (see {@link WorkerWrapper}).
      */
-    public get cootCommand(): CootCommandWrapper {
-        return this._cootCommand;
+    public get workerCommand(): WorkerWrapper {
+        return this._workerCommand;
+    }
+
+    /**
+     * @deprecated Renamed {@link MoorhenInstance.workerCommand}.
+     */
+    public get cootCommand(): WorkerWrapper {
+        return this._workerCommand;
     }
 
     /**
@@ -1678,7 +1685,7 @@ export class MoorhenInstance extends StoreExtension {
             await newCommandCentre.init();
         }
 
-        this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
+        this.workerCommand.set_max_number_of_simple_mesh_vertices(10000000);
         this.storeSyncsUnsubscribe?.();
         this.storeSyncsUnsubscribe = startStoreSyncs(this);
         this.dispatch(setGlobalInstanceReady(true));

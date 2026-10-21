@@ -10,6 +10,7 @@ import jsonValidationReducer from "./jsonValidation";
 import labelSettingsReducer from "./labelSettingsSlice";
 import lhasaReducer from "./lhasaSlice";
 import mapContourSettingsReducer from "./mapContourSettingsSlice";
+import mapRepresentationsReducer from "./mapRepresentationsSlice";
 import mapsReducer from "./mapsSlice";
 import menusReducer from "./menusSlice";
 import modalsReducer from "./modalsSlice";
@@ -39,6 +40,7 @@ export const reducers = {
     hoveringStates: hoveringStatesReducer,
     modals: modalsReducer,
     mapContourSettings: mapContourSettingsReducer,
+    mapRepresentations: mapRepresentationsReducer,
     moleculeMapUpdate: moleculeMapUpdateReducer,
     sharedSession: sharedSessionReducer,
     refinementSettings: refinementSettingsReducer,

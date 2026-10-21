@@ -250,6 +250,16 @@ export {
     resetMapContourSettings,
 }  from "./mapContourSettingsSlice";
 export {
+    addMapRepresentation,
+    removeMapRepresentation,
+    removeMapRepresentationsOfMap,
+    emptyMapRepresentations,
+    setMapRepresentation,
+    setMapRepresentationAlpha,
+    setMapRepresentationRadius,
+
+}  from "./mapRepresentationsSlice";
+export {
     setConnectedMolecule,
     enableUpdatingMaps,
     disableUpdatingMaps,

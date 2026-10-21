@@ -21,6 +21,22 @@ export class CootCommandError extends Error {
     }
 }
 
+/**
+ * Rejects a queued command that a newer command with the same squash key replaced before it was sent
+ * (see WorkerWrapper). Not a failure: callers that squash expect it and ignore it.
+ */
+export class CommandSquashedError extends CootCommandError {
+    /** The squash key shared by the command and the one that replaced it. */
+    readonly squashKey: string;
+
+    constructor(command: string, squashKey: string) {
+        super(command);
+        this.message = `Coot command ${command} was replaced by a newer one (${squashKey}) before it was sent`;
+        this.name = "CommandSquashedError";
+        this.squashKey = squashKey;
+    }
+}
+
 /** The name to report for a command: the coot command, or else the worker message type. */
 export const commandName = (kwargs: cootCommandKwargs): string => kwargs?.command ?? kwargs?.message ?? "unknown";
 
