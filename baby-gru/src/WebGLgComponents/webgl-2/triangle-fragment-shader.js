@@ -52,7 +52,7 @@ const clipAndPeelDiscards = `
 
       if(peelNumber>0) {
           vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
-          float max_depth;
+          highp float max_depth;
           max_depth = texture(depthPeelSamplers,tex_coord).r;
           if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 || gl_FrontFacing!=true ) {
               discard;
@@ -141,10 +141,15 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
     uniform vec3 screenZFrag;
 
     uniform int peelNumber;
-    uniform sampler2D depthPeelSamplers;
+    // highp, as is max_depth in the peel test. Samplers default to lowp and floats here to
+    // mediump, which Chrome (ANGLE) lets the driver run in 16 bits: depth then rounds to ~5e-4,
+    // far coarser than the peel test's 1e-6, and a later layer re-captures the same surface
+    // wherever the rounding falls the wrong way - rows of dots along lines of equal depth.
+    // Firefox runs everything at highp, which is why only Chrome showed it.
+    uniform highp sampler2D depthPeelSamplers;
     /** The opaque scene's depth, when it is drawn separately from the peel layers. */
     uniform bool haveOpaqueDepth;
-    uniform sampler2D opaqueDepthSampler;
+    uniform highp sampler2D opaqueDepthSampler;
 
     uniform float zoom;
 
