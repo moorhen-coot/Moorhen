@@ -6,12 +6,18 @@ import { moorhen } from '../types/moorhen';
 import { vec3Create  } from './mgMaths.js';
 import type { BufferMaterial } from './textureRegistry';
 import { clampFade, isFaded } from './objectFade';
+import type { MGWebGLBuffer, PendingInfluence } from './glResources';
 
-
-interface MGWebGLBuffer {
-    itemSize: number;
-    numItems: number;
-}
+/**
+ * Per-vertex data for one sub-buffer.
+ *
+ * Ingestion (createWebGLBuffers) always stores typed arrays now. Plain arrays are still allowed
+ * because a few producers build buffers by hand; anything reading these should index them rather
+ * than use Array methods.
+ */
+export type VertexData = Float32Array | number[];
+/** Indices for one sub-buffer. See VertexData. */
+export type IndexData = Uint32Array | number[];
 
 export class DisplayBuffer {
     // pick_point_instances maps a pick_points index back to the instance that owns it, for
@@ -30,7 +36,7 @@ export class DisplayBuffer {
     // section_level_ranges and section_level_points are coarser readings of the same sections,
     // each indexed by section exactly as section_ranges is, so a consumer swaps one level's
     // array in and its existing section index still means something. Level 0 repeats the finest.
-    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][], pick_point_instances?:number[], pick_point_sections?:number[], section_ranges?:number[][], section_level_ranges?:number[][][], section_level_points?:number[][][], pick_spans?:number[][], pick_radius?:number, pick_point_tags?:string[], pick_tag_kind?:string, instance_tags?:string[], instance_tag_kind?:string, claims_pointer?:boolean, pick_priority?:number, highlight_whole?:boolean, pick_exact?:boolean, pick_bounds?:{low:[number,number,number],high:[number,number,number]}}
+    pick_info: {influence_weights_width?:number,influence_index_offsets_width?:number,influence_point_indexes_width?:number,influence_weights_texture?:number,influence_index_offsets_texture?:number,influence_point_indexes_texture?:number,pick_points?:[], point_triangles?:number[][], pick_point_instances?:number[], pick_point_sections?:number[], section_ranges?:number[][], section_level_ranges?:number[][][], section_level_points?:number[][][], pick_spans?:number[][], pick_radius?:number, pick_point_tags?:string[], pick_tag_kind?:string, instance_tags?:string[], instance_tag_kind?:string, claims_pointer?:boolean, pick_priority?:number, highlight_whole?:boolean, pick_exact?:boolean, pick_bounds?:{low:[number,number,number],high:[number,number,number]}, pending_influence?:PendingInfluence}
     origin: number[];
     visible: boolean;
     name_label: string;
@@ -60,20 +66,20 @@ export class DisplayBuffer {
     triangleInstanceOrientationBuffer: MGWebGLBuffer[];
     triangleInstanceSizeBuffer: MGWebGLBuffer[];
     triangleColourBuffer: MGWebGLBuffer[];
-    triangleIndexs: number[][];
-    triangleVertices: number[][];
-    triangleInstanceOrigins: number[][];
-    triangleInstanceSizes: number[][];
-    triangleInstanceOrientations: number[][];
-    triangleColours: number[][];
-    triangleNormals: number[][];
+    triangleIndexs: IndexData[];
+    triangleVertices: VertexData[];
+    triangleInstanceOrigins: VertexData[];
+    triangleInstanceSizes: VertexData[];
+    triangleInstanceOrientations: VertexData[];
+    triangleColours: VertexData[];
+    triangleNormals: VertexData[];
     /**
      * Flat u,v per vertex, one array per sub-buffer.
      *
      * The GL buffer for these (triangleVertexTextureBuffer) and the attribute they feed
      * (aVertexTexture, bound to location 3) both long predate anything filling them.
      */
-    triangleTextureCoords: number[][];
+    triangleTextureCoords: VertexData[];
     /**
      * What each sub-buffer is drawn with, beyond its vertex colours.
      *

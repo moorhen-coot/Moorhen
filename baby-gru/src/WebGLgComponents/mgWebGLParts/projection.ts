@@ -1,3 +1,6 @@
+import * as mat4 from 'gl-matrix/mat4';
+import { quatToMat4 } from '../quatToMat4.js';
+
 /**
  * Turning the view slab into projection near and far planes.
  *
@@ -264,3 +267,165 @@ export const focalPlaneDepth = (
     if (!(distance > 1e-6)) return 0.0;
     return Math.min(1.0, Math.max(0.0, (far * (distance - near)) / (distance * span)));
 };
+
+/**
+ * Everything the camera matrices for one view depend on, as plain values.
+ *
+ * GLrender used to build its projection and modelview inline, reading all of this off the
+ * renderer and interleaved with framebuffer and shader setup. Gathering it here means a second
+ * renderer (a WebGPU canvas, say) can produce exactly the matrices WebGL does from the same
+ * camera, without an MGWebGL to read them from - and drawCore's cameraFrame() is the one place
+ * that says how the WebGL renderer's fields map onto it.
+ */
+export interface CameraFrame {
+    /** The view rotation, as MGWebGL.myQuat. Turned into a matrix by quatToMat4, the transpose of mat4.fromQuat. */
+    quat: ArrayLike<number>;
+    /** The translation applied to the modelview, as MGWebGL.origin. The view centre is its negation. */
+    origin: ArrayLike<number>;
+    zoom: number;
+    /** Eye to view centre, in angstroms. MGWebGL.fogClipOffset. */
+    eyeDistance: number;
+    /** w of the front clip plane (0,0,-1,w). MGWebGL.gl_clipPlane0[3]. */
+    clipPlane0W: number;
+    /** w of the back clip plane (0,0,1,w). MGWebGL.gl_clipPlane1[3]. */
+    clipPlane1W: number;
+    /** MGWebGL.gl_fog_end. Fog cuts geometry off no later than the back plane does. */
+    fogEnd: number;
+    perspective: boolean;
+    /** The viewport this view draws into, [x, y, width, height]. MGWebGL.currentViewport. */
+    viewport: ArrayLike<number>;
+    /**
+     * Width over height of the whole drawing area, times any multi-view ratioMult: GLrender's
+     * `ratio`. The orthographic path frames with this; the perspective path uses the viewport.
+     */
+    aspect: number;
+    /**
+     * Set when rendering to an offscreen capture buffer (MGWebGL.renderToTexture). That path
+     * renders into a square buffer and takeScreenShot crops an aspect-correct band out of it
+     * afterwards, so it frames differently and the two halves only make sense together.
+     */
+    offscreen?: {
+        /** gl.viewportWidth > gl.viewportHeight */
+        canvasLandscape: boolean;
+        /** Side-by-side or cross-eyed stereo, three-way or multiview: the canvas is divided. */
+        dividedView: boolean;
+    };
+}
+
+/**
+ * The projection for a frame before the zoom is applied: a fixed half-height of 24 at zoom 1,
+ * with the slab as its near and far planes. Written into `out`, which is returned.
+ *
+ * Moved from GLrender without change. The comments that went with each branch came too.
+ */
+export function baseProjection(out: mat4.mat4, frame: CameraFrame): mat4.mat4 {
+    const { clipPlane0W, clipPlane1W, fogEnd, perspective, viewport, aspect: ratio } = frame;
+    if (frame.offscreen) {
+        //FIXME - drawingGBuffers stanza?
+        //
+        // The square extents below are deliberate and are half of a pair: this renders
+        // into a square buffer and takeScreenShot afterwards crops an aspect-correct band
+        // out of it. Neither half makes sense alone - give this projection a non-square
+        // buffer and the picture comes out stretched.
+        if (perspective) {
+            // Aspect stays at 1.0. Measured, not derived: it is right on screen for both
+            // plain and side-by-side capture, and deriving the aspect from the capture
+            // viewport instead - (viewport * framebuffer / canvas), which gives 0.5 per
+            // eye - visibly stretched the stereo screenshot. The arithmetic for that
+            // viewport is not in dispute, so something downstream is already accounting
+            // for it - the perspMult zoom applied to this matrix by zoomScaleFor. Captures
+            // were checked by eye afterwards, plain and side-by-side stereo, and both
+            // frame correctly as they stand. The pair works; leave it alone.
+            //
+            // The near and far are a separate matter and do come from the slab: they
+            // clip, they do not frame, so they cannot affect any of the above.
+            const slab = slabNearFar(clipPlane0W, clipPlane1W, fogEnd, true);
+            return mat4.perspective(out, PERSPECTIVE_FOV, 1.0, slab.near, slab.far);
+        }
+        const { near, far } = slabNearFar(clipPlane0W, clipPlane1W, fogEnd, false);
+        const divided = frame.offscreen.dividedView;
+        if (viewport[2] > viewport[3]) {
+            if (divided) {
+                return mat4.ortho(out, -24 * ratio, 24 * ratio, -24, 24, near, far);
+            }
+            return mat4.ortho(out, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, near, far);
+        }
+        const fbScale = divided ? viewport[2] / viewport[3] : 1.0;
+        return mat4.ortho(out, -24 * fbScale, 24 * fbScale, -24, 24, near, far);
+    }
+    if (perspective) {
+        // Two fixes in one line. The aspect came from the canvas rather than the
+        // viewport, so every mode that divides the canvas - side-by-side and
+        // cross-eyed stereo, three-way, multiview - was drawn stretched by exactly
+        // the factor the viewport had been divided by. And the near and far were
+        // fixed at 100 and 1270, so the slab was enforced only by the fragment
+        // discards, which cost the program its early depth rejection and spread the
+        // depth buffer over ten times the range the geometry occupies.
+        const slab = slabNearFar(clipPlane0W, clipPlane1W, fogEnd, true);
+        return mat4.perspective(out, PERSPECTIVE_FOV, viewportAspect(viewport), slab.near, slab.far);
+    }
+    const slab = slabNearFar(clipPlane0W, clipPlane1W, fogEnd, false);
+    return mat4.ortho(out, -24 * ratio, 24 * ratio, -24, 24, slab.near, slab.far);
+}
+
+/**
+ * The x and y scale applied to the projection after baseProjection, which is what the zoom does.
+ *
+ * The 1/aspect for landscape offscreen capture pairs with the aspect of 1.0 that path uses. The
+ * perspective factor is derived from the eye distance rather than fixed at 5.7, so moving the eye
+ * changes how strongly the view converges while the framing stays put - see perspectiveScale.
+ *
+ * Note for merging shadow_fix: its drawCore helper projectionZoomScale(self, ratio) computes the
+ * same number and can become zoomScaleFor(cameraFrame(self, ratio)).
+ */
+export function zoomScaleFor(frame: CameraFrame): number {
+    if (frame.perspective) {
+        const perspMult = frame.offscreen?.canvasLandscape ? 1.0 / frame.aspect : 1.0;
+        return perspMult * perspectiveScale(frame.eyeDistance) / frame.zoom;
+    }
+    return 1.0 / frame.zoom;
+}
+
+/**
+ * Takes a projection from the [-1, 1] clip depth WebGL uses to the [0, 1] that WebGPU (and Metal,
+ * D3D and Vulkan) use. x, y and w are untouched, so the framing is identical.
+ */
+export const DEPTH_MINUS_ONE_TO_ZERO_ONE: mat4.mat4 = mat4.fromValues(
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 0.5, 0,
+    0, 0, 0.5, 1,
+);
+
+export type ClipDepthRange = "minusOneToOne" | "zeroToOne";
+
+/**
+ * The complete camera for a frame: the projection, and the modelview that takes world
+ * coordinates to eye space.
+ *
+ * This is what GLrender ends up with for an ordinary (non-shadow) view, composed in the same
+ * order: view = T(0,0,-eyeDistance) . R(quat) . T(origin), and projection = baseProjection scaled
+ * in x and y by zoomScaleFor. GLrender still composes the view step by step, because the shadow
+ * pass shares that tail with its own frustum and light rotation; it calls baseProjection and
+ * zoomScaleFor for the parts that are not shadow-specific. A change to the order there must be
+ * made here too.
+ *
+ * @param depthRange  "zeroToOne" for a WebGPU renderer. The default matches WebGL.
+ */
+export function viewProjection(
+    frame: CameraFrame,
+    depthRange: ClipDepthRange = "minusOneToOne",
+): { projection: mat4.mat4; view: mat4.mat4 } {
+    const projection = baseProjection(mat4.create(), frame);
+    const s = zoomScaleFor(frame);
+    mat4.scale(projection, projection, [s, s, 1.0]);
+    if (depthRange === "zeroToOne") {
+        mat4.multiply(projection, DEPTH_MINUS_ONE_TO_ZERO_ONE, projection);
+    }
+
+    const view = mat4.create();
+    mat4.translate(view, view, [0, 0, -frame.eyeDistance]);
+    mat4.multiply(view, view, quatToMat4(frame.quat));
+    mat4.translate(view, view, [frame.origin[0], frame.origin[1], frame.origin[2]]);
+    return { projection, view };
+}
