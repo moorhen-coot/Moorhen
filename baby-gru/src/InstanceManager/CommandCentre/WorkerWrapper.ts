@@ -12,8 +12,13 @@
  * replied (the worker runs one command at a time anyway). While a command
  * waits it can still be squashed: a command sent with a `squashKey` removes
  * the commands with the same key still waiting, whose promises reject with a
- * CommandSquashedError. Used for commands where only the latest matters, e.g.
- * map contours while the view moves. Commands sent through
+ * CommandSquashedError, and takes the place in the queue of the oldest one it
+ * replaced: callers squashing all the time still take turns (with two maps
+ * contoured while the view moves: A, B, A, B...), instead of the last one to
+ * squash being sent first every time while the others wait. Used for commands
+ * where only the latest matters, e.g. map contours while the view moves. A
+ * squashing command can therefore run before unrelated commands queued after
+ * the one it replaced. Commands sent through
  * `commandCentre.cootCommand` directly bypass the queue.
  *
  * What the layers below already guarantee:
@@ -48,7 +53,8 @@ import { WorkerResponse, cootCommandKwargs } from "./MoorhenCommandCentre";
 export type WorkerCommandOptions = {
     /**
      * Commands sharing a key squash each other: queuing one removes the older ones with the same key that are
-     * still waiting (their promises reject with a CommandSquashedError). Use one key per caller and purpose,
+     * still waiting (their promises reject with a CommandSquashedError) and takes the queue position of the oldest
+     * of them, so callers that keep squashing still take turns. Use one key per caller and purpose,
      * e.g. `map-contour:<representation id>`.
      */
     squashKey?: string;
@@ -122,14 +128,17 @@ export class WorkerWrapper {
     private enqueue(kwargs: cootCommandKwargs, doJournal: boolean, options: WorkerCommandOptions = {}): Promise<WorkerResponse> {
         const { squashKey } = options;
         return new Promise<WorkerResponse>((resolve, reject) => {
-            if (squashKey !== undefined) {
-                const squashed = this.queue.filter(command => command.squashKey === squashKey);
-                if (squashed.length > 0) {
-                    this.queue = this.queue.filter(command => command.squashKey !== squashKey);
-                    squashed.forEach(command => command.reject(new CommandSquashedError(commandName(command.kwargs), squashKey)));
-                }
+            const command: QueuedCommand = { kwargs, doJournal, squashKey, resolve, reject };
+            // Replaces the waiting commands with the same key, at the place of the oldest one; else goes last
+            const position = squashKey === undefined ? -1 : this.queue.findIndex(waiting => waiting.squashKey === squashKey);
+            if (position === -1) {
+                this.queue.push(command);
+            } else {
+                const squashed = this.queue.filter(waiting => waiting.squashKey === squashKey);
+                this.queue = this.queue.map((waiting, index) => (index === position ? command : waiting));
+                this.queue = this.queue.filter(waiting => waiting === command || waiting.squashKey !== squashKey);
+                squashed.forEach(waiting => waiting.reject(new CommandSquashedError(commandName(waiting.kwargs), squashKey)));
             }
-            this.queue.push({ kwargs, doJournal, squashKey, resolve, reject });
             void this.sendQueued();
         });
     }

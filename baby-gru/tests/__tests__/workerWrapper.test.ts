@@ -71,7 +71,7 @@ describe("WorkerWrapper queue", () => {
         await expect(latest).resolves.toBe("mesh 4");
     });
 
-    test("other keys and commands without a key are not squashed, and keep their order", async () => {
+    test("other keys and commands without a key are not squashed; a squashing command takes the place of the one it replaces", async () => {
         const { wrapper, sent } = makeWorker();
         const first = contour(wrapper, 1);
         await flush();
@@ -86,7 +86,23 @@ describe("WorkerWrapper queue", () => {
             sent[i].reply(`mesh ${sent[i].kwargs.commandArgs[0]}`);
         }
         await expect(Promise.all([others[1], others[2], replacing])).resolves.toEqual(["mesh 3", "mesh 4", "mesh 5"]);
-        expect(sent.map(command => command.kwargs.commandArgs[0])).toEqual([1, 3, 4, 5]);
+        expect(sent.map(command => command.kwargs.commandArgs[0])).toEqual([1, 5, 3, 4]);
+    });
+
+    test("callers squashing all the time take turns: two maps both follow a view that keeps moving", async () => {
+        const { wrapper, sent } = makeWorker();
+        // Map 1 and map 2 are contoured on every view move; each move arrives while a contour is running
+        contour(wrapper, 1, "map-contour:a").catch(() => {});
+        contour(wrapper, 2, "map-contour:b").catch(() => {});
+        await flush();
+        for (let move = 0; move < 6; move++) {
+            contour(wrapper, 1, "map-contour:a").catch(() => {});
+            contour(wrapper, 2, "map-contour:b").catch(() => {});
+            sent[sent.length - 1].reply("mesh");
+            await flush();
+        }
+        // Before, the last caller to squash went last every time: map 2 was only sent once the view stopped
+        expect(sent.map(command => command.kwargs.commandArgs[0])).toEqual([1, 2, 1, 2, 1, 2, 1]);
     });
 
     test("a failed command rejects and the queue goes on", async () => {
