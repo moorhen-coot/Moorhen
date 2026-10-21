@@ -102,7 +102,7 @@ import { Camera } from './mgWebGLParts/camera'
 import type { CameraController, CameraState, CameraTarget, MoveResult, Transition } from './cameraController'
 import { clipOffsets, fogOffsets, slabFromCamera } from './slab'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './mgWebGLParts/viewTransforms'
-import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, ensureOffScreeenBuffers, initTextureFramebuffer } from './mgWebGLParts/framebuffers'
+import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, ensureOffScreeenBuffers, initTextureFramebuffer, deleteTextureFramebuffer } from './mgWebGLParts/framebuffers'
 import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
 import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWebGLParts/postProcessUniformBuffers'
 import { renderStatsText } from './mgWebGLParts/renderStats'
@@ -308,6 +308,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         textCtx: CanvasRenderingContext2D;
         circleCtx: CanvasRenderingContext2D;
         atom_span: number;
+    /**
+     * How far back the shadow camera's eye was put, in angstrom.
+     *
+     * Kept apart from atom_span because the two stopped being the same thing when the shadow
+     * frustum was fitted to the view: the eye now sits at whatever distance clears the casters,
+     * not at the structure's diagonal. setMatrixUniforms needs this one, not that one.
+     */
+    shadowEyeDistance: number;
         axesColourBuffer: WebGLBuffer;
         axesIndexBuffer: WebGLBuffer;
         axesNormalBuffer: WebGLBuffer;
@@ -399,6 +407,13 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         offScreenRenderbufferDepth: WebGLRenderbuffer;
         depthPeelRenderbufferColor: WebGLRenderbuffer[];
         depthPeelRenderbufferDepth: WebGLRenderbuffer[];
+        /** The multisampled buffer the opaque peel layer is drawn into; see ensureDepthPeelResolveBuffer. */
+        depthPeelMSAAFramebuffer: webGL.MGWebGLFrameBuffer | null;
+        depthPeelMSAAColor: WebGLRenderbuffer | null;
+        depthPeelMSAADepth: WebGLRenderbuffer | null;
+        depthPeelMSAASamples: number;
+        depthPeelMSAASupported: number[] | null;
+        depthPeelMSAAFailed: string | null;
         offScreenTexture: WebGLTexture;
         pMatrix: Float32Array;
         pmvMatrix: Float32Array;
@@ -637,6 +652,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.depthPeelDepthTextures = [];
         this.depthPeelRenderbufferDepth = [];
         this.depthPeelRenderbufferColor = [];
+        this.depthPeelMSAAFramebuffer = null;
+        this.depthPeelMSAAColor = null;
+        this.depthPeelMSAADepth = null;
+        this.depthPeelMSAASamples = 0;
+        this.depthPeelMSAASupported = null;
+        this.depthPeelMSAAFailed = null;
         this.currentViewport = [0,0, 400,400];
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
         this.store = props.store;
@@ -835,6 +856,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     setOccludeDiffuse(doOccludeDiffuse) {
         this.occludeDiffuse = doOccludeDiffuse;
+    }
+
+    /**
+     * Rebuild the shadow map at whatever size the current quality asks for.
+     *
+     * The map is allocated with the other render-to-texture buffers rather than per pass, so
+     * changing its size means dropping the lot and letting the next render build them again -
+     * which is exactly what deleteTextureFramebuffer plus a cleared screenshotBuffersReady does.
+     */
+    rebuildShadowMap() {
+        // Nothing allocated yet - these buffers are built lazily, on the first render that wants
+        // them - so there is nothing to free, and whenever that build happens it will read the
+        // quality then. Freeing regardless would clear screenshotBuffersReady on a renderer that
+        // has not finished starting up.
+        if (!this.screenshotBuffersReady) return;
+        deleteTextureFramebuffer(this);
     }
 
     setShadowDepthDebug(doShadowDebug) {
@@ -1575,8 +1612,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniform1f(program.fog_start, this.gl_fog_start);
         this.gl.uniform1f(program.fog_end, this.gl_fog_end);
         this.gl.uniform1i(program.nClipPlanes, this.gl_nClipPlanes);
-        if(this.calculatingShadowMap&&typeof(this.atom_span)!=="undefined"){
-            const offy = -this.atom_span+(this.fogClipOffset+this.gl_clipPlane0[3])
+        if(this.calculatingShadowMap&&typeof(this.shadowEyeDistance)!=="undefined"){
+            // The front clip plane, moved from the camera's eye into the shadow camera's.
+            //
+            // `fogClipOffset + gl_clipPlane0[3]` is how far in front of the view centre the plane
+            // sits; the shadow eye is `shadowEyeDistance` behind that same centre, so the plane
+            // lands here. This used to read atom_span, which was the distance the shadow modelview
+            // was translated by until the frustum was fitted to the view - after which the two
+            // diverged, this plane fell in front of everything, and the whole shadow pass was
+            // discarded. An empty depth map reads as "nothing occludes anything", so the symptom
+            // was no shadows at all rather than anything pointing here.
+            const offy = -this.shadowEyeDistance+(this.fogClipOffset+this.gl_clipPlane0[3])
             this.gl.uniform4fv(program.clipPlane0, [0, 0, -1, offy]);
         }else{
             //console.log(this.gl_clipPlane0[3],this.gl_clipPlane1[3])

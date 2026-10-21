@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { ShadowMapQuality } from "../WebGLgComponents/mgWebGLParts/framebuffers";
 
 const execAutoClipFogByZoom = (state: typeof initialState) => {
     const fieldDepthFront: number = 8;
@@ -54,6 +55,14 @@ export const initialState: {
     ssaoRadius: number;
     doShadowDepthDebug: boolean;
     doShadow: boolean;
+    /**
+     * How finely shadows are resolved: "coarse", "nice" or "smooth".
+     *
+     * Named to match the mesh quality settings rather than quoting a texture size, which is a
+     * number nobody outside the renderer should have to reason about. See SHADOW_MAP_TEXELS for
+     * what each one costs.
+     */
+    shadowMapQuality: ShadowMapQuality;
     doSSAO: boolean;
     doEdgeDetect: boolean;
     edgeDetectDepthThreshold: number;
@@ -123,6 +132,7 @@ export const initialState: {
     useOffScreenBuffers: false,
     doShadowDepthDebug: false,
     doShadow: false,
+    shadowMapQuality: "coarse",
     doSpin: false,
     doThreeWayView: false,
     doSideBySideStereo: false,
@@ -279,6 +289,10 @@ const sceneSettingsSlice = createSlice({
         // API
         setDoShadow: (state, action: PayloadAction<boolean>) => {
             state.doShadow = action.payload;
+        },
+        // API
+        setShadowMapQuality: (state, action: PayloadAction<ShadowMapQuality>) => {
+            state.shadowMapQuality = action.payload;
         },
         // API
         setDoSpin: (state, action: PayloadAction<boolean>) => {
@@ -441,6 +455,7 @@ export const {
     setUseOffScreenBuffers,
     setDoShadowDepthDebug,
     setDoShadow,
+    setShadowMapQuality,
     setDoSpin,
     setDoOutline,
     setDepthBlurRadius,

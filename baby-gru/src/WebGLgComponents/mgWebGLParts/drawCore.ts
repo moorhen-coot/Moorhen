@@ -7,9 +7,162 @@ import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 import { advanceCamera } from './cameraAnimations';
+import { beginDepthOnlyPass } from '../shadowPass';
 import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
 import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
+import { ensureDepthPeelResolveBuffer, resolveDepthPeelResolveBuffer } from './framebuffers';
+import { fitShadowFrustum, lightAxes, radiusAbout } from '../shadowFrustum';
+
+/** A bounding box over the shadow casters, with the diagonal the rest of the renderer calls the atom span. */
+interface ShadowCasterBounds {
+    min: [number, number, number];
+    max: [number, number, number];
+    span: number;
+}
+
+/**
+ * The box containing everything that can cast a shadow, cached.
+ *
+ * This walks every atom of every visible buffer, and it used to do so on every shadowed frame -
+ * a nested forEach over a hundred thousand atoms for a ribosome, sixty times a second, to
+ * recompute a box that only changes when the geometry does. The cache is keyed on the identity of
+ * the atom arrays themselves: a rebuilt representation brings new arrays, and nothing else needs
+ * to remember to invalidate anything.
+ */
+function shadowCasterBounds(self: MGWebGL, displayBuffers: any[]): ShadowCasterBounds {
+    const sources: any[] = [];
+    displayBuffers.forEach(buffer => {
+        if (buffer.visible && buffer.atoms && buffer.atoms.length > 0) sources.push(buffer.atoms);
+    });
+
+    const cached = (self as any)._shadowCasterBounds;
+    if (cached && cached.sources.length === sources.length
+        && cached.sources.every((atoms: any, i: number) => atoms === sources[i])) {
+        return cached.bounds;
+    }
+
+    let min_x = Infinity, max_x = -Infinity;
+    let min_y = Infinity, max_y = -Infinity;
+    let min_z = Infinity, max_z = -Infinity;
+    sources.forEach(atoms => {
+        atoms.forEach((atom: { x: number; y: number; z: number }) => {
+            if (atom.x > max_x) max_x = atom.x;
+            if (atom.x < min_x) min_x = atom.x;
+            if (atom.y > max_y) max_y = atom.y;
+            if (atom.y < min_y) min_y = atom.y;
+            if (atom.z > max_z) max_z = atom.z;
+            if (atom.z < min_z) min_z = atom.z;
+        });
+    });
+
+    // Nothing with atoms in it - a map or an imported mesh on its own. An empty box about the
+    // origin gives a caster radius that the frustum reads as "no casters", and it then fits
+    // itself to the view, which is the right answer rather than a guess at 1e5.
+    if (!(min_x <= max_x)) {
+        min_x = max_x = min_y = max_y = min_z = max_z = 0;
+    }
+
+    const span = Math.min(1000.0, Math.sqrt(
+        (max_x - min_x) * (max_x - min_x)
+        + (max_y - min_y) * (max_y - min_y)
+        + (max_z - min_z) * (max_z - min_z)));
+
+    const bounds: ShadowCasterBounds = {
+        min: [min_x, min_y, min_z], max: [max_x, max_y, max_z], span,
+    };
+    (self as any)._shadowCasterBounds = { sources, bounds };
+    return bounds;
+}
+
+/**
+ * WHO OWNS WHICH TEXTURE UNIT
+ *
+ * Written down because getting it wrong does not look like a texture bug. A sampler uniform that
+ * is never assigned reads as unit 0, and two samplers of *different types* on one unit - a
+ * sampler2D and a sampler2DShadow, say - fail draw-time validation outright, so every draw in the
+ * frame is discarded and the screen goes empty. There is nothing in the picture to point at the
+ * unit, and the console says only "Two textures of different types use the same sampler location".
+ *
+ *   0  the general-purpose unit: peel layers, text and circle canvases, G-buffers, post-process
+ *      inputs. Bound and rebound twenty-odd times a frame.
+ *   1  second input to the two-input passes: colour peel, normals, blurred colour.
+ *   2  third input: SSAO noise, depth for the depth-of-field composite.
+ *   3  DEPTH_PEEL_TEXTURE_UNIT, and the second depth texture of the blur passes.
+ *   4  glTF base colour.
+ *   5  OPAQUE_DEPTH_TEXTURE_UNIT.
+ *   6  SHADOW_TEXTURE_UNIT.
+ *   7-9 the G-buffer attachments during the SSAO pass.
+ */
+
+/**
+ * Texture unit the shadow map is read from during the lit pass.
+ *
+ * Its own unit, not the shared unit 0: the comparison sampler below has to stay bound for as long
+ * as the shadow map is being read, and a sampler with depth comparison turned on would corrupt
+ * every ordinary read made through the same unit.
+ *
+ * It was 5 to begin with, on the strength of a comment three hundred lines down saying units 0-4
+ * and 7-9 were taken. 5 is the opaque depth the peel pass reads, which only exists while something
+ * is transparent - so solid geometry vanished the moment anything was given an opacity below 1,
+ * and was fine the rest of the time. Hence the table above.
+ */
+const SHADOW_TEXTURE_UNIT = 6;
+
+/** Where the previous peel layer's depth is read from. */
+const DEPTH_PEEL_TEXTURE_UNIT = 3;
+
+/** Where the opaque layer's depth is read from while peeling the transparent layers. */
+const OPAQUE_DEPTH_TEXTURE_UNIT = 5;
+
+/**
+ * A sampler that does the depth comparison in the texture unit.
+ *
+ * This is what makes the lookup hardware PCF: with COMPARE_REF_TO_TEXTURE and LINEAR filtering,
+ * one fetch compares against four texels and returns the blend, where the shader previously did
+ * one NEAREST fetch and compared by hand - so every texel boundary was a hard step.
+ *
+ * A sampler object rather than parameters on the texture itself, because the shadow-depth debug
+ * view reads the same texture as an ordinary sampler2D to display it; comparison state set on the
+ * texture would make that read undefined. Sampler state belongs to the unit, so the two uses do
+ * not collide.
+ */
+function shadowComparisonSampler(self: MGWebGL): WebGLSampler | null {
+    if (!self.WEBGL2) return null;
+    const gl = self.gl as WebGL2RenderingContext;
+    const held = (self as any)._shadowComparisonSampler;
+    if (held) return held;
+    const sampler = gl.createSampler();
+    gl.samplerParameteri(sampler, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.samplerParameteri(sampler, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.samplerParameteri(sampler, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.samplerParameteri(sampler, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.samplerParameteri(sampler, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
+    // LEQUAL, so the lookup returns 1.0 where the fragment is in front of what the light saw -
+    // lit - which is the polarity the shader already expected of its hand-rolled test.
+    gl.samplerParameteri(sampler, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+    (self as any)._shadowComparisonSampler = sampler;
+    return sampler;
+}
+
+/**
+ * The scale drawScene applies to pMatrix after choosing a projection.
+ *
+ * The ordinary projection is built with a fixed half-height of 24 and then scaled by the zoom
+ * here; the shadow pass has to know the same number so it can state its frustum in angstrom and
+ * have it survive. One function so the two cannot drift - they had already, which is what the old
+ * `excess += 150; // ?? It works.` was compensating for.
+ */
+function projectionZoomScale(self: MGWebGL, ratio: number): number {
+    if (self.doPerspectiveProjection) {
+        let perspMult = 1.0;
+        if (self.renderToTexture && self.gl.viewportWidth > self.gl.viewportHeight) {
+            perspMult = 1.0 / ratio;
+        }
+        return perspMult * perspectiveScale(self.fogClipOffset) / self.zoom;
+    }
+    return 1.0 / self.zoom;
+}
 
 /**
  * The hot render core - drawScene orchestrates the frame (framebuffer setup,
@@ -83,9 +236,10 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
             if(self.depthPeelFramebuffers.length>0&&self.depthPeelFramebuffers[0].width>0&&self.depthPeelFramebuffers[0].height>0){
 
                 self.gl.enable(self.gl.DEPTH_TEST);
-                const depthPeelSampler0 = 3;
-                // Units 0-4 and 7-9 are taken; see the sampler assignments through drawCore.
-                const opaqueDepthUnit = 5;
+                // Named at the top of this file, with the rest of the unit allocation, rather
+                // than here - a unit chosen locally is a unit the next reader cannot find.
+                const depthPeelSampler0 = DEPTH_PEEL_TEXTURE_UNIT;
+                const opaqueDepthUnit = OPAQUE_DEPTH_TEXTURE_UNIT;
 
                 theShaders.forEach(shader => {
                         self.gl.useProgram(shader);
@@ -114,11 +268,19 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                 // so a WebGL1 context keeps the old behaviour of drawing everything into every
                 // layer. Correct either way; only the faster path needs the newer API.
                 const separateOpaque = self.peelOpaqueSeparately && self.WEBGL2;
+                // The opaque layer is drawn multisampled and resolved into layer 0, so that
+                // transparency elsewhere in the scene does not cost the opaque geometry its
+                // antialiasing. See ensureDepthPeelResolveBuffer. Only possible when the opaque
+                // scene has a layer of its own.
+                const msaaOpaque = separateOpaque && ensureDepthPeelResolveBuffer(self,
+                    self.depthPeelFramebuffers[0].width, self.depthPeelFramebuffers[0].height);
                 for(let ipeel=0;ipeel<self.depthPeelFramebuffers.length;ipeel++){
                     const isOpaqueLayer = separateOpaque && ipeel === 0;
                     self.peelTransparentOnly = separateOpaque ? !isOpaqueLayer : null;
+                    const drawMultisampled = isOpaqueLayer && msaaOpaque;
 
-                    self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.depthPeelFramebuffers[ipeel]);
+                    self.gl.bindFramebuffer(self.gl.FRAMEBUFFER,
+                        drawMultisampled ? self.depthPeelMSAAFramebuffer : self.depthPeelFramebuffers[ipeel]);
 
                     // The opaque depth goes to the shader as its own texture, not into this
                     // layer's depth buffer. Seeding the depth buffer was the obvious thing and
@@ -158,6 +320,7 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                             self.gl.uniform1i(shader.peelNumber,peelNumber);
                             })
                     invMat = GLrender(self, false,doClear,ratioMult);
+                    if(drawMultisampled) resolveDepthPeelResolveBuffer(self, self.depthPeelFramebuffers[0]);
                     self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
                 }
                 self.peelTransparentOnly = null;
@@ -241,6 +404,11 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                     self.gl.activeTexture(self.gl.TEXTURE1);
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelColorTextures[ipeel]);
                     self.gl.uniform1i(theShader.peelNumber,ipeel);
+                    // A resolved layer already carries its antialiased edges blended with the
+                    // background, so it is drawn as it is: no depth gate, which would cut those
+                    // edges off wherever the resolved depth sample happened to be background, and
+                    // no FXAA on top of real multisampling.
+                    self.gl.uniform1i(theShader.resolvedLayer, (msaaOpaque && ipeel === 0) ? 1 : 0);
                     if (self.ext) {
                         self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
                     } else {
@@ -250,6 +418,11 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
             }
             self.gl.activeTexture(self.gl.TEXTURE0);
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
+            // The composite above runs with the depth test off, as a fullscreen quad must. Leaving
+            // it off outlived the frame: the next frame begins with the shadow pass, and a pass
+            // that renders depth with the test disabled writes no depth at all, so the shadow map
+            // came out empty whenever anything in the scene was transparent. See shadowPass.ts.
+            self.gl.enable(self.gl.DEPTH_TEST);
         return invMat
     }
 
@@ -280,8 +453,12 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         const bright_y = self.background_colour[0] * 0.299 + self.background_colour[1] * 0.587 + self.background_colour[2] * 0.114;
 
         if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
-            self.gl.activeTexture(self.gl.TEXTURE0);
+            self.gl.activeTexture(self.gl.TEXTURE0 + SHADOW_TEXTURE_UNIT);
             self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttTextureDepth);
+            const comparison = shadowComparisonSampler(self);
+            if (comparison) {
+                (self.gl as WebGL2RenderingContext).bindSampler(SHADOW_TEXTURE_UNIT, comparison);
+            }
         }
 
         /**
@@ -389,6 +566,14 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             if (displayBuffers[idx].transparent && !self.drawingGBuffers
                 && !displayBuffers[idx].isHoverBuffer) {
                 if(!self.doPeel)
+                    continue;
+                // Nor does it cast a shadow. The shadow map holds one depth per texel and nothing
+                // about opacity, so a transparent surface could only cast a solid one: a 0.67
+                // molecular surface would put everything inside it in full shadow. Without
+                // peeling, the skip above already kept it out; with peeling on, it used to reach
+                // the shadow pass. video_record_take_three makes the same rule for faded objects
+                // (shouldCastShadow in objectFade.ts), and the two agree once that branch lands.
+                if(calculatingShadowMap)
                     continue;
             }
             if (self.peelTransparentOnly !== null && self.peelTransparentOnly !== undefined
@@ -500,8 +685,17 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.uniform1i(theShader.doShadows, false);
+                // The shadow sampler's unit, set whether or not shadows are being drawn.
+                //
+                // A sampler uniform that is never assigned reads as unit 0, and unit 0 carries
+                // ordinary colour textures. ShadowMap is a sampler2DShadow, and a shadow sampler
+                // sharing a unit with a plain sampler2D fails draw-time validation outright:
+                // "Two textures of different types use the same sampler location". Every draw is
+                // then discarded and nothing appears at all. It only used to be safe because
+                // ShadowMap was a sampler2D like its neighbours.
+                if(theShader.ShadowMap != null)
+                    self.gl.uniform1i(theShader.ShadowMap, SHADOW_TEXTURE_UNIT);
                 if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
-                    self.gl.uniform1i(theShader.ShadowMap, 0);
                     self.gl.uniform1f(theShader.xPixelOffset, 1.0/self.rttFramebufferDepth.width);
                     self.gl.uniform1f(theShader.yPixelOffset, 1.0/self.rttFramebufferDepth.height);
                     self.gl.uniformMatrix4fv(theShader.textureMatrixUniform, false, self.textureMatrix);
@@ -734,10 +928,24 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 if(program.offsetAttribute!=null) self.gl.enableVertexAttribArray(program.offsetAttribute);
                 if(program.sizeAttribute!=null) self.gl.enableVertexAttribArray(program.sizeAttribute);
                 if(program.doShadows!=null) self.gl.uniform1i(program.doShadows, false);
+                // The shadow sampler's unit, set whether or not shadows are being drawn.
+                //
+                // A sampler uniform that is never assigned reads as unit 0, and unit 0 carries
+                // ordinary colour textures. ShadowMap is a sampler2DShadow, and a shadow sampler
+                // sharing a unit with a plain sampler2D fails draw-time validation outright:
+                // "Two textures of different types use the same sampler location". Every draw is
+                // then discarded and nothing appears at all. It only used to be safe because
+                // ShadowMap was a sampler2D like its neighbours.
+                if(program.ShadowMap != null)
+                    self.gl.uniform1i(program.ShadowMap, SHADOW_TEXTURE_UNIT);
                 if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
-                    self.gl.uniform1i(program.ShadowMap, 0);
-                    self.gl.activeTexture(self.gl.TEXTURE0);
+                    self.gl.activeTexture(self.gl.TEXTURE0 + SHADOW_TEXTURE_UNIT);
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttTextureDepth);
+                    const comparison = shadowComparisonSampler(self);
+                    if (comparison) {
+                        (self.gl as WebGL2RenderingContext)
+                            .bindSampler(SHADOW_TEXTURE_UNIT, comparison);
+                    }
                     self.gl.uniform1f(program.xPixelOffset, 1.0/self.rttFramebufferDepth.width);
                     self.gl.uniform1f(program.yPixelOffset, 1.0/self.rttFramebufferDepth.height);
                     self.gl.uniformMatrix4fv(program.textureMatrixUniform, false, self.textureMatrix);
@@ -1534,12 +1742,16 @@ export function drawScene(self: MGWebGL) : void {
         self.shaderProgramInstanced = useFastShaders ? self.shaderProgramInstancedFast : self.shaderProgramInstancedClip;
         self.shaderProgramThickLinesNormal = useFastShaders ? self.shaderProgramThickLinesNormalFast : self.shaderProgramThickLinesNormalClip;
 
+        // Every program that can draw into a peel layer. The two line programs were missing, so
+        // they never got the peel uniforms and a transparent map mesh appeared in every layer.
         const theShaders = [
             self.shaderProgram,
             self.shaderProgramInstanced,
             self.shaderProgramThickLinesNormal,
             self.shaderProgramPerfectSpheres,
-            self.shaderProgramTextInstanced
+            self.shaderProgramTextInstanced,
+            self.shaderProgramThickLines,
+            self.shaderProgramLines
         ];
 
         theShaders.forEach(shader => {
@@ -2693,6 +2905,10 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                 self.initTextureFramebuffer();
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebufferDepth);
             self.gl.viewport(0, 0, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height);
+            // This is the first pass of the frame, so it starts with whatever the last frame left
+            // behind. The shadow map is only as good as the depth it writes, so it says what it
+            // needs rather than hoping.
+            beginDepthOnlyPass(self.gl);
         } else if(self.drawingGBuffers) {
             const width_ratio = self.gl.viewportWidth / self.gFramebuffer.width;
             const height_ratio = self.gl.viewportHeight / self.gFramebuffer.height;
@@ -2797,34 +3013,12 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
 
         if (calculatingShadowMap) {
 
-            let min_x =  1e5;
-            let max_x = -1e5;
-            let min_y =  1e5;
-            let max_y = -1e5;
-            let min_z =  1e5;
-            let max_z = -1e5;
-
-            displayBuffers.forEach(buffer => {
-                if (buffer.visible) {
-                    buffer.atoms.forEach(atom => {
-                        if(atom.x>max_x) max_x = atom.x;
-                        if(atom.x<min_x) min_x = atom.x;
-                        if(atom.y>max_y) max_y = atom.y;
-                        if(atom.y<min_y) min_y = atom.y;
-                        if(atom.z>max_z) max_z = atom.z;
-                        if(atom.z<min_z) min_z = atom.z;
-                    })
-                }
-            })
-            let atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
-            atom_span = Math.min(1000.0,atom_span);
-            self.atom_span = atom_span;
-            const shadowExtent = Math.max(170.0,atom_span); // 170. ??
-
-            //The extent (atom_span) should probably be scaled to viewable area - lets see if we can calculate that.
-            //But, the angle of the light is important ...
-
-            let d = Math.min(48*self.zoom,atom_span)
+            // Where everything is. Cached: this used to walk every atom of every visible buffer
+            // on every shadowed frame - a nested forEach over a hundred thousand atoms for a
+            // ribosome, sixty times a second - to recompute a box that only changes when the
+            // geometry does.
+            const bounds = shadowCasterBounds(self, displayBuffers);
+            self.atom_span = bounds.span;
 
             let rotX = quat4.create();
             quat4.set(rotX, 0, 0, 0, -1);
@@ -2832,7 +3026,6 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             NormalizeVec3(zprime);
             const zorig = vec3Create([0.0, 0.0, 1.0]);
             const dp = vec3.dot(zprime, zorig);
-            let tanA = 0.0;
             if ((1.0 - dp) > 1e-6) {
                 const axis = vec3.create();
                 vec3Cross(zprime, zorig, axis);
@@ -2845,20 +3038,58 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
                 rotX = quat4.create();
                 quat4.set(rotX, dval0, dval1, dval2, dval3);
                 quat4.multiply(newQuat, newQuat, rotX);
-                tanA = Math.tan(angle)
+            } else {
+                // Light straight down the view axis: light space is eye space.
+                quat4.identity(rotX);
             }
 
-            let excess = Math.abs(shadowExtent*tanA);
-            if(self.doPerspectiveProjection){
-                excess += 150; // ?? It works.
-            }
-            d += excess;
+            // What the camera can see, about the view centre. The 24 is the half-height the
+            // ordinary projection is built with; the zoom that turns it into angstrom is applied
+            // to pMatrix further down, and is undone again below.
+            // The view centre in the atoms' own space. `origin` is the translation applied to the
+            // modelview, so the world point that lands at the eye is its negation.
+            const viewCentre: [number, number, number] =
+                [-self.origin[0], -self.origin[1], -self.origin[2]];
+            const casterRadius = radiusAbout(viewCentre, bounds.min, bounds.max);
 
-            d /= 2.0
-            d = Math.max(d,60.0)
+            // How deep the visible region is: the slab, but never deeper than there is scene to
+            // see through.
+            //
+            // The slab alone is the wrong number and was the bug. With clipping off it is the
+            // wide-open default - 0 to 1000 A - so the box being fitted came out 27 x 19 x 1000,
+            // the depth term swamped the other two, and the extents fell back on the caster
+            // radius: the old behaviour, restored by accident. It also explained why toggling
+            // clip on and off appeared to fix a freshly loaded structure - that recomputes the
+            // planes to suit it.
+            //
+            // You cannot see through more scene than exists, so the molecule's own extent is the
+            // honest bound when the planes are not doing any work.
+            const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end,
+                                     self.doPerspectiveProjection);
+            const slabHalfDepth = Math.max(0, slab.far - slab.near) / 2;
+            const visible = {
+                halfWidth: 24 * ratio * self.zoom,
+                halfHeight: 24 * self.zoom,
+                halfDepth: casterRadius > 0 ? Math.min(slabHalfDepth, casterRadius) : slabHalfDepth,
+            };
 
-            mat4.ortho(self.pMatrix, -d * ratio, d * ratio, -d, d, 0.1, 1000.0);
-            mat4.translate(self.mvMatrix, self.mvMatrix, [0, 0, -atom_span]);
+            const axes = lightAxes(quatToMat4(rotX));
+            const frustum = fitShadowFrustum(visible, casterRadius, axes);
+
+            // pMatrix is scaled by 1/zoom (or perspMult*pScale/zoom) after this if/else, for the
+            // benefit of the ordinary projection. That scale divides these extents, so they are
+            // multiplied by it here to come out as asked. The old code met the perspective half
+            // of this with `excess += 150; // ?? It works.`
+            const undoLaterScale = projectionZoomScale(self, ratio);
+            mat4.ortho(self.pMatrix,
+                -frustum.halfWidth * undoLaterScale, frustum.halfWidth * undoLaterScale,
+                -frustum.halfHeight * undoLaterScale, frustum.halfHeight * undoLaterScale,
+                frustum.near, frustum.far);
+            mat4.translate(self.mvMatrix, self.mvMatrix, [0, 0, -frustum.eyeDistance]);
+            // setMatrixUniforms rewrites clipPlane0 for this pass relative to where the shadow
+            // eye ended up, so it has to be told. It read atom_span before, which was this
+            // distance until the frustum started being fitted to the view.
+            self.shadowEyeDistance = frustum.eyeDistance;
 
             self.gl.disable(self.gl.CULL_FACE);
             self.gl.cullFace(self.gl.FRONT);
@@ -2969,23 +3200,12 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
         }
         self.gl.uniform1i(self.shaderProgramInstanced.shinyBack, self.shinyBack);
 
-        if(self.doPerspectiveProjection){
-            //FIXME - What is the justificatio of 5.7? (Approximately tan(acos(48./270.)), but not quite close enough)....
-            // The 1/ratio for landscape offscreen capture stays: it pairs with the aspect of
-            // 1.0 that path uses, and both are left as they were.
-            let perspMult = 1.0;
-            if(self.renderToTexture){
-                if(self.gl.viewportWidth > self.gl.viewportHeight){
-                    perspMult = 1.0 / ratio;
-                }
-            }
-            // Derived from the eye distance rather than fixed at 5.7, so moving the eye changes
-            // how strongly the view converges while the framing stays put. See perspectiveScale.
-            const pScale = perspectiveScale(self.fogClipOffset);
-            mat4.scale(self.pMatrix, self.pMatrix, [perspMult * pScale / self.zoom, perspMult * pScale / self.zoom, 1.0]);
-        } else {
-            mat4.scale(self.pMatrix, self.pMatrix, [1. / self.zoom, 1. / self.zoom, 1.0]);
-        }
+        // The 1/ratio for landscape offscreen capture pairs with the aspect of 1.0 that path
+        // uses. The perspective factor is derived from the eye distance rather than fixed at 5.7,
+        // so moving the eye changes how strongly the view converges while the framing stays put -
+        // see perspectiveScale. The shadow pass reads the same function, which is why it is one.
+        const zoomScale = projectionZoomScale(self, ratio);
+        mat4.scale(self.pMatrix, self.pMatrix, [zoomScale, zoomScale, 1.0]);
         mat4.translate(self.mvMatrix, self.mvMatrix, self.origin);
 
         self.pmvMatrix = mat4.create();
