@@ -8,6 +8,7 @@ import { MoorhenCarbohydrateValidationModal } from "../../modal/MoorhenCarbohydr
 import { MoorhenColourMapByOtherMapModal } from "../../modal/MoorhenColourMapByOtherMapModal";
 import { MoorhenFourierShellCorrelationModal } from "../../modal/MoorhenFourierShellCorrelationModal";
 import { MoorhenConKitModal } from "../../modal/MoorhenConKitModal";
+import { WorkerQueueModal } from "../../modal/WorkerQueueModal";
 import { MoorhenControlsModal } from "../../modal/MoorhenControlsModal";
 import { MoorhenCreateAcedrgLinkModal } from "../../modal/MoorhenCreateAcedrgLinkModal";
 import { MoorhenDiffMapPeaksModal } from "../../modal/MoorhenDiffMapPeaksModal";
@@ -65,6 +66,7 @@ export type ModalKey =
     | "NOE"
     | "config-shortcuts"
     | "fourier-shell-correlation"
+    | "worker-queue"
 
 export type ModalComponentProps = {
     openDocked?: "left" | "right" | null | undefined;
@@ -102,7 +104,8 @@ const modalsMap: Record<ModalKey, React.FC<ModalComponentProps>> = {
     conkit: MoorhenConKitModal,
     "config-shortcuts": MoorhenShortcutConfigModal,
     NOE: MoorhenNOERestraints,
-    "fourier-shell-correlation": MoorhenFourierShellCorrelationModal
+    "fourier-shell-correlation": MoorhenFourierShellCorrelationModal,
+    "worker-queue": WorkerQueueModal,
 };
 
 export type ExtraDraggableModals = React.JSX.Element[];

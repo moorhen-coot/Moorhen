@@ -105,6 +105,40 @@ describe("WorkerWrapper queue", () => {
         expect(sent.map(command => command.kwargs.commandArgs[0])).toEqual([1, 2, 1, 2, 1, 2, 1]);
     });
 
+    test("getStatus describes the queue, and subscribers hear about every change", async () => {
+        const { wrapper, sent } = makeWorker();
+        const idle = wrapper.getStatus();
+        expect(idle).toMatchObject({ running: null, waiting: [], completed: 0, squashed: 0, failed: 0, lastDurationMs: null });
+        // Same object until something changes (what useSyncExternalStore needs)
+        expect(wrapper.getStatus()).toBe(idle);
+
+        let changes = 0;
+        const unsubscribe = wrapper.subscribe(() => changes++);
+        const first = contour(wrapper, 1, "map-contour:a");
+        contour(wrapper, 2, "map-contour:b").catch(() => {});
+        const failing = contour(wrapper, 3, "map-contour:b");
+        await flush();
+        const busy = wrapper.getStatus();
+        expect(busy).not.toBe(idle);
+        expect(busy.running).toMatchObject({ command: "get_map_contours_mesh", squashKey: "map-contour:a" });
+        expect(busy.waiting.map(entry => entry.squashKey)).toEqual(["map-contour:b"]);
+        expect(busy.squashed).toBe(1);
+
+        sent[0].reply("mesh 1");
+        await first;
+        await flush();
+        sent[1].reply(null, "Exception");
+        await expect(failing).rejects.toBeInstanceOf(CootCommandError);
+        expect(wrapper.getStatus()).toMatchObject({ running: null, waiting: [], completed: 1, failed: 1 });
+        expect(wrapper.getStatus().lastDurationMs).toBeGreaterThanOrEqual(0);
+        expect(changes).toBeGreaterThan(0);
+
+        const before = changes;
+        unsubscribe();
+        contour(wrapper, 4).catch(() => {});
+        expect(changes).toBe(before);
+    });
+
     test("a failed command rejects and the queue goes on", async () => {
         const { wrapper, sent } = makeWorker();
         const failing = contour(wrapper, 1);

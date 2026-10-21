@@ -496,6 +496,14 @@ export const MoorhenDevMenu = () => {
             >
                 2D Overlays
             </MoorhenMenuItem>
+            <MoorhenMenuItem
+                onClick={() => {
+                    dispatch(showModal({ key: modalKeys.WORKER_QUEUE }));
+                    document.body.click();
+                }}
+            >
+                Worker command queue
+            </MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>

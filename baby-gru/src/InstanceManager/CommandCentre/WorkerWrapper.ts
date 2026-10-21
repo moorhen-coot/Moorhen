@@ -64,9 +64,39 @@ type QueuedCommand = {
     kwargs: cootCommandKwargs;
     doJournal: boolean;
     squashKey?: string;
+    /** `performance.now()` when queued */
+    queuedAt: number;
     resolve: (reply: WorkerResponse) => void;
     reject: (reason: unknown) => void;
 };
+
+/** A command in the queue, for display (see {@link WorkerWrapper.getStatus}) */
+export type WorkerQueueEntry = {
+    command: string;
+    squashKey?: string;
+    /** `performance.now()` when queued */
+    queuedAt: number;
+};
+
+/** What the queue is doing, as a snapshot: a new object each time something changes */
+export type WorkerQueueStatus = {
+    /** The command the worker is running, with `performance.now()` when it was sent */
+    running: (WorkerQueueEntry & { sentAt: number }) | null;
+    /** Commands waiting, in the order they will be sent */
+    waiting: WorkerQueueEntry[];
+    /** Counts since the wrapper was created */
+    completed: number;
+    squashed: number;
+    failed: number;
+    /** How long the last completed command took in the worker, ms */
+    lastDurationMs: number | null;
+};
+
+const entryOf = (command: QueuedCommand): WorkerQueueEntry => ({
+    command: commandName(command.kwargs),
+    squashKey: command.squashKey,
+    queuedAt: command.queuedAt,
+});
 
 /** How the worker returns a map contour: lines, lit lines or a solid surface */
 export type MapContourMeshType = "lines_mesh" | "lit_lines_mesh" | "mesh_perm";
@@ -114,6 +144,11 @@ export class WorkerWrapper {
     private send: (kwargs: cootCommandKwargs, doJournal: boolean) => Promise<WorkerResponse>;
     private queue: QueuedCommand[] = [];
     private sending = false;
+    private running: (WorkerQueueEntry & { sentAt: number }) | null = null;
+    private counts = { completed: 0, squashed: 0, failed: 0 };
+    private lastDurationMs: number | null = null;
+    private status: WorkerQueueStatus | null = null;
+    private readonly listeners = new Set<() => void>();
 
     constructor(send: (kwargs: cootCommandKwargs, doJournal: boolean) => Promise<WorkerResponse>) {
         this.send = send;
@@ -124,11 +159,39 @@ export class WorkerWrapper {
         return this.queue.length;
     }
 
+    /**
+     * What the queue is doing. The same object until something changes, so it can be read with React's
+     * `useSyncExternalStore(wrapper.subscribe, wrapper.getStatus)`. Not in the redux store: it changes many times a
+     * second while maps follow the view.
+     */
+    readonly getStatus = (): WorkerQueueStatus => {
+        if (!this.status) {
+            this.status = {
+                running: this.running,
+                waiting: this.queue.map(entryOf),
+                ...this.counts,
+                lastDurationMs: this.lastDurationMs,
+            };
+        }
+        return this.status;
+    };
+
+    /** Call `listener` whenever the queue changes; returns the function that stops it */
+    readonly subscribe = (listener: () => void): (() => void) => {
+        this.listeners.add(listener);
+        return () => this.listeners.delete(listener);
+    };
+
+    private changed(): void {
+        this.status = null;
+        this.listeners.forEach(listener => listener());
+    }
+
     /** Queue a command; resolves with the worker's reply once it has been sent and run */
     private enqueue(kwargs: cootCommandKwargs, doJournal: boolean, options: WorkerCommandOptions = {}): Promise<WorkerResponse> {
         const { squashKey } = options;
         return new Promise<WorkerResponse>((resolve, reject) => {
-            const command: QueuedCommand = { kwargs, doJournal, squashKey, resolve, reject };
+            const command: QueuedCommand = { kwargs, doJournal, squashKey, queuedAt: performance.now(), resolve, reject };
             // Replaces the waiting commands with the same key, at the place of the oldest one; else goes last
             const position = squashKey === undefined ? -1 : this.queue.findIndex(waiting => waiting.squashKey === squashKey);
             if (position === -1) {
@@ -138,7 +201,9 @@ export class WorkerWrapper {
                 this.queue = this.queue.map((waiting, index) => (index === position ? command : waiting));
                 this.queue = this.queue.filter(waiting => waiting === command || waiting.squashKey !== squashKey);
                 squashed.forEach(waiting => waiting.reject(new CommandSquashedError(commandName(waiting.kwargs), squashKey)));
+                this.counts.squashed += squashed.length;
             }
+            this.changed();
             void this.sendQueued();
         });
     }
@@ -151,11 +216,23 @@ export class WorkerWrapper {
         this.sending = true;
         while (this.queue.length > 0) {
             const command = this.queue.shift();
+            this.running = { ...entryOf(command), sentAt: performance.now() };
+            this.changed();
             try {
-                command.resolve(await this.send(command.kwargs, command.doJournal));
+                const reply = await this.send(command.kwargs, command.doJournal);
+                if (reply?.data?.result?.status === "Exception") {
+                    this.counts.failed++;
+                } else {
+                    this.counts.completed++;
+                }
+                command.resolve(reply);
             } catch (err) {
+                this.counts.failed++;
                 command.reject(err);
             }
+            this.lastDurationMs = performance.now() - this.running.sentAt;
+            this.running = null;
+            this.changed();
         }
         this.sending = false;
     }
