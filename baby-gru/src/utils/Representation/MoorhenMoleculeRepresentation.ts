@@ -15,6 +15,10 @@ import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInS
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { wholeMeshPickInfo } from "../../WebGLgComponents/wholeMeshPick";
+import {
+    METABALLS_GRID_SIZE, METABALLS_ISO_LEVEL, METABALLS_RADIUS, METABALLS_SPHERE_ARGS,
+    gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
+} from "../../WebGPUComponents/metaballs";
 
 export type MeshType =
     | libcootApi.InstancedMeshJS
@@ -1786,16 +1790,60 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
      */
     async getMetaBallBuffers(cid: string) : Promise<PickableMesh[]>{
+        if (gpuMetaBallsSetting.enabled) {
+            try {
+                const objects = await this.getMetaBallBuffersOnGpu(cid);
+                if (objects) return objects;
+            } catch (err) {
+                console.warn("GPU MetaBalls failed; making them with Coot instead.", err);
+            }
+        }
         const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "PickableMeshPerm",
                 command: "DrawMoorhenMetaBalls",
-                commandArgs: [this.parentMolecule.molNo, cid, 0.2, 0.67, 1.8, 4],
+                commandArgs: [this.parentMolecule.molNo, cid, METABALLS_GRID_SIZE, METABALLS_RADIUS, METABALLS_ISO_LEVEL, 4],
             },
             false
         )) as moorhen.WorkerResponse<{mesh:libcootApi.SimpleMeshJS,pick_info:{pick_points:number[][]}}>;
         const objects = [{ ...response.data.result.result.mesh, pick_info: response.data.result.result.pick_info }];
         return objects;
+    }
+
+    /**
+     * The same MetaBalls mesh made with WebGPU compute: Coot supplies the spheres, as it does for
+     * DrawMoorhenMetaBalls, and the field, marching cubes and per-vertex pass run on the GPU.
+     * Null when WebGPU is not available. See WebGPUComponents/metaballs.
+     */
+    async getMetaBallBuffersOnGpu(cid: string) : Promise<PickableMesh[] | null>{
+        const generator = await sharedGpuMetaBalls();
+        if (!generator) return null;
+        const started = performance.now();
+        const response = (await this.commandCentre.cootCommand(
+            {
+                returnType: "instanced_mesh_perfect_spheres",
+                command: "get_bonds_mesh_for_selection_instanced",
+                commandArgs: [this.parentMolecule.molNo, cid, ...METABALLS_SPHERE_ARGS],
+            },
+            false
+        )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+        const spheresMs = performance.now() - started;
+        const { input, pickPoints } = metaballsInputFromSpheres(response.data.result.result as never, METABALLS_RADIUS);
+        const mesh = await generator.generate(input, {
+            gridSize: METABALLS_GRID_SIZE, isoLevel: METABALLS_ISO_LEVEL, tiledField: gpuMetaBallsSetting.tiledField,
+        });
+        const grid = mesh.grid ? mesh.grid.n.join("x") : "none";
+        const t = mesh.timings;
+        const other = t.totalMs - t.setupMs - t.countWaitMs - t.emitWaitMs - t.readbackWaitMs - t.assembleMs;
+        console.log(`GPU MetaBalls: ${pickPoints.length} points, grid ${grid}, ${mesh.positions.length / 3} vertices, ` +
+            `${mesh.indices.length / 3} triangles; spheres from Coot ${spheresMs.toFixed(0)} ms, ` +
+            `GPU ${t.totalMs.toFixed(0)} ms in ${t.slabs} slab(s), ${gpuMetaBallsSetting.tiledField ? "tiled" : "direct"} field: ` +
+            `setup ${t.setupMs.toFixed(0)}, ` +
+            `count ${t.countWaitMs.toFixed(0)}, emit ${t.emitWaitMs.toFixed(0)}, readback ${t.readbackWaitMs.toFixed(0)}, ` +
+            `assemble ${t.assembleMs.toFixed(0)}, other ${other.toFixed(0)}` +
+            (t.gpuMs ? `; GPU time per kernel: ${Object.entries(t.gpuMs).map(([k, ms]) => `${k} ${ms.toFixed(1)}`).join(", ")}` : ""));
+        const data = metaballsMeshData(mesh, pickPoints);
+        return [data as unknown as PickableMesh];
     }
 
     /**

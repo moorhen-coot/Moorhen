@@ -31,6 +31,7 @@ import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
+import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
 
 import { readGzippedTextFile } from "../../utils/utils";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
@@ -194,6 +195,8 @@ export const MoorhenDevMenu = () => {
     // meter alone against the meter with this on, which needs them to be two switches.
     const [countingDraws, setCountingDraws] = useState<boolean>(renderStats.enabled);
     const [syncingGpu, setSyncingGpu] = useState<boolean>(renderStats.syncGpu);
+    const [gpuMetaBalls, setGpuMetaBalls] = useState<boolean>(gpuMetaBallsSetting.enabled);
+    const [tiledField, setTiledField] = useState<boolean>(gpuMetaBallsSetting.tiledField);
     const glCtx = useSelector((state: RootState) => state.glRef.glCtx);
     const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately);
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
@@ -504,6 +507,24 @@ export const MoorhenDevMenu = () => {
             >
                 WebGPU preview (test)
             </MoorhenMenuItem>
+            <MoorhenToggle
+                type="switch"
+                checked={gpuMetaBalls}
+                label="MetaBalls on the GPU (test; applies to MetaBalls made from now on)"
+                onChange={() => {
+                    gpuMetaBallsSetting.enabled = !gpuMetaBalls;
+                    setGpuMetaBalls(!gpuMetaBalls);
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={tiledField}
+                label="GPU MetaBalls: tiled field kernel (off = one thread per grid point)"
+                onChange={() => {
+                    gpuMetaBallsSetting.tiledField = !tiledField;
+                    setTiledField(!tiledField);
+                }}
+            />
             <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>
