@@ -6,6 +6,8 @@ import { MockMoorhenInstance } from '../__mocks__/mockMoorhenInstance';
 import { setOrigin } from '@/store/sceneSettingsSlice';
 import { setActiveMap, setDevMode, setDisableFileUpload } from '@/store/generalStatesSlice';
 import { setEnableTimeCapsule } from '@/store/backupSettingsSlice';
+import { emptyMaps } from '@/store/mapsSlice';
+import { emptyMapRepresentations } from '@/store/mapRepresentationsSlice';
 import { setBackgroundColor, setDefaultBondSmoothness } from '@/store/sceneSettingsSlice';
 import { createCallbackBackupStorage } from '@/WebComponent/ccp4cloud/backupStorage';
 import { MoorhenTimeCapsule } from '@/utils/MoorhenTimeCapsule';
@@ -182,6 +184,14 @@ beforeEach(async () => {
         React.createRef(),
         MoorhenReduxStore,
     );
+});
+
+afterEach(() => {
+    // Every test starts its own instance on the shared store, with a new coot container: stop this one drawing
+    // maps, and forget its maps, so the next instance does not draw maps of a deleted container
+    moorhenInstance.mapDisplay?.stop();
+    MoorhenReduxStore.dispatch(emptyMaps());
+    MoorhenReduxStore.dispatch(emptyMapRepresentations());
 });
 
 // ==============================

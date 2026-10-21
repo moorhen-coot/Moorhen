@@ -48,6 +48,7 @@ import { CommandCentre } from "./CommandCentre";
 import { WorkerWrapper } from "./CommandCentre/WorkerWrapper";
 import { StoreExtension } from "./StoreExtension";
 import { startStoreSyncs } from "./StoreSync";
+import { MapDisplayDriver } from "./MapDisplayDriver";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
 import type { AppDispatch, MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 
@@ -127,6 +128,7 @@ export class MoorhenInstance extends StoreExtension {
     private readyCallbacks: Array<() => void | Promise<void>> = [];
     private preferencesUnsubscribe: (() => void) | null = null;
     private storeSyncsUnsubscribe: (() => void) | null = null;
+    private _mapDisplay: MapDisplayDriver | null = null;
 
     /**
      * Create a new Moorhen instance.
@@ -224,6 +226,13 @@ export class MoorhenInstance extends StoreExtension {
      */
     public get workerCommand(): WorkerWrapper {
         return this._workerCommand;
+    }
+
+    /**
+     * Draws the maps from their representation records (see {@link MapDisplayDriver}); null before `startInstance`.
+     */
+    public get mapDisplay(): MapDisplayDriver | null {
+        return this._mapDisplay;
     }
 
     /**
@@ -1688,6 +1697,9 @@ export class MoorhenInstance extends StoreExtension {
         this.workerCommand.set_max_number_of_simple_mesh_vertices(10000000);
         this.storeSyncsUnsubscribe?.();
         this.storeSyncsUnsubscribe = startStoreSyncs(this);
+        this._mapDisplay?.stop();
+        this._mapDisplay = new MapDisplayDriver(this);
+        this._mapDisplay.start();
         this.dispatch(setGlobalInstanceReady(true));
         this.ready = true;
         await Promise.all(this.readyCallbacks.map(callback => callback()));
@@ -1709,6 +1721,8 @@ export class MoorhenInstance extends StoreExtension {
         }
         this.storeSyncsUnsubscribe?.();
         this.storeSyncsUnsubscribe = null;
+        this._mapDisplay?.stop();
+        this._mapDisplay = null;
         if (this._commandCentre) {
             this.commandCentre.close();
             this._commandCentre = undefined;

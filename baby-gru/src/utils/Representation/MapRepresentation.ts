@@ -1,12 +1,12 @@
 /**
- * DRAFT, not wired yet: see .roadmaps/map-display.md ("Target design").
+ * See .roadmaps/map-display.md ("Target design").
  *
  * A map's display is a list of map representations. Each one is
  * - a plain record in the store (`MapRepresentationData`): what to show, serialisable, saved in scenes and sessions;
  * - a `MapRepresentation` instance outside the store: its GL buffers and what it last drew. It reads its record
  *   from the store and never holds a setting itself.
  *
- * The map display driver (to write, StoreSync style) creates / disposes instances as records appear / disappear,
+ * The map display driver (MapDisplayDriver) creates / disposes instances as records appear / disappear,
  * and calls `update()` when a record changes and `onViewMoved()` when the view origin moves.
  */
 import { appendOtherData, buildBuffers } from "../../WebGLgComponents/buildBuffers";
@@ -84,7 +84,7 @@ export class MapRepresentation {
         const contour = this.contourKey(data);
         if (!sameContour(this.lastContour, contour)) {
             // A new contour builds its buffers with the current appearance
-            this.requestContour();
+            void this.requestContour();
         } else if (!sameAppearance(this.lastAppearance, this.appearanceKey(data))) {
             this.applyAppearance(data);
         }
@@ -94,8 +94,17 @@ export class MapRepresentation {
     onViewMoved(): void {
         const data = this.data;
         if (data?.visible && !data.originLock) {
-            this.requestContour();
+            void this.requestContour();
         }
+    }
+
+    /**
+     * Contour again even if nothing in the record changed: the map's data changed (e.g. maps updated after a
+     * refinement, reflections replaced), or the line width. Resolves once drawn (or replaced by a newer contour).
+     */
+    redraw(): Promise<void> {
+        this.lastContour = null;
+        return this.requestContour();
     }
 
     /** Draw with a smaller radius during interaction, null to go back to the record's radius */
@@ -155,13 +164,13 @@ export class MapRepresentation {
      * Queue a contour with the current record and view. Requests are not coalesced here: the worker queue squashes
      * the older ones still waiting (same squash key), so only the latest is contoured.
      */
-    private requestContour(): void {
+    private requestContour(): Promise<void> {
         const data = this.data;
         if (!data?.visible) {
             this.hide();
-            return;
+            return Promise.resolve();
         }
-        this.contour(this.contourKey(data), this.appearanceKey(data)).catch(err => {
+        return this.contour(this.contourKey(data), this.appearanceKey(data)).catch(err => {
             if (!(err instanceof CommandSquashedError)) {
                 console.error(`Map representation ${this.id}: contour failed`, err);
             }
@@ -247,6 +256,10 @@ export class MapRepresentation {
     private applyAppearance(data: MapRepresentationData): void {
         const appearance = this.appearanceKey(data);
         this.paint(this.buffers, appearance, data.colourByMap !== null);
+        buildBuffers(
+            this.buffers.map(({ buffer }) => buffer),
+            this.instance.store
+        );
         this.lastAppearance = appearance;
         this.instance.dispatch(setRequestDrawScene(true));
     }

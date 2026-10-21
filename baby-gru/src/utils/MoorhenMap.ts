@@ -2,7 +2,7 @@ import { Store } from "@reduxjs/toolkit";
 import { correctExportedGltf } from "./gltfWinding";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
-import { setDisplayBuffers, setOrigin, setRequestDrawScene, setZoom } from "../store";
+import { hideMap, setDisplayBuffers, setOrigin, setZoom } from "../store";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
@@ -651,21 +651,18 @@ export class MoorhenMap {
     }
 
     /**
-     * Contour the map with parameters from the redux store
+     * Contour the map again, e.g. after its data changed. The map is drawn by its representations
+     * (see MapDisplayDriver); resolves once they are drawn.
      */
     drawMapContour(): Promise<void> {
-        const originState = this.store.getState().sceneSettings.origin;
-        const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams();
-        return this.doCootContour(...(originState.map(coord => -coord) as [number, number, number]), mapRadius, contourLevel, mapStyle);
+        return this.moorhenInstance?.mapDisplay?.redrawMap(this.uniqueId) ?? Promise.resolve();
     }
 
     /**
      * Hide the map contour
      */
     hideMapContour(): void {
-        const displayBuffers = this.store.getState().glRef.displayBuffers;
-        const oldBuffers = this.clearBuffersOfStyle("Coot", displayBuffers);
-        this.store.dispatch(setDisplayBuffers([...oldBuffers]));
+        this.store.dispatch(hideMap(this));
     }
 
     /**
@@ -837,6 +834,8 @@ export class MoorhenMap {
 
     /**
      * Draw the map contour around a given origin
+     * @deprecated Maps are drawn by their representations (MapDisplayDriver); this draws a second, separate copy.
+     * Change the display through the store and use {@link drawMapContour} to redraw.
      * @param {number} x - Origin coord. X
      * @param {number} y - Origin coord. Y
      * @param {number} z - Origin coord. Z
@@ -918,10 +917,12 @@ export class MoorhenMap {
         } else {
             this.otherMapForColouring = { molNo, min, max };
         }
+        this.moorhenInstance?.mapDisplay?.syncMapFields();
     }
 
     /**
-     * Fetch the colours for a difference map using values from redux store and redraw the map
+     * Redraw a difference map with its colours from the redux store. Colour changes in the store are drawn
+     * automatically (see MapDisplayDriver): kept for callers that still call it after dispatching.
      * @param {'positiveDiffColour' | 'negativeDiffColour'} type - Indicates whether the negative or positive colours will be set
      * @returns {Promise<void>}
      */
@@ -932,39 +933,12 @@ export class MoorhenMap {
             );
             return;
         }
-
-        const { mapAlpha, positiveMapColour, negativeMapColour } = this.getMapContourParams();
-        const mapColour = type === "positiveDiffColour" ? positiveMapColour : negativeMapColour;
-
-        if (mapAlpha < 0.99) {
-            this.displayObjects["Coot"].forEach((buffer, bufferIdx) => {
-                buffer.customColour = null;
-                buffer.transparent = true;
-                buffer.triangleColours.forEach((colbuffer, colBufferIdx) => {
-                    for (const idx of this.diffMapColourBuffers[type]) {
-                        colbuffer[idx] = mapColour.r;
-                        colbuffer[idx + 1] = mapColour.g;
-                        colbuffer[idx + 2] = mapColour.b;
-                    }
-                });
-                buffer.isDirty = true;
-                buffer.alphaChanged = true;
-            });
-        } else {
-            if (this.displayObjects["Coot"].length === 2) {
-                if (type === "positiveDiffColour") {
-                    this.displayObjects["Coot"][0].setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                    this.displayObjects["Coot"][0].transparent = false;
-                } else {
-                    this.displayObjects["Coot"][1].setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                    this.displayObjects["Coot"][1].transparent = false;
-                }
-            }
-        }
+        this.moorhenInstance?.mapDisplay?.syncMapFields();
     }
 
     /**
-     * Set the colours for a non-difference map using values from redux store
+     * Redraw a non-difference map with its colour from the redux store, no longer coloured by another map.
+     * Colour changes in the store are drawn automatically (see MapDisplayDriver).
      */
     async fetchColourAndRedraw(): Promise<void> {
         if (this.isDifference) {
@@ -973,65 +947,16 @@ export class MoorhenMap {
             );
             return;
         }
-
-        if (this.otherMapForColouring !== null) {
-            this.otherMapForColouring = null;
-        }
-
-        const { mapAlpha, mapColour } = this.getMapContourParams();
-
-        this.displayObjects["Coot"].forEach(buffer => {
-            if (mapAlpha < 0.99) {
-                buffer.transparent = true;
-                buffer.alphaChanged = true;
-                buffer.setCustomColour([mapColour.r, mapColour.g, mapColour.b, mapAlpha]);
-            } else {
-                buffer.setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                buffer.transparent = false;
-            }
-        });
+        this.otherMapForColouring = null;
+        this.moorhenInstance?.mapDisplay?.syncMapFields();
     }
 
     /**
-     * Fetch the map alpha (transparency) for this map using values from redux store and redraw the map
+     * Redraw the map with its alpha (transparency) from the redux store. Alpha changes in the store are drawn
+     * automatically (see MapDisplayDriver): kept for callers that still call it after dispatching.
      */
     async fetchMapAlphaAndRedraw(): Promise<void> {
-        const { mapAlpha, mapColour } = this.getMapContourParams();
-        this.displayObjects["Coot"].forEach(buffer => {
-            buffer.triangleColours.forEach(colbuffer => {
-                if (this.isDifference) {
-                    console.log("Setting alpha", mapAlpha);
-                }
-                for (let idx = 3; idx < colbuffer.length; idx += 4) {
-                    colbuffer[idx] = mapAlpha;
-                }
-            });
-            buffer.isDirty = true;
-            buffer.alphaChanged = true;
-            if (mapAlpha < 0.99) {
-                buffer.transparent = true;
-                if (buffer.customColour && buffer.customColour.length === 4) {
-                    buffer.customColour = null;
-                    if (this.isDifference) {
-                        console.log("Setting colours to", mapColour);
-                    }
-                    buffer.triangleColours.forEach(colbuffer => {
-                        for (let idx = 0; idx < colbuffer.length; idx += 4) {
-                            colbuffer[idx] = mapColour.r;
-                            colbuffer[idx + 1] = mapColour.g;
-                            colbuffer[idx + 2] = mapColour.b;
-                        }
-                    });
-                }
-            } else {
-                buffer.transparent = false;
-                if (buffer.customColour && buffer.customColour.length === 4) {
-                    buffer.setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                }
-            }
-        });
-        buildBuffers(this.displayObjects["Coot"], this.store);
-        this.store.dispatch(setRequestDrawScene(true));
+        this.moorhenInstance?.mapDisplay?.syncMapFields();
     }
 
     /**
@@ -1578,6 +1503,7 @@ export class MoorhenMap {
 
     toggleOriginLock(val: boolean = !this.isOriginLocked): void {
         this.isOriginLocked = val;
+        this.moorhenInstance?.mapDisplay?.syncMapFields();
     }
 
 }

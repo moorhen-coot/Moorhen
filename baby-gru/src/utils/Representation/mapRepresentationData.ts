@@ -39,7 +39,7 @@ export const currentRadius = (data: MapRepresentationData): number => data.radiu
 export const currentAlpha = (data: MapRepresentationData): number => data.alpha[data.style];
 
 /**
- * The display a map gets when it is loaded (today in the MoorhenMapManager mount effect).
+ * The display a map gets when it is loaded.
  * `preferences` are the global map preferences (`mapContourSettings.defaultMapLitLines` / `defaultMapSurface`).
  */
 export const createDefaultMapRepresentationData = (

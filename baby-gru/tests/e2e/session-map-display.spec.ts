@@ -73,6 +73,20 @@ const getMapDisplays = (page: Page): Promise<MapDisplaySummary[]> =>
             .sort((a: MapDisplaySummary, b: MapDisplaySummary) => a.name.localeCompare(b.name));
     });
 
+/** Per map (sorted by name): its representation records in the store, and the MapRepresentation instances drawing it */
+const getRepresentationCounts = (page: Page): Promise<{ records: number; drawing: number }[]> =>
+    page.evaluate(async () => {
+        const instance = await (document.getElementById("moorhen-test") as any).getMoorhenInstance();
+        const state = instance.store.getState();
+        const records = Object.values(state.mapRepresentations.representations) as { mapUid: string }[];
+        return [...state.maps]
+            .sort((a: any, b: any) => a.name.localeCompare(b.name))
+            .map((map: any) => ({
+                records: records.filter(record => record.mapUid === map.uniqueId).length,
+                drawing: instance.mapDisplay.getRepresentations(map.uniqueId).length,
+            }));
+    });
+
 /** The maps as stored in a session file (colours 0-255, as saved) */
 const getStoredMaps = (page: Page, session: SessionFile): Promise<StoredMap[]> =>
     page.evaluate(async url => {
@@ -222,6 +236,8 @@ test.describe("Map display in session files", () => {
             const displays = await getMapDisplays(page);
             expect(displays.map(map => map.name)).toEqual(stored.map(map => map.name));
             displays.forEach((display, index) => expectDisplayMatchesFile(display, stored[index]));
+            // Each map is drawn by one map representation, from its record
+            expect(await getRepresentationCounts(page)).toEqual(stored.map(() => ({ records: 1, drawing: 1 })));
         });
     }
 
@@ -248,10 +264,8 @@ test.describe("Map display in session files", () => {
     });
 
     test("map-display.pb: map radius survives a session load and a save and reload", async ({ page }) => {
-        // Known bug: the MoorhenMapManager mount effect sets the radius to suggestedRadius * 1.2, and session
-        // load sets suggestedRadius to the saved radius, so every load grows it by 20% (18 -> 21.6 -> 25.92).
-        // Goes away with map display defaults computed at map load (.roadmaps/map-display.md); drop test.fail() then.
-        test.fail();
+        // Was a bug: the MoorhenMapManager mount effect set the radius to suggestedRadius * 1.2 over the saved one,
+        // growing it by 20% per load. Fixed 2026-10-21: defaults at map load keep values already set (MapDisplayDriver)
         test.setTimeout(240_000);
         const stored = await loadSession(page, MAP_DISPLAY_SESSION);
         expect((await getMapDisplays(page)).map(map => map.radius)).toEqual(stored.map(map => map.radius));

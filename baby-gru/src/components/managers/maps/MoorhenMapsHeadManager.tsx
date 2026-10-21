@@ -1,21 +1,25 @@
 import { useSelector } from "react-redux";
 import { moorhen } from "../../../types/moorhen";
-import { MoorhenMapManager} from "./MoorhenMapManager"
+import { MapScrollWheelListener } from "./MapScrollWheelListener";
 
 /**
- * React functional component that manages and renders a list of `MoorhenMapManager` components,
- * one for each map present in the application's Redux state.
- *
- * @returns {JSX.Element[] | null} An array of `MoorhenMapManager` components, or `null` if no maps are present.
+ * Mounts the scroll-wheel contour level control for the active map.
  *
  * @remarks
- * - Uses the `useSelector` hook to access the `maps` array from the Redux state.
- * - Each `MoorhenMapManager` is keyed by its associated `molNo`.
+ * Maps are no longer drawn from React: the instance's `MapDisplayDriver` draws them from their representation
+ * records (see .roadmaps/map-display.md).
  */
 export const MoorhenMapsHeadManager = () => {
-    const maps = useSelector((state: moorhen.State) => state.maps);
-    const managerList = maps.map((item) => 
-        <MoorhenMapManager mapMolNo={item.molNo} key={'MapManager' + item.molNo}/> 
-    )
-    return (managerList ? managerList : null)
-}
+    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
+    const map = useSelector((state: moorhen.State) => state.maps.find(item => item.molNo === activeMap?.molNo) ?? null);
+    const mapIsVisible = useSelector((state: moorhen.State) => (map ? state.mapContourSettings.visibleMaps.includes(map.molNo) : false));
+    const mapContourLevel = useSelector((state: moorhen.State) => {
+        const level = map ? state.mapContourSettings.contourLevels.find(item => item.molNo === map.molNo)?.contourLevel : undefined;
+        return level ?? map?.suggestedContourLevel ?? 0.003;
+    });
+
+    if (!map) {
+        return null;
+    }
+    return <MapScrollWheelListener key={map.uniqueId} map={map} mapIsVisible={mapIsVisible} mapContourLevel={mapContourLevel} />;
+};
