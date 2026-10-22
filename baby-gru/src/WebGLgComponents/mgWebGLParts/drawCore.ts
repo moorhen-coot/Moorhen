@@ -7,6 +7,7 @@ import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 import { advanceCamera } from './cameraAnimations';
+import { isInvisible, shouldCastShadow } from '../objectFade';
 import { beginDepthOnlyPass } from '../shadowPass';
 import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
 import { glTextureFor } from '../textureRegistry';
@@ -108,6 +109,44 @@ function shadowCasterBounds(self: MGWebGL, displayBuffers: any[]): ShadowCasterB
  * and was fine the rest of the time. Hence the table above.
  */
 const SHADOW_TEXTURE_UNIT = 6;
+
+/**
+ * Everything a program built from the triangle fragment shader has to be told, per draw.
+ *
+ * ONE PLACE, BECAUSE THE LIST KEEPS GROWING AND THE PROGRAMS ARE NOT OBVIOUS
+ *
+ * `mgWebGL.initShaders` pairs that one fragment shader with three different vertex shaders, so it
+ * backs six programs: the triangle pair, the instanced pair, **and the thick-lines-normal pair**.
+ * Nothing in the shader source says so - you have to read the `init*Shaders(vertexShader,
+ * fragmentShader, gl)` call sites to find out - and the lines programs are the ones everybody
+ * forgets, because "lines" does not sound like something drawn with the triangle shader. (It is:
+ * lines are triangles here, for thickness.)
+ *
+ * Both uniforms below have now gone missing on the lines program once each, in separate pieces of
+ * work, and both times the result was that lit lines vanished completely while everything else
+ * looked perfect:
+ *
+ *   - `alphaMultiplier` unwritten is **0.0**, so every fragment's alpha is multiplied by zero.
+ *   - `ShadowMap` unassigned is unit **0**, and unit 0 holds ordinary colour textures. A
+ *     `sampler2DShadow` sharing a unit with a `sampler2D` fails draw-time validation outright -
+ *     "Two textures of different types use the same sampler location" - and every draw in the
+ *     frame is discarded. It was only ever safe before because `ShadowMap` was a plain
+ *     `sampler2D` like its neighbours.
+ *
+ * Neither failure resembles a uniform from the outside, and neither is logged anywhere obvious.
+ * So the rule is mechanical: if you draw with a program built from the triangle fragment shader,
+ * call this immediately after `useProgram`, and if you add a uniform to that shader, add it here.
+ *
+ * @param program must already be the current program; these are uniform writes.
+ */
+function setTriangleFragmentUniforms(self: MGWebGL, program: any, alphaMultiplier: number): void {
+    if (program.ShadowMap != null) {
+        self.gl.uniform1i(program.ShadowMap, SHADOW_TEXTURE_UNIT);
+    }
+    if (program.alphaMultiplier != null) {
+        self.gl.uniform1f(program.alphaMultiplier, alphaMultiplier);
+    }
+}
 
 /** Where the previous peel layer's depth is read from. */
 const DEPTH_PEEL_TEXTURE_UNIT = 3;
@@ -501,6 +540,24 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             if (!displayBuffers[idx].visible) {
                 continue;
             }
+
+            // What a fade has done to this buffer. Two separate decisions, both cheap, and both
+            // wrong in a visible way if skipped - see objectFade.
+            //
+            // Faded to nothing: drawing it costs a full pass through the vertex shader, the
+            // rasteriser and a peeling layer to contribute no pixels at all. A movie that fades
+            // four molecules out should get faster, not carry their cost to the end.
+            //
+            // Faded at all: it stops casting a shadow. An object that has half vanished while its
+            // shadow stays solid on the floor is the most obvious way to make a fade look wrong.
+            const bufferFade = displayBuffers[idx].alphaMultiplier ?? 1.0;
+            if (isInvisible(bufferFade)) {
+                continue;
+            }
+            if (calculatingShadowMap
+                && !shouldCastShadow(true, bufferFade, displayBuffers[idx].transparent)) {
+                continue;
+            }
             if(self.doStenciling){
                 if(self.stencilPass&&!displayBuffers[idx].doStencil){
                     continue;
@@ -610,6 +667,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.useProgram(theShader);
+                setTriangleFragmentUniforms(self, theShader, bufferFade);
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
 
@@ -685,16 +743,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.uniform1i(theShader.doShadows, false);
-                // The shadow sampler's unit, set whether or not shadows are being drawn.
-                //
-                // A sampler uniform that is never assigned reads as unit 0, and unit 0 carries
-                // ordinary colour textures. ShadowMap is a sampler2DShadow, and a shadow sampler
-                // sharing a unit with a plain sampler2D fails draw-time validation outright:
-                // "Two textures of different types use the same sampler location". Every draw is
-                // then discarded and nothing appears at all. It only used to be safe because
-                // ShadowMap was a sampler2D like its neighbours.
-                if(theShader.ShadowMap != null)
-                    self.gl.uniform1i(theShader.ShadowMap, SHADOW_TEXTURE_UNIT);
+                // ShadowMap's unit is set by setTriangleFragmentUniforms above, unconditionally.
                 if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
                     self.gl.uniform1f(theShader.xPixelOffset, 1.0/self.rttFramebufferDepth.width);
                     self.gl.uniform1f(theShader.yPixelOffset, 1.0/self.rttFramebufferDepth.height);
@@ -914,6 +963,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 0.0, 0.0, 0.0, 1.0,
                 );
                 self.gl.useProgram(program);
+                setTriangleFragmentUniforms(self, program, bufferFade);
                 self.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                 self.setMatrixUniforms(program);
                 self.gl.disableVertexAttribArray(program.vertexColourAttribute);
@@ -928,16 +978,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 if(program.offsetAttribute!=null) self.gl.enableVertexAttribArray(program.offsetAttribute);
                 if(program.sizeAttribute!=null) self.gl.enableVertexAttribArray(program.sizeAttribute);
                 if(program.doShadows!=null) self.gl.uniform1i(program.doShadows, false);
-                // The shadow sampler's unit, set whether or not shadows are being drawn.
-                //
-                // A sampler uniform that is never assigned reads as unit 0, and unit 0 carries
-                // ordinary colour textures. ShadowMap is a sampler2DShadow, and a shadow sampler
-                // sharing a unit with a plain sampler2D fails draw-time validation outright:
-                // "Two textures of different types use the same sampler location". Every draw is
-                // then discarded and nothing appears at all. It only used to be safe because
-                // ShadowMap was a sampler2D like its neighbours.
-                if(program.ShadowMap != null)
-                    self.gl.uniform1i(program.ShadowMap, SHADOW_TEXTURE_UNIT);
+                // ShadowMap's unit is set by setTriangleFragmentUniforms above, unconditionally.
                 if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
                     self.gl.activeTexture(self.gl.TEXTURE0 + SHADOW_TEXTURE_UNIT);
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttTextureDepth);
@@ -1152,6 +1193,10 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
             for(let i = 0; i<16; i++)
                 self.gl.disableVertexAttribArray(i);
+
+            // Lit lines are drawn with the triangle fragment shader, so they need everything a
+            // triangle needs. This line has now had to be restored twice; see the helper.
+            setTriangleFragmentUniforms(self, shaderProgramThickLinesNormal, bufferFade);
 
             self.gl.uniform1i(shaderProgramThickLinesNormal.shinyBack, true);
             self.setLightUniforms(shaderProgramThickLinesNormal);
@@ -1680,28 +1725,27 @@ export function drawScene(self: MGWebGL) : void {
             console.log(self.myQuat)
         }
 
-        // A copy, and only when it has actually changed.
+        // Not while the camera is being driven. This used to test `animating`, which meant "a
+        // centring move is running" and so missed a movie entirely - the movie code had to set the flag
+        // by hand to get the same effect. `moving` is the condition that was always meant: a move
+        // or a movie is in flight, and the store will hear about it when the camera comes to rest.
         //
-        // The copy is needed because onQuatChanged dispatches into Redux, which freezes what it is
-        // given, while the camera writes this array in place on every frame of every move. But a
-        // fresh array every frame is a fresh *reference* every frame, so every selector reading
-        // the stored quaternion re-renders - MoorhenWebMG, the scene sliders, the 3D objects
-        // dialog - sixty times a second during a drag. This previously passed the live array,
-        // which Redux saw as unchanged and which therefore cost nothing; the copy fixed the
-        // freezing and paid for it in re-renders.
+        // The store's copy of the orientation is not sent from here any more.
         //
-        // Comparing against what the store already holds gets both: the store is never handed an
-        // array the renderer will mutate, and it is only handed one when the view has really
-        // turned. A drag dispatches once per distinct orientation, which is what it did before.
+        // It used to be, once per drawn frame, and that was expensive in a way that did not show
+        // up until recently: Redux freezes what it is given while the camera writes this array in
+        // place, so the dispatch had to send a *copy* - and a fresh array every frame is a fresh
+        // reference every frame, so every selector reading the stored quaternion re-rendered sixty
+        // times a second throughout a drag. MoorhenWebMG, the scene sliders and the 3D objects
+        // dialog all read it.
         //
-        // setDrawQuat is React state rather than Redux, does not freeze, and is deliberately given
-        // the live array so that a rotation does not re-render the 2D overlay either.
-        if(!self.animating){
-            const stored = self.store.getState().glRef.quat
-            const turned = !stored || [0,1,2,3].some(
-                i => !(Math.abs(self.myQuat[i] - stored[i]) < 1e-9))
-            if(turned) self.props.onQuatChanged([self.myQuat[0], self.myQuat[1], self.myQuat[2], self.myQuat[3]])
-        }
+        // echoViewToStore now sends it, from the camera's own subscription, and only when the
+        // value has actually changed. That fires when the camera is turned, set, released or
+        // arrives - never per frame of a move, which is the same restraint the `!moving` guard
+        // here was expressing. One echo, in one place, for every way of moving the camera.
+        //
+        // setDrawQuat stays: it is React state rather than Redux, does not freeze, and is
+        // deliberately given the live array so that a rotation does not re-render the 2D overlay.
         self.props.setDrawQuat(self.myQuat)
 
         // Decided here, before theShaders is built, because the shader variant chosen below
@@ -2906,9 +2950,10 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebufferDepth);
             self.gl.viewport(0, 0, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height);
             // This is the first pass of the frame, so it starts with whatever the last frame left
-            // behind. The shadow map is only as good as the depth it writes, so it says what it
-            // needs rather than hoping.
-            beginDepthOnlyPass(self.gl);
+            // behind - depth state, and the shadow map still bound to its unit from the lit pass.
+            // The shadow map is only as good as the depth it writes, so it says what it needs
+            // rather than hoping.
+            beginDepthOnlyPass(self.gl, SHADOW_TEXTURE_UNIT);
         } else if(self.drawingGBuffers) {
             const width_ratio = self.gl.viewportWidth / self.gFramebuffer.width;
             const height_ratio = self.gl.viewportHeight / self.gFramebuffer.height;

@@ -74,6 +74,31 @@ message Representation {
     string hbondedToCid = 11;
     bool hbondedTo = 12;
     float neighboursDistance = 13;
+    /**
+     * A representation's identity, kept so that it is the same one after a reload.
+     *
+     * Minted as a guid at construction and, before this field existed, minted afresh on every
+     * restore - so anything that referred to a representation by id (a movie's per-object fades,
+     * say) lost its referent the moment the session was reopened. A string decodes absent as "",
+     * which is not a legitimate id, so a session written before this field keeps the new guid
+     * without needing `optional` to tell absent from zero.
+     */
+    string uniqueId = 14;
+    /**
+     * How solid the representation is, where its colours do not say otherwise.
+     *
+     * Written into saved sessions and read back on restore for as long as there has been a
+     * session format - but never declared here, so pbjs dropped it on the way out. A surface
+     * saved at half opacity came back solid from a .pb session, while a JSON backup of the same
+     * scene restored correctly.
+     *
+     * `optional` because zero is a legitimate opacity - fully transparent - so absent and zero
+     * have to be distinguishable. Today's decode happens to omit absent scalars, which would be
+     * enough; but it is one toObject({defaults: true}) away from turning every representation in
+     * every older session invisible, and explicit presence costs nothing. Same reasoning as
+     * ViewDataSession.eyeDistance.
+     */
+    optional float nonCustomOpacity = 15;
 }
 
 message MoleculeSessionData {
@@ -290,7 +315,8 @@ message ViewDataSession {
   // `optional` is load-bearing, not decoration. A proto3 float has no explicit presence, so an
   // absent one decodes as 0 rather than undefined - and `?? 250` on the restore side would never
   // fire. Every older session would arrive claiming an eye at the origin, and fog measured from
-  // an eye at 0 is not slightly wrong, it is nowhere.
+  // an eye at 0 is not slightly wrong, it is nowhere. See LEGACY_EYE_DISTANCE in
+  // utils/sessionCamera.ts.
   optional float eyeDistance = 20;
 }
 

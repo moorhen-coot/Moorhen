@@ -163,6 +163,26 @@ export const subMenuMap: SubMenuMap = {
                 label: "Screenshot",
                 action: setShownControl({ name: "screenshot" }),
             },
+            {
+                // "Record the screen" rather than "Record a video", because a movie is a video
+                // too: the two entries used to be told apart only by which synonym they chose,
+                // and they sat six items apart with the import block between them. This one
+                // captures what you do as you do it; the next builds a movie you did not perform.
+                id: "record-video",
+                label: "Record the screen...",
+                type: "dispatch",
+                action: setShownControl({ name: "videoRecorder" }),
+                // "video" is no longer in the label, so the search bar needs it back: someone
+                // looking for this will type the word they used to see.
+                keywords: ["video", "record", "screen", "capture", "webm"],
+            },
+            {
+                id: "movie",
+                label: "Movie editor...",
+                type: "showPanel",
+                panel: "movie",
+                keywords: ["movie", "video", "animation", "keyframe", "camera", "mp4", "export"],
+            },
 
             // {
             //     id: "auto-open-mtz",
@@ -197,12 +217,6 @@ export const subMenuMap: SubMenuMap = {
                 label: "Load tutorial data...",
                 type: "popover",
                 content: MenuItems.LoadTutorialData,
-            },
-            {
-                id: "record-video",
-                label: "Record a video",
-                type: "dispatch",
-                action: setShownControl({ name: "videoRecorder" }),
             },
             {
                 id: "export",
