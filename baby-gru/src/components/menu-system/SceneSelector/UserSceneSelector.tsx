@@ -3,7 +3,8 @@ import { useRef, useState } from "react";
 import { MoorhenIcon } from "@/components/icons";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenTextInput } from "@/components/inputs";
 import { useMoorhenInstance } from "@/hooks";
-import { RootState, UserScene, setMainMenuOpen } from "@/store";
+import { RootState, setMainMenuOpen } from "@/store";
+import { UserScene } from "@/store/userScenesSlice";
 import { MoorhenMenuItem, MoorhenPopover, MoorhenStack, MoorhenTooltip } from "../../interface-base";
 import "./scene-selector.css";
 

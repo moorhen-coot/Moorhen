@@ -14,6 +14,7 @@ const initialState: {
     /** The id of the scene or snapshot currently shown */
     selectedScene: string;
     isSceneChanging: boolean;
+    showSceneSelector: boolean; //to be removed when the scene selector is finished
 } = {
     scenes: [
         { id: "Default", name: "Default" },
@@ -22,6 +23,7 @@ const initialState: {
     snapshots: [],
     selectedScene: "Default",
     isSceneChanging: false,
+    showSceneSelector: false,
 };
 
 const userScenesSlice = createSlice({
@@ -56,6 +58,9 @@ const userScenesSlice = createSlice({
             state.snapshots = action.payload.snapshots;
             state.selectedScene = action.payload.selectedScene;
         },
+        setShowSceneSelector: (state, action: PayloadAction<boolean>) => {
+            state.showSceneSelector = action.payload;
+        },
     },
 });
 
@@ -67,6 +72,7 @@ export const {
     setSelectedScene,
     setSceneChanging,
     setUserSceneState,
+    setShowSceneSelector,
 } = userScenesSlice.actions;
 
 export default userScenesSlice.reducer;

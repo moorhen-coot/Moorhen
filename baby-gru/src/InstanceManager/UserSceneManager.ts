@@ -3,7 +3,6 @@ import {
     addUserSnapshot,
     applySceneSettingsSnapshot,
     enqueueSnackbar,
-    getSceneSettingsSnapshot,
     removeUserScene,
     renameUserScene,
     setOrigin,
@@ -13,7 +12,9 @@ import {
     setUserSceneState,
     setZoom,
 } from "../store";
-import type { SceneSettingsSnapshot, UserScene } from "../store";
+import { getSceneSettingsSnapshot, SceneSettingsSnapshot } from"../store/sceneSettingsSlice";
+import {  UserScene  } from "../store/userScenesSlice"
+import type { } from "../store";
 import { initialState as sceneSettingsInitialState } from "../store/sceneSettingsSlice";
 import type { RepresentationBackup } from "../utils/Representation/RepresentationBuilder";
 import { DEFAULT_REPRESENTATION_STYLE, type MoorhenInstance } from "./MoorhenInstance";
