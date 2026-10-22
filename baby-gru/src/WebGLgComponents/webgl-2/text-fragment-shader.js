@@ -19,9 +19,9 @@ var text_fragment_shader_source = `#version 300 es\n
     uniform int nClipPlanes;
 
     uniform int peelNumber;
-    uniform sampler2D depthPeelSamplers;
+    uniform highp sampler2D depthPeelSamplers;
     uniform bool haveOpaqueDepth;
-    uniform sampler2D opaqueDepthSampler;
+    uniform highp sampler2D opaqueDepthSampler;
     uniform float xSSAOScaling;
     uniform float ySSAOScaling;
 
@@ -45,7 +45,7 @@ var text_fragment_shader_source = `#version 300 es\n
 
       if(peelNumber>0) {
           vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
-          float max_depth;
+          highp float max_depth;
           max_depth = texture(depthPeelSamplers,tex_coord).r;
           if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 || gl_FrontFacing!=true ) {
               discard;

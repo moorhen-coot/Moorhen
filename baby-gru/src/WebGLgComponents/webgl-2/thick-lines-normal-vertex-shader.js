@@ -16,7 +16,7 @@ var thick_lines_normal_vertex_shader_source = `#version 300 es\n
     out mediump mat4 mvInvMatrix;
     out lowp vec3 v;
     out lowp vec4 eyePos;
-    out lowp vec4 ShadowCoord;
+    out highp vec4 ShadowCoord;
 
     out float vHighlight;
 

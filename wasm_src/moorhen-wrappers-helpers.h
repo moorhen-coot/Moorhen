@@ -27,6 +27,7 @@
 #include <random>
 #include <ctime>
 #include <cstdlib>
+#include <stdexcept>
 #include <fstream>
 #include <utility>
 #include <cctype>
@@ -459,6 +460,17 @@ bool isSugar(const std::string &resName);
 class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
+        }
+
+        // Test hooks for Moorhen's command error handling (see
+        // baby-gru/tests/e2e/coot-command-errors.spec.ts). They always fail, so the
+        // worker and command centre error paths can be exercised end to end.
+        int debug_throw_exception(const std::string &message) {
+            throw std::runtime_error(message);
+        }
+        // abort() compiles to a wasm `unreachable` trap, which reaches JS as a RuntimeError.
+        int debug_abort() {
+            abort();
         }
 
         std::string get_validation(int imol){

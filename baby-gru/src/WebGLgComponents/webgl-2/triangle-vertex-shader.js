@@ -29,7 +29,7 @@ var triangle_vertex_shader_source = `#version 300 es\n
     out lowp vec3 vNormal;
     out lowp vec2 vTexture;
     out mediump mat4 mvInvMatrix;
-    out lowp vec4 ShadowCoord;
+    out highp vec4 ShadowCoord;
 
     out lowp vec4 eyePos;
 

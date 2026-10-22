@@ -694,6 +694,19 @@ const stringArrayToJSArray = (stringArray: emscriptem.vector<string>) => {
     return returnResult;
 }
 
+const fscResultToJSArray = (numberPairsVector: emscriptem.vector<libcootApi.PairType<number, number>>) : {x:number,y:number}[] => {
+    const res = []
+    const arrSize = numberPairsVector.size()
+    for(let i = 0; i < arrSize; i++) {
+        const resPair = numberPairsVector.get(i)
+        const first = resPair.first
+        const second = resPair.second
+        res.push({x:first,y:second})
+    }
+    numberPairsVector.delete()
+    return res
+}
+
 
 /**
  * Read an exported mesh file back out of the module filesystem, and unlink it.
@@ -1666,6 +1679,20 @@ const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerI
     }
 }
 
+// Turn a caught error into readable text. A C++ exception thrown in libcoot reaches JS
+// as a WebAssembly.Exception, which stringifies to "[object WebAssembly.Exception]";
+// with this build's ASSERTIONS, Emscripten puts [type, what()] in its message instead.
+const describeError = (err: any): string => {
+    const message = err?.message
+    if (Array.isArray(message)) {
+        return message.filter(Boolean).join(': ')
+    }
+    if (typeof message === 'string' && message.length > 0) {
+        return err?.name ? `${err.name}: ${message}` : message
+    }
+    return String(err)
+}
+
 const doCootCommand = (messageData: {
     myTimeStamp: number;
     chainID?: string;
@@ -1797,6 +1824,9 @@ const doCootCommand = (messageData: {
                 break;
             case 'mmrrcc_stats':
                 returnResult = mmrrccStatsToJSArray(cootResult)
+                break;
+            case 'fsc_result':
+                returnResult = fscResultToJSArray(cootResult)
                 break;
             case 'colour_rules':
                 returnResult = colourRulesToJSArray(cootResult)
@@ -1934,13 +1964,42 @@ const doCootCommand = (messageData: {
         console.log(err)
         return {
             messageId, myTimeStamp, message,
-            consoleMessage: `EXCEPTION RAISED IN ${command}, ${err}`,
+            consoleMessage: `EXCEPTION RAISED IN ${command}, ${describeError(err)}`,
             result: { status: 'Exception' }
         }
     }
 }
 
+// Reply to a message with an Exception status, so the caller's promise is settled
+// instead of left pending for ever (which keeps the app's busy spinner on).
+const postExceptionReply = (data: { messageId?: string; myTimeStamp?: number; message?: string; command?: string }, err: unknown) => {
+    try {
+        postMessage({
+            messageId: data.messageId,
+            myTimeStamp: data.myTimeStamp,
+            message: data.message,
+            consoleMessage: `EXCEPTION RAISED IN ${data.command ?? data.message}, ${describeError(err)}`,
+            result: { status: 'Exception' },
+        })
+    } catch (postErr) {
+        console.error(postErr)
+    }
+}
+
+// Every message posted to the worker must get exactly one reply. Branches post their
+// reply as their last statement, so anything they throw -- a wasm trap, a dead module
+// after an abort, or a result that cannot be structured-cloned -- means no reply was
+// sent, and we send an Exception reply instead.
 onmessage = function (e) {
+    try {
+        dispatchMessage(e)
+    } catch (err) {
+        console.error(err)
+        postExceptionReply(e.data, err)
+    }
+}
+
+const dispatchMessage = function (e: MessageEvent) {
 
     if (e.data.message === 'CootInitialize') {
         let mod
@@ -1981,8 +2040,6 @@ onmessage = function (e) {
             printErr: printErr,
         })
             .then((returnedModule) => {
-                postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
-
                 console.log("Loaded",scriptName,". Is 64-bit:",memory64)
 
                 cootModule = returnedModule;
@@ -2012,9 +2069,12 @@ onmessage = function (e) {
                 molecules_container.set_map_is_contoured_with_thread_pool(true)
                 molecules_container.set_max_number_of_threads(8)
                 cootModule.FS.mkdir("COOT_BACKUP")
+                // Only report success once molecules_container actually exists.
+                postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
             })
-            .catch((e) => {
-                console.log(e)
+            .catch((err) => {
+                console.error(err)
+                postExceptionReply(e.data, err)
             })
     }
 

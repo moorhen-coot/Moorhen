@@ -16,7 +16,7 @@ var triangle_shadow_vertex_shader_source = `#version 300 es\n
     out mediump mat4 mvInvMatrix;
     out mediump mat4 mvMatrix;
     out lowp vec3 v;
-    out lowp vec4 ShadowCoord;
+    out highp vec4 ShadowCoord;
 
     out lowp vec4 eyePos;
 
