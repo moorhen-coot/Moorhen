@@ -7,6 +7,7 @@ import { RootState } from "@/store";
 //import * as mat4 from 'gl-matrix/mat4';
 //import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "./moorhen";
+import type { CameraController, CameraTarget, MoveResult, Transition } from "../WebGLgComponents/cameraController";
 
 export namespace webGL {
     interface MGWebGLRenderingContext extends WebGLRenderingContext {
@@ -53,6 +54,7 @@ export namespace webGL {
         colorPeelSamplers: WebGLUniformLocation;
         xSSAOScaling: WebGLUniformLocation;
         ySSAOScaling: WebGLUniformLocation;
+        resolvedLayer: WebGLUniformLocation;
     }
 
     interface MGWebGLTextureQuadShader extends WebGLProgram {
@@ -382,5 +384,40 @@ export namespace webGL {
         //These 2 are used in MoorhenVercelBuild
         origin: [number, number, number];
         background_colour: [number, number, number, number];
+        //These are used in MoorhenMovieSpike, which steps the view a frame at a time and can
+        //render off-screen at a size that does not depend on the window
+        drawScene(): void;
+        myQuat: quat4;
+        zoom: number;
+        /**
+         * Set while a camera move is in flight. MoorhenMovieSpike also sets it while driving the
+         * camera itself, because moveCameraTo declines to start when it is - which is what stops
+         * the reconciling effect in MoorhenWebMG fighting a movie. Acquiring a "movie" driver on
+         * the camera controller is the better way to say the same thing, and will replace it.
+         */
+        animating: boolean;
+        /**
+         * The camera. Owns where the view is; see WebGLgComponents/cameraController.
+         */
+        cameraController: CameraController;
+        /**
+         * Put the camera somewhere, over whatever time the caller asks for. A transition of
+         * `{ kind: "instant" }` moves it with no animation at all, which is what an export wants.
+         */
+        moveCameraTo(target: CameraTarget, transition: Transition): Promise<MoveResult>;
+        /**
+         * Turn the view by a relative rotation. A turn arriving during a move accumulates and is
+         * applied when the move lands, so a nudge of the mouse cannot stop the camera arriving.
+         */
+        turnCameraBy(delta: [number, number, number, number]): void;
+        /**
+         * The time, in seconds, the camera is advanced to on the next draw; null means wall clock.
+         * An export sets it to i/fps before each frame so that no frame is dropped and the output
+         * runs at its authored speed however long rendering took.
+         */
+        cameraTime: number | null;
+        set_clip_range(clipStart: number, clipEnd: number, update?: boolean): void;
+        set_fog_range(fogStart: number, fogEnd: number, update?: boolean): void;
+        setDrawingBufferSize(width: number, height: number): void;
     }
 }

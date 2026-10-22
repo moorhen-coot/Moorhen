@@ -13,6 +13,7 @@ import {
     setDoEdgeDetect,
     setDoSSAO,
     setDoShadow,
+    setShadowMapQuality,
     setEdgeDetectDepthScale,
     setEdgeDetectDepthThreshold,
     setEdgeDetectNormalScale,
@@ -27,7 +28,8 @@ import { MAX_EYE_DISTANCE, MIN_EYE_DISTANCE } from "../../WebGLgComponents/mgWeb
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
+import type { ShadowMapQuality } from "../../WebGLgComponents/mgWebGLParts/framebuffers";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSwatch";
@@ -45,6 +47,11 @@ const EdgeDetectPanel = () => {
 
     return (
         <MoorhenStack direction="vertical" card={true}>
+            {/* All four are disabled while auto-clip is on: the camera re-derives the slab from
+                zoom as part of writing its own state, so a value set here would be overwritten
+                before it was drawn. A control that silently does nothing is worse than one that
+                says it is unavailable. The sliders modal already disables its fog and clip
+                toggles on the same condition. */}
             <MoorhenToggle
                 type="switch"
                 checked={doEdgeDetect}
@@ -394,7 +401,8 @@ const LightingPanel = () => {
     const diffuse = useSelector((state: moorhen.State) => state.sceneSettings.diffuse);
     const specularPower = useSelector((state: moorhen.State) => state.sceneSettings.specularPower);
 
-    const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow);
+    const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
+    const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality);
 
     const dispatch = useDispatch();
 
@@ -464,6 +472,21 @@ const LightingPanel = () => {
                 }}
                 label="Shadows"
             />
+            {/* Only when there are shadows to resolve. Measured costs are in SHADOW_MAP_TEXELS;
+                briefly, "nice" is nearly free and "smooth" roughly doubles the frame's GPU time
+                on a large structure. */}
+            {doShadow && (
+                <MoorhenSelect
+                    label="Shadow quality"
+                    value={shadowMapQuality}
+                    onChange={event =>
+                        dispatch(setShadowMapQuality(event.target.value as ShadowMapQuality))}
+                >
+                    <option value="coarse">Coarse</option>
+                    <option value="nice">Nice</option>
+                    <option value="smooth">Smooth</option>
+                </MoorhenSelect>
+            )}
         </MoorhenStack>
     );
 };
