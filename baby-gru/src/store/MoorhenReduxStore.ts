@@ -56,11 +56,8 @@ export const reducers = {
     bottomPanels: bottomPanelsReducer,
     vectors: vectorsReducer,
     snackBars: snackBarsReducer,
-<<<<<<< HEAD
     userScenes: userScenesReducer,
-=======
     movie: movieReducer,
->>>>>>> main
 };
 
 // Infer RootState directly from reducers object structure (no runtime dependency)
