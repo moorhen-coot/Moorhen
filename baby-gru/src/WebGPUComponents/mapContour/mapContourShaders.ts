@@ -204,9 +204,10 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
 `;
 
 /**
- * One thread per cell: its triangles, and the same as lines (each edge of each triangle), for
- * the line styles. A triangle whose midpoint is outside the sphere - or, for an EM map, outside
- * the map's box - is written as a degenerate one (all corners vertex 0), which draws nothing.
+ * One thread per cell: its triangles. A triangle whose midpoint is outside the sphere - or, for an
+ * EM map, outside the map's box - is written as a degenerate one (all corners vertex 0), which
+ * draws nothing. The line styles draw the edges of these same triangles (the preview's thick-line
+ * shader reads them from this buffer), so there is no separate list of lines.
  */
 export const EMIT_TRIANGLES_WGSL = COMMON + FIELD_AT + /* wgsl */ `
 @group(1) @binding(0) var<storage, read> field: array<f32>;
@@ -216,7 +217,6 @@ export const EMIT_TRIANGLES_WGSL = COMMON + FIELD_AT + /* wgsl */ `
 @group(1) @binding(4) var<storage, read> triangleOffset: array<u32>;
 @group(1) @binding(5) var<storage, read> positions: array<f32>;
 @group(1) @binding(6) var<storage, read_write> triangles: array<u32>;
-@group(1) @binding(7) var<storage, read_write> lines: array<u32>;
 ${EDGES}
 fn positionOf(i: u32) -> vec3f { return vec3f(positions[3u * i], positions[3u * i + 1u], positions[3u * i + 2u]); }
 
@@ -265,21 +265,16 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
         triangles[3u * triangle] = corner[0];
         triangles[3u * triangle + 1u] = corner[1];
         triangles[3u * triangle + 2u] = corner[2];
-        lines[6u * triangle] = corner[0];
-        lines[6u * triangle + 1u] = corner[1];
-        lines[6u * triangle + 2u] = corner[1];
-        lines[6u * triangle + 3u] = corner[2];
-        lines[6u * triangle + 4u] = corner[2];
-        lines[6u * triangle + 5u] = corner[0];
     }
 }
 `;
 
 /**
  * One thread: the totals (for the CPU to check the room was enough, when it gets round to it),
- * and the draw arguments, so the draws need nothing from the CPU. drawIndexedIndirect's arguments
- * are (index count, instance count, first index, base vertex, first instance): triangles at word
- * 0, lines at word 8.
+ * and the draw arguments, so the draws need nothing from the CPU. At word 0, drawIndexedIndirect's
+ * for the triangles: (index count, instance count, first index, base vertex, first instance). At
+ * word 8, drawIndirect's for thick lines: (vertex count, instance count, first vertex, first
+ * instance), six vertices - two triangles - for each of each triangle's three edges.
  */
 export const TOTALS_WGSL = COMMON + /* wgsl */ `
 @group(1) @binding(0) var<storage, read> vertexCount: array<u32>;
@@ -298,6 +293,6 @@ fn main() {
     counts[1] = triangles;
     let drawn = min(triangles, P.caps.y);
     drawArgs[0] = 3u * drawn; drawArgs[1] = 1u; drawArgs[2] = 0u; drawArgs[3] = 0u; drawArgs[4] = 0u;
-    drawArgs[8] = 6u * drawn; drawArgs[9] = 1u; drawArgs[10] = 0u; drawArgs[11] = 0u; drawArgs[12] = 0u;
+    drawArgs[8] = 18u * drawn; drawArgs[9] = 1u; drawArgs[10] = 0u; drawArgs[11] = 0u;
 }
 `;

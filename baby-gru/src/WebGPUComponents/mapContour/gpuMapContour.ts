@@ -95,9 +95,12 @@ export class GpuMapGrid {
 export interface GpuContourBuffers {
     position: GPUBuffer;
     normal: GPUBuffer;
+    /** Triangle indices; also what the thick lines are drawn from, as each triangle's edges. */
     triangles: GPUBuffer;
-    lines: GPUBuffer;
-    /** drawIndexedIndirect arguments: triangles at byte 0, lines at byte 32. */
+    /**
+     * Draw arguments: drawIndexedIndirect's for the triangles at byte 0, drawIndirect's for thick
+     * lines (18 vertices per triangle) at byte 32.
+     */
     drawArgs: GPUBuffer;
 }
 
@@ -160,7 +163,7 @@ export class GpuIsosurface {
         this.writeParams(box, request, out.vertices, out.triangles);
 
         const [field, edgeMask, vertexCount, vertexOffset, triangleCount, triangleOffset] = work;
-        const { position, normal, triangles, lines } = out.buffers;
+        const { position, normal, triangles } = out.buffers;
         const k = this.kernels;
         const encoder = this.device.createCommandEncoder({ label: "map contour" });
         k.dispatch(encoder, "sample", this.params, [this.mapGrid.buffer, field], points);
@@ -170,7 +173,7 @@ export class GpuIsosurface {
         k.scan.encode(encoder, triangleCount, triangleOffset, cells);
         k.dispatch(encoder, "emitVertices", this.params, [this.mapGrid.buffer, field, edgeMask, vertexOffset, position, normal], points);
         k.dispatch(encoder, "emitTriangles", this.params,
-            [field, k.table, edgeMask, vertexOffset, triangleOffset, position, triangles, lines], cells);
+            [field, k.table, edgeMask, vertexOffset, triangleOffset, position, triangles], cells);
         k.dispatch(encoder, "totals", this.params, [vertexCount, vertexOffset, triangleCount, triangleOffset, this.counts, this.drawArgs], 1);
         const check = !this.reading;
         if (check) encoder.copyBufferToBuffer(this.counts, 0, this.countsRead, 0, 16);
@@ -252,7 +255,6 @@ export class GpuIsosurface {
                 position: buffer("positions", vertices * 12, VERTEX),
                 normal: buffer("normals", vertices * 12, VERTEX),
                 triangles: buffer("triangles", triangles * 12, INDEX),
-                lines: buffer("lines", triangles * 24, INDEX),
                 drawArgs: this.drawArgs,
             },
         };
@@ -260,8 +262,8 @@ export class GpuIsosurface {
 
     private destroyOutput(): void {
         if (!this.output) return;
-        const { position, normal, triangles, lines } = this.output.buffers;
-        [position, normal, triangles, lines].forEach(b => b.destroy());
+        const { position, normal, triangles } = this.output.buffers;
+        [position, normal, triangles].forEach(b => b.destroy());
         this.output = null;
     }
 

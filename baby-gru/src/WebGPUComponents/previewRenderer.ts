@@ -23,23 +23,40 @@ const BufferUsage = { COPY_DST: 0x0008, INDEX: 0x0010, VERTEX: 0x0020, UNIFORM: 
 const TextureUsage = { RENDER_ATTACHMENT: 0x10 } as const;
 const ShaderStage = { VERTEX: 0x1, FRAGMENT: 0x2 } as const;
 
+/**
+ * WebGL's thick lines are 2 × pixelZoom × size² Å wide, pixelZoom being 0.04 × zoom when the
+ * buffer has no primitive sizes (map contours have none) and size the map line width:
+ * drawCore.ts sets pixelZoom; linesToThickLinesWithIndices makes the "normals" size long, and
+ * thick-lines-vertex-shader.js offsets by pixelZoom times their length squared, each way.
+ */
+export const thickLineHalfWidth = (lineWidth: number, zoom: number): number => 0.04 * zoom * lineWidth * lineWidth;
+
 const SAMPLE_COUNT = 4;
 const DEPTH_FORMAT: GPUTextureFormat = "depth24plus";
 
 /**
- * Something drawn straight from GPU buffers made on this renderer's device, with the draw's size
- * in a buffer too (drawIndexedIndirect): map contours made on the GPU (../mapContour).
+ * A triangle mesh drawn straight from GPU buffers made on this renderer's device, with the draw's
+ * size in a buffer too: map contours made on the GPU (../mapContour).
+ *
+ * As a surface ("triangles": drawIndexedIndirect, lit as the other meshes are) or as the edges of
+ * its triangles, `lineWidth` wide in the units of the map line width setting ("lines", unlit, and
+ * "lit-lines": WebGL's LINES and NORMALLINES). The lines are quads built in the vertex shader,
+ * from the position, normal and index buffers bound as storage, so those need STORAGE usage too,
+ * and their drawIndirect arguments have 18 vertices per triangle.
  */
 export interface PreviewGpuDraw {
     /** The same from frame to frame for the same thing, so its uniforms can be kept. */
     key: string;
     position: GPUBuffer;
     normal: GPUBuffer;
-    /** uint32 indices, and the drawIndexedIndirect arguments for them at `drawArgsOffset`. */
+    /** uint32 triangle indices. */
     index: GPUBuffer;
+    /** drawIndexedIndirect's arguments for "triangles", drawIndirect's for the line styles. */
     drawArgs: GPUBuffer;
     drawArgsOffset: number;
-    topology: "triangle-list" | "line-list";
+    style: "triangles" | "lines" | "lit-lines";
+    /** For the line styles: as mapContourSettings.mapLineWidth. */
+    lineWidth: number;
     colour: [number, number, number, number];
     transparent: boolean;
 }
@@ -114,13 +131,21 @@ export class WebGPUPreviewRenderer {
     private readonly frameLayout: GPUBindGroupLayout;
     private readonly drawLayout: GPUBindGroupLayout;
     private readonly pipelineLayout: GPUPipelineLayout;
+    /** Thick lines: the mesh's buffers as storage, at group 2. */
+    private readonly lineLayout: GPUBindGroupLayout;
+    private readonly linePipelineLayout: GPUPipelineLayout;
     private readonly pipelines = new Map<string, GPURenderPipeline>();
     private readonly resources = new Map<DisplayBuffer, (SubBufferResources | undefined)[]>();
     private readonly frameData = new Float32Array(FRAME_FLOATS);
     private colourTarget: GPUTexture | null = null;
     private depthTarget: GPUTexture | null = null;
     private destroyed = false;
-    private readonly gpuDrawUniforms = new Map<string, { buffer: GPUBuffer; bindGroup: GPUBindGroup }>();
+    private readonly gpuDrawUniforms = new Map<string, {
+        buffer: GPUBuffer;
+        bindGroup: GPUBindGroup;
+        /** The thick lines' storage bindings, and the buffers they were made for. */
+        lines?: { sources: GPUBuffer[]; bindGroup: GPUBindGroup };
+    }>();
     /** The largest GPU buffer this renderer makes; bigger meshes are drawn in chunks. */
     private readonly maxBufferBytes: number;
 
@@ -181,6 +206,11 @@ export class WebGPUPreviewRenderer {
             entries: [{ binding: 0, visibility: ShaderStage.VERTEX | ShaderStage.FRAGMENT, buffer: { type: "uniform" } }],
         });
         this.pipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [this.frameLayout, this.drawLayout] });
+        this.lineLayout = device.createBindGroupLayout({
+            label: "preview thick lines",
+            entries: [0, 1, 2].map(binding => ({ binding, visibility: ShaderStage.VERTEX, buffer: { type: "read-only-storage" as const } })),
+        });
+        this.linePipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [this.frameLayout, this.drawLayout, this.lineLayout] });
         this.frameBuffer = device.createBuffer({
             label: "preview frame uniforms",
             size: FRAME_FLOATS * 4,
@@ -241,7 +271,7 @@ export class WebGPUPreviewRenderer {
                 this.drawOne(pass, item);
             }
             for (const item of gpuDraws) {
-                if (item.transparent === transparent) this.drawGpu(pass, item);
+                if (item.transparent === transparent) this.drawGpu(pass, item, camera.zoom);
             }
         }
         pass.end();
@@ -319,7 +349,7 @@ export class WebGPUPreviewRenderer {
         }
     }
 
-    private drawGpu(pass: GPURenderPassEncoder, item: PreviewGpuDraw): void {
+    private drawGpu(pass: GPURenderPassEncoder, item: PreviewGpuDraw, zoom: number): void {
         let uniforms = this.gpuDrawUniforms.get(item.key);
         if (!uniforms) {
             const buffer = this.device.createBuffer({ label: `draw uniforms ${item.key}`, size: 32, usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST });
@@ -327,13 +357,32 @@ export class WebGPUPreviewRenderer {
             uniforms = { buffer, bindGroup };
             this.gpuDrawUniforms.set(item.key, uniforms);
         }
-        this.device.queue.writeBuffer(uniforms.buffer, 0, new Float32Array([...item.colour, 1, 0, 0, 0]));
-        pass.setPipeline(this.pipeline("mesh-uniform", item.transparent, item.topology));
+        const halfWidth = item.style === "triangles" ? 0 : thickLineHalfWidth(item.lineWidth, zoom);
+        this.device.queue.writeBuffer(uniforms.buffer, 0, new Float32Array([...item.colour, 1, halfWidth, 0, 0]));
         pass.setBindGroup(1, uniforms.bindGroup);
-        pass.setVertexBuffer(0, item.position);
-        pass.setVertexBuffer(1, item.normal);
-        pass.setIndexBuffer(item.index, "uint32");
-        pass.drawIndexedIndirect(item.drawArgs, item.drawArgsOffset);
+        if (item.style === "triangles") {
+            pass.setPipeline(this.pipeline("mesh-uniform", item.transparent));
+            pass.setVertexBuffer(0, item.position);
+            pass.setVertexBuffer(1, item.normal);
+            pass.setIndexBuffer(item.index, "uint32");
+            pass.drawIndexedIndirect(item.drawArgs, item.drawArgsOffset);
+            return;
+        }
+        // The contour's buffers are remade when they grow, so the bindings follow them.
+        const sources = [item.position, item.normal, item.index];
+        if (!uniforms.lines || uniforms.lines.sources.some((b, i) => b !== sources[i])) {
+            uniforms.lines = {
+                sources,
+                bindGroup: this.device.createBindGroup({
+                    label: `thick lines ${item.key}`,
+                    layout: this.lineLayout,
+                    entries: sources.map((buffer, binding) => ({ binding, resource: { buffer } })),
+                }),
+            };
+        }
+        pass.setPipeline(this.linePipeline(item.style === "lit-lines", item.transparent));
+        pass.setBindGroup(2, uniforms.lines.bindGroup);
+        pass.drawIndirect(item.drawArgs, item.drawArgsOffset);
     }
 
     /**
@@ -482,8 +531,8 @@ export class WebGPUPreviewRenderer {
         };
     }
 
-    private pipeline(kind: PipelineKind, transparent: boolean, topology: "triangle-list" | "line-list" = "triangle-list"): GPURenderPipeline {
-        const key = `${kind}|${transparent}|${topology}`;
+    private pipeline(kind: PipelineKind, transparent: boolean): GPURenderPipeline {
+        const key = `${kind}|${transparent}`;
         const cached = this.pipelines.get(key);
         if (cached) return cached;
 
@@ -514,20 +563,42 @@ export class WebGPUPreviewRenderer {
             fragment: {
                 module: this.module,
                 entryPoint: "fs_main",
-                targets: [{
-                    format: this.format,
-                    blend: transparent ? {
-                        color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
-                        alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
-                    } : undefined,
-                }],
+                targets: [this.colourTargetState(transparent)],
             },
             // The WebGL view draws with face culling off, back faces flat-shaded.
-            primitive: { topology, cullMode: "none", frontFace: "ccw" },
+            primitive: { topology: "triangle-list", cullMode: "none", frontFace: "ccw" },
             depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: !transparent, depthCompare: "less" },
             multisample: { count: SAMPLE_COUNT },
         });
         this.pipelines.set(key, pipeline);
         return pipeline;
+    }
+
+    /** Thick lines, unlit or lit; no vertex buffers, as the vertex shader reads storage. */
+    private linePipeline(lit: boolean, transparent: boolean): GPURenderPipeline {
+        const key = `thick-line|${lit}|${transparent}`;
+        const cached = this.pipelines.get(key);
+        if (cached) return cached;
+        const pipeline = this.device.createRenderPipeline({
+            label: `preview ${key}`,
+            layout: this.linePipelineLayout,
+            vertex: { module: this.module, entryPoint: "vs_thick_line", buffers: [] },
+            fragment: { module: this.module, entryPoint: lit ? "fs_lit_line" : "fs_line", targets: [this.colourTargetState(transparent)] },
+            primitive: { topology: "triangle-list", cullMode: "none" },
+            depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: !transparent, depthCompare: "less" },
+            multisample: { count: SAMPLE_COUNT },
+        });
+        this.pipelines.set(key, pipeline);
+        return pipeline;
+    }
+
+    private colourTargetState(transparent: boolean): GPUColorTargetState {
+        return {
+            format: this.format,
+            blend: transparent ? {
+                color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
+                alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
+            } : undefined,
+        };
     }
 }

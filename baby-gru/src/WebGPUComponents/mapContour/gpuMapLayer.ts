@@ -95,10 +95,12 @@ export class GpuMapLayer {
                     key,
                     position: buffers.position,
                     normal: buffers.normal,
-                    index: solid ? buffers.triangles : buffers.lines,
+                    index: buffers.triangles,
                     drawArgs: buffers.drawArgs,
                     drawArgsOffset: solid ? 0 : 32,
-                    topology: solid ? "triangle-list" : "line-list",
+                    style: solid ? "triangles" : style === "lit-lines" ? "lit-lines" : "lines",
+                    // Null until the preferences are read; MGWebGL takes 1 then too.
+                    lineWidth: settings.mapLineWidth ?? 1,
                     colour: [colour.r, colour.g, colour.b, mapAlpha],
                     transparent: mapAlpha < 0.99,
                 });
