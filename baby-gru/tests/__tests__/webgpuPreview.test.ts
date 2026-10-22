@@ -11,7 +11,7 @@ import { DisplayBuffer } from "../../src/WebGLgComponents/displayBuffer";
 import { createWebGLBuffers } from "../../src/WebGLgComponents/createWebGLBuffers";
 import { viewProjection } from "../../src/WebGLgComponents/mgWebGLParts/projection";
 import {
-    FRAME_FLOATS, PreviewCameraSource, describeSkipped, frameUniforms, planPreview, previewCameraFrame,
+    FRAME_FLOATS, MeshChunk, PreviewCameraSource, describeSkipped, frameUniforms, planMeshChunks, planPreview, previewCameraFrame,
 } from "../../src/WebGPUComponents/previewScene";
 
 const triangle = (over: Record<string, unknown> = {}) => createWebGLBuffers({
@@ -180,5 +180,60 @@ describe("DisplayBuffer.dataVersion", () => {
         buffer.isDirty = true;
         expect(buffer.dataVersion).toBe(start + 1);
         expect(buffer.isDirty).toBe(true);
+    });
+});
+
+describe("planMeshChunks", () => {
+    /** A strip of `n` quads, vertices numbered along it: neighbouring triangles, neighbouring vertices. */
+    const strip = (n: number) => {
+        const indices: number[] = [];
+        for (let i = 0; i < n; i++) {
+            const a = 2 * i;
+            indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+        }
+        return { indices: Uint32Array.from(indices), vertexCount: 2 * n + 2 };
+    };
+    /** The triangles the chunks draw, as mesh vertex numbers, in order. */
+    const drawn = (indices: Uint32Array, chunks: MeshChunk[]) => chunks.flatMap(chunk => {
+        const own = chunk.remap ? Array.from(chunk.remap.indices) : Array.from(indices.subarray(chunk.firstIndex, chunk.firstIndex + chunk.indexCount));
+        return own.map(i => chunk.remap ? chunk.remap.vertices[i] : i);
+    });
+
+    it("leaves a mesh within the limits whole", () => {
+        const { indices, vertexCount } = strip(10);
+        expect(planMeshChunks(indices, vertexCount, 1000, 1000)).toEqual([{ firstIndex: 0, indexCount: 60, firstVertex: 0, vertexCount: 22 }]);
+    });
+
+    it("splits by indices and vertices into windows, whole triangles each, nothing copied", () => {
+        const { indices, vertexCount } = strip(100);
+        for (const [maxIndices, maxVertices] of [[61, 10_000], [10_000, 25], [32, 9]]) {
+            const chunks = planMeshChunks(indices, vertexCount, maxIndices, maxVertices);
+            expect(chunks.length).toBeGreaterThan(1);
+            for (const chunk of chunks) {
+                expect(chunk.remap).toBeUndefined();
+                expect(chunk.indexCount % 3).toBe(0);
+                expect(chunk.indexCount).toBeLessThanOrEqual(maxIndices);
+                expect(chunk.vertexCount).toBeLessThanOrEqual(maxVertices);
+                const own = indices.subarray(chunk.firstIndex, chunk.firstIndex + chunk.indexCount);
+                own.forEach(v => {
+                    expect(v).toBeGreaterThanOrEqual(chunk.firstVertex);
+                    expect(v).toBeLessThan(chunk.firstVertex + chunk.vertexCount);
+                });
+            }
+            expect(drawn(indices, chunks)).toEqual(Array.from(indices));
+        }
+    });
+
+    it("renumbers chunks whose vertices are too spread out for a window", () => {
+        const { indices, vertexCount } = strip(100);
+        // Number the vertices backwards in halves, so that neighbouring triangles are far apart.
+        const scattered = indices.map(v => (v % 2 === 0 ? v / 2 : vertexCount - 1 - (v - 1) / 2));
+        const chunks = planMeshChunks(scattered, vertexCount, 30, 12);
+        expect(chunks.some(chunk => chunk.remap)).toBe(true);
+        for (const chunk of chunks) {
+            expect(chunk.indexCount).toBeLessThanOrEqual(30);
+            expect(chunk.vertexCount).toBeLessThanOrEqual(12);
+        }
+        expect(drawn(scattered, chunks)).toEqual(Array.from(scattered));
     });
 });

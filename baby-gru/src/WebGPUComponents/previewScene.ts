@@ -205,3 +205,78 @@ export function describeSkipped(skipped: Record<string, number>): string {
         .map(([why, n]) => `${why} ×${n}`)
         .join(", ");
 }
+
+/**
+ * One piece of a mesh too big for a single GPU buffer. Either a window onto the mesh - a run of
+ * its triangles and the run of vertices they use, drawn with a negative base vertex so that the
+ * original indices still work - or, when a run's vertices are too spread out for that, a copy
+ * with its own vertices and renumbered indices.
+ */
+export interface MeshChunk {
+    /** The chunk's triangles, as indices into the mesh: [firstIndex, firstIndex + indexCount). */
+    firstIndex: number;
+    indexCount: number;
+    /** Window: the vertices [firstVertex, firstVertex + vertexCount) of the mesh. */
+    firstVertex: number;
+    vertexCount: number;
+    /** Copy: the mesh vertex each chunk vertex is, and the chunk's renumbered indices. */
+    remap?: { vertices: Uint32Array; indices: Uint32Array };
+}
+
+/**
+ * Split a triangle mesh into chunks of at most `maxIndices` indices and `maxVertices` vertices,
+ * keeping the triangles in order. A mesh within both limits is one chunk.
+ *
+ * Meshes made slab by slab (MetaBalls, map contours) use vertices close together in index for
+ * triangles close together in order, so their chunks are windows and nothing is copied.
+ */
+export function planMeshChunks(indices: ArrayLike<number>, vertexCount: number, maxIndices: number, maxVertices: number): MeshChunk[] {
+    const perChunk = Math.max(3, maxIndices - (maxIndices % 3));
+    if (indices.length <= perChunk && vertexCount <= maxVertices) {
+        return [{ firstIndex: 0, indexCount: indices.length, firstVertex: 0, vertexCount }];
+    }
+    const chunks: MeshChunk[] = [];
+    const total = indices.length - (indices.length % 3);
+    let start = 0;
+    while (start < total) {
+        // As many whole triangles as fit, with all their vertices inside one window.
+        let low = Infinity, high = -Infinity, end = start;
+        while (end < total && end - start + 3 <= perChunk) {
+            const a = indices[end], b = indices[end + 1], c = indices[end + 2];
+            const lo = Math.min(low, a, b, c), hi = Math.max(high, a, b, c);
+            if (hi - lo + 1 > maxVertices) break;
+            low = lo; high = hi; end += 3;
+        }
+        // Too spread out for a window to hold even an eighth of what a renumbered copy would
+        // (meshes have about two triangles, six indices, per vertex): copy instead.
+        if (end - start < Math.min(perChunk, total - start, 6 * maxVertices) / 8) {
+            chunks.push(remapChunk(indices, start, total, perChunk, maxVertices));
+            start += chunks[chunks.length - 1].indexCount;
+            continue;
+        }
+        chunks.push({ firstIndex: start, indexCount: end - start, firstVertex: low, vertexCount: high - low + 1 });
+        start = end;
+    }
+    return chunks;
+}
+
+function remapChunk(indices: ArrayLike<number>, start: number, total: number, perChunk: number, maxVertices: number): MeshChunk {
+    const local = new Map<number, number>();
+    const renumbered: number[] = [];
+    let end = start;
+    while (end < total && end - start + 3 <= perChunk) {
+        const corners = [indices[end], indices[end + 1], indices[end + 2]];
+        const fresh = corners.filter((v, i) => !local.has(v) && corners.indexOf(v) === i).length;
+        // (At least one triangle, whatever the limit, so that the split always moves on.)
+        if (local.size + fresh > maxVertices && end > start) break;
+        for (const v of corners) {
+            if (!local.has(v)) local.set(v, local.size);
+            renumbered.push(local.get(v));
+        }
+        end += 3;
+    }
+    return {
+        firstIndex: start, indexCount: end - start, firstVertex: 0, vertexCount: local.size,
+        remap: { vertices: Uint32Array.from(local.keys()), indices: Uint32Array.from(renumbered) },
+    };
+}

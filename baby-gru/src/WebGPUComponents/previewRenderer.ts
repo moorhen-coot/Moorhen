@@ -13,7 +13,7 @@
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
 import { PREVIEW_WGSL } from './previewShaders';
 import {
-    ColourSource, FRAME_FLOATS, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, planPreview,
+    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, planMeshChunks, planPreview,
 } from './previewScene';
 
 // The WebGPU flag constants, by their values in the specification. TypeScript's DOM library has
@@ -34,16 +34,27 @@ export interface PreviewFrameReport {
     cpuMs: number;
 }
 
+/** One drawable piece of a sub-buffer: the whole of it, unless it is too big for one GPU buffer. */
+interface ChunkResources {
+    position: GPUBuffer;
+    normal: GPUBuffer;
+    /** Per-vertex colours; null when colours are per instance or uniform. */
+    colour: GPUBuffer | null;
+    index: GPUBuffer;
+    indexCount: number;
+    /** Added to each index: minus the first vertex of a window onto the mesh (see MeshChunk). */
+    baseVertex: number;
+}
+
 /** The GPU side of one sub-buffer. */
 interface SubBufferResources {
     dataVersion: number;
     /** The arrays these were uploaded from, so that a replaced array is noticed too. */
     sources: unknown[];
     buffers: GPUBuffer[];
-    position: GPUBuffer;
-    normal: GPUBuffer;
-    colour: GPUBuffer | null;
-    index: GPUBuffer;
+    chunks: ChunkResources[];
+    /** Per-instance colours (colour source "instance"), shared by every chunk. */
+    instanceColour: GPUBuffer | null;
     instanceOrigin: GPUBuffer | null;
     instanceSize: GPUBuffer | null;
     instanceOrientation: GPUBuffer | null;
@@ -91,27 +102,37 @@ export class WebGPUPreviewRenderer {
     private colourTarget: GPUTexture | null = null;
     private depthTarget: GPUTexture | null = null;
     private destroyed = false;
+    /** The largest GPU buffer this renderer makes; bigger meshes are drawn in chunks. */
+    private readonly maxBufferBytes: number;
 
     /**
      * Ask for an adapter and device and configure the canvas. Rejects with a readable message if
      * any step fails, so the caller can show it as it stands.
      */
-    static async create(canvas: HTMLCanvasElement, onError: (message: string) => void): Promise<WebGPUPreviewRenderer> {
+    static async create(canvas: HTMLCanvasElement, onError: (message: string) => void,
+                        options: { maxBufferBytes?: number } = {}): Promise<WebGPUPreviewRenderer> {
         const unavailable = webGPUUnavailableReason();
         if (unavailable) throw new Error(unavailable);
         const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
         if (!adapter) throw new Error("WebGPU is present but no adapter was offered (blocklisted GPU or driver?).");
-        const device = await adapter.requestDevice();
+        // The default limit is 256 MB per buffer, which a big surface passes (1ibm's MetaBalls
+        // have 341 MB of indices). Ask for what the adapter can do; meshes bigger than even that
+        // are drawn in chunks.
+        const device = await adapter.requestDevice({ requiredLimits: { maxBufferSize: adapter.limits.maxBufferSize } });
         // The DOM library's getContext overloads do not include "webgpu" yet.
         const context = canvas.getContext("webgpu") as unknown as GPUCanvasContext | null;
         if (!context) throw new Error("The canvas would not give a WebGPU context.");
         const info = adapter.info;
         const description = info ? [info.vendor, info.architecture, info.description].filter(Boolean).join(" ") : "";
-        return new WebGPUPreviewRenderer(device, context, description || "unknown adapter", onError);
+        // For tests: a smaller limit than the device's, to exercise the chunking.
+        const maxBufferBytes = Math.min(device.limits.maxBufferSize, options.maxBufferBytes ?? Infinity);
+        return new WebGPUPreviewRenderer(device, context, description || "unknown adapter", onError, maxBufferBytes);
     }
 
-    private constructor(device: GPUDevice, context: GPUCanvasContext, adapterDescription: string, onError: (message: string) => void) {
+    private constructor(device: GPUDevice, context: GPUCanvasContext, adapterDescription: string, onError: (message: string) => void,
+                        maxBufferBytes: number) {
         this.device = device;
+        this.maxBufferBytes = maxBufferBytes;
         this.context = context;
         this.adapterDescription = adapterDescription;
         this.format = navigator.gpu.getPreferredCanvasFormat();
@@ -240,17 +261,21 @@ export class WebGPUPreviewRenderer {
 
         pass.setPipeline(this.pipeline(pipelineKind(item.instanced, item.colourSource), item.transparent));
         pass.setBindGroup(1, sub.bindGroup);
-        let slot = 0;
-        pass.setVertexBuffer(slot++, sub.position);
-        pass.setVertexBuffer(slot++, sub.normal);
-        if (item.colourSource !== "uniform") pass.setVertexBuffer(slot++, sub.colour);
+        const colourSlot = item.colourSource !== "uniform";
+        if (item.colourSource === "instance") pass.setVertexBuffer(2, sub.instanceColour);
         if (item.instanced) {
+            let slot = colourSlot ? 3 : 2;
             pass.setVertexBuffer(slot++, sub.instanceOrigin);
             pass.setVertexBuffer(slot++, sub.instanceSize);
             pass.setVertexBuffer(slot++, sub.instanceOrientation);
         }
-        pass.setIndexBuffer(sub.index, "uint32");
-        pass.drawIndexed(item.indexCount, item.instanceCount);
+        for (const chunk of sub.chunks) {
+            pass.setVertexBuffer(0, chunk.position);
+            pass.setVertexBuffer(1, chunk.normal);
+            if (chunk.colour) pass.setVertexBuffer(2, chunk.colour);
+            pass.setIndexBuffer(chunk.index, "uint32");
+            pass.drawIndexed(chunk.indexCount, item.instanceCount, 0, chunk.baseVertex);
+        }
     }
 
     /**
@@ -293,6 +318,51 @@ export class WebGPUPreviewRenderer {
         ];
     }
 
+    /**
+     * The sub-buffer's vertex and index buffers, in as many pieces as the buffer size limit
+     * needs: usually one. A colour has the widest vertex (16 bytes), so it sets the vertex limit.
+     * Only per-vertex colours are split with the vertices; per-instance ones are not vertex data.
+     */
+    private meshChunks(item: PreviewDraw, created: GPUBuffer[]): ChunkResources[] {
+        const b = item.buffer, j = item.index;
+        const positions = asFloat32(b.triangleVertices[j]);
+        const normals = asFloat32(b.triangleNormals[j]);
+        const colours = item.colourSource === "vertex" ? asFloat32(b.triangleColours[j]) : null;
+        const indices = asUint32(b.triangleIndexs[j]);
+        const VERTEX = BufferUsage.VERTEX;
+        const plan: MeshChunk[] = planMeshChunks(indices, positions.length / 3,
+            Math.floor(this.maxBufferBytes / 4), Math.floor(this.maxBufferBytes / 16));
+        return plan.map((chunk, n) => {
+            const label = plan.length > 1 ? ` ${n + 1}/${plan.length}` : "";
+            if (chunk.remap) {
+                const { vertices, indices: local } = chunk.remap;
+                const gather = (source: Float32Array, size: number): Float32Array => {
+                    const out = new Float32Array(vertices.length * size);
+                    vertices.forEach((v, i) => out.set(source.subarray(v * size, v * size + size), i * size));
+                    return out;
+                };
+                return {
+                    position: this.vertexBuffer(`position${label}`, gather(positions, 3), VERTEX, created),
+                    normal: this.vertexBuffer(`normal${label}`, gather(normals, 3), VERTEX, created),
+                    colour: colours ? this.vertexBuffer(`colour${label}`, gather(colours, 4), VERTEX, created) : null,
+                    index: this.vertexBuffer(`index${label}`, local, BufferUsage.INDEX, created),
+                    indexCount: chunk.indexCount,
+                    baseVertex: 0,
+                };
+            }
+            const v0 = chunk.firstVertex, v1 = chunk.firstVertex + chunk.vertexCount;
+            return {
+                position: this.vertexBuffer(`position${label}`, positions.subarray(3 * v0, 3 * v1), VERTEX, created),
+                normal: this.vertexBuffer(`normal${label}`, normals.subarray(3 * v0, 3 * v1), VERTEX, created),
+                colour: colours ? this.vertexBuffer(`colour${label}`, colours.subarray(4 * v0, 4 * v1), VERTEX, created) : null,
+                index: this.vertexBuffer(`index${label}`, indices.subarray(chunk.firstIndex, chunk.firstIndex + chunk.indexCount),
+                    BufferUsage.INDEX, created),
+                indexCount: chunk.indexCount,
+                baseVertex: -v0,
+            };
+        });
+    }
+
     private vertexBuffer(label: string, data: Float32Array | Uint32Array, usage: number, created: GPUBuffer[]): GPUBuffer {
         const buffer = this.device.createBuffer({
             label,
@@ -309,11 +379,10 @@ export class WebGPUPreviewRenderer {
         const created: GPUBuffer[] = [];
         const VERTEX = BufferUsage.VERTEX;
 
-        const position = this.vertexBuffer("position", asFloat32(b.triangleVertices[j]), VERTEX, created);
-        const normal = this.vertexBuffer("normal", asFloat32(b.triangleNormals[j]), VERTEX, created);
-        const colour = item.colourSource === "uniform" ? null
-            : this.vertexBuffer("colour", asFloat32(b.triangleColours[j]), VERTEX, created);
-        const index = this.vertexBuffer("index", asUint32(b.triangleIndexs[j]), BufferUsage.INDEX, created);
+        const chunks = this.meshChunks(item, created);
+        const instanceColour = item.colourSource === "instance"
+            ? this.vertexBuffer("instance colour", asFloat32(b.triangleColours[j]), VERTEX, created)
+            : null;
 
         let instanceOrigin: GPUBuffer | null = null;
         let instanceSize: GPUBuffer | null = null;
@@ -350,7 +419,7 @@ export class WebGPUPreviewRenderer {
 
         return {
             dataVersion: b.dataVersion, sources, buffers: created,
-            position, normal, colour, index, instanceOrigin, instanceSize, instanceOrientation,
+            chunks, instanceColour, instanceOrigin, instanceSize, instanceOrientation,
             drawUniforms, bindGroup,
         };
     }

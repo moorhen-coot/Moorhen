@@ -126,10 +126,12 @@ export interface MetaBallsTimings {
     readbackWaitMs?: number;
     assembleMs?: number;
     /**
-     * GPU time per kernel, summed over slabs, from timestamp queries. Absent when the device
-     * does not offer them. Chrome rounds each timestamp to 0.1 ms unless told otherwise.
+     * GPU time per kernel, summed over slabs, from timestamp queries: resolves after the mesh is
+     * returned, so that reading them back is not part of making it (it is one more wait, up to
+     * 100 ms in Firefox). Absent when the device does not offer timestamps; undefined if they
+     * could not be read. Chrome rounds each timestamp to 0.1 ms unless told otherwise.
      */
-    gpuMs?: Record<string, number>;
+    gpuMs?: Promise<Record<string, number> | undefined>;
 }
 
 const EMPTY = (grid: MetaBallsGrid | null, totalMs: number): MetaBallsMesh => ({
@@ -310,21 +312,7 @@ export class GpuMetaBalls {
      * rather than returning whatever the buffers held, so a caller can fall back to the C++.
      */
     async generate(input: MetaBallsInput, options: MetaBallsOptions): Promise<MetaBallsMesh> {
-        this.device.pushErrorScope("out-of-memory");
-        this.device.pushErrorScope("validation");
-        let mesh: MetaBallsMesh | null = null;
-        let thrown: unknown = null;
-        try {
-            mesh = await this.generateUnchecked(input, options);
-        } catch (err) {
-            thrown = err;
-        }
-        const validation = await this.device.popErrorScope();
-        const memory = await this.device.popErrorScope();
-        if (thrown) throw thrown;
-        const error = validation ?? memory;
-        if (error) throw new Error(`GPU MetaBalls: ${error.message}`);
-        return mesh;
+        return this.generateUnchecked(input, options);
     }
 
     private async generateUnchecked(input: MetaBallsInput, options: MetaBallsOptions): Promise<MetaBallsMesh> {
@@ -358,6 +346,22 @@ export class GpuMetaBalls {
         const started = performance.now();
         const grid = metaballsGrid(input.points, options.gridSize, options.isoLevel);
         if (!grid) return { mesh: EMPTY(grid, performance.now() - started), timings: EMPTY(grid, 0).timings };
+
+        // Validation and out-of-memory errors from everything below, so that a failure is
+        // reported (and the caller can fall back to the C++) rather than a mesh made of whatever
+        // the buffers held. The scopes are closed straight after the last submission, so that
+        // the answer comes back with the last slabs rather than after them.
+        this.device.pushErrorScope("out-of-memory");
+        this.device.pushErrorScope("validation");
+        let scopes: Promise<GPUError | null> | null = null;
+        const closeScopes = (): Promise<GPUError | null> => {
+            if (!scopes) {
+                const validation = this.device.popErrorScope();
+                const memory = this.device.popErrorScope();
+                scopes = Promise.all([validation, memory]).then(([v, m]) => v ?? m);
+            }
+            return scopes;
+        };
         const [nx, ny, nz] = grid.n;
         const plane = nx * ny;
         const cellPlane = (nx - 1) * (ny - 1);
@@ -579,8 +583,10 @@ export class GpuMetaBalls {
                 encodeMs += performance.now() - mark;
                 if (inFlight.length >= SLABS_IN_FLIGHT) await takeOldest();
             }
+            closeScopes();
             while (inFlight.length > 0 && overflow === 0) await takeOldest();
         } finally {
+            closeScopes();
             // After an overflow or an error: let what is in flight finish before freeing it all.
             while (inFlight.length > 0) {
                 const slab = inFlight.shift();
@@ -591,12 +597,14 @@ export class GpuMetaBalls {
             this.scan.releaseTransient();
         }
 
-        // If a slab's commands were invalid (generate reports that), their queries were never
-        // written, and resolving them has been seen to hang: give up on the timings after 2 s.
+        const error = await closeScopes();
+        // Read the kernel times in the background. If a slab's commands were invalid, their
+        // queries were never written, and resolving them has been seen to hang: give up after 2 s.
         const gpuMs = this.timer
-            ? await Promise.race([this.timer.read(), new Promise<undefined>(done => setTimeout(() => done(undefined), 2000))])
+            ? Promise.race([this.timer.read(), new Promise<undefined>(done => setTimeout(() => done(undefined), 2000))])
             : undefined;
         this.timer = null;
+        if (error) throw new Error(`GPU MetaBalls: ${error.message}`);
         const timings: MetaBallsTimings = {
             totalMs: performance.now() - started, slabs, field: split ? "split" : "plain",
             setupMs, encodeMs, waitMs, copyMs, gpuMs,

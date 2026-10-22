@@ -56,15 +56,29 @@ const WebGPUPreview = () => {
 
         let renderer: WebGPUPreviewRenderer | null = null;
         let cancelled = false;
+        let failed = false;
         let frameRequest = 0;
         let lastStatus = 0;
         let unsubscribe: () => void = () => {};
 
+        // After a WebGPU error, show it and stop drawing: every later frame would only repeat it
+        // (or, once the device is gone, throw).
+        const fail = (message: string) => {
+            failed = true;
+            setError(message);
+        };
+
         const draw = () => {
             frameRequest = 0;
             const gl = glRef.current;
-            if (!renderer || !gl) return;
-            const report = renderer.render(store.getState().glRef.displayBuffers ?? [], gl);
+            if (!renderer || !gl || failed) return;
+            let report: PreviewFrameReport;
+            try {
+                report = renderer.render(store.getState().glRef.displayBuffers ?? [], gl);
+            } catch (err) {
+                fail(err instanceof Error ? err.message : String(err));
+                return;
+            }
             const now = performance.now();
             if (now - lastStatus > STATUS_INTERVAL) {
                 lastStatus = now;
@@ -76,7 +90,7 @@ const WebGPUPreview = () => {
         // Several drawScenes can happen in one frame (a hover and a camera step, say); one
         // preview frame covers them all.
         const requestDraw = () => {
-            if (!frameRequest) frameRequest = requestAnimationFrame(draw);
+            if (!frameRequest && !failed) frameRequest = requestAnimationFrame(draw);
         };
 
         const resize = () => {
@@ -93,7 +107,7 @@ const WebGPUPreview = () => {
         observer.observe(container);
         resize();
 
-        WebGPUPreviewRenderer.create(canvas, message => setError(message))
+        WebGPUPreviewRenderer.create(canvas, fail)
             .then(created => {
                 if (cancelled) {
                     created.destroy();

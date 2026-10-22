@@ -1839,8 +1839,11 @@ export class MoleculeRepresentation {
             `${mesh.indices.length / 3} triangles; spheres from Coot ${spheresMs.toFixed(0)} ms, ` +
             `GPU ${t.totalMs.toFixed(0)} ms in ${t.slabs} slab(s), ${t.field ?? "no"} field: ` +
             `setup ${t.setupMs.toFixed(0)}, encode ${t.encodeMs.toFixed(0)}, wait ${t.waitMs.toFixed(0)}, ` +
-            `copy ${t.copyMs.toFixed(0)}, other ${other.toFixed(0)}` + (t.retries ? `, ${t.retries} retry(s)` : "") +
-            (t.gpuMs ? `; GPU time per kernel: ${Object.entries(t.gpuMs).map(([k, ms]) => `${k} ${ms.toFixed(1)}`).join(", ")}` : ""));
+            `copy ${t.copyMs.toFixed(0)}, other ${other.toFixed(0)}` + (t.retries ? `, ${t.retries} retry(s)` : ""));
+        // Read back after the mesh is made, so as not to hold it up.
+        t.gpuMs?.then(gpuMs => {
+            if (gpuMs) console.log(`GPU MetaBalls, GPU time per kernel: ${Object.entries(gpuMs).map(([k, ms]) => `${k} ${ms.toFixed(1)}`).join(", ")}`);
+        });
         const data = metaballsMeshData(mesh, pickPoints);
         return [data as unknown as PickableMesh];
     }
