@@ -26,7 +26,7 @@ import { MoorhenNumberInput } from "@/components/inputs";
 import { RootState } from "@/store";
 import {
     addObjectToMovie, appendKeyframe, clearTrailingMotion, duplicateKeyframe, removeKeyframe,
-    removeObjectFromMovie, reorderKeyframe, selectKeyframe, setMovieFileName, setMovieName, spreadSceneFromKeyframe, updateKeyframe, updateMotion, updateMovieOutput,
+    removeObjectFromMovie, reorderKeyframe, selectKeyframe, setMovieFileName, setMovieName, setMoviePlaying, spreadSceneFromKeyframe, updateKeyframe, updateMotion, updateMovieOutput,
     updateObjectOpacity, updateSegment,
 } from "@/store";
 import { useMoorhenInstance } from "@/InstanceManager";
@@ -256,11 +256,13 @@ export const MoviePanel = () => {
             });
             previewRef.current = handle;
             setPlaying(true);
+            dispatch(setMoviePlaying(true));
             await handle.finished;
             setStatus("Played");
         } finally {
             previewRef.current = null;
             setPlaying(false);
+            dispatch(setMoviePlaying(false));
         }
     };
 
@@ -340,6 +342,7 @@ export const MoviePanel = () => {
             return;
         }
         setBusy(true);
+        dispatch(setMoviePlaying(true));
         try {
             const result = await recordMovieToMp4(glRef, document.path, {
                 onSample: playbackApplier(),
@@ -353,6 +356,7 @@ export const MoviePanel = () => {
                     }
                 },
             });
+            dispatch(setMoviePlaying(false));
             const name = baseName();
             downloadMovie(result.blob, `${name}.mp4`);
 
@@ -384,6 +388,7 @@ export const MoviePanel = () => {
             console.error(err);
             setStatus(`Could not export: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
+            dispatch(setMoviePlaying(false));
             setBusy(false);
         }
     };

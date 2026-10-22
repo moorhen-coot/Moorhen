@@ -14,6 +14,9 @@ export const UserSceneSelector = () => {
     const userSnapshots = useSelector((state: RootState) => state.userScenes.snapshots);
     const selectedScene = useSelector((state: RootState) => state.userScenes.selectedScene);
     const isSceneChanging = useSelector((state: RootState) => state.userScenes.isSceneChanging);
+    const isMoviePlaying = useSelector((state: RootState) => state.movie.isPlaying);
+    // Switching scene deletes the representations a movie fades, and a snapshot moves its camera
+    const isLocked = isSceneChanging || isMoviePlaying;
     const [isShown, setIsShown] = useState<boolean>(false);
     const [renameInputValue, setRenameInputValue] = useState<string>("");
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -39,9 +42,13 @@ export const UserSceneSelector = () => {
     if (isSnapshotShown) sceneIcon = "MatSymPhotoCam";
 
     const link = (
-        <MoorhenTooltip tooltip={`Scene selector: ${sceneName}`} placement="bottom">
+        <MoorhenTooltip
+            tooltip={isMoviePlaying ? `Scene selector: ${sceneName} (locked while a movie plays)` : `Scene selector: ${sceneName}`}
+            placement="bottom"
+        >
             <button
                 ref={buttonRef}
+                disabled={isMoviePlaying}
                 className={`moorhen__main-menu-button moorhen__scene-selector${isShown ? " open" : ""}`}
                 onClick={handleClick}
                 aria-haspopup="menu"
@@ -93,7 +100,7 @@ export const UserSceneSelector = () => {
     const sceneItem = (userScene: UserScene) => (
         <MoorhenStack direction="line" key={userScene.id}>
             <MoorhenMenuItem
-                disabled={isSceneChanging}
+                disabled={isLocked}
                 selected={userScene.id === selectedScene}
                 style={{ flex: 1 }}
                 onClick={() => {
@@ -121,7 +128,7 @@ export const UserSceneSelector = () => {
                 {userScenes.map(sceneItem)}
                 <MoorhenButton
                     tooltip="New Custom Scene"
-                    disabled={isSceneChanging}
+                    disabled={isLocked}
                     onClick={handleNewScene}
                     type="icon-only"
                     icon="MatSymAdd"
@@ -130,7 +137,7 @@ export const UserSceneSelector = () => {
                 {userSnapshots.map(sceneItem)}
                 <MoorhenButton
                     tooltip="Take a snapshot of the current view"
-                    disabled={isSceneChanging}
+                    disabled={isLocked}
                     onClick={() => moorhenInstance.userScene.takeSnapshot()}
                     type="icon-only"
                     icon="MatSymPhotoCam"

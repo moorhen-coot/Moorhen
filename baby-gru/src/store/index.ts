@@ -285,7 +285,7 @@ export {
 
 export {
     setMovieDocument, setMovieName, setMovieFileName, newMovie,
-    selectKeyframe,
+    setMoviePlaying, selectKeyframe,
     appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
     duplicateKeyframe,
     updateSegment, updateMotion, clearTrailingMotion,

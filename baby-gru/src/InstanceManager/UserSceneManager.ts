@@ -238,6 +238,11 @@ export class MoorhenUserSceneManager {
         return this.isChanging;
     }
 
+    /** A movie is playing or being rendered: the scene must not change under it */
+    private get isMoviePlaying(): boolean {
+        return this.instance.store.getState().movie.isPlaying;
+    }
+
     /** Resolve once no scene switch is running (e.g. before loading a session, which deletes every molecule) */
     public async waitUntilIdle(): Promise<void> {
         while (this.isChanging) {
@@ -323,13 +328,14 @@ export class MoorhenUserSceneManager {
      * @param sceneId - The id of the scene or snapshot to show.
      * @param saveCurrentScene - Save the current representations as the scene being left (default true).
      * Snapshots are never saved.
-     * @returns True if the switch ran, false if it was ignored (same scene, or a switch already running).
+     * @returns True if the switch ran, false if it was ignored (same scene, a switch already running,
+     * or a movie playing).
      * @example
      * await moorhenInstance.userScene.select("Model Building");
      */
     public async select(sceneId: string, saveCurrentScene: boolean = true): Promise<boolean> {
         // Selecting the shown snapshot again re-applies it, undoing any change made since
-        if ((sceneId === this.selected && !isSnapshot(sceneId)) || this.isChanging) return false;
+        if ((sceneId === this.selected && !isSnapshot(sceneId)) || this.isChanging || this.isMoviePlaying) return false;
         this.setChanging(true);
         try {
             await this.changeScene(sceneId, saveCurrentScene);
@@ -388,7 +394,7 @@ export class MoorhenUserSceneManager {
      * @returns True if the scene was deleted.
      */
     public async delete(sceneId: string): Promise<boolean> {
-        if (this.isChanging || isBuiltInScene(sceneId)) return false;
+        if (this.isChanging || this.isMoviePlaying || isBuiltInScene(sceneId)) return false;
         if (this.selected === sceneId) {
             // Leaving the deleted scene must not save it again
             await this.select("Default", false);
@@ -406,10 +412,10 @@ export class MoorhenUserSceneManager {
      * otherwise the reset is used on its next visit. The camera (zoom, origin) is not changed.
      * @param sceneId - "Default" or "Model Building".
      * @param to - "factory" (default) for the scene's original settings, "saved" for its saved ones.
-     * @returns True if the scene was reset, false if it is not built-in or a switch is running.
+     * @returns True if the scene was reset, false if it is not built-in, a switch is running or a movie is playing.
      */
     public async restoreDefault(sceneId: string, to: "factory" | "saved" = "factory"): Promise<boolean> {
-        if (this.isChanging || !isBuiltInScene(sceneId)) return false;
+        if (this.isChanging || this.isMoviePlaying || !isBuiltInScene(sceneId)) return false;
         const settings = to === "saved" ? this.instance.store.getState().userScenes.savedSceneSettings[sceneId] : builtInSceneDefaults(sceneId);
         const backup = builtInSceneBackup(sceneId, settings, false);
         // Keep the name if the user renamed the scene

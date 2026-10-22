@@ -44,12 +44,18 @@ export interface MovieState {
     selected: number | null;
     /** Where the document came from, for the title bar and for deciding what Save means. */
     fileName: string | null;
+    /**
+     * A movie is playing or being rendered. The scene must not change under it: switching scene
+     * deletes the representations it fades, and a snapshot moves the camera it holds.
+     */
+    isPlaying: boolean;
 }
 
 const initialState: MovieState = {
     document: emptyMovie(),
     selected: null,
     fileName: null,
+    isPlaying: false,
 };
 
 /** Keep the selection pointing at something, after the list it indexes has changed length. */
@@ -78,6 +84,10 @@ export const movieSlice = createSlice({
             state.document = emptyMovie();
             state.selected = null;
             state.fileName = null;
+        },
+
+        setMoviePlaying: (state, action: PayloadAction<boolean>) => {
+            state.isPlaying = action.payload;
         },
 
         selectKeyframe: (state, action: PayloadAction<number | null>) => {
@@ -151,7 +161,7 @@ export const movieSlice = createSlice({
 
 export const {
     setMovieDocument, setMovieName, setMovieFileName, newMovie,
-    selectKeyframe,
+    setMoviePlaying, selectKeyframe,
     appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
     duplicateKeyframe,
     updateSegment, updateMotion, clearTrailingMotion,
