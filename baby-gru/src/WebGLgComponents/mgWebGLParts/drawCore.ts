@@ -2950,9 +2950,10 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebufferDepth);
             self.gl.viewport(0, 0, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height);
             // This is the first pass of the frame, so it starts with whatever the last frame left
-            // behind. The shadow map is only as good as the depth it writes, so it says what it
-            // needs rather than hoping.
-            beginDepthOnlyPass(self.gl);
+            // behind - depth state, and the shadow map still bound to its unit from the lit pass.
+            // The shadow map is only as good as the depth it writes, so it says what it needs
+            // rather than hoping.
+            beginDepthOnlyPass(self.gl, SHADOW_TEXTURE_UNIT);
         } else if(self.drawingGBuffers) {
             const width_ratio = self.gl.viewportWidth / self.gFramebuffer.width;
             const height_ratio = self.gl.viewportHeight / self.gFramebuffer.height;
