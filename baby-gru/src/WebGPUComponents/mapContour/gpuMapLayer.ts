@@ -4,19 +4,24 @@
  * Each frame it reads the same settings Moorhen contours with (visible maps, radius, level,
  * style, colours, the origin or a map's locked origin) from the store, remakes a map's contour on
  * the GPU only when its centre, radius or level has changed, and returns what to draw. Each map's
- * unit-cell grid is fetched from the Coot worker once and kept on the GPU while the preview is
- * open.
+ * unit-cell grid is fetched from the Coot worker and kept on the GPU while the preview is open,
+ * and fetched again when the map's dataRevision goes up (MoorhenMap.markDataChanged); the old
+ * grid is drawn until the new one is in.
  */
 import type { RootState } from "../../store/MoorhenReduxStore";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
 import type { PreviewGpuDraw } from "../previewRenderer";
 import { GpuIsosurface, GpuMapGrid, MapContourKernels } from "./gpuMapContour";
 import type { MapUnitCellGrid } from "./mapContourBox";
-import { gpuMapContourSetting } from "./setting";
+import { gpuMapContourSetting, onMapDataChanged } from "./setting";
 
 interface MapEntry {
     grid: GpuMapGrid | null;
+    /** The map's dataRevision when `grid` was asked for. */
+    revision: number;
     loading: boolean;
+    /** Grids fetched, for the status line. */
+    fetches: number;
     failed: string | null;
     surfaces: Map<string, GpuIsosurface>;
 }
@@ -24,10 +29,15 @@ interface MapEntry {
 export class GpuMapLayer {
     private readonly maps = new Map<MoorhenMap, MapEntry>();
     private destroyed = false;
+    private readonly stopListening: () => void;
     /** One line for the preview's status: what is being contoured, or what went wrong. */
     status = "";
 
-    private constructor(private readonly kernels: MapContourKernels, private readonly requestDraw: () => void) {}
+    private constructor(private readonly kernels: MapContourKernels, private readonly requestDraw: () => void) {
+        // A map can change with nothing else in the scene changing (updating maps after a
+        // refinement): the next frame is when its grid is fetched again.
+        this.stopListening = onMapDataChanged(requestDraw);
+    }
 
     static async create(device: GPUDevice, requestDraw: () => void): Promise<GpuMapLayer> {
         return new GpuMapLayer(await MapContourKernels.create(device), requestDraw);
@@ -55,15 +65,15 @@ export class GpuMapLayer {
             if (!settings.visibleMaps.includes(map.molNo)) continue;
             let entry = this.maps.get(map);
             if (!entry) {
-                entry = { grid: null, loading: false, failed: null, surfaces: new Map() };
+                entry = { grid: null, revision: -1, loading: false, fetches: 0, failed: null, surfaces: new Map() };
                 this.maps.set(map, entry);
             }
             if (entry.failed) {
                 notes.push(`map ${map.molNo}: ${entry.failed}`);
                 continue;
             }
+            if (!entry.loading && entry.revision !== map.dataRevision) this.load(map, entry);
             if (!entry.grid) {
-                if (!entry.loading) this.load(map, entry);
                 notes.push(`map ${map.molNo}: fetching its unit cell…`);
                 continue;
             }
@@ -108,7 +118,8 @@ export class GpuMapLayer {
             const box = entry.surfaces.get(`${map.molNo}:1`)?.lastBox;
             const made = [...entry.surfaces.values()].reduce((sum, s) => sum + s.made, 0);
             const { nu, nv, nw } = entry.grid.grid;
-            notes.push(`map ${map.molNo}: cell grid ${nu}×${nv}×${nw}` + (box ? `, box ${box.size.join("×")}` : "") + `, contoured ${made}×`);
+            notes.push(`map ${map.molNo}: cell grid ${nu}×${nv}×${nw}` + (box ? `, box ${box.size.join("×")}` : "") + `, contoured ${made}×`
+                + (entry.fetches > 1 ? `, fetched ${entry.fetches}×` : "") + (entry.loading ? ", fetching again…" : ""));
         }
         this.status = notes.length > 0 ? `GPU maps: ${notes.join("; ")}` : "GPU maps: none visible";
         return draws;
@@ -116,6 +127,7 @@ export class GpuMapLayer {
 
     destroy(): void {
         this.destroyed = true;
+        this.stopListening();
         this.clear();
         this.kernels.destroy();
     }
@@ -132,8 +144,14 @@ export class GpuMapLayer {
         entry.grid = null;
     }
 
+    /**
+     * Fetch the map's unit cell, and swap it in when it arrives. Until then the current grid, if
+     * there is one, is still drawn. The revision asked for is recorded first, so that a change
+     * while this is in flight is fetched again afterwards.
+     */
     private load(map: MoorhenMap, entry: MapEntry): void {
         entry.loading = true;
+        entry.revision = map.dataRevision;
         const started = performance.now();
         map.commandCentre.cootCommand({
             returnType: "unit_cell_grid",
@@ -141,20 +159,34 @@ export class GpuMapLayer {
             commandArgs: [map.molNo],
         }, false).then(response => {
             entry.loading = false;
+            if (this.destroyed || this.maps.get(map) !== entry) return;
             const result = response.data.result as { status: string; result?: MapUnitCellGrid };
             if (result.status !== "Completed" || !result.result) {
-                entry.failed = "the Coot worker could not export its grid (is the WASM rebuilt with get_map_unit_cell_grid?)";
-            } else if (!this.destroyed && this.maps.get(map) === entry) {
+                this.fetchFailed(map, entry, "the Coot worker could not export its grid (is the WASM rebuilt with get_map_unit_cell_grid?)");
+            } else {
                 const grid = result.result;
+                // The surfaces were made from the old grid (whose size may differ): start again.
+                entry.surfaces.forEach(surface => surface.destroy());
+                entry.surfaces.clear();
+                entry.grid?.destroy();
                 entry.grid = new GpuMapGrid(this.kernels, grid);
+                entry.fetches++;
                 console.log(`GPU map contours: map ${map.molNo} unit cell ${grid.nu}×${grid.nv}×${grid.nw} ` +
-                    `(${(grid.data.byteLength / 1e6).toFixed(0)} MB) in ${(performance.now() - started).toFixed(0)} ms`);
+                    `(${(grid.data.byteLength / 1e6).toFixed(0)} MB) in ${(performance.now() - started).toFixed(0)} ms` +
+                    (entry.fetches > 1 ? ` (fetch ${entry.fetches}: the map changed)` : ""));
             }
             this.requestDraw();
         }).catch(err => {
             entry.loading = false;
-            entry.failed = String(err);
+            if (this.destroyed || this.maps.get(map) !== entry) return;
+            this.fetchFailed(map, entry, String(err));
             this.requestDraw();
         });
+    }
+
+    /** A first fetch failing stops the map being drawn; a later one leaves the old grid drawn. */
+    private fetchFailed(map: MoorhenMap, entry: MapEntry, why: string): void {
+        if (entry.grid) console.warn(`GPU map contours: map ${map.molNo} changed but could not be fetched again: ${why}`);
+        else entry.failed = why;
     }
 }

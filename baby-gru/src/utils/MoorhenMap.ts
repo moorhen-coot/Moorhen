@@ -1,5 +1,5 @@
 import { Store } from "@reduxjs/toolkit";
-import { gpuMapContourSetting } from "../WebGPUComponents/mapContour/setting";
+import { gpuMapContourSetting, notifyMapDataChanged } from "../WebGPUComponents/mapContour/setting";
 import { correctExportedGltf } from "./gltfWinding";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
@@ -98,6 +98,11 @@ export class MoorhenMap {
     dataOrigin: "mtz" | "mapFile";
     originShift: [number, number, number];
     moorhenInstance: MoorhenInstance
+    /**
+     * Goes up whenever the map's data may have changed in Coot (markDataChanged), for anything
+     * that keeps its own copy of the map: the GPU contours fetch the unit cell again.
+     */
+    dataRevision: number;
 
     constructor(moorhenInstance: MoorhenInstance) {
         this.type = "map";
@@ -131,6 +136,18 @@ export class MoorhenMap {
         this.defaultMapColour = _DEFAULT_MAP_COLOUR;
         this.defaultPositiveMapColour = _DEFAULT_POSITIVE_MAP_COLOUR;
         this.defaultNegativeMapColour = _DEFAULT_NEGATIVE_MAP_COLOUR;
+        this.dataRevision = 0;
+    }
+
+    /**
+     * Note that the map's data may have changed in Coot, so copies of it are out of date.
+     *
+     * Contouring through Coot needs no such note - every contour reads Coot's map as it is - but
+     * the GPU contours keep the map's unit cell on the GPU and contour from that.
+     */
+    markDataChanged(): void {
+        this.dataRevision++;
+        notifyMapDataChanged();
     }
 
     /**
@@ -591,7 +608,10 @@ export class MoorhenMap {
                 commandArgs: [this.molNo, scale],
             },
             false
-        );
+        ).then(response => {
+            this.markDataChanged();
+            return response;
+        });
     }
 
     /**
@@ -647,12 +667,42 @@ export class MoorhenMap {
     }
 
     /**
-     * Contour the map with parameters from the redux store
+     * Contour the map with parameters from the redux store.
+     *
+     * This is what is called after the map's data has changed in Coot (updating maps, a new MTZ,
+     * a new sampling rate), so it also marks the data changed: the GPU contours, which keep a copy
+     * of the map, fetch it again. The other callers (an origin lock, colouring by another map)
+     * cost them one needless fetch. Moving the origin or changing the level does not come here.
      */
-    drawMapContour(): Promise<void> {
+    async drawMapContour(): Promise<void> {
         const originState = this.store.getState().sceneSettings.origin;
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams();
-        return this.doCootContour(...(originState.map(coord => -coord) as [number, number, number]), mapRadius, contourLevel, mapStyle);
+        const [x, y, z] = originState.map(coord => -coord) as [number, number, number];
+        if (gpuMapContourSetting.enabled) await this.bringUpdatingMapsUpToDate(x, y, z, contourLevel);
+        this.markDataChanged();
+        return this.doCootContour(x, y, z, mapRadius, contourLevel, mapStyle);
+    }
+
+    /**
+     * Have Coot recalculate the updating maps (2Fo-Fc and Fo-Fc after a model change), if they
+     * are out of date.
+     *
+     * Coot does that lazily: a model change only notes that the maps need it, and the maps are
+     * recalculated when a contour mesh is next asked for (molecules_container_t::
+     * get_map_contours_mesh), the flag and update_updating_maps being private. Contouring through
+     * Coot always asks; with the maps contoured on the GPU nothing does, so the map fetched would
+     * be the old one, and the R-factors read after this (UpdatingMapsManager) the old ones too.
+     * So ask for a token mesh, half an ångström across. Nothing to do if the maps are up to date.
+     */
+    private async bringUpdatingMapsUpToDate(x: number, y: number, z: number, contourLevel: number): Promise<void> {
+        await this.commandCentre.cootCommand(
+            {
+                returnType: "lines_mesh",
+                command: "get_map_contours_mesh",
+                commandArgs: [this.molNo, x, y, z, 0.5, contourLevel],
+            },
+            false
+        );
     }
 
     /**
@@ -1143,14 +1193,18 @@ export class MoorhenMap {
      * @returns {Promise<moorhen.WorkerResponse<number>>} Status (-1 if failure)
      */
     blur(bFactor: number): Promise<moorhen.WorkerResponse> {
-        return this.commandCentre.cootCommand(
+        return (this.commandCentre.cootCommand(
             {
                 command: "sharpen_blur_map",
                 commandArgs: [this.molNo, bFactor, true],
                 returnType: "status",
             },
             true
-        ) as Promise<moorhen.WorkerResponse<number>>;
+        ) as Promise<moorhen.WorkerResponse<number>>).then(response => {
+            // In place (the last argument).
+            this.markDataChanged();
+            return response;
+        });
     }
 
     /**
