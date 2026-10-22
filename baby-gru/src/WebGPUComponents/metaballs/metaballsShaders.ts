@@ -30,8 +30,9 @@ struct Params {
     binNx: u32, binNy: u32, binNz: u32, cutoff: f32,
     // First plane of this slab, and how many planes each kind of array covers.
     z0: u32, fieldPlanes: u32, countPlanes: u32, cellPlanes: u32,
-    // Point planes whose vertices this slab owns; global index of its first vertex.
-    ownedPlanes: u32, vertexBase: u32, vertexCount: u32, pointCount: u32,
+    // Point planes whose vertices this slab owns; room in this slab's output buffers for
+    // vertices and triangles (see capInfluences).
+    ownedPlanes: u32, capTriangles: u32, capVertices: u32, pointCount: u32,
     // The field planes this slab computes: global first plane and count, and the slab plane
     // they are stored from (the ones before it came over from the previous slab).
     fz0: u32, fzCount: u32, fieldFirst: u32,
@@ -39,9 +40,18 @@ struct Params {
     kStart: u32, kCount: u32, zSpan: u32,
     // Fixed point for the box sums: 2^bits and 2^-bits.
     fixedScale: f32, fixedInv: f32,
-    // Influences before this slab's; 1 to emit the mesh as Moorhen draws it (see pickable).
-    influenceBase: u32, pickable: u32, pad0: u32, pad1: u32,
+    // Room for influences; 1 to emit the mesh as Moorhen draws it (see pickable).
+    capInfluences: u32, pickable: u32, pad0: u32, pad1: u32,
 };
+
+// The slab's totals and the mesh so far, kept on the GPU (the CPU only reads them with the slab's
+// results): written by TOTALS_WGSL.
+const COUNT_VERTICES_IN_SLAB = 0u;
+const COUNT_TRIANGLES_IN_SLAB = 1u;
+const COUNT_INFLUENCES_IN_SLAB = 2u;
+const COUNT_VERTEX_BASE = 4u;
+const COUNT_TRIANGLE_BASE = 5u;
+const COUNT_INFLUENCE_BASE = 6u;
 
 @group(0) @binding(0) var<uniform> P: Params;
 
@@ -569,11 +579,14 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
         else { vb = fieldAt(ix, iy, lz + 1u); }
         var v = vec3f(f32(ix), f32(iy), f32(iz));
         v[axis] = v[axis] + va / (va - vb);
-        positions[3u * slot] = v.x * P.cell + P.minX;
-        positions[3u * slot + 1u] = v.y * P.cell + P.minY;
-        positions[3u * slot + 2u] = v.z * P.cell + P.minZ;
-        // Which edge this vertex sits on: for matching against the C++ mesh in tests.
-        keys[slot] = (((iz * P.ny + iy) * P.nx + ix) * 3u) + axis;
+        // Past the room the CPU estimated: the slab will be done again with more.
+        if (slot < P.capVertices) {
+            positions[3u * slot] = v.x * P.cell + P.minX;
+            positions[3u * slot + 1u] = v.y * P.cell + P.minY;
+            positions[3u * slot + 2u] = v.z * P.cell + P.minZ;
+            // Which edge this vertex sits on: for matching against the C++ mesh in tests.
+            keys[slot] = (((iz * P.ny + iy) * P.nx + ix) * 3u) + axis;
+        }
         slot++;
     }
 }
@@ -587,6 +600,7 @@ export const EMIT_TRIANGLES_WGSL = COMMON + /* wgsl */ `
 @group(1) @binding(3) var<storage, read> vertexOffset: array<u32>;
 @group(1) @binding(4) var<storage, read> triangleOffset: array<u32>;
 @group(1) @binding(5) var<storage, read_write> indices: array<u32>;
+@group(1) @binding(6) var<storage, read> counts: array<u32>;
 ${FIELD_AT}
 ${EDGES}
 @compute @workgroup_size(${ITEM_WORKGROUP})
@@ -604,6 +618,8 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
     if (config == 0u || config == 255u) { return; }
     let count = tableNibble(config, 0u) * 3u;
     let base = triangleOffset[idx] * 3u;
+    if (base + count > 3u * P.capTriangles) { return; }
+    let vertexBase = counts[COUNT_VERTEX_BASE];
     for (var i = 0u; i < count; i++) {
         let e = EDGE_POINTS[tableNibble(config, i + 1u)];
         let point = ((lz + e.z) * P.ny + (cy + e.y)) * P.nx + (cx + e.x);
@@ -612,7 +628,7 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
         // Moorhen draws the triangles wound the other way round: (a, c, b).
         var slot = i;
         if (P.pickable != 0u && i % 3u != 0u) { slot = i + 3u - 2u * (i % 3u); }
-        indices[base + slot] = P.vertexBase + vertexOffset[point] + rank;
+        indices[base + slot] = vertexBase + vertexOffset[point] + rank;
     }
 }
 `;
@@ -636,12 +652,14 @@ export const SMOOTH_WGSL = COMMON + /* wgsl */ `
 @group(1) @binding(4) var<storage, read_write> normals: array<f32>;
 @group(1) @binding(5) var<storage, read_write> vertexColours: array<vec4f>;
 @group(1) @binding(6) var<storage, read_write> influenceCount: array<u32>;
+@group(1) @binding(7) var<storage, read> counts: array<u32>;
 ${SMOOTH_COMMON}
 @compute @workgroup_size(${ITEM_WORKGROUP})
 fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u,
         @builtin(num_workgroups) nwg: vec3u) {
     let i = itemIndex(lid, wid, nwg);
-    if (i >= P.vertexCount) { return; }
+    // Dispatched for the room there is; the slab's vertices are fewer.
+    if (i >= min(counts[COUNT_VERTICES_IN_SLAB], P.capVertices)) { return; }
     let v = vertexAt(i);
     let ex = v.x + 0.02;
     let ey = v.y + 0.02;
@@ -710,9 +728,7 @@ export const INFLUENCES_WGSL = COMMON + /* wgsl */ `
 @group(1) @binding(2) var<storage, read> binStart: array<u32>;
 @group(1) @binding(3) var<storage, read> positions: array<f32>;
 @group(1) @binding(4) var<storage, read> influenceOffset: array<u32>;
-// In: how many influences each vertex has. Out: the END of its run in the whole mesh's list, as
-// DrawMoorhenMetaBalls packs it.
-@group(1) @binding(5) var<storage, read_write> influenceCount: array<u32>;
+@group(1) @binding(5) var<storage, read> influenceCount: array<u32>;
 @group(1) @binding(6) var<storage, read_write> influencePoints: array<u32>;
 @group(1) @binding(7) var<storage, read_write> influenceWeights: array<f32>;
 ${SMOOTH_COMMON}
@@ -720,13 +736,16 @@ ${SMOOTH_COMMON}
 fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u,
         @builtin(num_workgroups) nwg: vec3u) {
     let i = itemIndex(lid, wid, nwg);
-    if (i >= P.vertexCount) { return; }
+    // Dispatched for the room there is; counts past the slab's vertices were cleared to 0.
+    if (i >= P.capVertices) { return; }
+    let count = influenceCount[i];
+    if (count == 0u) { return; }
     let v = vertexAt(i);
     var slot = influenceOffset[i];
     // The count pass decided how many slots this vertex has. Recomputing the same test should
-    // agree with it, but the two are separate shaders, so never write past what it allotted.
-    let end = slot + influenceCount[i];
-    influenceCount[i] = P.influenceBase + end;
+    // agree with it, but the two are separate shaders, so never write past what it allotted -
+    // nor past the room the CPU estimated.
+    let end = min(slot + count, P.capInfluences);
     let c = P.cutoff;
     let bx0 = binCoord(v.x - c - 0.01, P.binX, P.binNx); let bx1 = binCoord(v.x + c + 0.01, P.binX, P.binNx);
     let by0 = binCoord(v.y - c - 0.01, P.binY, P.binNy); let by1 = binCoord(v.y + c + 0.01, P.binY, P.binNy);
@@ -797,10 +816,32 @@ fn vertices_and_triangles() {
 }
 @compute @workgroup_size(1)
 fn influences() {
-    if (P.vertexCount > 0u) {
-        totals[2] = influenceOffset[P.vertexCount - 1u] + influenceCount[P.vertexCount - 1u];
-    } else {
-        totals[2] = 0u;
-    }
+    // Counts past the slab's vertices are 0, so the last slot of the room gives the total.
+    totals[2] = influenceOffset[P.capVertices - 1u] + influenceCount[P.capVertices - 1u];
+}
+// After the slab: the mesh so far now includes it.
+@compute @workgroup_size(1)
+fn advance() {
+    totals[COUNT_VERTEX_BASE] += totals[COUNT_VERTICES_IN_SLAB];
+    totals[COUNT_TRIANGLE_BASE] += totals[COUNT_TRIANGLES_IN_SLAB];
+    totals[COUNT_INFLUENCE_BASE] += totals[COUNT_INFLUENCES_IN_SLAB];
+}
+`;
+
+/**
+ * One thread per vertex of the slab's room: each vertex's END in the whole mesh's influence list,
+ * as DrawMoorhenMetaBalls packs it, written over its count. After INFLUENCES_WGSL, which needs the
+ * counts.
+ */
+export const INFLUENCE_ENDS_WGSL = COMMON + /* wgsl */ `
+@group(1) @binding(0) var<storage, read> influenceOffset: array<u32>;
+@group(1) @binding(1) var<storage, read_write> influenceCount: array<u32>;
+@group(1) @binding(2) var<storage, read> counts: array<u32>;
+@compute @workgroup_size(${ITEM_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u,
+        @builtin(num_workgroups) nwg: vec3u) {
+    let i = itemIndex(lid, wid, nwg);
+    if (i >= P.capVertices) { return; }
+    influenceCount[i] = counts[COUNT_INFLUENCE_BASE] + influenceOffset[i] + influenceCount[i];
 }
 `;
