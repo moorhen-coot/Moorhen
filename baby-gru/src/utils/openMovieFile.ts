@@ -63,6 +63,11 @@ export async function openMovieFile(
 
         dispatch(setMovieDocument(container.movie));
         dispatch(setMovieFileName(file.name));
+        // Show the movie's own scene, whichever one the session was saved on
+        const sceneId = container.movie.sceneId;
+        if (sceneId && moorhenInstance.userScene.list.some(scene => scene.id === sceneId)) {
+            await moorhenInstance.userScene.select(sceneId);
+        }
         // Show the panel. Opening a movie with nothing visibly happening is the most likely way
         // to conclude that nothing did - and the panel is where every next thing is done.
         dispatch(setShownSidePanel("movie"));

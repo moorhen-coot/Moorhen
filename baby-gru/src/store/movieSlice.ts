@@ -25,10 +25,10 @@
 
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Keyframe, Motion, Segment } from "../utils/cameraPath";
-import { type MovieDocument, type MovieOutputSettings, type MovieSceneSettings, emptyMovie } from "../utils/movieDocument";
+import { type MovieDocument, type MovieOutputSettings, emptyMovie } from "../utils/movieDocument";
 import {
     addKeyframe, applySceneToAll, cloneKeyframe, deleteKeyframe, introduceObject, moveKeyframe,
-    releaseObject, removeTrailingSegment, replaceKeyframe, setObjectOpacity, setSceneSettings,
+    releaseObject, removeTrailingSegment, replaceKeyframe, setObjectOpacity,
     setSegment,
 } from "../utils/movieEditing";
 
@@ -137,8 +137,9 @@ export const movieSlice = createSlice({
         spreadSceneFromKeyframe: (state, action: PayloadAction<number>) => {
             state.document = applySceneToAll(state.document, action.payload);
         },
-        updateMovieScene: (state, action: PayloadAction<Partial<MovieSceneSettings>>) => {
-            state.document = setSceneSettings(state.document, action.payload);
+        /** The scene the movie plays in (see MovieDocument.sceneId) */
+        setMovieSceneId: (state, action: PayloadAction<string>) => {
+            state.document = { ...state.document, sceneId: action.payload };
         },
         updateMovieOutput: (state, action: PayloadAction<Partial<MovieOutputSettings>>) => {
             state.document = { ...state.document, output: { ...state.document.output, ...action.payload } };
@@ -165,7 +166,7 @@ export const {
     appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
     duplicateKeyframe,
     updateSegment, updateMotion, clearTrailingMotion,
-    spreadSceneFromKeyframe, updateMovieScene, updateMovieOutput,
+    spreadSceneFromKeyframe, setMovieSceneId, updateMovieOutput,
     updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
 } = movieSlice.actions;
 

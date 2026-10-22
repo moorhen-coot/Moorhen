@@ -13,8 +13,8 @@
  *
  * WHAT IS NOT HERE
  *
- * The movie's own scene settings - shadows, SSAO, edge detection - are in the scene settings
- * panel, because they are the scene's settings and a movie simply records them. Only the things
+ * The movie's modes - shadows, SSAO, edge detection, depth blur - are those of the movie's scene,
+ * edited in the scene settings panel while that scene is shown ("Go to scene"). Only the things
  * that vary *within* a movie are edited here.
  */
 
@@ -25,8 +25,8 @@ import { MoorhenButton, MoorhenPopoverButton, MoorhenSelect, MoorhenSlider, Moor
 import { MoorhenNumberInput } from "@/components/inputs";
 import { RootState } from "@/store";
 import {
-    addObjectToMovie, appendKeyframe, clearTrailingMotion, duplicateKeyframe, removeKeyframe,
-    removeObjectFromMovie, reorderKeyframe, selectKeyframe, setMovieFileName, setMovieName, setMoviePlaying, spreadSceneFromKeyframe, updateKeyframe, updateMotion, updateMovieOutput,
+    addObjectToMovie, appendKeyframe, clearTrailingMotion, duplicateKeyframe, enqueueSnackbar, removeKeyframe,
+    removeObjectFromMovie, reorderKeyframe, selectKeyframe, setMovieFileName, setMovieName, setMoviePlaying, setMovieSceneId, spreadSceneFromKeyframe, updateKeyframe, updateMotion, updateMovieOutput,
     updateObjectOpacity, updateSegment,
 } from "@/store";
 import { useMoorhenInstance } from "@/InstanceManager";
@@ -57,6 +57,10 @@ export const MoviePanel = () => {
     // The file this movie was last saved to or opened from. Shown rather than merely recorded:
     // once a movie can be saved and reopened, "which one am I editing" is a real question.
     const fileName = useSelector((state: RootState) => state.movie.fileName);
+    // The movie plays in a scene of its own (MovieDocument.sceneId)
+    const movieScene = useSelector((state: RootState) =>
+        state.userScenes.scenes.find(scene => scene.id === state.movie.document.sceneId));
+    const selectedScene = useSelector((state: RootState) => state.userScenes.selectedScene);
     const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
     const threeDObjects = useSelector((state: RootState) => state.threeDObjects.objects);
     const displayBuffers = useSelector((state: RootState) => state.glRef.displayBuffers);
@@ -150,7 +154,50 @@ export const MoviePanel = () => {
         return thumbnail ? { ...keyframe, thumbnail } : keyframe;
     }, [hostInputs, glRef]);
 
-    const addFromView = () => {
+    /**
+     * Show the movie's scene before playing or exporting: its modes and the representations it
+     * fades are the movie's. A movie opened without its session plays over the scene shown.
+     * @param explain - Say why the scene changed: true unless the user asked for the switch.
+     * @returns False if the scene could not be shown (a scene switch already running).
+     */
+    const goToMovieScene = async (explain: boolean = true): Promise<boolean> => {
+        if (!movieScene || selectedScene === movieScene.id) return true;
+        const switched = await moorhenInstance.userScene.select(movieScene.id);
+        if (switched && explain) {
+            dispatch(enqueueSnackbar({
+                message: `Switched to the movie scene. Movie can be modified or played only here.\n`
+                        + "Change its settings to change how the movie looks; your other scenes are not affected.",
+            variant: "info",
+            autoHideDuration: 5000,
+            }));
+        }
+        return switched;
+    };
+
+    /** Like goToMovieScene, but the first keyframe creates the scene, as a copy of the one shown */
+    const ensureMovieScene = async (): Promise<boolean> => {
+        if (movieScene) return goToMovieScene();
+        const name = `Movie: ${document.name}`;
+        const sceneId = await moorhenInstance.userScene.createMovieScene(name);
+        dispatch(setMovieSceneId(sceneId));
+        dispatch(enqueueSnackbar({
+            message: `Created a copy of the current scene, for this movie to play in.\n`
+                + "Change its settings to change how the movie looks; your other scenes are not affected.",
+            variant: "info",
+            autoHideDuration: 5000,
+        }));
+        return true;
+    };
+
+    const addFromView = async () => {
+        if (!hostInputs) {
+            setStatus("No 3D view yet");
+            return;
+        }
+        if (!(await ensureMovieScene())) {
+            setStatus("Could not switch to the movie's scene, try again");
+            return;
+        }
         const keyframe = capture();
         if (!keyframe) {
             setStatus("No 3D view yet");
@@ -160,7 +207,11 @@ export const MoviePanel = () => {
         setStatus(`Keyframe ${keyframes.length + 1} captured`);
     };
 
-    const updateFromView = (index: number) => {
+    const updateFromView = async (index: number) => {
+        if (!(await ensureMovieScene())) {
+            setStatus("Could not switch to the movie's scene, try again");
+            return;
+        }
         const keyframe = capture();
         if (!keyframe) return;
         dispatch(updateKeyframe({ index, keyframe }));
@@ -241,6 +292,10 @@ export const MoviePanel = () => {
         // the trailing slot is for - and a list of keyframes with nothing between them is not.
         if (segments.length === 0) {
             setStatus("Nothing to play yet. Add a keyframe to move to, or a motion to end on.");
+            return;
+        }
+        if (!(await goToMovieScene())) {
+            setStatus("Could not switch to the movie's scene, try again");
             return;
         }
         try {
@@ -339,6 +394,10 @@ export const MoviePanel = () => {
         }
         if (!glRef?.current) {
             setStatus("No 3D view yet");
+            return;
+        }
+        if (!(await goToMovieScene())) {
+            setStatus("Could not switch to the movie's scene, try again");
             return;
         }
         setBusy(true);
@@ -721,6 +780,25 @@ export const MoviePanel = () => {
                          title={fileName ? "The file this movie was last saved to or opened from" : undefined}>
                         {fileName ?? "Not saved yet"}
                     </div>
+                </MoorhenStack>
+
+                {/* Where the movie plays: its own scene, holding its shadows, SSAO, edge
+                    detection and depth blur, and the representations it fades */}
+                <MoorhenStack direction="row" align="center" gap="0.25rem" flex={0}>
+                    <div style={{ flex: 1, fontSize: "0.95rem" }}>
+                        {movieScene
+                            ? `Scene: ${movieScene.name}`
+                            : document.sceneId
+                              ? "Scene: not in this session, plays over the current scene"
+                              : "Scene: created with the first keyframe"}
+                    </div>
+                    <MoorhenButton
+                        onClick={() => goToMovieScene(false)}
+                        disabled={!movieScene || selectedScene === movieScene.id || busy || playing}
+                        tooltip="Show the movie's scene, to change how the movie looks"
+                    >
+                        Go to scene
+                    </MoorhenButton>
                 </MoorhenStack>
 
                 {problems.length > 0 && (

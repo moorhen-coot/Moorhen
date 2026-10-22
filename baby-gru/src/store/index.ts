@@ -289,7 +289,7 @@ export {
     appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
     duplicateKeyframe,
     updateSegment, updateMotion, clearTrailingMotion,
-    spreadSceneFromKeyframe, updateMovieScene, updateMovieOutput,
+    spreadSceneFromKeyframe, setMovieSceneId, updateMovieOutput,
     updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
     type MovieState,
 } from "./movieSlice";

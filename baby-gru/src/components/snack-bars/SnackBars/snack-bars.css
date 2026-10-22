@@ -28,6 +28,8 @@
     justify-content: center;
     padding: 0.5rem 1rem;
     min-height: 2.5rem;
+    /* "\n" in a message starts a new line; other whitespace still collapses */
+    white-space: pre-line;
     color: var(--moorhen-primary);
     background-color: var(--moorhen-background-header);
     /* border: 1px solid var(--moorhen-border); */
