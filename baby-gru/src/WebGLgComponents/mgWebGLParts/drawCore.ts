@@ -8,7 +8,7 @@ import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 import { advanceCamera } from './cameraAnimations';
 import { beginDepthOnlyPass } from '../shadowPass';
-import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
+import { levelForHeight, visibleHeight, ownerMaskForLevel } from '../../utils/pickLevel';
 import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
 import { ensureDepthPeelResolveBuffer, resolveDepthPeelResolveBuffer } from './framebuffers';
@@ -542,29 +542,30 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             // layer, which is what used to happen, meant the opaque geometry - most of the
             // triangles in a molecule with a map contoured around it - was rendered once per
             // layer for a result that was identical each time.
+            // Hover buffers sit outside the peeling system in both directions. They are already
+            // excluded from turning peeling on - one hovered atom should not push a whole scene
+            // into depth peeling - and so they must also be excluded from being suppressed by it
+            // being off, or they fall through the gap between the two and are never drawn at all.
+            //
+            // That is what used to happen: in a fully opaque scene the golden balls were excluded
+            // from the mechanism that would have drawn them and from the thing that would have
+            // switched that mechanism on, so hover feedback was simply invisible. It only became
+            // apparent once edge detection worked, because the balls still reached the g-buffer
+            // (see below) and the edges of spheres nobody had drawn appeared in mid air.
+            //
+            // The gap opened when the two buffer loops became one. Ordinary geometry was drawn by
+            // a loop that carried this skip, and PERFECT_SPHERES by a separate later loop that
+            // carried no transparency test at all - so the ball, which is perfect spheres, had
+            // never faced it. Merging them brought it under a test it fails every time: it is
+            // transparent, and nothing else in an opaque scene is there to turn peeling on.
+            //
+            // Hover buffers are the only casualty, which is why exempting them is the whole fix.
+            // Any other transparent buffer makes doPeel true by its own existence, so it is never
+            // reached by the skip below.
             const isTransparent = displayBuffers[idx].transparent && !self.drawingGBuffers
                                   && !displayBuffers[idx].isHoverBuffer;
-            // A hover ball is see-through on purpose - its colour is [1, 0.5, 0, 0.35] - but it
-            // is not transparent geometry in the sense this skip means.
-            //
-            // THE REGRESSION THIS FIXES
-            //
-            // This renderer used to walk its buffers twice: one loop for ordinary geometry, which
-            // carried this skip, and a separate later loop for PERFECT_SPHERES, which carried no
-            // transparency test at all. The hover ball is drawn as perfect spheres, so it was
-            // never subject to the skip and was simply always drawn. Merging the two loops into
-            // one brought it under a test it had never faced, and it fails that test every time:
-            // it is transparent, and the scan that decides whether to peel deliberately refuses
-            // to let a hover buffer switch peeling on - so doPeel is false precisely when the
-            // ball is the only transparent thing in the scene. Nothing but bonds on screen, and
-            // the ball was built on every hover and drawn on none of them.
-            //
-            // Hover buffers are the only casualty, which is why exempting them is the whole fix:
-            // any other transparent buffer makes doPeel true by its own existence, so it is never
-            // reached by this skip. The exemption also puts this line in step with the two places
-            // that already make it - the doPeel scan, and isTransparent just above.
-            if (displayBuffers[idx].transparent && !self.drawingGBuffers
-                && !displayBuffers[idx].isHoverBuffer) {
+            if (displayBuffers[idx].transparent && !displayBuffers[idx].isHoverBuffer
+                && !self.drawingGBuffers) {
                 if(!self.doPeel)
                     continue;
                 // Nor does it cast a shadow. The shadow map holds one depth per texel and nothing
@@ -612,6 +613,10 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 self.gl.useProgram(theShader);
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
+                // Always set alongside the hovered point, never left to default: an unset
+                // uint uniform is zero, and zero as a mask matches every point id there is,
+                // which would light whatever mesh forgot to set it from end to end.
+                if(theShader.uHoverMask) self.gl.uniform1ui(theShader.uHoverMask, 0xFFFFFFFF);
 
                 // Instanced buffers highlight a whole instance rather than a region of the mesh,
                 // because the mesh is shared between instances and gl_VertexID cannot tell them
@@ -1499,7 +1504,26 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         // added or removed, so the index can outlive the buffer it referred to. Fetched once,
         // rather than indexed repeatedly below, so a stale index cannot throw part-way through a
         // frame and take the rest of the draw with it.
-        const hoveredBuffer = self.state.hoveridx>-1 ? displayBuffers[self.state.hoveridx] : undefined
+        // Which buffer this pass lights, and which of its pick points.
+        //
+        // Usually the pointer: hoveridx and hover_point are what the pick wrote. But a hover
+        // can also come from somewhere with no pointer in it at all - the sequence viewer
+        // naming a residue - and a surface can light that residue just as well, because
+        // uHoveredPoint does not care where the index came from. The pointer wins where both
+        // have an opinion, matching the instanced path above.
+        let overlayIdx = self.state.hoveridx
+        let overlayPoint = self.state.hover_point
+        if(!(overlayIdx > -1 && overlayPoint > -1) && hoveredSection){
+            const asked = displayBuffers.findIndex(buffer => buffer.id === hoveredSection.bufferId)
+            // Only a mesh with the influence data can be lit this way. A sectioned mesh is
+            // handled during the main draw, by uHighlightFrom and uHighlightTo.
+            if(asked > -1 && displayBuffers[asked].pick_info?.influence_weights_texture){
+                overlayIdx = asked
+                overlayPoint = hoveredSection.section
+            }
+        }
+
+        const hoveredBuffer = overlayIdx>-1 ? displayBuffers[overlayIdx] : undefined
 
         // Only the smooth mesh highlight can be drawn by this pass, and it is the only thing that
         // should be: the pass uses the non-instanced program and a non-instanced draw, so pointing
@@ -1521,22 +1545,22 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         const hoveredWholeMesh = !hoveredHasInfluenceTextures
             && !!hoveredBuffer?.pick_info?.highlight_whole
 
-        if(drawingVisibleImage && hoveredBuffer && self.state.hover_point>-1
+        if(drawingVisibleImage && hoveredBuffer && overlayPoint>-1
            && (hoveredHasInfluenceTextures || hoveredWholeMesh)){
             //TODO - We don't really need to do self.draw at all. This could be done in the
             //       general drawing above.
-            const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
+            const bufferTypes = displayBuffers[overlayIdx].bufferTypes
             if(bufferTypes[0]==="TRIANGLES"){
 
-                 const triangleVertexNormalBuffer = displayBuffers[self.state.hoveridx].triangleVertexNormalBuffer
-                 const triangleVertexPositionBuffer = displayBuffers[self.state.hoveridx].triangleVertexPositionBuffer
-                 const triangleVertexIndexBuffer = displayBuffers[self.state.hoveridx].triangleVertexIndexBuffer
-                 const influence_weights_texture = displayBuffers[self.state.hoveridx].pick_info.influence_weights_texture
-                 const influence_point_indexes_texture = displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_texture
-                 const influence_index_offsets_texture = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_texture
-                 const influence_weights_width = displayBuffers[self.state.hoveridx].pick_info.influence_weights_width
-                 const influence_point_indexes_width = displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_width
-                 const influence_index_offsets_width = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_width
+                 const triangleVertexNormalBuffer = displayBuffers[overlayIdx].triangleVertexNormalBuffer
+                 const triangleVertexPositionBuffer = displayBuffers[overlayIdx].triangleVertexPositionBuffer
+                 const triangleVertexIndexBuffer = displayBuffers[overlayIdx].triangleVertexIndexBuffer
+                 const influence_weights_texture = displayBuffers[overlayIdx].pick_info.influence_weights_texture
+                 const influence_point_indexes_texture = displayBuffers[overlayIdx].pick_info.influence_point_indexes_texture
+                 const influence_index_offsets_texture = displayBuffers[overlayIdx].pick_info.influence_index_offsets_texture
+                 const influence_weights_width = displayBuffers[overlayIdx].pick_info.influence_weights_width
+                 const influence_point_indexes_width = displayBuffers[overlayIdx].pick_info.influence_point_indexes_width
+                 const influence_index_offsets_width = displayBuffers[overlayIdx].pick_info.influence_index_offsets_width
                  const theShader = self.shaderProgram
                  self.gl.useProgram(theShader)
                  // Only for the smooth-mesh case; the whole-mesh one has no such textures and
@@ -1564,8 +1588,22 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                  // The sentinel the vertex shader compares against: anything at or above it
                  // means "not hovering a particular point", which is the branch that sets
                  // vHighlight to 1 for every vertex. That is precisely the whole-mesh case.
+                 //
+                 // Otherwise the point is identified by its code, not by its index, where the
+                 // mesh supplies codes - a surface does, packing the chain into the high half
+                 // so that masking the low half lights the chain and masking everything
+                 // lights the molecule. A mesh without codes, a metaball, keeps comparing
+                 // whole indices and is unaffected.
+                 const ownerCodes = displayBuffers[overlayIdx].pick_info?.owner_codes
+                 const hoveredCode = ownerCodes && overlayPoint < ownerCodes.length
+                     ? ownerCodes[overlayPoint] : overlayPoint
+                 const hoverMask = ownerCodes ? ownerMaskForLevel(self.pickLevel) : 0xFFFFFFFF
                  self.gl.uniform1ui(theShader.uHoveredPoint,
-                                    hoveredWholeMesh ? 0xFFFFFFFF : self.state.hover_point);
+                                    hoveredWholeMesh ? 0xFFFFFFFF : hoveredCode);
+                 if(theShader.uHoverMask){
+                     self.gl.uniform1ui(theShader.uHoverMask,
+                                        hoveredWholeMesh ? 0xFFFFFFFF : hoverMask);
+                 }
                  self.hoverBuffer ??= self.gl.createBuffer()
                  self.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
                  self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])
