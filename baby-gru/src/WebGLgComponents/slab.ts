@@ -46,6 +46,30 @@ export interface RendererSlab {
 /** Just the parts of the camera the slab depends on. */
 export type SlabSource = Pick<CameraState, "eyeDistance" | "clipFront" | "clipBack" | "fogFront" | "fogBack">;
 
+/**
+ * How deep the slab is either side of the view centre, per unit of zoom.
+ *
+ * These two numbers are what "Reset clip and fog on zoom" means. They were written out in three
+ * places - the slab policy, the store's reducer, and nothing at all in a movie, which is how a
+ * movie came to freeze its slab while its zoom changed by a factor of thirty.
+ */
+export const FIELD_DEPTH_FRONT = 8;
+export const FIELD_DEPTH_BACK = 21;
+
+/**
+ * The slab auto-clip would choose at this zoom, as offsets from the view centre.
+ *
+ * A movie needs this because its slab policy is manual for its duration: whoever authors a
+ * keyframe has to say what the slab is, and a keyframe captured from a live scene gets whatever
+ * the user was looking at. A keyframe computed rather than captured - a generated tour - has no
+ * such scene to read, so it asks for the slab that zoom implies.
+ */
+export function slabForZoom(zoom: number): Pick<CameraState, "clipFront" | "clipBack" | "fogFront" | "fogBack"> {
+    const front = zoom * FIELD_DEPTH_FRONT;
+    const back = zoom * FIELD_DEPTH_BACK;
+    return { clipFront: front, clipBack: back, fogFront: front, fogBack: back };
+}
+
 /** What the renderer should be holding, given where the camera is. */
 export function slabFromCamera(camera: SlabSource): RendererSlab {
     return {

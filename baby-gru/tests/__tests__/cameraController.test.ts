@@ -10,6 +10,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import * as quat4 from "gl-matrix/quat";
 import { CameraController, CameraState, Quat } from "../../src/WebGLgComponents/cameraController";
+import type { Movie } from "../../src/utils/cameraPath";
 
 const identity: Quat = [0, 0, 0, 1];
 
@@ -57,34 +58,35 @@ describe("holding a camera", () => {
     });
 });
 
-describe("settle, which is what reconciliation becomes", () => {
-    it("agrees with the store when nobody is driving", () => {
+describe("who holds the camera, which is what reconciliation consults", () => {
+    // These used to be written against `settle`, a method whose whole purpose was to express
+    // deference. It was deleted because nothing ever called it: reconciliation goes through
+    // moveCameraTo, which asks `driver` and declines when the answer is not null. The property
+    // being protected is the same one - a move in progress means the store is out of date, not
+    // that the camera is wrong - so it is now asserted against the thing the real code reads.
+
+    it("names nobody when the camera is free, so reconciliation may act", () => {
         const camera = new CameraController(startingAt());
-        camera.settle({ zoom: 2 });
-        expect(camera.state.zoom).toBe(2);
+        expect(camera.driver).toBeNull();
     });
 
-    it("defers to an active driver", () => {
-        // The loop, stated as an expectation. A move in progress means the store is out of date,
-        // not that the camera is wrong - so reconciliation must not pull it back.
+    it("names the holder while a driver is active, so reconciliation stands aside", () => {
         const camera = new CameraController(startingAt());
         const movie = camera.acquire("movie");
         movie.set({ zoom: 5 });
 
-        camera.settle({ zoom: 1 });
-
+        expect(camera.driver).toBe("movie");
         expect(camera.state.zoom).toBe(5);
         movie.release();
     });
 
-    it("agrees again once the driver lets go", () => {
+    it("names nobody again once the driver lets go", () => {
         const camera = new CameraController(startingAt());
         const movie = camera.acquire("movie");
         movie.set({ zoom: 5 });
         movie.release();
 
-        camera.settle({ zoom: 1 });
-        expect(camera.state.zoom).toBe(1);
+        expect(camera.driver).toBeNull();
     });
 });
 
@@ -379,6 +381,15 @@ describe("the slab", () => {
         expect(camera.state.clipFront).toBe(16);
     });
 
+    it("leaves the slab alone when the camera only rotates", () => {
+        // turnBy writes like anything else, so an unguarded policy re-derived on every drag event.
+        const camera = new CameraController(startingAt({ zoom: 1 }),
+            { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 });
+        camera.writeLive({ clipFront: 3 });
+        camera.turnBy([0, 0.3827, 0, 0.9239]);
+        expect(camera.state.clipFront).toBe(3);
+    });
+
     it("is not touched by a move that was never asked to change it", () => {
         // The bug. An eased move is a two-keyframe movie built from the whole camera, so it carried
         // clip and fog whether or not anyone asked - and the next frame quietly put back a value a
@@ -401,12 +412,15 @@ describe("the slab", () => {
 
     it("is carried by a movie, whose keyframes were authored on purpose", () => {
         const camera = new CameraController(startingAt({ clipFront: 8 }), { kind: "manual" });
-        const movie = {
+        // Annotated, so the compiler checks it. Unannotated, this literal kept its old field
+        // names through a rename of Keyframe without tsc saying a word, and only the
+        // assertion below noticed.
+        const movie: Movie = {
             keyframes: [
                 { quat: quat4.fromValues(0, 0, 0, 1), origin: [0, 0, 0] as [number, number, number],
-                  zoom: 1, clipStart: 8, clipEnd: 21, fogStart: 8, fogEnd: 21 },
+                  zoom: 1, clipFront: 8, clipBack: 21, fogFront: 8, fogBack: 21 },
                 { quat: quat4.fromValues(0, 0, 0, 1), origin: [0, 0, 0] as [number, number, number],
-                  zoom: 1, clipStart: 40, clipEnd: 60, fogStart: 40, fogEnd: 60 },
+                  zoom: 1, clipFront: 40, clipBack: 60, fogFront: 40, fogBack: 60 },
             ],
             segments: [{ seconds: 1, motion: { kind: "move" as const } }],
         };
@@ -425,7 +439,7 @@ describe("the slab", () => {
         expect(camera.state.eyeDistance).toBe(400);
     });
 
-    it("writes through regardless of who is driving, unlike settle", () => {
+    it("writes through regardless of who is driving", () => {
         // These are the renderer's own direct writes, which have always landed unconditionally.
         // They become a driver in the last slice; until then, dropping one would leave the slab
         // describing a zoom the camera is no longer at.
@@ -472,6 +486,20 @@ describe("telling the world", () => {
         expect(heard).not.toHaveBeenCalled();
         movie.release();
         expect(heard).toHaveBeenCalledTimes(1);
+    });
+
+    it("says so for a direct write, which is what setQuat depends on", () => {
+        // MGWebGL.setQuat writes through writeLive rather than through the silent `myQuat` setter,
+        // and the reason is this notification. The store's copy of the orientation is kept current
+        // by echoViewToStore on this subscription; a write that did not notify would turn the view
+        // and leave the store believing otherwise - whereupon MoorhenWebMG's reconciling effect
+        // would ease the camera back to where it thought it was.
+        const camera = new CameraController(startingAt());
+        const heard = jest.fn();
+        camera.subscribe(heard);
+        camera.writeLive({ quat: [0, 0.3827, 0, 0.9239] });
+        expect(heard).toHaveBeenCalledTimes(1);
+        expect(camera.state.quat[1]).toBeCloseTo(0.3827, 6);
     });
 
     it("stops telling an unsubscribed listener", () => {

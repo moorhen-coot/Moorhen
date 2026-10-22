@@ -79,6 +79,11 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
     vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
 
     in lowp vec4 vColor;
+
+    // A fade applied to the whole buffer: 1.0 leaves it alone, 0.0 makes it vanish. Set per draw
+    // from DisplayBuffer.alphaMultiplier, so a movie can fade an object in or out without touching
+    // a single vertex. Defaults to 1.0 for the many draws that never set it.
+    uniform float alphaMultiplier;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
 
@@ -289,6 +294,10 @@ ${discards ? clipAndPeelDiscards : ""}
       float boost = clamp(vHighlight - 1.0, 0.0, 1.0);
       fragColor.rgb = mix(fragColor.rgb, vec3(1.0, 1.0, 1.0), 0.5 * boost);
       fragColor.a *= min(vHighlight, 1.0);
+
+      // Last, so it scales whatever the rest of the shader decided the alpha was - the vertex
+      // colour, the hover highlight's fade, all of it.
+      fragColor.a *= alphaMultiplier;
 
     }
 `;

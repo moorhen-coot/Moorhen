@@ -378,8 +378,11 @@ applycootpatches() {
 }
 
 # Take the patches back out so that checking out another commit is not
-# blocked by local modifications.
+# blocked by local modifications. A clean tree has nothing to take out: the
+# patch's changes there are committed upstream, and reversing them would
+# itself create the local modifications that block the checkout.
 unapplycootpatches() {
+    git -C coot-1.0 diff --quiet && return
     for p in $coot_patches; do
         if git -C coot-1.0 apply -p0 --reverse --check ../../patches/$p 2>/dev/null; then
             git -C coot-1.0 apply -p0 --reverse ../../patches/$p

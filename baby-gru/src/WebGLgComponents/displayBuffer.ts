@@ -5,6 +5,7 @@ import { vec3, mat4 } from 'gl-matrix';
 import { moorhen } from '../types/moorhen';
 import { vec3Create  } from './mgMaths.js';
 import type { BufferMaterial } from './textureRegistry';
+import { clampFade, isFaded } from './objectFade';
 
 
 interface MGWebGLBuffer {
@@ -35,6 +36,16 @@ export class DisplayBuffer {
     name_label: string;
     display_class: string;
     transparent: boolean;
+    /**
+     * A fade applied to the whole buffer, from 0 to 1, multiplied into the fragment alpha.
+     *
+     * Distinct from the vertex colours' own alpha, which says what the object is made of. This
+     * says how much of it is there at this moment, which is a movie's business and changes per
+     * frame - so it is a uniform rather than a rewrite of every vertex. See objectFade.
+     *
+     * Ignored on a WebGL1 context, where the uniform is not registered and objects stay solid.
+     */
+    alphaMultiplier: number;
     alphaChanged: boolean;
     atoms: moorhen.AtomInfo[];
     symmetryAtoms: {chain_id: string, has_altloc: boolean, mol_name: string, serial: number, res_no:string, res_name:string, name: string, charge: number, tempFactor: number, pos: vec3, element: string}[][];
@@ -113,6 +124,7 @@ export class DisplayBuffer {
         this.name_label = "";
         this.display_class = "NONE";
         this.transparent = false;
+        this.alphaMultiplier = 1.0;
         this.alphaChanged = false;
         this.atoms = [];
         this.symmetryMatrices = [];
@@ -129,6 +141,19 @@ export class DisplayBuffer {
             this.transparent = true
         else
             this.transparent = false
+    }
+
+    /**
+     * Fade the whole buffer.
+     *
+     * A faded buffer has to be drawn as a transparent one, or it writes depth as though solid and
+     * everything behind it disappears instead of showing through. That is why this touches
+     * `transparent` rather than only storing a number.
+     */
+    setAlphaMultiplier(alphaMultiplier: number) {
+        this.alphaMultiplier = clampFade(alphaMultiplier);
+        if (isFaded(this.alphaMultiplier)) this.transparent = true;
+        else if (!this.customColour || this.customColour[3] >= 0.99) this.transparent = false;
     }
 
     updateSymmetryAtoms() {
