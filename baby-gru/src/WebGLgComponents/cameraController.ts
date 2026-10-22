@@ -2,8 +2,7 @@
  * The camera: one owner, transitions as data, drivers that say who is moving it.
  *
  * Pure. No GL, no store, no React - it is told the time and says where the camera is, and the
- * renderer draws that. The design and the reasoning behind each decision are in
- * cameraController.sketch.ts; this file implements it.
+ * renderer draws that.
  *
  * WHY IT EXISTS
  *
@@ -14,9 +13,10 @@
  * that fought it, and the fight sustained itself because each animation announced its arrival into
  * the store and re-triggered the reconciliation.
  *
- * Here the live value has exactly one writer, so there is nothing to reconcile. `settle` is how
- * stored state asks to be agreed with, and it defers to anyone actively driving - a move in
- * progress means the store is out of date, not that the camera is wrong.
+ * Here the live value has exactly one writer, so there is nothing to reconcile. Stored state asks
+ * to be agreed with by going through a driver - moveCameraTo, which declines outright while
+ * somebody else holds the camera. A move in progress means the store is out of date, not that the
+ * camera is wrong, and `driver` is what says so.
  *
  * THE CLOCK IS AN ARGUMENT
  *
@@ -181,13 +181,12 @@ const asKeyframe = (state: CameraState) => ({
     quat: quat4.fromValues(...state.quat),
     origin: [...state.origin] as Vec3,
     zoom: state.zoom,
-    // cameraPath speaks of clipStart/clipEnd/fogStart/fogEnd; here they carry offsets from the
-    // view centre rather than the store's mixed conventions. The names are cameraPath's, the
-    // meaning is this file's, and nothing in between cares which.
-    clipStart: state.clipFront,
-    clipEnd: state.clipBack,
-    fogStart: state.fogFront,
-    fogEnd: state.fogBack,
+    // Both sides now call these what they are: offsets from the view centre. cameraPath used to
+    // borrow the renderer's names for absolute distances, which meant this comment had to exist.
+    clipFront: state.clipFront,
+    clipBack: state.clipBack,
+    fogFront: state.fogFront,
+    fogBack: state.fogBack,
 });
 
 const easeMovie = (from: CameraState, to: CameraState, seconds: number): Movie => ({
@@ -247,25 +246,35 @@ export class CameraController {
     }
 
     /**
-     * MIGRATION SCAFFOLDING. The live state, writable, with none of the rules applied.
+     * The live state, writable, with none of the rules applied and nobody told.
      *
-     * MGWebGL writes the camera in about forty places, many of them by mutating the quaternion in
-     * place - `quat4.multiply(self.myQuat, self.myQuat, xQ)`. Those cannot all become drivers in
-     * one commit, and a slice that tried would be unreviewable. So the renderer's `myQuat`, `zoom`,
-     * `origin` and `fogClipOffset` accessors read and write *through here*, which makes this object
-     * the single home for the live camera without yet making it the single writer.
+     * This began as migration scaffolding - the renderer wrote the camera in dozens of places and
+     * they could not all become drivers in one commit - and a survey of what is left found that
+     * most of those are gone, but that the remainder are not a backlog. They are the per-frame
+     * scratch writes in drawCore: multi-view and the stereo modes save the quaternion and origin,
+     * set a value for one view, draw it, and put the originals back, all within a single frame.
      *
-     * Nothing that is not the Camera facade in mgWebGLParts/camera.ts should touch it. Every write
-     * that moves to a driver is one fewer user; when the last goes, so does this, and the promise
-     * in the file header above becomes true rather than intended.
+     * Those must stay silent, and that is a design decision rather than an unpaid debt. A per-eye
+     * camera is not where the view is; echoing one to the store would be wrong as well as costing
+     * a dispatch per view per frame on the hot path.
+     *
+     * So: writes that nothing should hear about come through here. Writes that move the view go
+     * through `writeLive` or a driver. The distinction is the point, and the test is
+     * simple - would it be a lie to tell the rest of the application that the camera is here?
+     *
+     * Nothing outside the Camera facade in mgWebGLParts/camera.ts should touch it.
      */
     get liveState(): CameraState {
         return this.current;
     }
 
     /**
-     * MIGRATION SCAFFOLDING, the writing half. Set part of the live state, with the slab policy
-     * applied and listeners told.
+     * Set part of the live state, with the slab policy applied and listeners told.
+     *
+     * The renderer's own direct writes: a zoom, a slab, an orientation handed in through setQuat.
+     * Distinct from `liveState` above in that somebody hears about it - which is how the store's
+     * copy of the view stays current, and therefore how MoorhenWebMG's reconciling effect is kept
+     * from easing the camera back to a value it only believes because nobody told it otherwise.
      *
      * The difference from assigning through `liveState` is the policy. Zoom and the slab are
      * coupled, so a zoom that did not re-derive the slab would leave the two disagreeing until
@@ -276,9 +285,9 @@ export class CameraController {
      * To apply the policy after switching it on, call `reapplySlab`: an empty write now changes
      * nothing, because the policy only acts when the zoom moves.
      *
-     * Unlike `settle` it does not defer to an active driver, because its callers are the renderer's
-     * own direct writes, which have always landed unconditionally. Those become drivers in the last
-     * slice, and this goes with them.
+     * It does not defer to an active driver: its callers have always landed unconditionally.
+     * Whether they should - whether a slab drag during a movie ought to win or wait - is a real
+     * question, and not one this answers.
      */
     writeLive(part: CameraTarget): void {
         this.current = this.applySlab(mergeLive(this.current, part), touchesSlab(part));
@@ -326,17 +335,6 @@ export class CameraController {
     }
 
     /**
-     * Agree with a stored value, unless somebody is actively driving.
-     *
-     * This is what the reconciling effect becomes. The deference is the point.
-     */
-    settle(target: CameraTarget): void {
-        if (this.activeDriver?.active) return;
-        this.current = this.applySlab(mergeLive(this.current, target), touchesSlab(target));
-        this.notify();
-    }
-
-    /**
      * Turn the camera by a relative rotation. What the mouse does.
      *
      * Not a driver operation, deliberately. Acquiring would supersede whatever was running, and
@@ -355,6 +353,31 @@ export class CameraController {
 
     /** Advance to a moment in time. Called by the renderer before it draws. */
     tick(seconds: number): void {
+        // A tick that happens inside a tick advances the camera by the length of its own side
+        // effects, which is never what anyone meant.
+        //
+        // The sampler of a driven movie runs here, from inside drawScene. If anything it does
+        // causes another draw - and asking the renderer to redraw after changing the scene is an
+        // ordinary thing to do - that draw ticks again, samples again at a slightly later time,
+        // and does it all once more. Nothing in a fade converges, because every nested sample
+        // differs from the one before, so an entire segment could be consumed inside a single
+        // animation frame. That cost an afternoon, and the comment it taught us is not a defence:
+        // the next person to write to the scene from a sampler should not have to know.
+        //
+        // Returning is right rather than queueing. The outer tick is still in progress and will
+        // finish with the time it was given; a nested one has nothing to add.
+        if (this.ticking) return;
+        this.ticking = true;
+        try {
+            this.tickOnce(seconds);
+        } finally {
+            this.ticking = false;
+        }
+    }
+
+    private ticking = false;
+
+    private tickOnce(seconds: number): void {
         if (this.sampler) {
             // A driven sequence owns the clock; it is told the time and says where to be.
             this.current = this.applySlab(mergeLive(this.current, this.sampler(seconds)));
@@ -372,10 +395,10 @@ export class CameraController {
         if (writes.has("quat")) next.quat = writeQuat(this.current.quat, sample.quat);
         if (writes.has("origin")) next.origin = writeVec3(this.current.origin, sample.origin);
         if (writes.has("zoom")) next.zoom = sample.zoom;
-        if (writes.has("clipFront")) next.clipFront = sample.clipStart;
-        if (writes.has("clipBack")) next.clipBack = sample.clipEnd;
-        if (writes.has("fogFront")) next.fogFront = sample.fogStart;
-        if (writes.has("fogBack")) next.fogBack = sample.fogEnd;
+        if (writes.has("clipFront")) next.clipFront = sample.clipFront;
+        if (writes.has("clipBack")) next.clipBack = sample.clipBack;
+        if (writes.has("fogFront")) next.fogFront = sample.fogFront;
+        if (writes.has("fogBack")) next.fogBack = sample.fogBack;
         this.current = this.applySlab(next, writes.has("clipFront"));
 
         if (elapsed >= this.move.duration) {

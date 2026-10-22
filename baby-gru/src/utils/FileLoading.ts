@@ -19,6 +19,8 @@ import { loadMtzMaps } from "./MtzLoading";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { modalKeys } from "./enums";
+import { MOVIE_EXTENSION } from "./movieContainer";
+import { openMovieFile } from "./openMovieFile";
 import { decompressDracoGltf } from "./gltfDraco";
 import { createDracoDecode } from "./gltfDracoDecoder";
 import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
@@ -833,6 +835,16 @@ export const autoOpenFiles = async (
                 dispatch(enqueueSnackbar({ message, variant: "warning" }));
             }
             break; //We only load the first session.
+        } else if (file.name.toLowerCase().endsWith(MOVIE_EXTENSION)) {
+            // A movie file, which is a movie description plus the session it was made against.
+            // Handled like a session and for the same reason: it rebuilds the whole scene, so
+            // there is nothing sensible to do with a second one, or with anything opened after it.
+            const opened = await openMovieFile(file, moorhenInstance);
+            dispatch(enqueueSnackbar({
+                message: opened.message,
+                variant: opened.ok ? "info" : "warning",
+            }));
+            break;
         } else if (file.name.toLowerCase().endsWith(".gltf") || file.name.toLowerCase().endsWith(".glb")) {
             try {
                 // The whole selection, not just this file: a .gltf takes its buffers and images

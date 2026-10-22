@@ -62,6 +62,7 @@ import MatSymVisibilityOff from "./MatSymVisibilityOff.svg"
 import MatSymWarning from "./MatSymWarning.svg"
 import MoorhenLogo from "./MoorhenLogo.svg"
 import SecondaryStructure from "./SecondaryStructure.svg"
+import clapperboard from "./clapperboard.svg"
 import ligand from "./ligand.svg"
 import menu2DObjects from "./menu2DObjects.svg"
 import menuLigands from "./menuLigands.svg"
@@ -158,6 +159,7 @@ export const moorhenSVGs = {"MatSymAdd": MatSymAdd,
  "MatSymWarning": MatSymWarning,
  "MoorhenLogo": MoorhenLogo,
  "SecondaryStructure": SecondaryStructure,
+ "clapperboard": clapperboard,
  "ligand": ligand,
  "menu2DObjects": menu2DObjects,
  "menuLigands": menuLigands,
@@ -255,6 +257,7 @@ export type MoorhenSVG = "MatSymAdd" |
  "MatSymWarning" |
  "MoorhenLogo" |
  "SecondaryStructure" |
+ "clapperboard" |
  "ligand" |
  "menu2DObjects" |
  "menuLigands" |

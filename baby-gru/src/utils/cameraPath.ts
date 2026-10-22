@@ -41,24 +41,95 @@ import * as quat4 from "gl-matrix/quat";
 
 export type Vec3 = [number, number, number];
 
-/** Where the camera is, and what can be seen from it. */
-export interface CameraKeyframe {
+/** Where the camera is, and how solid the things it looks at are. */
+export interface Keyframe {
     /** View orientation, as the renderer's myQuat. */
     quat: quat4.quat;
     origin: Vec3;
     zoom: number;
-    clipStart: number;
-    clipEnd: number;
-    fogStart: number;
-    fogEnd: number;
     /**
-     * Unique ids of whatever should be visible from this keyframe onwards.
+     * The slab, as offsets from the view centre, matching CameraState.
      *
-     * Not interpolated - there is no halfway between shown and hidden - so it switches as the
-     * keyframe is passed. Fading something in is a job for opacity, which is a camera-independent
-     * property and does not belong here.
+     * These were called clipStart/clipEnd/fogStart/fogEnd, which were the renderer's names for
+     * absolute distances from the eye. They have always held offsets here; the names simply lied,
+     * and a reader who believed them would place a movie's fog hundreds of angstroms adrift.
      */
-    visible?: string[];
+    clipFront: number;
+    clipBack: number;
+    fogFront: number;
+    fogBack: number;
+    /**
+     * How solid each object is at this keyframe, by unique id, from 0 to 1.
+     *
+     * Interpolated, which is what makes a fade possible - and once it is, visibility has no
+     * separate existence: hidden is opacity 0, shown is 1, and an object that appears halfway
+     * through is one that goes from 0 to 1. A boolean alongside this would only be a second way to
+     * say the same thing, and they could disagree.
+     *
+     * An id missing from a keyframe is not animated by it rather than hidden by it, so a movie
+     * that only moves the camera - a tour with no opacity map at all - leaves the scene's own
+     * opacities alone. The authoring side keeps keyframes complete, adding new objects to earlier
+     * keyframes at 0; this rule is what makes a hand-written movie behave sensibly anyway.
+     */
+    opacity?: Record<string, number>;
+    /**
+     * The rest of the scene at this keyframe, interpolated between keyframes like everything else.
+     *
+     * QUANTITIES LIVE HERE; MODES LIVE ON THE MOVIE
+     *
+     * A light's position and a background colour are quantities: halfway between two of them means
+     * something, so they belong on a keyframe. Whether shadows are on is a mode - there is no
+     * halfway between on and off - so it belongs to the movie as a whole, set once and applied
+     * throughout. SSAO and edge detection go with it: their parameters are quantities, but they
+     * describe a feature that is either running or not, and animating one while the other switches
+     * is more confusion than anyone asked for.
+     *
+     * Blur splits along that line rather than against it. Whether the off-screen buffers are used
+     * at all is the movie's; how deep and how wide the blur is are the keyframe's.
+     */
+    scene?: SceneKeyframe;
+    /**
+     * A small picture of this shot, as a data URL.
+     *
+     * Not camera path arithmetic, and it sits here anyway. The alternative - a parallel list of
+     * images beside the keyframes - has to be kept in step by hand through every add, delete and
+     * reorder, and the first time it slips the panel shows one shot and goes to another. Carried
+     * on the keyframe it is simply part of the thing it depends on.
+     *
+     * Optional throughout: a hand-written movie has none, an older file has none, and a keyframe
+     * whose picture could not be taken has none. Nothing but the panel reads it, and the panel
+     * falls back to the numbers.
+     */
+    thumbnail?: string;
+}
+
+/** A colour or a position, as the store holds them. */
+export type Vec4 = [number, number, number, number];
+
+/**
+ * The scene's quantities at a keyframe. Every field optional, and absent means not animated.
+ *
+ * That is the same rule as opacity, and for the same reason: a movie that only moves the camera
+ * must leave the scene it is shown in alone, not assert a lighting rig it never chose. A keyframe
+ * captured from a live scene fills all of these in; one written by hand or generated need not.
+ */
+export interface SceneKeyframe {
+    backgroundColor?: Vec4;
+    lightPosition?: Vec4;
+    ambient?: Vec4;
+    diffuse?: Vec4;
+    specular?: Vec4;
+    specularPower?: number;
+    /**
+     * Depth of field: where the focal plane sits.
+     *
+     * The radius is not here, though it is just as much a quantity. Setting it calls
+     * makeBlurBuffers, which reallocates the blur framebuffers - cheap for a slider someone drags
+     * now and then, ruinous sixty times a second. It lives in the movie's settings instead, and
+     * the half that carries the expression anyway is this one: what is in focus, not how soft the
+     * rest is.
+     */
+    blurDepth?: number;
 }
 
 /** What happens between one keyframe and the next. */
@@ -78,20 +149,24 @@ export interface Segment {
 }
 
 export interface Movie {
-    keyframes: CameraKeyframe[];
+    keyframes: Keyframe[];
     /** One per gap between keyframes, so there is always one fewer than there are keyframes. */
     segments: Segment[];
 }
 
-export interface CameraSample {
+export interface MovieSample {
     quat: quat4.quat;
     origin: Vec3;
     zoom: number;
-    clipStart: number;
-    clipEnd: number;
-    fogStart: number;
-    fogEnd: number;
-    visible: string[];
+    /** Offsets from the view centre, as in Keyframe. */
+    clipFront: number;
+    clipBack: number;
+    fogFront: number;
+    fogBack: number;
+    /** Only the objects this movie animates; anything absent is left as the scene has it. */
+    opacity: Record<string, number>;
+    /** Only the scene quantities this movie animates; likewise. */
+    scene: SceneKeyframe;
 }
 
 const SPIN_DEFAULTS = { turns: 1, axis: "y" as const };
@@ -239,24 +314,74 @@ const locate = (movie: Movie, seconds: number): { index: number; u: number } => 
     return { index: movie.segments.length - 1, u: 1 };
 };
 
-/** Whatever was last switched on at or before this keyframe. */
-const visibleAt = (movie: Movie, keyframeIndex: number): string[] => {
-    for (let i = Math.min(keyframeIndex, movie.keyframes.length - 1); i >= 0; i--) {
-        const visible = movie.keyframes[i]?.visible;
-        if (visible) return visible;
+/**
+ * Blend the two keyframes' opacities.
+ *
+ * Every id either keyframe mentions appears in the result. One that only one end mentions holds
+ * that value rather than fading from an assumed zero: a movie that first names an object halfway
+ * through is saying "from here it is this solid", not "ghost it in from nothing".
+ *
+ * LINEAR, NOT SPLINED, UNLIKE EVERYTHING ELSE HERE
+ *
+ * Opacity is bounded and the others are not. A Catmull-Rom through 0, 1, 0 - which is exactly what
+ * fading something in and out looks like - overshoots both ends, so an object would go more than
+ * solid and then less than invisible before coming back. Clamping that is visible as a pause at
+ * the limit. Straight lines between the values, carrying the segment's own easing, are what a fade
+ * should do.
+ */
+const blendOpacity = (
+    from: Keyframe, to: Keyframe, t: number
+): Record<string, number> => {
+    const blended: Record<string, number> = {};
+    for (const id of new Set([...Object.keys(from.opacity ?? {}), ...Object.keys(to.opacity ?? {})])) {
+        const a = from.opacity?.[id] ?? to.opacity?.[id] as number;
+        const b = to.opacity?.[id] ?? from.opacity?.[id] as number;
+        blended[id] = Math.min(1, Math.max(0, a + (b - a) * t));
     }
-    return [];
+    return blended;
 };
 
-const sampleOf = (keyframe: CameraKeyframe, visible: string[], quat: quat4.quat): CameraSample => ({
+/**
+ * Blend the scene quantities, by the same rules as opacity.
+ *
+ * A field only one keyframe mentions holds that value rather than being interpolated from nothing,
+ * and a field neither mentions is absent from the result, so whoever applies it leaves the scene's
+ * own value alone. Straight lines, not splines: a colour channel is bounded like an opacity, and
+ * a Catmull-Rom through three colours can leave the gamut on the way between them.
+ */
+const blendScene = (from: Keyframe, to: Keyframe, t: number): SceneKeyframe => {
+    const a = from.scene ?? {};
+    const b = to.scene ?? {};
+    const blended: SceneKeyframe = {};
+
+    const number = (key: "specularPower" | "blurDepth") => {
+        const x = a[key] ?? b[key];
+        const y = b[key] ?? a[key];
+        if (x === undefined || y === undefined) return;
+        blended[key] = x + (y - x) * t;
+    };
+    const vector = (key: "backgroundColor" | "lightPosition" | "ambient" | "diffuse" | "specular") => {
+        const x = a[key] ?? b[key];
+        const y = b[key] ?? a[key];
+        if (!x || !y) return;
+        blended[key] = [0, 1, 2, 3].map(i => x[i] + (y[i] - x[i]) * t) as Vec4;
+    };
+
+    (["specularPower", "blurDepth"] as const).forEach(number);
+    (["backgroundColor", "lightPosition", "ambient", "diffuse", "specular"] as const).forEach(vector);
+    return blended;
+};
+
+const sampleOf = (keyframe: Keyframe, quat: quat4.quat): MovieSample => ({
     quat,
     origin: [...keyframe.origin] as Vec3,
     zoom: keyframe.zoom,
-    clipStart: keyframe.clipStart,
-    clipEnd: keyframe.clipEnd,
-    fogStart: keyframe.fogStart,
-    fogEnd: keyframe.fogEnd,
-    visible,
+    clipFront: keyframe.clipFront,
+    clipBack: keyframe.clipBack,
+    fogFront: keyframe.fogFront,
+    fogBack: keyframe.fogBack,
+    opacity: { ...(keyframe.opacity ?? {}) },
+    scene: { ...(keyframe.scene ?? {}) },
 });
 
 /**
@@ -264,11 +389,14 @@ const sampleOf = (keyframe: CameraKeyframe, visible: string[], quat: quat4.quat)
  *
  * @param seconds  from the start; clamped to the movie's length at both ends
  */
-export function sampleMovie(movie: Movie, seconds: number): CameraSample {
+export function sampleMovie(movie: Movie, seconds: number): MovieSample {
     if (movie.keyframes.length === 0) throw new Error("A movie needs at least one keyframe");
-    if (movie.keyframes.length === 1 || movie.segments.length === 0) {
+    // One keyframe and no segments is a still. One keyframe *with* a segment is a movie - a spin
+    // or a rock about a single held view - and used to be treated as a still too, which is why a
+    // one-shot spin could not be made at all.
+    if (movie.segments.length === 0) {
         const only = movie.keyframes[0];
-        return sampleOf(only, visibleAt(movie, 0), quat4.clone(only.quat));
+        return sampleOf(only, quat4.clone(only.quat));
     }
 
     const { index, u } = locate(movie, seconds);
@@ -276,17 +404,16 @@ export function sampleMovie(movie: Movie, seconds: number): CameraSample {
     const from = movie.keyframes[index];
     const to = movie.keyframes[Math.min(index + 1, movie.keyframes.length - 1)];
 
-    // Visibility is a step: it changes as a keyframe is reached, never between two.
-    const visible = visibleAt(movie, u >= 1 ? index + 1 : index);
-
     switch (segment.motion.kind) {
+        // The camera stays put in all three of these, so the opacities do too - a spin or a rock
+        // is one pose held while the view turns, not a journey between two keyframes.
         case "hold":
-            return sampleOf(from, visible, quat4.clone(from.quat));
+            return sampleOf(from, quat4.clone(from.quat));
 
         case "spin": {
             const { turns, axis } = { ...SPIN_DEFAULTS, ...segment.motion };
             // Eased, so a spin starts and stops smoothly rather than snapping into full speed.
-            return sampleOf(from, visible, rotatedBy(from.quat, easeInOut(u) * 360 * turns, axis));
+            return sampleOf(from, rotatedBy(from.quat, easeInOut(u) * 360 * turns, axis));
         }
 
         case "rock": {
@@ -294,7 +421,7 @@ export function sampleMovie(movie: Movie, seconds: number): CameraSample {
             // A sine rather than a triangle: it is already smooth at the turning points, which is
             // the whole character of a rock.
             const cycles = periodSeconds > 0 ? (u * segment.seconds) / periodSeconds : 0;
-            return sampleOf(from, visible, rotatedBy(from.quat, degrees * Math.sin(2 * Math.PI * cycles), axis));
+            return sampleOf(from, rotatedBy(from.quat, degrees * Math.sin(2 * Math.PI * cycles), axis));
         }
 
         case "move":
@@ -320,7 +447,7 @@ export function sampleMovie(movie: Movie, seconds: number): CameraSample {
                 to.quat, eased);
             quat4.normalize(orientation, orientation);
 
-            const spline = (pick: (keyframe: CameraKeyframe) => number) =>
+            const spline = (pick: (keyframe: Keyframe) => number) =>
                 catmullRom(
                     before ? pick(before) : reflect(pick(from), pick(to)),
                     pick(from), pick(to),
@@ -335,11 +462,14 @@ export function sampleMovie(movie: Movie, seconds: number): CameraSample {
                     spline(k => k.origin[2]),
                 ],
                 zoom: spline(k => k.zoom),
-                clipStart: spline(k => k.clipStart),
-                clipEnd: spline(k => k.clipEnd),
-                fogStart: spline(k => k.fogStart),
-                fogEnd: spline(k => k.fogEnd),
-                visible,
+                clipFront: spline(k => k.clipFront),
+                clipBack: spline(k => k.clipBack),
+                fogFront: spline(k => k.fogFront),
+                fogBack: spline(k => k.fogBack),
+                // Eased like the rest of the move, so a fade keeps step with the camera, but
+                // blended straight rather than splined. See blendOpacity.
+                opacity: blendOpacity(from, to, eased),
+                scene: blendScene(from, to, eased),
             };
         }
     }

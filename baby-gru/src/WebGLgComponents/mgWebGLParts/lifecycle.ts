@@ -141,10 +141,9 @@ export function initInstanceState(self: MGWebGL): void {
     self.doOrderIndependentTransparency = true;//Request OIT user/state setting
     self.doPeel = false;//Requested and required - above set and there are transparent objects.
 
-    //Debugging only
+    //Debugging only - see MGWebGL.setShadowDepthDebug. Shadows must be on separately for there
+    //to be a map to look at.
     self.doShadowDepthDebug = false;
-    if(self.doShadowDepthDebug)
-        self.doShadow = true;
 
     self.drawingGBuffers = false;
     self.offScreenFramebuffer = null;

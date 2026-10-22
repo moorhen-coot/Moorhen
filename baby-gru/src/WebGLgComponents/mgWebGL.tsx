@@ -6,6 +6,9 @@ import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { setDisplayBuffers, setCanvasSize } from "../store/glRefSlice"
 import { setClipStart, setClipEnd, setFogStart, setFogEnd } from "../store/sceneSettingsSlice"
+import { setOrigin as setStoreOrigin, setZoom as setStoreZoom } from "../store/sceneSettingsSlice"
+import { setQuat as setStoreQuat } from "../store/glRefSlice"
+import { isSilent, viewDifference } from "./viewEcho"
 import { parseAtomInfoLabel, guid, gemmiAtomPairsToCylindersInfo } from '../utils/utils';
 import  { unProject } from './GLU.js';
 
@@ -182,6 +185,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         // already use. Getters return the LIVE objects so in-place mutation (e.g.
         // quat4.multiply(this.myQuat, this.myQuat, …)) keeps working unchanged.
         private _camera: Camera = new Camera();
+        /**
+         * Whether objects can be faded in and out.
+         *
+         * The fade is a shader uniform, and only the WebGL2 shaders declare it - so on a WebGL1
+         * context an object stays solid however its opacity is animated. Asked rather than
+         * inferred, so a movie's UI can say that plainly instead of appearing to work.
+         */
+        get supportsObjectFading(): boolean { return this.WEBGL2 === true; }
+
         /** The camera controller. Nothing drives it yet; see mgWebGLParts/camera.ts. */
         get cameraController(): CameraController { return this._camera.controller; }
         get myQuat(): quat4 { return this._camera.quat; }
@@ -874,7 +886,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         deleteTextureFramebuffer(this);
     }
 
-    setShadowDepthDebug(doShadowDebug) {
+    /**
+     * Show the shadow map itself instead of the scene.
+     *
+     * No UI reaches this - it is set from a preference, or from the console - and that is
+     * deliberate. It is a debugging view, and an invaluable one: it is what finally localised a
+     * shadow bug that three plausible explanations had failed to, by showing that the map was
+     * simply empty.
+     *
+     * The body of this was missing, so the preference and the MoorhenWebMG effect that reads it
+     * both ran and did nothing.
+     *
+     * Shadows have to be on for there to be a map to look at, which drawScene's gate already
+     * requires. Switching them on here would be the convenient thing and the wrong one: a
+     * debugging view should not quietly change the setting it is there to inspect.
+     */
+    setShadowDepthDebug(doShadowDebug: boolean) {
+        this.doShadowDepthDebug = doShadowDebug;
     }
 
     componentDidUpdate(oldProps) {
@@ -949,7 +977,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         initGraphicsContext(this)
         attachCanvasListeners(this)
         initGraphics(this)
-        this.unsubscribeCamera = this._camera.controller.subscribe(() => this.echoSlabToStore())
+        this.unsubscribeCamera = this._camera.controller.subscribe(() => {
+            this.echoSlabToStore()
+            this.echoViewToStore()
+        })
     }
 
     componentWillUnmount() {
@@ -985,6 +1016,38 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (!same(scene.clipEnd, camera.clipBack)) this.dispatch(setClipEnd(camera.clipBack))
         if (!same(scene.fogStart, slab.fogStart)) this.dispatch(setFogStart(slab.fogStart))
         if (!same(scene.fogEnd, slab.fogEnd)) this.dispatch(setFogEnd(slab.fogEnd))
+    }
+
+    /**
+     * Tell the store where the view ended up.
+     *
+     * The companion to echoSlabToStore, and for the same reason: the camera owns the view, the
+     * store keeps a copy, and the copy has to stay current or MoorhenWebMG's reconciling effect
+     * will see a disagreement and resolve it the wrong way - easing the camera back to a stale
+     * value a moment after something put it somewhere.
+     *
+     * THIS REPLACES A RULE NOBODY COULD KNOW
+     *
+     * The copy used to be kept current by individual movers calling onOriginChanged,
+     * onZoomChanged and onQuatChanged by hand. Every mover written since had to rediscover that
+     * rule by watching the view slide away, and three features found it the hard way. Subscribed
+     * here it applies to any way of moving the camera, including ones not yet written.
+     *
+     * The decision is in viewEcho, so the equality guard that stops the store and the camera
+     * chasing each other can be reasoned about and tested without a renderer.
+     */
+    echoViewToStore() {
+        const state = this.store.getState()
+        const echo = viewDifference(this._camera.controller.state, {
+            origin: state.sceneSettings.origin,
+            quat: state.glRef.quat,
+            zoom: state.sceneSettings.zoom,
+        })
+        if (isSilent(echo)) return
+
+        if (echo.origin) this.dispatch(setStoreOrigin(echo.origin))
+        if (echo.quat) this.dispatch(setStoreQuat(echo.quat))
+        if (echo.zoom !== undefined) this.dispatch(setStoreZoom(echo.zoom))
     }
 
     initializeShaders() : void {
@@ -1267,19 +1330,35 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
      * Put part of the slab on the camera and re-derive. The one way the slab is written.
      *
      * Not through `settle`, which stands aside for an active driver: these are the renderer's own
-     * direct writes and have always landed unconditionally. They become a driver in the last slice.
+     * direct writes and have always landed unconditionally.
      *
-     * The slab policy is applied here, so under auto-clip a manual write is immediately re-derived
-     * from zoom. That is why the clip and fog sliders are disabled while auto-clip is on - the
-     * alternative being a control that silently does nothing.
+     * A write that names clip or fog stands, even under auto-clip. The policy only re-derives when
+     * the zoom moves, which is what "reset clip and fog on zoom" says and what it did before the
+     * camera work. This comment used to claim the opposite and to explain why the settings sliders
+     * were disabled under auto-clip; they were disabled because the policy was overreaching, and
+     * both the overreach and the disabling are gone.
      */
     private setCameraSlab(part: Partial<CameraState>) {
         this._camera.controller.writeLive(part)
         this.applySlabToRenderer()
     }
 
+    /**
+     * Point the view in a given direction.
+     *
+     * Through the camera rather than through the `myQuat` setter, which writes the live state
+     * silently - no notify, so no subscriber hears it. That used not to matter: drawScene echoed
+     * the orientation to the store once per frame, so the store caught up on the next draw
+     * whatever had written it. That per-frame echo has gone, replaced by echoViewToStore on the
+     * camera's own subscription, and a silent write reaches neither.
+     *
+     * The consequence of getting this wrong is not a stale number. MoorhenWebMG reconciles from
+     * the store, and resolves a disagreement by easing the camera *back* - so a setQuat that did
+     * not notify would turn the view and have it drift away again a moment later, which is a
+     * maddening thing to debug and has already been found three times in other guises.
+     */
     setQuat(q: quat4) : void {
-        this.myQuat = q;
+        this._camera.controller.writeLive({ quat: [q[0], q[1], q[2], q[3]] });
         this.drawScene();
     }
 
@@ -1522,39 +1601,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     initTextureFramebuffer() : void {
         initTextureFramebuffer(this)
-    }
-
-    centreOn(idx) {
-        const displayBuffers = this.store.getState().glRef.displayBuffers
-        const self = this;
-        if (displayBuffers[idx].atoms.length > 0) {
-            let xtot = 0;
-            let ytot = 0;
-            let ztot = 0;
-            for (let j = 0; j < displayBuffers[idx].atoms.length; j++) {
-                xtot += displayBuffers[idx].atoms[j].x;
-                ytot += displayBuffers[idx].atoms[j].y;
-                ztot += displayBuffers[idx].atoms[j].z;
-            }
-            xtot /= displayBuffers[idx].atoms.length;
-            ytot /= displayBuffers[idx].atoms.length;
-            ztot /= displayBuffers[idx].atoms.length;
-
-            const new_origin = [-xtot, -ytot, -ztot];
-            const old_origin = [this.origin[0], this.origin[1], this.origin[2]];
-
-            const myVar = setInterval(function () { myTimer() }, 10);
-            let frac = 0;
-            function myTimer() {
-                const ffrac = 0.01 * frac;
-                self.origin = [ffrac * new_origin[0] + (1.0 - ffrac) * old_origin[0], ffrac * new_origin[1] + (1.0 - ffrac) * old_origin[1], ffrac * new_origin[2] + (1.0 - ffrac) * old_origin[2]];
-                self.drawScene();
-                if (frac > 99) {
-                    clearInterval(myVar);
-                }
-                frac += 1;
-            }
-        }
     }
 
     initTextBuffersBuffer(buffer) {
