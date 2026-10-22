@@ -49,7 +49,7 @@ test.describe("Moorhen Web Component scene settings", () => {
 
         await testSceneSetting("setDoEdgeDetect", true);
         await testSceneSetting("setDoPerspectiveProjection", true);
-        await testSceneSetting("setUseOffScreenBuffers", true);
+        await testSceneSetting("setDoDepthBlur", true);
         await testSceneSetting("setAmbient", [0.0, 1.0, 0.0, 1.0]);
         await testSceneSetting("setDiffuse", [0.0, 1.0, 0.0, 1.0]);
         await testSceneSetting("setSpecular", [1.0, 0.0, 0.0, 1.0]);

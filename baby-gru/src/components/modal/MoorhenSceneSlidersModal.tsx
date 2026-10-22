@@ -27,7 +27,7 @@ import {
     setDepthBlurRadius,
     setDepthPeelLayers,
     setResetClippingFogging,
-    setUseOffScreenBuffers,
+    setDoDepthBlur,
 } from "../../store/sceneSettingsSlice";
 import {
     setFogStart,
@@ -99,7 +99,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const store = useStore<RootState>()
     const dispatch = useDispatch();
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
-    const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
+    const doDepthBlur = useSelector((state: moorhen.State) => state.sceneSettings.doDepthBlur);
 
     const gl_fog_start = useSelector((state: moorhen.State) => state.sceneSettings.fogStart);
     const gl_fog_end = useSelector((state: moorhen.State) => state.sceneSettings.fogEnd);
@@ -257,8 +257,8 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         { id: "clipEnd", offset: clipEnd, visible: useClip },
         { id: "fogStart", offset: -(fogClipOffset - gl_fog_start), visible: useFog },
         { id: "fogEnd", offset: gl_fog_end - fogClipOffset, visible: useFog },
-        { id: "blurDepth", offset: depthBlurDepth, visible: useOffScreenBuffers },
-    ], [clipStart, clipEnd, gl_fog_start, gl_fog_end, fogClipOffset, depthBlurDepth, useClip, useFog, useOffScreenBuffers])
+        { id: "blurDepth", offset: depthBlurDepth, visible: doDepthBlur },
+    ], [clipStart, clipEnd, gl_fog_start, gl_fog_end, fogClipOffset, depthBlurDepth, useClip, useFog, doDepthBlur])
 
     /**
      * Half the plot's extent, in angstroms.
@@ -635,7 +635,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
             ctx.stroke()
         }
 
-        if(useOffScreenBuffers){
+        if(doDepthBlur){
             if((grabbed===null||grabbed==="blurDepth")&&Math.abs(moveX-depthBlurDepthPos)<5&&!hovering){
                 ctx.strokeStyle = "white"
                 ctx.lineWidth = 4
@@ -927,14 +927,14 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                 />
                 <MoorhenToggle
                     type="switch"
-                    checked={useOffScreenBuffers}
+                    checked={doDepthBlur}
                     onChange={() => {
-                        dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
+                        dispatch(setDoDepthBlur(!doDepthBlur));
                     }}
                     label={blurLabel}
                 />
                 <MoorhenSlider
-                    isDisabled={!useOffScreenBuffers}
+                    isDisabled={!doDepthBlur}
                     minVal={1.0}
                     maxVal={12.0}
                     sliderTitle="Blur size"

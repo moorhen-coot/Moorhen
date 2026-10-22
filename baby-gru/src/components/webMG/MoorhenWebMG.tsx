@@ -86,7 +86,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
     const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap)
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
-    const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
+    const doDepthBlur = useSelector((state: moorhen.State) => state.sceneSettings.doDepthBlur)
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
     const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
@@ -569,10 +569,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.useOffScreenBuffers = useOffScreenBuffers
+            glRef.current.doDepthBlur = doDepthBlur
             glRef.current.drawScene()
         }
-    }, [useOffScreenBuffers])
+    }, [doDepthBlur])
 
     const handleWindowResized = useCallback(() => {
         if (glRef !== null && typeof glRef !== 'function') {

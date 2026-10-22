@@ -210,18 +210,7 @@ export {
     removeVectorsByIds
 }  from "./vectorsSlice";
 export {
-    addUserScene,
-    addUserSnapshot,
-    removeUserScene,
-    renameUserScene,
-    setSelectedScene,
-    setSceneChanging,
-    setUserSceneState,
-    setShowSceneSelector,
-}  from "./userScenesSlice";
-export {
     setOrigin,
-    setDefaultBackgroundColor,
     setDrawCrosshairs,
     setDrawScaleBar,
     setDrawFPS,
@@ -234,7 +223,7 @@ export {
     setClipCap,
     resetSceneSettings,
     setEdgeDetectNormalScale,
-    setUseOffScreenBuffers,
+    setDoDepthBlur,
     setDoShadowDepthDebug,
     setDoShadow,
     setShadowMapQuality,
@@ -281,6 +270,18 @@ export {
     autoClipFogByZoom,
     applySceneSettingsSnapshot,
 }  from "./sceneSettingsSlice";
+export {
+    addUserScene,
+    addUserSnapshot,
+    removeUserScene,
+    renameUserScene,
+    setSelectedScene,
+    setSceneChanging,
+    setUserSceneState,
+    setShowSceneSelector,
+    setSavedSceneSetting,
+    saveSceneSettings,
+}  from "./userScenesSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

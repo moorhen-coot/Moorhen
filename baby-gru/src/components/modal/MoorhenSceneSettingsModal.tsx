@@ -21,7 +21,7 @@ import {
     setResetClippingFogging,
     setSsaoBias,
     setSsaoRadius,
-    setUseOffScreenBuffers,setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd , setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
+    setDoDepthBlur,setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd , setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MAX_EYE_DISTANCE, MIN_EYE_DISTANCE } from "../../WebGLgComponents/mgWebGLParts/projection";
@@ -35,6 +35,8 @@ import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/Draggable
 import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSwatch";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { MoorhenSlidersSettings } from "./MoorhenSceneSlidersModal";
+import { SaveSceneButton } from "../menu-system/SceneSelector/SaveSceneButton";
+import { isBuiltInScene } from "../../store/userScenesSlice";
 
 const EdgeDetectPanel = () => {
     const dispatch = useDispatch();
@@ -274,7 +276,7 @@ const BackgroundColorPanel = () => {
 
 const DepthBlurPanel = () => {
     const dispatch = useDispatch();
-    const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
+    const doDepthBlur = useSelector((state: moorhen.State) => state.sceneSettings.doDepthBlur);
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
 
@@ -282,15 +284,15 @@ const DepthBlurPanel = () => {
         <MoorhenStack direction="vertical" card={true}>
             <MoorhenToggle
                 type="switch"
-                checked={useOffScreenBuffers}
+                checked={doDepthBlur}
                 onChange={() => {
-                    dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
+                    dispatch(setDoDepthBlur(!doDepthBlur));
                 }}
                 label="Depth Blur"
             />
 
             <MoorhenSlider
-                isDisabled={!useOffScreenBuffers}
+                isDisabled={!doDepthBlur}
                 minVal={-100.0}
                 maxVal={100.0}
                 scale="linear"
@@ -301,7 +303,7 @@ const DepthBlurPanel = () => {
                 decimalPlaces={1}
             />
             <MoorhenSlider
-                isDisabled={!useOffScreenBuffers}
+                isDisabled={!doDepthBlur}
                 minVal={2}
                 maxVal={16}
                 scale="linear"
@@ -495,10 +497,12 @@ export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "ve
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
     const panelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const [newSlidersMode, setNewSlidersMode] = useState<boolean>(true);
+    const selectedScene = useSelector((state: RootState) => state.userScenes.selectedScene);
     const dispatch = useDispatch();
     return (
         <MoorhenStack direction={props.stackDirection}>
             <MoorhenButton onClick={() => dispatch(resetSceneSettings())} > Reset </MoorhenButton>
+            {isBuiltInScene(selectedScene) && <SaveSceneButton sceneId={selectedScene} />}
             <MoorhenToggle
                 label="Use new fog/clip/blur sliders"
                 checked={newSlidersMode}

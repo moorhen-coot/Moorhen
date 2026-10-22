@@ -225,7 +225,7 @@ export namespace moorhen {
         setDoOutline: React.Dispatch<React.SetStateAction<boolean>>;
         setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
         setResetClippingFogging: React.Dispatch<React.SetStateAction<boolean>>;
-        setUseOffScreenBuffers: React.Dispatch<React.SetStateAction<boolean>>;
+        setDoDepthBlur: React.Dispatch<React.SetStateAction<boolean>>;
         setDepthBlurRadius: React.Dispatch<React.SetStateAction<number>>;
         setDepthBlurDepth: React.Dispatch<React.SetStateAction<number>>;
         setSsaoRadius: React.Dispatch<React.SetStateAction<number>>;

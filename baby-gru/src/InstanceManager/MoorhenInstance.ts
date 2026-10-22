@@ -343,14 +343,15 @@ export class MoorhenInstance extends StoreExtension {
             store,
             dispatch,
             localStorageInstance: this._preferences,
-            onUserPreferencesChange: (key, value) => {
-                onUserPreferencesChange?.(key, value);
+            onUserPreferencesChange,
+            // Once per store change: saving a scene changes many preferences at once
+            onPreferencesStored: () => {
                 if (this._preferencesChangeCallbacks.size > 0) {
                     this.preferences.export().then(stored => this._preferencesChangeCallbacks.forEach(callback => callback(stored)));
                 }
             },
-            // The starting scene's preset sits under the saved preferences: it only sets what the user has not saved
-            onRestored: restoredLabels => this.userScene.applyStartupScene(restoredLabels),
+            // The built-in scenes start from their saved settings, at start-up and after an import
+            onRestored: () => this.userScene.applySavedScenes(),
         });
         this._preferencesRestore = persistence.restore;
         this.preferencesUnsubscribe = persistence;

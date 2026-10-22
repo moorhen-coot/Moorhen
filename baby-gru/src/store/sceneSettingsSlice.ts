@@ -11,7 +11,6 @@ const execAutoClipFogByZoom = (state: typeof initialState) => {
 }
 
 export const initialState: {
-    defaultBackgroundColor: [number, number, number, number];
     origin: [number, number, number];
     zoom: number;
     drawScaleBar: boolean;
@@ -26,7 +25,7 @@ export const initialState: {
     clipStart: number;
     clipEnd: number;
     doPerspectiveProjection: boolean;
-    useOffScreenBuffers: boolean;
+    doDepthBlur: boolean;
     depthBlurRadius: number;
     /**
      * How many depth-peel layers to resolve transparency with.
@@ -90,7 +89,6 @@ export const initialState: {
     GlViewportWidth: number;
     isDark: boolean;
 } = {
-    defaultBackgroundColor: [1, 1, 1, 1],
     origin: [0, 0, 0],
     zoom: 1.0,
     lightPosition: [25.0, 25.0, 50.0, 1.0],
@@ -129,7 +127,7 @@ export const initialState: {
     resetClippingFogging: true,
     clipCap: true,
     doPerspectiveProjection: false,
-    useOffScreenBuffers: false,
+    doDepthBlur: false,
     doShadowDepthDebug: false,
     doShadow: false,
     shadowMapQuality: "coarse",
@@ -163,10 +161,23 @@ export const initialState: {
 export type SceneSettingsState = typeof initialState;
 
 /**
- * Fields that describe the viewport, camera or app theme rather than the look of a scene, so they
- * are not saved in scene presets.
+ * Fields that are not part of the look of a scene, so they are not saved in scene presets: the
+ * viewport, camera and app theme, and the machine or debug settings kept as global user preferences
+ * (switching scene must not change them).
  */
-const NON_SCENE_KEYS = ["height", "width", "GlViewportHeight", "GlViewportWidth", "origin", "zoom", "isDark"] as const;
+const NON_SCENE_KEYS = [
+    "height",
+    "width",
+    "GlViewportHeight",
+    "GlViewportWidth",
+    "origin",
+    "zoom",
+    "isDark",
+    "depthPeelLayers",
+    "shadowMapQuality",
+    "doShadowDepthDebug",
+    "drawFPS",
+] as const;
 
 /** Fog and clipping planes: only saved when they are set by hand (resetClippingFogging off), else they follow the zoom */
 const FOG_CLIP_KEYS: readonly string[] = ["fogStart", "fogEnd", "clipStart", "clipEnd"];
@@ -180,12 +191,83 @@ const sceneKeys = (Object.keys(initialState) as (keyof SceneSettingsState)[]).fi
     key => !(NON_SCENE_KEYS as readonly string[]).includes(key)
 ) as SceneKey[];
 
+/**
+ * Scene settings that are user preferences of each built-in scene ("Default.doSSAO",
+ * "Model Building.doSSAO"), saved explicitly with the scene's save button. Add or remove a setting
+ * here to make it a per-scene preference or not. See src/.roadmaps/scene-preferences.md.
+ */
+export const PER_SCENE_PREFERENCE_KEYS = [
+    "drawCrosshairs",
+    "drawMissingLoops",
+    "defaultBondSmoothness",
+    "resetClippingFogging",
+    "clipCap",
+    "doPerspectiveProjection",
+    "drawAxes",
+    "doShadow",
+    "doOutline",
+    "doDepthBlur",
+    "depthBlurRadius",
+    "depthBlurDepth",
+    "doSSAO",
+    "ssaoRadius",
+    "ssaoBias",
+    "drawScaleBar",
+    "doEdgeDetect",
+    "edgeDetectDepthThreshold",
+    "edgeDetectNormalThreshold",
+    "edgeDetectDepthScale",
+    "edgeDetectNormalScale",
+    "fogClipOffset",
+    "lightPosition",
+    "ambient",
+    "specular",
+    "diffuse",
+    "specularPower",
+    "backgroundColor",
+    "fogStart",
+    "fogEnd",
+    "clipStart",
+    "clipEnd",
+] as const satisfies readonly SceneKey[];
+
+export type PerSceneKey = (typeof PER_SCENE_PREFERENCE_KEYS)[number];
+
+/** The value of every per-scene preference of one scene */
+export type PerSceneSettings = Pick<SceneSettingsState, PerSceneKey>;
+
 const isSameValue = (a: unknown, b: unknown): boolean => {
     if (Array.isArray(a) && Array.isArray(b)) {
         return a.length === b.length && a.every((value, i) => value === b[i]);
     }
     return a === b;
 };
+
+const copyValue = <T>(value: T): T => (Array.isArray(value) ? ([...value] as T) : value);
+
+/**
+ * The per-scene preference values of some scene settings (settings missing from a snapshot take
+ * their default). While fog and clipping follow the zoom their planes are not part of the scene, so
+ * they take `sceneDefaults`' values: zooming does not make a scene differ from its saved version.
+ * @param sceneSettings - The `sceneSettings` state, or a scene snapshot.
+ * @param sceneDefaults - The scene's default per-scene values.
+ */
+export const getPerSceneSettings = (sceneSettings: SceneSettingsSnapshot, sceneDefaults: PerSceneSettings): PerSceneSettings => {
+    const autoFogClip = sceneSettings.resetClippingFogging ?? initialState.resetClippingFogging;
+    const settings: Record<string, unknown> = {};
+    for (const key of PER_SCENE_PREFERENCE_KEYS) {
+        if (autoFogClip && FOG_CLIP_KEYS.includes(key)) {
+            settings[key] = copyValue(sceneDefaults[key]);
+        } else {
+            settings[key] = copyValue(Object.hasOwn(sceneSettings, key) ? sceneSettings[key] : initialState[key]);
+        }
+    }
+    return settings as PerSceneSettings;
+};
+
+/** Whether two sets of per-scene preference values are the same */
+export const isSamePerSceneSettings = (a: PerSceneSettings, b: PerSceneSettings): boolean =>
+    PER_SCENE_PREFERENCE_KEYS.every(key => isSameValue(a[key], b[key]));
 
 /** Whether a value can be stored in `key` (same type as its default), to reject malformed injected scenes */
 const isValidValue = (key: SceneKey, value: unknown): boolean => {
@@ -237,10 +319,6 @@ const sceneSettingsSlice = createSlice({
             state.origin = origin;
 
             execAutoClipFogByZoom(state);
-        },
-        // API
-        setDefaultBackgroundColor: (state, action: PayloadAction<[number, number, number, number]>) => {
-            state.defaultBackgroundColor = action.payload;
         },
         // API
         setDrawScaleBar: (state, action: PayloadAction<boolean>) => {
@@ -332,8 +410,8 @@ const sceneSettingsSlice = createSlice({
             state.fogEnd += delta;
         },
         // API
-        setUseOffScreenBuffers: (state, action: PayloadAction<boolean>) => {
-            state.useOffScreenBuffers = action.payload;
+        setDoDepthBlur: (state, action: PayloadAction<boolean>) => {
+            state.doDepthBlur = action.payload;
         },
         // API
         setDoShadowDepthDebug: (state, action: PayloadAction<boolean>) => {
@@ -509,7 +587,6 @@ const sceneSettingsSlice = createSlice({
 
 export const {
     setOrigin,
-    setDefaultBackgroundColor,
     setDrawCrosshairs,
     setDrawScaleBar,
     setDrawFPS,
@@ -522,7 +599,7 @@ export const {
     setClipCap,
     resetSceneSettings,
     setEdgeDetectNormalScale,
-    setUseOffScreenBuffers,
+    setDoDepthBlur,
     setDoShadowDepthDebug,
     setDoShadow,
     setShadowMapQuality,

@@ -153,7 +153,7 @@ export function initInstanceState(self: MGWebGL): void {
     self.ssaoFramebuffer = null;
     self.edgeDetectFramebuffer = null;
     self.gFramebuffer = null;
-    self.useOffScreenBuffers = false; //This means "doDepthBlur" and is historically named.
+    self.doDepthBlur = false;
     self.blurSize = 3;
     self.depthPeelLayers = 4;
     self.peelOpaqueSeparately = true;

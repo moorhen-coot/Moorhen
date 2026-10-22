@@ -6,6 +6,7 @@ import { useMoorhenInstance } from "@/hooks";
 import { RootState, setMainMenuOpen } from "@/store";
 import { UserScene } from "@/store/userScenesSlice";
 import { MoorhenMenuItem, MoorhenPopover, MoorhenStack, MoorhenTooltip } from "../../interface-base";
+import { SaveSceneButton } from "./SaveSceneButton";
 import "./scene-selector.css";
 
 export const UserSceneSelector = () => {
@@ -72,11 +73,19 @@ export const UserSceneSelector = () => {
             );
         } else {
             return (
-                <MoorhenPopoverButton type="icon-only" icon="MatSymReplay" tooltip="Restore this scene to default">
-                    <MoorhenButton variant="danger" onClick={() => moorhenInstance.userScene.restoreDefault(id)}>
-                        Restore Scene to Default
-                    </MoorhenButton>
-                </MoorhenPopoverButton>
+                <>
+                    <SaveSceneButton sceneId={id} iconOnly={true} />
+                    <MoorhenPopoverButton type="icon-only" icon="MatSymReplay" tooltip="Restore this scene">
+                        <MoorhenStack>
+                            <MoorhenButton onClick={() => moorhenInstance.userScene.restoreDefault(id, "saved")}>
+                                Restore Saved Settings
+                            </MoorhenButton>
+                            <MoorhenButton variant="danger" onClick={() => moorhenInstance.userScene.restoreDefault(id, "factory")}>
+                                Restore Factory Settings
+                            </MoorhenButton>
+                        </MoorhenStack>
+                    </MoorhenPopoverButton>
+                </>
             );
         }
     };

@@ -14,6 +14,9 @@
  * 5. Set the `selector` to a function that retrieves the value from the Redux state.
  * 6. Set the `defaultValue` to the desired default.
  *
+ * A scene setting that should be a preference of each built-in scene goes in
+ * `PER_SCENE_PREFERENCE_KEYS` (sceneSettingsSlice.ts) instead: its entries are generated.
+ *
  * @example
  * ```typescript
  * 52: {
@@ -48,37 +51,16 @@ import { overwriteMapUpdatingScores, setShowScoresToast } from "../../store/mole
 import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
 import { setAnimateRefine, setEnableRefineAfterMod } from "../../store/refinementSettingsSlice";
 import {
-    setClipCap,
-    setDefaultBackgroundColor,
-    setDefaultBondSmoothness,
-    setDepthBlurDepth,
-    setDepthBlurRadius,
     setDepthPeelLayers,
-    setDoEdgeDetect,
-    setDoOutline,
-    setDoPerspectiveProjection,
-    setPerspectiveEyeDistance,
-    setDoSSAO,
-    setDoShadow,
     setShadowMapQuality,
     setDoShadowDepthDebug,
-    setDrawAxes,
-    setDrawCrosshairs,
     setDrawFPS,
-    setDrawMissingLoops,
-    setDrawScaleBar,
-    setEdgeDetectDepthScale,
-    setEdgeDetectDepthThreshold,
-    setEdgeDetectNormalScale,
-    setEdgeDetectNormalThreshold,
-    setResetClippingFogging,
-    setSsaoBias,
-    setSsaoRadius,
-    setUseOffScreenBuffers,setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast, 
+    setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast, 
     RootState
 } from "@/store";
 import { initialState as sceneSettingsInitialState } from "@/store/sceneSettingsSlice";
 import { DEFAULT_SHORTCUTS } from "./DefaultShortcuts";
+import { SCENE_PREFERENCES } from "./ScenePreferences";
 
 export type PreferenceEntry<T = unknown> = {
     label: string;
@@ -94,12 +76,6 @@ export type PreferenceEntry<T = unknown> = {
 };
 
 export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
-    1: {
-        label: "defaultBackgroundColor",
-        valueSetter: setDefaultBackgroundColor,
-        selector: (state: RootState) => state.sceneSettings.defaultBackgroundColor,
-        defaultValue: sceneSettingsInitialState.defaultBackgroundColor,
-    },
     2: {
         label: "atomLabelDepthMode",
         valueSetter: setAtomLabelDepthMode,
@@ -142,23 +118,11 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         selector: (state: RootState) => state.mouseSettings.zoomWheelSensitivityFactor,
         defaultValue: 1.0,
     },
-    9: {
-        label: "drawCrosshairs",
-        valueSetter: setDrawCrosshairs,
-        selector: (state: RootState) => state.sceneSettings.drawCrosshairs,
-        defaultValue: sceneSettingsInitialState.drawCrosshairs,
-    },
     10: {
         label: "drawFPS",
         valueSetter: setDrawFPS,
         selector: (state: RootState) => state.sceneSettings.drawFPS,
         defaultValue: sceneSettingsInitialState.drawFPS,
-    },
-    11: {
-        label: "drawMissingLoops",
-        valueSetter: setDrawMissingLoops,
-        selector: (state: RootState) => state.sceneSettings.drawMissingLoops,
-        defaultValue: sceneSettingsInitialState.drawMissingLoops,
     },
     12: {
         label: "mapLineWidth",
@@ -184,16 +148,6 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         selector: (state: RootState) => state.mapContourSettings.defaultMapSurface,
         defaultValue: false,
     },
-    16: {
-        label: "defaultBondSmoothness",
-        valueSetter: setDefaultBondSmoothness,
-        selector: (state: RootState) => state.sceneSettings.defaultBondSmoothness,
-        // Enum value: 1 = Coarse, 2 = Nice, 3 = Smooth
-        defaultValue: sceneSettingsInitialState.defaultBondSmoothness,
-        // Bumped for 1.0: the default changed from 1 (Coarse) to 2 (Nice), so any previously
-        // stored value must be reset to the new default.
-        version: 2,
-    },
     17: {
         label: "showScoresToast",
         valueSetter: setShowScoresToast,
@@ -205,12 +159,6 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         valueSetter: setShortcutOnHoveredAtom,
         selector: (state: RootState) => state.shortcutSettings.shortcutOnHoveredAtom,
         defaultValue: false,
-    },
-    19: {
-        label: "resetClippingFogging",
-        valueSetter: setResetClippingFogging,
-        selector: (state: RootState) => state.sceneSettings.resetClippingFogging,
-        defaultValue: sceneSettingsInitialState.resetClippingFogging,
     },
     20: {
         label: "defaultUpdatingScores",
@@ -230,41 +178,17 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         selector: (state: RootState) => state.backupSettings.modificationCountBackupThreshold,
         defaultValue: 5,
     },
-    23: {
-        label: "clipCap",
-        valueSetter: setClipCap,
-        selector: (state: RootState) => state.sceneSettings.clipCap,
-        defaultValue: sceneSettingsInitialState.clipCap,
-    },
     24: {
         label: "enableTimeCapsule",
         valueSetter: setEnableTimeCapsule,
         selector: (state: RootState) => state.backupSettings.enableTimeCapsule,
         defaultValue: true,
     },
-    25: {
-        label: "doPerspectiveProjection",
-        valueSetter: setDoPerspectiveProjection,
-        selector: (state: RootState) => state.sceneSettings.doPerspectiveProjection,
-        defaultValue: sceneSettingsInitialState.doPerspectiveProjection,
-    },
-    26: {
-        label: "useOffScreenBuffers",
-        valueSetter: setUseOffScreenBuffers,
-        selector: (state: RootState) => state.sceneSettings.useOffScreenBuffers,
-        defaultValue: sceneSettingsInitialState.useOffScreenBuffers,
-    },
     27: {
         label: "contourWheelSensitivityFactor",
         valueSetter: setContourWheelSensitivityFactor,
         selector: (state: RootState) => state.mouseSettings.contourWheelSensitivityFactor,
         defaultValue: 1.0,
-    },
-    28: {
-        label: "drawAxes",
-        valueSetter: setDrawAxes,
-        selector: (state: RootState) => state.sceneSettings.drawAxes,
-        defaultValue: sceneSettingsInitialState.drawAxes,
     },
     29: {
         label: "devMode",
@@ -277,12 +201,6 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         valueSetter: setDoShadowDepthDebug,
         selector: (state: RootState) => state.sceneSettings.doShadowDepthDebug,
         defaultValue: sceneSettingsInitialState.doShadowDepthDebug,
-    },
-    31: {
-        label: "doShadow",
-        valueSetter: setDoShadow,
-        selector: (state: RootState) => state.sceneSettings.doShadow,
-        defaultValue: sceneSettingsInitialState.doShadow,
     },
     54: {
         label: "shadowMapQuality",
@@ -302,24 +220,6 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         selector: (state: RootState) => state.labelSettings.GLLabelsFontSize,
         defaultValue: 18,
     },
-    34: {
-        label: "doOutline",
-        valueSetter: setDoOutline,
-        selector: (state: RootState) => state.sceneSettings.doOutline,
-        defaultValue: sceneSettingsInitialState.doOutline,
-    },
-    35: {
-        label: "depthBlurRadius",
-        valueSetter: setDepthBlurRadius,
-        selector: (state: RootState) => state.sceneSettings.depthBlurRadius,
-        defaultValue: sceneSettingsInitialState.depthBlurRadius,
-    },
-    36: {
-        label: "depthBlurDepth",
-        valueSetter: setDepthBlurDepth,
-        selector: (state: RootState) => state.sceneSettings.depthBlurDepth,
-        defaultValue: sceneSettingsInitialState.depthBlurDepth,
-    },
     37: {
         label: "transparentModalsOnMouseOut",
         valueSetter: setTransparentModalsOnMouseOut,
@@ -332,65 +232,11 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         selector: (state: RootState) => state.mapContourSettings.defaultMapSamplingRate,
         defaultValue: 1.8,
     },
-    39: {
-        label: "doSSAO",
-        valueSetter: setDoSSAO,
-        selector: (state: RootState) => state.sceneSettings.doSSAO,
-        defaultValue: sceneSettingsInitialState.doSSAO,
-    },
-    40: {
-        label: "ssaoRadius",
-        valueSetter: setSsaoRadius,
-        selector: (state: RootState) => state.sceneSettings.ssaoRadius,
-        defaultValue: sceneSettingsInitialState.ssaoRadius,
-    },
-    41: {
-        label: "ssaoBias",
-        valueSetter: setSsaoBias,
-        selector: (state: RootState) => state.sceneSettings.ssaoBias,
-        defaultValue: sceneSettingsInitialState.ssaoBias,
-    },
-    42: {
-        label: "drawScaleBar",
-        valueSetter: setDrawScaleBar,
-        selector: (state: RootState) => state.sceneSettings.drawScaleBar,
-        defaultValue: sceneSettingsInitialState.drawScaleBar,
-    },
     43: {
         label: "animateRefine",
         valueSetter: setAnimateRefine,
         selector: (state: RootState) => state.refinementSettings.animateRefine,
         defaultValue: true,
-    },
-    44: {
-        label: "doEdgeDetect",
-        valueSetter: setDoEdgeDetect,
-        selector: (state: RootState) => state.sceneSettings.doEdgeDetect,
-        defaultValue: sceneSettingsInitialState.doEdgeDetect,
-    },
-    45: {
-        label: "edgeDetectDepthThreshold",
-        valueSetter: setEdgeDetectDepthThreshold,
-        selector: (state: RootState) => state.sceneSettings.edgeDetectDepthThreshold,
-        defaultValue: sceneSettingsInitialState.edgeDetectDepthThreshold,
-    },
-    46: {
-        label: "edgeDetectNormalThreshold",
-        valueSetter: setEdgeDetectNormalThreshold,
-        selector: (state: RootState) => state.sceneSettings.edgeDetectNormalThreshold,
-        defaultValue: sceneSettingsInitialState.edgeDetectNormalThreshold,
-    },
-    47: {
-        label: "edgeDetectDepthScale",
-        valueSetter: setEdgeDetectDepthScale,
-        selector: (state: RootState) => state.sceneSettings.edgeDetectDepthScale,
-        defaultValue: sceneSettingsInitialState.edgeDetectDepthScale,
-    },
-    48: {
-        label: "edgeDetectNormalScale",
-        valueSetter: setEdgeDetectNormalScale,
-        selector: (state: RootState) => state.sceneSettings.edgeDetectNormalScale,
-        defaultValue: sceneSettingsInitialState.edgeDetectNormalScale,
     },
     49: {
         label: "reContourMapOnlyOnMouseUp",
@@ -416,13 +262,13 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         selector: (state: RootState) => state.sceneSettings.depthPeelLayers,
         defaultValue: sceneSettingsInitialState.depthPeelLayers,
     },
-    53: {
-        label: "fogClipOffset",
-        valueSetter: setPerspectiveEyeDistance,
-        selector: (state: RootState) => state.sceneSettings.fogClipOffset,
-        defaultValue: sceneSettingsInitialState.fogClipOffset,
-    },
 };
+
+/**
+ * Every user preference: the global ones of PREFERENCES_MAP and the generated per-scene ones of the
+ * built-in scenes (see ScenePreferences.ts).
+ */
+export const ALL_PREFERENCES: PreferenceEntry[] = [...Object.values(PREFERENCES_MAP), ...SCENE_PREFERENCES];
 
 export type PreferenceLabel = (typeof PREFERENCES_MAP)[keyof typeof PREFERENCES_MAP]["label"];
 export type PreferenceDefaultValue<L extends PreferenceLabel> = Extract<
@@ -440,7 +286,7 @@ export type PreferencesValues = {
 // eslint-disable-next-line
 const test: PreferencesValues = {
     version: "1.0.0",
-    doPerspectiveProjection: true,
-    fogClipOffset: true,
+    drawFPS: true,
+    depthPeelLayers: 4,
     // Add other preference values here
 };

@@ -5,6 +5,7 @@ import {
     enqueueSnackbar,
     removeUserScene,
     renameUserScene,
+    saveSceneSettings,
     setOrigin,
     setQuat,
     setSceneChanging,
@@ -12,10 +13,15 @@ import {
     setUserSceneState,
     setZoom,
 } from "../store";
-import { getSceneSettingsSnapshot, SceneSettingsSnapshot } from"../store/sceneSettingsSlice";
-import {  UserScene  } from "../store/userScenesSlice"
-import type { } from "../store";
-import { initialState as sceneSettingsInitialState } from "../store/sceneSettingsSlice";
+import type { RootState } from "../store";
+import {
+    getPerSceneSettings,
+    getSceneSettingsSnapshot,
+    isSamePerSceneSettings,
+    type PerSceneSettings,
+    type SceneSettingsSnapshot,
+} from "../store/sceneSettingsSlice";
+import { BUILT_IN_SCENE_IDS, builtInSceneDefaults, isBuiltInScene, type BuiltInSceneId, type UserScene } from "../store/userScenesSlice";
 import type { RepresentationBackup } from "../utils/Representation/RepresentationBuilder";
 import { DEFAULT_REPRESENTATION_STYLE, type MoorhenInstance } from "./MoorhenInstance";
 
@@ -30,8 +36,8 @@ type SceneBackupEntry = {
     sceneSettings: SceneSettingsSnapshot;
     name: string;
     /**
-     * A built-in preset that was never saved: its sceneSettings only override some settings on
-     * top of the current ones, so user preferences (SSAO, outline...) are kept.
+     * The sceneSettings only override some settings on top of the current ones: a built-in scene
+     * starting from its saved settings, which only cover the per-scene preferences.
      */
     isPreset?: boolean;
     /** Snapshots only: the camera when the snapshot was taken */
@@ -128,39 +134,18 @@ const isSnapshot = (sceneId: string) => sceneId.startsWith("snapshot-");
 const nextNumber = (scenes: UserScene[], prefix: string) =>
     Math.max(0, ...scenes.filter(scene => scene.id.startsWith(prefix)).map(scene => parseInt(scene.id.slice(prefix.length)))) + 1;
 
-/** Scenes that ship with Moorhen and cannot be deleted */
-const BUILT_IN_SCENES = ["Default", "Model Building"];
-
-const { fogClipOffset } = sceneSettingsInitialState;
-
-const DEFAULT_SCENE_SETTINGS: SceneSettingsSnapshot = {
-    resetClippingFogging: false,
-    clipStart: 40,
-    clipEnd: 40,
-    fogStart: fogClipOffset - 2,
-    fogEnd: fogClipOffset + 120,
-};
-
-const MODEL_BUILDING_SCENE_SETTINGS: SceneSettingsSnapshot = {
-    resetClippingFogging: true,
-};
-
 /**
- * The original backup of a built-in scene, matching the "Activate scene preset" menu (ScenePreset.tsx):
- * "Default" is figure making (fixed clipping and fog), "Model Building" has clipping and fog following
- * the zoom. With no saved representations, every molecule gets the scene's default style when shown.
+ * A built-in scene with no saved representations: every molecule gets the scene's default style
+ * when shown.
  * @param isPreset - Layer the settings on top of the current ones (true) instead of the absolute defaults.
  */
-const builtInSceneBackup = (sceneId: string, isPreset: boolean): SceneBackupEntry => ({
+const builtInSceneBackup = (sceneId: BuiltInSceneId, sceneSettings: PerSceneSettings, isPreset: boolean): SceneBackupEntry => ({
     name: sceneId,
     representation: [],
     molecules: {},
-    sceneSettings: sceneId === "Model Building" ? MODEL_BUILDING_SCENE_SETTINGS : DEFAULT_SCENE_SETTINGS,
+    sceneSettings,
     isPreset,
 });
-
-const builtInSceneBackups = (): { [sceneId: string]: SceneBackupEntry } =>
-    Object.fromEntries(BUILT_IN_SCENES.map(sceneId => [sceneId, builtInSceneBackup(sceneId, true)]));
 
 /**
  * Scene presets: named sets of representations the user can switch between.
@@ -179,7 +164,10 @@ const builtInSceneBackups = (): { [sceneId: string]: SceneBackupEntry } =>
  */
 export class MoorhenUserSceneManager {
     private instance: MoorhenInstance;
-    private backups: { [sceneId: string]: SceneBackupEntry } = builtInSceneBackups();
+    // Until preferences are restored (applySavedScenes), the built-in scenes start from their defaults
+    private backups: { [sceneId: string]: SceneBackupEntry } = Object.fromEntries(
+        BUILT_IN_SCENE_IDS.map(sceneId => [sceneId, builtInSceneBackup(sceneId, builtInSceneDefaults(sceneId), true)])
+    );
     // Not read from the store: two calls in the same tick must already see each other
     private isChanging: boolean = false;
 
@@ -203,21 +191,46 @@ export class MoorhenUserSceneManager {
     }
 
     /**
-     * Apply the scene settings of the starting scene ("Default": figure making), under the user's
-     * saved preferences: settings the user has saved keep their saved value.
+     * Start the built-in scenes from their saved settings (user preferences), keeping their
+     * representations, and show them if a built-in scene is selected.
      *
-     * **Internal use only.** Called once user preferences are restored.
+     * **Internal use only.** Called after preferences are restored: at start-up and after an import.
      * @private
-     * @param savedPreferences - Labels of the preferences restored from storage (they match the
-     * scene settings field names).
      */
-    public applyStartupScene(savedPreferences: string[] = []): void {
-        const backup = this.backups[this.selected];
-        if (!backup) return;
-        const sceneSettings = Object.fromEntries(
-            Object.entries(backup.sceneSettings).filter(([key]) => !savedPreferences.includes(key))
-        ) as SceneSettingsSnapshot;
-        this.applySceneSettings({ ...backup, sceneSettings });
+    public applySavedScenes(): void {
+        const { savedSceneSettings } = this.instance.store.getState().userScenes;
+        for (const sceneId of BUILT_IN_SCENE_IDS) {
+            const backup = this.backups[sceneId] ?? builtInSceneBackup(sceneId, savedSceneSettings[sceneId], true);
+            this.backups[sceneId] = { ...backup, sceneSettings: savedSceneSettings[sceneId], isPreset: true };
+        }
+        if (isBuiltInScene(this.selected)) this.applySceneSettings(this.backups[this.selected]);
+    }
+
+    /**
+     * Save the current settings of a built-in scene as user preferences, used the next time Moorhen
+     * starts. What is shown does not change.
+     * @param sceneId - "Default" or "Model Building".
+     * @returns True if the scene was saved, false if it is not built-in.
+     * @example
+     * moorhenInstance.userScene.saveScene("Model Building");
+     */
+    public saveScene(sceneId: string): boolean {
+        if (!isBuiltInScene(sceneId)) return false;
+        const state = this.instance.store.getState();
+        const settings = getPerSceneSettings(this.currentSceneSettings(sceneId, state), builtInSceneDefaults(sceneId));
+        this.instance.dispatch(saveSceneSettings({ sceneId, settings }));
+        return true;
+    }
+
+    /**
+     * Whether the current settings of a built-in scene differ from its saved ones. False for other scenes.
+     * @param sceneId - The id of the scene.
+     * @param state - The store state to read (the current one by default), e.g. in a `useSelector` selector.
+     */
+    public hasUnsavedChanges(sceneId: string, state: RootState = this.instance.store.getState()): boolean {
+        if (!isBuiltInScene(sceneId)) return false;
+        const current = getPerSceneSettings(this.currentSceneSettings(sceneId, state), builtInSceneDefaults(sceneId));
+        return !isSamePerSceneSettings(current, state.userScenes.savedSceneSettings[sceneId]);
     }
 
     /** Whether a scene switch is in progress (switching again is ignored until it ends) */
@@ -258,14 +271,14 @@ export class MoorhenUserSceneManager {
     public importState(state: UserSceneState): void {
         const scenes = readSceneList(state.scenes, id => !isSnapshot(id));
         // Built-in scenes are always available, in their usual place if the file lost them
-        BUILT_IN_SCENES.slice()
+        BUILT_IN_SCENE_IDS.slice()
             .reverse()
             .forEach(sceneId => {
                 if (!scenes.some(scene => scene.id === sceneId)) scenes.unshift({ id: sceneId, name: sceneId });
             });
         const snapshots = readSceneList(state.snapshots, isSnapshot);
 
-        this.backups = builtInSceneBackups();
+        this.backups = this.savedBuiltInSceneBackups();
         for (const entry of [...scenes, ...snapshots]) {
             const backup = fromFileEntry(entry);
             if (backup) this.backups[entry.id] = backup;
@@ -294,10 +307,10 @@ export class MoorhenUserSceneManager {
      * @private
      */
     public resetForLegacySession(): void {
-        this.backups = builtInSceneBackups();
+        this.backups = this.savedBuiltInSceneBackups();
         this.instance.dispatch(
             setUserSceneState({
-                scenes: BUILT_IN_SCENES.map(sceneId => ({ id: sceneId, name: sceneId })),
+                scenes: BUILT_IN_SCENE_IDS.map(sceneId => ({ id: sceneId, name: sceneId })),
                 snapshots: [],
                 selectedScene: "Default",
             })
@@ -375,7 +388,7 @@ export class MoorhenUserSceneManager {
      * @returns True if the scene was deleted.
      */
     public async delete(sceneId: string): Promise<boolean> {
-        if (this.isChanging || BUILT_IN_SCENES.includes(sceneId)) return false;
+        if (this.isChanging || isBuiltInScene(sceneId)) return false;
         if (this.selected === sceneId) {
             // Leaving the deleted scene must not save it again
             await this.select("Default", false);
@@ -387,17 +400,18 @@ export class MoorhenUserSceneManager {
     }
 
     /**
-     * Reset a built-in scene to its original state: its preset on top of the absolute default scene
-     * settings (settings saved as user preferences, such as SSAO, are reset too), and the default
-     * representations for every molecule (bonds for "Model Building", ribbons and ligands otherwise).
-     * The scene is rebuilt now if it is shown, otherwise the reset is used on its next visit. The
-     * camera (zoom, origin) is not changed.
+     * Reset a built-in scene: its settings go back to its saved ones or to its factory defaults, and
+     * every molecule gets the default representations (bonds for "Model Building", ribbons and
+     * ligands otherwise). The saved settings are not changed. The scene is rebuilt now if it is shown,
+     * otherwise the reset is used on its next visit. The camera (zoom, origin) is not changed.
      * @param sceneId - "Default" or "Model Building".
+     * @param to - "factory" (default) for the scene's original settings, "saved" for its saved ones.
      * @returns True if the scene was reset, false if it is not built-in or a switch is running.
      */
-    public async restoreDefault(sceneId: string): Promise<boolean> {
-        if (this.isChanging || !BUILT_IN_SCENES.includes(sceneId)) return false;
-        const backup = builtInSceneBackup(sceneId, false);
+    public async restoreDefault(sceneId: string, to: "factory" | "saved" = "factory"): Promise<boolean> {
+        if (this.isChanging || !isBuiltInScene(sceneId)) return false;
+        const settings = to === "saved" ? this.instance.store.getState().userScenes.savedSceneSettings[sceneId] : builtInSceneDefaults(sceneId);
+        const backup = builtInSceneBackup(sceneId, settings, false);
         // Keep the name if the user renamed the scene
         backup.name = this.list.find(scene => scene.id === sceneId)?.name ?? sceneId;
         this.backups[sceneId] = backup;
@@ -432,6 +446,20 @@ export class MoorhenUserSceneManager {
             .getTimeCapsuleRef()
             .current?.addModification()
             .catch(error => console.error("Error backing up scenes:", error));
+    }
+
+    /** The built-in scenes as they start, from their saved settings */
+    private savedBuiltInSceneBackups(): { [sceneId: string]: SceneBackupEntry } {
+        const { savedSceneSettings } = this.instance.store.getState().userScenes;
+        return Object.fromEntries(BUILT_IN_SCENE_IDS.map(sceneId => [sceneId, builtInSceneBackup(sceneId, savedSceneSettings[sceneId], true)]));
+    }
+
+    /** The settings a scene shows if it is selected, otherwise the ones it shows when selected again */
+    private currentSceneSettings(sceneId: string, state: RootState): SceneSettingsSnapshot {
+        const backup = this.backups[sceneId];
+        // A scene never visited starts as a copy of the current one
+        if (sceneId === state.userScenes.selectedScene || !backup) return state.sceneSettings;
+        return backup.isPreset ? { ...getSceneSettingsSnapshot(state.sceneSettings), ...backup.sceneSettings } : backup.sceneSettings;
     }
 
     private applySceneSettings(backup: SceneBackupEntry) {
