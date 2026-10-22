@@ -11,7 +11,7 @@
 import type { RootState } from "../../store/MoorhenReduxStore";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
 import type { PreviewGpuDraw } from "../previewRenderer";
-import { GpuIsosurface, GpuMapGrid, MapContourKernels } from "./gpuMapContour";
+import { CONTOUR_STEPS, GpuIsosurface, GpuMapGrid, MapContourKernels } from "./gpuMapContour";
 import type { MapUnitCellGrid } from "./mapContourBox";
 import { gpuMapContourSetting, onMapDataChanged } from "./setting";
 
@@ -117,12 +117,40 @@ export class GpuMapLayer {
             }
             const box = entry.surfaces.get(`${map.molNo}:1`)?.lastBox;
             const made = [...entry.surfaces.values()].reduce((sum, s) => sum + s.made, 0);
+            const triangles = [...entry.surfaces.values()].reduce((sum, s) => sum + s.lastTriangles, 0);
             const { nu, nv, nw } = entry.grid.grid;
-            notes.push(`map ${map.molNo}: cell grid ${nu}×${nv}×${nw}` + (box ? `, box ${box.size.join("×")}` : "") + `, contoured ${made}×`
+            notes.push(`map ${map.molNo}: r ${radius} Å, cell grid ${nu}×${nv}×${nw}` + (box ? `, box ${box.size.join("×")}` : "")
+                + `, ${formatCount(triangles)} triangles, contoured ${made}×`
                 + (entry.fetches > 1 ? `, fetched ${entry.fetches}×` : "") + (entry.loading ? ", fetching again…" : ""));
         }
         this.status = notes.length > 0 ? `GPU maps: ${notes.join("; ")}` : "GPU maps: none visible";
         return draws;
+    }
+
+    /**
+     * The GPU time of contouring since the last call: for each surface, the mean of its timed
+     * contours, added up over the surfaces (what one move of the origin costs, all maps
+     * together), with the largest single contour, and the same sum step by step. Empty if
+     * nothing was timed (or cannot be).
+     */
+    takeTiming(): string {
+        let perMove = 0, max = 0, timed = 0, surfaces = 0;
+        const steps = CONTOUR_STEPS.map(() => 0);
+        for (const entry of this.maps.values()) {
+            for (const surface of entry.surfaces.values()) {
+                const t = surface.takeTiming();
+                if (!t || t.count === 0) continue;
+                perMove += t.meanMs;
+                max = Math.max(max, t.maxMs);
+                timed += t.count;
+                surfaces++;
+                t.segmentsMs.forEach((ms, i) => { steps[i] += ms; });
+            }
+        }
+        if (timed === 0) return "";
+        return `contouring ${perMove.toFixed(1)} ms GPU per change (${surfaces} surface${surfaces > 1 ? "s" : ""}; ` +
+            `slowest ${max.toFixed(1)} ms; ${timed} timed): ` +
+            CONTOUR_STEPS.map((name, i) => `${name} ${steps[i].toFixed(1)}`).join(", ");
     }
 
     destroy(): void {
@@ -190,3 +218,7 @@ export class GpuMapLayer {
         else entry.failed = why;
     }
 }
+
+/** 1234567 → "1.23M", 12345 → "12.3k". */
+const formatCount = (n: number): string =>
+    n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}k` : `${n}`;

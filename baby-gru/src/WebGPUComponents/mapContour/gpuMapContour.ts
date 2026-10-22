@@ -7,11 +7,12 @@
  * guess was too small (the draw then shows only part of the surface for a frame), the buffers
  * grow and the contour is made again.
  */
+import { GpuSpanTimer, SpanTiming } from "../gpuSpanTimer";
 import { GpuScan, dispatchSize } from "../metaballs/gpuScan";
 import { MC_TRIANGLE_TABLE } from "../metaballs/mcTable";
 import { ContourBox, MapUnitCellGrid, contourBox, inverse3 } from "./mapContourBox";
 import {
-    COUNT_TRIANGLES_WGSL, COUNT_VERTICES_WGSL, EMIT_TRIANGLES_WGSL, EMIT_VERTICES_WGSL, MAP_WORKGROUP, SAMPLE_WGSL, TOTALS_WGSL,
+    COUNT_TRIANGLES_WGSL, COUNT_VERTICES_WGSL, EMIT_TRIANGLES_WGSL, EMIT_VERTICES_WGSL, MAP_WORKGROUP, SAMPLE_WGSL, TOTALS_WGSL, chunksOf,
 } from "./mapContourShaders";
 
 // Spec values; the DOM typings have the WebGPU interfaces but not these globals.
@@ -50,10 +51,11 @@ export class MapContourKernels {
         return new MapContourKernels(device, scan as GpuScan, table, pipelines);
     }
 
-    dispatch(encoder: GPUCommandEncoder, kernel: Kernel, params: GPUBuffer, buffers: GPUBuffer[], items: number): void {
+    dispatch(encoder: GPUCommandEncoder, kernel: Kernel, params: GPUBuffer, buffers: GPUBuffer[], items: number,
+             timestampWrites?: GPUComputePassTimestampWrites): void {
         if (items <= 0) return;
         const pipeline = this.pipelines.get(kernel);
-        const pass = encoder.beginComputePass({ label: `map contour ${kernel}` });
+        const pass = encoder.beginComputePass({ label: `map contour ${kernel}`, timestampWrites });
         pass.setPipeline(pipeline);
         pass.setBindGroup(0, this.device.createBindGroup({
             layout: pipeline.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: params } }],
@@ -110,6 +112,26 @@ export interface ContourRequest {
     level: number;
 }
 
+/** Per contouring, kept between contourings and grown as needed. */
+interface WorkBuffers {
+    /** The map less the level, per box point. */
+    field: GPUBuffer;
+    /** Per box point: which of its three edges carry a vertex. */
+    edgeMask: GPUBuffer;
+    /** Per box point: its first vertex. */
+    vertexOffset: GPUBuffer;
+    /** Per cell: which of its triangles are kept. */
+    keepMask: GPUBuffer;
+    /** Per run of CHUNK points or cells: its count, and where it starts. */
+    vertexChunkSum: GPUBuffer;
+    vertexChunkOffset: GPUBuffer;
+    triangleChunkSum: GPUBuffer;
+    triangleChunkOffset: GPUBuffer;
+}
+
+/** The steps of a contouring, as GpuIsosurface times them: segment i of its SpanTiming is step i. */
+export const CONTOUR_STEPS = ["sample", "count vertices", "count triangles", "scans", "emit vertices", "emit triangles", "totals"] as const;
+
 /** One contour level of one map, remade when the request changes. */
 export class GpuIsosurface {
     /** First guess at the room needed: vertices per box point. Tests make it tiny to force growth. */
@@ -120,7 +142,7 @@ export class GpuIsosurface {
     private readonly counts: GPUBuffer;
     private readonly countsRead: GPUBuffer;
     private readonly drawArgs: GPUBuffer;
-    private work: { points: number; cells: number; buffers: GPUBuffer[] } | null = null;
+    private work: { points: number; cells: number; buffers: WorkBuffers } | null = null;
     private output: { vertices: number; triangles: number; buffers: GpuContourBuffers } | null = null;
     private last = "";
     private reading = false;
@@ -128,6 +150,10 @@ export class GpuIsosurface {
     /** How many times the contour has been made, and the box last contoured: for the status line. */
     made = 0;
     lastBox: ContourBox | null = null;
+    /** Triangles (kept, so drawn), as last read back; for the status line. */
+    lastTriangles = 0;
+    /** GPU time of each contouring and its steps (CONTOUR_STEPS), when the device can time. */
+    private readonly timer: GpuSpanTimer | null;
 
     /** `onRemade`: the room was too small; the next update will make the contour again. */
     constructor(private readonly kernels: MapContourKernels, private readonly mapGrid: GpuMapGrid, private readonly onRemade: () => void) {
@@ -137,6 +163,12 @@ export class GpuIsosurface {
         this.countsRead = this.device.createBuffer({ label: "map contour counts read", size: 16, usage: MAP_READ | COPY_DST });
         this.drawArgs = this.device.createBuffer({ label: "map contour draw args", size: 64, usage: STORAGE | INDIRECT | COPY_SRC | COPY_DST });
         this.device.queue.writeBuffer(this.drawArgs, 0, new Uint32Array(16));
+        this.timer = GpuSpanTimer.create(this.device, "map contour", CONTOUR_STEPS.length + 1);
+    }
+
+    /** The GPU time of contouring since the last call, by step (CONTOUR_STEPS); null if untimed. */
+    takeTiming(): SpanTiming | null {
+        return this.timer?.take() ?? null;
     }
 
     /** The buffers to draw, or null before the first contour. */
@@ -162,22 +194,32 @@ export class GpuIsosurface {
         const out = this.outputBuffers(points);
         this.writeParams(box, request, out.vertices, out.triangles);
 
-        const [field, edgeMask, vertexCount, vertexOffset, triangleCount, triangleOffset] = work;
+        const { field, edgeMask, vertexOffset, keepMask, vertexChunkSum, vertexChunkOffset, triangleChunkSum, triangleChunkOffset } = work;
         const { position, normal, triangles } = out.buffers;
         const k = this.kernels;
         const encoder = this.device.createCommandEncoder({ label: "map contour" });
-        k.dispatch(encoder, "sample", this.params, [this.mapGrid.buffer, field], points);
-        k.dispatch(encoder, "countVertices", this.params, [field, edgeMask, vertexCount], points);
-        k.dispatch(encoder, "countTriangles", this.params, [field, k.table, triangleCount], cells);
-        k.scan.encode(encoder, vertexCount, vertexOffset, points);
-        k.scan.encode(encoder, triangleCount, triangleOffset, cells);
-        k.dispatch(encoder, "emitVertices", this.params, [this.mapGrid.buffer, field, edgeMask, vertexOffset, position, normal], points);
+        // Marks at the step boundaries (CONTOUR_STEPS); the scans' own passes fall between 3 and 4.
+        const mark = this.timer?.writes() ?? null;
+        k.dispatch(encoder, "sample", this.params, [this.mapGrid.buffer, field], points, mark?.(0));
+        // The count and emit kernels take CHUNK points or cells per thread, and only the chunks'
+        // sums are scanned (see mapContourShaders).
+        const pointChunks = chunksOf(points), cellChunks = chunksOf(cells);
+        k.dispatch(encoder, "countVertices", this.params, [field, edgeMask, vertexChunkSum], pointChunks, mark?.(1));
+        k.dispatch(encoder, "countTriangles", this.params, [field, k.table, keepMask, triangleChunkSum], cellChunks, mark?.(2, 3));
+        k.scan.encode(encoder, vertexChunkSum, vertexChunkOffset, pointChunks);
+        k.scan.encode(encoder, triangleChunkSum, triangleChunkOffset, cellChunks);
+        k.dispatch(encoder, "emitVertices", this.params,
+            [this.mapGrid.buffer, field, edgeMask, vertexChunkOffset, vertexOffset, position, normal], pointChunks, mark?.(4));
         k.dispatch(encoder, "emitTriangles", this.params,
-            [field, k.table, edgeMask, vertexOffset, triangleOffset, position, triangles], cells);
-        k.dispatch(encoder, "totals", this.params, [vertexCount, vertexOffset, triangleCount, triangleOffset, this.counts, this.drawArgs], 1);
+            [field, k.table, edgeMask, vertexOffset, triangleChunkOffset, keepMask, triangles], cellChunks, mark?.(5));
+        k.dispatch(encoder, "totals", this.params,
+            [vertexChunkSum, vertexChunkOffset, triangleChunkSum, triangleChunkOffset, this.counts, this.drawArgs], 1, mark?.(6, 7));
+        const timing = mark !== null;
+        if (timing) this.timer.resolve(encoder);
         const check = !this.reading;
         if (check) encoder.copyBufferToBuffer(this.counts, 0, this.countsRead, 0, 16);
         this.device.queue.submit([encoder.finish()]);
+        if (timing) this.timer.collect();
         // Freed once the commands that use them have run.
         k.scan.releaseTransient();
         this.made++;
@@ -187,12 +229,13 @@ export class GpuIsosurface {
 
     destroy(): void {
         this.destroyed = true;
-        this.work?.buffers.forEach(b => b.destroy());
+        this.destroyWork();
         this.destroyOutput();
         this.params.destroy();
         this.counts.destroy();
         if (!this.reading) this.countsRead.destroy();
         this.drawArgs.destroy();
+        this.timer?.destroy();
     }
 
     /** In the background: if the room was too small, make more and the contour again. */
@@ -202,6 +245,7 @@ export class GpuIsosurface {
             const [vertices, triangles] = new Uint32Array(this.countsRead.getMappedRange(), 0, 2);
             this.countsRead.unmap();
             this.reading = false;
+            this.lastTriangles = triangles;
             if (this.destroyed) {
                 this.countsRead.destroy();
                 return;
@@ -216,19 +260,29 @@ export class GpuIsosurface {
         });
     }
 
-    private workBuffers(points: number, cells: number): GPUBuffer[] {
+    private workBuffers(points: number, cells: number): WorkBuffers {
         if (!this.work || this.work.points < points || this.work.cells < cells) {
-            this.work?.buffers.forEach(b => b.destroy());
+            this.destroyWork();
             const p = Math.ceil(points * 1.25), c = Math.ceil(cells * 1.25);
             const storage = (label: string, n: number) =>
                 this.device.createBuffer({ label: `map contour ${label}`, size: Math.max(16, n * 4), usage: STORAGE });
             this.work = {
                 points: p, cells: c,
-                buffers: [storage("field", p), storage("edge mask", p), storage("vertex count", p), storage("vertex offset", p),
-                    storage("triangle count", c), storage("triangle offset", c)],
+                buffers: {
+                    field: storage("field", p), edgeMask: storage("edge mask", p), vertexOffset: storage("vertex offset", p),
+                    keepMask: storage("keep mask", c),
+                    vertexChunkSum: storage("vertex chunk sums", chunksOf(p)), vertexChunkOffset: storage("vertex chunk offsets", chunksOf(p)),
+                    triangleChunkSum: storage("triangle chunk sums", chunksOf(c)),
+                    triangleChunkOffset: storage("triangle chunk offsets", chunksOf(c)),
+                },
             };
         }
         return this.work.buffers;
+    }
+
+    private destroyWork(): void {
+        if (this.work) Object.values(this.work.buffers).forEach(b => b.destroy());
+        this.work = null;
     }
 
     /** Room for a fifth of the box's points as vertices, and two triangles per vertex, at first. */

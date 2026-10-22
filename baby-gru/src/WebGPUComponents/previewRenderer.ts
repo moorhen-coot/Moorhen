@@ -11,6 +11,7 @@
  * from the WebGL view.
  */
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
+import { GpuSpanTimer } from './gpuSpanTimer';
 import { PREVIEW_WGSL } from './previewShaders';
 import {
     ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, planMeshChunks, planPreview,
@@ -148,6 +149,8 @@ export class WebGPUPreviewRenderer {
     }>();
     /** The largest GPU buffer this renderer makes; bigger meshes are drawn in chunks. */
     private readonly maxBufferBytes: number;
+    /** GPU time of each frame's render pass, where the device can time. */
+    private readonly frameTimer: GpuSpanTimer | null;
 
     /**
      * Ask for an adapter and device and configure the canvas. Rejects with a readable message if
@@ -163,7 +166,9 @@ export class WebGPUPreviewRenderer {
         // have 341 MB of indices). Ask for what the adapter can do; meshes bigger than even that
         // are drawn in chunks.
         // The storage binding limit likewise, for a map's whole unit cell (GPU map contours).
+        // Timestamps, where offered, for the GPU times on the status line (frames and map contours).
         const device = await adapter.requestDevice({
+            requiredFeatures: adapter.features.has("timestamp-query") ? ["timestamp-query"] : [],
             requiredLimits: {
                 maxBufferSize: adapter.limits.maxBufferSize,
                 maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize,
@@ -220,6 +225,15 @@ export class WebGPUPreviewRenderer {
             layout: this.frameLayout,
             entries: [{ binding: 0, resource: { buffer: this.frameBuffer } }],
         });
+        this.frameTimer = GpuSpanTimer.create(device, "preview frame");
+    }
+
+    /**
+     * The render passes' GPU time since the last call (mean and largest, ms, of the frames that
+     * were timed), or null if the device cannot time.
+     */
+    takeFrameGpuTime(): { meanMs: number; maxMs: number; count: number } | null {
+        return this.frameTimer?.take() ?? null;
     }
 
     /**
@@ -247,7 +261,9 @@ export class WebGPUPreviewRenderer {
 
         const background = camera.background_colour;
         const encoder = this.device.createCommandEncoder({ label: "preview frame" });
+        const timing = this.frameTimer?.writes() ?? null;
         const pass = encoder.beginRenderPass({
+            timestampWrites: timing ? timing(0, 1) : undefined,
             colorAttachments: [{
                 view: this.colourTarget.createView(),
                 resolveTarget: this.context.getCurrentTexture().createView(),
@@ -281,7 +297,9 @@ export class WebGPUPreviewRenderer {
                 this.gpuDrawUniforms.delete(key);
             }
         }
+        if (timing) this.frameTimer.resolve(encoder);
         this.device.queue.submit([encoder.finish()]);
+        if (timing) this.frameTimer.collect();
 
         return { plan, uploads, cpuMs: performance.now() - started };
     }
@@ -296,6 +314,7 @@ export class WebGPUPreviewRenderer {
         this.frameBuffer.destroy();
         this.gpuDrawUniforms.forEach(u => u.buffer.destroy());
         this.gpuDrawUniforms.clear();
+        this.frameTimer?.destroy();
         this.context.unconfigure();
         this.device.destroy();
     }

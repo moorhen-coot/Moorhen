@@ -62,6 +62,7 @@ const WebGPUPreview = () => {
         let failed = false;
         let frameRequest = 0;
         let lastStatus = 0;
+        let framesSinceStatus = 0;
         let unsubscribe: () => void = () => {};
 
         // After a WebGPU error, show it and stop drawing: every later frame would only repeat it
@@ -85,13 +86,20 @@ const WebGPUPreview = () => {
                 fail(err instanceof Error ? err.message : String(err));
                 return;
             }
+            framesSinceStatus++;
             const now = performance.now();
             if (now - lastStatus > STATUS_INTERVAL) {
+                // Frames drawn per second: as often as the scene asks, so a still scene shows few.
+                const fps = lastStatus > 0 ? framesSinceStatus * 1000 / (now - lastStatus) : 0;
                 lastStatus = now;
+                framesSinceStatus = 0;
                 const text = describeFrame(report);
-                setDrawn(text.drawn);
+                const gpu = renderer.takeFrameGpuTime();
+                const gpuText = gpu && gpu.count > 0 ? `, ${gpu.meanMs.toFixed(1)} ms GPU (slowest ${gpu.maxMs.toFixed(1)})` : "";
+                setDrawn(`${text.drawn}${gpuText}, ${fps.toFixed(0)} frames/s`);
                 setSkipped(text.skipped);
-                setMapStatus(maps?.status ?? "");
+                const contouring = maps?.takeTiming() ?? "";
+                setMapStatus([maps?.status ?? "", contouring].filter(Boolean).join(" · "));
             }
         };
         // Several drawScenes can happen in one frame (a hover and a camera step, say); one
