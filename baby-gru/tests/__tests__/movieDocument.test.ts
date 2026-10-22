@@ -102,7 +102,7 @@ describe("a new movie", () => {
         // A movie made without thinking about shadows should not have them, and the costly passes
         // are the ones most likely to turn a smooth export into a slow one.
         const { scene } = emptyMovie();
-        expect([scene.doShadow, scene.doSSAO, scene.doEdgeDetect, scene.useOffScreenBuffers])
+        expect([scene.doShadow, scene.doSSAO, scene.doEdgeDetect, scene.doDepthBlur])
             .toEqual([false, false, false, false]);
     });
 

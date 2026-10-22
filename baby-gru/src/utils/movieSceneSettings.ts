@@ -25,7 +25,7 @@ export interface SceneSettingsSource {
     edgeDetectDepthThreshold: number;
     edgeDetectNormalThreshold: number;
     doOutline: boolean;
-    useOffScreenBuffers: boolean;
+    doDepthBlur: boolean;
     /** The store's name for the depth-of-field blur width, which a movie calls blurRadius. */
     depthBlurRadius: number;
     doPerspectiveProjection: boolean;
@@ -52,7 +52,7 @@ export const movieSceneFrom = (
     edgeDetectDepthThreshold: settings.edgeDetectDepthThreshold,
     edgeDetectNormalThreshold: settings.edgeDetectNormalThreshold,
     doOutline: settings.doOutline,
-    useOffScreenBuffers: settings.useOffScreenBuffers,
+    doDepthBlur: settings.doDepthBlur,
     // The two that are not a straight copy. Both renamed deliberately when the movie document was
     // defined: "depthBlur" says how it is implemented, "blur radius" says what it does.
     blurRadius: settings.depthBlurRadius,

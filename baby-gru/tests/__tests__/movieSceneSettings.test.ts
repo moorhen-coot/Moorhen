@@ -21,7 +21,7 @@ const storeSettings: SceneSettingsSource = {
     edgeDetectDepthThreshold: 0.75,
     edgeDetectNormalThreshold: 0.25,
     doOutline: true,
-    useOffScreenBuffers: true,
+    doDepthBlur: true,
     depthBlurRadius: 7,
     doPerspectiveProjection: true,
 };
@@ -44,7 +44,7 @@ describe("recording the scene's modes", () => {
             doShadow: true, doSSAO: true, ssaoRadius: 2.5, ssaoBias: 0.05,
             doEdgeDetect: true, edgeDetectDepthScale: 1.5, edgeDetectNormalScale: 2.5,
             edgeDetectDepthThreshold: 0.75, edgeDetectNormalThreshold: 0.25,
-            doOutline: true, useOffScreenBuffers: true, blurRadius: 7,
+            doOutline: true, doDepthBlur: true, blurRadius: 7,
             doPerspectiveProjection: true, eyeDistance: 250,
         });
     });

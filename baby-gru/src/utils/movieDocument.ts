@@ -44,7 +44,7 @@ export interface MovieSceneSettings {
     edgeDetectNormalThreshold: number;
     doOutline: boolean;
     /** Whether depth of field runs at all. Where the focal plane sits is per keyframe. */
-    useOffScreenBuffers: boolean;
+    doDepthBlur: boolean;
     /**
      * How wide the depth-of-field blur is.
      *
@@ -110,7 +110,7 @@ export const DEFAULT_SCENE: MovieSceneSettings = {
     edgeDetectDepthThreshold: 1.0,
     edgeDetectNormalThreshold: 1.0,
     doOutline: false,
-    useOffScreenBuffers: false,
+    doDepthBlur: false,
     blurRadius: 3.0,
     doPerspectiveProjection: false,
     eyeDistance: 250,
