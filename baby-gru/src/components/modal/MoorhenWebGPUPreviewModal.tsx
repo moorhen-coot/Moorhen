@@ -7,6 +7,7 @@ import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/Draggable
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { PreviewFrameReport, WebGPUPreviewRenderer, webGPUUnavailableReason } from "../../WebGPUComponents/previewRenderer";
 import { describeSkipped } from "../../WebGPUComponents/previewScene";
+import { GpuMapLayer } from "../../WebGPUComponents/mapContour/gpuMapLayer";
 
 /** How often the status line may change, ms. It would otherwise re-render on every frame. */
 const STATUS_INTERVAL = 250;
@@ -37,6 +38,7 @@ const WebGPUPreview = () => {
     const [adapter, setAdapter] = useState<string>("");
     const [drawn, setDrawn] = useState<string>("Starting WebGPU…");
     const [skipped, setSkipped] = useState<string>("");
+    const [mapStatus, setMapStatus] = useState<string>("");
     const [error, setError] = useState<string | null>(webGPUUnavailableReason());
 
     useEffect(() => {
@@ -55,6 +57,7 @@ const WebGPUPreview = () => {
         }
 
         let renderer: WebGPUPreviewRenderer | null = null;
+        let maps: GpuMapLayer | null = null;
         let cancelled = false;
         let failed = false;
         let frameRequest = 0;
@@ -74,7 +77,10 @@ const WebGPUPreview = () => {
             if (!renderer || !gl || failed) return;
             let report: PreviewFrameReport;
             try {
-                report = renderer.render(store.getState().glRef.displayBuffers ?? [], gl);
+                const state = store.getState();
+                // Maps contoured on the GPU (dev menu): made, and drawn, without the CPU.
+                const gpuDraws = maps?.frame(state) ?? [];
+                report = renderer.render(state.glRef.displayBuffers ?? [], gl, gpuDraws);
             } catch (err) {
                 fail(err instanceof Error ? err.message : String(err));
                 return;
@@ -85,6 +91,7 @@ const WebGPUPreview = () => {
                 const text = describeFrame(report);
                 setDrawn(text.drawn);
                 setSkipped(text.skipped);
+                setMapStatus(maps?.status ?? "");
             }
         };
         // Several drawScenes can happen in one frame (a hover and a camera step, say); one
@@ -115,8 +122,18 @@ const WebGPUPreview = () => {
                 }
                 renderer = created;
                 setAdapter(created.adapterDescription);
-                unsubscribe = glRef.current?.onFrameDrawn(requestDraw) ?? unsubscribe;
+                const unsubscribeFrames = glRef.current?.onFrameDrawn(requestDraw) ?? (() => {});
+                // Map contour settings change without the WebGL view redrawing when the maps are
+                // contoured on the GPU, so follow the store too (coalesced like the rest).
+                const unsubscribeStore = store.subscribe(requestDraw);
+                unsubscribe = () => { unsubscribeFrames(); unsubscribeStore(); };
                 requestDraw();
+                GpuMapLayer.create(created.gpuDevice, requestDraw)
+                    .then(layer => {
+                        if (cancelled) layer.destroy();
+                        else { maps = layer; requestDraw(); }
+                    })
+                    .catch(err => console.warn("WebGPU preview: no GPU map contours:", err));
             })
             .catch(err => {
                 if (!cancelled) setError(err instanceof Error ? err.message : String(err));
@@ -127,6 +144,8 @@ const WebGPUPreview = () => {
             observer.disconnect();
             unsubscribe();
             if (frameRequest) cancelAnimationFrame(frameRequest);
+            maps?.destroy();
+            maps = null;
             renderer?.destroy();
             renderer = null;
         };
@@ -148,6 +167,7 @@ const WebGPUPreview = () => {
                 <div style={{ fontSize: "0.8rem", lineHeight: 1.3, opacity: 0.8 }}>
                     <div>{adapter ? `${adapter} · ${drawn}` : drawn}</div>
                     {skipped && <div>Not drawn yet: {skipped}</div>}
+                    {mapStatus && <div>{mapStatus}</div>}
                 </div>
             )}
         </div>

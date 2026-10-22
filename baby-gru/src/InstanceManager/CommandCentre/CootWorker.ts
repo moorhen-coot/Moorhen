@@ -562,6 +562,30 @@ const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo: libcootApi.MapMo
     return returnResult;
 }
 
+/**
+ * A map over one whole unit cell, every symmetry copy filled in, for contouring on the GPU. The
+ * values are sent back by transfer (see the 'coot_command' reply), not copied.
+ */
+const getMapUnitCellGrid = (imol: number) => {
+    // Added to Moorhen's wrappers (moorhen-wrappers-helpers.h) for WebGPU map contours.
+    const container = molecules_container as unknown as {
+        get_map_unit_cell_grid_info(imol: number): emscriptem.vector<number>;
+        get_map_unit_cell_grid(imol: number, out: Float32Array): void;
+    };
+    if (typeof container.get_map_unit_cell_grid_info !== "function") {
+        throw new Error("This build of the Coot WASM has no get_map_unit_cell_grid: rebuild it with the current wasm_src");
+    }
+    const infoVec = container.get_map_unit_cell_grid_info(imol);
+    const info: number[] = [];
+    for (let i = 0; i < infoVec.size(); i++) info.push(infoVec.get(i));
+    infoVec.delete();
+    if (info.length < 13) throw new Error(`Molecule ${imol} is not a map`);
+    const [nu, nv, nw] = info;
+    const data = new Float32Array(nu * nv * nw);
+    container.get_map_unit_cell_grid(imol, data);
+    return { nu, nv, nw, orth: info.slice(3, 12), isEM: info[12] !== 0, data };
+}
+
 const textureAsFloatsToJSTextureAsFloats = (data: libcootApi.textureAsFloats): libcootApi.textureAsFloatsJS => {
 
     const imageDataVecSize = data.width * data.height
@@ -1695,6 +1719,9 @@ const doCootCommand = (messageData: {
             case "shim_export_metaballs_as_mesh_file":
                 cootResult =  export_metaballs_as_mesh_file(...commandArgs as [number, string, number, number, number, string])
                 break
+            case "shim_get_map_unit_cell_grid":
+                cootResult = getMapUnitCellGrid(...commandArgs as [number])
+                break
             default:
                 console.log("Calling",command)
                 cootResult = molecules_container[command](...commandArgs)
@@ -2156,6 +2183,9 @@ const dispatchMessage = function (e: MessageEvent) {
 
     if (e.data.message === 'coot_command') {
         const result = doCootCommand(e.data)
-        postMessage(result)
+        // A unit-cell map grid can be hundreds of MB: hand its buffer over rather than copy it.
+        const grid = e.data.command === "shim_get_map_unit_cell_grid"
+            ? (result as { result?: { result?: { data?: unknown } } }).result?.result?.data : null
+        postMessage(result, grid instanceof Float32Array ? [grid.buffer] : [])
     }
 }

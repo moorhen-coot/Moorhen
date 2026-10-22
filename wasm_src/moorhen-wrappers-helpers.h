@@ -473,6 +473,50 @@ class molecules_container_js : public molecules_container_t {
             abort();
         }
 
+        // The map over one whole unit cell, every symmetry copy filled in, for contouring on
+        // the GPU (Moorhen's WebGPU map contours). A box anywhere then just wraps around the
+        // cell. For an EM map the cell is the box.
+        //
+        // Returns [nu, nv, nw, the 3x3 fractional-to-orthogonal matrix row by row, is EM (0/1)],
+        // or an empty vector if imol is not a map.
+        std::vector<double> get_map_unit_cell_grid_info(int imol) {
+            std::vector<double> info;
+            if (!is_valid_map_molecule(imol)) return info;
+            const clipper::Xmap<float> &xmap = (*this)[imol].xmap;
+            const clipper::Grid_sampling &gs = xmap.grid_sampling();
+            info.push_back(gs.nu());
+            info.push_back(gs.nv());
+            info.push_back(gs.nw());
+            const clipper::Mat33<> orth = xmap.cell().matrix_orth();
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                    info.push_back(orth(i, j));
+            info.push_back(is_EM_map(imol) ? 1.0 : 0.0);
+            return info;
+        }
+
+        // Fills `out`, a Float32Array of nu * nv * nw, with the map values at every grid point
+        // of the unit cell: index (w * nv + v) * nu + u. A plane at a time, so that the copy
+        // in WASM memory stays small.
+        void get_map_unit_cell_grid(int imol, const emscripten::val &out) {
+            if (!is_valid_map_molecule(imol)) return;
+            const clipper::Xmap<float> &xmap = (*this)[imol].xmap;
+            const clipper::Grid_sampling &gs = xmap.grid_sampling();
+            const int nu = gs.nu(), nv = gs.nv(), nw = gs.nw();
+            std::vector<float> plane(size_t(nu) * size_t(nv));
+            clipper::Xmap_base::Map_reference_coord iw(xmap, clipper::Coord_grid(0, 0, 0));
+            for (int w = 0; w < nw; w++, iw.next_w()) {
+                clipper::Xmap_base::Map_reference_coord iv = iw;
+                size_t k = 0;
+                for (int v = 0; v < nv; v++, iv.next_v()) {
+                    clipper::Xmap_base::Map_reference_coord iu = iv;
+                    for (int u = 0; u < nu; u++, iu.next_u()) plane[k++] = xmap[iu];
+                }
+                emscripten::val view{ emscripten::typed_memory_view(plane.size(), plane.data()) };
+                out.call<void>("set", view, double(size_t(w) * plane.size()));
+            }
+        }
+
         std::string get_validation(int imol){
             // mmdb::Manager *mol = get_mol(imol);
             // auto st = gemmi::copy_from_mmdb(mol);

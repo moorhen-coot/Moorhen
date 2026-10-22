@@ -32,6 +32,8 @@ import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "..
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
+import { gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
+import type { MoorhenMap } from "../../utils/MoorhenMap";
 
 import { readGzippedTextFile } from "../../utils/utils";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
@@ -197,6 +199,7 @@ export const MoorhenDevMenu = () => {
     const [syncingGpu, setSyncingGpu] = useState<boolean>(renderStats.syncGpu);
     const [gpuMetaBalls, setGpuMetaBalls] = useState<boolean>(gpuMetaBallsSetting.enabled);
     const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
+    const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.enabled);
     const glCtx = useSelector((state: RootState) => state.glRef.glCtx);
     const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately);
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
@@ -523,6 +526,23 @@ export const MoorhenDevMenu = () => {
                 onChange={() => {
                     gpuMetaBallsSetting.splitField = !splitField;
                     setSplitField(!splitField);
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={gpuMapContours}
+                label="Contour maps on the GPU (test; drawn in the WebGPU preview only)"
+                onChange={() => {
+                    const enabled = !gpuMapContours;
+                    gpuMapContourSetting.enabled = enabled;
+                    setGpuMapContours(enabled);
+                    // Take the maps off WebGL now, or give them back to Coot.
+                    const maps = store.getState().maps as unknown as MoorhenMap[];
+                    const visible = store.getState().mapContourSettings.visibleMaps;
+                    maps.forEach(map => {
+                        if (enabled) map.hideMapContour();
+                        else if (visible.includes(map.molNo)) map.drawMapContour();
+                    });
                 }}
             />
             <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>

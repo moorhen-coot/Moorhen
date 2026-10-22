@@ -26,6 +26,24 @@ const ShaderStage = { VERTEX: 0x1, FRAGMENT: 0x2 } as const;
 const SAMPLE_COUNT = 4;
 const DEPTH_FORMAT: GPUTextureFormat = "depth24plus";
 
+/**
+ * Something drawn straight from GPU buffers made on this renderer's device, with the draw's size
+ * in a buffer too (drawIndexedIndirect): map contours made on the GPU (../mapContour).
+ */
+export interface PreviewGpuDraw {
+    /** The same from frame to frame for the same thing, so its uniforms can be kept. */
+    key: string;
+    position: GPUBuffer;
+    normal: GPUBuffer;
+    /** uint32 indices, and the drawIndexedIndirect arguments for them at `drawArgsOffset`. */
+    index: GPUBuffer;
+    drawArgs: GPUBuffer;
+    drawArgsOffset: number;
+    topology: "triangle-list" | "line-list";
+    colour: [number, number, number, number];
+    transparent: boolean;
+}
+
 export interface PreviewFrameReport {
     plan: PreviewPlan;
     /** GPU buffers created this frame because a DisplayBuffer was new or had changed. */
@@ -102,6 +120,7 @@ export class WebGPUPreviewRenderer {
     private colourTarget: GPUTexture | null = null;
     private depthTarget: GPUTexture | null = null;
     private destroyed = false;
+    private readonly gpuDrawUniforms = new Map<string, { buffer: GPUBuffer; bindGroup: GPUBindGroup }>();
     /** The largest GPU buffer this renderer makes; bigger meshes are drawn in chunks. */
     private readonly maxBufferBytes: number;
 
@@ -118,7 +137,13 @@ export class WebGPUPreviewRenderer {
         // The default limit is 256 MB per buffer, which a big surface passes (1ibm's MetaBalls
         // have 341 MB of indices). Ask for what the adapter can do; meshes bigger than even that
         // are drawn in chunks.
-        const device = await adapter.requestDevice({ requiredLimits: { maxBufferSize: adapter.limits.maxBufferSize } });
+        // The storage binding limit likewise, for a map's whole unit cell (GPU map contours).
+        const device = await adapter.requestDevice({
+            requiredLimits: {
+                maxBufferSize: adapter.limits.maxBufferSize,
+                maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize,
+            },
+        });
         // The DOM library's getContext overloads do not include "webgpu" yet.
         const context = canvas.getContext("webgpu") as unknown as GPUCanvasContext | null;
         if (!context) throw new Error("The canvas would not give a WebGPU context.");
@@ -173,7 +198,12 @@ export class WebGPUPreviewRenderer {
      * The canvas's width and height are the caller's business (device pixels); this only follows
      * them.
      */
-    render(displayBuffers: readonly DisplayBuffer[], camera: PreviewCameraSource): PreviewFrameReport {
+    /** The device everything is drawn with: GPU buffers for gpuDraws must be made on it. */
+    get gpuDevice(): GPUDevice {
+        return this.device;
+    }
+
+    render(displayBuffers: readonly DisplayBuffer[], camera: PreviewCameraSource, gpuDraws: readonly PreviewGpuDraw[] = []): PreviewFrameReport {
         const started = performance.now();
         const canvas = this.context.canvas as HTMLCanvasElement;
         const width = Math.max(1, canvas.width);
@@ -210,8 +240,17 @@ export class WebGPUPreviewRenderer {
                 if (item.transparent !== transparent) continue;
                 this.drawOne(pass, item);
             }
+            for (const item of gpuDraws) {
+                if (item.transparent === transparent) this.drawGpu(pass, item);
+            }
         }
         pass.end();
+        for (const [key, uniforms] of this.gpuDrawUniforms) {
+            if (!gpuDraws.some(item => item.key === key)) {
+                uniforms.buffer.destroy();
+                this.gpuDrawUniforms.delete(key);
+            }
+        }
         this.device.queue.submit([encoder.finish()]);
 
         return { plan, uploads, cpuMs: performance.now() - started };
@@ -225,6 +264,8 @@ export class WebGPUPreviewRenderer {
         this.colourTarget?.destroy();
         this.depthTarget?.destroy();
         this.frameBuffer.destroy();
+        this.gpuDrawUniforms.forEach(u => u.buffer.destroy());
+        this.gpuDrawUniforms.clear();
         this.context.unconfigure();
         this.device.destroy();
     }
@@ -276,6 +317,23 @@ export class WebGPUPreviewRenderer {
             pass.setIndexBuffer(chunk.index, "uint32");
             pass.drawIndexed(chunk.indexCount, item.instanceCount, 0, chunk.baseVertex);
         }
+    }
+
+    private drawGpu(pass: GPURenderPassEncoder, item: PreviewGpuDraw): void {
+        let uniforms = this.gpuDrawUniforms.get(item.key);
+        if (!uniforms) {
+            const buffer = this.device.createBuffer({ label: `draw uniforms ${item.key}`, size: 32, usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST });
+            const bindGroup = this.device.createBindGroup({ layout: this.drawLayout, entries: [{ binding: 0, resource: { buffer } }] });
+            uniforms = { buffer, bindGroup };
+            this.gpuDrawUniforms.set(item.key, uniforms);
+        }
+        this.device.queue.writeBuffer(uniforms.buffer, 0, new Float32Array([...item.colour, 1, 0, 0, 0]));
+        pass.setPipeline(this.pipeline("mesh-uniform", item.transparent, item.topology));
+        pass.setBindGroup(1, uniforms.bindGroup);
+        pass.setVertexBuffer(0, item.position);
+        pass.setVertexBuffer(1, item.normal);
+        pass.setIndexBuffer(item.index, "uint32");
+        pass.drawIndexedIndirect(item.drawArgs, item.drawArgsOffset);
     }
 
     /**
@@ -424,8 +482,8 @@ export class WebGPUPreviewRenderer {
         };
     }
 
-    private pipeline(kind: PipelineKind, transparent: boolean): GPURenderPipeline {
-        const key = `${kind}|${transparent}`;
+    private pipeline(kind: PipelineKind, transparent: boolean, topology: "triangle-list" | "line-list" = "triangle-list"): GPURenderPipeline {
+        const key = `${kind}|${transparent}|${topology}`;
         const cached = this.pipelines.get(key);
         if (cached) return cached;
 
@@ -465,7 +523,7 @@ export class WebGPUPreviewRenderer {
                 }],
             },
             // The WebGL view draws with face culling off, back faces flat-shaded.
-            primitive: { topology: "triangle-list", cullMode: "none", frontFace: "ccw" },
+            primitive: { topology, cullMode: "none", frontFace: "ccw" },
             depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: !transparent, depthCompare: "less" },
             multisample: { count: SAMPLE_COUNT },
         });

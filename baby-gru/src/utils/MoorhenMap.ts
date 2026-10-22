@@ -1,4 +1,5 @@
 import { Store } from "@reduxjs/toolkit";
+import { gpuMapContourSetting } from "../WebGPUComponents/mapContour/setting";
 import { correctExportedGltf } from "./gltfWinding";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
@@ -846,6 +847,12 @@ export class MoorhenMap {
         contourLevel: number,
         style: "solid" | "lines" | "lit-lines"
     ): Promise<void> {
+        if (gpuMapContourSetting.enabled) {
+            // Contoured on the GPU and drawn by the WebGPU preview instead (dev menu): nothing to
+            // ask Coot for, and nothing for the WebGL view.
+            if (this.displayObjects["Coot"].length > 0) this.hideMapContour();
+            return;
+        }
         if (this.isOriginLocked) {
             if (this.drawOrigin === null) {
                 this.drawOrigin = [-x, -y, -z];
