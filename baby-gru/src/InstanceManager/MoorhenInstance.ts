@@ -49,6 +49,8 @@ import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
 import { startStoreSyncs } from "./StoreSync";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
+import { makeWebGPUApi } from "@/WebGPUComponents/instanceApi";
+import type { WebGPUApi } from "@/WebGPUComponents/instanceApi";
 import type { AppDispatch, MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 
 
@@ -706,6 +708,23 @@ export class MoorhenInstance extends StoreExtension {
                 return result;
             },
         };
+    }
+
+    /**
+     * Experimental: the WebGPU renderer, for tests and for trying it from the console.
+     *
+     * `snapshot()` draws what the main view shows with WebGPU, offscreen, with the main view's
+     * camera (only what the WebGPU renderer can draw yet; the rest is listed in `skipped`), and
+     * `webGLSnapshot()` reads the main view's own pixels to compare with. Neither changes the
+     * main view. Likely to change while the WebGPU renderer is built.
+     * @example
+     * if (instance.webGPU.available()) {
+     *     const gpu = await instance.webGPU.snapshot();
+     *     const gl = instance.webGPU.webGLSnapshot();
+     * }
+     */
+    public get webGPU(): WebGPUApi {
+        return makeWebGPUApi(this);
     }
 
     //========================================

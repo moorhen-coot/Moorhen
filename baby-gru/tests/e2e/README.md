@@ -38,6 +38,7 @@ This suite targets the standalone web component page in `webcomponent.html`.
 - Smoke tests in `webcomponent-smoke.spec.ts` cover ready state, search interaction, and WebGL pipeline health.
 - File-loading workflow tests in `load-files.spec.ts` cover molecule+map loading via `moorhenInstance.files.loadFiles` and post-load WebGL drawability checks.
 - The first app load can take longer due to WASM and worker initialization.
+- `webgpu-*.spec.ts` (WebGL against WebGPU) run only in the `chromium-webgpu` and `firefox-webgpu` projects, whose browsers start with WebGPU on (`tests/webgpuBrowsers.ts`); the `chromium` and `firefox` projects, and their strict baselines, skip them. Run them alone with `npm run test:e2e -- webgpu-parity`. They attach both renderers' pictures and their difference to the HTML report.
 
 ## Strict Pixel Baseline Mode (Default)
 

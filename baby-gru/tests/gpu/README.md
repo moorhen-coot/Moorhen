@@ -10,7 +10,9 @@ npm run test:gpu -- --project=gpu-chromium    # Chromium only
 npm run test:gpu -- -g "map contour"          # by title
 ```
 
-Browsers come from `npm run test:e2e:install`.
+Browsers come from `npm run test:e2e:install`. Their WebGPU settings are in
+`tests/webgpuBrowsers.ts`, shared with the WebGL-against-WebGPU e2e tests (`tests/e2e/webgpu-*.spec.ts`,
+projects `chromium-webgpu` and `firefox-webgpu`).
 
 - **Chromium** uses the machine's GPU, except on Linux, where it uses SwiftShader, a software GPU
   that any Linux box or CI runner has. `MOORHEN_GPU_SWIFTSHADER=1` (or `=0`) overrides that.

@@ -11,7 +11,8 @@
  * from the WebGL view.
  */
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
-import { BufferUsage, GpuSpanTimer, ShaderStage, TextureUsage, getGpuContext } from './gpu';
+import { BufferUsage, GpuSpanTimer, MapMode, ShaderStage, TextureUsage, getGpuContext } from './gpu';
+import { SnapshotTile, narrowToTile, planTiles } from './snapshotTiles';
 import { PREVIEW_WGSL } from './previewShaders';
 import {
     ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, planMeshChunks, planPreview,
@@ -28,6 +29,35 @@ export const thickLineHalfWidth = (lineWidth: number, zoom: number): number => 0
 
 const SAMPLE_COUNT = 4;
 const DEPTH_FORMAT: GPUTextureFormat = "depth24plus";
+/**
+ * The largest tile a snapshot is drawn in. Multisampled colour and depth take 32 bytes a pixel,
+ * so a 2048 x 2048 tile needs 128 MB on top of the image; bigger images are drawn in tiles.
+ */
+const MAX_SNAPSHOT_TILE = 2048;
+
+/** An image rendered offscreen: RGBA, 8 bits a channel, top row first. */
+export interface PreviewSnapshot {
+    width: number;
+    height: number;
+    data: Uint8ClampedArray;
+    /** What was drawn (the last tile's report: every tile draws the same things). */
+    report: PreviewFrameReport;
+    tiles: number;
+}
+
+/** Where one frame goes: the multisampled targets it is drawn into, and what they resolve to. */
+interface FrameTarget {
+    /** The whole image's size, which the camera frames. */
+    width: number;
+    height: number;
+    /** The part of it this frame draws, or null for all of it. */
+    tile: SnapshotTile | null;
+    colour: GPUTexture;
+    depth: GPUTexture;
+    resolve: GPUTextureView;
+    /** Whether to time the frame (canvas frames only, for the status line). */
+    timed: boolean;
+}
 
 /**
  * A triangle mesh drawn straight from GPU buffers made on this renderer's device, with the draw's
@@ -219,43 +249,125 @@ export class WebGPUPreviewRenderer {
         return this.frameTimer?.take() ?? null;
     }
 
+    /** The device everything is drawn with: GPU buffers for gpuDraws must be made on it. */
+    get gpuDevice(): GPUDevice {
+        return this.device;
+    }
+
     /**
      * Draw one frame of `displayBuffers` as seen by `camera`, at the canvas's current size.
      *
      * The canvas's width and height are the caller's business (device pixels); this only follows
      * them.
      */
-    /** The device everything is drawn with: GPU buffers for gpuDraws must be made on it. */
-    get gpuDevice(): GPUDevice {
-        return this.device;
-    }
-
     render(displayBuffers: readonly DisplayBuffer[], camera: PreviewCameraSource, gpuDraws: readonly PreviewGpuDraw[] = []): PreviewFrameReport {
-        const started = performance.now();
         const canvas = this.context.canvas as HTMLCanvasElement;
         const width = Math.max(1, canvas.width);
         const height = Math.max(1, canvas.height);
         this.ensureTargets(width, height);
+        return this.drawFrame(displayBuffers, camera, gpuDraws, {
+            width, height, tile: null, colour: this.colourTarget, depth: this.depthTarget,
+            resolve: this.context.getCurrentTexture().createView(), timed: true,
+        });
+    }
 
+    /**
+     * Render `width` x `height` pixels of the scene offscreen, as `render` would draw it on a
+     * canvas of that size, and read them back. Any size: images bigger than a tile (2048, or
+     * `maxTile`, or the device's largest texture) are drawn in tiles, each with the whole image's
+     * camera narrowed to the tile, so they join without seams.
+     *
+     * This waits for the GPU (it has to, to read the image), so it is for screenshots and tests,
+     * not for every frame.
+     */
+    async snapshot(displayBuffers: readonly DisplayBuffer[], camera: PreviewCameraSource, gpuDraws: readonly PreviewGpuDraw[],
+                   width: number, height: number, options: { maxTile?: number } = {}): Promise<PreviewSnapshot> {
+        width = Math.round(width);
+        height = Math.round(height);
+        const maxTile = Math.min(options.maxTile ?? MAX_SNAPSHOT_TILE, this.device.limits.maxTextureDimension2D);
+        const tiles = planTiles(width, height, maxTile);
+        const data = new Uint8ClampedArray(width * height * 4);
+        // The canvas format, so that the pipelines are shared; on some systems it is BGRA.
+        const bgra = this.format === "bgra8unorm";
+        let report: PreviewFrameReport;
+        let targets: { colour: GPUTexture; depth: GPUTexture } | null = null;
+        try {
+            for (const tile of tiles) {
+                if (!targets || targets.colour.width !== tile.width || targets.colour.height !== tile.height) {
+                    targets?.colour.destroy();
+                    targets?.depth.destroy();
+                    targets = this.multisampledTargets(tile.width, tile.height, "snapshot");
+                }
+                const image = this.device.createTexture({
+                    label: "snapshot tile", size: [tile.width, tile.height], format: this.format,
+                    usage: TextureUsage.RENDER_ATTACHMENT | TextureUsage.COPY_SRC,
+                });
+                // Rows of a texture copy are padded to 256 bytes.
+                const bytesPerRow = Math.ceil(tile.width * 4 / 256) * 256;
+                const readback = this.device.createBuffer({
+                    label: "snapshot tile read back", size: bytesPerRow * tile.height,
+                    usage: BufferUsage.MAP_READ | BufferUsage.COPY_DST,
+                });
+                try {
+                    report = this.drawFrame(displayBuffers, camera, gpuDraws, {
+                        width, height, tile, colour: targets.colour, depth: targets.depth, resolve: image.createView(), timed: false,
+                    });
+                    const encoder = this.device.createCommandEncoder({ label: "snapshot copy" });
+                    encoder.copyTextureToBuffer({ texture: image }, { buffer: readback, bytesPerRow }, [tile.width, tile.height]);
+                    this.device.queue.submit([encoder.finish()]);
+                    await readback.mapAsync(MapMode.READ);
+                    const rows = new Uint8Array(readback.getMappedRange());
+                    for (let row = 0; row < tile.height; row++) {
+                        const from = row * bytesPerRow;
+                        const to = ((tile.y + row) * width + tile.x) * 4;
+                        if (bgra) {
+                            for (let i = 0; i < tile.width * 4; i += 4) {
+                                data[to + i] = rows[from + i + 2];
+                                data[to + i + 1] = rows[from + i + 1];
+                                data[to + i + 2] = rows[from + i];
+                                data[to + i + 3] = rows[from + i + 3];
+                            }
+                        } else {
+                            data.set(rows.subarray(from, from + tile.width * 4), to);
+                        }
+                    }
+                } finally {
+                    image.destroy();
+                    readback.destroy();
+                }
+            }
+        } finally {
+            targets?.colour.destroy();
+            targets?.depth.destroy();
+        }
+        return { width, height, data, report, tiles: tiles.length };
+    }
+
+    private drawFrame(displayBuffers: readonly DisplayBuffer[], camera: PreviewCameraSource, gpuDraws: readonly PreviewGpuDraw[],
+                      target: FrameTarget): PreviewFrameReport {
+        const started = performance.now();
         const plan = planPreview(displayBuffers);
         const uploads = this.syncResources(displayBuffers, plan.draws);
 
-        this.device.queue.writeBuffer(this.frameBuffer, 0, frameUniforms(camera, width, height, this.frameData));
+        const uniforms = frameUniforms(camera, target.width, target.height, this.frameData);
+        // The projection is the frame's first 16 floats (Frame in previewShaders.ts).
+        if (target.tile) narrowToTile(uniforms, target.tile, target.width, target.height);
+        this.device.queue.writeBuffer(this.frameBuffer, 0, uniforms);
 
         const background = camera.background_colour;
         const encoder = this.device.createCommandEncoder({ label: "preview frame" });
-        const timing = this.frameTimer?.writes() ?? null;
+        const timing = target.timed ? this.frameTimer?.writes() ?? null : null;
         const pass = encoder.beginRenderPass({
             timestampWrites: timing ? timing(0, 1) : undefined,
             colorAttachments: [{
-                view: this.colourTarget.createView(),
-                resolveTarget: this.context.getCurrentTexture().createView(),
+                view: target.colour.createView(),
+                resolveTarget: target.resolve,
                 clearValue: { r: background[0], g: background[1], b: background[2], a: 1 },
                 loadOp: "clear",
                 storeOp: "discard",
             }],
             depthStencilAttachment: {
-                view: this.depthTarget.createView(),
+                view: target.depth.createView(),
                 depthClearValue: 1.0,
                 depthLoadOp: "clear",
                 depthStoreOp: "discard",
@@ -306,24 +418,27 @@ export class WebGPUPreviewRenderer {
         this.device.removeEventListener("uncapturederror", this.errorListener);
     }
 
+    /** The canvas's multisampled targets, remade when the canvas changes size. */
     private ensureTargets(width: number, height: number): void {
         if (this.colourTarget && this.colourTarget.width === width && this.colourTarget.height === height) return;
         this.colourTarget?.destroy();
         this.depthTarget?.destroy();
-        this.colourTarget = this.device.createTexture({
-            label: "preview colour (multisampled)",
-            size: [width, height],
-            format: this.format,
-            sampleCount: SAMPLE_COUNT,
-            usage: TextureUsage.RENDER_ATTACHMENT,
-        });
-        this.depthTarget = this.device.createTexture({
-            label: "preview depth",
-            size: [width, height],
-            format: DEPTH_FORMAT,
-            sampleCount: SAMPLE_COUNT,
-            usage: TextureUsage.RENDER_ATTACHMENT,
-        });
+        const targets = this.multisampledTargets(width, height, "preview");
+        this.colourTarget = targets.colour;
+        this.depthTarget = targets.depth;
+    }
+
+    private multisampledTargets(width: number, height: number, label: string): { colour: GPUTexture; depth: GPUTexture } {
+        return {
+            colour: this.device.createTexture({
+                label: `${label} colour (multisampled)`, size: [width, height], format: this.format,
+                sampleCount: SAMPLE_COUNT, usage: TextureUsage.RENDER_ATTACHMENT,
+            }),
+            depth: this.device.createTexture({
+                label: `${label} depth`, size: [width, height], format: DEPTH_FORMAT,
+                sampleCount: SAMPLE_COUNT, usage: TextureUsage.RENDER_ATTACHMENT,
+            }),
+        };
     }
 
     private drawOne(pass: GPURenderPassEncoder, item: PreviewDraw): void {

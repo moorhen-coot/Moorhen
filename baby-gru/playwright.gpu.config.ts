@@ -1,4 +1,5 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig } from "@playwright/test";
+import { webGPUChromium, webGPUFirefox } from "./tests/webgpuBrowsers";
 
 /**
  * GPU tests: WebGPU kernels and the WebGPU renderer, run in a browser page against CPU references.
@@ -8,24 +9,10 @@ import { defineConfig, devices } from "@playwright/test";
  *   npm run test:gpu                         # all projects
  *   npm run test:gpu -- --project=gpu-chromium
  *
- * Chromium uses the machine's GPU, except on Linux, where it uses SwiftShader (a software GPU
- * that every Linux box and CI runner has). MOORHEN_GPU_SWIFTSHADER=1 or =0 overrides that, and
- * MOORHEN_GPU_CHROMIUM points at a particular Chromium binary. Where a browser offers no WebGPU
- * (Playwright's Firefox, usually), the tests are skipped and say why rather than fail.
+ * The browsers are set up in tests/webgpuBrowsers.ts: Chromium uses the machine's GPU, except on
+ * Linux, where it uses SwiftShader. Where a browser offers no WebGPU (Playwright's Firefox,
+ * usually), the tests are skipped and say why rather than fail.
  */
-const swiftShader = process.env.MOORHEN_GPU_SWIFTSHADER !== undefined
-    ? process.env.MOORHEN_GPU_SWIFTSHADER !== "0"
-    : process.platform === "linux";
-
-const chromiumArgs = [
-    "--enable-unsafe-webgpu",
-    ...(swiftShader
-        ? ["--enable-features=Vulkan", "--use-vulkan=swiftshader", "--use-webgpu-adapter=swiftshader",
-            // Without this the GPU process falls back badly and the WebGPU device is lost.
-            "--use-angle=swiftshader"]
-        : []),
-];
-
 export default defineConfig({
     testDir: "./tests/gpu",
     testMatch: "**/*.gpu.spec.ts",
@@ -37,24 +24,11 @@ export default defineConfig({
     projects: [
         {
             name: "gpu-chromium",
-            use: {
-                ...devices["Desktop Chrome"],
-                // The full Chromium in its new headless mode: the old headless shell has no GPU.
-                channel: process.env.MOORHEN_GPU_CHROMIUM ? undefined : "chromium",
-                launchOptions: {
-                    args: chromiumArgs,
-                    executablePath: process.env.MOORHEN_GPU_CHROMIUM || undefined,
-                },
-            },
+            use: webGPUChromium,
         },
         {
             name: "gpu-firefox",
-            use: {
-                ...devices["Desktop Firefox"],
-                launchOptions: {
-                    firefoxUserPrefs: { "dom.webgpu.enabled": true, "gfx.webgpu.ignore-blocklist": true },
-                },
-            },
+            use: webGPUFirefox,
         },
     ],
 });
