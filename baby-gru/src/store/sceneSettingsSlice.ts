@@ -161,41 +161,14 @@ export const initialState: {
 export type SceneSettingsState = typeof initialState;
 
 /**
- * Fields that are not part of the look of a scene, so they are not saved in scene presets: the
- * viewport, camera and app theme, and the machine or debug settings kept as global user preferences
- * (switching scene must not change them).
- */
-const NON_SCENE_KEYS = [
-    "height",
-    "width",
-    "GlViewportHeight",
-    "GlViewportWidth",
-    "origin",
-    "zoom",
-    "isDark",
-    "depthPeelLayers",
-    "shadowMapQuality",
-    "doShadowDepthDebug",
-    "drawFPS",
-    "defaultBondSmoothness",
-] as const;
-
-/** Fog and clipping planes: only saved when they are set by hand (resetClippingFogging off), else they follow the zoom */
-const FOG_CLIP_KEYS: readonly string[] = ["fogStart", "fogEnd", "clipStart", "clipEnd"];
-
-/** The scene settings saved in a scene preset: only the values that differ from the defaults */
-export type SceneSettingsSnapshot = Partial<Omit<SceneSettingsState, (typeof NON_SCENE_KEYS)[number]>>;
-
-type SceneKey = keyof SceneSettingsSnapshot;
-
-const sceneKeys = (Object.keys(initialState) as (keyof SceneSettingsState)[]).filter(
-    key => !(NON_SCENE_KEYS as readonly string[]).includes(key)
-) as SceneKey[];
-
-/**
- * Scene settings that are user preferences of each built-in scene ("Default.doSSAO",
- * "Model Building.doSSAO"), saved explicitly with the scene's save button. Add or remove a setting
- * here to make it a per-scene preference or not. See src/.roadmaps/scene-preferences.md.
+ * The scene settings that make up the look of a scene: switching scene saves and restores them,
+ * and they are the user preferences of each built-in scene ("Default.doSSAO",
+ * "Model Building.doSSAO"), saved explicitly with the scene's save button. Every other field is
+ * not part of scenes, and switching scene leaves it alone: the viewport, camera and app theme, the
+ * machine or debug settings kept as global preferences (depthPeelLayers, shadowMapQuality, drawFPS,
+ * defaultBondSmoothness...), and the view modes and interaction aids (spin, stereo, multi-view,
+ * drawEnvBOcc). Add or remove a setting here to make it part of scenes or not.
+ * See src/.roadmaps/scene-preferences.md.
  */
 export const PER_SCENE_PREFERENCE_KEYS = [
     "drawCrosshairs",
@@ -229,12 +202,18 @@ export const PER_SCENE_PREFERENCE_KEYS = [
     "fogEnd",
     "clipStart",
     "clipEnd",
-] as const satisfies readonly SceneKey[];
+] as const satisfies readonly (keyof SceneSettingsState)[];
+
+/** Fog and clipping planes: only saved when they are set by hand (resetClippingFogging off), else they follow the zoom */
+const FOG_CLIP_KEYS: readonly string[] = ["fogStart", "fogEnd", "clipStart", "clipEnd"];
 
 export type PerSceneKey = (typeof PER_SCENE_PREFERENCE_KEYS)[number];
 
 /** The value of every per-scene preference of one scene */
 export type PerSceneSettings = Pick<SceneSettingsState, PerSceneKey>;
+
+/** The scene settings saved in a scene backup: only the values that differ from the defaults */
+export type SceneSettingsSnapshot = Partial<PerSceneSettings>;
 
 /** Whether two values of a scene setting are the same (arrays compared item by item) */
 export const isSameSceneSettingValue = (a: unknown, b: unknown): boolean => {
@@ -271,7 +250,7 @@ export const isSamePerSceneSettings = (a: PerSceneSettings, b: PerSceneSettings)
     PER_SCENE_PREFERENCE_KEYS.every(key => isSameSceneSettingValue(a[key], b[key]));
 
 /** Whether a value can be stored in `key` (same type as its default), to reject malformed injected scenes or stored preferences */
-export const isValidSceneSettingValue = (key: keyof SceneSettingsSnapshot, value: unknown): boolean => {
+export const isValidSceneSettingValue = (key: PerSceneKey, value: unknown): boolean => {
     const defaultValue = initialState[key];
     if (Array.isArray(defaultValue)) {
         return Array.isArray(value) && value.length === defaultValue.length && value.every(item => typeof item === typeof defaultValue[0]);
@@ -286,7 +265,7 @@ export const isValidSceneSettingValue = (key: keyof SceneSettingsSnapshot, value
  */
 export const getSceneSettingsSnapshot = (sceneSettings: SceneSettingsState): SceneSettingsSnapshot => {
     const snapshot: Record<string, unknown> = {};
-    for (const key of sceneKeys) {
+    for (const key of PER_SCENE_PREFERENCE_KEYS) {
         if (sceneSettings.resetClippingFogging && FOG_CLIP_KEYS.includes(key)) continue;
         const value = sceneSettings[key];
         if (!isSameSceneSettingValue(value, initialState[key])) {
@@ -571,8 +550,8 @@ const sceneSettingsSlice = createSlice({
         zoom unless the snapshot turns resetClippingFogging off. */
         applySceneSettingsSnapshot: (state, action: PayloadAction<SceneSettingsSnapshot>) => {
             const snapshot = action.payload ?? {};
-            const target = state as Record<SceneKey, unknown>;
-            for (const key of sceneKeys) {
+            const target = state as Record<PerSceneKey, unknown>;
+            for (const key of PER_SCENE_PREFERENCE_KEYS) {
                 const value = snapshot[key];
                 const useSaved = Object.hasOwn(snapshot, key) && isValidSceneSettingValue(key, value);
                 const newValue = useSaved ? value : initialState[key];

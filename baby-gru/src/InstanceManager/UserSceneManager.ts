@@ -44,14 +44,9 @@ type SceneBackupEntry = {
     /** Scene settings that differ from the defaults (lighting, background, effects...) */
     sceneSettings: SceneSettingsSnapshot;
     name: string;
-    /**
-     * The sceneSettings only override some settings on top of the current ones: a built-in scene
-     * starting from its saved settings, which only cover the per-scene preferences.
-     */
-    isPreset?: boolean;
     /** Snapshots only: the camera when the snapshot was taken */
     camera?: { origin: [number, number, number]; zoom: number; quat: number[] };
-    /** Snapshots only: the scene the snapshot was taken from, whose default style new molecules get */
+    /** Not for built-in scenes: the built-in scene this one was made from, whose default style new molecules get */
     baseScene?: string;
     /** Sections read from a file that this version does not know: kept so they are saved back unchanged */
     extraSections?: { [section: string]: unknown };
@@ -68,7 +63,6 @@ export const USER_SCENE_FORMAT_VERSION = 1;
 export type UserSceneFileEntry = {
     id: string;
     name: string;
-    isPreset?: boolean;
     baseScene?: string;
     camera?: { origin: [number, number, number]; zoom: number; quat: number[] };
     /** The objects the entry refers to (uid: name), to report the ones that are not loaded */
@@ -99,7 +93,6 @@ const isNumberArray = (value: unknown, length: number): value is number[] =>
 const toFileEntry = (scene: UserScene, backup: SceneBackupEntry | undefined): UserSceneFileEntry => {
     const entry: UserSceneFileEntry = { id: scene.id, name: scene.name };
     if (!backup) return entry;
-    if (backup.isPreset) entry.isPreset = true;
     if (backup.baseScene) entry.baseScene = backup.baseScene;
     if (backup.camera) entry.camera = backup.camera;
     entry.objects = { molecules: backup.molecules };
@@ -122,7 +115,6 @@ const fromFileEntry = (entry: UserSceneFileEntry): SceneBackupEntry | undefined 
         },
         sceneSettings: isObject(sceneSettings) ? sceneSettings : {},
     };
-    if (entry.isPreset === true) backup.isPreset = true;
     if (typeof entry.baseScene === "string") backup.baseScene = entry.baseScene;
     const camera = entry.camera;
     if (isObject(camera) && isNumberArray(camera.origin, 3) && typeof camera.zoom === "number" && isNumberArray(camera.quat, 4)) {
@@ -174,14 +166,13 @@ const BUILT_IN_SCENE_STYLES: Record<BuiltInSceneId, { defaultStyle: DefaultStyle
 /**
  * A built-in scene with no saved representations: every molecule gets the scene's default style
  * when shown.
- * @param isPreset - Layer the settings on top of the current ones (true) instead of the absolute defaults.
+ * @param sceneSettings - Its saved or default settings: they cover every scene setting.
  */
-const builtInSceneBackup = (sceneId: BuiltInSceneId, sceneSettings: PerSceneSettings, isPreset: boolean): SceneBackupEntry => ({
+const builtInSceneBackup = (sceneId: BuiltInSceneId, sceneSettings: PerSceneSettings): SceneBackupEntry => ({
     name: sceneId,
     representation: [],
     molecules: {},
     sceneSettings,
-    isPreset,
 });
 
 /**
@@ -205,7 +196,7 @@ export class MoorhenUserSceneManager {
     private instance: MoorhenInstance;
     // Until preferences are restored (applySavedScenes), the built-in scenes start from their defaults
     private backups: { [sceneId: string]: SceneBackupEntry } = Object.fromEntries(
-        BUILT_IN_SCENE_IDS.map(sceneId => [sceneId, builtInSceneBackup(sceneId, builtInSceneDefaults(sceneId), true)])
+        BUILT_IN_SCENE_IDS.map(sceneId => [sceneId, builtInSceneBackup(sceneId, builtInSceneDefaults(sceneId))])
     );
     // Not read from the store: two calls in the same tick must already see each other
     private isChanging: boolean = false;
@@ -241,8 +232,8 @@ export class MoorhenUserSceneManager {
     public applySavedScenes(): void {
         const { savedSceneSettings } = this.instance.store.getState().userScenes;
         for (const sceneId of BUILT_IN_SCENE_IDS) {
-            const backup = this.backups[sceneId] ?? builtInSceneBackup(sceneId, savedSceneSettings[sceneId], true);
-            this.backups[sceneId] = { ...backup, sceneSettings: savedSceneSettings[sceneId], isPreset: true };
+            const backup = this.backups[sceneId] ?? builtInSceneBackup(sceneId, savedSceneSettings[sceneId]);
+            this.backups[sceneId] = { ...backup, sceneSettings: savedSceneSettings[sceneId] };
         }
         this.backupsChanged();
         if (isBuiltInScene(this.selected)) this.applySceneSettings(this.backups[this.selected]);
@@ -459,7 +450,6 @@ export class MoorhenUserSceneManager {
         const backup: SceneBackupEntry = {
             ...target,
             sceneSettings: this.sceneSettingsOf(sourceId, this.instance.store.getState()),
-            isPreset: false,
             ...(withRepresentations ? this.representationsOf(sourceId) : {}),
         };
         this.backups[targetId] = backup;
@@ -558,7 +548,7 @@ export class MoorhenUserSceneManager {
         if (this.isChanging || this.isMoviePlaying || !isBuiltInScene(sceneId)) return false;
         const settings =
             to === "saved" ? this.instance.store.getState().userScenes.savedSceneSettings[sceneId] : builtInSceneDefaults(sceneId);
-        const backup = builtInSceneBackup(sceneId, settings, false);
+        const backup = builtInSceneBackup(sceneId, settings);
         // Keep the name if the user renamed the scene
         backup.name = this.list.find(scene => scene.id === sceneId)?.name ?? sceneId;
         this.backups[sceneId] = backup;
@@ -598,7 +588,7 @@ export class MoorhenUserSceneManager {
             return false;
         }
         const target = sceneId === this.selected || !this.backups[sceneId] ? this.captureSceneAs(sceneId) : this.backups[sceneId];
-        const backup: SceneBackupEntry = { ...target, sceneSettings, isPreset: false };
+        const backup: SceneBackupEntry = { ...target, sceneSettings};
         this.backups[sceneId] = backup;
         this.backupsChanged();
         if (sceneId === this.selected) this.applySceneSettings(backup);
@@ -638,7 +628,7 @@ export class MoorhenUserSceneManager {
     private savedBuiltInSceneBackups(): { [sceneId: string]: SceneBackupEntry } {
         const { savedSceneSettings } = this.instance.store.getState().userScenes;
         return Object.fromEntries(
-            BUILT_IN_SCENE_IDS.map(sceneId => [sceneId, builtInSceneBackup(sceneId, savedSceneSettings[sceneId], true)])
+            BUILT_IN_SCENE_IDS.map(sceneId => [sceneId, builtInSceneBackup(sceneId, savedSceneSettings[sceneId])])
         );
     }
 
@@ -647,7 +637,7 @@ export class MoorhenUserSceneManager {
         const backup = this.backups[sceneId];
         // A scene never visited starts as a copy of the current one
         if (sceneId === state.userScenes.selectedScene || !backup) return getSceneSettingsSnapshot(state.sceneSettings);
-        return backup.isPreset ? { ...getSceneSettingsSnapshot(state.sceneSettings), ...backup.sceneSettings } : { ...backup.sceneSettings };
+        return { ...backup.sceneSettings };
     }
 
     /** The representations a scene shows if it is selected, otherwise the ones it shows when selected again */
@@ -658,10 +648,7 @@ export class MoorhenUserSceneManager {
     }
 
     private applySceneSettings(backup: SceneBackupEntry) {
-        const sceneSettings = backup.isPreset
-            ? { ...getSceneSettingsSnapshot(this.instance.store.getState().sceneSettings), ...backup.sceneSettings }
-            : backup.sceneSettings;
-        this.instance.dispatch(applySceneSettingsSnapshot(sceneSettings));
+        this.instance.dispatch(applySceneSettingsSnapshot(backup.sceneSettings));
     }
 
     /**

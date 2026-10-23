@@ -2,7 +2,7 @@
  * Copying the parameters of one scene (or snapshot) into another (userScene.copyFrom), and
  * resetting a scene's settings (userScene.resetSettings).
  */
-import { setDefaultBondSmoothness, setDoSSAO, setSsaoRadius } from "@/store/sceneSettingsSlice";
+import { setDefaultBondSmoothness, setDoAnaglyphStereo, setDoSSAO, setDoSpin, setSsaoRadius } from "@/store/sceneSettingsSlice";
 import { createCloudInstance, loadCootModules, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
 jest.setTimeout(60000);
@@ -141,5 +141,33 @@ describe("global settings", () => {
         cloud.store.dispatch(setDefaultBondSmoothness(1));
         await userScene.select("Default");
         expect(sceneSettings().defaultBondSmoothness).toBe(1);
+    });
+});
+
+describe("view modes", () => {
+    test("spin and stereo are not part of a scene: switching leaves them alone, on every visit", async () => {
+        const userScene = cloud.instance.userScene;
+        cloud.store.dispatch(setDoSpin(true));
+        cloud.store.dispatch(setDoAnaglyphStereo(true));
+        // First visit of Model Building, then later visits of both scenes
+        for (const sceneId of ["Model Building", "Default", "Model Building", "Default"]) {
+            await userScene.select(sceneId);
+            expect(sceneSettings().doSpin).toBe(true);
+            expect(sceneSettings().doAnaglyphStereo).toBe(true);
+        }
+        cloud.store.dispatch(setDoSpin(false));
+        await userScene.select("Model Building");
+        expect(sceneSettings().doSpin).toBe(false);
+    });
+
+    test("a built-in scene looks the same on its first visit and after", async () => {
+        const userScene = cloud.instance.userScene;
+        await userScene.select("Model Building");
+        const firstVisit = { ...sceneSettings() };
+        await userScene.select("Default");
+        await userScene.select("Model Building");
+        const { zoom: _zoomNow, origin: _originNow, ...rest } = sceneSettings();
+        const { zoom: _zoom, origin: _origin, ...firstRest } = firstVisit;
+        expect(rest).toEqual(firstRest);
     });
 });
