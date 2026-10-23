@@ -14,6 +14,7 @@ import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { CameraFrame, viewProjection } from '../WebGLgComponents/mgWebGLParts/projection';
 import { isFaded, shouldDraw } from '../WebGLgComponents/objectFade';
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
+import { type BufferMaterial, materialTextureIds } from '../WebGLgComponents/textureRegistry';
 import type { TextSource } from './textLayer';
 import type { OverlayLinesSource } from './overlayLines';
 import type { TexturedShapeSource } from './texturedShapes';
@@ -100,6 +101,12 @@ export interface PreviewDraw {
     moving: boolean;
     /** And, while moving, with drawCore's pulsing ambient light (meshes and spheres, not lines). */
     glow: boolean;
+    /**
+     * For a mesh with textures and a texture coordinate per vertex (triangleTextureCoords): what
+     * it is textured with. Null otherwise. Whether its textures are actually registered is the
+     * renderer's to find out; one that is not is drawn as if it were absent, as in WebGL.
+     */
+    material: BufferMaterial | null;
 }
 
 export interface PreviewPlan {
@@ -222,11 +229,22 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
                 transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
                 vertexCount, indexCount, instanceCount,
                 ...copiesOf(buffer), moving, glow: moving,
+                material: materialOf(buffer, j, vertexCount),
             });
             triangles += (indexCount / 3) * instanceCount * (1 + draws[draws.length - 1].copies.length);
         }
     }
     return { draws, skipped: skips.counts, triangles, spheres, segments, skippedSubBuffers: skips.list };
+}
+
+/**
+ * A mesh sub-buffer's material, if it has a texture of any kind and a texture coordinate per
+ * vertex - the same test drawCore makes before binding one (a two-component coordinate buffer).
+ */
+function materialOf(buffer: DisplayBuffer, j: number, vertexCount: number): BufferMaterial | null {
+    const material = buffer.materials?.[j];
+    if (materialTextureIds(material).length === 0) return null;
+    return lengthOf(buffer.triangleTextureCoords?.[j]) === vertexCount * 2 ? material : null;
 }
 
 /**
@@ -252,7 +270,7 @@ function planSpheres(buffer: DisplayBuffer, j: number, skips: Skips): PreviewDra
         buffer, index: j, primitive: "spheres", instanced: true, colourSource: "instance",
         transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
         vertexCount: 4, indexCount: 6, instanceCount: n,
-        ...copiesOf(buffer), moving, glow: moving,
+        ...copiesOf(buffer), moving, glow: moving, material: null,
     };
 }
 
@@ -294,7 +312,7 @@ function planLines(buffer: DisplayBuffer, j: number, lit: boolean, skips: Skips)
         colourSource: hasCustom ? "uniform" : "vertex",
         transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
         vertexCount: useIndices ? vertexCount : vertexCount - (vertexCount % 2), indexCount, instanceCount: 1,
-        copies: [], greyCopies: false, moving, glow: false,
+        copies: [], greyCopies: false, moving, glow: false, material: null,
     };
 }
 

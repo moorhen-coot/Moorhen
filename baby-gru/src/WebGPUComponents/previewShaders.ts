@@ -3,7 +3,8 @@
  *
  * A transcription of the parts of webgl-2/triangle-vertex-shader.js,
  * triangle-instanced-vertex-shader.js and triangle-fragment-shader.js that apply with shadows,
- * SSAO, edge detection, textures, hover highlighting and depth peeling all off. Keep the lighting
+ * SSAO, edge detection, hover highlighting and depth peeling all off. Textured meshes (base
+ * colour, normal and metallic-roughness maps) have entry points of their own: fs_textured. Keep the lighting
  * in step with the fragment shader there, or the two views will drift apart in ways that look
  * like bugs in whichever one is newer.
  *
@@ -92,12 +93,19 @@ fn vs_mesh_uniform_colour(@location(0) position: vec3f, @location(1) normal: vec
 
 // As the WebGL instanced shader: the orientation is applied to the scaled vertex with w = 1 and
 // the result's w forced back to 1, and the normal is rotated with w = 1 too.
+fn instanceWorld(position: vec3f, origin: vec3f, size: vec3f, o0: vec4f, o1: vec4f, o2: vec4f, o3: vec4f) -> vec4f {
+    var world = vec4f(origin, 1.0) + mat4x4f(o0, o1, o2, o3) * vec4f(size * position, 1.0);
+    world.w = 1.0;
+    return world;
+}
+
+fn instanceNormal(normal: vec3f, o0: vec4f, o1: vec4f, o2: vec4f, o3: vec4f) -> vec3f {
+    return (mat4x4f(o0, o1, o2, o3) * vec4f(normal, 1.0)).xyz;
+}
+
 fn placeInstance(position: vec3f, normal: vec3f, origin: vec3f, size: vec3f,
                  o0: vec4f, o1: vec4f, o2: vec4f, o3: vec4f, colour: vec4f) -> VOut {
-    let orientation = mat4x4f(o0, o1, o2, o3);
-    var world = vec4f(origin, 1.0) + orientation * vec4f(size * position, 1.0);
-    world.w = 1.0;
-    return finish(world, (orientation * vec4f(normal, 1.0)).xyz, colour);
+    return finish(instanceWorld(position, origin, size, o0, o1, o2, o3), instanceNormal(normal, o0, o1, o2, o3), colour);
 }
 
 // Used for both per-vertex and per-instance colours: the pipeline's step mode is the difference.
@@ -142,6 +150,134 @@ fn fs_main(in: VOut, @builtin(front_facing) frontFacing: bool) -> @location(0) v
     // Back faces are drawn flat in their own colour, as in WebGL.
     let colour = select(in.colour, lit(in.colour, in.normal), frontFacing);
     return fogged(colour, in.colour.a, in.eyeDistance);
+}
+
+// Textured meshes: a sub-buffer with a BufferMaterial (textureRegistry.ts) and a texture
+// coordinate per vertex, as triangle-fragment-shader.js draws them - the base colour multiplied
+// into the vertex colour, a tangent-space normal map, and a metallic-roughness map that reshapes
+// the highlight. Separate entry points and pipelines, so that the untextured meshes - nearly
+// everything - go through fs_main exactly as before.
+struct Material {
+    flags: vec4f,        // 1 where there is a base colour, a normal map, a metallic-roughness map
+    factors: vec4f,      // normal scale, metallic factor, roughness factor
+};
+
+@group(2) @binding(7) var<uniform> material: Material;
+@group(2) @binding(8) var materialSampler: sampler;
+@group(2) @binding(9) var baseColourMap: texture_2d<f32>;
+@group(2) @binding(10) var normalMap: texture_2d<f32>;
+@group(2) @binding(11) var metallicRoughnessMap: texture_2d<f32>;
+
+struct TexturedOut {
+    @builtin(position) position: vec4f,
+    @location(0) colour: vec4f,
+    @location(1) normal: vec3f,
+    @location(2) eyeDistance: f32,
+    @location(3) uv: vec2f,
+    // Where the vertex is, in the frame the normal is in, for the normal map's tangent frame.
+    @location(4) world: vec3f,
+};
+
+fn textured(world: vec4f, normal: vec3f, colour: vec4f, uv: vec2f) -> TexturedOut {
+    let v = finish(world, normal, colour);
+    var out: TexturedOut;
+    out.position = v.position;
+    out.colour = v.colour;
+    out.normal = v.normal;
+    out.eyeDistance = v.eyeDistance;
+    out.uv = uv;
+    out.world = (draw.model * world).xyz;
+    return out;
+}
+
+@vertex
+fn vs_mesh_vertex_colour_textured(@location(0) position: vec3f, @location(1) normal: vec3f,
+                                  @location(2) colour: vec4f, @location(9) uv: vec2f) -> TexturedOut {
+    return textured(vec4f(position, 1.0), normal, colour, uv);
+}
+
+@vertex
+fn vs_mesh_uniform_colour_textured(@location(0) position: vec3f, @location(1) normal: vec3f,
+                                   @location(9) uv: vec2f) -> TexturedOut {
+    return textured(vec4f(position, 1.0), normal, draw.colour, uv);
+}
+
+@vertex
+fn vs_instanced_attribute_colour_textured(@location(0) position: vec3f, @location(1) normal: vec3f,
+                                          @location(2) colour: vec4f,
+                                          @location(3) origin: vec3f, @location(4) size: vec3f,
+                                          @location(5) o0: vec4f, @location(6) o1: vec4f,
+                                          @location(7) o2: vec4f, @location(8) o3: vec4f,
+                                          @location(9) uv: vec2f) -> TexturedOut {
+    return textured(instanceWorld(position, origin, size, o0, o1, o2, o3), instanceNormal(normal, o0, o1, o2, o3), colour, uv);
+}
+
+@vertex
+fn vs_instanced_uniform_colour_textured(@location(0) position: vec3f, @location(1) normal: vec3f,
+                                        @location(3) origin: vec3f, @location(4) size: vec3f,
+                                        @location(5) o0: vec4f, @location(6) o1: vec4f,
+                                        @location(7) o2: vec4f, @location(8) o3: vec4f,
+                                        @location(9) uv: vec2f) -> TexturedOut {
+    return textured(instanceWorld(position, origin, size, o0, o1, o2, o3), instanceNormal(normal, o0, o1, o2, o3), draw.colour, uv);
+}
+
+// lit, with what a metallic-roughness map changes: the highlight's exponent and colour, and the
+// share of diffuse light.
+fn litSurface(base: vec4f, n: vec3f, shininess: f32, specularTint: vec4f, diffuseShare: f32) -> vec4f {
+    let L = frame.lightDir.xyz;
+    let E = frame.eyeDir.xyz;
+    let R = normalize(-reflect(L, n));
+    let diffuse = frame.diffuse * max(dot(n, L), 0.0) * diffuseShare;
+    let specular = specularTint * frame.specular * pow(max(dot(R, E), 0.0), shininess);
+    return 1.5 * base * ambientLight() + 1.2 * base * diffuse + specular;
+}
+
+// The normal map's normal, as mappedNormal in triangle-fragment-shader.js: the directions in
+// which u and v increase along the surface, solved for from the screen-space derivatives of
+// position and coordinate (so independent of which way the screen's y runs - WebGPU's is down,
+// WebGL's up), made perpendicular to the interpolated normal; glTF's +Y is up the image, minus v.
+fn mappedNormal(N: vec3f, sampled: vec3f, dp1: vec3f, dp2: vec3f, duv1: vec2f, duv2: vec2f) -> vec3f {
+    let m = vec3f((sampled.xy * 2.0 - 1.0) * material.factors.x, sampled.z * 2.0 - 1.0);
+    let det = duv1.x * duv2.y - duv1.y * duv2.x;
+    var t = dp1 * duv2.y - dp2 * duv1.y;
+    var b = dp2 * duv1.x - dp1 * duv2.x;
+    t -= N * dot(N, t);
+    b -= N * dot(N, b);
+    if (abs(det) < 1e-20 || dot(t, t) < 1e-20 || dot(b, b) < 1e-20) { return N; }
+    let handed = select(1.0, -1.0, det < 0.0);
+    return normalize(handed * (normalize(t) * m.x - normalize(b) * m.y) + N * m.z);
+}
+
+@fragment
+fn fs_textured(in: TexturedOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+    // Everything that takes derivatives first, while control flow is still uniform. A map the
+    // material does not have is a 1 x 1 stand-in, so sampling it costs next to nothing.
+    let baseSample = textureSample(baseColourMap, materialSampler, in.uv);
+    let normalSample = textureSample(normalMap, materialSampler, in.uv).xyz;
+    let mrSample = textureSample(metallicRoughnessMap, materialSampler, in.uv);
+    let dp1 = dpdx(in.world);
+    let dp2 = dpdy(in.world);
+    let duv1 = dpdx(in.uv);
+    let duv2 = dpdy(in.uv);
+
+    var colour = in.colour;
+    if (material.flags.x > 0.5) { colour = vec4f(colour.rgb * baseSample.rgb, colour.a); }
+    var n = normalize(in.normal);
+    if (material.flags.y > 0.5) { n = mappedNormal(n, normalSample, dp1, dp2, duv1, duv2); }
+    var shininess = frame.params.z;
+    var specularTint = vec4f(1.0);
+    var diffuseShare = 1.0;
+    if (material.flags.z > 0.5) {
+        let roughness = clamp(mrSample.g * material.factors.z, 0.05, 1.0);
+        let metallic = clamp(mrSample.b * material.factors.y, 0.0, 1.0);
+        let r2 = roughness * roughness;
+        shininess = clamp((2.0 / (r2 * r2) - 2.0) / 4.0, 1.0, 1024.0);
+        specularTint = vec4f(mix(vec3f(1.0), colour.rgb, metallic) * (1.0 - roughness), 1.0);
+        diffuseShare = 1.0 - metallic;
+    }
+    // Back faces flat in their (textured) colour, as fs_main.
+    let shaded = select(colour, litSurface(colour, n, shininess, specularTint, diffuseShare), frontFacing);
+    return fogged(shaded, in.colour.a, in.eyeDistance);
 }
 
 // Thick lines, drawn from a triangle mesh's own buffers: each edge of each triangle is a quad

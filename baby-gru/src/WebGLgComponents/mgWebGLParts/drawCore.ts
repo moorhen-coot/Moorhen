@@ -93,7 +93,9 @@ function shadowCasterBounds(self: MGWebGL, displayBuffers: any[]): ShadowCasterB
  *   4  glTF base colour.
  *   5  OPAQUE_DEPTH_TEXTURE_UNIT.
  *   6  SHADOW_TEXTURE_UNIT.
- *   7-9 the G-buffer attachments during the SSAO pass.
+ *   7-9 the G-buffer attachments during the SSAO pass, and the hover influence textures.
+ *  10  glTF normal map (NORMAL_MAP_TEXTURE_UNIT).
+ *  11  glTF metallic-roughness map (METALLIC_ROUGHNESS_TEXTURE_UNIT).
  */
 
 /**
@@ -109,6 +111,12 @@ function shadowCasterBounds(self: MGWebGL, displayBuffers: any[]): ShadowCasterB
  * and was fine the rest of the time. Hence the table above.
  */
 const SHADOW_TEXTURE_UNIT = 6;
+
+/** Where a mesh's glTF normal map is read from. */
+const NORMAL_MAP_TEXTURE_UNIT = 10;
+
+/** Where a mesh's glTF metallic-roughness map is read from. */
+const METALLIC_ROUGHNESS_TEXTURE_UNIT = 11;
 
 /**
  * Everything a program built from the triangle fragment shader has to be told, per draw.
@@ -146,6 +154,31 @@ function setTriangleFragmentUniforms(self: MGWebGL, program: any, alphaMultiplie
     if (program.alphaMultiplier != null) {
         self.gl.uniform1f(program.alphaMultiplier, alphaMultiplier);
     }
+    // Their own units whether or not anything is bound there, so that an unassigned sampler
+    // never lands on unit 0 alongside whatever that holds. The flags that say whether to sample
+    // them are set per sub-buffer, in the triangle loop.
+    if (program.normalTexture != null) {
+        self.gl.uniform1i(program.normalTexture, NORMAL_MAP_TEXTURE_UNIT);
+    }
+    if (program.metallicRoughnessTexture != null) {
+        self.gl.uniform1i(program.metallicRoughnessTexture, METALLIC_ROUGHNESS_TEXTURE_UNIT);
+    }
+}
+
+/**
+ * Bind one of a mesh's textures (a base colour, a normal map, a metallic-roughness map) to its
+ * unit and point its sampler there, leaving that unit active. False, and nothing bound, when the
+ * mesh has no such texture, the program no such sampler, or the id does not resolve - which callers
+ * treat as "draw without it".
+ */
+function bindSurfaceMap(self: MGWebGL, id: string | undefined, unit: number, sampler: WebGLUniformLocation | null): boolean {
+    if (!id || sampler == null) return false;
+    const texture = glTextureFor(self.gl, id);
+    if (!texture) return false;
+    self.gl.uniform1i(sampler, unit);
+    self.gl.activeTexture(self.gl.TEXTURE0 + unit);
+    self.gl.bindTexture(self.gl.TEXTURE_2D, texture);
+    return true;
 }
 
 /** Where the previous peel layer's depth is read from. */
@@ -783,13 +816,14 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     }
                 }
 
-                // This sub-buffer's base colour texture, if it has one, on unit 4.
+                // This sub-buffer's base colour texture, if it has one, on unit 4, and its normal
+                // and metallic-roughness maps on 10 and 11 (the unit table at the top).
                 //
                 // Unit 4 because the whole of this loop assumes 0, 1 and 2 hold the shadow, SSAO
                 // and edge-detect maps, 3 is the depth peel, and 7 to 9 are the hover influence
-                // textures; 4 to 6 are the free ones. In particular unit 0 is bound to the shadow
-                // map once before this loop starts and only the uniform is re-set inside it, so
-                // binding anything there would silently turn shadows into nonsense.
+                // textures. In particular unit 0 is bound to the shadow map once before this loop
+                // starts and only the uniform is re-set inside it, so binding anything there
+                // would silently turn shadows into nonsense.
                 //
                 // Bound per sub-buffer rather than once per frame because the binding does not
                 // survive a frame: the depth-peel passes and the screenshot path both recreate
@@ -800,7 +834,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 // a unit, so they rely on 0 being current; and this loop leaves activeTexture on
                 // unit 9 after a hovered buffer, which is why it is set explicitly here too
                 // rather than assumed.
-                let boundBaseColourTexture: WebGLTexture | null = null;
+                let boundSurfaceTexture = false;
                 if(theShader.hasBaseColourTexture!=null){
                     const material = displayBuffers[idx].materials?.[j];
                     const textureBuffer = displayBuffers[idx].triangleVertexTextureBuffer[j];
@@ -818,23 +852,38 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         && !calculatingShadowMap
                         && !self.drawingGBuffers
                         && !self.stencilPass
-                        && !!material?.baseColourTexture
+                        && !!material
                         && !!textureBuffer && textureBuffer.itemSize === 2
                         && theShader.vertexTextureAttribute!=null && theShader.vertexTextureAttribute>-1;
 
-                    if(wanted) boundBaseColourTexture = glTextureFor(self.gl, material.baseColourTexture);
-
-                    if(boundBaseColourTexture){
-                        self.gl.uniform1i(theShader.baseColourTexture, 4);
-                        self.gl.activeTexture(self.gl.TEXTURE4);
-                        self.gl.bindTexture(self.gl.TEXTURE_2D, boundBaseColourTexture);
-                        self.gl.activeTexture(self.gl.TEXTURE0);
-                        self.gl.uniform1i(theShader.hasBaseColourTexture, 1);
-                    } else {
-                        // Set every time, not just when turning it off: this is a uniform on a
-                        // shared program, so a previous sub-buffer's texture would otherwise go
-                        // on being sampled by an untextured one.
-                        self.gl.uniform1i(theShader.hasBaseColourTexture, 0);
+                    // Each map is bound, and its flag set, only if it resolves to a texture. The
+                    // base colour flag is written every time, not just when turning it on: it is a
+                    // uniform on a shared program, so a previous sub-buffer's texture would
+                    // otherwise go on being sampled by an untextured one. The two map flags are
+                    // written only when they change, remembered on the program, since nothing
+                    // else writes them and almost nothing has maps - so the untextured majority
+                    // pays one uniform write a sub-buffer here, as it always has.
+                    const base = wanted && bindSurfaceMap(self, material?.baseColourTexture, 4, theShader.baseColourTexture);
+                    self.gl.uniform1i(theShader.hasBaseColourTexture, base ? 1 : 0);
+                    const normal = wanted
+                        && bindSurfaceMap(self, material?.normalTexture, NORMAL_MAP_TEXTURE_UNIT, theShader.normalTexture);
+                    const metallicRoughness = wanted
+                        && bindSurfaceMap(self, material?.metallicRoughnessTexture, METALLIC_ROUGHNESS_TEXTURE_UNIT, theShader.metallicRoughnessTexture);
+                    if(theShader.hasNormalTexture!=null && theShader._normalMapOn !== normal){
+                        self.gl.uniform1i(theShader.hasNormalTexture, normal ? 1 : 0);
+                        theShader._normalMapOn = normal;
+                    }
+                    if(theShader.hasMetallicRoughnessTexture!=null && theShader._metallicRoughnessOn !== metallicRoughness){
+                        self.gl.uniform1i(theShader.hasMetallicRoughnessTexture, metallicRoughness ? 1 : 0);
+                        theShader._metallicRoughnessOn = metallicRoughness;
+                    }
+                    boundSurfaceTexture = base || normal || metallicRoughness;
+                    if(boundSurfaceTexture) self.gl.activeTexture(self.gl.TEXTURE0);
+                    if(normal && theShader.normalScale!=null){
+                        self.gl.uniform1f(theShader.normalScale, material?.normalScale ?? 1);
+                    }
+                    if(metallicRoughness && theShader.metallicRoughnessFactors!=null){
+                        self.gl.uniform2f(theShader.metallicRoughnessFactors, material?.metallicFactor ?? 1, material?.roughnessFactor ?? 1);
                     }
                 }
 
@@ -858,7 +907,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 // mesh vertex shaders and bound to location 3, and the loop above has just
                 // disabled every array - so leaving it alone gives the shader the generic
                 // attribute value, which is what every untextured mesh has always had.
-                if(boundBaseColourTexture){
+                if(boundSurfaceTexture){
                     self.gl.enableVertexAttribArray(theShader.vertexTextureAttribute);
                     self.gl.bindBuffer(self.gl.ARRAY_BUFFER, displayBuffers[idx].triangleVertexTextureBuffer[j]);
                     self.gl.vertexAttribPointer(theShader.vertexTextureAttribute, 2, self.gl.FLOAT, false, 0, 0);

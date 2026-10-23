@@ -6,7 +6,8 @@
  * those until the DisplayBuffer's data changes or the buffer leaves the scene.
  *
  * What it does not do yet is listed in planPreview; what it does is triangles lit and fogged as the
- * WebGL triangle shader has them, perfect spheres as impostors, GPU-resident meshes (map contours)
+ * WebGL triangle shader has them (textured too: base colour, normal and metallic-roughness maps,
+ * see surfaceTextures.ts), perfect spheres as impostors, GPU-resident meshes (map contours)
  * as surfaces or thick lines, 4x multisampling, and a second, blended pass for transparent
  * geometry - unsorted and without depth peeling, so overlapping transparent surfaces can differ
  * from the WebGL view.
@@ -19,6 +20,7 @@ import { PREVIEW_WGSL } from './previewShaders';
 import { TextLayer, textBatchesOf } from './textLayer';
 import { OverlayLines, overlayLineBatchesOf } from './overlayLines';
 import { TexturedShapeLayer } from './texturedShapes';
+import { SurfaceTextures } from './surfaceTextures';
 import {
     ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, symmetryCopyGrey,
 } from './previewScene';
@@ -129,6 +131,8 @@ interface ChunkResources {
     normal: GPUBuffer;
     /** Per-vertex colours; null when colours are per instance or uniform. */
     colour: GPUBuffer | null;
+    /** Texture coordinates, for a sub-buffer with a material; null otherwise. */
+    uv: GPUBuffer | null;
     index: GPUBuffer;
     indexCount: number;
     /** Added to each index: minus the first vertex of a window onto the mesh (see MeshChunk). */
@@ -228,6 +232,10 @@ export class WebGPUPreviewRenderer {
     private readonly overlayLines: OverlayLines;
     /** Planes of values coloured through a ramp (glRef.texturedShapes); after the meshes. */
     private readonly texturedShapes: TexturedShapeLayer;
+    /** Meshes' textures (DisplayBuffer.materials), uploaded from the texture registry. */
+    private readonly surfaceTextures: SurfaceTextures;
+    /** Textured meshes: the frame, the draw, and the material at group 2. */
+    private readonly texturedPipelineLayout: GPUPipelineLayout;
     /** On the shared device: removed again by destroy(), which must not destroy the device. */
     private readonly errorListener: (event: GPUUncapturedErrorEvent) => void;
 
@@ -299,6 +307,10 @@ export class WebGPUPreviewRenderer {
         this.textLayer = new TextLayer(device, this.format, this.frameLayout, SAMPLE_COUNT, DEPTH_FORMAT);
         this.overlayLines = new OverlayLines(device, this.format, this.frameLayout, SAMPLE_COUNT, DEPTH_FORMAT);
         this.texturedShapes = new TexturedShapeLayer(device, this.format, this.frameLayout, SAMPLE_COUNT, DEPTH_FORMAT);
+        this.surfaceTextures = new SurfaceTextures(device);
+        this.texturedPipelineLayout = device.createPipelineLayout({
+            bindGroupLayouts: [this.frameLayout, this.drawLayout, this.surfaceTextures.layout],
+        });
     }
 
     /**
@@ -462,6 +474,7 @@ export class WebGPUPreviewRenderer {
         if (timing) this.frameTimer.resolve(encoder);
         this.device.queue.submit([encoder.finish()]);
         if (timing) this.frameTimer.collect();
+        this.surfaceTextures.prune();
 
         return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes };
     }
@@ -480,6 +493,7 @@ export class WebGPUPreviewRenderer {
         this.textLayer.destroy();
         this.overlayLines.destroy();
         this.texturedShapes.destroy();
+        this.surfaceTextures.destroy();
         if (canvasOwners.get(this.context) === this) {
             this.context.unconfigure();
             canvasOwners.delete(this.context);
@@ -581,21 +595,29 @@ export class WebGPUPreviewRenderer {
             return;
         }
 
-        pass.setPipeline(this.pipeline(pipelineKind(item.instanced, item.colourSource), item.transparent));
+        // Textured only if its material has a texture that is registered; otherwise drawn as if it
+        // had no material, as drawCore does.
+        const material = item.material ? this.surfaceTextures.bindGroupFor(item.material) : null;
+        const kind = pipelineKind(item.instanced, item.colourSource);
+        pass.setPipeline(this.pipeline(kind, item.transparent, !!material));
         const colourSlot = item.colourSource !== "uniform";
         if (item.colourSource === "instance") pass.setVertexBuffer(2, sub.instanceColour);
+        let slot = colourSlot ? 3 : 2;
         if (item.instanced) {
-            let slot = colourSlot ? 3 : 2;
             pass.setVertexBuffer(slot++, sub.instanceOrigin);
             pass.setVertexBuffer(slot++, sub.instanceSize);
             pass.setVertexBuffer(slot++, sub.instanceOrientation);
         }
+        // The texture coordinates come after everything else (see pipeline()).
+        const uvSlot = slot;
+        if (material) pass.setBindGroup(2, material);
         for (let copy = 0; copy < copies; copy++) {
             pass.setBindGroup(1, sub.bindGroups[copy]);
             for (const chunk of sub.chunks) {
                 pass.setVertexBuffer(0, chunk.position);
                 pass.setVertexBuffer(1, chunk.normal);
                 if (chunk.colour) pass.setVertexBuffer(2, chunk.colour);
+                if (material) pass.setVertexBuffer(uvSlot, chunk.uv);
                 pass.setIndexBuffer(chunk.index, "uint32");
                 pass.drawIndexed(chunk.indexCount, item.instanceCount, 0, chunk.baseVertex);
             }
@@ -682,7 +704,7 @@ export class WebGPUPreviewRenderer {
         return [
             b.triangleVertices[j], b.triangleNormals[j], b.triangleColours?.[j], b.triangleIndexs[j],
             b.triangleInstanceOrigins?.[j], b.triangleInstanceSizes?.[j], b.triangleInstanceOrientations?.[j],
-            item.colourSource,
+            item.colourSource, item.material ? b.triangleTextureCoords[j] : null,
         ];
     }
 
@@ -696,6 +718,7 @@ export class WebGPUPreviewRenderer {
         const positions = asFloat32(b.triangleVertices[j]);
         const normals = asFloat32(b.triangleNormals[j]);
         const colours = item.colourSource === "vertex" ? asFloat32(b.triangleColours[j]) : null;
+        const uvs = item.material ? asFloat32(b.triangleTextureCoords[j]) : null;
         const indices = asUint32(b.triangleIndexs[j]);
         const VERTEX = BufferUsage.VERTEX;
         const plan: MeshChunk[] = planMeshChunks(indices, positions.length / 3,
@@ -713,6 +736,7 @@ export class WebGPUPreviewRenderer {
                     position: this.vertexBuffer(`position${label}`, gather(positions, 3), VERTEX, created),
                     normal: this.vertexBuffer(`normal${label}`, gather(normals, 3), VERTEX, created),
                     colour: colours ? this.vertexBuffer(`colour${label}`, gather(colours, 4), VERTEX, created) : null,
+                    uv: uvs ? this.vertexBuffer(`uv${label}`, gather(uvs, 2), VERTEX, created) : null,
                     index: this.vertexBuffer(`index${label}`, local, BufferUsage.INDEX, created),
                     indexCount: chunk.indexCount,
                     baseVertex: 0,
@@ -723,6 +747,7 @@ export class WebGPUPreviewRenderer {
                 position: this.vertexBuffer(`position${label}`, positions.subarray(3 * v0, 3 * v1), VERTEX, created),
                 normal: this.vertexBuffer(`normal${label}`, normals.subarray(3 * v0, 3 * v1), VERTEX, created),
                 colour: colours ? this.vertexBuffer(`colour${label}`, colours.subarray(4 * v0, 4 * v1), VERTEX, created) : null,
+                uv: uvs ? this.vertexBuffer(`uv${label}`, uvs.subarray(2 * v0, 2 * v1), VERTEX, created) : null,
                 index: this.vertexBuffer(`index${label}`, indices.subarray(chunk.firstIndex, chunk.firstIndex + chunk.indexCount),
                     BufferUsage.INDEX, created),
                 indexCount: chunk.indexCount,
@@ -842,8 +867,12 @@ export class WebGPUPreviewRenderer {
         };
     }
 
-    private pipeline(kind: PipelineKind, transparent: boolean): GPURenderPipeline {
-        const key = `${kind}|${transparent}`;
+    /**
+     * `textured`: with texture coordinates in the last vertex buffer slot and a material at group
+     * 2, through the *_textured entry points and fs_textured.
+     */
+    private pipeline(kind: PipelineKind, transparent: boolean, textured = false): GPURenderPipeline {
+        const key = `${kind}|${transparent}${textured ? "|textured" : ""}`;
         const cached = this.pipelines.get(key);
         if (cached) return cached;
 
@@ -883,14 +912,18 @@ export class WebGPUPreviewRenderer {
             case "instanced-uniform": entryPoint = "vs_instanced_uniform_colour"; break;
         }
         if (kind.startsWith("instanced")) buffers.push(vec3(3, "instance"), vec3(4, "instance"), orientation);
+        if (textured) {
+            buffers.push({ arrayStride: 8, stepMode: "vertex", attributes: [{ shaderLocation: 9, offset: 0, format: "float32x2" }] });
+            entryPoint += "_textured";
+        }
 
         const pipeline = this.device.createRenderPipeline({
             label: `preview ${key}`,
-            layout: this.pipelineLayout,
+            layout: textured ? this.texturedPipelineLayout : this.pipelineLayout,
             vertex: { module: this.module, entryPoint, buffers },
             fragment: {
                 module: this.module,
-                entryPoint: "fs_main",
+                entryPoint: textured ? "fs_textured" : "fs_main",
                 targets: [this.colourTargetState(transparent)],
             },
             // The WebGL view draws with face culling off, back faces flat-shaded.

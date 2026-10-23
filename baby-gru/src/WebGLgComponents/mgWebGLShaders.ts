@@ -14,6 +14,13 @@
 const locateBaseColourTextureUniforms = (program, gl) => {
     program.hasBaseColourTexture = gl.getUniformLocation(program, "hasBaseColourTexture");
     program.baseColourTexture = gl.getUniformLocation(program, "baseColourTexture");
+    // And the maps that go with it (SurfaceMaps), under the same rule.
+    program.hasNormalTexture = gl.getUniformLocation(program, "hasNormalTexture");
+    program.normalTexture = gl.getUniformLocation(program, "normalTexture");
+    program.normalScale = gl.getUniformLocation(program, "normalScale");
+    program.hasMetallicRoughnessTexture = gl.getUniformLocation(program, "hasMetallicRoughnessTexture");
+    program.metallicRoughnessTexture = gl.getUniformLocation(program, "metallicRoughnessTexture");
+    program.metallicRoughnessFactors = gl.getUniformLocation(program, "metallicRoughnessFactors");
 };
 
 /**

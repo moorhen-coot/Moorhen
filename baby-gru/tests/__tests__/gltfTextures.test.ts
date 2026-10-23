@@ -10,16 +10,16 @@
  * The decoder is injected. jsdom has neither createImageBitmap nor OffscreenCanvas, and a test
  * that supplied both would be testing the browser rather than this.
  */
-import { gltfMaterialTextures, type ImageDecode } from "../../src/utils/gltfTextures";
+import { gltfMaterials, gltfMaterialTextures, type ImageDecode, type ImageUse } from "../../src/utils/gltfTextures";
 import { getTextureSource } from "../../src/WebGLgComponents/textureRegistry";
 
 const PNG_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3, 4]);
 
 /** A decoder that records what it was asked and returns a 1x1 image. */
 const recordingDecode = () => {
-    const seen: { bytes: Uint8Array; mimeType: string }[] = [];
-    const decode: ImageDecode = async (bytes, mimeType) => {
-        seen.push({ bytes, mimeType });
+    const seen: { bytes: Uint8Array; mimeType: string; use?: ImageUse }[] = [];
+    const decode: ImageDecode = async (bytes, mimeType, use) => {
+        seen.push({ bytes, mimeType, use });
         return { width: 1, height: 1, rgba: new Uint8Array([seen.length, 0, 0, 255]) };
     };
     return { decode, seen };
@@ -159,5 +159,109 @@ describe("finding a material's texture", () => {
         const { decode } = recordingDecode();
         const junk = new TextEncoder().encode("ATOM      1  N   MET A   1");
         expect((await gltfMaterialTextures(junk.buffer as ArrayBuffer, new Map(), decode)).size).toBe(0);
+    });
+});
+
+describe("finding a material's normal and metallic-roughness maps", () => {
+    /** Three images beside the document: wood (colour), bumps (normals), grain (metallic-roughness). */
+    const files = new Map([["wood.png", PNG_BYTES], ["bumps.png", PNG_BYTES], ["grain.png", PNG_BYTES]]);
+    const threeImages = {
+        textures: [{ source: 0 }, { source: 1 }, { source: 2 }],
+        images: [{ uri: "wood.png" }, { uri: "bumps.png" }, { uri: "grain.png" }],
+    };
+
+    it("reads all three, with the normal scale and the metallic and roughness factors", async () => {
+        const { decode } = recordingDecode();
+        const materials = await gltfMaterials(asGltf({
+            materials: [{
+                pbrMetallicRoughness: {
+                    baseColorTexture: { index: 0 }, metallicRoughnessTexture: { index: 2 },
+                    metallicFactor: 0.25, roughnessFactor: 0.5,
+                },
+                normalTexture: { index: 1, scale: 0.8 },
+            }],
+            ...threeImages,
+        }), files, decode);
+
+        const material = materials.get(0);
+        expect(material?.baseColour).toBeDefined();
+        expect(material?.maps).toEqual({
+            normalTexture: expect.any(String), normalScale: 0.8,
+            metallicRoughnessTexture: expect.any(String), metallicFactor: 0.25, roughnessFactor: 0.5,
+        });
+        // Three different images, three different textures.
+        expect(new Set([material?.baseColour, material?.maps?.normalTexture, material?.maps?.metallicRoughnessTexture]).size).toBe(3);
+    });
+
+    it("decodes the maps as data and the base colour as colour", async () => {
+        // A colour profile or gamma chunk would otherwise be applied to numbers that are not colours.
+        const { decode, seen } = recordingDecode();
+        await gltfMaterials(asGltf({
+            materials: [{
+                pbrMetallicRoughness: { baseColorTexture: { index: 0 }, metallicRoughnessTexture: { index: 2 } },
+                normalTexture: { index: 1 },
+            }],
+            ...threeImages,
+        }), files, decode);
+        expect(seen.map(s => s.use)).toEqual(["colour", "data", "data"]);
+    });
+
+    it("gives glTF's defaults when the scale and factors are absent", async () => {
+        const { decode } = recordingDecode();
+        const materials = await gltfMaterials(asGltf({
+            materials: [{ pbrMetallicRoughness: { metallicRoughnessTexture: { index: 2 } }, normalTexture: { index: 1 } }],
+            ...threeImages,
+        }), files, decode);
+        expect(materials.get(0)).toEqual({
+            maps: {
+                normalTexture: expect.any(String), normalScale: 1,
+                metallicRoughnessTexture: expect.any(String), metallicFactor: 1, roughnessFactor: 1,
+            },
+        });
+    });
+
+    it("leaves the factors out without their map", async () => {
+        // glTF's default metallic factor is 1, so applying factors to a material with no map would
+        // turn every plain imported mesh to dark metal.
+        const { decode } = recordingDecode();
+        const materials = await gltfMaterials(asGltf({
+            materials: [{ pbrMetallicRoughness: { baseColorTexture: { index: 0 }, metallicFactor: 1, roughnessFactor: 0.1 } }],
+            ...threeImages,
+        }), files, decode);
+        expect(materials.get(0)?.maps).toBeUndefined();
+    });
+
+    it("decodes an image used both as colour and as data once each way", async () => {
+        const { decode, seen } = recordingDecode();
+        const materials = await gltfMaterials(asGltf({
+            materials: [
+                { pbrMetallicRoughness: { baseColorTexture: { index: 0 } } },
+                { normalTexture: { index: 0 } },
+                { normalTexture: { index: 0 } },
+            ],
+            textures: [{ source: 0 }],
+            images: [{ uri: "wood.png" }],
+        }), files, decode);
+        expect(seen.map(s => s.use)).toEqual(["colour", "data"]);
+        expect(materials.get(1)?.maps?.normalTexture).toBe(materials.get(2)?.maps?.normalTexture);
+        expect(materials.get(1)?.maps?.normalTexture).not.toBe(materials.get(0)?.baseColour);
+    });
+
+    it("skips a map asking for a coordinate set we do not read", async () => {
+        const { decode } = recordingDecode();
+        const materials = await gltfMaterials(asGltf({
+            materials: [{ normalTexture: { index: 1, texCoord: 1 } }],
+            ...threeImages,
+        }), files, decode);
+        expect(materials.size).toBe(0);
+    });
+
+    it("still gives the base colour alone through gltfMaterialTextures", async () => {
+        const { decode } = recordingDecode();
+        const textures = await gltfMaterialTextures(asGltf({
+            materials: [{ pbrMetallicRoughness: { baseColorTexture: { index: 0 } }, normalTexture: { index: 1 } }, { normalTexture: { index: 1 } }],
+            ...threeImages,
+        }), files, decode);
+        expect([...textures.keys()]).toEqual([0]);
     });
 });

@@ -9,9 +9,10 @@ import * as preview from "../../../src/WebGPUComponents/previewShaders";
 import * as mapContour from "../../../src/WebGPUComponents/mapContour/mapContourShaders";
 import * as metaballs from "../../../src/WebGPUComponents/metaballs/metaballsShaders";
 import * as scan from "../../../src/WebGPUComponents/gpu/gpuScan";
+import * as surfaceTextures from "../../../src/WebGPUComponents/surfaceTextures";
 import { defineCase } from "../helpers/browserCase";
 
-const SOURCES: Record<string, Record<string, unknown>> = { preview, mapContour, metaballs, scan };
+const SOURCES: Record<string, Record<string, unknown>> = { preview, mapContour, metaballs, scan, surfaceTextures };
 
 export interface ShaderReport {
     name: string;

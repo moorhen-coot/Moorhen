@@ -58,7 +58,10 @@ interface ParityResult {
  * either. The limits are about twice what was measured (Apple GPU, 1280x647, 2026-10-23): CRs
  * 0.49% and 0.26, CBs 1.47% and 0.82 (many more edges), VdwSpheres 0.01% and 0.01.
  */
-const STYLES: { style: string; what: string; maxDiffering: number; maxMeanDifference: number; symmetry?: boolean; map?: boolean; environment?: boolean }[] = [
+const STYLES: {
+    style: string; what: string; maxDiffering: number; maxMeanDifference: number;
+    symmetry?: boolean; map?: boolean; environment?: boolean; gltf?: boolean;
+}[] = [
     { style: "CRs", what: "ribbons", maxDiffering: 0.01, maxMeanDifference: 0.6 },
     { style: "CBs", what: "ball-and-stick", maxDiffering: 0.03, maxMeanDifference: 1.6 },
     { style: "VdwSpheres", what: "spacefill", maxDiffering: 0.002, maxMeanDifference: 0.2 },
@@ -69,10 +72,14 @@ const STYLES: { style: string; what: string; maxDiffering: number; maxMeanDiffer
     // Environment distances around the view centre: dashed cylinders and their text labels.
     // Not yet measured.
     { style: "CRs", what: "ribbons with environment distances", maxDiffering: 0.02, maxMeanDifference: 1.2, environment: true },
+    // An imported glTF with a base colour texture, a normal map and a metallic-roughness map
+    // (tests/test_data/textured_sphere.gltf, made by make_textured_sphere.py beside it). The
+    // import centres the view on it, so it is what is in the picture. Not yet measured.
+    { style: "CRs", what: "a textured glTF sphere", maxDiffering: 0.02, maxMeanDifference: 1.2, gltf: true },
 ];
 
 test.describe("WebGPU against WebGL", () => {
-    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map, environment } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
+    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map, environment, gltf } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
         test.setTimeout(180_000);
         const moorhen = await startAndGetInstance(page);
 
@@ -93,6 +100,7 @@ test.describe("WebGPU against WebGL", () => {
 
         const files = [{ url: "/tests/test_data/5a3h.pdb", filename: "5a3h.pdb" }];
         if (map) files.push({ url: "/tests/test_data/5a3h_sigmaa.mtz", filename: "5a3h_sigmaa.mtz" });
+        if (gltf) files.push({ url: "/tests/test_data/textured_sphere.gltf", filename: "textured_sphere.gltf" });
         const loaded = await moorhen.loadFiles(files);
         if (map) {
             await expect.poll(async () => (await moorhen.getObjectCounts()).mapCount, { timeout: 120_000 }).toBeGreaterThan(0);
@@ -177,7 +185,7 @@ test.describe("WebGPU against WebGL", () => {
             };
         }, { targetId: moorhen.elementId, tolerance: PIXEL_TOLERANCE });
 
-        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}${environment ? " + environment" : ""}`;
+        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}${environment ? " + environment" : ""}${gltf ? " + textured glTF" : ""}`;
         for (const [name, url] of Object.entries(result.images ?? {})) {
             await testInfo.attach(`${variant.replace(/ \+ /g, "-")}-${name}.png`, { body: Buffer.from(url.split(",")[1], "base64"), contentType: "image/png" });
         }
