@@ -140,10 +140,10 @@ export const UserSceneSelector = () => {
                     <CopySceneButton sceneId={id} />
                     <MoorhenPopoverButton type="icon-only" icon="MatSymReplay" tooltip="Restore this scene">
                         <MoorhenStack>
-                            <MoorhenButton onClick={() => moorhenInstance.userScene.restoreDefault(id, "saved")}>
+                            <MoorhenButton onClick={() => moorhenInstance.userScene.reset(id, "saved", true)}>
                                 Restore Saved Settings
                             </MoorhenButton>
-                            <MoorhenButton variant="danger" onClick={() => moorhenInstance.userScene.restoreDefault(id, "default")}>
+                            <MoorhenButton variant="danger" onClick={() => moorhenInstance.userScene.reset(id, "default", true)}>
                                 Restore Default Settings
                             </MoorhenButton>
                         </MoorhenStack>

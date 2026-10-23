@@ -62,9 +62,7 @@ export const builtInSceneDefaults = (sceneId: BuiltInSceneId): PerSceneSettings 
  */
 const initialState: {
     scenes: UserScene[];
-    /** Immutable snapshots of a scene, including the camera (listed under the scenes) */
     snapshots: UserScene[];
-    /** The id of the scene or snapshot currently shown */
     selectedScene: string;
     isSceneChanging: boolean;
     /**

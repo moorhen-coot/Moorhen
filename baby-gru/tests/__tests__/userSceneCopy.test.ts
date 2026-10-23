@@ -1,6 +1,6 @@
 /*
  * Copying the parameters of one scene (or snapshot) into another (userScene.copyFrom), and
- * resetting a scene's settings (userScene.resetSettings).
+ * resetting a scene's settings (userScene.reset).
  */
 import { setDefaultBondSmoothness, setDoAnaglyphStereo, setDoSSAO, setDoSpin, setSsaoRadius } from "@/store/sceneSettingsSlice";
 import { createCloudInstance, loadCootModules, type CloudInstance } from "./cloudHost/cloudHostHarness";
@@ -70,10 +70,10 @@ describe("resetting scene settings", () => {
         userScene.saveScene("Default");
         cloud.store.dispatch(setSsaoRadius(9));
 
-        expect(userScene.resetSettings("Default", "saved")).toBe(true);
+        expect(await userScene.reset("Default", "saved")).toBe(true);
         expect(sceneSettings().ssaoRadius).toBe(7);
 
-        expect(userScene.resetSettings("Default", "default")).toBe(true);
+        expect(await userScene.reset("Default", "default")).toBe(true);
         expect(sceneSettings().ssaoRadius).not.toBe(7);
         expect(sceneSettings().resetClippingFogging).toBe(false);
         expect(cloud.store.getState().userScenes.savedSceneSettings.Default.ssaoRadius).toBe(7);
@@ -84,12 +84,12 @@ describe("resetting scene settings", () => {
         const customId = await userScene.create("Figure");
         cloud.store.dispatch(setDoSSAO(true));
 
-        expect(userScene.resetSettings(customId, "saved")).toBe(false);
-        expect(userScene.resetSettings(customId, "default")).toBe(true);
+        expect(await userScene.reset(customId, "saved")).toBe(false);
+        expect(await userScene.reset(customId, "default")).toBe(true);
         expect(sceneSettings().doSSAO).toBe(false);
 
         const snapshotId = userScene.takeSnapshot("Shot");
-        expect(userScene.resetSettings(snapshotId, "default")).toBe(false);
+        expect(await userScene.reset(snapshotId, "default")).toBe(false);
     });
 });
 

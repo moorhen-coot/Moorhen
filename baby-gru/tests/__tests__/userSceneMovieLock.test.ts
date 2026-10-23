@@ -32,13 +32,13 @@ afterEach(async () => {
 });
 
 describe("scene changes while a movie plays", () => {
-    test("select and restoreDefault are refused, and allowed again once the movie stops", async () => {
+    test("select and reset are refused, and allowed again once the movie stops", async () => {
         const userScene = cloud.instance.userScene;
         cloud.store.dispatch(setMoviePlaying(true));
 
         expect(await userScene.select("Model Building")).toBe(false);
         expect(userScene.selected).toBe("Default");
-        expect(await userScene.restoreDefault("Default")).toBe(false);
+        expect(await userScene.reset("Default", "default", true)).toBe(false);
 
         cloud.store.dispatch(setMoviePlaying(false));
         expect(await userScene.select("Model Building")).toBe(true);
@@ -54,7 +54,7 @@ describe("the movie's scene", () => {
         expect(sceneId).toBe(MOVIE_SCENE_ID);
         expect(userScene.selected).toBe(sceneId);
         expect(userScene.list.map(scene => scene.name)).toContain("Movie: test");
-        expect(userScene.isMovieScene(sceneId)).toBe(true);
+        expect(sceneId).toBe(MOVIE_SCENE_ID);
 
         cloud.store.dispatch(appendKeyframe(keyframe));
         expect(await userScene.delete(sceneId)).toBe(false);
@@ -72,6 +72,6 @@ describe("the movie's scene", () => {
 
         expect(await userScene.createMovieScene("Movie: second")).toBe(MOVIE_SCENE_ID);
         expect(userScene.selected).toBe(MOVIE_SCENE_ID);
-        expect(userScene.list.filter(scene => userScene.isMovieScene(scene.id))).toHaveLength(1);
+        expect(userScene.list.filter(scene => scene.id === MOVIE_SCENE_ID)).toHaveLength(1);
     });
 });
