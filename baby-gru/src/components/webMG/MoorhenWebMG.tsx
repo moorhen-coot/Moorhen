@@ -91,6 +91,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
     const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality)
+    const shadowSoftness = useSelector((state: moorhen.State) => state.sceneSettings.shadowSoftness)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
@@ -369,6 +370,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [shadowMapQuality])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.setShadowSoftness(shadowSoftness)
+            glRef.current.drawScene()
+        }
+    }, [shadowSoftness])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

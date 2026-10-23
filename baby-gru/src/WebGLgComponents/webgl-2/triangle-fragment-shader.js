@@ -117,6 +117,8 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
     uniform bool doPerspective;
     uniform bool occludeDiffuse;
     uniform int shadowQuality;
+    /** Radius of the soft shadow filter, in texels of the part of the map in use. 0 is a hard edge. */
+    uniform float shadowSoftness;
     uniform float ssaoMultiviewWidthHeightRatio;
 
     in mediump mat4 mvInvMatrix;
@@ -166,13 +168,32 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
 
     out vec4 fragColor;
 
+    // How this surface's depth in the shadow map changes per unit of shadow-map uv, worked out once
+    // per fragment at the top of main. See lookup.
+    highp vec2 shadowDepthSlope;
+
+    // The receiver plane: solve the screen-space derivatives of ShadowCoord for dz/du and dz/dv.
+    // Done before any discard, because derivatives stop being meaningful once neighbouring fragments in
+    // the 2x2 quad have taken a different path. Zero where the surface is edge-on to the light
+    // and the system has no useful solution.
+    highp vec2 receiverPlaneDepthSlope() {
+      highp vec3 dx = dFdx(ShadowCoord.xyz);
+      highp vec3 dy = dFdy(ShadowCoord.xyz);
+      highp mat2 uvPerPixel = mat2(dx.x, dy.x, dx.y, dy.y);
+      if(abs(determinant(uvPerPixel)) < 1e-14) return vec2(0.0);
+      return inverse(uvPerPixel) * vec2(dx.z, dy.z);
+    }
+
     float lookup(vec2 offSet){
       // Offsets in shadow-map texels. xPixelOffset and yPixelOffset are 1/width and 1/height of
       // the shadow texture, already set from rttFramebufferDepth - this used to offset by
       // xSSAOScaling/zoom instead, a scale borrowed from SSAO with no relation to the shadow
       // map's resolution, so the kernel's footprint changed as you zoomed and bore no fixed
       // relationship to a texel.
-      vec2 uv = ShadowCoord.xy + offSet * vec2(xPixelOffset, yPixelOffset);
+      // highp: at mediump a shadow-map coordinate has about 11 bits, too few to address the
+      // texels of a 4096 map - the comparison lands on the wrong texel and the result speckles.
+      highp vec2 duv = offSet * vec2(xPixelOffset, yPixelOffset);
+      highp vec2 uv = ShadowCoord.xy + duv;
       // One fetch does the comparison and blends the four texels around it: the unit returns the
       // fraction of that 2x2 the fragment is in front of. 1.0 is fully lit, as before.
       //
@@ -180,22 +201,56 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
       // near-to-far range. That range used to be a fixed 0.1 to 1000 whatever the scene, making
       // this about 5 A - wider than an alpha helix, which is why shadows sat away from their
       // casters. Now that the range is fitted to the scene it comes to well under one.
-      return texture(ShadowMap, vec3(uv, ShadowCoord.z - 0.005));
+      //
+      // Each tap compares against the depth the surface itself has at that tap, not at the
+      // fragment. A soft kernel reaches several texels out, and on a surface sloped to the light
+      // the flat bias above is soon smaller than the change in the surface's own depth over that
+      // distance, so the surface shadows itself in speckles - worse the softer the shadow.
+      // Following the plane removes that for any radius. Capped at twice the bias so that
+      // near edge-on surfaces, where the slope runs away, cannot push the comparison far enough
+      // behind a real occluder to let light through it.
+      highp float alongSurface = clamp(dot(shadowDepthSlope, duv), -0.01, 0.01);
+      //
+      // And a texel's worth of that slope on top of the flat bias. Each texel holds one depth
+      // for the whole of its area, so a sloped surface sits up to a texel's slope in front of or
+      // behind it. Negligible at full resolution, but a soft shadow renders a coarser map and the
+      // speckles would come straight back.
+      highp float withinTexel = min(dot(abs(shadowDepthSlope), vec2(xPixelOffset, yPixelOffset)), 0.01);
+      return texture(ShadowMap, vec3(uv, ShadowCoord.z + alongSurface - 0.005 - withinTexel));
     }
 
     void main(void) {
+      shadowDepthSlope = receiverPlaneDepthSlope();
 ${discards ? clipAndPeelDiscards : ""}
       float shad = 1.0;
       if(doShadows){
-          if(shadowQuality==0){
+          if(shadowSoftness <= 0.0){
               shad = lookup(vec2(0.0,0.0));
           } else {
+              // A grid of taps no more than a texel apart, each of which already blends the 2x2
+              // texels around it, so the sum is a continuous ramp - a gradient, not grain. A
+              // spacing of exactly the texel pitch or less keeps the taps from beating against
+              // the texel grid, which at 1.5 texels left a ripple three texels long. Tent-weighted
+              // so the penumbra falls off softly at both ends rather than as a straight ramp.
+              //
+              // shadowSoftness arrives in texels and is held to a few of them by sizing the map
+              // to it (softShadowRegion), so the grid stays small at any zoom: at most 9x9 on
+              // screen and 16x16 for screenshots.
+              int n = clamp(int(ceil(2.0*shadowSoftness)) + 1, 2, 16);
+              float spacing = 2.0*shadowSoftness/float(n-1);
+              float reach = shadowSoftness + spacing;
+              float total = 0.0;
               shad = 0.0;
-              float x,y;
-              for (y = -3.5 ; y <=3.5 ; y+=1.0)
-                  for (x = -3.5 ; x <=3.5 ; x+=1.0)
-                      shad += lookup(vec2(x,y));
-              shad /= 64.0 ;
+              for (int j = 0; j < n; j++) {
+                  for (int i = 0; i < n; i++) {
+                      vec2 p = vec2(float(i), float(j)) * spacing - shadowSoftness;
+                      vec2 tent = 1.0 - abs(p) / reach;
+                      float w = tent.x * tent.y;
+                      shad += w * lookup(p);
+                      total += w;
+                  }
+              }
+              shad /= total;
           }
       }
 

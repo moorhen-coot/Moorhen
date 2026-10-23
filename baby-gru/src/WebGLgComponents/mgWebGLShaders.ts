@@ -1052,6 +1052,7 @@ export function initShaders(vertexShader, fragmentShader, gl) {
     shaderProgram.occludeDiffuse = gl.getUniformLocation(shaderProgram, "occludeDiffuse");
     shaderProgram.doPerspective = gl.getUniformLocation(shaderProgram, "doPerspective");
     shaderProgram.shadowQuality = gl.getUniformLocation(shaderProgram, "shadowQuality");
+    shaderProgram.shadowSoftness = gl.getUniformLocation(shaderProgram, "shadowSoftness");
 
     shaderProgram.clipPlane0 = gl.getUniformLocation(shaderProgram, "clipPlane0");
     shaderProgram.clipPlane1 = gl.getUniformLocation(shaderProgram, "clipPlane1");
@@ -1162,6 +1163,7 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
     shaderProgramInstanced.occludeDiffuse = gl.getUniformLocation(shaderProgramInstanced, "occludeDiffuse");
     shaderProgramInstanced.doPerspective = gl.getUniformLocation(shaderProgramInstanced, "doPerspective");
     shaderProgramInstanced.shadowQuality = gl.getUniformLocation(shaderProgramInstanced, "shadowQuality");
+    shaderProgramInstanced.shadowSoftness = gl.getUniformLocation(shaderProgramInstanced, "shadowSoftness");
 
     shaderProgramInstanced.clipPlane0 = gl.getUniformLocation(shaderProgramInstanced, "clipPlane0");
     shaderProgramInstanced.clipPlane1 = gl.getUniformLocation(shaderProgramInstanced, "clipPlane1");
@@ -1426,6 +1428,7 @@ export function initThickLineNormalShaders(vertexShader, fragmentShader, gl) {
     shaderProgramThickLinesNormal.occludeDiffuse = gl.getUniformLocation(shaderProgramThickLinesNormal, "occludeDiffuse");
     shaderProgramThickLinesNormal.doPerspective = gl.getUniformLocation(shaderProgramThickLinesNormal, "doPerspective");
     shaderProgramThickLinesNormal.shadowQuality = gl.getUniformLocation(shaderProgramThickLinesNormal, "shadowQuality");
+    shaderProgramThickLinesNormal.shadowSoftness = gl.getUniformLocation(shaderProgramThickLinesNormal, "shadowSoftness");
     shaderProgramThickLinesNormal.clipPlane0 = gl.getUniformLocation(shaderProgramThickLinesNormal, "clipPlane0");
     shaderProgramThickLinesNormal.clipPlane1 = gl.getUniformLocation(shaderProgramThickLinesNormal, "clipPlane1");
     shaderProgramThickLinesNormal.clipPlane2 = gl.getUniformLocation(shaderProgramThickLinesNormal, "clipPlane2");
@@ -1751,6 +1754,7 @@ export function initPerfectSphereShaders(vertexShader, fragmentShader, gl) {
     shaderProgramPerfectSpheres.occludeDiffuse = gl.getUniformLocation(shaderProgramPerfectSpheres, "occludeDiffuse");
     shaderProgramPerfectSpheres.doPerspective = gl.getUniformLocation(shaderProgramPerfectSpheres, "doPerspective");
     shaderProgramPerfectSpheres.shadowQuality = gl.getUniformLocation(shaderProgramPerfectSpheres, "shadowQuality");
+    shaderProgramPerfectSpheres.shadowSoftness = gl.getUniformLocation(shaderProgramPerfectSpheres, "shadowSoftness");
 
     shaderProgramPerfectSpheres.scaleMatrix = gl.getUniformLocation(shaderProgramPerfectSpheres, "scaleMatrix");
 
