@@ -40,9 +40,28 @@ export const initialState: {
     /**
      * Whether the opaque scene is drawn once while depth peeling, rather than into every layer.
      *
+     * OFF BY DEFAULT, AND THE MEASUREMENT SAYS WHY
+     *
+     * Drawing it once is the obvious saving and it is real - 52 draws and 1290k triangles against
+     * 96 and 3337k on a model with a map contoured around it, so 2.6x less geometry submitted.
+     * What it buys is 0.89 ms of a 12.86 ms frame, about 7%, because four full-screen peel layers
+     * with blending and depth are fill-bound and the triangles are nearly free beside them. (If
+     * that cost ever needs attacking, the layer *count* is where the time is, not what goes in
+     * each layer.)
+     *
+     * Against those 0.89 ms it puts a visible rim of the background colour wherever opaque
+     * geometry sits in front of transparent geometry. Layer 0 is multisampled and resolved against
+     * a background-coloured clear, so a half-covered silhouette pixel blends with the background;
+     * and the single resolved depth at that pixel rejects the transparent surface behind, so there
+     * is nothing else for it to blend with. The information needed to draw that edge correctly is
+     * not in the layer. Compositing front-to-back with an "under" operator would fix it properly,
+     * and would be a rewrite of the accumulation pass.
+     *
+     * So: correct picture by default, 7% available to anyone who wants it.
+     *
      * Deliberately not in the persisted preferences: it exists so the two paths can be compared
-     * on screen, and it should come back on after a reload rather than leaving someone stuck on
-     * the slow path because they once turned it off.
+     * on screen, and a reload should return to the default rather than leaving someone stuck on
+     * whichever they last tried.
      */
     peelOpaqueSeparately: boolean;
     depthBlurDepth: number;
@@ -142,7 +161,7 @@ export const initialState: {
     doOutline: false,
     depthBlurRadius: 3.0,
     depthPeelLayers: 4,
-    peelOpaqueSeparately: true,
+    peelOpaqueSeparately: false,
     // Where the depth blur starts, in angstroms from the view centre; negative is towards the
     // viewer. Zero puts it on the rotation centre, which is what you are usually looking at.
     // This was a 0 to 1 fraction, so a saved value lands a fraction of an angstrom from centre -
