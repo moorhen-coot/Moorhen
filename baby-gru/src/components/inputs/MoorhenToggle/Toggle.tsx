@@ -20,11 +20,12 @@ export const MoorhenToggle = (props: MoorhenToggleProps) => {
     const type = props.type ? props.type : "switch";
     const { id, checked = false, onChange = () => {}, toggle = null, ref, name, disabled } = props;
     return (
-        <div
+        <label
             className={`moorhen__toggle-container ${props.className ? props.className : ""} ${props.disabled ? "disabled" : ""}`}
             style={{ ...props.style }}
+            htmlFor={id}
         >
-            <label className={`moorhen__toggle-switch`} htmlFor={id}>
+            <span className={`moorhen__toggle-switch moorhen__toggle-switch--${type}`}>
                 <input
                     id={id}
                     className="moorhen__toggle-input"
@@ -51,8 +52,8 @@ export const MoorhenToggle = (props: MoorhenToggleProps) => {
                               : "moorhen__toggle-checkbox"
                     }
                 ></span>
-            </label>
+            </span>
             <span className="moorhen__toggle-label-text">{props.label}</span>
-        </div>
+        </label>
     );
 };
