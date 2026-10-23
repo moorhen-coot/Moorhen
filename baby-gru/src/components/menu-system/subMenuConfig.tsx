@@ -607,14 +607,6 @@ export const subMenuMap: SubMenuMap = {
         label: "View",
         items: [
             {
-                id: "scene-preset",
-                label: "Scene preset...",
-                type: "popover",
-                keywords: ["scene", "preset"],
-                description: "Apply scene preset",
-                content: MenuItems.ScenePreset,
-            },
-            {
                 id: "scene-settings",
                 label: "Scene settings...",
                 type: "showPanel",

@@ -489,15 +489,15 @@ export class MoorhenUserSceneManager {
     }
 
     /**
-     * Reset a built-in scene: its settings go back to its saved ones or to its factory defaults, and
+     * Reset a built-in scene: its settings go back to its saved ones or to its defaults, and
      * every molecule gets the default representations (bonds for "Model Building", ribbons and
      * ligands otherwise). The saved settings are not changed. The scene is rebuilt now if it is shown,
      * otherwise the reset is used on its next visit. The camera (zoom, origin) is not changed.
      * @param sceneId - "Default" or "Model Building".
-     * @param to - "factory" (default) for the scene's original settings, "saved" for its saved ones.
+     * @param to - "default" (the default) for the scene's original settings, "saved" for its saved ones.
      * @returns True if the scene was reset, false if it is not built-in, a switch is running or a movie is playing.
      */
-    public async restoreDefault(sceneId: string, to: "factory" | "saved" = "factory"): Promise<boolean> {
+    public async restoreDefault(sceneId: string, to: "default" | "saved" = "default"): Promise<boolean> {
         if (this.isChanging || this.isMoviePlaying || !isBuiltInScene(sceneId)) return false;
         const settings =
             to === "saved" ? this.instance.store.getState().userScenes.savedSceneSettings[sceneId] : builtInSceneDefaults(sceneId);
@@ -515,6 +515,34 @@ export class MoorhenUserSceneManager {
                 this.setChanging(false);
             }
         }
+        this.recordInHistory();
+        return true;
+    }
+
+    /**
+     * Reset the settings of a scene, leaving its representations alone: to its defaults (a built-in
+     * scene's original settings, the default settings for other scenes) or, for a built-in scene, to
+     * its saved ones. The settings saved as preferences are not changed. Applied now if the scene is
+     * shown, otherwise on its next visit. Snapshots cannot be changed.
+     * @param sceneId - The id of the scene.
+     * @param to - "default" or "saved".
+     * @returns True if the settings were reset, false for a snapshot, a missing scene, "saved" on a
+     * scene that is not built-in, a switch running or a movie playing.
+     */
+    public resetSettings(sceneId: string, to: "default" | "saved" = "default"): boolean {
+        if (this.isChanging || this.isMoviePlaying || isSnapshot(sceneId)) return false;
+        const name = this.list.find(scene => scene.id === sceneId)?.name;
+        if (name === undefined) return false;
+        let sceneSettings: SceneSettingsSnapshot = {};
+        if (isBuiltInScene(sceneId)) {
+            sceneSettings = to === "saved" ? this.instance.store.getState().userScenes.savedSceneSettings[sceneId] : builtInSceneDefaults(sceneId);
+        } else if (to === "saved") {
+            return false;
+        }
+        const target = sceneId === this.selected || !this.backups[sceneId] ? this.captureScene(name) : this.backups[sceneId];
+        const backup: SceneBackupEntry = { ...target, sceneSettings, isPreset: false };
+        this.backups[sceneId] = backup;
+        if (sceneId === this.selected) this.applySceneSettings(backup);
         this.recordInHistory();
         return true;
     }

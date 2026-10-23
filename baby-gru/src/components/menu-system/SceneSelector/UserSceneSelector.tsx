@@ -1,13 +1,46 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState } from "react";
 import { MoorhenIcon } from "@/components/icons";
-import { MoorhenButton, MoorhenPopoverButton, MoorhenSelect, MoorhenTextInput } from "@/components/inputs";
+import { MoorhenButton, MoorhenPopoverButton, MoorhenTextInput } from "@/components/inputs";
 import { useMoorhenInstance } from "@/hooks";
-import { RootState, enqueueSnackbar, setMainMenuOpen } from "@/store";
+import { RootState, setMainMenuOpen, setShownSidePanel } from "@/store";
 import { isBuiltInScene, UserScene } from "@/store/userScenesSlice";
-import { MoorhenMenuItem, MoorhenPopover, MoorhenStack, MoorhenTooltip } from "../../interface-base";
+import { MoorhenInfoCard, MoorhenMenuItem, MoorhenPopover, MoorhenStack, MoorhenTooltip } from "../../interface-base";
+import { CopySceneButton } from "./CopySceneButton";
 import { SaveSceneButton } from "./SaveSceneButton";
 import "./scene-selector.css";
+
+const scenesInfo = (
+    <span>
+        <b>Scenes</b>
+        <br />A scene is a whole look of the view: the representations of every molecule and the scene settings (lighting,
+        background, effects, fog and clipping). Switching scene swaps all of it, the camera stays where it is. A scene keeps
+        its changes while you work in another one.
+        <br />
+        <br />
+        <b>Default and Model Building</b>
+        <br />
+        Built in. Save their settings to start Moorhen with them; restore brings back the saved or the default settings.
+        <br />
+        <br />
+        <b>Custom scenes</b>
+        <br />
+        Start as a copy of the current scene. Kept in session files.
+        <br />
+        <br />
+        <b>Movie</b>
+        <br />
+        The scene the movie plays in: its settings are the movie&apos;s.
+        <br />
+        <br />
+        <b>Snapshots</b>
+        <br />
+        A scene with its camera, that cannot be changed: changes made while it is shown are not kept.
+        <br />
+        <br />
+        The copy button gives a scene the settings (and representations) of another one, the gear opens the scene settings.
+    </span>
+);
 
 export const UserSceneSelector = () => {
     const userScenes = useSelector((state: RootState) => state.userScenes.scenes);
@@ -20,7 +53,6 @@ export const UserSceneSelector = () => {
     const isLocked = isSceneChanging || isMoviePlaying;
     const [isShown, setIsShown] = useState<boolean>(false);
     const [renameInputValue, setRenameInputValue] = useState<string>("");
-    const [copySource, setCopySource] = useState<string>("");
     const buttonRef = useRef<HTMLButtonElement>(null);
     const moorhenInstance = useMoorhenInstance();
     const dispatch = useDispatch();
@@ -65,52 +97,6 @@ export const UserSceneSelector = () => {
         </MoorhenTooltip>
     );
 
-    /** Give scene `id` the parameters of another scene or snapshot (not for snapshots, which are immutable) */
-    const copyControl = (id: string) => {
-        const sources = [...userScenes, ...userSnapshots].filter(userScene => userScene.id !== id);
-        const targetName = userScenes.find(userScene => userScene.id === id)?.name ?? id;
-        const copy = async (withRepresentations: boolean) => {
-            const sourceName = sources.find(userScene => userScene.id === copySource)?.name ?? copySource;
-            if (await moorhenInstance.userScene.copyFrom(id, copySource, withRepresentations)) {
-                dispatch(
-                    enqueueSnackbar({
-                        message: `"${targetName}" now has the ${withRepresentations ? "settings and representations" : "settings"} of "${sourceName}"`,
-                        variant: "info",
-                    })
-                );
-            }
-        };
-        return (
-            <MoorhenPopoverButton
-                type="icon-only"
-                icon="MatSymCopyAll"
-                extraOnClick={() => setCopySource(sources[0]?.id ?? "")}
-                tooltip="Copy the parameters of another scene into this one"
-            >
-                <MoorhenStack>
-                    <MoorhenSelect label="Copy from" value={copySource} onChange={event => setCopySource(event.target.value)}>
-                        {sources.map(source => (
-                            <option key={source.id} value={source.id}>
-                                {source.name}
-                            </option>
-                        ))}
-                    </MoorhenSelect>
-                    <MoorhenButton disabled={!copySource || isLocked} onClick={() => copy(false)}>
-                        Copy Settings
-                    </MoorhenButton>
-                    <MoorhenButton disabled={!copySource || isLocked} onClick={() => copy(true)}>
-                        Copy Settings and Representations
-                    </MoorhenButton>
-                    {id === movieSceneId && (
-                        <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>
-                            Copying representations replaces the ones this movie fades: their fades stop working.
-                        </div>
-                    )}
-                </MoorhenStack>
-            </MoorhenPopoverButton>
-        );
-    };
-
     const extraControls = (id: string) => {
         if (!isBuiltInScene(id)) {
             const kind = id.startsWith("snapshot-") ? "Snapshot" : "Scene";
@@ -129,21 +115,21 @@ export const UserSceneSelector = () => {
                         <MoorhenTextInput text={renameInputValue} setText={setRenameInputValue} />
                         <MoorhenButton onClick={() => moorhenInstance.userScene.rename(id, renameInputValue)}>Apply</MoorhenButton>
                     </MoorhenPopoverButton>
-                    {kind === "Scene" && copyControl(id)}
+                    {kind === "Scene" && <CopySceneButton sceneId={id} />}
                 </>
             );
         } else {
             return (
                 <>
                     <SaveSceneButton sceneId={id} iconOnly={true} />
-                    {copyControl(id)}
+                    <CopySceneButton sceneId={id} />
                     <MoorhenPopoverButton type="icon-only" icon="MatSymReplay" tooltip="Restore this scene">
                         <MoorhenStack>
                             <MoorhenButton onClick={() => moorhenInstance.userScene.restoreDefault(id, "saved")}>
                                 Restore Saved Settings
                             </MoorhenButton>
-                            <MoorhenButton variant="danger" onClick={() => moorhenInstance.userScene.restoreDefault(id, "factory")}>
-                                Restore Factory Settings
+                            <MoorhenButton variant="danger" onClick={() => moorhenInstance.userScene.restoreDefault(id, "default")}>
+                                Restore Default Settings
                             </MoorhenButton>
                         </MoorhenStack>
                     </MoorhenPopoverButton>
@@ -179,7 +165,21 @@ export const UserSceneSelector = () => {
             type="custom"
         >
             <MoorhenStack className="moorhen__scene-selector-menu" role="menu" style={{ maxHeight: "80vh", overflowY: "auto" }}>
-                <div className="moorhen__submenu-title">Scenes</div>
+                <MoorhenStack direction="line" align="center">
+                    <div className="moorhen__submenu-title" style={{ flex: 1 }}>
+                        Scenes
+                    </div>
+                    <MoorhenInfoCard infoText={scenesInfo} popoverPlacement="right" width="25rem" />
+                    <MoorhenButton
+                        type="icon-only"
+                        icon="MatSymSettings"
+                        tooltip="Scene settings"
+                        onClick={() => {
+                            dispatch(setShownSidePanel("sceneSettings"));
+                            setIsShown(false);
+                        }}
+                    />
+                </MoorhenStack>
                 {userScenes.filter(userScene => !isMovieScene(userScene.id)).map(sceneItem)}
                 <MoorhenButton
                     tooltip="New Custom Scene"

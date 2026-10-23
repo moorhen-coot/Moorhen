@@ -36,7 +36,7 @@ const BUILT_IN_SCENE_PRESETS: Record<BuiltInSceneId, SceneSettingsSnapshot> = {
     },
 };
 
-/** The factory values of a built-in scene's per-scene preferences */
+/** The default values of a built-in scene's per-scene preferences */
 export const builtInSceneDefaults = (sceneId: BuiltInSceneId): PerSceneSettings => {
     const preset = BUILT_IN_SCENE_PRESETS[sceneId];
     const settings: Record<string, unknown> = {};
