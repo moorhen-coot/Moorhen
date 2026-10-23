@@ -11,13 +11,15 @@
  * workgroup memory whenever a workgroup starts, and some implementations (Firefox's) do that with
  * one thread; starting a workgroup per block made that the larger part of the work there.
  */
+import { BufferUsage } from "./constants";
 
 const THREADS = 256;
 const PER_THREAD = 8;
 const BLOCK = THREADS * PER_THREAD;
 const MAX_WORKGROUPS = 1024;
 
-const SCAN_WGSL = /* wgsl */ `
+/** The scan kernels (reduceBlocks, scanBlocks); exported for the shader compilation tests. */
+export const SCAN_WGSL = /* wgsl */ `
 struct ScanParams { n: u32, withOffsets: u32 };
 @group(0) @binding(0) var<uniform> S: ScanParams;
 @group(0) @binding(1) var<storage, read> input: array<u32>;
@@ -106,16 +108,7 @@ fn scanBlock(lane: u32, block: u32) {
 }
 `;
 
-const MAX_GROUPS_X = 65535;
-
-/** Workgroup counts for `groups` groups, folded into y when x would exceed the limit. */
-export function dispatchSize(groups: number): [number, number] {
-    if (groups <= MAX_GROUPS_X) return [Math.max(1, groups), 1];
-    return [MAX_GROUPS_X, Math.ceil(groups / MAX_GROUPS_X)];
-}
-
-// Spec values; the DOM typings have the WebGPU interfaces but not these globals.
-const STORAGE = 0x0080, COPY_DST = 0x0008, UNIFORM = 0x0040;
+const { STORAGE, COPY_DST, UNIFORM } = BufferUsage;
 
 export class GpuScan {
     private readonly device: GPUDevice;

@@ -16,6 +16,7 @@
  * barriers or workgroup memory (dear in some implementations: Firefox zeroes workgroup memory
  * with one thread, and software renderers pay heavily for barriers).
  */
+import { itemIndexWgsl } from "../gpu";
 
 /** Threads per workgroup. */
 export const MAP_WORKGROUP = 64;
@@ -44,11 +45,7 @@ struct Params {
 };
 @group(0) @binding(0) var<uniform> P: Params;
 
-fn workgroupIndex(wid: vec3u, nwg: vec3u) -> u32 { return wid.y * nwg.x + wid.x; }
-fn itemIndex(lid: vec3u, wid: vec3u, nwg: vec3u) -> u32 {
-    return workgroupIndex(wid, nwg) * ${MAP_WORKGROUP}u + lid.x;
-}
-fn boxPoints() -> u32 { return P.box.x * P.box.y * P.box.z; }
+${itemIndexWgsl(MAP_WORKGROUP)}fn boxPoints() -> u32 { return P.box.x * P.box.y * P.box.z; }
 fn boxCells() -> u32 { return (P.box.x - 1u) * (P.box.y - 1u) * (P.box.z - 1u); }
 fn chunks(items: u32) -> u32 { return (items + ${CHUNK - 1}u) / ${CHUNK}u; }
 fn cellIndex(idx: u32) -> vec3u {

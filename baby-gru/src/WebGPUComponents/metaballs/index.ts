@@ -5,6 +5,7 @@
  * structures in real browsers. When it is on and WebGPU is available, getMetaBallBuffers uses it;
  * otherwise, or if it fails, Moorhen's own C++ (DrawMoorhenMetaBalls, in the WASM) is used as before.
  */
+import { getGpuContext } from "../gpu";
 import { GpuMetaBalls } from "./gpuMetaBalls";
 
 export { GpuMetaBalls } from "./gpuMetaBalls";
@@ -25,42 +26,27 @@ export const gpuMetaBallsSetting = { enabled: false, splitField: true };
 let shared: Promise<GpuMetaBalls | null> | null = null;
 
 /**
- * The GPU MetaBalls generator, on a device of its own, made once and reused. Null when WebGPU
- * is not there or offers no adapter; the result is remembered, and forgotten again if the device
- * is lost, so that a later call can try afresh.
+ * The GPU MetaBalls generator, on the shared device (../gpu), made once and reused. Null when
+ * WebGPU is not there or offers no adapter; the result is remembered, and forgotten again if the
+ * device is lost, so that a later call can try afresh.
  */
 export function sharedGpuMetaBalls(): Promise<GpuMetaBalls | null> {
     if (shared) return shared;
-    shared = (async () => {
-        if (typeof navigator === "undefined" || !navigator.gpu) return null;
-        const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
-        if (!adapter) return null;
-        // As large as the adapter allows: the slab buffers are sized well inside the defaults,
-        // but the mesh readback buffers grow with the molecule.
-        // Timestamp queries when offered, so the console can say which kernel the time went on.
-        const timing: GPUFeatureName[] = adapter.features.has("timestamp-query") ? ["timestamp-query"] : [];
-        const device = await adapter.requestDevice({
-            label: "metaballs",
-            requiredFeatures: timing,
-            requiredLimits: {
-                maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize,
-                maxBufferSize: adapter.limits.maxBufferSize,
-            },
-        });
-        device.addEventListener("uncapturederror", (event: GPUUncapturedErrorEvent) => {
-            console.error("GPU MetaBalls:", event.error.message);
-        });
-        device.lost.then(info => {
-            console.warn("GPU MetaBalls device lost:", info.message);
-            shared = null;
-        });
-        const generator = await GpuMetaBalls.create(device);
+    const made = (async () => {
+        const context = await getGpuContext();
+        // The shared device has the adapter's largest buffers (the mesh readback buffers grow with
+        // the molecule) and timestamp queries when offered (the console's per-kernel times).
+        const generator = await GpuMetaBalls.create(context.device);
         console.log(`GPU MetaBalls: pipelines compiled in ${generator.compileMs.toFixed(0)} ms`);
+        context.lost.then(() => {
+            if (shared === made) shared = null;
+        });
         return generator;
     })().catch(err => {
         console.warn("GPU MetaBalls unavailable:", err);
-        shared = null;
+        if (shared === made) shared = null;
         return null;
     });
+    shared = made;
     return shared;
 }

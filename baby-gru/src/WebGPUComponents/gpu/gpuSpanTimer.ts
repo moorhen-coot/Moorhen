@@ -11,8 +11,9 @@
  * Browsers quantise timestamps (Chrome to 0.1 ms without its unsafe-APIs flag), so a single short
  * segment is coarse; the mean of many is what to read.
  */
-const QUERY_RESOLVE = 0x0200, COPY_SRC = 0x0004, COPY_DST = 0x0008, MAP_READ = 0x0001;
-const MAP_MODE_READ = 0x0001;
+import { BufferUsage, MapMode } from "./constants";
+const { QUERY_RESOLVE, COPY_SRC, COPY_DST, MAP_READ } = BufferUsage;
+const MAP_MODE_READ = MapMode.READ;
 
 export type PassTimestamps = GPUComputePassTimestampWrites & GPURenderPassTimestampWrites;
 

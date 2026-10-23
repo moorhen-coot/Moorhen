@@ -11,18 +11,12 @@
  * from the WebGL view.
  */
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
-import { GpuSpanTimer } from './gpuSpanTimer';
+import { BufferUsage, GpuSpanTimer, ShaderStage, TextureUsage, getGpuContext } from './gpu';
 import { PREVIEW_WGSL } from './previewShaders';
 import {
     ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, planMeshChunks, planPreview,
 } from './previewScene';
 
-// The WebGPU flag constants, by their values in the specification. TypeScript's DOM library has
-// the WebGPU interfaces but not these globals, and they are fixed by the spec, so spelling them
-// out is simpler than adding @webgpu/types for three objects.
-const BufferUsage = { COPY_DST: 0x0008, INDEX: 0x0010, VERTEX: 0x0020, UNIFORM: 0x0040 } as const;
-const TextureUsage = { RENDER_ATTACHMENT: 0x10 } as const;
-const ShaderStage = { VERTEX: 0x1, FRAGMENT: 0x2 } as const;
 
 /**
  * WebGL's thick lines are 2 × pixelZoom × size² Å wide, pixelZoom being 0.04 × zoom when the
@@ -111,15 +105,16 @@ const asFloat32 = (data: ArrayLike<number>): Float32Array =>
 const asUint32 = (data: ArrayLike<number>): Uint32Array =>
     data instanceof Uint32Array ? data : Uint32Array.from(data);
 
-/** Why WebGPU cannot be used here, or null if it can. Cheap; does not create a device. */
-export function webGPUUnavailableReason(): string | null {
-    if (typeof navigator === "undefined" || !("gpu" in navigator) || !navigator.gpu) {
-        return "This browser does not offer WebGPU (navigator.gpu is missing). Chrome and Edge have it " +
-            "on Windows, macOS and ChromeOS, Safari from version 26, and Firefox from 141 on Windows; " +
-            "on Linux it usually needs enabling by hand.";
-    }
-    return null;
-}
+// Where it always was, for the modal; it lives with the shared device now.
+export { webGPUUnavailableReason } from './gpu';
+
+/**
+ * Which renderer configured each canvas context last. A canvas has one WebGPU context however
+ * often getContext is called, so two renderers on one canvas share it - as when React's
+ * StrictMode mounts the preview twice in development, and the first renderer is destroyed after
+ * the second has configured the context. Only the last to configure may unconfigure.
+ */
+const canvasOwners = new WeakMap<GPUCanvasContext, WebGPUPreviewRenderer>();
 
 export class WebGPUPreviewRenderer {
     readonly adapterDescription: string;
@@ -151,37 +146,24 @@ export class WebGPUPreviewRenderer {
     private readonly maxBufferBytes: number;
     /** GPU time of each frame's render pass, where the device can time. */
     private readonly frameTimer: GpuSpanTimer | null;
+    /** On the shared device: removed again by destroy(), which must not destroy the device. */
+    private readonly errorListener: (event: GPUUncapturedErrorEvent) => void;
 
     /**
-     * Ask for an adapter and device and configure the canvas. Rejects with a readable message if
-     * any step fails, so the caller can show it as it stands.
+     * Configure the canvas on the shared device (../gpu: the adapter's largest buffers and
+     * storage bindings, and timestamps where offered). Rejects with a readable message if any
+     * step fails, so the caller can show it as it stands.
      */
     static async create(canvas: HTMLCanvasElement, onError: (message: string) => void,
                         options: { maxBufferBytes?: number } = {}): Promise<WebGPUPreviewRenderer> {
-        const unavailable = webGPUUnavailableReason();
-        if (unavailable) throw new Error(unavailable);
-        const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
-        if (!adapter) throw new Error("WebGPU is present but no adapter was offered (blocklisted GPU or driver?).");
-        // The default limit is 256 MB per buffer, which a big surface passes (1ibm's MetaBalls
-        // have 341 MB of indices). Ask for what the adapter can do; meshes bigger than even that
-        // are drawn in chunks.
-        // The storage binding limit likewise, for a map's whole unit cell (GPU map contours).
-        // Timestamps, where offered, for the GPU times on the status line (frames and map contours).
-        const device = await adapter.requestDevice({
-            requiredFeatures: adapter.features.has("timestamp-query") ? ["timestamp-query"] : [],
-            requiredLimits: {
-                maxBufferSize: adapter.limits.maxBufferSize,
-                maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize,
-            },
-        });
+        const { device, adapterDescription } = await getGpuContext();
         // The DOM library's getContext overloads do not include "webgpu" yet.
         const context = canvas.getContext("webgpu") as unknown as GPUCanvasContext | null;
         if (!context) throw new Error("The canvas would not give a WebGPU context.");
-        const info = adapter.info;
-        const description = info ? [info.vendor, info.architecture, info.description].filter(Boolean).join(" ") : "";
-        // For tests: a smaller limit than the device's, to exercise the chunking.
+        // Meshes bigger than the largest buffer are drawn in chunks. For tests: a smaller limit
+        // than the device's, to exercise the chunking.
         const maxBufferBytes = Math.min(device.limits.maxBufferSize, options.maxBufferBytes ?? Infinity);
-        return new WebGPUPreviewRenderer(device, context, description || "unknown adapter", onError, maxBufferBytes);
+        return new WebGPUPreviewRenderer(device, context, adapterDescription, onError, maxBufferBytes);
     }
 
     private constructor(device: GPUDevice, context: GPUCanvasContext, adapterDescription: string, onError: (message: string) => void,
@@ -192,11 +174,12 @@ export class WebGPUPreviewRenderer {
         this.adapterDescription = adapterDescription;
         this.format = navigator.gpu.getPreferredCanvasFormat();
         context.configure({ device, format: this.format, alphaMode: "opaque" });
+        canvasOwners.set(context, this);
 
-        device.addEventListener("uncapturederror", (event: GPUUncapturedErrorEvent) => {
-            console.error("WebGPU preview:", event.error.message);
-            onError(event.error.message);
-        });
+        // Any error outside an error scope on the shared device, whoever caused it: the device
+        // logs them too (../gpu/context.ts).
+        this.errorListener = (event: GPUUncapturedErrorEvent) => onError(event.error.message);
+        device.addEventListener("uncapturederror", this.errorListener);
         device.lost.then(info => {
             if (!this.destroyed) onError(`WebGPU device lost: ${info.message || info.reason}`);
         });
@@ -304,7 +287,7 @@ export class WebGPUPreviewRenderer {
         return { plan, uploads, cpuMs: performance.now() - started };
     }
 
-    /** Release every GPU resource. The renderer cannot be used afterwards. */
+    /** Release every GPU resource it made (not the shared device). It cannot be used afterwards. */
     destroy(): void {
         this.destroyed = true;
         for (const subs of this.resources.values()) subs.forEach(sub => sub?.buffers.forEach(b => b.destroy()));
@@ -315,8 +298,12 @@ export class WebGPUPreviewRenderer {
         this.gpuDrawUniforms.forEach(u => u.buffer.destroy());
         this.gpuDrawUniforms.clear();
         this.frameTimer?.destroy();
-        this.context.unconfigure();
-        this.device.destroy();
+        if (canvasOwners.get(this.context) === this) {
+            this.context.unconfigure();
+            canvasOwners.delete(this.context);
+        }
+        // The device is shared (../gpu), so it stays.
+        this.device.removeEventListener("uncapturederror", this.errorListener);
     }
 
     private ensureTargets(width: number, height: number): void {

@@ -21,7 +21,7 @@
  * field-gradient ones), and vertex_owner / point_triangles, which DrawMoorhenMetaBalls does not
  * return.
  */
-import { GpuScan, dispatchSize } from "./gpuScan";
+import { BufferUsage, GpuScan, MapMode, dispatchSize } from "../gpu";
 import { MC_TRIANGLE_TABLE } from "./mcTable";
 import {
     METABALLS_FIELD_CUTOFF, MetaBallsGrid, binPoints, boxZSpan, fieldFixedPointBits, metaballsGrid, pointIndexBoxes, slabDepth,
@@ -33,9 +33,8 @@ import {
     TOTALS_WGSL,
 } from "./metaballsShaders";
 
-// Spec values; the DOM typings have the WebGPU interfaces but not these globals.
-const MAP_READ = 0x0001, COPY_SRC = 0x0004, COPY_DST = 0x0008, UNIFORM = 0x0040, STORAGE = 0x0080;
-const MAP_MODE_READ = 0x0001;
+const { MAP_READ, COPY_SRC, COPY_DST, UNIFORM, STORAGE } = BufferUsage;
+const MAP_MODE_READ = MapMode.READ;
 
 /**
  * How many workgroups the row-sum and near-field kernels start; each loops over rows or bricks.

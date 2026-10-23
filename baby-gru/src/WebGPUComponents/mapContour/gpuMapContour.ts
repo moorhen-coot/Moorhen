@@ -7,18 +7,15 @@
  * guess was too small (the draw then shows only part of the surface for a frame), the buffers
  * grow and the contour is made again.
  */
-import { GpuSpanTimer, SpanTiming } from "../gpuSpanTimer";
-import { GpuScan, dispatchSize } from "../metaballs/gpuScan";
+import { BufferUsage, ComputeKernel, GpuScan, GpuSpanTimer, MapMode, SpanTiming, createBuffer } from "../gpu";
 import { MC_TRIANGLE_TABLE } from "../metaballs/mcTable";
 import { ContourBox, MapUnitCellGrid, contourBox, inverse3 } from "./mapContourBox";
 import {
     COUNT_TRIANGLES_WGSL, COUNT_VERTICES_WGSL, EMIT_TRIANGLES_WGSL, EMIT_VERTICES_WGSL, MAP_WORKGROUP, SAMPLE_WGSL, TOTALS_WGSL, chunksOf,
 } from "./mapContourShaders";
 
-// Spec values; the DOM typings have the WebGPU interfaces but not these globals.
-const MAP_READ = 0x0001, COPY_SRC = 0x0004, COPY_DST = 0x0008, INDEX = 0x0010, VERTEX = 0x0020, UNIFORM = 0x0040,
-    STORAGE = 0x0080, INDIRECT = 0x0100;
-const MAP_MODE_READ = 0x0001;
+const { MAP_READ, COPY_SRC, COPY_DST, INDEX, VERTEX, UNIFORM, STORAGE, INDIRECT } = BufferUsage;
+const MAP_MODE_READ = MapMode.READ;
 
 type Kernel = "sample" | "countVertices" | "countTriangles" | "emitVertices" | "emitTriangles" | "totals";
 
@@ -28,49 +25,33 @@ export class MapContourKernels {
         readonly device: GPUDevice,
         readonly scan: GpuScan,
         readonly table: GPUBuffer,
-        private readonly pipelines: Map<Kernel, GPUComputePipeline>,
+        private readonly kernels: Map<Kernel, ComputeKernel>,
     ) {}
 
     static async create(device: GPUDevice): Promise<MapContourKernels> {
-        const kernels: [Kernel, string][] = [
-            ["sample", SAMPLE_WGSL], ["countVertices", COUNT_VERTICES_WGSL], ["countTriangles", COUNT_TRIANGLES_WGSL],
-            ["emitVertices", EMIT_VERTICES_WGSL], ["emitTriangles", EMIT_TRIANGLES_WGSL], ["totals", TOTALS_WGSL],
+        const sources: [Kernel, string, number][] = [
+            ["sample", SAMPLE_WGSL, MAP_WORKGROUP], ["countVertices", COUNT_VERTICES_WGSL, MAP_WORKGROUP],
+            ["countTriangles", COUNT_TRIANGLES_WGSL, MAP_WORKGROUP], ["emitVertices", EMIT_VERTICES_WGSL, MAP_WORKGROUP],
+            ["emitTriangles", EMIT_TRIANGLES_WGSL, MAP_WORKGROUP], ["totals", TOTALS_WGSL, 1],
         ];
         const [scan, ...compiled] = await Promise.all([
             GpuScan.create(device),
-            ...kernels.map(([kernel, code]) => device.createComputePipelineAsync({
-                label: `map contour ${kernel}`,
-                layout: "auto",
-                compute: { module: device.createShaderModule({ label: `map contour ${kernel}`, code }), entryPoint: "main" },
-            })),
+            ...sources.map(([kernel, code, workgroupSize]) =>
+                ComputeKernel.create(device, { label: `map contour ${kernel}`, code, workgroupSize })),
         ]);
-        const pipelines = new Map<Kernel, GPUComputePipeline>();
-        kernels.forEach(([kernel], i) => pipelines.set(kernel, compiled[i] as GPUComputePipeline));
-        const table = device.createBuffer({ label: "mc table", size: MC_TRIANGLE_TABLE.byteLength, usage: STORAGE | COPY_DST });
-        device.queue.writeBuffer(table, 0, MC_TRIANGLE_TABLE);
-        return new MapContourKernels(device, scan as GpuScan, table, pipelines);
+        const kernels = new Map<Kernel, ComputeKernel>();
+        sources.forEach(([kernel], i) => kernels.set(kernel, compiled[i] as ComputeKernel));
+        const table = createBuffer(device, "mc table", MC_TRIANGLE_TABLE.byteLength, STORAGE, MC_TRIANGLE_TABLE);
+        return new MapContourKernels(device, scan as GpuScan, table, kernels);
     }
 
+    /**
+     * One pass of `kernel` over `items` threads, with the parameters at group 0 and `buffers` at
+     * group 1, in binding order.
+     */
     dispatch(encoder: GPUCommandEncoder, kernel: Kernel, params: GPUBuffer, buffers: GPUBuffer[], items: number,
              timestampWrites?: GPUComputePassTimestampWrites): void {
-        if (items <= 0) return;
-        const pipeline = this.pipelines.get(kernel);
-        const pass = encoder.beginComputePass({ label: `map contour ${kernel}`, timestampWrites });
-        pass.setPipeline(pipeline);
-        pass.setBindGroup(0, this.device.createBindGroup({
-            layout: pipeline.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: params } }],
-        }));
-        pass.setBindGroup(1, this.device.createBindGroup({
-            layout: pipeline.getBindGroupLayout(1),
-            entries: buffers.map((buffer, binding) => ({ binding, resource: { buffer } })),
-        }));
-        if (kernel === "totals") {
-            pass.dispatchWorkgroups(1);
-        } else {
-            const [gx, gy] = dispatchSize(Math.ceil(items / MAP_WORKGROUP));
-            pass.dispatchWorkgroups(gx, gy);
-        }
-        pass.end();
+        this.kernels.get(kernel).dispatch(encoder, { groups: [[params], buffers], items, timestampWrites });
     }
 
     destroy(): void {
@@ -84,8 +65,7 @@ export class GpuMapGrid {
     readonly buffer: GPUBuffer;
     readonly frac: number[];
     constructor(readonly kernels: MapContourKernels, readonly grid: MapUnitCellGrid) {
-        this.buffer = kernels.device.createBuffer({ label: "map grid", size: Math.max(16, grid.data.byteLength), usage: STORAGE | COPY_DST });
-        kernels.device.queue.writeBuffer(this.buffer, 0, grid.data.buffer, grid.data.byteOffset, grid.data.byteLength);
+        this.buffer = createBuffer(kernels.device, "map grid", grid.data.byteLength, STORAGE, grid.data);
         this.frac = inverse3(grid.orth);
     }
     destroy(): void {
