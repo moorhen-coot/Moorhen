@@ -42,6 +42,20 @@ export interface PreviewCameraSource {
     clipCapPerfectSpheres?: boolean;
     /** The map line width, which buildBuffers makes every LINES and NORMALLINES buffer's size. */
     mapLineWidth?: number;
+    /**
+     * Where drawCore reads the hover highlight's size (glRef.hoverSize): the largest sphere under
+     * the hovered atoms, so the highlight covers them. MGWebGL has its store.
+     */
+    store?: { getState(): { glRef?: { hoverSize?: number } } };
+}
+
+/**
+ * The radius drawCore gives every sphere of a hover highlight, or null to keep their own: past
+ * the default 0.27, the hovered spheres' size plus 0.4.
+ */
+export function hoverSphereRadius(source: PreviewCameraSource): number | null {
+    const hoverSize = source.store?.getState().glRef?.hoverSize ?? 0;
+    return hoverSize > 0.27 ? hoverSize + 0.4 : null;
 }
 
 /** Where a sub-buffer's colour comes from. Decides the pipeline. */
@@ -163,8 +177,12 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
                 continue;
             }
 
-            const instanced = lengthOf(buffer.triangleInstanceOrigins?.[j]) > 0;
-            const instanceCount = instanced ? lengthOf(buffer.triangleInstanceOrigins[j]) / 3 : 1;
+            // Instanced when it has instance origins at all, as drawBuffer decides it. Empty ones
+            // are a template with no instances - the vector and measurement cylinders and cones
+            // with nothing to show - and draw nothing; they are not missing from the picture.
+            const instanced = buffer.triangleInstanceOrigins?.[j] != null;
+            const instanceCount = instanced ? Math.floor(lengthOf(buffer.triangleInstanceOrigins[j]) / 3) : 1;
+            if (instanceCount === 0) continue;
             const hasCustom = !!buffer.customColour && buffer.customColour.length === 4;
             const colours = lengthOf(buffer.triangleColours?.[j]);
 
@@ -207,11 +225,6 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
 function planSpheres(buffer: DisplayBuffer, j: number, skips: Skips): PreviewDraw | null {
     if (buffer.transformMatrix || buffer.transformMatrixInteractive) {
         skip(skips, buffer, j, "PERFECT_SPHERES with a transform matrix");
-        return null;
-    }
-    // Drawn at the hover size, which lives in the WebGL renderer, not in the buffer.
-    if (buffer.isHoverBuffer) {
-        skip(skips, buffer, j, "hover highlight");
         return null;
     }
     const n = Math.floor(lengthOf(buffer.triangleInstanceOrigins?.[j]) / 3);

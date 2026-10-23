@@ -34,6 +34,12 @@ test("perfect spheres: shape, shading and depth as WebGL's impostors, chunked an
     expect(r.capErrors.holes).toBeLessThanOrEqual(r.capErrors.expected * 0.002);
     expect(r.capErrors.extra).toBeLessThanOrEqual(r.capErrors.expected * 0.002);
 
+    // The hover highlight at the hover size: as a plain sphere that size; at the default, its own.
+    expect(r.hover.plainDrawn).toBeGreaterThan(500);
+    expect(r.hover.differ).toBe(0);
+    expect(r.hover.atDefault).toBe(r.hover.smallDrawn);
+    expect(r.hover.atDefault).toBeLessThan(r.hover.drawn / 10);
+
     expect(r.chunked.drawn).toBeGreaterThan(500);
     expect(r.chunked.differ).toBe(0);
 

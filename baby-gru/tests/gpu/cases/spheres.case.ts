@@ -10,6 +10,8 @@
  * - clip caps leave no holes: wherever some of a sphere is behind the front plane, something is
  *   drawn (Stuart's old WebGL bug cut a ring out of the cap, or shrank it);
  * - chunking: spheres split over several buffers draw the same picture;
+ * - a hover highlight's spheres all take the hover size (glRef.hoverSize + 0.4) once that is past
+ *   the default;
  * - tiled snapshots match whole ones, orthographic and perspective.
  */
 import * as mat4 from "gl-matrix/mat4";
@@ -162,6 +164,8 @@ export interface SpheresReport {
     chunked: { differ: number; drawn: number };
     tiled: { differ: number; tiles: number };
     perspectiveTiled: { differ: number; drawn: number; fromOrthographic: number };
+    /** A hover sphere of size 0.3 with hoverSize 1.6, against a plain sphere of radius 2; and at the default. */
+    hover: { drawn: number; plainDrawn: number; differ: number; atDefault: number; smallDrawn: number };
     rendererErrors: string[];
 }
 
@@ -239,6 +243,15 @@ export default defineCase(async (_device: GPUDevice): Promise<SpheresReport> => 
         const perspective = await shot([row], camera(true));
         const perspectiveTiled = await shot([row], camera(true), 50);
 
+        const hoverCamera = { ...front, store: { getState: () => ({ glRef: { hoverSize: 1.6 } }) } };
+        const defaultCamera = { ...front, store: { getState: () => ({ glRef: { hoverSize: 0.27 } }) } };
+        const hoverBuffer = sphereBuffer([{ centre: [0, 0, 0], radius: 0.3, colour: [1, 0.5, 0, 1] }]);
+        hoverBuffer.isHoverBuffer = true;
+        const hovered = await shot([hoverBuffer], hoverCamera);
+        const plain = await shot([sphereBuffer([{ centre: [0, 0, 0], radius: 2, colour: [1, 0.5, 0, 1] }])], hoverCamera);
+        const atDefault = await shot([hoverBuffer], defaultCamera);
+        const smallPlain = await shot([sphereBuffer([{ centre: [0, 0, 0], radius: 0.3, colour: [1, 0.5, 0, 1] }])], defaultCamera);
+
         const singleComparison = compare(single.data, expected);
         return {
             pixels: WIDTH * HEIGHT,
@@ -251,6 +264,10 @@ export default defineCase(async (_device: GPUDevice): Promise<SpheresReport> => 
             chunked: { differ: compare(chunked.data, whole.data, 0).differ, drawn: drawnPixels(whole.data) },
             tiled: { differ: compare(tiled.data, whole.data).differ, tiles: tiled.tiles },
             perspectiveTiled: { differ: compare(perspectiveTiled.data, perspective.data).differ, drawn: drawnPixels(perspective.data), fromOrthographic: compare(perspective.data, whole.data).differ },
+            hover: {
+                drawn: drawnPixels(hovered.data), plainDrawn: drawnPixels(plain.data), differ: compare(hovered.data, plain.data).differ,
+                atDefault: drawnPixels(atDefault.data), smallDrawn: drawnPixels(smallPlain.data),
+            },
             rendererErrors,
         };
     } finally {

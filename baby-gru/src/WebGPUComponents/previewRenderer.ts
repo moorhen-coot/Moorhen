@@ -16,7 +16,7 @@ import { BufferUsage, GpuSpanTimer, MapMode, ShaderStage, TextureUsage, getGpuCo
 import { SnapshotTile, narrowToTile, planTiles } from './snapshotTiles';
 import { PREVIEW_WGSL } from './previewShaders';
 import {
-    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, planMeshChunks, planPreview, symmetryCopyGrey,
+    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, hoverSphereRadius, planMeshChunks, planPreview, symmetryCopyGrey,
 } from './previewScene';
 
 
@@ -528,7 +528,9 @@ export class WebGPUPreviewRenderer {
             return;
         }
 
-        this.writeDrawBlocks(sub, item, background);
+        // A hover highlight's spheres all take the hover size (drawCore), through the half-width slot.
+        const hoverRadius = item.primitive === "spheres" && item.buffer.isHoverBuffer ? hoverSphereRadius(camera) ?? 0 : 0;
+        this.writeDrawBlocks(sub, item, background, hoverRadius);
         const copies = 1 + item.copies.length;
 
         if (item.primitive === "spheres") {

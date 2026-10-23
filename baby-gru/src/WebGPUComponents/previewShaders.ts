@@ -36,7 +36,8 @@ struct Frame {
 
 struct Draw {
     colour: vec4f,       // used when the colour comes from a uniform (customColour)
-    params: vec4f,       // alpha multiplier (an object fade), thick lines' half width (Å),
+    params: vec4f,       // alpha multiplier (an object fade), thick lines' half width (Å) or
+                         // every sphere's radius (a hover highlight; 0 for their own),
                          // 1 to colour everything copyColour (a grey symmetry copy),
                          // segments' colour: 0 their first vertex's, 1 each end's own, 2 draw.colour
     copyColour: vec4f,
@@ -254,7 +255,7 @@ fn vs_sphere(@builtin(vertex_index) vertex: u32, @location(0) origin: vec3f, @lo
     let corner = SPHERE_CORNERS[vertex];
     // As twodshapes-vertex-shader.js: its unit-radius quad, scaled by sqrt(2) * size, has corners
     // size along the screen's axes; drawCore turns them to face the screen.
-    let r = size.x;
+    let r = select(size.x, draw.params.y, draw.params.y > 0.0);
     let centre = (draw.model * vec4f(origin, 1.0)).xyz;
     let world = vec4f(centre + r * (corner.x * frame.rightDir.xyz + corner.y * frame.upDir.xyz), 1.0);
     var out: SphereOut;

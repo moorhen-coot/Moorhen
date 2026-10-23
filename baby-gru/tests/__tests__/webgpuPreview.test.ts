@@ -12,7 +12,7 @@ import { createWebGLBuffers } from "../../src/WebGLgComponents/createWebGLBuffer
 import { viewProjection } from "../../src/WebGLgComponents/mgWebGLParts/projection";
 import {
     FRAME_FLOATS, MeshChunk, PreviewCameraSource, describeSkipped, frameUniforms, planMeshChunks, planPreview, previewCameraFrame,
-    symmetryCopyGrey,
+    hoverSphereRadius, symmetryCopyGrey,
 } from "../../src/WebGPUComponents/previewScene";
 
 const triangle = (over: Record<string, unknown> = {}) => createWebGLBuffers({
@@ -73,6 +73,23 @@ describe("planPreview", () => {
         expect(draw).toMatchObject({ instanced: true, colourSource: "instance", instanceCount: 2 });
     });
 
+    it("draws nothing for an instanced mesh with no instances, and does not call it skipped", () => {
+        // As getVectorsBuffers makes them when there are no vectors: the cylinder template, no colours.
+        const empty = createWebGLBuffers({
+            prim_types: [["TRIANGLES"]],
+            vert_tri: [[new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0])]],
+            norm_tri: [[new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1])]],
+            col_tri: [[new Float32Array([])]],
+            idx_tri: [[new Uint32Array([0, 1, 2])]],
+            instance_origins: [[new Float32Array([])]],
+            instance_sizes: [[new Float32Array([])]],
+            instance_orientations: [[new Float32Array([])]],
+        }, 0);
+        const plan = planPreview([empty]);
+        expect(plan.draws).toHaveLength(0);
+        expect(plan.skipped).toEqual({});
+    });
+
     it("counts instances in the triangle total", () => {
         const plan = planPreview([instanced(false)]);
         expect(plan.draws[0].colourSource).toBe("vertex");
@@ -112,18 +129,26 @@ describe("planPreview", () => {
     it("reports spheres it cannot draw, and why", () => {
         const noColours = spheres({ col_tri: [[new Float32Array([1, 0, 0, 1])]] });
         const noSizes = spheres({ instance_sizes: [[new Float32Array([0.5])]] });
-        const hover = spheres();
-        hover.isHoverBuffer = true;
         const moved = spheres();
         moved.setTransformMatrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-        const plan = planPreview([noColours, noSizes, hover, moved]);
+        const plan = planPreview([noColours, noSizes, moved]);
         expect(plan.draws).toHaveLength(0);
         expect(plan.skipped).toEqual({
             "PERFECT_SPHERES without a colour per sphere": 1,
             "PERFECT_SPHERES without a size per sphere": 1,
-            "hover highlight": 1,
             "PERFECT_SPHERES with a transform matrix": 1,
         });
+    });
+
+    it("draws the hover highlight, at the hover size once that is past the default", () => {
+        const hover = spheres();
+        hover.isHoverBuffer = true;
+        expect(planPreview([hover]).draws).toHaveLength(1);
+        const at = (hoverSize?: number) => hoverSphereRadius(camera({ store: { getState: () => ({ glRef: { hoverSize } }) } }));
+        expect(at(undefined)).toBeNull();
+        expect(at(0.27)).toBeNull();
+        expect(at(0.5)).toBeCloseTo(0.9, 6);
+        expect(hoverSphereRadius(camera())).toBeNull();
     });
 
     it("draws LINES between index pairs or vertex pairs, and lit NORMALLINES only with indices", () => {
