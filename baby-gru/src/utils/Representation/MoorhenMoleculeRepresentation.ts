@@ -1567,6 +1567,8 @@ export class MoleculeRepresentation {
     drawSymmetry() {
         if (this.parentMolecule.symmetryMatrices && this.buffers && this.styleHasSymmetry) {
             this.buffers.forEach((displayObject: moorhen.DisplayObject) => {
+                // Only meshes: text-label and image records ride along in buffers, frozen by the store.
+                if (!("bufferTypes" in displayObject)) return;
                 displayObject.symmetryMatrices = this.parentMolecule.symmetryMatrices;
                 displayObject.updateSymmetryAtoms();
             });
