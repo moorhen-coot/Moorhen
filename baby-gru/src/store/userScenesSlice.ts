@@ -58,7 +58,6 @@ const initialState: {
     /** The id of the scene or snapshot currently shown */
     selectedScene: string;
     isSceneChanging: boolean;
-    showSceneSelector: boolean; //to be removed when the scene selector is finished
     /**
      * The saved settings of each built-in scene: user preferences, used when Moorhen starts. Only
      * changed by the scene's save button or by restoring / importing preferences, never by editing
@@ -73,7 +72,6 @@ const initialState: {
     snapshots: [],
     selectedScene: "Default",
     isSceneChanging: false,
-    showSceneSelector: false,
     savedSceneSettings: {
         Default: builtInSceneDefaults("Default"),
         "Model Building": builtInSceneDefaults("Model Building"),
@@ -112,9 +110,6 @@ const userScenesSlice = createSlice({
             state.snapshots = action.payload.snapshots;
             state.selectedScene = action.payload.selectedScene;
         },
-        setShowSceneSelector: (state, action: PayloadAction<boolean>) => {
-            state.showSceneSelector = action.payload;
-        },
         /* Set one saved setting of a built-in scene (restoring a preference) */
         setSavedSceneSetting: (state, action: PayloadAction<{ sceneId: BuiltInSceneId; key: PerSceneKey; value: unknown }>) => {
             const { sceneId, key, value } = action.payload;
@@ -135,7 +130,6 @@ export const {
     setSelectedScene,
     setSceneChanging,
     setUserSceneState,
-    setShowSceneSelector,
     setSavedSceneSetting,
     saveSceneSettings,
 } = userScenesSlice.actions;

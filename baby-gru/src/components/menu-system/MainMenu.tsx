@@ -21,7 +21,6 @@ export const MoorhenMainMenu = memo(() => {
     const dispatch = useDispatch();
     const moorhenInstance = useMoorhenInstance();
     const menuSystem = moorhenInstance.menuSystem;
-    const showSceneSelector = useSelector((state: RootState) => state.userScenes.showSceneSelector);
 
     const menuVersion = useMenuHook();
 
@@ -137,7 +136,7 @@ export const MoorhenMainMenu = memo(() => {
                 >
                 <MoorhenSearchBar />
                 </MoorhenTooltip>
-                {showSceneSelector && <UserSceneSelector />}
+                <UserSceneSelector />
             </div>
         </div>
     );

@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useState } from "react";
-import { setOrigin, setShowSceneSelector } from "@/store";
+import { setOrigin } from "@/store";
 import { RootState, setShownBottomPanel } from "@/store";
 import { useMoorhenInstance, usePaths } from "../../InstanceManager";
 import {
@@ -171,7 +171,6 @@ export const MoorhenDevMenu = () => {
     const [testVectors, setTestVectors] = useState<MoorhenVector[]>([]);
     const [conKitFile1Contents, setConKitFile1Contents] = useState<string>("");
     const [conKitFile2Contents, setConKitFile2Contents] = useState<string>("");
-    const showSceneSelector = useSelector((state: RootState) => state.userScenes.showSceneSelector);
 
     const dispatch = useDispatch();
     const moorhenInstance = useMoorhenInstance();
@@ -518,14 +517,6 @@ export const MoorhenDevMenu = () => {
                 label="Draw opaque geometry once when depth peeling"
                 onChange={() => {
                     dispatch(setPeelOpaqueSeparately(!peelOpaqueSeparately));
-                }}
-            />
-            <MoorhenToggle
-                type="switch"
-                checked={showSceneSelector}
-                label="Toggle Scene Selector"
-                onChange={() => {
-                    dispatch(setShowSceneSelector(!showSceneSelector));
                 }}
             />
             <MoorhenMenuItem

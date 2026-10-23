@@ -278,7 +278,6 @@ export {
     setSelectedScene,
     setSceneChanging,
     setUserSceneState,
-    setShowSceneSelector,
     setSavedSceneSetting,
     saveSceneSettings,
 }  from "./userScenesSlice";
