@@ -21,7 +21,15 @@ import {
     getSceneSettingsSnapshot,
     isSamePerSceneSettings,
 } from "../store/sceneSettingsSlice";
-import { BUILT_IN_SCENE_IDS, type BuiltInSceneId, type UserScene, builtInSceneDefaults, isBuiltInScene } from "../store/userScenesSlice";
+import {
+    BUILT_IN_SCENE_IDS,
+    type BuiltInSceneId,
+    type UserScene,
+    MOVIE_SCENE_ID,
+    builtInSceneDefaults,
+    bumpBackupsRevision,
+    isBuiltInScene,
+} from "../store/userScenesSlice";
 import type { RepresentationBackup } from "../utils/Representation/RepresentationBuilder";
 import { DEFAULT_REPRESENTATION_STYLE, type MoorhenInstance } from "./MoorhenInstance";
 
@@ -139,6 +147,14 @@ const isSnapshot = (sceneId: string) => sceneId.startsWith("snapshot-");
 const nextNumber = (scenes: UserScene[], prefix: string) =>
     Math.max(0, ...scenes.filter(scene => scene.id.startsWith(prefix)).map(scene => parseInt(scene.id.slice(prefix.length)))) + 1;
 
+/** `name`, or `name (2)`, `name (3)`... if it is already used, so entries in the scene menu can be told apart */
+const uniqueName = (scenes: UserScene[], name: string) => {
+    const names = new Set(scenes.map(scene => scene.name));
+    let candidate = name;
+    for (let n = 2; names.has(candidate); n++) candidate = `${name} (${n})`;
+    return candidate;
+};
+
 /**
  * A built-in scene with no saved representations: every molecule gets the scene's default style
  * when shown.
@@ -175,6 +191,8 @@ export class MoorhenUserSceneManager {
     );
     // Not read from the store: two calls in the same tick must already see each other
     private isChanging: boolean = false;
+    // hasUnsavedChanges runs in selectors, so on every dispatch: recompute only when its inputs change
+    private unsavedChangesCache = new Map<string, { inputs: unknown[]; result: boolean }>();
 
     constructor(instance: MoorhenInstance) {
         this.instance = instance;
@@ -208,6 +226,7 @@ export class MoorhenUserSceneManager {
             const backup = this.backups[sceneId] ?? builtInSceneBackup(sceneId, savedSceneSettings[sceneId], true);
             this.backups[sceneId] = { ...backup, sceneSettings: savedSceneSettings[sceneId], isPreset: true };
         }
+        this.backupsChanged();
         if (isBuiltInScene(this.selected)) this.applySceneSettings(this.backups[this.selected]);
     }
 
@@ -234,8 +253,21 @@ export class MoorhenUserSceneManager {
      */
     public hasUnsavedChanges(sceneId: string, state: RootState = this.instance.store.getState()): boolean {
         if (!isBuiltInScene(sceneId)) return false;
+        const { userScenes } = state;
+        // What the answer depends on: the live settings only matter for the shown scene, the
+        // backups are tracked by backupsRevision
+        const inputs = [
+            userScenes.selectedScene === sceneId ? state.sceneSettings : null,
+            userScenes.selectedScene === sceneId,
+            userScenes.backupsRevision,
+            userScenes.savedSceneSettings[sceneId],
+        ];
+        const cached = this.unsavedChangesCache.get(sceneId);
+        if (cached && cached.inputs.every((input, i) => input === inputs[i])) return cached.result;
         const current = getPerSceneSettings(this.sceneSettingsOf(sceneId, state), builtInSceneDefaults(sceneId));
-        return !isSamePerSceneSettings(current, state.userScenes.savedSceneSettings[sceneId]);
+        const result = !isSamePerSceneSettings(current, userScenes.savedSceneSettings[sceneId]);
+        this.unsavedChangesCache.set(sceneId, { inputs, result });
+        return result;
     }
 
     /** Whether a scene switch is in progress (switching again is ignored until it ends) */
@@ -245,7 +277,12 @@ export class MoorhenUserSceneManager {
 
     /** Whether a scene is the one the movie plays in */
     public isMovieScene(sceneId: string): boolean {
-        return this.instance.store.getState().movie.document.sceneId === sceneId;
+        return sceneId === MOVIE_SCENE_ID;
+    }
+
+    /** The movie scene holds the look of the movie's keyframes: it is kept while there are some */
+    private get isMovieSceneInUse(): boolean {
+        return this.instance.store.getState().movie.document.path.keyframes.length > 0;
     }
 
     /** A movie is playing or being rendered: the scene must not change under it */
@@ -298,6 +335,7 @@ export class MoorhenUserSceneManager {
             const backup = fromFileEntry(entry);
             if (backup) this.backups[entry.id] = backup;
         }
+        this.backupsChanged();
         const allIds = [...scenes, ...snapshots].map(scene => scene.id);
         const selectedScene = allIds.includes(state.selectedScene) ? state.selectedScene : "Default";
 
@@ -323,6 +361,7 @@ export class MoorhenUserSceneManager {
      */
     public resetForLegacySession(): void {
         this.backups = this.savedBuiltInSceneBackups();
+        this.backupsChanged();
         this.instance.dispatch(
             setUserSceneState({
                 scenes: BUILT_IN_SCENE_IDS.map(sceneId => ({ id: sceneId, name: sceneId })),
@@ -370,16 +409,14 @@ export class MoorhenUserSceneManager {
 
     /**
      * Add a custom scene and switch to it. It starts as a copy of the current scene.
-     * @param name - Display name (defaults to "Custom N").
-     * @returns The id of the new scene.
+     * @param name - Display name (defaults to "Custom N"), numbered "Name (2)"... if already used.
+     * @returns The id of the new scene, or null if it could not be shown (a switch running or a
+     * movie playing): the scene is then not added.
      */
-    public async create(name?: string): Promise<string> {
+    public async create(name?: string): Promise<string | null> {
         // Use the highest existing number + 1 so a new id never collides with an existing scene
         const customNumber = nextNumber(this.list, "custom-");
-        const id = `custom-${customNumber}`;
-        this.instance.dispatch(addUserScene({ id, name: name ?? `Custom ${customNumber}` }));
-        await this.select(id);
-        return id;
+        return this.addAndSelect(`custom-${customNumber}`, name ?? `Custom ${customNumber}`);
     }
 
     /**
@@ -394,7 +431,7 @@ export class MoorhenUserSceneManager {
      * @returns True if the scene changed, false if one of them does not exist, the target is a
      * snapshot or the source itself, a switch is running or a movie is playing.
      * @example
-     * await moorhenInstance.userScene.copyFrom("movie-1", "Default");
+     * await moorhenInstance.userScene.copyFrom("movie", "Default");
      */
     public async copyFrom(targetId: string, sourceId: string, withRepresentations: boolean = false): Promise<boolean> {
         const exists = (id: string) => [...this.list, ...this.snapshots].some(scene => scene.id === id);
@@ -410,6 +447,7 @@ export class MoorhenUserSceneManager {
             ...(withRepresentations ? this.representationsOf(sourceId) : {}),
         };
         this.backups[targetId] = backup;
+        this.backupsChanged();
 
         if (targetId === this.selected) {
             if (withRepresentations) {
@@ -431,24 +469,25 @@ export class MoorhenUserSceneManager {
 
     /**
      * Add the scene a movie plays in and switch to it. Like a custom scene it starts as a copy of
-     * the current one; its id starts with "movie-", and it cannot be deleted while the movie uses it.
+     * the current one. There is only one (id "movie"): if it already exists it is shown, unchanged. It
+     * cannot be deleted while the movie has keyframes.
      *
      * **Internal use only.** Called by the movie panel when the first keyframe is captured.
      * @private
-     * @param name - Display name.
-     * @returns The id of the new scene.
+     * @param name - Display name, numbered "Name (2)"... if already used.
+     * @returns The id of the new scene, or null if it could not be shown (the scene is then not added).
      */
-    public async createMovieScene(name: string): Promise<string> {
-        const id = `movie-${nextNumber(this.list, "movie-")}`;
-        this.instance.dispatch(addUserScene({ id, name }));
-        await this.select(id);
-        return id;
+    public async createMovieScene(name: string): Promise<string | null> {
+        if (this.list.some(scene => scene.id === MOVIE_SCENE_ID)) {
+            return this.selected === MOVIE_SCENE_ID || (await this.select(MOVIE_SCENE_ID)) ? MOVIE_SCENE_ID : null;
+        }
+        return this.addAndSelect(MOVIE_SCENE_ID, name);
     }
 
     /**
      * Snapshot what is shown now: representations, scene settings and camera. The snapshot is
      * added to the snapshot list; the current scene stays selected.
-     * @param name - Display name (defaults to "Snapshot N").
+     * @param name - Display name (defaults to "Snapshot N"), numbered "Name (2)"... if already used.
      * @returns The id of the new snapshot, or null while a scene switch is running.
      * @example
      * const id = moorhenInstance.userScene.takeSnapshot("Active site");
@@ -458,12 +497,13 @@ export class MoorhenUserSceneManager {
         if (this.isChanging) return null;
         const snapshotNumber = nextNumber(this.snapshots, "snapshot-");
         const id = `snapshot-${snapshotNumber}`;
-        const backup = this.captureScene(name ?? `Snapshot ${snapshotNumber}`);
+        const backup = this.captureScene(uniqueName([...this.list, ...this.snapshots], name ?? `Snapshot ${snapshotNumber}`));
         const { sceneSettings, glRef } = this.instance.store.getState();
         backup.camera = { origin: [...sceneSettings.origin], zoom: sceneSettings.zoom, quat: [...glRef.quat] };
         // A snapshot of a snapshot keeps the original scene
         backup.baseScene = isSnapshot(this.selected) ? this.backups[this.selected]?.baseScene : this.selected;
         this.backups[id] = backup;
+        this.backupsChanged();
         this.instance.dispatch(addUserSnapshot({ id, name: backup.name }));
         this.recordInHistory();
         return id;
@@ -471,19 +511,21 @@ export class MoorhenUserSceneManager {
 
     /**
      * Delete a custom scene or a snapshot, with its saved representations. Deleting the current
-     * one switches back to "Default" first. Built-in scenes, and the scene the movie plays in,
-     * cannot be deleted.
+     * one switches back to "Default" first. Built-in scenes, and the movie scene while the movie has
+     * keyframes, cannot be deleted.
      * @param sceneId - The id of the scene or snapshot to delete.
      * @returns True if the scene was deleted.
      */
     public async delete(sceneId: string): Promise<boolean> {
-        if (this.isChanging || this.isMoviePlaying || isBuiltInScene(sceneId) || this.isMovieScene(sceneId)) return false;
+        if (this.isChanging || this.isMoviePlaying || isBuiltInScene(sceneId)) return false;
+        if (this.isMovieScene(sceneId) && this.isMovieSceneInUse) return false;
         if (this.selected === sceneId) {
             // Leaving the deleted scene must not save it again
             await this.select("Default", false);
         }
         this.instance.dispatch(removeUserScene(sceneId));
         delete this.backups[sceneId];
+        this.backupsChanged();
         this.recordInHistory();
         return true;
     }
@@ -505,6 +547,7 @@ export class MoorhenUserSceneManager {
         // Keep the name if the user renamed the scene
         backup.name = this.list.find(scene => scene.id === sceneId)?.name ?? sceneId;
         this.backups[sceneId] = backup;
+        this.backupsChanged();
         if (this.selected === sceneId) {
             this.setChanging(true);
             try {
@@ -542,6 +585,7 @@ export class MoorhenUserSceneManager {
         const target = sceneId === this.selected || !this.backups[sceneId] ? this.captureScene(name) : this.backups[sceneId];
         const backup: SceneBackupEntry = { ...target, sceneSettings, isPreset: false };
         this.backups[sceneId] = backup;
+        this.backupsChanged();
         if (sceneId === this.selected) this.applySceneSettings(backup);
         this.recordInHistory();
         return true;
@@ -556,6 +600,15 @@ export class MoorhenUserSceneManager {
         this.instance.dispatch(renameUserScene({ id: sceneId, name }));
         if (this.backups[sceneId]) this.backups[sceneId].name = name;
         this.recordInHistory();
+    }
+
+    /** Add a scene and switch to it, or leave the list unchanged if the switch is refused */
+    private async addAndSelect(id: string, name: string): Promise<string | null> {
+        if (this.isChanging || this.isMoviePlaying) return null;
+        this.instance.dispatch(addUserScene({ id, name: uniqueName([...this.list, ...this.snapshots], name) }));
+        if (await this.select(id)) return id;
+        this.instance.dispatch(removeUserScene(id));
+        return null;
     }
 
     /** Count a scene change towards the next time capsule backup, like other modifications */
@@ -596,6 +649,11 @@ export class MoorhenUserSceneManager {
         this.instance.dispatch(applySceneSettingsSnapshot(sceneSettings));
     }
 
+    /** Call after changing `backups`: lets selectors that read them (hasUnsavedChanges) re-run */
+    private backupsChanged() {
+        this.instance.dispatch(bumpBackupsRevision());
+    }
+
     private setChanging(value: boolean) {
         this.isChanging = value;
         this.instance.dispatch(setSceneChanging(value));
@@ -630,6 +688,7 @@ export class MoorhenUserSceneManager {
         // Snapshots are immutable
         if (isSnapshot(sceneId)) return;
         this.backups[sceneId] = this.captureScene(this.list.find(scene => scene.id === sceneId)?.name ?? sceneId);
+        this.backupsChanged();
     }
 
     private async restoreScene(backup: SceneBackupEntry, wizardType: "bonds" | typeof DEFAULT_REPRESENTATION_STYLE) {

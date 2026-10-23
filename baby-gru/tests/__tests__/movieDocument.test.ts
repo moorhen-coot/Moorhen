@@ -91,10 +91,9 @@ describe("the scene quantities on a keyframe", () => {
 });
 
 describe("a new movie", () => {
-    it("starts empty, at a sensible size, and with no scene until a keyframe is captured", () => {
+    it("starts empty, at a sensible size", () => {
         const movie = emptyMovie();
         expect(movie.path.keyframes).toEqual([]);
-        expect(movie.sceneId).toBeUndefined();
         expect(movie.output).toEqual(DEFAULT_OUTPUT);
     });
 

@@ -92,3 +92,16 @@ describe("resetting scene settings", () => {
         expect(userScene.resetSettings(snapshotId, "default")).toBe(false);
     });
 });
+
+describe("scene names", () => {
+    test("a name already used gets a number", async () => {
+        const userScene = cloud.instance.userScene;
+        const names = (ids: string[]) => ids.map(id => [...userScene.list, ...userScene.snapshots].find(scene => scene.id === id)?.name);
+
+        const snapshots = [userScene.takeSnapshot("Figure"), userScene.takeSnapshot("Figure"), userScene.takeSnapshot("Figure")];
+        expect(names(snapshots)).toEqual(["Figure", "Figure (2)", "Figure (3)"]);
+        // Scenes and snapshots share the menu, so a scene cannot take a snapshot's name either
+        const sceneId = await userScene.create("Figure");
+        expect(names([sceneId])).toEqual(["Figure (4)"]);
+    });
+});

@@ -16,6 +16,7 @@
 
 import type { MoorhenInstance } from "@/InstanceManager";
 import { setMovieDocument, setMovieFileName, setShownSidePanel } from "@/store";
+import { MOVIE_SCENE_ID } from "@/store/userScenesSlice";
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { MovieFileError, unpackMovie } from "./movieContainer";
 
@@ -49,13 +50,15 @@ export async function openMovieFile(
             onProgress("Restoring the scene the movie was made with...");
             const status = await MoorhenTimeCapsule.loadSessionFromArrayBuffer(
                 container.session.buffer as ArrayBuffer, moorhenInstance);
-            if (status === -1) {
+            if (status !== 0) {
                 // The document is deliberately not loaded here. A movie over the wrong scene is
                 // worse than no movie: it plays, and everything it shows is wrong.
                 return {
                     ok: false,
                     restoredScene: false,
-                    message: `${file.name} opened, but its scene would not load`,
+                    message: status === MoorhenTimeCapsule.NEWER_VERSION_STATUS
+                        ? `${file.name} opened, but its scene would not load. ${MoorhenTimeCapsule.NEWER_VERSION_MESSAGE}`
+                        : `${file.name} opened, but its scene would not load`,
                 };
             }
             restoredScene = true;
@@ -63,10 +66,9 @@ export async function openMovieFile(
 
         dispatch(setMovieDocument(container.movie));
         dispatch(setMovieFileName(file.name));
-        // Show the movie's own scene, whichever one the session was saved on
-        const sceneId = container.movie.sceneId;
-        if (sceneId && moorhenInstance.userScene.list.some(scene => scene.id === sceneId)) {
-            await moorhenInstance.userScene.select(sceneId);
+        // Show the movie scene, whichever one the session was saved on
+        if (moorhenInstance.userScene.list.some(scene => scene.id === MOVIE_SCENE_ID)) {
+            await moorhenInstance.userScene.select(MOVIE_SCENE_ID);
         }
         // Show the panel. Opening a movie with nothing visibly happening is the most likely way
         // to conclude that nothing did - and the panel is where every next thing is done.

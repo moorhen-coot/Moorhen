@@ -15,6 +15,13 @@ export const BUILT_IN_SCENE_IDS = ["Default", "Model Building"] as const;
 
 export type BuiltInSceneId = (typeof BUILT_IN_SCENE_IDS)[number];
 
+/**
+ * The scene the movie plays in. There is only one movie at a time, so only one movie scene: it is
+ * created as a copy of the scene shown when the first keyframe is captured, and any later movie
+ * plays in it too.
+ */
+export const MOVIE_SCENE_ID = "movie";
+
 export const isBuiltInScene = (sceneId: string): sceneId is BuiltInSceneId => (BUILT_IN_SCENE_IDS as readonly string[]).includes(sceneId);
 
 const { fogClipOffset } = sceneSettingsInitialState;
@@ -59,6 +66,11 @@ const initialState: {
     selectedScene: string;
     isSceneChanging: boolean;
     /**
+     * Bumped whenever MoorhenInstance.userScene changes what a scene shows when selected again (its
+     * backups live outside the store), so selectors reading them re-run
+     */
+    backupsRevision: number;
+    /**
      * The saved settings of each built-in scene: user preferences, used when Moorhen starts. Only
      * changed by the scene's save button or by restoring / importing preferences, never by editing
      * what is shown.
@@ -72,6 +84,7 @@ const initialState: {
     snapshots: [],
     selectedScene: "Default",
     isSceneChanging: false,
+    backupsRevision: 0,
     savedSceneSettings: {
         Default: builtInSceneDefaults("Default"),
         "Model Building": builtInSceneDefaults("Model Building"),
@@ -104,6 +117,10 @@ const userScenesSlice = createSlice({
         setSceneChanging: (state, action: PayloadAction<boolean>) => {
             state.isSceneChanging = action.payload;
         },
+        /* A scene's backup changed in MoorhenInstance.userScene */
+        bumpBackupsRevision: state => {
+            state.backupsRevision += 1;
+        },
         /* Replace the scene and snapshot lists and the selection at once (e.g. when loading a session) */
         setUserSceneState: (state, action: PayloadAction<{ scenes: UserScene[]; snapshots: UserScene[]; selectedScene: string }>) => {
             state.scenes = action.payload.scenes;
@@ -129,6 +146,7 @@ export const {
     renameUserScene,
     setSelectedScene,
     setSceneChanging,
+    bumpBackupsRevision,
     setUserSceneState,
     setSavedSceneSetting,
     saveSceneSettings,

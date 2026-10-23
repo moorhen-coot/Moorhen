@@ -1,5 +1,6 @@
 .moorhen__scene-selector {
     margin-top: 0;
+    position: relative;
 }
 
 .moorhen__scene-selector.open {
@@ -44,4 +45,62 @@
 
 .moorhen__scene-selector-number {
     font-size: 1.2rem;
+}
+
+/* Played once when a snapshot is added: a ring pulses out of the button and a camera pops up from it */
+.moorhen__scene-selector-snapshot-added {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    animation: moorhen-snapshot-ring 0.9s ease-out forwards;
+}
+
+.moorhen__scene-selector-snapshot-added > * {
+    position: absolute;
+    right: -0.4rem;
+    top: -0.4rem;
+    padding: 0.15rem;
+    border-radius: 50%;
+    background: var(--moorhen-background);
+    box-shadow: 0px 1px 3px 1px var(--moorhen-inactive-shadow);
+    animation: moorhen-snapshot-camera 1.4s ease-out forwards;
+}
+
+@keyframes moorhen-snapshot-ring {
+    0% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--moorhen-focus) 70%, transparent);
+    }
+    100% {
+        box-shadow: 0 0 0 0.8rem color-mix(in srgb, var(--moorhen-focus) 0%, transparent);
+    }
+}
+
+@keyframes moorhen-snapshot-camera {
+    0% {
+        opacity: 0;
+        transform: translateY(0.4rem) scale(0.4);
+    }
+    20% {
+        opacity: 1;
+        transform: translateY(-0.2rem) scale(1.15);
+    }
+    35% {
+        transform: translateY(0) scale(1);
+    }
+    75% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-0.6rem) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .moorhen__scene-selector-snapshot-added,
+    .moorhen__scene-selector-snapshot-added > * {
+        animation: none;
+        display: none;
+    }
 }

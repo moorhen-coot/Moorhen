@@ -1292,7 +1292,8 @@ export class MoorhenTimeCapsule {
      * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
      * @param {Store} store - The Redux store
      * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
-     * @returns {number} Returns -1 if there was an error loading the session otherwise 0
+     * @returns {number} Returns 0 on success, -1 if there was an error loading the session, or
+     * NEWER_VERSION_STATUS if the session is from a more recent Moorhen
      */
     static async loadSessionFromArrayBuffer(
         sessionArrayBuffer: ArrayBuffer,

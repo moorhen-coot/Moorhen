@@ -4,6 +4,7 @@ import { MoorhenButton, MoorhenPopoverButton, MoorhenSelect } from "@/components
 import { MoorhenStack } from "@/components/interface-base";
 import { useMoorhenInstance } from "@/hooks";
 import { RootState, enqueueSnackbar } from "@/store";
+import { MOVIE_SCENE_ID } from "@/store/userScenesSlice";
 
 /**
  * Give a scene the settings, and optionally the representations, of another scene or snapshot.
@@ -16,7 +17,6 @@ export const CopySceneButton = (props: { sceneId: string; withLabel?: boolean })
     const dispatch = useDispatch();
     const scenes = useSelector((state: RootState) => state.userScenes.scenes);
     const snapshots = useSelector((state: RootState) => state.userScenes.snapshots);
-    const movieSceneId = useSelector((state: RootState) => state.movie.document.sceneId);
     const isLocked = useSelector((state: RootState) => state.userScenes.isSceneChanging || state.movie.isPlaying);
     const [source, setSource] = useState<string>("");
 
@@ -57,7 +57,7 @@ export const CopySceneButton = (props: { sceneId: string; withLabel?: boolean })
                 <MoorhenButton disabled={!source || isLocked} onClick={() => copy(true)}>
                     Copy Settings and Representations
                 </MoorhenButton>
-                {props.sceneId === movieSceneId && (
+                {props.sceneId === MOVIE_SCENE_ID && (
                     <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>
                         Copying representations replaces the ones this movie fades: their fades stop working.
                     </div>

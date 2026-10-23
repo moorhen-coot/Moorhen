@@ -135,7 +135,13 @@ export const initPreferencePersistence = (
         restoring = restoring.then(async () => {
             hasRestored = false;
             await Promise.all(preferences.map(restorePreference));
-            onRestored?.();
+            // A failing hook must not leave the app waiting for userPreferencesMounted, nor reject
+            // `restoring`, which would make every later restore a no-op
+            try {
+                onRestored?.();
+            } catch (err) {
+                console.error("Error after restoring preferences:", err);
+            }
             finishRestore();
         });
         return restoring;

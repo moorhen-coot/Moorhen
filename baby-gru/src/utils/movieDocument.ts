@@ -10,9 +10,9 @@
  * A keyframe holds quantities that can be interpolated: halfway between two light positions is a
  * light position. Modes cannot - halfway between shadows-on and shadows-off is nothing at all - so
  * they are set once for the whole movie, and the place they are set is the movie's scene: a scene
- * of its own (`sceneId`), created as a copy of the scene shown when the first keyframe is
- * captured, edited like any other scene, and selected whenever the movie is captured, played or
- * exported. Shadows, SSAO, edge detection, depth blur and the representations the movie fades all
+ * of its own (the movie scene, `MOVIE_SCENE_ID`), created as a copy of the scene shown when the
+ * first keyframe is captured, edited like any other scene, and selected whenever the movie is
+ * captured, played or exported. There is one movie at a time, so one movie scene. Shadows, SSAO, edge detection, depth blur and the representations the movie fades all
  * come from it, and it travels in the session a movie file embeds.
  */
 
@@ -39,12 +39,6 @@ export interface MovieDocument {
     name: string;
     /** What varies with time. */
     path: Movie;
-    /**
-     * The id of the scene the movie plays in (see the note at the top). Absent until the first
-     * keyframe is captured; a movie opened without its session may name a scene that is not
-     * there, and then plays over the scene shown.
-     */
-    sceneId?: string;
     output: MovieOutputSettings;
 }
 

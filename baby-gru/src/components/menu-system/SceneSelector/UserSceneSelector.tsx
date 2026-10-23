@@ -4,7 +4,7 @@ import { MoorhenIcon } from "@/components/icons";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenTextInput } from "@/components/inputs";
 import { useMoorhenInstance } from "@/hooks";
 import { RootState, setMainMenuOpen, setShownSidePanel } from "@/store";
-import { isBuiltInScene, UserScene } from "@/store/userScenesSlice";
+import { MOVIE_SCENE_ID, isBuiltInScene, UserScene } from "@/store/userScenesSlice";
 import { MoorhenInfoCard, MoorhenMenuItem, MoorhenPopover, MoorhenStack, MoorhenTooltip } from "../../interface-base";
 import { CopySceneButton } from "./CopySceneButton";
 import { SaveSceneButton } from "./SaveSceneButton";
@@ -48,11 +48,19 @@ export const UserSceneSelector = () => {
     const selectedScene = useSelector((state: RootState) => state.userScenes.selectedScene);
     const isSceneChanging = useSelector((state: RootState) => state.userScenes.isSceneChanging);
     const isMoviePlaying = useSelector((state: RootState) => state.movie.isPlaying);
-    const movieSceneId = useSelector((state: RootState) => state.movie.document.sceneId);
+    const hasMovieKeyframes = useSelector((state: RootState) => state.movie.document.path.keyframes.length > 0);
     // Switching scene deletes the representations a movie fades, and a snapshot moves its camera
     const isLocked = isSceneChanging || isMoviePlaying;
     const [isShown, setIsShown] = useState<boolean>(false);
     const [renameInputValue, setRenameInputValue] = useState<string>("");
+    // A snapshot taken from anywhere (e.g. with a screenshot) plays an animation on the button. Only
+    // for one added snapshot: loading a session replaces the whole list
+    const [snapshotCount, setSnapshotCount] = useState<number>(userSnapshots.length);
+    const [snapshotAnimationKey, setSnapshotAnimationKey] = useState<number>(0);
+    if (userSnapshots.length !== snapshotCount) {
+        if (userSnapshots.length === snapshotCount + 1) setSnapshotAnimationKey(snapshotAnimationKey + 1);
+        setSnapshotCount(userSnapshots.length);
+    }
     const buttonRef = useRef<HTMLButtonElement>(null);
     const moorhenInstance = useMoorhenInstance();
     const dispatch = useDispatch();
@@ -67,7 +75,7 @@ export const UserSceneSelector = () => {
         document.body.click();
     };
 
-    const isMovieScene = (id: string) => id.startsWith("movie-");
+    const isMovieScene = (id: string) => id === MOVIE_SCENE_ID;
     const isSnapshotShown = selectedScene.startsWith("snapshot-");
     const sceneName = [...userScenes, ...userSnapshots].find(userScene => userScene.id === selectedScene)?.name ?? selectedScene;
     const sceneCustomNumber =
@@ -93,6 +101,12 @@ export const UserSceneSelector = () => {
                 <MoorhenIcon moorhenSVG={sceneIcon} alt="Scene Presets" size="medium" />
                 <div className="moorhen__scene-selector-number">{sceneCustomNumber}</div>
                 {(selectedScene === "Model Building") && <MoorhenIcon moorhenSVG="MatSymBuild" size="small" />} 
+                {/* Keyed: a new snapshot mounts a new element, which restarts the animation */}
+                {snapshotAnimationKey > 0 && (
+                    <span key={snapshotAnimationKey} className="moorhen__scene-selector-snapshot-added" aria-hidden="true">
+                        <MoorhenIcon moorhenSVG="MatSymPhotoCam" size="small" />
+                    </span>
+                )}
             </button>
         </MoorhenTooltip>
     );
@@ -103,8 +117,8 @@ export const UserSceneSelector = () => {
             const name = [...userScenes, ...userSnapshots].find(userScene => userScene.id === id)?.name ?? id;
             return (
                 <>
-                    {/* The movie plays in its scene: it cannot be deleted while the movie uses it */}
-                    {id !== movieSceneId && (
+                    {/* The movie plays in its scene: it cannot be deleted while the movie has keyframes */}
+                    {!(isMovieScene(id) && hasMovieKeyframes) && (
                         <MoorhenPopoverButton type="icon-only" icon="MatSymDelete" tooltip={`Delete this ${kind.toLowerCase()}`}>
                             <MoorhenButton variant="danger" onClick={() => moorhenInstance.userScene.delete(id)}>
                                 Delete This {kind}

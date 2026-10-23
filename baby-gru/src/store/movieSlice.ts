@@ -137,10 +137,6 @@ export const movieSlice = createSlice({
         spreadSceneFromKeyframe: (state, action: PayloadAction<number>) => {
             state.document = applySceneToAll(state.document, action.payload);
         },
-        /** The scene the movie plays in (see MovieDocument.sceneId) */
-        setMovieSceneId: (state, action: PayloadAction<string>) => {
-            state.document = { ...state.document, sceneId: action.payload };
-        },
         updateMovieOutput: (state, action: PayloadAction<Partial<MovieOutputSettings>>) => {
             state.document = { ...state.document, output: { ...state.document.output, ...action.payload } };
         },
@@ -166,7 +162,7 @@ export const {
     appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
     duplicateKeyframe,
     updateSegment, updateMotion, clearTrailingMotion,
-    spreadSceneFromKeyframe, setMovieSceneId, updateMovieOutput,
+    spreadSceneFromKeyframe, updateMovieOutput,
     updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
 } = movieSlice.actions;
 

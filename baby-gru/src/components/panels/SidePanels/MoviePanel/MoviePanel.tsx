@@ -24,9 +24,10 @@ import { MoorhenStack } from "@/components/interface-base";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenSelect, MoorhenSlider, MoorhenTextInput } from "@/components/inputs";
 import { MoorhenNumberInput } from "@/components/inputs";
 import { RootState } from "@/store";
+import { MOVIE_SCENE_ID } from "@/store/userScenesSlice";
 import {
     addObjectToMovie, appendKeyframe, clearTrailingMotion, duplicateKeyframe, enqueueSnackbar, removeKeyframe,
-    removeObjectFromMovie, reorderKeyframe, selectKeyframe, setMovieFileName, setMovieName, setMoviePlaying, setMovieSceneId, spreadSceneFromKeyframe, updateKeyframe, updateMotion, updateMovieOutput,
+    removeObjectFromMovie, reorderKeyframe, selectKeyframe, setMovieFileName, setMovieName, setMoviePlaying, spreadSceneFromKeyframe, updateKeyframe, updateMotion, updateMovieOutput,
     updateObjectOpacity, updateSegment,
 } from "@/store";
 import { useMoorhenInstance } from "@/InstanceManager";
@@ -57,9 +58,9 @@ export const MoviePanel = () => {
     // The file this movie was last saved to or opened from. Shown rather than merely recorded:
     // once a movie can be saved and reopened, "which one am I editing" is a real question.
     const fileName = useSelector((state: RootState) => state.movie.fileName);
-    // The movie plays in a scene of its own (MovieDocument.sceneId)
+    // The movie plays in a scene of its own (MOVIE_SCENE_ID)
     const movieScene = useSelector((state: RootState) =>
-        state.userScenes.scenes.find(scene => scene.id === state.movie.document.sceneId));
+        state.userScenes.scenes.find(scene => scene.id === MOVIE_SCENE_ID));
     const selectedScene = useSelector((state: RootState) => state.userScenes.selectedScene);
     const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
     const threeDObjects = useSelector((state: RootState) => state.threeDObjects.objects);
@@ -178,8 +179,7 @@ export const MoviePanel = () => {
     const ensureMovieScene = async (): Promise<boolean> => {
         if (movieScene) return goToMovieScene();
         const name = `Movie: ${document.name}`;
-        const sceneId = await moorhenInstance.userScene.createMovieScene(name);
-        dispatch(setMovieSceneId(sceneId));
+        if (!(await moorhenInstance.userScene.createMovieScene(name))) return false;
         dispatch(enqueueSnackbar({
             message: `Created a copy of the current scene, for this movie to play in.\n`
                 + "Change its settings to change how the movie looks; your other scenes are not affected.",
@@ -788,7 +788,7 @@ export const MoviePanel = () => {
                     <div style={{ flex: 1, fontSize: "0.95rem" }}>
                         {movieScene
                             ? `Scene: ${movieScene.name}`
-                            : document.sceneId
+                            : document.path.keyframes.length > 0
                               ? "Scene: not in this session, plays over the current scene"
                               : "Scene: created with the first keyframe"}
                     </div>
