@@ -29,6 +29,8 @@ export interface WebGPUSceneSnapshot extends RendererImage {
     spheres: number;
     /** Line segments (LINES, NORMALLINES) drawn. */
     segments: number;
+    /** Text labels drawn. */
+    labels: number;
     /** What is in the scene but not drawn by the WebGPU renderer yet, with sub-buffer counts. */
     skipped: Record<string, number>;
     /** The same, as a sentence; empty if nothing was left out. */
@@ -174,7 +176,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 const { plan } = shot.report;
                 return {
                     width: shot.width, height: shot.height, data: shot.data, tiles: shot.tiles,
-                    meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments,
+                    meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments, labels: shot.report.labels,
                     skipped: plan.skipped, skippedText: describeSkipped(plan.skipped),
                 };
             } finally {

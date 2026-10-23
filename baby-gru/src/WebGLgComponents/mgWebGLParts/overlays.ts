@@ -1,6 +1,7 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat4 from 'gl-matrix/mat4';
 import { linesToThickLines } from '../buildBuffers';
+import { FPS_METER_LIFT, fpsMeterSegments, lineMeasureSegments } from './overlayGeometry';
 import { getDeviceScale } from '../webGLUtils';
 import { getOffsetRect } from '../mgWebGL';
 import type { MGWebGL } from '../mgWebGL';
@@ -112,10 +113,7 @@ export function drawLineMeasures(self: MGWebGL, invMat) {
     if(self.measurePointsArray.length<1) return;
 
     self.gl.depthFunc(self.gl.ALWAYS);
-    //Begin copy/paste from crosshairs
-    const axesOffset = vec3.create();
-    vec3.set(axesOffset, 0, 0, 0);
-    const xyzOff = self.origin.map((coord, iCoord) => -coord + self.zoom * axesOffset[iCoord])
+    // The segments: overlayGeometry, shared with the WebGPU renderer.
 
     self.gl.useProgram(self.shaderProgramThickLines);
     self.setMatrixUniforms(self.shaderProgramThickLines);
@@ -152,62 +150,10 @@ export function drawLineMeasures(self: MGWebGL, invMat) {
         self.axesTextTexCoordBuffer = self.gl.createBuffer();
         self.axesTextIndexesBuffer = self.gl.createBuffer();
     }
-    const renderArrays = {
-        axesVertices: [],
-        axesColours: [],
-        axesIdx: []
-    }
-    const addSegment = (renderArrays, point1, point2, colour1, colour2) => {
-        renderArrays.axesIdx.push(renderArrays.axesVertices.length)
-        renderArrays.axesVertices = renderArrays.axesVertices.concat(point1)
-        renderArrays.axesIdx.push(renderArrays.axesVertices.length)
-        renderArrays.axesVertices = renderArrays.axesVertices.concat(point2)
-        renderArrays.axesColours = renderArrays.axesColours.concat([...colour1, ...colour2])
-    }
-
-    let hairColour = [0., 0., 0., 1.];
-    const y = self.background_colour[0] * 0.299 + self.background_colour[1] * 0.587 + self.background_colour[2] * 0.114;
-    if (y < 0.5) {
-        hairColour = [1., 1., 1., 1.];
-    }
-
-    const lineStart = vec3.create();
-    const lineEnd = vec3.create();
-
-    let lastPoint = null;
-
-    const addLine = (x1,y1,x2,y2) => {
-        vec3.set(lineStart, x1 * self.zoom * ratio, y1 * self.zoom, 0.0);
-        vec3.transformMat4(lineStart, lineStart, invMat);
-        vec3.set(lineEnd,   x2 * self.zoom * ratio, y2 * self.zoom, 0.0);
-        vec3.transformMat4(lineEnd, lineEnd, invMat);
-        addSegment(renderArrays,
-            xyzOff.map((coord, iCoord) => coord + lineStart[iCoord]),
-            xyzOff.map((coord, iCoord) => coord + lineEnd[iCoord]),
-            hairColour, hairColour
-        )
-    }
-
-    self.measurePointsArray.forEach(point => {
-
-        const x2 =  point.x;
-        const y2 = -point.y;
-
-        addLine(x2-.3/ratio,  y2-.3, x2+.3/ratio, y2-.3);
-        addLine(x2-.3/ratio,  y2+.3, x2+.3/ratio, y2+.3);
-        addLine(x2-.25/ratio, y2-.3, x2-.25/ratio, y2+.3);
-        addLine(x2+.25/ratio, y2-.3, x2+.25/ratio, y2+.3);
-
-        if(lastPoint){
-            const x1 =  lastPoint.x;
-            const y1 = -lastPoint.y;
-            addLine(x1,y1,x2,y2);
-        }
-        lastPoint = point;
-    })
+    const segments = lineMeasureSegments(self.measurePointsArray, self.origin, self.zoom, ratio, invMat, self.background_colour);
 
     const size = 1.5;
-    const thickLines = linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+    const thickLines = linesToThickLines(segments.vertices, segments.colours, size);
     const axesNormals = thickLines["normals"];
     const axesVertices_new = thickLines["vertices"];
     const axesColours_new = thickLines["colours"];
@@ -510,7 +456,6 @@ export function drawMouseTrack(self: MGWebGL) {
  * sitting at the very bottom edge is partly hidden by them. Applied to the histogram and to the
  * text lines together, so they stay as one block.
  */
-const FPS_METER_LIFT = 5.0;
 
 export function drawFPSMeter(self: MGWebGL) {
 
@@ -550,45 +495,8 @@ export function drawFPSMeter(self: MGWebGL) {
 
     self.gl.uniform3fv(self.shaderProgramThickLines.screenZ, screenZ);
 
-    const hitchometerColours = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
-    const top = -11.4 + FPS_METER_LIFT;
-    const bottom = -21.6 + FPS_METER_LIFT;
-    const hitchometerVertices = [
-        -22.9, top, 0.0,
-        -12.7, top, 0.0,
-        -22.9, bottom, 0.0,
-        -12.7, bottom, 0.0,
-        -22.9, top, 0.0,
-        -22.9, bottom, 0.0,
-        -12.7, top, 0.0,
-        -12.7, bottom, 0.0,
-
-    ];
-
-    for(let i=0; i<self.mspfArray.length;i++){
-        let mspf = self.mspfArray[i];
-        if(mspf>200.0) mspf = 200.0;
-
-        const l = mspf / 200.0 * 10.0;
-        const x = -22.8 + i/20.;
-        const y1 = -21.5 + FPS_METER_LIFT;
-        const y2 = -21.5 + FPS_METER_LIFT + l;
-        const z = 0.0;
-        hitchometerVertices.push(x,y1,z,x,y2,z);
-        if(mspf<17){
-            hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
-            hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
-        } else if(mspf<24) {
-            hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
-            hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
-        } else if(mspf<50) {
-            hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
-            hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
-        } else {
-            hitchometerColours.push(0.8, 0.2, 0.2, 1.0);
-            hitchometerColours.push(0.8, 0.2, 0.2, 1.0);
-        }
-    }
+    // The box and bars: overlayGeometry, shared with the WebGPU renderer.
+    const { vertices: hitchometerVertices, colours: hitchometerColours } = fpsMeterSegments(self.mspfArray);
 
     const thickLines = linesToThickLines(hitchometerVertices, hitchometerColours, size);
     const hitchometerNormals = thickLines["normals"];

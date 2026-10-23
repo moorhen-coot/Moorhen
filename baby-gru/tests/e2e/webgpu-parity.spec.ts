@@ -25,7 +25,10 @@ interface Host {
         webGPU: WebGPUApi;
         representation: { defaultStyle: string };
         sceneSettings: { setDrawCrosshairs(value: boolean): void };
-        getMoleculeList(): { show(style: string): Promise<unknown>; hide(style: string): unknown; toggleSymmetry(): Promise<void> }[];
+        getMoleculeList(): {
+            show(style: string): Promise<unknown>; hide(style: string): unknown; toggleSymmetry(): Promise<void>;
+            drawEnvironment(cid?: string): Promise<void>;
+        }[];
     }>;
 }
 
@@ -36,6 +39,7 @@ interface ParityResult {
     triangles: number;
     spheres: number;
     segments: number;
+    labels: number;
     skippedText: string;
     skippedSubBuffers: SkippedSubBufferInfo[];
     tiles: number;
@@ -54,7 +58,7 @@ interface ParityResult {
  * either. The limits are about twice what was measured (Apple GPU, 1280x647, 2026-10-23): CRs
  * 0.49% and 0.26, CBs 1.47% and 0.82 (many more edges), VdwSpheres 0.01% and 0.01.
  */
-const STYLES: { style: string; what: string; maxDiffering: number; maxMeanDifference: number; symmetry?: boolean; map?: boolean }[] = [
+const STYLES: { style: string; what: string; maxDiffering: number; maxMeanDifference: number; symmetry?: boolean; map?: boolean; environment?: boolean }[] = [
     { style: "CRs", what: "ribbons", maxDiffering: 0.01, maxMeanDifference: 0.6 },
     { style: "CBs", what: "ball-and-stick", maxDiffering: 0.03, maxMeanDifference: 1.6 },
     { style: "VdwSpheres", what: "spacefill", maxDiffering: 0.002, maxMeanDifference: 0.2 },
@@ -62,10 +66,13 @@ const STYLES: { style: string; what: string; maxDiffering: number; maxMeanDiffer
     { style: "CRs", what: "ribbons with symmetry copies", maxDiffering: 0.02, maxMeanDifference: 1.2, symmetry: true },
     // A map contoured by Coot, drawn as LINES (thick lines). Not yet measured.
     { style: "CRs", what: "ribbons and a map", maxDiffering: 0.03, maxMeanDifference: 1.6, map: true },
+    // Environment distances around the view centre: dashed cylinders and their text labels.
+    // Not yet measured.
+    { style: "CRs", what: "ribbons with environment distances", maxDiffering: 0.02, maxMeanDifference: 1.2, environment: true },
 ];
 
 test.describe("WebGPU against WebGL", () => {
-    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
+    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map, environment } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
         test.setTimeout(180_000);
         const moorhen = await startAndGetInstance(page);
 
@@ -96,6 +103,13 @@ test.describe("WebGPU against WebGL", () => {
                 const host = document.getElementById(targetId) as unknown as Host;
                 const instance = await host.getMoorhenInstance();
                 await instance.getMoleculeList()[0].toggleSymmetry();
+            }, moorhen.elementId);
+        }
+        if (environment) {
+            await page.evaluate(async targetId => {
+                const host = document.getElementById(targetId) as unknown as Host;
+                const instance = await host.getMoorhenInstance();
+                await instance.getMoleculeList()[0].drawEnvironment();
             }, moorhen.elementId);
         }
         // Then the representation under test in place of the ribbons.
@@ -151,6 +165,7 @@ test.describe("WebGPU against WebGL", () => {
                 triangles: gpu.triangles,
                 spheres: gpu.spheres,
                 segments: gpu.segments,
+                labels: gpu.labels,
                 skippedText: gpu.skippedText,
                 skippedSubBuffers: instance.webGPU.describeSkipped(),
                 tiles: gpu.tiles,
@@ -162,12 +177,12 @@ test.describe("WebGPU against WebGL", () => {
             };
         }, { targetId: moorhen.elementId, tolerance: PIXEL_TOLERANCE });
 
-        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}`;
+        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}${environment ? " + environment" : ""}`;
         for (const [name, url] of Object.entries(result.images ?? {})) {
             await testInfo.attach(`${variant.replace(/ \+ /g, "-")}-${name}.png`, { body: Buffer.from(url.split(",")[1], "base64"), contentType: "image/png" });
         }
         const pixels = result.width * result.height;
-        const summary = `${variant}: ${result.width}x${result.height}, ${result.meshes} meshes, ${result.triangles} triangles, ${result.spheres} spheres, ${result.segments} line segments; ` +
+        const summary = `${variant}: ${result.width}x${result.height}, ${result.meshes} meshes, ${result.triangles} triangles, ${result.spheres} spheres, ${result.segments} line segments, ${result.labels} labels; ` +
             `${result.drawn} pixels drawn, ${result.differing} differ by more than ${PIXEL_TOLERANCE} ` +
             `(${(100 * result.differing / pixels).toFixed(2)}%), mean difference ${result.meanDifference.toFixed(2)}, worst ${result.worst}` +
             (result.skippedText ? `; not drawn by WebGPU: ${result.skippedText}` : "");

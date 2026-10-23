@@ -51,6 +51,13 @@ export class TextCanvasTexture {
      */
     contentKey: string | null = null;
 
+    /**
+     * Goes up whenever the atlas's pixels change: a string or image drawn into it, or a clear. For
+     * renderers other than this one's own GL texture (the WebGPU renderer keeps its own copy of
+     * the atlas, and re-copies it only when this has moved).
+     */
+    revision = 0;
+
     constructor(gl,ext,instanced_ext,shader,width=1024,height=4096, store: Store<RootState>) {
         this.gl = gl
         this.ext = ext
@@ -275,6 +282,7 @@ export class TextCanvasTexture {
 
         this.contextBig.fillStyle = textColour;
         this.contextBig.putImageData(imgData, placed.x, placed.baseline-actualHeight);
+        this.revision++;
 
         this.textureCache[textColour][font.toLowerCase()][t] = placed.texCoords;
         return placed.texCoords
@@ -331,6 +339,7 @@ export class TextCanvasTexture {
 
         this.contextBig.fillStyle = textColour;
         this.contextBig.fillText(t, placed.x, placed.baseline-actualBoundingBoxDescent, width);
+        this.revision++;
 
         this.textureCache[textColour][font.toLowerCase()][t] = placed.texCoords;
         return placed.texCoords
@@ -339,6 +348,7 @@ export class TextCanvasTexture {
     clearBigTexture() {
         this.contextBig.fillStyle = "#00000000";
         this.contextBig.clearRect(0, 0, this.canvasBig.width, this.canvasBig.height);
+        this.revision++;
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.canvasBig);
         this.textureCache = {};

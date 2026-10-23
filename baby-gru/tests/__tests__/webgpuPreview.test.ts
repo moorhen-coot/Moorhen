@@ -12,7 +12,7 @@ import { createWebGLBuffers } from "../../src/WebGLgComponents/createWebGLBuffer
 import { viewProjection } from "../../src/WebGLgComponents/mgWebGLParts/projection";
 import {
     FRAME_FLOATS, MeshChunk, PreviewCameraSource, describeSkipped, frameUniforms, planMeshChunks, planPreview, previewCameraFrame,
-    hoverSphereRadius, symmetryCopyGrey,
+    hoverSphereRadius, interactiveGlow, interactiveModel, symmetryCopyGrey,
 } from "../../src/WebGPUComponents/previewScene";
 
 const triangle = (over: Record<string, unknown> = {}) => createWebGLBuffers({
@@ -129,14 +129,11 @@ describe("planPreview", () => {
     it("reports spheres it cannot draw, and why", () => {
         const noColours = spheres({ col_tri: [[new Float32Array([1, 0, 0, 1])]] });
         const noSizes = spheres({ instance_sizes: [[new Float32Array([0.5])]] });
-        const moved = spheres();
-        moved.setTransformMatrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-        const plan = planPreview([noColours, noSizes, moved]);
+        const plan = planPreview([noColours, noSizes]);
         expect(plan.draws).toHaveLength(0);
         expect(plan.skipped).toEqual({
             "PERFECT_SPHERES without a colour per sphere": 1,
             "PERFECT_SPHERES without a size per sphere": 1,
-            "PERFECT_SPHERES with a transform matrix": 1,
         });
     });
 
@@ -166,6 +163,41 @@ describe("planPreview", () => {
         ]);
         expect(plan.segments).toBe(2 + 1 + 3);
         expect(plan.skipped).toEqual({ "NORMALLINES without indices": 1 });
+    });
+
+    it("draws what is being dragged, moving and glowing as drawCore does, except lit lines", () => {
+        const drag = [0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 1];
+        const mesh = triangle();
+        mesh.transformMatrixInteractive = drag;
+        const balls = spheres();
+        balls.transformMatrixInteractive = drag;
+        const lines = triangle({ prim_types: [["LINES"]] });
+        lines.supplementary = { useIndices: [false] };
+        lines.transformMatrixInteractive = drag;
+        const lit = triangle({ prim_types: [["NORMALLINES"]], idx_tri: [[new Uint32Array([0, 1])]] });
+        lit.supplementary = { useIndices: [true] };
+        lit.transformMatrixInteractive = drag;
+        const plan = planPreview([mesh, balls, lines, lit]);
+        expect(plan.draws.map(d => [d.primitive, d.moving, d.glow])).toEqual([
+            ["triangles", true, true], ["spheres", true, true], ["lines", true, false], ["lit-lines", false, false],
+        ]);
+        expect(plan.skipped).toEqual({});
+    });
+
+    it("turns a dragged buffer about its centre: transformOriginInteractive less the view origin", () => {
+        // A quarter turn about z and a shift of 2 in x, about the point (1, 1, 0); view origin (-3, 0, 0).
+        const model = interactiveModel([0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 1], [-2, 1, 0], [-3, 0, 0]);
+        const apply = (p: number[]) => [0, 1, 2].map(r => model[r] * p[0] + model[4 + r] * p[1] + model[8 + r] * p[2] + model[12 + r]);
+        // The centre itself only shifts; a point 1 to its right goes to 1 above it, then shifts.
+        expect(apply([1, 1, 0]).map(x => Math.round(x * 1e6) / 1e6)).toEqual([3, 1, 0]);
+        expect(apply([2, 1, 0]).map(x => Math.round(x * 1e6) / 1e6)).toEqual([3, 2, 0]);
+    });
+
+    it("pulses a dragged buffer's ambient light once a second", () => {
+        expect(interactiveGlow(5000)).toBeCloseTo(0, 6);
+        expect(interactiveGlow(5500)).toBeCloseTo(1, 6);
+        expect(interactiveGlow(5250)).toBeCloseTo(Math.SQRT1_2, 6);
+        expect(interactiveGlow(4750)).toBeCloseTo(Math.SQRT1_2, 6);
     });
 
     it("reports what it cannot draw yet", () => {

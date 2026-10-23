@@ -12,11 +12,15 @@
  * from the WebGL view.
  */
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
+import type * as mat4 from 'gl-matrix/mat4';
 import { BufferUsage, GpuSpanTimer, MapMode, ShaderStage, TextureUsage, getGpuContext } from './gpu';
 import { SnapshotTile, narrowToTile, planTiles } from './snapshotTiles';
 import { PREVIEW_WGSL } from './previewShaders';
+import { TextLayer, textBatchesOf } from './textLayer';
+import { OverlayLines, overlayLineBatchesOf } from './overlayLines';
+import { TexturedShapeLayer } from './texturedShapes';
 import {
-    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, hoverSphereRadius, planMeshChunks, planPreview, symmetryCopyGrey,
+    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, symmetryCopyGrey,
 } from './previewScene';
 
 
@@ -29,8 +33,8 @@ import {
 export const thickLineHalfWidth = (lineWidth: number, zoom: number): number => 0.04 * zoom * lineWidth * lineWidth;
 
 const SAMPLE_COUNT = 4;
-/** Floats in a Draw uniform block (previewShaders.ts): colour, params, copyColour, model. */
-const DRAW_FLOATS = 28;
+/** Floats in a Draw uniform block (previewShaders.ts): colour, params, copyColour, model, ambient. */
+const DRAW_FLOATS = 32;
 /** Bytes between one copy's Draw block and the next: the uniform offset alignment WebGPU guarantees. */
 const DRAW_STRIDE = 256;
 const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
@@ -40,10 +44,11 @@ const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
  * grey; `model` places the copy (identity for the original).
  */
 function drawBlock(colour: ArrayLike<number>, alpha: number, halfWidth: number, copyColour: number[] | null,
-                   model: ArrayLike<number>, out: Float32Array, offset = 0, segmentColours = 0): void {
+                   model: ArrayLike<number>, out: Float32Array, offset = 0, segmentColours = 0, ambient: number | null = null): void {
     out.set([colour[0], colour[1], colour[2], colour[3], alpha, halfWidth, copyColour ? 1 : 0, segmentColours], offset);
     out.set(copyColour ?? [0, 0, 0, 0], offset + 8);
     out.set(Array.from(model).slice(0, 16), offset + 12);
+    out.set(ambient === null ? [0, 0, 0, 0] : [ambient, ambient, ambient, 1], offset + 28);
 }
 
 const DEPTH_FORMAT: GPUTextureFormat = "depth24plus";
@@ -110,6 +115,12 @@ export interface PreviewFrameReport {
     uploads: number;
     /** CPU time spent building and submitting the frame, ms. */
     cpuMs: number;
+    /** Text labels drawn (all atlases). */
+    labels: number;
+    /** Segments of the line overlays (FPS meter, measuring lines) drawn. */
+    overlaySegments: number;
+    /** Textured shapes drawn. */
+    shapes: number;
 }
 
 /** One drawable piece of a sub-buffer: the whole of it, unless it is too big for one GPU buffer. */
@@ -211,6 +222,12 @@ export class WebGPUPreviewRenderer {
     private readonly maxBufferBytes: number;
     /** GPU time of each frame's render pass, where the device can time. */
     private readonly frameTimer: GpuSpanTimer | null;
+    /** Labels, from the WebGL renderer's glyph atlases; drawn last. */
+    private readonly textLayer: TextLayer;
+    /** The FPS meter and the measuring lines; drawn over the scene, before the text. */
+    private readonly overlayLines: OverlayLines;
+    /** Planes of values coloured through a ramp (glRef.texturedShapes); after the meshes. */
+    private readonly texturedShapes: TexturedShapeLayer;
     /** On the shared device: removed again by destroy(), which must not destroy the device. */
     private readonly errorListener: (event: GPUUncapturedErrorEvent) => void;
 
@@ -279,6 +296,9 @@ export class WebGPUPreviewRenderer {
             entries: [{ binding: 0, resource: { buffer: this.frameBuffer } }],
         });
         this.frameTimer = GpuSpanTimer.create(device, "preview frame");
+        this.textLayer = new TextLayer(device, this.format, this.frameLayout, SAMPLE_COUNT, DEPTH_FORMAT);
+        this.overlayLines = new OverlayLines(device, this.format, this.frameLayout, SAMPLE_COUNT, DEPTH_FORMAT);
+        this.texturedShapes = new TexturedShapeLayer(device, this.format, this.frameLayout, SAMPLE_COUNT, DEPTH_FORMAT);
     }
 
     /**
@@ -425,6 +445,13 @@ export class WebGPUPreviewRenderer {
                 if (item.transparent === transparent) this.drawGpu(pass, item, camera.zoom);
             }
         }
+        // Textured shapes after the meshes, as GLrender draws them after drawTriangles.
+        const shapes = this.texturedShapes.draw(pass, camera.store?.getState().glRef?.texturedShapes ?? []);
+        // Then the overlays, as drawCore ends its frame: the FPS meter and measuring lines, over
+        // everything, then text - over everything, or (atomLabelDepthMode) depth-tested.
+        const view = uniforms.slice(16, 32) as unknown as mat4.mat4;
+        const overlaySegments = this.overlayLines.draw(pass, overlayLineBatchesOf(camera, view, target.width, target.height, target.tile));
+        const labels = this.textLayer.draw(pass, textBatchesOf(camera), camera.zoom, target.height);
         pass.end();
         for (const [key, uniforms] of this.gpuDrawUniforms) {
             if (!gpuDraws.some(item => item.key === key)) {
@@ -436,7 +463,7 @@ export class WebGPUPreviewRenderer {
         this.device.queue.submit([encoder.finish()]);
         if (timing) this.frameTimer.collect();
 
-        return { plan, uploads, cpuMs: performance.now() - started };
+        return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes };
     }
 
     /** Release every GPU resource it made (not the shared device). It cannot be used afterwards. */
@@ -450,6 +477,9 @@ export class WebGPUPreviewRenderer {
         this.gpuDrawUniforms.forEach(u => u.buffer.destroy());
         this.gpuDrawUniforms.clear();
         this.frameTimer?.destroy();
+        this.textLayer.destroy();
+        this.overlayLines.destroy();
+        this.texturedShapes.destroy();
         if (canvasOwners.get(this.context) === this) {
             this.context.unconfigure();
             canvasOwners.delete(this.context);
@@ -485,8 +515,9 @@ export class WebGPUPreviewRenderer {
      * The sub-buffer's Draw blocks for this frame: the original's, then one per symmetry copy, with
      * room made for more copies than last time.
      */
-    private writeDrawBlocks(sub: SubBufferResources, item: PreviewDraw, background: ArrayLike<number>,
+    private writeDrawBlocks(sub: SubBufferResources, item: PreviewDraw, camera: PreviewCameraSource,
                             halfWidth = 0, segmentColours = 0): void {
+        const background = camera.background_colour;
         const count = 1 + item.copies.length;
         if (sub.bindGroups.length < count) {
             const old = sub.drawUniforms;
@@ -504,7 +535,11 @@ export class WebGPUPreviewRenderer {
         const alpha = item.buffer.alphaMultiplier ?? 1;
         const grey = item.greyCopies ? symmetryCopyGrey(background) : null;
         const data = new Float32Array(count * DRAW_STRIDE / 4);
-        drawBlock(custom, alpha, halfWidth, null, IDENTITY, data, 0, segmentColours);
+        // The original: where it is, or - being dragged - where the drag has it, pulsing.
+        const b = item.buffer;
+        const model = item.moving ? interactiveModel(b.transformMatrixInteractive, b.transformOriginInteractive, camera.origin) : IDENTITY;
+        const glow = item.glow ? interactiveGlow(Date.now()) : null;
+        drawBlock(custom, alpha, halfWidth, null, model, data, 0, segmentColours, glow);
         item.copies.forEach((model, n) => drawBlock(custom, alpha, halfWidth, grey, model, data, (n + 1) * DRAW_STRIDE / 4, segmentColours));
         this.device.queue.writeBuffer(sub.drawUniforms, 0, data);
     }
@@ -512,7 +547,6 @@ export class WebGPUPreviewRenderer {
     private drawOne(pass: GPURenderPassEncoder, item: PreviewDraw, camera: PreviewCameraSource): void {
         const sub = this.resources.get(item.buffer)?.[item.index];
         if (!sub) return;
-        const background = camera.background_colour;
 
         if (sub.segments) {
             // drawCore's pixelZoom (0.04 x zoom, times the buffer's primitive size if it has one)
@@ -520,7 +554,7 @@ export class WebGPUPreviewRenderer {
             const primitiveSize = item.buffer.primitiveSizes?.[item.index]?.[0] ?? 1;
             const halfWidth = primitiveSize * thickLineHalfWidth(camera.mapLineWidth ?? 1, camera.zoom);
             const colours = item.colourSource === "uniform" ? 2 : item.indexCount > 0 ? 0 : 1;
-            this.writeDrawBlocks(sub, item, background, halfWidth, colours);
+            this.writeDrawBlocks(sub, item, camera, halfWidth, colours);
             pass.setPipeline(this.segmentPipeline(item.primitive === "lit-lines", item.transparent));
             pass.setBindGroup(1, sub.bindGroups[0]);
             pass.setBindGroup(2, sub.segments.bindGroup);
@@ -530,7 +564,7 @@ export class WebGPUPreviewRenderer {
 
         // A hover highlight's spheres all take the hover size (drawCore), through the half-width slot.
         const hoverRadius = item.primitive === "spheres" && item.buffer.isHoverBuffer ? hoverSphereRadius(camera) ?? 0 : 0;
-        this.writeDrawBlocks(sub, item, background, hoverRadius);
+        this.writeDrawBlocks(sub, item, camera, hoverRadius);
         const copies = 1 + item.copies.length;
 
         if (item.primitive === "spheres") {

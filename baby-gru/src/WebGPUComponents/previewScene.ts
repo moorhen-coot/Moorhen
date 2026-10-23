@@ -14,12 +14,15 @@ import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { CameraFrame, viewProjection } from '../WebGLgComponents/mgWebGLParts/projection';
 import { isFaded, shouldDraw } from '../WebGLgComponents/objectFade';
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
+import type { TextSource } from './textLayer';
+import type { OverlayLinesSource } from './overlayLines';
+import type { TexturedShapeSource } from './texturedShapes';
 
 /**
  * What the preview reads off the WebGL renderer each frame. MGWebGL has all of these; tests pass
  * plain objects.
  */
-export interface PreviewCameraSource {
+export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
     myQuat: ArrayLike<number>;
     origin: ArrayLike<number>;
     zoom: number;
@@ -46,7 +49,7 @@ export interface PreviewCameraSource {
      * Where drawCore reads the hover highlight's size (glRef.hoverSize): the largest sphere under
      * the hovered atoms, so the highlight covers them. MGWebGL has its store.
      */
-    store?: { getState(): { glRef?: { hoverSize?: number } } };
+    store?: { getState(): { glRef?: { hoverSize?: number; texturedShapes?: TexturedShapeSource[] } } };
 }
 
 /**
@@ -90,6 +93,13 @@ export interface PreviewDraw {
     copies: ArrayLike<number>[];
     /** Copies are drawn in one grey, as drawBuffer does, rather than in their own colours. */
     greyCopies: boolean;
+    /**
+     * Being dragged: drawn through the buffer's transformMatrixInteractive about its
+     * transformOriginInteractive (see interactiveModel), the original only, as drawCore does.
+     */
+    moving: boolean;
+    /** And, while moving, with drawCore's pulsing ambient light (meshes and spheres, not lines). */
+    glow: boolean;
 }
 
 export interface PreviewPlan {
@@ -164,10 +174,12 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
                 skip(skips, buffer, j, types[j] ?? "unknown");
                 continue;
             }
-            if (buffer.transformMatrix || buffer.transformMatrixInteractive) {
+            // drawCore tries transformMatrix first, then transformMatrixInteractive.
+            if (buffer.transformMatrix) {
                 skip(skips, buffer, j, "TRIANGLES with a transform matrix");
                 continue;
             }
+            const moving = !!buffer.transformMatrixInteractive;
 
             const vertexCount = lengthOf(buffer.triangleVertices?.[j]) / 3;
             const indexCount = lengthOf(buffer.triangleIndexs?.[j]);
@@ -209,7 +221,7 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
                 buffer, index: j, primitive: "triangles", instanced, colourSource,
                 transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
                 vertexCount, indexCount, instanceCount,
-                ...copiesOf(buffer),
+                ...copiesOf(buffer), moving, glow: moving,
             });
             triangles += (indexCount / 3) * instanceCount * (1 + draws[draws.length - 1].copies.length);
         }
@@ -223,10 +235,9 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
  * sphere, whatever customColour says, so this does too.
  */
 function planSpheres(buffer: DisplayBuffer, j: number, skips: Skips): PreviewDraw | null {
-    if (buffer.transformMatrix || buffer.transformMatrixInteractive) {
-        skip(skips, buffer, j, "PERFECT_SPHERES with a transform matrix");
-        return null;
-    }
+    // drawCore's sphere loop knows only transformMatrixInteractive; a plain transformMatrix is
+    // not applied to spheres.
+    const moving = !!buffer.transformMatrixInteractive;
     const n = Math.floor(lengthOf(buffer.triangleInstanceOrigins?.[j]) / 3);
     if (n === 0) return null;
     if (lengthOf(buffer.triangleInstanceSizes?.[j]) < 3 * n) {
@@ -241,7 +252,7 @@ function planSpheres(buffer: DisplayBuffer, j: number, skips: Skips): PreviewDra
         buffer, index: j, primitive: "spheres", instanced: true, colourSource: "instance",
         transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
         vertexCount: 4, indexCount: 6, instanceCount: n,
-        ...copiesOf(buffer),
+        ...copiesOf(buffer), moving, glow: moving,
     };
 }
 
@@ -253,10 +264,12 @@ function planSpheres(buffer: DisplayBuffer, j: number, skips: Skips): PreviewDra
  */
 function planLines(buffer: DisplayBuffer, j: number, lit: boolean, skips: Skips): PreviewDraw | null {
     const type = lit ? "NORMALLINES" : "LINES";
-    if (buffer.transformMatrix || buffer.transformMatrixInteractive) {
+    if (buffer.transformMatrix) {
         skip(skips, buffer, j, `${type} with a transform matrix`);
         return null;
     }
+    // drawCore moves LINES while they are dragged, but draws NORMALLINES where they were.
+    const moving = !lit && !!buffer.transformMatrixInteractive;
     const vertexCount = lengthOf(buffer.triangleVertices?.[j]) / 3;
     if (!(vertexCount > 0)) return null;
     const useIndices = lit ? !!buffer.supplementary?.["useIndices"] : !!buffer.supplementary?.["useIndices"]?.[0];
@@ -281,8 +294,34 @@ function planLines(buffer: DisplayBuffer, j: number, lit: boolean, skips: Skips)
         colourSource: hasCustom ? "uniform" : "vertex",
         transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
         vertexCount: useIndices ? vertexCount : vertexCount - (vertexCount % 2), indexCount, instanceCount: 1,
-        copies: [], greyCopies: false,
+        copies: [], greyCopies: false, moving, glow: false,
     };
+}
+
+/**
+ * Where a dragged buffer is drawn: setupModelViewTransformMatrixInteractive's model matrix,
+ * T(d) x S x T(-d), S the buffer's transformMatrixInteractive (column-major, its translation the
+ * drag) and d its transformOriginInteractive less the view origin - the fragment's centre, so it
+ * turns about that. Column-major.
+ */
+export function interactiveModel(transform: ArrayLike<number>, transformOrigin: ArrayLike<number> | null | undefined,
+                                 viewOrigin: ArrayLike<number>): Float32Array {
+    const o = transformOrigin ?? [0, 0, 0];
+    const d = [0, 1, 2].map(i => o[i] - viewOrigin[i]);
+    const model = mat4.fromTranslation(mat4.create(), d as vec3.vec3);
+    mat4.multiply(model, model, mat4.clone(Array.from(transform).slice(0, 16) as unknown as mat4.mat4));
+    mat4.translate(model, model, d.map(x => -x) as vec3.vec3);
+    return new Float32Array(model);
+}
+
+/**
+ * drawCore's pulse for something being dragged, as its ambient light: sin(pi x the distance to the
+ * nearest whole second), so 0 on each second and 1 half way between.
+ */
+export function interactiveGlow(nowMs: number): number {
+    const t = nowMs / 1000;
+    const tdiff = Math.round(t) - t;
+    return tdiff < 0 ? Math.sin(Math.PI + tdiff * Math.PI) : Math.sin(tdiff * Math.PI);
 }
 
 /**

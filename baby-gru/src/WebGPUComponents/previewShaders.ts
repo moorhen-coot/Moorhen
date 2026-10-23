@@ -15,9 +15,13 @@
  * thick-lines-normal-vertex-shader.js (lit), but build their quads in the vertex shader from the
  * GPU's own buffers, where WebGL has them built on the CPU (linesToThickLinesWithIndices).
  *
+ * Text (TEXT_WGSL) follows text-vertex-shader.js and text-fragment-shader.js.
+ *
  * Frame must match the packing in previewScene.ts (frameUniforms, FRAME_FLOATS).
  */
-export const PREVIEW_WGSL = /* wgsl */ `
+
+/** The per-frame uniforms, at group 0, shared by every pipeline the renderer draws a frame with. */
+export const FRAME_WGSL = /* wgsl */ `
 struct Frame {
     projection: mat4x4f,
     view: mat4x4f,
@@ -34,6 +38,10 @@ struct Frame {
     clipPlane1: vec4f,   // back clip plane, eye space
 };
 
+@group(0) @binding(0) var<uniform> frame: Frame;
+`;
+
+export const PREVIEW_WGSL = FRAME_WGSL + /* wgsl */ `
 struct Draw {
     colour: vec4f,       // used when the colour comes from a uniform (customColour)
     params: vec4f,       // alpha multiplier (an object fade), thick lines' half width (Å) or
@@ -42,9 +50,14 @@ struct Draw {
                          // segments' colour: 0 their first vertex's, 1 each end's own, 2 draw.colour
     copyColour: vec4f,
     model: mat4x4f,      // where this copy goes: a symmetry operator, or identity for the original
+                         // (or, while it is dragged, its drag)
+    ambient: vec4f,      // w = 1: this ambient light instead of the frame's (the drag's pulse)
 };
 
-@group(0) @binding(0) var<uniform> frame: Frame;
+fn ambientLight() -> vec4f {
+    return select(frame.ambient, vec4f(draw.ambient.xyz, 1.0), draw.ambient.w > 0.5);
+}
+
 @group(1) @binding(0) var<uniform> draw: Draw;
 
 struct VOut {
@@ -112,7 +125,7 @@ fn lit(base: vec4f, normal: vec3f) -> vec4f {
     let R = normalize(-reflect(L, n));
     let diffuse = frame.diffuse * max(dot(n, L), 0.0);
     let specular = frame.specular * pow(max(dot(R, E), 0.0), frame.params.z);
-    return 1.5 * base * frame.ambient + 1.2 * base * diffuse + specular;
+    return 1.5 * base * ambientLight() + 1.2 * base * diffuse + specular;
 }
 
 fn fogged(colour: vec4f, alpha: f32, eyeDistance: f32) -> vec4f {
@@ -193,13 +206,16 @@ fn segmentCorner(vertex: u32, lit: bool) -> VOut {
     let i = select(a, b, LINE_CORNER_END[corner] == 1u);
     let p = segPosition(i);
     let along = segPosition(b) - segPosition(a);
-    let across = cross(along, frame.eyeDir.xyz);
+    // Across the line of sight as the segment's own frame sees it - turned with a drag, as
+    // drawTransformMatrixInteractivePMV turns screenZ - so it is as wide wherever it is moved.
+    let eyeLocal = (transpose(draw.model) * vec4f(frame.eyeDir.xyz, 0.0)).xyz;
+    let across = cross(along, eyeLocal);
     let len = length(across);
     let offset = select(vec3f(0.0), across / len, len > 1e-20) * (draw.params.y * LINE_CORNER_SIDE[corner]);
     var n = vec3f(0.0, 0.0, 1.0);
     if (lit) {
         n = vec3f(segNormals[3u * i], segNormals[3u * i + 1u], segNormals[3u * i + 2u]);
-        if (dot(n, frame.eyeDir.xyz) < 0.0) { n = -n; }
+        if (dot(n, eyeLocal) < 0.0) { n = -n; }
     }
     // linesToThickLinesWithIndices colours a segment by its first vertex; linesToThickLines
     // colours each end its own.
@@ -299,7 +315,7 @@ fn fs_sphere(in: SphereOut) -> SphereFragment {
     let n = x * frame.rightDir.xyz + y * frame.upDir.xyz + z * frame.eyeDir.xyz;
     let nl = max(dot(n, frame.lightDir.xyz), 0.0);
     let base = in.colour;
-    let lit = 1.5 * base * frame.ambient + 1.2 * base * (frame.diffuse * nl) + frame.specular * pow(nl, frame.params.z);
+    let lit = 1.5 * base * ambientLight() + 1.2 * base * (frame.diffuse * nl) + frame.specular * pow(nl, frame.params.z);
     let eyeDistance = abs(in.eye.z / in.eye.w);
     out.colour = fogged(lit, base.a, eyeDistance);
 
@@ -316,5 +332,167 @@ fn fs_sphere(in: SphereOut) -> SphereFragment {
         if (back < 0.0) { discard; }
     }
     return out;
+}
+`;
+
+/**
+ * Text: labels from the WebGL renderer's glyph atlases (TextCanvasTexture), one quad per label,
+ * facing the screen and a fixed number of pixels big, as text-vertex-shader.js draws them. Each
+ * atlas is a texture at group 1 with its pixel zoom; the labels are instances.
+ */
+export const TEXT_WGSL = FRAME_WGSL + /* wgsl */ `
+struct Text {
+    params: vec4f,       // pixel zoom (zoom x atlas height / image height), unused x3
+};
+
+@group(1) @binding(0) var<uniform> text: Text;
+@group(1) @binding(1) var atlas: texture_2d<f32>;
+@group(1) @binding(2) var atlasSampler: sampler;
+
+struct TextOut {
+    @builtin(position) position: vec4f,
+    @location(0) uv: vec2f,
+    @location(1) eye: vec4f,
+};
+
+// The quad as TextCanvasTexture builds it: corners (0,0) (1,0) (1,1) (0,1), indices 0 1 2 0 2 3,
+// and the atlas row 0 at the top, so the quad's bottom samples the label's bottom.
+const TEXT_CORNERS = array<vec2f, 6>(vec2f(0.0, 0.0), vec2f(1.0, 0.0), vec2f(1.0, 1.0),
+                                     vec2f(0.0, 0.0), vec2f(1.0, 1.0), vec2f(0.0, 1.0));
+
+@vertex
+fn vs_text(@builtin(vertex_index) vertex: u32, @location(0) offset: vec3f, @location(1) size: vec3f,
+           @location(2) texOffsets: vec4f, @location(3) screenOffset: vec4f) -> TextOut {
+    let corner = TEXT_CORNERS[vertex];
+    var textOffset = size * vec3f(corner, 0.0);
+    // Placed beside a world-space vector rather than at the point: across it on the screen.
+    if (screenOffset.w != 0.0) {
+        let toClip = frame.projection * frame.view;
+        let originClip = toClip * vec4f(offset, 1.0);
+        let targetClip = toClip * vec4f(offset + screenOffset.xyz, 1.0);
+        let screenDir = targetClip.xy / targetClip.w - originClip.xy / originClip.w;
+        let perpendicular = select(vec2f(1.0, 0.0), normalize(vec2f(-screenDir.y, screenDir.x)), length(screenDir) > 0.0001);
+        let halfExtent = 0.5 * (abs(perpendicular.x) * size.x + abs(perpendicular.y) * size.y);
+        textOffset = size * (vec3f(corner, 0.0) - vec3f(0.5, 0.5, 0.0));
+        textOffset = vec3f(textOffset.xy + perpendicular * (screenOffset.w + halfExtent), textOffset.z);
+    }
+    // uMVINVMatrix (the inverse view rotation) times the offset: screen axes in model space.
+    let p = text.params.x * textOffset;
+    let world = vec4f(offset + p.x * frame.rightDir.xyz + p.y * frame.upDir.xyz + p.z * frame.eyeDir.xyz, 1.0);
+    var out: TextOut;
+    out.eye = frame.view * world;
+    out.position = frame.projection * out.eye;
+    out.uv = vec2f(texOffsets.x + corner.x * texOffsets.y, texOffsets.z + (1.0 - corner.y) * texOffsets.w);
+    return out;
+}
+
+@fragment
+fn fs_text(in: TextOut) -> @location(0) vec4f {
+    // Sampled first: textureSample needs uniform control flow, which a discard ahead of it breaks.
+    let colour = textureSample(atlas, atlasSampler, in.uv);
+    if (dot(in.eye, frame.clipPlane0) < 0.0 || dot(in.eye, frame.clipPlane1) < 0.0) { discard; }
+    return colour;
+}
+`;
+
+/**
+ * Line overlays drawn in a frame of their own (the FPS meter, the on-screen measuring lines):
+ * segments as vertex pairs with a colour per vertex, made thick across `screenZ` as
+ * thick-lines-vertex-shader.js does, and put on screen by one matrix, over everything.
+ */
+export const OVERLAY_LINES_WGSL = /* wgsl */ `
+struct Overlay {
+    clip: mat4x4f,       // the overlay's whole transform, to WebGPU clip space
+    screenZ: vec4f,      // the direction lines are widened across, in the overlay's space
+    params: vec4f,       // half width, unused x3
+};
+
+@group(1) @binding(0) var<uniform> overlay: Overlay;
+@group(1) @binding(1) var<storage, read> overlayPositions: array<f32>;
+@group(1) @binding(2) var<storage, read> overlayColours: array<f32>;
+
+struct OverlayOut {
+    @builtin(position) position: vec4f,
+    @location(0) colour: vec4f,
+};
+
+// As LINE_CORNER_END and LINE_CORNER_SIDE in PREVIEW_WGSL.
+const OVERLAY_CORNER_END = array<u32, 6>(0u, 1u, 0u, 0u, 1u, 1u);
+const OVERLAY_CORNER_SIDE = array<f32, 6>(1.0, -1.0, -1.0, 1.0, 1.0, -1.0);
+
+fn overlayPosition(i: u32) -> vec3f {
+    return vec3f(overlayPositions[3u * i], overlayPositions[3u * i + 1u], overlayPositions[3u * i + 2u]);
+}
+
+@vertex
+fn vs_overlay_line(@builtin(vertex_index) vertex: u32) -> OverlayOut {
+    let s = vertex / 6u;
+    let corner = vertex - 6u * s;
+    let i = 2u * s + OVERLAY_CORNER_END[corner];
+    let along = overlayPosition(2u * s + 1u) - overlayPosition(2u * s);
+    let across = cross(along, overlay.screenZ.xyz);
+    let len = length(across);
+    let offset = select(vec3f(0.0), across / len, len > 1e-20) * (overlay.params.x * OVERLAY_CORNER_SIDE[corner]);
+    var out: OverlayOut;
+    out.position = overlay.clip * vec4f(overlayPosition(i) + offset, 1.0);
+    // linesToThickLines colours each end its own.
+    out.colour = vec4f(overlayColours[4u * i], overlayColours[4u * i + 1u], overlayColours[4u * i + 2u], overlayColours[4u * i + 3u]);
+    return out;
+}
+
+@fragment
+fn fs_overlay_line(in: OverlayOut) -> @location(0) vec4f {
+    return in.colour;
+}
+`;
+
+/**
+ * Textured shapes (TexturedShape: a plane of values from Coot, coloured through a ramp), as
+ * triangle-texture-vertex-shader.js and triangle-texture-fragment-shader.js draw them: a
+ * rectangle x_size by y_size at z, in world coordinates; each pixel's value, nearest texel, picks
+ * the nearest colour of the ramp; fogged.
+ */
+export const TEXTURED_WGSL = FRAME_WGSL + /* wgsl */ `
+struct Shape {
+    size: vec4f,         // x_size, y_size, z_position, unused
+};
+
+@group(1) @binding(0) var<uniform> shape: Shape;
+@group(1) @binding(1) var shapeValues: texture_2d<f32>;
+@group(1) @binding(2) var shapeRamp: texture_2d<f32>;
+
+struct ShapeOut {
+    @builtin(position) position: vec4f,
+    @location(0) uv: vec2f,
+    @location(1) eye: vec4f,
+};
+
+// TexturedShape's two triangles: (0,0) (x,0) (x,y), (0,0) (x,y) (0,y), texture coordinates alike.
+const SHAPE_CORNERS = array<vec2f, 6>(vec2f(0.0, 0.0), vec2f(1.0, 0.0), vec2f(1.0, 1.0),
+                                      vec2f(0.0, 0.0), vec2f(1.0, 1.0), vec2f(0.0, 1.0));
+
+@vertex
+fn vs_shape(@builtin(vertex_index) vertex: u32) -> ShapeOut {
+    let corner = SHAPE_CORNERS[vertex];
+    var out: ShapeOut;
+    out.eye = frame.view * vec4f(corner.x * shape.size.x, corner.y * shape.size.y, shape.size.z, 1.0);
+    out.position = frame.projection * out.eye;
+    out.uv = corner;
+    return out;
+}
+
+@fragment
+fn fs_shape(in: ShapeOut) -> @location(0) vec4f {
+    if (dot(in.eye, frame.clipPlane0) < 0.0 || dot(in.eye, frame.clipPlane1) < 0.0) { discard; }
+    // NEAREST sampling, clamped to the edge, done by hand: 32-bit float textures need not filter.
+    let size = vec2i(textureDimensions(shapeValues));
+    let texel = clamp(vec2i(floor(in.uv * vec2f(size))), vec2i(0), size - 1);
+    let value = textureLoad(shapeValues, texel, 0).x;
+    let rampSize = i32(textureDimensions(shapeRamp).x);
+    let colour = textureLoad(shapeRamp, vec2i(clamp(i32(floor(value * f32(rampSize))), 0, rampSize - 1), 0), 0);
+    let fogStart = frame.params.x;
+    let fogEnd = frame.params.y;
+    let fogFactor = 1.0 - clamp((fogEnd - abs(in.eye.z / in.eye.w)) / (fogEnd - fogStart), 0.0, 1.0);
+    return mix(colour, frame.fogColour, fogFactor);
 }
 `;
