@@ -8,9 +8,19 @@ import {
     isSameSceneSettingValue,
     isValidSceneSettingValue,
 } from "./sceneSettingsSlice";
+import { type SceneContent, emptyContent } from "./userSceneFormat";
 
 /** A scene or snapshot listed in the scene selector (see MoorhenInstance.userScene) */
-export type UserScene = { id: string; name: string };
+export type UserScene = {
+    id: string;
+    name: string;
+    /**
+     * What the scene shows when selected (for the shown scene: what it showed when last recorded,
+     * on leaving it or saving the session). Absent for a scene never shown, which starts as a copy
+     * of the shown one.
+     */
+    content?: SceneContent;
+};
 
 /** Scenes that ship with Moorhen: they cannot be deleted and their settings are user preferences */
 export const BUILT_IN_SCENE_IDS = ["Default", "Model Building"] as const;
@@ -66,25 +76,17 @@ const initialState: {
     selectedScene: string;
     isSceneChanging: boolean;
     /**
-     * Bumped whenever MoorhenInstance.userScene changes what a scene shows when selected again (its
-     * backups live outside the store), so selectors reading them re-run
-     */
-    backupsRevision: number;
-    /**
      * The saved settings of each built-in scene: user preferences, used when Moorhen starts. Only
      * changed by the scene's save button or by restoring / importing preferences, never by editing
      * what is shown.
      */
     savedSceneSettings: Record<BuiltInSceneId, PerSceneSettings>;
 } = {
-    scenes: [
-        { id: "Default", name: "Default" },
-        { id: "Model Building", name: "Model Building" },
-    ],
+    // Until preferences are restored (userScene.applySavedScenes), built-in scenes start from their defaults
+    scenes: BUILT_IN_SCENE_IDS.map(id => ({ id, name: id, content: emptyContent(builtInSceneDefaults(id)) })),
     snapshots: [],
     selectedScene: "Default",
     isSceneChanging: false,
-    backupsRevision: 0,
     savedSceneSettings: {
         Default: builtInSceneDefaults("Default"),
         "Model Building": builtInSceneDefaults("Model Building"),
@@ -117,9 +119,10 @@ const userScenesSlice = createSlice({
         setSceneChanging: (state, action: PayloadAction<boolean>) => {
             state.isSceneChanging = action.payload;
         },
-        /* A scene's backup changed in MoorhenInstance.userScene */
-        bumpBackupsRevision: state => {
-            state.backupsRevision += 1;
+        /* Set what a scene or snapshot shows when selected */
+        setSceneContent: (state, action: PayloadAction<{ id: string; content: SceneContent }>) => {
+            const scene = [...state.scenes, ...state.snapshots].find(scene => scene.id === action.payload.id);
+            if (scene) scene.content = action.payload.content;
         },
         /* Replace the scene and snapshot lists and the selection at once (e.g. when loading a session) */
         setUserSceneState: (state, action: PayloadAction<{ scenes: UserScene[]; snapshots: UserScene[]; selectedScene: string }>) => {
@@ -154,7 +157,7 @@ export const {
     renameUserScene,
     setSelectedScene,
     setSceneChanging,
-    bumpBackupsRevision,
+    setSceneContent,
     setUserSceneState,
     setSavedSceneSetting,
     saveSceneSettings,

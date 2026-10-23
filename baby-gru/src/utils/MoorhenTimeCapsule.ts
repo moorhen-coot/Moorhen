@@ -68,7 +68,7 @@ import { m2tParameters, residueEnvironmentOptions } from "./Representation/Moorh
 import { guid } from "./utils";
 import { representationIdForRestore } from "./sessionRepresentation";
 import { MoorhenInstance } from "@/InstanceManager";
-import { USER_SCENE_FORMAT_VERSION, type UserSceneState } from "@/InstanceManager/userSceneFormat";
+import { USER_SCENE_FORMAT_VERSION, type UserSceneState } from "@/store/userSceneFormat";
 import { Root } from "protobufjs";
 
 export interface backupKey {

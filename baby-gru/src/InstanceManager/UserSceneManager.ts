@@ -16,24 +16,23 @@ import {
 import type { RootState } from "../store";
 import { type SceneSettingsSnapshot, getPerSceneSettings, getSceneSettingsSnapshot, isSamePerSceneSettings } from "../store/sceneSettingsSlice";
 import {
+    type SceneContent,
+    type SceneSections,
+    USER_SCENE_FORMAT_VERSION,
+    type UserSceneState,
+    emptyContent,
+    readSceneList,
+    toFileEntry,
+} from "../store/userSceneFormat";
+import {
     BUILT_IN_SCENE_IDS,
     type BuiltInSceneId,
     type UserScene,
     MOVIE_SCENE_ID,
     builtInSceneDefaults,
-    bumpBackupsRevision,
     isBuiltInScene,
+    setSceneContent,
 } from "../store/userScenesSlice";
-import {
-    type SceneBackup,
-    type SceneSections,
-    USER_SCENE_FORMAT_VERSION,
-    type UserSceneState,
-    emptyBackup,
-    fromFileEntry,
-    readSceneList,
-    toFileEntry,
-} from "./userSceneFormat";
 // Type only: MoorhenInstance imports this module, a value import would be undefined while it loads
 import type { MoorhenInstance } from "./MoorhenInstance";
 
@@ -51,19 +50,18 @@ const uniqueName = (scenes: UserScene[], name: string) => {
     return candidate;
 };
 
-/** The built-in scenes with no saved representations: every molecule gets the scene's default style when shown */
-const builtInBackups = (settingsOf: (sceneId: BuiltInSceneId) => SceneSettingsSnapshot) =>
-    Object.fromEntries(BUILT_IN_SCENE_IDS.map(sceneId => [sceneId, emptyBackup(settingsOf(sceneId))]));
+const findScene = (state: RootState, sceneId: string): UserScene | undefined =>
+    [...state.userScenes.scenes, ...state.userScenes.snapshots].find(scene => scene.id === sceneId);
 
-/** `backup` with other scene settings and, if given, other representations */
+/** `content` with other scene settings and, if given, other representations */
 const replaceContent = (
-    backup: SceneBackup,
+    content: SceneContent,
     sceneSettings: SceneSettingsSnapshot,
-    representations?: { representations: SceneSections["representations"]; molecules: SceneBackup["objects"]["molecules"] }
-): SceneBackup => ({
-    ...backup,
-    objects: representations ? { ...backup.objects, molecules: representations.molecules } : backup.objects,
-    sections: { ...backup.sections, sceneSettings, ...(representations && { representations: representations.representations }) },
+    representations?: { representations: SceneSections["representations"]; molecules: SceneContent["objects"]["molecules"] }
+): SceneContent => ({
+    ...content,
+    objects: representations ? { ...content.objects, molecules: representations.molecules } : content.objects,
+    sections: { ...content.sections, sceneSettings, ...(representations && { representations: representations.representations }) },
 });
 
 /** The style of molecules in the "Default" scene, which MoorhenInstance starts with */
@@ -95,14 +93,11 @@ const BUILT_IN_SCENE_STYLES: Record<BuiltInSceneId, { defaultStyle: DefaultStyle
  * drawn (BUILT_IN_SCENE_STYLES): bonds for "Model Building", ribbons and ligands for "Default".
  * Access it through `moorhenInstance.userScene`.
  *
- * The scene and snapshot lists, the selected scene and whether a switch is running live in the
- * `userScenes` store slice so the UI can follow them.
+ * The scenes and snapshots, with what each shows (`content`), the selected scene and whether a
+ * switch is running live in the `userScenes` store slice.
  */
 export class MoorhenUserSceneManager {
     private instance: MoorhenInstance;
-    // What each scene shows when selected (the shown one: what it showed when last recorded).
-    // Until preferences are restored (applySavedScenes), the built-in scenes start from their defaults
-    private backups: { [sceneId: string]: SceneBackup } = builtInBackups(builtInSceneDefaults);
     // Not read from the store: two calls in the same tick must already see each other
     private isChanging: boolean = false;
     // hasUnsavedChanges runs in selectors, so on every dispatch: recompute only when its inputs change
@@ -149,10 +144,10 @@ export class MoorhenUserSceneManager {
     public applySavedScenes(): void {
         const { savedSceneSettings } = this.instance.store.getState().userScenes;
         for (const sceneId of BUILT_IN_SCENE_IDS) {
-            this.backups[sceneId] = replaceContent(this.backups[sceneId], savedSceneSettings[sceneId]);
+            const content = this.contentOf(sceneId) ?? emptyContent(savedSceneSettings[sceneId]);
+            this.setContent(sceneId, replaceContent(content, savedSceneSettings[sceneId]));
         }
-        this.backupsChanged();
-        if (isBuiltInScene(this.selected)) this.applySceneSettings(this.backups[this.selected]);
+        if (isBuiltInScene(this.selected)) this.applySceneSettings(this.contentOf(this.selected));
     }
 
     /**
@@ -177,15 +172,11 @@ export class MoorhenUserSceneManager {
      */
     public hasUnsavedChanges(sceneId: string, state: RootState = this.instance.store.getState()): boolean {
         if (!isBuiltInScene(sceneId)) return false;
-        const { userScenes } = state;
-        // What the answer depends on: the live settings only matter for the shown scene, the
-        // backups are tracked by backupsRevision
-        const isShown = userScenes.selectedScene === sceneId;
-        const inputs = [isShown ? state.sceneSettings : null, isShown, userScenes.backupsRevision, userScenes.savedSceneSettings[sceneId]];
+        const saved = state.userScenes.savedSceneSettings[sceneId];
+        const inputs = [state.userScenes.selectedScene === sceneId ? state.sceneSettings : findScene(state, sceneId)?.content, saved];
         const cached = this.unsavedChangesCache.get(sceneId);
         if (cached && cached.inputs.every((input, i) => input === inputs[i])) return cached.result;
-        const current = getPerSceneSettings(this.sceneSettingsOf(sceneId, state), builtInSceneDefaults(sceneId));
-        const result = !isSamePerSceneSettings(current, userScenes.savedSceneSettings[sceneId]);
+        const result = !isSamePerSceneSettings(getPerSceneSettings(this.sceneSettingsOf(sceneId, state), builtInSceneDefaults(sceneId)), saved);
         this.unsavedChangesCache.set(sceneId, { inputs, result });
         return result;
     }
@@ -196,12 +187,12 @@ export class MoorhenUserSceneManager {
      */
     public exportState(): UserSceneState {
         // Mid-switch, what is shown is half built: keep the last recorded version instead
-        if (!this.isChanging) this.backupScene(this.selected);
+        if (!this.isChanging) this.recordScene(this.selected);
         return {
             formatVersion: USER_SCENE_FORMAT_VERSION,
             selectedScene: this.selected,
-            scenes: this.list.map(scene => toFileEntry(scene, this.backups[scene.id])),
-            snapshots: this.snapshots.map(snapshot => toFileEntry(snapshot, this.backups[snapshot.id])),
+            scenes: this.list.map(toFileEntry),
+            snapshots: this.snapshots.map(toFileEntry),
         };
     }
 
@@ -214,30 +205,21 @@ export class MoorhenUserSceneManager {
      * @private
      */
     public importState(state: UserSceneState): void {
-        const scenes = readSceneList(state.scenes, id => !isSnapshot(id));
-        // Built-in scenes are always available, in their usual place if the file lost them
+        // Built-in scenes are always available, in their usual place if the file lost them, and
+        // start from their saved settings if the file has none
+        const scenes = readSceneList(state.scenes, id => !isSnapshot(id)).map(scene =>
+            isBuiltInScene(scene.id) && !scene.content ? this.savedBuiltInScene(scene.id, scene.name) : scene
+        );
         const missingBuiltIns = BUILT_IN_SCENE_IDS.filter(sceneId => !scenes.some(scene => scene.id === sceneId));
-        scenes.unshift(...missingBuiltIns.map(sceneId => ({ id: sceneId, name: sceneId })));
+        scenes.unshift(...missingBuiltIns.map(sceneId => this.savedBuiltInScene(sceneId)));
         const snapshots = readSceneList(state.snapshots, isSnapshot);
-
-        this.backups = this.savedBuiltInBackups();
-        for (const entry of [...scenes, ...snapshots]) {
-            const backup = fromFileEntry(entry);
-            if (backup) this.backups[entry.id] = backup;
-        }
-        this.backupsChanged();
         const isListed = [...scenes, ...snapshots].some(scene => scene.id === state.selectedScene);
         const selectedScene = isListed ? state.selectedScene : "Default";
 
-        this.instance.dispatch(
-            setUserSceneState({
-                scenes: scenes.map(({ id, name }) => ({ id, name })),
-                snapshots: snapshots.map(({ id, name }) => ({ id, name })),
-                selectedScene,
-            })
-        );
+        this.instance.dispatch(setUserSceneState({ scenes, snapshots, selectedScene }));
         this.applyDefaultStyle(selectedScene);
-        if (this.backups[selectedScene]) this.applySceneSettings(this.backups[selectedScene]);
+        const content = this.contentOf(selectedScene);
+        if (content) this.applySceneSettings(content);
     }
 
     /**
@@ -248,11 +230,9 @@ export class MoorhenUserSceneManager {
      * @private
      */
     public resetForLegacySession(): void {
-        this.backups = this.savedBuiltInBackups();
-        this.backupsChanged();
         this.instance.dispatch(
             setUserSceneState({
-                scenes: BUILT_IN_SCENE_IDS.map(sceneId => ({ id: sceneId, name: sceneId })),
+                scenes: BUILT_IN_SCENE_IDS.map(sceneId => this.savedBuiltInScene(sceneId)),
                 snapshots: [],
                 selectedScene: "Default",
             })
@@ -333,11 +313,16 @@ export class MoorhenUserSceneManager {
         const snapshotNumber = nextNumber(this.snapshots, "snapshot-");
         const id = `snapshot-${snapshotNumber}`;
         const { sceneSettings, glRef } = this.instance.store.getState();
-        this.setBackup(id, {
-            ...this.capture(id),
-            camera: { origin: [...sceneSettings.origin], zoom: sceneSettings.zoom, quat: [...glRef.quat] },
-        });
-        this.instance.dispatch(addUserSnapshot({ id, name: uniqueName(this.allScenes, name ?? `Snapshot ${snapshotNumber}`) }));
+        this.instance.dispatch(
+            addUserSnapshot({
+                id,
+                name: uniqueName(this.allScenes, name ?? `Snapshot ${snapshotNumber}`),
+                content: {
+                    ...this.capture(id),
+                    camera: { origin: [...sceneSettings.origin], zoom: sceneSettings.zoom, quat: [...glRef.quat] },
+                },
+            })
+        );
         this.recordInHistory();
         return id;
     }
@@ -358,11 +343,12 @@ export class MoorhenUserSceneManager {
      */
     public async copyFrom(targetId: string, sourceId: string, withRepresentations: boolean = false): Promise<boolean> {
         if (!this.canChange || isSnapshot(targetId) || targetId === sourceId || !this.find(targetId) || !this.find(sourceId)) return false;
-        const source = this.workingBackup(sourceId);
+        const source = this.workingContent(sourceId);
         const representations = withRepresentations
-            ? structuredClone({ representations: source.sections.representations, molecules: source.objects.molecules })
+            ? { representations: source.sections.representations, molecules: source.objects.molecules }
             : undefined;
-        await this.replaceScene(targetId, replaceContent(this.workingBackup(targetId), { ...source.sections.sceneSettings }, representations), withRepresentations);
+        const content = replaceContent(this.workingContent(targetId), source.sections.sceneSettings, representations);
+        await this.replaceScene(targetId, content, withRepresentations);
         return true;
     }
 
@@ -389,7 +375,7 @@ export class MoorhenUserSceneManager {
             return false;
         }
         const representations = withRepresentations ? { representations: [], molecules: {} } : undefined;
-        await this.replaceScene(sceneId, replaceContent(this.workingBackup(sceneId), sceneSettings, representations), withRepresentations);
+        await this.replaceScene(sceneId, replaceContent(this.workingContent(sceneId), sceneSettings, representations), withRepresentations);
         return true;
     }
 
@@ -408,8 +394,6 @@ export class MoorhenUserSceneManager {
         // Leaving the deleted scene must not save it again
         if (this.selected === sceneId) await this.select("Default", false);
         this.instance.dispatch(removeUserScene(sceneId));
-        delete this.backups[sceneId];
-        this.backupsChanged();
         this.recordInHistory();
         return true;
     }
@@ -434,11 +418,26 @@ export class MoorhenUserSceneManager {
     }
 
     private find(sceneId: string): UserScene | undefined {
-        return this.allScenes.find(scene => scene.id === sceneId);
+        return findScene(this.instance.store.getState(), sceneId);
     }
 
     private nameOf(sceneId: string): string {
         return this.find(sceneId)?.name ?? sceneId;
+    }
+
+    /** What a scene shows when selected (for the shown one, when last recorded); undefined if never shown */
+    private contentOf(sceneId: string): SceneContent | undefined {
+        return this.find(sceneId)?.content;
+    }
+
+    private setContent(sceneId: string, content: SceneContent) {
+        this.instance.dispatch(setSceneContent({ id: sceneId, content }));
+    }
+
+    /** A built-in scene with no saved representations, from its saved settings */
+    private savedBuiltInScene(sceneId: BuiltInSceneId, name: string = sceneId): UserScene {
+        const { savedSceneSettings } = this.instance.store.getState().userScenes;
+        return { id: sceneId, name, content: emptyContent(savedSceneSettings[sceneId]) };
     }
 
     /** Add a scene and switch to it, or leave the list unchanged if the switch is refused */
@@ -472,51 +471,35 @@ export class MoorhenUserSceneManager {
             .catch(error => console.error("Error backing up scenes:", error));
     }
 
-    /** The built-in scenes as they start, from their saved settings */
-    private savedBuiltInBackups() {
-        const { savedSceneSettings } = this.instance.store.getState().userScenes;
-        return builtInBackups(sceneId => savedSceneSettings[sceneId]);
-    }
-
-    /** Call after changing `backups`: lets selectors that read them (hasUnsavedChanges) re-run */
-    private backupsChanged() {
-        this.instance.dispatch(bumpBackupsRevision());
-    }
-
-    private setBackup(sceneId: string, backup: SceneBackup) {
-        this.backups[sceneId] = backup;
-        this.backupsChanged();
-    }
-
     /** The settings a scene shows if it is selected, otherwise the ones it shows when selected again */
     private sceneSettingsOf(sceneId: string, state: RootState = this.instance.store.getState()): SceneSettingsSnapshot {
-        const backup = this.backups[sceneId];
+        const content = findScene(state, sceneId)?.content;
         // A scene never visited starts as a copy of the current one
-        if (sceneId === state.userScenes.selectedScene || !backup) return getSceneSettingsSnapshot(state.sceneSettings);
-        return { ...backup.sections.sceneSettings };
+        if (sceneId === state.userScenes.selectedScene || !content) return getSceneSettingsSnapshot(state.sceneSettings);
+        return content.sections.sceneSettings;
     }
 
-    /** What a scene shows if it is selected or never visited (it starts as a copy of the shown one), otherwise its backup */
-    private workingBackup(sceneId: string): SceneBackup {
-        const backup = this.backups[sceneId];
-        return sceneId === this.selected || !backup ? this.capture(sceneId) : backup;
+    /** What a scene shows if it is selected or never visited (it starts as a copy of the shown one), otherwise its content */
+    private workingContent(sceneId: string): SceneContent {
+        const content = this.contentOf(sceneId);
+        return sceneId === this.selected || !content ? this.capture(sceneId) : content;
     }
 
     /**
      * Store a scene's new content (not a snapshot), and show it if the scene is shown
      * @param rebuild - The representations changed: rebuild them, not only the scene settings.
      */
-    private async replaceScene(sceneId: string, backup: SceneBackup, rebuild: boolean) {
-        this.setBackup(sceneId, backup);
+    private async replaceScene(sceneId: string, content: SceneContent, rebuild: boolean) {
+        this.setContent(sceneId, content);
         if (sceneId === this.selected) {
-            if (rebuild) await this.runSwitch(() => this.showScene(sceneId, backup));
-            else this.applySceneSettings(backup);
+            if (rebuild) await this.runSwitch(() => this.showScene(sceneId, content));
+            else this.applySceneSettings(content);
         }
         this.recordInHistory();
     }
 
-    private applySceneSettings(backup: SceneBackup) {
-        this.instance.dispatch(applySceneSettingsSnapshot(backup.sections.sceneSettings));
+    private applySceneSettings(content: SceneContent) {
+        this.instance.dispatch(applySceneSettingsSnapshot(content.sections.sceneSettings));
     }
 
     /**
@@ -525,7 +508,7 @@ export class MoorhenUserSceneManager {
      */
     private baseSceneOf(sceneId: string): BuiltInSceneId {
         if (isBuiltInScene(sceneId)) return sceneId;
-        const baseScene = this.backups[sceneId]?.baseScene;
+        const baseScene = this.contentOf(sceneId)?.baseScene;
         return baseScene !== undefined && isBuiltInScene(baseScene) ? baseScene : "Default";
     }
 
@@ -538,56 +521,60 @@ export class MoorhenUserSceneManager {
      * Record what is shown now, as the content of a scene: the shown one, or one never visited (which
      * starts as a copy of the shown one). Keeps the scene's base scene; a new scene takes the shown one's.
      */
-    private capture(sceneId: string): SceneBackup {
-        const backup = emptyBackup(getSceneSettingsSnapshot(this.instance.store.getState().sceneSettings));
+    private capture(sceneId: string): SceneContent {
+        const content = emptyContent(getSceneSettingsSnapshot(this.instance.store.getState().sceneSettings));
         for (const molecule of this.instance.getMoleculeList()) {
-            backup.objects.molecules[molecule.uniqueId] = molecule.name;
+            content.objects.molecules[molecule.uniqueId] = molecule.name;
             for (const representation of this.instance.representation.getList(molecule.uniqueId)) {
-                backup.sections.representations.push({ moleculeUniqueId: molecule.uniqueId, params: representation.backup() });
+                // A copy: the store freezes what it holds, and the backup may share objects with the live representation
+                const params = structuredClone(representation.backup());
+                content.sections.representations.push({ moleculeUniqueId: molecule.uniqueId, params });
             }
         }
-        if (!isBuiltInScene(sceneId)) backup.baseScene = this.backups[sceneId]?.baseScene ?? this.baseSceneOf(this.selected);
-        return backup;
+        if (!isBuiltInScene(sceneId)) content.baseScene = this.contentOf(sceneId)?.baseScene ?? this.baseSceneOf(this.selected);
+        return content;
     }
 
-    private backupScene(sceneId: string) {
-        // Snapshots are immutable
-        if (!isSnapshot(sceneId)) this.setBackup(sceneId, this.capture(sceneId));
+    /** Store what is shown now as the scene's content (snapshots are immutable) */
+    private recordScene(sceneId: string) {
+        if (!isSnapshot(sceneId)) this.setContent(sceneId, this.capture(sceneId));
     }
 
-    /** Replace what is shown by a scene's backup (already stored in `backups`): its settings and representations */
-    private async showScene(sceneId: string, backup: SceneBackup) {
+    /** Replace what is shown by a scene's content: its settings and representations */
+    private async showScene(sceneId: string, content: SceneContent) {
         this.applyDefaultStyle(sceneId);
         for (const molecule of this.instance.getMoleculeList()) {
             for (const representation of this.instance.representation.getList(molecule.uniqueId)) {
                 await this.instance.representation.delete(representation.uniqueId);
             }
         }
-        if (backup.camera) {
+        if (content.camera) {
             // Before the scene settings: automatic fog and clipping follow the zoom
-            this.instance.dispatch(setOrigin([...backup.camera.origin]));
-            this.instance.dispatch(setZoom(backup.camera.zoom));
-            this.instance.dispatch(setQuat([...backup.camera.quat]));
+            this.instance.dispatch(setOrigin([...content.camera.origin]));
+            this.instance.dispatch(setZoom(content.camera.zoom));
+            this.instance.dispatch(setQuat([...content.camera.quat]));
         }
-        this.applySceneSettings(backup);
-        for (const { moleculeUniqueId, params } of backup.sections.representations) {
+        this.applySceneSettings(content);
+        for (const { moleculeUniqueId, params } of content.sections.representations) {
             // The molecule may have been closed since the scene was saved
             if (!this.instance.getMolecule(moleculeUniqueId)) continue;
-            await this.instance.representation.create(moleculeUniqueId, params as Parameters<typeof this.instance.representation.create>[1]);
+            // A copy: the stored params are frozen, the representation keeps (and may change) them
+            const copy = structuredClone(params) as Parameters<typeof this.instance.representation.create>[1];
+            await this.instance.representation.create(moleculeUniqueId, copy);
         }
         // Molecules loaded since the scene was saved get the scene's default style
         const { wizard } = BUILT_IN_SCENE_STYLES[this.baseSceneOf(sceneId)];
         for (const molecule of this.instance.getMoleculeList()) {
-            if (!Object.hasOwn(backup.objects.molecules, molecule.uniqueId)) {
+            if (!Object.hasOwn(content.objects.molecules, molecule.uniqueId)) {
                 await this.instance.representation.wizard(molecule.uniqueId, wizard, false);
             }
         }
-        this.reportMissingMolecules(sceneId, backup);
+        this.reportMissingMolecules(sceneId, content);
     }
 
     /** Warn about molecules the scene was saved with that are not loaded any more */
-    private reportMissingMolecules(sceneId: string, backup: SceneBackup) {
-        const missing = Object.entries(backup.objects.molecules)
+    private reportMissingMolecules(sceneId: string, content: SceneContent) {
+        const missing = Object.entries(content.objects.molecules)
             .filter(([uniqueId]) => !this.instance.getMolecule(uniqueId))
             .map(([, name]) => name);
         if (missing.length === 0) return;
@@ -600,14 +587,14 @@ export class MoorhenUserSceneManager {
     }
 
     private async changeScene(sceneId: string, saveCurrentScene: boolean) {
-        if (saveCurrentScene) this.backupScene(this.selected);
-        const backup = this.backups[sceneId];
-        if (backup) {
-            await this.showScene(sceneId, backup);
+        if (saveCurrentScene) this.recordScene(this.selected);
+        const content = this.contentOf(sceneId);
+        if (content) {
+            await this.showScene(sceneId, content);
         } else {
             // A scene visited for the first time (e.g. Custom) starts as a copy of the current one,
             // and is made from the same built-in scene
-            this.setBackup(sceneId, this.capture(sceneId));
+            this.setContent(sceneId, this.capture(sceneId));
             this.applyDefaultStyle(sceneId);
         }
     }
