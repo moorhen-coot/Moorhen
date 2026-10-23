@@ -146,4 +146,34 @@ describe("per-scene preferences", () => {
         expect(saved["Model Building"].resetClippingFogging).toBe(true);
         unsubscribe();
     });
+
+    it("saving unchanged settings reports no change, array settings included", async () => {
+        const onUserPreferencesChange = jest.fn();
+        const prefs = makePreferences("pp-scene-4");
+        const { store, unsubscribe } = init(prefs, { onUserPreferencesChange });
+        await waitMounted(store);
+
+        const saved = store.getState().userScenes.savedSceneSettings.Default;
+        // New arrays with the same values, as a save button builds them
+        const settings = { ...saved, lightPosition: [...saved.lightPosition], backgroundColor: [...saved.backgroundColor] };
+        store.dispatch(saveSceneSettings({ sceneId: "Default", settings }));
+        await flush();
+        expect(onUserPreferencesChange).not.toHaveBeenCalled();
+        expect(store.getState().userScenes.savedSceneSettings.Default).toBe(saved);
+        unsubscribe();
+    });
+
+    it("a stored value of the wrong type is replaced by the scene's default", async () => {
+        const prefs = makePreferences("pp-scene-5");
+        await prefs.localStorageInstance.setItem("Default.backgroundColor", { version: 1, value: "red" });
+        await prefs.localStorageInstance.setItem("Default.resetClippingFogging", { version: 1, value: 1 });
+        const { store, unsubscribe } = init(prefs);
+        await waitMounted(store);
+
+        const saved = store.getState().userScenes.savedSceneSettings.Default;
+        expect(saved.backgroundColor).toEqual(builtInSceneDefaults("Default").backgroundColor);
+        // The Default scene's default, not the global one (true)
+        expect(saved.resetClippingFogging).toBe(false);
+        unsubscribe();
+    });
 });

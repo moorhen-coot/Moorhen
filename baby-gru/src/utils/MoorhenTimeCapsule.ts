@@ -46,7 +46,7 @@ import {
     setEdgeDetectNormalThreshold,
     setSsaoBias,
     setSsaoRadius,
-    setDoDepthBlur,
+    setUseOffScreenBuffers,
     MoorhenReduxStoreType,
 } from "../store";
 
@@ -552,7 +552,7 @@ export class MoorhenTimeCapsule {
         const depthBlurDepth = this.store.getState().sceneSettings.depthBlurDepth;
         const ssaoRadius = this.store.getState().sceneSettings.ssaoRadius;
         const ssaoBias = this.store.getState().sceneSettings.ssaoBias;
-        const doDepthBlur = this.store.getState().sceneSettings.doDepthBlur;
+        const useOffScreenBuffers = this.store.getState().sceneSettings.useOffScreenBuffers;
         const doEdgeDetect = this.store.getState().sceneSettings.doEdgeDetect;
         const depthScale = this.store.getState().sceneSettings.edgeDetectDepthScale;
         const depthThreshold = this.store.getState().sceneSettings.edgeDetectDepthThreshold;
@@ -592,7 +592,7 @@ export class MoorhenTimeCapsule {
                 bias: ssaoBias,
             },
             blur: {
-                enabled: doDepthBlur,
+                enabled: useOffScreenBuffers,
                 radius: depthBlurRadius,
                 depth: depthBlurDepth,
             },
@@ -1220,10 +1220,10 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setDoSSAO, sessionData.viewData.ssao.enabled);
         guardedDispatch(setSsaoBias, sessionData.viewData.ssao.bias);
         guardedDispatch(setSsaoRadius, sessionData.viewData.ssao.radius);
-        guardedDispatch(setDoDepthBlur, sessionData.viewData.blur.enabled);
+        guardedDispatch(setUseOffScreenBuffers, sessionData.viewData.blur.enabled);
         guardedDispatch(setDepthBlurDepth, sessionData.viewData.blur.depth);
         guardedDispatch(setDepthBlurRadius, sessionData.viewData.blur.radius);
-        guardedDispatch(setDoDepthBlur, sessionData.viewData.blur.enabled);
+        guardedDispatch(setUseOffScreenBuffers, sessionData.viewData.blur.enabled);
         guardedDispatch(setDoPerspectiveProjection, sessionData.viewData.doPerspectiveProjection ?? false);
         // The eye distance is restored with the rest of the camera further up, through
         // cameraFromSession, which also applies the "a session without one means 250" rule. The

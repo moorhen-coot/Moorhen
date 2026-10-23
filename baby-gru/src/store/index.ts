@@ -223,7 +223,7 @@ export {
     setClipCap,
     resetSceneSettings,
     setEdgeDetectNormalScale,
-    setDoDepthBlur,
+    setUseOffScreenBuffers,
     setDoShadowDepthDebug,
     setDoShadow,
     setShadowMapQuality,

@@ -184,7 +184,7 @@ export async function getCloudExitData(instance: MoorhenInstance): Promise<Cloud
         },
         shadows: sceneSettings.doShadow,
         ssao: { enabled: sceneSettings.doSSAO, radius: sceneSettings.ssaoRadius, bias: sceneSettings.ssaoBias },
-        blur: { enabled: sceneSettings.doDepthBlur, radius: sceneSettings.depthBlurRadius, depth: sceneSettings.depthBlurDepth },
+        blur: { enabled: sceneSettings.useOffScreenBuffers, radius: sceneSettings.depthBlurRadius, depth: sceneSettings.depthBlurDepth },
     };
 
     return { viewData, molData, ligData };

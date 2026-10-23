@@ -2,7 +2,7 @@
  * Copying the parameters of one scene (or snapshot) into another (userScene.copyFrom), and
  * resetting a scene's settings (userScene.resetSettings).
  */
-import { setDoSSAO, setSsaoRadius } from "@/store/sceneSettingsSlice";
+import { setDefaultBondSmoothness, setDoSSAO, setSsaoRadius } from "@/store/sceneSettingsSlice";
 import { createCloudInstance, loadCootModules, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
 jest.setTimeout(60000);
@@ -103,5 +103,43 @@ describe("scene names", () => {
         // Scenes and snapshots share the menu, so a scene cannot take a snapshot's name either
         const sceneId = await userScene.create("Figure");
         expect(names([sceneId])).toEqual(["Figure (4)"]);
+    });
+});
+
+describe("how scenes draw new molecules", () => {
+    test("a scene or snapshot made from Model Building keeps its style", async () => {
+        const userScene = cloud.instance.userScene;
+        const representation = cloud.instance.representation;
+        await userScene.select("Model Building");
+        expect(representation.defaultStyle).toBe("CBs");
+
+        const customId = await userScene.create("From Model Building");
+        expect(representation.defaultStyle).toBe("CBs");
+        const snapshotId = userScene.takeSnapshot();
+
+        await userScene.select("Default");
+        expect(representation.defaultStyle).toBe("ribbons-and-ligands");
+        await userScene.select(customId);
+        expect(representation.defaultStyle).toBe("CBs");
+        await userScene.select("Default");
+        await userScene.select(snapshotId);
+        expect(representation.defaultStyle).toBe("CBs");
+
+        // A scene made from Default draws as Default
+        await userScene.select("Default");
+        await userScene.create("From Default");
+        expect(representation.defaultStyle).toBe("ribbons-and-ligands");
+    });
+});
+
+describe("global settings", () => {
+    test("the bond smoothness is the same in every scene", async () => {
+        const userScene = cloud.instance.userScene;
+        cloud.store.dispatch(setDefaultBondSmoothness(3));
+        await userScene.select("Model Building");
+        expect(sceneSettings().defaultBondSmoothness).toBe(3);
+        cloud.store.dispatch(setDefaultBondSmoothness(1));
+        await userScene.select("Default");
+        expect(sceneSettings().defaultBondSmoothness).toBe(1);
     });
 });

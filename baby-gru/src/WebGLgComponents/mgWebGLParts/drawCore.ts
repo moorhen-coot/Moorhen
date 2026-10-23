@@ -401,7 +401,7 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                     self.gl.uniform1f(theShader.xSSAOScaling, 1.0/self.rttFramebuffer.width );
                     self.gl.uniform1f(theShader.ySSAOScaling, 1.0/self.rttFramebuffer.height );
                 } else {
-                    if(self.doDepthBlur&&self.WEBGL2){
+                    if(self.useOffScreenBuffers&&self.WEBGL2){
                         self.ensureOffScreeenBuffers(self.canvas.width,self.canvas.height);
                         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebuffer);
                     }
@@ -2234,7 +2234,7 @@ export function drawScene(self: MGWebGL) : void {
                 self.drawFPSMeter();
             }
 
-            if(!(self.doDepthBlur&&self.offScreenReady)){
+            if(!(self.useOffScreenBuffers&&self.offScreenReady)){
                 if(self.renderToTexture){
                     if(self.doPeel){
                         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebuffer);
@@ -2317,7 +2317,7 @@ export function drawScene(self: MGWebGL) : void {
             self.pixel_data = pixels;
         }
 
-        if(self.renderToTexture&&!self.doDepthBlur) {
+        if(self.renderToTexture&&!self.useOffScreenBuffers) {
             if (self.WEBGL2) {
                 if(self.doPeel){
                      self.gl.bindFramebuffer(self.gl.READ_FRAMEBUFFER, self.offScreenFramebuffer);
@@ -2347,7 +2347,7 @@ export function drawScene(self: MGWebGL) : void {
             self.pixel_data = pixels;
         }
 
-        if(self.doDepthBlur&&self.offScreenReady){
+        if(self.useOffScreenBuffers&&self.offScreenReady){
             depthBlur(self, invMat);
         }
 
@@ -3031,7 +3031,7 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             }
         } else {
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
-            if(self.doDepthBlur&&self.WEBGL2){
+            if(self.useOffScreenBuffers&&self.WEBGL2){
                 self.ensureOffScreeenBuffers(self.canvas.width,self.canvas.height);
                 self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.offScreenFramebuffer);
             }

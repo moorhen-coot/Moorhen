@@ -21,7 +21,7 @@ import {
     setResetClippingFogging,
     setSsaoBias,
     setSsaoRadius,
-    setDoDepthBlur,setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd , setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
+    setUseOffScreenBuffers,setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd , setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MAX_EYE_DISTANCE, MIN_EYE_DISTANCE } from "../../WebGLgComponents/mgWebGLParts/projection";
@@ -277,7 +277,7 @@ const BackgroundColorPanel = () => {
 
 const DepthBlurPanel = () => {
     const dispatch = useDispatch();
-    const doDepthBlur = useSelector((state: moorhen.State) => state.sceneSettings.doDepthBlur);
+    const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
 
@@ -285,15 +285,15 @@ const DepthBlurPanel = () => {
         <MoorhenStack direction="vertical" card={true}>
             <MoorhenToggle
                 type="switch"
-                checked={doDepthBlur}
+                checked={useOffScreenBuffers}
                 onChange={() => {
-                    dispatch(setDoDepthBlur(!doDepthBlur));
+                    dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
                 }}
                 label="Depth Blur"
             />
 
             <MoorhenSlider
-                isDisabled={!doDepthBlur}
+                isDisabled={!useOffScreenBuffers}
                 minVal={-100.0}
                 maxVal={100.0}
                 scale="linear"
@@ -304,7 +304,7 @@ const DepthBlurPanel = () => {
                 decimalPlaces={1}
             />
             <MoorhenSlider
-                isDisabled={!doDepthBlur}
+                isDisabled={!useOffScreenBuffers}
                 minVal={2}
                 maxVal={16}
                 scale="linear"

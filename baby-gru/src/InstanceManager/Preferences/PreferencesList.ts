@@ -51,6 +51,7 @@ import { overwriteMapUpdatingScores, setShowScoresToast } from "../../store/mole
 import { setContourWheelSensitivityFactor, setMouseSensitivity, setZoomWheelSensitivityFactor } from "../../store/mouseSettings";
 import { setAnimateRefine, setEnableRefineAfterMod } from "../../store/refinementSettingsSlice";
 import {
+    setDefaultBondSmoothness,
     setDepthPeelLayers,
     setShadowMapQuality,
     setDoShadowDepthDebug,
@@ -147,6 +148,16 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         valueSetter: setDefaultMapSurface,
         selector: (state: RootState) => state.mapContourSettings.defaultMapSurface,
         defaultValue: false,
+    },
+    16: {
+        label: "defaultBondSmoothness",
+        valueSetter: setDefaultBondSmoothness,
+        selector: (state: RootState) => state.sceneSettings.defaultBondSmoothness,
+        // Enum value: 1 = Coarse, 2 = Nice, 3 = Smooth
+        defaultValue: sceneSettingsInitialState.defaultBondSmoothness,
+        // Bumped for 1.0: the default changed from 1 (Coarse) to 2 (Nice), so any previously
+        // stored value must be reset to the new default.
+        version: 2,
     },
     17: {
         label: "showScoresToast",

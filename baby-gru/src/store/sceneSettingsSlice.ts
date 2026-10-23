@@ -25,7 +25,7 @@ export const initialState: {
     clipStart: number;
     clipEnd: number;
     doPerspectiveProjection: boolean;
-    doDepthBlur: boolean;
+    useOffScreenBuffers: boolean;
     depthBlurRadius: number;
     /**
      * How many depth-peel layers to resolve transparency with.
@@ -127,7 +127,7 @@ export const initialState: {
     resetClippingFogging: true,
     clipCap: true,
     doPerspectiveProjection: false,
-    doDepthBlur: false,
+    useOffScreenBuffers: false,
     doShadowDepthDebug: false,
     doShadow: false,
     shadowMapQuality: "coarse",
@@ -177,6 +177,7 @@ const NON_SCENE_KEYS = [
     "shadowMapQuality",
     "doShadowDepthDebug",
     "drawFPS",
+    "defaultBondSmoothness",
 ] as const;
 
 /** Fog and clipping planes: only saved when they are set by hand (resetClippingFogging off), else they follow the zoom */
@@ -199,14 +200,13 @@ const sceneKeys = (Object.keys(initialState) as (keyof SceneSettingsState)[]).fi
 export const PER_SCENE_PREFERENCE_KEYS = [
     "drawCrosshairs",
     "drawMissingLoops",
-    "defaultBondSmoothness",
     "resetClippingFogging",
     "clipCap",
     "doPerspectiveProjection",
     "drawAxes",
     "doShadow",
     "doOutline",
-    "doDepthBlur",
+    "useOffScreenBuffers",
     "depthBlurRadius",
     "depthBlurDepth",
     "doSSAO",
@@ -236,7 +236,8 @@ export type PerSceneKey = (typeof PER_SCENE_PREFERENCE_KEYS)[number];
 /** The value of every per-scene preference of one scene */
 export type PerSceneSettings = Pick<SceneSettingsState, PerSceneKey>;
 
-const isSameValue = (a: unknown, b: unknown): boolean => {
+/** Whether two values of a scene setting are the same (arrays compared item by item) */
+export const isSameSceneSettingValue = (a: unknown, b: unknown): boolean => {
     if (Array.isArray(a) && Array.isArray(b)) {
         return a.length === b.length && a.every((value, i) => value === b[i]);
     }
@@ -267,10 +268,10 @@ export const getPerSceneSettings = (sceneSettings: SceneSettingsSnapshot, sceneD
 
 /** Whether two sets of per-scene preference values are the same */
 export const isSamePerSceneSettings = (a: PerSceneSettings, b: PerSceneSettings): boolean =>
-    PER_SCENE_PREFERENCE_KEYS.every(key => isSameValue(a[key], b[key]));
+    PER_SCENE_PREFERENCE_KEYS.every(key => isSameSceneSettingValue(a[key], b[key]));
 
-/** Whether a value can be stored in `key` (same type as its default), to reject malformed injected scenes */
-const isValidValue = (key: SceneKey, value: unknown): boolean => {
+/** Whether a value can be stored in `key` (same type as its default), to reject malformed injected scenes or stored preferences */
+export const isValidSceneSettingValue = (key: keyof SceneSettingsSnapshot, value: unknown): boolean => {
     const defaultValue = initialState[key];
     if (Array.isArray(defaultValue)) {
         return Array.isArray(value) && value.length === defaultValue.length && value.every(item => typeof item === typeof defaultValue[0]);
@@ -288,7 +289,7 @@ export const getSceneSettingsSnapshot = (sceneSettings: SceneSettingsState): Sce
     for (const key of sceneKeys) {
         if (sceneSettings.resetClippingFogging && FOG_CLIP_KEYS.includes(key)) continue;
         const value = sceneSettings[key];
-        if (!isSameValue(value, initialState[key])) {
+        if (!isSameSceneSettingValue(value, initialState[key])) {
             snapshot[key] = Array.isArray(value) ? [...value] : value;
         }
     }
@@ -410,8 +411,8 @@ const sceneSettingsSlice = createSlice({
             state.fogEnd += delta;
         },
         // API
-        setDoDepthBlur: (state, action: PayloadAction<boolean>) => {
-            state.doDepthBlur = action.payload;
+        setUseOffScreenBuffers: (state, action: PayloadAction<boolean>) => {
+            state.useOffScreenBuffers = action.payload;
         },
         // API
         setDoShadowDepthDebug: (state, action: PayloadAction<boolean>) => {
@@ -573,10 +574,10 @@ const sceneSettingsSlice = createSlice({
             const target = state as Record<SceneKey, unknown>;
             for (const key of sceneKeys) {
                 const value = snapshot[key];
-                const useSaved = Object.hasOwn(snapshot, key) && isValidValue(key, value);
+                const useSaved = Object.hasOwn(snapshot, key) && isValidSceneSettingValue(key, value);
                 const newValue = useSaved ? value : initialState[key];
                 // Leave unchanged values alone: a new array reference would re-trigger renderer effects
-                if (isSameValue(target[key], newValue)) continue;
+                if (isSameSceneSettingValue(target[key], newValue)) continue;
                 target[key] = Array.isArray(newValue) ? [...newValue] : newValue;
             }
             if (state.resetClippingFogging) execAutoClipFogByZoom(state);
@@ -599,7 +600,7 @@ export const {
     setClipCap,
     resetSceneSettings,
     setEdgeDetectNormalScale,
-    setDoDepthBlur,
+    setUseOffScreenBuffers,
     setDoShadowDepthDebug,
     setDoShadow,
     setShadowMapQuality,

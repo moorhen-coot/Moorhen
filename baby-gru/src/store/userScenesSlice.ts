@@ -5,6 +5,8 @@ import {
     type PerSceneKey,
     type PerSceneSettings,
     type SceneSettingsSnapshot,
+    isSameSceneSettingValue,
+    isValidSceneSettingValue,
 } from "./sceneSettingsSlice";
 
 /** A scene or snapshot listed in the scene selector (see MoorhenInstance.userScene) */
@@ -127,14 +129,22 @@ const userScenesSlice = createSlice({
             state.snapshots = action.payload.snapshots;
             state.selectedScene = action.payload.selectedScene;
         },
-        /* Set one saved setting of a built-in scene (restoring a preference) */
+        /* Set one saved setting of a built-in scene (restoring a preference). A value of the wrong
+        type (corrupted storage, a bad import) is replaced by the scene's default */
         setSavedSceneSetting: (state, action: PayloadAction<{ sceneId: BuiltInSceneId; key: PerSceneKey; value: unknown }>) => {
             const { sceneId, key, value } = action.payload;
-            (state.savedSceneSettings[sceneId] as Record<PerSceneKey, unknown>)[key] = value;
+            const saved = state.savedSceneSettings[sceneId] as Record<PerSceneKey, unknown>;
+            saved[key] = isValidSceneSettingValue(key, value) ? value : builtInSceneDefaults(sceneId)[key];
         },
-        /* Replace the saved settings of a built-in scene at once (the scene's save button) */
+        /* Replace the saved settings of a built-in scene at once (the scene's save button). Values
+        that did not change keep their reference: preference persistence compares by reference, and
+        would otherwise report every array setting as changed */
         saveSceneSettings: (state, action: PayloadAction<{ sceneId: BuiltInSceneId; settings: PerSceneSettings }>) => {
-            state.savedSceneSettings[action.payload.sceneId] = action.payload.settings;
+            const { sceneId, settings } = action.payload;
+            const saved = state.savedSceneSettings[sceneId] as Record<PerSceneKey, unknown>;
+            for (const key of PER_SCENE_PREFERENCE_KEYS) {
+                if (!isSameSceneSettingValue(saved[key], settings[key])) saved[key] = settings[key];
+            }
         },
     },
 });

@@ -209,7 +209,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         specularPower: number;
         atomLabelDepthMode: boolean;
         clipCapPerfectSpheres: boolean;
-        doDepthBlur: boolean;
+        useOffScreenBuffers: boolean;
         blurSize: number;
         /** Depth-peel layers; see setDepthPeelLayers. */
         depthPeelLayers: number;
@@ -600,7 +600,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.setupStereoTransformations()
         this.multiWayViewports = []
 
-        if(this.doDepthBlur&&this.WEBGL2){
+        if(this.useOffScreenBuffers&&this.WEBGL2){
             this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
         }
         if(this.edgeDetectFramebuffer){
@@ -630,7 +630,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.setupStereoTransformations()
         this.multiWayViewports = []
 
-        if(this.doDepthBlur&&this.WEBGL2){
+        if(this.useOffScreenBuffers&&this.WEBGL2){
             this.recreateOffScreeenBuffers(this.canvas.width,this.canvas.height);
         }
         if(this.edgeDetectFramebuffer){

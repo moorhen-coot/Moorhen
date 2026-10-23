@@ -31,7 +31,8 @@ import {
     isBuiltInScene,
 } from "../store/userScenesSlice";
 import type { RepresentationBackup } from "../utils/Representation/RepresentationBuilder";
-import { DEFAULT_REPRESENTATION_STYLE, type MoorhenInstance } from "./MoorhenInstance";
+// Type only: MoorhenInstance imports this module, a value import would be undefined while it loads
+import type { MoorhenInstance } from "./MoorhenInstance";
 
 type SceneBackupEntry = {
     representation: { moleculeUniqueId: string; params: RepresentationBackup }[];
@@ -155,6 +156,21 @@ const uniqueName = (scenes: UserScene[], name: string) => {
     return candidate;
 };
 
+/** The style of molecules in the "Default" scene, which MoorhenInstance starts with */
+export const DEFAULT_REPRESENTATION_STYLE = "ribbons-and-ligands";
+
+type DefaultStyle = MoorhenInstance["representation"]["defaultStyle"];
+
+/**
+ * How each built-in scene, and every scene or snapshot made from it, draws molecules it has not
+ * seen: `defaultStyle` for molecules loaded while it is shown, `wizard` for molecules loaded since
+ * it was last shown.
+ */
+const BUILT_IN_SCENE_STYLES: Record<BuiltInSceneId, { defaultStyle: DefaultStyle; wizard: "bonds" | typeof DEFAULT_REPRESENTATION_STYLE }> = {
+    Default: { defaultStyle: DEFAULT_REPRESENTATION_STYLE, wizard: DEFAULT_REPRESENTATION_STYLE },
+    "Model Building": { defaultStyle: "CBs", wizard: "bonds" },
+};
+
 /**
  * A built-in scene with no saved representations: every molecule gets the scene's default style
  * when shown.
@@ -177,8 +193,10 @@ const builtInSceneBackup = (sceneId: BuiltInSceneId, sceneSettings: PerSceneSett
  *
  * Switching scene saves the current custom representations of every molecule, deletes them,
  * then restores the representations saved for the new scene. A scene visited for the first
- * time starts as a copy of the current one, except "Model Building" which shows every molecule
- * as bonds. Access it through `moorhenInstance.userScene`.
+ * time starts as a copy of the current one. Every scene and snapshot is made from a built-in
+ * scene ("base scene", itself for a built-in one), which decides how molecules it has not seen are
+ * drawn (BUILT_IN_SCENE_STYLES): bonds for "Model Building", ribbons and ligands for "Default".
+ * Access it through `moorhenInstance.userScene`.
  *
  * The scene and snapshot lists, the selected scene and whether a switch is running live in the
  * `userScenes` store slice so the UI can follow them.
@@ -346,9 +364,8 @@ export class MoorhenUserSceneManager {
                 selectedScene,
             })
         );
+        this.applyDefaultStyle(selectedScene);
         const selectedBackup = this.backups[selectedScene];
-        const isModelBuilding = (selectedBackup?.baseScene ?? selectedScene) === "Model Building";
-        this.instance.representation.defaultStyle = isModelBuilding ? "CBs" : DEFAULT_REPRESENTATION_STYLE;
         if (selectedBackup) this.applySceneSettings(selectedBackup);
     }
 
@@ -369,7 +386,7 @@ export class MoorhenUserSceneManager {
                 selectedScene: "Default",
             })
         );
-        this.instance.representation.defaultStyle = DEFAULT_REPRESENTATION_STYLE;
+        this.applyDefaultStyle("Default");
     }
 
     /**
@@ -438,8 +455,7 @@ export class MoorhenUserSceneManager {
         if (this.isChanging || this.isMoviePlaying || isSnapshot(targetId) || targetId === sourceId) return false;
         if (!exists(targetId) || !exists(sourceId)) return false;
 
-        const name = this.list.find(scene => scene.id === targetId)?.name ?? targetId;
-        const target = targetId === this.selected || !this.backups[targetId] ? this.captureScene(name) : this.backups[targetId];
+        const target = targetId === this.selected || !this.backups[targetId] ? this.captureSceneAs(targetId) : this.backups[targetId];
         const backup: SceneBackupEntry = {
             ...target,
             sceneSettings: this.sceneSettingsOf(sourceId, this.instance.store.getState()),
@@ -500,8 +516,7 @@ export class MoorhenUserSceneManager {
         const backup = this.captureScene(uniqueName([...this.list, ...this.snapshots], name ?? `Snapshot ${snapshotNumber}`));
         const { sceneSettings, glRef } = this.instance.store.getState();
         backup.camera = { origin: [...sceneSettings.origin], zoom: sceneSettings.zoom, quat: [...glRef.quat] };
-        // A snapshot of a snapshot keeps the original scene
-        backup.baseScene = isSnapshot(this.selected) ? this.backups[this.selected]?.baseScene : this.selected;
+        backup.baseScene = this.baseSceneOf(this.selected);
         this.backups[id] = backup;
         this.backupsChanged();
         this.instance.dispatch(addUserSnapshot({ id, name: backup.name }));
@@ -582,7 +597,7 @@ export class MoorhenUserSceneManager {
         } else if (to === "saved") {
             return false;
         }
-        const target = sceneId === this.selected || !this.backups[sceneId] ? this.captureScene(name) : this.backups[sceneId];
+        const target = sceneId === this.selected || !this.backups[sceneId] ? this.captureSceneAs(sceneId) : this.backups[sceneId];
         const backup: SceneBackupEntry = { ...target, sceneSettings, isPreset: false };
         this.backups[sceneId] = backup;
         this.backupsChanged();
@@ -638,7 +653,7 @@ export class MoorhenUserSceneManager {
     /** The representations a scene shows if it is selected, otherwise the ones it shows when selected again */
     private representationsOf(sceneId: string): Pick<SceneBackupEntry, "representation" | "molecules"> {
         const backup = this.backups[sceneId];
-        const { representation, molecules } = sceneId === this.selected || !backup ? this.captureScene(sceneId) : backup;
+        const { representation, molecules } = sceneId === this.selected || !backup ? this.captureSceneAs(sceneId) : backup;
         return structuredClone({ representation, molecules });
     }
 
@@ -647,6 +662,21 @@ export class MoorhenUserSceneManager {
             ? { ...getSceneSettingsSnapshot(this.instance.store.getState().sceneSettings), ...backup.sceneSettings }
             : backup.sceneSettings;
         this.instance.dispatch(applySceneSettingsSnapshot(sceneSettings));
+    }
+
+    /**
+     * The built-in scene a scene or snapshot was made from (itself for a built-in one), which decides
+     * how molecules it has not seen are drawn. "Default" when unknown (e.g. a session without it).
+     */
+    private baseSceneOf(sceneId: string): BuiltInSceneId {
+        if (isBuiltInScene(sceneId)) return sceneId;
+        const baseScene = this.backups[sceneId]?.baseScene;
+        return baseScene !== undefined && isBuiltInScene(baseScene) ? baseScene : "Default";
+    }
+
+    /** Molecules loaded from now on get the style of the scene's base scene */
+    private applyDefaultStyle(sceneId: string) {
+        this.instance.representation.defaultStyle = BUILT_IN_SCENE_STYLES[this.baseSceneOf(sceneId)].defaultStyle;
     }
 
     /** Call after changing `backups`: lets selectors that read them (hasUnsavedChanges) re-run */
@@ -684,14 +714,24 @@ export class MoorhenUserSceneManager {
         return backup;
     }
 
+    /**
+     * Record what is shown now as the content of a scene: the shown one, or one never visited (which
+     * starts as a copy of the shown one). Keeps the scene's base scene; a new scene takes the shown one's.
+     */
+    private captureSceneAs(sceneId: string): SceneBackupEntry {
+        const backup = this.captureScene(this.list.find(scene => scene.id === sceneId)?.name ?? sceneId);
+        if (!isBuiltInScene(sceneId)) backup.baseScene = this.backups[sceneId]?.baseScene ?? this.baseSceneOf(this.selected);
+        return backup;
+    }
+
     private backupScene(sceneId: string) {
         // Snapshots are immutable
         if (isSnapshot(sceneId)) return;
-        this.backups[sceneId] = this.captureScene(this.list.find(scene => scene.id === sceneId)?.name ?? sceneId);
+        this.backups[sceneId] = this.captureSceneAs(sceneId);
         this.backupsChanged();
     }
 
-    private async restoreScene(backup: SceneBackupEntry, wizardType: "bonds" | typeof DEFAULT_REPRESENTATION_STYLE) {
+    private async restoreScene(backup: SceneBackupEntry, wizardType: (typeof BUILT_IN_SCENE_STYLES)[BuiltInSceneId]["wizard"]) {
         for (const { moleculeUniqueId, params } of backup.representation) {
             // The molecule may have been closed since the scene was saved
             if (!this.instance.getMolecule(moleculeUniqueId)) continue;
@@ -708,11 +748,9 @@ export class MoorhenUserSceneManager {
         }
     }
 
-    /** Replace what is shown by a saved scene: its settings and representations */
+    /** Replace what is shown by a scene's backup (already stored in `backups`): its settings and representations */
     private async showScene(sceneId: string, backup: SceneBackupEntry) {
-        const isModelBuilding = (backup.baseScene ?? sceneId) === "Model Building";
-        const wizardType = isModelBuilding ? "bonds" : DEFAULT_REPRESENTATION_STYLE;
-        this.instance.representation.defaultStyle = isModelBuilding ? "CBs" : DEFAULT_REPRESENTATION_STYLE;
+        this.applyDefaultStyle(sceneId);
         await this.deleteCustomRepresentations();
         if (backup.camera) {
             // Before the scene settings: automatic fog and clipping follow the zoom
@@ -721,7 +759,7 @@ export class MoorhenUserSceneManager {
             this.instance.dispatch(setQuat([...backup.camera.quat]));
         }
         this.applySceneSettings(backup);
-        await this.restoreScene(backup, wizardType);
+        await this.restoreScene(backup, BUILT_IN_SCENE_STYLES[this.baseSceneOf(sceneId)].wizard);
         this.reportMissingMolecules(backup);
     }
 
@@ -746,8 +784,10 @@ export class MoorhenUserSceneManager {
             await this.showScene(sceneId, savedScene);
         } else {
             // A scene visited for the first time (e.g. Custom) starts as a copy of the current one,
-            // but still takes the default style for molecules loaded from now on
-            this.instance.representation.defaultStyle = DEFAULT_REPRESENTATION_STYLE;
+            // and is made from the same built-in scene
+            this.backups[sceneId] = this.captureSceneAs(sceneId);
+            this.backupsChanged();
+            this.applyDefaultStyle(sceneId);
         }
     }
 }

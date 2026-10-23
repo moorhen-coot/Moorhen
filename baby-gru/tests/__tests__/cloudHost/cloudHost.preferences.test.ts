@@ -93,35 +93,35 @@ describe("PRF: preferences", () => {
 
     test("PRF-02 after import the preference storage contains exactly the imported entries", async () => {
         const fixture = moorhen10();
-        await changeAndPersist(cloud, "Default.defaultBondSmoothness", 3);
+        await changeAndPersist(cloud, "defaultBondSmoothness", 3);
         await cloud.instance.preferences.import(fixture);
         await flush();
         expect(await storageContents(cloud)).toEqual(fixture.entries);
     });
 
     test("PRF-03 an entry older than the preference's version is reset to the default and removed", async () => {
-        expect(pref("Default.defaultBondSmoothness").version).toBe(1);
+        expect(pref("defaultBondSmoothness").version).toBe(2);
         await cloud.instance.preferences.import({
             format: "moorhen-1.0",
-            entries: { "Default.defaultBondSmoothness": { version: 0, value: 3 } },
+            entries: { defaultBondSmoothness: { version: 1, value: 3 } },
         });
-        expect(valueOf(cloud, "Default.defaultBondSmoothness")).toBe(defaultOf("Default.defaultBondSmoothness"));
+        expect(valueOf(cloud, "defaultBondSmoothness")).toBe(defaultOf("defaultBondSmoothness"));
         // restore removes stale entries without awaiting the removal
-        await waitFor(async () => (await storedEntry(cloud, "Default.defaultBondSmoothness")) === null);
+        await waitFor(async () => (await storedEntry(cloud, "defaultBondSmoothness")) === null);
         expect(await storageContents(cloud)).toEqual({});
     });
 
     test("PRF-04 a preference with no entry in the import returns to its default", async () => {
-        await changeAndPersist(cloud, "Default.defaultBondSmoothness", 3);
-        expect(valueOf(cloud, "Default.defaultBondSmoothness")).toBe(3);
+        await changeAndPersist(cloud, "defaultBondSmoothness", 3);
+        expect(valueOf(cloud, "defaultBondSmoothness")).toBe(3);
         await cloud.instance.preferences.import(moorhen10());
-        expect(valueOf(cloud, "Default.defaultBondSmoothness")).toBe(defaultOf("Default.defaultBondSmoothness"));
+        expect(valueOf(cloud, "defaultBondSmoothness")).toBe(defaultOf("defaultBondSmoothness"));
         await flush();
-        expect(await storedEntry(cloud, "Default.defaultBondSmoothness")).toBeNull();
+        expect(await storedEntry(cloud, "defaultBondSmoothness")).toBeNull();
     });
 
     test("PRF-05 an old flat v41 object is ignored: store and storage unchanged", async () => {
-        await changeAndPersist(cloud, "Default.defaultBondSmoothness", 1);
+        await changeAndPersist(cloud, "defaultBondSmoothness", 1);
         const valuesBefore = allValues(cloud);
         const storageBefore = await storageContents(cloud);
         await cloud.instance.preferences.import(v41());
@@ -134,10 +134,10 @@ describe("PRF: preferences", () => {
     // Documented behaviour: import returns early for anything that is not { format: "moorhen-1.0", entries: object },
     // so none of these inputs clears the storage: what was stored before is kept, and the store is untouched.
     test("PRF-06 null, undefined, a string or a moorhen-1.0 object without entries: no throw, nothing imported, storage NOT cleared", async () => {
-        await changeAndPersist(cloud, "Default.defaultBondSmoothness", 3);
+        await changeAndPersist(cloud, "defaultBondSmoothness", 3);
         const valuesBefore = allValues(cloud);
         const storageBefore = await storageContents(cloud);
-        expect(storageBefore).toEqual({ "Default.defaultBondSmoothness": { version: 1, value: 3 } });
+        expect(storageBefore).toEqual({ defaultBondSmoothness: { version: 2, value: 3 } });
         for (const input of [null, undefined, "x", { format: "moorhen-1.0" }]) {
             await expect(cloud.instance.preferences.import(input)).resolves.toBeUndefined();
             await flush();
@@ -152,10 +152,10 @@ describe("PRF: preferences", () => {
         await cloud.instance.preferences.import(moorhen10());
         await flush(100);
         // Also an import that resets an existing deviation and removes a stale entry
-        await changeAndPersist(cloud, "Default.defaultBondSmoothness", 3);
+        await changeAndPersist(cloud, "defaultBondSmoothness", 3);
         await flush();
         host.savedPreferences.length = 0;
-        await cloud.instance.preferences.import({ format: "moorhen-1.0", entries: { "Default.defaultBondSmoothness": { version: 0, value: 1 } } });
+        await cloud.instance.preferences.import({ format: "moorhen-1.0", entries: { "defaultBondSmoothness": { version: 0, value: 1 } } });
         await flush(100);
         expect(host.savedPreferences).toHaveLength(0);
     });
@@ -199,9 +199,9 @@ describe("PRF: preferences", () => {
     test("PRF-12 round trip: change several, export, import into a new instance gives identical store values", async () => {
         await changeAndPersist(cloud, "defaultMapSamplingRate", 3.0);
         await changeAndPersist(cloud, "Default.backgroundColor", [0.2, 0.3, 0.4, 1]);
-        await changeAndPersist(cloud, "Default.defaultBondSmoothness", 3);
+        await changeAndPersist(cloud, "defaultBondSmoothness", 3);
         const exported = await cloud.instance.preferences.export();
-        expect(Object.keys(exported.entries).sort()).toEqual(["Default.backgroundColor", "Default.defaultBondSmoothness", "defaultMapSamplingRate"]);
+        expect(Object.keys(exported.entries).sort()).toEqual(["Default.backgroundColor", "defaultBondSmoothness", "defaultMapSamplingRate"]);
 
         const other = await newInstance();
         expect(allValues(other)).not.toEqual(allValues(cloud));

@@ -48,7 +48,7 @@ import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
 import { startStoreSyncs } from "./StoreSync";
-import { MoorhenUserSceneManager } from "./UserSceneManager";
+import { DEFAULT_REPRESENTATION_STYLE, MoorhenUserSceneManager } from "./UserSceneManager";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
 import type { AppDispatch, MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 
@@ -99,9 +99,6 @@ export type moleculeChangeAction = "new" | "add" | "delete" | "modify" | "refine
  *
  * @extends StoreExtension
  */
-
-export const DEFAULT_REPRESENTATION_STYLE = "ribbons-and-ligands";
-
 export class MoorhenInstance extends StoreExtension {
     private _defaultStyle:
         | "CAs"

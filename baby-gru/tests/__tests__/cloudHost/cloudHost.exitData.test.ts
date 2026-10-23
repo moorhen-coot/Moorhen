@@ -95,7 +95,7 @@ function getViewSettings(store: CloudInstance["store"]): CloudViewData {
             bias: sceneSettings.ssaoBias,
         },
         blur: {
-            enabled: sceneSettings.doDepthBlur,
+            enabled: sceneSettings.useOffScreenBuffers,
             radius: sceneSettings.depthBlurRadius,
             depth: sceneSettings.depthBlurDepth,
         },
@@ -263,7 +263,7 @@ describe("EXT: exit data", () => {
             normalThreshold: scene.edgeDetectNormalThreshold,
         });
         expect(viewData.ssao).toEqual({ enabled: scene.doSSAO, radius: scene.ssaoRadius, bias: scene.ssaoBias });
-        expect(viewData.blur).toEqual({ enabled: scene.doDepthBlur, radius: scene.depthBlurRadius, depth: scene.depthBlurDepth });
+        expect(viewData.blur).toEqual({ enabled: scene.useOffScreenBuffers, radius: scene.depthBlurRadius, depth: scene.depthBlurDepth });
     });
 
     test("EXT-11 view data reflects changes to zoom, origin and background", async () => {
