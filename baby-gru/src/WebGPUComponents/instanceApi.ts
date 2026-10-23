@@ -3,14 +3,14 @@
  * WebGPU renderer, offscreen, and read the main (WebGL) view's pixels to compare it with.
  *
  * For tests and for trying the WebGPU renderer from the console. It follows the WebGPU preview:
- * the store's DisplayBuffers and the WebGL renderer's camera, TRIANGLES only for now, with what
- * was left out reported in `skipped`. Nothing here changes the main view.
+ * the store's DisplayBuffers and the WebGL renderer's camera, with what it cannot draw yet
+ * reported in `skipped` (and described by describeSkipped). Nothing here changes the main view.
  */
 import type { DisplayBuffer } from "../WebGLgComponents/displayBuffer";
 import { WebGPUPreviewRenderer, webGPUUnavailableReason } from "./previewRenderer";
 import { getGpuContext } from "./gpu";
 import type { PreviewCameraSource } from "./previewScene";
-import { describeSkipped } from "./previewScene";
+import { describeSkipped, planPreview } from "./previewScene";
 
 /** An image: RGBA, 8 bits a channel, top row first (as ImageData has it). */
 export interface RendererImage {
@@ -27,10 +27,31 @@ export interface WebGPUSceneSnapshot extends RendererImage {
     meshes: number;
     triangles: number;
     spheres: number;
+    /** Line segments (LINES, NORMALLINES) drawn. */
+    segments: number;
     /** What is in the scene but not drawn by the WebGPU renderer yet, with sub-buffer counts. */
     skipped: Record<string, number>;
     /** The same, as a sentence; empty if nothing was left out. */
     skippedText: string;
+}
+
+/** One sub-buffer the WebGPU renderer leaves out (or draws only in part), described for a person. */
+export interface SkippedSubBufferInfo {
+    why: string;
+    /** Whose it is: "molecule style", "map key", or the buffer's statsLabel, as far as can be told. */
+    owner: string;
+    bufferType: string;
+    /** Array lengths, in numbers (not vertices). */
+    vertices: number;
+    normals: number;
+    colours: number;
+    indices: number;
+    instanceOrigins: number;
+    customColour: number[] | null;
+    transparent: boolean;
+    symmetryCopies: number;
+    hasTransform: boolean;
+    isHoverBuffer: boolean;
 }
 
 export interface WebGPUSnapshotOptions {
@@ -56,7 +77,7 @@ interface WebGLView extends PreviewCameraSource {
  * MoorhenInstance's again, and TypeScript gives up on the circle.
  */
 export interface WebGPUApiHost {
-    store: { getState(): { glRef: { displayBuffers?: DisplayBuffer[] } } };
+    store: { getState(): { glRef: { displayBuffers?: DisplayBuffer[] }; molecules?: { moleculeList?: unknown[] }; maps?: unknown[] } };
     getVideoRecorderRef(): { readonly current: { glRef: { readonly current: unknown } } | null };
 }
 
@@ -85,6 +106,25 @@ export interface WebGPUApi {
     snapshot(options?: WebGPUSnapshotOptions): Promise<WebGPUSceneSnapshot>;
     /** What the main (WebGL) view shows, the size of its drawing buffer. */
     webGLSnapshot(): RendererImage;
+    /** Each sub-buffer in the scene that WebGPU leaves out, or draws in part, and why. */
+    describeSkipped(): SkippedSubBufferInfo[];
+}
+
+/** Who owns a DisplayBuffer: a molecule's representation or a map's display object, if either. */
+function ownerOf(host: WebGPUApiHost, buffer: DisplayBuffer): string {
+    type Named = { name?: string };
+    const state = host.store.getState();
+    for (const molecule of (state.molecules?.moleculeList ?? []) as (Named & { representations?: { style?: string; buffers?: unknown[] }[] })[]) {
+        for (const representation of molecule.representations ?? []) {
+            if (representation.buffers?.includes(buffer)) return `${molecule.name ?? "molecule"} ${representation.style ?? "?"}`;
+        }
+    }
+    for (const map of (state.maps ?? []) as (Named & { displayObjects?: Record<string, unknown> })[]) {
+        for (const [key, objects] of Object.entries(map.displayObjects ?? {})) {
+            if (Array.isArray(objects) && objects.includes(buffer)) return `${map.name ?? "map"} ${key}`;
+        }
+    }
+    return buffer.statsLabel ?? "unknown";
 }
 
 /** Build the `webGPU` API object for one instance. */
@@ -134,7 +174,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 const { plan } = shot.report;
                 return {
                     width: shot.width, height: shot.height, data: shot.data, tiles: shot.tiles,
-                    meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres,
+                    meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments,
                     skipped: plan.skipped, skippedText: describeSkipped(plan.skipped),
                 };
             } finally {
@@ -149,6 +189,26 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
          * Read straight from the canvas, so with depth blur (offscreen buffers) on it would miss
          * the blur; that case is refused rather than returning the wrong picture.
          */
+        describeSkipped(): SkippedSubBufferInfo[] {
+            const displayBuffers = host.store.getState().glRef.displayBuffers ?? [];
+            const length = (data: ArrayLike<number> | undefined | null) => data?.length ?? 0;
+            return planPreview(displayBuffers).skippedSubBuffers.map(({ buffer: b, index: j, why }) => ({
+                why,
+                owner: ownerOf(host, b),
+                bufferType: b.bufferTypes?.[j] ?? "unknown",
+                vertices: length(b.triangleVertices?.[j]),
+                normals: length(b.triangleNormals?.[j]),
+                colours: length(b.triangleColours?.[j]),
+                indices: length(b.triangleIndexs?.[j]),
+                instanceOrigins: length(b.triangleInstanceOrigins?.[j]),
+                customColour: b.customColour ? Array.from(b.customColour) : null,
+                transparent: !!b.transparent,
+                symmetryCopies: b.symmetryMatrices?.length ?? 0,
+                hasTransform: !!(b.transformMatrix || b.transformMatrixInteractive),
+                isHoverBuffer: !!b.isHoverBuffer,
+            }));
+        },
+
         webGLSnapshot(): RendererImage {
             const view = webGLView(host);
             if (view.useOffScreenBuffers) throw new Error("webGLSnapshot does not support depth blur (offscreen buffers); turn it off first.");

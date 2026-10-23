@@ -40,13 +40,15 @@ export interface PreviewCameraSource {
      * than vanishing whole (the scene's clipCap setting; MoorhenWebMG copies it here).
      */
     clipCapPerfectSpheres?: boolean;
+    /** The map line width, which buildBuffers makes every LINES and NORMALLINES buffer's size. */
+    mapLineWidth?: number;
 }
 
 /** Where a sub-buffer's colour comes from. Decides the pipeline. */
 export type ColourSource = "vertex" | "instance" | "uniform";
 
 /** How a sub-buffer is drawn. */
-export type PreviewPrimitive = "triangles" | "spheres";
+export type PreviewPrimitive = "triangles" | "spheres" | "lines" | "lit-lines";
 
 /** One sub-buffer the preview will draw. */
 export interface PreviewDraw {
@@ -55,7 +57,9 @@ export interface PreviewDraw {
     index: number;
     /**
      * "triangles": a mesh, instanced or not. "spheres": PERFECT_SPHERES, one impostor quad per
-     * instance, coloured per instance; vertexCount and indexCount are then the quad's.
+     * instance, coloured per instance; vertexCount and indexCount are then the quad's. "lines" and
+     * "lit-lines": LINES and NORMALLINES, drawn as thick lines; indexCount is two per segment, and
+     * zero when the segments are the vertices taken in pairs.
      */
     primitive: PreviewPrimitive;
     instanced: boolean;
@@ -65,6 +69,13 @@ export interface PreviewDraw {
     vertexCount: number;
     indexCount: number;
     instanceCount: number;
+    /**
+     * Symmetry (or biomolecule) copies to draw besides the original: each a 4x4 placement,
+     * column-major as WebGL's applySymmetryMatrix reads DisplayBuffer.symmetryMatrices.
+     */
+    copies: ArrayLike<number>[];
+    /** Copies are drawn in one grey, as drawBuffer does, rather than in their own colours. */
+    greyCopies: boolean;
 }
 
 export interface PreviewPlan {
@@ -75,10 +86,27 @@ export interface PreviewPlan {
     triangles: number;
     /** Perfect spheres that will be drawn. */
     spheres: number;
+    /** Line segments that will be drawn. */
+    segments: number;
+    /** Which sub-buffers `skipped` counts, for finding out what they are. */
+    skippedSubBuffers: SkippedSubBuffer[];
 }
 
-const skip = (skipped: Record<string, number>, why: string) => {
-    skipped[why] = (skipped[why] ?? 0) + 1;
+/** A sub-buffer left out, or left partly drawn (symmetry copies), and why. */
+export interface SkippedSubBuffer {
+    buffer: DisplayBuffer;
+    index: number;
+    why: string;
+}
+
+interface Skips {
+    counts: Record<string, number>;
+    list: SkippedSubBuffer[];
+}
+
+const skip = (skips: Skips, buffer: DisplayBuffer, index: number, why: string) => {
+    skips.counts[why] = (skips.counts[why] ?? 0) + 1;
+    skips.list.push({ buffer, index, why });
 };
 
 const lengthOf = (data: ArrayLike<number> | undefined | null): number => data ? data.length : 0;
@@ -93,28 +121,37 @@ const lengthOf = (data: ArrayLike<number> | undefined | null): number => data ? 
  */
 export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPlan {
     const draws: PreviewDraw[] = [];
-    const skipped: Record<string, number> = {};
+    const skips: Skips = { counts: {}, list: [] };
     let triangles = 0;
     let spheres = 0;
+    let segments = 0;
 
     for (const buffer of displayBuffers) {
         if (!buffer || !shouldDraw(buffer.visible, buffer.alphaMultiplier ?? 1)) continue;
         const types = buffer.bufferTypes ?? [];
         for (let j = 0; j < types.length; j++) {
             if (types[j] === "PERFECT_SPHERES") {
-                const draw = planSpheres(buffer, j, skipped);
+                const draw = planSpheres(buffer, j, skips);
                 if (draw) {
                     draws.push(draw);
-                    spheres += draw.instanceCount;
+                    spheres += draw.instanceCount * (1 + draw.copies.length);
+                }
+                continue;
+            }
+            if (types[j] === "LINES" || types[j] === "NORMALLINES") {
+                const draw = planLines(buffer, j, types[j] === "NORMALLINES", skips);
+                if (draw) {
+                    draws.push(draw);
+                    segments += (draw.indexCount || draw.vertexCount) / 2;
                 }
                 continue;
             }
             if (types[j] !== "TRIANGLES") {
-                skip(skipped, types[j] ?? "unknown");
+                skip(skips, buffer, j, types[j] ?? "unknown");
                 continue;
             }
             if (buffer.transformMatrix || buffer.transformMatrixInteractive) {
-                skip(skipped, "TRIANGLES with a transform matrix");
+                skip(skips, buffer, j, "TRIANGLES with a transform matrix");
                 continue;
             }
 
@@ -122,7 +159,7 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
             const indexCount = lengthOf(buffer.triangleIndexs?.[j]);
             if (!(vertexCount > 0) || !(indexCount > 0)) continue;
             if (lengthOf(buffer.triangleNormals?.[j]) !== vertexCount * 3) {
-                skip(skipped, "TRIANGLES without one normal per vertex");
+                skip(skips, buffer, j, "TRIANGLES without one normal per vertex");
                 continue;
             }
 
@@ -135,30 +172,31 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
             if (instanced && buffer.supplementary?.["instance_use_colors"]?.[j]) {
                 colourSource = "instance";
                 if (colours < instanceCount * 4) {
-                    skip(skipped, "instanced TRIANGLES with too few instance colours");
+                    skip(skips, buffer, j, "instanced TRIANGLES with too few instance colours");
                     continue;
                 }
             } else if (hasCustom) {
                 colourSource = "uniform";
             } else {
                 colourSource = "vertex";
-                if (colours !== vertexCount * 4) {
-                    skip(skipped, "TRIANGLES without one colour per vertex");
+                // More colours than vertices is harmless (WebGL reads one per vertex); fewer is not.
+                if (colours < vertexCount * 4) {
+                    skip(skips, buffer, j, "TRIANGLES without one colour per vertex");
                     continue;
                 }
             }
 
-            if (buffer.symmetryMatrices?.length > 0) skip(skipped, "symmetry copies (original drawn)");
 
             draws.push({
                 buffer, index: j, primitive: "triangles", instanced, colourSource,
                 transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
                 vertexCount, indexCount, instanceCount,
+                ...copiesOf(buffer),
             });
-            triangles += (indexCount / 3) * instanceCount;
+            triangles += (indexCount / 3) * instanceCount * (1 + draws[draws.length - 1].copies.length);
         }
     }
-    return { draws, skipped, triangles, spheres };
+    return { draws, skipped: skips.counts, triangles, spheres, segments, skippedSubBuffers: skips.list };
 }
 
 /**
@@ -166,32 +204,89 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
  * the first, the radius) and an RGBA colour per sphere. drawCore always takes the colours per
  * sphere, whatever customColour says, so this does too.
  */
-function planSpheres(buffer: DisplayBuffer, j: number, skipped: Record<string, number>): PreviewDraw | null {
+function planSpheres(buffer: DisplayBuffer, j: number, skips: Skips): PreviewDraw | null {
     if (buffer.transformMatrix || buffer.transformMatrixInteractive) {
-        skip(skipped, "PERFECT_SPHERES with a transform matrix");
+        skip(skips, buffer, j, "PERFECT_SPHERES with a transform matrix");
         return null;
     }
     // Drawn at the hover size, which lives in the WebGL renderer, not in the buffer.
     if (buffer.isHoverBuffer) {
-        skip(skipped, "hover highlight");
+        skip(skips, buffer, j, "hover highlight");
         return null;
     }
     const n = Math.floor(lengthOf(buffer.triangleInstanceOrigins?.[j]) / 3);
     if (n === 0) return null;
     if (lengthOf(buffer.triangleInstanceSizes?.[j]) < 3 * n) {
-        skip(skipped, "PERFECT_SPHERES without a size per sphere");
+        skip(skips, buffer, j, "PERFECT_SPHERES without a size per sphere");
         return null;
     }
     if (lengthOf(buffer.triangleColours?.[j]) < 4 * n) {
-        skip(skipped, "PERFECT_SPHERES without a colour per sphere");
+        skip(skips, buffer, j, "PERFECT_SPHERES without a colour per sphere");
         return null;
     }
-    if (buffer.symmetryMatrices?.length > 0) skip(skipped, "symmetry copies (original drawn)");
     return {
         buffer, index: j, primitive: "spheres", instanced: true, colourSource: "instance",
         transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
         vertexCount: 4, indexCount: 6, instanceCount: n,
+        ...copiesOf(buffer),
     };
+}
+
+/**
+ * LINES and NORMALLINES, as buildBuffers turns them into thick lines (linesToThickLines...) and
+ * drawCore draws them: segments between index pairs when supplementary.useIndices says so (for
+ * LINES, its first entry; NORMALLINES has no other way), otherwise between the vertices taken in
+ * pairs; coloured by customColour, or per vertex. drawCore draws neither with symmetry copies.
+ */
+function planLines(buffer: DisplayBuffer, j: number, lit: boolean, skips: Skips): PreviewDraw | null {
+    const type = lit ? "NORMALLINES" : "LINES";
+    if (buffer.transformMatrix || buffer.transformMatrixInteractive) {
+        skip(skips, buffer, j, `${type} with a transform matrix`);
+        return null;
+    }
+    const vertexCount = lengthOf(buffer.triangleVertices?.[j]) / 3;
+    if (!(vertexCount > 0)) return null;
+    const useIndices = lit ? !!buffer.supplementary?.["useIndices"] : !!buffer.supplementary?.["useIndices"]?.[0];
+    const indexCount = useIndices ? lengthOf(buffer.triangleIndexs?.[j]) - (lengthOf(buffer.triangleIndexs?.[j]) % 2) : 0;
+    if (lit && !useIndices) {
+        // buildBuffers gives up on these ("RETURNING BECAUSE NO INDICES").
+        skip(skips, buffer, j, "NORMALLINES without indices");
+        return null;
+    }
+    if (useIndices ? indexCount === 0 : vertexCount < 2) return null;
+    if (lit && lengthOf(buffer.triangleNormals?.[j]) < vertexCount * 3) {
+        skip(skips, buffer, j, "NORMALLINES without one normal per vertex");
+        return null;
+    }
+    const hasCustom = !!buffer.customColour && buffer.customColour.length === 4;
+    if (!hasCustom && lengthOf(buffer.triangleColours?.[j]) < vertexCount * 4) {
+        skip(skips, buffer, j, `${type} without one colour per vertex`);
+        return null;
+    }
+    return {
+        buffer, index: j, primitive: lit ? "lit-lines" : "lines", instanced: false,
+        colourSource: hasCustom ? "uniform" : "vertex",
+        transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
+        vertexCount: useIndices ? vertexCount : vertexCount - (vertexCount % 2), indexCount, instanceCount: 1,
+        copies: [], greyCopies: false,
+    };
+}
+
+/**
+ * The grey drawBuffer gives symmetry copies: darker on a light background, lighter on a dark one
+ * (by the background's luma).
+ */
+export function symmetryCopyGrey(background: ArrayLike<number>): number[] {
+    const luma = background[0] * 0.299 + background[1] * 0.587 + background[2] * 0.114;
+    return luma > 0.5 ? [0.3, 0.3, 0.3, 1] : [0.5, 0.5, 0.5, 1];
+}
+
+/** A buffer's symmetry copies, as drawBuffer and drawCore's sphere loop draw them. */
+function copiesOf(buffer: DisplayBuffer): { copies: ArrayLike<number>[]; greyCopies: boolean } {
+    // Typed as number[] on DisplayBuffer, but drawBuffer reads it as a list of 16-number matrices.
+    const matrices = (buffer.symmetryMatrices ?? []) as unknown as (ArrayLike<number> | null)[];
+    const copies = matrices.filter(m => m && m.length === 16);
+    return { copies, greyCopies: copies.length > 0 && buffer.changeColourWithSymmetry !== false };
 }
 
 /** Floats in the per-frame uniform block; see Frame in previewShaders.ts. */

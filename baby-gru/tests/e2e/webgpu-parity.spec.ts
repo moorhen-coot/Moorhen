@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { startAndGetInstance } from "./helpers";
-import type { WebGPUApi } from "../../src/WebGPUComponents/instanceApi";
+import type { SkippedSubBufferInfo, WebGPUApi } from "../../src/WebGPUComponents/instanceApi";
 
 /**
  * The WebGPU renderer against the WebGL one, on the same scene and camera.
@@ -25,7 +25,7 @@ interface Host {
         webGPU: WebGPUApi;
         representation: { defaultStyle: string };
         sceneSettings: { setDrawCrosshairs(value: boolean): void };
-        getMoleculeList(): { show(style: string): Promise<unknown>; hide(style: string): unknown }[];
+        getMoleculeList(): { show(style: string): Promise<unknown>; hide(style: string): unknown; toggleSymmetry(): Promise<void> }[];
     }>;
 }
 
@@ -35,7 +35,9 @@ interface ParityResult {
     meshes: number;
     triangles: number;
     spheres: number;
+    segments: number;
     skippedText: string;
+    skippedSubBuffers: SkippedSubBufferInfo[];
     tiles: number;
     /** Pixels that are not background, in the WebGL picture. */
     drawn: number;
@@ -52,14 +54,18 @@ interface ParityResult {
  * either. The limits are about twice what was measured (Apple GPU, 1280x647, 2026-10-23): CRs
  * 0.49% and 0.26, CBs 1.47% and 0.82 (many more edges), VdwSpheres 0.01% and 0.01.
  */
-const STYLES: { style: string; what: string; maxDiffering: number; maxMeanDifference: number }[] = [
+const STYLES: { style: string; what: string; maxDiffering: number; maxMeanDifference: number; symmetry?: boolean; map?: boolean }[] = [
     { style: "CRs", what: "ribbons", maxDiffering: 0.01, maxMeanDifference: 0.6 },
     { style: "CBs", what: "ball-and-stick", maxDiffering: 0.03, maxMeanDifference: 1.6 },
     { style: "VdwSpheres", what: "spacefill", maxDiffering: 0.002, maxMeanDifference: 0.2 },
+    // Crystal symmetry on: grey copies of the ribbons around the view centre. Not yet measured.
+    { style: "CRs", what: "ribbons with symmetry copies", maxDiffering: 0.02, maxMeanDifference: 1.2, symmetry: true },
+    // A map contoured by Coot, drawn as LINES (thick lines). Not yet measured.
+    { style: "CRs", what: "ribbons and a map", maxDiffering: 0.03, maxMeanDifference: 1.6, map: true },
 ];
 
 test.describe("WebGPU against WebGL", () => {
-    for (const { style, what, maxDiffering, maxMeanDifference } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
+    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
         test.setTimeout(180_000);
         const moorhen = await startAndGetInstance(page);
 
@@ -78,8 +84,20 @@ test.describe("WebGPU against WebGL", () => {
             instance.sceneSettings.setDrawCrosshairs(false);
         }, moorhen.elementId);
 
-        const loaded = await moorhen.loadFiles([{ url: "/tests/test_data/5a3h.pdb", filename: "5a3h.pdb" }]);
+        const files = [{ url: "/tests/test_data/5a3h.pdb", filename: "5a3h.pdb" }];
+        if (map) files.push({ url: "/tests/test_data/5a3h_sigmaa.mtz", filename: "5a3h_sigmaa.mtz" });
+        const loaded = await moorhen.loadFiles(files);
+        if (map) {
+            await expect.poll(async () => (await moorhen.getObjectCounts()).mapCount, { timeout: 120_000 }).toBeGreaterThan(0);
+        }
         expect(loaded).toEqual(expect.arrayContaining([expect.objectContaining({ type: "molecule", fileName: "5a3h.pdb" })]));
+        if (symmetry) {
+            await page.evaluate(async targetId => {
+                const host = document.getElementById(targetId) as unknown as Host;
+                const instance = await host.getMoorhenInstance();
+                await instance.getMoleculeList()[0].toggleSymmetry();
+            }, moorhen.elementId);
+        }
         // Then the representation under test in place of the ribbons.
         if (style !== "CRs") {
             await page.evaluate(async ({ targetId, wanted }) => {
@@ -132,7 +150,9 @@ test.describe("WebGPU against WebGL", () => {
                 meshes: gpu.meshes,
                 triangles: gpu.triangles,
                 spheres: gpu.spheres,
+                segments: gpu.segments,
                 skippedText: gpu.skippedText,
+                skippedSubBuffers: instance.webGPU.describeSkipped(),
                 tiles: gpu.tiles,
                 drawn,
                 differing,
@@ -142,16 +162,22 @@ test.describe("WebGPU against WebGL", () => {
             };
         }, { targetId: moorhen.elementId, tolerance: PIXEL_TOLERANCE });
 
+        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}`;
         for (const [name, url] of Object.entries(result.images ?? {})) {
-            await testInfo.attach(`${style}-${name}.png`, { body: Buffer.from(url.split(",")[1], "base64"), contentType: "image/png" });
+            await testInfo.attach(`${variant.replace(/ \+ /g, "-")}-${name}.png`, { body: Buffer.from(url.split(",")[1], "base64"), contentType: "image/png" });
         }
         const pixels = result.width * result.height;
-        const summary = `${style}: ${result.width}x${result.height}, ${result.meshes} meshes, ${result.triangles} triangles, ${result.spheres} spheres; ` +
+        const summary = `${variant}: ${result.width}x${result.height}, ${result.meshes} meshes, ${result.triangles} triangles, ${result.spheres} spheres, ${result.segments} line segments; ` +
             `${result.drawn} pixels drawn, ${result.differing} differ by more than ${PIXEL_TOLERANCE} ` +
             `(${(100 * result.differing / pixels).toFixed(2)}%), mean difference ${result.meanDifference.toFixed(2)}, worst ${result.worst}` +
             (result.skippedText ? `; not drawn by WebGPU: ${result.skippedText}` : "");
         testInfo.annotations.push({ type: "parity", description: summary });
         console.log(`WebGPU parity: ${summary}`);
+        if (result.skippedSubBuffers.length) {
+            const lines = result.skippedSubBuffers.map(info => `  ${JSON.stringify(info)}`).join("\n");
+            console.log(`WebGPU parity: ${variant}: not drawn, or drawn in part:\n${lines}`);
+            await testInfo.attach(`${style}-skipped.json`, { body: JSON.stringify(result.skippedSubBuffers, null, 2), contentType: "application/json" });
+        }
 
         // Something of the molecule is in the picture, and WebGPU drew it.
         expect(result.drawn, summary).toBeGreaterThan(pixels * 0.01);

@@ -36,7 +36,11 @@ struct Frame {
 
 struct Draw {
     colour: vec4f,       // used when the colour comes from a uniform (customColour)
-    params: vec4f,       // alpha multiplier (an object fade), thick lines' half width (Å), unused x2
+    params: vec4f,       // alpha multiplier (an object fade), thick lines' half width (Å),
+                         // 1 to colour everything copyColour (a grey symmetry copy),
+                         // segments' colour: 0 their first vertex's, 1 each end's own, 2 draw.colour
+    copyColour: vec4f,
+    model: mat4x4f,      // where this copy goes: a symmetry operator, or identity for the original
 };
 
 @group(0) @binding(0) var<uniform> frame: Frame;
@@ -51,10 +55,12 @@ struct VOut {
 
 fn finish(world: vec4f, normal: vec3f, colour: vec4f) -> VOut {
     var out: VOut;
-    let eye = frame.view * world;
+    // A symmetry copy is lit as if the operator had moved the mesh, as applySymmetryMatrix does
+    // by turning the light and eye into the copy's frame.
+    let eye = frame.view * (draw.model * world);
     out.position = frame.projection * eye;
-    out.colour = colour;
-    out.normal = normal;
+    out.colour = select(colour, draw.copyColour, draw.params.z > 0.5);
+    out.normal = (draw.model * vec4f(normal, 0.0)).xyz;
     out.eyeDistance = abs(eye.z / eye.w);
     return out;
 }
@@ -157,7 +163,7 @@ fn thickLine(vertex: u32) -> VOut {
     if (dot(n, frame.eyeDir.xyz) < 0.0) { n = -n; }
     var out = finish(vec4f(p + offset, 1.0), n, draw.colour);
     // Fog by the line's own depth, not the offset corner's, as WebGL does.
-    let eye = frame.view * vec4f(p, 1.0);
+    let eye = frame.view * (draw.model * vec4f(p, 1.0));
     out.eyeDistance = abs(eye.z / eye.w);
     return out;
 }
@@ -165,6 +171,53 @@ fn thickLine(vertex: u32) -> VOut {
 @vertex
 fn vs_thick_line(@builtin(vertex_index) vertex: u32) -> VOut {
     return thickLine(vertex);
+}
+
+// Thick lines from a DisplayBuffer's LINES or NORMALLINES: a quad per segment, six vertices,
+// between the vertices an index pair names (or consecutive vertices, given indices 0 1 2 3 ...).
+// The same quads as above, built as linesToThickLines builds them on the CPU for WebGL.
+@group(2) @binding(3) var<storage, read> segPositions: array<f32>;
+@group(2) @binding(4) var<storage, read> segNormals: array<f32>;
+@group(2) @binding(5) var<storage, read> segColours: array<f32>;
+@group(2) @binding(6) var<storage, read> segments: array<u32>;
+
+fn segPosition(i: u32) -> vec3f { return vec3f(segPositions[3u * i], segPositions[3u * i + 1u], segPositions[3u * i + 2u]); }
+fn segColour(i: u32) -> vec4f { return vec4f(segColours[4u * i], segColours[4u * i + 1u], segColours[4u * i + 2u], segColours[4u * i + 3u]); }
+
+fn segmentCorner(vertex: u32, lit: bool) -> VOut {
+    let s = vertex / 6u;
+    let corner = vertex - 6u * s;
+    let a = segments[2u * s];
+    let b = segments[2u * s + 1u];
+    let i = select(a, b, LINE_CORNER_END[corner] == 1u);
+    let p = segPosition(i);
+    let along = segPosition(b) - segPosition(a);
+    let across = cross(along, frame.eyeDir.xyz);
+    let len = length(across);
+    let offset = select(vec3f(0.0), across / len, len > 1e-20) * (draw.params.y * LINE_CORNER_SIDE[corner]);
+    var n = vec3f(0.0, 0.0, 1.0);
+    if (lit) {
+        n = vec3f(segNormals[3u * i], segNormals[3u * i + 1u], segNormals[3u * i + 2u]);
+        if (dot(n, frame.eyeDir.xyz) < 0.0) { n = -n; }
+    }
+    // linesToThickLinesWithIndices colours a segment by its first vertex; linesToThickLines
+    // colours each end its own.
+    let mode = draw.params.w;
+    let colour = select(select(segColour(a), segColour(i), mode > 0.5), draw.colour, mode > 1.5);
+    var out = finish(vec4f(p + offset, 1.0), n, colour);
+    let eye = frame.view * (draw.model * vec4f(p, 1.0));
+    out.eyeDistance = abs(eye.z / eye.w);
+    return out;
+}
+
+@vertex
+fn vs_segment(@builtin(vertex_index) vertex: u32) -> VOut {
+    return segmentCorner(vertex, false);
+}
+
+@vertex
+fn vs_lit_segment(@builtin(vertex_index) vertex: u32) -> VOut {
+    return segmentCorner(vertex, true);
 }
 
 @fragment
@@ -202,11 +255,12 @@ fn vs_sphere(@builtin(vertex_index) vertex: u32, @location(0) origin: vec3f, @lo
     // As twodshapes-vertex-shader.js: its unit-radius quad, scaled by sqrt(2) * size, has corners
     // size along the screen's axes; drawCore turns them to face the screen.
     let r = size.x;
-    let world = vec4f(origin + r * (corner.x * frame.rightDir.xyz + corner.y * frame.upDir.xyz), 1.0);
+    let centre = (draw.model * vec4f(origin, 1.0)).xyz;
+    let world = vec4f(centre + r * (corner.x * frame.rightDir.xyz + corner.y * frame.upDir.xyz), 1.0);
     var out: SphereOut;
     out.eye = frame.view * world;
     out.position = frame.projection * out.eye;
-    out.colour = colour;
+    out.colour = select(colour, draw.copyColour, draw.params.z > 0.5);
     out.quad = corner;
     out.radius = r;
     return out;

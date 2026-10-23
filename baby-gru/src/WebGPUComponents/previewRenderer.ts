@@ -16,7 +16,7 @@ import { BufferUsage, GpuSpanTimer, MapMode, ShaderStage, TextureUsage, getGpuCo
 import { SnapshotTile, narrowToTile, planTiles } from './snapshotTiles';
 import { PREVIEW_WGSL } from './previewShaders';
 import {
-    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, planMeshChunks, planPreview,
+    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, planMeshChunks, planPreview, symmetryCopyGrey,
 } from './previewScene';
 
 
@@ -29,6 +29,23 @@ import {
 export const thickLineHalfWidth = (lineWidth: number, zoom: number): number => 0.04 * zoom * lineWidth * lineWidth;
 
 const SAMPLE_COUNT = 4;
+/** Floats in a Draw uniform block (previewShaders.ts): colour, params, copyColour, model. */
+const DRAW_FLOATS = 28;
+/** Bytes between one copy's Draw block and the next: the uniform offset alignment WebGPU guarantees. */
+const DRAW_STRIDE = 256;
+const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
+/**
+ * The Draw block for one copy of a draw. `copyColour` is set for symmetry copies drawn in one
+ * grey; `model` places the copy (identity for the original).
+ */
+function drawBlock(colour: ArrayLike<number>, alpha: number, halfWidth: number, copyColour: number[] | null,
+                   model: ArrayLike<number>, out: Float32Array, offset = 0, segmentColours = 0): void {
+    out.set([colour[0], colour[1], colour[2], colour[3], alpha, halfWidth, copyColour ? 1 : 0, segmentColours], offset);
+    out.set(copyColour ?? [0, 0, 0, 0], offset + 8);
+    out.set(Array.from(model).slice(0, 16), offset + 12);
+}
+
 const DEPTH_FORMAT: GPUTextureFormat = "depth24plus";
 /**
  * The largest tile a snapshot is drawn in. Multisampled colour and depth take 32 bytes a pixel,
@@ -129,8 +146,12 @@ interface SubBufferResources {
     instanceOrientation: GPUBuffer | null;
     /** For PERFECT_SPHERES, in place of chunks and the instance buffers. */
     spheres: SphereChunk[];
+    /** For LINES and NORMALLINES: their arrays bound as storage, and how many segments. */
+    segments: { bindGroup: GPUBindGroup; count: number } | null;
+    /** A Draw block per copy, original first, DRAW_STRIDE apart; remade when the copies grow. */
     drawUniforms: GPUBuffer;
-    bindGroup: GPUBindGroup;
+    /** One per block. */
+    bindGroups: GPUBindGroup[];
 }
 
 type PipelineKind = "mesh-vertex" | "mesh-uniform" | "instanced-vertex" | "instanced-instance" | "instanced-uniform" | "spheres";
@@ -171,6 +192,9 @@ export class WebGPUPreviewRenderer {
     /** Thick lines: the mesh's buffers as storage, at group 2. */
     private readonly lineLayout: GPUBindGroupLayout;
     private readonly linePipelineLayout: GPUPipelineLayout;
+    /** LINES and NORMALLINES from DisplayBuffers: positions, normals, colours, segments, at group 2. */
+    private readonly segmentLayout: GPUBindGroupLayout;
+    private readonly segmentPipelineLayout: GPUPipelineLayout;
     private readonly pipelines = new Map<string, GPURenderPipeline>();
     private readonly resources = new Map<DisplayBuffer, (SubBufferResources | undefined)[]>();
     private readonly frameData = new Float32Array(FRAME_FLOATS);
@@ -240,6 +264,11 @@ export class WebGPUPreviewRenderer {
             entries: [0, 1, 2].map(binding => ({ binding, visibility: ShaderStage.VERTEX, buffer: { type: "read-only-storage" as const } })),
         });
         this.linePipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [this.frameLayout, this.drawLayout, this.lineLayout] });
+        this.segmentLayout = device.createBindGroupLayout({
+            label: "preview segments",
+            entries: [3, 4, 5, 6].map(binding => ({ binding, visibility: ShaderStage.VERTEX, buffer: { type: "read-only-storage" as const } })),
+        });
+        this.segmentPipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [this.frameLayout, this.drawLayout, this.segmentLayout] });
         this.frameBuffer = device.createBuffer({
             label: "preview frame uniforms",
             size: FRAME_FLOATS * 4,
@@ -390,7 +419,7 @@ export class WebGPUPreviewRenderer {
         for (const transparent of [false, true]) {
             for (const item of plan.draws) {
                 if (item.transparent !== transparent) continue;
-                this.drawOne(pass, item);
+                this.drawOne(pass, item, camera);
             }
             for (const item of gpuDraws) {
                 if (item.transparent === transparent) this.drawGpu(pass, item, camera.zoom);
@@ -452,30 +481,71 @@ export class WebGPUPreviewRenderer {
         };
     }
 
-    private drawOne(pass: GPURenderPassEncoder, item: PreviewDraw): void {
+    /**
+     * The sub-buffer's Draw blocks for this frame: the original's, then one per symmetry copy, with
+     * room made for more copies than last time.
+     */
+    private writeDrawBlocks(sub: SubBufferResources, item: PreviewDraw, background: ArrayLike<number>,
+                            halfWidth = 0, segmentColours = 0): void {
+        const count = 1 + item.copies.length;
+        if (sub.bindGroups.length < count) {
+            const old = sub.drawUniforms;
+            sub.drawUniforms = this.device.createBuffer({
+                label: "draw uniforms", size: count * DRAW_STRIDE, usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST,
+            });
+            sub.buffers[sub.buffers.indexOf(old)] = sub.drawUniforms;
+            old.destroy();
+            sub.bindGroups = Array.from({ length: count }, (_, n) => this.device.createBindGroup({
+                layout: this.drawLayout,
+                entries: [{ binding: 0, resource: { buffer: sub.drawUniforms, offset: n * DRAW_STRIDE, size: DRAW_FLOATS * 4 } }],
+            }));
+        }
+        const custom = item.buffer.customColour ?? [1, 1, 1, 1];
+        const alpha = item.buffer.alphaMultiplier ?? 1;
+        const grey = item.greyCopies ? symmetryCopyGrey(background) : null;
+        const data = new Float32Array(count * DRAW_STRIDE / 4);
+        drawBlock(custom, alpha, halfWidth, null, IDENTITY, data, 0, segmentColours);
+        item.copies.forEach((model, n) => drawBlock(custom, alpha, halfWidth, grey, model, data, (n + 1) * DRAW_STRIDE / 4, segmentColours));
+        this.device.queue.writeBuffer(sub.drawUniforms, 0, data);
+    }
+
+    private drawOne(pass: GPURenderPassEncoder, item: PreviewDraw, camera: PreviewCameraSource): void {
         const sub = this.resources.get(item.buffer)?.[item.index];
         if (!sub) return;
+        const background = camera.background_colour;
 
-        const custom = item.buffer.customColour ?? [1, 1, 1, 1];
-        this.device.queue.writeBuffer(sub.drawUniforms, 0, new Float32Array([
-            custom[0], custom[1], custom[2], custom[3],
-            item.buffer.alphaMultiplier ?? 1, 0, 0, 0,
-        ]));
+        if (sub.segments) {
+            // drawCore's pixelZoom (0.04 x zoom, times the buffer's primitive size if it has one)
+            // and buildBuffers' line size (the map line width) together give the half width.
+            const primitiveSize = item.buffer.primitiveSizes?.[item.index]?.[0] ?? 1;
+            const halfWidth = primitiveSize * thickLineHalfWidth(camera.mapLineWidth ?? 1, camera.zoom);
+            const colours = item.colourSource === "uniform" ? 2 : item.indexCount > 0 ? 0 : 1;
+            this.writeDrawBlocks(sub, item, background, halfWidth, colours);
+            pass.setPipeline(this.segmentPipeline(item.primitive === "lit-lines", item.transparent));
+            pass.setBindGroup(1, sub.bindGroups[0]);
+            pass.setBindGroup(2, sub.segments.bindGroup);
+            pass.draw(6 * sub.segments.count);
+            return;
+        }
+
+        this.writeDrawBlocks(sub, item, background);
+        const copies = 1 + item.copies.length;
 
         if (item.primitive === "spheres") {
             pass.setPipeline(this.pipeline("spheres", item.transparent));
-            pass.setBindGroup(1, sub.bindGroup);
-            for (const chunk of sub.spheres) {
-                pass.setVertexBuffer(0, chunk.origin);
-                pass.setVertexBuffer(1, chunk.size);
-                pass.setVertexBuffer(2, chunk.colour);
-                pass.draw(6, chunk.count);
+            for (let copy = 0; copy < copies; copy++) {
+                pass.setBindGroup(1, sub.bindGroups[copy]);
+                for (const chunk of sub.spheres) {
+                    pass.setVertexBuffer(0, chunk.origin);
+                    pass.setVertexBuffer(1, chunk.size);
+                    pass.setVertexBuffer(2, chunk.colour);
+                    pass.draw(6, chunk.count);
+                }
             }
             return;
         }
 
         pass.setPipeline(this.pipeline(pipelineKind(item.instanced, item.colourSource), item.transparent));
-        pass.setBindGroup(1, sub.bindGroup);
         const colourSlot = item.colourSource !== "uniform";
         if (item.colourSource === "instance") pass.setVertexBuffer(2, sub.instanceColour);
         if (item.instanced) {
@@ -484,25 +554,30 @@ export class WebGPUPreviewRenderer {
             pass.setVertexBuffer(slot++, sub.instanceSize);
             pass.setVertexBuffer(slot++, sub.instanceOrientation);
         }
-        for (const chunk of sub.chunks) {
-            pass.setVertexBuffer(0, chunk.position);
-            pass.setVertexBuffer(1, chunk.normal);
-            if (chunk.colour) pass.setVertexBuffer(2, chunk.colour);
-            pass.setIndexBuffer(chunk.index, "uint32");
-            pass.drawIndexed(chunk.indexCount, item.instanceCount, 0, chunk.baseVertex);
+        for (let copy = 0; copy < copies; copy++) {
+            pass.setBindGroup(1, sub.bindGroups[copy]);
+            for (const chunk of sub.chunks) {
+                pass.setVertexBuffer(0, chunk.position);
+                pass.setVertexBuffer(1, chunk.normal);
+                if (chunk.colour) pass.setVertexBuffer(2, chunk.colour);
+                pass.setIndexBuffer(chunk.index, "uint32");
+                pass.drawIndexed(chunk.indexCount, item.instanceCount, 0, chunk.baseVertex);
+            }
         }
     }
 
     private drawGpu(pass: GPURenderPassEncoder, item: PreviewGpuDraw, zoom: number): void {
         let uniforms = this.gpuDrawUniforms.get(item.key);
         if (!uniforms) {
-            const buffer = this.device.createBuffer({ label: `draw uniforms ${item.key}`, size: 32, usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST });
+            const buffer = this.device.createBuffer({ label: `draw uniforms ${item.key}`, size: DRAW_FLOATS * 4, usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST });
             const bindGroup = this.device.createBindGroup({ layout: this.drawLayout, entries: [{ binding: 0, resource: { buffer } }] });
             uniforms = { buffer, bindGroup };
             this.gpuDrawUniforms.set(item.key, uniforms);
         }
         const halfWidth = item.style === "triangles" ? 0 : thickLineHalfWidth(item.lineWidth, zoom);
-        this.device.queue.writeBuffer(uniforms.buffer, 0, new Float32Array([...item.colour, 1, halfWidth, 0, 0]));
+        const block = new Float32Array(DRAW_FLOATS);
+        drawBlock(item.colour, 1, halfWidth, null, IDENTITY, block);
+        this.device.queue.writeBuffer(uniforms.buffer, 0, block);
         pass.setBindGroup(1, uniforms.bindGroup);
         if (item.style === "triangles") {
             pass.setPipeline(this.pipeline("mesh-uniform", item.transparent));
@@ -565,6 +640,9 @@ export class WebGPUPreviewRenderer {
         if (item.primitive === "spheres") {
             return [b.triangleInstanceOrigins[j], b.triangleInstanceSizes[j], b.triangleColours[j], item.primitive];
         }
+        if (item.primitive === "lines" || item.primitive === "lit-lines") {
+            return [b.triangleVertices[j], b.triangleNormals?.[j], b.triangleColours?.[j], b.triangleIndexs?.[j], item.primitive, item.colourSource, item.indexCount];
+        }
         return [
             b.triangleVertices[j], b.triangleNormals[j], b.triangleColours?.[j], b.triangleIndexs[j],
             b.triangleInstanceOrigins?.[j], b.triangleInstanceSizes?.[j], b.triangleInstanceOrientations?.[j],
@@ -617,6 +695,29 @@ export class WebGPUPreviewRenderer {
         });
     }
 
+    /**
+     * A LINES or NORMALLINES sub-buffer's arrays as storage, for vs_segment: positions, normals
+     * (lit only), colours (per vertex only), and segment index pairs - made up, 0 1 2 3 ..., when
+     * the buffer pairs its vertices in order. Unused bindings get the positions as a stand-in.
+     */
+    private segmentBindings(item: PreviewDraw, created: GPUBuffer[]): { bindGroup: GPUBindGroup; count: number } {
+        const b = item.buffer, j = item.index;
+        const STORAGE = BufferUsage.STORAGE;
+        const positions = this.vertexBuffer("segment positions", asFloat32(b.triangleVertices[j]), STORAGE, created);
+        const normals = item.primitive === "lit-lines" ? this.vertexBuffer("segment normals", asFloat32(b.triangleNormals[j]), STORAGE, created) : positions;
+        const colours = item.colourSource === "vertex" ? this.vertexBuffer("segment colours", asFloat32(b.triangleColours[j]), STORAGE, created) : positions;
+        const pairs = item.indexCount > 0
+            ? asUint32(b.triangleIndexs[j]).subarray(0, item.indexCount)
+            : Uint32Array.from({ length: item.vertexCount }, (_, i) => i);
+        const segments = this.vertexBuffer("segments", pairs, STORAGE, created);
+        const bindGroup = this.device.createBindGroup({
+            label: "segments",
+            layout: this.segmentLayout,
+            entries: [positions, normals, colours, segments].map((buffer, n) => ({ binding: 3 + n, resource: { buffer } })),
+        });
+        return { bindGroup, count: pairs.length / 2 };
+    }
+
     /** The spheres' origins, sizes and colours, in as many pieces as the buffer size limit needs. */
     private sphereChunks(item: PreviewDraw, created: GPUBuffer[]): SphereChunk[] {
         const b = item.buffer, j = item.index;
@@ -656,8 +757,10 @@ export class WebGPUPreviewRenderer {
         const created: GPUBuffer[] = [];
         const VERTEX = BufferUsage.VERTEX;
 
+        const isLines = item.primitive === "lines" || item.primitive === "lit-lines";
+        const segments = isLines ? this.segmentBindings(item, created) : null;
         const spheres = item.primitive === "spheres" ? this.sphereChunks(item, created) : [];
-        const chunks = item.primitive === "spheres" ? [] : this.meshChunks(item, created);
+        const chunks = item.primitive === "spheres" || isLines ? [] : this.meshChunks(item, created);
         const instanceColour = item.colourSource === "instance" && item.primitive !== "spheres"
             ? this.vertexBuffer("instance colour", asFloat32(b.triangleColours[j]), VERTEX, created)
             : null;
@@ -684,21 +787,22 @@ export class WebGPUPreviewRenderer {
             instanceOrientation = this.vertexBuffer("instance orientation", orientationData, VERTEX, created);
         }
 
+        // The original's block; writeDrawBlocks makes room for symmetry copies when there are any.
         const drawUniforms = this.device.createBuffer({
             label: "draw uniforms",
-            size: 32,
+            size: DRAW_STRIDE,
             usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST,
         });
         created.push(drawUniforms);
         const bindGroup = this.device.createBindGroup({
             layout: this.drawLayout,
-            entries: [{ binding: 0, resource: { buffer: drawUniforms } }],
+            entries: [{ binding: 0, resource: { buffer: drawUniforms, offset: 0, size: DRAW_FLOATS * 4 } }],
         });
 
         return {
             dataVersion: b.dataVersion, sources, buffers: created,
-            chunks, instanceColour, instanceOrigin, instanceSize, instanceOrientation, spheres,
-            drawUniforms, bindGroup,
+            chunks, instanceColour, instanceOrigin, instanceSize, instanceOrientation, spheres, segments,
+            drawUniforms, bindGroups: [bindGroup],
         };
     }
 
@@ -771,6 +875,24 @@ export class WebGPUPreviewRenderer {
             label: `preview ${key}`,
             layout: this.linePipelineLayout,
             vertex: { module: this.module, entryPoint: "vs_thick_line", buffers: [] },
+            fragment: { module: this.module, entryPoint: lit ? "fs_lit_line" : "fs_line", targets: [this.colourTargetState(transparent)] },
+            primitive: { topology: "triangle-list", cullMode: "none" },
+            depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: !transparent, depthCompare: "less" },
+            multisample: { count: SAMPLE_COUNT },
+        });
+        this.pipelines.set(key, pipeline);
+        return pipeline;
+    }
+
+    /** LINES (unlit) and NORMALLINES (lit) from DisplayBuffers; storage, no vertex buffers. */
+    private segmentPipeline(lit: boolean, transparent: boolean): GPURenderPipeline {
+        const key = `segments|${lit}|${transparent}`;
+        const cached = this.pipelines.get(key);
+        if (cached) return cached;
+        const pipeline = this.device.createRenderPipeline({
+            label: `preview ${key}`,
+            layout: this.segmentPipelineLayout,
+            vertex: { module: this.module, entryPoint: lit ? "vs_lit_segment" : "vs_segment", buffers: [] },
             fragment: { module: this.module, entryPoint: lit ? "fs_lit_line" : "fs_line", targets: [this.colourTargetState(transparent)] },
             primitive: { topology: "triangle-list", cullMode: "none" },
             depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: !transparent, depthCompare: "less" },

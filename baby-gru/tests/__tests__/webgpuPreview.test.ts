@@ -12,6 +12,7 @@ import { createWebGLBuffers } from "../../src/WebGLgComponents/createWebGLBuffer
 import { viewProjection } from "../../src/WebGLgComponents/mgWebGLParts/projection";
 import {
     FRAME_FLOATS, MeshChunk, PreviewCameraSource, describeSkipped, frameUniforms, planMeshChunks, planPreview, previewCameraFrame,
+    symmetryCopyGrey,
 } from "../../src/WebGPUComponents/previewScene";
 
 const triangle = (over: Record<string, unknown> = {}) => createWebGLBuffers({
@@ -125,27 +126,61 @@ describe("planPreview", () => {
         });
     });
 
+    it("draws LINES between index pairs or vertex pairs, and lit NORMALLINES only with indices", () => {
+        const indexed = triangle({ prim_types: [["LINES"]], idx_tri: [[new Uint32Array([0, 1, 1, 2])]] });
+        indexed.supplementary = { useIndices: [true] };
+        const paired = triangle({ prim_types: [["LINES"]] });
+        paired.supplementary = { useIndices: [false] };
+        const lit = triangle({ prim_types: [["NORMALLINES"]], idx_tri: [[new Uint32Array([0, 1, 1, 2, 2, 0])]] });
+        lit.supplementary = { useIndices: [true] };
+        const litWithout = triangle({ prim_types: [["NORMALLINES"]] });
+        litWithout.supplementary = {};
+        const plan = planPreview([indexed, paired, lit, litWithout]);
+        expect(plan.draws.map(d => [d.primitive, d.indexCount, d.vertexCount])).toEqual([
+            ["lines", 4, 3], ["lines", 0, 2], ["lit-lines", 6, 3],
+        ]);
+        expect(plan.segments).toBe(2 + 1 + 3);
+        expect(plan.skipped).toEqual({ "NORMALLINES without indices": 1 });
+    });
+
     it("reports what it cannot draw yet", () => {
-        const lines = triangle({ prim_types: [["LINES"]] });
+        const lines = triangle({ prim_types: [["LINE_STRIP"]] });
         const moved = triangle();
         moved.setTransformMatrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
         const badColours = triangle({ col_tri: [[new Float32Array([1, 0, 0, 1])]] });
         const plan = planPreview([lines, moved, badColours]);
         expect(plan.draws).toHaveLength(0);
         expect(plan.skipped).toEqual({
-            LINES: 1,
+            LINE_STRIP: 1,
             "TRIANGLES with a transform matrix": 1,
             "TRIANGLES without one colour per vertex": 1,
         });
+        expect(plan.skippedSubBuffers.map(s => s.why)).toEqual(["LINE_STRIP", "TRIANGLES with a transform matrix", "TRIANGLES without one colour per vertex"]);
         expect(describeSkipped({ LINES: 1, PERFECT_SPHERES: 3 })).toBe("PERFECT_SPHERES ×3, LINES ×1");
     });
 
-    it("draws the original of a buffer with symmetry copies, and says the copies are missing", () => {
+    it("draws symmetry copies besides the original, grey unless the buffer says otherwise", () => {
+        const shift = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 10, 0, 0, 1];
         const buffer = triangle();
-        buffer.symmetryMatrices = [[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]] as never;
+        buffer.symmetryMatrices = [shift, shift] as never;
         const plan = planPreview([buffer]);
         expect(plan.draws).toHaveLength(1);
-        expect(plan.skipped["symmetry copies (original drawn)"]).toBe(1);
+        expect(plan.draws[0].copies).toHaveLength(2);
+        expect(plan.draws[0].greyCopies).toBe(true);
+        expect(plan.triangles).toBe(3);
+        expect(plan.skipped).toEqual({});
+
+        const biomolecule = spheres();
+        biomolecule.symmetryMatrices = [shift] as never;
+        biomolecule.changeColourWithSymmetry = false;
+        const [draw] = planPreview([biomolecule]).draws;
+        expect(draw).toMatchObject({ primitive: "spheres", greyCopies: false });
+        expect(planPreview([biomolecule]).spheres).toBe(4);
+    });
+
+    it("grey copies are darker on a light background, as drawBuffer has them", () => {
+        expect(symmetryCopyGrey([1, 1, 1, 1])).toEqual([0.3, 0.3, 0.3, 1]);
+        expect(symmetryCopyGrey([0, 0, 0, 1])).toEqual([0.5, 0.5, 0.5, 1]);
     });
 });
 
