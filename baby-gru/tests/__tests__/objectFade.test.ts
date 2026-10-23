@@ -160,11 +160,28 @@ describe("the fade uniform's wiring", () => {
         expect(helper.slice(0, 400)).toMatch(/uniform1f\([^,]*alphaMultiplier,\s*1\.0\)/);
     });
 
-    it("is written for lines as well as triangles and spheres", () => {
-        // Three draw paths, three writes. The lines one was the one that was missing.
-        expect(drawCore).toMatch(/uniform1f\(\s*theShader\.alphaMultiplier/);
-        expect(drawCore).toMatch(/uniform1f\(\s*program\.alphaMultiplier/);
-        expect(drawCore).toMatch(/uniform1f\(\s*shaderProgramThickLinesNormal\.alphaMultiplier/);
+    it("is written through one helper, for every program that declares it", () => {
+        // Three draw paths, one helper. Writing them out separately is how the lines program came
+        // to be missed twice over: once for the fade, and once for `ShadowMap`, which the same
+        // programs inherit from the same fragment shader and which is just as fatal unset.
+        expect(drawCore).toMatch(
+            /function setTriangleFragmentUniforms[\s\S]{0,400}uniform1i\([^)]*\.ShadowMap[\s\S]{0,200}uniform1f\([^)]*\.alphaMultiplier/);
+        for (const program of ["theShader", "program", "shaderProgramThickLinesNormal"]) {
+            expect(drawCore).toMatch(
+                new RegExp(`setTriangleFragmentUniforms\\(self, ${program}, bufferFade\\)`));
+        }
+    });
+
+    it("leaves no draw path setting these uniforms by hand", () => {
+        // A hand-written write is a write that only covers the uniforms somebody remembered on
+        // the day, which is the whole failure mode.
+        const byHand = [...drawCore.matchAll(/uniform1[fi]\(\s*\w+\.(alphaMultiplier|ShadowMap)/g)]
+            .filter(match => {
+                const context = drawCore.slice(Math.max(0, match.index - 600), match.index);
+                return !context.includes("function setTriangleFragmentUniforms");
+            });
+
+        expect(byHand.map(match => match[0])).toEqual([]);
     });
 
     it("notices if a program built from the triangle fragment shader stops being covered", () => {

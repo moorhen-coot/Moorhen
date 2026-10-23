@@ -90,6 +90,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
+    const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
@@ -349,6 +350,25 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [doShadowDepthDebug])
+
+    // Only when the quality actually changes, never on mount.
+    //
+    // An effect with a dependency list still runs once when the component appears, and on that
+    // first pass there is no shadow map to rebuild and no reason to ask for a frame. Asking
+    // anyway means a drawScene before the renderer necessarily has its shaders, buffers and
+    // Coot, which is its own class of first-frame failure - and one that leaves nothing on
+    // screen afterwards.
+    const shadowQualityMounted = useRef(false)
+    useEffect(() => {
+        if (!shadowQualityMounted.current) {
+            shadowQualityMounted.current = true
+            return
+        }
+        if(glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.rebuildShadowMap()
+            glRef.current.drawScene()
+        }
+    }, [shadowMapQuality])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
