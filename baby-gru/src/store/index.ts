@@ -131,6 +131,7 @@ export {
     setGlobalInstanceReady,
     setSearchBarActive,
     setMainMenuOpen,
+    setSceneSelectorOpen,
     setShortCutsBlocked,
     setShownSidePanel,
     setSidePanelWidth,

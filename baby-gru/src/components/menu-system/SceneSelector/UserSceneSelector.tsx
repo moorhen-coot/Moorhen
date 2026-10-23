@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { MoorhenIcon } from "@/components/icons";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenTextInput } from "@/components/inputs";
 import { useMoorhenInstance } from "@/hooks";
-import { RootState, setMainMenuOpen, setShownSidePanel } from "@/store";
+import { RootState, setSceneSelectorOpen, setShownSidePanel } from "@/store";
 import { MOVIE_SCENE_ID, isBuiltInScene, UserScene } from "@/store/userScenesSlice";
 import { MoorhenInfoCard, MoorhenMenuItem, MoorhenPopover, MoorhenStack, MoorhenTooltip } from "../../interface-base";
 import { CopySceneButton } from "./CopySceneButton";
@@ -51,7 +51,8 @@ export const UserSceneSelector = () => {
     const hasMovieKeyframes = useSelector((state: RootState) => state.movie.document.path.keyframes.length > 0);
     // Switching scene deletes the representations a movie fades, and a snapshot moves its camera
     const isLocked = isSceneChanging || isMoviePlaying;
-    const [isShown, setIsShown] = useState<boolean>(false);
+    // In the store so the View menu can open it too
+    const isShown = useSelector((state: RootState) => state.globalUI.isSceneSelectorOpen);
     const [renameInputValue, setRenameInputValue] = useState<string>("");
     // A snapshot taken from anywhere (e.g. with a screenshot) plays an animation on the button. Only
     // for one added snapshot: loading a session replaces the whole list
@@ -64,15 +65,15 @@ export const UserSceneSelector = () => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const moorhenInstance = useMoorhenInstance();
     const dispatch = useDispatch();
+    const setIsShown = (value: boolean) => dispatch(setSceneSelectorOpen(value));
 
     const handleClick = () => {
         setIsShown(!isShown);
-        dispatch(setMainMenuOpen(false));
     };
 
     const handleNewScene = () => {
         moorhenInstance.userScene.create();
-        document.body.click();
+        setIsShown(false);
     };
 
     const isMovieScene = (id: string) => id === MOVIE_SCENE_ID;
