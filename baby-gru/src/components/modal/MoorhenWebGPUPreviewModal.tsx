@@ -12,13 +12,14 @@ import { GpuMapLayer } from "../../WebGPUComponents/mapContour/gpuMapLayer";
 /** How often the status line may change, ms. It would otherwise re-render on every frame. */
 const STATUS_INTERVAL = 250;
 
+/** 1234567 → "1.23M", 12345 → "12.3k". */
+const count = (n: number): string => n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}k` : `${n}`;
+
 const describeFrame = (report: PreviewFrameReport): { drawn: string; skipped: string } => {
     const { plan, cpuMs } = report;
-    const triangles = plan.triangles >= 1e6
-        ? `${(plan.triangles / 1e6).toFixed(2)}M`
-        : plan.triangles >= 1e3 ? `${(plan.triangles / 1e3).toFixed(1)}k` : `${plan.triangles}`;
+    const triangles = count(plan.triangles);
     return {
-        drawn: `${plan.draws.length} meshes, ${triangles} triangles, ${cpuMs.toFixed(1)} ms CPU`,
+        drawn: `${plan.draws.length} meshes, ${triangles} triangles${plan.spheres ? `, ${count(plan.spheres)} spheres` : ""}, ${cpuMs.toFixed(1)} ms CPU`,
         skipped: describeSkipped(plan.skipped),
     };
 };

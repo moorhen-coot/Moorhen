@@ -36,6 +36,20 @@ const instanced = (instanceColours: boolean) => createWebGLBuffers({
     instance_use_colors: instanceColours ? [[true]] : undefined,
 }, 0);
 
+/** Perfect spheres as a ball-and-stick buffer arrives: origin, size (x3) and colour per sphere. */
+const spheres = (over: Record<string, unknown> = {}) => createWebGLBuffers({
+    prim_types: [["PERFECT_SPHERES"]],
+    vert_tri: [[new Float32Array([0, 0, 0, 3, 0, 0])]],
+    norm_tri: [[new Float32Array([0, 0, 0, 3, 0, 0])]],
+    col_tri: [[new Float32Array([1, 0, 0, 1, 0, 0, 1, 1])]],
+    idx_tri: [[new Uint32Array([0, 1])]],
+    instance_origins: [[new Float32Array([0, 0, 0, 3, 0, 0])]],
+    instance_sizes: [[new Float32Array([0.5, 0.5, 0.5, 0.7, 0.7, 0.7])]],
+    instance_orientations: [[new Float32Array(32)]],
+    instance_use_colors: [[true]],
+    ...over,
+}, 0);
+
 describe("planPreview", () => {
     it("draws a plain mesh with its vertex colours", () => {
         const plan = planPreview([triangle()]);
@@ -83,16 +97,42 @@ describe("planPreview", () => {
         expect(plan.skipped).toEqual({});
     });
 
+    it("draws perfect spheres, one per instance, coloured per sphere", () => {
+        const buffer = spheres();
+        buffer.setCustomColour([0, 1, 0, 1]);
+        const plan = planPreview([buffer]);
+        expect(plan.draws).toHaveLength(1);
+        expect(plan.draws[0]).toMatchObject({ primitive: "spheres", instanced: true, colourSource: "instance", instanceCount: 2 });
+        expect(plan.spheres).toBe(2);
+        expect(plan.triangles).toBe(0);
+        expect(plan.skipped).toEqual({});
+    });
+
+    it("reports spheres it cannot draw, and why", () => {
+        const noColours = spheres({ col_tri: [[new Float32Array([1, 0, 0, 1])]] });
+        const noSizes = spheres({ instance_sizes: [[new Float32Array([0.5])]] });
+        const hover = spheres();
+        hover.isHoverBuffer = true;
+        const moved = spheres();
+        moved.setTransformMatrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+        const plan = planPreview([noColours, noSizes, hover, moved]);
+        expect(plan.draws).toHaveLength(0);
+        expect(plan.skipped).toEqual({
+            "PERFECT_SPHERES without a colour per sphere": 1,
+            "PERFECT_SPHERES without a size per sphere": 1,
+            "hover highlight": 1,
+            "PERFECT_SPHERES with a transform matrix": 1,
+        });
+    });
+
     it("reports what it cannot draw yet", () => {
-        const spheres = triangle({ prim_types: [["PERFECT_SPHERES"]] });
         const lines = triangle({ prim_types: [["LINES"]] });
         const moved = triangle();
         moved.setTransformMatrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
         const badColours = triangle({ col_tri: [[new Float32Array([1, 0, 0, 1])]] });
-        const plan = planPreview([spheres, lines, moved, badColours]);
+        const plan = planPreview([lines, moved, badColours]);
         expect(plan.draws).toHaveLength(0);
         expect(plan.skipped).toEqual({
-            PERFECT_SPHERES: 1,
             LINES: 1,
             "TRIANGLES with a transform matrix": 1,
             "TRIANGLES without one colour per vertex": 1,
@@ -150,6 +190,17 @@ describe("frameUniforms", () => {
         const turned = frameUniforms(camera({ myQuat: [0, 1, 0, 0] }), 100, 100);
         expect(turned[38]).toBeCloseTo(-1, 6);
         expect(turned[34]).toBeCloseTo(-60 / length, 6);
+    });
+
+    it("gives the screen's right and up in model space, for sphere impostors, and the clip planes", () => {
+        const still = frameUniforms(camera(), 100, 100);
+        expect(Array.from(still.slice(60, 63))).toEqual([1, 0, 0]);
+        expect(Array.from(still.slice(64, 67))).toEqual([0, 1, 0]);
+        expect(Array.from(still.slice(68, 76))).toEqual([0, 0, -1, -230, 0, 0, 1, 270]);
+        // A half turn about y: the viewer's right is the model's -x; up stays.
+        const turned = frameUniforms(camera({ myQuat: [0, 1, 0, 0] }), 100, 100);
+        expect(turned[60]).toBeCloseTo(-1, 6);
+        expect(turned[65]).toBeCloseTo(1, 6);
     });
 
     it("packs colours, fog and specular power", () => {

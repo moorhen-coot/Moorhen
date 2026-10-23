@@ -5,8 +5,9 @@
  * typed arrays) and the same camera, uploads what it needs into its own GPU buffers, and keeps
  * those until the DisplayBuffer's data changes or the buffer leaves the scene.
  *
- * What it does not do yet is listed in planPreview; what it does is lighting and fog as the
- * WebGL triangle shader has them, 4x multisampling, and a second, blended pass for transparent
+ * What it does not do yet is listed in planPreview; what it does is triangles lit and fogged as the
+ * WebGL triangle shader has them, perfect spheres as impostors, GPU-resident meshes (map contours)
+ * as surfaces or thick lines, 4x multisampling, and a second, blended pass for transparent
  * geometry - unsorted and without depth peeling, so overlapping transparent surfaces can differ
  * from the WebGL view.
  */
@@ -106,6 +107,14 @@ interface ChunkResources {
     baseVertex: number;
 }
 
+/** Some of a PERFECT_SPHERES sub-buffer's spheres: all of them, unless too many for one buffer. */
+interface SphereChunk {
+    origin: GPUBuffer;
+    size: GPUBuffer;
+    colour: GPUBuffer;
+    count: number;
+}
+
 /** The GPU side of one sub-buffer. */
 interface SubBufferResources {
     dataVersion: number;
@@ -118,11 +127,13 @@ interface SubBufferResources {
     instanceOrigin: GPUBuffer | null;
     instanceSize: GPUBuffer | null;
     instanceOrientation: GPUBuffer | null;
+    /** For PERFECT_SPHERES, in place of chunks and the instance buffers. */
+    spheres: SphereChunk[];
     drawUniforms: GPUBuffer;
     bindGroup: GPUBindGroup;
 }
 
-type PipelineKind = "mesh-vertex" | "mesh-uniform" | "instanced-vertex" | "instanced-instance" | "instanced-uniform";
+type PipelineKind = "mesh-vertex" | "mesh-uniform" | "instanced-vertex" | "instanced-instance" | "instanced-uniform" | "spheres";
 
 const pipelineKind = (instanced: boolean, colour: ColourSource): PipelineKind =>
     instanced
@@ -451,6 +462,18 @@ export class WebGPUPreviewRenderer {
             item.buffer.alphaMultiplier ?? 1, 0, 0, 0,
         ]));
 
+        if (item.primitive === "spheres") {
+            pass.setPipeline(this.pipeline("spheres", item.transparent));
+            pass.setBindGroup(1, sub.bindGroup);
+            for (const chunk of sub.spheres) {
+                pass.setVertexBuffer(0, chunk.origin);
+                pass.setVertexBuffer(1, chunk.size);
+                pass.setVertexBuffer(2, chunk.colour);
+                pass.draw(6, chunk.count);
+            }
+            return;
+        }
+
         pass.setPipeline(this.pipeline(pipelineKind(item.instanced, item.colourSource), item.transparent));
         pass.setBindGroup(1, sub.bindGroup);
         const colourSlot = item.colourSource !== "uniform";
@@ -539,6 +562,9 @@ export class WebGPUPreviewRenderer {
 
     private sourcesOf(item: PreviewDraw): unknown[] {
         const b = item.buffer, j = item.index;
+        if (item.primitive === "spheres") {
+            return [b.triangleInstanceOrigins[j], b.triangleInstanceSizes[j], b.triangleColours[j], item.primitive];
+        }
         return [
             b.triangleVertices[j], b.triangleNormals[j], b.triangleColours?.[j], b.triangleIndexs[j],
             b.triangleInstanceOrigins?.[j], b.triangleInstanceSizes?.[j], b.triangleInstanceOrientations?.[j],
@@ -591,6 +617,29 @@ export class WebGPUPreviewRenderer {
         });
     }
 
+    /** The spheres' origins, sizes and colours, in as many pieces as the buffer size limit needs. */
+    private sphereChunks(item: PreviewDraw, created: GPUBuffer[]): SphereChunk[] {
+        const b = item.buffer, j = item.index;
+        const n = item.instanceCount;
+        const origins = asFloat32(b.triangleInstanceOrigins[j]);
+        const sizes = asFloat32(b.triangleInstanceSizes[j]);
+        const colours = asFloat32(b.triangleColours[j]);
+        // A colour, 16 bytes a sphere, is the widest.
+        const perChunk = Math.max(1, Math.floor(this.maxBufferBytes / 16));
+        const chunks: SphereChunk[] = [];
+        for (let first = 0; first < n; first += perChunk) {
+            const count = Math.min(perChunk, n - first);
+            const label = n > perChunk ? ` ${first / perChunk + 1}/${Math.ceil(n / perChunk)}` : "";
+            chunks.push({
+                origin: this.vertexBuffer(`sphere origin${label}`, origins.subarray(3 * first, 3 * (first + count)), BufferUsage.VERTEX, created),
+                size: this.vertexBuffer(`sphere size${label}`, sizes.subarray(3 * first, 3 * (first + count)), BufferUsage.VERTEX, created),
+                colour: this.vertexBuffer(`sphere colour${label}`, colours.subarray(4 * first, 4 * (first + count)), BufferUsage.VERTEX, created),
+                count,
+            });
+        }
+        return chunks;
+    }
+
     private vertexBuffer(label: string, data: Float32Array | Uint32Array, usage: number, created: GPUBuffer[]): GPUBuffer {
         const buffer = this.device.createBuffer({
             label,
@@ -607,15 +656,16 @@ export class WebGPUPreviewRenderer {
         const created: GPUBuffer[] = [];
         const VERTEX = BufferUsage.VERTEX;
 
-        const chunks = this.meshChunks(item, created);
-        const instanceColour = item.colourSource === "instance"
+        const spheres = item.primitive === "spheres" ? this.sphereChunks(item, created) : [];
+        const chunks = item.primitive === "spheres" ? [] : this.meshChunks(item, created);
+        const instanceColour = item.colourSource === "instance" && item.primitive !== "spheres"
             ? this.vertexBuffer("instance colour", asFloat32(b.triangleColours[j]), VERTEX, created)
             : null;
 
         let instanceOrigin: GPUBuffer | null = null;
         let instanceSize: GPUBuffer | null = null;
         let instanceOrientation: GPUBuffer | null = null;
-        if (item.instanced) {
+        if (item.instanced && item.primitive !== "spheres") {
             const n = item.instanceCount;
             instanceOrigin = this.vertexBuffer("instance origin", asFloat32(b.triangleInstanceOrigins[j]), VERTEX, created);
             // WebGL leaves a missing size or orientation to the attribute's default value, which
@@ -647,7 +697,7 @@ export class WebGPUPreviewRenderer {
 
         return {
             dataVersion: b.dataVersion, sources, buffers: created,
-            chunks, instanceColour, instanceOrigin, instanceSize, instanceOrientation,
+            chunks, instanceColour, instanceOrigin, instanceSize, instanceOrientation, spheres,
             drawUniforms, bindGroup,
         };
     }
@@ -665,6 +715,23 @@ export class WebGPUPreviewRenderer {
             arrayStride: 64, stepMode: "instance",
             attributes: [0, 1, 2, 3].map(i => ({ shaderLocation: 5 + i, offset: 16 * i, format: "float32x4" as GPUVertexFormat })),
         };
+
+        if (kind === "spheres") {
+            const pipeline = this.device.createRenderPipeline({
+                label: `preview ${key}`,
+                layout: this.pipelineLayout,
+                vertex: {
+                    module: this.module, entryPoint: "vs_sphere",
+                    buffers: [vec3(0, "instance"), vec3(1, "instance"), vec4(2, "instance")],
+                },
+                fragment: { module: this.module, entryPoint: "fs_sphere", targets: [this.colourTargetState(transparent)] },
+                primitive: { topology: "triangle-list", cullMode: "none" },
+                depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: !transparent, depthCompare: "less" },
+                multisample: { count: SAMPLE_COUNT },
+            });
+            this.pipelines.set(key, pipeline);
+            return pipeline;
+        }
 
         const buffers: GPUVertexBufferLayout[] = [vec3(0), vec3(1)];
         let entryPoint: string;

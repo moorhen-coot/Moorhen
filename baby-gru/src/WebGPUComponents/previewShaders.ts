@@ -7,6 +7,10 @@
  * in step with the fragment shader there, or the two views will drift apart in ways that look
  * like bugs in whichever one is newer.
  *
+ * Perfect spheres follow twodshapes-vertex-shader.js and perfect-sphere-fragment-shader.js: a
+ * quad per sphere facing the viewer, shaded and given the depth of a sphere in the fragment
+ * shader. Their lighting is not the triangles': see fs_sphere.
+ *
  * Thick lines follow thick-lines-vertex-shader.js (unlit, with lines-fragment-shader.js) and
  * thick-lines-normal-vertex-shader.js (lit), but build their quads in the vertex shader from the
  * GPU's own buffers, where WebGL has them built on the CPU (linesToThickLinesWithIndices).
@@ -23,7 +27,11 @@ struct Frame {
     diffuse: vec4f,
     specular: vec4f,
     fogColour: vec4f,
-    params: vec4f,       // fog start, fog end, specular power, unused
+    params: vec4f,       // fog start, fog end, specular power, sphere clip caps (1 or 0)
+    rightDir: vec4f,     // the screen's right, in model space
+    upDir: vec4f,        // the screen's up, in model space
+    clipPlane0: vec4f,   // front clip plane, eye space
+    clipPlane1: vec4f,   // back clip plane, eye space
 };
 
 struct Draw {
@@ -167,5 +175,91 @@ fn fs_line(in: VOut) -> @location(0) vec4f {
 @fragment
 fn fs_lit_line(in: VOut) -> @location(0) vec4f {
     return fogged(lit(in.colour, in.normal), in.colour.a, in.eyeDistance);
+}
+
+// Perfect spheres: impostors. Each sphere is a square of side 2r centred on it, facing the
+// viewer, drawn as two triangles from the per-instance origin, size and colour alone. The
+// fragment shader cuts the disc out of it and gives each pixel the depth and normal of the
+// sphere's front surface there.
+struct SphereOut {
+    @builtin(position) position: vec4f,
+    @location(0) colour: vec4f,
+    // Where on the square, -1 to 1 each way: x right, y up.
+    @location(1) quad: vec2f,
+    // The square's point in eye space, at the depth of the sphere's centre.
+    @location(2) eye: vec4f,
+    @location(3) @interpolate(flat) radius: f32,
+};
+
+const SPHERE_CORNERS = array<vec2f, 6>(
+    vec2f(-1.0, -1.0), vec2f(1.0, -1.0), vec2f(1.0, 1.0),
+    vec2f(-1.0, -1.0), vec2f(1.0, 1.0), vec2f(-1.0, 1.0));
+
+@vertex
+fn vs_sphere(@builtin(vertex_index) vertex: u32, @location(0) origin: vec3f, @location(1) size: vec3f,
+             @location(2) colour: vec4f) -> SphereOut {
+    let corner = SPHERE_CORNERS[vertex];
+    // As twodshapes-vertex-shader.js: its unit-radius quad, scaled by sqrt(2) * size, has corners
+    // size along the screen's axes; drawCore turns them to face the screen.
+    let r = size.x;
+    let world = vec4f(origin + r * (corner.x * frame.rightDir.xyz + corner.y * frame.upDir.xyz), 1.0);
+    var out: SphereOut;
+    out.eye = frame.view * world;
+    out.position = frame.projection * out.eye;
+    out.colour = colour;
+    out.quad = corner;
+    out.radius = r;
+    return out;
+}
+
+struct SphereFragment {
+    @location(0) colour: vec4f,
+    @builtin(frag_depth) depth: f32,
+};
+
+@fragment
+fn fs_sphere(in: SphereOut) -> SphereFragment {
+    let x = in.quad.x;
+    let y = in.quad.y;
+    let zz = 1.0 - x * x - y * y;
+    // The same edge as WebGL's: a little inside the true silhouette.
+    if (zz <= 0.06) { discard; }
+    // The back plane is tested at the square, so a sphere beyond it goes whole, not sliced.
+    if (dot(in.eye, frame.clipPlane1) < 0.0) { discard; }
+    let capped = frame.params.w > 0.5;
+    // So is the front plane, without clip caps.
+    if (!capped && dot(in.eye, frame.clipPlane0) < 0.0) { discard; }
+    let z = sqrt(zz);
+
+    var out: SphereFragment;
+    // The front surface's depth: the square's point brought forward by z r, in eye space.
+    var surface = in.eye;
+    surface.z += z * in.radius;
+    let clip = frame.projection * surface;
+    out.depth = clip.z / clip.w;
+
+    // perfect-sphere-fragment-shader.js lights in eye space, with the light direction as given
+    // and the normal (x, y, z); here both are in model space, which gives the same products.
+    // Its specular term is not the triangles': pow(N.L), not a reflection.
+    let n = x * frame.rightDir.xyz + y * frame.upDir.xyz + z * frame.eyeDir.xyz;
+    let nl = max(dot(n, frame.lightDir.xyz), 0.0);
+    let base = in.colour;
+    let lit = 1.5 * base * frame.ambient + 1.2 * base * (frame.diffuse * nl) + frame.specular * pow(nl, frame.params.z);
+    let eyeDistance = abs(in.eye.z / in.eye.w);
+    out.colour = fogged(lit, base.a, eyeDistance);
+
+    // Clip caps, as perfect-sphere-fragment-shader.js fakes them: where the front surface is
+    // beyond the front plane, the sphere shows its flat, unlit colour, as if cut there; where the
+    // back surface is too, so that the whole chord is beyond it, nothing. The cap is the plane's
+    // whole cut through the sphere and meets the lit surface where front = 0.
+    if (capped) {
+        let front = dot(surface, frame.clipPlane0);
+        var backPlane = frame.clipPlane0;
+        backPlane.w += z * in.radius;
+        let back = dot(in.eye, backPlane);
+        if (front < 0.0) { out.colour = fogged(base, base.a, eyeDistance); }
+        if (back < 0.0) { discard; }
+    }
+    return out;
 }
 `;

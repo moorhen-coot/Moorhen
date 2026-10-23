@@ -23,9 +23,10 @@ export interface RendererImage {
 export interface WebGPUSceneSnapshot extends RendererImage {
     /** Tiles it was drawn in: more than one for an image bigger than the largest tile. */
     tiles: number;
-    /** Meshes (sub-buffers) and triangles drawn, instances included. */
+    /** Meshes (sub-buffers) and triangles drawn, instances included, and perfect spheres. */
     meshes: number;
     triangles: number;
+    spheres: number;
     /** What is in the scene but not drawn by the WebGPU renderer yet, with sub-buffer counts. */
     skipped: Record<string, number>;
     /** The same, as a sentence; empty if nothing was left out. */
@@ -133,7 +134,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 const { plan } = shot.report;
                 return {
                     width: shot.width, height: shot.height, data: shot.data, tiles: shot.tiles,
-                    meshes: plan.draws.length, triangles: plan.triangles,
+                    meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres,
                     skipped: plan.skipped, skippedText: describeSkipped(plan.skipped),
                 };
             } finally {

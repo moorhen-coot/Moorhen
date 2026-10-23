@@ -5,8 +5,9 @@ import type { WebGPUApi } from "../../src/WebGPUComponents/instanceApi";
 /**
  * The WebGPU renderer against the WebGL one, on the same scene and camera.
  *
- * 5a3h is loaded as ribbons only, which the WebGPU renderer draws in full, with the crosshairs
- * off. Then, in one go in the page, the main view's pixels are read back and the WebGPU renderer
+ * 5a3h is loaded in one representation at a time, with the crosshairs off: ribbons (meshes),
+ * ball-and-stick (instanced cylinders and perfect spheres) and spacefill (perfect spheres). Then,
+ * in one go in the page, the main view's pixels are read back and the WebGPU renderer
  * draws the same scene offscreen at the same size (moorhenInstance.webGPU), and the two are
  * compared pixel by pixel. Both pictures and their difference are attached to the report.
  *
@@ -17,13 +18,6 @@ import type { WebGPUApi } from "../../src/WebGPUComponents/instanceApi";
 
 /** Per-pixel difference, in levels of the largest channel, above which a pixel counts as different. */
 const PIXEL_TOLERANCE = 24;
-/**
- * Share of all pixels that may differ by more than that: silhouettes antialias a little
- * differently. First measured (Apple GPU, 2026-10-23): 0.49% of 1280x647, all on silhouettes.
- */
-const MAX_DIFFERING = 0.015;
-/** Mean difference over all pixels, in levels. First measured: 0.26. */
-const MAX_MEAN_DIFFERENCE = 1;
 
 /** The web component, as far as this test uses its instance. */
 interface Host {
@@ -31,6 +25,7 @@ interface Host {
         webGPU: WebGPUApi;
         representation: { defaultStyle: string };
         sceneSettings: { setDrawCrosshairs(value: boolean): void };
+        getMoleculeList(): { show(style: string): Promise<unknown>; hide(style: string): unknown }[];
     }>;
 }
 
@@ -39,6 +34,7 @@ interface ParityResult {
     height: number;
     meshes: number;
     triangles: number;
+    spheres: number;
     skippedText: string;
     tiles: number;
     /** Pixels that are not background, in the WebGL picture. */
@@ -49,8 +45,21 @@ interface ParityResult {
     images: { webgl: string; webgpu: string; difference: string } | null;
 }
 
+/**
+ * The representations compared, what they exercise, and how far they may differ: the share of
+ * all pixels differing by more than PIXEL_TOLERANCE, and the mean difference in levels. Triangle
+ * silhouettes antialias a little differently in the two; sphere impostors are not antialiased in
+ * either. The limits are about twice what was measured (Apple GPU, 1280x647, 2026-10-23): CRs
+ * 0.49% and 0.26, CBs 1.47% and 0.82 (many more edges), VdwSpheres 0.01% and 0.01.
+ */
+const STYLES: { style: string; what: string; maxDiffering: number; maxMeanDifference: number }[] = [
+    { style: "CRs", what: "ribbons", maxDiffering: 0.01, maxMeanDifference: 0.6 },
+    { style: "CBs", what: "ball-and-stick", maxDiffering: 0.03, maxMeanDifference: 1.6 },
+    { style: "VdwSpheres", what: "spacefill", maxDiffering: 0.002, maxMeanDifference: 0.2 },
+];
+
 test.describe("WebGPU against WebGL", () => {
-    test("ribbons of 5a3h look the same in both renderers", async ({ page }, testInfo) => {
+    for (const { style, what, maxDiffering, maxMeanDifference } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
         test.setTimeout(180_000);
         const moorhen = await startAndGetInstance(page);
 
@@ -61,7 +70,7 @@ test.describe("WebGPU against WebGL", () => {
         }, moorhen.elementId);
         test.skip(unavailable !== null, `No WebGPU: ${unavailable}`);
 
-        // Ribbons only, and nothing drawn over the scene that the WebGPU renderer leaves out.
+        // Ribbons to start with, and nothing drawn over the scene that WebGPU leaves out.
         await page.evaluate(async targetId => {
             const host = document.getElementById(targetId) as unknown as Host;
             const instance = await host.getMoorhenInstance();
@@ -71,6 +80,16 @@ test.describe("WebGPU against WebGL", () => {
 
         const loaded = await moorhen.loadFiles([{ url: "/tests/test_data/5a3h.pdb", filename: "5a3h.pdb" }]);
         expect(loaded).toEqual(expect.arrayContaining([expect.objectContaining({ type: "molecule", fileName: "5a3h.pdb" })]));
+        // Then the representation under test in place of the ribbons.
+        if (style !== "CRs") {
+            await page.evaluate(async ({ targetId, wanted }) => {
+                const host = document.getElementById(targetId) as unknown as Host;
+                const instance = await host.getMoorhenInstance();
+                const [molecule] = instance.getMoleculeList();
+                await molecule.show(wanted);
+                molecule.hide("CRs");
+            }, { targetId: moorhen.elementId, wanted: style });
+        }
         await moorhen.waitForWebGLRenderSettle({ minSettleMs: 1_500, minDisplayBufferCount: 1, timeoutMs: 60_000 });
 
         const result: ParityResult = await page.evaluate(async ({ targetId, tolerance }) => {
@@ -112,6 +131,7 @@ test.describe("WebGPU against WebGL", () => {
                 height: gl.height,
                 meshes: gpu.meshes,
                 triangles: gpu.triangles,
+                spheres: gpu.spheres,
                 skippedText: gpu.skippedText,
                 tiles: gpu.tiles,
                 drawn,
@@ -123,10 +143,10 @@ test.describe("WebGPU against WebGL", () => {
         }, { targetId: moorhen.elementId, tolerance: PIXEL_TOLERANCE });
 
         for (const [name, url] of Object.entries(result.images ?? {})) {
-            await testInfo.attach(`${name}.png`, { body: Buffer.from(url.split(",")[1], "base64"), contentType: "image/png" });
+            await testInfo.attach(`${style}-${name}.png`, { body: Buffer.from(url.split(",")[1], "base64"), contentType: "image/png" });
         }
         const pixels = result.width * result.height;
-        const summary = `${result.width}x${result.height}, ${result.meshes} meshes, ${result.triangles} triangles; ` +
+        const summary = `${style}: ${result.width}x${result.height}, ${result.meshes} meshes, ${result.triangles} triangles, ${result.spheres} spheres; ` +
             `${result.drawn} pixels drawn, ${result.differing} differ by more than ${PIXEL_TOLERANCE} ` +
             `(${(100 * result.differing / pixels).toFixed(2)}%), mean difference ${result.meanDifference.toFixed(2)}, worst ${result.worst}` +
             (result.skippedText ? `; not drawn by WebGPU: ${result.skippedText}` : "");
@@ -137,7 +157,7 @@ test.describe("WebGPU against WebGL", () => {
         expect(result.drawn, summary).toBeGreaterThan(pixels * 0.01);
         expect(result.meshes, summary).toBeGreaterThan(0);
         // The same picture, give or take antialiasing.
-        expect(result.differing, summary).toBeLessThanOrEqual(pixels * MAX_DIFFERING);
-        expect(result.meanDifference, summary).toBeLessThanOrEqual(MAX_MEAN_DIFFERENCE);
+        expect(result.differing, summary).toBeLessThanOrEqual(pixels * maxDiffering);
+        expect(result.meanDifference, summary).toBeLessThanOrEqual(maxMeanDifference);
     });
 });

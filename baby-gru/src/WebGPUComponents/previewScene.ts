@@ -3,9 +3,10 @@
  * and packing the per-frame uniforms.
  *
  * The preview reads the same DisplayBuffers the WebGL renderer does, from the store, and the same
- * camera, from the WebGL renderer's fields. It draws TRIANGLES sub-buffers only, instanced or not,
- * lit and fogged the way triangle-fragment-shader.js does it. Everything else is counted and
- * reported rather than silently missing, so a gap in the picture reads as "not done yet".
+ * camera, from the WebGL renderer's fields. It draws TRIANGLES sub-buffers, instanced or not, lit
+ * and fogged the way triangle-fragment-shader.js does it, and PERFECT_SPHERES as impostors, as
+ * twodshapes-vertex-shader.js and perfect-sphere-fragment-shader.js do. Everything else is counted
+ * and reported rather than silently missing, so a gap in the picture reads as "not done yet".
  */
 import * as mat4 from 'gl-matrix/mat4';
 import * as vec3 from 'gl-matrix/vec3';
@@ -34,16 +35,29 @@ export interface PreviewCameraSource {
     light_colours_specular: ArrayLike<number>;
     specularPower: number;
     background_colour: ArrayLike<number>;
+    /**
+     * Whether spheres cut by the front clip plane show a flat cap where they are cut, rather
+     * than vanishing whole (the scene's clipCap setting; MoorhenWebMG copies it here).
+     */
+    clipCapPerfectSpheres?: boolean;
 }
 
 /** Where a sub-buffer's colour comes from. Decides the pipeline. */
 export type ColourSource = "vertex" | "instance" | "uniform";
+
+/** How a sub-buffer is drawn. */
+export type PreviewPrimitive = "triangles" | "spheres";
 
 /** One sub-buffer the preview will draw. */
 export interface PreviewDraw {
     buffer: DisplayBuffer;
     /** Sub-buffer index. */
     index: number;
+    /**
+     * "triangles": a mesh, instanced or not. "spheres": PERFECT_SPHERES, one impostor quad per
+     * instance, coloured per instance; vertexCount and indexCount are then the quad's.
+     */
+    primitive: PreviewPrimitive;
     instanced: boolean;
     colourSource: ColourSource;
     /** Drawn after the opaque pass, blended, without writing depth. */
@@ -57,8 +71,10 @@ export interface PreviewPlan {
     draws: PreviewDraw[];
     /** Why things were left out, with counts of sub-buffers. Keys are human-readable. */
     skipped: Record<string, number>;
-    /** Triangles that will be drawn, instances included. */
+    /** Triangles that will be drawn, instances included (not counting the spheres' quads). */
     triangles: number;
+    /** Perfect spheres that will be drawn. */
+    spheres: number;
 }
 
 const skip = (skipped: Record<string, number>, why: string) => {
@@ -79,11 +95,20 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
     const draws: PreviewDraw[] = [];
     const skipped: Record<string, number> = {};
     let triangles = 0;
+    let spheres = 0;
 
     for (const buffer of displayBuffers) {
         if (!buffer || !shouldDraw(buffer.visible, buffer.alphaMultiplier ?? 1)) continue;
         const types = buffer.bufferTypes ?? [];
         for (let j = 0; j < types.length; j++) {
+            if (types[j] === "PERFECT_SPHERES") {
+                const draw = planSpheres(buffer, j, skipped);
+                if (draw) {
+                    draws.push(draw);
+                    spheres += draw.instanceCount;
+                }
+                continue;
+            }
             if (types[j] !== "TRIANGLES") {
                 skip(skipped, types[j] ?? "unknown");
                 continue;
@@ -126,18 +151,51 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
             if (buffer.symmetryMatrices?.length > 0) skip(skipped, "symmetry copies (original drawn)");
 
             draws.push({
-                buffer, index: j, instanced, colourSource,
+                buffer, index: j, primitive: "triangles", instanced, colourSource,
                 transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
                 vertexCount, indexCount, instanceCount,
             });
             triangles += (indexCount / 3) * instanceCount;
         }
     }
-    return { draws, skipped, triangles };
+    return { draws, skipped, triangles, spheres };
+}
+
+/**
+ * A PERFECT_SPHERES sub-buffer: an origin, a size (three floats, of which drawCore's shader uses
+ * the first, the radius) and an RGBA colour per sphere. drawCore always takes the colours per
+ * sphere, whatever customColour says, so this does too.
+ */
+function planSpheres(buffer: DisplayBuffer, j: number, skipped: Record<string, number>): PreviewDraw | null {
+    if (buffer.transformMatrix || buffer.transformMatrixInteractive) {
+        skip(skipped, "PERFECT_SPHERES with a transform matrix");
+        return null;
+    }
+    // Drawn at the hover size, which lives in the WebGL renderer, not in the buffer.
+    if (buffer.isHoverBuffer) {
+        skip(skipped, "hover highlight");
+        return null;
+    }
+    const n = Math.floor(lengthOf(buffer.triangleInstanceOrigins?.[j]) / 3);
+    if (n === 0) return null;
+    if (lengthOf(buffer.triangleInstanceSizes?.[j]) < 3 * n) {
+        skip(skipped, "PERFECT_SPHERES without a size per sphere");
+        return null;
+    }
+    if (lengthOf(buffer.triangleColours?.[j]) < 4 * n) {
+        skip(skipped, "PERFECT_SPHERES without a colour per sphere");
+        return null;
+    }
+    if (buffer.symmetryMatrices?.length > 0) skip(skipped, "symmetry copies (original drawn)");
+    return {
+        buffer, index: j, primitive: "spheres", instanced: true, colourSource: "instance",
+        transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
+        vertexCount: 4, indexCount: 6, instanceCount: n,
+    };
 }
 
 /** Floats in the per-frame uniform block; see Frame in previewShaders.ts. */
-export const FRAME_FLOATS = 60;
+export const FRAME_FLOATS = 76;
 
 /**
  * The camera for the preview's own canvas.
@@ -166,7 +224,8 @@ export function previewCameraFrame(source: PreviewCameraSource, width: number, h
  *
  * Lighting is done in model space, as the WebGL triangle shader does it: normals arrive
  * untransformed, and the light and eye directions are rotated back by the inverse view rotation.
- * That is what setLightUniforms and screenZ do.
+ * That is what setLightUniforms and screenZ do. The sphere shader lights in eye space with the
+ * light as given; rotating both the normal and the light back gives the same dot products.
  */
 export function frameUniforms(source: PreviewCameraSource, width: number, height: number, out = new Float32Array(FRAME_FLOATS)): Float32Array {
     const { projection, view } = viewProjection(previewCameraFrame(source, width, height), "zeroToOne");
@@ -194,7 +253,17 @@ export function frameUniforms(source: PreviewCameraSource, width: number, height
     // A zero-width fog range would divide by zero in the shader; WebGL has the same hazard and
     // the slab code never produces it, but a preview should not go black over it.
     const fogEnd = source.gl_fog_end > fogStart ? source.gl_fog_end : fogStart + 1e-3;
-    out.set([fogStart, fogEnd, source.specularPower, 0], 56);
+    out.set([fogStart, fogEnd, source.specularPower, source.clipCapPerfectSpheres ? 1 : 0], 56);
+
+    // The screen's right and up in model space, which sphere impostors face: what drawCore gets
+    // by turning its quad's corners with the same inverse rotation every frame.
+    const right = vec3.transformMat4(vec3.create(), [1, 0, 0], invRotation);
+    const up = vec3.transformMat4(vec3.create(), [0, 1, 0], invRotation);
+    out.set([right[0], right[1], right[2], 0], 60);
+    out.set([up[0], up[1], up[2], 0], 64);
+    // The front and back clip planes, in eye space, which the sphere shader tests itself.
+    out.set(Array.from(source.gl_clipPlane0).slice(0, 4), 68);
+    out.set(Array.from(source.gl_clipPlane1).slice(0, 4), 72);
     return out;
 }
 
