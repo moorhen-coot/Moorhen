@@ -68,6 +68,7 @@ import { m2tParameters, residueEnvironmentOptions } from "./Representation/Moorh
 import { guid } from "./utils";
 import { representationIdForRestore } from "./sessionRepresentation";
 import { MoorhenInstance } from "@/InstanceManager";
+import { USER_SCENE_FORMAT_VERSION, type UserSceneState } from "@/store/userSceneFormat";
 import { Root } from "protobufjs";
 
 export interface backupKey {
@@ -192,6 +193,11 @@ export type backupSession = {
     vectorData?: MoorhenVector[];
     overlay2dData?: Overlay2DSessionData;
     threeDObjectData?: ThreeDObject[];
+    /**
+     * The scenes and snapshots (JSON of a UserSceneState). The fields above describe the scene shown
+     * when the session was saved; sessions saved without it load into the "Default" scene.
+     */
+    sceneData?: string;
 };
 
 export type Overlay2DSessionData = {
@@ -234,6 +240,12 @@ export class MoorhenTimeCapsule {
     storageInstance: LocalForage;
     store: MoorhenReduxStoreType;
     onIsBusyChange: (arg0: boolean) => void;
+    /** Provides the scenes to save in sessions (set by MoorhenInstance) */
+    getSceneData: (() => string) | null = null;
+
+    /** Status returned by the session loaders for a session saved by a more recent version of Moorhen */
+    static readonly NEWER_VERSION_STATUS = -2;
+    static readonly NEWER_VERSION_MESSAGE = "This session file is for a more recent version of Moorhen, open it at moorhen.org";
 
     /**
      * Session versions older than the current one that can still be loaded. Add the outgoing
@@ -609,6 +621,8 @@ export class MoorhenTimeCapsule {
             vectorData: vectorData,
             threeDObjectData: threeDObjectData,
         };
+        const sceneData = this.getSceneData?.();
+        if (sceneData) session.sceneData = sceneData;
 
         return session;
     }
@@ -831,7 +845,29 @@ export class MoorhenTimeCapsule {
 
         if (!sessionData) {
             return -1;
-        } else if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
+        }
+        // Versions are "v<number>": refuse sessions from a more recent Moorhen with a clear message
+        const versionNumber = (version: unknown) => parseInt(String(version).replace(/^v/, ""));
+        if (versionNumber(sessionData.version) > versionNumber(timeCapsuleRef.current.version)) {
+            console.warn(MoorhenTimeCapsule.NEWER_VERSION_MESSAGE);
+            return MoorhenTimeCapsule.NEWER_VERSION_STATUS;
+        }
+        let sceneState: UserSceneState | null = null;
+        if (sessionData.sceneData) {
+            try {
+                sceneState = JSON.parse(sessionData.sceneData);
+            } catch (error) {
+                console.warn("Ignoring unreadable scene data in session", error);
+            }
+            if (sceneState?.formatVersion > USER_SCENE_FORMAT_VERSION) {
+                console.warn(MoorhenTimeCapsule.NEWER_VERSION_MESSAGE);
+                return MoorhenTimeCapsule.NEWER_VERSION_STATUS;
+            }
+        }
+        // Loading deletes every molecule: let a running scene switch finish first
+        await moorhenInstance.userScene.waitUntilIdle();
+
+        if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
             if (!MoorhenTimeCapsule.supportedLegacyVersions.includes(sessionData.version)) {
                 console.warn(`Outdated session backup version (${sessionData.version}), wont load...`);
                 return -1;
@@ -1234,6 +1270,13 @@ export class MoorhenTimeCapsule {
             });
         }
 
+        // What the session restored above is the selected scene; restore the others around it
+        if (sceneState) {
+            moorhenInstance.userScene.importState(sceneState);
+        } else {
+            moorhenInstance.userScene.resetForLegacySession();
+        }
+
         timeCapsuleRef.current.setBusy(false);
         return 0;
     }
@@ -1249,7 +1292,8 @@ export class MoorhenTimeCapsule {
      * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
      * @param {Store} store - The Redux store
      * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
-     * @returns {number} Returns -1 if there was an error loading the session otherwise 0
+     * @returns {number} Returns 0 on success, -1 if there was an error loading the session, or
+     * NEWER_VERSION_STATUS if the session is from a more recent Moorhen
      */
     static async loadSessionFromArrayBuffer(
         sessionArrayBuffer: ArrayBuffer,

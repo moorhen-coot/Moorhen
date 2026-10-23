@@ -48,6 +48,7 @@ import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
 import { startStoreSyncs } from "./StoreSync";
+import { DEFAULT_REPRESENTATION_STYLE, MoorhenUserSceneManager } from "./UserSceneManager";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
 import type { AppDispatch, MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 
@@ -105,7 +106,7 @@ export class MoorhenInstance extends StoreExtension {
         | "CRs"
         | "ribbons-and-ligands"
         | "ribbons-and-side-chains"
-        | "site-and-ribbons" = "ribbons-and-ligands";
+        | "site-and-ribbons" = DEFAULT_REPRESENTATION_STYLE;
     private _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
     private _commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
@@ -127,6 +128,7 @@ export class MoorhenInstance extends StoreExtension {
     private readyCallbacks: Array<() => void | Promise<void>> = [];
     private preferencesUnsubscribe: (() => void) | null = null;
     private storeSyncsUnsubscribe: (() => void) | null = null;
+    private _userScene: MoorhenUserSceneManager;
 
     /**
      * Create a new Moorhen instance.
@@ -161,6 +163,7 @@ export class MoorhenInstance extends StoreExtension {
         this._preferences = new Preferences();
         this._menuSystem = menuSystem || null;
         this.containerRef = containerRef;
+        this._userScene = new MoorhenUserSceneManager(this);
     }
 
     /**
@@ -330,16 +333,22 @@ export class MoorhenInstance extends StoreExtension {
         if (this.preferencesUnsubscribe) {
             this.preferencesUnsubscribe();
         }
+        // Needed by userScene before startInstance runs
+        this.store = store;
+        this.dispatch = dispatch;
         const persistence = initPreferencePersistence({
             store,
             dispatch,
             localStorageInstance: this._preferences,
-            onUserPreferencesChange: (key, value) => {
-                onUserPreferencesChange?.(key, value);
+            onUserPreferencesChange,
+            // Once per store change: saving a scene changes many preferences at once
+            onPreferencesStored: () => {
                 if (this._preferencesChangeCallbacks.size > 0) {
                     this.preferences.export().then(stored => this._preferencesChangeCallbacks.forEach(callback => callback(stored)));
                 }
             },
+            // The built-in scenes start from their saved settings, at start-up and after an import
+            onRestored: () => this.userScene.applySavedScenes(),
         });
         this._preferencesRestore = persistence.restore;
         this.preferencesUnsubscribe = persistence;
@@ -737,6 +746,16 @@ export class MoorhenInstance extends StoreExtension {
     public getMapList(): MoorhenMap[] {
         const state = this.store.getState();
         return state.maps;
+    }
+
+    /**
+     * Scene presets API for this instance: switch between, create, rename and delete
+     * named sets of representations (see {@link MoorhenUserSceneManager}).
+     * @example
+     * await instance.userScene.select("Model Building");
+     */
+    public get userScene(): MoorhenUserSceneManager {
+        return this._userScene;
     }
 
     /**
@@ -1201,6 +1220,17 @@ export class MoorhenInstance extends StoreExtension {
                 }
             },
 
+            getList(moleculeUid: string): MoleculeRepresentation[] {
+                const molecule = moorhenInstance.getMolecule(moleculeUid);
+                if (!molecule) {
+                    return [];
+                }
+                const representations = moorhenInstance.store.getState().molecules.customRepresentations.filter(
+                    (rep: MoleculeRepresentation) => rep.parentMolecule.uniqueId === molecule.uniqueId)
+                return representations;
+        
+            },
+
             /**
              * Delete an existing representation via the public API.
              *
@@ -1647,6 +1677,7 @@ export class MoorhenInstance extends StoreExtension {
         if (timeCapsuleConfig?.modificationCountBackupThreshold) {
             newTimeCapsule.modificationCountBackupThreshold = timeCapsuleConfig?.modificationCountBackupThreshold;
         }
+        newTimeCapsule.getSceneData = () => JSON.stringify(this.userScene.exportState());
         await newTimeCapsule.init();
         this.setTimeCapsule(newTimeCapsule);
         if (externalTimeCapsuleRef) {

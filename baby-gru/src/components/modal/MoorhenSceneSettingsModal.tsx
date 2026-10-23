@@ -2,8 +2,8 @@ import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { RootState } from "@/store";
+import { useMoorhenInstance } from "@/hooks";
 import {
-    resetSceneSettings,
     setBackgroundColor,
     setClipCap,
     setDepthBlurDepth,
@@ -35,6 +35,9 @@ import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/Draggable
 import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSwatch";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { MoorhenSlidersSettings } from "./MoorhenSceneSlidersModal";
+import { CopySceneButton } from "../menu-system/SceneSelector/CopySceneButton";
+import { SaveSceneButton } from "../menu-system/SceneSelector/SaveSceneButton";
+import { isBuiltInScene } from "../../store/userScenesSlice";
 
 const EdgeDetectPanel = () => {
     const dispatch = useDispatch();
@@ -491,14 +494,77 @@ const LightingPanel = () => {
     );
 };
 
+/** Which scene these settings belong to, a way to switch, and saving / resetting its settings */
+const CurrentScenePanel = () => {
+    const moorhenInstance = useMoorhenInstance();
+    const scenes = useSelector((state: RootState) => state.userScenes.scenes);
+    const snapshots = useSelector((state: RootState) => state.userScenes.snapshots);
+    const selectedScene = useSelector((state: RootState) => state.userScenes.selectedScene);
+    const isLocked = useSelector((state: RootState) => state.userScenes.isSceneChanging || state.movie.isPlaying);
+    const hasUnsavedChanges = useSelector((state: RootState) => moorhenInstance.userScene.hasUnsavedChanges(selectedScene, state));
+    const isSnapshot = snapshots.some(snapshot => snapshot.id === selectedScene);
+    const isBuiltIn = isBuiltInScene(selectedScene);
+
+    return (
+        <MoorhenStack direction="vertical" card={true}>
+            <MoorhenSelect
+                label="Scene"
+                value={selectedScene}
+                disabled={isLocked}
+                onChange={event => moorhenInstance.userScene.select(event.target.value)}
+            >
+                <optgroup label="Scenes">
+                    {scenes.map(scene => (
+                        <option key={scene.id} value={scene.id}>
+                            {scene.name}
+                        </option>
+                    ))}
+                </optgroup>
+                {snapshots.length > 0 && (
+                    <optgroup label="Snapshots">
+                        {snapshots.map(snapshot => (
+                            <option key={snapshot.id} value={snapshot.id}>
+                                {snapshot.name}
+                            </option>
+                        ))}
+                    </optgroup>
+                )}
+            </MoorhenSelect>
+            {isSnapshot ? (
+                <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>Snapshots cannot be changed: changes made here are not kept.</div>
+            ) : (
+                <MoorhenStack direction="line" gap="0.25rem">
+                    {isBuiltIn && <SaveSceneButton sceneId={selectedScene} />}
+                    <MoorhenButton
+                        disabled={isLocked}
+                        tooltip={isBuiltIn ? "Back to this scene's original settings (saved settings are kept)" : "Back to the default settings"}
+                        onClick={() => moorhenInstance.userScene.reset(selectedScene, "default")}
+                    >
+                        Reset to Default
+                    </MoorhenButton>
+                    {isBuiltIn && (
+                        <MoorhenButton
+                            disabled={isLocked || !hasUnsavedChanges}
+                            tooltip="Back to the settings saved for this scene"
+                            onClick={() => moorhenInstance.userScene.reset(selectedScene, "saved")}
+                        >
+                            Reset to Saved
+                        </MoorhenButton>
+                    )}
+                    <CopySceneButton sceneId={selectedScene} withLabel={true} />
+                </MoorhenStack>
+            )}
+        </MoorhenStack>
+    );
+};
+
 export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
     const panelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const [newSlidersMode, setNewSlidersMode] = useState<boolean>(true);
-    const dispatch = useDispatch();
     return (
         <MoorhenStack direction={props.stackDirection}>
-            <MoorhenButton onClick={() => dispatch(resetSceneSettings())} > Reset </MoorhenButton>
+            <CurrentScenePanel />
             <MoorhenToggle
                 label="Use new fog/clip/blur sliders"
                 checked={newSlidersMode}

@@ -1,5 +1,5 @@
 import localforage from "localforage";
-import { PREFERENCES_MAP, PreferenceEntry, PreferencesValues } from "./PreferencesList";
+import { ALL_PREFERENCES, PreferenceEntry, PreferencesValues } from "./PreferencesList";
 
 /**
  * Generates default preferences values from the preferences map
@@ -9,8 +9,8 @@ function generateDefaultPreferencesFromMap(): PreferencesValues {
         version: "v41",
     };
 
-    // Iterate through PREFERENCES_MAP and extract defaultValue for each preference
-    Object.values(PREFERENCES_MAP).forEach((preference: PreferenceEntry) => {
+    // Iterate through every preference and extract its defaultValue
+    ALL_PREFERENCES.forEach((preference: PreferenceEntry) => {
         defaults[preference.label] = preference.defaultValue;
     });
 

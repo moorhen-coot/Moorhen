@@ -18,6 +18,7 @@ import {
     createFakeHost,
     fetchCount,
     fetchedUrls,
+    flush,
     jobUrl,
     loadCootModules,
     readTestData,
@@ -101,7 +102,7 @@ describe("E2E: a CCP4 Cloud job from start to exit", () => {
         expect(mapByName(instance, "diff-map").isDifference).toBe(true);
 
         expect(store.getState().mapContourSettings.defaultMapSamplingRate).toBe(2.5);
-        expect(store.getState().sceneSettings.defaultBackgroundColor).toEqual([0.1, 0.1, 0.1, 1]);
+        expect(store.getState().sceneSettings.backgroundColor).toEqual([0.1, 0.1, 0.1, 1]);
     });
 
     test("E2E-02 the MTZ is fetched once and the dictionary before the structure", async () => {
@@ -153,24 +154,29 @@ describe("E2E: a CCP4 Cloud job from start to exit", () => {
         expect(payload.ligData.some(dictionary => dictionary.includes("data_comp_LIG"))).toBe(true);
     });
 
-    test("E2E-05 a preference changed then reset to default is added then removed, through onChange alone", async () => {
+    test("E2E-05 a scene setting saved then saved back to default is added then removed, through onChange alone", async () => {
         const { instance, store } = cloud;
         const exit = await runCloudJob(host, instance, readInputFiles(), readPreferences());
         const changed = !sceneSettingsInitialState.doSSAO;
 
+        // Editing the scene is not a preference until the scene is saved
         store.dispatch(setDoSSAO(changed));
-        await waitFor(() => host.savedPreferences.some(stored => stored.entries.doSSAO?.value === changed));
-        const addedIndex = host.savedPreferences.findIndex(stored => stored.entries.doSSAO?.value === changed);
+        await flush(100);
+        expect(host.savedPreferences).toEqual([]);
+        instance.userScene.saveScene("Default");
+        await waitFor(() => host.savedPreferences.some(stored => stored.entries["Default.doSSAO"]?.value === changed));
+        const addedIndex = host.savedPreferences.findIndex(stored => stored.entries["Default.doSSAO"]?.value === changed);
 
         store.dispatch(setDoSSAO(sceneSettingsInitialState.doSSAO));
-        await waitFor(() => host.savedPreferences.slice(addedIndex + 1).some(stored => !("doSSAO" in stored.entries)));
+        instance.userScene.saveScene("Default");
+        await waitFor(() => host.savedPreferences.slice(addedIndex + 1).some(stored => !("Default.doSSAO" in stored.entries)));
 
         const savedBeforeExit = host.savedPreferences.length;
         await exit();
         // exit saves nothing: the last onChange already holds the reset
         expect(host.savedPreferences).toHaveLength(savedBeforeExit);
         const last = host.savedPreferences[host.savedPreferences.length - 1];
-        expect(last.entries).not.toHaveProperty("doSSAO");
+        expect(last.entries).not.toHaveProperty("Default.doSSAO");
         expect(last).toEqual(readPreferences());
         expect(host.exitPayloads).toHaveLength(1);
     });

@@ -7,7 +7,7 @@ import { useMoorhenInstance } from "../../../InstanceManager/useMoorhenInstance"
 import { RootState } from "../../../store/MoorhenReduxStore";
 import "./popover.css";
 
-type PlacementType = "left" | "right" | "top" | "bottom" | "center";
+type PlacementType = "left" | "right" | "top" | "bottom" | "center" | "bottom-left";
 type MoorhenPopoverType = {
     popoverContent?: React.JSX.Element | React.ReactNode;
     children?: React.JSX.Element | React.ReactNode;
@@ -16,7 +16,7 @@ type MoorhenPopoverType = {
     link: React.JSX.Element;
     linkRef: React.RefObject<HTMLDivElement | HTMLButtonElement>;
     isShown: boolean;
-    type?: "default" | "tooltip" | "autocomplete" ;
+    type?: "default" | "tooltip" | "autocomplete" | "custom";
     setIsShown: (arg0: boolean) => void;
     overridePopoverSize?: { width: number; height: number };
     allowAutoFlip?: boolean;
@@ -24,7 +24,11 @@ type MoorhenPopoverType = {
     style?: React.CSSProperties;
     dynamicPosition?: boolean;
     hideOverflow?: boolean;
+    className?: string;
 };
+// Measure every popover type as position: fixed so its size matches the final layout (not the container width)
+const hiddenPopoverStyle: React.CSSProperties = { visibility: "hidden", position: "fixed", top: 0, left: 0 };
+
 export const MoorhenPopover = (props: MoorhenPopoverType) => {
     const {
         popoverContent = null,
@@ -36,9 +40,15 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
     } = props;
 
     const popoverRef = useRef<HTMLDivElement>(null);
-    const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({ visibility: "hidden" });
+    const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>(hiddenPopoverStyle);
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
     const [popoverPlacement, setPopoverPlacement] = useState<PlacementType>(props.popoverPlacement ?? "top");
+    // Keep the placement in sync with the prop (the state only diverges when auto-flip kicks in)
+    const [prevPlacementProp, setPrevPlacementProp] = useState(props.popoverPlacement);
+    if (props.popoverPlacement !== prevPlacementProp) {
+        setPrevPlacementProp(props.popoverPlacement);
+        setPopoverPlacement(props.popoverPlacement ?? "top");
+    }
     const linkPositionRef = useRef<{ left: number; top: number } | null>(null);
     const popoverSizeRef = useRef<{ width: number; height: number } | null>(null);
 
@@ -66,7 +76,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
         if (popoverPlacement === "center") {
             const left = "calc(50vw - " + popoverRect.width / 2 + "px)";
             const top = "calc(50vh - " + popoverRect.height / 2 + "px)";
-            setPopoverStyle({ visibility: "visible", left, top });
+            setPopoverStyle({ position: "fixed", visibility: "visible", left, top });
             return;
         }
 
@@ -88,7 +98,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
         function calculateLeft(placement) {
             let left: number;
-            if (type === "autocomplete") {
+            if (type === "autocomplete" || placement === "bottom-left") {
                 left = buttonRect.left;
             } else if (placement === "left") {
                 left = buttonRect.left - popoverRect.width - extraSpace;
@@ -102,7 +112,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
         function calculateTop(placement) {
             let top: number;
-            if (placement === "bottom") {
+            if (placement === "bottom" || placement === "bottom-left") {
                 top = buttonRect.bottom + extraSpace;
             } else if (placement === "top") {
                 top = buttonRect.top - popoverRect.height - extraSpace;
@@ -170,7 +180,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
 
     useLayoutEffect(() => {
         if (!isShown) {
-            setPopoverStyle({ visibility: "hidden" });
+            setPopoverStyle(hiddenPopoverStyle);
             return;
         }
 
@@ -242,7 +252,7 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
         arrow = "";
     }
 
-    let className: string = "";
+    let className: string = props.className ?? "";
     if (type === "tooltip") {
         className = "moorhen__tooltip";
     } else if (type === "autocomplete") {

@@ -5,63 +5,20 @@
  * gets from one to the next. This holds the whole artefact: that path, plus the settings that do
  * not vary, plus enough about itself to appear in a list.
  *
- * WHY THE SETTINGS ARE NOT KEYFRAME PROPERTIES
+ * WHERE THE MODES COME FROM
  *
- * The line is between quantities and modes. Halfway between two light positions is a light
- * position; halfway between shadows-on and shadows-off is nothing at all. So a quantity belongs on
- * a keyframe, where it can be interpolated, and a mode belongs here, set once and applied for the
- * whole movie.
- *
- * SSAO and edge detection sit here whole, parameters and all, which is the one place the rule is
- * applied loosely. Their numbers are quantities, but they configure a feature that is either
- * running or not, and animating a radius while the thing it belongs to switches off midway is more
- * confusion than anyone wanted. Recording them at all - rather than leaving them to whatever the
- * viewer happens to have set - is what makes a movie look the same tomorrow as it does today.
- *
- * Blur is split rather than lumped: whether the off-screen buffers run is a mode and lives here,
- * while how deep and how wide the blur is are quantities and live on the keyframe.
+ * A keyframe holds quantities that can be interpolated: halfway between two light positions is a
+ * light position. Modes cannot - halfway between shadows-on and shadows-off is nothing at all - so
+ * they are set once for the whole movie, and the place they are set is the movie's scene: a scene
+ * of its own (the movie scene, `MOVIE_SCENE_ID`), created as a copy of the scene shown when the
+ * first keyframe is captured, edited like any other scene, and selected whenever the movie is
+ * captured, played or exported. There is one movie at a time, so one movie scene. Shadows, SSAO, edge detection, depth blur and the representations the movie fades all
+ * come from it, and it travels in the session a movie file embeds.
  */
 
 import { Movie, movieDuration } from "./cameraPath";
 import { DEFAULT_QUALITY } from "./videoBitrate";
 import type { VideoQuality } from "./videoBitrate";
-
-/**
- * The scene's modes, fixed for the length of a movie.
- *
- * Every field is required, because a saved movie that declines to say whether it wanted shadows is
- * a movie that looks different on someone else's machine. Capturing them is cheap; guessing is not.
- */
-export interface MovieSceneSettings {
-    doShadow: boolean;
-    doSSAO: boolean;
-    ssaoRadius: number;
-    ssaoBias: number;
-    doEdgeDetect: boolean;
-    edgeDetectDepthScale: number;
-    edgeDetectNormalScale: number;
-    edgeDetectDepthThreshold: number;
-    edgeDetectNormalThreshold: number;
-    doOutline: boolean;
-    /** Whether depth of field runs at all. Where the focal plane sits is per keyframe. */
-    useOffScreenBuffers: boolean;
-    /**
-     * How wide the depth-of-field blur is.
-     *
-     * A quantity that cannot be animated: setting it reallocates the blur framebuffers, so it has
-     * to be chosen once for the movie rather than interpolated between keyframes.
-     */
-    blurRadius: number;
-    doPerspectiveProjection: boolean;
-    /**
-     * Distance from the eye to the view centre.
-     *
-     * A quantity, and it still sits here: a camera path has no slot to interpolate it, so a movie
-     * that wanted a dolly zoom could not have one anyway. Recording it keeps perspective looking
-     * the way it was authored.
-     */
-    eyeDistance: number;
-}
 
 /** How the movie is rendered out. Nothing here changes what the scene looks like. */
 export interface MovieOutputSettings {
@@ -82,7 +39,6 @@ export interface MovieDocument {
     name: string;
     /** What varies with time. */
     path: Movie;
-    scene: MovieSceneSettings;
     output: MovieOutputSettings;
 }
 
@@ -93,33 +49,9 @@ export const DEFAULT_OUTPUT: MovieOutputSettings = {
     quality: DEFAULT_QUALITY,
 };
 
-/**
- * The settings a movie gets when nothing says otherwise.
- *
- * Deliberately the quiet ones. A movie made without thinking about shadows should not acquire
- * them, and the expensive passes are the ones most likely to turn a smooth export into a slow one.
- */
-export const DEFAULT_SCENE: MovieSceneSettings = {
-    doShadow: false,
-    doSSAO: false,
-    ssaoRadius: 1.0,
-    ssaoBias: 0.025,
-    doEdgeDetect: false,
-    edgeDetectDepthScale: 1.0,
-    edgeDetectNormalScale: 1.0,
-    edgeDetectDepthThreshold: 1.0,
-    edgeDetectNormalThreshold: 1.0,
-    doOutline: false,
-    useOffScreenBuffers: false,
-    blurRadius: 3.0,
-    doPerspectiveProjection: false,
-    eyeDistance: 250,
-};
-
 export const emptyMovie = (name = "Untitled movie"): MovieDocument => ({
     name,
     path: { keyframes: [], segments: [] },
-    scene: { ...DEFAULT_SCENE },
     output: { ...DEFAULT_OUTPUT },
 });
 

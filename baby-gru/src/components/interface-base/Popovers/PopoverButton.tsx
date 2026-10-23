@@ -17,6 +17,7 @@ type MoorhenPopoverButtonType = {
     popoverStyle?: React.CSSProperties;
     closeButton?: boolean;
     label?: string;
+    extraOnClick?: () => void;
 };
 
 export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
@@ -30,7 +31,10 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
             icon={props.icon ? props.icon : "MatSymSettings"}
             size={props.size}
             ref={buttonRef}
-            onClick={() => setPopOverIsShown(!popoverIsShown)}
+            onClick={() => {
+                setPopOverIsShown(!popoverIsShown);
+                props.extraOnClick?.();
+            }}
             tooltip={tooltip}
             style={style}
             label={label}

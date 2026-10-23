@@ -1,5 +1,4 @@
 import type { RootState } from "@/store/MoorhenReduxStore";
-import { setBackgroundColor } from "@/store/sceneSettingsSlice";
 import type { MoorhenInstance } from "./MoorhenInstance";
 
 /**
@@ -23,14 +22,6 @@ const STORE_SYNCS: StoreSync<unknown>[] = [
         selector: state => state.mapContourSettings.defaultMapSamplingRate,
         apply: (instance, rate) =>
             instance.commandCentre?.cootCommand({ command: "set_map_sampling_rate", commandArgs: [rate], returnType: "status" }, false),
-    }),
-    sync({
-        // e.g. preferences imported by a host after start-up recolour the current view, not only the next session.
-        // MainContainer copies backgroundColor back into defaultBackgroundColor; that settles after one step, since
-        // dispatching the same array leaves the state unchanged
-        name: "background colour",
-        selector: state => state.sceneSettings.defaultBackgroundColor,
-        apply: (instance, colour) => instance.dispatch(setBackgroundColor(colour)),
     }),
 ];
 
