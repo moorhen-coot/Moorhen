@@ -51,6 +51,48 @@ export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
      * the hovered atoms, so the highlight covers them. MGWebGL has its store.
      */
     store?: { getState(): { glRef?: { hoverSize?: number; texturedShapes?: TexturedShapeSource[] } } };
+    /** Screen-space ambient occlusion (scene settings doSSAO, ssaoRadius in A, ssaoBias the strength). */
+    doSSAO?: boolean;
+    ssaoRadius?: number;
+    ssaoBias?: number;
+    /**
+     * Edge detection (doEdgeDetect): a step in depth of more than depthThreshold A, or a change of
+     * normal past normalThreshold, across scaleDepth or scaleNormal of WebGL's g-buffer texels.
+     */
+    doEdgeDetect?: boolean;
+    depthThreshold?: number;
+    normalThreshold?: number;
+    scaleDepth?: number;
+    scaleNormal?: number;
+}
+
+/** What the effects passes do this frame, from the source's settings; null for an effect that is off. */
+export interface EffectSettings {
+    ssao: { radius: number; strength: number } | null;
+    edges: { depthThreshold: number; normalThreshold: number; depthStep: number; normalStep: number } | null;
+}
+
+/**
+ * The effects the source asks for.
+ *
+ * Edge detection's steps are in pixels of the image: WebGL's are in texels of a g-buffer about
+ * twice the canvas, so its default scale of 2 comes to about one pixel. Taken as half the scale,
+ * rounded, so 0 stays "off" (normal edges are off by default, with scaleNormal 0) and anything
+ * else is at least one pixel.
+ */
+export function effectSettings(source: PreviewCameraSource): EffectSettings {
+    const step = (scale: number | undefined) => (scale && scale > 0 ? Math.max(1, Math.round(scale / 2)) : 0);
+    return {
+        ssao: source.doSSAO ? { radius: source.ssaoRadius ?? 5, strength: source.ssaoBias ?? 1 } : null,
+        edges: source.doEdgeDetect
+            ? {
+                depthThreshold: source.depthThreshold ?? 1.3,
+                normalThreshold: source.normalThreshold ?? 0.5,
+                depthStep: step(source.scaleDepth ?? 2),
+                normalStep: step(source.scaleNormal ?? 0),
+            }
+            : null,
+    };
 }
 
 /**
@@ -360,7 +402,7 @@ function copiesOf(buffer: DisplayBuffer): { copies: ArrayLike<number>[]; greyCop
 }
 
 /** Floats in the per-frame uniform block; see Frame in previewShaders.ts. */
-export const FRAME_FLOATS = 76;
+export const FRAME_FLOATS = 84;
 
 /**
  * The camera for the preview's own canvas.
@@ -429,6 +471,10 @@ export function frameUniforms(source: PreviewCameraSource, width: number, height
     // The front and back clip planes, in eye space, which the sphere shader tests itself.
     out.set(Array.from(source.gl_clipPlane0).slice(0, 4), 68);
     out.set(Array.from(source.gl_clipPlane1).slice(0, 4), 72);
+    // Which effects maps the frame has, and where in them its pixels are (the renderer sets these
+    // when it has made them; for a tile the maps reach past it).
+    out.set([0, 0, 0, 0], 76);
+    out.set([0, 0, 1 / width, 1 / height], 80);
     return out;
 }
 

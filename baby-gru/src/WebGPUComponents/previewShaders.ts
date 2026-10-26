@@ -37,6 +37,8 @@ struct Frame {
     upDir: vec4f,        // the screen's up, in model space
     clipPlane0: vec4f,   // front clip plane, eye space
     clipPlane1: vec4f,   // back clip plane, eye space
+    effects: vec4f,      // 1 where the frame has them: ambient occlusion, edges, (shadows, quality)
+    effectsArea: vec4f,  // where this target's pixels are in the effects maps (x, y), and 1 / the maps' size
 };
 
 @group(0) @binding(0) var<uniform> frame: Frame;
@@ -60,6 +62,49 @@ fn ambientLight() -> vec4f {
 }
 
 @group(1) @binding(0) var<uniform> draw: Draw;
+
+// The effects maps (effectPasses.ts), read at the fragment's pixel; 1 x 1 white stand-ins when the
+// frame has none, and the flags in frame.effects say so too. For a tile of a snapshot the maps
+// cover the tile and a margin round it, so the pixel is offset into them.
+@group(0) @binding(1) var aoMap: texture_2d<f32>;
+@group(0) @binding(2) var edgeMap: texture_2d<f32>;
+@group(0) @binding(3) var effectSampler: sampler;
+
+// Ambient occlusion at this pixel: what triangle-fragment-shader.js multiplies its ambient and
+// diffuse light by (SSAOMap). 1 without it.
+fn occlusionAt(fragCoord: vec4f) -> f32 {
+    if (frame.effects.x < 0.5) { return 1.0; }
+    // Half size: a texel for every 2 x 2 pixels, from the corner.
+    let uv = (fragCoord.xy + frame.effectsArea.xy) * 0.5 / vec2f(textureDimensions(aoMap));
+    return textureSampleLevel(aoMap, effectSampler, uv, 0.0).r;
+}
+
+// The edge factor at this pixel, 0 on an edge and 1 elsewhere, antialiased as WebGL reads its edge
+// map: through the FXAA filter of fxaa.js, on one channel. 1 without edges.
+fn edgeAt(fragCoord: vec4f) -> f32 {
+    if (frame.effects.y < 0.5) { return 1.0; }
+    let inv = frame.effectsArea.zw;
+    let p = fragCoord.xy + frame.effectsArea.xy;
+    let nw = textureSampleLevel(edgeMap, effectSampler, (p + vec2f(-1.0, -1.0)) * inv, 0.0).r;
+    let ne = textureSampleLevel(edgeMap, effectSampler, (p + vec2f(1.0, -1.0)) * inv, 0.0).r;
+    let sw = textureSampleLevel(edgeMap, effectSampler, (p + vec2f(-1.0, 1.0)) * inv, 0.0).r;
+    let se = textureSampleLevel(edgeMap, effectSampler, (p + vec2f(1.0, 1.0)) * inv, 0.0).r;
+    let m = textureSampleLevel(edgeMap, effectSampler, p * inv, 0.0).r;
+    // Luma of a grey is the grey.
+    let lumaMin = min(m, min(min(nw, ne), min(sw, se)));
+    let lumaMax = max(m, max(max(nw, ne), max(sw, se)));
+    // Along the edge: perpendicular to the gradient, whichever way y runs.
+    var dir = vec2f(-((nw + ne) - (sw + se)), (nw + sw) - (ne + se));
+    let dirReduce = max((nw + ne + sw + se) * (0.25 / 8.0), 1.0 / 128.0);
+    let rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
+    dir = clamp(dir * rcpDirMin, vec2f(-8.0), vec2f(8.0)) * inv;
+    let centre = p * inv;
+    let a = 0.5 * (textureSampleLevel(edgeMap, effectSampler, centre + dir * (1.0 / 3.0 - 0.5), 0.0).r
+                 + textureSampleLevel(edgeMap, effectSampler, centre + dir * (2.0 / 3.0 - 0.5), 0.0).r);
+    let b = a * 0.5 + 0.25 * (textureSampleLevel(edgeMap, effectSampler, centre - dir * 0.5, 0.0).r
+                            + textureSampleLevel(edgeMap, effectSampler, centre + dir * 0.5, 0.0).r);
+    return select(b, a, b < lumaMin || b > lumaMax);
+}
 
 struct VOut {
     @builtin(position) position: vec4f,
@@ -126,14 +171,16 @@ fn vs_instanced_uniform_colour(@location(0) position: vec3f, @location(1) normal
     return placeInstance(position, normal, origin, size, o0, o1, o2, o3, draw.colour);
 }
 
-fn lit(base: vec4f, normal: vec3f) -> vec4f {
+// occ: the ambient occlusion here, which darkens the ambient and diffuse light but not the
+// highlight, as in triangle-fragment-shader.js.
+fn lit(base: vec4f, normal: vec3f, occ: f32) -> vec4f {
     let n = normalize(normal);
     let L = frame.lightDir.xyz;
     let E = frame.eyeDir.xyz;
     let R = normalize(-reflect(L, n));
     let diffuse = frame.diffuse * max(dot(n, L), 0.0);
     let specular = frame.specular * pow(max(dot(R, E), 0.0), frame.params.z);
-    return 1.5 * base * ambientLight() + 1.2 * base * diffuse + specular;
+    return (1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ + specular;
 }
 
 fn fogged(colour: vec4f, alpha: f32, eyeDistance: f32) -> vec4f {
@@ -145,11 +192,20 @@ fn fogged(colour: vec4f, alpha: f32, eyeDistance: f32) -> vec4f {
     return out;
 }
 
+// The edge factor scales everything, back faces too; the occlusion only the lit front.
 @fragment
 fn fs_main(in: VOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
     // Back faces are drawn flat in their own colour, as in WebGL.
-    let colour = select(in.colour, lit(in.colour, in.normal), frontFacing);
-    return fogged(colour, in.colour.a, in.eyeDistance);
+    let colour = select(in.colour, lit(in.colour, in.normal, occlusionAt(in.position)), frontFacing);
+    return fogged(colour * edgeAt(in.position), in.colour.a, in.eyeDistance);
+}
+
+// The g-buffer (effectPasses.ts): the surface's normal in eye space, w = 1 where anything is drawn.
+// Depth is the depth attachment's. Facing as the mesh says, as WebGL's g-buffer has it, so a back
+// face's normal points away from the viewer.
+@fragment
+fn fs_gbuffer(in: VOut) -> @location(0) vec4f {
+    return vec4f(normalize((frame.view * vec4f(in.normal, 0.0)).xyz), 1.0);
 }
 
 // Textured meshes: a sub-buffer with a BufferMaterial (textureRegistry.ts) and a texture
@@ -233,13 +289,13 @@ fn metalReflection(N: vec3f, E: vec3f, L: vec3f, roughness: f32) -> f32 {
 
 // lit, with what a metallic-roughness map changes: the highlight's exponent and colour, and the
 // diffuse light traded for a metal's reflection.
-fn litSurface(base: vec4f, n: vec3f, shininess: f32, specularTint: vec4f, metallic: f32, roughness: f32) -> vec4f {
+fn litSurface(base: vec4f, n: vec3f, shininess: f32, specularTint: vec4f, metallic: f32, roughness: f32, occ: f32) -> vec4f {
     let L = frame.lightDir.xyz;
     let E = frame.eyeDir.xyz;
     let R = normalize(-reflect(L, n));
     let diffuse = frame.diffuse * (max(dot(n, L), 0.0) * (1.0 - metallic) + metallic * metalReflection(n, E, L, roughness));
     let specular = specularTint * frame.specular * pow(max(dot(R, E), 0.0), shininess);
-    return 1.5 * base * ambientLight() + 1.2 * base * diffuse + specular;
+    return (1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ + specular;
 }
 
 // The normal map's normal, as mappedNormal in triangle-fragment-shader.js: the directions in
@@ -286,8 +342,8 @@ fn fs_textured(in: TexturedOut, @builtin(front_facing) frontFacing: bool) -> @lo
         specularTint = vec4f(mix(vec3f(1.0), colour.rgb, metallic) * (1.0 - roughness), 1.0);
     }
     // Back faces flat in their (textured) colour, as fs_main.
-    let shaded = select(colour, litSurface(colour, n, shininess, specularTint, metallic, roughness), frontFacing);
-    return fogged(shaded, in.colour.a, in.eyeDistance);
+    let shaded = select(colour, litSurface(colour, n, shininess, specularTint, metallic, roughness, occlusionAt(in.position)), frontFacing);
+    return fogged(shaded * edgeAt(in.position), in.colour.a, in.eyeDistance);
 }
 
 // Thick lines, drawn from a triangle mesh's own buffers: each edge of each triangle is a quad
@@ -388,9 +444,10 @@ fn fs_line(in: VOut) -> @location(0) vec4f {
     return fogged(in.colour, in.colour.a, in.eyeDistance);
 }
 
+// Lit lines are drawn with the triangle shader in WebGL, so occlusion and edges darken them too.
 @fragment
 fn fs_lit_line(in: VOut) -> @location(0) vec4f {
-    return fogged(lit(in.colour, in.normal), in.colour.a, in.eyeDistance);
+    return fogged(lit(in.colour, in.normal, occlusionAt(in.position)) * edgeAt(in.position), in.colour.a, in.eyeDistance);
 }
 
 // Perfect spheres: impostors. Each sphere is a square of side 2r centred on it, facing the
@@ -461,9 +518,10 @@ fn fs_sphere(in: SphereOut) -> SphereFragment {
     let n = x * frame.rightDir.xyz + y * frame.upDir.xyz + z * frame.eyeDir.xyz;
     let nl = max(dot(n, frame.lightDir.xyz), 0.0);
     let base = in.colour;
-    let lit = 1.5 * base * ambientLight() + 1.2 * base * (frame.diffuse * nl) + frame.specular * pow(nl, frame.params.z);
+    let occ = occlusionAt(in.position);
+    let lit = (1.5 * base * ambientLight() + 1.2 * base * (frame.diffuse * nl)) * occ + frame.specular * pow(nl, frame.params.z);
     let eyeDistance = abs(in.eye.z / in.eye.w);
-    out.colour = fogged(lit, base.a, eyeDistance);
+    out.colour = fogged(lit * edgeAt(in.position), base.a, eyeDistance);
 
     // Clip caps, as perfect-sphere-fragment-shader.js fakes them: where the front surface is
     // beyond the front plane, the sphere shows its flat, unlit colour, as if cut there; where the
@@ -477,6 +535,30 @@ fn fs_sphere(in: SphereOut) -> SphereFragment {
         if (front < 0.0) { out.colour = fogged(base, base.a, eyeDistance); }
         if (back < 0.0) { discard; }
     }
+    return out;
+}
+
+struct SphereGBuffer {
+    @location(0) normal: vec4f,
+    @builtin(frag_depth) depth: f32,
+};
+
+// A sphere in the g-buffer, as perfect-sphere-gbuffer-fragment-shader.js: the same cut and depth,
+// both clip planes tested at the square (no caps), and the eye-space normal (x, y, z).
+@fragment
+fn fs_sphere_gbuffer(in: SphereOut) -> SphereGBuffer {
+    let x = in.quad.x;
+    let y = in.quad.y;
+    let zz = 1.0 - x * x - y * y;
+    if (zz <= 0.06) { discard; }
+    if (dot(in.eye, frame.clipPlane1) < 0.0 || dot(in.eye, frame.clipPlane0) < 0.0) { discard; }
+    let z = sqrt(zz);
+    var surface = in.eye;
+    surface.z += z * in.radius;
+    let clip = frame.projection * surface;
+    var out: SphereGBuffer;
+    out.depth = clip.z / clip.w;
+    out.normal = vec4f(x, y, z, 1.0);
     return out;
 }
 `;

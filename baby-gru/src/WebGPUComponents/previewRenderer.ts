@@ -15,14 +15,15 @@
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
 import type * as mat4 from 'gl-matrix/mat4';
 import { BufferUsage, GpuSpanTimer, MapMode, ShaderStage, TextureUsage, getGpuContext } from './gpu';
-import { SnapshotTile, narrowToTile, planTiles } from './snapshotTiles';
+import { SnapshotTile, expandTile, narrowToTile, planTiles } from './snapshotTiles';
 import { PREVIEW_WGSL } from './previewShaders';
 import { TextLayer, textBatchesOf } from './textLayer';
 import { OverlayLines, overlayLineBatchesOf } from './overlayLines';
 import { TexturedShapeLayer } from './texturedShapes';
 import { SurfaceTextures } from './surfaceTextures';
+import { EffectMaps, EffectPasses, GBUFFER_DEPTH_FORMAT, GBUFFER_NORMAL_FORMAT, effectMargin } from './effectPasses';
 import {
-    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, symmetryCopyGrey,
+    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, symmetryCopyGrey,
 } from './previewScene';
 
 
@@ -33,6 +34,18 @@ import {
  * thick-lines-vertex-shader.js offsets by pixelZoom times their length squared, each way.
  */
 export const thickLineHalfWidth = (lineWidth: number, zoom: number): number => 0.04 * zoom * lineWidth * lineWidth;
+
+/**
+ * Pixels per angstrom at the view centre, from the whole image's frame uniforms (projection, then
+ * view) and its width: how big the effects' reach in angstroms is on screen.
+ */
+function pixelsPerAngstrom(frame: Float32Array, camera: PreviewCameraSource, width: number): number {
+    const centre = [-camera.origin[0], -camera.origin[1], -camera.origin[2], 1];
+    const eye = [0, 1, 2, 3].map(r => frame[16 + r] * centre[0] + frame[20 + r] * centre[1] + frame[24 + r] * centre[2] + frame[28 + r]);
+    const clip = (p: number[]) => [0, 3].map(r => frame[r] * p[0] + frame[4 + r] * p[1] + frame[8 + r] * p[2] + frame[12 + r] * p[3]);
+    const a = clip(eye), b = clip([eye[0] + 1, eye[1], eye[2], eye[3]]);
+    return Math.abs(b[0] / b[1] - a[0] / a[1]) * width / 2;
+}
 
 const SAMPLE_COUNT = 4;
 /** Floats in a Draw uniform block (previewShaders.ts): colour, params, copyColour, model, ambient. */
@@ -200,7 +213,18 @@ export class WebGPUPreviewRenderer {
     private readonly format: GPUTextureFormat;
     private readonly module: GPUShaderModule;
     private readonly frameBuffer: GPUBuffer;
+    /** The frame's uniforms with white stand-ins for the effects maps, for frames without effects. */
     private readonly frameBindGroup: GPUBindGroup;
+    /**
+     * The g-buffer pass's: the same camera, narrowed for a tile to the tile and its margin (see
+     * expandTile) where the frame's is narrowed to the tile.
+     */
+    private readonly gbufferFrameBuffer: GPUBuffer;
+    private readonly gbufferFrameBindGroup: GPUBindGroup;
+    /** And with this frame's maps, remade when the maps are. */
+    private effectsFrameBindGroup: { maps: EffectMaps; bindGroup: GPUBindGroup } | null = null;
+    /** Ambient occlusion and edges: the g-buffer and the passes that read it. */
+    private readonly effects: EffectPasses;
     private readonly frameLayout: GPUBindGroupLayout;
     private readonly drawLayout: GPUBindGroupLayout;
     private readonly pipelineLayout: GPUPipelineLayout;
@@ -275,9 +299,15 @@ export class WebGPUPreviewRenderer {
         });
 
         this.module = device.createShaderModule({ label: "preview", code: PREVIEW_WGSL });
+        // The frame's uniforms, and the effects maps every lit pipeline reads (previewShaders.ts).
         this.frameLayout = device.createBindGroupLayout({
             label: "preview frame",
-            entries: [{ binding: 0, visibility: ShaderStage.VERTEX | ShaderStage.FRAGMENT, buffer: { type: "uniform" } }],
+            entries: [
+                { binding: 0, visibility: ShaderStage.VERTEX | ShaderStage.FRAGMENT, buffer: { type: "uniform" } },
+                { binding: 1, visibility: ShaderStage.FRAGMENT, texture: { sampleType: "float" } },
+                { binding: 2, visibility: ShaderStage.FRAGMENT, texture: { sampleType: "float" } },
+                { binding: 3, visibility: ShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+            ],
         });
         this.drawLayout = device.createBindGroupLayout({
             label: "preview draw",
@@ -299,10 +329,14 @@ export class WebGPUPreviewRenderer {
             size: FRAME_FLOATS * 4,
             usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST,
         });
-        this.frameBindGroup = device.createBindGroup({
-            layout: this.frameLayout,
-            entries: [{ binding: 0, resource: { buffer: this.frameBuffer } }],
+        this.effects = new EffectPasses(device);
+        this.frameBindGroup = this.frameBindGroupWith(null);
+        this.gbufferFrameBuffer = device.createBuffer({
+            label: "g-buffer frame uniforms",
+            size: FRAME_FLOATS * 4,
+            usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST,
         });
+        this.gbufferFrameBindGroup = this.frameBindGroupWith(null, this.gbufferFrameBuffer);
         this.frameTimer = GpuSpanTimer.create(device, "preview frame");
         this.textLayer = new TextLayer(device, this.format, this.frameLayout, SAMPLE_COUNT, DEPTH_FORMAT);
         this.overlayLines = new OverlayLines(device, this.format, this.frameLayout, SAMPLE_COUNT, DEPTH_FORMAT);
@@ -422,15 +456,42 @@ export class WebGPUPreviewRenderer {
         const uploads = this.syncResources(displayBuffers, plan.draws);
 
         const uniforms = frameUniforms(camera, target.width, target.height, this.frameData);
+        const whole = uniforms.slice();
         // The projection is the frame's first 16 floats (Frame in previewShaders.ts).
         if (target.tile) narrowToTile(uniforms, target.tile, target.width, target.height);
-        this.device.queue.writeBuffer(this.frameBuffer, 0, uniforms);
 
         const background = camera.background_colour;
         const encoder = this.device.createCommandEncoder({ label: "preview frame" });
         const timing = target.timed ? this.frameTimer?.writes() ?? null : null;
+
+        // Ambient occlusion and edges, if asked for: the scene into the g-buffer, then the maps.
+        // Over the image, or for a tile over the tile and enough round it to join its neighbours.
+        const settings = effectSettings(camera);
+        let maps: EffectMaps | null = null;
+        const tile = target.tile ?? { x: 0, y: 0, width: target.width, height: target.height };
+        let area = tile;
+        if (EffectPasses.wanted(settings)) {
+            if (target.tile) {
+                area = expandTile(target.tile, effectMargin(settings, pixelsPerAngstrom(whole, camera, target.width)), target.width, target.height);
+                narrowToTile(whole, area, target.width, target.height);
+            }
+            this.device.queue.writeBuffer(this.gbufferFrameBuffer, 0, whole);
+            const gbuffer = encoder.beginRenderPass({
+                ...this.effects.gbufferPass(area.width, area.height),
+                timestampWrites: timing ? timing(0) : undefined,
+            });
+            gbuffer.setBindGroup(0, this.gbufferFrameBindGroup);
+            for (const item of plan.draws) this.drawOne(gbuffer, item, camera, true);
+            for (const item of gpuDraws) this.drawGpu(gbuffer, item, camera.zoom, true);
+            gbuffer.end();
+            maps = this.effects.encode(encoder, settings, whole.subarray(0, 16), [area.x, area.y]);
+        }
+        uniforms.set(maps ? [maps.flags[0], maps.flags[1], 0, 0] : [0, 0, 0, 0], 76);
+        uniforms.set([tile.x - area.x, tile.y - area.y, 1 / area.width, 1 / area.height], 80);
+        this.device.queue.writeBuffer(this.frameBuffer, 0, uniforms);
+
         const pass = encoder.beginRenderPass({
-            timestampWrites: timing ? timing(0, 1) : undefined,
+            timestampWrites: timing ? (maps ? timing(undefined, 1) : timing(0, 1)) : undefined,
             colorAttachments: [{
                 view: target.colour.createView(),
                 resolveTarget: target.resolve,
@@ -445,7 +506,7 @@ export class WebGPUPreviewRenderer {
                 depthStoreOp: "discard",
             },
         });
-        pass.setBindGroup(0, this.frameBindGroup);
+        pass.setBindGroup(0, maps ? this.effectsBindGroup(maps) : this.frameBindGroup);
 
         // Opaque first, then transparent over it, as the WebGL renderer orders them.
         for (const transparent of [false, true]) {
@@ -487,6 +548,7 @@ export class WebGPUPreviewRenderer {
         this.colourTarget?.destroy();
         this.depthTarget?.destroy();
         this.frameBuffer.destroy();
+        this.gbufferFrameBuffer.destroy();
         this.gpuDrawUniforms.forEach(u => u.buffer.destroy());
         this.gpuDrawUniforms.clear();
         this.frameTimer?.destroy();
@@ -494,12 +556,35 @@ export class WebGPUPreviewRenderer {
         this.overlayLines.destroy();
         this.texturedShapes.destroy();
         this.surfaceTextures.destroy();
+        this.effects.destroy();
         if (canvasOwners.get(this.context) === this) {
             this.context.unconfigure();
             canvasOwners.delete(this.context);
         }
         // The device is shared (../gpu), so it stays.
         this.device.removeEventListener("uncapturederror", this.errorListener);
+    }
+
+    /** The frame's bind group: its uniforms, and these effects maps or white stand-ins. */
+    private frameBindGroupWith(maps: EffectMaps | null, buffer = this.frameBuffer): GPUBindGroup {
+        return this.device.createBindGroup({
+            label: maps ? "preview frame (effects)" : "preview frame",
+            layout: this.frameLayout,
+            entries: [
+                { binding: 0, resource: { buffer } },
+                { binding: 1, resource: maps?.ao ?? this.effects.whiteView },
+                { binding: 2, resource: maps?.edge ?? this.effects.whiteView },
+                { binding: 3, resource: this.effects.sampler },
+            ],
+        });
+    }
+
+    private effectsBindGroup(maps: EffectMaps): GPUBindGroup {
+        const held = this.effectsFrameBindGroup;
+        if (held && held.maps.ao === maps.ao && held.maps.edge === maps.edge) return held.bindGroup;
+        const bindGroup = this.frameBindGroupWith(maps);
+        this.effectsFrameBindGroup = { maps, bindGroup };
+        return bindGroup;
     }
 
     /** The canvas's multisampled targets, remade when the canvas changes size. */
@@ -558,9 +643,14 @@ export class WebGPUPreviewRenderer {
         this.device.queue.writeBuffer(sub.drawUniforms, 0, data);
     }
 
-    private drawOne(pass: GPURenderPassEncoder, item: PreviewDraw, camera: PreviewCameraSource): void {
+    /**
+     * `gbuffer`: into the g-buffer, for the effects passes: everything WebGL's g-buffer pass draws -
+     * meshes (untextured), spheres and lit lines, not unlit lines - with fs_gbuffer.
+     */
+    private drawOne(pass: GPURenderPassEncoder, item: PreviewDraw, camera: PreviewCameraSource, gbuffer = false): void {
         const sub = this.resources.get(item.buffer)?.[item.index];
         if (!sub) return;
+        if (gbuffer && item.primitive === "lines") return;
 
         if (sub.segments) {
             // drawCore's pixelZoom (0.04 x zoom, times the buffer's primitive size if it has one)
@@ -569,7 +659,7 @@ export class WebGPUPreviewRenderer {
             const halfWidth = primitiveSize * thickLineHalfWidth(camera.mapLineWidth ?? 1, camera.zoom);
             const colours = item.colourSource === "uniform" ? 2 : item.indexCount > 0 ? 0 : 1;
             this.writeDrawBlocks(sub, item, camera, halfWidth, colours);
-            pass.setPipeline(this.segmentPipeline(item.primitive === "lit-lines", item.transparent));
+            pass.setPipeline(this.segmentPipeline(item.primitive === "lit-lines", item.transparent, gbuffer));
             pass.setBindGroup(1, sub.bindGroups[0]);
             pass.setBindGroup(2, sub.segments.bindGroup);
             pass.draw(6 * sub.segments.count);
@@ -582,7 +672,7 @@ export class WebGPUPreviewRenderer {
         const copies = 1 + item.copies.length;
 
         if (item.primitive === "spheres") {
-            pass.setPipeline(this.pipeline("spheres", item.transparent));
+            pass.setPipeline(this.pipeline("spheres", item.transparent, false, gbuffer));
             for (let copy = 0; copy < copies; copy++) {
                 pass.setBindGroup(1, sub.bindGroups[copy]);
                 for (const chunk of sub.spheres) {
@@ -597,9 +687,9 @@ export class WebGPUPreviewRenderer {
 
         // Textured only if its material has a texture that is registered; otherwise drawn as if it
         // had no material, as drawCore does.
-        const material = item.material ? this.surfaceTextures.bindGroupFor(item.material) : null;
+        const material = item.material && !gbuffer ? this.surfaceTextures.bindGroupFor(item.material) : null;
         const kind = pipelineKind(item.instanced, item.colourSource);
-        pass.setPipeline(this.pipeline(kind, item.transparent, !!material));
+        pass.setPipeline(this.pipeline(kind, item.transparent, !!material, gbuffer));
         const colourSlot = item.colourSource !== "uniform";
         if (item.colourSource === "instance") pass.setVertexBuffer(2, sub.instanceColour);
         let slot = colourSlot ? 3 : 2;
@@ -624,7 +714,8 @@ export class WebGPUPreviewRenderer {
         }
     }
 
-    private drawGpu(pass: GPURenderPassEncoder, item: PreviewGpuDraw, zoom: number): void {
+    private drawGpu(pass: GPURenderPassEncoder, item: PreviewGpuDraw, zoom: number, gbuffer = false): void {
+        if (gbuffer && item.style === "lines") return;
         let uniforms = this.gpuDrawUniforms.get(item.key);
         if (!uniforms) {
             const buffer = this.device.createBuffer({ label: `draw uniforms ${item.key}`, size: DRAW_FLOATS * 4, usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST });
@@ -638,7 +729,7 @@ export class WebGPUPreviewRenderer {
         this.device.queue.writeBuffer(uniforms.buffer, 0, block);
         pass.setBindGroup(1, uniforms.bindGroup);
         if (item.style === "triangles") {
-            pass.setPipeline(this.pipeline("mesh-uniform", item.transparent));
+            pass.setPipeline(this.pipeline("mesh-uniform", item.transparent, false, gbuffer));
             pass.setVertexBuffer(0, item.position);
             pass.setVertexBuffer(1, item.normal);
             pass.setIndexBuffer(item.index, "uint32");
@@ -657,7 +748,7 @@ export class WebGPUPreviewRenderer {
                 }),
             };
         }
-        pass.setPipeline(this.linePipeline(item.style === "lit-lines", item.transparent));
+        pass.setPipeline(this.linePipeline(item.style === "lit-lines", item.transparent, gbuffer));
         pass.setBindGroup(2, uniforms.lines.bindGroup);
         pass.drawIndirect(item.drawArgs, item.drawArgsOffset);
     }
@@ -868,11 +959,32 @@ export class WebGPUPreviewRenderer {
     }
 
     /**
-     * `textured`: with texture coordinates in the last vertex buffer slot and a material at group
-     * 2, through the *_textured entry points and fs_textured.
+     * What a pipeline draws into: the main pass's 4x targets, blended when transparent, or the
+     * g-buffer's (single-sampled, normals and depth, depth always written).
      */
-    private pipeline(kind: PipelineKind, transparent: boolean, textured = false): GPURenderPipeline {
-        const key = `${kind}|${transparent}${textured ? "|textured" : ""}`;
+    private outputs(transparent: boolean, gbuffer: boolean): {
+        targets: GPUColorTargetState[]; depthStencil: GPUDepthStencilState; multisample: GPUMultisampleState;
+    } {
+        if (gbuffer) {
+            return {
+                targets: [{ format: GBUFFER_NORMAL_FORMAT }],
+                depthStencil: { format: GBUFFER_DEPTH_FORMAT, depthWriteEnabled: true, depthCompare: "less" },
+                multisample: { count: 1 },
+            };
+        }
+        return {
+            targets: [this.colourTargetState(transparent)],
+            depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: !transparent, depthCompare: "less" },
+            multisample: { count: SAMPLE_COUNT },
+        };
+    }
+
+    /**
+     * `textured`: with texture coordinates in the last vertex buffer slot and a material at group
+     * 2, through the *_textured entry points and fs_textured. `gbuffer`: into the g-buffer.
+     */
+    private pipeline(kind: PipelineKind, transparent: boolean, textured = false, gbuffer = false): GPURenderPipeline {
+        const key = `${kind}|${transparent}${textured ? "|textured" : ""}${gbuffer ? "|gbuffer" : ""}`;
         const cached = this.pipelines.get(key);
         if (cached) return cached;
 
@@ -885,6 +997,7 @@ export class WebGPUPreviewRenderer {
             attributes: [0, 1, 2, 3].map(i => ({ shaderLocation: 5 + i, offset: 16 * i, format: "float32x4" as GPUVertexFormat })),
         };
 
+        const out = this.outputs(transparent, gbuffer);
         if (kind === "spheres") {
             const pipeline = this.device.createRenderPipeline({
                 label: `preview ${key}`,
@@ -893,10 +1006,10 @@ export class WebGPUPreviewRenderer {
                     module: this.module, entryPoint: "vs_sphere",
                     buffers: [vec3(0, "instance"), vec3(1, "instance"), vec4(2, "instance")],
                 },
-                fragment: { module: this.module, entryPoint: "fs_sphere", targets: [this.colourTargetState(transparent)] },
+                fragment: { module: this.module, entryPoint: gbuffer ? "fs_sphere_gbuffer" : "fs_sphere", targets: out.targets },
                 primitive: { topology: "triangle-list", cullMode: "none" },
-                depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: !transparent, depthCompare: "less" },
-                multisample: { count: SAMPLE_COUNT },
+                depthStencil: out.depthStencil,
+                multisample: out.multisample,
             });
             this.pipelines.set(key, pipeline);
             return pipeline;
@@ -923,49 +1036,51 @@ export class WebGPUPreviewRenderer {
             vertex: { module: this.module, entryPoint, buffers },
             fragment: {
                 module: this.module,
-                entryPoint: textured ? "fs_textured" : "fs_main",
-                targets: [this.colourTargetState(transparent)],
+                entryPoint: gbuffer ? "fs_gbuffer" : textured ? "fs_textured" : "fs_main",
+                targets: out.targets,
             },
             // The WebGL view draws with face culling off, back faces flat-shaded.
             primitive: { topology: "triangle-list", cullMode: "none", frontFace: "ccw" },
-            depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: !transparent, depthCompare: "less" },
-            multisample: { count: SAMPLE_COUNT },
+            depthStencil: out.depthStencil,
+            multisample: out.multisample,
         });
         this.pipelines.set(key, pipeline);
         return pipeline;
     }
 
     /** Thick lines, unlit or lit; no vertex buffers, as the vertex shader reads storage. */
-    private linePipeline(lit: boolean, transparent: boolean): GPURenderPipeline {
-        const key = `thick-line|${lit}|${transparent}`;
+    private linePipeline(lit: boolean, transparent: boolean, gbuffer = false): GPURenderPipeline {
+        const key = `thick-line|${lit}|${transparent}${gbuffer ? "|gbuffer" : ""}`;
         const cached = this.pipelines.get(key);
         if (cached) return cached;
+        const out = this.outputs(transparent, gbuffer);
         const pipeline = this.device.createRenderPipeline({
             label: `preview ${key}`,
             layout: this.linePipelineLayout,
             vertex: { module: this.module, entryPoint: "vs_thick_line", buffers: [] },
-            fragment: { module: this.module, entryPoint: lit ? "fs_lit_line" : "fs_line", targets: [this.colourTargetState(transparent)] },
+            fragment: { module: this.module, entryPoint: gbuffer ? "fs_gbuffer" : lit ? "fs_lit_line" : "fs_line", targets: out.targets },
             primitive: { topology: "triangle-list", cullMode: "none" },
-            depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: !transparent, depthCompare: "less" },
-            multisample: { count: SAMPLE_COUNT },
+            depthStencil: out.depthStencil,
+            multisample: out.multisample,
         });
         this.pipelines.set(key, pipeline);
         return pipeline;
     }
 
     /** LINES (unlit) and NORMALLINES (lit) from DisplayBuffers; storage, no vertex buffers. */
-    private segmentPipeline(lit: boolean, transparent: boolean): GPURenderPipeline {
-        const key = `segments|${lit}|${transparent}`;
+    private segmentPipeline(lit: boolean, transparent: boolean, gbuffer = false): GPURenderPipeline {
+        const key = `segments|${lit}|${transparent}${gbuffer ? "|gbuffer" : ""}`;
         const cached = this.pipelines.get(key);
         if (cached) return cached;
+        const out = this.outputs(transparent, gbuffer);
         const pipeline = this.device.createRenderPipeline({
             label: `preview ${key}`,
             layout: this.segmentPipelineLayout,
             vertex: { module: this.module, entryPoint: lit ? "vs_lit_segment" : "vs_segment", buffers: [] },
-            fragment: { module: this.module, entryPoint: lit ? "fs_lit_line" : "fs_line", targets: [this.colourTargetState(transparent)] },
+            fragment: { module: this.module, entryPoint: gbuffer ? "fs_gbuffer" : lit ? "fs_lit_line" : "fs_line", targets: out.targets },
             primitive: { topology: "triangle-list", cullMode: "none" },
-            depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: !transparent, depthCompare: "less" },
-            multisample: { count: SAMPLE_COUNT },
+            depthStencil: out.depthStencil,
+            multisample: out.multisample,
         });
         this.pipelines.set(key, pipeline);
         return pipeline;

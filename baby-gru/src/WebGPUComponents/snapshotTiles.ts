@@ -47,3 +47,17 @@ export function narrowToTile(projection: Float32Array | number[], tile: Snapshot
         projection[i + 1] = sy * (projection[i + 1] - cy * w);
     }
 }
+
+/**
+ * `tile` grown by `margin` pixels each way, within the image, its corner on even pixels: the region
+ * a tile's screen-space effects are worked out over, so that what they read just past the tile's
+ * edge - occlusion samples, blur and edge taps - is the scene that is there, not nothing. Even, so
+ * that the half-size occlusion map lies on the same grid in every tile.
+ */
+export function expandTile(tile: SnapshotTile, margin: number, width: number, height: number): SnapshotTile {
+    const x = Math.max(0, tile.x - margin) & ~1;
+    const y = Math.max(0, tile.y - margin) & ~1;
+    const right = Math.min(width, tile.x + tile.width + margin);
+    const bottom = Math.min(height, tile.y + tile.height + margin);
+    return { x, y, width: right - x, height: bottom - y };
+}

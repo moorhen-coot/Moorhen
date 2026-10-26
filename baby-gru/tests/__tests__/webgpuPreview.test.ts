@@ -11,9 +11,10 @@ import { DisplayBuffer } from "../../src/WebGLgComponents/displayBuffer";
 import { createWebGLBuffers } from "../../src/WebGLgComponents/createWebGLBuffers";
 import { viewProjection } from "../../src/WebGLgComponents/mgWebGLParts/projection";
 import {
-    FRAME_FLOATS, MeshChunk, PreviewCameraSource, describeSkipped, frameUniforms, planMeshChunks, planPreview, previewCameraFrame,
+    FRAME_FLOATS, MeshChunk, PreviewCameraSource, describeSkipped, effectSettings, frameUniforms, planMeshChunks, planPreview, previewCameraFrame,
     hoverSphereRadius, interactiveGlow, interactiveModel, symmetryCopyGrey,
 } from "../../src/WebGPUComponents/previewScene";
+import { effectMargin, ssaoKernel } from "../../src/WebGPUComponents/effectPasses";
 
 const triangle = (over: Record<string, unknown> = {}) => createWebGLBuffers({
     prim_types: [["TRIANGLES"]],
@@ -295,6 +296,12 @@ describe("frameUniforms", () => {
         expect(turned[65]).toBeCloseTo(1, 6);
     });
 
+    it("leaves the effects off, read across the whole target, until the renderer says otherwise", () => {
+        const data = frameUniforms(camera(), 200, 100);
+        expect(Array.from(data.slice(76, 80))).toEqual([0, 0, 0, 0]);
+        expect(Array.from(data.slice(80, 84))).toEqual(Array.from(new Float32Array([0, 0, 1 / 200, 1 / 100])));
+    });
+
     it("packs colours, fog and specular power", () => {
         const data = frameUniforms(camera(), 100, 100);
         expect(Array.from(data.slice(52, 56))).toEqual(Array.from(new Float32Array([0.1, 0.2, 0.3, 1])));
@@ -378,5 +385,45 @@ describe("planMeshChunks", () => {
             expect(chunk.vertexCount).toBeLessThanOrEqual(12);
         }
         expect(drawn(scattered, chunks)).toEqual(Array.from(scattered));
+    });
+});
+
+describe("effectSettings", () => {
+    it("is nothing when the scene has no effects on", () => {
+        expect(effectSettings(camera())).toEqual({ ssao: null, edges: null });
+    });
+
+    it("takes occlusion's radius and strength (ssaoBias) as WebGL does", () => {
+        expect(effectSettings(camera({ doSSAO: true, ssaoRadius: 3, ssaoBias: 1.5 })).ssao).toEqual({ radius: 3, strength: 1.5 });
+    });
+
+    it("turns WebGL's g-buffer texel steps into pixels, keeping 0 as off", () => {
+        const edges = effectSettings(camera({ doEdgeDetect: true, depthThreshold: 1.3, normalThreshold: 0.5, scaleDepth: 2, scaleNormal: 0 })).edges;
+        expect(edges).toEqual({ depthThreshold: 1.3, normalThreshold: 0.5, depthStep: 1, normalStep: 0 });
+        expect(effectSettings(camera({ doEdgeDetect: true, scaleDepth: 6, scaleNormal: 1 })).edges).toMatchObject({ depthStep: 3, normalStep: 1 });
+    });
+});
+
+describe("the effects' margin and kernel", () => {
+    it("reaches as far as occlusion can, on screen, and no margin without effects", () => {
+        expect(effectMargin({ ssao: null, edges: null }, 10)).toBe(0);
+        const withRadius = effectMargin({ ssao: { radius: 2, strength: 1 }, edges: null }, 10);
+        expect(withRadius).toBeGreaterThanOrEqual(2 * 10);
+        expect(effectMargin({ ssao: { radius: 2, strength: 1 }, edges: null }, 20)).toBeGreaterThan(withRadius);
+        expect(effectMargin({ ssao: { radius: 1000, strength: 1 }, edges: null }, 100)).toBe(512);
+    });
+
+    it("samples the hemisphere above the surface, out to the radius, the same every time", () => {
+        const { samples, noise } = ssaoKernel();
+        expect(samples).toHaveLength(32 * 4);
+        for (let i = 0; i < 32; i++) {
+            const [x, y, z] = samples.slice(4 * i, 4 * i + 3);
+            expect(z).toBeGreaterThanOrEqual(0);
+            expect(Math.hypot(x, y, z)).toBeLessThanOrEqual(1 + 1e-6);
+        }
+        // Stratified: the last is longer than the first.
+        expect(Math.hypot(...samples.slice(124, 127))).toBeGreaterThan(Math.hypot(...samples.slice(0, 3)));
+        expect(noise).toHaveLength(16 * 4);
+        expect(Array.from(ssaoKernel().samples)).toEqual(Array.from(samples));
     });
 });

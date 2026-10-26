@@ -16,7 +16,7 @@
 import { loadGltfFile } from "../../src/utils/FileLoading";
 import type { MoorhenInstance } from "../../src/InstanceManager/MoorhenInstance";
 import { createDracoDecode } from "../../src/utils/gltfDracoDecoder";
-import { gltfMaterialTextures } from "../../src/utils/gltfTextures";
+import { type GltfMaterial, gltfMaterials } from "../../src/utils/gltfTextures";
 import type { DracoDecode } from "../../src/utils/gltfDraco";
 
 // The real one fetches the decoder over HTTP from Moorhen's asset directory, which no test can
@@ -28,10 +28,9 @@ jest.mock("../../src/utils/gltfDracoDecoder", () => ({ createDracoDecode: jest.f
 // Decoding an image needs createImageBitmap and OffscreenCanvas, which jsdom has not. What the
 // resolution does is covered on its own in gltfTextures.test.ts; here the map it produces is
 // supplied directly, so these tests are about how the loader joins it to the geometry.
-jest.mock("../../src/utils/gltfTextures", () => ({ gltfMaterialTextures: jest.fn() }));
+jest.mock("../../src/utils/gltfTextures", () => ({ gltfMaterials: jest.fn() }));
 const mockedCreateDracoDecode = createDracoDecode as jest.MockedFunction<typeof createDracoDecode>;
-const mockedGltfMaterialTextures =
-    gltfMaterialTextures as jest.MockedFunction<typeof gltfMaterialTextures>;
+const mockedGltfMaterials = gltfMaterials as jest.MockedFunction<typeof gltfMaterials>;
 
 /** A file object with just enough of the File interface for the function under test. */
 const fakeFile = (name: string, bytes?: ArrayBuffer): File =>
@@ -259,7 +258,12 @@ describe("a glTF with several materials", () => {
     /** The object the loader created, from the spy on object.create. */
     const createdObject = (calls: unknown[][]) => calls[0][0] as { parts: { texture?: string }[] };
 
-    const instanceCapturing = (result: unknown, textures: Map<number, string> = new Map()) => {
+    /**
+     * `textures`: each material's base colour texture, as the shorthand most of these tests need;
+     * `materials`, when given, is what gltfMaterials resolves to instead.
+     */
+    const instanceCapturing = (result: unknown, textures: Map<number, string> = new Map(),
+                               materials?: Map<number, GltfMaterial>) => {
         const created: unknown[][] = [];
         const instance = {
             paths,
@@ -272,11 +276,12 @@ describe("a glTF with several materials", () => {
             },
             centerOnCoordinate: () => undefined,
         } as unknown as MoorhenInstance;
-        mockedGltfMaterialTextures.mockResolvedValue(textures);
+        mockedGltfMaterials.mockResolvedValue(
+            materials ?? new Map([...textures].map(([m, id]) => [m, { baseColour: id }])));
         return { instance, created };
     };
 
-    beforeEach(() => mockedGltfMaterialTextures.mockReset());
+    beforeEach(() => mockedGltfMaterials.mockReset());
 
     it("makes one part per group, inside one object", async () => {
         const { instance, created } = instanceCapturing(groups({ material: 0 }, { material: 1 }));
@@ -303,6 +308,21 @@ describe("a glTF with several materials", () => {
         );
         await loadGltfFile(fakeFile("two.glb"), instance);
         expect(createdObject(created).parts.map(p => p.texture)).toEqual([undefined, "tex-for-1"]);
+    });
+
+    it("carries a material's normal and metallic-roughness maps onto its part", async () => {
+        const maps = { normalTexture: "bumps", normalScale: 0.5, metallicRoughnessTexture: "grain", metallicFactor: 1, roughnessFactor: 0.4 };
+        const { instance, created } = instanceCapturing(
+            groups({ material: 0, textured: true }, { material: 1, textured: true }), new Map(),
+            new Map<number, GltfMaterial>([[0, { baseColour: "wood", maps }], [1, { maps: { normalTexture: "bumps" } }]]),
+        );
+        await loadGltfFile(fakeFile("two.glb"), instance);
+        const parts = createdObject(created).parts as { texture?: string; maps?: unknown; texCoords?: number[] }[];
+        expect(parts[0]).toMatchObject({ texture: "wood", maps });
+        // A normal map and no image of its own colour: still needs the coordinates.
+        expect(parts[1].texture).toBeUndefined();
+        expect(parts[1].maps).toEqual({ normalTexture: "bumps" });
+        expect(parts[1].texCoords).toBeDefined();
     });
 
     it("drops the coordinates when there is not one pair per vertex", async () => {

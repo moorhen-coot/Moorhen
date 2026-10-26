@@ -222,7 +222,7 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
     // range (down to about 6e-5) would flush to zero on hardware that honours it.
     vec3 mappedNormal(highp vec3 N) {
         // Sampled before anything can return early, since the sampler's level of detail comes
-        // from derivatives that are undefined outside uniform control flow.
+        // from derivatives that have no defined value outside uniform control flow.
         highp vec3 m = texture(normalTexture, vTexture).xyz * 2.0 - 1.0;
         m.xy *= normalScale;
         highp vec3 dp1 = dFdx(vModelPos);

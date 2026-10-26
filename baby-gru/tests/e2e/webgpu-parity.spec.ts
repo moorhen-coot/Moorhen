@@ -24,7 +24,7 @@ interface Host {
     getMoorhenInstance: () => Promise<{
         webGPU: WebGPUApi;
         representation: { defaultStyle: string };
-        sceneSettings: { setDrawCrosshairs(value: boolean): void };
+        sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoSSAO(value: boolean): void; setDoEdgeDetect(value: boolean): void };
         getMoleculeList(): {
             show(style: string): Promise<unknown>; hide(style: string): unknown; toggleSymmetry(): Promise<void>;
             drawEnvironment(cid?: string): Promise<void>;
@@ -61,6 +61,8 @@ interface ParityResult {
 const STYLES: {
     style: string; what: string; maxDiffering: number; maxMeanDifference: number;
     symmetry?: boolean; map?: boolean; environment?: boolean; gltf?: boolean;
+    /** Scene effects on: ambient occlusion, edge detection. */
+    ssao?: boolean; edges?: boolean;
 }[] = [
     { style: "CRs", what: "ribbons", maxDiffering: 0.01, maxMeanDifference: 0.6 },
     { style: "CBs", what: "ball-and-stick", maxDiffering: 0.03, maxMeanDifference: 1.6 },
@@ -76,10 +78,16 @@ const STYLES: {
     // (tests/test_data/textured_sphere.gltf, made by make_textured_sphere.py beside it). The
     // import centres the view on it, so it is what is in the picture. Not yet measured.
     { style: "CRs", what: "a textured glTF sphere", maxDiffering: 0.02, maxMeanDifference: 1.2, gltf: true },
+    // Ambient occlusion and edge detection (effectPasses.ts). The same definitions as WebGL's, but
+    // not the same maps - WebGL's g-buffer is a 2048 square and its occlusion a 1024 one, with a
+    // random kernel - so these differ by more. Not yet measured.
+    { style: "CRs", what: "ribbons with ambient occlusion", maxDiffering: 0.1, maxMeanDifference: 4, ssao: true },
+    { style: "VdwSpheres", what: "spacefill with ambient occlusion", maxDiffering: 0.1, maxMeanDifference: 4, ssao: true },
+    { style: "CRs", what: "ribbons with edges", maxDiffering: 0.05, maxMeanDifference: 3, edges: true },
 ];
 
 test.describe("WebGPU against WebGL", () => {
-    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map, environment, gltf } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
+    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map, environment, gltf, ssao, edges } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
         test.setTimeout(180_000);
         const moorhen = await startAndGetInstance(page);
 
@@ -91,12 +99,14 @@ test.describe("WebGPU against WebGL", () => {
         test.skip(unavailable !== null, `No WebGPU: ${unavailable}`);
 
         // Ribbons to start with, and nothing drawn over the scene that WebGPU leaves out.
-        await page.evaluate(async targetId => {
+        await page.evaluate(async ({ targetId, ssao, edges }) => {
             const host = document.getElementById(targetId) as unknown as Host;
             const instance = await host.getMoorhenInstance();
             instance.representation.defaultStyle = "CRs";
             instance.sceneSettings.setDrawCrosshairs(false);
-        }, moorhen.elementId);
+            if (ssao) instance.sceneSettings.setDoSSAO(true);
+            if (edges) instance.sceneSettings.setDoEdgeDetect(true);
+        }, { targetId: moorhen.elementId, ssao: !!ssao, edges: !!edges });
 
         const files = [{ url: "/tests/test_data/5a3h.pdb", filename: "5a3h.pdb" }];
         if (map) files.push({ url: "/tests/test_data/5a3h_sigmaa.mtz", filename: "5a3h_sigmaa.mtz" });
@@ -185,7 +195,7 @@ test.describe("WebGPU against WebGL", () => {
             };
         }, { targetId: moorhen.elementId, tolerance: PIXEL_TOLERANCE });
 
-        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}${environment ? " + environment" : ""}${gltf ? " + textured glTF" : ""}`;
+        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}${environment ? " + environment" : ""}${gltf ? " + textured glTF" : ""}${ssao ? " + SSAO" : ""}${edges ? " + edges" : ""}`;
         for (const [name, url] of Object.entries(result.images ?? {})) {
             await testInfo.attach(`${variant.replace(/ \+ /g, "-")}-${name}.png`, { body: Buffer.from(url.split(",")[1], "base64"), contentType: "image/png" });
         }

@@ -14,7 +14,7 @@ var text_instanced_vertex_shader_source = `#version 300 es\n
 
     uniform float pixelZoom;
 
-    out lowp vec2 vTexture;
+    out highp vec2 vTexture;
     out lowp vec4 eyePos;
 
     void main(void) {

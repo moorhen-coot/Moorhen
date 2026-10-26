@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "@jest/globals";
 import * as mat4 from "gl-matrix/mat4";
-import { narrowToTile, planTiles } from "../../src/WebGPUComponents/snapshotTiles";
+import { expandTile, narrowToTile, planTiles } from "../../src/WebGPUComponents/snapshotTiles";
 
 /** Where a point lands, in pixels from the top-left, under `projection` for a w x h image. */
 function pixelOf(projection: ArrayLike<number>, point: number[], w: number, h: number): [number, number] {
@@ -66,5 +66,19 @@ describe("narrowToTile", () => {
             expect(narrowed[column * 4 + 2]).toBe(projection[column * 4 + 2]);
             expect(narrowed[column * 4 + 3]).toBe(projection[column * 4 + 3]);
         }
+    });
+});
+
+describe("expandTile", () => {
+    it("grows a tile by the margin, within the image, from an even corner", () => {
+        expect(expandTile({ x: 100, y: 64, width: 50, height: 40 }, 10, 300, 200)).toEqual({ x: 90, y: 54, width: 70, height: 60 });
+        // At the image's edges it stops there.
+        expect(expandTile({ x: 0, y: 0, width: 50, height: 40 }, 10, 55, 45)).toEqual({ x: 0, y: 0, width: 55, height: 45 });
+        // An odd corner is moved back to an even one, still covering the margin.
+        const odd = expandTile({ x: 101, y: 63, width: 20, height: 20 }, 10, 300, 200);
+        expect(odd.x % 2).toBe(0);
+        expect(odd.y % 2).toBe(0);
+        expect(odd.x).toBeLessThanOrEqual(91);
+        expect(odd.x + odd.width).toBe(131);
     });
 });

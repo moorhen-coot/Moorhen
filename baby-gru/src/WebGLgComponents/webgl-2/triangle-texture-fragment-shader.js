@@ -1,6 +1,6 @@
 var triangle_texture_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    in lowp vec2 vTexture;
+    in highp vec2 vTexture;
     in lowp vec4 eyePos;
 
     uniform sampler2D valueMap;

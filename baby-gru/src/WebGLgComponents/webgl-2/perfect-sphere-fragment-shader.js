@@ -16,7 +16,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     uniform float alphaMultiplier;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
-    in lowp vec2 vTexture;
+    in highp vec2 vTexture;
     in mediump mat4 mvMatrix;
 
     uniform float fog_end;
