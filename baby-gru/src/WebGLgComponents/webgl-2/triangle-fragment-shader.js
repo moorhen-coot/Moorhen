@@ -122,9 +122,8 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
 
     // Roughness in G, metallic in B, times glTF's factors (x metallic, y roughness). This is not a
     // physically based shader and does not pretend to be: roughness widens and dims the Phong
-    // highlight, and metallic tints the highlight with the base colour and takes away diffuse
-    // light, which is how those properties look under one light without an environment. Ambient
-    // light is left alone, so a metal keeps its colour rather than going black.
+    // highlight, and metallic tints the highlight with the base colour and trades diffuse light
+    // for a reflection of a simple studio (metalReflection). Ambient light is left alone.
     uniform bool hasMetallicRoughnessTexture;
     uniform sampler2D metallicRoughnessTexture;
     uniform vec2 metallicRoughnessFactors;
@@ -242,6 +241,19 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
         return normalize(handed * (normalize(t) * m.x - normalize(b) * m.y) + N * m.z);
     }
 
+    // What a metal shows in place of diffuse light: a reflection of a plain studio, bright towards
+    // the light and dim away from it, as a fraction of the diffuse light. A metal has no diffuse
+    // light of its own - it only reflects - and with nothing to reflect but the one light's
+    // highlight it went dark and flat. Taken from the view direction's reflection, so it moves
+    // over the surface as the view turns, which is what reads as metal; a rough metal blurs it
+    // towards the normal's own view of the light, which is to say back towards diffuse.
+    float metalReflection(vec3 N, vec3 E, vec3 L, float roughness) {
+        vec3 Rv = reflect(-E, N);
+        float t = mix(dot(Rv, L), dot(N, L), roughness);
+        float w = 0.25 + 0.75 * roughness;
+        return mix(0.2, 1.0, smoothstep(-w, w, t));
+    }
+
     void main(void) {
 ${discards ? clipAndPeelDiscards : ""}
       float shad = 1.0;
@@ -293,10 +305,12 @@ ${discards ? clipAndPeelDiscards : ""}
       float shininess = specularPower;
       vec4 specularTint = vec4(1.0);
       float diffuseShare = 1.0;
+      float roughness = 1.0;
+      float metallic = 0.0;
       if(hasMetallicRoughnessTexture){
           vec4 mr = texture(metallicRoughnessTexture, vTexture);
-          float roughness = clamp(mr.g * metallicRoughnessFactors.y, 0.05, 1.0);
-          float metallic = clamp(mr.b * metallicRoughnessFactors.x, 0.0, 1.0);
+          roughness = clamp(mr.g * metallicRoughnessFactors.y, 0.05, 1.0);
+          metallic = clamp(mr.b * metallicRoughnessFactors.x, 0.0, 1.0);
           // The Phong exponent with roughly the spread of a microfacet lobe of this roughness
           // (Blinn-Phong's 2/a^2 - 2 with a = roughness^2, a quarter of it for Phong's reflected
           // ray), and less of it the rougher the surface.
@@ -312,6 +326,9 @@ ${discards ? clipAndPeelDiscards : ""}
       Iamb += light_colours_ambient;
 
       Idiff += light_colours_diffuse * max(dot(norm,L), 0.0) * diffuseShare;
+      if(hasMetallicRoughnessTexture){
+          Idiff += light_colours_diffuse * metallic * metalReflection(norm, E, normalize(L), roughness);
+      }
 
       float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
       Ispec += specularTint * light_colours_specular * pow(max(dot(R,E),0.0),shininess);

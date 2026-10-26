@@ -106,9 +106,15 @@ export function litWithMetallicRoughness(lights: Lights, n: number[], base: numb
     const re = Math.max(dot(R, E), 0);
     const r = Math.min(Math.max(roughness, 0.05), 1), r2 = r * r;
     const shininess = Math.min(Math.max((2 / (r2 * r2) - 2) / 4, 1), 1024);
+    // A metal's studio reflection, from the view's reflection, blurred towards the normal.
+    const Rv = n.map((c, i) => 2 * dot(n, E) * c - E[i]);
+    const t = dot(Rv, L) + (dot(n, L) - dot(Rv, L)) * r;
+    const w = 0.25 + 0.75 * r;
+    const x = Math.min(Math.max((t + w) / (2 * w), 0), 1);
+    const studio = 0.2 + 0.8 * x * x * (3 - 2 * x);
     return [0, 1, 2].map(c => {
         const tint = (1 + (base[c] - 1) * metallic) * (1 - r);
-        const value = 1.5 * base[c] * ambient[c] + 1.2 * base[c] * diffuse[c] * nl * (1 - metallic)
+        const value = 1.5 * base[c] * ambient[c] + 1.2 * base[c] * diffuse[c] * (nl * (1 - metallic) + metallic * studio)
             + tint * specular[c] * Math.pow(re, shininess);
         return Math.round(255 * Math.min(Math.max(value, 0), 1));
     });

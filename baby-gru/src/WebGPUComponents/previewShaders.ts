@@ -221,13 +221,23 @@ fn vs_instanced_uniform_colour_textured(@location(0) position: vec3f, @location(
     return textured(instanceWorld(position, origin, size, o0, o1, o2, o3), instanceNormal(normal, o0, o1, o2, o3), draw.colour, uv);
 }
 
+// metalReflection in triangle-fragment-shader.js: what a metal shows in place of diffuse light, a
+// reflection of a plain studio, bright towards the light, blurred towards the normal's view of
+// the light as the metal gets rougher.
+fn metalReflection(N: vec3f, E: vec3f, L: vec3f, roughness: f32) -> f32 {
+    let Rv = reflect(-E, N);
+    let t = mix(dot(Rv, L), dot(N, L), roughness);
+    let w = 0.25 + 0.75 * roughness;
+    return mix(0.2, 1.0, smoothstep(-w, w, t));
+}
+
 // lit, with what a metallic-roughness map changes: the highlight's exponent and colour, and the
-// share of diffuse light.
-fn litSurface(base: vec4f, n: vec3f, shininess: f32, specularTint: vec4f, diffuseShare: f32) -> vec4f {
+// diffuse light traded for a metal's reflection.
+fn litSurface(base: vec4f, n: vec3f, shininess: f32, specularTint: vec4f, metallic: f32, roughness: f32) -> vec4f {
     let L = frame.lightDir.xyz;
     let E = frame.eyeDir.xyz;
     let R = normalize(-reflect(L, n));
-    let diffuse = frame.diffuse * max(dot(n, L), 0.0) * diffuseShare;
+    let diffuse = frame.diffuse * (max(dot(n, L), 0.0) * (1.0 - metallic) + metallic * metalReflection(n, E, L, roughness));
     let specular = specularTint * frame.specular * pow(max(dot(R, E), 0.0), shininess);
     return 1.5 * base * ambientLight() + 1.2 * base * diffuse + specular;
 }
@@ -266,17 +276,17 @@ fn fs_textured(in: TexturedOut, @builtin(front_facing) frontFacing: bool) -> @lo
     if (material.flags.y > 0.5) { n = mappedNormal(n, normalSample, dp1, dp2, duv1, duv2); }
     var shininess = frame.params.z;
     var specularTint = vec4f(1.0);
-    var diffuseShare = 1.0;
+    var metallic = 0.0;
+    var roughness = 1.0;
     if (material.flags.z > 0.5) {
-        let roughness = clamp(mrSample.g * material.factors.z, 0.05, 1.0);
-        let metallic = clamp(mrSample.b * material.factors.y, 0.0, 1.0);
+        roughness = clamp(mrSample.g * material.factors.z, 0.05, 1.0);
+        metallic = clamp(mrSample.b * material.factors.y, 0.0, 1.0);
         let r2 = roughness * roughness;
         shininess = clamp((2.0 / (r2 * r2) - 2.0) / 4.0, 1.0, 1024.0);
         specularTint = vec4f(mix(vec3f(1.0), colour.rgb, metallic) * (1.0 - roughness), 1.0);
-        diffuseShare = 1.0 - metallic;
     }
     // Back faces flat in their (textured) colour, as fs_main.
-    let shaded = select(colour, litSurface(colour, n, shininess, specularTint, diffuseShare), frontFacing);
+    let shaded = select(colour, litSurface(colour, n, shininess, specularTint, metallic, roughness), frontFacing);
     return fogged(shaded, in.colour.a, in.eyeDistance);
 }
 
