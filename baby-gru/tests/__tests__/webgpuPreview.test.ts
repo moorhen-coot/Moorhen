@@ -16,6 +16,7 @@ import {
 } from "../../src/WebGPUComponents/previewScene";
 import { MAX_GBUFFER_SIDE, effectMargin, gbufferScale, ssaoKernel, stepInTexels } from "../../src/WebGPUComponents/effectPasses";
 import { SHADOW_BIAS, casterBounds, shadowCamera, shadowFrameUniforms } from "../../src/WebGPUComponents/shadowMap";
+import { transparentLayers } from "../../src/WebGPUComponents/depthPeel";
 
 const triangle = (over: Record<string, unknown> = {}) => createWebGLBuffers({
     prim_types: [["TRIANGLES"]],
@@ -533,5 +534,23 @@ describe("casterBounds", () => {
         const first = casterBounds([withAtoms(atoms)], null);
         expect(casterBounds([withAtoms(atoms)], first)).toBe(first);
         expect(casterBounds([withAtoms([...atoms])], first)).not.toBe(first);
+    });
+});
+
+describe("transparentLayers", () => {
+    const withLayers = (depthPeelLayers?: number) => ({ store: { getState: () => ({ sceneSettings: { depthPeelLayers } }) } });
+
+    it("peels depthPeelLayers less the opaque layer, as WebGL counts them, 3 by default", () => {
+        expect(transparentLayers({}, true)).toBe(3);
+        expect(transparentLayers(withLayers(4), true)).toBe(3);
+        expect(transparentLayers(withLayers(6), true)).toBe(5);
+        // Never none while something is transparent.
+        expect(transparentLayers(withLayers(1), true)).toBe(1);
+    });
+
+    it("peels nothing without transparency, or with order-independent transparency off", () => {
+        expect(transparentLayers(withLayers(4), false)).toBe(0);
+        expect(transparentLayers({ ...withLayers(4), doOrderIndependentTransparency: false }, true)).toBe(0);
+        expect(transparentLayers({ doOrderIndependentTransparency: true }, true)).toBe(3);
     });
 });

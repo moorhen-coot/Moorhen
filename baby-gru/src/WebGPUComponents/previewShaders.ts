@@ -18,6 +18,10 @@
  *
  * Text (TEXT_WGSL) follows text-vertex-shader.js and text-fragment-shader.js.
  *
+ * Depth peeling (depthPeel.ts) draws the transparent geometry through *_peel entry points: the
+ * same colour, kept only if it is in front of the opaque scene at one of its samples at least and
+ * behind the previous layer (peelKeep).
+ *
  * Frame must match the packing in previewScene.ts (frameUniforms, FRAME_FLOATS).
  */
 
@@ -100,6 +104,27 @@ fn shaded(light: vec4f, specular: vec4f, shadow: f32) -> vec4f {
 
 fn backShade(shadow: f32) -> f32 {
     return select(shadow, min(shadow + 0.5, 1.0), shadow < 0.5);
+}
+
+// Depth peeling (depthPeel.ts): the opaque scene's depth, multisampled as it was drawn, and the
+// depth of the layer before this one (cleared to 0 for the first). 1 x 1 stand-ins otherwise.
+@group(0) @binding(6) var opaqueDepth: texture_depth_multisampled_2d;
+@group(0) @binding(7) var previousLayer: texture_depth_2d;
+
+// Whether a transparent fragment at this depth belongs in this layer, as the peel test in
+// triangle-fragment-shader.js decides it: not behind the opaque scene - here, not behind it at
+// every one of its samples, so a fragment at an opaque silhouette is kept for the samples it shows
+// in, and the composite sorts out which - and not at or in front of the previous layer.
+fn peelKeep(fragCoord: vec4f, depth: f32) -> bool {
+    let p = vec2i(fragCoord.xy);
+    let z = clamp(depth, 0.0, 1.0);
+    var farthest = 0.0;
+    for (var i = 0u; i < textureNumSamples(opaqueDepth); i++) {
+        farthest = max(farthest, textureLoad(opaqueDepth, p, i));
+    }
+    if (z >= farthest) { return false; }
+    let previous = textureLoad(previousLayer, p, 0);
+    return !(z <= previous || abs(z - previous) < 1e-6);
 }
 
 // Ambient occlusion at this pixel: what triangle-fragment-shader.js multiplies its ambient and
@@ -242,12 +267,25 @@ fn fogged(colour: vec4f, alpha: f32, eyeDistance: f32) -> vec4f {
 }
 
 // The edge factor scales everything, back faces too; the occlusion only the lit front.
-@fragment
-fn fs_main(in: VOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+fn meshColour(in: VOut, frontFacing: bool) -> vec4f {
     // Back faces are drawn flat in their own colour, as in WebGL.
     let shadow = shadowAt(in.shadowPos);
     let colour = select(in.colour * backShade(shadow), lit(in.colour, in.normal, occlusionAt(in.position), shadow), frontFacing);
     return fogged(colour * edgeAt(in.position), in.colour.a, in.eyeDistance);
+}
+
+@fragment
+fn fs_main(in: VOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+    return meshColour(in, frontFacing);
+}
+
+// The peel entry points shade first and discard after, so that anything taking derivatives does
+// so in uniform control flow.
+@fragment
+fn fs_main_peel(in: VOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+    let colour = meshColour(in, frontFacing);
+    if (!peelKeep(in.position, in.position.z)) { discard; }
+    return colour;
 }
 
 // The g-buffer (effectPasses.ts): the surface's normal in eye space, w = 1 where anything is drawn.
@@ -366,8 +404,7 @@ fn mappedNormal(N: vec3f, sampled: vec3f, dp1: vec3f, dp2: vec3f, duv1: vec2f, d
     return normalize(handed * (normalize(t) * m.x - normalize(b) * m.y) + N * m.z);
 }
 
-@fragment
-fn fs_textured(in: TexturedOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+fn texturedColour(in: TexturedOut, frontFacing: bool) -> vec4f {
     // Everything that takes derivatives first, while control flow is still uniform. A map the
     // material does not have is a 1 x 1 stand-in, so sampling it costs next to nothing.
     let baseSample = textureSample(baseColourMap, materialSampler, in.uv);
@@ -398,6 +435,18 @@ fn fs_textured(in: TexturedOut, @builtin(front_facing) frontFacing: bool) -> @lo
     let surface = select(colour * backShade(shadow),
         litSurface(colour, n, shininess, specularTint, metallic, roughness, occlusionAt(in.position), shadow), frontFacing);
     return fogged(surface * edgeAt(in.position), in.colour.a, in.eyeDistance);
+}
+
+@fragment
+fn fs_textured(in: TexturedOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+    return texturedColour(in, frontFacing);
+}
+
+@fragment
+fn fs_textured_peel(in: TexturedOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+    let colour = texturedColour(in, frontFacing);
+    if (!peelKeep(in.position, in.position.z)) { discard; }
+    return colour;
 }
 
 // Thick lines, drawn from a triangle mesh's own buffers: each edge of each triangle is a quad
@@ -498,11 +547,28 @@ fn fs_line(in: VOut) -> @location(0) vec4f {
     return fogged(in.colour, in.colour.a, in.eyeDistance);
 }
 
-// Lit lines are drawn with the triangle shader in WebGL, so occlusion and edges darken them too.
 @fragment
-fn fs_lit_line(in: VOut) -> @location(0) vec4f {
+fn fs_line_peel(in: VOut) -> @location(0) vec4f {
+    if (!peelKeep(in.position, in.position.z)) { discard; }
+    return fogged(in.colour, in.colour.a, in.eyeDistance);
+}
+
+// Lit lines are drawn with the triangle shader in WebGL, so occlusion and edges darken them too.
+fn litLineColour(in: VOut) -> vec4f {
     // Not shadowed: WebGL never tells the lines program about shadows. They do cast them.
     return fogged(lit(in.colour, in.normal, occlusionAt(in.position), 1.0) * edgeAt(in.position), in.colour.a, in.eyeDistance);
+}
+
+@fragment
+fn fs_lit_line(in: VOut) -> @location(0) vec4f {
+    return litLineColour(in);
+}
+
+@fragment
+fn fs_lit_line_peel(in: VOut) -> @location(0) vec4f {
+    let colour = litLineColour(in);
+    if (!peelKeep(in.position, in.position.z)) { discard; }
+    return colour;
 }
 
 // Perfect spheres: impostors. Each sphere is a square of side 2r centred on it, facing the
@@ -549,8 +615,7 @@ struct SphereFragment {
     @builtin(frag_depth) depth: f32,
 };
 
-@fragment
-fn fs_sphere(in: SphereOut) -> SphereFragment {
+fn sphereFragment(in: SphereOut) -> SphereFragment {
     let x = in.quad.x;
     let y = in.quad.y;
     let zz = 1.0 - x * x - y * y;
@@ -596,6 +661,19 @@ fn fs_sphere(in: SphereOut) -> SphereFragment {
         if (front < 0.0) { out.colour = fogged(base, base.a, eyeDistance); }
         if (back < 0.0) { discard; }
     }
+    return out;
+}
+
+@fragment
+fn fs_sphere(in: SphereOut) -> SphereFragment {
+    return sphereFragment(in);
+}
+
+// Peeled at the depth the sphere gives itself, not the square's.
+@fragment
+fn fs_sphere_peel(in: SphereOut) -> SphereFragment {
+    let out = sphereFragment(in);
+    if (!peelKeep(in.position, out.depth)) { discard; }
     return out;
 }
 

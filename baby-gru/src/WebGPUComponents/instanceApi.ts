@@ -36,6 +36,8 @@ export interface WebGPUSceneSnapshot extends RendererImage {
      * view draws with, so this says what both pictures should show.
      */
     effects: { ssao: boolean; edges: boolean; shadow: boolean };
+    /** Transparent layers depth-peeled (depthPeel.ts); 0 if nothing called for peeling. */
+    peelLayers: number;
     /** What is in the scene but not drawn by the WebGPU renderer yet, with sub-buffer counts. */
     skipped: Record<string, number>;
     /** The same, as a sentence; empty if nothing was left out. */
@@ -184,6 +186,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                     width: shot.width, height: shot.height, data: shot.data, tiles: shot.tiles,
                     meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments, labels: shot.report.labels,
                     effects: { ssao: !!effects.ssao, edges: !!effects.edges, shadow: !!effects.shadow },
+                    peelLayers: shot.report.peelLayers,
                     skipped: plan.skipped, skippedText: describeSkipped(plan.skipped),
                 };
             } finally {

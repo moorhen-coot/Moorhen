@@ -23,6 +23,7 @@ import { OverlayLines, overlayLineBatchesOf } from './overlayLines';
 import { TexturedShapeLayer } from './texturedShapes';
 import { SurfaceTextures } from './surfaceTextures';
 import { EffectMaps, EffectPasses, GBUFFER_DEPTH_FORMAT, GBUFFER_NORMAL_FORMAT, effectMargin, gbufferScale } from './effectPasses';
+import { DepthPeel, PEEL_COLOUR_FORMAT, PEEL_DEPTH_FORMAT, transparentLayers } from './depthPeel';
 import {
     ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, symmetryCopyGrey,
 } from './previewScene';
@@ -146,6 +147,8 @@ export interface PreviewFrameReport {
     overlaySegments: number;
     /** Textured shapes drawn. */
     shapes: number;
+    /** Transparent layers peeled (depthPeel.ts); 0 when the frame blended its transparency unsorted. */
+    peelLayers: number;
 }
 
 /** One drawable piece of a sub-buffer: the whole of it, unless it is too big for one GPU buffer. */
@@ -192,8 +195,11 @@ interface SubBufferResources {
     bindGroups: GPUBindGroup[];
 }
 
-/** Which pass a pipeline draws in: the picture, the effects' g-buffer, or the light's shadow map. */
-type PassKind = "main" | "gbuffer" | "shadow";
+/**
+ * Which pass a pipeline draws in: the picture, the effects' g-buffer, the light's shadow map, or a
+ * layer of transparent geometry peeled (depthPeel.ts).
+ */
+type PassKind = "main" | "gbuffer" | "shadow" | "peel";
 
 type PipelineKind = "mesh-vertex" | "mesh-uniform" | "instanced-vertex" | "instanced-instance" | "instanced-uniform" | "spheres";
 
@@ -201,6 +207,10 @@ const pipelineKind = (instanced: boolean, colour: ColourSource): PipelineKind =>
     instanced
         ? (colour === "vertex" ? "instanced-vertex" : colour === "instance" ? "instanced-instance" : "instanced-uniform")
         : (colour === "uniform" ? "mesh-uniform" : "mesh-vertex");
+
+/** The fragment entry point a line pipeline draws with in a pass. */
+const lineFragment = (pass: PassKind, lit: boolean): string =>
+    pass === "gbuffer" ? "fs_gbuffer" : pass === "peel" ? (lit ? "fs_lit_line_peel" : "fs_line_peel") : lit ? "fs_lit_line" : "fs_line";
 
 const asFloat32 = (data: ArrayLike<number>): Float32Array =>
     data instanceof Float32Array ? data : Float32Array.from(data);
@@ -244,6 +254,10 @@ export class WebGPUPreviewRenderer {
     /** Its stand-in where a frame has none, and the pass that draws into it reads. */
     private readonly noShadowMap: GPUTexture;
     private readonly shadowSampler: GPUSampler;
+    /** Depth peeling's stand-ins where a frame does not peel (bindings 6 and 7), and its passes. */
+    private readonly noOpaqueDepth: GPUTexture;
+    private readonly noPreviousLayer: GPUTexture;
+    private readonly depthPeel: DepthPeel;
     /** The shadow pass's frame: the light's camera (shadowMap.ts). */
     private readonly shadowFrameBuffer: GPUBuffer;
     private readonly shadowFrameBindGroup: GPUBindGroup;
@@ -332,6 +346,8 @@ export class WebGPUPreviewRenderer {
                 { binding: 3, visibility: ShaderStage.FRAGMENT, sampler: { type: "filtering" } },
                 { binding: 4, visibility: ShaderStage.FRAGMENT, texture: { sampleType: "depth" } },
                 { binding: 5, visibility: ShaderStage.FRAGMENT, sampler: { type: "comparison" } },
+                { binding: 6, visibility: ShaderStage.FRAGMENT, texture: { sampleType: "depth", multisampled: true } },
+                { binding: 7, visibility: ShaderStage.FRAGMENT, texture: { sampleType: "depth" } },
             ],
         });
         this.drawLayout = device.createBindGroupLayout({
@@ -365,6 +381,15 @@ export class WebGPUPreviewRenderer {
             label: "shadow map", compare: "less-equal", magFilter: "linear", minFilter: "linear",
             addressModeU: "clamp-to-edge", addressModeV: "clamp-to-edge",
         });
+        this.noOpaqueDepth = device.createTexture({
+            label: "no opaque depth", size: [1, 1], format: DEPTH_FORMAT, sampleCount: SAMPLE_COUNT,
+            usage: TextureUsage.TEXTURE_BINDING | TextureUsage.RENDER_ATTACHMENT,
+        });
+        this.noPreviousLayer = device.createTexture({
+            label: "no previous peel layer", size: [1, 1], format: PEEL_DEPTH_FORMAT,
+            usage: TextureUsage.TEXTURE_BINDING | TextureUsage.RENDER_ATTACHMENT,
+        });
+        this.depthPeel = new DepthPeel(device, this.format, SAMPLE_COUNT, DEPTH_FORMAT);
         this.frameBindGroup = this.frameBindGroupWith(null);
         this.shadowFrameBuffer = device.createBuffer({
             label: "shadow frame uniforms", size: FRAME_FLOATS * 4, usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST,
@@ -562,36 +587,93 @@ export class WebGPUPreviewRenderer {
         uniforms.set([tile.x - area.x, tile.y - area.y, 1 / area.width, 1 / area.height], 80);
         this.device.queue.writeBuffer(this.frameBuffer, 0, uniforms);
 
-        const pass = encoder.beginRenderPass({
-            timestampWrites: timing ? (timingStarted ? timing(undefined, 1) : timing(0, 1)) : undefined,
-            colorAttachments: [{
-                view: target.colour.createView(),
-                resolveTarget: target.resolve,
-                clearValue: { r: background[0], g: background[1], b: background[2], a: 1 },
-                loadOp: "clear",
-                storeOp: "discard",
-            }],
-            depthStencilAttachment: {
-                view: target.depth.createView(),
-                depthClearValue: 1.0,
-                depthLoadOp: "clear",
-                depthStoreOp: "discard",
-            },
-        });
-        pass.setBindGroup(0, maps || shadowMap ? this.effectsBindGroup(maps, shadowMap) : this.frameBindGroup);
+        let shapes = 0;
+        const frameGroup = maps || shadowMap ? this.effectsBindGroup(maps, shadowMap) : this.frameBindGroup;
+        const clearColour = { r: background[0], g: background[1], b: background[2], a: 1 };
+        // The last pass ends the GPU timer (and starts it, if nothing has).
+        const endTiming = () => (timing ? (timingStarted ? timing(undefined, 1) : timing(0, 1)) : undefined);
 
-        // Opaque first, then transparent over it, as the WebGL renderer orders them.
-        for (const transparent of [false, true]) {
-            for (const item of plan.draws) {
-                if (item.transparent !== transparent) continue;
-                this.drawOne(pass, item, camera);
+        // Transparency: peeled and composited exactly when the scene asks for it as WebGL's does
+        // (depthPeel.ts), otherwise blended over the opaque scene in the order it comes.
+        const anyTransparent = plan.draws.some(item => item.transparent && !item.buffer.isHoverBuffer)
+            || gpuDraws.some(item => item.transparent);
+        const peelLayers = transparentLayers(camera, anyTransparent);
+        let pass: GPURenderPassEncoder;
+        if (peelLayers > 0) {
+            const peel = this.depthPeel.ensure(target.colour.width, target.colour.height, peelLayers);
+            // The opaque scene, multisampled, its depth kept to peel and composite against.
+            const opaque = encoder.beginRenderPass({
+                label: "opaque",
+                timestampWrites: startTiming(),
+                colorAttachments: [{ view: target.colour.createView(), clearValue: clearColour, loadOp: "clear", storeOp: "store" }],
+                depthStencilAttachment: { view: peel.opaqueDepthView, depthClearValue: 1.0, depthLoadOp: "clear", depthStoreOp: "store" },
+            });
+            opaque.setBindGroup(0, frameGroup);
+            for (const item of plan.draws) if (!item.transparent) this.drawOne(opaque, item, camera);
+            for (const item of gpuDraws) if (!item.transparent) this.drawGpu(opaque, item, camera.zoom);
+            // Textured shapes after the meshes, as GLrender draws them after drawTriangles; they are
+            // opaque, so they hide what is behind them.
+            const shapeCount = this.texturedShapes.draw(opaque, camera.store?.getState().glRef?.texturedShapes ?? []);
+            opaque.end();
+
+            this.depthPeel.clearZeroLayer(encoder, peel);
+            for (let k = 0; k < peelLayers; k++) {
+                const layer = encoder.beginRenderPass(this.depthPeel.layerPass(peel, k));
+                layer.setBindGroup(0, this.frameBindGroupWith(maps, this.frameBuffer, shadowMap,
+                    { opaque: peel.opaqueDepthView, previous: peel.previousViews[k] }));
+                for (const item of plan.draws) if (item.transparent) this.drawOne(layer, item, camera, "peel");
+                for (const item of gpuDraws) if (item.transparent) this.drawGpu(layer, item, camera.zoom, "peel");
+                layer.end();
             }
-            for (const item of gpuDraws) {
-                if (item.transparent === transparent) this.drawGpu(pass, item, camera.zoom);
+
+            const composite = encoder.beginRenderPass({
+                label: "peel composite",
+                colorAttachments: [{ view: target.colour.createView(), loadOp: "load", storeOp: "store" }],
+            });
+            this.depthPeel.composite(composite, peel);
+            composite.end();
+
+            // Overlays and text over the composite, against the opaque depth, and the resolve.
+            pass = encoder.beginRenderPass({
+                label: "overlays",
+                timestampWrites: endTiming(),
+                colorAttachments: [{ view: target.colour.createView(), resolveTarget: target.resolve, loadOp: "load", storeOp: "discard" }],
+                depthStencilAttachment: { view: peel.opaqueDepthView, depthLoadOp: "load", depthStoreOp: "discard" },
+            });
+            pass.setBindGroup(0, frameGroup);
+            shapes = shapeCount;
+        } else {
+            pass = encoder.beginRenderPass({
+                timestampWrites: endTiming(),
+                colorAttachments: [{
+                    view: target.colour.createView(),
+                    resolveTarget: target.resolve,
+                    clearValue: clearColour,
+                    loadOp: "clear",
+                    storeOp: "discard",
+                }],
+                depthStencilAttachment: {
+                    view: target.depth.createView(),
+                    depthClearValue: 1.0,
+                    depthLoadOp: "clear",
+                    depthStoreOp: "discard",
+                },
+            });
+            pass.setBindGroup(0, frameGroup);
+
+            // Opaque first, then transparent over it, as the WebGL renderer orders them.
+            for (const transparent of [false, true]) {
+                for (const item of plan.draws) {
+                    if (item.transparent !== transparent) continue;
+                    this.drawOne(pass, item, camera);
+                }
+                for (const item of gpuDraws) {
+                    if (item.transparent === transparent) this.drawGpu(pass, item, camera.zoom);
+                }
             }
+            // Textured shapes after the meshes, as GLrender draws them after drawTriangles.
+            shapes = this.texturedShapes.draw(pass, camera.store?.getState().glRef?.texturedShapes ?? []);
         }
-        // Textured shapes after the meshes, as GLrender draws them after drawTriangles.
-        const shapes = this.texturedShapes.draw(pass, camera.store?.getState().glRef?.texturedShapes ?? []);
         // Then the overlays, as drawCore ends its frame: the FPS meter and measuring lines, over
         // everything, then text - over everything, or (atomLabelDepthMode) depth-tested.
         const view = uniforms.slice(16, 32) as unknown as mat4.mat4;
@@ -609,7 +691,7 @@ export class WebGPUPreviewRenderer {
         if (timing) this.frameTimer.collect();
         this.surfaceTextures.prune();
 
-        return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes };
+        return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers };
     }
 
     /** Release every GPU resource it made (not the shared device). It cannot be used afterwards. */
@@ -624,6 +706,9 @@ export class WebGPUPreviewRenderer {
         this.shadowFrameBuffer.destroy();
         this.shadowMapTexture?.destroy();
         this.noShadowMap.destroy();
+        this.noOpaqueDepth.destroy();
+        this.noPreviousLayer.destroy();
+        this.depthPeel.destroy();
         this.gpuDrawUniforms.forEach(u => u.buffer.destroy());
         this.gpuDrawUniforms.clear();
         this.frameTimer?.destroy();
@@ -640,10 +725,14 @@ export class WebGPUPreviewRenderer {
         this.device.removeEventListener("uncapturederror", this.errorListener);
     }
 
-    /** The frame's bind group: its uniforms, and these effects maps or white stand-ins. */
-    private frameBindGroupWith(maps: EffectMaps | null, buffer = this.frameBuffer, shadowMap: GPUTextureView | null = null): GPUBindGroup {
+    /**
+     * The frame's bind group: its uniforms, and these effects maps or white stand-ins; for a peel
+     * layer, the opaque depth and the layer before's.
+     */
+    private frameBindGroupWith(maps: EffectMaps | null, buffer = this.frameBuffer, shadowMap: GPUTextureView | null = null,
+                               peel: { opaque: GPUTextureView; previous: GPUTextureView } | null = null): GPUBindGroup {
         return this.device.createBindGroup({
-            label: maps || shadowMap ? "preview frame (effects)" : "preview frame",
+            label: peel ? "preview frame (peel layer)" : maps || shadowMap ? "preview frame (effects)" : "preview frame",
             layout: this.frameLayout,
             entries: [
                 { binding: 0, resource: { buffer } },
@@ -652,6 +741,8 @@ export class WebGPUPreviewRenderer {
                 { binding: 3, resource: this.effects.sampler },
                 { binding: 4, resource: shadowMap ?? this.noShadowMap.createView() },
                 { binding: 5, resource: this.shadowSampler },
+                { binding: 6, resource: peel?.opaque ?? this.noOpaqueDepth.createView() },
+                { binding: 7, resource: peel?.previous ?? this.noPreviousLayer.createView() },
             ],
         });
     }
@@ -742,7 +833,7 @@ export class WebGPUPreviewRenderer {
     private drawOne(pass: GPURenderPassEncoder, item: PreviewDraw, camera: PreviewCameraSource, mode: PassKind = "main"): void {
         const sub = this.resources.get(item.buffer)?.[item.index];
         if (!sub) return;
-        if (mode !== "main" && item.primitive === "lines") return;
+        if ((mode === "gbuffer" || mode === "shadow") && item.primitive === "lines") return;
         if (mode === "shadow" && item.transparent) return;
 
         if (sub.segments) {
@@ -780,7 +871,7 @@ export class WebGPUPreviewRenderer {
 
         // Textured only if its material has a texture that is registered; otherwise drawn as if it
         // had no material, as drawCore does.
-        const material = item.material && mode === "main" ? this.surfaceTextures.bindGroupFor(item.material) : null;
+        const material = item.material && (mode === "main" || mode === "peel") ? this.surfaceTextures.bindGroupFor(item.material) : null;
         const kind = pipelineKind(item.instanced, item.colourSource);
         pass.setPipeline(this.pipeline(kind, item.transparent, !!material, mode));
         const colourSlot = item.colourSource !== "uniform";
@@ -808,7 +899,7 @@ export class WebGPUPreviewRenderer {
     }
 
     private drawGpu(pass: GPURenderPassEncoder, item: PreviewGpuDraw, zoom: number, mode: PassKind = "main"): void {
-        if (mode !== "main" && item.style === "lines") return;
+        if ((mode === "gbuffer" || mode === "shadow") && item.style === "lines") return;
         if (mode === "shadow" && item.transparent) return;
         let uniforms = this.gpuDrawUniforms.get(item.key);
         if (!uniforms) {
@@ -1067,6 +1158,14 @@ export class WebGPUPreviewRenderer {
                 multisample: { count: 1 },
             };
         }
+        if (pass === "peel") {
+            // Straight colour and alpha, blending off, as WebGL's peel layers are drawn.
+            return {
+                targets: [{ format: PEEL_COLOUR_FORMAT }],
+                depthStencil: { format: PEEL_DEPTH_FORMAT, depthWriteEnabled: true, depthCompare: "less" },
+                multisample: { count: 1 },
+            };
+        }
         if (pass === "gbuffer") {
             return {
                 targets: [{ format: GBUFFER_NORMAL_FORMAT }],
@@ -1110,7 +1209,8 @@ export class WebGPUPreviewRenderer {
                 },
                 fragment: {
                     module: this.module, targets: out.targets,
-                    entryPoint: pass === "gbuffer" ? "fs_sphere_gbuffer" : pass === "shadow" ? "fs_sphere_shadow" : "fs_sphere",
+                    entryPoint: pass === "gbuffer" ? "fs_sphere_gbuffer" : pass === "shadow" ? "fs_sphere_shadow"
+                        : pass === "peel" ? "fs_sphere_peel" : "fs_sphere",
                 },
                 primitive: { topology: "triangle-list", cullMode: "none" },
                 depthStencil: out.depthStencil,
@@ -1142,7 +1242,8 @@ export class WebGPUPreviewRenderer {
             // The shadow map needs only depth: no fragment stage at all.
             fragment: pass === "shadow" ? undefined : {
                 module: this.module,
-                entryPoint: pass === "gbuffer" ? "fs_gbuffer" : textured ? "fs_textured" : "fs_main",
+                entryPoint: pass === "gbuffer" ? "fs_gbuffer" : textured ? (pass === "peel" ? "fs_textured_peel" : "fs_textured")
+                    : pass === "peel" ? "fs_main_peel" : "fs_main",
                 targets: out.targets,
             },
             // The WebGL view draws with face culling off, back faces flat-shaded.
@@ -1165,7 +1266,7 @@ export class WebGPUPreviewRenderer {
             layout: this.linePipelineLayout,
             vertex: { module: this.module, entryPoint: "vs_thick_line", buffers: [] },
             fragment: pass === "shadow" ? undefined
-                : { module: this.module, entryPoint: pass === "gbuffer" ? "fs_gbuffer" : lit ? "fs_lit_line" : "fs_line", targets: out.targets },
+                : { module: this.module, entryPoint: lineFragment(pass, lit), targets: out.targets },
             primitive: { topology: "triangle-list", cullMode: "none" },
             depthStencil: out.depthStencil,
             multisample: out.multisample,
@@ -1185,7 +1286,7 @@ export class WebGPUPreviewRenderer {
             layout: this.segmentPipelineLayout,
             vertex: { module: this.module, entryPoint: lit ? "vs_lit_segment" : "vs_segment", buffers: [] },
             fragment: pass === "shadow" ? undefined
-                : { module: this.module, entryPoint: pass === "gbuffer" ? "fs_gbuffer" : lit ? "fs_lit_line" : "fs_line", targets: out.targets },
+                : { module: this.module, entryPoint: lineFragment(pass, lit), targets: out.targets },
             primitive: { topology: "triangle-list", cullMode: "none" },
             depthStencil: out.depthStencil,
             multisample: out.multisample,

@@ -19,7 +19,7 @@ const describeFrame = (report: PreviewFrameReport): { drawn: string; skipped: st
     const { plan, cpuMs } = report;
     const triangles = count(plan.triangles);
     return {
-        drawn: `${plan.draws.length} meshes, ${triangles} triangles${plan.spheres ? `, ${count(plan.spheres)} spheres` : ""}${plan.segments ? `, ${count(plan.segments)} line segments` : ""}${report.labels ? `, ${report.labels} labels` : ""}, ${cpuMs.toFixed(1)} ms CPU`,
+        drawn: `${plan.draws.length} meshes, ${triangles} triangles${plan.spheres ? `, ${count(plan.spheres)} spheres` : ""}${plan.segments ? `, ${count(plan.segments)} line segments` : ""}${report.labels ? `, ${report.labels} labels` : ""}${report.peelLayers ? `, ${report.peelLayers} layers peeled` : ""}, ${cpuMs.toFixed(1)} ms CPU`,
         skipped: describeSkipped(plan.skipped),
     };
 };

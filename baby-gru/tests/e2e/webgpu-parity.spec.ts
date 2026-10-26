@@ -28,6 +28,7 @@ interface Host {
         getMoleculeList(): {
             show(style: string): Promise<unknown>; hide(style: string): unknown; toggleSymmetry(): Promise<void>;
             drawEnvironment(cid?: string): Promise<void>;
+            representations: { style: string; setNonCustomOpacity(opacity: number): void }[];
         }[];
     }>;
 }
@@ -45,6 +46,8 @@ interface ParityResult {
     tiles: number;
     /** The effects drawn, as the main view's settings ask for them. */
     effects: { ssao: boolean; edges: boolean; shadow: boolean };
+    /** Transparent layers WebGPU peeled. */
+    peelLayers: number;
     /** Pixels the added symmetry, environment, glTF or effect changed, in each renderer's picture. */
     changed: { webgl: number; webgpu: number } | null;
     /** Pixels that are not background, in the WebGL picture. */
@@ -67,6 +70,8 @@ const STYLES: {
     symmetry?: boolean; map?: boolean; environment?: boolean; gltf?: boolean;
     /** Scene effects on: ambient occlusion, edge detection, shadows. */
     ssao?: boolean; edges?: boolean; shadow?: boolean;
+    /** A molecular surface over the ribbons at half opacity: depth peeling. */
+    transparentSurface?: boolean;
 }[] = [
     { style: "CRs", what: "ribbons", maxDiffering: 0.01, maxMeanDifference: 0.6 },
     { style: "CBs", what: "ball-and-stick", maxDiffering: 0.03, maxMeanDifference: 1.6 },
@@ -95,10 +100,16 @@ const STYLES: {
     // 1280x647, 2026-10-26): 0.50% and 0.27, as plain ribbons; 11 318 pixels shadowed in WebGL,
     // 11 323 in WebGPU.
     { style: "CRs", what: "ribbons with shadows", maxDiffering: 0.01, maxMeanDifference: 0.6, shadow: true },
+    // Depth peeling (depthPeel.ts): a molecular surface at half opacity over the ribbons, its front
+    // and back walls and the ribbons inside sorted. WebGL peels the same nearest 3 layers, but
+    // leaves its white rim at opaque silhouettes behind the surface and runs FXAA over the layers;
+    // WebGPU does neither, so they differ only along silhouettes. Measured (Apple GPU, 1280x647,
+    // 2026-10-26): 0.76% and 0.60; the surface changed 134 909 pixels in WebGL, 135 173 in WebGPU.
+    { style: "CRs", what: "ribbons inside a transparent surface", maxDiffering: 0.015, maxMeanDifference: 1.2, transparentSurface: true },
 ];
 
 test.describe("WebGPU against WebGL", () => {
-    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map, environment, gltf, ssao, edges, shadow } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
+    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map, environment, gltf, ssao, edges, shadow, transparentSurface } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
         test.setTimeout(180_000);
         const moorhen = await startAndGetInstance(page);
 
@@ -140,7 +151,7 @@ test.describe("WebGPU against WebGL", () => {
         // the scene without it kept: it has to change both, or the case passes on a scene that
         // never had it (as the glTF, environment and shadow cases once did - all three came out
         // pixel for pixel as plain ribbons).
-        const extra = !!(symmetry || environment || gltf || ssao || edges || shadow);
+        const extra = !!(symmetry || environment || gltf || ssao || edges || shadow || transparentSurface);
         if (extra) {
             await page.evaluate(async targetId => {
                 const host = document.getElementById(targetId) as unknown as Host;
@@ -167,6 +178,15 @@ test.describe("WebGPU against WebGL", () => {
                 if (edges) instance.sceneSettings.setDoEdgeDetect(true);
                 if (shadow) instance.sceneSettings.setDoShadow(true);
             }, { targetId: moorhen.elementId, symmetry: !!symmetry, environment: !!environment, ssao: !!ssao, edges: !!edges, shadow: !!shadow });
+            if (transparentSurface) {
+                await page.evaluate(async targetId => {
+                    const host = document.getElementById(targetId) as unknown as Host;
+                    const instance = await host.getMoorhenInstance();
+                    const [molecule] = instance.getMoleculeList();
+                    await molecule.show("MolecularSurface");
+                    molecule.representations.find(r => r.style === "MolecularSurface")?.setNonCustomOpacity(0.5);
+                }, moorhen.elementId);
+            }
             await moorhen.waitForWebGLRenderSettle({ minSettleMs: 1_500, minDisplayBufferCount: 1, timeoutMs: 60_000 });
         }
 
@@ -230,6 +250,7 @@ test.describe("WebGPU against WebGL", () => {
                 skippedSubBuffers: instance.webGPU.describeSkipped(),
                 tiles: gpu.tiles,
                 effects: gpu.effects,
+                peelLayers: gpu.peelLayers,
                 changed,
                 drawn,
                 differing,
@@ -239,7 +260,7 @@ test.describe("WebGPU against WebGL", () => {
             };
         }, { targetId: moorhen.elementId, tolerance: PIXEL_TOLERANCE });
 
-        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}${environment ? " + environment" : ""}${gltf ? " + textured glTF" : ""}${ssao ? " + SSAO" : ""}${edges ? " + edges" : ""}${shadow ? " + shadows" : ""}`;
+        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}${environment ? " + environment" : ""}${gltf ? " + textured glTF" : ""}${ssao ? " + SSAO" : ""}${edges ? " + edges" : ""}${shadow ? " + shadows" : ""}${transparentSurface ? " + transparent surface" : ""}`;
         for (const [name, url] of Object.entries(result.images ?? {})) {
             await testInfo.attach(`${variant.replace(/ \+ /g, "-")}-${name}.png`, { body: Buffer.from(url.split(",")[1], "base64"), contentType: "image/png" });
         }
@@ -247,6 +268,7 @@ test.describe("WebGPU against WebGL", () => {
         const summary = `${variant}: ${result.width}x${result.height}, ${result.meshes} meshes, ${result.triangles} triangles, ${result.spheres} spheres, ${result.segments} line segments, ${result.labels} labels; ` +
             `${result.drawn} pixels drawn, ${result.differing} differ by more than ${PIXEL_TOLERANCE} ` +
             `(${(100 * result.differing / pixels).toFixed(2)}%), mean difference ${result.meanDifference.toFixed(2)}, worst ${result.worst}` +
+            (result.peelLayers ? `; ${result.peelLayers} layers peeled` : "") +
             (result.changed ? `; the addition changed ${result.changed.webgl} pixels in WebGL, ${result.changed.webgpu} in WebGPU` : "") +
             (result.skippedText ? `; not drawn by WebGPU: ${result.skippedText}` : "");
         testInfo.annotations.push({ type: "parity", description: summary });
@@ -264,6 +286,8 @@ test.describe("WebGPU against WebGL", () => {
             expect(result.changed.webgpu, `${summary}: the addition should show in WebGPU`).toBeGreaterThan(pixels * 0.001);
         }
         if (environment) expect(result.labels, summary).toBeGreaterThan(0);
+        // WebGL's default 4 layers: the opaque one and 3 peeled.
+        if (transparentSurface) expect(result.peelLayers, summary).toBe(3);
         // Something of the molecule is in the picture, and WebGPU drew it.
         expect(result.drawn, summary).toBeGreaterThan(pixels * 0.01);
         expect(result.meshes, summary).toBeGreaterThan(0);

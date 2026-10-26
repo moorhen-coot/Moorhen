@@ -53,8 +53,13 @@ export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
      */
     store?: { getState(): {
         glRef?: { hoverSize?: number; texturedShapes?: TexturedShapeSource[] };
-        sceneSettings?: { shadowMapQuality?: ShadowMapQuality };
+        sceneSettings?: { shadowMapQuality?: ShadowMapQuality; depthPeelLayers?: number };
     } };
+    /**
+     * Depth peeling for transparent geometry (MGWebGL's, on unless switched off), with the scene's
+     * depthPeelLayers counting the opaque layer (depthPeel.ts).
+     */
+    doOrderIndependentTransparency?: boolean;
     /** Shadows from the light (doShadow), in a map of the scene's shadowMapQuality. */
     doShadow?: boolean;
     /** Screen-space ambient occlusion (scene settings doSSAO, ssaoRadius in A, ssaoBias the strength). */
