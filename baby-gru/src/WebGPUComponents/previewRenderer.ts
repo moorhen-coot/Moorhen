@@ -106,6 +106,8 @@ interface FrameTarget {
     timed: boolean;
     /** Shadows with the 8 x 8 soft lookup, as WebGL's screenshots have them; the canvas has one tap. */
     softShadows?: boolean;
+    /** The background cleared to nothing (alpha 0), for a screenshot with a transparent background. */
+    transparentBackground?: boolean;
 }
 
 /**
@@ -451,7 +453,7 @@ export class WebGPUPreviewRenderer {
      * not for every frame.
      */
     async snapshot(displayBuffers: readonly DisplayBuffer[], camera: PreviewCameraSource, gpuDraws: readonly PreviewGpuDraw[],
-                   width: number, height: number, options: { maxTile?: number; softShadows?: boolean } = {}): Promise<PreviewSnapshot> {
+                   width: number, height: number, options: { maxTile?: number; softShadows?: boolean; transparentBackground?: boolean } = {}): Promise<PreviewSnapshot> {
         width = Math.round(width);
         height = Math.round(height);
         const edgeCap = effectSettings(camera).edges ? MAX_SNAPSHOT_TILE_WITH_EDGES : Infinity;
@@ -483,6 +485,7 @@ export class WebGPUPreviewRenderer {
                     report = this.drawFrame(displayBuffers, camera, gpuDraws, {
                         width, height, tile, colour: targets.colour, depth: targets.depth, resolve: image.createView(), timed: false,
                         softShadows: options.softShadows,
+                        transparentBackground: options.transparentBackground,
                     });
                     const encoder = this.device.createCommandEncoder({ label: "snapshot copy" });
                     encoder.copyTextureToBuffer({ texture: image }, { buffer: readback, bytesPerRow }, [tile.width, tile.height]);
@@ -501,6 +504,11 @@ export class WebGPUPreviewRenderer {
                             }
                         } else {
                             data.set(rows.subarray(from, from + tile.width * 4), to);
+                        }
+                        // Opaque, as the canvas shows it (alphaMode "opaque"), whatever alpha the
+                        // passes left: the picture on screen ignores it.
+                        if (!options.transparentBackground) {
+                            for (let i = 3; i < tile.width * 4; i += 4) data[to + i] = 255;
                         }
                     }
                 } finally {
@@ -589,7 +597,8 @@ export class WebGPUPreviewRenderer {
 
         let shapes = 0;
         const frameGroup = maps || shadowMap ? this.effectsBindGroup(maps, shadowMap) : this.frameBindGroup;
-        const clearColour = { r: background[0], g: background[1], b: background[2], a: 1 };
+        // Alpha 0 for a transparent screenshot, as WebGL clears for one: the background's colour, nothing of it.
+        const clearColour = { r: background[0], g: background[1], b: background[2], a: target.transparentBackground ? 0 : 1 };
         // The last pass ends the GPU timer (and starts it, if nothing has).
         const endTiming = () => (timing ? (timingStarted ? timing(undefined, 1) : timing(0, 1)) : undefined);
 

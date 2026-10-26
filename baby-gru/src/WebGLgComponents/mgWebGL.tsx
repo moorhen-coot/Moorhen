@@ -543,7 +543,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         setupStereoTransformations(this)
     }
 
+    /**
+     * The canvas showing the view: another renderer's while it draws it (externalRenderer.ts), else
+     * WebGL's. Movie export, screen recording and keyframe thumbnails take their pictures from this.
+     * Input and sizing stay with WebGL's canvas, this.canvasRef.
+     */
     getCanvasRef() : React.RefObject<HTMLCanvasElement>{
+        const external = this.externalRenderer;
+        if (external?.isShowing()) return { current: external.canvas };
         return this.canvasRef
     }
 

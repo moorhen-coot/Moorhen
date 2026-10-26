@@ -1,3 +1,4 @@
+import { copyFileSync, readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { startAndGetInstance } from "./helpers";
 import type { WebGPUApi } from "../../src/WebGPUComponents/instanceApi";
@@ -7,7 +8,9 @@ import type { WebGPUApi } from "../../src/WebGPUComponents/instanceApi";
  *
  * With 5a3h as ribbons: switched on, WebGPU takes the view and draws it, on a canvas the size of
  * the WebGL one; what is on screen is WebGPU's picture of the scene; WebGL can still be read back
- * (save_pixel_data draws that frame with WebGL); a view WebGPU does not draw yet (multiple views)
+ * (save_pixel_data draws that frame with WebGL); a screenshot is drawn by WebGPU, at the size
+ * WebGL's would be, with a transparent background when asked; a recording started while WebGPU
+ * draws records its canvas and leaves it drawing; a view WebGPU does not draw yet (multiple views)
  * goes back to WebGL and returns; a map contoured again at a new radius is drawn without anything
  * else asking for a frame; and switched off, WebGL draws the view again - with the buffers that
  * waited while WebGPU drew built for it (switching off crashed until they were), and no page errors.
@@ -22,10 +25,25 @@ interface Host {
         sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoMultiView(value: boolean): void };
         mapContourSettings: { setMapRadius(value: { molNo: number; radius: number }): void };
         getMapList(): { molNo: number }[];
+        getVideoRecorderRef(): { current: Recorder | null };
     }>;
 }
 
+interface Recorder {
+    takeScreenShot(filename: string, doTransparentBackground?: boolean): Promise<void>;
+    startRecording(): void;
+    stopRecording(): void;
+    isRecording(): boolean;
+    recordingCanvas: HTMLCanvasElement | null;
+    glRef: { current: { drawScene(): void } | null };
+}
+
 const SELECTOR = "[data-testid=webgpu-main-view]";
+
+/** As screenshotSize (src/utils/screenshotSize.ts) has it: 4096 on the long side, the view's shape. */
+const expectedScreenshotSize = (width: number, height: number) => width > height
+    ? { width: 4096, height: Math.floor(4096 / (width / height)) }
+    : { width: Math.floor(4096 * (width / height)), height: 4096 };
 
 test("the main view drawn with WebGPU, handing back to WebGL where it must", async ({ page }) => {
     test.setTimeout(180_000);
@@ -127,6 +145,101 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
         return drawn / (gl.data.length / 4);
     }, id);
     expect(readBack).toBeGreaterThan(0.01);
+
+    // A screenshot (the screenshot popup's takeScreenShot) is drawn by WebGPU, at the size WebGL's
+    // would be: the scene in it, about as much of it as on screen; and with a transparent
+    // background, transparent where the scene is not and opaque where it is.
+    const screenshot = async (transparent: boolean) => {
+        const download = page.waitForEvent("download", { timeout: 120_000 });
+        await page.evaluate(async ({ targetId, transparent }) => {
+            const host = document.getElementById(targetId) as unknown as Host;
+            await (await host.getMoorhenInstance()).getVideoRecorderRef().current.takeScreenShot("webgpu-screenshot.png", transparent);
+        }, { targetId: id, transparent });
+        const downloaded = await (await download).path();
+        // Kept with the test's results, to look at.
+        copyFileSync(downloaded, test.info().outputPath(transparent ? "screenshot-transparent.png" : "screenshot.png"));
+        const png = readFileSync(downloaded).toString("base64");
+        return await page.evaluate(async png => {
+            const image = new Image();
+            image.src = `data:image/png;base64,${png}`;
+            await image.decode();
+            const canvas = document.createElement("canvas");
+            canvas.width = image.width;
+            canvas.height = image.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(image, 0, 0);
+            const pixels = ctx.getImageData(0, 0, image.width, image.height).data;
+            // The background: the commonest of the four corners' colours, as the corners may have a 2D overlay on them.
+            const corners = [0, image.width - 1, (image.height - 1) * image.width, image.height * image.width - 1].map(p => p * 4);
+            const key = (i: number) => `${pixels[i]},${pixels[i + 1]},${pixels[i + 2]},${pixels[i + 3]}`;
+            const background = corners.map(key).sort((a, b) => corners.filter(i => key(i) === b).length - corners.filter(i => key(i) === a).length)[0];
+            const [r, g, b] = background.split(",").map(Number);
+            let drawn = 0, clear = 0, opaque = 0, partialInside = 0, partialAtEdge = 0, nearlyOpaque = 0;
+            const w = image.width, h = image.height;
+            for (let p = 0, i = 0; i < pixels.length; p++, i += 4) {
+                const a = pixels[i + 3];
+                if (a === 0) clear++;
+                else if (a === 255) opaque++;
+                // Some residues' colours come with an alpha a hair under 1 (254 here), which is
+                // drawn as it is - by WebGL too - and cannot be seen.
+                else if (a >= 250) nearlyOpaque++;
+                else {
+                    // Partly transparent: at the scene's edge (next to a clear pixel), as antialiasing
+                    // against a transparent background leaves it, or inside the scene, which nothing should.
+                    const x = p % w, y = (p - x) / w;
+                    const nextToClear = (x > 0 && pixels[i - 1] === 0) || (x < w - 1 && pixels[i + 7] === 0)
+                        || (y > 0 && pixels[i - 4 * w + 3] === 0) || (y < h - 1 && pixels[i + 4 * w + 3] === 0);
+                    if (nextToClear) partialAtEdge++; else partialInside++;
+                }
+                if (a > 0 && Math.abs(pixels[i] - r) + Math.abs(pixels[i + 1] - g) + Math.abs(pixels[i + 2] - b) > 6) drawn++;
+            }
+            const n = pixels.length / 4;
+            return {
+                width: w, height: h, drawn: drawn / n, clear: clear / n, opaque: opaque / n,
+                partialInside: partialInside / n, partialAtEdge: partialAtEdge / n, nearlyOpaque: nearlyOpaque / n,
+            };
+        }, png);
+    };
+    const expectedSize = expectedScreenshotSize(canvases.gl.width, canvases.gl.height);
+    const shot = await screenshot(false);
+    console.log(`WebGPU main view: screenshot ${shot.width}x${shot.height}, ${(100 * shot.drawn).toFixed(1)}% scene`);
+    expect({ width: shot.width, height: shot.height }).toEqual(expectedSize);
+    expect(shot.opaque).toBe(1);
+    expect(shot.drawn).toBeGreaterThan(onScreen.drawn / 2);
+    expect(shot.drawn).toBeLessThan(onScreen.drawn * 2);
+    const transparentShot = await screenshot(true);
+    console.log(`WebGPU main view: transparent screenshot ${(100 * transparentShot.clear).toFixed(1)}% clear, `
+        + `${(100 * transparentShot.opaque).toFixed(1)}% opaque, ${(100 * transparentShot.nearlyOpaque).toFixed(2)}% nearly (alpha 250-254), `
+        + `${(100 * transparentShot.partialAtEdge).toFixed(2)}% partly at the scene's edge, `
+        + `${(100 * transparentShot.partialInside).toFixed(3)}% partly inside it`);
+    expect({ width: transparentShot.width, height: transparentShot.height }).toEqual(expectedSize);
+    expect(transparentShot.clear).toBeGreaterThan(1 - 2 * onScreen.drawn);
+    expect(transparentShot.opaque + transparentShot.nearlyOpaque).toBeGreaterThan(onScreen.drawn / 2);
+    // The scene itself opaque: partly transparent pixels only along its edge, a few strays aside.
+    expect(transparentShot.partialInside).toBeLessThan(0.001);
+    expect((await mainView()).drawing).toBe(true);
+
+    // A recording started while WebGPU draws records WebGPU's canvas, which goes on drawing.
+    const recordedCanvas = await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        const recorder = (await host.getMoorhenInstance()).getVideoRecorderRef().current;
+        recorder.startRecording();
+        // Frames to record: the scene is still, and a canvas not drawn to gives the stream nothing.
+        for (let frame = 0; frame < 30; frame++) {
+            recorder.glRef.current?.drawScene();
+            await new Promise(resolve => requestAnimationFrame(resolve));
+        }
+        return recorder.isRecording() ? recorder.recordingCanvas?.dataset.testid ?? "another canvas" : "not recording";
+    }, id);
+    expect(recordedCanvas).toBe("webgpu-main-view");
+    expect(await mainView()).toMatchObject({ drawing: true, webGLReason: null });
+    const video = page.waitForEvent("download", { timeout: 30_000 });
+    await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        (await host.getMoorhenInstance()).getVideoRecorderRef().current.stopRecording();
+    }, id);
+    expect(readFileSync(await (await video).path()).length).toBeGreaterThan(0);
+    expect((await mainView()).drawing).toBe(true);
 
     // A view WebGPU does not draw yet goes to WebGL, the WebGPU canvas out of its way, and back.
     await setMultiView(true);

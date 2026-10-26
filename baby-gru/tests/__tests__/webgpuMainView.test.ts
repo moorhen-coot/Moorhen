@@ -4,6 +4,7 @@
  */
 import { describe, expect, it, jest } from "@jest/globals";
 import { webGLOnlyReason } from "../../src/WebGLgComponents/externalRenderer";
+import { SCREENSHOT_SIDE, screenshotSize } from "../../src/utils/screenshotSize";
 import { buildBuffers, deferWebGLUploads } from "../../src/WebGLgComponents/buildBuffers";
 import type { DisplayBuffer } from "../../src/WebGLgComponents/displayBuffer";
 
@@ -22,7 +23,27 @@ describe("webGLOnlyReason", () => {
         expect(webGLOnlyReason({ useOffScreenBuffers: true }, false)).toBe("depth blur");
         expect(webGLOnlyReason({ doStenciling: true }, false)).toBe("outlines");
         expect(webGLOnlyReason({ doShadowDepthDebug: true }, false)).toBe("the shadow map debug view");
-        expect(webGLOnlyReason({}, true)).toMatch(/recording/);
+        expect(webGLOnlyReason({}, true)).toBe("a recording of the WebGL canvas");
+        // Before anything else: the recording is of what WebGL draws, whatever the view.
+        expect(webGLOnlyReason({ doMultiView: true }, true)).toBe("a recording of the WebGL canvas");
+    });
+});
+
+describe("screenshotSize", () => {
+    // WebGL's screenshot: a square render-to-texture buffer, with the view's shape cropped out of it.
+    it("keeps the long side and the view's shape", () => {
+        expect(SCREENSHOT_SIDE).toBe(4096);
+        expect(screenshotSize(1280, 647, 4096)).toEqual({ width: 4096, height: 2070 });
+        expect(screenshotSize(647, 1280, 4096)).toEqual({ width: 2070, height: 4096 });
+    });
+
+    it("rounds the short side down, as WebGL's crop does", () => {
+        expect(screenshotSize(3, 2, 100)).toEqual({ width: 100, height: 66 });
+        expect(screenshotSize(2, 3, 100)).toEqual({ width: 66, height: 100 });
+    });
+
+    it("gives a square view a square picture", () => {
+        expect(screenshotSize(800, 800, 4096)).toEqual({ width: 4096, height: 4096 });
     });
 });
 

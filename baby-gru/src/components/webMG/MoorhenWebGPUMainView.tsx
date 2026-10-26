@@ -27,8 +27,12 @@ export interface WebGPUMainViewRenderer extends ExternalRenderer {
  * MGWebGL keeps everything but the drawing - camera, mouse and keys, picking, labels, the frame
  * loop - and offers it each frame (externalRenderer.ts). This canvas takes no input: events go
  * through to the WebGL canvas underneath, as before. It is hidden whenever WebGL draws a frame
- * itself (webGLOnlyReason: multiple views, stereo, depth blur, outlines, a recording), so the
- * WebGL picture shows; screenshots read back from WebGL do not disturb it.
+ * itself (webGLOnlyReason: multiple views, stereo, depth blur, outlines, a recording of the WebGL
+ * canvas), so the WebGL picture shows.
+ *
+ * While it shows the view, MGWebGL.getCanvasRef gives this canvas, so movie export, recordings
+ * and keyframe thumbnails take their pictures from it; screenshots are drawn offscreen by the same
+ * renderer (snapshot), at the size WebGL's would be.
  *
  * While it is in use, WebGL's buffer uploads wait until WebGL draws (deferWebGLUploads). If WebGPU
  * fails - an error, a lost device - it gets out of the way and WebGL draws from then on.
@@ -78,16 +82,31 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
 
         const external: WebGPUMainViewRenderer = {
             name: "WebGPU",
+            canvas,
             webGLReason: null,
             framesDrawn: 0,
+            isShowing() {
+                return !!renderer && external.webGLReason === null && external.framesDrawn > 0;
+            },
+            async snapshot(width: number, height: number, options: { transparentBackground?: boolean } = {}) {
+                if (!renderer) throw new Error("WebGPU is not drawing the main view");
+                const state = store.getState();
+                const shot = await renderer.snapshot(state.glRef.displayBuffers ?? [], view, maps?.frame(state) ?? [], width, height, {
+                    softShadows: true, transparentBackground: !!options.transparentBackground,
+                });
+                return shot.data;
+            },
             get lastFrame() {
                 if (!lastReport) return null;
                 const { plan } = lastReport;
                 return { meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments };
             },
             willDraw() {
-                const recording = !!moorhenInstance.getVideoRecorderRef()?.current?.isRecording?.();
-                const reason = renderer ? webGLOnlyReason(view, recording) : "WebGPU is not ready";
+                // A recording started while WebGL drew records WebGL's canvas, so WebGL keeps
+                // drawing until it ends; one started while WebGPU drew records this one.
+                const recorder = moorhenInstance.getVideoRecorderRef()?.current;
+                const recordingWebGLCanvas = !!recorder?.isRecording?.() && recorder.recordingCanvas !== canvas;
+                const reason = renderer ? webGLOnlyReason(view, recordingWebGLCanvas) : "WebGPU is not ready";
                 if (reason !== lastReason) {
                     if (reason && lastReason !== undefined) console.info(`WebGPU main view: WebGL draws while there is ${reason}.`);
                     lastReason = reason;

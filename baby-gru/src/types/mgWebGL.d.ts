@@ -8,6 +8,7 @@ import { RootState } from "@/store";
 //import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "./moorhen";
 import type { CameraController, CameraTarget, MoveResult, Transition } from "../WebGLgComponents/cameraController";
+import type { ExternalRenderer } from "../WebGLgComponents/externalRenderer";
 
 export namespace webGL {
     interface MGWebGLRenderingContext extends WebGLRenderingContext {
@@ -387,6 +388,8 @@ export namespace webGL {
         //These 2 are used in MoorhenScreenRecorder
         getCanvasRef(): React.RefObject<HTMLCanvasElement>;
         getPixelData(doTransparentBackground?: boolean): Uint8Array;
+        /** Another renderer drawing the view (the WebGPU main view); screenshots ask it. */
+        externalRenderer: ExternalRenderer | null;
         //These 2 are used in MoorhenVercelBuild
         origin: [number, number, number];
         background_colour: [number, number, number, number];
