@@ -122,6 +122,7 @@ import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, init
 import { Dispatch, Store } from '@reduxjs/toolkit';
 import { Root } from 'react-dom/client';
 import { RootState } from '@/store/MoorhenReduxStore';
+import type { ExternalRenderer } from './externalRenderer';
 
 export function getOffsetRect(elem) {
     const box = elem.getBoundingClientRect();
@@ -210,6 +211,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         atomLabelDepthMode: boolean;
         clipCapPerfectSpheres: boolean;
         useOffScreenBuffers: boolean;
+        /**
+         * Another renderer drawing the main view in WebGL's place (the WebGPU main view), offered
+         * each frame first; null while WebGL draws everything. See externalRenderer.ts.
+         */
+        externalRenderer: ExternalRenderer | null;
         blurSize: number;
         /** Depth-peel layers; see setDepthPeelLayers. */
         depthPeelLayers: number;
@@ -656,6 +662,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.fpsText = "";
         this.mspfArray = [];
         this.renderStatsText = "";
+        this.externalRenderer = null;
         this.pointsArray = [];
         this.mouseTrackPoints = [];
         this.hoverSize = 0.27;
@@ -683,7 +690,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.fpsText = avg.toFixed(2)+" ms/frame (" + (fps).toFixed(0)+" fps) ["+this.canvas.width+" x "+this.canvas.height+"]";
             // Kept separate rather than appended, because each string becomes one entry in the
             // glyph atlas and one wider than the atlas cannot be laid out.
-            this.renderStatsText = renderStatsText();
+            this.renderStatsText = this.externalRenderer ? this.externalRenderer.statsText() : renderStatsText();
             }, 1000);
 
         //Set to false to use WebGL 1
@@ -1741,7 +1748,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.imageBuffer.triangleVertexTextureBuffer[0].numItems = imageTextures.length / 2;
             this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageTextures), this.gl.STATIC_DRAW);
         }
-        buildBuffers(this.displayBuffers, this.store)
+        // The scene's buffers - the store's, which are what WebGL draws; this.displayBuffers is a
+        // leftover that nothing fills - and this context, given outright: WebGL is about to draw,
+        // so whatever was left dirty while another renderer drew (deferWebGLUploads) is uploaded
+        // now. Building only this.displayBuffers was harmless while every buffer was uploaded as
+        // it was made, and left WebGL drawing buffers with nothing in them once uploads waited.
+        buildBuffers(this.store.getState().glRef.displayBuffers, this.store, this.gl)
     }
 
     drawTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:webGL.MGWebGLShader, vertexType:number, bufferIdx:number, specialDrawBuffer?:number) {

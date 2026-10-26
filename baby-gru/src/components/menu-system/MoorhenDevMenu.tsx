@@ -16,7 +16,8 @@ import {
     uninstrumentGl,
 } from "../../WebGLgComponents/mgWebGLParts/renderStats";
 import { setUseGemmi } from "../../store/generalStatesSlice";
-import { setPeelOpaqueSeparately } from "../../store/sceneSettingsSlice";
+import { setPeelOpaqueSeparately, setUseWebGPU } from "../../store/sceneSettingsSlice";
+import { webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
 import { showModal } from "../../store/modalsSlice";
 import {
     addCallback,
@@ -202,6 +203,7 @@ export const MoorhenDevMenu = () => {
     const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.enabled);
     const glCtx = useSelector((state: RootState) => state.glRef.glCtx);
     const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately);
+    const useWebGPU = useSelector((state: moorhen.State) => state.sceneSettings.useWebGPU);
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
     const toggleValidationPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");
@@ -510,6 +512,17 @@ export const MoorhenDevMenu = () => {
             >
                 WebGPU preview (test)
             </MoorhenMenuItem>
+            <MoorhenToggle
+                type="switch"
+                checked={useWebGPU}
+                disabled={webGPUUnavailableReason() !== null}
+                label={webGPUUnavailableReason() === null
+                    ? "Draw the main view with WebGPU (test; WebGL still draws multiple views, stereo, depth blur, outlines and recordings)"
+                    : `Draw the main view with WebGPU (${webGPUUnavailableReason()})`}
+                onChange={() => {
+                    dispatch(setUseWebGPU(!useWebGPU));
+                }}
+            />
             <MoorhenToggle
                 type="switch"
                 checked={gpuMetaBalls}

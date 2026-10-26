@@ -11,6 +11,8 @@ import { WebGPUPreviewRenderer, webGPUUnavailableReason } from "./previewRendere
 import { getGpuContext } from "./gpu";
 import type { PreviewCameraSource } from "./previewScene";
 import { describeSkipped, effectSettings, planPreview } from "./previewScene";
+import { setUseWebGPU } from "../store/sceneSettingsSlice";
+import type { WebGPUMainViewRenderer } from "../components/webMG/MoorhenWebGPUMainView";
 
 /** An image: RGBA, 8 bits a channel, top row first (as ImageData has it). */
 export interface RendererImage {
@@ -86,7 +88,10 @@ interface WebGLView extends PreviewCameraSource {
  * MoorhenInstance's again, and TypeScript gives up on the circle.
  */
 export interface WebGPUApiHost {
-    store: { getState(): { glRef: { displayBuffers?: DisplayBuffer[] }; molecules?: { moleculeList?: unknown[] }; maps?: unknown[] } };
+    store: {
+        getState(): { glRef: { displayBuffers?: DisplayBuffer[] }; molecules?: { moleculeList?: unknown[] }; maps?: unknown[]; sceneSettings?: { useWebGPU?: boolean } };
+        dispatch(action: ReturnType<typeof setUseWebGPU>): unknown;
+    };
     getVideoRecorderRef(): { readonly current: { glRef: { readonly current: unknown } } | null };
 }
 
@@ -117,6 +122,17 @@ export interface WebGPUApi {
     webGLSnapshot(): RendererImage;
     /** Each sub-buffer in the scene that WebGPU leaves out, or draws in part, and why. */
     describeSkipped(): SkippedSubBufferInfo[];
+    /**
+     * Who draws the main view: whether WebGPU is asked for (sceneSettings.useWebGPU), whether it
+     * has taken the view (`active`), whether it drew the last frame (`drawing`) and, if WebGL did,
+     * why (`webGLReason`), and how many frames WebGPU has drawn.
+     */
+    mainView(): {
+        requested: boolean; active: boolean; drawing: boolean; webGLReason: string | null; framesDrawn: number;
+        lastFrame: { meshes: number; triangles: number; spheres: number; segments: number } | null;
+    };
+    /** Ask for the main view to be drawn with WebGPU, or not (the preference, so it is remembered). */
+    setMainView(useWebGPU: boolean): void;
 }
 
 /** Who owns a DisplayBuffer: a molecule's representation or a map's display object, if either. */
@@ -201,6 +217,23 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
          * Read straight from the canvas, so with depth blur (offscreen buffers) on it would miss
          * the blur; that case is refused rather than returning the wrong picture.
          */
+        mainView() {
+            const requested = !!host.store.getState().sceneSettings?.useWebGPU;
+            const external = (host.getVideoRecorderRef()?.current?.glRef?.current as { externalRenderer?: WebGPUMainViewRenderer | null } | null)?.externalRenderer;
+            const active = external?.name === "WebGPU";
+            return {
+                requested, active,
+                drawing: active && external.webGLReason === null,
+                webGLReason: active ? external.webGLReason : null,
+                framesDrawn: active ? external.framesDrawn : 0,
+                lastFrame: active ? external.lastFrame : null,
+            };
+        },
+
+        setMainView(useWebGPU: boolean): void {
+            host.store.dispatch(setUseWebGPU(useWebGPU));
+        },
+
         describeSkipped(): SkippedSubBufferInfo[] {
             const displayBuffers = host.store.getState().glRef.displayBuffers ?? [];
             const length = (data: ArrayLike<number> | undefined | null) => data?.length ?? 0;

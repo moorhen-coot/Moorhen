@@ -597,7 +597,22 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
     return newBuffers
 }
 
+/** The stores whose WebGL uploads wait while another renderer draws the main view. */
+const deferredUploads = new WeakSet<object>();
+
+/**
+ * While another renderer draws the main view (externalRenderer.ts), building buffers for the
+ * store's WebGL context waits: nothing would draw them. They stay dirty, and are built when
+ * WebGL next draws (MGWebGL.buildBuffers, which passes its context outright). A context passed
+ * to buildBuffers is always built for: it belongs to someone who is about to draw with it.
+ */
+export function deferWebGLUploads(store: object, defer: boolean): void {
+    if (defer) deferredUploads.add(store);
+    else deferredUploads.delete(store);
+}
+
 export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootState>, gl_in: WebGLRenderingContext = null) : void => {
+        if (!gl_in && deferredUploads.has(store)) return
         const print_timing = false
 
         const mapLineWidth = store.getState().mapContourSettings.mapLineWidth

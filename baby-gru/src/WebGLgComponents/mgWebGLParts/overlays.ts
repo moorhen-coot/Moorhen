@@ -537,7 +537,12 @@ export function drawFPSMeter(self: MGWebGL) {
     self.gl.depthFunc(self.gl.LESS)
 }
 
-export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=1.0) {
+/**
+ * The 2D overlays' text - legends, the FPS text, the measuring distances - into its glyph atlas
+ * (measureText2DCanvasTexture), placed for this view: drawTextOverlays' work short of drawing. A
+ * frame drawn by another renderer (externalRenderer) needs this and draws the atlas itself.
+ */
+export function gatherTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=1.0) {
 
     const ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight * ratioMult
 
@@ -637,6 +642,11 @@ export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=
     const rebuilt = atlas.beginFrame(atlas.contentKeyFor(items));
     items.forEach(item => atlas.addBigTextureTextImage(item));
     atlas.recreateBigTextureBuffers(rebuilt);
+}
+
+export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=1.0) {
+
+    gatherTextOverlays(self, invMat, ratioMult, font_scale);
 
     self.gl.useProgram(self.shaderProgramTextInstanced);
     self.setMatrixUniforms(self.shaderProgramTextInstanced);

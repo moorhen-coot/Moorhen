@@ -26,6 +26,8 @@ import { isSilent, viewDifference } from "../../WebGLgComponents/viewEcho";
 import { HighlightHoveredSection } from './HoverSection';
 import { DragHandles } from './DragHandles';
 import { SelectClickedObject } from './SelectObject';
+import { MoorhenWebGPUMainView } from './MoorhenWebGPUMainView';
+import { webGPUUnavailableReason } from '../../WebGPUComponents/gpu';
 
 
 interface MoorhenWebMGPropsInterface {
@@ -77,6 +79,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
     const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
+    // The main view drawn with WebGPU, where the browser offers it (MoorhenWebGPUMainView).
+    const useWebGPU = useSelector((state: moorhen.State) => state.sceneSettings.useWebGPU)
+    const webGPUAvailable = webGPUUnavailableReason() === null
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
     const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
     const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
@@ -936,6 +941,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}
                     store={store}
                     dispatch={dispatch} />
+                    {useWebGPU && webGPUAvailable && <MoorhenWebGPUMainView glRef={glRef as React.RefObject<MGWebGL>} />}
                     <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>;
                 </figure>
                 {showContextMenu &&

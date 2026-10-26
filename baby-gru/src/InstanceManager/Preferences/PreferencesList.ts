@@ -77,7 +77,7 @@ import {
     setUseOffScreenBuffers,setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast, 
     RootState
 } from "@/store";
-import { initialState as sceneSettingsInitialState } from "@/store/sceneSettingsSlice";
+import { initialState as sceneSettingsInitialState, setUseWebGPU } from "@/store/sceneSettingsSlice";
 import { DEFAULT_SHORTCUTS } from "./DefaultShortcuts";
 
 export type PreferenceEntry<T = unknown> = {
@@ -421,6 +421,12 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         valueSetter: setPerspectiveEyeDistance,
         selector: (state: RootState) => state.sceneSettings.fogClipOffset,
         defaultValue: sceneSettingsInitialState.fogClipOffset,
+    },
+    55: {
+        label: "useWebGPU",
+        valueSetter: setUseWebGPU,
+        selector: (state: RootState) => state.sceneSettings.useWebGPU,
+        defaultValue: sceneSettingsInitialState.useWebGPU,
     },
 };
 

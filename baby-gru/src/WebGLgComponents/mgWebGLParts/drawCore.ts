@@ -1,7 +1,9 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
-import { slabNearFar, focalPlaneDepth, baseProjection, zoomScaleFor, CameraFrame } from './projection';
+import { slabNearFar, focalPlaneDepth, baseProjection, zoomScaleFor, CameraFrame, viewProjection } from './projection';
+import { gatherTextOverlays } from './overlays';
+import type { ExternalRenderer } from '../externalRenderer';
 import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
@@ -1743,7 +1745,55 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         }
     }
 
+/**
+ * A frame drawn by another renderer (MGWebGL.externalRenderer: the WebGPU main view), with
+ * everything drawScene does for a frame that is not WebGL drawing, so that the rest of Moorhen
+ * finds the frame it expects: the camera advanced; the matrices GLrender would have left, which
+ * picking (unProject) and the overlays read; picking's grain; the 2D overlay's quaternion; the
+ * overlay text's glyph atlas (which the other renderer draws from); and the FPS meter's timings.
+ */
+function drawExternalFrame(self: MGWebGL, external: ExternalRenderer): void {
+        advanceCamera(self)
+
+        const width = self.gl.viewportWidth;
+        const height = self.gl.viewportHeight;
+        self.currentViewport = [0, 0, width, height];
+        const { projection, view } = viewProjection(cameraFrame(self, width / height));
+        self.pMatrix = projection;
+        self.mvMatrix = view;
+        const invQuat = quat4.create();
+        quat4Inverse(self.myQuat, invQuat);
+        const invMat = quatToMat4(invQuat);
+        self.mvInvMatrix = invMat;
+        vec3.set(self.screenZ, 0.0, 0.0, 1.0);
+        vec3.transformMat4(self.screenZ, self.screenZ, invMat);
+        // drawTriangles keeps this current for WebGL frames.
+        self.pickLevel = levelForHeight(visibleHeight(self.zoom), self.pickLevel)
+
+        self.props.setDrawQuat(self.myQuat)
+        gatherTextOverlays(self, invMat);
+
+        external.draw();
+
+        if(self.showFPS){
+            self.nFrames += 1;
+            const thisTime = performance.now();
+            const mspf = thisTime - self.prevTime;
+            self.mspfArray.push(mspf);
+            if(self.mspfArray.length>200) self.mspfArray.shift();
+            self.prevTime = thisTime;
+        }
+}
+
 export function drawScene(self: MGWebGL) : void {
+
+        // Another renderer drawing the main view takes the frame, unless it is one read back from
+        // the WebGL canvas (a screenshot, save_pixel_data) or one it declines. See externalRenderer.ts.
+        const external = self.externalRenderer;
+        if (external && !self.renderToTexture && !self.save_pixel_data && external.willDraw()) {
+            drawExternalFrame(self, external);
+            return;
+        }
 
         // Only read when the counters are installed, so an uninstrumented frame pays for one
         // branch and nothing else.

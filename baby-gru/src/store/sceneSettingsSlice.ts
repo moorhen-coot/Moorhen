@@ -45,6 +45,12 @@ export const initialState: {
      * the slow path because they once turned it off.
      */
     peelOpaqueSeparately: boolean;
+    /**
+     * Draw the main view with WebGPU (components/webMG/MoorhenWebGPUMainView.tsx) where the browser
+     * offers it; WebGL still draws what WebGPU cannot yet, and everything where there is no WebGPU.
+     * Off by default while WebGPU is being brought up to WebGL's features.
+     */
+    useWebGPU: boolean;
     depthBlurDepth: number;
     lightPosition: [number, number, number, number];
     ambient: [number, number, number, number];
@@ -143,6 +149,7 @@ export const initialState: {
     depthBlurRadius: 3.0,
     depthPeelLayers: 4,
     peelOpaqueSeparately: true,
+    useWebGPU: false,
     // Where the depth blur starts, in angstroms from the view centre; negative is towards the
     // viewer. Zero puts it on the rotation centre, which is what you are usually looking at.
     // This was a 0 to 1 fraction, so a saved value lands a fraction of an angstrom from centre -
@@ -350,6 +357,9 @@ const sceneSettingsSlice = createSlice({
         setPeelOpaqueSeparately: (state, action: PayloadAction<boolean>) => {
             state.peelOpaqueSeparately = action.payload;
         },
+        setUseWebGPU: (state, action: PayloadAction<boolean>) => {
+            state.useWebGPU = action.payload;
+        },
         // API
         setDepthBlurDepth: (state, action: PayloadAction<number>) => {
             state.depthBlurDepth = action.payload;
@@ -461,6 +471,7 @@ export const {
     setDepthBlurRadius,
     setDepthPeelLayers,
     setPeelOpaqueSeparately,
+    setUseWebGPU,
     setBackgroundColor,
     setDepthBlurDepth,
     setDrawAxes,

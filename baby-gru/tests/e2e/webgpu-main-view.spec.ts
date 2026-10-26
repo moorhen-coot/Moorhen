@@ -1,0 +1,175 @@
+import { expect, test } from "@playwright/test";
+import { startAndGetInstance } from "./helpers";
+import type { WebGPUApi } from "../../src/WebGPUComponents/instanceApi";
+
+/**
+ * The main view drawn with WebGPU (sceneSettings.useWebGPU; MoorhenWebGPUMainView.tsx).
+ *
+ * With 5a3h as ribbons: switched on, WebGPU takes the view and draws it, on a canvas the size of
+ * the WebGL one; what is on screen is WebGPU's picture of the scene; WebGL can still be read back
+ * (save_pixel_data draws that frame with WebGL); a view WebGPU does not draw yet (multiple views)
+ * goes back to WebGL and returns; a map contoured again at a new radius is drawn without anything
+ * else asking for a frame; and switched off, WebGL draws the view again - with the buffers that
+ * waited while WebGPU drew built for it (switching off crashed until they were), and no page errors.
+ *
+ * Runs in the chromium-webgpu and firefox-webgpu projects, and skips where there is no WebGPU.
+ */
+
+interface Host {
+    getMoorhenInstance: () => Promise<{
+        webGPU: WebGPUApi;
+        representation: { defaultStyle: string };
+        sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoMultiView(value: boolean): void };
+        mapContourSettings: { setMapRadius(value: { molNo: number; radius: number }): void };
+        getMapList(): { molNo: number }[];
+    }>;
+}
+
+const SELECTOR = "[data-testid=webgpu-main-view]";
+
+test("the main view drawn with WebGPU, handing back to WebGL where it must", async ({ page }) => {
+    test.setTimeout(180_000);
+    const moorhen = await startAndGetInstance(page);
+    const id = moorhen.elementId;
+    const pageErrors: string[] = [];
+    page.on("pageerror", error => pageErrors.push(String(error)));
+
+    const unavailable = await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        return (await host.getMoorhenInstance()).webGPU.deviceUnavailableReason();
+    }, id);
+    test.skip(unavailable !== null, `No WebGPU: ${unavailable}`);
+
+    await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        const instance = await host.getMoorhenInstance();
+        instance.representation.defaultStyle = "CRs";
+        instance.sceneSettings.setDrawCrosshairs(false);
+    }, id);
+    await moorhen.loadFiles([{ url: "/tests/test_data/5a3h.pdb", filename: "5a3h.pdb" }]);
+    await moorhen.waitForWebGLRenderSettle({ minSettleMs: 1_500, minDisplayBufferCount: 1, timeoutMs: 60_000 });
+
+    const mainView = async () => await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        return (await host.getMoorhenInstance()).webGPU.mainView();
+    }, id);
+    const setMainView = async (on: boolean) => await page.evaluate(async ({ targetId, on }) => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        (await host.getMoorhenInstance()).webGPU.setMainView(on);
+    }, { targetId: id, on });
+    const setMultiView = async (on: boolean) => await page.evaluate(async ({ targetId, on }) => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        (await host.getMoorhenInstance()).sceneSettings.setDoMultiView(on);
+    }, { targetId: id, on });
+
+    // Off by default: WebGL draws, and there is no WebGPU canvas.
+    expect(await mainView()).toMatchObject({ requested: false, active: false, drawing: false });
+    await expect(page.locator(SELECTOR)).toHaveCount(0);
+
+    // On: WebGPU takes the view and draws it.
+    await setMainView(true);
+    await expect.poll(async () => (await mainView()).drawing, { timeout: 30_000 }).toBe(true);
+    // Through the locator, which reaches into the web component's shadow root; document.querySelector does not.
+    const canvases = await page.locator(SELECTOR).evaluate((gpu: HTMLCanvasElement) => {
+        const gl = gpu.parentElement.querySelector("canvas") as HTMLCanvasElement;
+        return {
+            gpu: { width: gpu.width, height: gpu.height, cssWidth: gpu.style.width, cssHeight: gpu.style.height, visibility: gpu.style.visibility },
+            gl: { width: gl.width, height: gl.height, cssWidth: gl.style.width, cssHeight: gl.style.height },
+            gpuIsNotGl: gpu !== gl,
+        };
+    });
+    expect(canvases.gpuIsNotGl).toBe(true);
+    expect(canvases.gpu).toEqual({ ...canvases.gl, visibility: "visible" });
+    expect((await mainView()).framesDrawn).toBeGreaterThan(0);
+
+    // What is on screen is WebGPU's picture of the scene: the page's pixels where the canvas is,
+    // against an offscreen WebGPU snapshot of the same view, where the snapshot has the scene. The
+    // page's own UI lies over parts of the canvas (the menu, the test page's banner, the tabs) and
+    // is left out that way, as long as it is over background; a blank or stale canvas would be a
+    // long way off.
+    const screen = (await page.locator(SELECTOR).screenshot()).toString("base64");
+    const onScreen = await page.evaluate(async ({ targetId, png }) => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        const instance = await host.getMoorhenInstance();
+        const image = new Image();
+        image.src = `data:image/png;base64,${png}`;
+        await image.decode();
+        const shot = await instance.webGPU.snapshot({ width: image.width, height: image.height });
+        const canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(image, 0, 0);
+        const pixels = ctx.getImageData(0, 0, image.width, image.height).data;
+        let differing = 0, drawn = 0;
+        for (let i = 0; i < pixels.length; i += 4) {
+            if (Math.abs(shot.data[i] - shot.data[0]) + Math.abs(shot.data[i + 1] - shot.data[1]) + Math.abs(shot.data[i + 2] - shot.data[2]) <= 6) continue;
+            drawn++;
+            const d = Math.max(Math.abs(pixels[i] - shot.data[i]), Math.abs(pixels[i + 1] - shot.data[i + 1]), Math.abs(pixels[i + 2] - shot.data[i + 2]));
+            if (d > 24) differing++;
+        }
+        const n = pixels.length / 4;
+        return { width: image.width, height: image.height, differing: drawn > 0 ? differing / drawn : 1, drawn: drawn / n };
+    }, { targetId: id, png: screen });
+    console.log(`WebGPU main view: on screen ${onScreen.width}x${onScreen.height}, ${(100 * onScreen.drawn).toFixed(1)}% of it scene, `
+        + `${(100 * onScreen.differing).toFixed(2)}% of the scene's pixels differing from an offscreen WebGPU snapshot`);
+    expect(onScreen.drawn).toBeGreaterThan(0.01);
+    expect(onScreen.differing).toBeLessThan(0.03);
+
+    // WebGL can still be read back: that frame is WebGL's, and the next is WebGPU's again.
+    const readBack = await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        const gl = (await host.getMoorhenInstance()).webGPU.webGLSnapshot();
+        let drawn = 0;
+        for (let i = 0; i < gl.data.length; i += 4) {
+            if (Math.abs(gl.data[i] - gl.data[0]) + Math.abs(gl.data[i + 1] - gl.data[1]) + Math.abs(gl.data[i + 2] - gl.data[2]) > 6) drawn++;
+        }
+        return drawn / (gl.data.length / 4);
+    }, id);
+    expect(readBack).toBeGreaterThan(0.01);
+
+    // A view WebGPU does not draw yet goes to WebGL, the WebGPU canvas out of its way, and back.
+    await setMultiView(true);
+    await expect.poll(async () => (await mainView()).webGLReason, { timeout: 30_000 }).toBe("multiple views");
+    expect((await mainView()).drawing).toBe(false);
+    await expect(page.locator(SELECTOR)).toHaveCSS("visibility", "hidden");
+    await setMultiView(false);
+    await expect.poll(async () => (await mainView()).drawing, { timeout: 30_000 }).toBe(true);
+    await expect(page.locator(SELECTOR)).toHaveCSS("visibility", "visible");
+
+    // A map loaded while WebGPU draws, and contoured again at a smaller radius: the new contours
+    // are drawn with nothing else asking for a frame (the store's new buffers do).
+    await moorhen.loadFiles([{ url: "/tests/test_data/5a3h_sigmaa.mtz", filename: "5a3h_sigmaa.mtz" }]);
+    await expect.poll(async () => (await moorhen.getObjectCounts()).mapCount, { timeout: 120_000 }).toBeGreaterThan(0);
+    await expect.poll(async () => (await mainView()).lastFrame?.segments ?? 0, { timeout: 60_000 }).toBeGreaterThan(0);
+    // Settled at the first radius before changing it.
+    let segments = -1;
+    await expect.poll(async () => {
+        const now = (await mainView()).lastFrame?.segments ?? 0;
+        const steady = now === segments;
+        segments = now;
+        return steady;
+    }, { timeout: 60_000, intervals: [2_000] }).toBe(true);
+    await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        const instance = await host.getMoorhenInstance();
+        instance.mapContourSettings.setMapRadius({ molNo: instance.getMapList()[0].molNo, radius: 6 });
+    }, id);
+    await expect.poll(async () => (await mainView()).lastFrame?.segments ?? 0, { timeout: 60_000 }).toBeLessThan(segments);
+
+    // Off: WebGL draws the view again, from buffers built now for the ones that waited.
+    await setMainView(false);
+    await expect.poll(async () => (await mainView()).active, { timeout: 30_000 }).toBe(false);
+    await expect(page.locator(SELECTOR)).toHaveCount(0);
+    const afterOff = await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        const gl = (await host.getMoorhenInstance()).webGPU.webGLSnapshot();
+        let drawn = 0;
+        for (let i = 0; i < gl.data.length; i += 4) {
+            if (Math.abs(gl.data[i] - gl.data[0]) + Math.abs(gl.data[i + 1] - gl.data[1]) + Math.abs(gl.data[i + 2] - gl.data[2]) > 6) drawn++;
+        }
+        return drawn / (gl.data.length / 4);
+    }, id);
+    expect(afterOff).toBeGreaterThan(0.01);
+    expect(pageErrors).toEqual([]);
+});
