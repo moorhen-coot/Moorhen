@@ -77,7 +77,10 @@ export interface EffectsReport {
     occlusion: { floorByPlateau: number; floorBySphere: number; floorFar: number; plateauTop: number; sphereTop: number };
     /** Strength 0: occlusion computed but changing nothing. */
     strengthZero: { differing: number; worst: number };
-    /** Along the row y = 0, x from -10 to 10: pixels darkened to under half, with edges on, and where. */
+    /**
+     * Along the row y = 0, x from -10 to 10: pixels darkened by a quarter or more with edges on,
+     * and where. Thin grey lines, as WebGL's: half dark across a pixel or two.
+     */
     edgeRow: { x: number; ratio: number }[];
     /** Away from any step (floor far, plateau middle, sphere middle): with edges over without. */
     edgeQuiet: number[];
@@ -113,10 +116,11 @@ export default defineCase(async (_device: GPUDevice): Promise<EffectsReport> => 
         const edges = (await shot({ doEdgeDetect: true, depthThreshold: 1.3, normalThreshold: 0.5, scaleDepth: 2, scaleNormal: 0 })).data;
         const edgeRow: { x: number; ratio: number }[] = [];
         const ppa = HEIGHT / (48 * base.zoom);
-        for (let px = Math.ceil(WIDTH / 2 - 10 * ppa); px < WIDTH / 2 + 10 * ppa; px++) {
+        // From the pixels the floor's ends fall in, which the edge can sit on.
+        for (let px = Math.floor(WIDTH / 2 - 10 * ppa); px < WIDTH / 2 + 10 * ppa; px++) {
             const x = (px + 0.5 - WIDTH / 2) / ppa;
             const r = brightness(edges, x, 0) / brightness(plain, x, 0);
-            if (r < 0.5) edgeRow.push({ x, ratio: r });
+            if (r < 0.75) edgeRow.push({ x, ratio: r });
         }
         const quiet = (x: number, y: number) => brightness(edges, x, y) / brightness(plain, x, y);
         const edgeQuiet = [quiet(-9, 5), quiet(3, 0), quiet(SPHERE.x, SPHERE.y)];

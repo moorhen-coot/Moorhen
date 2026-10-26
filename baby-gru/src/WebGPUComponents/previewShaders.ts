@@ -37,8 +37,10 @@ struct Frame {
     upDir: vec4f,        // the screen's up, in model space
     clipPlane0: vec4f,   // front clip plane, eye space
     clipPlane1: vec4f,   // back clip plane, eye space
-    effects: vec4f,      // 1 where the frame has them: ambient occlusion, edges, (shadows, quality)
+    effects: vec4f,      // 1 where the frame has them: ambient occlusion, edges, shadows; edge map texels a pixel
     effectsArea: vec4f,  // where this target's pixels are in the effects maps (x, y), and 1 / the maps' size
+    shadowMatrix: mat4x4f, // model space to the shadow map: x, y in 0..1 (rows down), z the depth
+    shadowParams: vec4f, // the map's texel size (x, y), the depth bias, 1 for the 8 x 8 soft lookup
 };
 
 @group(0) @binding(0) var<uniform> frame: Frame;
@@ -69,6 +71,36 @@ fn ambientLight() -> vec4f {
 @group(0) @binding(1) var aoMap: texture_2d<f32>;
 @group(0) @binding(2) var edgeMap: texture_2d<f32>;
 @group(0) @binding(3) var effectSampler: sampler;
+@group(0) @binding(4) var shadowMap: texture_depth_2d;
+@group(0) @binding(5) var shadowSampler: sampler_comparison;
+
+// How lit a point is by the light, 0 to 1, from where it lands in the shadow map: the lookup in
+// triangle-fragment-shader.js, one 2 x 2 compare, or (snapshots, as WebGL's screenshots) 64 of
+// them a texel apart. 1 without shadows.
+fn shadowAt(p: vec4f) -> f32 {
+    if (frame.effects.z < 0.5) { return 1.0; }
+    let depth = p.z - frame.shadowParams.z;
+    if (frame.shadowParams.w < 0.5) {
+        return textureSampleCompareLevel(shadowMap, shadowSampler, p.xy, depth);
+    }
+    var lit = 0.0;
+    for (var y = -3.5; y <= 3.5; y += 1.0) {
+        for (var x = -3.5; x <= 3.5; x += 1.0) {
+            lit += textureSampleCompareLevel(shadowMap, shadowSampler, p.xy + vec2f(x, y) * frame.shadowParams.xy, depth);
+        }
+    }
+    return lit / 64.0;
+}
+
+// WebGL's use of it: in shadow (under a half), the light is dimmed to the shadow plus a half and
+// the highlight dropped; otherwise the highlight is added. A back face, flat, is just scaled.
+fn shaded(light: vec4f, specular: vec4f, shadow: f32) -> vec4f {
+    return select(light + specular, light * min(shadow + 0.5, 1.0), shadow < 0.5);
+}
+
+fn backShade(shadow: f32) -> f32 {
+    return select(shadow, min(shadow + 0.5, 1.0), shadow < 0.5);
+}
 
 // Ambient occlusion at this pixel: what triangle-fragment-shader.js multiplies its ambient and
 // diffuse light by (SSAOMap). 1 without it.
@@ -79,17 +111,34 @@ fn occlusionAt(fragCoord: vec4f) -> f32 {
     return textureSampleLevel(aoMap, effectSampler, uv, 0.0).r;
 }
 
+// The edge map, bilinearly, at a point in pixels of the effects area. The map has frame.effects.w
+// texels a pixel (2 for an ordinary view: effectPasses.ts), so at a pixel's centre this is the
+// average of the 2 x 2 texels under it - WebGL's finer edges filtered down, as WebGL reads its own.
+// Worked out from texel positions rather than sampled at a 0..1 coordinate: every pixel centre
+// falls exactly between texels, where a coordinate rounded differently in another tile of a
+// snapshot would tip the weights, and the tiles would not join.
+fn edgeMapAt(pos: vec2f) -> f32 {
+    let size = vec2i(textureDimensions(edgeMap));
+    let t = pos * frame.effects.w - 0.5;
+    let i = vec2i(floor(t));
+    let f = t - floor(t);
+    let a = textureLoad(edgeMap, clamp(i, vec2i(0), size - 1), 0).r;
+    let b = textureLoad(edgeMap, clamp(i + vec2i(1, 0), vec2i(0), size - 1), 0).r;
+    let c = textureLoad(edgeMap, clamp(i + vec2i(0, 1), vec2i(0), size - 1), 0).r;
+    let d = textureLoad(edgeMap, clamp(i + vec2i(1, 1), vec2i(0), size - 1), 0).r;
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
 // The edge factor at this pixel, 0 on an edge and 1 elsewhere, antialiased as WebGL reads its edge
 // map: through the FXAA filter of fxaa.js, on one channel. 1 without edges.
 fn edgeAt(fragCoord: vec4f) -> f32 {
     if (frame.effects.y < 0.5) { return 1.0; }
-    let inv = frame.effectsArea.zw;
     let p = fragCoord.xy + frame.effectsArea.xy;
-    let nw = textureSampleLevel(edgeMap, effectSampler, (p + vec2f(-1.0, -1.0)) * inv, 0.0).r;
-    let ne = textureSampleLevel(edgeMap, effectSampler, (p + vec2f(1.0, -1.0)) * inv, 0.0).r;
-    let sw = textureSampleLevel(edgeMap, effectSampler, (p + vec2f(-1.0, 1.0)) * inv, 0.0).r;
-    let se = textureSampleLevel(edgeMap, effectSampler, (p + vec2f(1.0, 1.0)) * inv, 0.0).r;
-    let m = textureSampleLevel(edgeMap, effectSampler, p * inv, 0.0).r;
+    let nw = edgeMapAt(p + vec2f(-1.0, -1.0));
+    let ne = edgeMapAt(p + vec2f(1.0, -1.0));
+    let sw = edgeMapAt(p + vec2f(-1.0, 1.0));
+    let se = edgeMapAt(p + vec2f(1.0, 1.0));
+    let m = edgeMapAt(p);
     // Luma of a grey is the grey.
     let lumaMin = min(m, min(min(nw, ne), min(sw, se)));
     let lumaMax = max(m, max(max(nw, ne), max(sw, se)));
@@ -97,12 +146,9 @@ fn edgeAt(fragCoord: vec4f) -> f32 {
     var dir = vec2f(-((nw + ne) - (sw + se)), (nw + sw) - (ne + se));
     let dirReduce = max((nw + ne + sw + se) * (0.25 / 8.0), 1.0 / 128.0);
     let rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
-    dir = clamp(dir * rcpDirMin, vec2f(-8.0), vec2f(8.0)) * inv;
-    let centre = p * inv;
-    let a = 0.5 * (textureSampleLevel(edgeMap, effectSampler, centre + dir * (1.0 / 3.0 - 0.5), 0.0).r
-                 + textureSampleLevel(edgeMap, effectSampler, centre + dir * (2.0 / 3.0 - 0.5), 0.0).r);
-    let b = a * 0.5 + 0.25 * (textureSampleLevel(edgeMap, effectSampler, centre - dir * 0.5, 0.0).r
-                            + textureSampleLevel(edgeMap, effectSampler, centre + dir * 0.5, 0.0).r);
+    dir = clamp(dir * rcpDirMin, vec2f(-8.0), vec2f(8.0));
+    let a = 0.5 * (edgeMapAt(p + dir * (1.0 / 3.0 - 0.5)) + edgeMapAt(p + dir * (2.0 / 3.0 - 0.5)));
+    let b = a * 0.5 + 0.25 * (edgeMapAt(p - dir * 0.5) + edgeMapAt(p + dir * 0.5));
     return select(b, a, b < lumaMin || b > lumaMax);
 }
 
@@ -111,6 +157,8 @@ struct VOut {
     @location(0) colour: vec4f,
     @location(1) normal: vec3f,
     @location(2) eyeDistance: f32,
+    // Where this is in the shadow map (shadowAt).
+    @location(5) shadowPos: vec4f,
 };
 
 fn finish(world: vec4f, normal: vec3f, colour: vec4f) -> VOut {
@@ -122,6 +170,7 @@ fn finish(world: vec4f, normal: vec3f, colour: vec4f) -> VOut {
     out.colour = select(colour, draw.copyColour, draw.params.z > 0.5);
     out.normal = (draw.model * vec4f(normal, 0.0)).xyz;
     out.eyeDistance = abs(eye.z / eye.w);
+    out.shadowPos = frame.shadowMatrix * (draw.model * world);
     return out;
 }
 
@@ -173,14 +222,14 @@ fn vs_instanced_uniform_colour(@location(0) position: vec3f, @location(1) normal
 
 // occ: the ambient occlusion here, which darkens the ambient and diffuse light but not the
 // highlight, as in triangle-fragment-shader.js.
-fn lit(base: vec4f, normal: vec3f, occ: f32) -> vec4f {
+fn lit(base: vec4f, normal: vec3f, occ: f32, shadow: f32) -> vec4f {
     let n = normalize(normal);
     let L = frame.lightDir.xyz;
     let E = frame.eyeDir.xyz;
     let R = normalize(-reflect(L, n));
     let diffuse = frame.diffuse * max(dot(n, L), 0.0);
     let specular = frame.specular * pow(max(dot(R, E), 0.0), frame.params.z);
-    return (1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ + specular;
+    return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, shadow);
 }
 
 fn fogged(colour: vec4f, alpha: f32, eyeDistance: f32) -> vec4f {
@@ -196,7 +245,8 @@ fn fogged(colour: vec4f, alpha: f32, eyeDistance: f32) -> vec4f {
 @fragment
 fn fs_main(in: VOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
     // Back faces are drawn flat in their own colour, as in WebGL.
-    let colour = select(in.colour, lit(in.colour, in.normal, occlusionAt(in.position)), frontFacing);
+    let shadow = shadowAt(in.shadowPos);
+    let colour = select(in.colour * backShade(shadow), lit(in.colour, in.normal, occlusionAt(in.position), shadow), frontFacing);
     return fogged(colour * edgeAt(in.position), in.colour.a, in.eyeDistance);
 }
 
@@ -232,6 +282,7 @@ struct TexturedOut {
     @location(3) uv: vec2f,
     // Where the vertex is, in the frame the normal is in, for the normal map's tangent frame.
     @location(4) world: vec3f,
+    @location(5) shadowPos: vec4f,
 };
 
 fn textured(world: vec4f, normal: vec3f, colour: vec4f, uv: vec2f) -> TexturedOut {
@@ -243,6 +294,7 @@ fn textured(world: vec4f, normal: vec3f, colour: vec4f, uv: vec2f) -> TexturedOu
     out.eyeDistance = v.eyeDistance;
     out.uv = uv;
     out.world = (draw.model * world).xyz;
+    out.shadowPos = v.shadowPos;
     return out;
 }
 
@@ -289,13 +341,13 @@ fn metalReflection(N: vec3f, E: vec3f, L: vec3f, roughness: f32) -> f32 {
 
 // lit, with what a metallic-roughness map changes: the highlight's exponent and colour, and the
 // diffuse light traded for a metal's reflection.
-fn litSurface(base: vec4f, n: vec3f, shininess: f32, specularTint: vec4f, metallic: f32, roughness: f32, occ: f32) -> vec4f {
+fn litSurface(base: vec4f, n: vec3f, shininess: f32, specularTint: vec4f, metallic: f32, roughness: f32, occ: f32, shadow: f32) -> vec4f {
     let L = frame.lightDir.xyz;
     let E = frame.eyeDir.xyz;
     let R = normalize(-reflect(L, n));
     let diffuse = frame.diffuse * (max(dot(n, L), 0.0) * (1.0 - metallic) + metallic * metalReflection(n, E, L, roughness));
     let specular = specularTint * frame.specular * pow(max(dot(R, E), 0.0), shininess);
-    return (1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ + specular;
+    return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, shadow);
 }
 
 // The normal map's normal, as mappedNormal in triangle-fragment-shader.js: the directions in
@@ -342,8 +394,10 @@ fn fs_textured(in: TexturedOut, @builtin(front_facing) frontFacing: bool) -> @lo
         specularTint = vec4f(mix(vec3f(1.0), colour.rgb, metallic) * (1.0 - roughness), 1.0);
     }
     // Back faces flat in their (textured) colour, as fs_main.
-    let shaded = select(colour, litSurface(colour, n, shininess, specularTint, metallic, roughness, occlusionAt(in.position)), frontFacing);
-    return fogged(shaded * edgeAt(in.position), in.colour.a, in.eyeDistance);
+    let shadow = shadowAt(in.shadowPos);
+    let surface = select(colour * backShade(shadow),
+        litSurface(colour, n, shininess, specularTint, metallic, roughness, occlusionAt(in.position), shadow), frontFacing);
+    return fogged(surface * edgeAt(in.position), in.colour.a, in.eyeDistance);
 }
 
 // Thick lines, drawn from a triangle mesh's own buffers: each edge of each triangle is a quad
@@ -447,7 +501,8 @@ fn fs_line(in: VOut) -> @location(0) vec4f {
 // Lit lines are drawn with the triangle shader in WebGL, so occlusion and edges darken them too.
 @fragment
 fn fs_lit_line(in: VOut) -> @location(0) vec4f {
-    return fogged(lit(in.colour, in.normal, occlusionAt(in.position)) * edgeAt(in.position), in.colour.a, in.eyeDistance);
+    // Not shadowed: WebGL never tells the lines program about shadows. They do cast them.
+    return fogged(lit(in.colour, in.normal, occlusionAt(in.position), 1.0) * edgeAt(in.position), in.colour.a, in.eyeDistance);
 }
 
 // Perfect spheres: impostors. Each sphere is a square of side 2r centred on it, facing the
@@ -462,6 +517,8 @@ struct SphereOut {
     // The square's point in eye space, at the depth of the sphere's centre.
     @location(2) eye: vec4f,
     @location(3) @interpolate(flat) radius: f32,
+    // The centre, in model space (placed), for where the surface is in the shadow map.
+    @location(4) @interpolate(flat) centre: vec3f,
 };
 
 const SPHERE_CORNERS = array<vec2f, 6>(
@@ -483,6 +540,7 @@ fn vs_sphere(@builtin(vertex_index) vertex: u32, @location(0) origin: vec3f, @lo
     out.colour = select(colour, draw.copyColour, draw.params.z > 0.5);
     out.quad = corner;
     out.radius = r;
+    out.centre = centre;
     return out;
 }
 
@@ -519,7 +577,10 @@ fn fs_sphere(in: SphereOut) -> SphereFragment {
     let nl = max(dot(n, frame.lightDir.xyz), 0.0);
     let base = in.colour;
     let occ = occlusionAt(in.position);
-    let lit = (1.5 * base * ambientLight() + 1.2 * base * (frame.diffuse * nl)) * occ + frame.specular * pow(nl, frame.params.z);
+    // Shadowed at the surface point itself, where WebGL looks up the square's point: the same away
+    // from the sphere's own edge, and it does not shadow itself.
+    let shadow = shadowAt(frame.shadowMatrix * vec4f(in.centre + in.radius * n, 1.0));
+    let lit = shaded((1.5 * base * ambientLight() + 1.2 * base * (frame.diffuse * nl)) * occ, frame.specular * pow(nl, frame.params.z), shadow);
     let eyeDistance = abs(in.eye.z / in.eye.w);
     out.colour = fogged(lit * edgeAt(in.position), base.a, eyeDistance);
 
@@ -536,6 +597,20 @@ fn fs_sphere(in: SphereOut) -> SphereFragment {
         if (back < 0.0) { discard; }
     }
     return out;
+}
+
+// A sphere in the shadow map: the light's camera is the frame's, so the square faces the light and
+// this is the surface the light sees. WebGL's shadow pass draws the square flat, at the centre.
+@fragment
+fn fs_sphere_shadow(in: SphereOut) -> @builtin(frag_depth) f32 {
+    let x = in.quad.x;
+    let y = in.quad.y;
+    let zz = 1.0 - x * x - y * y;
+    if (zz <= 0.06) { discard; }
+    var surface = in.eye;
+    surface.z += sqrt(zz) * in.radius;
+    let clip = frame.projection * surface;
+    return clip.z / clip.w;
 }
 
 struct SphereGBuffer {

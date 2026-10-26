@@ -24,7 +24,7 @@ interface Host {
     getMoorhenInstance: () => Promise<{
         webGPU: WebGPUApi;
         representation: { defaultStyle: string };
-        sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoSSAO(value: boolean): void; setDoEdgeDetect(value: boolean): void };
+        sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoSSAO(value: boolean): void; setDoEdgeDetect(value: boolean): void; setDoShadow(value: boolean): void };
         getMoleculeList(): {
             show(style: string): Promise<unknown>; hide(style: string): unknown; toggleSymmetry(): Promise<void>;
             drawEnvironment(cid?: string): Promise<void>;
@@ -43,6 +43,10 @@ interface ParityResult {
     skippedText: string;
     skippedSubBuffers: SkippedSubBufferInfo[];
     tiles: number;
+    /** The effects drawn, as the main view's settings ask for them. */
+    effects: { ssao: boolean; edges: boolean; shadow: boolean };
+    /** Pixels the added symmetry, environment, glTF or effect changed, in each renderer's picture. */
+    changed: { webgl: number; webgpu: number } | null;
     /** Pixels that are not background, in the WebGL picture. */
     drawn: number;
     differing: number;
@@ -61,8 +65,8 @@ interface ParityResult {
 const STYLES: {
     style: string; what: string; maxDiffering: number; maxMeanDifference: number;
     symmetry?: boolean; map?: boolean; environment?: boolean; gltf?: boolean;
-    /** Scene effects on: ambient occlusion, edge detection. */
-    ssao?: boolean; edges?: boolean;
+    /** Scene effects on: ambient occlusion, edge detection, shadows. */
+    ssao?: boolean; edges?: boolean; shadow?: boolean;
 }[] = [
     { style: "CRs", what: "ribbons", maxDiffering: 0.01, maxMeanDifference: 0.6 },
     { style: "CBs", what: "ball-and-stick", maxDiffering: 0.03, maxMeanDifference: 1.6 },
@@ -80,14 +84,21 @@ const STYLES: {
     { style: "CRs", what: "a textured glTF sphere", maxDiffering: 0.02, maxMeanDifference: 1.2, gltf: true },
     // Ambient occlusion and edge detection (effectPasses.ts). The same definitions as WebGL's, but
     // not the same maps - WebGL's g-buffer is a 2048 square and its occlusion a 1024 one, with a
-    // random kernel - so these differ by more. Not yet measured.
-    { style: "CRs", what: "ribbons with ambient occlusion", maxDiffering: 0.1, maxMeanDifference: 4, ssao: true },
-    { style: "VdwSpheres", what: "spacefill with ambient occlusion", maxDiffering: 0.1, maxMeanDifference: 4, ssao: true },
-    { style: "CRs", what: "ribbons with edges", maxDiffering: 0.05, maxMeanDifference: 3, edges: true },
+    // random kernel - so these differ by more. Measured (Apple GPU, 1280x647, 2026-10-26): CRs +
+    // SSAO 0.51% and 0.58, spacefill + SSAO 3.14% and 2.89. Edges, after drawing them on a
+    // g-buffer twice the image as WebGL's finer one does: 0.83% and 0.56, 12 677 pixels edged
+    // against WebGL's 12 285 (at image size it was 2.39%, 1.53 and 26 041).
+    { style: "CRs", what: "ribbons with ambient occlusion", maxDiffering: 0.01, maxMeanDifference: 1.2, ssao: true },
+    { style: "VdwSpheres", what: "spacefill with ambient occlusion", maxDiffering: 0.05, maxMeanDifference: 5.5, ssao: true },
+    { style: "CRs", what: "ribbons with edges", maxDiffering: 0.02, maxMeanDifference: 1.2, edges: true },
+    // Shadows (shadowMap.ts): GLrender's light camera, clip and lookup. Measured (Apple GPU,
+    // 1280x647, 2026-10-26): 0.50% and 0.27, as plain ribbons; 11 318 pixels shadowed in WebGL,
+    // 11 323 in WebGPU.
+    { style: "CRs", what: "ribbons with shadows", maxDiffering: 0.01, maxMeanDifference: 0.6, shadow: true },
 ];
 
 test.describe("WebGPU against WebGL", () => {
-    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map, environment, gltf, ssao, edges } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
+    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map, environment, gltf, ssao, edges, shadow } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
         test.setTimeout(180_000);
         const moorhen = await startAndGetInstance(page);
 
@@ -99,37 +110,20 @@ test.describe("WebGPU against WebGL", () => {
         test.skip(unavailable !== null, `No WebGPU: ${unavailable}`);
 
         // Ribbons to start with, and nothing drawn over the scene that WebGPU leaves out.
-        await page.evaluate(async ({ targetId, ssao, edges }) => {
+        await page.evaluate(async targetId => {
             const host = document.getElementById(targetId) as unknown as Host;
             const instance = await host.getMoorhenInstance();
             instance.representation.defaultStyle = "CRs";
             instance.sceneSettings.setDrawCrosshairs(false);
-            if (ssao) instance.sceneSettings.setDoSSAO(true);
-            if (edges) instance.sceneSettings.setDoEdgeDetect(true);
-        }, { targetId: moorhen.elementId, ssao: !!ssao, edges: !!edges });
+        }, moorhen.elementId);
 
         const files = [{ url: "/tests/test_data/5a3h.pdb", filename: "5a3h.pdb" }];
         if (map) files.push({ url: "/tests/test_data/5a3h_sigmaa.mtz", filename: "5a3h_sigmaa.mtz" });
-        if (gltf) files.push({ url: "/tests/test_data/textured_sphere.gltf", filename: "textured_sphere.gltf" });
         const loaded = await moorhen.loadFiles(files);
         if (map) {
             await expect.poll(async () => (await moorhen.getObjectCounts()).mapCount, { timeout: 120_000 }).toBeGreaterThan(0);
         }
         expect(loaded).toEqual(expect.arrayContaining([expect.objectContaining({ type: "molecule", fileName: "5a3h.pdb" })]));
-        if (symmetry) {
-            await page.evaluate(async targetId => {
-                const host = document.getElementById(targetId) as unknown as Host;
-                const instance = await host.getMoorhenInstance();
-                await instance.getMoleculeList()[0].toggleSymmetry();
-            }, moorhen.elementId);
-        }
-        if (environment) {
-            await page.evaluate(async targetId => {
-                const host = document.getElementById(targetId) as unknown as Host;
-                const instance = await host.getMoorhenInstance();
-                await instance.getMoleculeList()[0].drawEnvironment();
-            }, moorhen.elementId);
-        }
         // Then the representation under test in place of the ribbons.
         if (style !== "CRs") {
             await page.evaluate(async ({ targetId, wanted }) => {
@@ -141,6 +135,40 @@ test.describe("WebGPU against WebGL", () => {
             }, { targetId: moorhen.elementId, wanted: style });
         }
         await moorhen.waitForWebGLRenderSettle({ minSettleMs: 1_500, minDisplayBufferCount: 1, timeoutMs: 60_000 });
+
+        // Anything else under test is added to the settled scene, with both renderers' pictures of
+        // the scene without it kept: it has to change both, or the case passes on a scene that
+        // never had it (as the glTF, environment and shadow cases once did - all three came out
+        // pixel for pixel as plain ribbons).
+        const extra = !!(symmetry || environment || gltf || ssao || edges || shadow);
+        if (extra) {
+            await page.evaluate(async targetId => {
+                const host = document.getElementById(targetId) as unknown as Host;
+                const instance = await host.getMoorhenInstance();
+                const gl = instance.webGPU.webGLSnapshot();
+                const gpu = await instance.webGPU.snapshot({ width: gl.width, height: gl.height });
+                (window as unknown as { parityBefore?: { webgl: Uint8ClampedArray; webgpu: Uint8ClampedArray } }).parityBefore = { webgl: gl.data, webgpu: gpu.data };
+            }, moorhen.elementId);
+            if (gltf) {
+                // After the molecule has settled, so that the import's centring on the glTF is the
+                // last word (loaded together, the molecule's own centring won and the sphere was off
+                // screen).
+                await moorhen.loadFiles([{ url: "/tests/test_data/textured_sphere.gltf", filename: "textured_sphere.gltf" }]);
+            }
+            await page.evaluate(async ({ targetId, symmetry, environment, ssao, edges, shadow }) => {
+                const host = document.getElementById(targetId) as unknown as Host;
+                const instance = await host.getMoorhenInstance();
+                const [molecule] = instance.getMoleculeList();
+                if (symmetry) await molecule.toggleSymmetry();
+                // A residue named outright: without one, drawEnvironment takes the atom at the
+                // view centre, and found none while the view was still moving to the molecule.
+                if (environment) await molecule.drawEnvironment("//A/150");
+                if (ssao) instance.sceneSettings.setDoSSAO(true);
+                if (edges) instance.sceneSettings.setDoEdgeDetect(true);
+                if (shadow) instance.sceneSettings.setDoShadow(true);
+            }, { targetId: moorhen.elementId, symmetry: !!symmetry, environment: !!environment, ssao: !!ssao, edges: !!edges, shadow: !!shadow });
+            await moorhen.waitForWebGLRenderSettle({ minSettleMs: 1_500, minDisplayBufferCount: 1, timeoutMs: 60_000 });
+        }
 
         const result: ParityResult = await page.evaluate(async ({ targetId, tolerance }) => {
             const host = document.getElementById(targetId) as unknown as Host;
@@ -176,6 +204,20 @@ test.describe("WebGPU against WebGL", () => {
                 return canvas.toDataURL("image/png");
             };
 
+            // How much what was added changed each renderer's picture.
+            const holder = window as unknown as { parityBefore?: { webgl: Uint8ClampedArray; webgpu: Uint8ClampedArray } };
+            const before = holder.parityBefore;
+            delete holder.parityBefore;
+            const changedFrom = (a: Uint8ClampedArray, b: Uint8ClampedArray) => {
+                if (a.length !== b.length) return a.length / 4;
+                let changed = 0;
+                for (let i = 0; i < a.length; i += 4) {
+                    if (Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2])) > tolerance) changed++;
+                }
+                return changed;
+            };
+            const changed = before ? { webgl: changedFrom(before.webgl, gl.data), webgpu: changedFrom(before.webgpu, gpu.data) } : null;
+
             return {
                 width: gl.width,
                 height: gl.height,
@@ -187,6 +229,8 @@ test.describe("WebGPU against WebGL", () => {
                 skippedText: gpu.skippedText,
                 skippedSubBuffers: instance.webGPU.describeSkipped(),
                 tiles: gpu.tiles,
+                effects: gpu.effects,
+                changed,
                 drawn,
                 differing,
                 meanDifference: total / n,
@@ -195,7 +239,7 @@ test.describe("WebGPU against WebGL", () => {
             };
         }, { targetId: moorhen.elementId, tolerance: PIXEL_TOLERANCE });
 
-        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}${environment ? " + environment" : ""}${gltf ? " + textured glTF" : ""}${ssao ? " + SSAO" : ""}${edges ? " + edges" : ""}`;
+        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}${environment ? " + environment" : ""}${gltf ? " + textured glTF" : ""}${ssao ? " + SSAO" : ""}${edges ? " + edges" : ""}${shadow ? " + shadows" : ""}`;
         for (const [name, url] of Object.entries(result.images ?? {})) {
             await testInfo.attach(`${variant.replace(/ \+ /g, "-")}-${name}.png`, { body: Buffer.from(url.split(",")[1], "base64"), contentType: "image/png" });
         }
@@ -203,6 +247,7 @@ test.describe("WebGPU against WebGL", () => {
         const summary = `${variant}: ${result.width}x${result.height}, ${result.meshes} meshes, ${result.triangles} triangles, ${result.spheres} spheres, ${result.segments} line segments, ${result.labels} labels; ` +
             `${result.drawn} pixels drawn, ${result.differing} differ by more than ${PIXEL_TOLERANCE} ` +
             `(${(100 * result.differing / pixels).toFixed(2)}%), mean difference ${result.meanDifference.toFixed(2)}, worst ${result.worst}` +
+            (result.changed ? `; the addition changed ${result.changed.webgl} pixels in WebGL, ${result.changed.webgpu} in WebGPU` : "") +
             (result.skippedText ? `; not drawn by WebGPU: ${result.skippedText}` : "");
         testInfo.annotations.push({ type: "parity", description: summary });
         console.log(`WebGPU parity: ${summary}`);
@@ -212,6 +257,13 @@ test.describe("WebGPU against WebGL", () => {
             await testInfo.attach(`${style}-skipped.json`, { body: JSON.stringify(result.skippedSubBuffers, null, 2), contentType: "application/json" });
         }
 
+        // The effects asked for are the ones drawn, and anything added shows in both pictures.
+        expect(result.effects, summary).toEqual({ ssao: !!ssao, edges: !!edges, shadow: !!shadow });
+        if (result.changed) {
+            expect(result.changed.webgl, `${summary}: the addition should show in WebGL`).toBeGreaterThan(pixels * 0.001);
+            expect(result.changed.webgpu, `${summary}: the addition should show in WebGPU`).toBeGreaterThan(pixels * 0.001);
+        }
+        if (environment) expect(result.labels, summary).toBeGreaterThan(0);
         // Something of the molecule is in the picture, and WebGPU drew it.
         expect(result.drawn, summary).toBeGreaterThan(pixels * 0.01);
         expect(result.meshes, summary).toBeGreaterThan(0);

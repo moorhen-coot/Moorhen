@@ -10,7 +10,7 @@ import type { DisplayBuffer } from "../WebGLgComponents/displayBuffer";
 import { WebGPUPreviewRenderer, webGPUUnavailableReason } from "./previewRenderer";
 import { getGpuContext } from "./gpu";
 import type { PreviewCameraSource } from "./previewScene";
-import { describeSkipped, planPreview } from "./previewScene";
+import { describeSkipped, effectSettings, planPreview } from "./previewScene";
 
 /** An image: RGBA, 8 bits a channel, top row first (as ImageData has it). */
 export interface RendererImage {
@@ -31,6 +31,11 @@ export interface WebGPUSceneSnapshot extends RendererImage {
     segments: number;
     /** Text labels drawn. */
     labels: number;
+    /**
+     * The scene effects drawn, as the main view's settings ask for them - the same flags the WebGL
+     * view draws with, so this says what both pictures should show.
+     */
+    effects: { ssao: boolean; edges: boolean; shadow: boolean };
     /** What is in the scene but not drawn by the WebGPU renderer yet, with sub-buffer counts. */
     skipped: Record<string, number>;
     /** The same, as a sentence; empty if nothing was left out. */
@@ -174,9 +179,11 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 const shot = await renderer.snapshot(displayBuffers, view, [], width, height, { maxTile: options.maxTile });
                 if (errors.length) throw new Error(errors.join("\n"));
                 const { plan } = shot.report;
+                const effects = effectSettings(view);
                 return {
                     width: shot.width, height: shot.height, data: shot.data, tiles: shot.tiles,
                     meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments, labels: shot.report.labels,
+                    effects: { ssao: !!effects.ssao, edges: !!effects.edges, shadow: !!effects.shadow },
                     skipped: plan.skipped, skippedText: describeSkipped(plan.skipped),
                 };
             } finally {

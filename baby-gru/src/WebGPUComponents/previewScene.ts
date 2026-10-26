@@ -18,6 +18,7 @@ import { type BufferMaterial, materialTextureIds } from '../WebGLgComponents/tex
 import type { TextSource } from './textLayer';
 import type { OverlayLinesSource } from './overlayLines';
 import type { TexturedShapeSource } from './texturedShapes';
+import { SHADOW_MAP_TEXELS, type ShadowMapQuality } from '../WebGLgComponents/shadowMapQuality';
 
 /**
  * What the preview reads off the WebGL renderer each frame. MGWebGL has all of these; tests pass
@@ -50,7 +51,12 @@ export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
      * Where drawCore reads the hover highlight's size (glRef.hoverSize): the largest sphere under
      * the hovered atoms, so the highlight covers them. MGWebGL has its store.
      */
-    store?: { getState(): { glRef?: { hoverSize?: number; texturedShapes?: TexturedShapeSource[] } } };
+    store?: { getState(): {
+        glRef?: { hoverSize?: number; texturedShapes?: TexturedShapeSource[] };
+        sceneSettings?: { shadowMapQuality?: ShadowMapQuality };
+    } };
+    /** Shadows from the light (doShadow), in a map of the scene's shadowMapQuality. */
+    doShadow?: boolean;
     /** Screen-space ambient occlusion (scene settings doSSAO, ssaoRadius in A, ssaoBias the strength). */
     doSSAO?: boolean;
     ssaoRadius?: number;
@@ -69,21 +75,27 @@ export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
 /** What the effects passes do this frame, from the source's settings; null for an effect that is off. */
 export interface EffectSettings {
     ssao: { radius: number; strength: number } | null;
+    /** The shadow map's edge, in texels (SHADOW_MAP_TEXELS for the quality). */
+    shadow: { texels: number } | null;
     edges: { depthThreshold: number; normalThreshold: number; depthStep: number; normalStep: number } | null;
 }
 
 /**
  * The effects the source asks for.
  *
- * Edge detection's steps are in pixels of the image: WebGL's are in texels of a g-buffer about
- * twice the canvas, so its default scale of 2 comes to about one pixel. Taken as half the scale,
- * rounded, so 0 stays "off" (normal edges are off by default, with scaleNormal 0) and anything
- * else is at least one pixel.
+ * Edge detection's steps are in pixels of the image, and may be fractions of one: WebGL's are in
+ * texels of its 2048-square g-buffer, scaled by the canvas's aspect, which for an ordinary window
+ * makes its default scale of 2 about half a pixel. So a quarter of the scale; 0 stays "off"
+ * (normal edges are off by default, with scaleNormal 0). The edge pass works on a g-buffer finer
+ * than the image to take them (effectPasses.ts), as WebGL's is.
  */
 export function effectSettings(source: PreviewCameraSource): EffectSettings {
-    const step = (scale: number | undefined) => (scale && scale > 0 ? Math.max(1, Math.round(scale / 2)) : 0);
+    const step = (scale: number | undefined) => (scale && scale > 0 ? scale / 4 : 0);
     return {
         ssao: source.doSSAO ? { radius: source.ssaoRadius ?? 5, strength: source.ssaoBias ?? 1 } : null,
+        shadow: source.doShadow
+            ? { texels: SHADOW_MAP_TEXELS[source.store?.getState().sceneSettings?.shadowMapQuality ?? "coarse"] ?? SHADOW_MAP_TEXELS.coarse }
+            : null,
         edges: source.doEdgeDetect
             ? {
                 depthThreshold: source.depthThreshold ?? 1.3,
@@ -402,7 +414,7 @@ function copiesOf(buffer: DisplayBuffer): { copies: ArrayLike<number>[]; greyCop
 }
 
 /** Floats in the per-frame uniform block; see Frame in previewShaders.ts. */
-export const FRAME_FLOATS = 84;
+export const FRAME_FLOATS = 104;
 
 /**
  * The camera for the preview's own canvas.
@@ -475,6 +487,9 @@ export function frameUniforms(source: PreviewCameraSource, width: number, height
     // when it has made them; for a tile the maps reach past it).
     out.set([0, 0, 0, 0], 76);
     out.set([0, 0, 1 / width, 1 / height], 80);
+    // The shadow map's matrix and texel size, bias and quality (shadowMap.ts), likewise.
+    out.set([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], 84);
+    out.set([0, 0, 0, 0], 100);
     return out;
 }
 

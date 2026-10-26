@@ -4,16 +4,24 @@
  *
  * Each frame that wants either:
  *   1. the scene is drawn into the g-buffer (the renderer does that, with its fs_gbuffer pipelines:
- *      an rgba16float eye-space normal, w = 1 where drawn, and a depth32float depth), at the size
- *      of the image, single-sampled;
+ *      an rgba16float eye-space normal, w = 1 where drawn, and a depth32float depth),
+ *      single-sampled, at the size of the image - or, with edges on, twice it (gbufferScale);
  *   2. ambient occlusion: ssao-fragment-shader.js's hemisphere test, 32 samples, at half the
  *      image's size, then blurred with blur_x/y_simple's 7-tap Gaussian;
- *   3. edges: edge-detect-fragment-shader.js's Sobel on depth (in A) and normals, at full size;
- *   4. the main pass reads both maps at its pixel (occlusionAt and edgeAt in previewShaders.ts).
+ *   3. edges: edge-detect-fragment-shader.js's Sobel on depth (in A) and normals, at the
+ *      g-buffer's size;
+ *   4. the main pass reads both maps at its pixel (occlusionAt and edgeAt in previewShaders.ts),
+ *      by position in the image, so an edge map twice the size is averaged 2 x 2 as it is read.
  *
- * Where WebGL differs: its g-buffer is a 2048 square stretched over the canvas, and its occlusion a
- * 1024 square, whatever the canvas; here the maps follow the image (so a big snapshot has big
- * maps). Positions are rebuilt from depth rather than stored. Samples landing outside the image
+ * Why edges want the finer g-buffer: WebGL's is a 2048 square stretched over the canvas - about
+ * 1.6 texels a pixel across an ordinary window and 3.2 down - and its edges are found a texel or
+ * so wide in that and filtered down to the canvas, so they come out thin and grey. Found on a
+ * g-buffer the size of the image they were two pixels wide and black. Twice the image gives
+ * WebGL's look, the same across as down (WebGL's horizontal edges are thinner than its vertical
+ * ones, by the aspect ratio).
+ *
+ * Where WebGL differs otherwise: its occlusion is a 1024 square whatever the canvas; here the maps
+ * follow the image (so a big snapshot has big maps). Positions are rebuilt from depth rather than stored. Samples landing outside the image
  * count as open sky. In a tiled snapshot each tile has its own maps, so occlusion can show a seam
  * at tile edges where a sample would have reached into the next tile.
  *
@@ -49,7 +57,7 @@ struct Ssao {
     projection: mat4x4f,
     inverseProjection: mat4x4f,
     params: vec4f,       // radius (A), strength (an exponent on visibility), target width, height
-    origin: vec4f,       // where the target's first texel is in the whole image's (a tile's), unused x2
+    origin: vec4f,       // where the target's first texel is in the whole image's (a tile's); g-buffer texels a pixel; unused
     samples: array<vec4f, 32>,
     noise: array<vec4f, 16>,
 };
@@ -77,10 +85,10 @@ fn texelOf(uv: vec2f) -> vec2i {
 // a range check, visibility raised to the strength.
 @fragment
 fn fs_ssao(in: FullOut) -> @location(0) vec4f {
-    // Each occlusion texel stands for the 2 x 2 g-buffer pixels from twice its own; the first of
-    // them is the one tested, so the grid is the same whatever the image's size.
+    // Each occlusion texel stands for the 2 x 2 pixels from twice its own; the g-buffer texel at
+    // the first of them is the one tested, so the grid is the same whatever the image's size.
     let gsize = vec2i(textureDimensions(gNormal));
-    let texel = min(vec2i(in.position.xy) * 2, gsize - 1);
+    let texel = min(vec2i(floor(vec2f(vec2i(in.position.xy)) * 2.0 * ssao.origin.z)), gsize - 1);
     let normalAll = textureLoad(gNormal, texel, 0);
     if (normalAll.a < 0.5) { return vec4f(1.0); }
     let normal = normalize(normalAll.xyz);
@@ -137,7 +145,7 @@ fn fs_blur(in: FullOut) -> @location(0) vec4f {
 
 struct Edge {
     inverseProjection: mat4x4f,
-    params: vec4f,       // depth threshold (A), normal threshold, depth step, normal step (pixels)
+    params: vec4f,       // depth threshold (A), normal threshold, depth step, normal step (g-buffer texels)
 };
 
 @group(0) @binding(0) var<uniform> edge: Edge;
@@ -235,8 +243,10 @@ const SSAO_FLOATS = 16 + 16 + 4 + 4 + KERNEL_SIZE * 4 + 16 * 4;
 const EDGE_FLOATS = 16 + 4;
 
 interface Targets {
+    /** The image's (or tile and margin's) size; the g-buffer and edge map are `scale` times it. */
     width: number;
     height: number;
+    scale: number;
     normal: GPUTexture;
     depth: GPUTexture;
     /** Half size: the raw occlusion, then (ping-pong) the blurred. */
@@ -256,10 +266,26 @@ interface Targets {
  */
 export function effectMargin(settings: EffectSettings, pixelsPerAngstrom: number): number {
     if (!settings.ssao && !settings.edges) return 0;
-    const reach = 24 + 2 * Math.max(settings.edges?.depthStep ?? 0, settings.edges?.normalStep ?? 0);
+    const reach = 24 + Math.ceil(2 * Math.max(settings.edges?.depthStep ?? 0, settings.edges?.normalStep ?? 0));
     const radius = settings.ssao ? Math.ceil(settings.ssao.radius * pixelsPerAngstrom * 1.5) : 0;
     return Math.min(512, reach + radius);
 }
+
+/** The largest g-buffer side the finer g-buffer for edges may come to; past it the scale drops. */
+export const MAX_GBUFFER_SIDE = 4096;
+
+/**
+ * G-buffer texels to an image pixel: 2 with edges on (see the top of this file), so long as that
+ * keeps the g-buffer within MAX_GBUFFER_SIDE - a 4K canvas gets about 1 - and 1 for occlusion
+ * alone, which has no use for more.
+ */
+export function gbufferScale(settings: EffectSettings, width: number, height: number): number {
+    if (!settings.edges) return 1;
+    return Math.max(1, Math.min(2, MAX_GBUFFER_SIDE / Math.max(width, height, 1)));
+}
+
+/** A step in pixels as whole g-buffer texels at `scale`: at least one, unless it is 0 (off). */
+export const stepInTexels = (pixels: number, scale: number): number => (pixels > 0 ? Math.max(1, Math.round(pixels * scale)) : 0);
 
 /** What the main pass reads: the maps made this frame, or white where an effect is off. */
 export interface EffectMaps {
@@ -267,6 +293,8 @@ export interface EffectMaps {
     edge: GPUTextureView;
     /** frame.effects.x and .y. */
     flags: [number, number];
+    /** Edge map texels a pixel: frame.effects.w. */
+    edgeScale: number;
 }
 
 export class EffectPasses {
@@ -341,9 +369,12 @@ export class EffectPasses {
         return !!settings.ssao || !!settings.edges;
     }
 
-    /** The g-buffer pass's attachments, at this size: begin it with this, draw with fs_gbuffer pipelines. */
-    gbufferPass(width: number, height: number): GPURenderPassDescriptor {
-        const t = this.ensure(width, height);
+    /**
+     * The g-buffer pass's attachments, for an image (or tile and margin) of this size, `scale`
+     * texels a pixel (gbufferScale): begin it with this, draw with fs_gbuffer pipelines.
+     */
+    gbufferPass(width: number, height: number, scale = 1): GPURenderPassDescriptor {
+        const t = this.ensure(width, height, scale);
         return {
             label: "g-buffer",
             colorAttachments: [{ view: t.views.normal, clearValue: { r: 0, g: 0, b: 0, a: 0 }, loadOp: "clear", storeOp: "store" }],
@@ -358,7 +389,7 @@ export class EffectPasses {
      */
     encode(encoder: GPUCommandEncoder, settings: EffectSettings, projection: ArrayLike<number>, origin: [number, number] = [0, 0]): EffectMaps {
         const t = this.targets;
-        const maps: EffectMaps = { ao: this.whiteView, edge: this.whiteView, flags: [0, 0] };
+        const maps: EffectMaps = { ao: this.whiteView, edge: this.whiteView, flags: [0, 0], edgeScale: 1 };
         if (!t || !EffectPasses.wanted(settings)) return maps;
         const inverse = mat4.invert(mat4.create(), Array.from(projection).slice(0, 16) as unknown as mat4.mat4) ?? mat4.create();
 
@@ -367,7 +398,7 @@ export class EffectPasses {
             data.set(Array.from(projection).slice(0, 16), 0);
             data.set(inverse as Float32Array, 16);
             data.set([settings.ssao.radius, settings.ssao.strength, t.ao.width, t.ao.height], 32);
-            data.set([Math.floor(origin[0] / 2), Math.floor(origin[1] / 2), 0, 0], 36);
+            data.set([Math.floor(origin[0] / 2), Math.floor(origin[1] / 2), t.scale, 0], 36);
             data.set(this.kernel.samples, 40);
             data.set(this.kernel.noise, 40 + KERNEL_SIZE * 4);
             this.device.queue.writeBuffer(this.ssaoUniform, 0, data);
@@ -391,11 +422,12 @@ export class EffectPasses {
             const data = new Float32Array(EDGE_FLOATS);
             data.set(inverse as Float32Array, 0);
             const e = settings.edges;
-            data.set([e.depthThreshold, e.normalThreshold, e.depthStep, e.normalStep], 16);
+            data.set([e.depthThreshold, e.normalThreshold, stepInTexels(e.depthStep, t.scale), stepInTexels(e.normalStep, t.scale)], 16);
             this.device.queue.writeBuffer(this.edgeUniform, 0, data);
             this.fullscreen(encoder, "edges", t.views.edge, this.edgePipeline, t.bindGroups.edge);
             maps.edge = t.views.edge;
             maps.flags[1] = 1;
+            maps.edgeScale = t.scale;
         }
         return maps;
     }
@@ -426,18 +458,20 @@ export class EffectPasses {
         this.targets = null;
     }
 
-    private ensure(width: number, height: number): Targets {
-        if (this.targets && this.targets.width === width && this.targets.height === height) return this.targets;
+    private ensure(width: number, height: number, scale: number): Targets {
+        const held = this.targets;
+        if (held && held.width === width && held.height === height && held.scale === scale) return held;
         this.releaseTargets();
         const usage = TextureUsage.RENDER_ATTACHMENT | TextureUsage.TEXTURE_BINDING;
         const texture = (label: string, format: GPUTextureFormat, w: number, h: number) =>
             this.device.createTexture({ label, size: [w, h], format, usage });
         const half = [Math.max(1, Math.ceil(width / 2)), Math.max(1, Math.ceil(height / 2))];
-        const normal = texture("g-buffer normals", GBUFFER_NORMAL_FORMAT, width, height);
-        const depth = texture("g-buffer depth", GBUFFER_DEPTH_FORMAT, width, height);
+        const fine = [Math.max(1, Math.round(width * scale)), Math.max(1, Math.round(height * scale))];
+        const normal = texture("g-buffer normals", GBUFFER_NORMAL_FORMAT, fine[0], fine[1]);
+        const depth = texture("g-buffer depth", GBUFFER_DEPTH_FORMAT, fine[0], fine[1]);
         const ao = texture("ambient occlusion", MAP_FORMAT, half[0], half[1]);
         const aoBlur = texture("ambient occlusion (blur)", MAP_FORMAT, half[0], half[1]);
-        const edge = texture("edges", MAP_FORMAT, width, height);
+        const edge = texture("edges", MAP_FORMAT, fine[0], fine[1]);
         const views = { normal: normal.createView(), depth: depth.createView(), ao: ao.createView(), aoBlur: aoBlur.createView(), edge: edge.createView() };
         const reader = (buffer: GPUBuffer) => this.device.createBindGroup({
             layout: this.ssaoLayout,
@@ -456,7 +490,7 @@ export class EffectPasses {
             ],
         });
         this.targets = {
-            width, height, normal, depth, ao, aoBlur, edge, views,
+            width, height, scale, normal, depth, ao, aoBlur, edge, views,
             bindGroups: {
                 ssao: reader(this.ssaoUniform),
                 blurX: blur(this.blurUniforms[0], views.ao),

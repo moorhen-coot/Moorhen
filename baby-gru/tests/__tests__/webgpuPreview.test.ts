@@ -14,7 +14,8 @@ import {
     FRAME_FLOATS, MeshChunk, PreviewCameraSource, describeSkipped, effectSettings, frameUniforms, planMeshChunks, planPreview, previewCameraFrame,
     hoverSphereRadius, interactiveGlow, interactiveModel, symmetryCopyGrey,
 } from "../../src/WebGPUComponents/previewScene";
-import { effectMargin, ssaoKernel } from "../../src/WebGPUComponents/effectPasses";
+import { MAX_GBUFFER_SIDE, effectMargin, gbufferScale, ssaoKernel, stepInTexels } from "../../src/WebGPUComponents/effectPasses";
+import { SHADOW_BIAS, casterBounds, shadowCamera, shadowFrameUniforms } from "../../src/WebGPUComponents/shadowMap";
 
 const triangle = (over: Record<string, unknown> = {}) => createWebGLBuffers({
     prim_types: [["TRIANGLES"]],
@@ -300,6 +301,9 @@ describe("frameUniforms", () => {
         const data = frameUniforms(camera(), 200, 100);
         expect(Array.from(data.slice(76, 80))).toEqual([0, 0, 0, 0]);
         expect(Array.from(data.slice(80, 84))).toEqual(Array.from(new Float32Array([0, 0, 1 / 200, 1 / 100])));
+        // No shadow: an identity shadow matrix and no texel size, bias or softness.
+        expect(Array.from(data.slice(84, 100))).toEqual([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+        expect(Array.from(data.slice(100, 104))).toEqual([0, 0, 0, 0]);
     });
 
     it("packs colours, fog and specular power", () => {
@@ -390,7 +394,7 @@ describe("planMeshChunks", () => {
 
 describe("effectSettings", () => {
     it("is nothing when the scene has no effects on", () => {
-        expect(effectSettings(camera())).toEqual({ ssao: null, edges: null });
+        expect(effectSettings(camera())).toEqual({ ssao: null, shadow: null, edges: null });
     });
 
     it("takes occlusion's radius and strength (ssaoBias) as WebGL does", () => {
@@ -399,18 +403,42 @@ describe("effectSettings", () => {
 
     it("turns WebGL's g-buffer texel steps into pixels, keeping 0 as off", () => {
         const edges = effectSettings(camera({ doEdgeDetect: true, depthThreshold: 1.3, normalThreshold: 0.5, scaleDepth: 2, scaleNormal: 0 })).edges;
-        expect(edges).toEqual({ depthThreshold: 1.3, normalThreshold: 0.5, depthStep: 1, normalStep: 0 });
-        expect(effectSettings(camera({ doEdgeDetect: true, scaleDepth: 6, scaleNormal: 1 })).edges).toMatchObject({ depthStep: 3, normalStep: 1 });
+        expect(edges).toEqual({ depthThreshold: 1.3, normalThreshold: 0.5, depthStep: 0.5, normalStep: 0 });
+        expect(effectSettings(camera({ doEdgeDetect: true, scaleDepth: 6, scaleNormal: 1 })).edges).toMatchObject({ depthStep: 1.5, normalStep: 0.25 });
+    });
+});
+
+describe("the g-buffer's scale", () => {
+    const edges = { depthThreshold: 1.3, normalThreshold: 0.5, depthStep: 0.5, normalStep: 0 };
+
+    it("is twice the image for edges, as fine as WebGL's g-buffer over an ordinary window, and 1 for occlusion alone", () => {
+        expect(gbufferScale({ ssao: null, shadow: null, edges }, 1280, 647)).toBe(2);
+        expect(gbufferScale({ ssao: { radius: 2, strength: 1 }, shadow: null, edges: null }, 1280, 647)).toBe(1);
+    });
+
+    it("drops to keep the g-buffer within its largest side, never below 1", () => {
+        expect(gbufferScale({ ssao: null, shadow: null, edges }, 3840, 2160) * 3840).toBeCloseTo(MAX_GBUFFER_SIDE, 6);
+        expect(gbufferScale({ ssao: null, shadow: null, edges }, 9000, 100)).toBe(1);
+        // A snapshot tile with edges and the largest margin still gets the whole 2.
+        expect(gbufferScale({ ssao: null, shadow: null, edges }, 1024 + 2 * 512, 1024 + 2 * 512)).toBe(2);
+    });
+
+    it("takes the steps to whole texels, at least one, 0 staying off", () => {
+        expect(stepInTexels(0.5, 2)).toBe(1);
+        expect(stepInTexels(1.5, 2)).toBe(3);
+        expect(stepInTexels(0.25, 2)).toBe(1);
+        expect(stepInTexels(0.5, 1.07)).toBe(1);
+        expect(stepInTexels(0, 2)).toBe(0);
     });
 });
 
 describe("the effects' margin and kernel", () => {
     it("reaches as far as occlusion can, on screen, and no margin without effects", () => {
-        expect(effectMargin({ ssao: null, edges: null }, 10)).toBe(0);
-        const withRadius = effectMargin({ ssao: { radius: 2, strength: 1 }, edges: null }, 10);
+        expect(effectMargin({ ssao: null, shadow: null, edges: null }, 10)).toBe(0);
+        const withRadius = effectMargin({ ssao: { radius: 2, strength: 1 }, shadow: null, edges: null }, 10);
         expect(withRadius).toBeGreaterThanOrEqual(2 * 10);
-        expect(effectMargin({ ssao: { radius: 2, strength: 1 }, edges: null }, 20)).toBeGreaterThan(withRadius);
-        expect(effectMargin({ ssao: { radius: 1000, strength: 1 }, edges: null }, 100)).toBe(512);
+        expect(effectMargin({ ssao: { radius: 2, strength: 1 }, shadow: null, edges: null }, 20)).toBeGreaterThan(withRadius);
+        expect(effectMargin({ ssao: { radius: 1000, strength: 1 }, shadow: null, edges: null }, 100)).toBe(512);
     });
 
     it("samples the hemisphere above the surface, out to the radius, the same every time", () => {
@@ -425,5 +453,85 @@ describe("the effects' margin and kernel", () => {
         expect(Math.hypot(...samples.slice(124, 127))).toBeGreaterThan(Math.hypot(...samples.slice(0, 3)));
         expect(noise).toHaveLength(16 * 4);
         expect(Array.from(ssaoKernel().samples)).toEqual(Array.from(samples));
+    });
+});
+
+describe("the shadow map's camera", () => {
+    const turned = (): PreviewCameraSource => {
+        const q = [0.3, -0.5, 0.2, 0];
+        q[3] = Math.sqrt(1 - q[0] * q[0] - q[1] * q[1] - q[2] * q[2]);
+        return camera({ myQuat: q, origin: [-3, 4, 5], zoom: 0.5, light_positions: [25, 25, 50, 1] });
+    };
+
+    it("looks from the light the scene is lit by, however the view is turned", () => {
+        const light = shadowCamera(turned(), null, 1.5);
+        const lit = frameUniforms(turned(), 300, 200).slice(32, 35);
+        light.eyeDir.forEach((c, i) => expect(c).toBeCloseTo(lit[i], 5));
+    });
+
+    it("takes the view centre to the middle of the map, at a depth inside it", () => {
+        const source = turned();
+        const light = shadowCamera(source, null, 1.5);
+        const centre = [-source.origin[0], -source.origin[1], -source.origin[2], 1];
+        const m = light.textureMatrix;
+        const p = [0, 1, 2, 3].map(r => m[r] * centre[0] + m[4 + r] * centre[1] + m[8 + r] * centre[2] + m[12 + r]);
+        expect(p[0] / p[3]).toBeCloseTo(0.5, 5);
+        expect(p[1] / p[3]).toBeCloseTo(0.5, 5);
+        expect(p[2] / p[3]).toBeGreaterThan(0);
+        expect(p[2] / p[3]).toBeLessThan(1);
+    });
+
+    it("fits the molecules when they are smaller than the view", () => {
+        const wide = shadowCamera(camera({ zoom: 4 }), null, 1);
+        const fitted = shadowCamera(camera({ zoom: 4 }), { min: [-1, -2, -3], max: [1, 2, 3] }, 1);
+        // A narrower box is a larger scale in the projection.
+        expect(Math.abs(fitted.projection[0])).toBeGreaterThan(Math.abs(wide.projection[0]));
+    });
+
+    it("clips at the camera's front clip distance along the light, as WebGL's shadow pass does", () => {
+        // In the map's 0..1 depth, a model-space point.
+        const depthAt = (m: Float32Array, p: number[]) =>
+            (m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]) / (m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15]);
+        // fogClipOffset 250 and gl_clipPlane0[3] -230: the front plane 20 A in front of the centre.
+        const source = camera();
+        const light = shadowCamera(source, null, 1);
+        const centre = [-source.origin[0], -source.origin[1], -source.origin[2]];
+        const at = (d: number) => centre.map((c, i) => c + d * light.eyeDir[i]);
+        expect(depthAt(light.textureMatrix, at(20))).toBeCloseTo(0, 5);
+        expect(depthAt(light.textureMatrix, at(19))).toBeGreaterThan(0);
+        // The bias grows as the range shrinks, to stay the distance in angstrom that WebGL's
+        // 0.005 is of its unclipped range, which runs from 1 A in front of the light's eye.
+        expect(light.bias).toBeGreaterThan(SHADOW_BIAS);
+        const v = light.view;
+        const eyeDistance = -(v[2] * centre[0] + v[6] * centre[1] + v[10] * centre[2] + v[14]);
+        const range = 1 / Math.abs(depthAt(light.textureMatrix, at(1)) - depthAt(light.textureMatrix, at(0)));
+        const far = eyeDistance - 20 + range;
+        expect(light.bias * range).toBeCloseTo(SHADOW_BIAS * (far - 1), 5);
+    });
+
+    it("draws the shadow pass from the light, clipping nothing", () => {
+        const light = shadowCamera(turned(), null, 1);
+        const u = shadowFrameUniforms(light);
+        expect(Array.from(u.slice(0, 16))).toEqual(Array.from(light.projection));
+        expect(Array.from(u.slice(16, 32))).toEqual(Array.from(light.view));
+        expect(Array.from(u.slice(68, 76))).toEqual([0, 0, 0, 1, 0, 0, 0, 1]);
+    });
+});
+
+describe("casterBounds", () => {
+    const withAtoms = (atoms: { x: number; y: number; z: number }[], visible = true) =>
+        ({ visible, atoms } as unknown as DisplayBuffer);
+
+    it("boxes the atoms of what is visible, and nothing without atoms", () => {
+        const found = casterBounds([withAtoms([{ x: 1, y: 2, z: 3 }, { x: -1, y: 5, z: 0 }]), withAtoms([{ x: 100, y: 0, z: 0 }], false)], null);
+        expect(found.bounds).toEqual({ min: [-1, 2, 0], max: [1, 5, 3] });
+        expect(casterBounds([withAtoms([])], null).bounds).toBeNull();
+    });
+
+    it("keeps its answer while the same atom arrays are drawn", () => {
+        const atoms = [{ x: 1, y: 2, z: 3 }];
+        const first = casterBounds([withAtoms(atoms)], null);
+        expect(casterBounds([withAtoms(atoms)], first)).toBe(first);
+        expect(casterBounds([withAtoms([...atoms])], first)).not.toBe(first);
     });
 });

@@ -18,6 +18,11 @@ test("ambient occlusion and edges: where WebGL's definitions put them, and nowhe
     // sphere's rim, the plateau's border - and only there.
     const near = (x: number) => r.edgeRow.some(e => Math.abs(e.x - x) < 0.3);
     for (const x of [-10, -7.5, -4.5, 0, 6, 10]) expect(near(x), `an edge near x = ${x}`).toBe(true);
+    // Thin, as WebGL's are: found on a g-buffer twice the image and read back down, no line is more
+    // than two pixels across (on a g-buffer the size of the image they were two, and black).
+    for (const x of [-10, -7.5, -4.5, 0, 6, 10]) {
+        expect(r.edgeRow.filter(e => Math.abs(e.x - x) < 0.3).length, `the edge at x = ${x} is thin`).toBeLessThanOrEqual(2);
+    }
     for (const e of r.edgeRow) {
         expect([-10, -7.5, -4.5, 0, 6, 10].some(x => Math.abs(e.x - x) < 0.3), `no edge at x = ${e.x}`).toBe(true);
     }
