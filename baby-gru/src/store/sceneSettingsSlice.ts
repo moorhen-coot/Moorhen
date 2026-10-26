@@ -40,24 +40,36 @@ export const initialState: {
     /**
      * Whether the opaque scene is drawn once while depth peeling, rather than into every layer.
      *
-     * OFF BY DEFAULT, AND THE MEASUREMENT SAYS WHY
+     * ON BY DEFAULT, AND IT IS THE ANTIALIASING THAT DECIDES IT, NOT THE SPEED
      *
-     * Drawing it once is the obvious saving and it is real - 52 draws and 1290k triangles against
-     * 96 and 3337k on a model with a map contoured around it, so 2.6x less geometry submitted.
-     * What it buys is 0.89 ms of a 12.86 ms frame, about 7%, because four full-screen peel layers
-     * with blending and depth are fill-bound and the triangles are nearly free beside them. (If
-     * that cost ever needs attacking, the layer *count* is where the time is, not what goes in
-     * each layer.)
+     * The speed is the obvious reason and it is the smaller one. Drawing the opaque scene once
+     * rather than into every layer submits 2.6x less geometry - 52 draws and 1290k triangles
+     * against 96 and 3337k, on a model with a map contoured around it - and that buys 0.89 ms of
+     * a 12.86 ms frame, about 7%. Four full-screen peel layers with blending and depth are
+     * fill-bound, so the triangles are nearly free beside them. (If that cost ever needs
+     * attacking, the layer *count* is where the time is, not what goes in each layer.)
      *
-     * Against those 0.89 ms it puts a visible rim of the background colour wherever opaque
-     * geometry sits in front of transparent geometry. Layer 0 is multisampled and resolved against
-     * a background-coloured clear, so a half-covered silhouette pixel blends with the background;
-     * and the single resolved depth at that pixel rejects the transparent surface behind, so there
-     * is nothing else for it to blend with. The information needed to draw that edge correctly is
-     * not in the layer. Compositing front-to-back with an "under" operator would fix it properly,
-     * and would be a rewrite of the accumulation pass.
+     * The real reason is that giving the opaque scene a layer of its own is what lets it be drawn
+     * multisampled and resolved - see ensureDepthPeelResolveBuffer and msaaOpaque. Without that
+     * there is no MSAA anywhere in a peeled frame, and lines fall back on FXAA, which is a poor
+     * substitute for coverage on something thin and high-contrast. Switching this off does not
+     * merely forfeit 7%, it reverts the fix for lines losing their antialiasing whenever anything
+     * in the scene is transparent.
      *
-     * So: correct picture by default, 7% available to anyone who wants it.
+     * WHAT IT COSTS, KNOWINGLY
+     *
+     * A rim of the background colour wherever opaque geometry sits in *front* of transparent
+     * geometry. The multisampled layer is resolved against a background-coloured clear, so a
+     * half-covered silhouette pixel blends with the background - and the single resolved depth at
+     * that same pixel rejects the transparent surface behind it, so there is nothing else for it
+     * to blend with. The information needed to draw that edge correctly is not in the layer, and
+     * no change to the clear colour or the blend recovers it: the loss is in the depth rejection.
+     * Fixing it properly means coverage-aware compositing, which is a rewrite of the accumulation
+     * pass and of how transparency is rejected behind opaque geometry.
+     *
+     * In practice the arrangement that produces it is uncommon - the everyday case is a model
+     * inside a transparent surface or a contoured map, where the transparency is in front and
+     * there is no rim.
      *
      * Deliberately not in the persisted preferences: it exists so the two paths can be compared
      * on screen, and a reload should return to the default rather than leaving someone stuck on
@@ -161,7 +173,7 @@ export const initialState: {
     doOutline: false,
     depthBlurRadius: 3.0,
     depthPeelLayers: 4,
-    peelOpaqueSeparately: false,
+    peelOpaqueSeparately: true,
     // Where the depth blur starts, in angstroms from the view centre; negative is towards the
     // viewer. Zero puts it on the rotation centre, which is what you are usually looking at.
     // This was a 0 to 1 fraction, so a saved value lands a fraction of an angstrom from centre -
