@@ -27,8 +27,8 @@ export interface WebGPUMainViewRenderer extends ExternalRenderer {
  * MGWebGL keeps everything but the drawing - camera, mouse and keys, picking, labels, the frame
  * loop - and offers it each frame (externalRenderer.ts). This canvas takes no input: events go
  * through to the WebGL canvas underneath, as before. It is hidden whenever WebGL draws a frame
- * itself (webGLOnlyReason: multiple views, stereo, outlines, a recording of the WebGL canvas), so
- * the WebGL picture shows.
+ * itself (webGLOnlyReason: outlines, the shadow map debug view, a recording of the WebGL
+ * canvas), so the WebGL picture shows.
  *
  * While it shows the view, MGWebGL.getCanvasRef gives this canvas, so movie export, recordings
  * and keyframe thumbnails take their pictures from it; screenshots are drawn offscreen by the same

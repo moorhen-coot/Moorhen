@@ -102,6 +102,12 @@ export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
     multiWayQuats?: ArrayLike<number>[];
     multiWayViewports?: ArrayLike<number>[];
     multiViewOrigins?: ArrayLike<number>[];
+    /**
+     * Anaglyph stereo: the eyes turned by the first two stereoQuats, each in the colour channels
+     * of anaglyphColours (../WebGLgComponents/anaglyph.ts; red and green if not set).
+     */
+    doAnaglyphStereo?: boolean;
+    anaglyphColours?: string;
 }
 
 /** What the effects passes do this frame, from the source's settings; null for an effect that is off. */
@@ -188,7 +194,7 @@ export function viewShows(view: PreviewView, buffer: DisplayBuffer): boolean {
  *
  * MGWebGL's viewports are in GL pixels of its canvas, from the bottom-left; here they are scaled
  * to the image and measured from its top-left, rounded so that neighbours share their edges.
- * Anaglyph stereo is not a division of the canvas, and is not here.
+ * Anaglyph stereo is not a division of the canvas, and is not here (drawAnaglyph).
  */
 export function previewViews(source: PreviewCameraSource, displayBuffers: readonly DisplayBuffer[], width: number, height: number): PreviewView[] | null {
     let quats: ArrayLike<number>[] | undefined;

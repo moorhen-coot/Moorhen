@@ -33,6 +33,14 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     uniform int nClipPlanes;
     uniform vec4 fogColour;
 
+    // Anaglyph stereo (drawCore, anaglyph.ts): 1 while an eye is drawn, its colour made grey - its
+    // brightest channel, at most 1 - before the fog, as the WebGPU renderer greys an eye.
+    uniform float anaglyphGrey;
+    vec4 anaglyphColour(vec4 c) {
+        if(anaglyphGrey > 0.5) return vec4(vec3(min(max(c.r, max(c.g, c.b)), 1.0)), c.a);
+        return c;
+    }
+
     uniform vec4 light_positions;
     uniform vec4 light_colours_ambient;
     uniform vec4 light_colours_specular;
@@ -227,14 +235,14 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
           color *= edge;
       }
       color.a = vColor.a;
-      fragColor = mix(color, fogColour, fogFactor );
+      fragColor = mix(anaglyphColour(color), fogColour, fogFactor );
       //fragColor = vec4(occ,occ,occ, vColor.a);
 
       //if(doSSAO) fragColor = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) );
 
       if(clipCap){
         if(clipd<0.0){
-            fragColor = mix(vColor, fogColour, fogFactor );
+            fragColor = mix(anaglyphColour(vColor), fogColour, fogFactor );
         }
         // Discard only where the whole chord through the sphere is in front of the plane. The
         // cap is then the plane's whole cut through the sphere, meeting the lit surface exactly

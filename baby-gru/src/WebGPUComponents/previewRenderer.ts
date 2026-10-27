@@ -14,6 +14,7 @@
  */
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
 import type * as mat4 from 'gl-matrix/mat4';
+import * as quat from 'gl-matrix/quat';
 import { BufferUsage, GpuSpanTimer, MapMode, ShaderStage, TextureUsage, getGpuContext } from './gpu';
 import { SnapshotTile, expandTile, narrowToTile, planTiles } from './snapshotTiles';
 import { type CasterBounds, casterBounds, shadowCamera, shadowFrameUniforms } from './shadowMap';
@@ -25,6 +26,7 @@ import { SurfaceTextures } from './surfaceTextures';
 import { EffectMaps, EffectPasses, GBUFFER_DEPTH_FORMAT, GBUFFER_NORMAL_FORMAT, effectMargin, gbufferScale } from './effectPasses';
 import { DepthPeel, PEEL_COLOUR_FORMAT, PEEL_DEPTH_FORMAT, type PeelTargets, transparentLayers } from './depthPeel';
 import { DepthBlur, depthBlurMargin } from './depthBlur';
+import { AnaglyphCombine, anaglyphUniforms } from './anaglyphCombine';
 import {
     ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, PreviewView, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, previewViews, symmetryCopyGrey, viewShows,
 } from './previewScene';
@@ -266,6 +268,7 @@ export class WebGPUPreviewRenderer {
     private readonly depthPeel: DepthPeel;
     /** Depth blur (depthBlur.ts): its pictures and passes. */
     private readonly depthBlur: DepthBlur;
+    private readonly anaglyph: AnaglyphCombine;
     /** The shadow pass's frame: the light's camera (shadowMap.ts). */
     private readonly shadowFrameBuffer: GPUBuffer;
     private readonly shadowFrameBindGroup: GPUBindGroup;
@@ -401,6 +404,7 @@ export class WebGPUPreviewRenderer {
         });
         this.depthPeel = new DepthPeel(device, this.format, SAMPLE_COUNT, DEPTH_FORMAT);
         this.depthBlur = new DepthBlur(device, this.format, SAMPLE_COUNT, this.effects.sampler);
+        this.anaglyph = new AnaglyphCombine(device, this.format);
         this.frameBindGroup = this.frameBindGroupWith(null);
         this.shadowFrameBuffer = device.createBuffer({
             label: "shadow frame uniforms", size: FRAME_FLOATS * 4, usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST,
@@ -554,6 +558,9 @@ export class WebGPUPreviewRenderer {
         // view by view (drawViews); the ordinary view keeps the frame below, its passes unchanged.
         const views = previewViews(camera, displayBuffers, target.width, target.height);
         if (views) return this.drawViews(views, plan, uploads, started, displayBuffers, camera, gpuDraws, target);
+        if (camera.doAnaglyphStereo && camera.stereoQuats && camera.stereoQuats.length >= 2) {
+            return this.drawAnaglyph(displayBuffers, camera, gpuDraws, target, started);
+        }
 
         const uniforms = frameUniforms(camera, target.width, target.height, this.frameData);
         const whole = uniforms.slice();
@@ -764,6 +771,32 @@ export class WebGPUPreviewRenderer {
         return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers };
     }
 
+    /**
+     * Anaglyph stereo (anaglyphCombine.ts): each eye's frame - the camera turned by its stereo
+     * quaternion, the left the first, as drawScene turns it - drawn whole on nothing, fog fading
+     * it, into a picture of its own, and the two put together into the target, each eye in its
+     * colour channels on the background. Each eye is an ordinary frame, so has everything one has:
+     * effects, transparency, depth blur, labels.
+     */
+    private drawAnaglyph(displayBuffers: readonly DisplayBuffer[], camera: PreviewCameraSource, gpuDraws: readonly PreviewGpuDraw[],
+                         target: FrameTarget, started: number): PreviewFrameReport {
+        const quats = camera.stereoQuats ?? [];
+        const eyes = this.anaglyph.eyeViews(target.colour.width, target.colour.height);
+        let report: PreviewFrameReport | null = null;
+        for (let i = 0; i < 2; i++) {
+            const turned = quat.multiply(quat.create(), Array.from(camera.myQuat) as quat.quat, Array.from(quats[i]) as quat.quat);
+            const eye = Object.create(camera, {
+                myQuat: { value: Array.from(turned) }, doAnaglyphStereo: { value: false },
+            }) as PreviewCameraSource;
+            const drawn = this.drawFrame(displayBuffers, eye, gpuDraws, {
+                ...target, resolve: eyes[i], timed: false, transparentBackground: true,
+            });
+            report = report ?? drawn;
+        }
+        this.anaglyph.combine(target.resolve, anaglyphUniforms(camera.anaglyphColours, camera.background_colour, !!target.transparentBackground));
+        return { ...report!, cpuMs: performance.now() - started };
+    }
+
     /** Let go of the uniforms of GPU draws that are gone. */
     private dropGpuDrawUniforms(gpuDraws: readonly PreviewGpuDraw[]): void {
         for (const [key, uniforms] of this.gpuDrawUniforms) {
@@ -778,9 +811,9 @@ export class WebGPUPreviewRenderer {
      * A divided canvas, as drawScene draws one: each view a frame of its own size - its own turn,
      * and for multiple views its own origin and group of buffers - drawn into its part of the
      * image (or of a tile of it). Each view has its own shadow map and effects maps, worked out for
-     * it alone. Then, over all of them, the depth blur, and the overlays in the first view, as
-     * WebGL draws its overlay text and FPS meter there; labels only drawn depth-tested
-     * (atomLabelDepthMode), in every view, as GLrender draws them - WebGL draws no others here.
+     * it alone. Then, over all of them, the depth blur; labels in every view (depth-tested ones,
+     * atomLabelDepthMode, with the scene, as GLrender draws them); and in the first view the
+     * overlay text and FPS meter, as WebGL draws them there.
      *
      * The views share the frame's uniform buffers, so each is encoded and submitted on its own,
      * with its uniforms written just before: the queue keeps the writes and the submissions in
@@ -824,8 +857,8 @@ export class WebGPUPreviewRenderer {
         let first = true;
         let shapes = 0;
         let labels = 0;
-        // The first view's frame in this target, for the overlays drawn in it at the end.
-        let overlay: { uniforms: Float32Array; rect: SnapshotTile; view: PreviewView; part: SnapshotTile; camera: PreviewCameraSource } | null = null;
+        // The views drawn in this target, for their labels and the first's overlays at the end.
+        const drawn: { uniforms: Float32Array; rect: SnapshotTile; view: PreviewView; part: SnapshotTile; camera: PreviewCameraSource }[] = [];
         for (const view of views) {
             // The part of the view in this target: all of it, or what of it falls in the tile.
             const x0 = Math.max(view.x, tile.x), y0 = Math.max(view.y, tile.y);
@@ -935,11 +968,11 @@ export class WebGPUPreviewRenderer {
                 scene.end();
             }
             this.device.queue.submit([encoder.finish()]);
-            if (!overlay) overlay = { uniforms, rect, view, part, camera: viewCamera };
+            drawn.push({ uniforms, rect, view, part, camera: viewCamera });
             first = false;
         }
 
-        const encoder = this.device.createCommandEncoder({ label: "preview views: blur and overlays" });
+        let encoder = this.device.createCommandEncoder({ label: "preview views: blur and overlays" });
         if (first) {
             // No view in this tile: the background.
             encoder.beginRenderPass({
@@ -959,27 +992,43 @@ export class WebGPUPreviewRenderer {
             this.depthBlur.encode(encoder, blur, blurSettings, scale, depthView, peel ? peel.depthViews[0] : null,
                 this.noPreviousLayer.createView(), target.colour.createView());
         }
-        if (overlay) this.device.queue.writeBuffer(this.frameBuffer, 0, overlay.uniforms);
-        const pass = encoder.beginRenderPass({
-            label: "overlays (first view)",
-            timestampWrites: endTiming(),
-            colorAttachments: [{ view: target.colour.createView(), resolveTarget: target.resolve, loadOp: "load", storeOp: "discard" }],
-            depthStencilAttachment: { view: depthView, depthLoadOp: "load", depthStoreOp: "discard" },
-        });
+        // Then, over the blur and sharp, each view's labels, and in the first view the FPS meter and
+        // the overlay text, as WebGL draws them there; each view with its own uniforms, so each its
+        // own submit, the last resolving the picture.
+        const onTopLabels = allText.filter(batch => batch.onTop && batch.atlas !== camera.measureText2DCanvasTexture);
+        const overlayText = allText.filter(batch => batch.atlas === camera.measureText2DCanvasTexture);
         let overlaySegments = 0;
-        const onTop = allText.filter(batch => batch.atlas === camera.measureText2DCanvasTexture);
-        if (overlay) {
-            pass.setViewport(overlay.rect.x, overlay.rect.y, overlay.rect.width, overlay.rect.height, 0, 1);
-            pass.setBindGroup(0, this.frameBindGroup);
-            const viewMatrix = overlay.uniforms.slice(16, 32) as unknown as mat4.mat4;
-            overlaySegments = this.overlayLines.draw(pass, overlayLineBatchesOf(overlay.camera, viewMatrix, overlay.view.width, overlay.view.height, overlay.part)
-                .filter(batch => batch.label === "FPS meter"));
-            labels += this.textLayer.draw(pass, onTop, camera.zoom, overlay.view.height, allText);
-        }
-        pass.end();
-        this.dropGpuDrawUniforms(gpuDraws);
-        if (timing) this.frameTimer.resolve(encoder);
-        this.device.queue.submit([encoder.finish()]);
+        const passes = drawn.length > 0 ? drawn : [null];
+        passes.forEach((v, k) => {
+            const last = k === passes.length - 1;
+            if (k > 0) encoder = this.device.createCommandEncoder({ label: "preview views: labels" });
+            if (v) this.device.queue.writeBuffer(this.frameBuffer, 0, v.uniforms);
+            const pass = encoder.beginRenderPass({
+                label: k === 0 ? "overlays (first view)" : "labels (view)",
+                timestampWrites: last ? endTiming() : undefined,
+                colorAttachments: [{
+                    view: target.colour.createView(), resolveTarget: last ? target.resolve : undefined, loadOp: "load", storeOp: last ? "discard" : "store",
+                }],
+                depthStencilAttachment: { view: depthView, depthLoadOp: "load", depthStoreOp: last ? "discard" : "store" },
+            });
+            if (v) {
+                pass.setViewport(v.rect.x, v.rect.y, v.rect.width, v.rect.height, 0, 1);
+                pass.setBindGroup(0, this.frameBindGroup);
+                if (onTopLabels.length) labels += this.textLayer.draw(pass, onTopLabels, camera.zoom, v.view.height, allText);
+                if (k === 0) {
+                    const viewMatrix = v.uniforms.slice(16, 32) as unknown as mat4.mat4;
+                    overlaySegments = this.overlayLines.draw(pass, overlayLineBatchesOf(v.camera, viewMatrix, v.view.width, v.view.height, v.part)
+                        .filter(batch => batch.label === "FPS meter"));
+                    labels += this.textLayer.draw(pass, overlayText, camera.zoom, v.view.height, allText);
+                }
+            }
+            pass.end();
+            if (last) {
+                this.dropGpuDrawUniforms(gpuDraws);
+                if (timing) this.frameTimer.resolve(encoder);
+            }
+            this.device.queue.submit([encoder.finish()]);
+        });
         if (timing) this.frameTimer.collect();
         this.surfaceTextures.prune();
         return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers };
@@ -1001,6 +1050,7 @@ export class WebGPUPreviewRenderer {
         this.noPreviousLayer.destroy();
         this.depthPeel.destroy();
         this.depthBlur.destroy();
+        this.anaglyph.destroy();
         this.gpuDrawUniforms.forEach(u => u.buffer.destroy());
         this.gpuDrawUniforms.clear();
         this.frameTimer?.destroy();

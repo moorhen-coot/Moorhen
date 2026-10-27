@@ -16,6 +16,7 @@ import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
 import { ensureDepthPeelResolveBuffer, resolveDepthPeelResolveBuffer } from './framebuffers';
 import { fitShadowFrustum, lightAxes, radiusAbout } from '../shadowFrustum';
+import { anaglyphChannels } from '../anaglyph';
 
 /** A bounding box over the shadow casters, with the diagonal the rest of the renderer calls the atom span. */
 interface ShadowCasterBounds {
@@ -980,7 +981,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         self.drawTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, displayBuffers[idx], self.shaderProgram, self.gl.TRIANGLE_STRIP, j);
                     } else {
                         if (self.ext) {
-                        if(self.doAnaglyphStereo) {
+                        if(self.doAnaglyphStereo && !self.WEBGL2) {
                             self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
                             self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...self.currentAnaglyphColor)
                         }
@@ -1154,7 +1155,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                                 const adjustedHoverSize = hoverSize + 0.4;
                                 self.gl.vertexAttrib3f(program.sizeAttribute, adjustedHoverSize, adjustedHoverSize, adjustedHoverSize, 1.0);
                             }
-                            if(self.doAnaglyphStereo) {
+                            if(self.doAnaglyphStereo && !self.WEBGL2) {
                                 self.gl.disableVertexAttribArray(program.vertexColourAttribute);
                                 self.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
                                 self.gl.vertexAttrib4f(program.vertexColourAttribute, ...self.currentAnaglyphColor)
@@ -1203,7 +1204,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
                                 applySymmetryMatrix(self, program,displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix,false)
                                     if (self.WEBGL2) {
-                                        if(self.doAnaglyphStereo) {
+                                        if(self.doAnaglyphStereo && !self.WEBGL2) {
                                             self.gl.disableVertexAttribArray(program.vertexColourAttribute);
                                             self.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
                                             self.gl.vertexAttrib4f(program.vertexColourAttribute, ...self.currentAnaglyphColor)
@@ -1395,7 +1396,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             self.drawTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, self.gl.TRIANGLES, j);
                         } else {
                             if (self.ext) {
-                                if(self.doAnaglyphStereo) {
+                                if(self.doAnaglyphStereo && !self.WEBGL2) {
                                     self.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
                                     self.gl.vertexAttribDivisor(sphereProgram.vertexColourAttribute,0);
                                     self.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, ...self.currentAnaglyphColor)
@@ -1420,7 +1421,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             self.drawTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, self.gl.TRIANGLES, j);
                         } else {
                             if (self.ext) {
-                                if(self.doAnaglyphStereo) {
+                                if(self.doAnaglyphStereo && !self.WEBGL2) {
                                     self.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
                                     self.gl.vertexAttribDivisor(sphereProgram.vertexColourAttribute,0);
                                     self.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, ...self.currentAnaglyphColor)
@@ -1964,8 +1965,7 @@ export function drawScene(self: MGWebGL) : void {
                     if(self.doMultiView){
                         if(multiViewGroupsKeys.length>0){
                             self.currentMultiViewGroup = parseInt(multiViewGroupsKeys[i])
-                            if(i<multiViewOrigins.length&& multiViewOrigins[i]&& multiViewOrigins[i].length===3)
-                                self.origin = multiViewOrigins[i]
+                            self.origin = groupOrigin(multiViewOrigins, self.currentMultiViewGroup, origOrigin)
                         } else {
                             continue
                         }
@@ -2286,8 +2286,7 @@ export function drawScene(self: MGWebGL) : void {
                         if(self.doMultiView){
                             if(multiViewGroupsKeys.length>0){
                                 self.currentMultiViewGroup = parseInt(multiViewGroupsKeys[i])
-                                if(i<multiViewOrigins.length&& multiViewOrigins[i]&& multiViewOrigins[i].length===3)
-                                    self.origin = multiViewOrigins[i]
+                                self.origin = groupOrigin(multiViewOrigins, self.currentMultiViewGroup, origOrigin)
                             } else {
                                 continue
                             }
@@ -2307,6 +2306,14 @@ export function drawScene(self: MGWebGL) : void {
                         if (self.doPeel) {
                             self.gl.activeTexture(self.gl.TEXTURE0);
                             self.gl.bindTexture(self.gl.TEXTURE_2D, self.textTex);
+                        }
+                        // Labels in every view, over it, as an undivided view has them (depth-tested
+                        // ones GLrender has drawn already). With the view's matrices and viewport, as
+                        // GLrender left them; after a peel, back on the screen in the view's part. Not
+                        // into a peeled screenshot, whose viewport there is the composite's.
+                        if(!self.atomLabelDepthMode && !(self.doPeel && self.renderToTexture)){
+                            if(self.doPeel) self.gl.viewport(self.currentViewport[0], self.currentViewport[1], self.currentViewport[2], self.currentViewport[3]);
+                            self.drawDistancesAndLabels();
                         }
                         if(invMat&&i==0) self.drawTextOverlays(invMat,ratioMult, Math.sqrt(self.gl.viewportHeight /self.currentViewport[3]));
                         if (self.showFPS&&i==0) {
@@ -2332,17 +2339,32 @@ export function drawScene(self: MGWebGL) : void {
                 }
 
             if(self.doAnaglyphStereo){
+                // Each eye grey, written only into its own colour channels (anaglyph.ts), the
+                // second eye depth-tested against nothing of the first: so through each filter one
+                // eye's picture shows on the background. (Before, the eyes were drawn red and green
+                // over each other, the second depth-tested against the first, and where both drew
+                // the nearer won.) The grey is each colour's brightest channel, made in the
+                // shaders before the fog (anaglyphGrey), as WebGPU greys an eye; WebGL1's shaders
+                // have no anaglyphGrey, so there everything is drawn white instead, as before.
                 const origQuat = quat4.clone(self.myQuat);
                 const quats = self.stereoQuats
+                const channels = anaglyphChannels(self.anaglyphColours)
 
+                self.gl.colorMask(true, true, true, true);
+                self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
+                setAnaglyphGrey(self, true);
                 for(let i=0;i<quats.length;i++){
                     const newXQuat = quat4.clone(origQuat);
                     quat4.multiply(newXQuat, newXQuat, quats[i]);
                     self.myQuat = newXQuat
-                    self.currentAnaglyphColor = i===0 ? [1.0,0.0,0.0,1.0] : [0.0,1.0,0.0,1.0]
-                    const doClear = i===0 ? true : false
-                    invMat = GLrender(self, false,doClear);
+                    self.currentAnaglyphColor = [1.0,1.0,1.0,1.0]
+                    const [r, g, b] = i===0 ? channels.left : channels.right
+                    if(i>0) self.gl.clear(self.gl.DEPTH_BUFFER_BIT);
+                    self.gl.colorMask(r, g, b, false);
+                    invMat = GLrender(self, false, false);
                 }
+                self.gl.colorMask(true, true, true, true);
+                setAnaglyphGrey(self, false);
                 self.myQuat = origQuat
             }
         }
@@ -2600,6 +2622,38 @@ export function bindFramebufferDrawBuffers(self: MGWebGL) {
         self.gl.vertexAttribPointer(self.shaderProgramRenderFrameBuffer.vertexPositionAttribute, 3, self.gl.FLOAT, false, 0, 0);
         self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, self.framebufferDrawIndexesBuffer);
     }
+
+/**
+ * Turn anaglyph stereo's grey (the anaglyphGrey uniform of the scene's fragment shaders) on or off
+ * in every program that has it. The uniform keeps its value, so it is on only between the two
+ * calls round the eyes, and nothing else drawn is greyed.
+ */
+function setAnaglyphGrey(self: MGWebGL, on: boolean): void {
+    const gl = self.gl;
+    const current = gl.getParameter(gl.CURRENT_PROGRAM);
+    const programs = self as unknown as Record<string, unknown>;
+    for (const key of Object.keys(programs)) {
+        if (!key.startsWith("shaderProgram")) continue;
+        const program = programs[key] as (WebGLProgram & { anaglyphGrey?: WebGLUniformLocation | null }) | null;
+        if (!program || typeof WebGLProgram === "undefined" || !(program instanceof WebGLProgram)) continue;
+        if (program.anaglyphGrey === undefined) program.anaglyphGrey = gl.getUniformLocation(program, "anaglyphGrey");
+        if (!program.anaglyphGrey) continue;
+        gl.useProgram(program);
+        gl.uniform1f(program.anaglyphGrey, on ? 1 : 0);
+    }
+    gl.useProgram(current);
+}
+
+/**
+ * Where a multiple view of `group` is centred: its group's origin, kept by group in
+ * multiViewOrigins (getMultiViewInfo), or the camera's if it has none. The loops over the views used
+ * to read multiViewOrigins by view, which is the same only while the groups run 0, 1, 2...: with a
+ * map between two molecules they run 0 and 2, and the second view kept the first view's origin.
+ */
+function groupOrigin(multiViewOrigins: number[][], group: number, cameraOrigin: [number, number, number]): [number, number, number] {
+    const origin = Number.isInteger(group) ? multiViewOrigins[group] : undefined;
+    return origin && origin.length === 3 ? [origin[0], origin[1], origin[2]] : cameraOrigin;
+}
 
 export function getMultiViewInfo(self: MGWebGL) : {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult,multi_rows_cols} {
 

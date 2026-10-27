@@ -220,6 +220,7 @@ export function initGraphicsContext(self: MGWebGL): void {
     self.dispatch(setGLCtx(self.gl))
     self.currentViewport = [0,0, self.gl.viewportWidth, self.gl.viewportWidth];
     self.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
+    self.anaglyphColours = "red-green"
 
     self.max_elements_indices = 65535;
 

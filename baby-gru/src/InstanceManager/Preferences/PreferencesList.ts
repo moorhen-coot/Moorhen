@@ -77,7 +77,7 @@ import {
     setUseOffScreenBuffers,setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast, 
     RootState
 } from "@/store";
-import { initialState as sceneSettingsInitialState, setUseWebGPU } from "@/store/sceneSettingsSlice";
+import { initialState as sceneSettingsInitialState, setAnaglyphColours, setUseWebGPU } from "@/store/sceneSettingsSlice";
 import { DEFAULT_SHORTCUTS } from "./DefaultShortcuts";
 
 export type PreferenceEntry<T = unknown> = {
@@ -427,6 +427,12 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         valueSetter: setUseWebGPU,
         selector: (state: RootState) => state.sceneSettings.useWebGPU,
         defaultValue: sceneSettingsInitialState.useWebGPU,
+    },
+    56: {
+        label: "anaglyphColours",
+        valueSetter: setAnaglyphColours,
+        selector: (state: RootState) => state.sceneSettings.anaglyphColours,
+        defaultValue: sceneSettingsInitialState.anaglyphColours,
     },
 };
 

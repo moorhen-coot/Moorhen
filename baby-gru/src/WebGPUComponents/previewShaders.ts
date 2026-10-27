@@ -266,14 +266,17 @@ fn lit(base: vec4f, normal: vec3f, occ: f32, shadow: f32) -> vec4f {
 // taken down by the same amount - so that over the fog colour it is the same picture, and over
 // anything else the distance fades into that. The picture is premultiplied then: what an opaque
 // pipeline writes as it is must be premultiplied too; what is blended goes in straight, and the
-// blend premultiplies it.
+// blend premultiplies it. Lit colour can pass 1 (highlights), which the target would clamp after
+// premultiplying, leaving a colour brighter than its alpha allows: so clamped first, as WebGL's
+// is before it shows over anything.
 fn fogged(colour: vec4f, alpha: f32, eyeDistance: f32) -> vec4f {
     let fogStart = frame.params.x;
     let fogEnd = frame.params.y;
     let fogFactor = 1.0 - clamp((fogEnd - eyeDistance) / (fogEnd - fogStart), 0.0, 1.0);
     if (frame.fog.x > 0.5) {
         let a = alpha * draw.params.x * (1.0 - fogFactor);
-        return select(vec4f(colour.rgb, a), vec4f(colour.rgb * a, a), draw.output.x > 0.5);
+        let c = clamp(colour.rgb, vec3f(0.0), vec3f(1.0));
+        return select(vec4f(c, a), vec4f(c * a, a), draw.output.x > 0.5);
     }
     var out = mix(colour, frame.fogColour, fogFactor);
     out.a = alpha * draw.params.x;

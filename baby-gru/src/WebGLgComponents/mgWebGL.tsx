@@ -528,6 +528,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         hoverSize: number;
         currentViewport: number[];
         currentAnaglyphColor: number[];
+        /** Anaglyph stereo's colours, left eye first (anaglyph.ts; sceneSettings.anaglyphColours). */
+        anaglyphColours: string;
         threeWayViewports: number[][];
         stereoViewports: number[][];
         threeWayQuats: quat4[];
@@ -686,6 +688,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.depthPeelMSAAFailed = null;
         this.currentViewport = [0,0, 400,400];
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
+        this.anaglyphColours = "red-green"
         this.store = props.store;
         this.dispatch = props.dispatch
 

@@ -99,6 +99,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
+    const anaglyphColours = useSelector((state: moorhen.State) => state.sceneSettings.anaglyphColours)
     const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
     const doSideBySideStereo = useSelector((state: moorhen.State) => state.sceneSettings.doSideBySideStereo)
     const doThreeWayView = useSelector((state: moorhen.State) => state.sceneSettings.doThreeWayView)
@@ -524,6 +525,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [doAnaglyphStereo])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.anaglyphColours = anaglyphColours
+            glRef.current.drawScene()
+        }
+    }, [anaglyphColours, glRef])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {

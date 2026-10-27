@@ -9,6 +9,14 @@ var twod_fragment_shader_source = `#version 300 es\n
     in float FogFragCoord;
     uniform vec4 fogColour;
 
+    // Anaglyph stereo (drawCore, anaglyph.ts): 1 while an eye is drawn, its colour made grey - its
+    // brightest channel, at most 1 - before the fog, as the WebGPU renderer greys an eye.
+    uniform float anaglyphGrey;
+    vec4 anaglyphColour(vec4 c) {
+        if(anaglyphGrey > 0.5) return vec4(vec3(min(max(c.r, max(c.g, c.b)), 1.0)), c.a);
+        return c;
+    }
+
     uniform float fog_end;
     uniform float fog_start;
 
@@ -40,7 +48,7 @@ var twod_fragment_shader_source = `#version 300 es\n
 
       vec4 theColor = vec4(vColor);
       vec4 color = vColor;
-      fragColor = mix(color, fogColour, fogFactor );
+      fragColor = mix(anaglyphColour(color), fogColour, fogFactor );
 
     }
 `;

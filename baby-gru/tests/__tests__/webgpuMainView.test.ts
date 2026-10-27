@@ -4,6 +4,8 @@
  */
 import { describe, expect, it, jest } from "@jest/globals";
 import { webGLOnlyReason } from "../../src/WebGLgComponents/externalRenderer";
+import { ANAGLYPH_COLOURS, DEFAULT_ANAGLYPH_COLOURS, anaglyphChannels } from "../../src/WebGLgComponents/anaglyph";
+import { anaglyphUniforms } from "../../src/WebGPUComponents/anaglyphCombine";
 import { SCREENSHOT_SIDE, screenshotSize } from "../../src/utils/screenshotSize";
 import { buildBuffers, deferWebGLUploads } from "../../src/WebGLgComponents/buildBuffers";
 import type { DisplayBuffer } from "../../src/WebGLgComponents/displayBuffer";
@@ -11,7 +13,7 @@ import type { DisplayBuffer } from "../../src/WebGLgComponents/displayBuffer";
 describe("webGLOnlyReason", () => {
     it("leaves an ordinary view to WebGPU", () => {
         expect(webGLOnlyReason({}, false)).toBeNull();
-        expect(webGLOnlyReason({ doAnaglyphStereo: false, doStenciling: false }, false)).toBeNull();
+        expect(webGLOnlyReason({ doStenciling: false }, false)).toBeNull();
         // Depth blur is drawn by WebGPU too (depthBlur.ts).
         const depthBlur = { doStenciling: false, useOffScreenBuffers: true };
         expect(webGLOnlyReason(depthBlur, false)).toBeNull();
@@ -20,15 +22,40 @@ describe("webGLOnlyReason", () => {
             const view = { doStenciling: false, [divided]: true };
             expect(webGLOnlyReason(view, false)).toBeNull();
         }
+        // And anaglyph stereo (drawAnaglyph).
+        const anaglyph = { doStenciling: false, doAnaglyphStereo: true };
+        expect(webGLOnlyReason(anaglyph, false)).toBeNull();
     });
 
     it("keeps the views WebGPU does not draw yet, and recordings, for WebGL", () => {
-        expect(webGLOnlyReason({ doAnaglyphStereo: true }, false)).toBe("anaglyph stereo");
         expect(webGLOnlyReason({ doStenciling: true }, false)).toBe("outlines");
         expect(webGLOnlyReason({ doShadowDepthDebug: true }, false)).toBe("the shadow map debug view");
         expect(webGLOnlyReason({}, true)).toBe("a recording of the WebGL canvas");
         // Before anything else: the recording is of what WebGL draws, whatever the view.
-        expect(webGLOnlyReason({ doAnaglyphStereo: true }, true)).toBe("a recording of the WebGL canvas");
+        expect(webGLOnlyReason({ doStenciling: true }, true)).toBe("a recording of the WebGL canvas");
+    });
+});
+
+describe("anaglyph colours", () => {
+    it("are red and green by default, as WebGL has always drawn them", () => {
+        expect(DEFAULT_ANAGLYPH_COLOURS).toBe("red-green");
+        expect(anaglyphChannels(undefined)).toBe(ANAGLYPH_COLOURS["red-green"]);
+        expect(anaglyphChannels("no such glasses")).toBe(ANAGLYPH_COLOURS["red-green"]);
+        expect(anaglyphChannels("red-green")).toMatchObject({ left: [true, false, false], right: [false, true, false] });
+    });
+
+    it("give each eye its own channels, and between them no more than all three", () => {
+        for (const channels of Object.values(ANAGLYPH_COLOURS)) {
+            for (let c = 0; c < 3; c++) expect(channels.left[c] && channels.right[c]).toBe(false);
+            expect(channels.left.some(Boolean) && channels.right.some(Boolean)).toBe(true);
+        }
+    });
+
+    it("go to the WebGPU combine as masks, with the background and whether on nothing", () => {
+        expect(Array.from(anaglyphUniforms("red-cyan", [0.1, 0.2, 0.3, 1], false))).toEqual(
+            Array.from(new Float32Array([1, 0, 0, 0, 0, 1, 1, 0, 0.1, 0.2, 0.3, 1, 0, 0, 0, 0])));
+        expect(anaglyphUniforms(undefined, [0, 0, 0, 1], true)[12]).toBe(1);
+        expect(Array.from(anaglyphUniforms(undefined, [0, 0, 0, 1], true).slice(0, 8))).toEqual([1, 0, 0, 0, 0, 1, 0, 0]);
     });
 });
 

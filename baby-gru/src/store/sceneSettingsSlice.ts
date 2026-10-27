@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { ShadowMapQuality } from "../WebGLgComponents/mgWebGLParts/framebuffers";
+import { type AnaglyphColours, DEFAULT_ANAGLYPH_COLOURS } from "../WebGLgComponents/anaglyph";
 
 const execAutoClipFogByZoom = (state: typeof initialState) => {
     const fieldDepthFront: number = 8;
@@ -51,6 +52,8 @@ export const initialState: {
      * Off by default while WebGPU is being brought up to WebGL's features.
      */
     useWebGPU: boolean;
+    /** Anaglyph stereo's colours, left eye first (WebGLgComponents/anaglyph.ts): red and green by default. */
+    anaglyphColours: AnaglyphColours;
     depthBlurDepth: number;
     lightPosition: [number, number, number, number];
     ambient: [number, number, number, number];
@@ -150,6 +153,7 @@ export const initialState: {
     depthPeelLayers: 4,
     peelOpaqueSeparately: true,
     useWebGPU: false,
+    anaglyphColours: DEFAULT_ANAGLYPH_COLOURS,
     // Where the depth blur starts, in angstroms from the view centre; negative is towards the
     // viewer. Zero puts it on the rotation centre, which is what you are usually looking at.
     // This was a 0 to 1 fraction, so a saved value lands a fraction of an angstrom from centre -
@@ -360,6 +364,9 @@ const sceneSettingsSlice = createSlice({
         setUseWebGPU: (state, action: PayloadAction<boolean>) => {
             state.useWebGPU = action.payload;
         },
+        setAnaglyphColours: (state, action: PayloadAction<AnaglyphColours>) => {
+            state.anaglyphColours = action.payload;
+        },
         // API
         setDepthBlurDepth: (state, action: PayloadAction<number>) => {
             state.depthBlurDepth = action.payload;
@@ -472,6 +479,7 @@ export const {
     setDepthPeelLayers,
     setPeelOpaqueSeparately,
     setUseWebGPU,
+    setAnaglyphColours,
     setBackgroundColor,
     setDepthBlurDepth,
     setDrawAxes,

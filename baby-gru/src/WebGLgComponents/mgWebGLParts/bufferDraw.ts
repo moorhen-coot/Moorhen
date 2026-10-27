@@ -88,7 +88,7 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
                 }
             }
             if (self.WEBGL2) {
-                if(self.doAnaglyphStereo) {
+                if(self.doAnaglyphStereo && !self.WEBGL2) {
                     self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
                     self.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
                     self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...self.currentAnaglyphColor)
@@ -172,7 +172,7 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
         } else {
             const theShader = theShaderIn as webGL.MGWebGLShader;
             if (self.WEBGL2) {
-                if(self.doAnaglyphStereo) {
+                if(self.doAnaglyphStereo && !self.WEBGL2) {
                     self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
                     self.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
                     self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...self.currentAnaglyphColor)
@@ -195,7 +195,7 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
 
                     self.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
                     if (self.WEBGL2) {
-                        if(self.doAnaglyphStereo) {
+                        if(self.doAnaglyphStereo && !self.WEBGL2) {
                             self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
                             self.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
                             self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...self.currentAnaglyphColor)
