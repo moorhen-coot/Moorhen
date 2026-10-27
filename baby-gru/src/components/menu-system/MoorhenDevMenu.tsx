@@ -519,6 +519,28 @@ export const MoorhenDevMenu = () => {
             >
                 WebGPU preview (test)
             </MoorhenMenuItem>
+            <MoorhenMenuItem
+                onClick={() => { void (async () => {
+                    document.body.click();
+                    // How this machine draws: one line, to paste into a report (rendererReport.ts).
+                    const line = await moorhenInstance.webGPU.report();
+                    console.info(`Moorhen renderer report: ${line}`);
+                    let copied = false;
+                    try {
+                        await navigator.clipboard.writeText(line);
+                        copied = true;
+                    } catch {
+                        // Clipboard refused (no permission, or the click is too long ago): the
+                        // line is in the console and the message below.
+                    }
+                    moorhenInstance.snackbar.enqueueSnackbar({
+                        message: `${copied ? "Copied to the clipboard" : "Renderer report (also in the console)"}: ${line}`,
+                        variant: "info",
+                    });
+                })(); }}
+            >
+                Renderer report (copied to the clipboard)
+            </MoorhenMenuItem>
             <MoorhenToggle
                 type="switch"
                 checked={noWebGPU === null && useWebGPU}

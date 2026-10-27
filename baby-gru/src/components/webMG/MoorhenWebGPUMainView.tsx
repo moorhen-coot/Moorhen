@@ -23,7 +23,9 @@ export interface WebGPUMainViewRenderer extends ExternalRenderer {
     /** Frames WebGPU has drawn. */
     readonly framesDrawn: number;
     /** What the last frame WebGPU drew had in it; mapTriangles, the maps contoured on the GPU. */
-    readonly lastFrame: { meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number } | null;
+    readonly lastFrame: { meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number; peelLayers: number } | null;
+    /** The GPU time of the frames drawn since the last call (and of the FPS meter's), or null if not timed. */
+    takeGpuTime(): { meanMs: number; maxMs: number; count: number } | null;
 }
 
 /**
@@ -151,7 +153,13 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
             get lastFrame() {
                 if (!lastReport) return null;
                 const { plan } = lastReport;
-                return { meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments, mapTriangles: maps?.triangles ?? 0 };
+                return {
+                    meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments,
+                    mapTriangles: maps?.triangles ?? 0, peelLayers: lastReport.peelLayers,
+                };
+            },
+            takeGpuTime() {
+                return renderer?.takeFrameGpuTime() ?? null;
             },
             willDraw() {
                 // A recording started while WebGL drew records WebGL's canvas, so WebGL keeps

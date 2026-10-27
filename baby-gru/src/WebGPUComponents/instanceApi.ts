@@ -14,6 +14,9 @@ import { describeSkipped, effectSettings, planPreview } from "./previewScene";
 import { setUseWebGPU } from "../store/sceneSettingsSlice";
 import type { WebGPUMainViewRenderer } from "../components/webMG/MoorhenWebGPUMainView";
 import { gpuMapContourSetting } from "./mapContour/setting";
+import { webGPUAdapterSummary } from "./gpu";
+import { formatRendererReport, median, type RendererReportFacts } from "./rendererReport";
+import { version as moorhenVersion } from "../version";
 
 /** An image: RGBA, 8 bits a channel, top row first (as ImageData has it). */
 export interface RendererImage {
@@ -131,9 +134,18 @@ export interface WebGPUApi {
      */
     mainView(): {
         requested: boolean; active: boolean; drawing: boolean; webGLReason: string | null; framesDrawn: number;
-        lastFrame: { meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number } | null;
+        lastFrame: { meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number; peelLayers: number } | null;
         mapsOnGpu: boolean;
     };
+    /**
+     * How this machine draws Moorhen, on one line for a tester to paste back (rendererReport.ts):
+     * browser and platform, secure context, the WebGPU adapter or why there is none, who draws the
+     * main view and why, where maps are contoured, and the time of `frames` frames of the current
+     * scene (60 by default; 0 for none), drawn one an animation frame.
+     */
+    report(options?: { frames?: number }): Promise<string>;
+    /** What report() says, as it gathered it. */
+    reportFacts(options?: { frames?: number }): Promise<RendererReportFacts>;
     /** Ask for the main view to be drawn with WebGPU, or not (the preference, so it is remembered). */
     setMainView(useWebGPU: boolean): void;
     /**
@@ -241,6 +253,61 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
 
         setMainView(useWebGPU: boolean): void {
             host.store.dispatch(setUseWebGPU(useWebGPU));
+        },
+
+        async report(options: { frames?: number } = {}): Promise<string> {
+            return formatRendererReport(await this.reportFacts(options));
+        },
+
+        async reportFacts(options: { frames?: number } = {}): Promise<RendererReportFacts> {
+            const webGPU = await webGPUAdapterSummary();
+            const view = webGLView(host) as WebGLView & { drawScene(): void; externalRenderer?: WebGPUMainViewRenderer | null };
+            const external = view.externalRenderer?.name === "WebGPU" ? view.externalRenderer : null;
+            const nextFrame = () => new Promise<number>(resolve => requestAnimationFrame(resolve));
+
+            // Frames of the scene as it is, one an animation frame, as a moving view draws them.
+            const wanted = Math.max(0, Math.round(options.frames ?? 60));
+            let frames: RendererReportFacts["frames"] = null;
+            if (wanted > 0) {
+                external?.takeGpuTime();
+                const intervals: number[] = [];
+                const cpu: number[] = [];
+                let last = await nextFrame();
+                for (let i = 0; i < wanted; i++) {
+                    const started = performance.now();
+                    view.drawScene();
+                    cpu.push(performance.now() - started);
+                    const now = await nextFrame();
+                    intervals.push(now - last);
+                    last = now;
+                }
+                // The GPU timings are read back a frame or two behind.
+                await nextFrame();
+                await nextFrame();
+                const gpu = external?.takeGpuTime() ?? null;
+                frames = {
+                    count: wanted,
+                    medianMs: median(intervals),
+                    worstMs: Math.max(...intervals),
+                    cpuMs: median(cpu),
+                    gpuMs: gpu && gpu.count > 0 ? gpu.meanMs : null,
+                };
+            }
+            const main = this.mainView();
+            const canvas = view.canvas as { width: number; height: number };
+            return {
+                moorhenVersion: String(moorhenVersion),
+                userAgent: navigator.userAgent,
+                secureContext: typeof window !== "undefined" && window.isSecureContext,
+                webGPU,
+                mainView: { requested: main.requested, active: main.active, drawing: main.drawing, webGLReason: main.webGLReason, mapsOnGpu: main.mapsOnGpu },
+                canvas: { width: canvas.width, height: canvas.height },
+                scene: {
+                    triangles: planPreview(host.store.getState().glRef.displayBuffers ?? []).triangles,
+                    peelLayers: main.drawing ? main.lastFrame?.peelLayers ?? null : null,
+                },
+                frames,
+            };
         },
 
         async simulateDeviceLoss(): Promise<boolean> {

@@ -3,7 +3,7 @@
  * modules are built from. See ../README.md.
  */
 export { BufferUsage, MapMode, MAX_WORKGROUPS_PER_DIMENSION, ShaderStage, TextureUsage } from "./constants";
-export { getGpuContext, webGPUAdapterUnavailableReason, webGPUUnavailableReason, withErrorScope } from "./context";
+export { getGpuContext, webGPUAdapterSummary, webGPUAdapterUnavailableReason, webGPUUnavailableReason, withErrorScope } from "./context";
 export type { GpuContext } from "./context";
 export { ComputeKernel, createBuffer, dispatchSize, itemIndexWgsl, readBuffer } from "./compute";
 export type { Bindings, KernelSource } from "./compute";

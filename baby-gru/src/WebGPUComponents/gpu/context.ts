@@ -17,6 +17,8 @@ export interface GpuContext {
     readonly device: GPUDevice;
     /** Vendor, architecture and description, as far as the browser says. */
     readonly adapterDescription: string;
+    /** A software adapter (SwiftShader, WARP and the like): it works, but slowly. */
+    readonly fallbackAdapter: boolean;
     /** Whether "timestamp-query" was granted (GpuSpanTimer needs it). */
     readonly timestampQuery: boolean;
     /** Settles when this context's device is lost. */
@@ -91,6 +93,7 @@ async function createContext(): Promise<GpuContext> {
     const context: GpuContext = {
         device,
         adapterDescription: describeAdapter(adapter),
+        fallbackAdapter: isFallback(adapter),
         timestampQuery,
         lost: device.lost,
     };
@@ -104,6 +107,29 @@ async function createContext(): Promise<GpuContext> {
     });
     currentContext = context;
     return context;
+}
+
+/**
+ * Whether WebGPU can be used here and on what, for reports (instanceApi's report): the reason it
+ * cannot, or the adapter. The shared context's adapter if there is one; otherwise one is asked for,
+ * and no device made.
+ */
+export async function webGPUAdapterSummary(): Promise<{ reason: string | null; adapter: string | null; fallback: boolean }> {
+    const unavailable = webGPUUnavailableReason();
+    if (unavailable) return { reason: unavailable, adapter: null, fallback: false };
+    if (currentContext) return { reason: null, adapter: currentContext.adapterDescription, fallback: currentContext.fallbackAdapter };
+    try {
+        const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
+        if (!adapter) return { reason: NO_ADAPTER, adapter: null, fallback: false };
+        return { reason: null, adapter: describeAdapter(adapter), fallback: isFallback(adapter) };
+    } catch (err) {
+        return { reason: err instanceof Error ? err.message : String(err), adapter: null, fallback: false };
+    }
+}
+
+/** The adapter's own say (GPUAdapterInfo), or the older GPUAdapter property where that is all there is. */
+function isFallback(adapter: GPUAdapter): boolean {
+    return !!(adapter.info?.isFallbackAdapter ?? (adapter as unknown as { isFallbackAdapter?: boolean }).isFallbackAdapter);
 }
 
 function describeAdapter(adapter: GPUAdapter): string {

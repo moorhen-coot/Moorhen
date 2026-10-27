@@ -105,6 +105,14 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
     expect(canvases.gpuIsNotGl).toBe(true);
     expect(canvases.gpu).toEqual({ ...canvases.gl, visibility: "visible" });
     expect((await mainView()).framesDrawn).toBeGreaterThan(0);
+    // The one-line report a tester would paste back says so too.
+    const report = await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        return await (await host.getMoorhenInstance()).webGPU.report({ frames: 10 });
+    }, id);
+    console.log(`renderer report: ${report}`);
+    expect(report).toContain("main view: WebGPU |");
+    expect(report).toContain("10 frames:");
 
     // What is on screen is WebGPU's picture of the scene: the page's pixels where the canvas is,
     // against an offscreen WebGPU snapshot of the same view, where the snapshot has the scene. The

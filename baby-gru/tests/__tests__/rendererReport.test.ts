@@ -1,0 +1,97 @@
+/**
+ * The renderer report (src/WebGPUComponents/rendererReport.ts): the one line a tester pastes back
+ * to say how their machine draws Moorhen.
+ */
+import { describe, expect, it } from "@jest/globals";
+import { browserName, formatRendererReport, median, platformName, type RendererReportFacts } from "../../src/WebGPUComponents/rendererReport";
+
+const AGENTS = {
+    firefoxLinux: "Mozilla/5.0 (X11; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0",
+    firefoxMac: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:158.0) Gecko/20100101 Firefox/158.0",
+    chromeWindows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    edgeWindows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    safariMac: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.1 Safari/605.1.15",
+    chromeOS: "Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    firefoxAndroid: "Mozilla/5.0 (Android 14; Mobile; rv:147.0) Gecko/147.0 Firefox/147.0",
+};
+
+const facts = (over: Partial<RendererReportFacts> = {}): RendererReportFacts => ({
+    moorhenVersion: "0.21.0",
+    userAgent: AGENTS.firefoxMac,
+    secureContext: true,
+    webGPU: { reason: null, adapter: "apple metal-3", fallback: false },
+    mainView: { requested: true, active: true, drawing: true, webGLReason: null, mapsOnGpu: true },
+    canvas: { width: 2848, height: 1468 },
+    scene: { triangles: 1_500_000, peelLayers: 3 },
+    frames: { count: 60, medianMs: 16.7, worstMs: 33.4, cpuMs: 0.42, gpuMs: 12.03 },
+    ...over,
+});
+
+describe("browser and platform", () => {
+    it("names the browser and its version, not the engines it claims to be", () => {
+        expect(browserName(AGENTS.firefoxLinux)).toBe("Firefox 147");
+        expect(browserName(AGENTS.firefoxMac)).toBe("Firefox 158");
+        expect(browserName(AGENTS.chromeWindows)).toBe("Chrome 142");
+        expect(browserName(AGENTS.edgeWindows)).toBe("Edge 142");
+        expect(browserName(AGENTS.safariMac)).toBe("Safari 26.1");
+    });
+
+    it("names the platform", () => {
+        expect(platformName(AGENTS.firefoxLinux)).toBe("Linux");
+        expect(platformName(AGENTS.firefoxMac)).toBe("macOS");
+        expect(platformName(AGENTS.chromeWindows)).toBe("Windows");
+        expect(platformName(AGENTS.chromeOS)).toBe("ChromeOS");
+        expect(platformName(AGENTS.firefoxAndroid)).toBe("Android");
+    });
+});
+
+describe("the report", () => {
+    it("says everything on one line", () => {
+        expect(formatRendererReport(facts())).toBe(
+            "Moorhen 0.21.0 | Firefox 158 on macOS | secure | WebGPU: apple metal-3 | main view: WebGPU | maps: GPU"
+            + " | 2848x1468, 1.50M triangles, 3 layers peeled | 60 frames: 16.7 ms median, 33.4 ms worst, CPU 0.4 ms, GPU 12.0 ms");
+    });
+
+    it("says why WebGPU is not drawing", () => {
+        const none = formatRendererReport(facts({
+            userAgent: AGENTS.firefoxLinux,
+            webGPU: { reason: "no adapter", adapter: null, fallback: false },
+            mainView: { requested: true, active: false, drawing: false, webGLReason: null, mapsOnGpu: false },
+            scene: { triangles: 1200, peelLayers: null },
+            frames: { count: 60, medianMs: 16.7, worstMs: 17, cpuMs: 3, gpuMs: null },
+        }));
+        expect(none).toContain("Firefox 147 on Linux");
+        expect(none).toContain("WebGPU: none (no adapter)");
+        expect(none).toContain("main view: WebGL (no WebGPU)");
+        expect(none).toContain("maps: Coot");
+        expect(none).toContain("1.2k triangles |");
+        expect(none).toContain("GPU not timed");
+
+        const forNow = formatRendererReport(facts({
+            mainView: { requested: true, active: true, drawing: false, webGLReason: "the shadow map debug view", mapsOnGpu: false },
+        }));
+        expect(forNow).toContain("main view: WebGL for now (the shadow map debug view)");
+        expect(formatRendererReport(facts({ mainView: { requested: false, active: false, drawing: false, webGLReason: null, mapsOnGpu: false } })))
+            .toContain("main view: WebGL (WebGPU switched off)");
+        expect(formatRendererReport(facts({ mainView: { requested: true, active: false, drawing: false, webGLReason: null, mapsOnGpu: false } })))
+            .toContain("gave up");
+    });
+
+    it("flags a page WebGPU cannot be offered on, and a software adapter", () => {
+        expect(formatRendererReport(facts({ secureContext: false }))).toContain("NOT a secure context");
+        expect(formatRendererReport(facts({ webGPU: { reason: null, adapter: "google swiftshader", fallback: true } })))
+            .toContain("WebGPU: google swiftshader (software)");
+    });
+
+    it("leaves the frames out when none were drawn", () => {
+        expect(formatRendererReport(facts({ frames: null }))).not.toContain("frames:");
+    });
+});
+
+describe("median", () => {
+    it("is the middle value, or the mean of the middle two", () => {
+        expect(median([])).toBe(0);
+        expect(median([5, 1, 3])).toBe(3);
+        expect(median([4, 1, 3, 2])).toBe(2.5);
+    });
+});
