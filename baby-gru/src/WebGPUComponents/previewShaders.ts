@@ -45,6 +45,8 @@ struct Frame {
     effectsArea: vec4f,  // where this target's pixels are in the effects maps (x, y), and 1 / the maps' size
     shadowMatrix: mat4x4f, // model space to the shadow map: x, y in 0..1 (rows down), z the depth
     shadowParams: vec4f, // the map's texel size (x, y), the depth bias, 1 for the 8 x 8 soft lookup
+    fog: vec4f,          // x: 1 to fade into nothing with distance rather than into fogColour (a
+                         // transparent snapshot: the picture is premultiplied, on nothing)
 };
 
 @group(0) @binding(0) var<uniform> frame: Frame;
@@ -61,6 +63,8 @@ struct Draw {
     model: mat4x4f,      // where this copy goes: a symmetry operator, or identity for the original
                          // (or, while it is dragged, its drag)
     ambient: vec4f,      // w = 1: this ambient light instead of the frame's (the drag's pulse)
+    output: vec4f,       // x: 1 where the pipeline writes its colour as it is (opaque), 0 where it
+                         // blends it over what is there (transparent, or into a peel layer)
 };
 
 fn ambientLight() -> vec4f {
@@ -257,10 +261,20 @@ fn lit(base: vec4f, normal: vec3f, occ: f32, shadow: f32) -> vec4f {
     return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, shadow);
 }
 
+// Fogged as triangle-fragment-shader.js: mixed towards the fog colour with distance. For a
+// transparent snapshot (frame.fog.x), faded into nothing instead - the colour kept, the alpha
+// taken down by the same amount - so that over the fog colour it is the same picture, and over
+// anything else the distance fades into that. The picture is premultiplied then: what an opaque
+// pipeline writes as it is must be premultiplied too; what is blended goes in straight, and the
+// blend premultiplies it.
 fn fogged(colour: vec4f, alpha: f32, eyeDistance: f32) -> vec4f {
     let fogStart = frame.params.x;
     let fogEnd = frame.params.y;
     let fogFactor = 1.0 - clamp((fogEnd - eyeDistance) / (fogEnd - fogStart), 0.0, 1.0);
+    if (frame.fog.x > 0.5) {
+        let a = alpha * draw.params.x * (1.0 - fogFactor);
+        return select(vec4f(colour.rgb, a), vec4f(colour.rgb * a, a), draw.output.x > 0.5);
+    }
     var out = mix(colour, frame.fogColour, fogFactor);
     out.a = alpha * draw.params.x;
     return out;
@@ -874,6 +888,8 @@ fn fs_shape(in: ShapeOut) -> @location(0) vec4f {
     let fogStart = frame.params.x;
     let fogEnd = frame.params.y;
     let fogFactor = 1.0 - clamp((fogEnd - abs(in.eye.z / in.eye.w)) / (fogEnd - fogStart), 0.0, 1.0);
+    // Faded rather than fogged in a transparent snapshot, as fogged() does; blended, so straight.
+    if (frame.fog.x > 0.5) { return vec4f(colour.rgb, colour.a * (1.0 - fogFactor)); }
     return mix(colour, frame.fogColour, fogFactor);
 }
 `;

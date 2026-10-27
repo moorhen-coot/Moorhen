@@ -12,11 +12,14 @@ import { createWebGLBuffers } from "../../src/WebGLgComponents/createWebGLBuffer
 import { viewProjection } from "../../src/WebGLgComponents/mgWebGLParts/projection";
 import {
     FRAME_FLOATS, MeshChunk, PreviewCameraSource, describeSkipped, effectSettings, frameUniforms, planMeshChunks, planPreview, previewCameraFrame,
-    hoverSphereRadius, interactiveGlow, interactiveModel, symmetryCopyGrey,
+    hoverSphereRadius, interactiveGlow, interactiveModel, symmetryCopyGrey, previewViews, viewShows,
 } from "../../src/WebGPUComponents/previewScene";
 import { MAX_GBUFFER_SIDE, effectMargin, gbufferScale, ssaoKernel, stepInTexels } from "../../src/WebGPUComponents/effectPasses";
 import { SHADOW_BIAS, casterBounds, shadowCamera, shadowFrameUniforms } from "../../src/WebGPUComponents/shadowMap";
 import { transparentLayers } from "../../src/WebGPUComponents/depthPeel";
+import { depthBlurKernel, depthBlurMargin } from "../../src/WebGPUComponents/depthBlur";
+import { gaussianBlurs } from "../../src/WebGLgComponents/gaussianBlurs";
+import { focalPlaneDepth, slabNearFar } from "../../src/WebGLgComponents/mgWebGLParts/projection";
 
 const triangle = (over: Record<string, unknown> = {}) => createWebGLBuffers({
     prim_types: [["TRIANGLES"]],
@@ -395,7 +398,7 @@ describe("planMeshChunks", () => {
 
 describe("effectSettings", () => {
     it("is nothing when the scene has no effects on", () => {
-        expect(effectSettings(camera())).toEqual({ ssao: null, shadow: null, edges: null });
+        expect(effectSettings(camera())).toEqual({ ssao: null, shadow: null, edges: null, depthBlur: null });
     });
 
     it("takes occlusion's radius and strength (ssaoBias) as WebGL does", () => {
@@ -406,6 +409,132 @@ describe("effectSettings", () => {
         const edges = effectSettings(camera({ doEdgeDetect: true, depthThreshold: 1.3, normalThreshold: 0.5, scaleDepth: 2, scaleNormal: 0 })).edges;
         expect(edges).toEqual({ depthThreshold: 1.3, normalThreshold: 0.5, depthStep: 0.5, normalStep: 0 });
         expect(effectSettings(camera({ doEdgeDetect: true, scaleDepth: 6, scaleNormal: 1 })).edges).toMatchObject({ depthStep: 1.5, normalStep: 0.25 });
+    });
+});
+
+describe("previewViews: a divided canvas", () => {
+    // A 200 x 100 canvas, as MGWebGL lays its views out: GL pixels, from the bottom-left.
+    const canvas = { width: 200, height: 100 };
+    const quarter = (angle: number) => [0, 0, Math.sin(angle / 2), Math.cos(angle / 2)];
+    const turn = quarter(Math.PI / 2);
+
+    it("is null for an ordinary view", () => {
+        expect(previewViews(camera({ canvas }), [], 200, 100)).toBeNull();
+    });
+
+    it("puts side-by-side stereo's eyes left and right, each turned its own way", () => {
+        const left = quarter(0.05), right = quarter(-0.05);
+        const views = previewViews(camera({
+            canvas, doSideBySideStereo: true, stereoQuats: [left, right], stereoViewports: [[0, 0, 100, 100], [100, 0, 100, 100]],
+        }), [], 200, 100);
+        expect(views.map(({ x, y, width, height }) => [x, y, width, height])).toEqual([[0, 0, 100, 100], [100, 0, 100, 100]]);
+        // The camera's own turn (identity here), then the eye's.
+        views[0].quat.forEach((v, i) => expect(v).toBeCloseTo(left[i], 6));
+        expect(views.map(view => view.group)).toEqual([null, null]);
+        expect(views.map(view => Array.from(view.origin))).toEqual([[-1, -2, -3], [-1, -2, -3]]);
+    });
+
+    it("crosses the eyes for cross-eyed stereo", () => {
+        const left = quarter(0.05), right = quarter(-0.05);
+        const views = previewViews(camera({
+            canvas, doCrossEyedStereo: true, stereoQuats: [left, right], stereoViewports: [[0, 0, 100, 100], [100, 0, 100, 100]],
+        }), [], 200, 100);
+        views[0].quat.forEach((v, i) => expect(v).toBeCloseTo(right[i], 6));
+    });
+
+    it("measures from the top-left, scaled to the image, as GL's bottom-left viewports land on it", () => {
+        // Three ways: bottom-left, top-left, top-right in GL terms.
+        const views = previewViews(camera({
+            canvas, doThreeWayView: true, threeWayQuats: [turn, turn, turn],
+            threeWayViewports: [[0, 0, 100, 50], [0, 50, 100, 50], [100, 50, 100, 50]],
+        }), [], 400, 200);
+        expect(views.map(({ x, y, width, height }) => [x, y, width, height])).toEqual([[0, 100, 200, 100], [0, 0, 200, 100], [200, 0, 200, 100]]);
+    });
+
+    it("gives multiple views a group each, round the group's origin, and shows each its own", () => {
+        const grouped = (group: number, origin: number[]) => {
+            const b = new DisplayBuffer();
+            b.multiViewGroup = group;
+            b.origin = origin;
+            return b;
+        };
+        const a = grouped(0, [1, 2, 3]), b = grouped(1, [4, 5, 6]);
+        const everywhere = new DisplayBuffer();
+        const views = previewViews(camera({
+            canvas, doMultiView: true, multiWayQuats: [[0, 0, 0, -1], [0, 0, 0, -1]],
+            multiWayViewports: [[0, 0, 100, 100], [100, 0, 100, 100]], multiViewOrigins: [[1, 2, 3], [4, 5, 6]],
+        }), [a, b, everywhere], 200, 100);
+        expect(views.map(view => view.group)).toEqual([0, 1]);
+        expect(views.map(view => Array.from(view.origin))).toEqual([[1, 2, 3], [4, 5, 6]]);
+        expect([a, b, everywhere].map(buffer => viewShows(views[0], buffer))).toEqual([true, false, true]);
+        expect([a, b, everywhere].map(buffer => viewShows(views[1], buffer))).toEqual([false, true, true]);
+    });
+
+    it("takes each group's own origin, whatever numbers the groups have", () => {
+        // A molecule, a map (no group) and a molecule: groups 0 and 2, their origins kept by group.
+        const grouped = (group: number, origin: number[]) => {
+            const b = new DisplayBuffer();
+            b.multiViewGroup = group;
+            b.origin = origin;
+            return b;
+        };
+        const origins: number[][] = [];
+        origins[0] = [1, 2, 3];
+        origins[2] = [7, 8, 9];
+        const views = previewViews(camera({
+            canvas, doMultiView: true, multiWayQuats: [[0, 0, 0, -1], [0, 0, 0, -1]],
+            multiWayViewports: [[0, 0, 100, 100], [100, 0, 100, 100]], multiViewOrigins: origins,
+        }), [grouped(0, [1, 2, 3]), new DisplayBuffer(), grouped(2, [7, 8, 9])], 200, 100);
+        expect(views.map(view => view.group)).toEqual([0, 2]);
+        expect(views.map(view => Array.from(view.origin))).toEqual([[1, 2, 3], [7, 8, 9]]);
+    });
+
+    it("is null for multiple views with no groups, as WebGL then draws the one view", () => {
+        expect(previewViews(camera({
+            canvas, doMultiView: true, multiWayQuats: [[0, 0, 0, 1]], multiWayViewports: [[0, 0, 200, 100]],
+        }), [new DisplayBuffer()], 200, 100)).toBeNull();
+    });
+});
+
+describe("depth blur", () => {
+    it("is off unless the offscreen buffers are on, as WebGL names it", () => {
+        expect(effectSettings(camera({ blurSize: 3, blurDepth: 5 })).depthBlur).toBeNull();
+    });
+
+    it("blurs with WebGL's Gaussian, taps half the radius apart, as its shaders step", () => {
+        const blur = effectSettings(camera({ useOffScreenBuffers: true, blurSize: 3 })).depthBlur;
+        expect(blur).toMatchObject({ taps: 3, step: 1.5, weights: gaussianBlurs[3] });
+        expect(blur.weights).toHaveLength(7);
+    });
+
+    it("puts the focal plane where drawCore's depthBlur does, in the depth buffer's terms", () => {
+        for (const doPerspectiveProjection of [false, true]) {
+            const source = camera({ useOffScreenBuffers: true, blurSize: 3, blurDepth: 7, doPerspectiveProjection });
+            const slab = slabNearFar(source.gl_clipPlane0[3], source.gl_clipPlane1[3], source.gl_fog_end, doPerspectiveProjection);
+            const focus = focalPlaneDepth(7, slab.near, slab.far, source.fogClipOffset, doPerspectiveProjection);
+            expect(effectSettings(source).depthBlur.focus).toBe(focus);
+            expect(focus).toBeGreaterThan(0);
+            expect(focus).toBeLessThan(1);
+        }
+    });
+
+    it("takes a radius WebGL's table lacks to the nearest it has", () => {
+        expect(depthBlurKernel(3).taps).toBe(3);
+        expect(depthBlurKernel(2.6).taps).toBe(3);
+        expect(depthBlurKernel(1).taps).toBe(2);
+        expect(depthBlurKernel(100).taps).toBe(16);
+        for (const radius of [2, 5, 16]) {
+            const { taps, weights } = depthBlurKernel(radius);
+            expect(weights).toHaveLength(2 * taps + 1);
+            expect(weights.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 3);
+        }
+    });
+
+    it("reaches both passes' taps, scaled with the picture, for a tile's margin", () => {
+        const blur = effectSettings(camera({ useOffScreenBuffers: true, blurSize: 3 })).depthBlur;
+        expect(depthBlurMargin(null, 1)).toBe(0);
+        expect(depthBlurMargin(blur, 1)).toBeGreaterThanOrEqual(2 * 3 * 1.5);
+        expect(depthBlurMargin(blur, 3.2)).toBeGreaterThanOrEqual(2 * 3 * 1.5 * 3.2);
     });
 });
 

@@ -24,7 +24,9 @@ interface Host {
     getMoorhenInstance: () => Promise<{
         webGPU: WebGPUApi;
         representation: { defaultStyle: string };
-        sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoSSAO(value: boolean): void; setDoEdgeDetect(value: boolean): void; setDoShadow(value: boolean): void };
+        sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoSSAO(value: boolean): void; setDoEdgeDetect(value: boolean): void; setDoShadow(value: boolean): void; setUseOffScreenBuffers(value: boolean): void;
+            setDoThreeWayView(value: boolean): void; setDoSideBySideStereo(value: boolean): void; setDoCrossEyedStereo(value: boolean): void;
+        };
         getMoleculeList(): {
             show(style: string): Promise<unknown>; hide(style: string): unknown; toggleSymmetry(): Promise<void>;
             drawEnvironment(cid?: string): Promise<void>;
@@ -45,7 +47,7 @@ interface ParityResult {
     skippedSubBuffers: SkippedSubBufferInfo[];
     tiles: number;
     /** The effects drawn, as the main view's settings ask for them. */
-    effects: { ssao: boolean; edges: boolean; shadow: boolean };
+    effects: { ssao: boolean; edges: boolean; shadow: boolean; depthBlur: boolean };
     /** Transparent layers WebGPU peeled. */
     peelLayers: number;
     /** Pixels the added symmetry, environment, glTF or effect changed, in each renderer's picture. */
@@ -72,6 +74,10 @@ const STYLES: {
     ssao?: boolean; edges?: boolean; shadow?: boolean;
     /** A molecular surface over the ribbons at half opacity: depth peeling. */
     transparentSurface?: boolean;
+    /** Depth blur (useOffScreenBuffers), at its default radius and focal plane. */
+    depthBlur?: boolean;
+    /** The canvas divided: three ways, or stereo side by side or crossed. */
+    layout?: "three ways" | "side by side" | "cross-eyed";
 }[] = [
     { style: "CRs", what: "ribbons", maxDiffering: 0.01, maxMeanDifference: 0.6 },
     { style: "CBs", what: "ball-and-stick", maxDiffering: 0.03, maxMeanDifference: 1.6 },
@@ -106,10 +112,22 @@ const STYLES: {
     // WebGPU does neither, so they differ only along silhouettes. Measured (Apple GPU, 1280x647,
     // 2026-10-26): 0.76% and 0.60; the surface changed 134 909 pixels in WebGL, 135 173 in WebGPU.
     { style: "CRs", what: "ribbons inside a transparent surface", maxDiffering: 0.015, maxMeanDifference: 1.2, transparentSurface: true },
+    // Depth blur (depthBlur.ts): WebGL's Gaussian and its mix by depth, behind a focal plane at the
+    // view centre (the default), but as one round blur where WebGL's two passes glow in a cross.
+    // WebGL's picture is taken from its canvas, as it reads save_pixel_data back before the blur.
+    // Measured (Apple GPU, 1280x647, 2026-10-27): 0.38% and 0.40 as WebGL's passes; round, 0.39% and
+    // 0.45, the blur changing 8 048 pixels in WebGL and 6 494 in WebGPU (the cross's arms gone).
+    { style: "CRs", what: "ribbons with depth blur", maxDiffering: 0.01, maxMeanDifference: 0.8, depthBlur: true },
+    // A divided canvas (previewViews, drawViews): each view a frame of its own size, with its own
+    // turn, as drawScene's loop over its viewports draws it. Measured (Apple GPU, 1280x647,
+    // 2026-10-27): three ways 1.63% and 1.07; side by side and cross-eyed 0.98% and 0.53.
+    { style: "CRs", what: "ribbons in three views", maxDiffering: 0.03, maxMeanDifference: 2.0, layout: "three ways" },
+    { style: "CRs", what: "ribbons in side-by-side stereo", maxDiffering: 0.02, maxMeanDifference: 1.2, layout: "side by side" },
+    { style: "CRs", what: "ribbons in cross-eyed stereo", maxDiffering: 0.02, maxMeanDifference: 1.2, layout: "cross-eyed" },
 ];
 
 test.describe("WebGPU against WebGL", () => {
-    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map, environment, gltf, ssao, edges, shadow, transparentSurface } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
+    for (const { style, what, maxDiffering, maxMeanDifference, symmetry, map, environment, gltf, ssao, edges, shadow, transparentSurface, depthBlur, layout } of STYLES) test(`${what} (${style}) of 5a3h look the same in both renderers`, async ({ page }, testInfo) => {
         test.setTimeout(180_000);
         const moorhen = await startAndGetInstance(page);
 
@@ -151,7 +169,7 @@ test.describe("WebGPU against WebGL", () => {
         // the scene without it kept: it has to change both, or the case passes on a scene that
         // never had it (as the glTF, environment and shadow cases once did - all three came out
         // pixel for pixel as plain ribbons).
-        const extra = !!(symmetry || environment || gltf || ssao || edges || shadow || transparentSurface);
+        const extra = !!(symmetry || environment || gltf || ssao || edges || shadow || transparentSurface || depthBlur || layout);
         if (extra) {
             await page.evaluate(async targetId => {
                 const host = document.getElementById(targetId) as unknown as Host;
@@ -166,7 +184,7 @@ test.describe("WebGPU against WebGL", () => {
                 // screen).
                 await moorhen.loadFiles([{ url: "/tests/test_data/textured_sphere.gltf", filename: "textured_sphere.gltf" }]);
             }
-            await page.evaluate(async ({ targetId, symmetry, environment, ssao, edges, shadow }) => {
+            await page.evaluate(async ({ targetId, symmetry, environment, ssao, edges, shadow, depthBlur, layout }) => {
                 const host = document.getElementById(targetId) as unknown as Host;
                 const instance = await host.getMoorhenInstance();
                 const [molecule] = instance.getMoleculeList();
@@ -177,7 +195,11 @@ test.describe("WebGPU against WebGL", () => {
                 if (ssao) instance.sceneSettings.setDoSSAO(true);
                 if (edges) instance.sceneSettings.setDoEdgeDetect(true);
                 if (shadow) instance.sceneSettings.setDoShadow(true);
-            }, { targetId: moorhen.elementId, symmetry: !!symmetry, environment: !!environment, ssao: !!ssao, edges: !!edges, shadow: !!shadow });
+                if (depthBlur) instance.sceneSettings.setUseOffScreenBuffers(true);
+                if (layout === "three ways") instance.sceneSettings.setDoThreeWayView(true);
+                if (layout === "side by side") instance.sceneSettings.setDoSideBySideStereo(true);
+                if (layout === "cross-eyed") instance.sceneSettings.setDoCrossEyedStereo(true);
+            }, { targetId: moorhen.elementId, symmetry: !!symmetry, environment: !!environment, ssao: !!ssao, edges: !!edges, shadow: !!shadow, depthBlur: !!depthBlur, layout });
             if (transparentSurface) {
                 await page.evaluate(async targetId => {
                     const host = document.getElementById(targetId) as unknown as Host;
@@ -260,7 +282,7 @@ test.describe("WebGPU against WebGL", () => {
             };
         }, { targetId: moorhen.elementId, tolerance: PIXEL_TOLERANCE });
 
-        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}${environment ? " + environment" : ""}${gltf ? " + textured glTF" : ""}${ssao ? " + SSAO" : ""}${edges ? " + edges" : ""}${shadow ? " + shadows" : ""}${transparentSurface ? " + transparent surface" : ""}`;
+        const variant = `${style}${symmetry ? " + symmetry" : ""}${map ? " + map" : ""}${environment ? " + environment" : ""}${gltf ? " + textured glTF" : ""}${ssao ? " + SSAO" : ""}${edges ? " + edges" : ""}${shadow ? " + shadows" : ""}${transparentSurface ? " + transparent surface" : ""}${depthBlur ? " + depth blur" : ""}${layout ? ` + ${layout}` : ""}`;
         for (const [name, url] of Object.entries(result.images ?? {})) {
             await testInfo.attach(`${variant.replace(/ \+ /g, "-")}-${name}.png`, { body: Buffer.from(url.split(",")[1], "base64"), contentType: "image/png" });
         }
@@ -280,7 +302,7 @@ test.describe("WebGPU against WebGL", () => {
         }
 
         // The effects asked for are the ones drawn, and anything added shows in both pictures.
-        expect(result.effects, summary).toEqual({ ssao: !!ssao, edges: !!edges, shadow: !!shadow });
+        expect(result.effects, summary).toEqual({ ssao: !!ssao, edges: !!edges, shadow: !!shadow, depthBlur: !!depthBlur });
         if (result.changed) {
             expect(result.changed.webgl, `${summary}: the addition should show in WebGL`).toBeGreaterThan(pixels * 0.001);
             expect(result.changed.webgpu, `${summary}: the addition should show in WebGPU`).toBeGreaterThan(pixels * 0.001);

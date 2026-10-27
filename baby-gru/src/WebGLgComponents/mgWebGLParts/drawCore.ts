@@ -1751,6 +1751,11 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
  * finds the frame it expects: the camera advanced; the matrices GLrender would have left, which
  * picking (unProject) and the overlays read; picking's grain; the 2D overlay's quaternion; the
  * overlay text's glyph atlas (which the other renderer draws from); and the FPS meter's timings.
+ *
+ * A divided canvas (three ways, stereo side by side or crossed, multiple views) as drawScene
+ * leaves it too: its layout kept current (getMultiViewInfo: multiple views get a cell a group);
+ * the overlay text gathered for the first view, where it is drawn; and the projection and
+ * viewport of the last view drawn, which picking reads with getThreeWayMatrixAndViewPort.
  */
 function drawExternalFrame(self: MGWebGL, external: ExternalRenderer): void {
         advanceCamera(self)
@@ -1776,7 +1781,21 @@ function drawExternalFrame(self: MGWebGL, external: ExternalRenderer): void {
         // without saying so: GLrender replaces myQuat with a clone whenever it sets up the
         // projection. Passing the camera's own here left the axes and scale bar still while WebGPU drew.
         self.props.setDrawQuat(quat4.clone(self.myQuat))
-        gatherTextOverlays(self, invMat);
+
+        const divided = self.doMultiView || self.doThreeWayView || self.doSideBySideStereo || self.doCrossEyedStereo;
+        const layout = divided ? getMultiViewInfo(self) : null;
+        const viewports = layout?.viewports ?? [];
+        if (layout && viewports.length > 0 && !(self.doMultiView && layout.multiViewGroupsKeys.length === 0)) {
+            const firstQuat = quat4.clone(self.myQuat);
+            quat4.multiply(firstQuat, firstQuat, layout.quats[0]);
+            const firstInverse = quat4.create();
+            quat4Inverse(firstQuat, firstInverse);
+            gatherTextOverlays(self, quatToMat4(firstInverse), layout.ratioMult, Math.sqrt(height / viewports[0][3]));
+            self.currentViewport = viewports[viewports.length - 1];
+            self.pMatrix = viewProjection(cameraFrame(self, width / height * layout.ratioMult)).projection;
+        } else {
+            gatherTextOverlays(self, invMat);
+        }
 
         external.draw();
 

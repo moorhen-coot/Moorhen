@@ -40,13 +40,8 @@ export interface ExternalRenderer {
 
 /** The parts of the view whose being on means WebGL must draw (externalWebGLOnlyReason). */
 export interface ViewModes {
-    doMultiView?: boolean;
-    doThreeWayView?: boolean;
-    doSideBySideStereo?: boolean;
-    doCrossEyedStereo?: boolean;
+    /** Anaglyph stereo: the two eyes drawn over each other in red and green. */
     doAnaglyphStereo?: boolean;
-    /** Depth blur: drawn through WebGL's offscreen buffers. */
-    useOffScreenBuffers?: boolean;
     /** Outlines (doOutline). */
     doStenciling?: boolean;
     /** The shadow map shown in place of the scene, for debugging shadows. */
@@ -56,13 +51,13 @@ export interface ViewModes {
 /**
  * Why WebGL must draw this view rather than the WebGPU renderer, or null if WebGPU can. The views
  * WebGPU does not draw yet, and a recording of the WebGL canvas in progress (one started while
- * WebGL was drawing; a recording started while WebGPU draws records WebGPU's canvas).
+ * WebGL was drawing; a recording started while WebGPU draws records WebGPU's canvas). Divided
+ * canvases - three ways, multiple views, side-by-side and cross-eyed stereo - WebGPU draws
+ * (previewViews, drawViews).
  */
 export function webGLOnlyReason(view: ViewModes, recordingWebGLCanvas: boolean): string | null {
     if (recordingWebGLCanvas) return "a recording of the WebGL canvas";
-    if (view.doMultiView || view.doThreeWayView) return "multiple views";
-    if (view.doSideBySideStereo || view.doCrossEyedStereo || view.doAnaglyphStereo) return "stereo";
-    if (view.useOffScreenBuffers) return "depth blur";
+    if (view.doAnaglyphStereo) return "anaglyph stereo";
     if (view.doStenciling) return "outlines";
     if (view.doShadowDepthDebug) return "the shadow map debug view";
     return null;

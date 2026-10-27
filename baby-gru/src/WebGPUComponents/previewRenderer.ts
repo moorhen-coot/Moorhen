@@ -23,9 +23,10 @@ import { OverlayLines, overlayLineBatchesOf } from './overlayLines';
 import { TexturedShapeLayer } from './texturedShapes';
 import { SurfaceTextures } from './surfaceTextures';
 import { EffectMaps, EffectPasses, GBUFFER_DEPTH_FORMAT, GBUFFER_NORMAL_FORMAT, effectMargin, gbufferScale } from './effectPasses';
-import { DepthPeel, PEEL_COLOUR_FORMAT, PEEL_DEPTH_FORMAT, transparentLayers } from './depthPeel';
+import { DepthPeel, PEEL_COLOUR_FORMAT, PEEL_DEPTH_FORMAT, type PeelTargets, transparentLayers } from './depthPeel';
+import { DepthBlur, depthBlurMargin } from './depthBlur';
 import {
-    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, symmetryCopyGrey,
+    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, PreviewView, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, previewViews, symmetryCopyGrey, viewShows,
 } from './previewScene';
 
 
@@ -50,22 +51,25 @@ function pixelsPerAngstrom(frame: Float32Array, camera: PreviewCameraSource, wid
 }
 
 const SAMPLE_COUNT = 4;
-/** Floats in a Draw uniform block (previewShaders.ts): colour, params, copyColour, model, ambient. */
-const DRAW_FLOATS = 32;
+/** Floats in a Draw uniform block (previewShaders.ts): colour, params, copyColour, model, ambient, output. */
+const DRAW_FLOATS = 36;
 /** Bytes between one copy's Draw block and the next: the uniform offset alignment WebGPU guarantees. */
 const DRAW_STRIDE = 256;
 const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
 /**
  * The Draw block for one copy of a draw. `copyColour` is set for symmetry copies drawn in one
- * grey; `model` places the copy (identity for the original).
+ * grey; `model` places the copy (identity for the original). `opaque`: drawn by a pipeline that
+ * writes its colour as it is, not blended (what a transparent snapshot's fading needs to know).
  */
 function drawBlock(colour: ArrayLike<number>, alpha: number, halfWidth: number, copyColour: number[] | null,
-                   model: ArrayLike<number>, out: Float32Array, offset = 0, segmentColours = 0, ambient: number | null = null): void {
+                   model: ArrayLike<number>, out: Float32Array, offset = 0, segmentColours = 0, ambient: number | null = null,
+                   opaque = true): void {
     out.set([colour[0], colour[1], colour[2], colour[3], alpha, halfWidth, copyColour ? 1 : 0, segmentColours], offset);
     out.set(copyColour ?? [0, 0, 0, 0], offset + 8);
     out.set(Array.from(model).slice(0, 16), offset + 12);
     out.set(ambient === null ? [0, 0, 0, 0] : [ambient, ambient, ambient, 1], offset + 28);
+    out.set([opaque ? 1 : 0, 0, 0, 0], offset + 32);
 }
 
 const DEPTH_FORMAT: GPUTextureFormat = "depth24plus";
@@ -260,6 +264,8 @@ export class WebGPUPreviewRenderer {
     private readonly noOpaqueDepth: GPUTexture;
     private readonly noPreviousLayer: GPUTexture;
     private readonly depthPeel: DepthPeel;
+    /** Depth blur (depthBlur.ts): its pictures and passes. */
+    private readonly depthBlur: DepthBlur;
     /** The shadow pass's frame: the light's camera (shadowMap.ts). */
     private readonly shadowFrameBuffer: GPUBuffer;
     private readonly shadowFrameBindGroup: GPUBindGroup;
@@ -278,6 +284,8 @@ export class WebGPUPreviewRenderer {
     private readonly frameData = new Float32Array(FRAME_FLOATS);
     private colourTarget: GPUTexture | null = null;
     private depthTarget: GPUTexture | null = null;
+    /** Whether depthTarget can be read as a texture, as the depth blur reads it. */
+    private depthTargetReadable = false;
     private destroyed = false;
     private readonly gpuDrawUniforms = new Map<string, {
         buffer: GPUBuffer;
@@ -392,6 +400,7 @@ export class WebGPUPreviewRenderer {
             usage: TextureUsage.TEXTURE_BINDING | TextureUsage.RENDER_ATTACHMENT,
         });
         this.depthPeel = new DepthPeel(device, this.format, SAMPLE_COUNT, DEPTH_FORMAT);
+        this.depthBlur = new DepthBlur(device, this.format, SAMPLE_COUNT, this.effects.sampler);
         this.frameBindGroup = this.frameBindGroupWith(null);
         this.shadowFrameBuffer = device.createBuffer({
             label: "shadow frame uniforms", size: FRAME_FLOATS * 4, usage: BufferUsage.UNIFORM | BufferUsage.COPY_DST,
@@ -436,7 +445,7 @@ export class WebGPUPreviewRenderer {
         const canvas = this.context.canvas as HTMLCanvasElement;
         const width = Math.max(1, canvas.width);
         const height = Math.max(1, canvas.height);
-        this.ensureTargets(width, height);
+        this.ensureTargets(width, height, !!camera.useOffScreenBuffers);
         return this.drawFrame(displayBuffers, camera, gpuDraws, {
             width, height, tile: null, colour: this.colourTarget, depth: this.depthTarget,
             resolve: this.context.getCurrentTexture().createView(), timed: true,
@@ -456,8 +465,12 @@ export class WebGPUPreviewRenderer {
                    width: number, height: number, options: { maxTile?: number; softShadows?: boolean; transparentBackground?: boolean } = {}): Promise<PreviewSnapshot> {
         width = Math.round(width);
         height = Math.round(height);
-        const edgeCap = effectSettings(camera).edges ? MAX_SNAPSHOT_TILE_WITH_EDGES : Infinity;
-        const maxTile = Math.min(options.maxTile ?? MAX_SNAPSHOT_TILE, edgeCap, this.device.limits.maxTextureDimension2D);
+        const settings = effectSettings(camera);
+        const edgeCap = settings.edges ? MAX_SNAPSHOT_TILE_WITH_EDGES : Infinity;
+        // With depth blur, a tile is drawn with a margin as wide as the blur reaches, and only the
+        // tile kept, so that what it blurs in from past its edge is the scene there.
+        const blurMargin = depthBlurMargin(settings.depthBlur, width / (camera.canvas?.width || width));
+        const maxTile = Math.min(options.maxTile ?? MAX_SNAPSHOT_TILE, edgeCap, this.device.limits.maxTextureDimension2D - 2 * blurMargin);
         const tiles = planTiles(width, height, maxTile);
         const data = new Uint8ClampedArray(width * height * 4);
         // The canvas format, so that the pipelines are shared; on some systems it is BGRA.
@@ -466,13 +479,14 @@ export class WebGPUPreviewRenderer {
         let targets: { colour: GPUTexture; depth: GPUTexture } | null = null;
         try {
             for (const tile of tiles) {
-                if (!targets || targets.colour.width !== tile.width || targets.colour.height !== tile.height) {
+                const drawn = blurMargin > 0 && tiles.length > 1 ? expandTile(tile, blurMargin, width, height) : tile;
+                if (!targets || targets.colour.width !== drawn.width || targets.colour.height !== drawn.height) {
                     targets?.colour.destroy();
                     targets?.depth.destroy();
-                    targets = this.multisampledTargets(tile.width, tile.height, "snapshot");
+                    targets = this.multisampledTargets(drawn.width, drawn.height, "snapshot", !!settings.depthBlur);
                 }
                 const image = this.device.createTexture({
-                    label: "snapshot tile", size: [tile.width, tile.height], format: this.format,
+                    label: "snapshot tile", size: [drawn.width, drawn.height], format: this.format,
                     usage: TextureUsage.RENDER_ATTACHMENT | TextureUsage.COPY_SRC,
                 });
                 // Rows of a texture copy are padded to 256 bytes.
@@ -483,12 +497,13 @@ export class WebGPUPreviewRenderer {
                 });
                 try {
                     report = this.drawFrame(displayBuffers, camera, gpuDraws, {
-                        width, height, tile, colour: targets.colour, depth: targets.depth, resolve: image.createView(), timed: false,
+                        width, height, tile: drawn, colour: targets.colour, depth: targets.depth, resolve: image.createView(), timed: false,
                         softShadows: options.softShadows,
                         transparentBackground: options.transparentBackground,
                     });
                     const encoder = this.device.createCommandEncoder({ label: "snapshot copy" });
-                    encoder.copyTextureToBuffer({ texture: image }, { buffer: readback, bytesPerRow }, [tile.width, tile.height]);
+                    encoder.copyTextureToBuffer({ texture: image, origin: [tile.x - drawn.x, tile.y - drawn.y] },
+                        { buffer: readback, bytesPerRow }, [tile.width, tile.height]);
                     this.device.queue.submit([encoder.finish()]);
                     await readback.mapAsync(MapMode.READ);
                     const rows = new Uint8Array(readback.getMappedRange());
@@ -509,6 +524,13 @@ export class WebGPUPreviewRenderer {
                         // passes left: the picture on screen ignores it.
                         if (!options.transparentBackground) {
                             for (let i = 3; i < tile.width * 4; i += 4) data[to + i] = 255;
+                        } else {
+                            // Drawn premultiplied, on nothing (drawFrame): straightened, as an image wants it.
+                            for (let i = 0; i < tile.width * 4; i += 4) {
+                                const a = data[to + i + 3];
+                                if (a === 0 || a === 255) continue;
+                                for (let c = 0; c < 3; c++) data[to + i + c] = Math.min(255, Math.round(data[to + i + c] * 255 / a));
+                            }
                         }
                     }
                 } finally {
@@ -528,6 +550,10 @@ export class WebGPUPreviewRenderer {
         const started = performance.now();
         const plan = planPreview(displayBuffers);
         const uploads = this.syncResources(displayBuffers, plan.draws);
+        // A divided canvas - three ways, stereo side by side or crossed, multiple views - is drawn
+        // view by view (drawViews); the ordinary view keeps the frame below, its passes unchanged.
+        const views = previewViews(camera, displayBuffers, target.width, target.height);
+        if (views) return this.drawViews(views, plan, uploads, started, displayBuffers, camera, gpuDraws, target);
 
         const uniforms = frameUniforms(camera, target.width, target.height, this.frameData);
         const whole = uniforms.slice();
@@ -539,6 +565,10 @@ export class WebGPUPreviewRenderer {
         const timing = target.timed ? this.frameTimer?.writes() ?? null : null;
 
         const settings = effectSettings(camera);
+        // Depth blur: the scene resolves into its sharp picture, and the blur and the mix follow
+        // before the overlays (depthBlur.ts).
+        const blurSettings = settings.depthBlur;
+        const blur = blurSettings ? this.depthBlur.ensure(target.colour.width, target.colour.height) : null;
         // The first pass of the frame starts the GPU timer; the main pass ends it.
         let timingStarted = false;
         const startTiming = () => {
@@ -593,12 +623,21 @@ export class WebGPUPreviewRenderer {
         }
         uniforms.set([maps?.flags[0] ?? 0, maps?.flags[1] ?? 0, shadowMap ? 1 : 0, maps?.edgeScale ?? 1], 76);
         uniforms.set([tile.x - area.x, tile.y - area.y, 1 / area.width, 1 / area.height], 80);
+        // A transparent snapshot fades with distance rather than fogging into the background's
+        // colour (fogged in previewShaders.ts): over that colour, the same picture.
+        uniforms.set([target.transparentBackground ? 1 : 0, 0, 0, 0], 104);
         this.device.queue.writeBuffer(this.frameBuffer, 0, uniforms);
 
         let shapes = 0;
         const frameGroup = maps || shadowMap ? this.effectsBindGroup(maps, shadowMap) : this.frameBindGroup;
-        // Alpha 0 for a transparent screenshot, as WebGL clears for one: the background's colour, nothing of it.
-        const clearColour = { r: background[0], g: background[1], b: background[2], a: target.transparentBackground ? 0 : 1 };
+        // For a transparent screenshot, nothing: alpha 0, and no colour either, so that everything
+        // drawn - antialiased edges, blended surfaces, the depth blur - comes out premultiplied, with
+        // nothing of a background that is not there in it. snapshot straightens the colours as it
+        // reads them back. (WebGL clears to the background's colour with alpha 0, so its edges
+        // carry a fringe of it.)
+        const clearColour = target.transparentBackground
+            ? { r: 0, g: 0, b: 0, a: 0 }
+            : { r: background[0], g: background[1], b: background[2], a: 1 };
         // The last pass ends the GPU timer (and starts it, if nothing has).
         const endTiming = () => (timing ? (timingStarted ? timing(undefined, 1) : timing(0, 1)) : undefined);
 
@@ -607,9 +646,10 @@ export class WebGPUPreviewRenderer {
         const anyTransparent = plan.draws.some(item => item.transparent && !item.buffer.isHoverBuffer)
             || gpuDraws.some(item => item.transparent);
         const peelLayers = transparentLayers(camera, anyTransparent);
-        let pass: GPURenderPassEncoder;
+        let pass: GPURenderPassEncoder | null = null;
+        let peel: PeelTargets | null = null;
         if (peelLayers > 0) {
-            const peel = this.depthPeel.ensure(target.colour.width, target.colour.height, peelLayers);
+            peel = this.depthPeel.ensure(target.colour.width, target.colour.height, peelLayers);
             // The opaque scene, multisampled, its depth kept to peel and composite against.
             const opaque = encoder.beginRenderPass({
                 label: "opaque",
@@ -635,28 +675,36 @@ export class WebGPUPreviewRenderer {
                 layer.end();
             }
 
+            // With depth blur, resolved into the sharp picture; the blur's mix replaces this colour.
             const composite = encoder.beginRenderPass({
                 label: "peel composite",
-                colorAttachments: [{ view: target.colour.createView(), loadOp: "load", storeOp: "store" }],
+                colorAttachments: [{
+                    view: target.colour.createView(), resolveTarget: blur?.sharpView, loadOp: "load", storeOp: blur ? "discard" : "store",
+                }],
             });
             this.depthPeel.composite(composite, peel);
             composite.end();
 
-            // Overlays and text over the composite, against the opaque depth, and the resolve.
-            pass = encoder.beginRenderPass({
-                label: "overlays",
-                timestampWrites: endTiming(),
-                colorAttachments: [{ view: target.colour.createView(), resolveTarget: target.resolve, loadOp: "load", storeOp: "discard" }],
-                depthStencilAttachment: { view: peel.opaqueDepthView, depthLoadOp: "load", depthStoreOp: "discard" },
-            });
-            pass.setBindGroup(0, frameGroup);
+            if (!blur) {
+                // Overlays and text over the composite, against the opaque depth, and the resolve.
+                pass = encoder.beginRenderPass({
+                    label: "overlays",
+                    timestampWrites: endTiming(),
+                    colorAttachments: [{ view: target.colour.createView(), resolveTarget: target.resolve, loadOp: "load", storeOp: "discard" }],
+                    depthStencilAttachment: { view: peel.opaqueDepthView, depthLoadOp: "load", depthStoreOp: "discard" },
+                });
+                pass.setBindGroup(0, frameGroup);
+            }
             shapes = shapeCount;
         } else {
-            pass = encoder.beginRenderPass({
-                timestampWrites: endTiming(),
+            // With depth blur, resolved into the sharp picture, its depth kept for the blur; without,
+            // the overlays follow in this pass and it resolves into the image.
+            const scene = encoder.beginRenderPass({
+                label: blur ? "scene" : undefined,
+                timestampWrites: blur ? startTiming() : endTiming(),
                 colorAttachments: [{
                     view: target.colour.createView(),
-                    resolveTarget: target.resolve,
+                    resolveTarget: blur?.sharpView ?? target.resolve,
                     clearValue: clearColour,
                     loadOp: "clear",
                     storeOp: "discard",
@@ -665,41 +713,275 @@ export class WebGPUPreviewRenderer {
                     view: target.depth.createView(),
                     depthClearValue: 1.0,
                     depthLoadOp: "clear",
-                    depthStoreOp: "discard",
+                    depthStoreOp: blur ? "store" : "discard",
                 },
             });
-            pass.setBindGroup(0, frameGroup);
+            scene.setBindGroup(0, frameGroup);
 
             // Opaque first, then transparent over it, as the WebGL renderer orders them.
             for (const transparent of [false, true]) {
                 for (const item of plan.draws) {
                     if (item.transparent !== transparent) continue;
-                    this.drawOne(pass, item, camera);
+                    this.drawOne(scene, item, camera);
                 }
                 for (const item of gpuDraws) {
-                    if (item.transparent === transparent) this.drawGpu(pass, item, camera.zoom);
+                    if (item.transparent === transparent) this.drawGpu(scene, item, camera.zoom);
                 }
             }
             // Textured shapes after the meshes, as GLrender draws them after drawTriangles.
-            shapes = this.texturedShapes.draw(pass, camera.store?.getState().glRef?.texturedShapes ?? []);
+            shapes = this.texturedShapes.draw(scene, camera.store?.getState().glRef?.texturedShapes ?? []);
+            if (blur) scene.end();
+            else pass = scene;
         }
+        if (blur && blurSettings) {
+            // The blur and the mix into the multisampled colour, then the overlays over that, sharp,
+            // against the scene's depth, and the resolve.
+            const depth = peel ? peel.opaqueDepthView : target.depth.createView();
+            const scale = target.width / (camera.canvas?.width || target.width);
+            this.depthBlur.encode(encoder, blur, blurSettings, scale, depth, peel ? peel.depthViews[0] : null,
+                this.noPreviousLayer.createView(), target.colour.createView());
+            pass = encoder.beginRenderPass({
+                label: "overlays",
+                timestampWrites: endTiming(),
+                colorAttachments: [{ view: target.colour.createView(), resolveTarget: target.resolve, loadOp: "load", storeOp: "discard" }],
+                depthStencilAttachment: { view: depth, depthLoadOp: "load", depthStoreOp: "discard" },
+            });
+            pass.setBindGroup(0, frameGroup);
+        }
+        if (!pass) throw new Error("No pass for the overlays");
         // Then the overlays, as drawCore ends its frame: the FPS meter and measuring lines, over
         // everything, then text - over everything, or (atomLabelDepthMode) depth-tested.
         const view = uniforms.slice(16, 32) as unknown as mat4.mat4;
         const overlaySegments = this.overlayLines.draw(pass, overlayLineBatchesOf(camera, view, target.width, target.height, target.tile));
         const labels = this.textLayer.draw(pass, textBatchesOf(camera), camera.zoom, target.height);
         pass.end();
+        this.dropGpuDrawUniforms(gpuDraws);
+        if (timing) this.frameTimer.resolve(encoder);
+        this.device.queue.submit([encoder.finish()]);
+        if (timing) this.frameTimer.collect();
+        this.surfaceTextures.prune();
+
+        return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers };
+    }
+
+    /** Let go of the uniforms of GPU draws that are gone. */
+    private dropGpuDrawUniforms(gpuDraws: readonly PreviewGpuDraw[]): void {
         for (const [key, uniforms] of this.gpuDrawUniforms) {
             if (!gpuDraws.some(item => item.key === key)) {
                 uniforms.buffer.destroy();
                 this.gpuDrawUniforms.delete(key);
             }
         }
+    }
+
+    /**
+     * A divided canvas, as drawScene draws one: each view a frame of its own size - its own turn,
+     * and for multiple views its own origin and group of buffers - drawn into its part of the
+     * image (or of a tile of it). Each view has its own shadow map and effects maps, worked out for
+     * it alone. Then, over all of them, the depth blur, and the overlays in the first view, as
+     * WebGL draws its overlay text and FPS meter there; labels only drawn depth-tested
+     * (atomLabelDepthMode), in every view, as GLrender draws them - WebGL draws no others here.
+     *
+     * The views share the frame's uniform buffers, so each is encoded and submitted on its own,
+     * with its uniforms written just before: the queue keeps the writes and the submissions in
+     * order. The multisampled colour and depth are kept from one view to the next, cleared only by
+     * the first, and resolved once at the end.
+     */
+    private drawViews(views: PreviewView[], plan: PreviewPlan, uploads: number, started: number, displayBuffers: readonly DisplayBuffer[],
+                      camera: PreviewCameraSource, gpuDraws: readonly PreviewGpuDraw[], target: FrameTarget): PreviewFrameReport {
+        const settings = effectSettings(camera);
+        const blurSettings = settings.depthBlur;
+        const blur = blurSettings ? this.depthBlur.ensure(target.colour.width, target.colour.height) : null;
+        const timing = target.timed ? this.frameTimer?.writes() ?? null : null;
+        let timingStarted = false;
+        const startTiming = () => {
+            if (!timing || timingStarted) return undefined;
+            timingStarted = true;
+            return timing(0);
+        };
+        const endTiming = () => (timing ? (timingStarted ? timing(undefined, 1) : timing(0, 1)) : undefined);
+        const background = camera.background_colour;
+        const clearColour = target.transparentBackground
+            ? { r: 0, g: 0, b: 0, a: 0 }
+            : { r: background[0], g: background[1], b: background[2], a: 1 };
+        const anyTransparent = plan.draws.some(item => item.transparent && !item.buffer.isHoverBuffer)
+            || gpuDraws.some(item => item.transparent);
+        const peelLayers = transparentLayers(camera, anyTransparent);
+        const peel = peelLayers > 0 ? this.depthPeel.ensure(target.colour.width, target.colour.height, peelLayers) : null;
+        const depthView = peel ? peel.opaqueDepthView : target.depth.createView();
+        const tile = target.tile ?? { x: 0, y: 0, width: target.width, height: target.height };
+        const allText = textBatchesOf(camera);
+        const labelsInScene = allText.filter(batch => !batch.onTop);
+        const shapesSource = camera.store?.getState().glRef?.texturedShapes ?? [];
+        let shadowMap: GPUTextureView | null = null;
+        let shadowTexels = 0;
+        if (settings.shadow) {
+            shadowTexels = Math.max(1, Math.min(settings.shadow.texels, this.device.limits.maxTextureDimension2D));
+            shadowMap = this.ensureShadowMap(shadowTexels);
+            this.casters = casterBounds(displayBuffers, this.casters);
+        }
+
+        let first = true;
+        let shapes = 0;
+        let labels = 0;
+        // The first view's frame in this target, for the overlays drawn in it at the end.
+        let overlay: { uniforms: Float32Array; rect: SnapshotTile; view: PreviewView; part: SnapshotTile; camera: PreviewCameraSource } | null = null;
+        for (const view of views) {
+            // The part of the view in this target: all of it, or what of it falls in the tile.
+            const x0 = Math.max(view.x, tile.x), y0 = Math.max(view.y, tile.y);
+            const x1 = Math.min(view.x + view.width, tile.x + tile.width), y1 = Math.min(view.y + view.height, tile.y + tile.height);
+            if (x1 <= x0 || y1 <= y0) continue;
+            const part = { x: x0 - view.x, y: y0 - view.y, width: x1 - x0, height: y1 - y0 };
+            const rect = { x: x0 - tile.x, y: y0 - tile.y, width: x1 - x0, height: y1 - y0 };
+            const viewCamera = Object.create(camera, {
+                myQuat: { value: view.quat }, origin: { value: view.origin },
+            }) as PreviewCameraSource;
+            const items = plan.draws.filter(item => viewShows(view, item.buffer));
+
+            const uniforms = frameUniforms(viewCamera, view.width, view.height);
+            const whole = uniforms.slice();
+            narrowToTile(uniforms, part, view.width, view.height);
+            const encoder = this.device.createCommandEncoder({ label: "preview view" });
+
+            if (shadowMap) {
+                const light = shadowCamera(viewCamera, this.casters?.bounds ?? null, view.width / view.height);
+                this.device.queue.writeBuffer(this.shadowFrameBuffer, 0, shadowFrameUniforms(light));
+                const shadowPass = encoder.beginRenderPass({
+                    label: "shadow map",
+                    colorAttachments: [],
+                    depthStencilAttachment: { view: shadowMap, depthClearValue: 1, depthLoadOp: "clear", depthStoreOp: "store" },
+                    timestampWrites: startTiming(),
+                });
+                shadowPass.setBindGroup(0, this.shadowFrameBindGroup);
+                for (const item of items) this.drawOne(shadowPass, item, viewCamera, "shadow");
+                for (const item of gpuDraws) this.drawGpu(shadowPass, item, camera.zoom, "shadow");
+                shadowPass.end();
+                uniforms.set(light.textureMatrix, 84);
+                uniforms.set([1 / shadowTexels, 1 / shadowTexels, light.bias, target.softShadows ? 1 : 0], 100);
+            }
+
+            let maps: EffectMaps | null = null;
+            let area = part;
+            if (EffectPasses.wanted(settings)) {
+                area = expandTile(part, effectMargin(settings, pixelsPerAngstrom(whole, viewCamera, view.width)), view.width, view.height);
+                narrowToTile(whole, area, view.width, view.height);
+                this.device.queue.writeBuffer(this.gbufferFrameBuffer, 0, whole);
+                const gbuffer = encoder.beginRenderPass({
+                    ...this.effects.gbufferPass(area.width, area.height, gbufferScale(settings, area.width, area.height)),
+                    timestampWrites: startTiming(),
+                });
+                gbuffer.setBindGroup(0, this.gbufferFrameBindGroup);
+                for (const item of items) this.drawOne(gbuffer, item, viewCamera, "gbuffer");
+                for (const item of gpuDraws) this.drawGpu(gbuffer, item, camera.zoom, "gbuffer");
+                gbuffer.end();
+                maps = this.effects.encode(encoder, settings, whole.subarray(0, 16), [area.x, area.y]);
+            }
+            uniforms.set([maps?.flags[0] ?? 0, maps?.flags[1] ?? 0, shadowMap ? 1 : 0, maps?.edgeScale ?? 1], 76);
+            // The effects maps cover `area` of the view; a pixel of the target is the view's pixel
+            // (it - rect + part), and so the map's (that - area).
+            uniforms.set([part.x - area.x - rect.x, part.y - area.y - rect.y, 1 / area.width, 1 / area.height], 80);
+            uniforms.set([target.transparentBackground ? 1 : 0, 0, 0, 0], 104);
+            this.device.queue.writeBuffer(this.frameBuffer, 0, uniforms);
+            const frameGroup = maps || shadowMap ? this.effectsBindGroup(maps, shadowMap) : this.frameBindGroup;
+            const loadOp: GPULoadOp = first ? "clear" : "load";
+            const inView = (pass: GPURenderPassEncoder) => pass.setViewport(rect.x, rect.y, rect.width, rect.height, 0, 1);
+
+            if (peel) {
+                const opaque = encoder.beginRenderPass({
+                    label: "opaque (view)",
+                    timestampWrites: startTiming(),
+                    colorAttachments: [{ view: target.colour.createView(), clearValue: clearColour, loadOp, storeOp: "store" }],
+                    depthStencilAttachment: { view: peel.opaqueDepthView, depthClearValue: 1.0, depthLoadOp: loadOp, depthStoreOp: "store" },
+                });
+                inView(opaque);
+                opaque.setBindGroup(0, frameGroup);
+                for (const item of items) if (!item.transparent) this.drawOne(opaque, item, viewCamera);
+                for (const item of gpuDraws) if (!item.transparent) this.drawGpu(opaque, item, camera.zoom);
+                shapes = this.texturedShapes.draw(opaque, shapesSource);
+                if (labelsInScene.length) labels += this.textLayer.draw(opaque, labelsInScene, camera.zoom, view.height, allText);
+                opaque.end();
+                if (first) this.depthPeel.clearZeroLayer(encoder, peel);
+                for (let k = 0; k < peelLayers; k++) {
+                    const layer = encoder.beginRenderPass(this.depthPeel.layerPass(peel, k, first));
+                    inView(layer);
+                    layer.setBindGroup(0, this.frameBindGroupWith(maps, this.frameBuffer, shadowMap,
+                        { opaque: peel.opaqueDepthView, previous: peel.previousViews[k] }));
+                    for (const item of items) if (item.transparent) this.drawOne(layer, item, viewCamera, "peel");
+                    for (const item of gpuDraws) if (item.transparent) this.drawGpu(layer, item, camera.zoom, "peel");
+                    layer.end();
+                }
+                const composite = encoder.beginRenderPass({
+                    label: "peel composite (view)",
+                    colorAttachments: [{ view: target.colour.createView(), loadOp: "load", storeOp: "store" }],
+                });
+                inView(composite);
+                this.depthPeel.composite(composite, peel);
+                composite.end();
+            } else {
+                const scene = encoder.beginRenderPass({
+                    label: "scene (view)",
+                    timestampWrites: startTiming(),
+                    colorAttachments: [{ view: target.colour.createView(), clearValue: clearColour, loadOp, storeOp: "store" }],
+                    depthStencilAttachment: { view: depthView, depthClearValue: 1.0, depthLoadOp: loadOp, depthStoreOp: "store" },
+                });
+                inView(scene);
+                scene.setBindGroup(0, frameGroup);
+                for (const transparent of [false, true]) {
+                    for (const item of items) if (item.transparent === transparent) this.drawOne(scene, item, viewCamera);
+                    for (const item of gpuDraws) if (item.transparent === transparent) this.drawGpu(scene, item, camera.zoom);
+                }
+                shapes = this.texturedShapes.draw(scene, shapesSource);
+                if (labelsInScene.length) labels += this.textLayer.draw(scene, labelsInScene, camera.zoom, view.height, allText);
+                scene.end();
+            }
+            this.device.queue.submit([encoder.finish()]);
+            if (!overlay) overlay = { uniforms, rect, view, part, camera: viewCamera };
+            first = false;
+        }
+
+        const encoder = this.device.createCommandEncoder({ label: "preview views: blur and overlays" });
+        if (first) {
+            // No view in this tile: the background.
+            encoder.beginRenderPass({
+                label: "background",
+                colorAttachments: [{ view: target.colour.createView(), clearValue: clearColour, loadOp: "clear", storeOp: "store" }],
+                depthStencilAttachment: { view: depthView, depthClearValue: 1.0, depthLoadOp: "clear", depthStoreOp: "store" },
+            }).end();
+        }
+        if (blur && blurSettings) {
+            // The views' picture, resolved, is the blur's sharp one; the blur spans them, as WebGL's
+            // does over the whole canvas.
+            encoder.beginRenderPass({
+                label: "resolve for the depth blur",
+                colorAttachments: [{ view: target.colour.createView(), resolveTarget: blur.sharpView, loadOp: "load", storeOp: "discard" }],
+            }).end();
+            const scale = target.width / (camera.canvas?.width || target.width);
+            this.depthBlur.encode(encoder, blur, blurSettings, scale, depthView, peel ? peel.depthViews[0] : null,
+                this.noPreviousLayer.createView(), target.colour.createView());
+        }
+        if (overlay) this.device.queue.writeBuffer(this.frameBuffer, 0, overlay.uniforms);
+        const pass = encoder.beginRenderPass({
+            label: "overlays (first view)",
+            timestampWrites: endTiming(),
+            colorAttachments: [{ view: target.colour.createView(), resolveTarget: target.resolve, loadOp: "load", storeOp: "discard" }],
+            depthStencilAttachment: { view: depthView, depthLoadOp: "load", depthStoreOp: "discard" },
+        });
+        let overlaySegments = 0;
+        const onTop = allText.filter(batch => batch.atlas === camera.measureText2DCanvasTexture);
+        if (overlay) {
+            pass.setViewport(overlay.rect.x, overlay.rect.y, overlay.rect.width, overlay.rect.height, 0, 1);
+            pass.setBindGroup(0, this.frameBindGroup);
+            const viewMatrix = overlay.uniforms.slice(16, 32) as unknown as mat4.mat4;
+            overlaySegments = this.overlayLines.draw(pass, overlayLineBatchesOf(overlay.camera, viewMatrix, overlay.view.width, overlay.view.height, overlay.part)
+                .filter(batch => batch.label === "FPS meter"));
+            labels += this.textLayer.draw(pass, onTop, camera.zoom, overlay.view.height, allText);
+        }
+        pass.end();
+        this.dropGpuDrawUniforms(gpuDraws);
         if (timing) this.frameTimer.resolve(encoder);
         this.device.queue.submit([encoder.finish()]);
         if (timing) this.frameTimer.collect();
         this.surfaceTextures.prune();
-
         return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers };
     }
 
@@ -718,6 +1000,7 @@ export class WebGPUPreviewRenderer {
         this.noOpaqueDepth.destroy();
         this.noPreviousLayer.destroy();
         this.depthPeel.destroy();
+        this.depthBlur.destroy();
         this.gpuDrawUniforms.forEach(u => u.buffer.destroy());
         this.gpuDrawUniforms.clear();
         this.frameTimer?.destroy();
@@ -778,16 +1061,23 @@ export class WebGPUPreviewRenderer {
     }
 
     /** The canvas's multisampled targets, remade when the canvas changes size. */
-    private ensureTargets(width: number, height: number): void {
-        if (this.colourTarget && this.colourTarget.width === width && this.colourTarget.height === height) return;
+    /** `readableDepth`: whether the depth must be readable as a texture (depth blur). */
+    private ensureTargets(width: number, height: number, readableDepth: boolean): void {
+        if (this.colourTarget && this.colourTarget.width === width && this.colourTarget.height === height
+            && this.depthTargetReadable === readableDepth) return;
         this.colourTarget?.destroy();
         this.depthTarget?.destroy();
-        const targets = this.multisampledTargets(width, height, "preview");
+        const targets = this.multisampledTargets(width, height, "preview", readableDepth);
         this.colourTarget = targets.colour;
         this.depthTarget = targets.depth;
+        this.depthTargetReadable = readableDepth;
     }
 
-    private multisampledTargets(width: number, height: number, label: string): { colour: GPUTexture; depth: GPUTexture } {
+    /**
+     * The frame's multisampled colour and depth. The depth is readable as a texture only when asked
+     * (depth blur reads it): otherwise it is only ever an attachment, which some GPUs keep cheaper.
+     */
+    private multisampledTargets(width: number, height: number, label: string, readableDepth = false): { colour: GPUTexture; depth: GPUTexture } {
         return {
             colour: this.device.createTexture({
                 label: `${label} colour (multisampled)`, size: [width, height], format: this.format,
@@ -795,7 +1085,7 @@ export class WebGPUPreviewRenderer {
             }),
             depth: this.device.createTexture({
                 label: `${label} depth`, size: [width, height], format: DEPTH_FORMAT,
-                sampleCount: SAMPLE_COUNT, usage: TextureUsage.RENDER_ATTACHMENT,
+                sampleCount: SAMPLE_COUNT, usage: TextureUsage.RENDER_ATTACHMENT | (readableDepth ? TextureUsage.TEXTURE_BINDING : 0),
             }),
         };
     }
@@ -828,8 +1118,8 @@ export class WebGPUPreviewRenderer {
         const b = item.buffer;
         const model = item.moving ? interactiveModel(b.transformMatrixInteractive, b.transformOriginInteractive, camera.origin) : IDENTITY;
         const glow = item.glow ? interactiveGlow(Date.now()) : null;
-        drawBlock(custom, alpha, halfWidth, null, model, data, 0, segmentColours, glow);
-        item.copies.forEach((model, n) => drawBlock(custom, alpha, halfWidth, grey, model, data, (n + 1) * DRAW_STRIDE / 4, segmentColours));
+        drawBlock(custom, alpha, halfWidth, null, model, data, 0, segmentColours, glow, !item.transparent);
+        item.copies.forEach((model, n) => drawBlock(custom, alpha, halfWidth, grey, model, data, (n + 1) * DRAW_STRIDE / 4, segmentColours, null, !item.transparent));
         this.device.queue.writeBuffer(sub.drawUniforms, 0, data);
     }
 
@@ -919,7 +1209,7 @@ export class WebGPUPreviewRenderer {
         }
         const halfWidth = item.style === "triangles" ? 0 : thickLineHalfWidth(item.lineWidth, zoom);
         const block = new Float32Array(DRAW_FLOATS);
-        drawBlock(item.colour, 1, halfWidth, null, IDENTITY, block);
+        drawBlock(item.colour, 1, halfWidth, null, IDENTITY, block, 0, 0, null, !item.transparent);
         this.device.queue.writeBuffer(uniforms.buffer, 0, block);
         pass.setBindGroup(1, uniforms.bindGroup);
         if (item.style === "triangles") {

@@ -9,9 +9,10 @@
  * and reported rather than silently missing, so a gap in the picture reads as "not done yet".
  */
 import * as mat4 from 'gl-matrix/mat4';
+import * as quat from 'gl-matrix/quat';
 import * as vec3 from 'gl-matrix/vec3';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
-import { CameraFrame, viewProjection } from '../WebGLgComponents/mgWebGLParts/projection';
+import { CameraFrame, focalPlaneDepth, slabNearFar, viewProjection } from '../WebGLgComponents/mgWebGLParts/projection';
 import { isFaded, shouldDraw } from '../WebGLgComponents/objectFade';
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
 import { type BufferMaterial, materialTextureIds } from '../WebGLgComponents/textureRegistry';
@@ -19,6 +20,7 @@ import type { TextSource } from './textLayer';
 import type { OverlayLinesSource } from './overlayLines';
 import type { TexturedShapeSource } from './texturedShapes';
 import { SHADOW_MAP_TEXELS, type ShadowMapQuality } from '../WebGLgComponents/shadowMapQuality';
+import { type DepthBlurSettings, depthBlurKernel } from './depthBlur';
 
 /**
  * What the preview reads off the WebGL renderer each frame. MGWebGL has all of these; tests pass
@@ -75,6 +77,31 @@ export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
     normalThreshold?: number;
     scaleDepth?: number;
     scaleNormal?: number;
+    /**
+     * Depth blur (useOffScreenBuffers, as WebGL names it): blurSize taps each side (the
+     * depthBlurRadius setting), with the focal plane blurDepth A behind the view centre
+     * (depthBlurDepth). The canvas the view is shown on, whose width the taps' spacing is in.
+     */
+    useOffScreenBuffers?: boolean;
+    blurSize?: number;
+    blurDepth?: number;
+    canvas?: { width: number; height?: number };
+    /**
+     * The views the canvas is divided into (previewViews): MGWebGL's layouts, each a viewport in
+     * GL pixels of the canvas (from its bottom-left corner) and a turn applied after the camera's.
+     * Multiple views show a group of buffers each, round its own origin (multiViewOrigins).
+     */
+    doMultiView?: boolean;
+    doThreeWayView?: boolean;
+    doSideBySideStereo?: boolean;
+    doCrossEyedStereo?: boolean;
+    threeWayQuats?: ArrayLike<number>[];
+    threeWayViewports?: ArrayLike<number>[];
+    stereoQuats?: ArrayLike<number>[];
+    stereoViewports?: ArrayLike<number>[];
+    multiWayQuats?: ArrayLike<number>[];
+    multiWayViewports?: ArrayLike<number>[];
+    multiViewOrigins?: ArrayLike<number>[];
 }
 
 /** What the effects passes do this frame, from the source's settings; null for an effect that is off. */
@@ -83,6 +110,8 @@ export interface EffectSettings {
     /** The shadow map's edge, in texels (SHADOW_MAP_TEXELS for the quality). */
     shadow: { texels: number } | null;
     edges: { depthThreshold: number; normalThreshold: number; depthStep: number; normalStep: number } | null;
+    /** Depth blur (depthBlur.ts); absent, as null, is off. */
+    depthBlur?: DepthBlurSettings | null;
 }
 
 /**
@@ -109,7 +138,109 @@ export function effectSettings(source: PreviewCameraSource): EffectSettings {
                 normalStep: step(source.scaleNormal ?? 0),
             }
             : null,
+        depthBlur: source.useOffScreenBuffers ? depthBlurSettings(source) : null,
     };
+}
+
+/**
+ * The depth blur, as drawCore's depthBlur sets it up: WebGL's Gaussian for the radius, taps half
+ * the radius apart in pixels of the canvas, and the focal plane - a distance in A behind the view
+ * centre - turned into a depth in the buffer for the frame's slab, as focalPlaneDepth does it.
+ */
+function depthBlurSettings(source: PreviewCameraSource): DepthBlurSettings {
+    const { taps, weights } = depthBlurKernel(source.blurSize ?? 3);
+    const perspective = !!source.doPerspectiveProjection;
+    const slab = slabNearFar(source.gl_clipPlane0[3], source.gl_clipPlane1[3], source.gl_fog_end, perspective);
+    const focus = focalPlaneDepth(source.blurDepth ?? 0, slab.near, slab.far, source.fogClipOffset, perspective);
+    return { taps, weights, step: taps / 2, focus };
+}
+
+/** One of the views a divided canvas shows (previewViews). */
+export interface PreviewView {
+    /** Where it is in the image, in pixels from the image's top-left corner. */
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    /** The camera's turn for this view: the camera's own, then the view's. */
+    quat: number[];
+    /** The view's origin (MGWebGL.origin's convention): the camera's, or a multiple view's group's. */
+    origin: ArrayLike<number>;
+    /** Multiple views: the group of buffers it shows; buffers in no group show in every view. */
+    group: number | null;
+}
+
+/** Whether the buffer is one a multiple view keeps to its own group, as drawTriangles decides. */
+function grouped(buffer: DisplayBuffer): boolean {
+    return !!buffer.origin && buffer.origin.length === 3 && Object.hasOwn(buffer, "isHoverBuffer") && !buffer.isHoverBuffer;
+}
+
+/** Whether `view` shows `buffer`: drawTriangles' multiple-view test. */
+export function viewShows(view: PreviewView, buffer: DisplayBuffer): boolean {
+    return view.group === null || !grouped(buffer) || buffer.multiViewGroup === view.group;
+}
+
+/**
+ * The views the canvas is divided into, in an image `width` x `height`, as drawScene lays them out
+ * (getMultiViewInfo and the loop over its viewports): three ways, side-by-side or cross-eyed
+ * stereo, or one view a multiple-view group. null for an ordinary, undivided view, and for
+ * multiple views with no groups to show (WebGL then draws the one view).
+ *
+ * MGWebGL's viewports are in GL pixels of its canvas, from the bottom-left; here they are scaled
+ * to the image and measured from its top-left, rounded so that neighbours share their edges.
+ * Anaglyph stereo is not a division of the canvas, and is not here.
+ */
+export function previewViews(source: PreviewCameraSource, displayBuffers: readonly DisplayBuffer[], width: number, height: number): PreviewView[] | null {
+    let quats: ArrayLike<number>[] | undefined;
+    let viewports: ArrayLike<number>[] | undefined;
+    let groups: (number | null)[] | null = null;
+    if (source.doThreeWayView) {
+        quats = source.threeWayQuats;
+        viewports = source.threeWayViewports;
+    } else if (source.doMultiView) {
+        // The groups in the order getMultiViewInfo finds them: an object's keys, so whole numbers
+        // in increasing order.
+        const found = new Set<number>();
+        for (const buffer of displayBuffers) {
+            if (buffer.multiViewGroup !== undefined && grouped(buffer)) found.add(buffer.multiViewGroup);
+        }
+        if (found.size === 0) return null;
+        const keys = Object.keys(Object.fromEntries([...found].map(group => [group, group])));
+        quats = source.multiWayQuats;
+        viewports = source.multiWayViewports;
+        // A cell past the last group shows only what is in no group, as WebGL's does.
+        groups = (viewports ?? []).map((_, i) => (i < keys.length ? parseInt(keys[i]) : NaN));
+    } else if (source.doSideBySideStereo) {
+        quats = source.stereoQuats;
+        viewports = source.stereoViewports;
+    } else if (source.doCrossEyedStereo) {
+        quats = source.stereoQuats ? [...source.stereoQuats].reverse() : undefined;
+        viewports = source.stereoViewports;
+    } else {
+        return null;
+    }
+    if (!quats || !viewports || viewports.length === 0 || quats.length < viewports.length) return null;
+
+    const canvasWidth = source.canvas?.width || width;
+    const canvasHeight = source.canvas?.height || height;
+    const sx = width / canvasWidth, sy = height / canvasHeight;
+    return viewports.map((viewport, i) => {
+        const [vx, vy, vw, vh] = [viewport[0], viewport[1], viewport[2], viewport[3]];
+        const x = Math.round(vx * sx), right = Math.round((vx + vw) * sx);
+        const y = Math.round((canvasHeight - vy - vh) * sy), bottom = Math.round((canvasHeight - vy) * sy);
+        const turned = quat.multiply(quat.create(), Array.from(source.myQuat) as quat.quat, Array.from(quats[i]) as quat.quat);
+        // The group's own origin. multiViewOrigins is indexed by group (getMultiViewInfo); drawScene
+        // reads it by view, which is the same only while the groups run 0, 1, 2... - with a map
+        // between two molecules they run 0, 2 and its second view kept the first view's origin.
+        const group = groups ? groups[i] : null;
+        const groupOrigin = group !== null && Number.isInteger(group) ? source.multiViewOrigins?.[group] : undefined;
+        return {
+            x, y, width: Math.max(1, right - x), height: Math.max(1, bottom - y),
+            quat: Array.from(turned),
+            origin: groupOrigin && groupOrigin.length === 3 ? groupOrigin : source.origin,
+            group,
+        };
+    });
 }
 
 /**
@@ -419,7 +550,7 @@ function copiesOf(buffer: DisplayBuffer): { copies: ArrayLike<number>[]; greyCop
 }
 
 /** Floats in the per-frame uniform block; see Frame in previewShaders.ts. */
-export const FRAME_FLOATS = 104;
+export const FRAME_FLOATS = 108;
 
 /**
  * The camera for the preview's own canvas.
@@ -495,6 +626,8 @@ export function frameUniforms(source: PreviewCameraSource, width: number, height
     // The shadow map's matrix and texel size, bias and quality (shadowMap.ts), likewise.
     out.set([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], 84);
     out.set([0, 0, 0, 0], 100);
+    // Fog into the fog colour; the renderer sets x for a transparent snapshot's fading.
+    out.set([0, 0, 0, 0], 104);
     return out;
 }
 

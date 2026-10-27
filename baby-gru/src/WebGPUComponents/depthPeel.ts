@@ -182,12 +182,17 @@ export class DepthPeel {
         }).end();
     }
 
-    /** Transparent layer `k`'s pass (0 nearest): its colour cleared to nothing, its depth to 1. */
-    layerPass(t: PeelTargets, k: number): GPURenderPassDescriptor {
+    /**
+     * Transparent layer `k`'s pass (0 nearest): its colour cleared to nothing, its depth to 1 - or,
+     * for the second and later views of a divided canvas (`clear` false), kept, as each view peels
+     * only its own part of the layer and the views' parts are blurred and composited together.
+     */
+    layerPass(t: PeelTargets, k: number, clear = true): GPURenderPassDescriptor {
+        const loadOp: GPULoadOp = clear ? "clear" : "load";
         return {
             label: `peel layer ${k + 1}`,
-            colorAttachments: [{ view: t.colourViews[k], clearValue: { r: 0, g: 0, b: 0, a: 0 }, loadOp: "clear", storeOp: "store" }],
-            depthStencilAttachment: { view: t.depthViews[k], depthClearValue: 1, depthLoadOp: "clear", depthStoreOp: "store" },
+            colorAttachments: [{ view: t.colourViews[k], clearValue: { r: 0, g: 0, b: 0, a: 0 }, loadOp, storeOp: "store" }],
+            depthStencilAttachment: { view: t.depthViews[k], depthClearValue: 1, depthLoadOp: loadOp, depthStoreOp: "store" },
         };
     }
 

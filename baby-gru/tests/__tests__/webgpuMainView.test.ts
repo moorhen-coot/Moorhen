@@ -11,21 +11,24 @@ import type { DisplayBuffer } from "../../src/WebGLgComponents/displayBuffer";
 describe("webGLOnlyReason", () => {
     it("leaves an ordinary view to WebGPU", () => {
         expect(webGLOnlyReason({}, false)).toBeNull();
-        expect(webGLOnlyReason({ doMultiView: false, useOffScreenBuffers: false, doStenciling: false }, false)).toBeNull();
+        expect(webGLOnlyReason({ doAnaglyphStereo: false, doStenciling: false }, false)).toBeNull();
+        // Depth blur is drawn by WebGPU too (depthBlur.ts).
+        const depthBlur = { doStenciling: false, useOffScreenBuffers: true };
+        expect(webGLOnlyReason(depthBlur, false)).toBeNull();
+        // And divided canvases (previewViews).
+        for (const divided of ["doMultiView", "doThreeWayView", "doSideBySideStereo", "doCrossEyedStereo"]) {
+            const view = { doStenciling: false, [divided]: true };
+            expect(webGLOnlyReason(view, false)).toBeNull();
+        }
     });
 
     it("keeps the views WebGPU does not draw yet, and recordings, for WebGL", () => {
-        expect(webGLOnlyReason({ doMultiView: true }, false)).toBe("multiple views");
-        expect(webGLOnlyReason({ doThreeWayView: true }, false)).toBe("multiple views");
-        for (const stereo of ["doSideBySideStereo", "doCrossEyedStereo", "doAnaglyphStereo"]) {
-            expect(webGLOnlyReason({ [stereo]: true }, false)).toBe("stereo");
-        }
-        expect(webGLOnlyReason({ useOffScreenBuffers: true }, false)).toBe("depth blur");
+        expect(webGLOnlyReason({ doAnaglyphStereo: true }, false)).toBe("anaglyph stereo");
         expect(webGLOnlyReason({ doStenciling: true }, false)).toBe("outlines");
         expect(webGLOnlyReason({ doShadowDepthDebug: true }, false)).toBe("the shadow map debug view");
         expect(webGLOnlyReason({}, true)).toBe("a recording of the WebGL canvas");
         // Before anything else: the recording is of what WebGL draws, whatever the view.
-        expect(webGLOnlyReason({ doMultiView: true }, true)).toBe("a recording of the WebGL canvas");
+        expect(webGLOnlyReason({ doAnaglyphStereo: true }, true)).toBe("a recording of the WebGL canvas");
     });
 });
 

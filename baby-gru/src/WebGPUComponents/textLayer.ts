@@ -95,11 +95,14 @@ export class TextLayer {
     /**
      * Draw the batches into `pass`, whose group 0 is already the frame. `imageHeight` is the
      * height of the whole image in pixels (not of a tile): a label is as many pixels tall as its
-     * glyphs are in the atlas, as drawCore has it with the canvas height.
+     * glyphs are in the atlas, as drawCore has it with the canvas height. Atlases not in `keep`
+     * (by default, the batches drawn) are let go: a frame drawn in several passes, each with some
+     * of its batches, keeps them all.
      */
-    draw(pass: GPURenderPassEncoder, batches: readonly TextBatch[], zoom: number, imageHeight: number): number {
+    draw(pass: GPURenderPassEncoder, batches: readonly TextBatch[], zoom: number, imageHeight: number,
+         keep: readonly TextBatch[] = batches): number {
         let drawn = 0;
-        const present = new Set(batches.map(b => b.atlas));
+        const present = new Set(keep.map(b => b.atlas));
         for (const [atlas, resources] of this.atlases) {
             if (!present.has(atlas)) {
                 this.release(resources);

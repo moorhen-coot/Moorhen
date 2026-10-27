@@ -10,7 +10,8 @@ import type { WebGPUApi } from "../../src/WebGPUComponents/instanceApi";
  * the WebGL one; what is on screen is WebGPU's picture of the scene; WebGL can still be read back
  * (save_pixel_data draws that frame with WebGL); a screenshot is drawn by WebGPU, at the size
  * WebGL's would be, with a transparent background when asked; a recording started while WebGPU
- * draws records its canvas and leaves it drawing; a view WebGPU does not draw yet (multiple views)
+ * draws records its canvas and leaves it drawing; a divided canvas (three ways) is WebGPU's too;
+ * a view WebGPU does not draw yet (anaglyph stereo)
  * goes back to WebGL and returns; a map contoured again at a new radius is drawn without anything
  * else asking for a frame; and switched off, WebGL draws the view again - with the buffers that
  * waited while WebGPU drew built for it (switching off crashed until they were), and no page errors.
@@ -22,7 +23,7 @@ interface Host {
     getMoorhenInstance: () => Promise<{
         webGPU: WebGPUApi;
         representation: { defaultStyle: string };
-        sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoMultiView(value: boolean): void };
+        sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoThreeWayView(value: boolean): void; setDoAnaglyphStereo(value: boolean): void };
         mapContourSettings: { setMapRadius(value: { molNo: number; radius: number }): void };
         getMapList(): { molNo: number }[];
         getVideoRecorderRef(): { current: Recorder | null };
@@ -75,9 +76,13 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
         const host = document.getElementById(targetId) as unknown as Host;
         (await host.getMoorhenInstance()).webGPU.setMainView(on);
     }, { targetId: id, on });
-    const setMultiView = async (on: boolean) => await page.evaluate(async ({ targetId, on }) => {
+    const setThreeWay = async (on: boolean) => await page.evaluate(async ({ targetId, on }) => {
         const host = document.getElementById(targetId) as unknown as Host;
-        (await host.getMoorhenInstance()).sceneSettings.setDoMultiView(on);
+        (await host.getMoorhenInstance()).sceneSettings.setDoThreeWayView(on);
+    }, { targetId: id, on });
+    const setAnaglyph = async (on: boolean) => await page.evaluate(async ({ targetId, on }) => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        (await host.getMoorhenInstance()).sceneSettings.setDoAnaglyphStereo(on);
     }, { targetId: id, on });
 
     // Off by default: WebGL draws, and there is no WebGPU canvas.
@@ -159,7 +164,7 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
         // Kept with the test's results, to look at.
         copyFileSync(downloaded, test.info().outputPath(transparent ? "screenshot-transparent.png" : "screenshot.png"));
         const png = readFileSync(downloaded).toString("base64");
-        return await page.evaluate(async png => {
+        const stats = await page.evaluate(async png => {
             const image = new Image();
             image.src = `data:image/png;base64,${png}`;
             await image.decode();
@@ -199,6 +204,7 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
                 partialInside: partialInside / n, partialAtEdge: partialAtEdge / n, nearlyOpaque: nearlyOpaque / n,
             };
         }, png);
+        return { ...stats, png };
     };
     const expectedSize = expectedScreenshotSize(canvases.gl.width, canvases.gl.height);
     const shot = await screenshot(false);
@@ -214,9 +220,36 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
         + `${(100 * transparentShot.partialInside).toFixed(3)}% partly inside it`);
     expect({ width: transparentShot.width, height: transparentShot.height }).toEqual(expectedSize);
     expect(transparentShot.clear).toBeGreaterThan(1 - 2 * onScreen.drawn);
-    expect(transparentShot.opaque + transparentShot.nearlyOpaque).toBeGreaterThan(onScreen.drawn / 2);
-    // The scene itself opaque: partly transparent pixels only along its edge, a few strays aside.
-    expect(transparentShot.partialInside).toBeLessThan(0.001);
+    // Fog fades a transparent screenshot rather than whitening it (fogged in previewShaders.ts), so
+    // much of the scene is partly transparent; laid over the background colour, it is the ordinary
+    // screenshot again, give or take rounding.
+    const overBackground = await page.evaluate(async ({ ordinary, clear }) => {
+        const decode = async (png: string) => {
+            const image = new Image();
+            image.src = `data:image/png;base64,${png}`;
+            await image.decode();
+            const canvas = document.createElement("canvas");
+            canvas.width = image.width;
+            canvas.height = image.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(image, 0, 0);
+            return ctx.getImageData(0, 0, image.width, image.height).data;
+        };
+        const [a, b] = [await decode(ordinary), await decode(clear)];
+        const background = [a[0], a[1], a[2]];
+        let differing = 0, worst = 0;
+        for (let i = 0; i < a.length; i += 4) {
+            const alpha = b[i + 3] / 255;
+            let d = 0;
+            for (let c = 0; c < 3; c++) d = Math.max(d, Math.abs(b[i + c] * alpha + background[c] * (1 - alpha) - a[i + c]));
+            if (d > 4) differing++;
+            worst = Math.max(worst, d);
+        }
+        return { differing: differing / (a.length / 4), worst };
+    }, { ordinary: shot.png, clear: transparentShot.png });
+    console.log(`WebGPU main view: the transparent screenshot over the background, against the ordinary one: `
+        + `${(100 * overBackground.differing).toFixed(3)}% differing by more than 4, worst ${overBackground.worst.toFixed(1)}`);
+    expect(overBackground.differing).toBeLessThan(0.002);
     expect((await mainView()).drawing).toBe(true);
 
     // A recording started while WebGPU draws records WebGPU's canvas, which goes on drawing.
@@ -241,12 +274,19 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
     expect(readFileSync(await (await video).path()).length).toBeGreaterThan(0);
     expect((await mainView()).drawing).toBe(true);
 
+    // A divided canvas is WebGPU's: three ways, drawn, with frames going on.
+    await setThreeWay(true);
+    const before = (await mainView()).framesDrawn;
+    await expect.poll(async () => (await mainView()).framesDrawn, { timeout: 30_000 }).toBeGreaterThan(before);
+    expect(await mainView()).toMatchObject({ drawing: true, webGLReason: null });
+    await setThreeWay(false);
+
     // A view WebGPU does not draw yet goes to WebGL, the WebGPU canvas out of its way, and back.
-    await setMultiView(true);
-    await expect.poll(async () => (await mainView()).webGLReason, { timeout: 30_000 }).toBe("multiple views");
+    await setAnaglyph(true);
+    await expect.poll(async () => (await mainView()).webGLReason, { timeout: 30_000 }).toBe("anaglyph stereo");
     expect((await mainView()).drawing).toBe(false);
     await expect(page.locator(SELECTOR)).toHaveCSS("visibility", "hidden");
-    await setMultiView(false);
+    await setAnaglyph(false);
     await expect.poll(async () => (await mainView()).drawing, { timeout: 30_000 }).toBe(true);
     await expect(page.locator(SELECTOR)).toHaveCSS("visibility", "visible");
 

@@ -37,7 +37,7 @@ export interface WebGPUSceneSnapshot extends RendererImage {
      * The scene effects drawn, as the main view's settings ask for them - the same flags the WebGL
      * view draws with, so this says what both pictures should show.
      */
-    effects: { ssao: boolean; edges: boolean; shadow: boolean };
+    effects: { ssao: boolean; edges: boolean; shadow: boolean; depthBlur: boolean };
     /** Transparent layers depth-peeled (depthPeel.ts); 0 if nothing called for peeling. */
     peelLayers: number;
     /** What is in the scene but not drawn by the WebGPU renderer yet, with sub-buffer counts. */
@@ -201,7 +201,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 return {
                     width: shot.width, height: shot.height, data: shot.data, tiles: shot.tiles,
                     meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments, labels: shot.report.labels,
-                    effects: { ssao: !!effects.ssao, edges: !!effects.edges, shadow: !!effects.shadow },
+                    effects: { ssao: !!effects.ssao, edges: !!effects.edges, shadow: !!effects.shadow, depthBlur: !!effects.depthBlur },
                     peelLayers: shot.report.peelLayers,
                     skipped: plan.skipped, skippedText: describeSkipped(plan.skipped),
                 };
@@ -256,14 +256,31 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
 
         webGLSnapshot(): RendererImage {
             const view = webGLView(host);
-            if (view.useOffScreenBuffers) throw new Error("webGLSnapshot does not support depth blur (offscreen buffers); turn it off first.");
+            const { width, height } = view.canvas;
+            if (view.useOffScreenBuffers) {
+                // WebGL reads save_pixel_data back before its depth blur, so the picture is taken
+                // from the canvas instead, as it shows it: in the same task as the draw, while the
+                // drawing buffer still holds the frame. save_pixel_data still makes WebGL draw it.
+                const copy = document.createElement("canvas");
+                copy.width = width;
+                copy.height = height;
+                const context = copy.getContext("2d");
+                if (!context) throw new Error("No 2D canvas to copy the main view into.");
+                view.save_pixel_data = true;
+                try {
+                    view.drawScene();
+                    context.drawImage(view.canvas, 0, 0);
+                } finally {
+                    view.save_pixel_data = false;
+                }
+                return { width, height, data: context.getImageData(0, 0, width, height).data };
+            }
             view.save_pixel_data = true;
             try {
                 view.drawScene();
             } finally {
                 view.save_pixel_data = false;
             }
-            const { width, height } = view.canvas;
             const pixels = view.pixel_data;
             if (!pixels || pixels.length !== width * height * 4) throw new Error("The main view did not return its pixels.");
             // WebGL reads bottom row first.
