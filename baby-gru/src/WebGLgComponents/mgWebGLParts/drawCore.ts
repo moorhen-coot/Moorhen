@@ -1770,7 +1770,12 @@ function drawExternalFrame(self: MGWebGL, external: ExternalRenderer): void {
         // drawTriangles keeps this current for WebGL frames.
         self.pickLevel = levelForHeight(visibleHeight(self.zoom), self.pickLevel)
 
-        self.props.setDrawQuat(self.myQuat)
+        // A copy, every frame, as WebGL's frames give one. The 2D overlay redraws - the axes, and the
+        // scale bar from the store's zoom - only when the quaternion it is handed changes by
+        // reference, and the camera's does not change on a zoom. WebGL's frames hand it a new one
+        // without saying so: GLrender replaces myQuat with a clone whenever it sets up the
+        // projection. Passing the camera's own here left the axes and scale bar still while WebGPU drew.
+        self.props.setDrawQuat(quat4.clone(self.myQuat))
         gatherTextOverlays(self, invMat);
 
         external.draw();
