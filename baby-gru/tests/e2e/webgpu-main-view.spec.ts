@@ -274,11 +274,13 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
     expect(readFileSync(await (await video).path()).length).toBeGreaterThan(0);
     expect((await mainView()).drawing).toBe(true);
 
-    // A divided canvas is WebGPU's: three ways, drawn, with frames going on.
-    await setThreeWay(true);
+    // A divided canvas is WebGPU's: three ways, drawn by WebGPU. Counted from before it is asked
+    // for: switching it on draws its frame at once, and a still scene draws no more.
     const before = (await mainView()).framesDrawn;
+    await setThreeWay(true);
     await expect.poll(async () => (await mainView()).framesDrawn, { timeout: 30_000 }).toBeGreaterThan(before);
     expect(await mainView()).toMatchObject({ drawing: true, webGLReason: null });
+    await expect(page.locator(SELECTOR)).toHaveCSS("visibility", "visible");
     await setThreeWay(false);
 
     // A view WebGPU does not draw yet goes to WebGL, the WebGPU canvas out of its way, and back.
