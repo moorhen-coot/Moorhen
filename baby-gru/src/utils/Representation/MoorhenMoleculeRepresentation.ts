@@ -1613,7 +1613,6 @@ export class MoleculeRepresentation {
         const objects = [{ ...gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours), pick_info: {} }]
         objects.forEach(object => {
             object["clickTol"] = 1e-6;
-            object["doStencil"] = true;
             object["isHoverBuffer"] = true;
         });
         return objects

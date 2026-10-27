@@ -22,7 +22,7 @@
  * "rebuilds when X changes" to "rasterises only the part of X that is new", which is the whole
  * point of the exercise.
  */
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 /** Enough of a 2D context to lay out text, recording what was drawn. */
 class FakeContext2D {
@@ -254,5 +254,80 @@ describe("text atlas rebuilding", () => {
         // every frame would append another copy and the text would multiply without limit.
         for (let i = 0; i < 5; i++) drawFrame(atlas, ["43 fps", "61 draws"]);
         expect(atlas.bigTextureTexOrigins.length).toBe(2);
+    });
+});
+
+/**
+ * While WebGPU draws the main view, the atlas is kept for it - glyphs drawn, instances laid out,
+ * the revision moving so that WebGPU copies it - but nothing goes to WebGL, which would not draw
+ * it. When WebGL next draws the atlas, it catches up first, and only then.
+ */
+describe("text atlas while another renderer draws", () => {
+    let gl, atlas, waiting: object;
+    let deferWebGLUploads: (store: object, defer: boolean) => void;
+
+    /** draw() needs a little more of the store and of GL than building does. */
+    const drawingStore = {
+        getState: () => ({
+            sceneSettings: { backgroundColor: [1, 1, 1, 1], zoom: 1 },
+            glRef: { canvasSize: [800, 600], isWebGL2: true },
+        }),
+    };
+
+    beforeEach(async () => {
+        ({ deferWebGLUploads } = await import("../../src/WebGLgComponents/webGLUploads"));
+        gl = Object.assign(makeGl(), {
+            activeTexture: jest.fn(), enableVertexAttribArray: jest.fn(), vertexAttribPointer: jest.fn(),
+            uniform1f: jest.fn(), vertexAttribDivisor: jest.fn(), drawElementsInstanced: jest.fn(),
+        });
+        waiting = drawingStore;
+        atlas = new TextCanvasTexture(gl, true, true, {}, 768, 2048, drawingStore);
+        gl.texImage2D.mockClear();
+        deferWebGLUploads(waiting, true);
+    });
+
+    afterEach(() => deferWebGLUploads(waiting, false));
+
+    it("keeps the glyphs and instances, and sends WebGL nothing", () => {
+        const revision = atlas.revision;
+        drawFrame(atlas, ["43 fps", "61 draws"]);
+        expect(atlas.revision).toBeGreaterThan(revision);
+        expect(atlas.bigTextureTexOrigins.length).toBe(2);
+        expect(gl.texSubImage2D).not.toHaveBeenCalled();
+        expect(gl.texImage2D).not.toHaveBeenCalled();
+        expect(gl.bufferData).not.toHaveBeenCalled();
+        expect(atlas.contextBig.getImageDataCalls.length).toBe(0);
+    });
+
+    it("catches up when WebGL draws it, once", () => {
+        drawFrame(atlas, ["43 fps"]);
+        drawFrame(atlas, ["43 fps", "61 draws"]);
+        atlas.draw();
+        // The glyphs of both frames in one region, and the instance buffers.
+        expect(gl.texSubImage2D).toHaveBeenCalledTimes(1);
+        expect(gl.bufferData).toHaveBeenCalled();
+        expect(gl.drawElementsInstanced).toHaveBeenCalledTimes(1);
+
+        gl.texSubImage2D.mockClear();
+        gl.bufferData.mockClear();
+        atlas.draw();
+        expect(gl.texSubImage2D).not.toHaveBeenCalled();
+        expect(gl.bufferData).not.toHaveBeenCalled();
+    });
+
+    it("sends the whole atlas after a clear while behind", () => {
+        drawFrame(atlas, ["43 fps"]);
+        atlas.clearBigTexture();
+        drawFrame(atlas, ["61 draws"]);
+        expect(gl.texImage2D).not.toHaveBeenCalled();
+        atlas.draw();
+        expect(gl.texImage2D).toHaveBeenCalledTimes(1);
+        expect(gl.texSubImage2D).not.toHaveBeenCalled();
+    });
+
+    it("uploads as before once WebGL draws again", () => {
+        deferWebGLUploads(waiting, false);
+        drawFrame(atlas, ["43 fps"]);
+        expect(gl.texSubImage2D).toHaveBeenCalledTimes(1);
     });
 });

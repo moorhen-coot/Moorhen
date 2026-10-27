@@ -159,7 +159,6 @@ export {
     setDoShadow,
     setShadowMapQuality,
     setDoSpin,
-    setDoOutline,
     setDepthBlurRadius,
     setDepthPeelLayers,
     setPeelOpaqueSeparately,

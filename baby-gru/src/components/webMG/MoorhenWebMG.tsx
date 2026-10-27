@@ -109,7 +109,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns)
     const doMultiView = useSelector((state: moorhen.State) => state.sceneSettings.doMultiView)
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
-    const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
     const depthPeelLayers = useSelector((state: moorhen.State) => state.sceneSettings.depthPeelLayers)
     const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately)
@@ -375,13 +374,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [shadowMapQuality])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setOutlinesOn(doOutline)
-            glRef.current.drawScene()
-        }
-    }, [doOutline])
 
     /*
     useEffect(() => {

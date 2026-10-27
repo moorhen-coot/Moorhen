@@ -13,26 +13,20 @@ import type { DisplayBuffer } from "../../src/WebGLgComponents/displayBuffer";
 describe("webGLOnlyReason", () => {
     it("leaves an ordinary view to WebGPU", () => {
         expect(webGLOnlyReason({}, false)).toBeNull();
-        expect(webGLOnlyReason({ doStenciling: false }, false)).toBeNull();
-        // Depth blur is drawn by WebGPU too (depthBlur.ts).
-        const depthBlur = { doStenciling: false, useOffScreenBuffers: true };
-        expect(webGLOnlyReason(depthBlur, false)).toBeNull();
-        // And divided canvases (previewViews).
-        for (const divided of ["doMultiView", "doThreeWayView", "doSideBySideStereo", "doCrossEyedStereo"]) {
-            const view = { doStenciling: false, [divided]: true };
+        expect(webGLOnlyReason({ doShadowDepthDebug: false }, false)).toBeNull();
+        // Depth blur is drawn by WebGPU too (depthBlur.ts); divided canvases (previewViews); and
+        // anaglyph stereo (drawAnaglyph).
+        for (const mode of ["useOffScreenBuffers", "doMultiView", "doThreeWayView", "doSideBySideStereo", "doCrossEyedStereo", "doAnaglyphStereo"]) {
+            const view = { doShadowDepthDebug: false, [mode]: true };
             expect(webGLOnlyReason(view, false)).toBeNull();
         }
-        // And anaglyph stereo (drawAnaglyph).
-        const anaglyph = { doStenciling: false, doAnaglyphStereo: true };
-        expect(webGLOnlyReason(anaglyph, false)).toBeNull();
     });
 
     it("keeps the views WebGPU does not draw yet, and recordings, for WebGL", () => {
-        expect(webGLOnlyReason({ doStenciling: true }, false)).toBe("outlines");
         expect(webGLOnlyReason({ doShadowDepthDebug: true }, false)).toBe("the shadow map debug view");
         expect(webGLOnlyReason({}, true)).toBe("a recording of the WebGL canvas");
         // Before anything else: the recording is of what WebGL draws, whatever the view.
-        expect(webGLOnlyReason({ doStenciling: true }, true)).toBe("a recording of the WebGL canvas");
+        expect(webGLOnlyReason({ doShadowDepthDebug: true }, true)).toBe("a recording of the WebGL canvas");
     });
 });
 

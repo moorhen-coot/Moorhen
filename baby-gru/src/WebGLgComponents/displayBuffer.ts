@@ -134,7 +134,6 @@ export class DisplayBuffer {
     statsLabel?: string;
     multiViewGroup: number;
     clickTol: number;
-    doStencil: boolean;
     // uses gl.depthRange
     alwaysOnTop: boolean;
 
@@ -251,7 +250,6 @@ export class DisplayBuffer {
         this.textColours = [];
         this.atoms = [];
         this.clickTol = null;
-        this.doStencil = false;
         this.alwaysOnTop = false;
     }
 

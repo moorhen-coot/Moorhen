@@ -5,54 +5,12 @@ import { SHADOW_MAP_TEXELS, type ShadowMapQuality } from '../shadowMapQuality';
 
 /**
  * Framebuffer / offscreen-buffer setup. These methods create and resize the
- * WebGL framebuffer objects used by the render pipeline (silhouette, edge
+ * WebGL framebuffer objects used by the render pipeline (edge
  * detect, gbuffers, SSAO, simple blur, depth peel, generic offscreen, texture).
  * They are self-contained: no cross-calls, no shader-init dependencies. The
  * buffer/framebuffer fields stay on the MGWebGL instance (the draw pipeline
  * reads them); only the setup logic moves here. `self` is the live instance.
  */
-
-export function recreateSilhouetteBuffers(self: MGWebGL) {
-        if(!self.silhouetteFramebuffer){
-            self.silhouetteFramebuffer = self.gl.createFramebuffer();
-
-            self.silhouetteTexture = self.gl.createTexture();
-            self.gl.bindTexture(self.gl.TEXTURE_2D, self.silhouetteTexture);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_MIN_FILTER, self.gl.LINEAR);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_S, self.gl.CLAMP_TO_EDGE);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_T, self.gl.CLAMP_TO_EDGE);
-
-            self.silhouetteDepthTexture = self.gl.createTexture();
-            self.gl.bindTexture(self.gl.TEXTURE_2D, self.silhouetteDepthTexture);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_MAG_FILTER, self.gl.NEAREST);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_MIN_FILTER, self.gl.NEAREST);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_S, self.gl.CLAMP_TO_EDGE);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_T, self.gl.CLAMP_TO_EDGE);
-
-            self.silhouetteRenderbufferDepth = self.gl.createRenderbuffer();
-            self.silhouetteRenderbufferColor = self.gl.createRenderbuffer();
-
-        }
-        self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.silhouetteFramebuffer);
-        self.silhouetteFramebuffer.width = self.canvas.width;
-        self.silhouetteFramebuffer.height = self.canvas.height;
-
-        self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, self.silhouetteRenderbufferColor);
-        self.gl.framebufferRenderbuffer(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.RENDERBUFFER, self.silhouetteRenderbufferColor);
-        self.gl.renderbufferStorage(self.gl.RENDERBUFFER, self.gl.DEPTH_COMPONENT16, self.canvas.width, self.canvas.height);
-
-        self.gl.bindTexture(self.gl.TEXTURE_2D, self.silhouetteTexture);
-        self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.RGBA, self.canvas.width, self.canvas.height, 0, self.gl.RGBA, self.gl.UNSIGNED_BYTE, null);
-        self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.COLOR_ATTACHMENT0, self.gl.TEXTURE_2D, self.silhouetteTexture, 0);
-
-        self.gl.bindTexture(self.gl.TEXTURE_2D, self.silhouetteDepthTexture);
-        self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.DEPTH_COMPONENT24, self.canvas.width, self.canvas.height, 0, self.gl.DEPTH_COMPONENT, self.gl.UNSIGNED_INT, null);
-        self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.TEXTURE_2D, self.silhouetteDepthTexture, 0);
-
-        self.gl.bindTexture(self.gl.TEXTURE_2D, null);
-        self.silhouetteBufferReady = true;
-
-}
 
 export function createEdgeDetectFramebufferBuffer(self: MGWebGL, width : number,height : number) {
 

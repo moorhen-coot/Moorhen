@@ -48,8 +48,8 @@ export const initialState: {
     peelOpaqueSeparately: boolean;
     /**
      * Draw the main view with WebGPU (components/webMG/MoorhenWebGPUMainView.tsx) where the browser
-     * offers it; WebGL still draws what WebGPU cannot yet, and everything where there is no WebGPU.
-     * Off by default while WebGPU is being brought up to WebGL's features.
+     * offers it; WebGL still draws what WebGPU does not (the shadow map debug view), and
+     * everything where there is no WebGPU. On by default.
      */
     useWebGPU: boolean;
     /** Anaglyph stereo's colours, left eye first (WebGLgComponents/anaglyph.ts): red and green by default. */
@@ -78,7 +78,6 @@ export const initialState: {
     edgeDetectNormalThreshold: number;
     edgeDetectDepthScale: number;
     edgeDetectNormalScale: number;
-    doOutline: boolean;
     doSpin: boolean;
     doThreeWayView: boolean;
     multiViewRows: number;
@@ -148,11 +147,10 @@ export const initialState: {
     doMultiView: false,
     doCrossEyedStereo: false,
     doAnaglyphStereo: false,
-    doOutline: false,
     depthBlurRadius: 3.0,
     depthPeelLayers: 4,
     peelOpaqueSeparately: true,
-    useWebGPU: false,
+    useWebGPU: true,
     anaglyphColours: DEFAULT_ANAGLYPH_COLOURS,
     // Where the depth blur starts, in angstroms from the view centre; negative is towards the
     // viewer. Zero puts it on the rotation centre, which is what you are usually looking at.
@@ -346,10 +344,6 @@ const sceneSettingsSlice = createSlice({
             state.threeWayViewOrder = action.payload;
         },
         // API
-        setDoOutline: (state, action: PayloadAction<boolean>) => {
-            state.doOutline = action.payload;
-        },
-        // API
         setDepthBlurRadius: (state, action: PayloadAction<number>) => {
             state.depthBlurRadius = action.payload;
         },
@@ -474,7 +468,6 @@ export const {
     setDoShadow,
     setShadowMapQuality,
     setDoSpin,
-    setDoOutline,
     setDepthBlurRadius,
     setDepthPeelLayers,
     setPeelOpaqueSeparately,

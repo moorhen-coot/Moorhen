@@ -33,6 +33,24 @@ export function webGPUUnavailableReason(): string | null {
     return null;
 }
 
+const NO_ADAPTER = "WebGPU is present but no adapter was offered (blocklisted GPU or driver?).";
+
+/**
+ * Why WebGPU cannot be used here, or null if it can: as webGPUUnavailableReason, and where the
+ * browser has WebGPU, whether it offers an adapter (some do not: no GPU, a blocklisted driver).
+ * Makes no device; once the shared context exists, null at once.
+ */
+export async function webGPUAdapterUnavailableReason(): Promise<string | null> {
+    const unavailable = webGPUUnavailableReason();
+    if (unavailable) return unavailable;
+    if (currentContext) return null;
+    try {
+        return (await navigator.gpu.requestAdapter({ powerPreference: "high-performance" })) ? null : NO_ADAPTER;
+    } catch (err) {
+        return err instanceof Error ? err.message : String(err);
+    }
+}
+
 let current: Promise<GpuContext> | null = null;
 /** The context `current` resolved to, once it has. */
 let currentContext: GpuContext | null = null;
@@ -55,7 +73,7 @@ async function createContext(): Promise<GpuContext> {
     const unavailable = webGPUUnavailableReason();
     if (unavailable) throw new Error(unavailable);
     const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
-    if (!adapter) throw new Error("WebGPU is present but no adapter was offered (blocklisted GPU or driver?).");
+    if (!adapter) throw new Error(NO_ADAPTER);
     const timestampQuery = adapter.features.has("timestamp-query");
     // The defaults are 256 MB per buffer and 128 MB per storage binding: a big surface's indices
     // (1ibm's MetaBalls: 341 MB) or a map's unit cell can pass them. Ask for what the adapter has.

@@ -138,10 +138,13 @@ test.describe("WebGPU against WebGL", () => {
         }, moorhen.elementId);
         test.skip(unavailable !== null, `No WebGPU: ${unavailable}`);
 
-        // Ribbons to start with, and nothing drawn over the scene that WebGPU leaves out.
+        // Ribbons to start with, and nothing drawn over the scene that WebGPU leaves out. The main
+        // view drawn by WebGL, as the reference: so too maps contoured by Coot, for both renderers
+        // to draw (while WebGPU draws the main view, maps are contoured on the GPU instead).
         await page.evaluate(async targetId => {
             const host = document.getElementById(targetId) as unknown as Host;
             const instance = await host.getMoorhenInstance();
+            instance.webGPU.setMainView(false);
             instance.representation.defaultStyle = "CRs";
             instance.sceneSettings.setDrawCrosshairs(false);
         }, moorhen.elementId);

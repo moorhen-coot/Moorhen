@@ -13,6 +13,7 @@ import type { PreviewCameraSource } from "./previewScene";
 import { describeSkipped, effectSettings, planPreview } from "./previewScene";
 import { setUseWebGPU } from "../store/sceneSettingsSlice";
 import type { WebGPUMainViewRenderer } from "../components/webMG/MoorhenWebGPUMainView";
+import { gpuMapContourSetting } from "./mapContour/setting";
 
 /** An image: RGBA, 8 bits a channel, top row first (as ImageData has it). */
 export interface RendererImage {
@@ -125,14 +126,21 @@ export interface WebGPUApi {
     /**
      * Who draws the main view: whether WebGPU is asked for (sceneSettings.useWebGPU), whether it
      * has taken the view (`active`), whether it drew the last frame (`drawing`) and, if WebGL did,
-     * why (`webGLReason`), and how many frames WebGPU has drawn.
+     * why (`webGLReason`), how many frames WebGPU has drawn, and whether maps are contoured on the
+     * GPU (`mapsOnGpu`: while WebGPU draws, mapContour/setting.ts).
      */
     mainView(): {
         requested: boolean; active: boolean; drawing: boolean; webGLReason: string | null; framesDrawn: number;
-        lastFrame: { meshes: number; triangles: number; spheres: number; segments: number } | null;
+        lastFrame: { meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number } | null;
+        mapsOnGpu: boolean;
     };
     /** Ask for the main view to be drawn with WebGPU, or not (the preference, so it is remembered). */
     setMainView(useWebGPU: boolean): void;
+    /**
+     * Lose the shared WebGPU device, as a GPU reset would (device.destroy()): for testing that the
+     * main view makes a new one. Resolves false if there was no device to lose.
+     */
+    simulateDeviceLoss(): Promise<boolean>;
 }
 
 /** Who owns a DisplayBuffer: a molecule's representation or a map's display object, if either. */
@@ -227,11 +235,22 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 webGLReason: active ? external.webGLReason : null,
                 framesDrawn: active ? external.framesDrawn : 0,
                 lastFrame: active ? external.lastFrame : null,
+                mapsOnGpu: gpuMapContourSetting.enabled,
             };
         },
 
         setMainView(useWebGPU: boolean): void {
             host.store.dispatch(setUseWebGPU(useWebGPU));
+        },
+
+        async simulateDeviceLoss(): Promise<boolean> {
+            try {
+                const { device } = await getGpuContext();
+                device.destroy();
+                return true;
+            } catch {
+                return false;
+            }
         },
 
         describeSkipped(): SkippedSubBufferInfo[] {

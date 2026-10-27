@@ -55,7 +55,6 @@ import {
     setDepthBlurRadius,
     setDepthPeelLayers,
     setDoEdgeDetect,
-    setDoOutline,
     setDoPerspectiveProjection,
     setPerspectiveEyeDistance,
     setDoSSAO,
@@ -302,12 +301,6 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         selector: (state: RootState) => state.labelSettings.GLLabelsFontSize,
         defaultValue: 18,
     },
-    34: {
-        label: "doOutline",
-        valueSetter: setDoOutline,
-        selector: (state: RootState) => state.sceneSettings.doOutline,
-        defaultValue: sceneSettingsInitialState.doOutline,
-    },
     35: {
         label: "depthBlurRadius",
         valueSetter: setDepthBlurRadius,
@@ -427,6 +420,9 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         valueSetter: setUseWebGPU,
         selector: (state: RootState) => state.sceneSettings.useWebGPU,
         defaultValue: sceneSettingsInitialState.useWebGPU,
+        // 2: on by default (where the browser offers WebGPU) from now on, whatever was chosen
+        // while it was a test.
+        version: 2,
     },
     56: {
         label: "anaglyphColours",

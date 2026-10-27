@@ -317,9 +317,12 @@ export class WebGPUPreviewRenderer {
      * Configure the canvas on the shared device (../gpu: the adapter's largest buffers and
      * storage bindings, and timestamps where offered). Rejects with a readable message if any
      * step fails, so the caller can show it as it stands.
+     *
+     * A lost device is reported to `onDeviceLost` when given (the renderer is then unusable, and
+     * a new one, on a new device, can be made), otherwise to `onError` like any other error.
      */
     static async create(canvas: HTMLCanvasElement, onError: (message: string) => void,
-                        options: { maxBufferBytes?: number } = {}): Promise<WebGPUPreviewRenderer> {
+                        options: { maxBufferBytes?: number; onDeviceLost?: (message: string) => void } = {}): Promise<WebGPUPreviewRenderer> {
         const { device, adapterDescription } = await getGpuContext();
         // The DOM library's getContext overloads do not include "webgpu" yet.
         const context = canvas.getContext("webgpu") as unknown as GPUCanvasContext | null;
@@ -327,11 +330,11 @@ export class WebGPUPreviewRenderer {
         // Meshes bigger than the largest buffer are drawn in chunks. For tests: a smaller limit
         // than the device's, to exercise the chunking.
         const maxBufferBytes = Math.min(device.limits.maxBufferSize, options.maxBufferBytes ?? Infinity);
-        return new WebGPUPreviewRenderer(device, context, adapterDescription, onError, maxBufferBytes);
+        return new WebGPUPreviewRenderer(device, context, adapterDescription, onError, maxBufferBytes, options.onDeviceLost ?? onError);
     }
 
     private constructor(device: GPUDevice, context: GPUCanvasContext, adapterDescription: string, onError: (message: string) => void,
-                        maxBufferBytes: number) {
+                        maxBufferBytes: number, onDeviceLost: (message: string) => void) {
         this.device = device;
         this.maxBufferBytes = maxBufferBytes;
         this.context = context;
@@ -345,7 +348,7 @@ export class WebGPUPreviewRenderer {
         this.errorListener = (event: GPUUncapturedErrorEvent) => onError(event.error.message);
         device.addEventListener("uncapturederror", this.errorListener);
         device.lost.then(info => {
-            if (!this.destroyed) onError(`WebGPU device lost: ${info.message || info.reason}`);
+            if (!this.destroyed) onDeviceLost(`WebGPU device lost: ${info.message || info.reason}`);
         });
 
         this.module = device.createShaderModule({ label: "preview", code: PREVIEW_WGSL });

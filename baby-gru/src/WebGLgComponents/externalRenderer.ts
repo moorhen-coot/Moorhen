@@ -40,8 +40,6 @@ export interface ExternalRenderer {
 
 /** The parts of the view whose being on means WebGL must draw (externalWebGLOnlyReason). */
 export interface ViewModes {
-    /** Outlines (doOutline). */
-    doStenciling?: boolean;
     /** The shadow map shown in place of the scene, for debugging shadows. */
     doShadowDepthDebug?: boolean;
 }
@@ -55,7 +53,6 @@ export interface ViewModes {
  */
 export function webGLOnlyReason(view: ViewModes, recordingWebGLCanvas: boolean): string | null {
     if (recordingWebGLCanvas) return "a recording of the WebGL canvas";
-    if (view.doStenciling) return "outlines";
     if (view.doShadowDepthDebug) return "the shadow map debug view";
     return null;
 }

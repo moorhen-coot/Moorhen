@@ -79,13 +79,6 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
                         }
                     }
                 }
-                if(self.stencilPass){
-                    self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                    if(bright_y<0.5)
-                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
-                    else
-                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
-                }
             }
             if (self.WEBGL2) {
                 if(self.doAnaglyphStereo && !self.WEBGL2) {

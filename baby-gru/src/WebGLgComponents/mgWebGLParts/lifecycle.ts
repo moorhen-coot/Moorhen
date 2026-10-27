@@ -96,8 +96,6 @@ export function initInstanceState(self: MGWebGL): void {
 
     self.transparentScreenshotBackground = false;
 
-    self.doStenciling = false;
-
     self.doShadow = false;
     self.doSSAO = false;
     self.doEdgeDetect = false;

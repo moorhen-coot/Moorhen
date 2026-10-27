@@ -17,7 +17,7 @@ import {
 } from "../../WebGLgComponents/mgWebGLParts/renderStats";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { setPeelOpaqueSeparately, setUseWebGPU } from "../../store/sceneSettingsSlice";
-import { webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
+import { webGPUAdapterUnavailableReason, webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
 import { showModal } from "../../store/modalsSlice";
 import {
     addCallback,
@@ -28,12 +28,11 @@ import {
     addTextOverlay,
     emptyOverlays,
 } from "../../store/overlaysSlice";
-import { setDoOutline } from "../../store/sceneSettingsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
-import { gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
+import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
 
 import { readGzippedTextFile } from "../../utils/utils";
@@ -200,11 +199,18 @@ export const MoorhenDevMenu = () => {
     const [syncingGpu, setSyncingGpu] = useState<boolean>(renderStats.syncGpu);
     const [gpuMetaBalls, setGpuMetaBalls] = useState<boolean>(gpuMetaBallsSetting.enabled);
     const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
-    const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.enabled);
+    const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.wanted);
+    // Why there is no WebGPU here, or null: no navigator.gpu at once, no adapter once asked. Then
+    // every WebGPU switch shows off and cannot be changed, whatever it is set to.
+    const [noWebGPU, setNoWebGPU] = useState<string | null>(webGPUUnavailableReason());
+    useEffect(() => {
+        let live = true;
+        webGPUAdapterUnavailableReason().then(reason => { if (live) setNoWebGPU(reason); });
+        return () => { live = false; };
+    }, []);
     const glCtx = useSelector((state: RootState) => state.glRef.glCtx);
     const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately);
     const useWebGPU = useSelector((state: moorhen.State) => state.sceneSettings.useWebGPU);
-    const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline);
     const useGemmi = useSelector((state: moorhen.State) => state.generalStates.useGemmi);
     const toggleValidationPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");
     const [sliderValue, setSliderValue] = useState(1);
@@ -505,6 +511,7 @@ export const MoorhenDevMenu = () => {
                 2D Overlays
             </MoorhenMenuItem>
             <MoorhenMenuItem
+                disabled={noWebGPU !== null}
                 onClick={() => {
                     dispatch(showModal({ key: modalKeys.WEBGPU_PREVIEW }));
                     document.body.click();
@@ -514,19 +521,20 @@ export const MoorhenDevMenu = () => {
             </MoorhenMenuItem>
             <MoorhenToggle
                 type="switch"
-                checked={useWebGPU}
-                disabled={webGPUUnavailableReason() !== null}
-                label={webGPUUnavailableReason() === null
-                    ? "Draw the main view with WebGPU (test; WebGL still draws multiple views, stereo, depth blur, outlines and recordings)"
-                    : `Draw the main view with WebGPU (${webGPUUnavailableReason()})`}
+                checked={noWebGPU === null && useWebGPU}
+                disabled={noWebGPU !== null}
+                label={noWebGPU === null
+                    ? "Draw the main view with WebGPU (on by default; WebGL still draws the shadow map debug view and recordings started under WebGL)"
+                    : `Draw the main view with WebGPU (${noWebGPU})`}
                 onChange={() => {
                     dispatch(setUseWebGPU(!useWebGPU));
                 }}
             />
             <MoorhenToggle
                 type="switch"
-                checked={gpuMetaBalls}
-                label="MetaBalls on the GPU (test; applies to MetaBalls made from now on)"
+                checked={noWebGPU === null && gpuMetaBalls}
+                disabled={noWebGPU !== null}
+                label={`MetaBalls on the GPU (test; applies to MetaBalls made from now on${noWebGPU ? "; no WebGPU here" : ""})`}
                 onChange={() => {
                     gpuMetaBallsSetting.enabled = !gpuMetaBalls;
                     setGpuMetaBalls(!gpuMetaBalls);
@@ -534,8 +542,9 @@ export const MoorhenDevMenu = () => {
             />
             <MoorhenToggle
                 type="switch"
-                checked={splitField}
-                label="GPU MetaBalls: split field (off = the plain sum, one thread per grid point)"
+                checked={noWebGPU === null && splitField}
+                disabled={noWebGPU !== null}
+                label={`GPU MetaBalls: split field (off = the plain sum, one thread per grid point${noWebGPU ? "; no WebGPU here" : ""})`}
                 onChange={() => {
                     gpuMetaBallsSetting.splitField = !splitField;
                     setSplitField(!splitField);
@@ -543,19 +552,15 @@ export const MoorhenDevMenu = () => {
             />
             <MoorhenToggle
                 type="switch"
-                checked={gpuMapContours}
-                label="Contour maps on the GPU (test; drawn in the WebGPU preview only)"
+                checked={noWebGPU === null && gpuMapContours}
+                disabled={noWebGPU !== null}
+                label={`Contour maps on the GPU while WebGPU draws the main view (on by default; off: Coot contours them${noWebGPU ? "; no WebGPU here" : ""})`}
                 onChange={() => {
-                    const enabled = !gpuMapContours;
-                    gpuMapContourSetting.enabled = enabled;
-                    setGpuMapContours(enabled);
-                    // Take the maps off WebGL now, or give them back to Coot.
-                    const maps = store.getState().maps as unknown as MoorhenMap[];
-                    const visible = store.getState().mapContourSettings.visibleMaps;
-                    maps.forEach(map => {
-                        if (enabled) map.hideMapContour();
-                        else if (visible.includes(map.molNo)) map.drawMapContour();
-                    });
+                    const wanted = !gpuMapContours;
+                    gpuMapContourSetting.wanted = wanted;
+                    setGpuMapContours(wanted);
+                    // Move the maps to the GPU now, or give them back to Coot.
+                    applyGpuMapContours(store.getState().maps as unknown as MoorhenMap[], store.getState().mapContourSettings.visibleMaps);
                 }}
             />
             <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
@@ -612,14 +617,6 @@ export const MoorhenDevMenu = () => {
             <hr></hr>
             <MoorhenToggle
                 type="switch"
-                checked={doOutline}
-                onChange={() => {
-                    dispatch(setDoOutline(!doOutline));
-                }}
-                label="Outlines"
-            />
-            <MoorhenToggle
-                type="switch"
                 checked={overlaysOn}
                 onChange={evt => {
                     loadExampleOverlays(evt);
@@ -640,14 +637,6 @@ export const MoorhenDevMenu = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     loadGzippedFiles(e.target.files);
                 }}
-            />
-            <MoorhenToggle
-                type="switch"
-                checked={doOutline}
-                onChange={() => {
-                    dispatch(setDoOutline(!doOutline));
-                }}
-                label="Outlines"
             />
             <MoorhenToggle
                 type="switch"

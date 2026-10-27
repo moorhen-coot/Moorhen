@@ -319,9 +319,6 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
     if(jsondata.clickTol){
         theBuffer.clickTol = jsondata.clickTol;
     }
-    if(jsondata.doStencil){
-        theBuffer.doStencil = jsondata.doStencil;
-    }
     if(jsondata.alwaysOnTop){
         theBuffer.alwaysOnTop = jsondata.alwaysOnTop;
     }

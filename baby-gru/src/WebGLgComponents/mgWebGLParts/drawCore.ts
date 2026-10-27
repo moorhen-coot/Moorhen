@@ -588,18 +588,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 && !shouldCastShadow(true, bufferFade, displayBuffers[idx].transparent)) {
                 continue;
             }
-            if(self.doStenciling){
-                if(self.stencilPass&&!displayBuffers[idx].doStencil){
-                    continue;
-                }
-                if(self.stenciling&&!displayBuffers[idx].doStencil){
-                    continue;
-                }
-                if (!self.stenciling&&displayBuffers[idx].doStencil){
-                    continue;
-                }
-            }
-
             if(self.doMultiView&&displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
                 if(Object.hasOwn(displayBuffers[idx], "isHoverBuffer")&&!displayBuffers[idx].isHoverBuffer){
                     if(displayBuffers[idx].multiViewGroup!==self.currentMultiViewGroup){
@@ -678,7 +666,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 let theShader;
-                let scaleZ = false;
 
                 if(displayBuffers[idx].triangleInstanceOriginBuffer[j]){
                     if(self.drawingGBuffers){
@@ -687,8 +674,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         theShader = self.shaderProgramInstanced;
                         if (calculatingShadowMap)
                             theShader = self.shaderProgramInstancedShadow;
-                        if(self.stencilPass)
-                            theShader = self.shaderProgramInstancedOutline;
                     }
                 } else {
                     if(self.drawingGBuffers){
@@ -697,10 +682,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         theShader = self.shaderProgram;
                         if (calculatingShadowMap)
                             theShader = self.shaderProgramShadow;
-                        if(self.stencilPass){
-                            theShader = self.shaderProgramOutline;
-                            scaleZ = true;
-                        }
                     }
                 }
 
@@ -854,7 +835,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     const wanted = self.WEBGL2
                         && !calculatingShadowMap
                         && !self.drawingGBuffers
-                        && !self.stencilPass
                         && !!material
                         && !!textureBuffer && textureBuffer.itemSize === 2
                         && theShader.vertexTextureAttribute!=null && theShader.vertexTextureAttribute>-1;
@@ -918,31 +898,17 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
                 self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
 
-                if(self.stencilPass){
-                    self.gl.disable(self.gl.DEPTH_TEST);
-                    self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                    if(bright_y<0.5)
-                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
-                    else
-                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
+                if(theShader.vertexColourAttribute>-1){
                     const outlineSize = vec3.create();
-                    vec3.set(outlineSize, 0.1, 0.1, 0.0);
-                    if(scaleZ)
-                        vec3.set(outlineSize, 0.1, 0.1, 0.1);
+                    vec3.set(outlineSize, 0.0, 0.0, 0.0);
                     self.gl.uniform3fv(theShader.outlineSize, outlineSize);
-                } else {
-                    if(theShader.vertexColourAttribute>-1){
-                        const outlineSize = vec3.create();
-                        vec3.set(outlineSize, 0.0, 0.0, 0.0);
-                        self.gl.uniform3fv(theShader.outlineSize, outlineSize);
-                        if(displayBuffers[idx].customColour&&displayBuffers[idx].customColour.length==4){
-                            self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                            self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...displayBuffers[idx].customColour)
-                        } else {
-                            self.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
-                            self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
-                            self.gl.vertexAttribPointer(theShader.vertexColourAttribute, triangleColourBuffer[j].itemSize, self.gl.FLOAT, false, 0, 0);
-                        }
+                    if(displayBuffers[idx].customColour&&displayBuffers[idx].customColour.length==4){
+                        self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...displayBuffers[idx].customColour)
+                    } else {
+                        self.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
+                        self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
+                        self.gl.vertexAttribPointer(theShader.vertexColourAttribute, triangleColourBuffer[j].itemSize, self.gl.FLOAT, false, 0, 0);
                     }
                 }
                 if (bufferTypes[j] === "TRIANGLES") {
@@ -963,16 +929,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         self.gl.uniform4fv(theShader.light_colours_ambient, self.light_colours_ambient);
                     } else {
                         self.gl.uniform3fv(theShader.screenZ, self.screenZ);
-                        if(self.stencilPass && scaleZ){
-                            const outlineSize = vec3.create();
-                            for(let i=0;i<10;i++){
-                                vec3.set(outlineSize, 0.01*i, 0.01*i, 0.01*i);
-                                self.gl.uniform3fv(theShader.outlineSize, outlineSize);
-                                self.drawBuffer(displayBuffers[idx],theShader,j,self.gl.TRIANGLES);
-                            }
-                        } else {
-                            self.drawBuffer(displayBuffers[idx],theShader,j,self.gl.TRIANGLES);
-                        }
+                        self.drawBuffer(displayBuffers[idx],theShader,j,self.gl.TRIANGLES);
                     }
                 } else if (bufferTypes[j] === "TRIANGLE_STRIP") {
                     if (displayBuffers[idx].transformMatrix) {
@@ -1006,9 +963,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
                 if(self.drawingGBuffers){
                     program = self.shaderProgramGBuffersPerfectSpheres;
-                }
-                if(self.stencilPass){
-                    program = self.shaderProgramPerfectSpheresOutline;
                 }
                 mat4.set(invsymt,
                 1.0, 0.0, 0.0, 0.0,
@@ -1076,12 +1030,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     }
                 }
 
-                if(self.stencilPass){
-                    self.gl.disable(self.gl.DEPTH_TEST);
-                    const outlineSize = vec3.create();
-                    vec3.set(outlineSize, 0.1, 0.1, 0.0);
-                    self.gl.uniform3fv(program.outlineSize, outlineSize);
-                } else {
+                {
                     const outlineSize = vec3.create();
                     vec3.set(outlineSize, 0.0, 0.0, 0.0);
                     if(program.outlineSize!=null) self.gl.uniform3fv(program.outlineSize, outlineSize);
@@ -1137,13 +1086,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             self.gl.enableVertexAttribArray(program.vertexColourAttribute);
                             self.gl.bindBuffer(self.gl.ARRAY_BUFFER, displayBuffers[idx].triangleColourBuffer[j]);
                             self.gl.vertexAttribPointer(program.vertexColourAttribute, displayBuffers[idx].triangleColourBuffer[j].itemSize, self.gl.FLOAT, false, 0, 0);
-                        }
-                        if(self.stencilPass){
-                            self.gl.disableVertexAttribArray(program.vertexColourAttribute);
-                            if(bright_y<0.5)
-                                self.gl.vertexAttrib4f(program.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
-                            else
-                                self.gl.vertexAttrib4f(program.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
                         }
                         if (self.WEBGL2) {
                             if(program.vertexColourAttribute!=null) self.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
@@ -1327,10 +1269,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             if(self.drawingGBuffers){
                 //FIXME - Don't skip on thick lines.
                 //console.log("Skip most stuff!");
-                continue;
-            }
-
-            if(self.stencilPass){
                 continue;
             }
 
@@ -1592,7 +1530,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         // transparent the whole scene switches to depth peeling, and the peel passes are then the
         // only place the geometry is drawn at all, so skipping them would lose the highlight
         // entirely. What it must not do is inherit their blend state - see below.
-        const drawingVisibleImage = !calculatingShadowMap && !self.drawingGBuffers && !self.stencilPass
+        const drawingVisibleImage = !calculatingShadowMap && !self.drawingGBuffers
 
         // hoveridx is an index into displayBuffers, and that array is rebuilt whenever buffers are
         // added or removed, so the index can outlive the buffer it referred to. Fetched once,
@@ -2220,59 +2158,11 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
         }
 
-        self.stencilPass = false;
-
         let invMat;
 
-        self.renderSilhouettesToTexture = false;
-
-        if(self.doStenciling){
-            //Framebuffer way
-            self.renderSilhouettesToTexture = true;
-            self.stenciling = false;
-            invMat = GLrender(self, false);
-            self.gl.clear(self.gl.COLOR_BUFFER_BIT);
-            self.stenciling = true;
-            invMat = GLrender(self, false);
-            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
-            self.renderSilhouettesToTexture = false;
-            self.stenciling = false;
-            invMat = GLrender(self, false);
-
-            self.gl.useProgram(self.shaderProgramOverlay);
-            for(let i = 0; i<16; i++)
-                self.gl.disableVertexAttribArray(i);
-            self.gl.enableVertexAttribArray(self.shaderProgramOverlay.vertexTextureAttribute);
-            self.gl.enableVertexAttribArray(self.shaderProgramOverlay.vertexPositionAttribute);
-
-            self.gl.uniform1i(self.shaderProgramOverlay.inputTexture,0);
-            self.gl.bindTexture(self.gl.TEXTURE_2D, self.silhouetteTexture);
-
-            self.gl.viewport(0, 0, self.gl.viewportWidth, self.gl.viewportHeight);
-
-            const paintMvMatrix = mat4.create();
-            const paintPMatrix = mat4.create();
-            mat4.identity(paintMvMatrix);
-            mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
-
-            self.gl.uniformMatrix4fv(self.shaderProgramOverlay.pMatrixUniform, false, paintPMatrix);
-            self.gl.uniformMatrix4fv(self.shaderProgramOverlay.mvMatrixUniform, false, paintMvMatrix);
-
-            bindFramebufferDrawBuffers(self);
-
-            self.gl.depthFunc(self.gl.ALWAYS);
-            if (self.ext) {
-                self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
-            } else {
-                self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_SHORT, 0);
-            }
-            self.gl.bindTexture(self.gl.TEXTURE_2D, null)
-            self.gl.depthFunc(self.gl.LESS);
-
-        } else {
-            self.gl.stencilMask(0x00);
-            self.gl.disable(self.gl.STENCIL_TEST);
-            self.gl.enable(self.gl.DEPTH_TEST);
+        self.gl.stencilMask(0x00);
+        self.gl.disable(self.gl.STENCIL_TEST);
+        self.gl.enable(self.gl.DEPTH_TEST);
                 if(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo){
 
                     const origQuat = quat4.clone(self.myQuat);
@@ -2367,7 +2257,6 @@ export function drawScene(self: MGWebGL) : void {
                 setAnaglyphGrey(self, false);
                 self.myQuat = origQuat
             }
-        }
 
         //console.log(self.mvMatrix);
         //console.log(self.mvInvMatrix);
@@ -3166,11 +3055,6 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             const height_ratio = self.gl.viewportHeight / self.gFramebuffer.height;
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.gFramebuffer);
             self.gl.viewport(self.currentViewport[0]/ width_ratio, self.currentViewport[1]/ height_ratio, self.currentViewport[2]/ width_ratio, self.currentViewport[3]/ height_ratio);
-        } else if(self.renderSilhouettesToTexture) {
-            if(!self.silhouetteBufferReady)
-                self.recreateSilhouetteBuffers();
-            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.silhouetteFramebuffer);
-            self.gl.viewport(0, 0, self.gl.viewportWidth, self.gl.viewportHeight);
         } else if(self.doDepthPeelPass&&self.renderToTexture&&(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo)) {
             if(!self.screenshotBuffersReady)
                 self.initTextureFramebuffer();
@@ -3245,18 +3129,12 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             self.gl.viewport(self.currentViewport[0], self.currentViewport[1], self.currentViewport[2], self.currentViewport[3]);
         }
 
-        if(self.renderSilhouettesToTexture||self.drawingGBuffers||(self.renderToTexture&&self.transparentScreenshotBackground)) {
+        if(self.drawingGBuffers||(self.renderToTexture&&self.transparentScreenshotBackground)) {
             self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], 0.0);
         } else {
             self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
         }
-        if(self.doStenciling){
-            if(!self.stenciling){
-                self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
-            }
-        } else {
-            if(doClear) self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
-        }
+        if(doClear) self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
 
         mat4.identity(self.mvMatrix);
 
@@ -3421,17 +3299,9 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
         self.setMatrixUniforms(self.shaderProgram);
         self.setLightUniforms(self.shaderProgram);
 
-        self.gl.useProgram(self.shaderProgramOutline);
-        self.setMatrixUniforms(self.shaderProgramOutline);
-        self.setLightUniforms(self.shaderProgramOutline);
-
         self.gl.useProgram(self.shaderProgramInstanced);
         self.setMatrixUniforms(self.shaderProgramInstanced);
         self.setLightUniforms(self.shaderProgramInstanced);
-
-        self.gl.useProgram(self.shaderProgramInstancedOutline);
-        self.setMatrixUniforms(self.shaderProgramInstancedOutline);
-        self.setLightUniforms(self.shaderProgramInstancedOutline);
 
         self.gl.useProgram(self.shaderProgramInstancedShadow);
         self.setMatrixUniforms(self.shaderProgramInstancedShadow);
@@ -3456,12 +3326,6 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
 
         self.gl.useProgram(self.shaderProgramGBuffersInstanced);
         self.gl.enableVertexAttribArray(self.shaderProgramGBuffersInstanced.vertexNormalAttribute);
-
-        self.gl.useProgram(self.shaderProgramOutline);
-        self.gl.enableVertexAttribArray(self.shaderProgramOutline.vertexNormalAttribute);
-
-        //self.gl.useProgram(self.shaderProgramInstancedOutline);
-        //self.gl.enableVertexAttribArray(self.shaderProgramInstancedOutline.vertexNormalAttribute);
 
         self.gl.useProgram(self.shaderProgramInstanced);
         self.gl.enableVertexAttribArray(self.shaderProgramInstanced.vertexNormalAttribute);

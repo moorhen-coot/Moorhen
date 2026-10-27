@@ -2,6 +2,7 @@ import { AtlasPacker } from "./atlasPacker";
 import { RootState } from '@/store/MoorhenReduxStore';
 import { webGL } from '../types/mgWebGL';
 import { Store } from '@reduxjs/toolkit';
+import { webGLUploadsDeferred } from './webGLUploads';
 
 interface Dictionary<T> {
     [Key: string]: T;
@@ -58,6 +59,19 @@ export class TextCanvasTexture {
      */
     revision = 0;
 
+    /**
+     * Whether the GL copy - texture and instance buffers - is behind the atlas, and whether the
+     * whole texture must go up again rather than the region drawn since (a clear while behind).
+     *
+     * While another renderer draws the main view (webGLUploadsDeferred), the atlas is still kept -
+     * glyphs drawn, instances laid out, for that renderer to copy (textLayer.ts) - but nothing is
+     * sent to WebGL, which would not draw it: each change used to cost a getImageData and a
+     * texture upload, and the 2D overlay text's buffers every frame, for a canvas nobody saw. When
+     * WebGL next draws the atlas (draw), it catches up first.
+     */
+    private glBehind = false;
+    private glBehindFully = false;
+
     constructor(gl,ext,instanced_ext,shader,width=1024,height=4096, store: Store<RootState>) {
         this.gl = gl
         this.ext = ext
@@ -95,6 +109,12 @@ export class TextCanvasTexture {
     }
 
     draw() {
+        if (this.glBehind) {
+            const full = this.glBehindFully;
+            this.glBehind = false;
+            this.glBehindFully = false;
+            this.uploadToGL(full);
+        }
         const zoom = this.store.getState().sceneSettings.zoom
         const canvasHeight = this.store.getState().glRef.canvasSize[1]
         const isWebGL2 = this.store.getState().glRef.isWebGL2
@@ -172,6 +192,16 @@ export class TextCanvasTexture {
      *                        incremental path is correct for every ordinary frame.
      */
     recreateBigTextureBuffers(forceFullUpload = false) {
+        if (webGLUploadsDeferred(this.store)) {
+            this.glBehind = true;
+            if (forceFullUpload) this.glBehindFully = true;
+            return;
+        }
+        this.uploadToGL(forceFullUpload);
+    }
+
+    /** What recreateBigTextureBuffers sends to GL, whether or not uploads are waiting. */
+    private uploadToGL(forceFullUpload: boolean) {
         const bigTextureTexCoords  = [0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
         const bigTexturePositions  = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0 ]
         const bigTextureIdxs = [0,1,2,0,2,3]
@@ -349,8 +379,14 @@ export class TextCanvasTexture {
         this.contextBig.fillStyle = "#00000000";
         this.contextBig.clearRect(0, 0, this.canvasBig.width, this.canvasBig.height);
         this.revision++;
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.canvasBig);
+        if (webGLUploadsDeferred(this.store)) {
+            // The blank atlas goes up whole when WebGL next draws (draw).
+            this.glBehind = true;
+            this.glBehindFully = true;
+        } else {
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.canvasBig);
+        }
         this.textureCache = {};
         this.packer.reset();
         // The whole atlas has just gone up blank, so there is nothing outstanding to upload.

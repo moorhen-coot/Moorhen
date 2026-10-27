@@ -1,5 +1,5 @@
 /**
- * The maps in the scene, contoured on the GPU for the WebGPU preview.
+ * The maps in the scene, contoured on the GPU for the WebGPU main view (and the preview).
  *
  * Each frame it reads the same settings Moorhen contours with (visible maps, radius, level,
  * style, colours, the origin or a map's locked origin) from the store, remakes a map's contour on
@@ -125,6 +125,22 @@ export class GpuMapLayer {
         }
         this.status = notes.length > 0 ? `GPU maps: ${notes.join("; ")}` : "GPU maps: none visible";
         return draws;
+    }
+
+    /** Triangles in the maps' contours as last made, all maps together. */
+    get triangles(): number {
+        let triangles = 0;
+        for (const entry of this.maps.values()) entry.surfaces.forEach(surface => { triangles += surface.lastTriangles; });
+        return triangles;
+    }
+
+    /**
+     * Whether some map could not be contoured here at all (its unit cell could not be fetched):
+     * then Coot contours the maps instead (MoorhenWebGPUMainView).
+     */
+    get failed(): boolean {
+        for (const entry of this.maps.values()) if (entry.failed) return true;
+        return false;
     }
 
     /**

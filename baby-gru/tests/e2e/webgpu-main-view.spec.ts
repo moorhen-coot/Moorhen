@@ -6,14 +6,15 @@ import type { WebGPUApi } from "../../src/WebGPUComponents/instanceApi";
 /**
  * The main view drawn with WebGPU (sceneSettings.useWebGPU; MoorhenWebGPUMainView.tsx).
  *
- * With 5a3h as ribbons: switched on, WebGPU takes the view and draws it, on a canvas the size of
+ * With 5a3h as ribbons: on by default, WebGPU takes the view and draws it, on a canvas the size of
  * the WebGL one; what is on screen is WebGPU's picture of the scene; WebGL can still be read back
  * (save_pixel_data draws that frame with WebGL); a screenshot is drawn by WebGPU, at the size
  * WebGL's would be, with a transparent background when asked; a recording started while WebGPU
  * draws records its canvas and leaves it drawing; a divided canvas (three ways) and anaglyph
- * stereo are WebGPU's too; a view WebGPU does not draw yet (outlines) goes back to WebGL and
- * returns; a map contoured again at a new radius is drawn without anything
- * else asking for a frame; and switched off, WebGL draws the view again - with the buffers that
+ * stereo are WebGPU's too; a view WebGPU does not draw (the shadow map debug view) goes back to
+ * WebGL and returns; a map is contoured on the GPU while WebGPU draws (and by Coot while WebGL
+ * does), and contoured again at a new radius without anything else asking for a frame; a lost
+ * device is replaced and WebGPU draws again; and switched off, WebGL draws the view again - with the buffers that
  * waited while WebGPU drew built for it (switching off crashed until they were), and no page errors.
  *
  * Runs in the chromium-webgpu and firefox-webgpu projects, and skips where there is no WebGPU.
@@ -23,7 +24,7 @@ interface Host {
     getMoorhenInstance: () => Promise<{
         webGPU: WebGPUApi;
         representation: { defaultStyle: string };
-        sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoThreeWayView(value: boolean): void; setDoAnaglyphStereo(value: boolean): void; setDoOutline(value: boolean): void };
+        sceneSettings: { setDrawCrosshairs(value: boolean): void; setDoThreeWayView(value: boolean): void; setDoAnaglyphStereo(value: boolean): void; setDoShadowDepthDebug(value: boolean): void };
         mapContourSettings: { setMapRadius(value: { molNo: number; radius: number }): void };
         getMapList(): { molNo: number }[];
         getVideoRecorderRef(): { current: Recorder | null };
@@ -84,17 +85,13 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
         const host = document.getElementById(targetId) as unknown as Host;
         (await host.getMoorhenInstance()).sceneSettings.setDoAnaglyphStereo(on);
     }, { targetId: id, on });
-    const setOutline = async (on: boolean) => await page.evaluate(async ({ targetId, on }) => {
+    const setShadowDebug = async (on: boolean) => await page.evaluate(async ({ targetId, on }) => {
         const host = document.getElementById(targetId) as unknown as Host;
-        (await host.getMoorhenInstance()).sceneSettings.setDoOutline(on);
+        (await host.getMoorhenInstance()).sceneSettings.setDoShadowDepthDebug(on);
     }, { targetId: id, on });
 
-    // Off by default: WebGL draws, and there is no WebGPU canvas.
-    expect(await mainView()).toMatchObject({ requested: false, active: false, drawing: false });
-    await expect(page.locator(SELECTOR)).toHaveCount(0);
-
-    // On: WebGPU takes the view and draws it.
-    await setMainView(true);
+    // On by default: WebGPU takes the view and draws it.
+    expect((await mainView()).requested).toBe(true);
     await expect.poll(async () => (await mainView()).drawing, { timeout: 30_000 }).toBe(true);
     // Through the locator, which reaches into the web component's shadow root; document.querySelector does not.
     const canvases = await page.locator(SELECTOR).evaluate((gpu: HTMLCanvasElement) => {
@@ -296,25 +293,29 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
     await setAnaglyph(false);
 
     // A view WebGPU does not draw yet goes to WebGL, the WebGPU canvas out of its way, and back.
-    await setOutline(true);
-    await expect.poll(async () => (await mainView()).webGLReason, { timeout: 30_000 }).toBe("outlines");
+    await setShadowDebug(true);
+    await expect.poll(async () => (await mainView()).webGLReason, { timeout: 30_000 }).toBe("the shadow map debug view");
     expect((await mainView()).drawing).toBe(false);
     await expect(page.locator(SELECTOR)).toHaveCSS("visibility", "hidden");
-    await setOutline(false);
+    await setShadowDebug(false);
     await expect.poll(async () => (await mainView()).drawing, { timeout: 30_000 }).toBe(true);
     await expect(page.locator(SELECTOR)).toHaveCSS("visibility", "visible");
 
-    // A map loaded while WebGPU draws, and contoured again at a smaller radius: the new contours
-    // are drawn with nothing else asking for a frame (the store's new buffers do).
+    // A map loaded while WebGPU draws is contoured on the GPU, not by Coot (no segments of its
+    // own in the scene's buffers), and contoured again at a smaller radius with nothing else
+    // asking for a frame (the map contour settings do).
+    const ribbonSegments = (await mainView()).lastFrame?.segments ?? 0;
     await moorhen.loadFiles([{ url: "/tests/test_data/5a3h_sigmaa.mtz", filename: "5a3h_sigmaa.mtz" }]);
     await expect.poll(async () => (await moorhen.getObjectCounts()).mapCount, { timeout: 120_000 }).toBeGreaterThan(0);
-    await expect.poll(async () => (await mainView()).lastFrame?.segments ?? 0, { timeout: 60_000 }).toBeGreaterThan(0);
+    await expect.poll(async () => (await mainView()).lastFrame?.mapTriangles ?? 0, { timeout: 60_000 }).toBeGreaterThan(0);
+    expect(await mainView()).toMatchObject({ mapsOnGpu: true });
+    expect((await mainView()).lastFrame.segments).toBe(ribbonSegments);
     // Settled at the first radius before changing it.
-    let segments = -1;
+    let mapTriangles = -1;
     await expect.poll(async () => {
-        const now = (await mainView()).lastFrame?.segments ?? 0;
-        const steady = now === segments;
-        segments = now;
+        const now = (await mainView()).lastFrame?.mapTriangles ?? 0;
+        const steady = now === mapTriangles;
+        mapTriangles = now;
         return steady;
     }, { timeout: 60_000, intervals: [2_000] }).toBe(true);
     await page.evaluate(async targetId => {
@@ -322,7 +323,25 @@ test("the main view drawn with WebGPU, handing back to WebGL where it must", asy
         const instance = await host.getMoorhenInstance();
         instance.mapContourSettings.setMapRadius({ molNo: instance.getMapList()[0].molNo, radius: 6 });
     }, id);
-    await expect.poll(async () => (await mainView()).lastFrame?.segments ?? 0, { timeout: 60_000 }).toBeLessThan(segments);
+    await expect.poll(async () => (await mainView()).lastFrame?.mapTriangles ?? 0, { timeout: 60_000 }).toBeLessThan(mapTriangles);
+
+    // While WebGL draws, Coot contours the map, and the GPU has it back after.
+    await setShadowDebug(true);
+    await expect.poll(async () => (await mainView()).mapsOnGpu, { timeout: 30_000 }).toBe(false);
+    await setShadowDebug(false);
+    await expect.poll(async () => (await mainView()).mapsOnGpu, { timeout: 30_000 }).toBe(true);
+
+    // A lost device is replaced: WebGPU draws again, maps and all.
+    const beforeLoss = (await mainView()).framesDrawn;
+    expect(await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as unknown as Host;
+        return await (await host.getMoorhenInstance()).webGPU.simulateDeviceLoss();
+    }, id)).toBe(true);
+    await expect.poll(async () => {
+        const now = await mainView();
+        return now.drawing && now.framesDrawn > beforeLoss && (now.lastFrame?.mapTriangles ?? 0) > 0;
+    }, { timeout: 60_000 }).toBe(true);
+    await expect(page.locator(SELECTOR)).toHaveCSS("visibility", "visible");
 
     // Off: WebGL draws the view again, from buffers built now for the ones that waited.
     await setMainView(false);

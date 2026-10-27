@@ -80,7 +80,7 @@ const WebGPUPreview = () => {
             let report: PreviewFrameReport;
             try {
                 const state = store.getState();
-                // Maps contoured on the GPU (dev menu): made, and drawn, without the CPU.
+                // Maps contoured on the GPU (while WebGPU draws the main view): made, and drawn, without the CPU.
                 const gpuDraws = maps?.frame(state) ?? [];
                 report = renderer.render(state.glRef.displayBuffers ?? [], gl, gpuDraws);
             } catch (err) {
