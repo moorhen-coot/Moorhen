@@ -22,6 +22,7 @@ const facts = (over: Partial<RendererReportFacts> = {}): RendererReportFacts => 
     webGPU: { reason: null, adapter: "apple metal-3", fallback: false },
     mainView: { requested: true, active: true, drawing: true, webGLReason: null, mapsOnGpu: true },
     canvas: { width: 2848, height: 1468 },
+    layout: null,
     scene: { triangles: 1_500_000, peelLayers: 3 },
     frames: { count: 60, medianMs: 16.7, worstMs: 33.4, cpuMs: 0.42, gpuMs: 12.03 },
     ...over,
@@ -81,6 +82,16 @@ describe("the report", () => {
         expect(formatRendererReport(facts({ secureContext: false }))).toContain("NOT a secure context");
         expect(formatRendererReport(facts({ webGPU: { reason: null, adapter: "google swiftshader", fallback: true } })))
             .toContain("WebGPU: google swiftshader (software)");
+    });
+
+    it("says how the page is laid out, to tell why the canvas is the size it is", () => {
+        const line = formatRendererReport(facts({
+            canvas: { width: 2385, height: 4767 },
+            layout: { canvasCss: [908.6, 1816], pixelRatio: 2.625, window: [908.6, 1816], visual: [411.4, 822.9, 2.21], screen: [411, 914] },
+        }));
+        expect(line).toContain("| 2385x4767, 1.50M triangles, 3 layers peeled | CSS: canvas 909x1816 at 2.63x, window 909x1816, visual 411x823 zoomed 2.21, screen 411x914 |");
+        expect(formatRendererReport(facts({ layout: { canvasCss: [400, 800], pixelRatio: 1, window: [400, 800], visual: [400, 800, 1], screen: [400, 800] } })))
+            .toContain("CSS: canvas 400x800 at 1x, window 400x800, visual 400x800, screen 400x800 |");
     });
 
     it("leaves the frames out when none were drawn", () => {

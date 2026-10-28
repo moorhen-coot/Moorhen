@@ -16,6 +16,18 @@ export interface RendererReportFacts {
     mainView: { requested: boolean; active: boolean; drawing: boolean; webGLReason: string | null; mapsOnGpu: boolean };
     /** The canvas, in device pixels. */
     canvas: { width: number; height: number };
+    /**
+     * How the page is laid out, in CSS pixels, to tell why the canvas is the size it is: the
+     * canvas's box, the device pixel ratio, the window (layout viewport), the visual viewport and
+     * its pinch zoom, and the screen. Null where unknown.
+     */
+    layout: {
+        canvasCss: [number, number];
+        pixelRatio: number;
+        window: [number, number];
+        visual: [number, number, number] | null;
+        screen: [number, number];
+    } | null;
     /** The scene: triangles in it (instances included), and transparent layers peeled if WebGPU drew. */
     scene: { triangles: number; peelLayers: number | null };
     /** Frames drawn for the report, one an animation frame. */
@@ -82,6 +94,13 @@ export function formatRendererReport(f: RendererReportFacts): string {
     const scene = `${f.canvas.width}x${f.canvas.height}, ${count(f.scene.triangles)} triangles`
         + (f.scene.peelLayers ? `, ${f.scene.peelLayers} layers peeled` : "");
     parts.push(scene);
+    if (f.layout) {
+        const size = ([w, h]: readonly number[]) => `${Math.round(w)}x${Math.round(h)}`;
+        const l = f.layout;
+        parts.push(`CSS: canvas ${size(l.canvasCss)} at ${+l.pixelRatio.toFixed(2)}x, window ${size(l.window)}`
+            + (l.visual ? `, visual ${size(l.visual)}${l.visual[2] !== 1 ? ` zoomed ${+l.visual[2].toFixed(2)}` : ""}` : "")
+            + `, screen ${size(l.screen)}`);
+    }
     if (f.frames) {
         parts.push(`${f.frames.count} frames: ${ms(f.frames.medianMs)} median, ${ms(f.frames.worstMs)} worst, `
             + `CPU ${ms(f.frames.cpuMs)}, GPU ${f.frames.gpuMs === null ? "not timed" : ms(f.frames.gpuMs)}`);

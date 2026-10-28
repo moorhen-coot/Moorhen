@@ -295,6 +295,8 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
             }
             const main = this.mainView();
             const canvas = view.canvas as { width: number; height: number };
+            const box = view.canvas.getBoundingClientRect?.();
+            const visual = window.visualViewport;
             return {
                 moorhenVersion: String(moorhenVersion),
                 userAgent: navigator.userAgent,
@@ -302,6 +304,13 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 webGPU,
                 mainView: { requested: main.requested, active: main.active, drawing: main.drawing, webGLReason: main.webGLReason, mapsOnGpu: main.mapsOnGpu },
                 canvas: { width: canvas.width, height: canvas.height },
+                layout: box ? {
+                    canvasCss: [box.width, box.height],
+                    pixelRatio: window.devicePixelRatio || 1,
+                    window: [window.innerWidth, window.innerHeight],
+                    visual: visual ? [visual.width, visual.height, visual.scale] : null,
+                    screen: [window.screen.width, window.screen.height],
+                } : null,
                 scene: {
                     triangles: planPreview(host.store.getState().glRef.displayBuffers ?? []).triangles,
                     peelLayers: main.drawing ? main.lastFrame?.peelLayers ?? null : null,
