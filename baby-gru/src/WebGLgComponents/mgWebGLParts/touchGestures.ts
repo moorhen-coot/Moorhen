@@ -28,6 +28,17 @@ import { panBy } from './eventHandlers';
  *     events arrive, breaking atom dragging.
  *   - Mouse hover needs nothing here: the native mousemove listener in
  *     attachCanvasListeners already drives doMouseMove / doHover.
+ *
+ * The first finger's press is provisional. A pinch starts with one finger, and
+ * the second usually lands a few tens of ms later, so pressing at once would
+ * click (and possibly grab a handle) under the first finger of every pinch.
+ * The press (doMouseDown + doClick) is held for TWO_FINGER_GRACE_MS and
+ * committed when that runs out, when the finger moves past TAP_MAX_PX, or when
+ * it lifts - in each case before any movement reaches doMouseMove, so taps
+ * and atom drags behave as before. A second finger inside the window cancels
+ * it, and the release that follows sends no mouse-up, so a pinch causes no
+ * click, grab, or release-click. A second finger after the window is a press
+ * then a pinch, and keeps its paired mouse-up.
  */
 
 const TAP_MAX_PX = 3;
@@ -35,6 +46,7 @@ const TAP_MAX_MS = 300;
 const DOUBLE_TAP_MS = 300;
 const DOUBLE_TAP_PX = 20;
 const LONG_PRESS_MS = 1000;
+const TWO_FINGER_GRACE_MS = 120;
 const TWIST_DEADZONE_RAD = 0.001;
 
 /** Build a synthetic event carrying the fields the mouse handlers read. */
@@ -80,6 +92,38 @@ export function attachTouchGestures(self: MGWebGL): () => void {
         }
     };
 
+    // The first finger's provisional press: see the note at the top.
+    let pendingPress: { x: number; y: number } | null = null;
+    let pressTimer: ReturnType<typeof setTimeout> | null = null;
+    let pressCommitted = false;
+    let multiTouch = false;
+    const clearPressTimer = () => {
+        if (pressTimer !== null) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+        }
+    };
+    const commitPress = () => {
+        clearPressTimer();
+        if (pendingPress === null) return;
+        const down = syntheticEvent(self, pendingPress.x, pendingPress.y, { button: 0, buttons: 1 });
+        pendingPress = null;
+        pressCommitted = true;
+        if (self.keysDown['dist_ang_2d']) {
+            self.doMouseDownMeasure(down, self);
+        } else {
+            self.doMouseDown(down, self);
+            // set currentlyDraggedAtom before any move is handled (no
+            // filterTaps) so an atom drag works from the first movement.
+            self.doClick(down, self);
+        }
+    };
+    const cancelPress = () => {
+        clearPressTimer();
+        pendingPress = null;
+        multiTouch = true;
+    };
+
     // --- 1-finger drag → rotate; tap → click; long-press → right-click.
     const drag = new DragGesture(
         canvas,
@@ -101,6 +145,7 @@ export function attachTouchGestures(self: MGWebGL): () => void {
             // first finger so rotation doesn't jump when going back to one finger.
             const touchCount = (event as TouchEvent)?.touches?.length ?? 0;
             if (pinching || touchCount > 1) {
+                cancelPress();
                 clearLongPress();
                 self.init_x = x;
                 self.init_y = y;
@@ -128,15 +173,11 @@ export function attachTouchGestures(self: MGWebGL): () => void {
             if (event?.cancelable) event.preventDefault();
 
             if (first) {
-                const down = syntheticEvent(self, x, y, { button: 0, buttons: 1 });
-                if (self.keysDown['dist_ang_2d']) {
-                    self.doMouseDownMeasure(down, self);
-                } else {
-                    self.doMouseDown(down, self);
-                    // set currentlyDraggedAtom up front (no filterTaps) so an
-                    // atom drag that starts immediately still works.
-                    self.doClick(down, self);
-                }
+                clearPressTimer();
+                pendingPress = { x, y };
+                pressCommitted = false;
+                multiTouch = false;
+                pressTimer = setTimeout(commitPress, TWO_FINGER_GRACE_MS);
                 self.mouseMoved = false;
                 clearLongPress();
                 longPressTimer = setTimeout(() => {
@@ -146,6 +187,17 @@ export function attachTouchGestures(self: MGWebGL): () => void {
                 }, LONG_PRESS_MS);
             } else if (last) {
                 clearLongPress();
+                // A tap lifted inside the grace window still clicks, just now.
+                commitPress();
+                if (!pressCommitted) {
+                    // The press was cancelled by a second finger: there was no
+                    // mouse-down, so no mouse-up either (it would report a click
+                    // or centre on whatever is under this finger).
+                    self.currentlyDraggedAtom = null;
+                    self.mouseDown = false;
+                    lastTap = null;
+                    return;
+                }
                 const up = syntheticEvent(self, x, y, { button: 0 });
                 if (self.keysDown['dist_ang_2d']) {
                     self.doMouseUpMeasure(up, self);
@@ -158,6 +210,7 @@ export function attachTouchGestures(self: MGWebGL): () => void {
                 // The browser's own dblclick is suppressed along with the
                 // emulated mouse events, so recognise the double-tap here.
                 const isTap =
+                    !multiTouch &&
                     elapsedTime < TAP_MAX_MS &&
                     Math.abs(mx) < TAP_MAX_PX &&
                     Math.abs(my) < TAP_MAX_PX;
@@ -178,8 +231,16 @@ export function attachTouchGestures(self: MGWebGL): () => void {
                 }
             } else {
                 // ongoing 1-finger move → rotate (buttons:1, no modifiers).
-                if (Math.abs(mx) > TAP_MAX_PX || Math.abs(my) > TAP_MAX_PX) {
+                const beyondTap = Math.abs(mx) > TAP_MAX_PX || Math.abs(my) > TAP_MAX_PX;
+                if (beyondTap) {
                     clearLongPress();
+                }
+                if (pendingPress !== null) {
+                    // Still provisional: jitter waits, a real move commits the
+                    // press first. doMouseDown set init_x/y at the press point,
+                    // so the move below carries the whole distance.
+                    if (!beyondTap) return;
+                    commitPress();
                 }
                 const move = syntheticEvent(self, x, y, { button: 0, buttons: 1 });
                 if (self.keysDown['dist_ang_2d']) {
@@ -218,6 +279,7 @@ export function attachTouchGestures(self: MGWebGL): () => void {
             if ((event as PointerEvent)?.pointerType === 'mouse') return memo;
 
             if (first) {
+                cancelPress();
                 clearLongPress();
                 baseZoom = self.zoom;
                 lastAngle = angle;
@@ -282,6 +344,7 @@ export function attachTouchGestures(self: MGWebGL): () => void {
 
     return () => {
         clearLongPress();
+        clearPressTimer();
         drag.destroy();
         pinch.destroy();
     };
