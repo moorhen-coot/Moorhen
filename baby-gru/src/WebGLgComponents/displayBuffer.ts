@@ -227,7 +227,7 @@ export class DisplayBuffer {
             // Most of these are lists, but MGWebGL's text and click-line setup assigns single buffers.
             for (const entry of glBuffers) {
                 for (const buffer of Array.isArray(entry) ? entry : [entry]) {
-                    if (buffer) gl.deleteBuffer(buffer as unknown as WebGLBuffer);
+                    if (buffer instanceof WebGLBuffer) gl.deleteBuffer(buffer);
                 }
             }
         }
