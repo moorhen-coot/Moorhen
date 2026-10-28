@@ -13,9 +13,17 @@ uniform sampler2D colorPeelSamplers;
 uniform float xSSAOScaling;
 uniform float ySSAOScaling;
 
+// True for the opaque layer when it was drawn multisampled and resolved: draw it exactly as it is.
+uniform bool resolvedLayer;
+
 out vec4 fragColor;
 
 void main(void) {
+
+    if(resolvedLayer) {
+        fragColor = texture(colorPeelSamplers, gl_FragCoord.xy * vec2(xSSAOScaling, ySSAOScaling));
+        return;
+    }
 
     float depth;
     depth = texture(depthPeelSamplers,vTexture).r;

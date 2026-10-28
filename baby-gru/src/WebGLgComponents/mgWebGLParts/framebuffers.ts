@@ -1,5 +1,6 @@
 import { setRttFramebufferSize } from "../../store/glRefSlice"
 import type { MGWebGL } from '../mgWebGL';
+import type { webGL } from "../../types/mgWebGL";
 
 /**
  * Framebuffer / offscreen-buffer setup. These methods create and resize the
@@ -241,6 +242,139 @@ export function deleteDepthPeelBuffers(self: MGWebGL) {
     self.depthPeelDepthTextures = [];
     self.depthPeelRenderbufferDepth = [];
     self.depthPeelRenderbufferColor = [];
+    deleteDepthPeelResolveBuffer(self);
+}
+
+/**
+ * Multisampling for the opaque peel layer.
+ *
+ * As soon as anything in the scene is transparent, the whole scene is drawn through the depth-peel
+ * layers instead of straight to the canvas, and those layers are ordinary single-sample textures.
+ * So making one object transparent switched antialiasing off for everything else - most visibly
+ * on map mesh, which is a mass of one-pixel lines. The FXAA in the compositing shader could not
+ * make up for it: it only runs where the layer drew something, so it can never add coverage to
+ * the pixels beside a line, which is the whole of what antialiasing a thin line means.
+ *
+ * Only the opaque layer is multisampled. It holds nearly everything on screen, and is drawn exactly
+ * once, so it costs about what the canvas's own multisampling costs when nothing is transparent.
+ * The transparent layers stay single-sample: they are composited at partial opacity, where aliasing
+ * shows far less, and multisampling them too would multiply the cost by the layer count.
+ */
+
+/** Memory allowed for the multisampled opaque layer, colour and depth over all samples. */
+export const PEEL_MSAA_BUDGET_BYTES = 256 * 1024 * 1024;
+
+/** What browsers give the canvas by default. More costs fill rate without being visible. */
+export const PEEL_MSAA_MAX_SAMPLES = 4;
+
+/** RGBA8 colour plus DEPTH_COMPONENT32F depth, per sample per pixel. */
+const PEEL_MSAA_BYTES_PER_SAMPLE = 8;
+
+/**
+ * How many samples to give the opaque peel layer at this size, or 0 for none.
+ *
+ * Bounded by memory as well as by the hardware, because the layers follow the render target: on
+ * screen that is the canvas, around 90 MB at 4 samples on a large Retina window, but a 4096x4096
+ * capture would want over 500 MB at 4 samples on top of the capture buffers themselves, so it gets
+ * 2. Past the budget the count drops, and below 2 there is no point multisampling at all.
+ *
+ * @param supported sample counts the implementation supports for both formats, in any order.
+ */
+export function peelResolveSamples(width: number, height: number, supported: readonly number[]): number {
+    if (!(width > 0 && height > 0)) return 0;
+    const affordable = Math.floor(PEEL_MSAA_BUDGET_BYTES / (width * height * PEEL_MSAA_BYTES_PER_SAMPLE));
+    const wanted = Math.min(PEEL_MSAA_MAX_SAMPLES, affordable);
+    const usable = supported.filter(n => n >= 2 && n <= wanted);
+    return usable.length > 0 ? Math.max(...usable) : 0;
+}
+
+/** Sample counts both RGBA8 and DEPTH_COMPONENT32F renderbuffers support here. Asked once. */
+function peelSupportedSamples(self: MGWebGL): number[] {
+    if (!self.depthPeelMSAASupported) {
+        const gl = self.gl as WebGL2RenderingContext;
+        const colour = Array.from(gl.getInternalformatParameter(gl.RENDERBUFFER, gl.RGBA8, gl.SAMPLES) ?? []) as number[];
+        const depth = Array.from(gl.getInternalformatParameter(gl.RENDERBUFFER, gl.DEPTH_COMPONENT32F, gl.SAMPLES) ?? []) as number[];
+        self.depthPeelMSAASupported = colour.filter(n => depth.includes(n));
+    }
+    return self.depthPeelMSAASupported;
+}
+
+export function deleteDepthPeelResolveBuffer(self: MGWebGL) {
+    if (self.depthPeelMSAAFramebuffer) self.gl.deleteFramebuffer(self.depthPeelMSAAFramebuffer);
+    if (self.depthPeelMSAAColor) self.gl.deleteRenderbuffer(self.depthPeelMSAAColor);
+    if (self.depthPeelMSAADepth) self.gl.deleteRenderbuffer(self.depthPeelMSAADepth);
+    self.depthPeelMSAAFramebuffer = null;
+    self.depthPeelMSAAColor = null;
+    self.depthPeelMSAADepth = null;
+    self.depthPeelMSAASamples = 0;
+}
+
+/**
+ * Make sure the multisampled opaque-layer buffer exists at this size, and say whether it can be
+ * used. False means draw layer 0 single-sample as before: WebGL1, too large for the budget, or an
+ * implementation that will not build it. A failed build is remembered for that size so it is not
+ * retried every frame.
+ */
+export function ensureDepthPeelResolveBuffer(self: MGWebGL, width: number, height: number): boolean {
+    if (!self.WEBGL2) return false;
+    const gl = self.gl as WebGL2RenderingContext;
+    const samples = peelResolveSamples(width, height, peelSupportedSamples(self));
+    const key = `${width}x${height}x${samples}`;
+
+    const fb = self.depthPeelMSAAFramebuffer;
+    if (fb && fb.width === width && fb.height === height && self.depthPeelMSAASamples === samples) return true;
+    deleteDepthPeelResolveBuffer(self);
+    if (samples === 0 || self.depthPeelMSAAFailed === key) return false;
+
+    const framebuffer = gl.createFramebuffer() as webGL.MGWebGLFrameBuffer;
+    framebuffer.width = width;
+    framebuffer.height = height;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+
+    const colour = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, colour);
+    gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.RGBA8, width, height);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, colour);
+
+    // 32F to match the layer depth textures it resolves into; a depth blit needs identical formats.
+    const depth = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, depth);
+    gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.DEPTH_COMPONENT32F, width, height);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth);
+
+    const complete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    self.depthPeelMSAAFramebuffer = framebuffer;
+    self.depthPeelMSAAColor = colour;
+    self.depthPeelMSAADepth = depth;
+    self.depthPeelMSAASamples = samples;
+    if (!complete) {
+        console.warn(`Multisampled opaque peel layer incomplete at ${key}; transparency will be drawn without antialiasing.`);
+        deleteDepthPeelResolveBuffer(self);
+        self.depthPeelMSAAFailed = key;
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Resolve the multisampled opaque layer into a peel layer's colour and depth textures.
+ *
+ * The depth resolve keeps one sample per pixel, chosen by the implementation. That only matters at
+ * silhouette edges, where it decides by a pixel whether transparent geometry counts as behind the
+ * opaque surface - the same choice a single-sample layer would have made anyway.
+ */
+export function resolveDepthPeelResolveBuffer(self: MGWebGL, target: webGL.MGWebGLFrameBuffer) {
+    const gl = self.gl as WebGL2RenderingContext;
+    const source = self.depthPeelMSAAFramebuffer;
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, source);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, target);
+    gl.blitFramebuffer(0, 0, source.width, source.height, 0, 0, target.width, target.height,
+                       gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
 }
 
 /**
@@ -290,7 +424,12 @@ export function recreateDepthPeelBuffers(self: MGWebGL, width, height, layers = 
                     // an eight-bit framebuffer, so the extra precision was never visible, while
                     // costing four times the memory and - since peeling is fill-bound - four
                     // times the bandwidth on every write and every read back during compositing.
-                    self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.RGBA, width, height, 0, self.gl.RGBA, self.gl.UNSIGNED_BYTE, null);
+                    //
+                    // Sized RGBA8 on WebGL2 rather than unsized RGBA: layer 0 is filled by resolving
+                    // a multisampled RGBA8 renderbuffer into it (see ensureDepthPeelResolveBuffer),
+                    // and a multisample resolve requires the two formats to be identical.
+                    self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.WEBGL2 ? (self.gl as WebGL2RenderingContext).RGBA8 : self.gl.RGBA,
+                                       width, height, 0, self.gl.RGBA, self.gl.UNSIGNED_BYTE, null);
                     self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.COLOR_ATTACHMENT0, self.gl.TEXTURE_2D, self.depthPeelColorTextures[i], 0);
 
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.depthPeelDepthTextures[i]);
@@ -455,8 +594,67 @@ export function recreateOffScreeenBuffers(self: MGWebGL, width,height) {
         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
 }
 
+/**
+ * Free everything initTextureFramebuffer made.
+ *
+ * Nothing used to, and initTextureFramebuffer runs more than once: resize() clears
+ * screenshotBuffersReady, and the next render that wants the texture rebuilds the lot. So every
+ * window resize stranded two framebuffers, three textures and the renderbuffers - at 4096x4096
+ * that is around 100 MB of GPU memory per resize, held until the context died.
+ *
+ * The renderbuffers used to be local consts, so they could not have been freed even by a caller
+ * that wanted to. They are kept on the instance now for that reason alone.
+ */
+/**
+ * How finely shadows are resolved, named the way the mesh settings are.
+ *
+ * Measured on 1ibm drawn as ribbons, with GPU timer queries in Chrome: 9.1 ms a frame at 2048,
+ * 10.5 at 4096, 17.6 at 8192. The step to 4096 is nearly free because the shadow pass is still
+ * dominated by vertex work; by 8192 fill has taken over and the cost is close to linear in
+ * texels. 16384 measured 75.8 ms - eight times coarse, for no visible gain over 8192 - so it is
+ * deliberately not offered.
+ */
+export type ShadowMapQuality = "coarse" | "nice" | "smooth";
+
+/** Edge length of the shadow map for each quality. Still bounded by what the hardware allows. */
+export const SHADOW_MAP_TEXELS: Record<ShadowMapQuality, number> = {
+    coarse: 2048,
+    nice: 4096,
+    smooth: 8192,
+};
+
+export function deleteTextureFramebuffer(self: MGWebGL) : void {
+        if (!self.gl) return;
+
+        (self.rttRenderbuffers ?? []).forEach(buffer => { if (buffer) self.gl.deleteRenderbuffer(buffer) });
+        self.rttRenderbuffers = [];
+
+        [self.rttFramebuffer, self.rttFramebufferColor, self.rttFramebufferDepth]
+            .forEach(buffer => { if (buffer) self.gl.deleteFramebuffer(buffer) });
+        [self.rttTexture, self.rttDepthTexture, self.rttTextureDepth]
+            .forEach(texture => { if (texture) self.gl.deleteTexture(texture) });
+
+        self.rttFramebuffer = null;
+        self.rttFramebufferColor = null;
+        self.rttFramebufferDepth = null;
+        self.rttTexture = null;
+        self.rttDepthTexture = null;
+        self.rttTextureDepth = null;
+        self.screenshotBuffersReady = false;
+}
+
+/**
+ * Build the render-to-texture buffers: a square as large as the hardware allows, up to 4096.
+ *
+ * Screenshots render into this and then crop an aspect-correct band out of it, which is why the
+ * projection built for this path uses square extents. The two halves only make sense together.
+ */
 export function initTextureFramebuffer(self: MGWebGL) : void {
 
+        // Whatever is already here is about to be replaced; this runs again after every resize.
+        deleteTextureFramebuffer(self);
+
+        self.rttRenderbuffers = [];
         self.rttFramebuffer = self.gl.createFramebuffer();
         self.rttFramebufferColor = self.gl.createFramebuffer();
 
@@ -483,6 +681,7 @@ export function initTextureFramebuffer(self: MGWebGL) : void {
 
         if (self.WEBGL2) {
             const renderbufferDepth = self.gl.createRenderbuffer();
+            self.rttRenderbuffers.push(renderbufferDepth);
             self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, renderbufferDepth);
             self.gl.framebufferRenderbuffer(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.RENDERBUFFER, renderbufferDepth);
             self.gl.renderbufferStorageMultisample(self.gl.RENDERBUFFER,
@@ -491,6 +690,7 @@ export function initTextureFramebuffer(self: MGWebGL) : void {
                                     self.rttFramebuffer.width,
                                     self.rttFramebuffer.height);
             const renderbuffer = self.gl.createRenderbuffer();
+            self.rttRenderbuffers.push(renderbuffer);
             self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, renderbuffer);
             self.gl.framebufferRenderbuffer(self.gl.FRAMEBUFFER, self.gl.COLOR_ATTACHMENT0, self.gl.RENDERBUFFER, renderbuffer);
             self.gl.renderbufferStorageMultisample(self.gl.RENDERBUFFER,
@@ -506,6 +706,7 @@ export function initTextureFramebuffer(self: MGWebGL) : void {
         } else {
             self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.COLOR_ATTACHMENT0, self.gl.TEXTURE_2D, self.rttTexture, 0);
             const renderbuffer = self.gl.createRenderbuffer();
+            self.rttRenderbuffers.push(renderbuffer);
             self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, renderbuffer);
             self.gl.framebufferRenderbuffer(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.RENDERBUFFER, renderbuffer);
             //Sigh. Maybe DEPTH_STENCIL? Is anyone actually stuck on WebGL1?
@@ -522,7 +723,22 @@ export function initTextureFramebuffer(self: MGWebGL) : void {
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebufferDepth);
             const hwLimit = Math.min(self.gl.getParameter(self.gl.MAX_TEXTURE_SIZE), self.gl.getParameter(self.gl.MAX_RENDERBUFFER_SIZE));
             const maxDim = Math.max(1, self.canvas.width, self.canvas.height);
-            const shadowSize = Math.max(1024, Math.min(4096, hwLimit, Math.pow(2, Math.ceil(Math.log2(maxDim)))));
+            // Sized by the chosen quality rather than by the canvas, which is what it used to
+            // be: nextPow2(max(width, height)) capped at 4096, so an ordinary window got 2048 and
+            // a 4K one silently got twice the shadow cost. The size people actually want depends
+            // on the structure and on what they are doing with it, not on the window.
+            const quality: ShadowMapQuality =
+                self.store?.getState?.()?.sceneSettings?.shadowMapQuality ?? "coarse";
+            const wanted = SHADOW_MAP_TEXELS[quality] ?? SHADOW_MAP_TEXELS.coarse;
+            const shadowSize = Math.max(1024, Math.min(wanted, hwLimit));
+            // Silent when it gets what it asked for. Said out loud when the hardware refuses,
+            // because then two settings quietly become the same picture and there is nothing on
+            // screen to say so - which is the likeliest reading of a browser where raising the
+            // quality changes nothing at all.
+            if (shadowSize !== wanted) {
+                console.warn(`[shadow map] asked for ${wanted}, hardware limit is ${hwLimit},`
+                    + ` using ${shadowSize}`);
+            }
             self.rttFramebufferDepth.width = shadowSize;
             self.rttFramebufferDepth.height = shadowSize;
             self.rttTextureDepth = self.gl.createTexture();
@@ -538,6 +754,7 @@ export function initTextureFramebuffer(self: MGWebGL) : void {
                 self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.DEPTH_COMPONENT, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height, 0, self.gl.DEPTH_COMPONENT, self.gl.UNSIGNED_SHORT, null);
             }
             const renderbufferCol = self.gl.createRenderbuffer();
+            self.rttRenderbuffers.push(renderbufferCol);
             self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, renderbufferCol);
             self.gl.renderbufferStorage(self.gl.RENDERBUFFER, self.gl.RGBA4, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height);
             self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.TEXTURE_2D, self.rttTextureDepth, 0);

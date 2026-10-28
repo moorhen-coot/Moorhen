@@ -52,6 +52,11 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = { r: 0.800000011920929, g: 0.40000000596046
  * map.delete();
 */
 
+// CCP4 numbers non-standard settings as base + 1000*n (e.g. 3018 = P 2 21 21), which spaceGroupList
+// doesn't cover; fall back to the base group so these aren't mistaken for P1 (and hence EM).
+const spaceGroupNameFromNumber = (spNum: number): string | undefined =>
+    spaceGroupList[`${spNum}`] ?? (spNum > 1000 ? spaceGroupList[`${spNum % 1000}`] : undefined);
+
 export type BasicMapHeaderInfo = {}
 
 export type mapHeaderInfo = {
@@ -1277,7 +1282,7 @@ export class MoorhenMap {
             const spNum = fileHeader.records.syminf?.spaceGroupNumber ?? 1
             headerInfo = {
                 cell: { a: cell[0], b: cell[1], c: cell[2], alpha: cell[3], beta: cell[4], gamma: cell[5] },   
-                spacegroup: spaceGroupList[`${spNum}`],
+                spacegroup: fileHeader.records.syminf?.spaceGroupName ?? spaceGroupNameFromNumber(spNum),
                 resolution: fileHeader.records.reso?.high ?? -1
             }
         } else if (this.dataOrigin === "mapFile" ) {
@@ -1292,7 +1297,7 @@ export class MoorhenMap {
                     beta: fileHeader.unitCell.cellb.beta,
                     gamma: fileHeader.unitCell.cellb.gamma,
                 },
-                spacegroup: spaceGroupList[`${spNum}`],
+                spacegroup: spaceGroupNameFromNumber(spNum),
                 resolution: fileHeader.sampling.mx
             }
         }
@@ -1311,6 +1316,7 @@ export class MoorhenMap {
         if (headerInfo === undefined) {
             throw new Error("Header info is not defined");
         }
+        this.headerInfo = headerInfo;
 
         this.cellCentre = [-headerInfo.cell.a / 2, -headerInfo.cell.b / 2, -headerInfo.cell.c / 2];
         console.log("headerInfo", headerInfo);

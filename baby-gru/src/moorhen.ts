@@ -17,6 +17,7 @@ export { MoorhenMap } from "./utils/MoorhenMap";
 export { getMultiColourRuleArgs } from "./utils/utils";
 export { CommandCentre } from "./InstanceManager/CommandCentre";
 export { CootCommandWrapper } from "./InstanceManager/CommandCentre/CootCommandWrapper";
+export { CootCommandError, throwIfCootFailed } from "./InstanceManager/CommandCentre/CootCommandError";
 export { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule";
 export { MoorhenMoleculeSelect } from "./components/inputs";
 export { MoorhenMapSelect } from "./components/inputs/Selector/MoorhenMapSelect";
@@ -36,6 +37,8 @@ export { MoorhenValidation } from "./components/validation-tools/MoorhenValidati
 export { MoorhenWaterValidation } from "./components/validation-tools/MoorhenWaterValidation";
 export { autoOpenFiles } from "./utils/FileLoading";
 export { MoorhenInstance, MoorhenInstanceProvider } from "./InstanceManager";
+export type { LoadFilesResult } from "./InstanceManager/MoorhenInstance";
+export type { MtzMapRequest } from "./utils/MtzLoading";
 export { MoorhenMenuSystem } from "./components/menu-system/MenuSystem";
 export { reducers as MoorhenStoreReducers } from "./store/MoorhenReduxStore";
 export type { RootState } from "./store/MoorhenReduxStore" ;

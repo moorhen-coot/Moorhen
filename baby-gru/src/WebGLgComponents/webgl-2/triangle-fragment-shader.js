@@ -52,9 +52,15 @@ const clipAndPeelDiscards = `
 
       if(peelNumber>0) {
           vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
-          float max_depth;
+          highp float max_depth;
           max_depth = texture(depthPeelSamplers,tex_coord).r;
-          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 || gl_FrontFacing!=true ) {
+          // No gl_FrontFacing test. There used to be one here, and only here: the first transparent
+          // layer runs without this block, so it kept back faces and every later layer threw them
+          // away. Whether a back-facing surface showed therefore depended on whether anything
+          // transparent was in front of it - the far inside wall of a clipped-open surface vanished
+          // behind a hover ball, which was then blended over the bare background and came out
+          // cream. Every layer now keeps every face, as a see-through surface really looks.
+          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
               discard;
           }
       }
@@ -64,9 +70,20 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
 
     precision mediump float;
 
+    // GLSL ES 3.00 gives a fragment shader no default precision for sampler2DShadow - unlike
+    // sampler2D - so leaving it out is a compile error, not a warning: "No precision specified".
+    // highp because the comparison is against a 24-bit depth texture over a range now fitted to
+    // the scene, where mediump's ~16 bits would quantise the very differences being tested.
+    precision highp sampler2DShadow;
+
     vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
 
     in lowp vec4 vColor;
+
+    // A fade applied to the whole buffer: 1.0 leaves it alone, 0.0 makes it vanish. Set per draw
+    // from DisplayBuffer.alphaMultiplier, so a movie can fade an object in or out without touching
+    // a single vertex. Defaults to 1.0 for the many draws that never set it.
+    uniform float alphaMultiplier;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
 
@@ -86,8 +103,8 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
     uniform bool hasBaseColourTexture;
     uniform sampler2D baseColourTexture;
 
-    in lowp vec4 ShadowCoord;
-    uniform sampler2D ShadowMap;
+    in highp vec4 ShadowCoord;
+    uniform sampler2DShadow ShadowMap;
     uniform sampler2D SSAOMap;
     uniform sampler2D edgeDetectMap;
     uniform float xPixelOffset;
@@ -135,24 +152,35 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
     uniform vec3 screenZFrag;
 
     uniform int peelNumber;
-    uniform sampler2D depthPeelSamplers;
+    // highp, as is max_depth in the peel test. Samplers default to lowp and floats here to
+    // mediump, which Chrome (ANGLE) lets the driver run in 16 bits: depth then rounds to ~5e-4,
+    // far coarser than the peel test's 1e-6, and a later layer re-captures the same surface
+    // wherever the rounding falls the wrong way - rows of dots along lines of equal depth.
+    // Firefox runs everything at highp, which is why only Chrome showed it.
+    uniform highp sampler2D depthPeelSamplers;
     /** The opaque scene's depth, when it is drawn separately from the peel layers. */
     uniform bool haveOpaqueDepth;
-    uniform sampler2D opaqueDepthSampler;
+    uniform highp sampler2D opaqueDepthSampler;
 
     uniform float zoom;
 
     out vec4 fragColor;
 
     float lookup(vec2 offSet){
-      vec2 resolution;
-      resolution.x = xSSAOScaling/zoom/3.;
-      resolution.y = ySSAOScaling/zoom/3.;
-      float shad = 1.0;
-      float bias = 0.005;
-      if(texture(ShadowMap, ShadowCoord.xy+offSet*resolution ).x < ShadowCoord.z-bias)
-          shad = texture(ShadowMap, ShadowCoord.xy+offSet*resolution ).x - (ShadowCoord.z-bias);
-      return shad;
+      // Offsets in shadow-map texels. xPixelOffset and yPixelOffset are 1/width and 1/height of
+      // the shadow texture, already set from rttFramebufferDepth - this used to offset by
+      // xSSAOScaling/zoom instead, a scale borrowed from SSAO with no relation to the shadow
+      // map's resolution, so the kernel's footprint changed as you zoomed and bore no fixed
+      // relationship to a texel.
+      vec2 uv = ShadowCoord.xy + offSet * vec2(xPixelOffset, yPixelOffset);
+      // One fetch does the comparison and blends the four texels around it: the unit returns the
+      // fraction of that 2x2 the fragment is in front of. 1.0 is fully lit, as before.
+      //
+      // The bias is in normalised depth, so what it means in angstrom depends on the light's
+      // near-to-far range. That range used to be a fixed 0.1 to 1000 whatever the scene, making
+      // this about 5 A - wider than an alpha helix, which is why shadows sat away from their
+      // casters. Now that the range is fitted to the scene it comes to well under one.
+      return texture(ShadowMap, vec3(uv, ShadowCoord.z - 0.005));
     }
 
     void main(void) {
@@ -266,6 +294,10 @@ ${discards ? clipAndPeelDiscards : ""}
       float boost = clamp(vHighlight - 1.0, 0.0, 1.0);
       fragColor.rgb = mix(fragColor.rgb, vec3(1.0, 1.0, 1.0), 0.5 * boost);
       fragColor.a *= min(vHighlight, 1.0);
+
+      // Last, so it scales whatever the rest of the shader decided the alpha was - the vertex
+      // colour, the hover highlight's fade, all of it.
+      fragColor.a *= alphaMultiplier;
 
     }
 `;

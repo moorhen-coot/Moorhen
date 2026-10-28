@@ -30,6 +30,9 @@ export const MoorhenControlsModal = (props: ModalComponentProps) => {
 
     const [autocompleteOpen, setAutocompleteOpen] = useState<boolean>(false);
     const [svgString, setSvgString] = useState<string | null>(null);
+    // Where the keyboard SVG lives: the document, or the web component's shadow root (document.querySelector
+    // cannot see inside a shadow root). Set from the SVG container below.
+    const [svgRoot, setSvgRoot] = useState<Document | ShadowRoot | null>(null);
     const [currentKey, setCurrentKey] = useState<string>(null);
 
     const shortCuts = useMemo(() => {
@@ -56,8 +59,10 @@ export const MoorhenControlsModal = (props: ModalComponentProps) => {
         fetchSVG();
     }, []);
 
+    const findKeyboardSvg = (): any => svgRoot?.querySelector("#moorhen-keyboard-blank-svg");
+
     const handleMouseHover = (key: string) => {
-        const svg: any = document.querySelector("#moorhen-keyboard-blank-svg");
+        const svg: any = findKeyboardSvg();
         if (!svg) {
             return;
         }
@@ -88,7 +93,7 @@ export const MoorhenControlsModal = (props: ModalComponentProps) => {
     };
 
     const clearMouseHighlights = () => {
-        const svg: any = document.querySelector("#moorhen-keyboard-blank-svg");
+        const svg: any = findKeyboardSvg();
         if (!svg) {
             return;
         }
@@ -156,7 +161,12 @@ export const MoorhenControlsModal = (props: ModalComponentProps) => {
                             )}
                         />
                         <span style={{ margin: "1rem", fontWeight: "bold" }}>{currentKey ? shortCuts[currentKey].label : ""}</span>
-                        <div style={{ display: "flex" }}>{svgString ? parse(svgString) : null}</div>
+                        <div
+                            style={{ display: "flex" }}
+                            ref={element => element && setSvgRoot(element.getRootNode() as Document | ShadowRoot)}
+                        >
+                            {svgString ? parse(svgString) : null}
+                        </div>
                     </MoorhenStack>
                 </MoorhenStack>
             }

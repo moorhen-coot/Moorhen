@@ -8,16 +8,19 @@ import { MoorhenReduxStoreType, enqueueSnackbar, setSeqViewerOption, setShownBot
 import { moorhensession } from "../protobuf/MoorhenSession";
 import { setActiveMap } from "../store/generalStatesSlice";
 import { setValidationJson } from "../store/jsonValidation";
-import { addMap, addMapList } from "../store/mapsSlice";
+import { addMap } from "../store/mapsSlice";
 import { showModal } from "../store/modalsSlice";
 import { addCustomRepresentation, addMoleculeList } from "../store/moleculesSlice";
 import { setAfJson, setEsmJson, setHomologsJson, setMrParseModels, setTargetSequence } from "../store/mrParseSlice";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
+import { loadMtzMaps } from "./MtzLoading";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { modalKeys } from "./enums";
+import { MOVIE_EXTENSION } from "./movieContainer";
+import { openMovieFile } from "./openMovieFile";
 import { decompressDracoGltf } from "./gltfDraco";
 import { createDracoDecode } from "./gltfDracoDecoder";
 import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
@@ -816,16 +819,7 @@ export const autoOpenFiles = async (
                 returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
             }
         } else if (file.name.endsWith(".mtz")) {
-            const newMaps = await MoorhenMap.autoReadMtz(file, moorhenInstance);
-            for (const map in newMaps) {
-                returnValues.push({ type: "map", uniqueID: newMaps[map].uniqueId, molNo: newMaps[map].molNo, fileName: file.name });
-            }
-            if (newMaps.length === 0) {
-                dispatch(enqueueSnackbar({ message: `Failed to read mtz file ${file.name}`, variant: "warning" }));
-            } else {
-                dispatch(addMapList(newMaps));
-                dispatch(setActiveMap(newMaps[0]));
-            }
+            returnValues.push(...(await loadMtzMaps(moorhenInstance, file)));
         } else if (file.name.endsWith(".pb")) {
             //Session file
             try {
@@ -834,6 +828,16 @@ export const autoOpenFiles = async (
                 dispatch(enqueueSnackbar({ message: `Failed to load session ${file.name}`, variant: "warning" }));
             }
             break; //We only load the first session.
+        } else if (file.name.toLowerCase().endsWith(MOVIE_EXTENSION)) {
+            // A movie file, which is a movie description plus the session it was made against.
+            // Handled like a session and for the same reason: it rebuilds the whole scene, so
+            // there is nothing sensible to do with a second one, or with anything opened after it.
+            const opened = await openMovieFile(file, moorhenInstance);
+            dispatch(enqueueSnackbar({
+                message: opened.message,
+                variant: opened.ok ? "info" : "warning",
+            }));
+            break;
         } else if (file.name.toLowerCase().endsWith(".gltf") || file.name.toLowerCase().endsWith(".glb")) {
             try {
                 // The whole selection, not just this file: a .gltf takes its buffers and images

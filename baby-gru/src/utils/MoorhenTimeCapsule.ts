@@ -1,12 +1,15 @@
 import { AnyAction, Dispatch, Store } from "@reduxjs/toolkit";
 import { batch } from "react-redux";
 import { moorhensession } from "../protobuf/MoorhenSession";
+import { cameraFromSession, sessionFromCamera } from "./sessionCamera";
+import { slabFromCamera } from "../WebGLgComponents/slab";
 import { setActiveMap } from "../store/generalStatesSlice";
 import {
     setAmbient,
     setClipEnd,
     setClipStart,
     setDiffuse,
+    setFogClipOffset,
     setFogEnd,
     setFogStart,
     setLightPosition,
@@ -63,6 +66,7 @@ import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
 import { guid } from "./utils";
+import { representationIdForRestore } from "./sessionRepresentation";
 import { MoorhenInstance } from "@/InstanceManager";
 import { Root } from "protobufjs";
 
@@ -83,6 +87,13 @@ export type moleculeSessionData = {
     coordString: string;
     coordFormat: moorhen.coorFormats;
     representations: {
+        /**
+         * The representation's identity, so that it survives a reload.
+         *
+         * Absent in sessions written before the field existed; those keep the guid minted on
+         * restore, which is what has always happened.
+         */
+        uniqueId: string;
         cid: string;
         style: moorhen.RepresentationStyles;
         isCustom: boolean;
@@ -146,6 +157,16 @@ export type viewDataSession = {
     doDrawClickedAtomLines: boolean;
     clipStart: number;
     clipEnd: number;
+    /**
+     * Distance from the eye to the view centre, the renderer's old `fogClipOffset`.
+     *
+     * Optional because sessions written before this field exists do not have it. `fogStart` and
+     * `fogEnd` are measured from the eye, so without it they could only be read back against an
+     * assumed 250 - which was right until the perspective eye-distance control made it movable.
+     * See LEGACY_EYE_DISTANCE: 250 is not a guess for an older file, it is the only value for
+     * which that file's fog numbers ever meant what they said.
+     */
+    eyeDistance?: number;
     quat4: any[];
     shadows: boolean;
     ssao: { enabled: boolean; radius: number; bias: number };
@@ -157,7 +178,6 @@ export type viewDataSession = {
         normalThreshold: number;
     };
     doPerspectiveProjection: boolean;
-    eyeDistance?: number;
     blur: { enabled: boolean; depth: number; radius: number };
 };
 
@@ -438,6 +458,7 @@ export class MoorhenTimeCapsule {
                     .filter(item => item.visible)
                     .map(item => {
                         return {
+                            uniqueId: item.uniqueId,
                             cid: item.cid,
                             style: item.style,
                             isCustom: item.isCustom,
@@ -497,13 +518,21 @@ export class MoorhenTimeCapsule {
         const specularPower = this.store.getState().sceneSettings.specularPower;
         const zoom = this.store.getState().sceneSettings.zoom;
         const quat = this.store.getState().glRef.quat;
-        const fogClipOffset = this.store.getState().sceneSettings.fogClipOffset;
-        const fogStart = this.store.getState().sceneSettings.fogStart;
-        const fogEnd = this.store.getState().sceneSettings.fogEnd;
-        //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
-        //Now we multiply by -1 at save and restore for compatibility with old status files.
-        const clipStart = this.store.getState().sceneSettings.clipStart * -1;
-        const clipEnd = this.store.getState().sceneSettings.clipEnd;
+        // The camera's conventions, translated to the session's by sessionCamera.ts - which is also
+        // what reads them back. The session stores fog as absolute distances from the eye while
+        // clip is relative to the view centre and negated; keeping both directions of that in one
+        // tested module is the point. `eyeDistance` is new, and is the field whose absence meant
+        // fog was saved against an eye whose position was not.
+        const { fogStart, fogEnd, clipStart, clipEnd, eyeDistance } = sessionFromCamera({
+            quat: [quat[0], quat[1], quat[2], quat[3]],
+            origin: this.store.getState().sceneSettings.origin,
+            zoom,
+            eyeDistance: this.store.getState().sceneSettings.fogClipOffset,
+            clipFront: this.store.getState().sceneSettings.clipStart,
+            clipBack: this.store.getState().sceneSettings.clipEnd,
+            fogFront: this.store.getState().sceneSettings.fogClipOffset - this.store.getState().sceneSettings.fogStart,
+            fogBack: this.store.getState().sceneSettings.fogEnd - this.store.getState().sceneSettings.fogClipOffset,
+        });
 
         const doShadow = this.store.getState().sceneSettings.doShadow;
         const doSSAO = this.store.getState().sceneSettings.doSSAO;
@@ -534,9 +563,9 @@ export class MoorhenTimeCapsule {
             doDrawClickedAtomLines: false, // This is unused as far as I can tell
             clipStart: clipStart,
             clipEnd: clipEnd,
+            eyeDistance: eyeDistance,
             quat4: [quat[0], quat[1], quat[2], quat[3]],
             doPerspectiveProjection: doPerspectiveProjection,
-            eyeDistance: fogClipOffset,
             edgeDetection: {
                 enabled: doEdgeDetect,
                 depthScale: depthScale,
@@ -642,13 +671,14 @@ export class MoorhenTimeCapsule {
         const allKeyStrings = await this.storageInstance.keys();
         const allKeys: backupKey[] = allKeyStrings.map((keyString: string) => JSON.parse(keyString));
         const backupKeys = allKeys.filter((key: backupKey) => ["automatic", "manual"].includes(key.type));
-        const [usedNames] = [...backupKeys.map((key: backupKey) => [...key.mtzNames, ...key.mapNames])];
+        // Data files used by any backup, not only the first one
+        const usedNames = new Set(backupKeys.flatMap((key: backupKey) => [...(key.mtzNames ?? []), ...(key.mapNames ?? [])]));
 
         await Promise.all(
             allKeys
                 .filter((key: backupKey) => ["mtzData", "mapData"].includes(key.type))
                 .map((key: backupKey) => {
-                    if (typeof usedNames === "undefined" || !usedNames.includes(key.name)) {
+                    if (!usedNames.has(key.name)) {
                         return this.removeBackup(JSON.stringify(key));
                     }
                     return Promise.resolve();
@@ -696,7 +726,8 @@ export class MoorhenTimeCapsule {
         try {
             const sortedKeys = await this.getSortedKeys();
             if (sortedKeys && sortedKeys.length > 0) {
-                const lastBackupKey = sortedKeys[sortedKeys.length - 1];
+                // getSortedKeys lists the newest backup first
+                const lastBackupKey = sortedKeys[0];
                 const backup = await this.retrieveBackup(JSON.stringify(lastBackupKey));
                 return backup;
             }
@@ -807,6 +838,11 @@ export class MoorhenTimeCapsule {
             }
         }
         timeCapsuleRef.current.setBusy(true);
+
+        // Ids handed out to restored representations, so that a file carrying a duplicate - one
+        // stitched together from two sessions, say - cannot make two representations answer to
+        // the same name. See representationIdForRestore.
+        const representationIdsTaken = new Set<string>();
 
         // Delete current scene
         molecules.forEach(molecule => {
@@ -932,6 +968,14 @@ export class MoorhenTimeCapsule {
                         item.hbondedTo,
                         item.neighboursDistance
                     );
+                    // Its identity, back as it was saved. A session written before the format
+                    // carried this keeps the guid minted a moment ago, which is what has always
+                    // happened.
+                    representation.uniqueId = representationIdForRestore(
+                        item.uniqueId, representationIdsTaken, representation.uniqueId,
+                    );
+                    representationIdsTaken.add(representation.uniqueId);
+
                     if (item.isCustom) {
                         dispatch(addCustomRepresentation(representation));
                     }
@@ -1103,12 +1147,32 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setLightPosition, sessionData.viewData.lightPosition);
         guardedDispatch(setSpecularPower, sessionData.viewData.specularPower);
         guardedDispatch(setZoom, sessionData.viewData.zoom);
-        guardedDispatch(setFogStart, sessionData.viewData.fogStart);
-        guardedDispatch(setFogEnd, sessionData.viewData.fogEnd);
-        //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
-        //Now we multiply by -1 at save and restore for compatibility with old status files.
-        guardedDispatch(setClipStart, sessionData.viewData.clipStart * -1);
-        guardedDispatch(setClipEnd, sessionData.viewData.clipEnd);
+
+        // The camera as the file describes it: fog turned from absolute distances into offsets from
+        // the view centre, the clip negation undone, and an eye distance that an older file does
+        // not carry and so is assumed to be the historical 250. The store still holds the old
+        // shapes - absolute fog, positive clip - so they are turned straight back; the value of
+        // going through here is that one tested module owns both directions of the conversion.
+        //
+        // The eye is dispatched before the fog. MoorhenWebMG reconciles them in that order for the
+        // same reason: fog read against the wrong eye lands in the wrong place.
+        //
+        // A file missing any of these fields must still restore the rest, as it did when each one
+        // went through guardedDispatch on its own. Origin and quat are only placeholders here - they
+        // are restored separately - and a fog or clip computed from a missing field comes out NaN,
+        // which is turned back into "absent" so guardedDispatch skips it.
+        const restoredCamera = cameraFromSession({
+            ...sessionData.viewData,
+            origin: sessionData.viewData.origin ?? [0, 0, 0],
+            quat4: sessionData.viewData.quat4 ?? [0, 0, 0, 1],
+        });
+        const restoredSlab = slabFromCamera(restoredCamera);
+        const finiteOrAbsent = (value: number) => (Number.isFinite(value) ? value : undefined);
+        guardedDispatch(setFogClipOffset, restoredCamera.eyeDistance);
+        guardedDispatch(setFogStart, finiteOrAbsent(restoredSlab.fogStart));
+        guardedDispatch(setFogEnd, finiteOrAbsent(restoredSlab.fogEnd));
+        guardedDispatch(setClipStart, finiteOrAbsent(restoredCamera.clipFront));
+        guardedDispatch(setClipEnd, finiteOrAbsent(restoredCamera.clipBack));
         guardedDispatch(setQuat, sessionData.viewData.quat4);
         guardedDispatch(setBackgroundColor, sessionData.viewData.backgroundColor);
         guardedDispatch(setEdgeDetectDepthScale, sessionData.viewData.edgeDetection.depthScale);
@@ -1125,9 +1189,11 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setDepthBlurRadius, sessionData.viewData.blur.radius);
         guardedDispatch(setUseOffScreenBuffers, sessionData.viewData.blur.enabled);
         guardedDispatch(setDoPerspectiveProjection, sessionData.viewData.doPerspectiveProjection ?? false);
-        // Optional: sessions written before the eye could be moved simply keep the default. This
-        // runs before the fog is restored below, since moving the eye shifts the fog with it.
-        guardedDispatch(setPerspectiveEyeDistance, sessionData.viewData.eyeDistance ?? 250);
+        // The eye distance is restored with the rest of the camera further up, through
+        // cameraFromSession, which also applies the "a session without one means 250" rule. The
+        // dispatch that used to be here said it ran before the fog was restored, and after this
+        // merge it would have run after - so it goes rather than being left to mean the opposite
+        // of what it says.
 
 
         // Set connected maps and molecules if any

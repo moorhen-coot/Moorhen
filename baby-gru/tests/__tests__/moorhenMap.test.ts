@@ -125,6 +125,16 @@ describe('Testing MoorhenMap', () => {
         expect(map_2.isDifference).toBeTruthy();
     })
 
+    test('initialise keeps the header info on the map', async () => {
+        // MapOriginListener and the map card read map.headerInfo.cell; it used to stay null
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz');
+        const files = await moorhenInstance.files.loadFiles(fileUrl)
+        const map = moorhenInstance.getMap(files[0].uniqueID)
+        expect(map.headerInfo).not.toBeNull();
+        expect(map.headerInfo).toEqual(map.getSimpleHeaderInfo());
+        expect(map.headerInfo.cell.a).toBeGreaterThan(0);
+    })
+
     test('delete', async () => {
         const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz');
         const map = new MoorhenMap(mockInstance);

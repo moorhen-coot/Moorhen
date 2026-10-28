@@ -3,6 +3,9 @@ import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
 import { getMathJaxSVG } from '../utils/mathJaxUtils';
 import { RootState } from "../store/MoorhenReduxStore";
 import { Store } from "redux";
+import { doDownload, downloadUrl } from "./utils";
+import { DEFAULT_QUALITY, bitrateFor } from "./videoBitrate";
+import type { VideoQuality } from "./videoBitrate";
 
 export interface ImageFrac2D {
     x: number
@@ -13,33 +16,107 @@ export interface ImageFrac2D {
     zIndex: number;
 }
 
+/** Frames per second requested from the canvas. */
+const CAPTURE_FPS = 30;
+
+/**
+ * Re-exported so `import type { VideoQuality } from ".../MoorhenScreenRecorder"` keeps working.
+ * The presets and the arithmetic now live in videoBitrate, shared with the movie export - see
+ * there for why a bitrate has to scale with the frame.
+ */
+export type { VideoQuality } from "./videoBitrate";
+
+/**
+ * Container and codec, in order of preference, filtered by what the browser admits to.
+ *
+ * The recorder used to be constructed with no mimeType at all, so it encoded with whatever the
+ * browser defaults to - VP8 or VP9 - while the resulting Blob was labelled h264. Nothing checked
+ * that any of it was supported.
+ */
+const PREFERRED_MIME_TYPES = [
+    "video/webm;codecs=vp9",
+    "video/webm;codecs=vp8",
+    "video/webm",
+    "video/mp4",
+];
+
 export class ScreenRecorder  {
 
-    rec: MediaRecorder;
+    rec: MediaRecorder | null = null;
     chunks: Blob[];
     canvasRef: React.RefObject<HTMLCanvasElement>;
     glRef: React.RefObject<webGL.MGWebGL>;
     store: Store<RootState>;
     _isRecording: boolean;
-    videoName = "moorhen";
+    videoName = "moorhen_video";
+    videoQuality: VideoQuality = DEFAULT_QUALITY;
+    private recordedMimeType = "";
 
     constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>, store: Store<RootState>){
         this.glRef = glRef; // BUG FIX: assign glRef
         this.chunks = [];
         this.store = store;
         this.canvasRef = canvasRef
-        const stream = this.canvasRef.current.captureStream(30)
-
-        const options = {
-          videoBitsPerSecond: 25000000000 // 2.5Mbps
-        }
-
-        this.rec = new MediaRecorder(stream,options)
         this._isRecording = false;
     }
 
+    /** The first preferred type this browser will actually record, or "" to let it choose. */
+    private pickMimeType = (): string => {
+        if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported) return "";
+        return PREFERRED_MIME_TYPES.find(type => MediaRecorder.isTypeSupported(type)) ?? "";
+    }
+
+    /** The file extension matching whatever was actually recorded. */
+    private extensionForMimeType = (mimeType: string): string =>
+        mimeType.startsWith("video/mp4") ? "mp4" : "webm";
+
+    /**
+     * Build a recorder around the canvas as it is now.
+     *
+     * Done per recording rather than once at construction. captureStream binds to the canvas at
+     * the size it has when called, and the canvas is resized whenever the window is - so a
+     * recorder built on mount was working from a stale track for every recording after the first
+     * resize, which browsers handle anywhere between gracefully and a truncated file.
+     *
+     * Resizing *during* a recording is still not survivable: the track changes size underneath an
+     * encoder that has already written a header. Only a resize between recordings is fixed here.
+     */
+    private createRecorder = (): MediaRecorder | null => {
+        const canvas = this.canvasRef?.current;
+        if (!canvas) {
+            console.warn("Attempted to record the screen before the canvas existed...");
+            return null;
+        }
+
+        const stream = canvas.captureStream(CAPTURE_FPS);
+        const bitrate = bitrateFor(this.videoQuality, canvas.width, canvas.height, CAPTURE_FPS);
+
+        // isTypeSupported saying yes does not guarantee the constructor will accept it at this
+        // resolution and bitrate, so a refusal falls back to letting the browser choose rather
+        // than failing the recording. Not doing that would be a regression: before any of this
+        // negotiation existed, a recorder was always constructed.
+        const mimeType = this.pickMimeType();
+        const attempts: MediaRecorderOptions[] = mimeType
+            ? [{ mimeType, videoBitsPerSecond: bitrate }, { videoBitsPerSecond: bitrate }, {}]
+            : [{ videoBitsPerSecond: bitrate }, {}];
+
+        for (const options of attempts) {
+            try {
+                const recorder = new MediaRecorder(stream, options);
+                // What the browser settled on, which is not always what was asked for.
+                this.recordedMimeType = recorder.mimeType || options.mimeType || "";
+                return recorder;
+            } catch (err) {
+                console.warn("Video recorder rejected", options, err);
+            }
+        }
+
+        console.warn("Could not start a video recorder for this canvas");
+        return null;
+    }
+
     stopRecording = () => {
-        if (this._isRecording) {
+        if (this._isRecording && this.rec) {
             this.rec.stop();
             this._isRecording = false;
         } else {
@@ -77,13 +154,18 @@ export class ScreenRecorder  {
             console.warn('Screen recording already taking place!')
             return
         }
+
+        const recorder = this.createRecorder();
+        if (!recorder) return;
+        this.rec = recorder;
+
         this.chunks = [];
         this.rec.ondataavailable = (e) => {
             this.chunks.push(e.data);
         }
         // only when the recorder stops, we construct a complete Blob from all the chunks
-        this.rec.onstop = (e) =>
-            this.downloadVideo(new Blob(this.chunks, { type: "video/webm;codecs=h264" }));
+        this.rec.onstop = () =>
+            this.downloadVideo(new Blob(this.chunks, { type: this.recordedMimeType || undefined }));
         this._isRecording = true;
         this.rec.start();
     }
@@ -92,17 +174,18 @@ export class ScreenRecorder  {
         this.videoName = name;
     }
 
+    /** So the popup can show the name the file will actually be given. */
+    getVideoName = () => this.videoName;
+
+    /** Takes effect from the next recording: the bitrate is fixed when a recording starts. */
+    setVideoQuality = (quality: VideoQuality) => {
+        this.videoQuality = quality;
+    }
+
+    getVideoQuality = () => this.videoQuality;
+
     downloadVideo = async (blob: Blob) => {
-        const url = URL.createObjectURL(blob);
-        let link: any = document.getElementById('download_video_link');
-        if (!link) {
-            link = document.createElement('a');
-            link.id = 'download_video_link';
-            document.body.appendChild(link);
-        }
-        link.download = `${this.videoName}.webm`;
-        link.href = url;
-        link.click();
+        doDownload([blob], `${this.videoName}.${this.extensionForMimeType(this.recordedMimeType)}`);
     }
 
     takeScreenShot = async(filename: string, doTransparentBackground: boolean = false) => {
@@ -207,15 +290,7 @@ export class ScreenRecorder  {
             drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,3, this.store)
             drawOn2DContext(ctx,saveCanvas.width,saveCanvas.height,saveCanvas.width/window.visualViewport.width,[],imgFracs,quat,4, this.store)
 
-            let link: any = document.getElementById('download_image_link');
-            if (!link) {
-                link = document.createElement('a');
-                link.id = 'download_image_link';
-                document.body.appendChild(link);
-            }
-            link.download = filename;
-            link.href = saveCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-            link.click();
+            downloadUrl(saveCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream"), filename);
         })
     }
 }

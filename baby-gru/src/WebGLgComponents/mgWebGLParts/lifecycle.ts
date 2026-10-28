@@ -49,14 +49,16 @@ export function initInstanceState(self: MGWebGL): void {
     self.mouseDown_y = null;
     self.dx = null;
     self.dy = null;
-    self.myQuat = null;
+    // myQuat and zoom are no longer nulled here. The Camera collaborator starts them at the exact
+    // values phase 2 below goes on to assign - the identity-ish quaternion (0, 0, 0, -1) and zoom
+    // 1.0 - so nothing that could read them in between sees a different number than it would have.
+    // Nothing does read them in between, and nothing in the codebase ever tested them for null.
     self.mouseDown = null;
     self.measurePointsArray = [];
     self.measureHit = null;
     self.measureButton = -1;
     self.measureDownPos = {x:-1,y:-1};
     self.mouseMoved = null;
-    self.zoom = null;
     self.ext = null;
     self.drawBuffersExt = null;
     self.instanced_ext = null;
@@ -140,10 +142,9 @@ export function initInstanceState(self: MGWebGL): void {
     self.doOrderIndependentTransparency = true;//Request OIT user/state setting
     self.doPeel = false;//Requested and required - above set and there are transparent objects.
 
-    //Debugging only
+    //Debugging only - see MGWebGL.setShadowDepthDebug. Shadows must be on separately for there
+    //to be a map to look at.
     self.doShadowDepthDebug = false;
-    if(self.doShadowDepthDebug)
-        self.doShadow = true;
 
     self.drawingGBuffers = false;
     self.offScreenFramebuffer = null;
@@ -161,6 +162,7 @@ export function initInstanceState(self: MGWebGL): void {
     self.offScreenReady = false;
     self.framebufferDrawBuffersReady = false;
     self.screenshotBuffersReady = false;
+    self.rttRenderbuffers = [];
 
     self.edgeDetectFramebufferSize = 2048;
     self.gBuffersFramebufferSize = 2048;
@@ -175,14 +177,13 @@ export function initInstanceState(self: MGWebGL): void {
 
     self.gl_clipPlane0 = new Float32Array(4);
     self.gl_clipPlane1 = new Float32Array(4);
+    // The plane normals; the W components come from the camera, via applySlabToRenderer below.
     self.gl_clipPlane1[0] = 0.0;
     self.gl_clipPlane1[1] = 0.0;
     self.gl_clipPlane1[2] = 1.0;
-    self.gl_clipPlane1[3] = 1000.0;
     self.gl_clipPlane0[0] = 0.0;
     self.gl_clipPlane0[1] = 0.0;
     self.gl_clipPlane0[2] = -1.0;
-    self.gl_clipPlane0[3] = -0.0;
     self.gl_clipPlane2 = new Float32Array(4);
     self.gl_clipPlane3 = new Float32Array(4);
     self.gl_clipPlane4 = new Float32Array(4);
@@ -202,8 +203,8 @@ export function initInstanceState(self: MGWebGL): void {
 
 
     self.gl_nClipPlanes = 0;
-    self.gl_fog_start = self.fogClipOffset;
-    self.gl_fog_end = 1000+self.fogClipOffset;
+    // Fog and the clip plane W components are derived from the camera, not set here.
+    self.applySlabToRenderer();
 
     self.origin = [0.0, 0.0, 0.0];
 
@@ -423,8 +424,8 @@ export function initGraphics(self: MGWebGL): void {
     self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.RGBA, self.gl.RGBA, self.gl.UNSIGNED_BYTE, self.circleCtx.canvas);
 
     self.gl_nClipPlanes = 0;
-    self.gl_fog_start = self.fogClipOffset;
-    self.gl_fog_end = 1000+self.fogClipOffset;
+    // Fog and the clip plane W components are derived from the camera, not set here.
+    self.applySlabToRenderer();
     //self.gl.lineWidth(2.0);
     self.gl.blendFuncSeparate(self.gl.SRC_ALPHA, self.gl.ONE_MINUS_SRC_ALPHA, self.gl.ONE, self.gl.ONE_MINUS_SRC_ALPHA);
     self.gl.enable(self.gl.BLEND);
