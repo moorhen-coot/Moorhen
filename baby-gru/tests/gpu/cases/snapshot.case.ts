@@ -93,7 +93,7 @@ export default defineCase(async (device: GPUDevice): Promise<SnapshotReport> => 
     surface.update({ centre: [13, 12, 12], radius: 9, level: 0.3 });
     const b = surface.buffers;
     const draw = (style: PreviewGpuDraw["style"], key: string): PreviewGpuDraw => ({
-        key, position: b.position, normal: b.normal, index: b.triangles, drawArgs: b.drawArgs,
+        key, position: b.position, normal: b.normal, index: b.triangles, lines: b.lines, drawArgs: b.drawArgs,
         drawArgsOffset: style === "triangles" ? 0 : 32, style, lineWidth: 1.2, colour: [0.2, 0.3, 1, 1], transparent: false,
     });
     const scene = [octahedron()];

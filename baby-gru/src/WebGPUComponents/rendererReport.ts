@@ -1,8 +1,9 @@
 /**
  * A one-line report of how this machine draws Moorhen, for testers to paste back: the browser and
  * platform, whether the page is a secure context (WebGPU needs one), the WebGPU adapter or why
- * there is none, who draws the main view and why, where maps are contoured, how long frames of
- * the current scene take, and - with maps showing - how soon a move of the origin is contoured. Gathered by `moorhenInstance.webGPU.report()` (instanceApi.ts) and the
+ * there is none, who draws the main view and why, where maps are contoured and how much they
+ * draw, how long frames of the current scene take, and - with maps showing - how soon a move of
+ * the origin is contoured. Gathered by `moorhenInstance.webGPU.report()` (instanceApi.ts) and the
  * Dev menu's "Renderer report"; formatted here, without the browser, so that it can be tested.
  */
 
@@ -30,6 +31,12 @@ export interface RendererReportFacts {
         visual: [number, number, number] | null;
         screen: [number, number];
     } | null;
+    /**
+     * The maps shown: the triangles of their contours and, if some are drawn as lines, the lines
+     * drawn (Coot's: each triangle's three edges; the GPU's: each edge once). Null with no map
+     * shown; undefined if not known.
+     */
+    mapCounts?: { triangles: number; lines: number | null } | null;
     /** The scene: triangles in it (instances included), and transparent layers peeled if WebGPU drew. */
     scene: { triangles: number; peelLayers: number | null };
     /** Frames drawn for the report, one an animation frame. */
@@ -100,7 +107,9 @@ export function formatRendererReport(f: RendererReportFacts): string {
     else if (view.requested && !f.webGPU.reason) parts.push("main view: WebGL (WebGPU asked for, but gave up: see the console)");
     else if (view.requested) parts.push("main view: WebGL (no WebGPU)");
     else parts.push("main view: WebGL (WebGPU switched off)");
-    parts.push(`maps: ${view.mapsOnGpu ? "GPU" : "Coot"}`);
+    const m = f.mapCounts;
+    parts.push(`maps: ${view.mapsOnGpu ? "GPU" : "Coot"}` + (m === null ? " (none shown)" : m === undefined ? ""
+        : `, ${count(m.triangles)} triangles` + (m.lines === null ? "" : ` drawn as ${count(m.lines)} lines`)));
     const scene = `${f.canvas.width}x${f.canvas.height}, ${count(f.scene.triangles)} triangles`
         + (f.scene.peelLayers ? `, ${f.scene.peelLayers} layers peeled` : "");
     parts.push(scene);

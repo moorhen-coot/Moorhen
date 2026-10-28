@@ -106,6 +106,7 @@ export class GpuMapLayer {
                     position: buffers.position,
                     normal: buffers.normal,
                     index: buffers.triangles,
+                    lines: buffers.lines,
                     drawArgs: buffers.drawArgs,
                     drawArgsOffset: solid ? 0 : 32,
                     style: solid ? "triangles" : style === "lit-lines" ? "lit-lines" : "lines",
@@ -118,9 +119,10 @@ export class GpuMapLayer {
             const box = entry.surfaces.get(`${map.molNo}:1`)?.lastBox;
             const made = [...entry.surfaces.values()].reduce((sum, s) => sum + s.made, 0);
             const triangles = [...entry.surfaces.values()].reduce((sum, s) => sum + s.lastTriangles, 0);
+            const lines = [...entry.surfaces.values()].reduce((sum, s) => sum + s.lastLines, 0);
             const { nu, nv, nw } = entry.grid.grid;
             notes.push(`map ${map.molNo}: r ${radius} Å, cell grid ${nu}×${nv}×${nw}` + (box ? `, box ${box.size.join("×")}` : "")
-                + `, ${formatCount(triangles)} triangles, contoured ${made}×`
+                + `, ${formatCount(triangles)} triangles, ${formatCount(lines)} lines, contoured ${made}×`
                 + (entry.fetches > 1 ? `, fetched ${entry.fetches}×` : "") + (entry.loading ? ", fetching again…" : ""));
         }
         this.status = notes.length > 0 ? `GPU maps: ${notes.join("; ")}` : "GPU maps: none visible";
@@ -139,6 +141,13 @@ export class GpuMapLayer {
         let triangles = 0;
         for (const entry of this.maps.values()) entry.surfaces.forEach(surface => { triangles += surface.lastTriangles; });
         return triangles;
+    }
+
+    /** Lines of those contours' edges (each edge once), all maps together, drawn in the line styles. */
+    get lines(): number {
+        let lines = 0;
+        for (const entry of this.maps.values()) entry.surfaces.forEach(surface => { lines += surface.lastLines; });
+        return lines;
     }
 
     /**

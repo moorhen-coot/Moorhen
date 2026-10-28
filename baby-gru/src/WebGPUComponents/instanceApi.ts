@@ -134,7 +134,9 @@ export interface WebGPUApi {
      */
     mainView(): {
         requested: boolean; active: boolean; drawing: boolean; webGLReason: string | null; framesDrawn: number;
-        lastFrame: { meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number; peelLayers: number } | null;
+        lastFrame: {
+            meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number; mapLines: number; peelLayers: number;
+        } | null;
         mapsOnGpu: boolean;
     };
     /**
@@ -312,6 +314,43 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 };
             }
 
+            type WalkMap = { molNo: number; displayObjects?: { Coot?: DisplayBuffer[] } };
+            const walkState = host.store.getState() as unknown as {
+                maps?: WalkMap[];
+                mapContourSettings?: {
+                    visibleMaps?: number[]; reContourMapOnlyOnMouseUp?: boolean;
+                    mapStyles?: { molNo: number; style: string }[]; defaultMapLitLines?: boolean; defaultMapSurface?: boolean;
+                };
+            };
+            const visibleMaps = (walkState.maps ?? []).filter(map => walkState.mapContourSettings?.visibleMaps?.includes(map.molNo));
+
+            // How much the maps shown draw: their contours' triangles and, in the line styles, lines.
+            let mapCounts: RendererReportFacts["mapCounts"] = null;
+            if (visibleMaps.length > 0) {
+                const settings = walkState.mapContourSettings;
+                // As the GPU map layer and MoorhenMapManager decide the style.
+                const styleOf = (molNo: number) => settings?.mapStyles?.find(item => item.molNo === molNo)?.style
+                    ?? (settings?.defaultMapLitLines ? "lit-lines" : settings?.defaultMapSurface ? "solid" : "lines");
+                const lineStyle = visibleMaps.some(map => styleOf(map.molNo) !== "solid");
+                if (external && gpuMapContourSetting.enabled) {
+                    const last = external.lastFrame;
+                    mapCounts = { triangles: last?.mapTriangles ?? 0, lines: lineStyle ? last?.mapLines ?? 0 : null };
+                } else {
+                    let triangles = 0, lines = 0;
+                    for (const map of visibleMaps) {
+                        for (const buffer of map.displayObjects?.Coot ?? []) {
+                            (buffer.bufferTypes ?? []).forEach((type, j) => {
+                                const indices = buffer.triangleIndexs?.[j]?.length ?? 0;
+                                if (type === "TRIANGLES") triangles += indices / 3;
+                                else if (type === "LINES" || type === "NORMALLINES") lines += indices / 2;
+                            });
+                        }
+                    }
+                    // Coot's lines are each of its triangles' three edges (getLineIndicesFromSimpleMesh2).
+                    mapCounts = { triangles: Math.round(triangles + lines / 3), lines: lines > 0 ? lines : null };
+                }
+            }
+
             // The map walk: small moves of the origin round a square, each timed from the move to
             // its new contours drawn, as a pan does it (setOrigin, then a frame). On the GPU the
             // contours are made in the frame that sees the new origin; Coot's arrive later, through
@@ -319,11 +358,6 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
             // counted as timed out (a map with its origin locked, say).
             const walkSteps = Math.max(0, Math.round(options.mapWalk ?? 20));
             let mapWalk: RendererReportFacts["mapWalk"] = null;
-            type WalkMap = { molNo: number; displayObjects?: { Coot?: unknown[] } };
-            const walkState = host.store.getState() as unknown as {
-                maps?: WalkMap[]; mapContourSettings?: { visibleMaps?: number[]; reContourMapOnlyOnMouseUp?: boolean };
-            };
-            const visibleMaps = (walkState.maps ?? []).filter(map => walkState.mapContourSettings?.visibleMaps?.includes(map.molNo));
             if (walkSteps > 0 && visibleMaps.length > 0) {
                 const onGpu = !!external && gpuMapContourSetting.enabled;
                 const start = [view.origin[0], view.origin[1], view.origin[2]] as [number, number, number];
@@ -393,6 +427,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                     peelLayers: main.drawing ? main.lastFrame?.peelLayers ?? null : null,
                 },
                 frames,
+                mapCounts,
                 mapWalk,
             };
         },

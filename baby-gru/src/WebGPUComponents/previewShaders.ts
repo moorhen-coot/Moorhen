@@ -466,12 +466,13 @@ fn fs_textured_peel(in: TexturedOut, @builtin(front_facing) frontFacing: bool) -
     return colour;
 }
 
-// Thick lines, drawn from a triangle mesh's own buffers: each edge of each triangle is a quad
-// facing the viewer, two triangles, six vertices, so a draw of 18 vertices per triangle needs no
-// index or vertex buffers. Positions and normals are packed vec3s, as for the vertex buffers.
+// Thick lines, drawn from a mesh's own vertex buffers and a list of its edges as pairs of vertex
+// indices (a GPU map contour's): each line is a quad facing the viewer, two triangles, six
+// vertices, so a draw of 6 vertices per line needs no index or vertex buffers. Positions and
+// normals are packed vec3s, as for the vertex buffers.
 @group(2) @binding(0) var<storage, read> linePositions: array<f32>;
 @group(2) @binding(1) var<storage, read> lineNormals: array<f32>;
-@group(2) @binding(2) var<storage, read> lineTriangles: array<u32>;
+@group(2) @binding(2) var<storage, read> lineEnds: array<u32>;
 
 // The six corners in the order linesToThickLinesWithIndices draws them (its indices 0, 2, 1, 3,
 // 4, 5): which end of the edge, and which side of it.
@@ -479,18 +480,17 @@ const LINE_CORNER_END = array<u32, 6>(0u, 1u, 0u, 0u, 1u, 1u);
 const LINE_CORNER_SIDE = array<f32, 6>(1.0, -1.0, -1.0, 1.0, 1.0, -1.0);
 
 fn thickLine(vertex: u32) -> VOut {
-    let edge = vertex / 6u;
-    let corner = vertex - 6u * edge;
-    let triangle = edge / 3u;
-    let k = edge - 3u * triangle;
-    let a = lineTriangles[3u * triangle + k];
-    let b = lineTriangles[3u * triangle + (k + 1u) % 3u];
-    let i = select(a, b, LINE_CORNER_END[corner] == 1u);
-    let p = vec3f(linePositions[3u * i], linePositions[3u * i + 1u], linePositions[3u * i + 2u]);
+    let line = vertex / 6u;
+    let corner = vertex - 6u * line;
+    let a = lineEnds[2u * line];
+    let b = lineEnds[2u * line + 1u];
+    let atB = LINE_CORNER_END[corner] == 1u;
+    let i = select(a, b, atB);
     let pa = vec3f(linePositions[3u * a], linePositions[3u * a + 1u], linePositions[3u * a + 2u]);
     let pb = vec3f(linePositions[3u * b], linePositions[3u * b + 1u], linePositions[3u * b + 2u]);
-    // Across the edge and across the line of sight, in model space (eyeDir is WebGL's screenZ). A
-    // degenerate edge - a dropped triangle's, all vertex 0 - has no across, and draws nothing.
+    let p = select(pa, pb, atB);
+    // Across the line and across the line of sight, in model space (eyeDir is WebGL's screenZ). A
+    // degenerate line - (0, 0), one with an end beyond the room - has no across, and draws nothing.
     let across = cross(pb - pa, frame.eyeDir.xyz);
     let len = length(across);
     let offset = select(vec3f(0.0), across / len, len > 1e-20) * (draw.params.y * LINE_CORNER_SIDE[corner]);

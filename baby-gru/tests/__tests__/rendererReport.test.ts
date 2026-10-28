@@ -113,6 +113,16 @@ describe("the report", () => {
         expect(formatRendererReport(facts({ mapWalk: null }))).not.toContain("map walk");
     });
 
+    it("says how much the maps shown draw", () => {
+        expect(formatRendererReport(facts({ mapCounts: { triangles: 412_100, lines: 618_400 } })))
+            .toContain("| maps: GPU, 412.1k triangles drawn as 618.4k lines |");
+        expect(formatRendererReport(facts({ mapCounts: { triangles: 412_100, lines: null } })))
+            .toContain("| maps: GPU, 412.1k triangles |");
+        expect(formatRendererReport(facts({ mapCounts: null }))).toContain("| maps: GPU (none shown) |");
+        // Not known (an older report): as before.
+        expect(formatRendererReport(facts())).toContain("| maps: GPU |");
+    });
+
     it("leaves the frames out when none were drawn", () => {
         expect(formatRendererReport(facts({ frames: null }))).not.toContain("frames:");
     });

@@ -16,11 +16,17 @@ const CASES: Record<string, ContourCase> = {
 for (const [name, contourCase] of Object.entries(CASES)) {
     test(`map contour matches the CPU: ${name}`, async ({ page }) => {
         const r = resultOrSkip(await runGpuCase<ContourReport>(page, "mapContour.case.ts", contourCase));
+        console.log(`map contour, ${name}: ${r.gpuTriangles} triangles, ${r.lines} lines (${(r.lines / (3 * r.gpuTriangles) * 100).toFixed(0)}% of 3 per triangle)`);
         expect(r.cpuTriangles).toBeGreaterThan(100);
         expect(r.gpuTriangles).toBe(r.cpuTriangles);
         expect(r.unmatchedMidpoints).toBe(0);
         expect(r.degenerate).toBe(0);
         expect(r.thickLineArgsOk).toBe(true);
+        // Each edge once: about 1.5 per triangle on a closed surface, more where the sphere cuts it.
+        expect(r.strayLines).toBe(0);
+        expect(r.repeatedLines).toBe(0);
+        expect(r.lines).toBe(r.edges);
+        expect(r.lines).toBeLessThan(2 * r.gpuTriangles);
         expect(r.normalsChecked).toBeGreaterThan(r.gpuTriangles / 4);
         expect(r.normalsOff).toBe(0);
         if (contourCase.room < 0.01) expect(r.remade).toBeGreaterThan(0);

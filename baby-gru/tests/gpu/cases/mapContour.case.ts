@@ -1,7 +1,7 @@
 /**
  * GPU map contours (src/WebGPUComponents/mapContour) against the CPU reference: the same kept
  * triangles (midpoints within 0.015 A), no degenerate ones, normals along the map's gradient, and
- * the thick-line draw arguments in step with the triangles.
+ * the lines exactly the triangles' edges, each once, with their draw arguments to match.
  */
 import { readBuffer } from "../../../src/WebGPUComponents/gpu";
 import { GpuIsosurface, GpuMapGrid, MapContourKernels } from "../../../src/WebGPUComponents/mapContour/gpuMapContour";
@@ -25,6 +25,11 @@ export interface ContourReport {
     degenerate: number;
     unmatchedMidpoints: number;
     thickLineArgsOk: boolean;
+    /** Lines drawn, the triangles' distinct edges, and lines that are not one or repeat one. */
+    lines: number;
+    edges: number;
+    strayLines: number;
+    repeatedLines: number;
     normalsChecked: number;
     normalsOff: number;
     worstNormalDot: number;
@@ -66,6 +71,23 @@ export default defineCase(async (device: GPUDevice, c: ContourCase): Promise<Con
         }
         const cpu = cpuContourMidpoints(grid, c.centre, c.radius, c.level);
 
+        // The lines: each distinct edge of the triangles, once.
+        const lineCount = args[8] / 6;
+        const lines = new Uint32Array(await readBuffer(device, b.lines, Math.max(8, lineCount * 8)));
+        const edgeKey = (p: number, q: number) => p < q ? `${p},${q}` : `${q},${p}`;
+        const edges = new Set<string>();
+        for (let t = 0; t < indexCount / 3; t++) {
+            for (let k = 0; k < 3; k++) edges.add(edgeKey(triangles[3 * t + k], triangles[3 * t + (k + 1) % 3]));
+        }
+        const seen = new Set<string>();
+        let strayLines = 0, repeatedLines = 0;
+        for (let l = 0; l < lineCount; l++) {
+            const key = edgeKey(lines[2 * l], lines[2 * l + 1]);
+            if (!edges.has(key)) strayLines++;
+            if (seen.has(key)) repeatedLines++;
+            seen.add(key);
+        }
+
         let normalsChecked = 0, normalsOff = 0, worstNormalDot = 1;
         for (const i of new Set(triangles)) {
             const want = expectedNormal(grid, position(i), c.level);
@@ -83,8 +105,12 @@ export default defineCase(async (device: GPUDevice, c: ContourCase): Promise<Con
             cpuTriangles: cpu.length,
             degenerate,
             unmatchedMidpoints: unmatchedMidpoints(midpoints, cpu, 0.015),
-            // drawIndirect for thick lines: 6 vertices for each of each triangle's 3 edges.
-            thickLineArgsOk: args[8] === 6 * indexCount && args[9] === 1 && args[10] === 0 && args[11] === 0,
+            // drawIndirect for thick lines: 6 vertices for each line.
+            thickLineArgsOk: args[8] % 6 === 0 && args[9] === 1 && args[10] === 0 && args[11] === 0,
+            lines: lineCount,
+            edges: edges.size,
+            strayLines,
+            repeatedLines,
             normalsChecked,
             normalsOff,
             worstNormalDot,

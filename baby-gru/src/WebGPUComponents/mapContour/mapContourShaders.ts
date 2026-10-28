@@ -9,6 +9,9 @@
  * as in the MetaBalls kernels (../metaballs), which these follow and share the table with. The
  * last step writes the draw arguments itself, so nothing ever has to come back to the CPU.
  *
+ * The line styles draw each edge of the kept triangles once (COUNT_LINES_WGSL says how the one
+ * drawing it is chosen), not once for each triangle it borders: half as many lines to draw.
+ *
  * Where each point's vertices and each cell's triangles go: the count and emit kernels take a run
  * of CHUNK consecutive points or cells per thread. Each count thread adds up its run's counts,
  * only those sums are scanned, and each emit thread walks its run again from the scanned offset.
@@ -40,7 +43,7 @@ struct Params {
     centre: vec4f,
     // x: the contour level; y: 1, or -1 for a negative level, whose surfaces face the other way.
     level: vec4f,
-    // x: room for vertices; y: room for triangles.
+    // x: room for vertices; y: room for triangles; z: room for lines.
     caps: vec4u,
 };
 @group(0) @binding(0) var<uniform> P: Params;
@@ -293,8 +296,8 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
 
 /**
  * One thread per CHUNK cells: their kept triangles (keepMask, from the count), one after another
- * from the run's offset. The line styles draw the edges of these same triangles (the preview's
- * thick-line shader reads them from this buffer), so there is no separate list of lines.
+ * from the run's offset. The line styles draw these triangles' edges, from their own list (the
+ * lines kernels), so that an edge two triangles share is drawn once.
  *
  * A triangle with a vertex beyond the room for vertices is written as a degenerate one (all
  * corners vertex 0), which draws nothing; the room is then grown and the contour made again.
@@ -350,29 +353,182 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
 `;
 
 /**
+ * One thread per CHUNK cells: which edges of the cell's kept triangles it draws as lines - each
+ * edge of the surface once, as a bit (3t + k: triangle t's edge from its corner k to the next);
+ * and the number in the run.
+ *
+ * An edge is a pair of grid edges (its ends' vertices). It borders at most two triangles: two in
+ * one cell (a diagonal of the cell's polygon) or, if both grid edges lie in a face of the cell,
+ * one each in the two cells that share the face. So: of a cell's triangles that share an edge,
+ * the first kept one draws it; and an edge in a cell's lower face (x, y or z least) is left to
+ * the cell below if a kept triangle there has it too. An edge of a dropped triangle is drawn when
+ * the kept triangle beside it is, as with Coot's lines from its kept triangles.
+ */
+export const COUNT_LINES_WGSL = COMMON + FIELD_AT + /* wgsl */ `
+@group(1) @binding(0) var<storage, read> field: array<f32>;
+@group(1) @binding(1) var<storage, read> table: array<vec2u>;
+@group(1) @binding(2) var<storage, read> keepMask: array<u32>;
+@group(1) @binding(3) var<storage, read_write> lineMask: array<u32>;
+@group(1) @binding(4) var<storage, read_write> chunkSum: array<u32>;
+${EDGES}
+fn cellAt(c: vec3u) -> u32 { return (c.z * (P.box.y - 1u) + c.y) * (P.box.x - 1u) + c.x; }
+
+// Whether triangle t of the configuration has grid edge e (an index into EDGE_POINTS) at a corner.
+fn triangleHas(config: u32, t: u32, e: u32) -> bool {
+    return tableNibble(config, 3u * t + 1u) == e || tableNibble(config, 3u * t + 2u) == e || tableNibble(config, 3u * t + 3u) == e;
+}
+
+// Whether a kept triangle of the cell below c across its face of least axis has grid edges a and
+// b of c (EDGE_POINTS entries: corner offset, axis), which lie in that face, as two of its corners.
+fn belowHas(c: vec3u, axis: u32, a: vec4u, b: vec4u) -> bool {
+    var n = c;
+    n[axis] = n[axis] - 1u;
+    let keep = keepMask[cellAt(n)];
+    if (keep == 0u) { return false; }
+    // The same grid edges, from the cell below: one further along the axis.
+    var up = vec4u(0u);
+    up[axis] = 1u;
+    let na = a + up;
+    let nb = b + up;
+    let config = cellConfig(n.x, n.y, n.z);
+    let count = tableNibble(config, 0u);
+    for (var t = 0u; t < count; t++) {
+        if ((keep & (1u << t)) == 0u) { continue; }
+        var hasA = false;
+        var hasB = false;
+        for (var k = 0u; k < 3u; k++) {
+            let e = EDGE_POINTS[tableNibble(config, 3u * t + k + 1u)];
+            hasA = hasA || all(e == na);
+            hasB = hasB || all(e == nb);
+        }
+        if (hasA && hasB) { return true; }
+    }
+    return false;
+}
+
+@compute @workgroup_size(${MAP_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let chunk = itemIndex(lid, wid, nwg);
+    let cells = boxCells();
+    if (chunk >= chunks(cells)) { return; }
+    var sum = 0u;
+    let end = min(chunk * ${CHUNK}u + ${CHUNK}u, cells);
+    for (var idx = chunk * ${CHUNK}u; idx < end; idx++) {
+        let keep = keepMask[idx];
+        var mask = 0u;
+        if (keep != 0u) {
+            let c = cellIndex(idx);
+            let config = cellConfig(c.x, c.y, c.z);
+            let count = tableNibble(config, 0u);
+            for (var t = 0u; t < count; t++) {
+                if ((keep & (1u << t)) == 0u) { continue; }
+                for (var k = 0u; k < 3u; k++) {
+                    let ea = tableNibble(config, 3u * t + k + 1u);
+                    let eb = tableNibble(config, 3u * t + (k + 1u) % 3u + 1u);
+                    var drawn = false;
+                    for (var s = 0u; s < t; s++) {
+                        if ((keep & (1u << s)) != 0u && triangleHas(config, s, ea) && triangleHas(config, s, eb)) { drawn = true; }
+                    }
+                    if (drawn) { continue; }
+                    let a = EDGE_POINTS[ea];
+                    let b = EDGE_POINTS[eb];
+                    for (var axis = 0u; axis < 3u; axis++) {
+                        // Both in the face of least axis: neither runs along the axis, both start at 0 on it.
+                        if (c[axis] > 0u && a.w != axis && b.w != axis && a[axis] == 0u && b[axis] == 0u) {
+                            drawn = belowHas(c, axis, a, b);
+                        }
+                    }
+                    if (!drawn) { mask |= 1u << (3u * t + k); }
+                }
+            }
+        }
+        lineMask[idx] = mask;
+        sum += countOneBits(mask);
+    }
+    chunkSum[chunk] = sum;
+}
+`;
+
+/**
+ * One thread per CHUNK cells: their lines (lineMask, from the count) as pairs of vertex indices,
+ * one after another from the run's offset; the preview's thick-line shader draws a quad for each.
+ * A line with an end beyond the room for vertices is written as (0, 0), which draws nothing.
+ */
+export const EMIT_LINES_WGSL = COMMON + FIELD_AT + /* wgsl */ `
+@group(1) @binding(0) var<storage, read> field: array<f32>;
+@group(1) @binding(1) var<storage, read> table: array<vec2u>;
+@group(1) @binding(2) var<storage, read> edgeMask: array<u32>;
+@group(1) @binding(3) var<storage, read> vertexOffset: array<u32>;
+@group(1) @binding(4) var<storage, read> chunkOffset: array<u32>;
+@group(1) @binding(5) var<storage, read> lineMask: array<u32>;
+@group(1) @binding(6) var<storage, read_write> lines: array<u32>;
+${EDGES}
+fn vertexOf(c: vec3u, id: u32) -> u32 {
+    let e = EDGE_POINTS[id];
+    let point = ((c.z + e.z) * P.box.y + (c.y + e.y)) * P.box.x + (c.x + e.x);
+    return vertexOffset[point] + countOneBits(edgeMask[point] & ((1u << e.w) - 1u));
+}
+
+@compute @workgroup_size(${MAP_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let chunk = itemIndex(lid, wid, nwg);
+    let cells = boxCells();
+    if (chunk >= chunks(cells)) { return; }
+    var slot = chunkOffset[chunk];
+    let end = min(chunk * ${CHUNK}u + ${CHUNK}u, cells);
+    for (var idx = chunk * ${CHUNK}u; idx < end; idx++) {
+        var bits = lineMask[idx];
+        if (bits == 0u) { continue; }
+        let c = cellIndex(idx);
+        let config = cellConfig(c.x, c.y, c.z);
+        while (bits != 0u) {
+            let bit = firstTrailingBit(bits);
+            bits &= bits - 1u;
+            if (slot >= P.caps.z) { return; }
+            let t = bit / 3u;
+            let k = bit - 3u * t;
+            var a = vertexOf(c, tableNibble(config, 3u * t + k + 1u));
+            var b = vertexOf(c, tableNibble(config, 3u * t + (k + 1u) % 3u + 1u));
+            if (a >= P.caps.x || b >= P.caps.x) {
+                a = 0u;
+                b = 0u;
+            }
+            lines[2u * slot] = a;
+            lines[2u * slot + 1u] = b;
+            slot++;
+        }
+    }
+}
+`;
+
+/**
  * One thread: the totals (for the CPU to check the room was enough, when it gets round to it),
  * and the draw arguments, so the draws need nothing from the CPU. At word 0, drawIndexedIndirect's
  * for the triangles: (index count, instance count, first index, base vertex, first instance). At
  * word 8, drawIndirect's for thick lines: (vertex count, instance count, first vertex, first
- * instance), six vertices - two triangles - for each of each triangle's three edges.
+ * instance), six vertices - two triangles - for each line.
  */
 export const TOTALS_WGSL = COMMON + /* wgsl */ `
 @group(1) @binding(0) var<storage, read> vertexChunkSum: array<u32>;
 @group(1) @binding(1) var<storage, read> vertexChunkOffset: array<u32>;
 @group(1) @binding(2) var<storage, read> triangleChunkSum: array<u32>;
 @group(1) @binding(3) var<storage, read> triangleChunkOffset: array<u32>;
-@group(1) @binding(4) var<storage, read_write> counts: array<u32>;
-@group(1) @binding(5) var<storage, read_write> drawArgs: array<u32>;
+@group(1) @binding(4) var<storage, read> lineChunkSum: array<u32>;
+@group(1) @binding(5) var<storage, read> lineChunkOffset: array<u32>;
+@group(1) @binding(6) var<storage, read_write> counts: array<u32>;
+@group(1) @binding(7) var<storage, read_write> drawArgs: array<u32>;
 @compute @workgroup_size(1)
 fn main() {
     let lastPoints = chunks(boxPoints()) - 1u;
     let lastCells = chunks(boxCells()) - 1u;
     let vertices = vertexChunkOffset[lastPoints] + vertexChunkSum[lastPoints];
     let triangles = triangleChunkOffset[lastCells] + triangleChunkSum[lastCells];
+    let lines = lineChunkOffset[lastCells] + lineChunkSum[lastCells];
     counts[0] = vertices;
     counts[1] = triangles;
+    counts[2] = lines;
     let drawn = min(triangles, P.caps.y);
     drawArgs[0] = 3u * drawn; drawArgs[1] = 1u; drawArgs[2] = 0u; drawArgs[3] = 0u; drawArgs[4] = 0u;
-    drawArgs[8] = 18u * drawn; drawArgs[9] = 1u; drawArgs[10] = 0u; drawArgs[11] = 0u;
+    drawArgs[8] = 6u * min(lines, P.caps.z); drawArgs[9] = 1u; drawArgs[10] = 0u; drawArgs[11] = 0u;
 }
 `;

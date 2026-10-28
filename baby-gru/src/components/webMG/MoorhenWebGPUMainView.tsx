@@ -22,8 +22,13 @@ export interface WebGPUMainViewRenderer extends ExternalRenderer {
     readonly webGLReason: string | null;
     /** Frames WebGPU has drawn. */
     readonly framesDrawn: number;
-    /** What the last frame WebGPU drew had in it; mapTriangles, the maps contoured on the GPU. */
-    readonly lastFrame: { meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number; peelLayers: number } | null;
+    /**
+     * What the last frame WebGPU drew had in it; mapTriangles, the maps contoured on the GPU, and
+     * mapLines, the lines of their edges (each once), which the line styles draw.
+     */
+    readonly lastFrame: {
+        meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number; mapLines: number; peelLayers: number;
+    } | null;
     /** The GPU time of the frames drawn since the last call (and of the FPS meter's), or null if not timed. */
     takeGpuTime(): { meanMs: number; maxMs: number; count: number } | null;
     /** Map contours made on the GPU so far (the report's map walk). */
@@ -159,7 +164,7 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
                 const { plan } = lastReport;
                 return {
                     meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments,
-                    mapTriangles: maps?.triangles ?? 0, peelLayers: lastReport.peelLayers,
+                    mapTriangles: maps?.triangles ?? 0, mapLines: maps?.lines ?? 0, peelLayers: lastReport.peelLayers,
                 };
             },
             takeGpuTime() {

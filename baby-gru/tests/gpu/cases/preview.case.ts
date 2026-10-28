@@ -135,7 +135,7 @@ export default defineCase(async (device: GPUDevice): Promise<PreviewReport> => {
     const b = surface.buffers;
     const draw = (style: PreviewGpuDraw["style"], lineWidth = 1.5): number => {
         renderer.render([], camera, [{
-            key: "map", position: b.position, normal: b.normal, index: b.triangles, drawArgs: b.drawArgs,
+            key: "map", position: b.position, normal: b.normal, index: b.triangles, lines: b.lines, drawArgs: b.drawArgs,
             drawArgsOffset: style === "triangles" ? 0 : 32, style, lineWidth,
             colour: [0.2, 0.3, 1, 1], transparent: false,
         }]);

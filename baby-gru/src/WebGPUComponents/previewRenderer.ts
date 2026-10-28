@@ -121,10 +121,10 @@ interface FrameTarget {
  * size in a buffer too: map contours made on the GPU (../mapContour).
  *
  * As a surface ("triangles": drawIndexedIndirect, lit as the other meshes are) or as the edges of
- * its triangles, `lineWidth` wide in the units of the map line width setting ("lines", unlit, and
- * "lit-lines": WebGL's LINES and NORMALLINES). The lines are quads built in the vertex shader,
- * from the position, normal and index buffers bound as storage, so those need STORAGE usage too,
- * and their drawIndirect arguments have 18 vertices per triangle.
+ * its triangles, each once (`lines`), `lineWidth` wide in the units of the map line width setting
+ * ("lines", unlit, and "lit-lines": WebGL's LINES and NORMALLINES). The lines are quads built in
+ * the vertex shader, from the position, normal and line buffers bound as storage, so those need
+ * STORAGE usage too, and their drawIndirect arguments have 6 vertices per line.
  */
 export interface PreviewGpuDraw {
     /** The same from frame to frame for the same thing, so its uniforms can be kept. */
@@ -133,6 +133,8 @@ export interface PreviewGpuDraw {
     normal: GPUBuffer;
     /** uint32 triangle indices. */
     index: GPUBuffer;
+    /** For the line styles: the triangles' edges, each once, as pairs of uint32 vertex indices. */
+    lines: GPUBuffer;
     /** drawIndexedIndirect's arguments for "triangles", drawIndirect's for the line styles. */
     drawArgs: GPUBuffer;
     drawArgsOffset: number;
@@ -1274,7 +1276,7 @@ export class WebGPUPreviewRenderer {
             return;
         }
         // The contour's buffers are remade when they grow, so the bindings follow them.
-        const sources = [item.position, item.normal, item.index];
+        const sources = [item.position, item.normal, item.lines];
         if (!uniforms.lines || uniforms.lines.sources.some((b, i) => b !== sources[i])) {
             uniforms.lines = {
                 sources,
