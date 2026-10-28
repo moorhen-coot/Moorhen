@@ -74,9 +74,11 @@ import {
     setSsaoBias,
     setSsaoRadius,
     setUseOffScreenBuffers,setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast, 
+    setUseWebGPU,
+    setAnaglyphColours,
     RootState
 } from "@/store";
-import { initialState as sceneSettingsInitialState, setAnaglyphColours, setUseWebGPU } from "@/store/sceneSettingsSlice";
+import { initialState as sceneSettingsInitialState } from "@/store/sceneSettingsSlice";
 import { DEFAULT_SHORTCUTS } from "./DefaultShortcuts";
 
 export type PreferenceEntry<T = unknown> = {

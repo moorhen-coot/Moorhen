@@ -11,7 +11,7 @@
  *     transparent ones, the nearest; where there are four, the furthest is not drawn.
  *   - at a silhouette, an opaque bar in front of a transparent quad: the pixel its edge halves
  *     should be half bar and half the quad over the floor - not half the bare floor, the "white
- *     rim" WebGL's resolved opaque depth makes (transparency-antialiasing-notes.md).
+ *     rim" WebGL's resolved opaque depth makes.
  *   - a transparent sphere: its own lit colour, half over the floor.
  */
 import { WebGPUPreviewRenderer } from "../../../src/WebGPUComponents/previewRenderer";

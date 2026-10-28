@@ -1,11 +1,10 @@
 /**
- * The WebGPU preview renderer draws: a DisplayBuffer mesh (whole, and in chunks as a too-big
+ * The WebGPU renderer draws: a DisplayBuffer mesh (whole, and in chunks as a too-big
  * mesh would be), and a GPU-resident map contour as a surface, thick lines and lit lines. Each is
  * drawn into a small canvas and the pixels of its colour counted; the test checks that something
  * of the right colour appeared and that WebGPU reported no errors.
  *
- * Not a picture comparison: that belongs with the WebGL-against-WebGPU tests, when there are
- * enough primitives to compare whole scenes.
+ * Not a picture comparison: that is tests/e2e/webgpu-parity.spec.ts.
  */
 import { WebGPUPreviewRenderer } from "../../../src/WebGPUComponents/previewRenderer";
 import type { PreviewGpuDraw } from "../../../src/WebGPUComponents/previewRenderer";
@@ -80,7 +79,7 @@ export interface PreviewReport {
     rendererErrors: string[];
     /**
      * Two renderers on one canvas, the first destroyed after the second was made - as React's
-     * StrictMode mounts the preview twice in development. The second must still draw.
+     * StrictMode mounts the main view twice in development. The second must still draw.
      */
     overlapError: string | null;
     overlapMesh: number;

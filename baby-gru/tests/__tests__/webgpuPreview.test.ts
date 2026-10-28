@@ -1,8 +1,9 @@
 /**
- * The GPU-free half of the WebGPU preview: what it chooses to draw, and the uniforms it packs.
+ * The GPU-free half of the WebGPU renderer (previewScene.ts): what it chooses to draw, and the
+ * uniforms it packs.
  *
- * The rendering itself needs a WebGPU device and is checked by eye in the browser. What can go
- * wrong quietly is here: a mesh drawn with the wrong colour source (the rules for that are spread
+ * The rendering itself needs a WebGPU device: tests/gpu, and the WebGL-against-WebGPU pictures in
+ * tests/e2e/webgpu-parity.spec.ts. What can go wrong quietly is here: a mesh drawn with the wrong colour source (the rules for that are spread
  * across drawTriangles and drawBuffer), something skipped without being reported, or the light
  * coming from a different direction than in the WebGL view.
  */
@@ -267,7 +268,7 @@ const camera = (over: Partial<PreviewCameraSource> = {}): PreviewCameraSource =>
 });
 
 describe("frameUniforms", () => {
-    it("carries the WebGPU-depth camera for the preview's own shape", () => {
+    it("carries the WebGPU-depth camera for the image's own shape", () => {
         const data = frameUniforms(camera(), 800, 400);
         expect(data).toHaveLength(FRAME_FLOATS);
         const expected = viewProjection(previewCameraFrame(camera(), 800, 400), "zeroToOne");

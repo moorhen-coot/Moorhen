@@ -711,12 +711,13 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     /**
-     * Experimental: the WebGPU renderer, for tests and for trying it from the console.
+     * The WebGPU renderer: who draws the main view, and WebGPU for tests and the console.
      *
-     * `snapshot()` draws what the main view shows with WebGPU, offscreen, with the main view's
-     * camera (only what the WebGPU renderer can draw yet; the rest is listed in `skipped`), and
-     * `webGLSnapshot()` reads the main view's own pixels to compare with. Neither changes the
-     * main view. Likely to change while the WebGPU renderer is built.
+     * `mainView()` says whether WebGPU or WebGL draws the main view and why, and `setMainView()`
+     * asks for one (the preference). `report()` gives one line on how this machine draws Moorhen,
+     * for a tester to paste back. `snapshot()` draws what the main view shows with WebGPU,
+     * offscreen, with the main view's camera (anything it cannot draw is listed in `skipped`), and
+     * `webGLSnapshot()` reads the WebGL view's own pixels to compare with. See instanceApi.ts.
      * @example
      * if (instance.webGPU.available()) {
      *     const gpu = await instance.webGPU.snapshot();

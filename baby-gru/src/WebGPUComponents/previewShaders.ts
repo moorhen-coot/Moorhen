@@ -1,12 +1,13 @@
 /**
- * WGSL for the WebGPU preview: lit, fogged triangles, plain and instanced, and thick lines.
+ * WGSL for the WebGPU renderer: lit, fogged triangles (plain, instanced and textured), sphere
+ * impostors and thick lines, with shadows, ambient occlusion, edges and depth-peel entry points;
+ * and text, overlay lines and textured shapes.
  *
- * A transcription of the parts of webgl-2/triangle-vertex-shader.js,
- * triangle-instanced-vertex-shader.js and triangle-fragment-shader.js that apply with shadows,
- * SSAO, edge detection, hover highlighting and depth peeling all off. Textured meshes (base
- * colour, normal and metallic-roughness maps) have entry points of their own: fs_textured. Keep the lighting
- * in step with the fragment shader there, or the two views will drift apart in ways that look
- * like bugs in whichever one is newer.
+ * The triangles transcribe webgl-2/triangle-vertex-shader.js, triangle-instanced-vertex-shader.js
+ * and triangle-fragment-shader.js. Textured meshes (base colour, normal and metallic-roughness
+ * maps) have entry points of their own: fs_textured. Keep the lighting in step with the fragment
+ * shader there, or the two views will drift apart in ways that look like bugs in whichever one is
+ * newer.
  *
  * Perfect spheres follow twodshapes-vertex-shader.js and perfect-sphere-fragment-shader.js: a
  * quad per sphere facing the viewer, shaded and given the depth of a sphere in the fragment

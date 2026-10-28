@@ -7,7 +7,8 @@ import { webGLOnlyReason } from "../../src/WebGLgComponents/externalRenderer";
 import { ANAGLYPH_COLOURS, DEFAULT_ANAGLYPH_COLOURS, anaglyphChannels } from "../../src/WebGLgComponents/anaglyph";
 import { anaglyphUniforms } from "../../src/WebGPUComponents/anaglyphCombine";
 import { SCREENSHOT_SIDE, screenshotSize } from "../../src/utils/screenshotSize";
-import { buildBuffers, deferWebGLUploads } from "../../src/WebGLgComponents/buildBuffers";
+import { buildBuffers } from "../../src/WebGLgComponents/buildBuffers";
+import { deferWebGLUploads } from "../../src/WebGLgComponents/webGLUploads";
 import type { DisplayBuffer } from "../../src/WebGLgComponents/displayBuffer";
 
 describe("webGLOnlyReason", () => {

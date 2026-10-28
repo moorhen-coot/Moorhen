@@ -179,7 +179,8 @@ const ROW_PER_THREAD = 4;
  * the row in workgroup memory, a chunk of 1024 at a time - which is the boxes' total, written to
  * the field as -isoLevel + total * 2^-bits.
  *
- * Each workgroup takes every FIELD_GROUPS-th row (WebGPU zeroes workgroup memory each time a
+ * Each workgroup takes every n-th row, n the number of workgroups started (ROW_WORKGROUPS in
+ * gpuMetaBalls.ts) (WebGPU zeroes workgroup memory each time a
  * workgroup starts, and Firefox does that with one thread, so starting one per row was costly
  * there). Items for the dispatch are workgroups * 64, so that dispatch() makes that many.
  */
@@ -782,8 +783,9 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
 `;
 
 /**
- * Totals the CPU needs to size the next buffers: the vertices this slab owns, its triangles, or
- * its influences. One thread.
+ * The slab's totals: the vertices it owns, its triangles, its influences - moved into the
+ * mesh-so-far offsets by `advance`, and read back afterwards to check they fitted the room. One
+ * thread.
  *
  * totals[0] = vertices owned by the slab: the offset of the first point of the first plane it
  *             does not own, or the grand total when it owns every counted plane.

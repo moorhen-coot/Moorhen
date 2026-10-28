@@ -37,7 +37,7 @@ export function sharedGpuMetaBalls(): Promise<GpuMetaBalls | null> {
         // The shared device has the adapter's largest buffers (the mesh readback buffers grow with
         // the molecule) and timestamp queries when offered (the console's per-kernel times).
         const generator = await GpuMetaBalls.create(context.device);
-        console.log(`GPU MetaBalls: pipelines compiled in ${generator.compileMs.toFixed(0)} ms`);
+        console.debug(`GPU MetaBalls: pipelines compiled in ${generator.compileMs.toFixed(0)} ms`);
         context.lost.then(() => {
             if (shared === made) shared = null;
         });

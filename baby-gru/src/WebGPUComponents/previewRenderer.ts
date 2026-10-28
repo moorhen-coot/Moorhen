@@ -1,16 +1,19 @@
 /**
- * A WebGPU renderer for the scene's TRIANGLES sub-buffers, drawing into its own canvas.
+ * The WebGPU renderer for the scene's DisplayBuffers, drawing into its own canvas: the main view
+ * (MoorhenWebGPUMainView), and snapshots, screenshots and movies.
  *
  * Nothing is shared with the WebGL context. It reads the same DisplayBuffers (their CPU-side
  * typed arrays) and the same camera, uploads what it needs into its own GPU buffers, and keeps
  * those until the DisplayBuffer's data changes or the buffer leaves the scene.
  *
- * What it does not do yet is listed in planPreview; what it does is triangles lit and fogged as the
+ * What it cannot draw is listed by planPreview. What it draws: triangles lit and fogged as the
  * WebGL triangle shader has them (textured too: base colour, normal and metallic-roughness maps,
- * see surfaceTextures.ts), perfect spheres as impostors, GPU-resident meshes (map contours)
- * as surfaces or thick lines, 4x multisampling, and a second, blended pass for transparent
- * geometry - unsorted and without depth peeling, so overlapping transparent surfaces can differ
- * from the WebGL view.
+ * see surfaceTextures.ts), perfect spheres as impostors, LINES and NORMALLINES as thick lines,
+ * GPU-resident meshes (map contours) as surfaces or thick lines, labels, overlays and textured
+ * shapes, with 4x multisampling; shadows, ambient occlusion and edges (effectPasses.ts), depth
+ * blur, divided views, stereo and anaglyph; and transparent geometry depth-peeled as WebGL peels
+ * it (depthPeel.ts), or blended over the opaque scene unsorted when order-independent
+ * transparency is off.
  */
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
 import type * as mat4 from 'gl-matrix/mat4';
@@ -228,19 +231,15 @@ const asFloat32 = (data: ArrayLike<number>): Float32Array =>
 const asUint32 = (data: ArrayLike<number>): Uint32Array =>
     data instanceof Uint32Array ? data : Uint32Array.from(data);
 
-// Where it always was, for the modal; it lives with the shared device now.
-export { webGPUUnavailableReason } from './gpu';
-
 /**
  * Which renderer configured each canvas context last. A canvas has one WebGPU context however
  * often getContext is called, so two renderers on one canvas share it - as when React's
- * StrictMode mounts the preview twice in development, and the first renderer is destroyed after
+ * StrictMode mounts the main view twice in development, and the first renderer is destroyed after
  * the second has configured the context. Only the last to configure may unconfigure.
  */
 const canvasOwners = new WeakMap<GPUCanvasContext, WebGPUPreviewRenderer>();
 
 export class WebGPUPreviewRenderer {
-    readonly adapterDescription: string;
     private readonly device: GPUDevice;
     private readonly context: GPUCanvasContext;
     private readonly format: GPUTextureFormat;
@@ -325,22 +324,21 @@ export class WebGPUPreviewRenderer {
      */
     static async create(canvas: HTMLCanvasElement, onError: (message: string) => void,
                         options: { maxBufferBytes?: number; onDeviceLost?: (message: string) => void } = {}): Promise<WebGPUPreviewRenderer> {
-        const { device, adapterDescription } = await getGpuContext();
+        const { device } = await getGpuContext();
         // The DOM library's getContext overloads do not include "webgpu" yet.
         const context = canvas.getContext("webgpu") as unknown as GPUCanvasContext | null;
         if (!context) throw new Error("The canvas would not give a WebGPU context.");
         // Meshes bigger than the largest buffer are drawn in chunks. For tests: a smaller limit
         // than the device's, to exercise the chunking.
         const maxBufferBytes = Math.min(device.limits.maxBufferSize, options.maxBufferBytes ?? Infinity);
-        return new WebGPUPreviewRenderer(device, context, adapterDescription, onError, maxBufferBytes, options.onDeviceLost ?? onError);
+        return new WebGPUPreviewRenderer(device, context, onError, maxBufferBytes, options.onDeviceLost ?? onError);
     }
 
-    private constructor(device: GPUDevice, context: GPUCanvasContext, adapterDescription: string, onError: (message: string) => void,
+    private constructor(device: GPUDevice, context: GPUCanvasContext, onError: (message: string) => void,
                         maxBufferBytes: number, onDeviceLost: (message: string) => void) {
         this.device = device;
         this.maxBufferBytes = maxBufferBytes;
         this.context = context;
-        this.adapterDescription = adapterDescription;
         this.format = navigator.gpu.getPreferredCanvasFormat();
         context.configure({ device, format: this.format, alphaMode: "opaque" });
         canvasOwners.set(context, this);
@@ -1115,8 +1113,10 @@ export class WebGPUPreviewRenderer {
         return this.shadowMapView;
     }
 
-    /** The canvas's multisampled targets, remade when the canvas changes size. */
-    /** `readableDepth`: whether the depth must be readable as a texture (depth blur). */
+    /**
+     * The canvas's multisampled targets, remade when the canvas changes size. `readableDepth`:
+     * whether the depth must be readable as a texture (depth blur).
+     */
     private ensureTargets(width: number, height: number, readableDepth: boolean): void {
         if (this.colourTarget && this.colourTarget.width === width && this.colourTarget.height === height
             && this.depthTargetReadable === readableDepth) return;

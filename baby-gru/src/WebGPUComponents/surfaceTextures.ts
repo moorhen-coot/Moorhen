@@ -83,6 +83,8 @@ export class SurfaceTextures {
     private readonly white: GPUTexture;
     private readonly flat: GPUTexture;
     private readonly textures = new Map<string, CachedTexture>();
+    /** Sources found too short for their size: warned about once each, not every frame. */
+    private readonly shortSources = new WeakSet<TextureSource>();
     private readonly materials = new Map<string, CachedMaterial>();
 
     constructor(private readonly device: GPUDevice) {
@@ -194,7 +196,10 @@ export class SurfaceTextures {
         }
         if (!source) return null;
         if (!(source.width > 0 && source.height > 0) || source.rgba.length < source.width * source.height * 4) {
-            console.warn(`texture ${id} has less data than its ${source.width}x${source.height} size`);
+            if (!this.shortSources.has(source)) {
+                this.shortSources.add(source);
+                console.warn(`texture ${id} has less data than its ${source.width}x${source.height} size`);
+            }
             return null;
         }
         const texture = this.upload(id, source);

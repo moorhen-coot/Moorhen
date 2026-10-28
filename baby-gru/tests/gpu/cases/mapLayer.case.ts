@@ -70,7 +70,7 @@ export default defineCase(async (device: GPUDevice): Promise<LayerStep[]> => {
     } as never;
     const frame = async (label: string) => {
         const draws = layer.frame(state);
-        // Read in the same task as the frame, as the preview renders in it.
+        // Read in the same task as the frame, as the WebGPU main view renders in it.
         const triangles = draws.length ? new Uint32Array(await readBuffer(device, draws[0].drawArgs, 4))[0] / 3 : null;
         steps.push({ label, draws: draws.length, triangles, fetches, status: layer.status });
     };

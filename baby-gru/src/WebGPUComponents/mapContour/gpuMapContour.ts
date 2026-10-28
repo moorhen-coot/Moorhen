@@ -7,7 +7,7 @@
  * guess was too small (the draw then shows only part of the surface for a frame), the buffers
  * grow and the contour is made again.
  */
-import { BufferUsage, ComputeKernel, GpuScan, GpuSpanTimer, MapMode, SpanTiming, createBuffer } from "../gpu";
+import { BufferUsage, ComputeKernel, GpuScan, MapMode, createBuffer } from "../gpu";
 import { MC_TRIANGLE_TABLE } from "../metaballs/mcTable";
 import { ContourBox, MapUnitCellGrid, contourBox, inverse3 } from "./mapContourBox";
 import {
@@ -51,9 +51,8 @@ export class MapContourKernels {
      * One pass of `kernel` over `items` threads, with the parameters at group 0 and `buffers` at
      * group 1, in binding order.
      */
-    dispatch(encoder: GPUCommandEncoder, kernel: Kernel, params: GPUBuffer, buffers: GPUBuffer[], items: number,
-             timestampWrites?: GPUComputePassTimestampWrites): void {
-        this.kernels.get(kernel).dispatch(encoder, { groups: [[params], buffers], items, timestampWrites });
+    dispatch(encoder: GPUCommandEncoder, kernel: Kernel, params: GPUBuffer, buffers: GPUBuffer[], items: number): void {
+        this.kernels.get(kernel).dispatch(encoder, { groups: [[params], buffers], items });
     }
 
     destroy(): void {
@@ -117,11 +116,6 @@ interface WorkBuffers {
     lineChunkOffset: GPUBuffer;
 }
 
-/** The steps of a contouring, as GpuIsosurface times them: segment i of its SpanTiming is step i. */
-export const CONTOUR_STEPS = [
-    "sample", "count vertices", "count triangles", "count lines", "scans", "emit vertices", "emit triangles", "emit lines", "totals",
-] as const;
-
 /** One contour level of one map, remade when the request changes. */
 export class GpuIsosurface {
     /** First guess at the room needed: vertices per box point. Tests make it tiny to force growth. */
@@ -137,14 +131,15 @@ export class GpuIsosurface {
     private last = "";
     private reading = false;
     private destroyed = false;
-    /** How many times the contour has been made, and the box last contoured: for the status line. */
+    /**
+     * How many times the contour has been made, and the box last contoured (the layer's status and
+     * the renderer report's map walk).
+     */
     made = 0;
     lastBox: ContourBox | null = null;
-    /** Triangles (kept, so drawn) and the lines of their edges, as last read back; for the status line. */
+    /** Triangles (kept, so drawn) and the lines of their edges, as last read back (the report). */
     lastTriangles = 0;
     lastLines = 0;
-    /** GPU time of each contouring and its steps (CONTOUR_STEPS), when the device can time. */
-    private readonly timer: GpuSpanTimer | null;
 
     /** `onRemade`: the room was too small; the next update will make the contour again. */
     constructor(private readonly kernels: MapContourKernels, private readonly mapGrid: GpuMapGrid, private readonly onRemade: () => void) {
@@ -154,12 +149,6 @@ export class GpuIsosurface {
         this.countsRead = this.device.createBuffer({ label: "map contour counts read", size: 16, usage: MAP_READ | COPY_DST });
         this.drawArgs = this.device.createBuffer({ label: "map contour draw args", size: 64, usage: STORAGE | INDIRECT | COPY_SRC | COPY_DST });
         this.device.queue.writeBuffer(this.drawArgs, 0, new Uint32Array(16));
-        this.timer = GpuSpanTimer.create(this.device, "map contour", CONTOUR_STEPS.length + 1);
-    }
-
-    /** The GPU time of contouring since the last call, by step (CONTOUR_STEPS); null if untimed. */
-    takeTiming(): SpanTiming | null {
-        return this.timer?.take() ?? null;
     }
 
     /** The buffers to draw, or null before the first contour. */
@@ -192,34 +181,29 @@ export class GpuIsosurface {
         const { position, normal, triangles, lines } = out.buffers;
         const k = this.kernels;
         const encoder = this.device.createCommandEncoder({ label: "map contour" });
-        // Marks at the step boundaries (CONTOUR_STEPS); the scans' own passes fall between 4 and 5.
-        const mark = this.timer?.writes() ?? null;
-        k.dispatch(encoder, "sample", this.params, [this.mapGrid.buffer, field], points, mark?.(0));
+        k.dispatch(encoder, "sample", this.params, [this.mapGrid.buffer, field], points);
         // The count and emit kernels take CHUNK points or cells per thread, and only the chunks'
         // sums are scanned (see mapContourShaders).
         const pointChunks = chunksOf(points), cellChunks = chunksOf(cells);
-        k.dispatch(encoder, "countVertices", this.params, [field, edgeMask, vertexChunkSum], pointChunks, mark?.(1));
-        k.dispatch(encoder, "countTriangles", this.params, [field, k.table, keepMask, triangleChunkSum], cellChunks, mark?.(2));
+        k.dispatch(encoder, "countVertices", this.params, [field, edgeMask, vertexChunkSum], pointChunks);
+        k.dispatch(encoder, "countTriangles", this.params, [field, k.table, keepMask, triangleChunkSum], cellChunks);
         // After all the cells' keepMasks: a cell looks at the ones below it.
-        k.dispatch(encoder, "countLines", this.params, [field, k.table, keepMask, lineMask, lineChunkSum], cellChunks, mark?.(3, 4));
+        k.dispatch(encoder, "countLines", this.params, [field, k.table, keepMask, lineMask, lineChunkSum], cellChunks);
         k.scan.encode(encoder, vertexChunkSum, vertexChunkOffset, pointChunks);
         k.scan.encode(encoder, triangleChunkSum, triangleChunkOffset, cellChunks);
         k.scan.encode(encoder, lineChunkSum, lineChunkOffset, cellChunks);
         k.dispatch(encoder, "emitVertices", this.params,
-            [this.mapGrid.buffer, field, edgeMask, vertexChunkOffset, vertexOffset, position, normal], pointChunks, mark?.(5));
+            [this.mapGrid.buffer, field, edgeMask, vertexChunkOffset, vertexOffset, position, normal], pointChunks);
         k.dispatch(encoder, "emitTriangles", this.params,
-            [field, k.table, edgeMask, vertexOffset, triangleChunkOffset, keepMask, triangles], cellChunks, mark?.(6));
+            [field, k.table, edgeMask, vertexOffset, triangleChunkOffset, keepMask, triangles], cellChunks);
         k.dispatch(encoder, "emitLines", this.params,
-            [field, k.table, edgeMask, vertexOffset, lineChunkOffset, lineMask, lines], cellChunks, mark?.(7));
+            [field, k.table, edgeMask, vertexOffset, lineChunkOffset, lineMask, lines], cellChunks);
         k.dispatch(encoder, "totals", this.params,
             [vertexChunkSum, vertexChunkOffset, triangleChunkSum, triangleChunkOffset, lineChunkSum, lineChunkOffset, this.counts, this.drawArgs],
-            1, mark?.(8, 9));
-        const timing = mark !== null;
-        if (timing) this.timer.resolve(encoder);
+            1);
         const check = !this.reading;
         if (check) encoder.copyBufferToBuffer(this.counts, 0, this.countsRead, 0, 16);
         this.device.queue.submit([encoder.finish()]);
-        if (timing) this.timer.collect();
         // Freed once the commands that use them have run.
         k.scan.releaseTransient();
         this.made++;
@@ -235,7 +219,6 @@ export class GpuIsosurface {
         this.counts.destroy();
         if (!this.reading) this.countsRead.destroy();
         this.drawArgs.destroy();
-        this.timer?.destroy();
     }
 
     /** In the background: if the room was too small, make more and the contour again. */

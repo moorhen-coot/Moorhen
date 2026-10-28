@@ -17,7 +17,7 @@ import {
 } from "../../WebGLgComponents/mgWebGLParts/renderStats";
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { setPeelOpaqueSeparately, setUseWebGPU } from "../../store/sceneSettingsSlice";
-import { webGPUAdapterUnavailableReason, webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
+import { webGPUAdapterSummary, webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
 import { showModal } from "../../store/modalsSlice";
 import {
     addCallback,
@@ -205,7 +205,7 @@ export const MoorhenDevMenu = () => {
     const [noWebGPU, setNoWebGPU] = useState<string | null>(webGPUUnavailableReason());
     useEffect(() => {
         let live = true;
-        webGPUAdapterUnavailableReason().then(reason => { if (live) setNoWebGPU(reason); });
+        webGPUAdapterSummary().then(({ reason }) => { if (live) setNoWebGPU(reason); });
         return () => { live = false; };
     }, []);
     const glCtx = useSelector((state: RootState) => state.glRef.glCtx);
@@ -509,15 +509,6 @@ export const MoorhenDevMenu = () => {
                 }}
             >
                 2D Overlays
-            </MoorhenMenuItem>
-            <MoorhenMenuItem
-                disabled={noWebGPU !== null}
-                onClick={() => {
-                    dispatch(showModal({ key: modalKeys.WEBGPU_PREVIEW }));
-                    document.body.click();
-                }}
-            >
-                WebGPU preview (test)
             </MoorhenMenuItem>
             <MoorhenMenuItem
                 onClick={() => { void (async () => {

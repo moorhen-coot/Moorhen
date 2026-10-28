@@ -11,7 +11,7 @@ npm run test:gpu -- -g "map contour"          # by title
 ```
 
 Browsers come from `npm run test:e2e:install`. Their WebGPU settings are in
-`tests/webgpuBrowsers.ts`, shared with the WebGL-against-WebGPU e2e tests (`tests/e2e/webgpu-*.spec.ts`,
+`tests/webgpuBrowsers.ts`, shared with the WebGPU e2e tests (`tests/e2e/webgpu-*.spec.ts`,
 projects `chromium-webgpu` and `firefox-webgpu`).
 
 - **Chromium** uses the machine's GPU, except on Linux, where it uses SwiftShader, a software GPU
@@ -19,8 +19,8 @@ projects `chromium-webgpu` and `firefox-webgpu`).
   `MOORHEN_GPU_CHROMIUM=/path/to/chrome` runs a particular build.
 - **Firefox:** Playwright's Firefox usually has no WebGPU, so its tests are *skipped*, with the
   reason, rather than failed. Shaders must still work in Firefox (its compiler, naga, is stricter
-  than Chrome's), so check in a real Firefox when you change WGSL: open the WebGPU preview, or
-  run a case page by hand.
+  than Chrome's), so check in a real Firefox when you change WGSL: load a structure (WebGPU draws
+  the main view there by default), or run a case page by hand.
 
 ## Layout
 

@@ -176,23 +176,6 @@ export const gltfMaterials = async (
     return byMaterial;
 };
 
-/**
- * A base colour texture id for each material that has one: gltfMaterials without the maps.
- *
- * @returns material index -> texture id. Materials absent from it draw untextured.
- */
-export const gltfMaterialTextures = async (
-    bytes: ArrayBuffer,
-    available: Map<string, Uint8Array>,
-    decode: ImageDecode = decodeImageInBrowser
-): Promise<Map<number, string>> => {
-    const byMaterial = new Map<number, string>();
-    for (const [m, material] of await gltfMaterials(bytes, available, decode)) {
-        if (material.baseColour) byMaterial.set(m, material.baseColour);
-    }
-    return byMaterial;
-};
-
 /** One image, decoded and registered, or null if it could not be. */
 const decodeImage = async (
     image: Json | undefined,

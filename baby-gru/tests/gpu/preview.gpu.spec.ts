@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { resultOrSkip, runGpuCase } from "./helpers/gpuPage";
 import type { PreviewReport } from "./cases/preview.case";
 
-test("the preview draws meshes, chunked meshes and GPU map contours in every style", async ({ page }) => {
+test("the WebGPU renderer draws meshes, chunked meshes and GPU map contours in every style", async ({ page }) => {
     const r = resultOrSkip(await runGpuCase<PreviewReport>(page, "preview.case.ts"));
     expect(r.rendererErrors).toEqual([]);
     expect(r.background).toBe(0);

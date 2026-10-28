@@ -33,7 +33,6 @@ import { MoorhenValidationPlotModal } from "../../modal/MoorhenValidationPlotMod
 import { MoorhenVectorsModal } from "../../modal/MoorhenVectorsModal";
 import { MoorhenWaterValidationModal } from "../../modal/MoorhenWaterValidationModal";
 import { MoorhenNOERestraints } from "../../modal/MoorhenNOERestraints"
-import { MoorhenWebGPUPreviewModal } from "../../modal/MoorhenWebGPUPreviewModal";
 export type ModalKey =
     | "acedrg"
     | "query-seq"
@@ -66,7 +65,6 @@ export type ModalKey =
     | "NOE"
     | "config-shortcuts"
     | "fourier-shell-correlation"
-    | "webgpu-preview"
 
 export type ModalComponentProps = {
     openDocked?: "left" | "right" | null | undefined;
@@ -104,8 +102,7 @@ const modalsMap: Record<ModalKey, React.FC<ModalComponentProps>> = {
     conkit: MoorhenConKitModal,
     "config-shortcuts": MoorhenShortcutConfigModal,
     NOE: MoorhenNOERestraints,
-    "fourier-shell-correlation": MoorhenFourierShellCorrelationModal,
-    "webgpu-preview": MoorhenWebGPUPreviewModal,
+    "fourier-shell-correlation": MoorhenFourierShellCorrelationModal
 };
 
 export type ExtraDraggableModals = React.JSX.Element[];

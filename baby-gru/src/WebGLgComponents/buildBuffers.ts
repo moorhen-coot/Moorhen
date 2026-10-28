@@ -4,7 +4,7 @@ import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRef
 import { DisplayBuffer } from './displayBuffer'
 import { TexturedShape } from './texturedShape'
 import { createWebGLBuffers } from './createWebGLBuffers'
-import { MGWebGLBuffer, pendingGLBuffer, realiseGLResources } from './glResources'
+import { GL_SLOT_ARRAYS, MGWebGLBuffer, pendingGLBuffer, realiseGLResources } from './glResources'
 import { RootState } from '../store/MoorhenReduxStore';
 import { Store } from '@reduxjs/toolkit';
 import { webGLUploadsDeferred } from './webGLUploads';
@@ -499,40 +499,8 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
         theBuffer.multiViewGroup = oldBuffer.multiViewGroup
         theBuffer.clickTol = oldBuffer.clickTol
 
-        for(const buf of oldBuffer.triangleVertexRealNormalBuffer){
-            theBuffer.triangleVertexRealNormalBuffer.push(pendingGLBuffer(buf.numItems));
-        }
-
-        for(const buf of oldBuffer.triangleVertexNormalBuffer){
-            theBuffer.triangleVertexNormalBuffer.push(pendingGLBuffer(buf.numItems));
-        }
-
-        for(const buf of oldBuffer.triangleVertexPositionBuffer){
-            theBuffer.triangleVertexPositionBuffer.push(pendingGLBuffer(buf.numItems));
-        }
-
-        for(const buf of oldBuffer.triangleVertexIndexBuffer){
-            theBuffer.triangleVertexIndexBuffer.push(pendingGLBuffer(buf.numItems));
-        }
-
-        for(const buf of oldBuffer.triangleVertexTextureBuffer){
-            theBuffer.triangleVertexTextureBuffer.push(pendingGLBuffer(buf.numItems));
-        }
-
-        for(const buf of oldBuffer.triangleInstanceOriginBuffer){
-            theBuffer.triangleInstanceOriginBuffer.push(pendingGLBuffer(buf.numItems));
-        }
-
-        for(const buf of oldBuffer.triangleInstanceOrientationBuffer){
-            theBuffer.triangleInstanceOrientationBuffer.push(pendingGLBuffer(buf.numItems));
-        }
-
-        for(const buf of oldBuffer.triangleInstanceSizeBuffer){
-            theBuffer.triangleInstanceSizeBuffer.push(pendingGLBuffer(buf.numItems));
-        }
-
-        for(const buf of oldBuffer.triangleColourBuffer){
-            theBuffer.triangleColourBuffer.push(pendingGLBuffer(buf.numItems));
+        for (const name of GL_SLOT_ARRAYS) {
+            for (const buf of oldBuffer[name]) theBuffer[name].push(pendingGLBuffer(buf.numItems));
         }
 
         if(oldBuffer.textNormalBuffer){
@@ -596,9 +564,6 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
 
     return newBuffers
 }
-
-// Re-exported: callers have always found it here.
-export { deferWebGLUploads } from './webGLUploads'
 
 export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootState>, gl_in: WebGLRenderingContext = null) : void => {
         if (!gl_in && webGLUploadsDeferred(store)) return

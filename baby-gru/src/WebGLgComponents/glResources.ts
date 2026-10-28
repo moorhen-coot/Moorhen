@@ -126,9 +126,6 @@ export function realiseGLResources(gl: GLForResources, buffer: SlotHolder): numb
 
 /**
  * Pack one array into a square-ish single-channel texture, or return null if it will not fit.
- *
- * Moved unchanged from createWebGLBuffers, apart from the test now being "fits" rather than
- * "fits, else silently leave the texture unset".
  */
 function influenceTexture(
     gl: GLForResources, data: ArrayLike<number>, maxTexSize: number, isFloat: boolean
@@ -174,6 +171,6 @@ function realiseInfluenceTextures(gl: GLForResources, pickInfo: NonNullable<Slot
             pickInfo.influence_index_offsets_width = indexOffsets.width;
         }
     } catch (e) {
-        console.log(e);
+        console.warn("realiseGLResources: the hover influence textures were not made", e);
     }
 }

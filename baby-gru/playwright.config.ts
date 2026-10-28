@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 import { webGPUChromium, webGPUFirefox } from "./tests/webgpuBrowsers";
 
-// WebGL-against-WebGPU tests need browsers started with WebGPU on (and, for Chromium, the full
+// The WebGPU e2e tests need browsers started with WebGPU on (and, for Chromium, the full
 // browser rather than the headless shell), so they run in projects of their own; the strict
 // screenshot baselines of the other projects stay as they are.
 const webGPUTests = "**/webgpu-*.spec.ts";

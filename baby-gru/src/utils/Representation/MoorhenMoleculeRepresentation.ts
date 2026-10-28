@@ -1836,14 +1836,14 @@ export class MoleculeRepresentation {
         const grid = mesh.grid ? mesh.grid.n.join("x") : "none";
         const t = mesh.timings;
         const other = t.totalMs - t.setupMs - t.encodeMs - t.waitMs - t.copyMs;
-        console.log(`GPU MetaBalls: ${pickPoints.length} points, grid ${grid}, ${mesh.positions.length / 3} vertices, ` +
+        console.debug(`GPU MetaBalls: ${pickPoints.length} points, grid ${grid}, ${mesh.positions.length / 3} vertices, ` +
             `${mesh.indices.length / 3} triangles; spheres from Coot ${spheresMs.toFixed(0)} ms, ` +
             `GPU ${t.totalMs.toFixed(0)} ms in ${t.slabs} slab(s), ${t.field ?? "no"} field: ` +
             `setup ${t.setupMs.toFixed(0)}, encode ${t.encodeMs.toFixed(0)}, wait ${t.waitMs.toFixed(0)}, ` +
             `copy ${t.copyMs.toFixed(0)}, other ${other.toFixed(0)}` + (t.retries ? `, ${t.retries} retry(s)` : ""));
         // Read back after the mesh is made, so as not to hold it up.
         t.gpuMs?.then(gpuMs => {
-            if (gpuMs) console.log(`GPU MetaBalls, GPU time per kernel: ${Object.entries(gpuMs).map(([k, ms]) => `${k} ${ms.toFixed(1)}`).join(", ")}`);
+            if (gpuMs) console.debug(`GPU MetaBalls, GPU time per kernel: ${Object.entries(gpuMs).map(([k, ms]) => `${k} ${ms.toFixed(1)}`).join(", ")}`);
         });
         const data = metaballsMeshData(mesh, pickPoints);
         return [data as unknown as PickableMesh];

@@ -88,7 +88,7 @@ export function platformName(userAgent: string): string {
 }
 
 /** 1234567 → "1.23M", 12345 → "12.3k". */
-const count = (n: number): string => n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}k` : `${n}`;
+export const formatCount = (n: number): string => n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}k` : `${n}`;
 const ms = (t: number): string => `${t.toFixed(1)} ms`;
 
 /** The report as one line, fields separated by " | ". */
@@ -109,8 +109,8 @@ export function formatRendererReport(f: RendererReportFacts): string {
     else parts.push("main view: WebGL (WebGPU switched off)");
     const m = f.mapCounts;
     parts.push(`maps: ${view.mapsOnGpu ? "GPU" : "Coot"}` + (m === null ? " (none shown)" : m === undefined ? ""
-        : `, ${count(m.triangles)} triangles` + (m.lines === null ? "" : ` drawn as ${count(m.lines)} lines`)));
-    const scene = `${f.canvas.width}x${f.canvas.height}, ${count(f.scene.triangles)} triangles`
+        : `, ${formatCount(m.triangles)} triangles` + (m.lines === null ? "" : ` drawn as ${formatCount(m.lines)} lines`)));
+    const scene = `${f.canvas.width}x${f.canvas.height}, ${formatCount(f.scene.triangles)} triangles`
         + (f.scene.peelLayers ? `, ${f.scene.peelLayers} layers peeled` : "");
     parts.push(scene);
     if (f.layout) {

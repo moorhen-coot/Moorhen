@@ -4,14 +4,12 @@ import { useMoorhenInstance } from "../../InstanceManager";
 import type { RootState } from "../../store/MoorhenReduxStore";
 import type { MGWebGL } from "../../WebGLgComponents/mgWebGL";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
-import { deferWebGLUploads } from "../../WebGLgComponents/buildBuffers";
+import { deferWebGLUploads } from "../../WebGLgComponents/webGLUploads";
 import { type ExternalRenderer, webGLOnlyReason } from "../../WebGLgComponents/externalRenderer";
 import { type PreviewFrameReport, WebGPUPreviewRenderer } from "../../WebGPUComponents/previewRenderer";
 import { GpuMapLayer } from "../../WebGPUComponents/mapContour/gpuMapLayer";
 import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
-
-/** 1234567 → "1.23M", 12345 → "12.3k". */
-const count = (n: number): string => n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}k` : `${n}`;
+import { formatCount } from "../../WebGPUComponents/rendererReport";
 
 /** Devices lost within a minute before WebGL takes the view for good. */
 const MAX_LOSSES = 3;
@@ -214,7 +212,7 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
                 const gpu = renderer.takeFrameGpuTime();
                 const parts = [
                     "WebGPU",
-                    `${count(lastReport.plan.triangles)} tris`,
+                    `${formatCount(lastReport.plan.triangles)} tris`,
                     ...(lastReport.peelLayers ? [`${lastReport.peelLayers} layers peeled`] : []),
                     ...(gpu && gpu.count > 0 ? [`gpu ${gpu.meanMs.toFixed(2)} ms`] : []),
                 ];
@@ -235,7 +233,7 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
                         view.externalRenderer = external;
                         deferWebGLUploads(store, true);
                         // Changes that ask for no frame of their own, redrawn for here, once a frame
-                        // at most (the preview followed the whole store for the same reason):
+                        // at most:
                         //   - a new set of buffers in the store: a map contoured again by Coot;
                         //   - the map contour settings and the maps: maps contoured on the GPU read
                         //     their level, radius and style when a frame is drawn, and a level or

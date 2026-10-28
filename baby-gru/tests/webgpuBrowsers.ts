@@ -2,7 +2,7 @@ import { devices, type PlaywrightTestOptions, type PlaywrightWorkerOptions } fro
 
 /**
  * Browser settings for tests that need WebGPU: the GPU tests (playwright.gpu.config.ts) and the
- * WebGL-against-WebGPU e2e tests (the *-webgpu projects in playwright.config.ts).
+ * WebGPU e2e tests (the *-webgpu projects in playwright.config.ts).
  *
  * Chromium: the full Chromium in its new headless mode, because Playwright's default headless
  * shell has no GPU, with WebGPU switched on. It uses the machine's GPU, except on Linux, where it

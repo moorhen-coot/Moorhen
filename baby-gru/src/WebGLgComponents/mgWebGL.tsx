@@ -18,7 +18,6 @@ import { depth_peel_accum_fragment_shader_source as depth_peel_accum_fragment_sh
 import { blur_x_simple_fragment_shader_source as blur_x_simple_fragment_shader_source_webgl2 } from './webgl-2/blur_x_simple-fragment-shader.js';
 import { blur_y_simple_fragment_shader_source as blur_y_simple_fragment_shader_source_webgl2 } from './webgl-2/blur_y_simple-fragment-shader.js';
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl2 } from './webgl-2/blur-vertex-shader.js';
-import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl2 } from './webgl-2/overlay-fragment-shader.js';
 import { ssao_fragment_shader_source as ssao_fragment_shader_source_webgl2 } from './webgl-2/ssao-fragment-shader.js';
 import { edge_detect_fragment_shader_source as edge_detect_fragment_shader_source_webgl2 } from './webgl-2/edge-detect-fragment-shader.js';
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl2 } from './webgl-2/blur_x-fragment-shader.js';
@@ -59,7 +58,6 @@ import { triangle_texture_fragment_shader_source as triangle_texture_fragment_sh
 import { depth_peel_accum_vertex_shader_source as depth_peel_accum_vertex_shader_source_webgl1 } from './webgl-1/depth-peel-accum-vertex-shader.js';
 import { depth_peel_accum_fragment_shader_source as depth_peel_accum_fragment_shader_source_webgl1 } from './webgl-1/depth-peel-accum-fragment-shader.js';
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl1 } from './webgl-1/blur-vertex-shader.js';
-import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl1 } from './webgl-1/overlay-fragment-shader.js';
 import { ssao_fragment_shader_source as ssao_fragment_shader_source_webgl1 } from './webgl-1/ssao-fragment-shader.js';
 import { edge_detect_fragment_shader_source as edge_detect_fragment_shader_source_webgl1 } from './webgl-1/edge-detect-fragment-shader.js';
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl1 } from './webgl-1/blur_x-fragment-shader.js';
@@ -114,11 +112,12 @@ import { pickHalfExtents } from './mgWebGLParts/projection'
 import { initInstanceState, initGraphicsContext, attachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
 import { getDeviceScale} from './webGLUtils'
 import { rayMeshHit } from './rayMesh'
-import {getShader, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
+import {getShader, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
 import { Root } from 'react-dom/client';
 import { RootState } from '@/store/MoorhenReduxStore';
 import type { ExternalRenderer } from './externalRenderer';
+import { DEFAULT_ANAGLYPH_COLOURS, type AnaglyphColours } from './anaglyph';
 
 export function getOffsetRect(elem) {
     const box = elem.getBoundingClientRect();
@@ -472,7 +471,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shaderProgramInstancedFast: webGL.ShaderTrianglesInstanced;
         shaderProgramInstancedShadow: webGL.ShaderTrianglesInstanced;
         shaderProgramLines: webGL.MGWebGLShader;
-        shaderProgramOverlay: webGL.ShaderOverlay;
         shaderProgramPerfectSpheres: webGL.ShaderPerfectSpheres;
         shaderProgramPointSpheres: webGL.ShaderPointSpheres;
         shaderProgramPointSpheresShadow: webGL.ShaderPointSpheres;
@@ -513,7 +511,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         currentViewport: number[];
         currentAnaglyphColor: number[];
         /** Anaglyph stereo's colours, left eye first (anaglyph.ts; sceneSettings.anaglyphColours). */
-        anaglyphColours: string;
+        anaglyphColours: AnaglyphColours;
         threeWayViewports: number[][];
         stereoViewports: number[][];
         threeWayQuats: quat4[];
@@ -670,7 +668,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.depthPeelMSAAFailed = null;
         this.currentViewport = [0,0, 400,400];
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
-        this.anaglyphColours = "red-green"
+        this.anaglyphColours = DEFAULT_ANAGLYPH_COLOURS
         this.store = props.store;
         this.dispatch = props.dispatch
 
@@ -1061,7 +1059,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let blurVertexShader;
         let ssaoFragmentShader;
         let edgeDetectFragmentShader;
-        let overlayFragmentShader;
         let blurXFragmentShader;
         let blurYFragmentShader;
         let simpleBlurXFragmentShader;
@@ -1097,7 +1094,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //I'm giving up on WebGL1 now ...
         let blur_x_simple_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
         let blur_y_simple_fragment_shader_source = blur_y_fragment_shader_source_webgl1;
-        let overlay_fragment_shader_source = overlay_fragment_shader_source_webgl1;
         let blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl1;
         let lines_fragment_shader_source = lines_fragment_shader_source_webgl1;
         let text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl1;
@@ -1140,7 +1136,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl2;
             blur_x_simple_fragment_shader_source = blur_x_simple_fragment_shader_source_webgl2;
             blur_y_simple_fragment_shader_source = blur_y_simple_fragment_shader_source_webgl2;
-            overlay_fragment_shader_source = overlay_fragment_shader_source_webgl2;
             blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl2;
             lines_fragment_shader_source = lines_fragment_shader_source_webgl2;
             text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl2;
@@ -1193,7 +1188,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         edgeDetectFragmentShader = getShader(this.gl, edge_detect_fragment_shader_source, "fragment");
         ssaoFragmentShader = getShader(this.gl, ssao_fragment_shader_source, "fragment");
         blurXFragmentShader = getShader(this.gl, blur_x_fragment_shader_source, "fragment");
-        overlayFragmentShader = getShader(this.gl, overlay_fragment_shader_source, "fragment");
         blurYFragmentShader = getShader(this.gl, blur_y_fragment_shader_source, "fragment");
         simpleBlurXFragmentShader = getShader(this.gl, blur_x_simple_fragment_shader_source, "fragment");
         simpleBlurYFragmentShader = getShader(this.gl, blur_y_simple_fragment_shader_source, "fragment");
@@ -1219,7 +1213,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.shaderProgramRenderFrameBuffer = initRenderFrameBufferShaders(blurVertexShader, renderFrameBufferFragmentShader, this.gl);
         this.shaderProgramLines = initLineShaders(lineVertexShader, lineFragmentShader, this.gl);
-        this.shaderProgramOverlay = initOverlayShader(blurVertexShader, overlayFragmentShader, this.gl);
         this.shaderProgramBlurX = initBlurXShader(blurVertexShader, blurXFragmentShader, this.gl, this.WEBGL2);
         this.shaderProgramSSAO = initSSAOShader(blurVertexShader, ssaoFragmentShader, this.gl, this.WEBGL2);
         this.shaderProgramEdgeDetect = initEdgeDetectShader(blurVertexShader, edgeDetectFragmentShader, this.gl);
@@ -1772,22 +1765,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     drawScene() : void {
         drawScene(this)
-        this.frameListeners.forEach(listener => listener())
-    }
-
-    private frameListeners = new Set<() => void>();
-
-    /**
-     * Be told after every frame this renderer draws. Returns the function that stops it.
-     *
-     * For anything that shows the same scene elsewhere - the WebGPU preview - and so needs to
-     * know when the camera or the scene has changed without hooking every place that changes
-     * them: they all end in drawScene. Listeners run synchronously inside it, so they should
-     * only note that a frame happened and do their own work later.
-     */
-    onFrameDrawn(listener: () => void): () => void {
-        this.frameListeners.add(listener)
-        return () => { this.frameListeners.delete(listener) }
     }
 
     bindFramebufferDrawBuffers() {

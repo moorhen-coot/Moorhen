@@ -1,12 +1,20 @@
 # WebGPU in Moorhen
 
-Everything WebGPU lives here. WebGL is still the main renderer; WebGPU is used for compute (making
-meshes on the GPU) and by a preview renderer that is growing towards parity with the WebGL one.
+Everything WebGPU lives here. WebGPU draws the main view wherever the browser offers it
+(`components/webMG/MoorhenWebGPUMainView.tsx`), and makes a new device if the old one is lost;
+WebGL is the fallback, and still takes the input (mouse, keyboard, touch) and runs the frame loop.
+While WebGPU draws, maps are contoured here on the GPU instead of by Coot.
 
 ```
 gpu/            shared infrastructure: the device, flag constants, compute helpers, scan, timer
 previewRenderer.ts, previewScene.ts, previewShaders.ts
-                the WebGPU renderer (dev menu → "WebGPU preview (test)")
+                the WebGPU renderer (the names are from when it was a preview)
+depthPeel.ts, effectPasses.ts, shadowMap.ts, depthBlur.ts, anaglyphCombine.ts
+                its passes: transparency, ambient occlusion and edges, shadows, depth blur, anaglyph
+textLayer.ts, overlayLines.ts, texturedShapes.ts, surfaceTextures.ts, snapshotTiles.ts
+                labels, overlays, textured shapes, mesh textures, tiled snapshots
+instanceApi.ts, rendererReport.ts, buildMode.ts
+                `moorhenInstance.webGPU`: who draws the main view, snapshots, the renderer report
 mapContour/     map contours made and drawn on the GPU (a worked example of a compute module)
 metaballs/      MetaBalls surfaces made on the GPU, read back for the normal draw path
 ```
@@ -21,7 +29,7 @@ There is **one** device per page. Get it with `await getGpuContext()`, never wit
 made on any other device could not be drawn by the renderer without a trip through the CPU.
 
 The context asks for the adapter's largest `maxBufferSize` and `maxStorageBufferBindingSize`, and
-for `timestamp-query` when offered (`context.timestampQuery`). If you need another limit or
+for `timestamp-query` when offered. If you need another limit or
 feature, add it there, conditionally on the adapter having it, and handle its absence.
 
 If the device is lost, `context.lost` settles and the next `getGpuContext()` makes a new one. A
@@ -84,7 +92,7 @@ There are two ways a mesh can leave a compute module. Choose by who needs the me
 | | Arrays → `DisplayBuffer` | GPU-resident → `PreviewGpuDraw` |
 |---|---|---|
 | Example | `metaballs/` | `mapContour/` |
-| Drawn by | WebGL and the WebGPU preview | the WebGPU preview only |
+| Drawn by | both renderers | the WebGPU renderer only |
 | Picking, export | yes (CPU-side) | not yet (needs a read-back) |
 | Cost | one read-back per mesh | none |
 
@@ -95,8 +103,10 @@ leaves them (front faces lit, normals outwards); see `metaballs/metaballsMeshDat
 GPU-resident: on the shared device, buffers with `STORAGE` plus the usage the draw needs:
 - positions and normals packed `vec3<f32>` (12 bytes a vertex; `VERTEX`);
 - `u32` triangle indices (`INDEX`);
+- for the line styles, `u32` pairs of vertex indices, one pair per edge of the surface (`lines`),
+  read by the thick-line shader;
 - the draw arguments in a buffer with `INDIRECT`: `drawIndexedIndirect`'s five words for the
-  surface, and `drawIndirect`'s four for thick lines (18 vertices per triangle).
+  surface, and `drawIndirect`'s four for thick lines (6 vertices per line).
 
 See `PreviewGpuDraw` in `previewRenderer.ts` and `GpuContourBuffers` in `mapContour/`.
 

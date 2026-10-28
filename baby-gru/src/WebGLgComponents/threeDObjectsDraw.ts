@@ -253,17 +253,6 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
     })
 
 /**
- * Shapes to buffers, knowing nothing about where the shapes came from.
- *
- * Takes a plain list, so a caller that generates shapes on the fly - a representation built out
- * of cuboids and cylinders, say - gets the same drawing for free without putting anything in the
- * store or into a saved session.
- *
- * @param threeDObjects - The shapes to draw. Only read; nothing is kept.
- * @param options - See {@link ShapeBufferOptions}.
- */
-
-/**
  * What a mesh part is drawn with besides its vertex colours: its base colour texture and its
  * maps, or undefined when it has none of them. Only the ids and factors it actually has are set,
  * so a part with just a base colour gives exactly the `{ baseColourTexture }` it always did.
@@ -284,6 +273,16 @@ const partMaterial = (part: MeshPart): BufferMaterial | undefined => {
     return Object.keys(material).length > 0 ? material : undefined
 }
 
+/**
+ * Shapes to buffers, knowing nothing about where the shapes came from.
+ *
+ * Takes a plain list, so a caller that generates shapes on the fly - a representation built out
+ * of cuboids and cylinders, say - gets the same drawing for free without putting anything in the
+ * store or into a saved session.
+ *
+ * @param threeDObjects - The shapes to draw. Only read; nothing is kept.
+ * @param options - See {@link ShapeBufferOptions}.
+ */
 export const getBuffersForShapes = async (
     threeDObjects: ThreeDObject[],
     options: ShapeBufferOptions = {}

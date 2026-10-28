@@ -1,3 +1,5 @@
+import {anaglyph_colour_snippet} from './anaglyph-colour-snippet.js';
+
 /*
  * Two variants of one shader, differing only in whether they can discard.
  *
@@ -150,13 +152,7 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
 
     uniform vec4 fogColour;
 
-    // Anaglyph stereo (drawCore, anaglyph.ts): 1 while an eye is drawn, its colour made grey - its
-    // brightest channel, at most 1 - before the fog, as the WebGPU renderer greys an eye.
-    uniform float anaglyphGrey;
-    vec4 anaglyphColour(vec4 c) {
-        if(anaglyphGrey > 0.5) return vec4(vec3(min(max(c.r, max(c.g, c.b)), 1.0)), c.a);
-        return c;
-    }
+${anaglyph_colour_snippet}
 
     uniform float fog_end;
     uniform float fog_start;

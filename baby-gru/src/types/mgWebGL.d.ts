@@ -347,17 +347,6 @@ export namespace webGL {
         vertexInstanceOrientationAttribute: GLint;
     }
 
-    interface ShaderOutLine extends MGWebGLShader {
-        outlineSize: WebGLUniformLocation;
-        cursorPos: WebGLUniformLocation;
-        textureMatrixUniform: WebGLUniformLocation;
-    }
-
-    interface ShaderOverlay extends MGWebGLShader {
-        vertexTextureAttribute: GLint;
-        inputTexture: WebGLUniformLocation;
-    }
-
     interface MGWebGLPropsInterface {
         reContourMapOnlyOnMouseUp: boolean | null;
         onAtomHovered: (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => void;
@@ -435,11 +424,7 @@ export namespace webGL {
         set_clip_range(clipStart: number, clipEnd: number, update?: boolean): void;
         set_fog_range(fogStart: number, fogEnd: number, update?: boolean): void;
         setDrawingBufferSize(width: number, height: number): void;
-        /**
-         * Be told after every frame drawn; returns the unsubscribe. Used by the WebGPU preview,
-         * which also reads the camera, slab and lighting fields below.
-         */
-        onFrameDrawn(listener: () => void): () => void;
+        // The camera, slab and lighting, which the WebGPU renderer reads too (PreviewCameraSource).
         fogClipOffset: number;
         gl_clipPlane0: ArrayLike<number>;
         gl_clipPlane1: ArrayLike<number>;

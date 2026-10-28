@@ -448,15 +448,6 @@ export function drawMouseTrack(self: MGWebGL) {
     self.gl.depthFunc(self.gl.LESS)
 }
 
-/**
- * How far up the meter is drawn from the bottom of the view, in the 48-unit ortho the overlays
- * use.
- *
- * The bottom strip of the canvas is covered by the sequence and validation panels, so a meter
- * sitting at the very bottom edge is partly hidden by them. Applied to the histogram and to the
- * text lines together, so they stay as one block.
- */
-
 export function drawFPSMeter(self: MGWebGL) {
 
     self.gl.depthFunc(self.gl.ALWAYS);

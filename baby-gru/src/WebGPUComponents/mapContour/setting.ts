@@ -13,6 +13,19 @@
  */
 export const gpuMapContourSetting = { enabled: false, active: false, wanted: true };
 
+/** The map contour settings that decide a map's style (state.mapContourSettings). */
+export interface MapStyleSettings {
+    mapStyles?: readonly { molNo: number; style: string }[];
+    defaultMapLitLines?: boolean;
+    defaultMapSurface?: boolean;
+}
+
+/** How a map is drawn: its own style if it has one, else the default, as MoorhenMapManager decides. */
+export function mapStyleOf(settings: MapStyleSettings | undefined, molNo: number): string {
+    return settings?.mapStyles?.find(item => item.molNo === molNo)?.style
+        ?? (settings?.defaultMapLitLines ? "lit-lines" : settings?.defaultMapSurface ? "solid" : "lines");
+}
+
 /** What applyGpuMapContours needs of a map. */
 interface ContouredMap {
     molNo: number;

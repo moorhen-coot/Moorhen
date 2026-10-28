@@ -11,7 +11,7 @@
 import { anaglyphChannels } from '../WebGLgComponents/anaglyph';
 import { BufferUsage, ShaderStage, TextureUsage } from './gpu';
 
-const ANAGLYPH_WGSL = /* wgsl */ `
+export const ANAGLYPH_WGSL = /* wgsl */ `
 struct Anaglyph {
     left: vec4f,        // 1 in the channels the left eye's picture goes into
     right: vec4f,       // and the right's

@@ -1,20 +1,24 @@
 /**
- * The experimental `moorhenInstance.webGPU` API: draw the scene the main view is showing with the
- * WebGPU renderer, offscreen, and read the main (WebGL) view's pixels to compare it with.
+ * `moorhenInstance.webGPU`: who draws the main view, and the WebGPU renderer from tests and the
+ * console.
  *
- * For tests and for trying the WebGPU renderer from the console. It follows the WebGPU preview:
- * the store's DisplayBuffers and the WebGL renderer's camera, with what it cannot draw yet
- * reported in `skipped` (and described by describeSkipped). Nothing here changes the main view.
+ * - mainView() says who draws the main view; setMainView() asks for WebGPU or WebGL (the
+ *   preference); simulateDeviceLoss() loses the shared device, as a GPU reset would.
+ * - report() and reportFacts(): how this machine draws Moorhen, for a tester to paste back. They
+ *   draw frames, and with maps shown move the origin round a small square and put it back.
+ * - snapshot() draws the scene the main view shows with a WebGPU renderer of its own, offscreen,
+ *   from the store's DisplayBuffers and the WebGL renderer's camera, with what it cannot draw
+ *   reported in `skipped` (describeSkipped); webGLSnapshot() reads the WebGL view's pixels, to
+ *   compare the two.
  */
 import type { DisplayBuffer } from "../WebGLgComponents/displayBuffer";
-import { WebGPUPreviewRenderer, webGPUUnavailableReason } from "./previewRenderer";
-import { getGpuContext } from "./gpu";
+import { WebGPUPreviewRenderer } from "./previewRenderer";
+import { getGpuContext, webGPUAdapterSummary, webGPUUnavailableReason } from "./gpu";
 import type { PreviewCameraSource } from "./previewScene";
 import { describeSkipped, effectSettings, planPreview } from "./previewScene";
 import { setUseWebGPU } from "../store/sceneSettingsSlice";
 import type { WebGPUMainViewRenderer } from "../components/webMG/MoorhenWebGPUMainView";
-import { gpuMapContourSetting } from "./mapContour/setting";
-import { webGPUAdapterSummary } from "./gpu";
+import { gpuMapContourSetting, mapStyleOf } from "./mapContour/setting";
 import { formatRendererReport, median, slowFrames, type RendererReportFacts } from "./rendererReport";
 import { version as moorhenVersion } from "../version";
 
@@ -134,9 +138,7 @@ export interface WebGPUApi {
      */
     mainView(): {
         requested: boolean; active: boolean; drawing: boolean; webGLReason: string | null; framesDrawn: number;
-        lastFrame: {
-            meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number; mapLines: number; peelLayers: number;
-        } | null;
+        lastFrame: WebGPUMainViewRenderer["lastFrame"];
         mapsOnGpu: boolean;
     };
     /**
@@ -234,13 +236,6 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
             }
         },
 
-        /**
-         * What the main (WebGL) view shows, as an image the size of its drawing buffer: the
-         * scene is drawn again and read back before anything else can draw over it.
-         *
-         * Read straight from the canvas, so with depth blur (offscreen buffers) on it would miss
-         * the blur; that case is refused rather than returning the wrong picture.
-         */
         mainView() {
             const requested = !!host.store.getState().sceneSettings?.useWebGPU;
             const external = (host.getVideoRecorderRef()?.current?.glRef?.current as { externalRenderer?: WebGPUMainViewRenderer | null } | null)?.externalRenderer;
@@ -266,7 +261,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
         async reportFacts(options: { frames?: number; mapWalk?: number } = {}): Promise<RendererReportFacts> {
             const webGPU = await webGPUAdapterSummary();
             const view = webGLView(host) as WebGLView & {
-                drawScene(): void; externalRenderer?: WebGPUMainViewRenderer | null;
+                externalRenderer?: WebGPUMainViewRenderer | null;
                 origin: number[]; setOrigin(origin: [number, number, number], doDrawScene?: boolean, dispatchEvent?: boolean): void;
             };
             const external = view.externalRenderer?.name === "WebGPU" ? view.externalRenderer : null;
@@ -327,11 +322,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
             // How much the maps shown draw: their contours' triangles and, in the line styles, lines.
             let mapCounts: RendererReportFacts["mapCounts"] = null;
             if (visibleMaps.length > 0) {
-                const settings = walkState.mapContourSettings;
-                // As the GPU map layer and MoorhenMapManager decide the style.
-                const styleOf = (molNo: number) => settings?.mapStyles?.find(item => item.molNo === molNo)?.style
-                    ?? (settings?.defaultMapLitLines ? "lit-lines" : settings?.defaultMapSurface ? "solid" : "lines");
-                const lineStyle = visibleMaps.some(map => styleOf(map.molNo) !== "solid");
+                const lineStyle = visibleMaps.some(map => mapStyleOf(walkState.mapContourSettings, map.molNo) !== "solid");
                 if (external && gpuMapContourSetting.enabled) {
                     const last = external.lastFrame;
                     mapCounts = { triangles: last?.mapTriangles ?? 0, lines: lineStyle ? last?.mapLines ?? 0 : null };
@@ -462,6 +453,12 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
             }));
         },
 
+        /**
+         * What the main (WebGL) view shows, as an image the size of its drawing buffer: the
+         * scene is drawn again and read back before anything else can draw over it. With depth
+         * blur on (offscreen buffers) the picture is copied from the canvas, as it shows it,
+         * because save_pixel_data is read before the blur.
+         */
         webGLSnapshot(): RendererImage {
             const view = webGLView(host);
             const { width, height } = view.canvas;

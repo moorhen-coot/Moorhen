@@ -16,7 +16,6 @@
  * back. Waits cost up to 100 ms each in Firefox, which only checks for finished GPU work that
  * often. If a slab turns out bigger than its room, the whole mesh is made again with more.
  *
- *
  * Not computed: MC.h's face-accumulated normals (metaballs.cc throws them away for the
  * field-gradient ones), and vertex_owner / point_triangles, which DrawMoorhenMetaBalls does not
  * return.
@@ -33,7 +32,7 @@ import {
     TOTALS_WGSL,
 } from "./metaballsShaders";
 
-const { MAP_READ, COPY_SRC, COPY_DST, UNIFORM, STORAGE } = BufferUsage;
+const { MAP_READ, COPY_SRC, COPY_DST, UNIFORM, STORAGE, QUERY_RESOLVE } = BufferUsage;
 const MAP_MODE_READ = MapMode.READ;
 
 /**
@@ -46,7 +45,7 @@ const BRICK_WORKGROUPS = 16384;
 
 /** Slabs submitted but not yet read back. */
 const SLABS_IN_FLIGHT = 3;
-/** Vertices per point the output room is sized for: 25% over the ~280 MetaBalls make. */
+/** Vertices per point the output room is sized for: about a third over the ~280 MetaBalls make. */
 const VERTICES_PER_POINT = 375;
 /** Times the mesh is made again with more room, if a slab overflows, before giving up. */
 const MAX_RETRIES = 2;
@@ -119,11 +118,6 @@ export interface MetaBallsTimings {
     waitMs?: number;
     /** Copying the slabs' results into the output arrays (and growing them if needed). */
     copyMs?: number;
-    /** Before the waits were removed: the three waits per slab. */
-    countWaitMs?: number;
-    emitWaitMs?: number;
-    readbackWaitMs?: number;
-    assembleMs?: number;
     /**
      * GPU time per kernel, summed over slabs, from timestamp queries: resolves after the mesh is
      * returned, so that reading them back is not part of making it (it is one more wait, up to
@@ -199,7 +193,7 @@ class PassTimer {
             for (const { querySet, labels } of this.sets) {
                 const count = labels.length * 2;
                 if (count === 0) continue;
-                const resolve = this.device.createBuffer({ size: count * 8, usage: 0x0200 /* QUERY_RESOLVE */ | COPY_SRC });
+                const resolve = this.device.createBuffer({ size: count * 8, usage: QUERY_RESOLVE | COPY_SRC });
                 const read = this.device.createBuffer({ size: count * 8, usage: MAP_READ | COPY_DST });
                 const encoder = this.device.createCommandEncoder();
                 encoder.resolveQuerySet(querySet, 0, count, resolve, 0);
@@ -311,10 +305,6 @@ export class GpuMetaBalls {
      * rather than returning whatever the buffers held, so a caller can fall back to the C++.
      */
     async generate(input: MetaBallsInput, options: MetaBallsOptions): Promise<MetaBallsMesh> {
-        return this.generateUnchecked(input, options);
-    }
-
-    private async generateUnchecked(input: MetaBallsInput, options: MetaBallsOptions): Promise<MetaBallsMesh> {
         const started = performance.now();
         let room = options.room ?? 1;
         let retries = 0;

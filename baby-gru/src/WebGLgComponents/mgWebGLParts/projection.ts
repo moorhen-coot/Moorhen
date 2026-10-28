@@ -374,9 +374,6 @@ export function baseProjection(out: mat4.mat4, frame: CameraFrame): mat4.mat4 {
  * The 1/aspect for landscape offscreen capture pairs with the aspect of 1.0 that path uses. The
  * perspective factor is derived from the eye distance rather than fixed at 5.7, so moving the eye
  * changes how strongly the view converges while the framing stays put - see perspectiveScale.
- *
- * Note for merging shadow_fix: its drawCore helper projectionZoomScale(self, ratio) computes the
- * same number and can become zoomScaleFor(cameraFrame(self, ratio)).
  */
 export function zoomScaleFor(frame: CameraFrame): number {
     if (frame.perspective) {

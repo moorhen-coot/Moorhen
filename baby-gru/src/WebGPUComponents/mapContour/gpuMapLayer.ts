@@ -1,19 +1,20 @@
 /**
- * The maps in the scene, contoured on the GPU for the WebGPU main view (and the preview).
+ * The maps in the scene, contoured on the GPU for the WebGPU main view.
  *
  * Each frame it reads the same settings Moorhen contours with (visible maps, radius, level,
  * style, colours, the origin or a map's locked origin) from the store, remakes a map's contour on
  * the GPU only when its centre, radius or level has changed, and returns what to draw. Each map's
- * unit-cell grid is fetched from the Coot worker and kept on the GPU while the preview is open,
- * and fetched again when the map's dataRevision goes up (MoorhenMap.markDataChanged); the old
+ * unit-cell grid is fetched from the Coot worker and kept on the GPU while the layer lasts, and
+ * fetched again when the map's dataRevision goes up (MoorhenMap.markDataChanged); the old
  * grid is drawn until the new one is in.
  */
 import type { RootState } from "../../store/MoorhenReduxStore";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
 import type { PreviewGpuDraw } from "../previewRenderer";
-import { CONTOUR_STEPS, GpuIsosurface, GpuMapGrid, MapContourKernels } from "./gpuMapContour";
+import { formatCount } from "../rendererReport";
+import { GpuIsosurface, GpuMapGrid, MapContourKernels } from "./gpuMapContour";
 import type { MapUnitCellGrid } from "./mapContourBox";
-import { gpuMapContourSetting, onMapDataChanged } from "./setting";
+import { gpuMapContourSetting, mapStyleOf, onMapDataChanged } from "./setting";
 
 interface MapEntry {
     grid: GpuMapGrid | null;
@@ -30,7 +31,7 @@ export class GpuMapLayer {
     private readonly maps = new Map<MoorhenMap, MapEntry>();
     private destroyed = false;
     private readonly stopListening: () => void;
-    /** One line for the preview's status: what is being contoured, or what went wrong. */
+    /** What is being contoured, or what went wrong, on one line (for the GPU tests and debugging). */
     status = "";
 
     private constructor(private readonly kernels: MapContourKernels, private readonly requestDraw: () => void) {
@@ -81,8 +82,7 @@ export class GpuMapLayer {
             // As MoorhenMapManager decides them.
             const radius = settings.mapRadii.find(item => item.molNo === map.molNo)?.radius || map.suggestedRadius || 15;
             const level = settings.contourLevels.find(item => item.molNo === map.molNo)?.contourLevel || map.suggestedContourLevel || 0.003;
-            const style = settings.mapStyles.find(item => item.molNo === map.molNo)?.style
-                ?? (settings.defaultMapLitLines ? "lit-lines" : settings.defaultMapSurface ? "solid" : "lines");
+            const style = mapStyleOf(settings, map.molNo);
             const { mapAlpha, mapColour, positiveMapColour, negativeMapColour } = map.getMapContourParams();
             const centreFrom = map.isOriginLocked && map.drawOrigin ? map.drawOrigin : origin;
             const centre = [-centreFrom[0], -centreFrom[1], -centreFrom[2]] as [number, number, number];
@@ -159,32 +159,6 @@ export class GpuMapLayer {
         return false;
     }
 
-    /**
-     * The GPU time of contouring since the last call: for each surface, the mean of its timed
-     * contours, added up over the surfaces (what one move of the origin costs, all maps
-     * together), with the largest single contour, and the same sum step by step. Empty if
-     * nothing was timed (or cannot be).
-     */
-    takeTiming(): string {
-        let perMove = 0, max = 0, timed = 0, surfaces = 0;
-        const steps = CONTOUR_STEPS.map(() => 0);
-        for (const entry of this.maps.values()) {
-            for (const surface of entry.surfaces.values()) {
-                const t = surface.takeTiming();
-                if (!t || t.count === 0) continue;
-                perMove += t.meanMs;
-                max = Math.max(max, t.maxMs);
-                timed += t.count;
-                surfaces++;
-                t.segmentsMs.forEach((ms, i) => { steps[i] += ms; });
-            }
-        }
-        if (timed === 0) return "";
-        return `contouring ${perMove.toFixed(1)} ms GPU per change (${surfaces} surface${surfaces > 1 ? "s" : ""}; ` +
-            `slowest ${max.toFixed(1)} ms; ${timed} timed): ` +
-            CONTOUR_STEPS.map((name, i) => `${name} ${steps[i].toFixed(1)}`).join(", ");
-    }
-
     destroy(): void {
         this.destroyed = true;
         this.stopListening();
@@ -231,7 +205,7 @@ export class GpuMapLayer {
                 entry.grid?.destroy();
                 entry.grid = new GpuMapGrid(this.kernels, grid);
                 entry.fetches++;
-                console.log(`GPU map contours: map ${map.molNo} unit cell ${grid.nu}×${grid.nv}×${grid.nw} ` +
+                console.debug(`GPU map contours: map ${map.molNo} unit cell ${grid.nu}×${grid.nv}×${grid.nw} ` +
                     `(${(grid.data.byteLength / 1e6).toFixed(0)} MB) in ${(performance.now() - started).toFixed(0)} ms` +
                     (entry.fetches > 1 ? ` (fetch ${entry.fetches}: the map changed)` : ""));
             }
@@ -250,7 +224,3 @@ export class GpuMapLayer {
         else entry.failed = why;
     }
 }
-
-/** 1234567 → "1.23M", 12345 → "12.3k". */
-const formatCount = (n: number): string =>
-    n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}k` : `${n}`;

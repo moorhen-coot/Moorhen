@@ -8,7 +8,14 @@ import * as mat4 from 'gl-matrix/mat4';
  * (overlays.ts) and the WebGPU one, so that the two draw the same thing.
  */
 
-/** How far the FPS meter sits above the bottom edge, in its 48-unit-high frame. */
+/**
+ * How far the FPS meter sits above the bottom edge, in its 48-unit-high frame (the ortho the
+ * overlays use).
+ *
+ * The bottom strip of the canvas is covered by the sequence and validation panels, so a meter
+ * sitting at the very bottom edge is partly hidden by them. Applied to the histogram and to the
+ * text lines together, so they stay as one block.
+ */
 export const FPS_METER_LIFT = 5.0;
 
 /** Segments as vertex pairs (x, y, z each) and an RGBA colour per vertex. */

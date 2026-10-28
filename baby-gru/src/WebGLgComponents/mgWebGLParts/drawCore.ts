@@ -813,8 +813,8 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 // survive a frame: the depth-peel passes and the screenshot path both recreate
                 // framebuffers, which leaves textures unbound on whatever unit was current.
                 //
-                // activeTexture is put back to 0 afterwards, and that is not tidiness. The text,
-                // circle and perfect-sphere-outline shaders declare uSampler and never assign it
+                // activeTexture is put back to 0 afterwards, and that is not tidiness. The text
+                // and circle shaders declare uSampler and never assign it
                 // a unit, so they rely on 0 being current; and this loop leaves activeTexture on
                 // unit 9 after a hovered buffer, which is why it is set explicitly here too
                 // rather than assumed.
@@ -899,9 +899,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
 
                 if(theShader.vertexColourAttribute>-1){
-                    const outlineSize = vec3.create();
-                    vec3.set(outlineSize, 0.0, 0.0, 0.0);
-                    self.gl.uniform3fv(theShader.outlineSize, outlineSize);
                     if(displayBuffers[idx].customColour&&displayBuffers[idx].customColour.length==4){
                         self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
                         self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...displayBuffers[idx].customColour)
@@ -1030,12 +1027,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     }
                 }
 
-                {
-                    const outlineSize = vec3.create();
-                    vec3.set(outlineSize, 0.0, 0.0, 0.0);
-                    if(program.outlineSize!=null) self.gl.uniform3fv(program.outlineSize, outlineSize);
-                }
-
                 for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                     if (bufferTypes[j] === "PERFECT_SPHERES") {
 
@@ -1097,11 +1088,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                                 const adjustedHoverSize = hoverSize + 0.4;
                                 self.gl.vertexAttrib3f(program.sizeAttribute, adjustedHoverSize, adjustedHoverSize, adjustedHoverSize, 1.0);
                             }
-                            if(self.doAnaglyphStereo && !self.WEBGL2) {
-                                self.gl.disableVertexAttribArray(program.vertexColourAttribute);
-                                self.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
-                                self.gl.vertexAttrib4f(program.vertexColourAttribute, ...self.currentAnaglyphColor)
-                            }
                             self.gl.drawElementsInstanced(self.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, self.gl.UNSIGNED_INT, 0, displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                             if(program.vertexColourAttribute!=null) self.gl.vertexAttribDivisor(program.vertexColourAttribute, 0);
                             self.gl.vertexAttribDivisor(program.sizeAttribute, 0);
@@ -1146,11 +1132,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
                                 applySymmetryMatrix(self, program,displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix,false)
                                     if (self.WEBGL2) {
-                                        if(self.doAnaglyphStereo && !self.WEBGL2) {
-                                            self.gl.disableVertexAttribArray(program.vertexColourAttribute);
-                                            self.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
-                                            self.gl.vertexAttrib4f(program.vertexColourAttribute, ...self.currentAnaglyphColor)
-                                        }
                                         self.gl.drawElementsInstanced(self.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, self.gl.UNSIGNED_INT, 0, displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                                     } else {
                                         self.instanced_ext.drawElementsInstancedANGLE(self.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, self.gl.UNSIGNED_INT, 0, displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
@@ -1336,7 +1317,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             if (self.ext) {
                                 if(self.doAnaglyphStereo && !self.WEBGL2) {
                                     self.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
-                                    self.gl.vertexAttribDivisor(sphereProgram.vertexColourAttribute,0);
                                     self.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, ...self.currentAnaglyphColor)
                                 }
                                 self.drawMaxElementsUInt(self.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems);
@@ -1361,7 +1341,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             if (self.ext) {
                                 if(self.doAnaglyphStereo && !self.WEBGL2) {
                                     self.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
-                                    self.gl.vertexAttribDivisor(sphereProgram.vertexColourAttribute,0);
                                     self.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, ...self.currentAnaglyphColor)
                                 }
                                 self.drawMaxElementsUInt(self.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems);
@@ -2160,8 +2139,6 @@ export function drawScene(self: MGWebGL) : void {
 
         let invMat;
 
-        self.gl.stencilMask(0x00);
-        self.gl.disable(self.gl.STENCIL_TEST);
         self.gl.enable(self.gl.DEPTH_TEST);
                 if(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo){
 

@@ -5,6 +5,7 @@ import { setIsWebGL2, setGLCtx } from '../../store/glRefSlice';
 import { TextCanvasTexture } from '../textCanvasTexture';
 import { initGL, MGWebGL } from '../mgWebGL';
 import { attachTouchGestures } from './touchGestures';
+import { DEFAULT_ANAGLYPH_COLOURS } from '../anaglyph';
 
 /**
  * componentDidMount, decomposed into ordered phases. The mount used to be one
@@ -219,7 +220,7 @@ export function initGraphicsContext(self: MGWebGL): void {
     self.dispatch(setGLCtx(self.gl))
     self.currentViewport = [0,0, self.gl.viewportWidth, self.gl.viewportWidth];
     self.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
-    self.anaglyphColours = "red-green"
+    self.anaglyphColours = DEFAULT_ANAGLYPH_COLOURS
 
     self.max_elements_indices = 65535;
 

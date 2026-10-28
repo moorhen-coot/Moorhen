@@ -10,8 +10,17 @@
  * The decoder is injected. jsdom has neither createImageBitmap nor OffscreenCanvas, and a test
  * that supplied both would be testing the browser rather than this.
  */
-import { gltfMaterials, gltfMaterialTextures, type ImageDecode, type ImageUse } from "../../src/utils/gltfTextures";
+import { gltfMaterials, type ImageDecode, type ImageUse } from "../../src/utils/gltfTextures";
 import { getTextureSource } from "../../src/WebGLgComponents/textureRegistry";
+
+/** The base colour texture id of each material that has one: gltfMaterials without the maps. */
+const gltfMaterialTextures = async (bytes: ArrayBuffer, available: Map<string, Uint8Array>, decode: ImageDecode): Promise<Map<number, string>> => {
+    const byMaterial = new Map<number, string>();
+    for (const [m, material] of await gltfMaterials(bytes, available, decode)) {
+        if (material.baseColour) byMaterial.set(m, material.baseColour);
+    }
+    return byMaterial;
+};
 
 const PNG_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3, 4]);
 
@@ -256,7 +265,7 @@ describe("finding a material's normal and metallic-roughness maps", () => {
         expect(materials.size).toBe(0);
     });
 
-    it("still gives the base colour alone through gltfMaterialTextures", async () => {
+    it("gives a base colour only to the materials that have one", async () => {
         const { decode } = recordingDecode();
         const textures = await gltfMaterialTextures(asGltf({
             materials: [{ pbrMetallicRoughness: { baseColorTexture: { index: 0 } }, normalTexture: { index: 1 } }, { normalTexture: { index: 1 } }],

@@ -903,8 +903,8 @@ export class MoorhenMap {
         style: "solid" | "lines" | "lit-lines"
     ): Promise<void> {
         if (gpuMapContourSetting.enabled) {
-            // Contoured on the GPU and drawn by the WebGPU preview instead (dev menu): nothing to
-            // ask Coot for, and nothing for the WebGL view.
+            // Contoured on the GPU and drawn by the WebGPU main view instead (mapContour/setting.ts):
+            // nothing to ask Coot for, and nothing for the WebGL view.
             if (this.displayObjects["Coot"].length > 0) this.hideMapContour();
             return;
         }

@@ -162,6 +162,8 @@ export {
     setDepthBlurRadius,
     setDepthPeelLayers,
     setPeelOpaqueSeparately,
+    setUseWebGPU,
+    setAnaglyphColours,
     setBackgroundColor,
     setDepthBlurDepth,
     setDrawAxes,

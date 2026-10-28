@@ -13,9 +13,10 @@ import * as surfaceTextures from "../../../src/WebGPUComponents/surfaceTextures"
 import * as effectPasses from "../../../src/WebGPUComponents/effectPasses";
 import * as depthPeel from "../../../src/WebGPUComponents/depthPeel";
 import * as depthBlur from "../../../src/WebGPUComponents/depthBlur";
+import * as anaglyphCombine from "../../../src/WebGPUComponents/anaglyphCombine";
 import { defineCase } from "../helpers/browserCase";
 
-const SOURCES: Record<string, Record<string, unknown>> = { preview, mapContour, metaballs, scan, surfaceTextures, effectPasses, depthPeel, depthBlur };
+const SOURCES: Record<string, Record<string, unknown>> = { preview, mapContour, metaballs, scan, surfaceTextures, effectPasses, depthPeel, depthBlur, anaglyphCombine };
 
 export interface ShaderReport {
     name: string;

@@ -23,7 +23,8 @@
  * sample.
  *
  * Where it differs: the FPS meter, and labels drawn depth-tested (atomLabelDepthMode), are not
- * blurred here; WebGL draws both into the picture it blurs. WebGL's screenshot path for depth blur
+ * blurred here in a single view (divided views draw such labels with the scene, as WebGL does);
+ * WebGL draws both into the picture it blurs. WebGL's screenshot path for depth blur
  * is marked as not working; here a snapshot bigger than the canvas blurs as far, as a share of the
  * picture, as the canvas does:
  *   - the taps are as far apart in the picture, and each is split into as many sub-taps as the

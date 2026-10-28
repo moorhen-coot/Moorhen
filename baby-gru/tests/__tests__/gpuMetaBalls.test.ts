@@ -5,7 +5,8 @@
  * The GPU kernels themselves were checked against metaballs.cc on 1df7 and 4dfr in headless
  * Chrome (SwiftShader WebGPU): same vertices, same triangles in the same order, same influence
  * sets; positions within 3e-4 A, normals within 0.05 degrees. Those comparisons need a WebGPU
- * device and a native build of the C++, so they are not part of this suite. What is here would
+ * device, so they are in tests/gpu (metaballs.gpu.spec.ts, against the C++'s output saved in
+ * tests/gpu/data). What is here would
  * break them first: a grid one plane different, or a mesh handed over the wrong way round,
  * gives a different surface or an inside-out one.
  */

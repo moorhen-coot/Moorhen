@@ -1,16 +1,17 @@
 /**
- * The one WebGPU device the page uses: the preview renderer and every compute module share it,
+ * The one WebGPU device the page uses: the WebGPU renderer and every compute module share it,
  * so a buffer made by one can be used by another (GPU buffers cannot cross devices).
  *
  * Made on first use and kept. It asks for what Moorhen needs beyond the defaults, as far as the
  * adapter offers it: the largest buffers and storage bindings (big meshes, a map's whole unit
- * cell) and timestamp queries (GPU timings on status lines). If the device is lost, the context
- * is forgotten, and the next getGpuContext() makes a new one; anything holding GPU resources from
- * the old one should listen to `lost` and drop them.
+ * cell) and timestamp queries (GPU frame times, for the FPS meter and the renderer report). If
+ * the device is lost, the context is forgotten, and the next getGpuContext() makes a new one;
+ * anything holding GPU resources from the old one should listen to `lost` and drop them (the
+ * main view does, and makes a new device: MoorhenWebGPUMainView).
  *
  * Errors: use error scopes around work whose failure you want to handle (see withErrorScope).
  * Errors outside any scope reach the device's "uncapturederror" event, which is logged here, and
- * which a consumer may listen to as well (the preview shows them).
+ * which a consumer may listen to as well (the WebGPU renderer reports them to its owner).
  */
 
 export interface GpuContext {
@@ -19,8 +20,6 @@ export interface GpuContext {
     readonly adapterDescription: string;
     /** A software adapter (SwiftShader, WARP and the like): it works, but slowly. */
     readonly fallbackAdapter: boolean;
-    /** Whether "timestamp-query" was granted (GpuSpanTimer needs it). */
-    readonly timestampQuery: boolean;
     /** Settles when this context's device is lost. */
     readonly lost: Promise<GPUDeviceLostInfo>;
 }
@@ -36,22 +35,6 @@ export function webGPUUnavailableReason(): string | null {
 }
 
 const NO_ADAPTER = "WebGPU is present but no adapter was offered (blocklisted GPU or driver?).";
-
-/**
- * Why WebGPU cannot be used here, or null if it can: as webGPUUnavailableReason, and where the
- * browser has WebGPU, whether it offers an adapter (some do not: no GPU, a blocklisted driver).
- * Makes no device; once the shared context exists, null at once.
- */
-export async function webGPUAdapterUnavailableReason(): Promise<string | null> {
-    const unavailable = webGPUUnavailableReason();
-    if (unavailable) return unavailable;
-    if (currentContext) return null;
-    try {
-        return (await navigator.gpu.requestAdapter({ powerPreference: "high-performance" })) ? null : NO_ADAPTER;
-    } catch (err) {
-        return err instanceof Error ? err.message : String(err);
-    }
-}
 
 let current: Promise<GpuContext> | null = null;
 /** The context `current` resolved to, once it has. */
@@ -94,7 +77,6 @@ async function createContext(): Promise<GpuContext> {
         device,
         adapterDescription: describeAdapter(adapter),
         fallbackAdapter: isFallback(adapter),
-        timestampQuery,
         lost: device.lost,
     };
     device.lost.then(info => {
@@ -110,9 +92,9 @@ async function createContext(): Promise<GpuContext> {
 }
 
 /**
- * Whether WebGPU can be used here and on what, for reports (instanceApi's report): the reason it
- * cannot, or the adapter. The shared context's adapter if there is one; otherwise one is asked for,
- * and no device made.
+ * Whether WebGPU can be used here and on what (the renderer report, the Dev menu): the reason it
+ * cannot - no WebGPU, or no adapter offered (no GPU, a blocklisted driver) - or the adapter. The
+ * shared context's adapter if there is one; otherwise one is asked for, and no device made.
  */
 export async function webGPUAdapterSummary(): Promise<{ reason: string | null; adapter: string | null; fallback: boolean }> {
     const unavailable = webGPUUnavailableReason();

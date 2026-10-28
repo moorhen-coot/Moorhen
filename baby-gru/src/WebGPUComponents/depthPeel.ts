@@ -9,7 +9,7 @@
  * front. depthPeelLayers counts the opaque layer, so its default 4 peels 3 transparent ones; a
  * fragment further back than the last is not drawn.
  *
- * The rim (transparency-antialiasing-notes.md): at an opaque silhouette WebGL has resolved the
+ * The rim: at an opaque silhouette WebGL has resolved the
  * opaque depth to one value a pixel, and a transparent fragment behind it is dropped from the
  * whole pixel - so the uncovered part of the pixel shows the background. Here the opaque depth
  * stays multisampled, as it was drawn:
@@ -24,8 +24,7 @@
  * Then the frame's overlays and text, and the resolve.
  *
  * Unlike WebGL's composite, the layers are not passed through FXAA: a layer holding only
- * transparent geometry is mostly empty, and FXAA averaged its cleared colour into every edge
- * (the notes, section 3, and WebGL's own fix for it).
+ * transparent geometry is mostly empty, and FXAA averaged its cleared colour into every edge.
  */
 import { ShaderStage, TextureUsage } from './gpu';
 

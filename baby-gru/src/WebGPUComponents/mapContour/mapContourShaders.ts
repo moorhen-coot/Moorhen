@@ -451,7 +451,7 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
 
 /**
  * One thread per CHUNK cells: their lines (lineMask, from the count) as pairs of vertex indices,
- * one after another from the run's offset; the preview's thick-line shader draws a quad for each.
+ * one after another from the run's offset; the renderer's thick-line shader draws a quad for each.
  * A line with an end beyond the room for vertices is written as (0, 0), which draws nothing.
  */
 export const EMIT_LINES_WGSL = COMMON + FIELD_AT + /* wgsl */ `

@@ -8,7 +8,7 @@
  *   - the frame is read back from the WebGL canvas: a screenshot (renderToTexture) or
  *     save_pixel_data; or
  *   - the external renderer declines it (willDraw), for a view it cannot draw yet.
- * While it draws, WebGL's buffer uploads wait (deferWebGLUploads in buildBuffers.ts): the buffers
+ * While it draws, WebGL's buffer uploads wait (deferWebGLUploads in webGLUploads.ts): the buffers
  * stay dirty, and WebGL builds them the next time it draws.
  *
  * What is taken from the view follows whoever is showing it: MGWebGL.getCanvasRef gives the external
@@ -38,7 +38,7 @@ export interface ExternalRenderer {
     snapshot(width: number, height: number, options?: { transparentBackground?: boolean }): Promise<Uint8ClampedArray>;
 }
 
-/** The parts of the view whose being on means WebGL must draw (externalWebGLOnlyReason). */
+/** The parts of the view whose being on means WebGL must draw (webGLOnlyReason). */
 export interface ViewModes {
     /** The shadow map shown in place of the scene, for debugging shadows. */
     doShadowDepthDebug?: boolean;

@@ -8,9 +8,9 @@
  * This reads exactly those, copies the canvas into a texture when its revision moves, and draws
  * the same quads as text-vertex-shader.js, so the two renderers show the same labels.
  *
- * Reading the WebGL renderer's state is for while both exist; when WebGPU draws the main view on
- * its own, the CPU half of TextCanvasTexture (the atlas and the instances) has to stand without
- * a GL context, and this consumes it unchanged.
+ * The WebGL renderer still owns the TextCanvasTextures (it handles input, and draws when WebGPU
+ * cannot); while WebGPU draws, their GL uploads wait (webGLUploads.ts) and only the CPU half -
+ * the atlas and the instances - is read here.
  */
 import { BufferUsage, ShaderStage, TextureUsage } from './gpu';
 import { TEXT_WGSL } from './previewShaders';

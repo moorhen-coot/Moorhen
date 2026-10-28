@@ -1,12 +1,13 @@
 /**
- * The parts of the WebGPU preview that do not need a GPU: deciding what in the scene it can draw,
+ * The parts of the WebGPU renderer that do not need a GPU: deciding what in the scene it can draw,
  * and packing the per-frame uniforms.
  *
- * The preview reads the same DisplayBuffers the WebGL renderer does, from the store, and the same
+ * The renderer reads the same DisplayBuffers the WebGL renderer does, from the store, and the same
  * camera, from the WebGL renderer's fields. It draws TRIANGLES sub-buffers, instanced or not, lit
- * and fogged the way triangle-fragment-shader.js does it, and PERFECT_SPHERES as impostors, as
- * twodshapes-vertex-shader.js and perfect-sphere-fragment-shader.js do. Everything else is counted
- * and reported rather than silently missing, so a gap in the picture reads as "not done yet".
+ * and fogged the way triangle-fragment-shader.js does it; PERFECT_SPHERES as impostors, as
+ * twodshapes-vertex-shader.js and perfect-sphere-fragment-shader.js do; and LINES and NORMALLINES
+ * as thick lines. Anything else is counted and reported rather than silently missing, so a gap in
+ * the picture reads as "not done yet".
  */
 import * as mat4 from 'gl-matrix/mat4';
 import * as quat from 'gl-matrix/quat';
@@ -23,7 +24,7 @@ import { SHADOW_MAP_TEXELS, type ShadowMapQuality } from '../WebGLgComponents/sh
 import { type DepthBlurSettings, depthBlurKernel } from './depthBlur';
 
 /**
- * What the preview reads off the WebGL renderer each frame. MGWebGL has all of these; tests pass
+ * What the WebGPU renderer reads off the WebGL renderer each frame. MGWebGL has all of these; tests pass
  * plain objects.
  */
 export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
@@ -264,7 +265,7 @@ export type ColourSource = "vertex" | "instance" | "uniform";
 /** How a sub-buffer is drawn. */
 export type PreviewPrimitive = "triangles" | "spheres" | "lines" | "lit-lines";
 
-/** One sub-buffer the preview will draw. */
+/** One sub-buffer the WebGPU renderer will draw. */
 export interface PreviewDraw {
     buffer: DisplayBuffer;
     /** Sub-buffer index. */
@@ -278,7 +279,10 @@ export interface PreviewDraw {
     primitive: PreviewPrimitive;
     instanced: boolean;
     colourSource: ColourSource;
-    /** Drawn after the opaque pass, blended, without writing depth. */
+    /**
+     * Peeled (depthPeel.ts) when order-independent transparency is on; otherwise drawn after the
+     * opaque pass, blended, without writing depth.
+     */
     transparent: boolean;
     vertexCount: number;
     indexCount: number;
@@ -339,7 +343,7 @@ const skip = (skips: Skips, buffer: DisplayBuffer, index: number, why: string) =
 const lengthOf = (data: ArrayLike<number> | undefined | null): number => data ? data.length : 0;
 
 /**
- * Pick out what the preview can draw, in the order the WebGL renderer would meet it.
+ * Pick out what the WebGPU renderer can draw, in the order the WebGL renderer would meet it.
  *
  * The colour rules follow drawTriangles and drawBuffer: a non-instanced mesh uses its customColour
  * if it has one and its vertex colours otherwise; an instanced one uses per-instance colours when
@@ -559,11 +563,11 @@ function copiesOf(buffer: DisplayBuffer): { copies: ArrayLike<number>[]; greyCop
 export const FRAME_FLOATS = 108;
 
 /**
- * The camera for the preview's own canvas.
+ * The camera for an image `width` x `height` (the WebGPU canvas, a snapshot, a view of a divided
+ * canvas).
  *
- * The same camera as the main view, framed for a different shape: the visible height matches
- * and the width follows the preview's aspect, which is what the main view does when its window
- * is resized.
+ * The same camera as the main view, framed for that shape: the visible height matches and the
+ * width follows the image's aspect, which is what the main view does when its window is resized.
  */
 export function previewCameraFrame(source: PreviewCameraSource, width: number, height: number): CameraFrame {
     return {
@@ -612,7 +616,7 @@ export function frameUniforms(source: PreviewCameraSource, width: number, height
 
     const fogStart = source.gl_fog_start ?? 0;
     // A zero-width fog range would divide by zero in the shader; WebGL has the same hazard and
-    // the slab code never produces it, but a preview should not go black over it.
+    // the slab code never produces it, but the view should not go black over it.
     const fogEnd = source.gl_fog_end > fogStart ? source.gl_fog_end : fogStart + 1e-3;
     out.set([fogStart, fogEnd, source.specularPower, source.clipCapPerfectSpheres ? 1 : 0], 56);
 
@@ -637,7 +641,7 @@ export function frameUniforms(source: PreviewCameraSource, width: number, height
     return out;
 }
 
-/** "PERFECT_SPHERES ×12, LINES ×2", or "" when nothing was skipped. */
+/** "TRIANGLES with a transform matrix ×3, LINES with a transform matrix ×1", or "" when nothing was skipped. */
 export function describeSkipped(skipped: Record<string, number>): string {
     return Object.entries(skipped)
         .sort((a, b) => b[1] - a[1])

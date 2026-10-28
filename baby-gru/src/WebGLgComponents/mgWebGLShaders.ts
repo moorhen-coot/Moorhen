@@ -75,67 +75,6 @@ export function getShader(gl, str, type) {
     return shader;
 }
 
-export function initInstancedOutlineShaders(vertexShaderOutline, fragmentShaderOutline, gl) {
-    const shaderProgramInstancedOutline = gl.createProgram();
-
-    gl.attachShader(shaderProgramInstancedOutline, vertexShaderOutline);
-    gl.attachShader(shaderProgramInstancedOutline, fragmentShaderOutline);
-    gl.bindAttribLocation(shaderProgramInstancedOutline, 0, "aVertexPosition");
-    gl.bindAttribLocation(shaderProgramInstancedOutline, 1, "aVertexColour");
-    gl.bindAttribLocation(shaderProgramInstancedOutline, 2, "aVertexNormal");
-    gl.bindAttribLocation(shaderProgramInstancedOutline, 3, "aVertexTexture");
-    gl.bindAttribLocation(shaderProgramInstancedOutline, 4, "instancePosition");
-    gl.bindAttribLocation(shaderProgramInstancedOutline, 5, "instanceSize");
-    gl.bindAttribLocation(shaderProgramInstancedOutline, 6, "instanceOrientation");
-    gl.linkProgram(shaderProgramInstancedOutline);
-
-    if (!gl.getProgramParameter(shaderProgramInstancedOutline, gl.LINK_STATUS)) {
-        alert("Could not initialise shaders (shaderProgramInstancedOutline)");
-        console.log(gl.getProgramInfoLog(shaderProgramInstancedOutline));
-    }
-
-    gl.useProgram(shaderProgramInstancedOutline);
-
-    shaderProgramInstancedOutline.vertexInstanceOriginAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "instancePosition");
-    shaderProgramInstancedOutline.vertexInstanceSizeAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "instanceSize");
-    shaderProgramInstancedOutline.vertexInstanceOrientationAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "instanceOrientation");
-    shaderProgramInstancedOutline.uHoveredInstance = gl.getUniformLocation(shaderProgramInstancedOutline, "uHoveredInstance");
-    shaderProgramInstancedOutline.uHighlightFrom = gl.getUniformLocation(shaderProgramInstancedOutline, "uHighlightFrom");
-    shaderProgramInstancedOutline.uHighlightTo = gl.getUniformLocation(shaderProgramInstancedOutline, "uHighlightTo");
-
-    shaderProgramInstancedOutline.vertexNormalAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "aVertexNormal");
-    //gl.enableVertexAttribArray(shaderProgramInstancedOutline.vertexNormalAttribute);
-
-    shaderProgramInstancedOutline.vertexPositionAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "aVertexPosition");
-    gl.enableVertexAttribArray(shaderProgramInstancedOutline.vertexPositionAttribute);
-
-    shaderProgramInstancedOutline.vertexColourAttribute = gl.getAttribLocation(shaderProgramInstancedOutline, "aVertexColour");
-    gl.enableVertexAttribArray(shaderProgramInstancedOutline.vertexColourAttribute);
-
-    shaderProgramInstancedOutline.pMatrixUniform = gl.getUniformLocation(shaderProgramInstancedOutline, "uPMatrix");
-    shaderProgramInstancedOutline.mvMatrixUniform = gl.getUniformLocation(shaderProgramInstancedOutline, "uMVMatrix");
-    shaderProgramInstancedOutline.mvInvMatrixUniform = gl.getUniformLocation(shaderProgramInstancedOutline, "uMVINVMatrix");
-    shaderProgramInstancedOutline.textureMatrixUniform = gl.getUniformLocation(shaderProgramInstancedOutline, "TextureMatrix");
-    shaderProgramInstancedOutline.outlineSize = gl.getUniformLocation(shaderProgramInstancedOutline, "outlineSize");
-
-    shaderProgramInstancedOutline.fog_start = gl.getUniformLocation(shaderProgramInstancedOutline, "fog_start");
-    shaderProgramInstancedOutline.fog_end = gl.getUniformLocation(shaderProgramInstancedOutline, "fog_end");
-    shaderProgramInstancedOutline.fogColour = gl.getUniformLocation(shaderProgramInstancedOutline, "fogColour");
-
-    shaderProgramInstancedOutline.clipPlane0 = gl.getUniformLocation(shaderProgramInstancedOutline, "clipPlane0");
-    shaderProgramInstancedOutline.clipPlane1 = gl.getUniformLocation(shaderProgramInstancedOutline, "clipPlane1");
-    shaderProgramInstancedOutline.clipPlane2 = gl.getUniformLocation(shaderProgramInstancedOutline, "clipPlane2");
-    shaderProgramInstancedOutline.clipPlane3 = gl.getUniformLocation(shaderProgramInstancedOutline, "clipPlane3");
-    shaderProgramInstancedOutline.clipPlane4 = gl.getUniformLocation(shaderProgramInstancedOutline, "clipPlane4");
-    shaderProgramInstancedOutline.clipPlane5 = gl.getUniformLocation(shaderProgramInstancedOutline, "clipPlane5");
-    shaderProgramInstancedOutline.clipPlane6 = gl.getUniformLocation(shaderProgramInstancedOutline, "clipPlane6");
-    shaderProgramInstancedOutline.clipPlane7 = gl.getUniformLocation(shaderProgramInstancedOutline, "clipPlane7");
-    shaderProgramInstancedOutline.nClipPlanes = gl.getUniformLocation(shaderProgramInstancedOutline, "nClipPlanes");
-
-    return shaderProgramInstancedOutline
-
-}
-
 export function initInstancedShadowShaders(vertexShaderShadow, fragmentShaderShadow, gl) {
     const shaderProgramInstancedShadow = gl.createProgram();
 
@@ -474,37 +413,6 @@ export function initSimpleBlurYShader(vertexShaderBlurY, fragmentShaderBlurY, gl
 
 }
 
-export function initOverlayShader(vertexShaderOverlay, fragmentShaderOverlay, gl) {
-    const shaderProgramOverlay = gl.createProgram();
-
-    gl.attachShader(shaderProgramOverlay, vertexShaderOverlay);
-    gl.attachShader(shaderProgramOverlay, fragmentShaderOverlay);
-    gl.bindAttribLocation(shaderProgramOverlay, 0, "aVertexPosition");
-    gl.bindAttribLocation(shaderProgramOverlay, 3, "aVertexTexture");
-    gl.linkProgram(shaderProgramOverlay);
-
-    if (!gl.getProgramParameter(shaderProgramOverlay, gl.LINK_STATUS)) {
-        alert("Could not initialise shaders (initRenderOverlayShader)");
-        console.log(gl.getProgramInfoLog(shaderProgramOverlay));
-    }
-
-    gl.useProgram(shaderProgramOverlay);
-
-    shaderProgramOverlay.vertexPositionAttribute = gl.getAttribLocation(shaderProgramOverlay, "aVertexPosition");
-    gl.enableVertexAttribArray(shaderProgramOverlay.vertexPositionAttribute);
-
-    shaderProgramOverlay.vertexTextureAttribute = gl.getAttribLocation(shaderProgramOverlay, "aVertexTexture");
-    gl.enableVertexAttribArray(shaderProgramOverlay.vertexTextureAttribute);
-
-    shaderProgramOverlay.pMatrixUniform = gl.getUniformLocation(shaderProgramOverlay, "uPMatrix");
-    shaderProgramOverlay.mvMatrixUniform = gl.getUniformLocation(shaderProgramOverlay, "uMVMatrix");
-
-    shaderProgramOverlay.inputTexture = gl.getUniformLocation(shaderProgramOverlay, "shader0");
-
-    return shaderProgramOverlay
-
-}
-
 export function initRenderFrameBufferShaders(vertexShaderRenderFrameBuffer, fragmentShaderRenderFrameBuffer, gl) {
     const shaderProgramRenderFrameBuffer = gl.createProgram();
 
@@ -718,59 +626,6 @@ export function initTextBackgroundShaders(vertexShaderTextBackground, fragmentSh
     shaderProgramTextBackground.nClipPlanes = gl.getUniformLocation(shaderProgramTextBackground, "nClipPlanes");
 
     return shaderProgramTextBackground
-
-}
-
-export function initOutlineShaders(vertexShader, fragmentShader, gl) {
-    const shaderProgramOutline = gl.createProgram();
-
-    gl.attachShader(shaderProgramOutline, vertexShader);
-    gl.attachShader(shaderProgramOutline, fragmentShader);
-    gl.bindAttribLocation(shaderProgramOutline, 0, "aVertexPosition");
-    gl.bindAttribLocation(shaderProgramOutline, 1, "aVertexColour");
-    gl.bindAttribLocation(shaderProgramOutline, 2, "aVertexNormal");
-    gl.bindAttribLocation(shaderProgramOutline, 3, "aVertexTexture");
-    gl.linkProgram(shaderProgramOutline);
-
-    if (!gl.getProgramParameter(shaderProgramOutline, gl.LINK_STATUS)) {
-        alert("Could not initialise shaders (initOutlineShaders)");
-        console.log(gl.getProgramInfoLog(shaderProgramOutline));
-    }
-
-    gl.useProgram(shaderProgramOutline);
-
-    shaderProgramOutline.vertexNormalAttribute = gl.getAttribLocation(shaderProgramOutline, "aVertexNormal");
-    gl.enableVertexAttribArray(shaderProgramOutline.vertexNormalAttribute);
-
-    shaderProgramOutline.vertexPositionAttribute = gl.getAttribLocation(shaderProgramOutline, "aVertexPosition");
-    gl.enableVertexAttribArray(shaderProgramOutline.vertexPositionAttribute);
-
-    shaderProgramOutline.vertexColourAttribute = gl.getAttribLocation(shaderProgramOutline, "aVertexColour");
-    gl.enableVertexAttribArray(shaderProgramOutline.vertexColourAttribute);
-
-    shaderProgramOutline.pMatrixUniform = gl.getUniformLocation(shaderProgramOutline, "uPMatrix");
-    shaderProgramOutline.mvMatrixUniform = gl.getUniformLocation(shaderProgramOutline, "uMVMatrix");
-    shaderProgramOutline.mvInvMatrixUniform = gl.getUniformLocation(shaderProgramOutline, "uMVINVMatrix");
-    shaderProgramOutline.textureMatrixUniform = gl.getUniformLocation(shaderProgramOutline, "TextureMatrix");
-    shaderProgramOutline.outlineSize = gl.getUniformLocation(shaderProgramOutline, "outlineSize");
-
-    shaderProgramOutline.fog_start = gl.getUniformLocation(shaderProgramOutline, "fog_start");
-    shaderProgramOutline.fog_end = gl.getUniformLocation(shaderProgramOutline, "fog_end");
-    shaderProgramOutline.fogColour = gl.getUniformLocation(shaderProgramOutline, "fogColour");
-
-    shaderProgramOutline.clipPlane0 = gl.getUniformLocation(shaderProgramOutline, "clipPlane0");
-    shaderProgramOutline.clipPlane1 = gl.getUniformLocation(shaderProgramOutline, "clipPlane1");
-    shaderProgramOutline.clipPlane2 = gl.getUniformLocation(shaderProgramOutline, "clipPlane2");
-    shaderProgramOutline.clipPlane3 = gl.getUniformLocation(shaderProgramOutline, "clipPlane3");
-    shaderProgramOutline.clipPlane4 = gl.getUniformLocation(shaderProgramOutline, "clipPlane4");
-    shaderProgramOutline.clipPlane5 = gl.getUniformLocation(shaderProgramOutline, "clipPlane5");
-    shaderProgramOutline.clipPlane6 = gl.getUniformLocation(shaderProgramOutline, "clipPlane6");
-    shaderProgramOutline.clipPlane7 = gl.getUniformLocation(shaderProgramOutline, "clipPlane7");
-    shaderProgramOutline.nClipPlanes = gl.getUniformLocation(shaderProgramOutline, "nClipPlanes");
-
-    shaderProgramOutline.cursorPos = gl.getUniformLocation(shaderProgramOutline, "cursorPos");
-
-    return shaderProgramOutline
 
 }
 
@@ -1631,70 +1486,6 @@ export function initDepthShadowPerfectSphereShaders(vertexShader, fragmentShader
     shaderDepthShadowProgramPerfectSpheres.nClipPlanes = gl.getUniformLocation(shaderDepthShadowProgramPerfectSpheres, "nClipPlanes");
 
     return shaderDepthShadowProgramPerfectSpheres
-
-}
-
-export function initPerfectSphereOutlineShaders(vertexShader, fragmentShader, gl) {
-    const shaderProgramPerfectSpheresOutline = gl.createProgram();
-    gl.attachShader(shaderProgramPerfectSpheresOutline, vertexShader);
-    gl.attachShader(shaderProgramPerfectSpheresOutline, fragmentShader);
-    gl.bindAttribLocation(shaderProgramPerfectSpheresOutline, 0, "aVertexPosition");
-    gl.bindAttribLocation(shaderProgramPerfectSpheresOutline, 1, "aVertexColour");
-    gl.bindAttribLocation(shaderProgramPerfectSpheresOutline, 2, "aVertexNormal");
-    gl.bindAttribLocation(shaderProgramPerfectSpheresOutline, 3, "aVertexTexture");
-    gl.bindAttribLocation(shaderProgramPerfectSpheresOutline, 8, "size");
-    gl.bindAttribLocation(shaderProgramPerfectSpheresOutline, 9, "offset");
-    gl.linkProgram(shaderProgramPerfectSpheresOutline);
-
-    if (!gl.getProgramParameter(shaderProgramPerfectSpheresOutline, gl.LINK_STATUS)) {
-        alert("Could not initialise shaders (initPerfectSphereOutlineShaders)");
-        console.log(gl.getProgramInfoLog(shaderProgramPerfectSpheresOutline));
-    }
-
-    gl.useProgram(shaderProgramPerfectSpheresOutline);
-
-    shaderProgramPerfectSpheresOutline.vertexPositionAttribute = gl.getAttribLocation(shaderProgramPerfectSpheresOutline, "aVertexPosition");
-    //gl.enableVertexAttribArray(shaderProgramPerfectSpheresOutline.vertexPositionAttribute);
-
-    shaderProgramPerfectSpheresOutline.vertexNormalAttribute = gl.getAttribLocation(shaderProgramPerfectSpheresOutline, "aVertexNormal");
-    //gl.enableVertexAttribArray(shaderProgramPerfectSpheresOutline.vertexNormalAttribute);
-
-    shaderProgramPerfectSpheresOutline.vertexColourAttribute = gl.getAttribLocation(shaderProgramPerfectSpheresOutline, "aVertexColour");
-    //gl.enableVertexAttribArray(shaderProgramPerfectSpheresOutline.vertexColourAttribute);
-
-    shaderProgramPerfectSpheresOutline.vertexTextureAttribute = gl.getAttribLocation(shaderProgramPerfectSpheresOutline, "aVertexTexture");
-    //gl.enableVertexAttribArray(shaderProgramPerfectSpheresOutline.vertexTextureAttribute);
-
-    shaderProgramPerfectSpheresOutline.offsetAttribute = gl.getAttribLocation(shaderProgramPerfectSpheresOutline, "offset");
-    //gl.enableVertexAttribArray(shaderProgramPerfectSpheresOutline.offsetAttribute);
-
-    shaderProgramPerfectSpheresOutline.sizeAttribute= gl.getAttribLocation(shaderProgramPerfectSpheresOutline, "size");
-    //gl.enableVertexAttribArray(shaderProgramPerfectSpheresOutline.sizeAttribute);
-
-    shaderProgramPerfectSpheresOutline.pMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "uPMatrix");
-    shaderProgramPerfectSpheresOutline.mvMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "uMVMatrix");
-    shaderProgramPerfectSpheresOutline.mvInvMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "uMVINVMatrix");
-    shaderProgramPerfectSpheresOutline.textureMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "TextureMatrix");
-    shaderProgramPerfectSpheresOutline.invSymMatrixUniform = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "uINVSymmMatrix");
-    shaderProgramPerfectSpheresOutline.outlineSize = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "outlineSize");
-
-    shaderProgramPerfectSpheresOutline.fog_start = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "fog_start");
-    shaderProgramPerfectSpheresOutline.fog_end = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "fog_end");
-    shaderProgramPerfectSpheresOutline.fogColour = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "fogColour");
-
-    shaderProgramPerfectSpheresOutline.scaleMatrix = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "scaleMatrix");
-
-    shaderProgramPerfectSpheresOutline.clipPlane0 = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "clipPlane0");
-    shaderProgramPerfectSpheresOutline.clipPlane1 = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "clipPlane1");
-    shaderProgramPerfectSpheresOutline.clipPlane2 = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "clipPlane2");
-    shaderProgramPerfectSpheresOutline.clipPlane3 = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "clipPlane3");
-    shaderProgramPerfectSpheresOutline.clipPlane4 = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "clipPlane4");
-    shaderProgramPerfectSpheresOutline.clipPlane5 = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "clipPlane5");
-    shaderProgramPerfectSpheresOutline.clipPlane6 = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "clipPlane6");
-    shaderProgramPerfectSpheresOutline.clipPlane7 = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "clipPlane7");
-    shaderProgramPerfectSpheresOutline.nClipPlanes = gl.getUniformLocation(shaderProgramPerfectSpheresOutline, "nClipPlanes");
-
-    return shaderProgramPerfectSpheresOutline
 
 }
 
