@@ -990,6 +990,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         stopPumpingCamera(this)
         this.unsubscribeCamera?.()
         this.unsubscribeCamera = null
+        // Removes the touch recognisers and cancels a pending long-press timer, which would
+        // otherwise call doRightClick on an unmounted viewer.
+        this.destroyTouchGestures?.()
+        this.destroyTouchGestures = undefined
     }
 
     /**

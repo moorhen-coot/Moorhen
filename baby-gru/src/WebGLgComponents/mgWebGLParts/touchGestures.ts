@@ -97,9 +97,16 @@ export function attachTouchGestures(self: MGWebGL): () => void {
                 event,
             } = state;
 
-            // PinchGesture owns two-finger input; ignore drag while pinching.
-            if (pinching) {
+            // PinchGesture owns two-finger input. DragGesture and PinchGesture are
+            // separate recognisers with separate controllers, so `pinching` is never
+            // set here; the drag also keeps tracking its first finger while a second
+            // is down. Count the touches instead, and keep the mouse baseline at the
+            // first finger so rotation doesn't jump when going back to one finger.
+            const touchCount = (event as TouchEvent)?.touches?.length ?? 0;
+            if (pinching || touchCount > 1) {
                 clearLongPress();
+                self.init_x = x;
+                self.init_y = y;
                 return;
             }
 
@@ -242,14 +249,16 @@ export function attachTouchGestures(self: MGWebGL): () => void {
                 self.setZoom(newZoom);
             }
 
-            // twist → z-rotate: apply the finger-angle delta straight into myQuat
+            // twist → z-rotate: turn the camera by the finger-angle delta
             // via the same Z-quat helper the mouse shift-drag path uses
             // (createZQuatFromDX takes degrees), so lights + cameras follow.
             const angleDeltaDeg = angle - lastAngle;
             lastAngle = angle;
             if (Math.abs((angleDeltaDeg * Math.PI) / 180) > TWIST_DEADZONE_RAD) {
                 const zQ = createZQuatFromDX(angleDeltaDeg);
-                quat4.multiply(self.myQuat, self.myQuat, zQ);
+                // Through the camera, as the mouse shift-drag does, so a twist during
+                // a centring move accumulates rather than being overwritten.
+                self.turnCameraBy(zQ);
             }
 
             // two-finger drag → translate: same origin math as the mouse pan
