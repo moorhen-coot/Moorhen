@@ -371,11 +371,14 @@ export const moorhenKeyPress = (
 
     else if (action === 'jump_next_residue' || action === 'jump_previous_residue') {
         getCentreAtom(molecules, commandCentre, store)
-        .then(result => {
+        .then(async result => {
             if (!result) {
+                console.log('Cannot find atom in the centre of the view...') 
                 return
             }
+
             const [selectedMolecule, residueCid] = result
+            console.log(`Jumping to ${action} from ${residueCid} in molecule ${selectedMolecule}`)
             if (typeof selectedMolecule === 'undefined' || !residueCid) {
                 return
             }
@@ -397,7 +400,13 @@ export const moorhenKeyPress = (
             } else {
                 return
             }
-            selectedMolecule.centreAndAlignViewOn(`/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/`, true)
+            // Translate only: keep the current orientation and zoom, so stepping along the chain is a
+            // short slide rather than a re-orientation per residue. Centre on CA so the steps follow
+            // the backbone; residues without one (nucleic acids, ligands) use the whole residue.
+            const nextResidueCid = `/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/`
+            const caAtoms = await selectedMolecule.gemmiAtomsForCid(nextResidueCid + "CA")
+            console.log(`Ste  pping to ${nextResidueCid} (CA atoms: ${caAtoms.length})`)
+            await store.dispatch(setOrigin([-caAtoms[0].x, -caAtoms[0].y, -caAtoms[0].z]))
         })
         .catch(err => console.log(err))
 
