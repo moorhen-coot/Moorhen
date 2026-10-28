@@ -127,6 +127,13 @@ export class GpuMapLayer {
         return draws;
     }
 
+    /** Contours made so far, all maps together: for timing how soon a move is contoured (report). */
+    get contoursMade(): number {
+        let made = 0;
+        for (const entry of this.maps.values()) entry.surfaces.forEach(surface => { made += surface.made; });
+        return made;
+    }
+
     /** Triangles in the maps' contours as last made, all maps together. */
     get triangles(): number {
         let triangles = 0;

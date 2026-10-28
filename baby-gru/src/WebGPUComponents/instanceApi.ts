@@ -15,7 +15,7 @@ import { setUseWebGPU } from "../store/sceneSettingsSlice";
 import type { WebGPUMainViewRenderer } from "../components/webMG/MoorhenWebGPUMainView";
 import { gpuMapContourSetting } from "./mapContour/setting";
 import { webGPUAdapterSummary } from "./gpu";
-import { formatRendererReport, median, type RendererReportFacts } from "./rendererReport";
+import { formatRendererReport, median, slowFrames, type RendererReportFacts } from "./rendererReport";
 import { version as moorhenVersion } from "../version";
 
 /** An image: RGBA, 8 bits a channel, top row first (as ImageData has it). */
@@ -140,12 +140,14 @@ export interface WebGPUApi {
     /**
      * How this machine draws Moorhen, on one line for a tester to paste back (rendererReport.ts):
      * browser and platform, secure context, the WebGPU adapter or why there is none, who draws the
-     * main view and why, where maps are contoured, and the time of `frames` frames of the current
-     * scene (60 by default; 0 for none), drawn one an animation frame.
+     * main view and why, where maps are contoured, the time of `frames` frames of the current
+     * scene (60 by default; 0 for none), drawn one an animation frame after a few untimed, and -
+     * with maps showing - a walk of `mapWalk` small moves of the origin (20 by default; 0 for
+     * none), each timed until its new contours are drawn. The origin is put back after.
      */
-    report(options?: { frames?: number }): Promise<string>;
+    report(options?: { frames?: number; mapWalk?: number }): Promise<string>;
     /** What report() says, as it gathered it. */
-    reportFacts(options?: { frames?: number }): Promise<RendererReportFacts>;
+    reportFacts(options?: { frames?: number; mapWalk?: number }): Promise<RendererReportFacts>;
     /** Ask for the main view to be drawn with WebGPU, or not (the preference, so it is remembered). */
     setMainView(useWebGPU: boolean): void;
     /**
@@ -255,20 +257,35 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
             host.store.dispatch(setUseWebGPU(useWebGPU));
         },
 
-        async report(options: { frames?: number } = {}): Promise<string> {
+        async report(options: { frames?: number; mapWalk?: number } = {}): Promise<string> {
             return formatRendererReport(await this.reportFacts(options));
         },
 
-        async reportFacts(options: { frames?: number } = {}): Promise<RendererReportFacts> {
+        async reportFacts(options: { frames?: number; mapWalk?: number } = {}): Promise<RendererReportFacts> {
             const webGPU = await webGPUAdapterSummary();
-            const view = webGLView(host) as WebGLView & { drawScene(): void; externalRenderer?: WebGPUMainViewRenderer | null };
+            const view = webGLView(host) as WebGLView & {
+                drawScene(): void; externalRenderer?: WebGPUMainViewRenderer | null;
+                origin: number[]; setOrigin(origin: [number, number, number], doDrawScene?: boolean, dispatchEvent?: boolean): void;
+            };
             const external = view.externalRenderer?.name === "WebGPU" ? view.externalRenderer : null;
             const nextFrame = () => new Promise<number>(resolve => requestAnimationFrame(resolve));
+            let build: string | undefined;
+            try {
+                // Loaded only now: see buildMode.ts.
+                ({ buildMode: build } = await import("./buildMode"));
+            } catch {
+                build = undefined;
+            }
 
-            // Frames of the scene as it is, one an animation frame, as a moving view draws them.
+            // Frames of the scene as it is, one an animation frame, as a moving view draws them,
+            // after a few untimed (anything left over from before the report starts).
             const wanted = Math.max(0, Math.round(options.frames ?? 60));
             let frames: RendererReportFacts["frames"] = null;
             if (wanted > 0) {
+                for (let i = 0; i < 5; i++) {
+                    view.drawScene();
+                    await nextFrame();
+                }
                 external?.takeGpuTime();
                 const intervals: number[] = [];
                 const cpu: number[] = [];
@@ -291,6 +308,65 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                     worstMs: Math.max(...intervals),
                     cpuMs: median(cpu),
                     gpuMs: gpu && gpu.count > 0 ? gpu.meanMs : null,
+                    slow: slowFrames(intervals),
+                };
+            }
+
+            // The map walk: small moves of the origin round a square, each timed from the move to
+            // its new contours drawn, as a pan does it (setOrigin, then a frame). On the GPU the
+            // contours are made in the frame that sees the new origin; Coot's arrive later, through
+            // the map manager's queue, as new buffers. A step that gets none in a few seconds is
+            // counted as timed out (a map with its origin locked, say).
+            const walkSteps = Math.max(0, Math.round(options.mapWalk ?? 20));
+            let mapWalk: RendererReportFacts["mapWalk"] = null;
+            type WalkMap = { molNo: number; displayObjects?: { Coot?: unknown[] } };
+            const walkState = host.store.getState() as unknown as {
+                maps?: WalkMap[]; mapContourSettings?: { visibleMaps?: number[]; reContourMapOnlyOnMouseUp?: boolean };
+            };
+            const visibleMaps = (walkState.maps ?? []).filter(map => walkState.mapContourSettings?.visibleMaps?.includes(map.molNo));
+            if (walkSteps > 0 && visibleMaps.length > 0) {
+                const onGpu = !!external && gpuMapContourSetting.enabled;
+                const start = [view.origin[0], view.origin[1], view.origin[2]] as [number, number, number];
+                const steps: [number, number, number][] = [[1, 0, 0], [0, 1, 0], [-1, 0, 0], [0, -1, 0]];
+                const times: number[] = [];
+                let timedOut = 0;
+                const position = [...start] as [number, number, number];
+                for (let i = 0; i < walkSteps; i++) {
+                    const step = steps[i % steps.length];
+                    for (let k = 0; k < 3; k++) position[k] += step[k];
+                    const madeBefore = external?.mapContoursMade() ?? 0;
+                    const cootBefore = visibleMaps.map(map => map.displayObjects?.Coot?.[0] ?? null);
+                    const started = performance.now();
+                    view.setOrigin([...position] as [number, number, number], false, true);
+                    // Contouring only on mouse up (a preference): as a pan ends.
+                    if (walkState.mapContourSettings?.reContourMapOnlyOnMouseUp) document.dispatchEvent(new MouseEvent("mouseup"));
+                    view.drawScene();
+                    let done = false;
+                    while (!done && performance.now() - started < 5000) {
+                        if (onGpu) {
+                            await external.gpuIdle();
+                            done = external.mapContoursMade() > madeBefore;
+                        } else {
+                            done = visibleMaps.every((map, k) => (map.displayObjects?.Coot?.[0] ?? null) !== cootBefore[k]);
+                        }
+                        if (!done) {
+                            await nextFrame();
+                            view.drawScene();
+                        }
+                    }
+                    if (!done) {
+                        timedOut++;
+                        continue;
+                    }
+                    // Drawn: the frame with the new contours, on the screen.
+                    if (!onGpu) view.drawScene();
+                    await nextFrame();
+                    times.push(performance.now() - started);
+                }
+                view.setOrigin(start, true, true);
+                mapWalk = {
+                    steps: walkSteps, by: onGpu ? "GPU" : "Coot",
+                    medianMs: median(times), worstMs: times.length ? Math.max(...times) : 0, timedOut,
                 };
             }
             const main = this.mainView();
@@ -299,6 +375,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
             const visual = window.visualViewport;
             return {
                 moorhenVersion: String(moorhenVersion),
+                build,
                 userAgent: navigator.userAgent,
                 secureContext: typeof window !== "undefined" && window.isSecureContext,
                 webGPU,
@@ -316,6 +393,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                     peelLayers: main.drawing ? main.lastFrame?.peelLayers ?? null : null,
                 },
                 frames,
+                mapWalk,
             };
         },
 

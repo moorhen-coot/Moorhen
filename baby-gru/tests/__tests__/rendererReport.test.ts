@@ -3,7 +3,7 @@
  * to say how their machine draws Moorhen.
  */
 import { describe, expect, it } from "@jest/globals";
-import { browserName, formatRendererReport, median, platformName, type RendererReportFacts } from "../../src/WebGPUComponents/rendererReport";
+import { browserName, formatRendererReport, median, platformName, slowFrames, type RendererReportFacts } from "../../src/WebGPUComponents/rendererReport";
 
 const AGENTS = {
     firefoxLinux: "Mozilla/5.0 (X11; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0",
@@ -94,8 +94,35 @@ describe("the report", () => {
             .toContain("CSS: canvas 400x800 at 1x, window 400x800, visual 400x800, screen 400x800 |");
     });
 
+    it("says which build, how many frames stalled, and how soon moves were contoured", () => {
+        const line = formatRendererReport(facts({
+            build: "production",
+            frames: { count: 60, medianMs: 16.7, worstMs: 183.8, cpuMs: 0.9, gpuMs: null, slow: 2 },
+            mapWalk: { steps: 20, by: "GPU", medianMs: 21.4, worstMs: 35.2, timedOut: 0 },
+        }));
+        expect(line.startsWith("Moorhen 0.21.0 (production) | ")).toBe(true);
+        expect(line).toContain("60 frames: 16.7 ms median, 183.8 ms worst (2 slow), CPU 0.9 ms, GPU not timed");
+        expect(line.endsWith("| map walk: 20 moves contoured by GPU, 21.4 ms median, 35.2 ms worst")).toBe(true);
+
+        expect(formatRendererReport(facts({ frames: { count: 60, medianMs: 16.7, worstMs: 17, cpuMs: 1, gpuMs: null, slow: 0 } })))
+            .toContain("17.0 ms worst (no stalls)");
+        expect(formatRendererReport(facts({ mapWalk: { steps: 20, by: "Coot", medianMs: 250, worstMs: 400, timedOut: 3 } })))
+            .toContain("map walk: 20 moves contoured by Coot, 250.0 ms median, 400.0 ms worst, 3 timed out");
+        expect(formatRendererReport(facts({ mapWalk: { steps: 4, by: "Coot", medianMs: 0, worstMs: 0, timedOut: 4 } })))
+            .toContain("map walk: 4 moves contoured by Coot, 4 timed out");
+        expect(formatRendererReport(facts({ mapWalk: null }))).not.toContain("map walk");
+    });
+
     it("leaves the frames out when none were drawn", () => {
         expect(formatRendererReport(facts({ frames: null }))).not.toContain("frames:");
+    });
+});
+
+describe("slow frames", () => {
+    it("are those half as long again as the median", () => {
+        expect(slowFrames([16.7, 16.6, 16.8, 16.7, 183.8, 33.4])).toBe(2);
+        expect(slowFrames([16.7, 16.7, 16.7])).toBe(0);
+        expect(slowFrames([])).toBe(0);
     });
 });
 

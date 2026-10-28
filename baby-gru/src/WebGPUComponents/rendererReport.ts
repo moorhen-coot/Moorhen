@@ -1,14 +1,16 @@
 /**
  * A one-line report of how this machine draws Moorhen, for testers to paste back: the browser and
  * platform, whether the page is a secure context (WebGPU needs one), the WebGPU adapter or why
- * there is none, who draws the main view and why, where maps are contoured, and how long frames
- * of the current scene take. Gathered by `moorhenInstance.webGPU.report()` (instanceApi.ts) and the
+ * there is none, who draws the main view and why, where maps are contoured, how long frames of
+ * the current scene take, and - with maps showing - how soon a move of the origin is contoured. Gathered by `moorhenInstance.webGPU.report()` (instanceApi.ts) and the
  * Dev menu's "Renderer report"; formatted here, without the browser, so that it can be tested.
  */
 
 /** What the report says, gathered by instanceApi's report(). */
 export interface RendererReportFacts {
     moorhenVersion: string;
+    /** The build: "development" (the dev server) or "production"; undefined if not known. */
+    build?: string;
     userAgent: string;
     /** window.isSecureContext: WebGPU is offered only on https and localhost. */
     secureContext: boolean;
@@ -40,7 +42,15 @@ export interface RendererReportFacts {
         cpuMs: number;
         /** The GPU's time per frame, where it can be timed (WebGPU with timestamp queries). */
         gpuMs: number | null;
+        /** Frames that took more than half as long again as the median: stalls. */
+        slow?: number;
     } | null;
+    /**
+     * Moving the origin with maps showing: a fixed walk of small steps from where it is, each timed
+     * from the move to its new contours drawn - on the GPU while WebGPU draws, by Coot otherwise.
+     * `timedOut`: steps whose contours had not come after some seconds (not in the times).
+     */
+    mapWalk?: { steps: number; by: "GPU" | "Coot"; medianMs: number; worstMs: number; timedOut: number } | null;
 }
 
 /** "Firefox 158", "Chrome 142", "Edge 142", "Safari 26.1", or the agent's first word. */
@@ -77,7 +87,7 @@ const ms = (t: number): string => `${t.toFixed(1)} ms`;
 /** The report as one line, fields separated by " | ". */
 export function formatRendererReport(f: RendererReportFacts): string {
     const parts = [
-        `Moorhen ${f.moorhenVersion}`,
+        `Moorhen ${f.moorhenVersion}${f.build ? ` (${f.build})` : ""}`,
         `${browserName(f.userAgent)} on ${platformName(f.userAgent)}`,
         f.secureContext ? "secure" : "NOT a secure context (WebGPU needs https or localhost)",
         f.webGPU.reason
@@ -102,10 +112,24 @@ export function formatRendererReport(f: RendererReportFacts): string {
             + `, screen ${size(l.screen)}`);
     }
     if (f.frames) {
-        parts.push(`${f.frames.count} frames: ${ms(f.frames.medianMs)} median, ${ms(f.frames.worstMs)} worst, `
+        const slow = f.frames.slow === undefined ? "" : f.frames.slow === 0 ? " (no stalls)" : ` (${f.frames.slow} slow)`;
+        parts.push(`${f.frames.count} frames: ${ms(f.frames.medianMs)} median, ${ms(f.frames.worstMs)} worst${slow}, `
             + `CPU ${ms(f.frames.cpuMs)}, GPU ${f.frames.gpuMs === null ? "not timed" : ms(f.frames.gpuMs)}`);
     }
+    if (f.mapWalk) {
+        const w = f.mapWalk;
+        const timed = w.steps - w.timedOut;
+        parts.push(`map walk: ${w.steps} moves contoured by ${w.by}`
+            + (timed > 0 ? `, ${ms(w.medianMs)} median, ${ms(w.worstMs)} worst` : "")
+            + (w.timedOut ? `, ${w.timedOut} timed out` : ""));
+    }
     return parts.join(" | ");
+}
+
+/** How many of `intervals` took more than half as long again as their median. */
+export function slowFrames(intervals: readonly number[]): number {
+    const typical = median(intervals);
+    return intervals.filter(t => t > typical * 1.5).length;
 }
 
 /** The middle of `values` (the mean of the two middle ones for an even count); 0 for none. */

@@ -26,6 +26,10 @@ export interface WebGPUMainViewRenderer extends ExternalRenderer {
     readonly lastFrame: { meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number; peelLayers: number } | null;
     /** The GPU time of the frames drawn since the last call (and of the FPS meter's), or null if not timed. */
     takeGpuTime(): { meanMs: number; maxMs: number; count: number } | null;
+    /** Map contours made on the GPU so far (the report's map walk). */
+    mapContoursMade(): number;
+    /** Resolves when the GPU has finished what has been submitted so far. */
+    gpuIdle(): Promise<void>;
 }
 
 /**
@@ -160,6 +164,12 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
             },
             takeGpuTime() {
                 return renderer?.takeFrameGpuTime() ?? null;
+            },
+            mapContoursMade() {
+                return maps?.contoursMade ?? 0;
+            },
+            async gpuIdle() {
+                await renderer?.gpuDevice.queue.onSubmittedWorkDone();
             },
             willDraw() {
                 // A recording started while WebGL drew records WebGL's canvas, so WebGL keeps

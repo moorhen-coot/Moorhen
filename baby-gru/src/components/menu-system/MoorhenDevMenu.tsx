@@ -539,7 +539,7 @@ export const MoorhenDevMenu = () => {
                     });
                 })(); }}
             >
-                Renderer report (copied to the clipboard)
+                Renderer report (a few seconds; copied to the clipboard)
             </MoorhenMenuItem>
             <MoorhenToggle
                 type="switch"
