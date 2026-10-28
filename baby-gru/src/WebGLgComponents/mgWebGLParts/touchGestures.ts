@@ -1,10 +1,7 @@
 import { DragGesture, PinchGesture } from '@use-gesture/vanilla';
-import * as vec3 from 'gl-matrix/vec3';
-import * as quat4 from 'gl-matrix/quat';
-import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { createZQuatFromDX } from '../quatUtils';
-import { getDeviceScale } from '../webGLUtils';
 import { MGWebGL } from '../mgWebGL';
+import { panBy } from './eventHandlers';
 
 /**
  * Touch-gesture layer for the WebGL viewer.
@@ -17,7 +14,7 @@ import { MGWebGL } from '../mgWebGL';
  *
  * Mapping (see the branches in doMouseMove):
  *   1-finger drag → rotate      (buttons:1, no modifiers)          → myQuat
- *   2-finger drag → translate   (altKey+shiftKey)                  → setOrigin
+ *   2-finger drag → translate   (as alt+shift drag)                → panBy (view or active molecule)
  *   twist         → z-rotate    (shiftKey)                         → myQuat
  *   pinch         → zoom        (setZoom(zoom*factor), like wheel) → zoom
  *   tap                         → doClick (on press, as the mouse does)
@@ -261,28 +258,13 @@ export function attachTouchGestures(self: MGWebGL): () => void {
                 self.turnCameraBy(zQ);
             }
 
-            // two-finger drag → translate: same origin math as the mouse pan
-            // branch of doMouseMove (inverse-quat screen shift, zoom-scaled /8).
+            // two-finger drag → translate: the same panBy the mouse pan branch of
+            // doMouseMove uses, so it moves the active molecule when there is one.
             const panDx = (ox - lastOrigin[0]) * self.props.mouseSensitivityFactor;
             const panDy = (oy - lastOrigin[1]) * self.props.mouseSensitivityFactor;
             lastOrigin = [ox, oy];
             if (Math.abs(panDx) > 0.01 || Math.abs(panDy) > 0.01) {
-                const moveFactor =
-                    (getDeviceScale() * 400.0) / self.canvas.height *
-                    self.moveFactor / self.props.mouseSensitivityFactor;
-                const invQuat = quat4.create();
-                quat4Inverse(self.myQuat, invQuat);
-                const theMatrix = quatToMat4(invQuat);
-                const xshift = vec3.create();
-                vec3.set(xshift, moveFactor * panDx, 0, 0);
-                const yshift = vec3.create();
-                vec3.set(yshift, 0, moveFactor * panDy, 0);
-                vec3.transformMat4(xshift, xshift, theMatrix);
-                vec3.transformMat4(yshift, yshift, theMatrix);
-                const newOrigin = self.origin.map((coord, i) => {
-                    return coord + (self.zoom * xshift[i]) / 8 - (self.zoom * yshift[i]) / 8;
-                }) as [number, number, number];
-                self.setOrigin(newOrigin, false, !self.reContourMapOnlyOnMouseUp);
+                panBy(self, panDx, panDy);
             }
 
             self.drawScene();
