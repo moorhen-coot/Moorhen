@@ -451,6 +451,59 @@ export function doDoubleClick(self: MGWebGL, event) {
     document.dispatchEvent(goToBlobEvent);
 }
 
+/**
+ * Whether camera-style drags should move the active molecule instead of the view.
+ */
+export function isActiveMoleculeMotion(self: MGWebGL): boolean {
+    return (self.activeMolecule != null) && (self.activeMolecule.representations.length > 0) && !self.keysDown['residue_camera_wiggle'];
+}
+
+/**
+ * Translate in the screen plane by (dx, dy) pixels, already scaled by mouseSensitivityFactor.
+ * Moves the view origin, or the active molecule when there is one (see isActiveMoleculeMotion).
+ * Shared by the mouse pan (alt+shift / middle drag) and the two-finger touch pan. Does not draw.
+ */
+export function panBy(self: MGWebGL, dx: number, dy: number): void {
+    const activeMoleculeMotion = isActiveMoleculeMotion(self);
+    const moveFactor = getDeviceScale() * 400.0 / self.canvas.height * self.moveFactor / self.props.mouseSensitivityFactor;
+    const invQuat = quat4.create();
+    quat4Inverse(self.myQuat, invQuat);
+    const theMatrix = quatToMat4(invQuat);
+    const xshift = vec3.create();
+    vec3.set(xshift, moveFactor * dx, 0, 0);
+    const yshift = vec3.create();
+    vec3.set(yshift, 0, moveFactor * dy, 0);
+    vec3.transformMat4(xshift, xshift, theMatrix);
+    vec3.transformMat4(yshift, yshift, theMatrix);
+
+    if (!activeMoleculeMotion) {
+        const newOrigin = self.origin.map((coord, coordIndex) => {
+            return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
+        })
+        self.setOrigin(newOrigin as [number, number, number], false, !self.reContourMapOnlyOnMouseUp)
+    } else {
+        const newOrigin = self.activeMolecule.displayObjectsTransformation.origin.map((coord, coordIndex) => {
+            return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
+        })
+        const newOriginSet : [number, number, number] = [ newOrigin[0], newOrigin[1], newOrigin[2]];
+        self.activeMolecule.displayObjectsTransformation.origin = newOriginSet;
+        if (!self.activeMolecule.displayObjectsTransformation.quat) {
+            self.activeMolecule.displayObjectsTransformation.quat = quat4.create();
+            quat4.set(self.activeMolecule.displayObjectsTransformation.quat, 0, 0, 0, -1);
+        }
+        const theMatrix = quatToMat4(self.activeMolecule.displayObjectsTransformation.quat);
+        theMatrix[12] = self.activeMolecule.displayObjectsTransformation.origin[0];
+        theMatrix[13] = self.activeMolecule.displayObjectsTransformation.origin[1];
+        theMatrix[14] = self.activeMolecule.displayObjectsTransformation.origin[2];
+        for (const representation of self.activeMolecule.representations) {
+            const value = representation.buffers
+            for (let ibuf = 0; ibuf < value.length; ibuf++) {
+                value[ibuf].transformMatrixInteractive = theMatrix;
+            }
+        }
+    }
+}
+
 export function doMouseMove(self: MGWebGL, event) {
     // A claimed drag never reaches the camera.
     if (self.pointerClaim) {
@@ -461,7 +514,7 @@ export function doMouseMove(self: MGWebGL, event) {
         return
     }
 
-    const activeMoleculeMotion = (self.activeMolecule != null) && (self.activeMolecule.representations.length > 0) && !self.keysDown['residue_camera_wiggle'];
+    const activeMoleculeMotion = isActiveMoleculeMotion(self);
 
     const centreOfMass = function (atoms) {
         let totX = 0.0;
@@ -504,42 +557,7 @@ export function doMouseMove(self: MGWebGL, event) {
         if (self.mouseDownButton === 1) {
             event.preventDefault();
         }
-        const invQuat = quat4.create();
-        quat4Inverse(self.myQuat, invQuat);
-        const theMatrix = quatToMat4(invQuat);
-        const xshift = vec3.create();
-        vec3.set(xshift, moveFactor * self.dx, 0, 0);
-        const yshift = vec3.create();
-        vec3.set(yshift, 0, moveFactor * self.dy, 0);
-        vec3.transformMat4(xshift, xshift, theMatrix);
-        vec3.transformMat4(yshift, yshift, theMatrix);
-
-        if (!activeMoleculeMotion) {
-            const newOrigin = self.origin.map((coord, coordIndex) => {
-                return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
-            })
-            self.setOrigin(newOrigin as [number, number, number], false, !self.reContourMapOnlyOnMouseUp)
-        } else {
-            const newOrigin = self.activeMolecule.displayObjectsTransformation.origin.map((coord, coordIndex) => {
-                return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
-            })
-            const newOriginSet : [number, number, number] = [ newOrigin[0], newOrigin[1], newOrigin[2]];
-            self.activeMolecule.displayObjectsTransformation.origin = newOriginSet;
-            if (!self.activeMolecule.displayObjectsTransformation.quat) {
-                self.activeMolecule.displayObjectsTransformation.quat = quat4.create();
-                quat4.set(self.activeMolecule.displayObjectsTransformation.quat, 0, 0, 0, -1);
-            }
-            const theMatrix = quatToMat4(self.activeMolecule.displayObjectsTransformation.quat);
-            theMatrix[12] = self.activeMolecule.displayObjectsTransformation.origin[0];
-            theMatrix[13] = self.activeMolecule.displayObjectsTransformation.origin[1];
-            theMatrix[14] = self.activeMolecule.displayObjectsTransformation.origin[2];
-            for (const representation of self.activeMolecule.representations) {
-                const value = representation.buffers
-                for (let ibuf = 0; ibuf < value.length; ibuf++) {
-                    value[ibuf].transformMatrixInteractive = theMatrix;
-                }
-            }
-        }
+        panBy(self, self.dx, self.dy);
         self.drawScene();
         return;
     }
