@@ -378,7 +378,6 @@ export const moorhenKeyPress = (
             }
 
             const [selectedMolecule, residueCid] = result
-            console.log(`Jumping to ${action} from ${residueCid} in molecule ${selectedMolecule}`)
             if (typeof selectedMolecule === 'undefined' || !residueCid) {
                 return
             }
