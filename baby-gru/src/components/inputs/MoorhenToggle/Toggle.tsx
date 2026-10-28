@@ -18,7 +18,12 @@ type MoorhenToggleProps = {
 
 export const MoorhenToggle = (props: MoorhenToggleProps) => {
     const type = props.type ? props.type : "switch";
-    const { id, checked = false, onChange = () => {}, toggle = null, ref, name, disabled } = props;
+    const { id, checked, onChange = () => {}, toggle = null, ref, name, disabled } = props;
+    // Controlled when the caller passes `checked`; otherwise uncontrolled so a
+    // caller that only reads the input through `ref` (e.g. `ref.current.checked`)
+    // still gets a toggle that actually flips. Passing `checked={false}` with no
+    // state update would make React revert every click.
+    const isControlled = checked !== undefined;
     return (
         <label
             className={`moorhen__toggle-container ${props.className ? props.className : ""} ${props.disabled ? "disabled" : ""}`}
@@ -30,13 +35,13 @@ export const MoorhenToggle = (props: MoorhenToggleProps) => {
                     id={id}
                     className="moorhen__toggle-input"
                     type="checkbox"
-                    checked={checked}
+                    {...(isControlled ? { checked } : { defaultChecked: false })}
                     onChange={(e) => {
                         if (onChange) {
                             onChange(e);
                         }
                         if (toggle) {
-                            toggle(!checked);
+                            toggle(e.target.checked);
                         }
                     }}
                     ref={ref}

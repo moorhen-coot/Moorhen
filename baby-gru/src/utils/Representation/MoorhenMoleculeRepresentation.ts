@@ -20,6 +20,12 @@ import {
     gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
 } from "../../WebGPUComponents/metaballs";
 
+/**
+ * The styles that actually put individual atoms on the screen, and so the only ones a per-atom
+ * highlight such as the hover ball can sit on.
+ */
+export const ATOM_LEVEL_STYLES: string[] = ["CBs", "CAs", "VdwSpheres", "ligands"];
+
 export type MeshType =
     | libcootApi.InstancedMeshJS
     | libcootApi.SimpleMeshJS
@@ -1576,6 +1582,31 @@ export class MoleculeRepresentation {
     }
 
     /**
+     * The models drawn by the parent molecule's visible atom-level representations, so a highlight
+     * lands only on atoms that are on screen. A representation restricted to "/2/*" contributes
+     * model 2; one with a wildcard, empty or chain-first model field shows every model, and "*"
+     * is returned.
+     * @returns {string[]} Model numbers, or ["*"] for all models
+     */
+    getDisplayedModels(): string[] {
+        const models = new Set<string>();
+        for (const representation of this.parentMolecule?.representations ?? []) {
+            if (!representation.visible || !ATOM_LEVEL_STYLES.includes(representation.style)) {
+                continue;
+            }
+            for (const part of (representation.cid ?? "").split("||")) {
+                const trimmed = part.trim();
+                const model = trimmed.split("/")[1];
+                if (!trimmed.startsWith("/") || !/^\d+$/.test(model ?? "")) {
+                    return ["*"];
+                }
+                models.add(model);
+            }
+        }
+        return models.size > 0 ? [...models] : ["*"];
+    }
+
+    /**
      * Get representation buffers corresponding with the residue highlight representation
      * @param {string} selectionString - The CID selection
      * @param {number[]} colour - The colour for the highlight
@@ -1592,15 +1623,13 @@ export class MoleculeRepresentation {
             modifiedSelection = selectionString;
         } else {
             const resSpec: moorhen.ResidueSpec = cidToSpec(selectionString);
-            if (this.parentMolecule.isLigand) {
-                modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/${resSpec.atom_name}${
-                    resSpec.alt_conf === "" ? "" : ":"
-                }${resSpec.alt_conf}`;
-            } else {
-                modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${
-                    resSpec.alt_conf === "" ? "" : ":"
-                }${resSpec.alt_conf}`;
-            }
+            const atomName = this.parentMolecule.isLigand ? resSpec.atom_name : "*";
+            const altConf = resSpec.alt_conf === "" ? "" : `:${resSpec.alt_conf}`;
+            // The model field of the hovered CID can't be trusted - the sequence viewer writes the
+            // molecule number there - so the models come from what is actually on screen instead.
+            modifiedSelection = this.getDisplayedModels()
+                .map(model => `/${model}/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/${atomName}${altConf}`)
+                .join("||");
         }
 
         const selectedGemmiAtoms = await this.parentMolecule.gemmiAtomsForCid(modifiedSelection);
