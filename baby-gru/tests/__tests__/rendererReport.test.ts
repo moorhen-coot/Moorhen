@@ -123,6 +123,13 @@ describe("the report", () => {
         expect(formatRendererReport(facts())).toContain("| maps: GPU |");
     });
 
+    it("says when the GPU, not the page, sets the frame rate", () => {
+        // The page asks for a frame every 16.7 ms, but the GPU takes 18.8 ms over each.
+        expect(formatRendererReport(facts({ frames: { count: 60, medianMs: 16.7, worstMs: 33.3, cpuMs: 0.5, gpuMs: 18.8, slow: 3 } })))
+            .toContain("CPU 0.5 ms, GPU 18.8 ms (GPU-bound: about 53 fps shown)");
+        expect(formatRendererReport(facts())).not.toContain("GPU-bound");
+    });
+
     it("leaves the frames out when none were drawn", () => {
         expect(formatRendererReport(facts({ frames: null }))).not.toContain("frames:");
     });

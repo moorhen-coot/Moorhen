@@ -29,6 +29,7 @@ import { SurfaceTextures } from './surfaceTextures';
 import { EffectMaps, EffectPasses, GBUFFER_DEPTH_FORMAT, GBUFFER_NORMAL_FORMAT, effectMargin, gbufferScale } from './effectPasses';
 import { DepthPeel, PEEL_COLOUR_FORMAT, PEEL_DEPTH_FORMAT, type PeelTargets, transparentLayers } from './depthPeel';
 import { DepthBlur, depthBlurMargin } from './depthBlur';
+import { SphereNeighbourKernels } from './sphereNeighbours';
 import { AnaglyphCombine, anaglyphUniforms } from './anaglyphCombine';
 import {
     ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, PreviewView, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, previewViews, symmetryCopyGrey, viewShows,
@@ -77,7 +78,12 @@ function drawBlock(colour: ArrayLike<number>, alpha: number, halfWidth: number, 
     out.set([opaque ? 1 : 0, 0, 0, 0], offset + 32);
 }
 
-const DEPTH_FORMAT: GPUTextureFormat = "depth24plus";
+/**
+ * Float, not depth24plus: clip caps (previewShaders.ts, capDepth) sort themselves by depth within a
+ * millionth of the range at the front plane, where a float has the precision and 24 bits do not.
+ * The same four bytes a sample (depth24plus is depth32float on many GPUs anyway).
+ */
+const DEPTH_FORMAT: GPUTextureFormat = "depth32float";
 /** The light's depth map: sampled with comparison, so a depth format that filters. */
 const SHADOW_MAP_FORMAT: GPUTextureFormat = "depth32float";
 /**
@@ -200,6 +206,12 @@ interface SubBufferResources {
     instanceOrientation: GPUBuffer | null;
     /** For PERFECT_SPHERES, in place of chunks and the instance buffers. */
     spheres: SphereChunk[];
+    /**
+     * The spheres and their neighbour lists at group 2, for the lines where clip caps meet: made
+     * the first time the spheres are drawn with clip caps (undefined until then), null where they
+     * have none (capSeamsFor).
+     */
+    capSeams?: GPUBindGroup | null;
     /** For LINES and NORMALLINES: their arrays bound as storage, and how many segments. */
     segments: { bindGroup: GPUBindGroup; count: number } | null;
     /** A Draw block per copy, original first, DRAW_STRIDE apart; remade when the copies grow. */
@@ -283,6 +295,12 @@ export class WebGPUPreviewRenderer {
     /** LINES and NORMALLINES from DisplayBuffers: positions, normals, colours, segments, at group 2. */
     private readonly segmentLayout: GPUBindGroupLayout;
     private readonly segmentPipelineLayout: GPUPipelineLayout;
+    /** Perfect spheres in the picture and peel layers: their neighbours at group 2 (capSeam). */
+    private readonly capSeamLayout: GPUBindGroupLayout;
+    private readonly spherePipelineLayout: GPUPipelineLayout;
+    /** Too short to be read: no lines where caps meet. */
+    private readonly noCapSeams: { buffers: GPUBuffer[]; bindGroup: GPUBindGroup };
+    private sphereNeighbourKernels: SphereNeighbourKernels | null = null;
     private readonly pipelines = new Map<string, GPURenderPipeline>();
     private readonly resources = new Map<DisplayBuffer, (SubBufferResources | undefined)[]>();
     private readonly frameData = new Float32Array(FRAME_FLOATS);
@@ -381,6 +399,13 @@ export class WebGPUPreviewRenderer {
             entries: [3, 4, 5, 6].map(binding => ({ binding, visibility: ShaderStage.VERTEX, buffer: { type: "read-only-storage" as const } })),
         });
         this.segmentPipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [this.frameLayout, this.drawLayout, this.segmentLayout] });
+        this.capSeamLayout = device.createBindGroupLayout({
+            label: "preview clip cap seams",
+            entries: [12, 13].map(binding => ({ binding, visibility: ShaderStage.FRAGMENT, buffer: { type: "read-only-storage" as const } })),
+        });
+        this.spherePipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [this.frameLayout, this.drawLayout, this.capSeamLayout] });
+        const noSeams = [16, 16].map(size => device.createBuffer({ label: "no clip cap seams", size, usage: BufferUsage.STORAGE }));
+        this.noCapSeams = { buffers: noSeams, bindGroup: this.capSeamBindGroup(noSeams[0], noSeams[1]) };
         this.frameBuffer = device.createBuffer({
             label: "preview frame uniforms",
             size: FRAME_FLOATS * 4,
@@ -1051,6 +1076,7 @@ export class WebGPUPreviewRenderer {
         this.noShadowMap.destroy();
         this.noOpaqueDepth.destroy();
         this.noPreviousLayer.destroy();
+        this.noCapSeams.buffers.forEach(b => b.destroy());
         this.depthPeel.destroy();
         this.depthBlur.destroy();
         this.anaglyph.destroy();
@@ -1211,6 +1237,7 @@ export class WebGPUPreviewRenderer {
 
         if (item.primitive === "spheres") {
             pass.setPipeline(this.pipeline("spheres", item.transparent, false, mode));
+            if (mode === "main" || mode === "peel") pass.setBindGroup(2, this.capSeamsFor(sub, item, camera) ?? this.noCapSeams.bindGroup);
             for (let copy = 0; copy < copies; copy++) {
                 pass.setBindGroup(1, sub.bindGroups[copy]);
                 for (const chunk of sub.spheres) {
@@ -1409,6 +1436,30 @@ export class WebGPUPreviewRenderer {
         return { bindGroup, count: pairs.length / 2 };
     }
 
+    /**
+     * The spheres' neighbour lists (sphereNeighbours.ts), for the lines where clip caps meet: made
+     * the first time they are wanted, which is when the spheres are drawn with clip caps. None for
+     * a hover highlight (its spheres all take the hover size), or for spheres in several chunks
+     * (the shader's instance index counts from each chunk's first).
+     */
+    private capSeamsFor(sub: SubBufferResources, item: PreviewDraw, camera: PreviewCameraSource): GPUBindGroup | null {
+        if (!camera.clipCapPerfectSpheres || item.buffer.isHoverBuffer || sub.spheres.length !== 1) return null;
+        if (sub.capSeams !== undefined) return sub.capSeams;
+        this.sphereNeighbourKernels ??= new SphereNeighbourKernels(this.device);
+        const b = item.buffer, j = item.index;
+        const built = this.sphereNeighbourKernels.build(b.triangleInstanceOrigins[j], b.triangleInstanceSizes[j], item.instanceCount, sub.buffers);
+        sub.capSeams = built ? this.capSeamBindGroup(built.spheres, built.neighbours) : null;
+        return sub.capSeams;
+    }
+
+    private capSeamBindGroup(spheres: GPUBuffer, neighbours: GPUBuffer): GPUBindGroup {
+        return this.device.createBindGroup({
+            label: "clip cap seams",
+            layout: this.capSeamLayout,
+            entries: [{ binding: 12, resource: { buffer: spheres } }, { binding: 13, resource: { buffer: neighbours } }],
+        });
+    }
+
     /** The spheres' origins, sizes and colours, in as many pieces as the buffer size limit needs. */
     private sphereChunks(item: PreviewDraw, created: GPUBuffer[]): SphereChunk[] {
         const b = item.buffer, j = item.index;
@@ -1556,9 +1607,10 @@ export class WebGPUPreviewRenderer {
         if (kind === "spheres") {
             const pipeline = this.device.createRenderPipeline({
                 label: `preview ${key}`,
-                layout: this.pipelineLayout,
+                // The picture and peel layers draw clip caps, with the lines where they meet.
+                layout: pass === "main" || pass === "peel" ? this.spherePipelineLayout : this.pipelineLayout,
                 vertex: {
-                    module: this.module, entryPoint: "vs_sphere",
+                    module: this.module, entryPoint: pass === "shadow" ? "vs_sphere_shadow" : "vs_sphere",
                     buffers: [vec3(0, "instance"), vec3(1, "instance"), vec4(2, "instance")],
                 },
                 fragment: {

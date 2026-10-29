@@ -8,7 +8,12 @@
  * - spheres beyond the back clip plane are not drawn;
  * - a sphere cut by the front clip plane, with and without clip caps;
  * - clip caps leave no holes: wherever some of a sphere is behind the front plane, something is
- *   drawn (Stuart's old WebGL bug cut a ring out of the cap, or shrank it);
+ *   drawn (Stuart's old WebGL bug cut a ring out of the cap, or shrank it) - including once the
+ *   centre has crossed the plane, until the back of the sphere has (the sphere used to vanish as
+ *   its centre crossed, its square clipped by the near plane), orthographic and in perspective;
+ * - overlapping caps meet as a cut through the spheres would: each point of the cut shows the
+ *   sphere whose power distance there is least, whichever is drawn first; and a line is drawn
+ *   where they meet, so that caps of one colour do not run together;
  * - chunking: spheres split over several buffers draw the same picture;
  * - a hover highlight's spheres all take the hover size (glRef.hoverSize + 0.4) once that is past
  *   the default;
@@ -122,6 +127,95 @@ function capErrors(sphere: Sphere, source: PreviewCameraSource, image: Uint8Clam
     return { holes, extra, expected };
 }
 
+/**
+ * Each pixel of a cut through overlapping spheres, from first principles: the sphere whose cap
+ * should show there (the least power distance |p - c|^2 - r^2 at the pixel's point p on the front
+ * plane, where their surfaces' seam is) and the next; how far the pixel is, in pixels, from the
+ * seam between those two and from the cap's rim; and whether the next one's cap is there too.
+ * Null where the pixel's point is in no sphere.
+ */
+function cutPixels(spheres: Sphere[], source: PreviewCameraSource): ({ px: number; py: number; best: number; overlap: boolean; seam: number; rim: number } | null)[] {
+    const f = frameUniforms(source, WIDTH, HEIGHT);
+    const projection = f.slice(0, 16), view = f.slice(16, 32);
+    const plane = f.slice(68, 72);
+    const normal = Array.from(plane.slice(0, 3)).map(v => v / Math.hypot(plane[0], plane[1], plane[2]));
+    const perspective = projection[11] !== 0;
+    const centres = spheres.map(s => [0, 1, 2].map(r => view[r] * s.centre[0] + view[4 + r] * s.centre[1] + view[8 + r] * s.centre[2] + view[12 + r]));
+    const out: ReturnType<typeof cutPixels> = [];
+    for (let py = 0; py < HEIGHT; py++) for (let px = 0; px < WIDTH; px++) {
+        const nx = (px + 0.5) / WIDTH * 2 - 1, ny = 1 - (py + 0.5) / HEIGHT * 2;
+        let p: number[];
+        if (perspective) {
+            const d = [(nx + projection[8]) / projection[0], (ny + projection[9]) / projection[5], -1];
+            const t = -plane[3] / (plane[0] * d[0] + plane[1] * d[1] + plane[2] * d[2]);
+            p = d.map(v => v * t);
+        } else {
+            const ex = (nx - projection[12]) / projection[0], ey = (ny - projection[13]) / projection[5];
+            p = [ex, ey, -(plane[0] * ex + plane[1] * ey + plane[3]) / plane[2]];
+        }
+        const pixelSize = 2 / (projection[0] * WIDTH) * (perspective ? Math.abs(p[2]) : 1);
+        const power = centres.map((c, k) => (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 + (p[2] - c[2]) ** 2 - spheres[k].radius ** 2);
+        const [best, next] = power.map((_, k) => k).sort((a, b) => power[a] - power[b]);
+        if (power[best] >= 0) {
+            out.push(null);
+            continue;
+        }
+        // Along the plane the power distance rises at 2 |p - c| (in the plane) toward the rim, and
+        // the difference of two at 2 |c1 - c2| (in the plane) across their seam.
+        const inPlane = (v: number[]) => { const n = v[0] * normal[0] + v[1] * normal[1] + v[2] * normal[2]; return Math.hypot(...v.map((x, k) => x - n * normal[k])); };
+        const rimSlope = 2 * Math.max(inPlane(p.map((x, k) => x - centres[best][k])), spheres[best].radius * 0.3);
+        const rim = -power[best] / rimSlope / pixelSize;
+        let seam = Infinity;
+        if (next !== undefined) {
+            const slope = 2 * inPlane(centres[best].map((x, k) => x - centres[next][k]));
+            if (slope > 1e-4) seam = (power[next] - power[best]) / slope / pixelSize;
+        }
+        out.push({ px, py, best, overlap: next !== undefined && power[next] < 0, seam, rim });
+    }
+    return out;
+}
+
+/**
+ * Overlapping spheres cut by the front plane, with clip caps: each pixel's point on the plane should
+ * show the sphere whose power distance there is least, in its flat colour. Pixels within 2.5
+ * pixels of a seam (where the line is) or 1.5 of a cap's rim, or near a sphere's silhouette (cut a
+ * little short, as WebGL's), are not judged.
+ */
+function capOwnerErrors(spheres: Sphere[], source: PreviewCameraSource, image: Uint8ClampedArray): { checked: number; overlap: number; wrong: number } {
+    let checked = 0, overlap = 0, wrong = 0;
+    for (const pixel of cutPixels(spheres, source)) {
+        if (!pixel || pixel.rim < 1.5 || pixel.seam < 2.5) continue;
+        const sphere = spheres[pixel.best];
+        checked++;
+        if (pixel.overlap) overlap++;
+        const i = (pixel.py * WIDTH + pixel.px) * 4;
+        if ([0, 1, 2].some(c => Math.abs(image[i + c] - 255 * sphere.colour[c]) > 3)) wrong++;
+    }
+    return { checked, overlap, wrong };
+}
+
+/**
+ * The line where two caps meet: pixels within half a pixel of the seam (on it), and 2.5 pixels or
+ * more from it and from the rim (away); how many of each are darker than the cap's flat colour.
+ */
+function capSeamLine(spheres: Sphere[], source: PreviewCameraSource, image: Uint8ClampedArray): { on: number; onDark: number; away: number; awayDark: number } {
+    let on = 0, onDark = 0, away = 0, awayDark = 0;
+    for (const pixel of cutPixels(spheres, source)) {
+        if (!pixel || pixel.rim < 2.5) continue;
+        const i = (pixel.py * WIDTH + pixel.px) * 4;
+        const colour = spheres[pixel.best].colour;
+        const dark = [0, 1, 2].every(c => image[i + c] < 255 * colour[c] * 0.75 + 1);
+        if (pixel.seam < 0.5 && pixel.overlap) {
+            on++;
+            if (dark) onDark++;
+        } else if (pixel.seam >= 2.5) {
+            away++;
+            if (dark) awayDark++;
+        }
+    }
+    return { on, onDark, away, awayDark };
+}
+
 function compare(a: Uint8ClampedArray, b: Uint8ClampedArray, tolerance = 2): { differ: number; worst: number } {
     let differ = 0, worst = 0;
     for (let i = 0; i < a.length; i += 4) {
@@ -157,8 +251,23 @@ export interface SpheresReport {
     /** A sphere cut by the front plane, without and with clip caps, against the reference. */
     cut: { drawn: number; expected: number; differ: number; worst: number };
     capped: { drawn: number; expected: number; differ: number; worst: number; flat: number };
-    /** Spheres with centres from on the front plane to 2.4 A behind it, radius 4, capped. */
+    /**
+     * Spheres of radius 4, capped, with centres from 3.8 A in front of the front plane (most of the
+     * sphere past it) to 2.4 A behind it.
+     */
     capErrors: { holes: number; extra: number; expected: number };
+    /**
+     * The same in perspective, the pixels drawn with the centre 0.5 to 3.5 A in front of the plane
+     * (each should show a cut), and with it 4.5 A in front (all of it past the plane: nothing).
+     */
+    perspectiveCut: { drawn: number[]; gone: number };
+    /**
+     * Two overlapping spheres, one centre in front of the plane and one behind, drawn in both
+     * orders, orthographic and in perspective: pixels judged, those in both caps, and wrong ones.
+     */
+    capOwners: { label: string; checked: number; overlap: number; wrong: number }[];
+    /** The same pair in one colour: the line where their caps meet (capSeamLine). */
+    capSeams: { label: string; on: number; onDark: number; away: number; awayDark: number }[];
     depth: { centre: number[]; centreOtherOrder: number[]; smallAlone: number[] };
     beyondBackPlane: number;
     chunked: { differ: number; drawn: number };
@@ -216,18 +325,45 @@ export default defineCase(async (_device: GPUDevice): Promise<SpheresReport> => 
             if (d <= 1) flat++;
         }
 
-        // Centres from on the front plane (world z = 20) to 2.4 A behind it; the old WebGL bug cut
-        // a ring from the cap for anything closer than r/3 (1.33 A). A sphere whose centre is in
-        // front of the plane is not drawn at all - its square is at the centre's depth, and the
-        // projection's near plane is the front plane - in WebGL as here, so it is not tested.
+        // Centres from 3.8 A in front of the front plane (world z = 20) to 2.4 A behind it; the old
+        // WebGL bug cut a ring from the cap for anything closer than r/3 (1.33 A). In front of the
+        // plane, the sphere used to vanish whole, its square (at the centre's depth) clipped by the
+        // projection's near plane, which is the front plane; WebGL's still does.
         const errors = { holes: 0, extra: 0, expected: 0 };
-        for (const d of [0, 0.2, 0.4, 0.8, 1.2, 1.6, 2.4]) {
+        for (const d of [-3.8, -3, -2, -1, -0.4, -0.05, 0, 0.2, 0.4, 0.8, 1.2, 1.6, 2.4]) {
             const sphere: Sphere = { centre: [0, 0, 20 - d], radius: 4, colour: [0.8, 0.8, 0.2, 1] };
             const image = await shot([sphereBuffer([sphere])], capCamera);
             const e = capErrors(sphere, capCamera, image.data);
             errors.holes += e.holes;
             errors.extra += e.extra;
             errors.expected += e.expected;
+        }
+
+        const perspectiveCap = { ...camera(true, [0, 0, 0, 1], true) };
+        const perspectiveCut = { drawn: [] as number[], gone: 0 };
+        for (const d of [-0.5, -1.5, -2.5, -3.5]) {
+            const image = await shot([sphereBuffer([{ centre: [0, 0, 20 - d], radius: 4, colour: [0.8, 0.8, 0.2, 1] }])], perspectiveCap);
+            perspectiveCut.drawn.push(drawnPixels(image.data));
+        }
+        perspectiveCut.gone = drawnPixels((await shot([sphereBuffer([{ centre: [0, 0, 24.5], radius: 4, colour: [0.8, 0.8, 0.2, 1] }])], perspectiveCap)).data);
+
+        // Overlapping caps: a red sphere 0.8 A in front of the plane and a blue one 1 A behind it.
+        const pair: Sphere[] = [
+            { centre: [-2.2, 0.3, 20.8], radius: 4, colour: [0.9, 0.2, 0.1, 1] },
+            { centre: [2.3, -0.2, 19], radius: 3.5, colour: [0.1, 0.3, 0.9, 1] },
+        ];
+        const capOwners: SpheresReport["capOwners"] = [];
+        for (const [label, source] of [["orthographic", capCamera], ["perspective", perspectiveCap]] as const) {
+            for (const [order, spheres] of [["red first", pair], ["blue first", [pair[1], pair[0]]]] as const) {
+                const image = await shot([sphereBuffer([...spheres])], source);
+                capOwners.push({ label: `${label}, ${order}`, ...capOwnerErrors(pair, source, image.data) });
+            }
+        }
+        const samePair = pair.map(sphere => ({ ...sphere, colour: [0.8, 0.7, 0.5, 1] }));
+        const capSeams: SpheresReport["capSeams"] = [];
+        for (const [label, source] of [["orthographic", capCamera], ["perspective", perspectiveCap]] as const) {
+            const image = await shot([sphereBuffer(samePair)], source);
+            capSeams.push({ label, ...capSeamLine(samePair, source, image.data) });
         }
 
         // 30 A behind the centre of view: beyond the back clip plane (20 A behind).
@@ -259,6 +395,9 @@ export default defineCase(async (_device: GPUDevice): Promise<SpheresReport> => 
             cut: { drawn: drawnPixels(cut.data), expected: drawnPixels(cutExpected), ...compare(cut.data, cutExpected) },
             capped: { drawn: drawnPixels(capped.data), expected: drawnPixels(cappedExpected), ...compare(capped.data, cappedExpected), flat },
             capErrors: errors,
+            perspectiveCut,
+            capOwners,
+            capSeams,
             depth: { centre: pixel(bigFirst.data, cx, cy), centreOtherOrder: pixel(smallFirst.data, cx, cy), smallAlone: pixel(smallAlone.data, cx, cy) },
             beyondBackPlane: drawnPixels(far.data),
             chunked: { differ: compare(chunked.data, whole.data, 0).differ, drawn: drawnPixels(whole.data) },

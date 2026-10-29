@@ -598,20 +598,62 @@ struct SphereOut {
     @location(0) colour: vec4f,
     // Where on the square, -1 to 1 each way: x right, y up.
     @location(1) quad: vec2f,
-    // The square's point in eye space, at the depth of the sphere's centre.
+    // The square's point in eye space, at the depth of the sphere's centre (where the square is
+    // drawn may be further back: vs_sphere).
     @location(2) eye: vec4f,
     @location(3) @interpolate(flat) radius: f32,
     // The centre, in model space (placed), for where the surface is in the shadow map.
     @location(4) @interpolate(flat) centre: vec3f,
+    // Which sphere of the sub-buffer, for its neighbours where clip caps meet (capSeam).
+    @location(5) @interpolate(flat) index: u32,
 };
 
 const SPHERE_CORNERS = array<vec2f, 6>(
     vec2f(-1.0, -1.0), vec2f(1.0, -1.0), vec2f(1.0, 1.0),
     vec2f(-1.0, -1.0), vec2f(1.0, 1.0), vec2f(-1.0, 1.0));
 
-@vertex
-fn vs_sphere(@builtin(vertex_index) vertex: u32, @location(0) origin: vec3f, @location(1) size: vec3f,
-             @location(2) colour: vec4f) -> SphereOut {
+// Where the square is drawn, from where it is (at the centre's depth, eye z centreZ). The
+// projection's near plane is the front clip plane, so a square in front of it is clipped away
+// whole: with clip caps, a sphere whose centre had crossed the plane vanished although up to a
+// radius of it was still behind the plane, and should show as a cut. So with caps the square is
+// slid back along the line of sight to just behind the near plane - scaled with its distance in
+// perspective, so that it covers the same pixels - and the fragments, which work from the true
+// point (out.eye), draw the cut: a flat cap where the sphere's front is past the plane, nothing
+// where its back is too. Without caps the sphere goes when its centre crosses, as in WebGL, and
+// in the shadow pass (caps off there) the light's near plane still clips what the camera's front
+// plane has cut away.
+fn capSquare(eye: vec4f, centreZ: f32) -> vec4f {
+    if (frame.params.w < 0.5) { return eye; }
+    // Eye z where clip z is 0, for either projection (column 2 row 2, column 3 row 2).
+    let nearZ = -frame.projection[3][2] / frame.projection[2][2];
+    // A hundredth of an angstrom behind it: clear of the clipping, and of nothing else.
+    let behind = nearZ - 0.01;
+    if (centreZ <= behind) { return eye; }
+    if (frame.projection[2][3] != 0.0) {
+        // Perspective: along the ray from the eye, which keeps the square's pixels. A centre at or
+        // behind the eye has no such ray in front; leave it.
+        if (centreZ >= 0.0) { return eye; }
+        return vec4f(eye.xyz * (behind / centreZ), 1.0);
+    }
+    return vec4f(eye.x, eye.y, eye.z + (behind - centreZ), 1.0);
+}
+
+// Whether every fragment of a sphere would be thrown away at the clip planes (sphereFragment,
+// fs_sphere_gbuffer): its square wholly beyond the back plane; or past the front plane, wholly
+// without clip caps, or with them the whole sphere, back and all (capSquare slides even those
+// back into view). Such a sphere is not drawn at all. Writing frag_depth turns off the early depth
+// test, so every pixel of a square drawn costs a whole fragment, kept or not: with the front plane
+// through a molecule, half of it is past the plane.
+fn sphereClipped(centreEye: vec4f, r: f32) -> bool {
+    let p0 = frame.clipPlane0;
+    let p1 = frame.clipPlane1;
+    // The square's corners are r along eye x and y from the centre.
+    if (dot(centreEye, p1) + r * (abs(p1.x) + abs(p1.y)) < 0.0) { return true; }
+    let reach = select(0.0, r, frame.params.w > 0.5);
+    return dot(centreEye, p0) + r * (abs(p0.x) + abs(p0.y)) + reach < 0.0;
+}
+
+fn sphereVertex(vertex: u32, instance: u32, origin: vec3f, size: vec3f, colour: vec4f, cull: bool) -> SphereOut {
     let corner = SPHERE_CORNERS[vertex];
     // As twodshapes-vertex-shader.js: its unit-radius quad, scaled by sqrt(2) * size, has corners
     // size along the screen's axes; drawCore turns them to face the screen.
@@ -620,12 +662,29 @@ fn vs_sphere(@builtin(vertex_index) vertex: u32, @location(0) origin: vec3f, @lo
     let world = vec4f(centre + r * (corner.x * frame.rightDir.xyz + corner.y * frame.upDir.xyz), 1.0);
     var out: SphereOut;
     out.eye = frame.view * world;
-    out.position = frame.projection * out.eye;
+    let centreEye = frame.view * vec4f(centre, 1.0);
+    out.position = frame.projection * capSquare(out.eye, centreEye.z);
+    // Outside the clip volume (z < 0): no fragments.
+    if (cull && sphereClipped(centreEye, r)) { out.position = vec4f(0.0, 0.0, -1.0, 1.0); }
     out.colour = select(colour, draw.copyColour, draw.params.z > 0.5);
     out.quad = corner;
     out.radius = r;
     out.centre = centre;
+    out.index = instance;
     return out;
+}
+
+@vertex
+fn vs_sphere(@builtin(vertex_index) vertex: u32, @builtin(instance_index) instance: u32,
+             @location(0) origin: vec3f, @location(1) size: vec3f, @location(2) colour: vec4f) -> SphereOut {
+    return sphereVertex(vertex, instance, origin, size, colour, true);
+}
+
+// The shadow map's: fs_sphere_shadow does not clip, so neither does this.
+@vertex
+fn vs_sphere_shadow(@builtin(vertex_index) vertex: u32, @builtin(instance_index) instance: u32,
+                    @location(0) origin: vec3f, @location(1) size: vec3f, @location(2) colour: vec4f) -> SphereOut {
+    return sphereVertex(vertex, instance, origin, size, colour, false);
 }
 
 struct SphereFragment {
@@ -634,6 +693,9 @@ struct SphereFragment {
 };
 
 fn sphereFragment(in: SphereOut) -> SphereFragment {
+    // How far apart neighbouring pixels are on the square, in eye space (A): for the lines where
+    // clip caps meet. Here, before anything is discarded, where derivatives are allowed.
+    let eyeStep = max(length(dpdx(in.eye.xyz)), length(dpdy(in.eye.xyz)));
     let x = in.quad.x;
     let y = in.quad.y;
     let zz = 1.0 - x * x - y * y;
@@ -670,16 +732,104 @@ fn sphereFragment(in: SphereOut) -> SphereFragment {
     // Clip caps, as perfect-sphere-fragment-shader.js fakes them: where the front surface is
     // beyond the front plane, the sphere shows its flat, unlit colour, as if cut there; where the
     // back surface is too, so that the whole chord is beyond it, nothing. The cap is the plane's
-    // whole cut through the sphere and meets the lit surface where front = 0.
+    // whole cut through the sphere and meets the lit surface where front = 0. Where caps overlap,
+    // capDepth decides which shows.
     if (capped) {
         let front = dot(surface, frame.clipPlane0);
         var backPlane = frame.clipPlane0;
         backPlane.w += z * in.radius;
         let back = dot(in.eye, backPlane);
-        if (front < 0.0) { out.colour = fogged(base, base.a, eyeDistance); }
+        if (front < 0.0) {
+            let p = capPoint(in.eye);
+            let centreEye = (frame.view * vec4f(in.centre, 1.0)).xyz;
+            let d = p - centreEye;
+            let power = dot(d, d) - in.radius * in.radius;
+            out.depth = capDepth(power);
+            // Darkened along the seams with its neighbours' caps, a pixel or so either side.
+            let pixel = eyeStep * select(1.0, p.z / in.eye.z, frame.projection[2][3] != 0.0);
+            let seam = capSeam(in.index, p);
+            if (seam < 0.0) { discard; }
+            let line = 1.0 - smoothstep(SEAM_HALF_WIDTH - 0.5, SEAM_HALF_WIDTH + 0.5, seam / max(pixel, 1e-6));
+            out.colour = fogged(vec4f(base.rgb * mix(1.0, SEAM_SHADE, line), base.a), base.a, eyeDistance);
+        }
         if (back < 0.0) { discard; }
     }
     return out;
+}
+
+// Caps that overlap meet as a real cut would show them. Where two spheres overlap, the seam
+// between their surfaces lies in the plane where their power distances, |p - c|^2 - r^2, are
+// equal, so a point p of the cut belongs to the sphere whose power distance there is least, and
+// neighbouring caps meet in straight lines that end where the surfaces' seams reach the plane.
+// Every cap is at the front plane, in front of everything else drawn, so the depth test chooses:
+// a cap's depth is its power distance at the pixel's point on the plane, squeezed into a sliver at
+// the front of the depth range (depth32float keeps it apart). Before this, every cap had depth 0
+// (the plane's) and whichever sphere was drawn first covered the others' caps whole.
+const CAP_DEPTH = 1e-6;
+// Power distances run from -r^2 (at the centre's foot on the plane) to 0 (the cap's rim): radii up
+// to 10 A keep a cap's depth above 0, below which the depth would clamp and the order be lost.
+const CAP_POWER_RANGE = 100.0;
+
+// Where the pixel's ray meets the front plane, in eye space: from the eye through the square's
+// point in perspective, along the line of sight from it orthographically.
+fn capPoint(eye: vec4f) -> vec3f {
+    let plane = frame.clipPlane0;
+    if (frame.projection[2][3] != 0.0) {
+        return eye.xyz * (-plane.w / dot(plane.xyz, eye.xyz));
+    }
+    return eye.xyz - vec3f(0.0, 0.0, dot(plane, eye) / plane.z);
+}
+
+fn capDepth(power: f32) -> f32 {
+    return CAP_DEPTH * clamp(1.0 + power / CAP_POWER_RANGE, 0.0, 1.0);
+}
+
+// The lines where caps meet: without them, caps of one colour (two carbons) run together into one
+// flat patch. Each cap pixel looks at its sphere's overlapping neighbours in the same sub-buffer
+// (sphereNeighbours.ts; NO_NEIGHBOUR ends a list) and finds how far it is, along the plane, from
+// the seam with each: the difference of the two power distances changes linearly along the plane,
+// so the distance is that difference over its gradient there. Lines are SEAM_HALF_WIDTH pixels
+// each side of the seam, the cap's colour times SEAM_SHADE, smoothed over a pixel. Where a
+// sub-buffer has no neighbour lists (clip caps off, a hover highlight, spheres in several chunks)
+// the stand-ins are too short and there are no lines.
+const NEIGHBOUR_SLOTS = 16u;
+const NO_NEIGHBOUR = 0xffffffffu;
+const SEAM_HALF_WIDTH = 1.0;
+const SEAM_SHADE = 0.45;
+
+@group(2) @binding(12) var<storage, read> capSpheres: array<vec4f>;      // x, y, z, radius
+@group(2) @binding(13) var<storage, read> capNeighbours: array<u32>;     // NEIGHBOUR_SLOTS a sphere
+
+// Distance along the plane (A) from p to the nearest seam with a neighbour, or a long way; or -1
+// where a neighbour's cap covers p (its power distance there is less), so that this fragment,
+// which would lose the depth test to it, can be thrown away now. Worked in the sub-buffer's own
+// space, where its spheres are: the view and the copy's model are rigid, so their inverses are
+// their rotations transposed, and the neighbours need no transforming each.
+fn capSeam(index: u32, p: vec3f) -> f32 {
+    var nearest = 1e9;
+    if (draw.params.y > 0.0 || arrayLength(&capNeighbours) < (index + 1u) * NEIGHBOUR_SLOTS) { return nearest; }
+    let fromView = transpose(mat3x3f(frame.view[0].xyz, frame.view[1].xyz, frame.view[2].xyz));
+    let fromModel = transpose(mat3x3f(draw.model[0].xyz, draw.model[1].xyz, draw.model[2].xyz));
+    let q = fromModel * (fromView * (p - frame.view[3].xyz) - draw.model[3].xyz);
+    let normal = normalize(fromModel * (fromView * frame.clipPlane0.xyz));
+    let own = capSpheres[index];
+    let d = q - own.xyz;
+    let power = dot(d, d) - own.w * own.w;
+    for (var k = 0u; k < NEIGHBOUR_SLOTS; k++) {
+        let j = capNeighbours[index * NEIGHBOUR_SLOTS + k];
+        if (j == NO_NEIGHBOUR) { break; }
+        let other = capSpheres[j];
+        let e = q - other.xyz;
+        let difference = dot(e, e) - other.w * other.w - power;
+        // Its cap is here (and not cut short at its silhouette, a little inside it, as WebGL's).
+        if (difference < 0.0 && power + difference < -0.07 * other.w * other.w) { return -1.0; }
+        let apart = own.xyz - other.xyz;
+        let slope = 2.0 * length(apart - normal * dot(normal, apart));
+        // Centres in line with the plane's normal: their seam is parallel to the plane, not across it.
+        if (slope < 1e-4) { continue; }
+        nearest = min(nearest, max(difference, 0.0) / slope);
+    }
+    return nearest;
 }
 
 @fragment

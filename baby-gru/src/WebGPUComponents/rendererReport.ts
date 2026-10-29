@@ -123,7 +123,11 @@ export function formatRendererReport(f: RendererReportFacts): string {
     if (f.frames) {
         const slow = f.frames.slow === undefined ? "" : f.frames.slow === 0 ? " (no stalls)" : ` (${f.frames.slow} slow)`;
         parts.push(`${f.frames.count} frames: ${ms(f.frames.medianMs)} median, ${ms(f.frames.worstMs)} worst${slow}, `
-            + `CPU ${ms(f.frames.cpuMs)}, GPU ${f.frames.gpuMs === null ? "not timed" : ms(f.frames.gpuMs)}`);
+            + `CPU ${ms(f.frames.cpuMs)}, GPU ${f.frames.gpuMs === null ? "not timed" : ms(f.frames.gpuMs)}`
+            // The frames are timed as the page asks for them, which goes on at the display's rate
+            // while the GPU falls behind and frames are dropped: then the GPU's time is the frame's.
+            + (f.frames.gpuMs !== null && f.frames.gpuMs > f.frames.medianMs * 1.05
+                ? ` (GPU-bound: about ${Math.round(1000 / f.frames.gpuMs)} fps shown)` : ""));
     }
     if (f.mapWalk) {
         const w = f.mapWalk;

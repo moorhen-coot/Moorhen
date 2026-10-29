@@ -33,6 +33,30 @@ test("perfect spheres: shape, shading and depth as WebGL's impostors, chunked an
     expect(r.capErrors.expected).toBeGreaterThan(20000);
     expect(r.capErrors.holes).toBeLessThanOrEqual(r.capErrors.expected * 0.002);
     expect(r.capErrors.extra).toBeLessThanOrEqual(r.capErrors.expected * 0.002);
+    // In perspective too: once its centre is past the plane the sphere still shows its cut,
+    // shrinking as the plane nears its back, and goes only when all of it is past.
+    console.log(`spheres, perspective cut: ${JSON.stringify(r.perspectiveCut)}`);
+    for (const [i, drawn] of r.perspectiveCut.drawn.entries()) {
+        expect(drawn, `the cut, step ${i}`).toBeGreaterThan(20);
+        if (i > 0) expect(drawn, `the cut, step ${i}`).toBeLessThan(r.perspectiveCut.drawn[i - 1]);
+    }
+    expect(r.perspectiveCut.gone).toBe(0);
+    // Overlapping caps meet where the spheres' surfaces do, whichever is drawn first (before,
+    // the first drawn covered the other's cap whole).
+    console.log(`spheres, overlapping caps: ${JSON.stringify(r.capOwners)}`);
+    for (const owners of r.capOwners) {
+        expect(owners.checked, owners.label).toBeGreaterThan(1000);
+        expect(owners.overlap, owners.label).toBeGreaterThan(200);
+        expect(owners.wrong, owners.label).toBeLessThanOrEqual(owners.checked * 0.002);
+    }
+    // ... and a line is drawn where they meet: on the seam, darker; away from it, not.
+    console.log(`spheres, cap seams: ${JSON.stringify(r.capSeams)}`);
+    for (const seams of r.capSeams) {
+        expect(seams.on, seams.label).toBeGreaterThan(20);
+        expect(seams.onDark, seams.label).toBeGreaterThanOrEqual(seams.on * 0.95);
+        expect(seams.away, seams.label).toBeGreaterThan(1000);
+        expect(seams.awayDark, seams.label).toBeLessThanOrEqual(seams.away * 0.002);
+    }
 
     // The hover highlight at the hover size: as a plain sphere that size; at the default, its own.
     expect(r.hover.plainDrawn).toBeGreaterThan(500);
