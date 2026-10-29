@@ -18,6 +18,7 @@ import {
 import type { RootState } from "../store";
 import { type SceneSettingsSnapshot, getPerSceneSettings, getSceneSettingsSnapshot, isSamePerSceneSettings } from "../store/sceneSettingsSlice";
 import {
+    type MoleculeDefaults,
     type SceneContent,
     type SceneSections,
     USER_SCENE_FORMAT_VERSION,
@@ -35,6 +36,8 @@ import {
     isBuiltInScene,
     setSceneContent,
 } from "../store/userScenesSlice";
+import { ColourRule, type ColourRuleData } from "../utils/MoorhenColourRule";
+import type { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import type { MoleculeRepresentation } from "../utils/Representation/MoorhenMoleculeRepresentation";
 import type { RepresentationBackup } from "../utils/Representation/RepresentationBuilder";
 // Type only: MoorhenInstance imports this module, a value import would be undefined while it loads
@@ -61,22 +64,38 @@ const findScene = (state: RootState, sceneId: string): UserScene | undefined =>
 const replaceContent = (
     content: SceneContent,
     sceneSettings: SceneSettingsSnapshot,
-    representations?: { representations: SceneSections["representations"]; molecules: SceneContent["objects"]["molecules"] }
+    representations?: {
+        representations: SceneSections["representations"];
+        molecules: SceneContent["objects"]["molecules"];
+        /** The molecules' default colour rules go with the representations that use them */
+        moleculeDefaults: MoleculeDefaults | undefined;
+    }
 ): SceneContent => ({
     ...content,
     objects: representations ? { ...content.objects, molecules: representations.molecules } : content.objects,
-    sections: { ...content.sections, sceneSettings, ...(representations && { representations: representations.representations }) },
+    sections: {
+        ...content.sections,
+        sceneSettings,
+        ...(representations && { representations: representations.representations, moleculeDefaults: representations.moleculeDefaults }),
+    },
 });
 
-/** Fields of a representation backup that identify it or say whether it is shown, rather than what it draws */
-const NOT_DRAWN_FIELDS = ["uniqueId", "parentRepresentationUniqueId", "visible", "interfaceVisible"];
+/** Fields of a representation backup or colour rule that identify it or say whether it is shown, rather than what it draws */
+const NOT_DRAWN_FIELDS = ["uniqueId", "parentRepresentationUniqueId", "parentMoleculeMolNo", "visible", "interfaceVisible"];
+
+const drawnJson = (value: unknown) => JSON.stringify(value, (key, item) => (NOT_DRAWN_FIELDS.includes(key) ? undefined : item));
 
 /**
  * What a representation draws: two representations with the same key are identical except for
  * their ids and visibility, so one can stand in for the other without being rebuilt.
+ * @param defaultColourRules - The molecule's default colour rules, which a representation using
+ * them is drawn with.
  */
-const drawnKey = (moleculeUniqueId: string, params: RepresentationBackup): string =>
-    `${moleculeUniqueId} ${JSON.stringify(params, (key, value) => (NOT_DRAWN_FIELDS.includes(key) ? undefined : value))}`;
+const drawnKey = (moleculeUniqueId: string, params: RepresentationBackup, defaultColourRules: ColourRuleData[] | null): string =>
+    `${moleculeUniqueId} ${drawnJson(params)} ${params.useDefaultColours ? drawnJson(defaultColourRules) : ""}`;
+
+const colourRulesData = (molecule: MoorhenMolecule): ColourRuleData[] | null =>
+    molecule.defaultColourRules?.map(rule => rule.objectify()) ?? null;
 
 /** The style of molecules in the "Default" scene, which MoorhenInstance starts with */
 export const DEFAULT_REPRESENTATION_STYLE = "ribbons-and-ligands";
@@ -377,7 +396,11 @@ export class MoorhenUserSceneManager {
         if (!this.canChange || isSnapshot(targetId) || targetId === sourceId || !this.find(targetId) || !this.find(sourceId)) return false;
         const source = this.workingContent(sourceId);
         const representations = withRepresentations
-            ? { representations: source.sections.representations, molecules: source.objects.molecules }
+            ? {
+                  representations: source.sections.representations,
+                  molecules: source.objects.molecules,
+                  moleculeDefaults: source.sections.moleculeDefaults,
+              }
             : undefined;
         const content = replaceContent(this.workingContent(targetId), source.sections.sceneSettings, representations);
         await this.replaceScene(targetId, content, withRepresentations);
@@ -406,7 +429,9 @@ export class MoorhenUserSceneManager {
         } else if (to === "saved") {
             return false;
         }
-        const representations = withRepresentations ? { representations: [], molecules: {} } : undefined;
+        // Default representations, in Coot's default colours
+        const cootColours = Object.fromEntries(this.instance.getMoleculeList().map(molecule => [molecule.uniqueId, { colourRules: null }]));
+        const representations = withRepresentations ? { representations: [], molecules: {}, moleculeDefaults: cootColours } : undefined;
         await this.replaceScene(sceneId, replaceContent(this.workingContent(sceneId), sceneSettings, representations), withRepresentations);
         return true;
     }
@@ -560,8 +585,10 @@ export class MoorhenUserSceneManager {
      */
     private capture(): SceneContent {
         const content = emptyContent(getSceneSettingsSnapshot(this.instance.store.getState().sceneSettings));
+        content.sections.moleculeDefaults = {};
         for (const molecule of this.instance.getMoleculeList()) {
             content.objects.molecules[molecule.uniqueId] = molecule.name;
+            content.sections.moleculeDefaults[molecule.uniqueId] = { colourRules: colourRulesData(molecule) };
             for (const representation of this.instance.representation.getList(molecule.uniqueId)) {
                 // A copy: the store freezes what it holds, and the backup may share objects with the live representation
                 const params = structuredClone(representation.backup());
@@ -581,19 +608,34 @@ export class MoorhenUserSceneManager {
         this.applyDefaultStyle(sceneId);
         // A shown representation identical to one of the scene's (e.g. switching between snapshots
         // of the same scene) is kept and given the scene's one id, instead of being rebuilt
+        // Default colour rules: the shown ones, and the scene's (a molecule it does not mention keeps its own)
+        const shownRules = new Map(this.instance.getMoleculeList().map(molecule => [molecule.uniqueId, colourRulesData(molecule)]));
+        const sceneRules = (moleculeUniqueId: string) => {
+            const defaults = content.sections.moleculeDefaults?.[moleculeUniqueId];
+            return defaults ? defaults.colourRules : shownRules.get(moleculeUniqueId);
+        };
         const shown = new Map<string, MoleculeRepresentation[]>();
         for (const molecule of this.instance.getMoleculeList()) {
             for (const representation of this.instance.representation.getList(molecule.uniqueId)) {
-                const key = drawnKey(molecule.uniqueId, representation.backup());
+                const key = drawnKey(molecule.uniqueId, representation.backup(), shownRules.get(molecule.uniqueId));
                 shown.set(key, [...(shown.get(key) ?? []), representation]);
             }
         }
         // The molecule may have been closed since the scene was saved
         const wanted = content.sections.representations
             .filter(({ moleculeUniqueId }) => this.instance.getMolecule(moleculeUniqueId))
-            .map(({ moleculeUniqueId, params }) => ({ moleculeUniqueId, params, kept: shown.get(drawnKey(moleculeUniqueId, params))?.shift() }));
+            .map(({ moleculeUniqueId, params }) => ({
+                moleculeUniqueId,
+                params,
+                kept: shown.get(drawnKey(moleculeUniqueId, params, sceneRules(moleculeUniqueId)))?.shift(),
+            }));
         for (const representation of [...shown.values()].flat()) {
             await this.instance.representation.delete(representation.uniqueId);
+        }
+        // Before rebuilding: new representations are drawn with them
+        for (const molecule of this.instance.getMoleculeList()) {
+            const rules = sceneRules(molecule.uniqueId);
+            if (drawnJson(rules) !== drawnJson(shownRules.get(molecule.uniqueId))) await this.setDefaultColourRules(molecule, rules);
         }
         // Take the kept ones out of the list and give them their new ids before anything is
         // added: ids can swap between kept representations, and a new one must not find its id taken
@@ -632,6 +674,24 @@ export class MoorhenUserSceneManager {
             }
         }
         this.reportMissingMolecules(sceneId, content);
+    }
+
+    /**
+     * Give a molecule other default colour rules (null: Coot's), and redraw its own (not custom)
+     * representations that use them, as the colour rules card does. Custom ones are rebuilt by the
+     * scene switch, since their drawn key includes these rules.
+     */
+    private async setDefaultColourRules(molecule: MoorhenMolecule, rules: ColourRuleData[] | null) {
+        if (rules === null) {
+            molecule.defaultColourRules = null;
+            await molecule.fetchDefaultColourRules();
+        } else {
+            molecule.defaultColourRules = rules.map(rule => ColourRule.initFromDataObject(rule, this.instance.commandCentre, molecule));
+        }
+        for (const representation of molecule.representations.filter(rep => !rep.isCustom && rep.useDefaultColourRules)) {
+            if (representation.visible) await representation.redraw();
+            else representation.deleteBuffers();
+        }
     }
 
     /** Warn about molecules the scene was saved with that are not loaded any more */

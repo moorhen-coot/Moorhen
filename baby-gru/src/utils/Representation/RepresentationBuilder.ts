@@ -24,6 +24,24 @@ export interface BuildCidSelectionParams {
 }
 
 /**
+ * The model a CID selects, from its first component ("/2/A/..." -> 2), or null for all models (a
+ * first component that is a star, empty or 0). This is where a representation keeps the model
+ * shown for a multi-model molecule (see MoleculeRepresentation.setShownMultimodel).
+ */
+export function cidModel(cid: string | null | undefined): number | null {
+    const model = cid?.startsWith("/") ? cid.split("/")[1] : "";
+    return /^\d+$/.test(model) && model !== "0" ? parseInt(model) : null;
+}
+
+/** A CID with its model replaced (null or 0: all models), as the multi-model selector does it */
+export function withCidModel(cid: string, model: number | null): string {
+    const parts = cid.split("/");
+    if (!cid.startsWith("/") || parts.length < 3) return cid;
+    parts[1] = model ? String(model) : "*";
+    return parts.join("/");
+}
+
+/**
  * Build a CID selection string based on the rule type and other parameters.
  * Returns null if the selection is invalid.
  */
@@ -508,7 +526,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         return;
     }
 
-    const cidSelection = buildCidSelection({
+    let cidSelection = buildCidSelection({
         ruleType,
         representationStyle,
         molecule,
@@ -526,6 +544,12 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     if (!cidSelection) {
         console.warn("Invalid CID selection to create a custom representation");
         return null;
+    }
+    // A selection rebuilt from its rule shows all models: keep the model of the given CID (a
+    // multi-model molecule showing one model, restored from a backup or edited)
+    const model = cidModel(cid);
+    if (model !== null && ruleType !== "cid" && ruleType !== "ligands") {
+        cidSelection = withCidModel(cidSelection, model);
     }
 
     const colourRule = params.colourRules !== undefined ? undefined : await buildColourRule({

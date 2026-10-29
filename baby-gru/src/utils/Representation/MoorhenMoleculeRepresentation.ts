@@ -8,7 +8,7 @@ import { libcootApi } from "../../types/libcoot";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
-import { createRepresentation, extractRepresentationParams } from "./RepresentationBuilder";
+import { createRepresentation, extractRepresentationParams, withCidModel } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams, RepresentationBackup } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
@@ -278,11 +278,9 @@ export class MoleculeRepresentation {
         }
     }
 
+    /** Show one model of a multi-model molecule (0: all of them). The model is kept in the CID */
     setShownMultimodel(modelIndex: number) {
-        const splitCid = this.cid.split("/");
-        const _modelIndex = modelIndex === 0 ? "*" : modelIndex;
-        console.log("splitCid", splitCid);
-        this.cid = `/${_modelIndex}/${splitCid.slice(2).join("/")}`;
+        this.cid = withCidModel(this.cid, modelIndex);
         this.redraw();
     }
 

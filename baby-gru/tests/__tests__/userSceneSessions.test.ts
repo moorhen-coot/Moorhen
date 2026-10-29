@@ -5,6 +5,8 @@
 import { appendKeyframe, setMoviePlaying } from "@/store/movieSlice";
 import { setDoSSAO, setDrawCrosshairs } from "@/store/sceneSettingsSlice";
 import { builtInSceneDefaults } from "@/store/userScenesSlice";
+import { ColourRule } from "@/utils/MoorhenColourRule";
+import { cidModel, withCidModel } from "@/utils/Representation/RepresentationBuilder";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
 import type { Keyframe } from "@/utils/cameraPath";
 import * as quat4 from "gl-matrix/quat";
@@ -186,5 +188,105 @@ describe("switching between scenes that draw the same representations", () => {
         await userScene.select("Model Building");
         const after = shownRepresentations();
         expect(after.some(rep => before.includes(rep))).toBe(false);
+    });
+});
+
+describe("default colour rules of a molecule", () => {
+    const molecule = () => cloud.instance.getMoleculeList()[0];
+    const rulesOf = () => JSON.stringify(molecule().defaultColourRules.map(rule => [rule.ruleType, rule.cid, rule.color]));
+    /** As the colour rules card does: one red rule for the whole molecule */
+    const colourRed = () => {
+        const rule = new ColourRule("molecule", "/*/*/*/*", "#ff0000", cloud.instance.commandCentre, false);
+        rule.setParentMolecule(molecule());
+        molecule().defaultColourRules = [rule];
+    };
+    const defaultColoured = () => state().molecules.customRepresentations.filter(rep => rep.useDefaultColourRules);
+
+    test("belong to the scene: each scene shows its own", async () => {
+        const { userScene } = cloud.instance;
+        const defaultRules = rulesOf();
+        await userScene.select("Model Building");
+        colourRed();
+        const redRules = rulesOf();
+        expect(redRules).not.toBe(defaultRules);
+
+        await userScene.select("Default");
+        expect(rulesOf()).toBe(defaultRules);
+        await userScene.select("Model Building");
+        expect(rulesOf()).toBe(redRules);
+    });
+
+    test("rebuild the representations that use them when they change, and only then", async () => {
+        const { userScene } = cloud.instance;
+        expect(defaultColoured().length).toBeGreaterThan(0);
+        const sameColours = userScene.takeSnapshot("Same colours");
+        colourRed();
+        const redSnapshot = userScene.takeSnapshot("Red");
+        const red = defaultColoured();
+
+        // Other colours: rebuilt, both ways
+        await userScene.select(sameColours);
+        const plain = defaultColoured();
+        expect(plain.some(rep => red.includes(rep))).toBe(false);
+        await userScene.select(redSnapshot);
+        expect(rulesOf()).toContain("#ff0000");
+        const redAgain = defaultColoured();
+        expect(redAgain.some(rep => plain.includes(rep))).toBe(false);
+
+        // The same colours (the snapshot selected again): kept, the same objects
+        await userScene.select(redSnapshot);
+        expect(defaultColoured().every(rep => redAgain.includes(rep))).toBe(true);
+    });
+
+    test("are saved with the scenes in a session", async () => {
+        const { userScene } = cloud.instance;
+        const defaultRules = rulesOf();
+        await userScene.select("Model Building");
+        colourRed();
+        const redRules = rulesOf();
+        await userScene.select("Default");
+        const session = await saveSession();
+
+        userScene.resetForLegacySession();
+        expect(await loadSession(session)).toBe(0);
+        expect(rulesOf()).toBe(defaultRules);
+        await userScene.select("Model Building");
+        expect(rulesOf()).toBe(redRules);
+    });
+
+    test("go back to Coot's when a scene is reset with its representations", async () => {
+        const { userScene } = cloud.instance;
+        const cootRules = rulesOf();
+        colourRed();
+        expect(await userScene.reset("Default", "default", true)).toBe(true);
+        expect(rulesOf()).toBe(cootRules);
+    });
+});
+
+describe("the model shown by a representation of a multi-model molecule", () => {
+    test("is read from and written to the first component of its CID", () => {
+        expect(cidModel("/2/A/10-20/*")).toBe(2);
+        expect(cidModel("/*/*/*/*:*")).toBeNull();
+        expect(cidModel("//A/")).toBeNull();
+        expect(cidModel("/0/*/*/*:*")).toBeNull();
+        expect(withCidModel("/*/*/*/*:*", 2)).toBe("/2/*/*/*:*");
+        expect(withCidModel("//A/*/", 3)).toBe("/3/A/*/");
+        expect(withCidModel("/2/*/*/*:*", 0)).toBe("/*/*/*/*:*");
+    });
+
+    test("is kept when the representation is rebuilt from its scene", async () => {
+        const { userScene, representation } = cloud.instance;
+        const [loaded] = await cloud.instance.files.loadFiles({ url: jobUrl("two-models.pdb"), filename: "two-models.pdb" }, "cloud");
+        const molecule = cloud.instance.getMolecule(loaded.uniqueID);
+        expect(molecule.numberOfModels).toBe(2);
+        const uid = await representation.create(molecule.uniqueId, { representationStyle: "CBs" });
+        const shownModel = () => representation.getList(molecule.uniqueId).find(rep => rep.uniqueId === uid)?.cid;
+        representation.getList(molecule.uniqueId).find(rep => rep.uniqueId === uid).setShownMultimodel(2);
+        expect(cidModel(shownModel())).toBe(2);
+
+        // Model Building shows other representations: back in Default, this one is rebuilt
+        await userScene.select("Model Building");
+        await userScene.select("Default");
+        expect(cidModel(shownModel())).toBe(2);
     });
 });

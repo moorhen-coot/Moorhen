@@ -1,3 +1,4 @@
+import type { ColourRuleData } from "../utils/MoorhenColourRule";
 import type { RepresentationBackup } from "../utils/Representation/RepresentationBuilder";
 import type { SceneSettingsSnapshot } from "./sceneSettingsSlice";
 import type { UserScene } from "./userScenesSlice";
@@ -7,10 +8,19 @@ export const USER_SCENE_FORMAT_VERSION = 1;
 
 export type SceneCamera = { origin: [number, number, number]; zoom: number; quat: number[] };
 
+/**
+ * What a scene sets on each molecule (by uid) for all its representations that use the molecule's
+ * defaults. `colourRules` null: Coot's default colours. A molecule missing from the section (loaded
+ * after the scene was saved, or an older file) keeps its current defaults.
+ */
+export type MoleculeDefaults = { [moleculeUniqueId: string]: { colourRules: ColourRuleData[] | null } };
+
 export type SceneSections = {
     representations: { moleculeUniqueId: string; params: RepresentationBackup }[];
     /** Scene settings that differ from the defaults (lighting, background, effects...) */
     sceneSettings: SceneSettingsSnapshot;
+    /** Absent in scenes saved before it existed */
+    moleculeDefaults?: MoleculeDefaults;
     /** Sections this version does not know (read from a newer file): saved back unchanged */
     [section: string]: unknown;
 };
@@ -63,11 +73,23 @@ export const emptyContent = (sceneSettings: SceneSettingsSnapshot): SceneContent
 
 export const toFileEntry = ({ id, name, content }: UserScene): UserSceneFileEntry => ({ id, name, ...content });
 
+/** Keep the molecules whose colour rules are a list of rule objects, or null */
+const readMoleculeDefaults = (value: unknown): MoleculeDefaults =>
+    isObject(value)
+        ? Object.fromEntries(
+              Object.entries(value).filter(
+                  ([, defaults]) =>
+                      isObject(defaults) &&
+                      (defaults.colourRules === null || (Array.isArray(defaults.colourRules) && defaults.colourRules.every(isObject)))
+              )
+          ) as MoleculeDefaults
+        : {};
+
 /** Read a saved entry, dropping anything malformed. Its content is undefined when it has none saved */
 export const fromFileEntry = (entry: UserSceneFileEntry): UserScene => {
     const scene: UserScene = { id: entry.id, name: entry.name };
     if (!isObject(entry.sections)) return scene;
-    const { representations, sceneSettings } = entry.sections;
+    const { representations, sceneSettings, moleculeDefaults } = entry.sections;
     const molecules = isObject(entry.objects?.molecules) ? entry.objects.molecules : {};
     const content: SceneContent = {
         objects: {
@@ -81,6 +103,7 @@ export const fromFileEntry = (entry: UserSceneFileEntry): UserScene => {
             sceneSettings: isObject(sceneSettings) ? sceneSettings : {},
         },
     };
+    if (moleculeDefaults !== undefined) content.sections.moleculeDefaults = readMoleculeDefaults(moleculeDefaults);
     const camera = entry.camera;
     if (isObject(camera) && isNumberArray(camera.origin, 3) && typeof camera.zoom === "number" && isNumberArray(camera.quat, 4)) {
         content.camera = { origin: [...camera.origin] as [number, number, number], zoom: camera.zoom, quat: [...camera.quat] };
