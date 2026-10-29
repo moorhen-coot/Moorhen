@@ -315,18 +315,22 @@ export const readGzippedDataFile = async (source: File): Promise<ArrayBuffer> =>
     return gUnZippeData;
 };
 
-const downloadFile = (file: File, fileName: string) => {
-    const url = window.URL.createObjectURL(file);
-
+/**
+ * Download `href` (an object or data URL) as `fileName`, through a temporary link on document.body. Never look a
+ * download link up by id: inside the web component the app is in a shadow root.
+ */
+export const downloadUrl = (href: string, fileName: string) => {
     const link = document.createElement("a");
     link.download = fileName;
-    link.href = url;
-
+    link.href = href;
     document.body.appendChild(link);
-
     link.click();
+    link.remove();
+};
 
-    link.parentNode.removeChild(link);
+const downloadFile = (file: File, fileName: string) => {
+    const url = window.URL.createObjectURL(file);
+    downloadUrl(url, fileName);
     window.URL.revokeObjectURL(url);
 };
 
@@ -790,6 +794,73 @@ export const hexToRGB = (hex: string): [number, number, number] => {
     return [r, g, b];
 };
 
+/**
+ * Parse a "#rrggbb" or "#rrggbbaa" string into RGBA components. Unlike hexToRGB this keeps the
+ * alpha channel, defaulting it to fully opaque when the string carries no alpha.
+ * @param {string} hex - The HEX string, with or without a leading hash
+ * @returns {[number, number, number, number]} r, g, b and a, each in the 0-255 range (matching
+ * hexToRGB - divide by 255 for the 0-1 range the WebGL colour buffers expect)
+ */
+export const hexToRGBA = (hex: string): [number, number, number, number] => {
+    const hexWithoutHash = hex.replace("#", "");
+    const [r, g, b] = hexToRGB(hexWithoutHash);
+    const a = hexWithoutHash.length > 6 ? parseInt(hexWithoutHash.slice(6, 8), 16) : 255;
+    return [r, g, b, a];
+};
+
+/**
+ * The hue each coloured emoji circle stands for, in degrees.
+ *
+ * Brown and the two neutrals are handled separately below: brown is not reachable by hue alone,
+ * and there is no grey circle, so anything without much colour has to resolve to black or white.
+ */
+const EMOJI_SWATCH_HUES: { hue: number; emoji: string }[] = [
+    { hue: 0, emoji: "\u{1F534}" }, // red
+    { hue: 33, emoji: "\u{1F7E0}" }, // orange
+    { hue: 55, emoji: "\u{1F7E1}" }, // yellow
+    { hue: 120, emoji: "\u{1F7E2}" }, // green
+    { hue: 210, emoji: "\u{1F535}" }, // blue
+    { hue: 285, emoji: "\u{1F7E3}" }, // purple
+];
+
+/**
+ * Pick the coloured emoji circle closest to a colour, for use as a swatch in places that can only
+ * hold text - a native <option>, most usefully, whose content model forbids markup and whose own
+ * colour styling the OS ignores when it draws the popup list itself.
+ *
+ * Only nine colours are available, so this quantises hard. It is a hint for telling entries apart
+ * at a glance, not a faithful sample.
+ *
+ * @param {string} colour - a CSS colour name, "#rrggbb" or "#rrggbbaa"
+ * @returns {string} a single emoji character
+ */
+export const colourToEmojiSwatch = (colour: string): string => {
+    if (!colour) return "\u{26AA}"; // white circle
+    if (colour === "gradient") return "\u{1F308}"; // rainbow
+
+    // Alpha says nothing about which swatch to use, and would break the 6-digit hex parsing.
+    const opaque = colour.startsWith("#") && colour.length === 9 ? colour.substring(0, 7) : colour;
+    const [hueFraction, saturation, lightness] = hexToHsl(getHexForCanvasColourName(opaque));
+    const hue = hueFraction * 360;
+
+    // Nothing in the palette is grey, so a washed-out or very dark or very pale colour has to
+    // land on one of the two neutrals.
+    if (saturation < 0.15 || lightness < 0.12) return lightness > 0.5 ? "\u{26AA}" : "\u{26AB}";
+    if (lightness > 0.92) return "\u{26AA}";
+
+    // Brown is really just a dark orange, and hue alone cannot distinguish the two.
+    if (hue >= 15 && hue <= 45 && lightness < 0.35) return "\u{1F7E4}";
+
+    // Circular distance, so a magenta at 330 degrees reads as red rather than purple.
+    const hueDistance = (a: number, b: number) => {
+        const d = Math.abs(a - b) % 360;
+        return d > 180 ? 360 - d : d;
+    };
+    return EMOJI_SWATCH_HUES.reduce((best, candidate) =>
+        hueDistance(hue, candidate.hue) < hueDistance(hue, best.hue) ? candidate : best
+    ).emoji;
+};
+
 export const getCone = (cylinder_accu: number): [number[], number[], number[]] => {
     let thisPos = [];
     let thisNorm = [];
@@ -878,6 +949,47 @@ export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [numbe
     return [thisPos, thisNorm, thisIdxs];
 };
 
+/**
+ * Build the per-instance orientation matrix that carries a mesh built along local +z, spanning
+ * z = 0 to z = 1, onto the axis running from `from` to `to`.
+ *
+ * Pair it with an instance origin of `from` and an instance size whose z component is the distance
+ * between the two points, and the mesh lands with its base at `from` and its top at `to`.
+ *
+ * @param {number[]} from - Start of the axis in world space, where the mesh's z = 0 end goes
+ * @param {number[]} to - End of the axis, where the mesh's z = 1 end goes
+ * @returns {number[]} 16 floats, column-major, as the instanceOrientation attribute expects
+ */
+export const getAxisOrientationMatrix = (from: number[], to: number[]): number[] => {
+    const v = vec3.create();
+    const au = vec3.create();
+    const a = vec3.create();
+    const b = vec3.create();
+    const aup = [from[0] - to[0], from[1] - to[1], from[2] - to[2]];
+    vec3.set(au, ...(aup as [number, number, number]));
+    vec3.normalize(a, au);
+    vec3.set(b, 0.0, 0.0, -1.0);
+    vec3.cross(v, a, b);
+    const c = vec3.dot(a, b);
+    if (Math.abs(c + 1.0) < 1e-4) {
+        // Axis is antiparallel to -z, where the Rodrigues form below is singular.
+        return [-1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0];
+    }
+    const k = mat3.create();
+    k.set([0.0, -v[2], v[1], v[2], 0.0, -v[0], -v[1], v[0], 0.0]);
+    const kk = mat3.create();
+    mat3.multiply(kk, k, k);
+    const sk = mat3.create();
+    mat3.multiplyScalar(sk, k, 1.0);
+    const omckk = mat3.create();
+    mat3.multiplyScalar(omckk, kk, 1.0 / (1.0 + c));
+    const r = mat3.create();
+    r.set([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
+    mat3.add(r, r, sk);
+    mat3.add(r, r, omckk);
+    return [r[0], r[1], r[2], 1.0, r[3], r[4], r[5], 1.0, r[6], r[7], r[8], 1.0, 0.0, 0.0, 0.0, 1.0];
+};
+
 export const gemmiAtomPairsToCylindersInfo = (
     atoms: [{ x: number; y: number; z: number; serial: number | string }, { x: number; y: number; z: number; serial: number | string }][],
     size: number,
@@ -889,7 +1001,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     style: "cylinder" | "cone" = "cylinder",
     individualSizes?: number[],
     dashedSteps: number = 15,
-    NEF?: boolean
+    NEF?: boolean,
+    cylinderAccu: number = 16
 ) => {
     const atomPairs = atoms;
 
@@ -903,7 +1016,8 @@ export const gemmiAtomPairsToCylindersInfo = (
     const totInstanceUseColours = [];
     const totInstancePrimTypes = [];
 
-    const [thisPos, thisNorm, thisIdxs] = style === "cylinder" ? getDashedCylinder(dashed ? dashedSteps : 1, 16) : getCone(16);
+    const [thisPos, thisNorm, thisIdxs] =
+        style === "cylinder" ? getDashedCylinder(dashed ? dashedSteps : 1, cylinderAccu) : getCone(cylinderAccu);
 
     const thisInstance_sizes = [];
     const thisInstance_colours = [];
@@ -941,34 +1055,9 @@ export const gemmiAtomPairsToCylindersInfo = (
         thisInstance_origins.push(at0.x, at0.y, at0.z);
         if (individualSizes) thisInstance_sizes.push(...[individualSizes[iat], individualSizes[iat], l]);
         else thisInstance_sizes.push(...[size, size, l]);
-        const v = vec3.create();
-        const au = vec3.create();
-        const a = vec3.create();
-        const b = vec3.create();
-        const aup = [at0.x - at1.x, at0.y - at1.y, at0.z - at1.z];
-        vec3.set(au, ...aup);
-        vec3.normalize(a, au);
-        vec3.set(b, 0.0, 0.0, -1.0);
-        vec3.cross(v, a, b);
-        const c = vec3.dot(a, b);
-        if (Math.abs(c + 1.0) < 1e-4) {
-            thisInstance_orientations.push(...[-1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0]);
-        } else {
-            const s = vec3.length(v);
-            const k = mat3.create();
-            k.set([0.0, -v[2], v[1], v[2], 0.0, -v[0], -v[1], v[0], 0.0]);
-            const kk = mat3.create();
-            mat3.multiply(kk, k, k);
-            const sk = mat3.create();
-            mat3.multiplyScalar(sk, k, 1.0);
-            const omckk = mat3.create();
-            mat3.multiplyScalar(omckk, kk, 1.0 / (1.0 + c));
-            const r = mat3.create();
-            r.set([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
-            mat3.add(r, r, sk);
-            mat3.add(r, r, omckk);
-            thisInstance_orientations.push(...[r[0], r[1], r[2], 1.0, r[3], r[4], r[5], 1.0, r[6], r[7], r[8], 1.0, 0.0, 0.0, 0.0, 1.0]);
-        }
+        thisInstance_orientations.push(
+            ...getAxisOrientationMatrix([at0.x, at0.y, at0.z], [at1.x, at1.y, at1.z])
+        );
     }
 
     totNorm.push(thisNorm);
@@ -1050,7 +1139,7 @@ export const gemmiAtomsToCirclesSpheresInfo = (
             instance_use_colors: [[totInstanceUseColours]],
             instance_orientations: [[totInstance_orientations]],
             col_tri: [[sphere_col_tri]],
-            norm_tri: [[[sphere_vert_tri]]],
+            norm_tri: [[sphere_vert_tri]],
             vert_tri: [[sphere_vert_tri]],
             idx_tri: [[sphere_idx_tri]],
             prim_types: [[primType]],
@@ -1089,6 +1178,100 @@ export const findConsecutiveRanges = (numbers: number[]): [number, number][] => 
     ranges.push([start, end]);
     return ranges;
 };
+
+/**
+ * A unit cube centred on the origin, spanning -0.5 to 0.5 on each axis.
+ *
+ * Normals are a per-vertex attribute, so the eight geometric corners cannot be shared: each corner
+ * belongs to three faces with three different outward normals. The cube is therefore built from 24
+ * vertices - four per face, each carrying that face's normal - which also gives flat shading. Every
+ * face is wound counter-clockwise seen from outside, so the winding agrees with the normal.
+ *
+ * @returns {{vertices: number[], normals: number[], idx: number[]}} 72 position floats, 72 normal
+ * floats and 36 indices
+ */
+export function getCube() {
+    // Each face: its four corners counter-clockwise seen from outside, plus its outward normal.
+    const faces: { corners: [number, number, number][]; normal: [number, number, number] }[] = [
+        {
+            // +X
+            corners: [
+                [0.5, -0.5, 0.5],
+                [0.5, -0.5, -0.5],
+                [0.5, 0.5, -0.5],
+                [0.5, 0.5, 0.5],
+            ],
+            normal: [1, 0, 0],
+        },
+        {
+            // -X
+            corners: [
+                [-0.5, -0.5, -0.5],
+                [-0.5, -0.5, 0.5],
+                [-0.5, 0.5, 0.5],
+                [-0.5, 0.5, -0.5],
+            ],
+            normal: [-1, 0, 0],
+        },
+        {
+            // +Y
+            corners: [
+                [-0.5, 0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [0.5, 0.5, -0.5],
+                [-0.5, 0.5, -0.5],
+            ],
+            normal: [0, 1, 0],
+        },
+        {
+            // -Y
+            corners: [
+                [-0.5, -0.5, -0.5],
+                [0.5, -0.5, -0.5],
+                [0.5, -0.5, 0.5],
+                [-0.5, -0.5, 0.5],
+            ],
+            normal: [0, -1, 0],
+        },
+        {
+            // +Z
+            corners: [
+                [-0.5, -0.5, 0.5],
+                [0.5, -0.5, 0.5],
+                [0.5, 0.5, 0.5],
+                [-0.5, 0.5, 0.5],
+            ],
+            normal: [0, 0, 1],
+        },
+        {
+            // -Z
+            corners: [
+                [-0.5, -0.5, -0.5],
+                [-0.5, 0.5, -0.5],
+                [0.5, 0.5, -0.5],
+                [0.5, -0.5, -0.5],
+            ],
+            normal: [0, 0, -1],
+        },
+    ];
+
+    const vertices: number[] = [];
+    const normals: number[] = [];
+    const idx: number[] = [];
+
+    faces.forEach((face, iface) => {
+        const base = 4 * iface;
+        face.corners.forEach(corner => {
+            vertices.push(...corner);
+            normals.push(...face.normal);
+        });
+        // Two triangles per quad, both keeping the face winding.
+        idx.push(base, base + 1, base + 2);
+        idx.push(base, base + 2, base + 3);
+    });
+
+    return { vertices, normals, idx };
+}
 
 export function getCubeLines(
     unitCell: gemmi.UnitCell

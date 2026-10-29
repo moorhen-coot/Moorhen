@@ -18,6 +18,7 @@ import moleculesReducer from "./moleculesSlice";
 import mouseSettingsReducer from "./mouseSettings";
 import mrParseSliceReducer from "./mrParseSlice";
 import overlaysSliceReducer from "./overlaysSlice";
+import threeDObjectsSliceReducer from "./threeDObjectsSlice";
 import refinementSettingsReducer from "./refinementSettingsSlice";
 import sceneSettingsReducer from "./sceneSettingsSlice";
 import sharedSessionReducer from "./sharedSessionSlice";
@@ -25,6 +26,7 @@ import shortcutSettingsReducer from "./shortCutsSlice";
 import sliceNDiceReducer from "./sliceNDiceSlice";
 import snackBarsReducer from "./snackbarSlice";
 import vectorsReducer from "./vectorsSlice";
+import movieReducer from "./movieSlice";
 
 export const reducers = {
     molecules: moleculesReducer,
@@ -47,11 +49,13 @@ export const reducers = {
     mrParse: mrParseSliceReducer,
     glRef: glRefSliceReducer,
     overlays: overlaysSliceReducer,
+    threeDObjects: threeDObjectsSliceReducer,
     menus: menusReducer,
     globalUI: globalUISliceReducer,
     bottomPanels: bottomPanelsReducer,
     vectors: vectorsReducer,
     snackBars: snackBarsReducer,
+    movie: movieReducer,
 };
 
 // Infer RootState directly from reducers object structure (no runtime dependency)

@@ -1,6 +1,7 @@
 import { useStore } from "react-redux";
 import React, { useEffect, useRef } from "react";
 import { RootState } from "@/store";
+import { getDeepActiveElement, getEventOrigin } from "@/utils/shadowDom";
 
 const isSelectRelated = (node: Node | null): boolean =>
     node instanceof HTMLSelectElement ||
@@ -36,7 +37,8 @@ export const MoorhenClickAwayListener = (props: {
             return;
         }
 
-        const target = event.target as Node | null;
+        // The real target and focused element, also inside the web component's shadow root
+        const target = getEventOrigin(event) as Node | null;
         const path = typeof event.composedPath === "function" ? event.composedPath() : [];
         const insideDOMTree = path.length > 0 ? path.includes(node) : !!(target && node.contains(target));
 
@@ -49,7 +51,7 @@ export const MoorhenClickAwayListener = (props: {
         // control that belongs to this popup. While a <select> is focused (its dropdown is
         // open) - or when the click itself targets a select/option - don't treat it as an
         // away click. This removes the need for <select> to globally pause this listener.
-        const activeElement = document.activeElement;
+        const activeElement = getDeepActiveElement();
         const isSelectInteraction = isSelectRelated(activeElement) || isSelectRelated(target);
 
         if (isSelectInteraction && !isProgrammatic) {

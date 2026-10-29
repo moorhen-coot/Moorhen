@@ -1,4 +1,5 @@
 import { batch } from "react-redux";
+import { correctExportedGltf } from "../gltfWinding";
 import { appendOtherData, buildBuffers } from "../../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../../store/glRefSlice";
 import { enqueueSnackbar  } from '@/store';
@@ -13,6 +14,13 @@ import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
+import { wholeMeshPickInfo } from "../../WebGLgComponents/wholeMeshPick";
+
+/**
+ * The styles that actually put individual atoms on the screen, and so the only ones a per-atom
+ * highlight such as the hover ball can sit on.
+ */
+export const ATOM_LEVEL_STYLES: string[] = ["CBs", "CAs", "VdwSpheres", "ligands"];
 
 export type MeshType =
     | libcootApi.InstancedMeshJS
@@ -536,6 +544,7 @@ export class MoleculeRepresentation {
         if (this.buffers) {
             this.buffers.forEach(buf => {
                 buf.multiViewGroup = this.parentMolecule.molNo;
+                buf.statsLabel = this.style;
             });
             this.parentMolecule.store.dispatch(setDisplayBuffers([...displayBuffers, ...newBuffers]));
         } else {
@@ -612,8 +621,10 @@ export class MoleculeRepresentation {
             newBuffers = displayBuffers;
         }
         if (this.buffers?.length > 0) {
+            const gl = this.parentMolecule.store.getState().glRef.glCtx;
             this.buffers.forEach(buffer => {
                 if ("clearBuffers" in buffer) {
+                    buffer.clearBuffers(gl);
                     newBuffers = newBuffers.filter(glBuffer => glBuffer !== buffer);
                 } else if ("labels" in buffer) {
                     newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid);
@@ -1468,7 +1479,17 @@ export class MoleculeRepresentation {
      * @param {string} name - The name of the representation style
      * @returns {any[]} An array of arguments passed to libcoot API
      */
-    getBondArgs(name: string): [string, boolean, number, number, boolean, boolean, boolean, number] {
+    /**
+     * The bond arguments, in the order coot's get_bonds_mesh_instanced takes them:
+     * mode, isDark, bondWidth, atomRadius, showAniso, showOrtep, showAnisoAsEmpty,
+     * drawHydrogens, smoothness.
+     *
+     * Nine, not eight. This was annotated as an eight-tuple and cast to it, so the extra one
+     * was invisible to the compiler - and a consumer that spread it into a function expecting
+     * eight had every later argument arrive one place early, with no error anywhere. That is
+     * what stopped bonds, spheres, CAs and ligands exporting as glTF.
+     */
+    getBondArgs(name: string): [string, boolean, number, number, boolean, boolean, boolean, boolean, number] {
         const bondSettings: (string | boolean | number)[] = [
             name === "VdwSpheres" ? "VDW-BALLS" : name === "CAs" ? "CA+LIGANDS" : "COLOUR-BY-CHAIN-AND-DICTIONARY",
             this.parentMolecule.isDarkBackground,
@@ -1498,7 +1519,7 @@ export class MoleculeRepresentation {
                 this.bondOptions.smoothness
             );
         }
-        return bondSettings as [string, boolean, number, number, boolean, boolean, boolean, number];
+        return bondSettings as [string, boolean, number, number, boolean, boolean, boolean, boolean, number];
     }
 
     /**
@@ -1557,6 +1578,31 @@ export class MoleculeRepresentation {
     }
 
     /**
+     * The models drawn by the parent molecule's visible atom-level representations, so a highlight
+     * lands only on atoms that are on screen. A representation restricted to "/2/*" contributes
+     * model 2; one with a wildcard, empty or chain-first model field shows every model, and "*"
+     * is returned.
+     * @returns {string[]} Model numbers, or ["*"] for all models
+     */
+    getDisplayedModels(): string[] {
+        const models = new Set<string>();
+        for (const representation of this.parentMolecule?.representations ?? []) {
+            if (!representation.visible || !ATOM_LEVEL_STYLES.includes(representation.style)) {
+                continue;
+            }
+            for (const part of (representation.cid ?? "").split("||")) {
+                const trimmed = part.trim();
+                const model = trimmed.split("/")[1];
+                if (!trimmed.startsWith("/") || !/^\d+$/.test(model ?? "")) {
+                    return ["*"];
+                }
+                models.add(model);
+            }
+        }
+        return models.size > 0 ? [...models] : ["*"];
+    }
+
+    /**
      * Get representation buffers corresponding with the residue highlight representation
      * @param {string} selectionString - The CID selection
      * @param {number[]} colour - The colour for the highlight
@@ -1573,15 +1619,13 @@ export class MoleculeRepresentation {
             modifiedSelection = selectionString;
         } else {
             const resSpec: moorhen.ResidueSpec = cidToSpec(selectionString);
-            if (this.parentMolecule.isLigand) {
-                modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/${resSpec.atom_name}${
-                    resSpec.alt_conf === "" ? "" : ":"
-                }${resSpec.alt_conf}`;
-            } else {
-                modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${
-                    resSpec.alt_conf === "" ? "" : ":"
-                }${resSpec.alt_conf}`;
-            }
+            const atomName = this.parentMolecule.isLigand ? resSpec.atom_name : "*";
+            const altConf = resSpec.alt_conf === "" ? "" : `:${resSpec.alt_conf}`;
+            // The model field of the hovered CID can't be trusted - the sequence viewer writes the
+            // molecule number there - so the models come from what is actually on screen instead.
+            modifiedSelection = this.getDisplayedModels()
+                .map(model => `/${model}/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/${atomName}${altConf}`)
+                .join("||");
         }
 
         const selectedGemmiAtoms = await this.parentMolecule.gemmiAtomsForCid(modifiedSelection);
@@ -1874,7 +1918,14 @@ export class MoleculeRepresentation {
                 } else {
                     objects = [_objects[cavityIndex -1]];
                 }
-                return objects;
+                // A cavity is one thing, so it is hovered and centred on as one thing: the
+                // whole pocket lights up and centring goes to its middle rather than to
+                // wherever on the surface the pointer happened to be. Everything needed for
+                // that is in the vertices Coot already sent, so this asks libcoot for nothing.
+                return objects.map(object => {
+                    const pick_info = wholeMeshPickInfo(object.vert_tri?.[0]?.[0] ?? []);
+                    return pick_info ? { ...object, pick_info } : object;
+                });
             }
         }
     }
@@ -2030,6 +2081,20 @@ export class MoleculeRepresentation {
         await this.applyColourRules();
 
         let gltfData: ArrayBuffer;
+        /**
+         * Whether this export needs its winding reversed and normals negated.
+         *
+         * Per path, not for everything, because Coot's generators do not agree with each other.
+         * Measured on real exports: metaballs come out inside-out by the glTF convention (signed
+         * volume -101.7), while M2T (+822.6) and coot bonds (+166.6) come out standard. Applying
+         * one rule to all of them inverts whichever were already right - which is precisely what
+         * a first attempt at this did to M2T, on the strength of a single sample that turned out
+         * to be metaballs misread as a surface.
+         *
+         * Left false for any path not actually measured. Being faithful to a generator that is
+         * already correct costs nothing; "correcting" one that was right breaks it.
+         */
+        let windingIsInverted = false;
         if (!(this.style === "MetaBalls") && (this.styleIsCootBondRepresentation || this.styleIsCombinedRepresentation)) {
             const bondArgs = this.getBondArgs(this.style);
             const state = this.parentMolecule.store.getState();
@@ -2070,9 +2135,28 @@ export class MoleculeRepresentation {
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;
             gltfData = result.data.result.result;
+            // Measured: export_metaballs_as_gltf produces an inside-out mesh.
+            windingIsInverted = true;
         } else {
             console.warn(`Unable to export molecule representation of style ${this.style} as mesh file`);
         }
-        return gltfData;
+        // Moorhen's glTF exports are inside-out by the glTF convention: Coot's meshes are wound
+        // clockwise seen from outside, Moorhen compensates on screen by asking for "mesh_perm3",
+        // and the exporters write the Coot mesh verbatim - so the compensation never reaches the
+        // file. Corrected here rather than in Coot, whose meshes have assorted histories, and
+        // here rather than in the worker, which is loaded as a classic script and so cannot
+        // import a module.
+        if (!gltfData) {
+            // Silence here is the old behaviour and is hard to act on: the caller only does
+            // `if (gltfData) doDownload(...)`, so a representation Coot cannot export produces
+            // no file and no message. Whatever the reason, say so.
+            console.warn(
+                `Export of ${this.parentMolecule?.name ?? "molecule"} representation "${this.style}" ` +
+                `as ${fileType} produced nothing. If the worker reported an exception it will be ` +
+                `logged above this line.`
+            );
+            return gltfData;
+        }
+        return fileType === "gltf" && windingIsInverted ? correctExportedGltf(gltfData) : gltfData;
     }
 }

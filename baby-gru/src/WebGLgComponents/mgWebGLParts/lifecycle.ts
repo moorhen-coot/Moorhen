@@ -4,6 +4,7 @@ import * as mat4 from 'gl-matrix/mat4';
 import { setIsWebGL2, setGLCtx } from '../../store/glRefSlice';
 import { TextCanvasTexture } from '../textCanvasTexture';
 import { initGL, MGWebGL } from '../mgWebGL';
+import { attachTouchGestures } from './touchGestures';
 
 /**
  * componentDidMount, decomposed into ordered phases. The mount used to be one
@@ -48,14 +49,16 @@ export function initInstanceState(self: MGWebGL): void {
     self.mouseDown_y = null;
     self.dx = null;
     self.dy = null;
-    self.myQuat = null;
+    // myQuat and zoom are no longer nulled here. The Camera collaborator starts them at the exact
+    // values phase 2 below goes on to assign - the identity-ish quaternion (0, 0, 0, -1) and zoom
+    // 1.0 - so nothing that could read them in between sees a different number than it would have.
+    // Nothing does read them in between, and nothing in the codebase ever tested them for null.
     self.mouseDown = null;
     self.measurePointsArray = [];
     self.measureHit = null;
     self.measureButton = -1;
     self.measureDownPos = {x:-1,y:-1};
     self.mouseMoved = null;
-    self.zoom = null;
     self.ext = null;
     self.drawBuffersExt = null;
     self.instanced_ext = null;
@@ -139,10 +142,9 @@ export function initInstanceState(self: MGWebGL): void {
     self.doOrderIndependentTransparency = true;//Request OIT user/state setting
     self.doPeel = false;//Requested and required - above set and there are transparent objects.
 
-    //Debugging only
+    //Debugging only - see MGWebGL.setShadowDepthDebug. Shadows must be on separately for there
+    //to be a map to look at.
     self.doShadowDepthDebug = false;
-    if(self.doShadowDepthDebug)
-        self.doShadow = true;
 
     self.drawingGBuffers = false;
     self.offScreenFramebuffer = null;
@@ -153,10 +155,14 @@ export function initInstanceState(self: MGWebGL): void {
     self.gFramebuffer = null;
     self.useOffScreenBuffers = false; //This means "doDepthBlur" and is historically named.
     self.blurSize = 3;
+    self.depthPeelLayers = 4;
+    self.peelOpaqueSeparately = true;
+    self.peelTransparentOnly = null;
     self.blurDepth = 0.2;
     self.offScreenReady = false;
     self.framebufferDrawBuffersReady = false;
     self.screenshotBuffersReady = false;
+    self.rttRenderbuffers = [];
 
     self.edgeDetectFramebufferSize = 2048;
     self.gBuffersFramebufferSize = 2048;
@@ -171,14 +177,13 @@ export function initInstanceState(self: MGWebGL): void {
 
     self.gl_clipPlane0 = new Float32Array(4);
     self.gl_clipPlane1 = new Float32Array(4);
+    // The plane normals; the W components come from the camera, via applySlabToRenderer below.
     self.gl_clipPlane1[0] = 0.0;
     self.gl_clipPlane1[1] = 0.0;
     self.gl_clipPlane1[2] = 1.0;
-    self.gl_clipPlane1[3] = 1000.0;
     self.gl_clipPlane0[0] = 0.0;
     self.gl_clipPlane0[1] = 0.0;
     self.gl_clipPlane0[2] = -1.0;
-    self.gl_clipPlane0[3] = -0.0;
     self.gl_clipPlane2 = new Float32Array(4);
     self.gl_clipPlane3 = new Float32Array(4);
     self.gl_clipPlane4 = new Float32Array(4);
@@ -198,8 +203,8 @@ export function initInstanceState(self: MGWebGL): void {
 
 
     self.gl_nClipPlanes = 0;
-    self.gl_fog_start = self.fogClipOffset;
-    self.gl_fog_end = 1000+self.fogClipOffset;
+    // Fog and the clip plane W components are derived from the camera, not set here.
+    self.applySlabToRenderer();
 
     self.origin = [0.0, 0.0, 0.0];
 
@@ -303,6 +308,25 @@ export function attachCanvasListeners(self: MGWebGL): void {
             function (evt) {
                 document.onkeydown = function (evt2) {
                 }
+
+                // Nothing here is hovered once the pointer has gone. Without this the last thing
+                // it touched stays lit for as long as the mouse is away, and because a pointer
+                // hover takes precedence over one driven from outside the view, it also stops the
+                // sequence viewer from lighting anything: the stale highlight simply wins.
+                //
+                // The pending hover goes too. doHover is debounced, so a move made just before
+                // leaving would otherwise fire after this and put the highlight straight back.
+                if (self.hoverDebounceTimeout) {
+                    clearTimeout(self.hoverDebounceTimeout);
+                    self.hoverDebounceTimeout = null;
+                }
+                const wasHovering = self.state.hoveridx > -1
+                    || self.state.hover_point > -1
+                    || (self.state.hoverIndices?.length ?? 0) > 0;
+                if (wasHovering) {
+                    self.setState({ hoveridx: -1, hover_point: -1, hoverIndices: [] });
+                    self.drawScene();
+                }
             },
             false);
         self.canvas.addEventListener("wheel",
@@ -312,56 +336,11 @@ export function attachCanvasListeners(self: MGWebGL): void {
                 evt.preventDefault();
             },
             false);
-        self.canvas.addEventListener('touchstart',
-            function (e) {
-                const touchobj = e.changedTouches[0];
-                const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
-                //alert(e.changedTouches.length)
-                if (e.changedTouches.length === 2) {
-                    evt.shiftKey = true;
-                    evt.altKey = true;
-                }
-                self.doMouseDown(evt, self);
-                self.mouseDownedAt = (e.timeStamp)
-                e.stopPropagation();
-                e.preventDefault();
-                // Create a timeout that will check if the user is holding down on the same spot to open the context menu
-                setTimeout(() => {
-                    if (self.mouseDown && !self.mouseMoved) {
-                        self.doRightClick(evt, self);
-                    }
-                }, 1000)
-            }, false)
-
-        self.canvas.addEventListener('touchmove',
-            function (e) {
-                const touchobj = e.touches[0]; // reference first touch point for this event
-                const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, buttons: 1 };
-                if (e.touches.length === 2) {
-                    evt.shiftKey = true;
-                    evt.altKey = true;
-                }
-                self.doMouseMove(evt, self);
-                e.stopPropagation();
-                e.preventDefault();
-            }, false)
-
-        self.canvas.addEventListener('touchend',
-            function (e) {
-                const touchobj = e.changedTouches[0]; // reference first touch point for this event
-                const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
-                if (e.changedTouches.length === 2) {
-                    evt.shiftKey = true;
-                    evt.altKey = true;
-                }
-                const deltaTime = e.timeStamp - self.mouseDownedAt;
-                if (deltaTime < 300) {
-                    self.doClick(evt, self);
-                }
-                self.doMouseUp(evt, self);
-                e.stopPropagation();
-                e.preventDefault();
-            }, false)
+        // Touch input is handled by the @use-gesture recognisers (rotate /
+        // translate / z-rotate / pinch-zoom / tap / long-press), which map
+        // finger gestures onto the same mouse handlers used above. The teardown
+        // it returns is kept on `self` so it can be destroyed on unmount.
+        self.destroyTouchGestures = attachTouchGestures(self);
     }
     self.doneEvents = true;
 }
@@ -445,8 +424,8 @@ export function initGraphics(self: MGWebGL): void {
     self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.RGBA, self.gl.RGBA, self.gl.UNSIGNED_BYTE, self.circleCtx.canvas);
 
     self.gl_nClipPlanes = 0;
-    self.gl_fog_start = self.fogClipOffset;
-    self.gl_fog_end = 1000+self.fogClipOffset;
+    // Fog and the clip plane W components are derived from the camera, not set here.
+    self.applySlabToRenderer();
     //self.gl.lineWidth(2.0);
     self.gl.blendFuncSeparate(self.gl.SRC_ALPHA, self.gl.ONE_MINUS_SRC_ALPHA, self.gl.ONE, self.gl.ONE_MINUS_SRC_ALPHA);
     self.gl.enable(self.gl.BLEND);

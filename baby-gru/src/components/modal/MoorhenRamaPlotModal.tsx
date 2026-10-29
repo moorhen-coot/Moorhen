@@ -12,7 +12,7 @@ export const MoorhenRamaPlotModal = (props: ModalComponentProps) => {
     return (
         <MoorhenDraggableModalBase
             modalId={modalKeys.RAMA_PLOT}
-            lockAspectRatio={true}
+            lockAspectRatio={false}
             onResize={(evt, ref, direction, delta, size) => {
                 setModalSize(size);
             }}

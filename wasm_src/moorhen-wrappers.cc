@@ -281,6 +281,8 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
     .function("get_validation",&molecules_container_js::get_validation)
+    .function("debug_throw_exception",&molecules_container_js::debug_throw_exception)
+    .function("debug_abort",&molecules_container_js::debug_abort)
     .function("get_B_validation",&molecules_container_js::get_B_validation)
     .function("rotamer_analysis_json",&molecules_container_js::rotamer_analysis_json)
     .function("ramachandran_analysis_json",&molecules_container_js::ramachandran_analysis_json)

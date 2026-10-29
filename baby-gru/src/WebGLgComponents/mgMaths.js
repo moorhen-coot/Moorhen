@@ -148,4 +148,71 @@ function DistanceBetweenPointAndLine(ls, le, p){
 
 }
 
-export {DistanceBetweenPointAndLine, DistanceBetweenTwoLines, DihedralAngle, NormalizeVec3, vec3Cross, vec3Add, vec3Subtract, vec3Create};
+/**
+ * Shortest distance from an infinite line to a finite segment, with the closest point on that
+ * segment.
+ *
+ * DistanceBetweenTwoLines treats both as infinite, which is wrong for picking: a short segment
+ * whose extension happens to pass near the ray would score as a hit from a long way off its own
+ * ends. Here only the segment is clamped; the line is left infinite because the caller's ray
+ * already spans the clip range and is range-checked separately.
+ *
+ * @param {number[]} ls - a point on the line
+ * @param {number[]} le - a second point on the line
+ * @param {number[]} a - one end of the segment
+ * @param {number[]} b - the other end
+ * @returns {[number, number, number[]]} distance, the segment parameter in [0, 1], and the
+ *          closest point on the segment
+ */
+function DistanceBetweenLineAndSegment(ls, le, a, b){
+    const d = [le[0]-ls[0], le[1]-ls[1], le[2]-ls[2]];
+    const e = [b[0]-a[0], b[1]-a[1], b[2]-a[2]];
+    const r = [ls[0]-a[0], ls[1]-a[1], ls[2]-a[2]];
+
+    const dd = d[0]*d[0] + d[1]*d[1] + d[2]*d[2];
+    const ee = e[0]*e[0] + e[1]*e[1] + e[2]*e[2];
+    const de = d[0]*e[0] + d[1]*e[1] + d[2]*e[2];
+    const dr = d[0]*r[0] + d[1]*r[1] + d[2]*r[2];
+    const er = e[0]*r[0] + e[1]*r[1] + e[2]*r[2];
+
+    // A degenerate segment is just a point, and a degenerate line has no direction to offer.
+    if(ee < 1e-12 || dd < 1e-12){
+        const closest = ee < 1e-12 ? [a[0], a[1], a[2]] : null;
+        if(closest === null) return [-1.0, 0.0, [a[0], a[1], a[2]]];
+        const dpl = DistanceBetweenPointAndLine(ls, le, closest);
+        return [dpl[0], 0.0, closest];
+    }
+
+    const denom = dd*ee - de*de;
+    // Parallel: every point of the segment is the same distance away, so take an end.
+    let u = Math.abs(denom) < 1e-12 ? 0.0 : (dd*er - de*dr) / denom;
+    u = Math.max(0.0, Math.min(1.0, u));
+
+    const closest = [a[0] + u*e[0], a[1] + u*e[1], a[2] + u*e[2]];
+    const dpl = DistanceBetweenPointAndLine(ls, le, closest);
+    return [dpl[0], u, closest];
+}
+
+/**
+ * The same, for a polyline given as flat x, y, z triples: the nearest of its segments.
+ *
+ * This is what makes a long object pickable by its whole extent rather than by however many
+ * sample points someone thought to scatter over it.
+ */
+function DistanceBetweenLineAndPolyline(ls, le, flatPoints){
+    let best = -1.0;
+    let bestPoint = null;
+    const count = Math.floor(flatPoints.length / 3);
+    for(let i = 0; i + 1 < count; i++){
+        const a = [flatPoints[3*i], flatPoints[3*i+1], flatPoints[3*i+2]];
+        const b = [flatPoints[3*i+3], flatPoints[3*i+4], flatPoints[3*i+5]];
+        const [distance, , closest] = DistanceBetweenLineAndSegment(ls, le, a, b);
+        if(distance >= 0.0 && (best < 0.0 || distance < best)){
+            best = distance;
+            bestPoint = closest;
+        }
+    }
+    return [best, bestPoint];
+}
+
+export {DistanceBetweenPointAndLine, DistanceBetweenTwoLines, DistanceBetweenLineAndSegment, DistanceBetweenLineAndPolyline, DihedralAngle, NormalizeVec3, vec3Cross, vec3Add, vec3Subtract, vec3Create};

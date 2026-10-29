@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { emptyVectors, RootState } from "@/store";
+import { emptyVectors, emptyObjects, RootState } from "@/store";
 import { emptyMaps } from "../../store/mapsSlice";
 import { emptyMolecules } from "../../store/moleculesSlice";
 import { MoorhenButton } from "../inputs";
@@ -21,6 +21,7 @@ export const DeleteEverything = () => {
         dispatch(emptyMolecules());
         dispatch(emptyMaps());
         dispatch(emptyVectors())
+        dispatch(emptyObjects())
         document.body.click();
     };
 

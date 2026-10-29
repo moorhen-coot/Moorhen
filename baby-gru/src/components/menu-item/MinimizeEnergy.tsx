@@ -13,11 +13,6 @@ export const MinimizeEnergy = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const menu = "minimizeEnergyMenu";
 
-    const useRamaRestraintsCheckRef = useRef<null | HTMLInputElement>(null);
-    const useTorsionRestraintsCheckRef = useRef<null | HTMLInputElement>(null);
-    const torsionWeightSliderRef = useRef<number>(1);
-    const nIterationsSliderRef = useRef<number>(50);
-    const ncycSliderRef = useRef<number>(50);
     const chainSelectRef = useRef<null | HTMLSelectElement>(null);
     const selectionTypeSelectRef = useRef<null | HTMLSelectElement>(null);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -84,14 +79,14 @@ export const MinimizeEnergy = () => {
 
         await selectedMolecule.minimizeEnergyUsingCidAnimated(
             cid,
-            ncycSliderRef.current,
-            nIterationsSliderRef.current,
-            useRamaRestraintsCheckRef.current.checked,
+            ncyc,
+            nIterations,
+            useRamaRestraints,
             ramaWeight,
-            useTorsionRestraintsCheckRef.current.checked,
-            torsionWeightSliderRef.current
+            useTorsionRestraints,
+            torsionWeight
         );
-    }, [molecules]);
+    }, [molecules, ncyc, nIterations, useRamaRestraints, ramaWeight, useTorsionRestraints, torsionWeight]);
 
     return (
         <>
@@ -137,7 +132,6 @@ export const MinimizeEnergy = () => {
             </MoorhenStack>
 
             <MoorhenToggle
-                ref={useRamaRestraintsCheckRef}
                 type="switch"
                 checked={useRamaRestraints}
                 onChange={() => {
@@ -147,7 +141,6 @@ export const MinimizeEnergy = () => {
             />
 
             <MoorhenToggle
-                ref={useTorsionRestraintsCheckRef}
                 type="switch"
                 checked={useTorsionRestraints}
                 onChange={() => {

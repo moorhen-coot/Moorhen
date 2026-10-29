@@ -23,21 +23,27 @@ export const ActivityIndicator = () => {
         : "";
 
     const glWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
-        const chemShiftAtom = hoveredAtom.atomInfo
-        ? `Chemical shift: ${hoveredAtom.molecule?.chemShifts.filter(cs => 
-            (cs.atom === hoveredAtom.atomInfo.name &&
-             cs.chain === hoveredAtom.atomInfo.chain_id &&
-             (cs.seq+"") === (hoveredAtom.atomInfo.res_no+"") &&
-             cs.resname === hoveredAtom.atomInfo.res_name)
-                        )[0]?.chemshift?? "N/A"
-                    
-                } Ambiguous? ${hoveredAtom.molecule?.chemShifts.filter(cs => 
-            (cs.atom === hoveredAtom.atomInfo.name &&
-             cs.chain === hoveredAtom.atomInfo.chain_id &&
-             (cs.seq+"") === (hoveredAtom.atomInfo.res_no+"") &&
-             cs.resname === hoveredAtom.atomInfo.res_name)
-                        )[0]?.ambiguityFlag?? "N/A"}`
-        : "";    
+    const atomChemShift = hoveredAtom.atomInfo
+        ? hoveredAtom.molecule?.chemShifts?.find(
+              cs =>
+                  cs.atom === hoveredAtom.atomInfo.name &&
+                  cs.chain === hoveredAtom.atomInfo.chain_id &&
+                  `${cs.seq}` === `${hoveredAtom.atomInfo.res_no}` &&
+                  cs.resname === hoveredAtom.atomInfo.res_name
+          )
+        : undefined;
+    const chemShiftAtom = atomChemShift
+        ? `δ: ${Number(atomChemShift.chemshift).toFixed(2)} ppm · amb: ${atomChemShift.ambiguityFlag ? "yes" : "no"}`
+        : "δ: N/A";
+
+    const lineStyle: React.CSSProperties = {
+        display: "block",
+        minWidth: 0,
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+    };
+    const infoLine = NMRMode ? chemShiftAtom : bFactorNOccupancy;
     const busyIndicator = busy ? (
         <>
             <MoorhenSpinner size="3rem" />
@@ -58,20 +64,13 @@ export const ActivityIndicator = () => {
                     {busyIndicator}
                     {showHoverInfo && hoveredAtom.cid && (
                         <MoorhenStack style={{ minWidth: "0" }}>
-                            <span>{reformatedCid}</span>
-                            
-                            <span style={{ fontSize: "0.8em" }}>{NMRMode? chemShiftAtom: bFactorNOccupancy}</span>
-                            <span
-                                style={{
-                                    fontSize: "0.8em",
-                                    textOverflow: "ellipsis",
-                                    display: "block",
-                                    minWidth: 0,
-                                    whiteSpace: "nowrap",
-                                    overflow: "hidden",
-                                    border: "none",
-                                }}
-                            >
+                            <span style={lineStyle} title={reformatedCid}>
+                                {reformatedCid}
+                            </span>
+                            <span style={{ ...lineStyle, fontSize: "0.8em" }} title={infoLine}>
+                                {infoLine}
+                            </span>
+                            <span style={{ ...lineStyle, fontSize: "0.8em" }} title={hoveredAtom.molecule.name}>
                                 {hoveredAtom.molecule.name}
                             </span>
                         </MoorhenStack>

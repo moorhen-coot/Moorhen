@@ -4,6 +4,7 @@ import { clampValue, toFixedNoZero } from "../../misc/helpers";
 import { MoorhenNumberInput } from "../MoorhenNumberInput/NumberInput";
 import "./MoorhenSlider.css";
 import { PlusMinusButton } from "./PlusMinusButton";
+import { getDeepActiveElement } from "@/utils/shadowDom";
 
 type MoorhenSliderPropsBase = {
     value: number; // value passed from parent
@@ -54,7 +55,7 @@ type MoorhenSliderDefault = {
     value2?: never;
 } & MoorhenSliderPropsBase;
 
-type MoorhenSliderProps = MoorhenSliderDefault | MoorhenSliderRange;
+export type MoorhenSliderProps = MoorhenSliderDefault | MoorhenSliderRange;
 
 function log10ofT<T extends number | [number, number]>(val: T, resolveScaling: (v: number) => number): T {
     if (Array.isArray(val)) {
@@ -257,7 +258,8 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
     const thumb2Ref = useRef<HTMLDivElement>(null);
 
     const blurActiveTextInput = () => {
-        const activeElement = document.activeElement;
+        // Also finds the focused input inside the web component's shadow root
+        const activeElement = getDeepActiveElement();
         if (activeElement instanceof HTMLInputElement && activeElement.type !== "range") {
             activeElement.blur();
         }

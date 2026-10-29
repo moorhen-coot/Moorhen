@@ -1,10 +1,13 @@
-import { useEffect, useCallback, forwardRef, useState, useReducer } from 'react';
+import { useEffect, useCallback, forwardRef, useState, useReducer, useRef } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import * as quat4 from 'gl-matrix/quat';
+import { FIELD_DEPTH_FRONT, FIELD_DEPTH_BACK } from '../../WebGLgComponents/slab';
 import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { buildBuffers, appendOtherData, } from '../../WebGLgComponents/buildBuffers'
 import { getVectorsBuffers } from '../../WebGLgComponents/vectorsDraw'
+import { getThreeDObjectsBuffers } from '../../WebGLgComponents/threeDObjectsDraw'
+import { getGizmoBuffers } from '../../WebGLgComponents/gizmoDraw'
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import type { ActionButtonSettings } from '../context-menu/MoorhenContextMenu';
 import { useCommandCentre, useMoorhenInstance } from '../../InstanceManager';
@@ -19,6 +22,10 @@ import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
+import { isSilent, viewDifference } from "../../WebGLgComponents/viewEcho";
+import { HighlightHoveredSection } from './HoverSection';
+import { DragHandles } from './DragHandles';
+import { SelectClickedObject } from './SelectObject';
 
 
 interface MoorhenWebMGPropsInterface {
@@ -27,6 +34,7 @@ interface MoorhenWebMGPropsInterface {
     viewOnly: boolean;
     urlPrefix: string;
     onAtomHovered: (identifier: { buffer: { id: string; }; atom: moorhen.AtomInfo; }) => void;
+    onSectionHovered?: (identifier: { buffer: { id: string; }; kind: string; tag: string; }) => void;
 }
 
 const intialDefaultActionButtonSettings: ActionButtonSettings = {
@@ -82,6 +90,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
+    const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
@@ -96,6 +105,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
     const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
+    const depthPeelLayers = useSelector((state: moorhen.State) => state.sceneSettings.depthPeelLayers)
+    const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately)
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth)
     const atomLabelDepthMode = useSelector((state: moorhen.State) => state.labelSettings.atomLabelDepthMode)
     const mouseSensitivity = useSelector((state: moorhen.State) => state.mouseSettings.mouseSensitivity)
@@ -137,52 +148,161 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
 
     const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
-    const displayBuffers = useSelector((state: moorhen.State) => state.glRef.displayBuffers)
-    const [vectorBuffers, setVectorBuffers] = useState<DisplayBuffer[]>([])
-    const [vectorLabelBuffers, setVectorLabelBuffers] = useState<any>([])
+    const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
+    // No selector for displayBuffers: the rebuilds read it from the store at dispatch time
+    // instead, so subscribing here would only re-render this component on every publish - which
+    // is now once per animation frame while a 3D object is being dragged.
+    // Held in refs rather than state because a rebuild can start before React has re-rendered -
+    // notably now that a 3D object can change on every animation frame while a control is
+    // dragged. A stale read here would clear the wrong buffers and leak the new ones.
+    const vectorBuffersRef = useRef<DisplayBuffer[]>([])
+    const vectorLabelBuffersRef = useRef<any[]>([])
+    const gizmoBuffersRef = useRef<any[]>([])
+    const threeDObjectsBuffersRef = useRef<DisplayBuffer[]>([])
     const shortcutsBlocked = useSelector((state: RootState) => state.globalUI.areShortcutsBlocked)
 
-    useEffect(() => {
-        const dispatchVectorsBuffers = async() => {
-        if(glRef !== null && typeof glRef !== 'function') {
+    /**
+     * Publish the display buffers this component owns, keeping everything it does not.
+     *
+     * Composed from the refs and the live store at dispatch time, never from a value captured
+     * when an effect ran. That is the whole trick to making the two rebuilds independent: if each
+     * captured `displayBuffers` up front, both would dispatch a list missing the other's buffers,
+     * and whichever landed second would erase the other's work. A session load, which populates
+     * vectors and 3D objects in the same commit, hits that every time - and which of the two
+     * disappears just depends on which rebuild happens to finish first.
+     *
+     * @param {Set<string>} droppedIds - ids this rebuild has just retired
+     */
+    const publishDisplayBuffers = useCallback((droppedIds: Set<string>) => {
+        const owned = [...threeDObjectsBuffersRef.current, ...vectorBuffersRef.current, ...gizmoBuffersRef.current]
+        const ownedIds = new Set(owned.map(buffer => buffer.id))
+        const others = (store.getState().glRef.displayBuffers ?? []).filter(
+            buffer => !ownedIds.has(buffer.id) && !droppedIds.has(buffer.id)
+        )
+        // Ours go last, leaving everything else where it already was. Hover state is held as an
+        // *index* into this array, so putting ours first would renumber every molecule and
+        // metaballs buffer each time a 3D object was added or removed - and a 3D object can now
+        // change on every animation frame. Appending keeps those indices stable.
+        dispatch(setDisplayBuffers([...others, ...owned]))
+    }, [store, dispatch])
 
-            let oldLabelBuffers = labelBuffers
-            vectorLabelBuffers.forEach((buffer) => {
-                oldLabelBuffers = oldLabelBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
-            })
+    /**
+     * The same for label buffers, which only the vectors produce here.
+     *
+     * Note these are identified by `uuid`, not `id` - that is what MoorhenMoleculeRepresentation
+     * uses when it prunes them, and what getVectorsBuffers actually sets.
+     *
+     * @param {Set<string>} droppedUuids - uuids this rebuild has just retired
+     */
+    const publishLabelBuffers = useCallback((droppedUuids: Set<string>) => {
+        const owned = vectorLabelBuffersRef.current
+        const ownedUuids = new Set(owned.map(buffer => buffer.uuid))
+        const others = (store.getState().glRef.labelBuffers ?? []).filter(
+            buffer => !ownedUuids.has(buffer.uuid) && !droppedUuids.has(buffer.uuid)
+        )
+        dispatch(setLabelBuffers([...owned, ...others]))
+    }, [store, dispatch])
 
-            let oldBuffers = displayBuffers
-            vectorBuffers.forEach((buffer) => {
-                buffer.clearBuffers()
-                oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
-            })
-
-            const [objects,newLabelBuffers] = await getVectorsBuffers(store)
-
-            let newBuffers = []
-            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                const a = appendOtherData(object, store, true);
-                newBuffers = [...newBuffers,...a]
+    // statsLabel is descriptive only - see DisplayBuffer.statsLabel. It is passed in because this
+    // helper serves both vectors and 3D objects, and by the time the buffers exist neither is
+    // distinguishable from the other.
+    const buildDisplayBuffers = useCallback((objects: any[], statsLabel?: string): DisplayBuffer[] => {
+        let newBuffers: DisplayBuffer[] = []
+        objects
+            .filter(object => typeof object !== 'undefined' && object !== null)
+            .forEach(object => {
+                const a = appendOtherData(object, store, true)
+                a.forEach(buffer => { buffer.statsLabel = statsLabel })
+                newBuffers = [...newBuffers, ...a]
                 buildBuffers(a, store)
             })
+        return newBuffers
+    }, [store])
 
-            setVectorBuffers(newBuffers)
-            setVectorLabelBuffers(newLabelBuffers)
-            dispatch(setDisplayBuffers([...newBuffers,...oldBuffers]))
-            dispatch(setLabelBuffers([...newLabelBuffers,...oldLabelBuffers]))
+    // Vectors rebuild only when the vector list changes. This is the expensive side: it runs gemmi
+    // atom selections and awaits MathJax for any LaTeX label, so it must not be dragged along by
+    // an unrelated 3D object edit.
+    useEffect(() => {
+        if (glRef === null || typeof glRef === 'function') return
+        let superseded = false
+
+        const rebuildVectors = async () => {
+            const [objects, newLabelBuffers] = await getVectorsBuffers(store)
+            // Bail before creating anything if a newer rebuild has started, so there is nothing
+            // left orphaned. The old buffers stay in the refs for that newer run to clear.
+            if (superseded) return
+
+            const retired = vectorBuffersRef.current
+            const retiredLabels = vectorLabelBuffersRef.current
+            retired.forEach(buffer => buffer.clearBuffers(store.getState().glRef.glCtx))
+
+            vectorBuffersRef.current = buildDisplayBuffers(objects, "vectors")
+            vectorLabelBuffersRef.current = newLabelBuffers ?? []
+
+            publishDisplayBuffers(new Set(retired.map(buffer => buffer.id)))
+            publishLabelBuffers(new Set(retiredLabels.map(buffer => buffer.uuid)))
         }
+
+        rebuildVectors()
+        return () => { superseded = true }
+    }, [vectorsList, glRef, store, buildDisplayBuffers, publishDisplayBuffers, publishLabelBuffers])
+
+    // 3D objects rebuild only when they change, which is now potentially every animation frame
+    // while one of them is being dragged in the editor.
+    useEffect(() => {
+        if (glRef === null || typeof glRef === 'function') return
+        let superseded = false
+
+        const rebuildThreeDObjects = async () => {
+            const objects = await getThreeDObjectsBuffers(store)
+            if (superseded) return
+
+            const retired = threeDObjectsBuffersRef.current
+            retired.forEach(buffer => buffer.clearBuffers(store.getState().glRef.glCtx))
+
+            threeDObjectsBuffersRef.current = buildDisplayBuffers(objects, "3D objects")
+
+            publishDisplayBuffers(new Set(retired.map(buffer => buffer.id)))
         }
-        dispatchVectorsBuffers()
-    }, [vectorsList])
+
+        rebuildThreeDObjects()
+        return () => { superseded = true }
+    }, [threeDObjects, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
+
+    // The manipulation handles rebuild on their own, so that neither editing an object nor
+    // dragging a handle drags the other along with it. Zoom is a dependency because the handles
+    // are a constant size on screen, which means a changing size in the world.
+    const selectedThreeDObjectId = useSelector((state: moorhen.State) => state.generalStates.selectedThreeDObjectId)
+    useEffect(() => {
+        if (glRef === null || typeof glRef === 'function') return
+        let superseded = false
+
+        const rebuildGizmo = async () => {
+            const objects = await getGizmoBuffers(store)
+            if (superseded) return
+
+            const retired = gizmoBuffersRef.current
+            retired.forEach(buffer => buffer.clearBuffers(store.getState().glRef.glCtx))
+
+            gizmoBuffersRef.current = buildDisplayBuffers(objects)
+
+            publishDisplayBuffers(new Set(retired.map(buffer => buffer.id)))
+        }
+
+        rebuildGizmo()
+        return () => { superseded = true }
+    }, [selectedThreeDObjectId, threeDObjects, zoom, backgroundColor, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
 
     const commandCentre = useCommandCentre()
 
-
-
+    /**
+     * The camera re-derives the slab itself now, under its slab policy, so this no longer has to
+     * dispatch autoClipFogByZoom and wait for the answer to come back round through the store.
+     *
+     * The listener stays because `zoomChanged` is a public event that code outside Moorhen may be
+     * listening for, and because removing it is a separate decision from this one.
+     */
     const handleZoomChanged = useCallback(evt => {
-        if (resetClippingFogging) {
-            dispatch(autoClipFogByZoom())
-        }
     }, [glRef, resetClippingFogging])
 
     const handleGoToBlobDoubleClick = useCallback(async (evt) => {
@@ -230,6 +350,25 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [doShadowDepthDebug])
+
+    // Only when the quality actually changes, never on mount.
+    //
+    // An effect with a dependency list still runs once when the component appears, and on that
+    // first pass there is no shadow map to rebuild and no reason to ask for a frame. Asking
+    // anyway means a drawScene before the renderer necessarily has its shaders, buffers and
+    // Coot, which is its own class of first-frame failure - and one that leaves nothing on
+    // screen afterwards.
+    const shadowQualityMounted = useRef(false)
+    useEffect(() => {
+        if (!shadowQualityMounted.current) {
+            shadowQualityMounted.current = true
+            return
+        }
+        if(glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.rebuildShadowMap()
+            glRef.current.drawScene()
+        }
+    }, [shadowMapQuality])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -411,6 +550,20 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setDepthPeelLayers(depthPeelLayers)
+            glRef.current.drawScene()
+        }
+    }, [depthPeelLayers])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.peelOpaqueSeparately = peelOpaqueSeparately
+            glRef.current.drawScene()
+        }
+    }, [peelOpaqueSeparately])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.blurDepth = depthBlurDepth
             glRef.current.drawScene()
         }
@@ -425,9 +578,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const handleWindowResized = useCallback(() => {
         if (glRef !== null && typeof glRef !== 'function') {
-            if (resetClippingFogging) {
-                dispatch(autoClipFogByZoom())
-            }
+            // No autoClipFogByZoom dispatch: the slab follows zoom inside the camera, and resizing
+            // does not change the zoom, so there was never anything to re-derive here.
             glRef.current.resize(width, height)
             glRef.current.drawScene()
         }
@@ -564,8 +716,59 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [labelBuffers, glRef])
 
+    /**
+     * How the slab follows the camera: the switch the user sees as "Reset clip and fog on zoom".
+     *
+     * It used to be a listener - a zoomChanged event, a dispatch, a reducer recomputing four
+     * numbers, two effects pushing them back into the renderer. It is now a policy the camera
+     * applies as part of writing its own state, so the coupling between zoom and the slab is
+     * declared in one place instead of implied by a round trip. The depths are the 8 and 21 that
+     * execAutoClipFogByZoom used.
+     *
+     * `reapplySlab` is what the switch needs: turning it on should snap the slab to the current
+     * zoom immediately rather than at the next move. The policy itself only acts when the zoom
+     * changes, so that a clip set by hand - from the keyboard shortcuts, the slider handles or the
+     * scripting API - stands until the next zoom, as it always did.
+     */
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.cameraController.slabPolicy = resetClippingFogging
+                ? { kind: "auto", fieldDepthFront: FIELD_DEPTH_FRONT, fieldDepthBack: FIELD_DEPTH_BACK }
+                : { kind: "manual" }
+            glRef.current.cameraController.reapplySlab()
+            glRef.current.drawScene()
+        }
+    }, [resetClippingFogging, glRef])
+
+    /**
+     * THE EYE MUST BE RECONCILED BEFORE THE SLAB. THIS EFFECT STAYS ABOVE THE NEXT TWO.
+     *
+     * The store records fog as absolute distances from the eye, so interpreting a saved fog against
+     * the wrong eye puts it in the wrong place. Restoring a session dispatches the eye and the fog
+     * in the same batch, and React runs effects in declaration order: with these the other way
+     * round, a session saved with the eye at 400 restores its fog measured against 250 and lands
+     * roughly 150A adrift - which is the bug this whole slice exists to fix, re-introduced one line
+     * lower down.
+     *
+     * Dragging the eye-distance slider works either way round, and that is why the order is easy to
+     * get wrong without noticing: there the camera keeps its offsets, echoes the new absolute fog
+     * back here, and the slab effects then agree and do nothing.
+     */
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            if (Math.abs(glRef.current.cameraController.state.eyeDistance - fogClipOffset) < 1e-9) return
+            glRef.current.setFogClipOffset(fogClipOffset)
+            glRef.current.drawScene()
+        }
+    }, [fogClipOffset, glRef])
+
+    // These two are reconciliation now rather than the way the slab is set: the camera owns it and
+    // echoes it back here. They skip when the renderer already agrees, which is what keeps the echo
+    // and the effect from chasing each other over a last-bit difference.
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            const camera = glRef.current.cameraController.state
+            if (Math.abs(camera.clipFront - clipStart) < 1e-9 && Math.abs(camera.clipBack - clipEnd) < 1e-9) return
             glRef.current.set_clip_range(-clipStart, clipEnd)
             glRef.current.drawScene()
         }
@@ -573,17 +776,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            const camera = glRef.current.cameraController.state
+            if (Math.abs(camera.eyeDistance - camera.fogFront - fogStart) < 1e-9 &&
+                Math.abs(camera.eyeDistance + camera.fogBack - fogEnd) < 1e-9) return
             glRef.current.set_fog_range(fogStart, fogEnd)
             glRef.current.drawScene()
         }
     }, [fogStart, fogEnd, glRef])
-
-    useEffect(() => {
-        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.setFogClipOffset(fogClipOffset)
-            glRef.current.drawScene()
-        }
-    }, [fogClipOffset, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
@@ -683,27 +882,32 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         dispatch(setCursorPosition([x,y]))
     })
 
+    /**
+     * Reconciliation: the store asks for a view, and the camera eases to it.
+     *
+     * The comparison is viewDifference, which is the same function the camera's own echo uses to
+     * decide what the store needs told - asked here in the other direction. That is deliberate.
+     * The two have to agree on when a difference counts, and they used to agree only because the
+     * same 1e-5 had been typed in both places: if the echo ever became the slacker of the two, a
+     * difference it never reported would still be large enough for this effect to act on, and the
+     * view would ease back a moment after something moved it. Sharing the function makes the
+     * tolerance a fact rather than a coincidence.
+     *
+     * Easing, not jumping, and through moveCameraTo - which declines outright while a driver holds
+     * the camera. So a movie is not disturbed by a store change arriving mid-playback.
+     */
     useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            let doOrigin = false
-            let doQuat = false
-            let doZoom = false
-            if(Math.abs(originState[0]-glRef.current.origin[0])>1e-5||Math.abs(originState[1]-glRef.current.origin[1])>1e-5||Math.abs(originState[2]-glRef.current.origin[2])>1e-5){
-                doOrigin = true
-            }
-            if(Math.abs(quat[0]-glRef.current.myQuat[0])>1e-5||Math.abs(quat[1]-glRef.current.myQuat[1])>1e-5||Math.abs(quat[2]-glRef.current.myQuat[2])>1e-5||Math.abs(quat[3]-glRef.current.myQuat[3])>1e-5){
-                doQuat = true
-            }
-            //if(glRef.current.animating) doQuat = false
-            if(Math.abs(zoom-glRef.current.zoom)>1e-5){
-                doZoom = true
-            }
+        if(glRef !== null && typeof glRef !== 'function' && glRef.current) {
             if(isNaN(quat[0])||isNaN(quat[1])||isNaN(quat[2])||isNaN(quat[3])){
                 console.log(quat)
                 console.log(originState)
                 console.log(zoom)
+                return
             }
-            if(doOrigin||doQuat||doZoom){
+            const wanted = viewDifference(
+                { origin: originState, quat, zoom },
+                { origin: glRef.current.origin, quat: glRef.current.myQuat, zoom: glRef.current.zoom })
+            if(!isSilent(wanted)){
                 glRef.current.setOriginOrientationAndZoomAnimated(originState,quat,zoom)
             }
         }
@@ -714,6 +918,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
+                    onSectionHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onSectionHovered : null}
                     onKeyPress={onKeyPress}
                     onZoomChanged={onZoomChanged}
                     onOriginChanged={onOriginChanged}
@@ -747,6 +952,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     setDefaultActionButtonSettings={setDefaultActionButtonSettings}
                 />}
                 <DrawHoverAtom />
+                <HighlightHoveredSection />
+                <DragHandles />
+                <SelectClickedObject />
             </>
 });
 

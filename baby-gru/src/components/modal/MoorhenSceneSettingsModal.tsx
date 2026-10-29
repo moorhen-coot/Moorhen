@@ -7,10 +7,13 @@ import {
     setBackgroundColor,
     setClipCap,
     setDepthBlurDepth,
+    setDoPerspectiveProjection,
+    setPerspectiveEyeDistance,
     setDepthBlurRadius,
     setDoEdgeDetect,
     setDoSSAO,
     setDoShadow,
+    setShadowMapQuality,
     setEdgeDetectDepthScale,
     setEdgeDetectDepthThreshold,
     setEdgeDetectNormalScale,
@@ -21,13 +24,15 @@ import {
     setUseOffScreenBuffers,setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd , setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
 } from "../../store/sceneSettingsSlice";
 import { moorhen } from "../../types/moorhen";
+import { MAX_EYE_DISTANCE, MIN_EYE_DISTANCE } from "../../WebGLgComponents/mgWebGLParts/projection";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
+import type { ShadowMapQuality } from "../../WebGLgComponents/mgWebGLParts/framebuffers";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
-import { MoorhenColorSwatch } from "../misc/MoorhenColorSwatch";
+import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSwatch";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { MoorhenSlidersSettings } from "./MoorhenSceneSlidersModal";
 
@@ -42,6 +47,11 @@ const EdgeDetectPanel = () => {
 
     return (
         <MoorhenStack direction="vertical" card={true}>
+            {/* All four are disabled while auto-clip is on: the camera re-derives the slab from
+                zoom as part of writing its own state, so a value set here would be overwritten
+                before it was drawn. A control that silently does nothing is worse than one that
+                says it is unavailable. The sliders modal already disables its fog and clip
+                toggles on the same condition. */}
             <MoorhenToggle
                 type="switch"
                 checked={doEdgeDetect}
@@ -78,7 +88,7 @@ const EdgeDetectPanel = () => {
                 minVal={0.1}
                 maxVal={10.0}
                 scale="linear"
-                sliderTitle="Depth threshold"
+                sliderTitle="Depth threshold (Å)"
                 value={edgeDetectDepthThreshold}
                 setValue={val => dispatch(setEdgeDetectDepthThreshold(val))}
                 stepButtons={0.1}
@@ -118,25 +128,56 @@ const OcclusionPanel = () => {
 
             <MoorhenSlider
                 minVal={0.0}
-                maxVal={2.0}
+                maxVal={10.0}
                 scale="linear"
                 isDisabled={!doSSAO}
-                sliderTitle="Occlusion radius"
+                sliderTitle="Occlusion radius (Å)"
                 value={ssaoRadius}
                 setValue={val => dispatch(setSsaoRadius(val))}
-                stepButtons={0.1}
+                stepButtons={0.5}
                 decimalPlaces={1}
             />
             <MoorhenSlider
                 minVal={0.0}
-                maxVal={1.0}
+                maxVal={4.0}
                 scale="linear"
                 isDisabled={!doSSAO}
-                sliderTitle="Occlusion effect"
+                sliderTitle="Occlusion strength"
                 value={ssaoBias}
                 setValue={val => dispatch(setSsaoBias(val))}
                 stepButtons={0.1}
                 decimalPlaces={1}
+            />
+        </MoorhenStack>
+    );
+};
+
+const PerspectivePanel = () => {
+    const dispatch = useDispatch();
+    const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection);
+    const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset);
+
+    return (
+        <MoorhenStack direction="vertical" card={true}>
+            <MoorhenToggle
+                type="switch"
+                checked={doPerspectiveProjection}
+                onChange={() => {
+                    dispatch(setDoPerspectiveProjection(!doPerspectiveProjection));
+                }}
+                label="Perspective projection"
+            />
+
+            <MoorhenSlider
+                minVal={MIN_EYE_DISTANCE}
+                maxVal={MAX_EYE_DISTANCE}
+                scale="linear"
+                isDisabled={!doPerspectiveProjection}
+                sliderTitle="Eye distance (Å) — closer converges more"
+                value={fogClipOffset}
+                setValue={val => dispatch(setPerspectiveEyeDistance(val))}
+                stepButtons={25}
+                decimalPlaces={0}
             />
         </MoorhenStack>
     );
@@ -250,14 +291,14 @@ const DepthBlurPanel = () => {
 
             <MoorhenSlider
                 isDisabled={!useOffScreenBuffers}
-                minVal={0.4}
-                maxVal={0.6}
+                minVal={-100.0}
+                maxVal={100.0}
                 scale="linear"
-                sliderTitle="Blur depth"
+                sliderTitle="Blur beyond (Å from centre)"
                 value={depthBlurDepth}
                 setValue={val => dispatch(setDepthBlurDepth(val))}
-                stepButtons={0.0001}
-                decimalPlaces={4}
+                stepButtons={1}
+                decimalPlaces={1}
             />
             <MoorhenSlider
                 isDisabled={!useOffScreenBuffers}
@@ -360,7 +401,8 @@ const LightingPanel = () => {
     const diffuse = useSelector((state: moorhen.State) => state.sceneSettings.diffuse);
     const specularPower = useSelector((state: moorhen.State) => state.sceneSettings.specularPower);
 
-    const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow);
+    const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
+    const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality);
 
     const dispatch = useDispatch();
 
@@ -430,6 +472,21 @@ const LightingPanel = () => {
                 }}
                 label="Shadows"
             />
+            {/* Only when there are shadows to resolve. Measured costs are in SHADOW_MAP_TEXELS;
+                briefly, "nice" is nearly free and "smooth" roughly doubles the frame's GPU time
+                on a large structure. */}
+            {doShadow && (
+                <MoorhenSelect
+                    label="Shadow quality"
+                    value={shadowMapQuality}
+                    onChange={event =>
+                        dispatch(setShadowMapQuality(event.target.value as ShadowMapQuality))}
+                >
+                    <option value="coarse">Coarse</option>
+                    <option value="nice">Nice</option>
+                    <option value="smooth">Smooth</option>
+                </MoorhenSelect>
+            )}
         </MoorhenStack>
     );
 };
@@ -457,6 +514,7 @@ export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "ve
                 <LightingPanel />
                 {isWebGL2 && !newSlidersMode && <DepthBlurPanel />}
                 <OcclusionPanel />
+                <PerspectivePanel />
             </MoorhenStack>
         </MoorhenStack>
     );

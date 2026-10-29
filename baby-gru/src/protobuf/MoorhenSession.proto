@@ -74,6 +74,31 @@ message Representation {
     string hbondedToCid = 11;
     bool hbondedTo = 12;
     float neighboursDistance = 13;
+    /**
+     * A representation's identity, kept so that it is the same one after a reload.
+     *
+     * Minted as a guid at construction and, before this field existed, minted afresh on every
+     * restore - so anything that referred to a representation by id (a movie's per-object fades,
+     * say) lost its referent the moment the session was reopened. A string decodes absent as "",
+     * which is not a legitimate id, so a session written before this field keeps the new guid
+     * without needing `optional` to tell absent from zero.
+     */
+    string uniqueId = 14;
+    /**
+     * How solid the representation is, where its colours do not say otherwise.
+     *
+     * Written into saved sessions and read back on restore for as long as there has been a
+     * session format - but never declared here, so pbjs dropped it on the way out. A surface
+     * saved at half opacity came back solid from a .pb session, while a JSON backup of the same
+     * scene restored correctly.
+     *
+     * `optional` because zero is a legitimate opacity - fully transparent - so absent and zero
+     * have to be distinguishable. Today's decode happens to omit absent scalars, which would be
+     * enough; but it is one toObject({defaults: true}) away from turning every representation in
+     * every older session invisible, and explicit presence costs nothing. Same reasoning as
+     * ViewDataSession.eyeDistance.
+     */
+    optional float nonCustomOpacity = 15;
 }
 
 message MoleculeSessionData {
@@ -187,6 +212,52 @@ message Overlay2DSessionData {
   repeated MoorhenOverlay2DImageSrcFrac imageFracPath2D = 5;
 }
 
+// NOTE: field names here must match the Redux field names exactly. pbjs is invoked with
+// --keep-case so that snake_case names survive into the generated code.
+
+message Moorhen3DObject {
+    string uniqueId = 1;
+    string type = 2;
+    string colour = 3;
+    repeated float origin = 4;
+    repeated float end = 5;
+    repeated float top = 6;
+    repeated float scalexyz = 7;
+    repeated float orientation = 8;
+    // These are `optional` so that explicit presence is tracked: proto3 scalars have no presence
+    // by default, so a genuine value of 0 would be indistinguishable from "not set" and would be
+    // dropped by toObject().
+    optional float radius = 9;
+    optional float scale = 10;
+    optional uint32 n_sides = 11;
+    optional float bottom_radius = 12;
+    optional float top_radius = 13;
+    optional float major_radius = 14;
+    optional float minor_radius = 15;
+    // Extent along the shape's own z axis, for the shapes positioned by origin + orientation
+    // rather than by a start and an end point.
+    optional float height = 16;
+    // Radius of the hole: in an annulus, where `radius` is the outer radius, and in a path,
+    // where a non-zero value bores the tube out into a pipe.
+    optional float inner_radius = 17;
+    // Angle swept by an arc, in degrees.
+    optional float sweep_angle = 18;
+    // Draw a shape as a cage of tubes instead of as a surface.
+    optional bool wireframe = 19;
+    // Tube radius of those wires, in scene units.
+    optional float wireframe_radius = 20;
+    // A path's points, as x, y, z triples relative to origin, and the point index at which each
+    // separate run of it begins.
+    repeated float points = 21;
+    repeated uint32 run_starts = 22;
+    // How many of those points make one separately hoverable section.
+    optional uint32 point_stride = 23;
+    // An opaque label per section, and the scheme they are written in. Meaningful only to
+    // whatever generated the path and whatever consumes a hover on it.
+    repeated string section_tags = 24;
+    optional string tag_kind = 25;
+}
+
 message RGB {
   float r = 1;
   float g = 2;
@@ -235,6 +306,18 @@ message ViewDataSession {
   EdgeDetection edgeDetection = 17;
   Blur blur = 18;
   bool doPerspectiveProjection = 19;
+  // Distance from the eye to the view centre - sceneSettings.fogClipOffset.
+  //
+  // Without this, fogStart and fogEnd are distances from an eye whose position is not recorded,
+  // so they can only be read back against an assumed 250. That was right until the perspective
+  // eye-distance control made the eye movable.
+  //
+  // `optional` is load-bearing, not decoration. A proto3 float has no explicit presence, so an
+  // absent one decodes as 0 rather than undefined - and `?? 250` on the restore side would never
+  // fire. Every older session would arrive claiming an eye at the origin, and fog measured from
+  // an eye at 0 is not slightly wrong, it is nowhere. See LEGACY_EYE_DISTANCE in
+  // utils/sessionCamera.ts.
+  optional float eyeDistance = 20;
 }
 
 message Ssao {
@@ -267,4 +350,5 @@ message Session {
   bool dataIsEmbedded = 7;
   optional Overlay2DSessionData overlay2dData = 8;
   repeated MoorhenVector vectorData = 9;
+  repeated Moorhen3DObject threeDObjectData = 10;
 }
