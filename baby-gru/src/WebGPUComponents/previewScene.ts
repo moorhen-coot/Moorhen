@@ -121,17 +121,26 @@ export interface EffectSettings {
     depthBlur?: DepthBlurSettings | null;
 }
 
+/** Pixels of the image's shorter side that make one unit of WebGL's edge scale (effectSettings). */
+export const EDGE_SCALE_SIDE = 2400;
+
 /**
- * The effects the source asks for.
+ * The effects the source asks for, for an image `width` x `height` pixels.
  *
- * Edge detection's steps are in pixels of the image, and may be fractions of one: WebGL's are in
- * texels of its 2048-square g-buffer, scaled by the canvas's aspect, which for an ordinary window
- * makes its default scale of 2 about half a pixel. So a quarter of the scale; 0 stays "off"
- * (normal edges are off by default, with scaleNormal 0). The edge pass works on a g-buffer finer
- * than the image to take them (effectPasses.ts), as WebGL's is.
+ * Edge detection's steps are in pixels of the image, and may be fractions of one. WebGL's are
+ * texels of its 2048-square g-buffer, divided by the canvas's aspect, so they grow with the
+ * canvas: its default scale of 2 steps 2 x height / 2048 pixels across and that times the aspect
+ * less down - 1.3 and 0.9 pixels on a 1948 x 1322 canvas - and its edges keep the same width on
+ * the screen whatever its pixel ratio. Here the step is the same both ways, the scale times the
+ * image's shorter side over 2400: about WebGL's two averaged on an ordinary landscape window,
+ * where they are 1.1 pixels; and not WebGL's 9 pixels down a tall phone, whose aspect makes its
+ * steps there twice as long as across. 0 stays "off" (normal edges are off by default, with
+ * scaleNormal 0). The edge pass works on a g-buffer finer than the image to take the fractions
+ * (effectPasses.ts), as WebGL's is.
  */
-export function effectSettings(source: PreviewCameraSource): EffectSettings {
-    const step = (scale: number | undefined) => (scale && scale > 0 ? scale / 4 : 0);
+export function effectSettings(source: PreviewCameraSource, width: number, height: number): EffectSettings {
+    const pixelsPerScale = Math.max(1, Math.min(width, height)) / EDGE_SCALE_SIDE;
+    const step = (scale: number | undefined) => (scale && scale > 0 ? scale * pixelsPerScale : 0);
     return {
         ssao: source.doSSAO ? { radius: source.ssaoRadius ?? 5, strength: source.ssaoBias ?? 1 } : null,
         shadow: source.doShadow

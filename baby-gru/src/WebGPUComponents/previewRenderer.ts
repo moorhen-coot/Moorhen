@@ -472,7 +472,7 @@ export class WebGPUPreviewRenderer {
                    width: number, height: number, options: { maxTile?: number; softShadows?: boolean; transparentBackground?: boolean } = {}): Promise<PreviewSnapshot> {
         width = Math.round(width);
         height = Math.round(height);
-        const settings = effectSettings(camera);
+        const settings = effectSettings(camera, width, height);
         const edgeCap = settings.edges ? MAX_SNAPSHOT_TILE_WITH_EDGES : Infinity;
         // With depth blur, a tile is drawn with a margin as wide as the blur reaches, and only the
         // tile kept, so that what it blurs in from past its edge is the scene there.
@@ -574,7 +574,7 @@ export class WebGPUPreviewRenderer {
         const encoder = this.device.createCommandEncoder({ label: "preview frame" });
         const timing = target.timed ? this.frameTimer?.writes() ?? null : null;
 
-        const settings = effectSettings(camera);
+        const settings = effectSettings(camera, target.width, target.height);
         // Depth blur: the scene resolves into its sharp picture, and the blur and the mix follow
         // before the overlays (depthBlur.ts).
         const blurSettings = settings.depthBlur;
@@ -825,7 +825,7 @@ export class WebGPUPreviewRenderer {
      */
     private drawViews(views: PreviewView[], plan: PreviewPlan, uploads: number, started: number, displayBuffers: readonly DisplayBuffer[],
                       camera: PreviewCameraSource, gpuDraws: readonly PreviewGpuDraw[], target: FrameTarget): PreviewFrameReport {
-        const settings = effectSettings(camera);
+        const settings = effectSettings(camera, target.width, target.height);
         const blurSettings = settings.depthBlur;
         const blur = blurSettings ? this.depthBlur.ensure(target.colour.width, target.colour.height) : null;
         const timing = target.timed ? this.frameTimer?.writes() ?? null : null;

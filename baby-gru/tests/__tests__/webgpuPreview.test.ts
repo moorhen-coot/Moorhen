@@ -12,7 +12,7 @@ import { DisplayBuffer } from "../../src/WebGLgComponents/displayBuffer";
 import { createWebGLBuffers } from "../../src/WebGLgComponents/createWebGLBuffers";
 import { viewProjection } from "../../src/WebGLgComponents/mgWebGLParts/projection";
 import {
-    FRAME_FLOATS, MeshChunk, PreviewCameraSource, describeSkipped, effectSettings, frameUniforms, planMeshChunks, planPreview, previewCameraFrame,
+    FRAME_FLOATS, MeshChunk, PreviewCameraSource, EDGE_SCALE_SIDE, describeSkipped, effectSettings, frameUniforms, planMeshChunks, planPreview, previewCameraFrame,
     hoverSphereRadius, interactiveGlow, interactiveModel, symmetryCopyGrey, previewViews, viewShows,
 } from "../../src/WebGPUComponents/previewScene";
 import { MAX_GBUFFER_SIDE, effectMargin, gbufferScale, ssaoKernel, stepInTexels } from "../../src/WebGPUComponents/effectPasses";
@@ -399,17 +399,26 @@ describe("planMeshChunks", () => {
 
 describe("effectSettings", () => {
     it("is nothing when the scene has no effects on", () => {
-        expect(effectSettings(camera())).toEqual({ ssao: null, shadow: null, edges: null, depthBlur: null });
+        expect(effectSettings(camera(), 1948, 1322)).toEqual({ ssao: null, shadow: null, edges: null, depthBlur: null });
     });
 
     it("takes occlusion's radius and strength (ssaoBias) as WebGL does", () => {
-        expect(effectSettings(camera({ doSSAO: true, ssaoRadius: 3, ssaoBias: 1.5 })).ssao).toEqual({ radius: 3, strength: 1.5 });
+        expect(effectSettings(camera({ doSSAO: true, ssaoRadius: 3, ssaoBias: 1.5 }), 1948, 1322).ssao).toEqual({ radius: 3, strength: 1.5 });
     });
 
-    it("turns WebGL's g-buffer texel steps into pixels, keeping 0 as off", () => {
-        const edges = effectSettings(camera({ doEdgeDetect: true, depthThreshold: 1.3, normalThreshold: 0.5, scaleDepth: 2, scaleNormal: 0 })).edges;
-        expect(edges).toEqual({ depthThreshold: 1.3, normalThreshold: 0.5, depthStep: 0.5, normalStep: 0 });
-        expect(effectSettings(camera({ doEdgeDetect: true, scaleDepth: 6, scaleNormal: 1 })).edges).toMatchObject({ depthStep: 1.5, normalStep: 0.25 });
+    it("turns WebGL's edge scale into pixels, growing with the image's shorter side, keeping 0 as off", () => {
+        // 1948 x 1322: WebGL's default steps 1.3 pixels across and 0.9 down; this, 1.1 both ways.
+        const edges = effectSettings(camera({ doEdgeDetect: true, depthThreshold: 1.3, normalThreshold: 0.5, scaleDepth: 2, scaleNormal: 0 }), 1948, 1322).edges;
+        expect(edges).toMatchObject({ depthThreshold: 1.3, normalThreshold: 0.5, normalStep: 0 });
+        expect(edges.depthStep).toBeCloseTo(2 * 1322 / EDGE_SCALE_SIDE, 6);
+        expect(edges.depthStep).toBeGreaterThan(0.9);
+        expect(edges.depthStep).toBeLessThan(1.3);
+        // Twice the pixels (a screenshot at twice the size, a canvas at twice the pixel ratio):
+        // twice the step, so the same look.
+        expect(effectSettings(camera({ doEdgeDetect: true, scaleDepth: 2 }), 3896, 2644).edges.depthStep).toBeCloseTo(2 * edges.depthStep, 6);
+        // A tall phone: by its shorter side, as a landscape window is.
+        expect(effectSettings(camera({ doEdgeDetect: true, scaleDepth: 2 }), 1322, 1948).edges.depthStep).toBeCloseTo(edges.depthStep, 6);
+        expect(effectSettings(camera({ doEdgeDetect: true, scaleDepth: 6, scaleNormal: 1 }), 2400, 4000).edges).toMatchObject({ depthStep: 6, normalStep: 1 });
     });
 });
 
@@ -499,11 +508,11 @@ describe("previewViews: a divided canvas", () => {
 
 describe("depth blur", () => {
     it("is off unless the offscreen buffers are on, as WebGL names it", () => {
-        expect(effectSettings(camera({ blurSize: 3, blurDepth: 5 })).depthBlur).toBeNull();
+        expect(effectSettings(camera({ blurSize: 3, blurDepth: 5 }), 1948, 1322).depthBlur).toBeNull();
     });
 
     it("blurs with WebGL's Gaussian, taps half the radius apart, as its shaders step", () => {
-        const blur = effectSettings(camera({ useOffScreenBuffers: true, blurSize: 3 })).depthBlur;
+        const blur = effectSettings(camera({ useOffScreenBuffers: true, blurSize: 3 }), 1948, 1322).depthBlur;
         expect(blur).toMatchObject({ taps: 3, step: 1.5, weights: gaussianBlurs[3] });
         expect(blur.weights).toHaveLength(7);
     });
@@ -513,7 +522,7 @@ describe("depth blur", () => {
             const source = camera({ useOffScreenBuffers: true, blurSize: 3, blurDepth: 7, doPerspectiveProjection });
             const slab = slabNearFar(source.gl_clipPlane0[3], source.gl_clipPlane1[3], source.gl_fog_end, doPerspectiveProjection);
             const focus = focalPlaneDepth(7, slab.near, slab.far, source.fogClipOffset, doPerspectiveProjection);
-            expect(effectSettings(source).depthBlur.focus).toBe(focus);
+            expect(effectSettings(source, 1948, 1322).depthBlur.focus).toBe(focus);
             expect(focus).toBeGreaterThan(0);
             expect(focus).toBeLessThan(1);
         }
@@ -532,7 +541,7 @@ describe("depth blur", () => {
     });
 
     it("reaches both passes' taps, scaled with the picture, for a tile's margin", () => {
-        const blur = effectSettings(camera({ useOffScreenBuffers: true, blurSize: 3 })).depthBlur;
+        const blur = effectSettings(camera({ useOffScreenBuffers: true, blurSize: 3 }), 1948, 1322).depthBlur;
         expect(depthBlurMargin(null, 1)).toBe(0);
         expect(depthBlurMargin(blur, 1)).toBeGreaterThanOrEqual(2 * 3 * 1.5);
         expect(depthBlurMargin(blur, 3.2)).toBeGreaterThanOrEqual(2 * 3 * 1.5 * 3.2);

@@ -223,7 +223,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 const shot = await renderer.snapshot(displayBuffers, view, [], width, height, { maxTile: options.maxTile });
                 if (errors.length) throw new Error(errors.join("\n"));
                 const { plan } = shot.report;
-                const effects = effectSettings(view);
+                const effects = effectSettings(view, width, height);
                 return {
                     width: shot.width, height: shot.height, data: shot.data, tiles: shot.tiles,
                     meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments, labels: shot.report.labels,
