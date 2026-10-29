@@ -4,8 +4,8 @@
  * background.
  *
  * What should happen, by WebGL's definitions (blur_x, blur_y and render-framebuffer shaders): with
- * the focal plane at the view centre, the square behind it is blurred - its edges soften and it
- * spreads onto the background - and the square in front, and the background round it, stay
+ * the focal plane at the view centre, the square behind it is blurred - its edges soften both ways,
+ * spreading onto the background and the background into it - and the square in front, and the background round it, stay
  * exactly as without the blur (a tap on something in front of the plane counts with the centre's
  * colour, so nothing in focus spreads). With the plane behind everything, nothing changes at all;
  * with it in front of everything, both squares blur. A snapshot drawn in tiles must come out as one
@@ -103,6 +103,11 @@ export interface DepthBlurReport {
     nearUnchanged: { differing: number; worst: number };
     /** Focal plane at the centre: the far square and round it, against no blur. */
     farChanged: { differing: number; worst: number };
+    /**
+     * The far square's green two pixels inside its left edge, without and with the blur (focal
+     * plane at the centre): the background softens into it, as it does into anything out of focus.
+     */
+    farInside: { plain: number; blurred: number };
     /** Focal plane behind everything: the whole picture against no blur. */
     focusBehind: { differing: number; worst: number };
     /** Focal plane at the centre, drawn in 6 tiles and whole: how far apart. */
@@ -113,8 +118,7 @@ export interface DepthBlurReport {
      * The canvas a quarter of the picture across, so the blur reaches four times as far: down a
      * column towards the far square's top edge, where the blur spreads onto the background, the
      * largest step from one pixel to the next in green, against the square's own green, and how
-     * many pixels the spread covers. (At the edge itself the picture steps: inside, a tap on the
-     * background counts with the centre's colour, so the square does not fade, as in WebGL.)
+     * many pixels the spread covers.
      */
     scaled: { largestStep: number; green: number; reach: number };
     /**
@@ -153,6 +157,9 @@ export default defineCase(async (_device: GPUDevice): Promise<DepthBlurReport> =
         });
         // Boxes round each square, a little over an angstrom beyond it: further than the blur reaches.
         const around = (s: typeof NEAR) => ({ x0: column(s.x0 - 1.2), x1: column(s.x1 + 1.2), y0: row(s.y1 + 1.2), y1: row(s.y0 - 1.2) });
+
+        const insideEdge = (data: Uint8ClampedArray) => data[(row(0) * WIDTH + column(FAR.x0) + 2) * 4 + 1];
+        const farInside = { plain: insideEdge(plain), blurred: insideEdge(centre) };
 
         const whole = centre;
         const tiledShot = await shot(blur(0), 90);
@@ -211,6 +218,7 @@ export default defineCase(async (_device: GPUDevice): Promise<DepthBlurReport> =
             edges: { plain: widths(plain), focusAtCentre: widths(centre), focusInFront: widths(inFront) },
             nearUnchanged: difference(centre, plain, around(NEAR)),
             farChanged: difference(centre, plain, around(FAR)),
+            farInside,
             focusBehind: difference(behind, plain),
             tiled: { ...difference(tiledShot.data, whole), tiles: tiledShot.tiles },
             peeled,

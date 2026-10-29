@@ -5,9 +5,10 @@
  * WebGL draws the scene into an offscreen buffer, resolves it, and then:
  *   1. blurs it across (blur_x-fragment-shader.js) and then down (blur_y-fragment-shader.js), with
  *      the Gaussian of gaussianBlurs[blurSize]: 2 blurSize + 1 taps, blurSize / 2 pixels apart.
- *      A tap counts with its own colour only where something was drawn there beyond the focal
- *      plane; anywhere else it counts with the centre's colour. So what is in focus does not
- *      spread, and the empty background does not bleed in;
+ *      A tap counts with its own colour where what is there is beyond the focal plane - the
+ *      empty background included; anywhere else (in front of the plane) it counts with the
+ *      centre's colour. So what is in focus does not spread, and what is out of focus softens
+ *      into what is behind it, both ways, as through a lens;
  *   2. mixes the sharp and the blurred pictures by the depth at each pixel
  *      (render-framebuffer-fragment-shader.js): sharp in front of the focal plane, then blurred,
  *      quickly, behind it - frac / (0.01 + frac) of the way, frac being how far behind it the
@@ -18,9 +19,10 @@
  *
  * Here the same, after the scene's passes (which resolve into `sharp` instead of the frame's
  * image, keeping their depth): the two blur passes, then the mix written into the frame's
- * multisampled colour, and then the overlays and the resolve as usual. The depth is read at
- * sample 0 of the multisampled depth, as WebGL's NEAREST blit of its multisampled depth reads one
- * sample.
+ * multisampled colour, and then the overlays and the resolve as usual. A pixel's depth is the
+ * nearest of its samples (WebGL's NEAREST blit reads one): so the antialiased edge of something
+ * in focus counts as in focus, neither blurred nor spread, though some of its samples show the
+ * background behind.
  *
  * Where it differs: the FPS meter, and labels drawn depth-tested (atomLabelDepthMode), are not
  * blurred here in a single view (divided views draw such labels with the scene, as WebGL does);
@@ -34,8 +36,11 @@
  *     for one, and straightens the colours as it reads the picture back), so the background's
  *     colour, which has no alpha, cannot bleed into the blur as a halo, as it would blurring
  *     straight colours over a background cleared to its colour.
- * On the canvas (one sub-tap, everything opaque) these come to exactly WebGL's sums. A tiled
- * snapshot draws each tile with a margin as wide as the blur reaches, so that tiles join.
+ * On the canvas (one sub-tap, everything opaque) these come to WebGL's sums, but for two
+ * things: a tap takes the colour of the texel whose depth it read, where WebGL's filters in its
+ * neighbours' (so something in focus spread a little onto the background beside it), and a
+ * pixel's depth is the nearest of its samples. A tiled snapshot draws each tile with a margin as
+ * wide as the blur reaches, so that tiles join.
  *
  * And one change everywhere: the two passes add up to one round blur (fs_depth_blur_across). In
  * WebGL's, what blur_x spread onto pixels that do not blur themselves (the background round a
@@ -120,19 +125,23 @@ const DRAWN_DEPTH = 0.9999;
 
 // The depth of the nearest thing drawn at this point, as the blur shaders' sceneDepth: the opaque
 // scene's, or where it has nothing, the nearest transparent layer's. At the texel the point is in,
-// as WebGL's NEAREST lookup.
+// as WebGL's NEAREST lookup, and the nearest of its samples: the antialiased edge of something in
+// focus is in focus, though some of its samples are on the background.
 fn sceneDepth(p: vec2f) -> f32 {
     let size = vec2i(textureDimensions(depth));
     let texel = clamp(vec2i(floor(p)), vec2i(0), size - 1);
-    var d = min(textureLoad(depth, texel, 0), 1.0);
+    var d = 1.0;
+    for (var s = 0; s < i32(textureNumSamples(depth)); s++) { d = min(d, textureLoad(depth, texel, s)); }
     if (blur.flags.x > 0.5 && d >= DRAWN_DEPTH) { d = min(textureLoad(depth2, texel, 0), 1.0); }
     return d;
 }
 
-// Whether a tap spreads its own colour: something drawn there, beyond the focal plane.
+// Whether a tap spreads its own colour: what is there is beyond the focal plane - the empty
+// background too, so that out-of-focus geometry softens into it, not only spreads out over it.
+// (Leaving the background out, as WebGL's shaders did for a while, left a blurred structure merely
+// fuzzy round its edges.)
 fn blurs(p: vec2f) -> bool {
-    let d = sceneDepth(p);
-    return d > blur.params.z && d < DRAWN_DEPTH;
+    return sceneDepth(p) > blur.params.z;
 }
 
 fn weight(i: i32) -> f32 {
@@ -141,6 +150,14 @@ fn weight(i: i32) -> f32 {
 
 fn at(t: texture_2d<f32>, p: vec2f, size: vec2f) -> vec4f {
     return textureSampleLevel(t, linear, p / size, 0.0);
+}
+
+// The colour of the texel the point is in: the one whose depth decided whether the tap blurs.
+// (Filtered, a tap on the background beside something in focus would take in some of its colour,
+// and spread it.)
+fn texelAt(t: texture_2d<f32>, p: vec2f) -> vec4f {
+    let size = vec2i(textureDimensions(t));
+    return textureLoad(t, clamp(vec2i(floor(p)), vec2i(0), size - 1), 0);
 }
 
 // Where tap i's sub-tap j falls: each tap is flags.z sub-taps spread evenly over its share of the
@@ -155,8 +172,8 @@ struct Across {
 };
 
 // The blur of WebGL's two passes, taken as the one round blur they stand for. blur_x sums, at each
-// pixel, the taps that blur with their own colour, and stands the centre's colour in for the rest,
-// so that the empty background does not bleed in; blur_y does the same again down. Summing down
+// pixel, the taps that blur with their own colour, and stands the centre's colour in for the rest
+// (those in front of the focal plane); blur_y does the same again down. Summing down
 // the across pass's whole result, though, a tap that does not blur gives the centre's colour in
 // place of what the across pass spread onto it - so a small blurred piece glows along its rows and
 // down its columns, in a cross, and not between them.
@@ -167,7 +184,6 @@ struct Across {
 // and the centre's sharp colour takes the share still left. Along one line it is blur_x exactly.
 @fragment
 fn fs_depth_blur_across(@builtin(position) position: vec4f) -> Across {
-    let size = vec2f(textureDimensions(picture));
     let taps = i32(blur.params.w);
     let sub = max(1, i32(blur.flags.z));
     var sum = vec4f(0.0);
@@ -177,7 +193,7 @@ fn fs_depth_blur_across(@builtin(position) position: vec4f) -> Across {
         for (var j = 0; j < sub; j++) {
             let p = position.xy + blur.params.xy * tapOffset(i, j, taps, sub);
             if (blurs(p)) {
-                sum += w * at(picture, p, size);
+                sum += w * texelAt(picture, p);
                 share += w;
             }
         }

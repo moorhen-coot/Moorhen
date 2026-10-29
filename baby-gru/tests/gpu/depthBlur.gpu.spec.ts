@@ -14,6 +14,10 @@ test("depth blur: what is behind the focal plane blurs, and nothing in front of 
     // Focal plane at the view centre: the square behind it softens, by several pixels an edge...
     expect(r.edges.focusAtCentre.far).toBeGreaterThanOrEqual(r.edges.plain.far + 4);
     expect(r.farChanged.differing).toBeGreaterThan(0);
+    // ...both ways: the background softens into it, not only it onto the background (leaving the
+    // background out of the blur left a blurred structure merely fuzzy round its edges).
+    console.log(`depth blur, inside the far edge: ${JSON.stringify(r.farInside)}`);
+    expect(r.farInside.blurred).toBeLessThan(r.farInside.plain * 0.9);
     // ...and the square in front of it, and the background round it, are as they were.
     expect(r.edges.focusAtCentre.near).toBe(r.edges.plain.near);
     expect(r.nearUnchanged.worst).toBeLessThanOrEqual(1);
