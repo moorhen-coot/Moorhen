@@ -2,11 +2,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { startAndGetInstance } from "./helpers";
 
 /**
- * Scenes in session files (sceneData, see src/.roadmap/sessions-to-scenes.md).
+ * Scenes in session files (sceneData, see src/.roadmaps/sessions-to-scenes.md).
  *
  * tests/test_data/session/1.0.1.pb was saved by Moorhen 1.0.1, before scenes existed: one molecule
- * (custom CBs + CRs), two maps (one difference map), two vectors. Old sessions must keep loading,
- * into the "Default" scene.
+ * (custom CBs + CRs), two vectors. Old sessions must keep loading, into the "Default" scene. Its two
+ * maps were removed (they made it 6.5 MB and are not about scenes); the rest is as 1.0.1 wrote it.
  */
 
 const PRE_SCENE_SESSION = { url: "/tests/test_data/session/1.0.1.pb", filename: "1.0.1.pb" };
@@ -45,7 +45,7 @@ const loadPreSceneSession = async (page: Page) => {
     await expect
         .poll(async () => {
             const counts = await moorhen.getObjectCounts();
-            return counts.moleculeCount === 1 && counts.mapCount === 2;
+            return counts.moleculeCount === 1;
         }, { timeout: 120_000 })
         .toBe(true);
     // The session restores representations and scenes after the objects. Wait for the whole load:
@@ -78,7 +78,7 @@ test.describe("Scenes in session files", () => {
         expect(summary.scenes).toEqual(["Default", "Model Building"]);
         expect(summary.snapshots).toEqual([]);
         expect(summary.moleculeUids).toEqual([SESSION_MOLECULE_UID]);
-        expect(summary.mapCount).toBe(2);
+        expect(summary.mapCount).toBe(0);
         expect(summary.vectorCount).toBe(2);
         expect(summary.customRepresentations).toEqual(["CBs", "CRs"]);
         // The session's own view is kept, not replaced by the Default preset
@@ -122,7 +122,7 @@ test.describe("Scenes in session files", () => {
             await instance.userScene.select(customId);
             const customRepresentations = state().molecules.customRepresentations.map((rep: { style: string }) => rep.style).sort();
             await instance.userScene.select(snapshotId);
-            return { afterLoad, customRepresentations, snapshotZoom: state().sceneSettings.zoom };
+            return { afterLoad, customRepresentations };
         });
 
         expect(result.afterLoad.status).toBe(0);
@@ -131,7 +131,16 @@ test.describe("Scenes in session files", () => {
         expect(result.afterLoad.snapshots).toEqual(["Close-up"]);
         expect(result.afterLoad.representations).toEqual(["CBs"]);
         expect(result.customRepresentations).toEqual(["CAs", "CBs", "CRs"]);
-        expect(result.snapshotZoom).toBeCloseTo(0.5, 5);
+        // The view eases to the snapshot's camera: its zoom reaches the store when the move ends,
+        // which can be after select() resolves (a switch that rebuilds nothing is quick)
+        await expect
+            .poll(() =>
+                page.evaluate(async () => {
+                    const instance = await (document.getElementById("moorhen-test") as any).getMoorhenInstance();
+                    return instance.store.getState().sceneSettings.zoom;
+                })
+            )
+            .toBeCloseTo(0.5, 5);
     });
 
     test("sessions from a more recent Moorhen are refused", async ({ page }) => {

@@ -13,7 +13,7 @@ import { readSceneList } from "@/store/userSceneFormat";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
 import type { Keyframe } from "@/utils/cameraPath";
 import * as quat4 from "gl-matrix/quat";
-import { createCloudInstance, flush, jobUrl, loadCootModules, type CloudInstance } from "./cloudHost/cloudHostHarness";
+import { createCloudInstance, flush, jobUrl, loadCootModules, readTestData, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
 jest.setTimeout(120000);
 
@@ -472,5 +472,31 @@ describe("vectors and 3D shapes", () => {
         await userScene.select("Model Building");
         expect(vectorIds()).toEqual([arrow]);
         expect(objectIds()).toEqual([sphere]);
+    });
+});
+
+describe("a session saved by Moorhen 1.0.1, before scenes", () => {
+    // tests/test_data/session/1.0.1.pb, as 1.0.1 wrote it but without its two maps
+    const SESSION_MOLECULE_UID = "d2216c9c-ef0d-48f7-9b71-e38b92349348";
+
+    test("becomes the Default scene, replacing the scenes there were", async () => {
+        const { userScene } = cloud.instance;
+        await userScene.create("Figure");
+        userScene.takeSnapshot();
+        await userScene.select("Model Building");
+
+        const file = readTestData("session/1.0.1.pb", null) as Buffer;
+        const buffer = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength) as ArrayBuffer;
+        expect(await MoorhenTimeCapsule.loadSessionFromArrayBuffer(buffer, cloud.instance)).toBe(0);
+
+        expect(sceneNames()).toEqual(["Default", "Model Building"]);
+        expect(state().userScenes.snapshots).toEqual([]);
+        expect(userScene.selected).toBe("Default");
+        expect(cloud.instance.representation.defaultStyle).toBe("ribbons-and-ligands");
+        expect(cloud.instance.getMoleculeList().map(molecule => molecule.uniqueId)).toEqual([SESSION_MOLECULE_UID]);
+        expect(representationStyles()).toEqual(["CBs", "CRs"]);
+        expect(state().vectors.vectorsList).toHaveLength(2);
+        // The session's own view, not the Default preset
+        expect(state().sceneSettings.zoom).toBeCloseTo(0.2661, 3);
     });
 });
