@@ -2004,7 +2004,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if(this.measureCylinderBuffers){
             this.measureCylinderBuffers.forEach((buffer) => {
                 if("clearBuffers" in buffer){
-                    buffer.clearBuffers()
+                    buffer.clearBuffers(this.gl)
                     this.displayBuffers = this.displayBuffers.filter(glBuffer => glBuffer.id !== buffer.id)
                 }
             })

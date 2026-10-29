@@ -203,6 +203,7 @@ export const AcceptRejectDragAtoms = () => {
                 <MoorhenButton
                     type="icon-only"
                     icon="MatSymCheck"
+                    ariaLabel="Accept dragged atoms"
                     onClick={async () => {
                         document.removeEventListener("atomDragged", atomDraggedCallback);
                         document.removeEventListener("mouseup", mouseUpCallback);
@@ -212,6 +213,7 @@ export const AcceptRejectDragAtoms = () => {
                 <MoorhenButton
                     type="icon-only"
                     icon="MatSymClose"
+                    ariaLabel="Reject dragged atoms"
                     onClick={async () => {
                         document.removeEventListener("atomDragged", atomDraggedCallback);
                         document.removeEventListener("mouseup", mouseUpCallback);

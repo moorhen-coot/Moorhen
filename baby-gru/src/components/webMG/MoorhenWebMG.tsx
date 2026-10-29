@@ -234,7 +234,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
             const retired = vectorBuffersRef.current
             const retiredLabels = vectorLabelBuffersRef.current
-            retired.forEach(buffer => buffer.clearBuffers())
+            retired.forEach(buffer => buffer.clearBuffers(store.getState().glRef.glCtx))
 
             vectorBuffersRef.current = buildDisplayBuffers(objects, "vectors")
             vectorLabelBuffersRef.current = newLabelBuffers ?? []
@@ -258,7 +258,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             if (superseded) return
 
             const retired = threeDObjectsBuffersRef.current
-            retired.forEach(buffer => buffer.clearBuffers())
+            retired.forEach(buffer => buffer.clearBuffers(store.getState().glRef.glCtx))
 
             threeDObjectsBuffersRef.current = buildDisplayBuffers(objects, "3D objects")
 
@@ -282,7 +282,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             if (superseded) return
 
             const retired = gizmoBuffersRef.current
-            retired.forEach(buffer => buffer.clearBuffers())
+            retired.forEach(buffer => buffer.clearBuffers(store.getState().glRef.glCtx))
 
             gizmoBuffersRef.current = buildDisplayBuffers(objects)
 

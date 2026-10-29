@@ -128,7 +128,7 @@ export class DisplayBuffer {
         this.alphaChanged = false;
         this.atoms = [];
         this.symmetryMatrices = [];
-        this.clearBuffers();
+        this.clearBuffers(null); // nothing has been created yet
         this.symmetryAtoms = []
         this.changeColourWithSymmetry = true;
         this.isHoverBuffer = false;
@@ -192,7 +192,45 @@ export class DisplayBuffer {
         })
     }
 
-    clearBuffers() {
+    /**
+     * Retire this buffer: free its WebGL buffers and drop its geometry.
+     *
+     * The WebGL buffers must be deleted here, not left to the garbage collector. A WebGLBuffer
+     * wrapper is tiny, so collecting it is driven by JS heap pressure while the GPU memory behind
+     * it is not counted at all: every redraw of a representation or map contour used to leave its
+     * old buffers on the GPU, and after editing a few dozen residues the app slowed to a crawl.
+     *
+     * @param gl - The context the buffers were created in. Pass null only when it has already
+     * been lost, in which case its buffers went with it.
+     */
+    clearBuffers(gl: WebGLRenderingContext | WebGL2RenderingContext | null) {
+        if (gl) {
+            const glBuffers: (MGWebGLBuffer[] | MGWebGLBuffer | null)[] = [
+                this.triangleVertexRealNormalBuffer,
+                this.triangleVertexNormalBuffer,
+                this.triangleVertexPositionBuffer,
+                this.triangleVertexIndexBuffer,
+                this.triangleVertexTextureBuffer,
+                this.triangleInstanceOriginBuffer,
+                this.triangleInstanceOrientationBuffer,
+                this.triangleInstanceSizeBuffer,
+                this.triangleColourBuffer,
+                this.textNormalBuffer,
+                this.textPositionBuffer,
+                this.textColourBuffer,
+                this.textTexCoordBuffer,
+                this.textIndexesBuffer,
+                this.clickLinePositionBuffer,
+                this.clickLineColourBuffer,
+                this.clickLineIndexesBuffer,
+            ];
+            // Most of these are lists, but MGWebGL's text and click-line setup assigns single buffers.
+            for (const entry of glBuffers) {
+                for (const buffer of Array.isArray(entry) ? entry : [entry]) {
+                    if (buffer instanceof WebGLBuffer) gl.deleteBuffer(buffer);
+                }
+            }
+        }
         this.triangleVertexRealNormalBuffer = []; // This is for lit lines.
         this.triangleVertexNormalBuffer = [];
         this.triangleVertexPositionBuffer = [];
