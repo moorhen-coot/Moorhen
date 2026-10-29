@@ -144,3 +144,47 @@ describe("copying a scene with its representations", () => {
         expect(representationStyles()).toEqual(defaultStyles);
     });
 });
+
+describe("switching between scenes that draw the same representations", () => {
+    const shownRepresentations = () => [...state().molecules.customRepresentations];
+
+    test("keeps them instead of rebuilding them, with the new scene's ids and order", async () => {
+        const { userScene } = cloud.instance;
+        const snapshotId = userScene.takeSnapshot("Same look");
+        const snapshotIds = shownRepresentations().map(rep => rep.uniqueId);
+        // Rebuilt from scratch: the same representations, with new ids
+        expect(await userScene.reset("Default", "default", true)).toBe(true);
+        const rebuilt = shownRepresentations();
+        expect(rebuilt.map(rep => rep.uniqueId)).not.toEqual(snapshotIds);
+        expect(rebuilt.map(rep => rep.style).sort()).toEqual(representationStyles());
+
+        await userScene.select(snapshotId);
+        const shown = shownRepresentations();
+        // The same objects (nothing rebuilt), now answering to the snapshot's ids
+        expect(new Set(shown)).toEqual(new Set(rebuilt));
+        expect(shown.map(rep => rep.uniqueId)).toEqual(snapshotIds);
+        expect(cloud.instance.getMoleculeList()[0].representations.filter(rep => rep.isCustom)).toHaveLength(shown.length);
+    });
+
+    test("keeps one that is only hidden or shown differently, and applies its visibility", async () => {
+        const { userScene } = cloud.instance;
+        const [first] = shownRepresentations();
+        first.hide();
+        const snapshotId = userScene.takeSnapshot("Hidden");
+        await first.show();
+        expect(first.visible).toBe(true);
+
+        await userScene.select(snapshotId);
+        const kept = shownRepresentations().find(rep => rep.uniqueId === first.uniqueId);
+        expect(kept).toBe(first);
+        expect(kept.visible).toBe(false);
+    });
+
+    test("rebuilds the ones that differ", async () => {
+        const { userScene } = cloud.instance;
+        const before = shownRepresentations();
+        await userScene.select("Model Building");
+        const after = shownRepresentations();
+        expect(after.some(rep => before.includes(rep))).toBe(false);
+    });
+});

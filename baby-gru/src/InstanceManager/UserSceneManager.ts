@@ -1,8 +1,10 @@
 import {
+    addCustomRepresentation,
     addUserScene,
     addUserSnapshot,
     applySceneSettingsSnapshot,
     enqueueSnackbar,
+    removeCustomRepresentation,
     removeUserScene,
     renameUserScene,
     saveSceneSettings,
@@ -33,6 +35,8 @@ import {
     isBuiltInScene,
     setSceneContent,
 } from "../store/userScenesSlice";
+import type { MoleculeRepresentation } from "../utils/Representation/MoorhenMoleculeRepresentation";
+import type { RepresentationBackup } from "../utils/Representation/RepresentationBuilder";
 // Type only: MoorhenInstance imports this module, a value import would be undefined while it loads
 import type { MoorhenInstance } from "./MoorhenInstance";
 
@@ -63,6 +67,16 @@ const replaceContent = (
     objects: representations ? { ...content.objects, molecules: representations.molecules } : content.objects,
     sections: { ...content.sections, sceneSettings, ...(representations && { representations: representations.representations }) },
 });
+
+/** Fields of a representation backup that identify it or say whether it is shown, rather than what it draws */
+const NOT_DRAWN_FIELDS = ["uniqueId", "parentRepresentationUniqueId", "visible", "interfaceVisible"];
+
+/**
+ * What a representation draws: two representations with the same key are identical except for
+ * their ids and visibility, so one can stand in for the other without being rebuilt.
+ */
+const drawnKey = (moleculeUniqueId: string, params: RepresentationBackup): string =>
+    `${moleculeUniqueId} ${JSON.stringify(params, (key, value) => (NOT_DRAWN_FIELDS.includes(key) ? undefined : value))}`;
 
 /** The style of molecules in the "Default" scene, which MoorhenInstance starts with */
 export const DEFAULT_REPRESENTATION_STYLE = "ribbons-and-ligands";
@@ -565,10 +579,28 @@ export class MoorhenUserSceneManager {
     /** Replace what is shown by a scene's content: its settings and representations */
     private async showScene(sceneId: string, content: SceneContent) {
         this.applyDefaultStyle(sceneId);
+        // A shown representation identical to one of the scene's (e.g. switching between snapshots
+        // of the same scene) is kept and given the scene's one id, instead of being rebuilt
+        const shown = new Map<string, MoleculeRepresentation[]>();
         for (const molecule of this.instance.getMoleculeList()) {
             for (const representation of this.instance.representation.getList(molecule.uniqueId)) {
-                await this.instance.representation.delete(representation.uniqueId);
+                const key = drawnKey(molecule.uniqueId, representation.backup());
+                shown.set(key, [...(shown.get(key) ?? []), representation]);
             }
+        }
+        // The molecule may have been closed since the scene was saved
+        const wanted = content.sections.representations
+            .filter(({ moleculeUniqueId }) => this.instance.getMolecule(moleculeUniqueId))
+            .map(({ moleculeUniqueId, params }) => ({ moleculeUniqueId, params, kept: shown.get(drawnKey(moleculeUniqueId, params))?.shift() }));
+        for (const representation of [...shown.values()].flat()) {
+            await this.instance.representation.delete(representation.uniqueId);
+        }
+        // Take the kept ones out of the list and give them their new ids before anything is
+        // added: ids can swap between kept representations, and a new one must not find its id taken
+        for (const { kept, params } of wanted) {
+            if (!kept) continue;
+            this.instance.dispatch(removeCustomRepresentation(kept));
+            kept.uniqueId = params.uniqueId;
         }
         if (content.camera) {
             // Before the scene settings: automatic fog and clipping follow the zoom
@@ -577,12 +609,20 @@ export class MoorhenUserSceneManager {
             this.instance.dispatch(setQuat([...content.camera.quat]));
         }
         this.applySceneSettings(content);
-        for (const { moleculeUniqueId, params } of content.sections.representations) {
-            // The molecule may have been closed since the scene was saved
-            if (!this.instance.getMolecule(moleculeUniqueId)) continue;
-            // A copy: the stored params are frozen, the representation keeps (and may change) them
-            const copy = structuredClone(params) as Parameters<typeof this.instance.representation.create>[1];
-            await this.instance.representation.create(moleculeUniqueId, copy);
+        // In the scene's order, as if every representation was rebuilt
+        for (const { moleculeUniqueId, params, kept } of wanted) {
+            if (kept) {
+                this.instance.dispatch(addCustomRepresentation(kept));
+                // As create() does: both default to shown
+                const visible = params.visible ?? true;
+                kept.interfaceOption.visible = params.interfaceVisible ?? true;
+                if (visible && !kept.visible) await kept.show();
+                else if (!visible && kept.visible) kept.hide();
+            } else {
+                // A copy: the stored params are frozen, the representation keeps (and may change) them
+                const copy = structuredClone(params) as Parameters<typeof this.instance.representation.create>[1];
+                await this.instance.representation.create(moleculeUniqueId, copy);
+            }
         }
         // Molecules loaded since the scene was saved get the scene's default style
         const { wizard } = sceneStyle(sceneId);
