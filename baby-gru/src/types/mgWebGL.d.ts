@@ -56,6 +56,7 @@ export namespace webGL {
         xSSAOScaling: WebGLUniformLocation;
         ySSAOScaling: WebGLUniformLocation;
         resolvedLayer: WebGLUniformLocation;
+        filterEdges: WebGLUniformLocation;
     }
 
     interface MGWebGLTextureQuadShader extends WebGLProgram {

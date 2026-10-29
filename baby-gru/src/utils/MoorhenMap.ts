@@ -728,7 +728,7 @@ export class MoorhenMap {
         //Empty existing buffers of this type
         let newBuffers = displayBuffers;
         this.displayObjects[style].forEach(buffer => {
-            buffer.clearBuffers();
+            buffer.clearBuffers(this.store.getState().glRef.glCtx);
             newBuffers = newBuffers?.filter(glBuffer => glBuffer.id !== buffer.id);
         });
         this.displayObjects[style] = [];

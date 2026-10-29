@@ -155,6 +155,10 @@ export function initInstanceState(self: MGWebGL): void {
     self.useOffScreenBuffers = false; //This means "doDepthBlur" and is historically named.
     self.blurSize = 3;
     self.depthPeelLayers = 4;
+    // On by default; see sceneSettingsSlice for what it buys and the rim it costs.
+    // Kept in step with the store's default because this is what a renderer used without
+    // the React app - the web component, the scripting API - starts from, and what the
+    // first frames draw with before the reconciling effect runs.
     self.peelOpaqueSeparately = true;
     self.peelTransparentOnly = null;
     self.blurDepth = 0.2;

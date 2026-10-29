@@ -172,6 +172,7 @@ export class MoorhenMolecule {
     isLigand: boolean;
     coordsFormat: moorhen.coorFormats;
     cachedPrivateerValidation: privateer.ResultsEntry[];
+    cachedPrivateerCremerPopleParameters: privateer.CremerPopleParameters[];
     cachedGemmiAtoms: moorhen.AtomInfo[];
     cachedLigandSVGs: { [key: string]: string };
     moleculeDiameter: number;
@@ -3020,10 +3021,12 @@ export class MoorhenMolecule {
             return this.cachedPrivateerValidation;
         }
 
+        const input_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(this.gemmiStructure)
         const result = (await this.commandCentre.cootCommand(
             {
                 command: "privateer_validate",
-                commandArgs: [this.molNo],
+                message: "privateer_validate",
+                commandArgs: [input_cif_string],
                 returnType: "privateer_results",
             },
             false
@@ -3035,6 +3038,35 @@ export class MoorhenMolecule {
 
         return result.data.result.result;
     }
+
+    /**
+     * Get results of privateer validation for this molecule instance
+     * @param {boolean} useCache - Whether to use the cached results or not
+     * @returns {Promise<privateer.CremerPopleParameters[]>} A list of results from privateer validation
+     */
+    async getPrivateerCremerPopleParameters(useCache: boolean = false): Promise<privateer.CremerPopleParameters[]> {
+        if (useCache && this.cachedPrivateerCremerPopleParameters && !this.atomsDirty) {
+            return this.cachedPrivateerCremerPopleParameters;
+        }
+
+        const input_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(this.gemmiStructure)
+        const result = (await this.commandCentre.cootCommand(
+            {
+                command: "privateer_calculate_cremer_pople_parameters",
+                message: "privateer_calculate_cremer_pople_parameters",
+                commandArgs: [input_cif_string],
+                returnType: "privateer_cremer_pople_parameters",
+            },
+            false
+        )) as moorhen.WorkerResponse<privateer.CremerPopleParameters[]>;
+
+        if (useCache) {
+            this.cachedPrivateerCremerPopleParameters = result.data.result.result;
+        }
+
+        return result.data.result.result;
+    }
+
 
     /**
      * Get SVG descriptions for the ligand environment

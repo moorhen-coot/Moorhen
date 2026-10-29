@@ -625,8 +625,10 @@ export class MoleculeRepresentation {
             newBuffers = displayBuffers;
         }
         if (this.buffers?.length > 0) {
+            const gl = this.parentMolecule.store.getState().glRef.glCtx;
             this.buffers.forEach(buffer => {
                 if ("clearBuffers" in buffer) {
+                    buffer.clearBuffers(gl);
                     newBuffers = newBuffers.filter(glBuffer => glBuffer !== buffer);
                 } else if ("labels" in buffer) {
                     newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid);

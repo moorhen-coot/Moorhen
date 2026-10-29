@@ -478,6 +478,14 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                     // edges off wherever the resolved depth sample happened to be background, and
                     // no FXAA on top of real multisampling.
                     self.gl.uniform1i(theShader.resolvedLayer, (msaaOpaque && ipeel === 0) ? 1 : 0);
+                    // FXAA only where the layer is dense enough for its neighbourhood taps to
+                    // land on geometry. With the opaque scene drawn into layer 0 of its own,
+                    // layers 1 upwards hold nothing but transparent surfaces surrounded by the
+                    // colour they were cleared to - and filtering those averages the background
+                    // into every silhouette. Without separateOpaque each layer still holds the
+                    // whole scene, which is the arrangement FXAA was added for, so it stays on.
+                    const sparseTransparentLayer = separateOpaque && ipeel > 0;
+                    self.gl.uniform1i(theShader.filterEdges, sparseTransparentLayer ? 0 : 1);
                     if (self.ext) {
                         self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
                     } else {
