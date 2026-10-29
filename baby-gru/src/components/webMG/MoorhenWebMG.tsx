@@ -153,7 +153,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
             let oldBuffers = displayBuffers
             vectorBuffers.forEach((buffer) => {
-                buffer.clearBuffers()
+                buffer.clearBuffers(store.getState().glRef.glCtx)
                 oldBuffers = oldBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
             })
 
