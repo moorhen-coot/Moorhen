@@ -25,7 +25,7 @@ export const RandomJiggleBlur = () => {
     const [cid, setCid] = useState<string>("");
 
     const onCompleted = useCallback(async () => {
-        if (selectedMolNo === undefined || selectedMap === null || !cid) {
+        if (selectedMolNo === undefined || selectedMap === null) {
             return;
         }
 
@@ -37,6 +37,7 @@ export const RandomJiggleBlur = () => {
         if (cid === residueSelection?.cid) {
             dispatch(clearResidueSelection());
         }
+
 
         await commandCentre.current.cootCommand(
             {
