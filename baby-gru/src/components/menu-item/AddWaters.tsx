@@ -20,7 +20,6 @@ export const AddWaters = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const maps = useSelector((state: moorhen.State) => state.maps);
     const [sigmaMap, setSigmaMap] = usePersistentState<number>(menu, "sigmaMap", 1.75, true);
-    const sigmaMapRef = useRef<number>(1.75);
     const moorhenInstance = useMoorhenInstance();
     const onCompleted = async () => {
         if (mapSelectRef.current.value === null || moleculeSelectRef.current.value === null) {
@@ -30,8 +29,7 @@ export const AddWaters = () => {
         const moleculeMolNo = parseInt(moleculeSelectRef.current.value);
         const mapMolNo = parseInt(mapSelectRef.current.value);
 
-        await moorhenInstance.cootCommand.set_add_waters_sigma_cutoff(sigmaMapRef.current);
-        console.log("Set sigma to ", sigmaMapRef.current);
+        await moorhenInstance.cootCommand.set_add_waters_sigma_cutoff(sigmaMap);
         const result = await moorhenInstance.cootCommand.add_water(moleculeMolNo, mapMolNo);
         const added = result.data.result.result;
         dispatch(enqueueSnackbar({ message: `Added ${added} water molecules`, variant: "success" }));
