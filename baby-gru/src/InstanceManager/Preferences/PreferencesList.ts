@@ -61,6 +61,7 @@ import {
     setDoSSAO,
     setDoShadow,
     setShadowMapQuality,
+    setShadowSoftness,
     setDoShadowDepthDebug,
     setDrawAxes,
     setDrawCrosshairs,
@@ -289,6 +290,12 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         valueSetter: setShadowMapQuality,
         selector: (state: RootState) => state.sceneSettings.shadowMapQuality,
         defaultValue: sceneSettingsInitialState.shadowMapQuality,
+    },
+    55: {
+        label: "shadowSoftness",
+        valueSetter: setShadowSoftness,
+        selector: (state: RootState) => state.sceneSettings.shadowSoftness,
+        defaultValue: sceneSettingsInitialState.shadowSoftness,
     },
     32: {
         label: "GLLabelsFontFamily",

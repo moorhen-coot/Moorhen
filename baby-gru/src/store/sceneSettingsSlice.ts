@@ -63,6 +63,8 @@ export const initialState: {
      * what each one costs.
      */
     shadowMapQuality: ShadowMapQuality;
+    /** Penumbra radius of soft shadows, in angstrom. 0 is a hard edge. */
+    shadowSoftness: number;
     doSSAO: boolean;
     doEdgeDetect: boolean;
     edgeDetectDepthThreshold: number;
@@ -133,6 +135,7 @@ export const initialState: {
     doShadowDepthDebug: false,
     doShadow: false,
     shadowMapQuality: "coarse",
+    shadowSoftness: 0,
     doSpin: false,
     doThreeWayView: false,
     doSideBySideStereo: false,
@@ -293,6 +296,10 @@ const sceneSettingsSlice = createSlice({
         // API
         setShadowMapQuality: (state, action: PayloadAction<ShadowMapQuality>) => {
             state.shadowMapQuality = action.payload;
+        },
+        // API
+        setShadowSoftness: (state, action: PayloadAction<number>) => {
+            state.shadowSoftness = action.payload;
         },
         // API
         setDoSpin: (state, action: PayloadAction<boolean>) => {
@@ -456,6 +463,7 @@ export const {
     setDoShadowDepthDebug,
     setDoShadow,
     setShadowMapQuality,
+    setShadowSoftness,
     setDoSpin,
     setDoOutline,
     setDepthBlurRadius,

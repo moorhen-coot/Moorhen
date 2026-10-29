@@ -121,6 +121,7 @@ export namespace webGL {
         xPixelOffset: WebGLUniformLocation;
         yPixelOffset: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         pixelZoom: WebGLUniformLocation;
         specularPower: WebGLUniformLocation;
         /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
@@ -196,6 +197,7 @@ export namespace webGL {
         edgeDetectMap: WebGLUniformLocation;
         outlineSize: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         doShadows: WebGLUniformLocation;
         doSSAO: WebGLUniformLocation;
         doEdgeDetect: WebGLUniformLocation;
@@ -221,6 +223,7 @@ export namespace webGL {
         SSAOMap: WebGLUniformLocation;
         edgeDetectMap: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         doShadows: WebGLUniformLocation;
         doSSAO: WebGLUniformLocation;
         doEdgeDetect: WebGLUniformLocation;

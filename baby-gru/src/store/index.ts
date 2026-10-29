@@ -158,6 +158,7 @@ export {
     setDoShadowDepthDebug,
     setDoShadow,
     setShadowMapQuality,
+    setShadowSoftness,
     setDoSpin,
     setDoOutline,
     setDepthBlurRadius,

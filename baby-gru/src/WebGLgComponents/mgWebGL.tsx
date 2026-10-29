@@ -104,6 +104,7 @@ import { buildBuffers, appendOtherData } from './buildBuffers'
 import { Camera } from './mgWebGLParts/camera'
 import type { CameraController, CameraState, CameraTarget, MoveResult, Transition } from './cameraController'
 import { clipOffsets, fogOffsets, slabFromCamera } from './slab'
+import { MAX_SHADOW_SOFTNESS, type ShadowMapRegion } from './shadowFrustum'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './mgWebGLParts/viewTransforms'
 import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, ensureOffScreeenBuffers, initTextureFramebuffer, deleteTextureFramebuffer } from './mgWebGLParts/framebuffers'
 import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
@@ -264,6 +265,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         scaleDepth: number;
         scaleNormal: number;
         occludeDiffuse: boolean;
+        /** Penumbra radius of soft shadows, in angstrom. 0 is a hard edge. */
+        shadowSoftness: number;
+        /** Where the last shadow pass drew in the map, and the filter radius that goes with it. */
+        shadowRegion: ShadowMapRegion | null;
         doPeel: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
@@ -878,6 +883,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
      * changing its size means dropping the lot and letting the next render build them again -
      * which is exactly what deleteTextureFramebuffer plus a cleared screenshotBuffersReady does.
      */
+    setShadowSoftness(shadowSoftness: number) {
+        // Clamped here as well as on the slider, so a larger value saved before the limit existed
+        // cannot come back in through preferences.
+        this.shadowSoftness = Math.min(Math.max(shadowSoftness, 0), MAX_SHADOW_SOFTNESS);
+    }
+
     rebuildShadowMap() {
         // Nothing allocated yet - these buffers are built lazily, on the first render that wants
         // them - so there is nothing to free, and whenever that build happens it will read the
