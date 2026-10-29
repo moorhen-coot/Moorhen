@@ -4,6 +4,7 @@ import * as mat4 from 'gl-matrix/mat4';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { createQuatFromDXAngle, createQuatFromAngle, createZQuatFromDX } from '../quatUtils';
 import { parseAtomInfoLabel } from '../../utils/utils';
+import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND } from '../../utils/enums';
 import { getDeviceScale } from '../webGLUtils';
 import { getOffsetRect, MGWebGL } from '../mgWebGL';
 import type { moorhen } from '../../types/moorhen';
@@ -187,16 +188,40 @@ export function doHover(self: MGWebGL, event) {
                 self.props.onAtomHovered(null)
             }
 
-            // A buffer may label its pickable pieces with strings that mean nothing here. Report
-            // the one under the cursor and let whoever understands the scheme act on it.
-            //
-            // An atom under the cursor takes precedence: the two pick channels are independent,
-            // so both can find something at once, and this is the renderer saying which of its
-            // own answers wins. Reported after onAtomHovered, which has already cleared the
-            // hover state on the way past when there is no atom - so a labelled piece fills the
-            // gap rather than fighting over it.
+            /**
+             * A buffer may label its pickable pieces with strings that mean nothing here. Report
+             * the one under the cursor and let whoever understands the scheme act on it.
+             *
+             * WHO WINS IS NOT DECIDED HERE, FOR THE PIECES THAT STAND FOR A RESIDUE
+             *
+             * These are two independent nearest-point tests and they need not agree. A ribbon
+             * carries per-section pick points *and* the atoms of the residues it draws, and near a
+             * peptide bond the nearest atom flips between one residue's C and the next one's N
+             * with a pixel of mouse movement while the nearest section does not move at all. A
+             * surface is worse: it has no atoms of its own, so the competing atom always comes
+             * from some other buffer, and the label wanders over a patch that stays lit.
+             *
+             * Deciding it here was tried twice and neither rule holds. The renderer knows about
+             * buffers and distances; the question is about *molecules* - a mesh that names a
+             * residue of the same molecule as the hovered atom should win, because it is the
+             * representation you are pointing at, while an atom of some other molecule should not
+             * be overridden. So both findings are reported, in order, and MainContainer - which
+             * knows which molecule owns which buffer, and already asks exactly that question of
+             * both - decides between them.
+             *
+             * The old suppression stands for every other kind of label. A 3D object or a cavity
+             * has nothing downstream that could arbitrate for it, so an atom under the cursor
+             * still silences it, exactly as before.
+             */
+            const pickKind = minidx_pi > -1
+                ? displayBuffers[minidx_pi].pick_info?.pick_tag_kind
+                : null
+            const sectionStandsForResidue = pickKind === MOORHEN_ATOM_TAG_KIND
+                || pickKind === MOORHEN_MESH_RESIDUE_TAG_KIND
+
             if (self.props.onSectionHovered) {
-                const atomHasIt = minidx > -1
+                // Silenced by an atom only for labels nothing downstream can arbitrate.
+                const atomHasIt = minidx > -1 && !sectionStandsForResidue
                 const pickInfo = (!atomHasIt && minidx_pi > -1) ? displayBuffers[minidx_pi].pick_info : null
                 const tag = (pickInfo?.pick_point_tags && minj_pi > -1)
                     ? pickInfo.pick_point_tags[minj_pi]

@@ -2174,10 +2174,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             // to be on screen here...
                             const onScreen = nearestZ > -this.gl_clipPlane1[3]
                                           && farthestZ < this.gl_clipPlane0[3];
-                            // ...and the nearest part of it that is, which is the clip plane
-                            // itself where the front of the pocket has been cut away and you
-                            // are looking at its inside.
-                            const depth = Math.min(nearestZ, this.gl_clipPlane0[3]);
                             // The face you are actually looking at: the nearer of the two,
                             // unless the front clip plane has cut it away, in which case you
                             // are seeing through to the far wall.
@@ -2185,6 +2181,24 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             const further = entryZ >= exitZ ? hit.exit : hit.entry;
                             const frontCutAway = nearestZ >= this.gl_clipPlane0[3];
                             const seen = frontCutAway ? further : nearer;
+                            // ...and how near that face is, which is what ranks this candidate
+                            // against the others: `depth > bestDepth_pi` means nearer wins.
+                            //
+                            // The depth of the face `seen` above, for the same reason it is the
+                            // one picked. This was `Math.min(nearestZ, gl_clipPlane0[3])` - the
+                            // nearest part of the chord still inside the slab - which for a mesh
+                            // cut open by the front clip is the clip plane itself, the nearest
+                            // depth anything in the scene can have. A cut-open surface therefore
+                            // outranked every piece of geometry inside it: clip into a molecule
+                            // with a surface and a ribbon both shown, and hovering the ribbon lit
+                            // a patch of the surface's *back* wall instead, because that patch
+                            // was claiming to be at the very front.
+                            //
+                            // Scoring the far wall as far away is a trade, not purely a fix: a
+                            // pocket you have deliberately clipped into becomes harder to pick,
+                            // because anything inside it now wins. That is the right way round
+                            // for a ribbon inside a surface, which is the case this came from.
+                            const depth = frontCutAway ? farthestZ : nearestZ;
                             // Which pickable piece that is. A mesh that knows where its
                             // vertices came from names the residue at a corner of the triangle
                             // the ray crossed; a mesh that is one whole thing - a cavity - has

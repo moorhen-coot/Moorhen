@@ -141,6 +141,14 @@ const withoutOwnershipArrays = (mesh: libcootApi.SimpleMeshJS) => {
     return rest;
 };
 
+/**
+ * Every name a water goes by in the structures this project reads.
+ *
+ * Copied from the water entries of MoorhenMolecule's `ligandsCid`, which is the one place that
+ * already enumerates them - so the two agree by construction rather than by memory.
+ */
+const WATER_RESIDUE_NAMES = ["WAT", "HOH", "OH2", "H2O"];
+
 export class MoleculeRepresentation {
     uniqueId: string;
     style: RepresentationStyles;
@@ -537,6 +545,34 @@ export class MoleculeRepresentation {
     }
 
     /**
+     * The atoms this representation is willing to be asked about, from the atoms of its selection.
+     *
+     * A buffer's `atoms` array is what the pick loop's atom channel searches, so it is the list of
+     * things the pointer can land on and the status box can name. It is filled from
+     * `gemmiAtomsForCid(this.cid)`, which for "All Chains" is every atom in the molecule - and a
+     * ribbon drawn over the whole chain therefore offered up its waters, which it does not draw.
+     * Hovering a surface with a ribbon also displayed reported "Hoh 1044" while highlighting a
+     * patch of protein: the water was never on screen, but the ribbon was holding it.
+     *
+     * Only the M2T styles that keep atom buffers at all - CRs, DishyBases, StickBases, Calpha -
+     * and every one of those draws polymer and nothing else. The bond representations are
+     * untouched, and must be: CBs and its relatives *do* draw waters, and picking one there is
+     * the whole point.
+     *
+     * Waters only, deliberately. A ligand sitting under a ribbon is still offered, which is not
+     * right either - but the set of residues M2T will actually ribbon is not written down
+     * anywhere (the ribbon styles pass "//" and let M2T decide), so narrowing further would mean
+     * inventing a polymer list and risking a nucleic acid or a modified residue losing its hover.
+     * This removes what is certainly wrong without guessing at what is merely probably wrong.
+     */
+    private atomsThisStyleDraws(atomBuffers: moorhen.AtomInfo[]): moorhen.AtomInfo[] {
+        if (!this.styleIsM2tRepresentation || !atomBuffers?.length) {
+            return atomBuffers;
+        }
+        return atomBuffers.filter(atom => !WATER_RESIDUE_NAMES.includes(atom.res_name));
+    }
+
+    /**
      * Set the molecule associated with this representation
      * @param {moorhen.Molecule} molecule - The molecule associated to this representation
      */
@@ -605,7 +641,9 @@ export class MoleculeRepresentation {
         this.buildBuffers(objects);
         const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
         if (this.styleHasAtomBuffers) {
-            this.setAtomBuffers(atomBuffers);
+            // Narrowed, not the raw selection: see atomsThisStyleDraws. The unnarrowed list is
+            // still what the centre below is measured from - that wants the whole selection.
+            this.setAtomBuffers(this.atomsThisStyleDraws(atomBuffers));
         }
         const selectionCentre = centreOnGemmiAtoms(atomBuffers);
         if (this.buffers) {
@@ -635,7 +673,9 @@ export class MoleculeRepresentation {
         this.buildBuffers(objects);
         const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
         if (this.styleHasAtomBuffers) {
-            this.setAtomBuffers(atomBuffers);
+            // Narrowed, not the raw selection: see atomsThisStyleDraws. The unnarrowed list is
+            // still what the centre below is measured from - that wants the whole selection.
+            this.setAtomBuffers(this.atomsThisStyleDraws(atomBuffers));
         }
         const selectionCentre = centreOnGemmiAtoms(atomBuffers);
         this.buffers.forEach(buf => {
