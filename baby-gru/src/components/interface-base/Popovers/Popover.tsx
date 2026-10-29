@@ -143,8 +143,8 @@ export const MoorhenPopover = (props: MoorhenPopoverType) => {
             }
 
             if (newPlacement !== null) {
-                let candidateLeft = calculateLeft(newPlacement);
-                let candidateTop = calculateTop(newPlacement);
+                const candidateLeft = calculateLeft(newPlacement);
+                const candidateTop = calculateTop(newPlacement);
 
                 const candidateOverflowScore = getOverflowScore(candidateLeft, candidateTop, popoverRect.width, popoverRect.height);
 

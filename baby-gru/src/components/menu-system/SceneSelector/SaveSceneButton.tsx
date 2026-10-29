@@ -24,7 +24,7 @@ export const SaveSceneButton = (props: { sceneId: string; iconOnly?: boolean }) 
         icon: "MatSymSave" as const,
     };
     return props.iconOnly ? (
-        <MoorhenButton type="icon-only" {...buttonProps} />
+        <MoorhenButton type="icon-only" {...buttonProps} ariaLabel={`Save the settings of "${sceneName}"`} />
     ) : (
         <MoorhenButton {...buttonProps} label={`Save "${sceneName}" settings`} />
     );

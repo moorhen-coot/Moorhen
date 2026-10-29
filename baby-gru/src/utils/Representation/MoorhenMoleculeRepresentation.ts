@@ -302,6 +302,22 @@ export class MoleculeRepresentation {
     }
 
     /**
+     * Undo a movie fade (DisplayBuffer.setAlphaMultiplier): back to the representation's own
+     * opacity. A rebuilt representation starts unfaded; a kept one (scene switch) must too.
+     */
+    resetFade() {
+        let wasFaded = false;
+        this.buffers?.forEach(buffer => {
+            if (buffer.alphaMultiplier === undefined || buffer.alphaMultiplier === 1) return;
+            wasFaded = true;
+            buffer.setAlphaMultiplier?.(1);
+            // setAlphaMultiplier only knows custom colours: a see-through representation stays see-through
+            if (this.nonCustomOpacity < 0.99) buffer.transparent = true;
+        });
+        if (wasFaded) this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+    }
+
+    /**
      * A method to set alpha for molecular representation in case of colour not picked with colour picker
      */
     setNonCustomOpacity(nonCustomOpacity: number) {

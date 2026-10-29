@@ -76,6 +76,11 @@ const initialState: {
     selectedScene: string;
     isSceneChanging: boolean;
     /**
+     * Counts the scenes shown (switches, a shown snapshot selected again, resets): what reads
+     * per-scene state once and keeps it (the colour rules card) starts again when it changes
+     */
+    shownRevision: number;
+    /**
      * The saved settings of each built-in scene: user preferences, used when Moorhen starts. Only
      * changed by the scene's save button or by restoring / importing preferences, never by editing
      * what is shown.
@@ -87,6 +92,7 @@ const initialState: {
     snapshots: [],
     selectedScene: "Default",
     isSceneChanging: false,
+    shownRevision: 0,
     savedSceneSettings: {
         Default: builtInSceneDefaults("Default"),
         "Model Building": builtInSceneDefaults("Model Building"),
@@ -118,6 +124,9 @@ const userScenesSlice = createSlice({
         },
         setSceneChanging: (state, action: PayloadAction<boolean>) => {
             state.isSceneChanging = action.payload;
+        },
+        sceneShown: state => {
+            state.shownRevision += 1;
         },
         /* Set what a scene or snapshot shows when selected */
         setSceneContent: (state, action: PayloadAction<{ id: string; content: SceneContent }>) => {
@@ -157,6 +166,7 @@ export const {
     renameUserScene,
     setSelectedScene,
     setSceneChanging,
+    sceneShown,
     setSceneContent,
     setUserSceneState,
     setSavedSceneSetting,

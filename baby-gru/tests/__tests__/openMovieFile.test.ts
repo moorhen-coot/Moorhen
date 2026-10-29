@@ -46,14 +46,14 @@ const movieFile = async (name: string, session?: Uint8Array): Promise<File> => {
  * Only what openMovieFile touches: somewhere to dispatch, somewhere to look afterwards, and the
  * scenes, to show the movie scene if the session has one.
  */
-const anInstance = (sceneIds: string[] = ["Default", "Model Building"]) => {
+const anInstance = (sceneIds: string[] = ["Default", "Model Building"], isPlaying = false) => {
     const dispatched: { type: string; payload?: unknown }[] = [];
     const select = jest.fn(async (_sceneId: string) => true);
     return {
         dispatched,
         select,
         instance: {
-            store: { dispatch: (action: any) => dispatched.push(action) },
+            store: { dispatch: (action: any) => dispatched.push(action), getState: () => ({ movie: { isPlaying } }) },
             userScene: { list: sceneIds.map(id => ({ id, name: id })), selected: "Default", select, waitUntilIdle: async () => {} },
         } as any,
     };
@@ -106,6 +106,15 @@ describe("opening a movie file", () => {
         const result = await openMovieFile(await movieFile("tour.mhm", new Uint8Array([8, 1])), instance);
         expect(result.ok).toBe(true);
         expect(result.message).toMatch(/could not show its scene/);
+    });
+
+    it("refuses a file without a session too while a movie plays", async () => {
+        const { instance, dispatched } = anInstance(undefined, true);
+        const result = await openMovieFile(await movieFile("path-only.mhm"), instance);
+        expect(result.ok).toBe(false);
+        expect(result.message).toMatch(/movie is playing/);
+        expect(dispatched).toHaveLength(0);
+        expect(mockLoadSession).not.toHaveBeenCalled();
     });
 
     it("refuses while a movie plays, saying why", async () => {

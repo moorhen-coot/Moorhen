@@ -863,11 +863,6 @@ export class MoorhenTimeCapsule {
                 return MoorhenTimeCapsule.NEWER_VERSION_STATUS;
             }
         }
-        if (store.getState().movie.isPlaying) {
-            console.warn(MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE);
-            return MoorhenTimeCapsule.MOVIE_PLAYING_STATUS;
-        }
-
         if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
             if (!MoorhenTimeCapsule.supportedLegacyVersions.includes(sessionData.version)) {
                 console.warn(`Outdated session backup version (${sessionData.version}), wont load...`);
@@ -876,6 +871,11 @@ export class MoorhenTimeCapsule {
         }
         // Loading deletes every molecule: no scene switch may run meanwhile (a running one finishes first)
         return moorhenInstance.userScene.whileLocked(async () => {
+            // Checked once no switch runs: Play waits for the scenes too (see the movie panel)
+            if (store.getState().movie.isPlaying) {
+                console.warn(MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE);
+                return MoorhenTimeCapsule.MOVIE_PLAYING_STATUS;
+            }
             timeCapsuleRef.current.setBusy(true);
             // A session replaces everything, the movie included: its scene and the objects it
             // fades are about to go (a movie file sets its own movie after loading its session)

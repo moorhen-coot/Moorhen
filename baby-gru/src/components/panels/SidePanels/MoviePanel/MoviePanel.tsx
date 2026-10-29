@@ -162,6 +162,8 @@ export const MoviePanel = () => {
      * @returns False if the scene could not be shown (a scene switch already running).
      */
     const goToMovieScene = async (explain: boolean = true): Promise<boolean> => {
+        // A scene switch or a session load is running: the scene may change under the movie
+        if (moorhenInstance.userScene.isBusy) return false;
         if (!movieScene || selectedScene === movieScene.id) return true;
         const switched = await moorhenInstance.userScene.select(movieScene.id);
         if (switched && explain) {

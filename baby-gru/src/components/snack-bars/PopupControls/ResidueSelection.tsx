@@ -25,8 +25,8 @@ export const ResidueSelectionControls = () => {
 
     const dispatch = useDispatch();
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    // Default colour rules belong to the scene: the colour rules card starts again on a switch
-    const selectedScene = useSelector((state: RootState) => state.userScenes.selectedScene);
+    // Default colour rules belong to the scene: the colour rules card starts again whenever one is shown
+    const shownRevision = useSelector((state: RootState) => state.userScenes.shownRevision);
     const residueSelection = useSelector((state: moorhen.State) => state.generalStates.residueSelection);
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine);
@@ -388,7 +388,7 @@ export const ResidueSelectionControls = () => {
                     </MoorhenPopoverButton>
                     <MoorhenButton type="icon-only" onClick={handleInvertSelection} tooltip="Invert selection" icon="MatSymSwapVert" />
                     <MoorhenPopoverButton type="icon-only" tooltip="Colour rules" icon="MatSymColors" popoverPlacement="right">
-                        <MoorhenModifyColourRulesCard key={selectedScene} molecule={molecule} residueSelection />
+                        <MoorhenModifyColourRulesCard key={shownRevision} molecule={molecule} residueSelection />
                     </MoorhenPopoverButton>
 
                     <MoorhenButton type="icon-only" onClick={handleRotateTranslate} tooltip="Rotate/Translate" icon="MatSymRotate90Cw" />

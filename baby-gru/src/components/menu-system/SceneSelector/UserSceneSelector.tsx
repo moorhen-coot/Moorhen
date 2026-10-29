@@ -4,7 +4,7 @@ import { MoorhenIcon } from "@/components/icons";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenTextInput } from "@/components/inputs";
 import { useMoorhenInstance } from "@/hooks";
 import { RootState, setSceneSelectorOpen, setShownSidePanel } from "@/store";
-import { MOVIE_SCENE_ID, isBuiltInScene, UserScene } from "@/store/userScenesSlice";
+import { MOVIE_SCENE_ID, UserScene, isBuiltInScene } from "@/store/userScenesSlice";
 import { MoorhenInfoCard, MoorhenMenuItem, MoorhenPopover, MoorhenStack, MoorhenTooltip } from "../../interface-base";
 import { CopySceneButton } from "./CopySceneButton";
 import { SaveSceneButton } from "./SaveSceneButton";
@@ -13,14 +13,15 @@ import "./scene-selector.css";
 const scenesInfo = (
     <span>
         <b>Scenes</b>
-        <br />A scene is a whole look of the view: the representations of every molecule and the scene settings (lighting,
-        background, effects, fog and clipping). Switching scene swaps all of it, the camera stays where it is. A scene keeps
-        its changes while you work in another one.
+        <br />A scene is a whole look of the view: the representations of every molecule and the scene settings (lighting, background,
+        effects, fog and clipping). Switching scene swaps all of it, the camera stays where it is. A scene keeps its changes while you work
+        in another one.
         <br />
         <br />
         <b>Default and Model Building</b>
         <br />
-        Built in. Save their settings to start Moorhen with them; restore brings back the saved or the default settings.
+        Built in. Save their settings to start Moorhen with them; restore brings back the saved or the default settings, with the default
+        representations.
         <br />
         <br />
         <b>Custom scenes</b>
@@ -80,8 +81,7 @@ export const UserSceneSelector = () => {
     const isMovieScene = (id: string) => id === MOVIE_SCENE_ID;
     const isSnapshotShown = selectedScene.startsWith("snapshot-");
     const sceneName = [...userScenes, ...userSnapshots].find(userScene => userScene.id === selectedScene)?.name ?? selectedScene;
-    const sceneCustomNumber =
-        selectedScene.startsWith("custom-") || isSnapshotShown ? parseInt(selectedScene.split("-")[1]) : null;
+    const sceneCustomNumber = selectedScene.startsWith("custom-") || isSnapshotShown ? parseInt(selectedScene.split("-")[1]) : null;
 
     let sceneIcon: "MatSymPhotoCam" | "MatSymWallpaperSlideshow" | "clapperboard" = "MatSymWallpaperSlideshow";
     if (isSnapshotShown) sceneIcon = "MatSymPhotoCam";
@@ -97,12 +97,13 @@ export const UserSceneSelector = () => {
                 disabled={isMoviePlaying}
                 className={`moorhen__main-menu-button moorhen__scene-selector${isShown ? " open" : ""}`}
                 onClick={handleClick}
-                aria-haspopup="menu"
+                aria-label={`Scene selector, showing ${sceneName}`}
+                aria-haspopup="dialog"
                 aria-expanded={isShown}
             >
-                <MoorhenIcon moorhenSVG={sceneIcon} alt="Scene Presets" size="medium" />
+                <MoorhenIcon moorhenSVG={sceneIcon} alt="Scenes" size="medium" />
                 <div className="moorhen__scene-selector-number">{sceneCustomNumber}</div>
-                {(selectedScene === "Model Building") && <MoorhenIcon moorhenSVG="MatSymBuild" size="small" />} 
+                {selectedScene === "Model Building" && <MoorhenIcon moorhenSVG="MatSymBuild" size="small" />}
                 {/* Keyed: a new snapshot mounts a new element, which restarts the animation */}
                 {snapshotAnimationKey > 0 && (
                     <span key={snapshotAnimationKey} className="moorhen__scene-selector-snapshot-added" aria-hidden="true">
@@ -138,6 +139,7 @@ export const UserSceneSelector = () => {
                             type="icon-only"
                             icon="MatSymDelete"
                             tooltip={`Delete this ${kind.toLowerCase()}`}
+                            ariaLabel={`Delete ${kind.toLowerCase()} "${name}"`}
                             disabled={isLocked}
                             {...popoverProps(`delete:${id}`)}
                         >
@@ -159,6 +161,7 @@ export const UserSceneSelector = () => {
                         icon="MatSymEdit"
                         extraOnClick={() => setRenameInputValue(name)}
                         tooltip={`Rename this ${kind.toLowerCase()}`}
+                        ariaLabel={`Rename ${kind.toLowerCase()} "${name}"`}
                         {...popoverProps(`rename:${id}`)}
                     >
                         <MoorhenTextInput text={renameInputValue} setText={setRenameInputValue} onSubmit={() => applyRename(id)} />
@@ -182,6 +185,7 @@ export const UserSceneSelector = () => {
                         type="icon-only"
                         icon="MatSymReplay"
                         tooltip="Restore this scene: its settings and representations"
+                        ariaLabel={`Restore scene "${userScenes.find(scene => scene.id === id)?.name ?? id}"`}
                         disabled={isLocked}
                         {...popoverProps(`restore:${id}`)}
                     >
@@ -204,6 +208,7 @@ export const UserSceneSelector = () => {
             <MoorhenMenuItem
                 disabled={isLocked}
                 selected={userScene.id === selectedScene}
+                ariaCurrent={userScene.id === selectedScene}
                 style={{ flex: 1 }}
                 onClick={() => {
                     moorhenInstance.userScene.select(userScene.id);
@@ -225,46 +230,62 @@ export const UserSceneSelector = () => {
             popoverPlacement="bottom-left"
             type="custom"
         >
-            <MoorhenStack className="moorhen__scene-selector-menu" role="menu" style={{ maxHeight: "80vh", overflowY: "auto" }}>
-                <MoorhenStack direction="line" align="center">
-                    <div className="moorhen__submenu-title" style={{ flex: 1 }}>
-                        Scenes
-                    </div>
-                    <MoorhenInfoCard infoText={scenesInfo} popoverPlacement="right" width="25rem" />
+            {/* A dialog, not a menu: its rows hold several controls each, reached with Tab. Escape
+                closes it, the usual dialog behaviour, which the rule below does not know about */}
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+            <div
+                role="dialog"
+                aria-label="Scenes"
+                onKeyDown={event => {
+                    if (event.key !== "Escape") return;
+                    setIsShown(false);
+                    buttonRef.current?.focus();
+                }}
+            >
+                <MoorhenStack className="moorhen__scene-selector-menu" style={{ maxHeight: "80vh", overflowY: "auto" }}>
+                    <MoorhenStack direction="line" align="center">
+                        <div className="moorhen__submenu-title" style={{ flex: 1 }}>
+                            Scenes
+                        </div>
+                        <MoorhenInfoCard infoText={scenesInfo} popoverPlacement="right" width="25rem" />
+                        <MoorhenButton
+                            type="icon-only"
+                            icon="MatSymSettings"
+                            tooltip="Scene settings"
+                            ariaLabel="Scene settings"
+                            onClick={() => {
+                                dispatch(setShownSidePanel("sceneSettings"));
+                                setIsShown(false);
+                            }}
+                        />
+                    </MoorhenStack>
+                    {userScenes.filter(userScene => !isMovieScene(userScene.id)).map(sceneItem)}
                     <MoorhenButton
+                        tooltip="New Custom Scene"
+                        ariaLabel="New custom scene"
+                        disabled={isLocked}
+                        onClick={handleNewScene}
                         type="icon-only"
-                        icon="MatSymSettings"
-                        tooltip="Scene settings"
-                        onClick={() => {
-                            dispatch(setShownSidePanel("sceneSettings"));
-                            setIsShown(false);
-                        }}
+                        icon="MatSymAdd"
+                    />
+                    {userScenes.some(userScene => isMovieScene(userScene.id)) && (
+                        <>
+                            <div className="moorhen__submenu-title">Movie</div>
+                            {userScenes.filter(userScene => isMovieScene(userScene.id)).map(sceneItem)}
+                        </>
+                    )}
+                    <div className="moorhen__submenu-title">Snapshots</div>
+                    {userSnapshots.map(sceneItem)}
+                    <MoorhenButton
+                        tooltip="Take a snapshot of the current view"
+                        ariaLabel="Take a snapshot of the current view"
+                        disabled={isLocked}
+                        onClick={() => moorhenInstance.userScene.takeSnapshot()}
+                        type="icon-only"
+                        icon="MatSymPhotoCam"
                     />
                 </MoorhenStack>
-                {userScenes.filter(userScene => !isMovieScene(userScene.id)).map(sceneItem)}
-                <MoorhenButton
-                    tooltip="New Custom Scene"
-                    disabled={isLocked}
-                    onClick={handleNewScene}
-                    type="icon-only"
-                    icon="MatSymAdd"
-                />
-                {userScenes.some(userScene => isMovieScene(userScene.id)) && (
-                    <>
-                        <div className="moorhen__submenu-title">Movie</div>
-                        {userScenes.filter(userScene => isMovieScene(userScene.id)).map(sceneItem)}
-                    </>
-                )}
-                <div className="moorhen__submenu-title">Snapshots</div>
-                {userSnapshots.map(sceneItem)}
-                <MoorhenButton
-                    tooltip="Take a snapshot of the current view"
-                    disabled={isLocked}
-                    onClick={() => moorhenInstance.userScene.takeSnapshot()}
-                    type="icon-only"
-                    icon="MatSymPhotoCam"
-                />
-            </MoorhenStack>
+            </div>
         </MoorhenPopover>
     );
 };

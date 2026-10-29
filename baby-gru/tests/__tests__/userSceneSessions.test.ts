@@ -3,10 +3,13 @@
  * the movie, never changes the saved preferences, and is refused while a movie plays.
  */
 import { appendKeyframe, setMoviePlaying } from "@/store/movieSlice";
+import { setSelectedThreeDObject } from "@/store/generalStatesSlice";
 import { setDoSSAO, setDrawCrosshairs } from "@/store/sceneSettingsSlice";
 import { builtInSceneDefaults } from "@/store/userScenesSlice";
 import { ColourRule } from "@/utils/MoorhenColourRule";
+import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { cidModel, withCidModel } from "@/utils/Representation/RepresentationBuilder";
+import { readSceneList } from "@/store/userSceneFormat";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
 import type { Keyframe } from "@/utils/cameraPath";
 import * as quat4 from "gl-matrix/quat";
@@ -163,7 +166,8 @@ describe("switching between scenes that draw the same representations", () => {
         await userScene.select(snapshotId);
         const shown = shownRepresentations();
         // The same objects (nothing rebuilt), now answering to the snapshot's ids
-        expect(new Set(shown)).toEqual(new Set(rebuilt));
+        expect(shown).toHaveLength(rebuilt.length);
+        expect(shown.every(rep => rebuilt.includes(rep))).toBe(true);
         expect(shown.map(rep => rep.uniqueId)).toEqual(snapshotIds);
         expect(cloud.instance.getMoleculeList()[0].representations.filter(rep => rep.isCustom)).toHaveLength(shown.length);
     });
@@ -187,6 +191,7 @@ describe("switching between scenes that draw the same representations", () => {
         const before = shownRepresentations();
         await userScene.select("Model Building");
         const after = shownRepresentations();
+        expect(after.length).toBeGreaterThan(0);
         expect(after.some(rep => before.includes(rep))).toBe(false);
     });
 });
@@ -227,10 +232,12 @@ describe("default colour rules of a molecule", () => {
         // Other colours: rebuilt, both ways
         await userScene.select(sameColours);
         const plain = defaultColoured();
+        expect(plain.length).toBeGreaterThan(0);
         expect(plain.some(rep => red.includes(rep))).toBe(false);
         await userScene.select(redSnapshot);
         expect(rulesOf()).toContain("#ff0000");
         const redAgain = defaultColoured();
+        expect(redAgain.length).toBeGreaterThan(0);
         expect(redAgain.some(rep => plain.includes(rep))).toBe(false);
 
         // The same colours (the snapshot selected again): kept, the same objects
@@ -288,5 +295,182 @@ describe("the model shown by a representation of a multi-model molecule", () => 
         await userScene.select("Model Building");
         await userScene.select("Default");
         expect(cidModel(shownModel())).toBe(2);
+    });
+});
+
+describe("a kept representation", () => {
+    const shownRepresentations = () => [...state().molecules.customRepresentations];
+    /** A stand-in display buffer (no WebGL here): only the fade a movie sets on it */
+    const fadedBuffer = (alphaMultiplier: number) => ({
+        alphaMultiplier,
+        transparent: true,
+        customColour: null as number[] | null,
+        visible: true,
+        setAlphaMultiplier(value: number) {
+            this.alphaMultiplier = value;
+            this.transparent = value < 0.99;
+        },
+    });
+
+    test("loses a movie fade, back to its own opacity", async () => {
+        const { userScene } = cloud.instance;
+        const [solid, seeThrough] = shownRepresentations();
+        seeThrough.nonCustomOpacity = 0.5;
+        const snapshotId = userScene.takeSnapshot("Before the movie");
+        const solidBuffer = fadedBuffer(0.2);
+        const seeThroughBuffer = fadedBuffer(0.2);
+        solid.buffers = [solidBuffer] as any;
+        seeThrough.buffers = [seeThroughBuffer] as any;
+
+        await userScene.select(snapshotId);
+        expect(shownRepresentations()).toContain(solid);
+        expect(solidBuffer.alphaMultiplier).toBe(1);
+        expect(solidBuffer.transparent).toBe(false);
+        expect(seeThroughBuffer.alphaMultiplier).toBe(1);
+        expect(seeThroughBuffer.transparent).toBe(true);
+    });
+
+    test("takes the scene's place in the store and in the molecule's own list", async () => {
+        const { userScene, representation } = cloud.instance;
+        const molecule = cloud.instance.getMoleculeList()[0];
+        const snapshotId = userScene.takeSnapshot("In order");
+        const sceneOrder = shownRepresentations().map(rep => rep.style);
+        // The same first representation, made again: now last
+        const [first] = shownRepresentations();
+        const { uniqueId: _uniqueId, ...params } = structuredClone(first.backup());
+        await representation.delete(first.uniqueId);
+        await representation.create(molecule.uniqueId, params as Parameters<typeof representation.create>[1]);
+        expect(shownRepresentations().map(rep => rep.style)).not.toEqual(sceneOrder);
+
+        await userScene.select(snapshotId);
+        expect(shownRepresentations().map(rep => rep.style)).toEqual(sceneOrder);
+        expect(molecule.representations.filter(rep => rep.isCustom).map(rep => rep.style)).toEqual(sceneOrder);
+    });
+
+    test("is never left drawn but out of the store when a rebuild fails", async () => {
+        const { userScene, representation } = cloud.instance;
+        const molecule = cloud.instance.getMoleculeList()[0];
+        const [first, second] = shownRepresentations();
+        const snapshotId = userScene.takeSnapshot("Two");
+        // Now: the second, then another one. The snapshot rebuilds the first, then keeps the second
+        await representation.delete(first.uniqueId);
+        await representation.create(molecule.uniqueId, { representationStyle: "CAs" });
+        const create = jest.spyOn(MoleculeRepresentation, "create").mockRejectedValue(new Error("rebuild failed"));
+        try {
+            await userScene.select(snapshotId);
+        } finally {
+            create.mockRestore();
+        }
+        const inStore = shownRepresentations();
+        expect(inStore).toContain(second);
+        for (const rep of molecule.representations.filter(rep => rep.isCustom)) expect(inStore).toContain(rep);
+        expect(userScene.isBusy).toBe(false);
+    });
+
+    test("showing a scene, even the shown snapshot again, counts for what reads per-scene state once", async () => {
+        const { userScene } = cloud.instance;
+        const revision = () => state().userScenes.shownRevision;
+        const snapshotId = userScene.takeSnapshot();
+        const before = revision();
+        await userScene.select(snapshotId);
+        await userScene.select(snapshotId);
+        expect(revision()).toBe(before + 2);
+        await userScene.select("Default");
+        await userScene.reset("Default", "default", true);
+        expect(revision()).toBe(before + 4);
+    });
+});
+
+describe("reading scenes from a file", () => {
+    test("drops default colour rules that could not be applied", () => {
+        const valid = { ruleType: "molecule", cid: "/*/*/*/*", color: "#ff0000", isMultiColourRule: false, args: [] };
+        const [scene] = readSceneList(
+            [
+                {
+                    id: "custom-1",
+                    name: "From a file",
+                    sections: {
+                        representations: [],
+                        sceneSettings: {},
+                        moleculeDefaults: {
+                            good: { colourRules: [valid] },
+                            coot: { colourRules: null },
+                            noColour: { colourRules: [{ ruleType: "molecule", cid: "/*" }] },
+                            multiWithoutData: { colourRules: [{ ...valid, isMultiColourRule: true, args: [] }] },
+                            notAList: { colourRules: "red" },
+                        },
+                    },
+                },
+            ],
+            () => true
+        );
+        expect(Object.keys(scene.content.sections.moleculeDefaults).sort()).toEqual(["coot", "good"]);
+    });
+});
+
+describe("vectors and 3D shapes", () => {
+    const vectorIds = () => state().vectors.vectorsList.map(vector => vector.uniqueId);
+    const objectIds = () => state().threeDObjects.objects.map(object => object.uniqueId);
+
+    test("belong to the scene: each scene shows its own", async () => {
+        const { userScene, vectors, object } = cloud.instance;
+        const arrow = vectors.create({ xTo: 10 });
+        const sphere = object.create({ type: "sphere", origin: [0, 0, 0], radius: 2 });
+        expect(vectorIds()).toEqual([arrow]);
+        expect(objectIds()).toEqual([sphere]);
+
+        // Model Building, never shown: starts with what is shown, then lives on its own
+        await userScene.select("Model Building");
+        expect(vectorIds()).toEqual([arrow]);
+        vectors.delete(arrow);
+        const cube = object.create({ type: "cube", origin: [5, 5, 5] });
+
+        await userScene.select("Default");
+        expect(vectorIds()).toEqual([arrow]);
+        expect(objectIds()).toEqual([sphere]);
+        await userScene.select("Model Building");
+        expect(vectorIds()).toEqual([]);
+        expect(objectIds()).toEqual([sphere, cube]);
+    });
+
+    test("an edited one comes back as it was edited, and a list shown unchanged is not replaced", async () => {
+        const { userScene, vectors } = cloud.instance;
+        const arrow = vectors.create({ xTo: 10 });
+        vectors.edit(arrow, { xTo: 20 });
+        const snapshotId = userScene.takeSnapshot();
+        const shownList = state().vectors.vectorsList;
+
+        await userScene.select(snapshotId);
+        expect(state().vectors.vectorsList).toBe(shownList);
+        vectors.edit(arrow, { xTo: 30 });
+        await userScene.select(snapshotId);
+        expect(vectors.get(arrow).xTo).toBe(20);
+    });
+
+    test("deselect a shape the new scene does not have", async () => {
+        const { userScene, object } = cloud.instance;
+        const snapshotId = userScene.takeSnapshot("Empty");
+        const sphere = object.create({ type: "sphere", origin: [0, 0, 0], radius: 2 });
+        cloud.store.dispatch(setSelectedThreeDObject(sphere));
+
+        await userScene.select(snapshotId);
+        expect(objectIds()).toEqual([]);
+        expect(state().generalStates.selectedThreeDObjectId).toBeNull();
+    });
+
+    test("are saved with the scenes in a session", async () => {
+        const { userScene, vectors, object } = cloud.instance;
+        await userScene.select("Model Building");
+        const arrow = vectors.create({ xTo: 10 });
+        const sphere = object.create({ type: "sphere", origin: [0, 0, 0], radius: 2 });
+        await userScene.select("Default");
+        const session = await saveSession();
+
+        userScene.resetForLegacySession();
+        expect(await loadSession(session)).toBe(0);
+        expect(vectorIds()).toEqual([]);
+        await userScene.select("Model Building");
+        expect(vectorIds()).toEqual([arrow]);
+        expect(objectIds()).toEqual([sphere]);
     });
 });

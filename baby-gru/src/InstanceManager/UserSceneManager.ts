@@ -1,7 +1,11 @@
 import {
     addCustomRepresentation,
+    addObject,
     addUserScene,
     addUserSnapshot,
+    addVectors,
+    emptyObjects,
+    emptyVectors,
     applySceneSettingsSnapshot,
     enqueueSnackbar,
     removeCustomRepresentation,
@@ -12,6 +16,7 @@ import {
     setQuat,
     setSceneChanging,
     setSelectedScene,
+    setSelectedThreeDObject,
     setUserSceneState,
     setZoom,
 } from "../store";
@@ -34,6 +39,7 @@ import {
     MOVIE_SCENE_ID,
     builtInSceneDefaults,
     isBuiltInScene,
+    sceneShown,
     setSceneContent,
 } from "../store/userScenesSlice";
 import { ColourRule, type ColourRuleData } from "../utils/MoorhenColourRule";
@@ -585,6 +591,10 @@ export class MoorhenUserSceneManager {
      */
     private capture(): SceneContent {
         const content = emptyContent(getSceneSettingsSnapshot(this.instance.store.getState().sceneSettings));
+        const { vectors, threeDObjects } = this.instance.store.getState();
+        // Copies: the store freezes what it holds, and the shown lists keep changing
+        content.sections.vectors = structuredClone(vectors.vectorsList);
+        content.sections.threeDObjects = structuredClone(threeDObjects.objects);
         content.sections.moleculeDefaults = {};
         for (const molecule of this.instance.getMoleculeList()) {
             content.objects.molecules[molecule.uniqueId] = molecule.name;
@@ -606,14 +616,14 @@ export class MoorhenUserSceneManager {
     /** Replace what is shown by a scene's content: its settings and representations */
     private async showScene(sceneId: string, content: SceneContent) {
         this.applyDefaultStyle(sceneId);
-        // A shown representation identical to one of the scene's (e.g. switching between snapshots
-        // of the same scene) is kept and given the scene's one id, instead of being rebuilt
         // Default colour rules: the shown ones, and the scene's (a molecule it does not mention keeps its own)
         const shownRules = new Map(this.instance.getMoleculeList().map(molecule => [molecule.uniqueId, colourRulesData(molecule)]));
         const sceneRules = (moleculeUniqueId: string) => {
             const defaults = content.sections.moleculeDefaults?.[moleculeUniqueId];
             return defaults ? defaults.colourRules : shownRules.get(moleculeUniqueId);
         };
+        // A shown representation identical to one of the scene's (e.g. switching between snapshots
+        // of the same scene) is kept and given the scene's one id, instead of being rebuilt
         const shown = new Map<string, MoleculeRepresentation[]>();
         for (const molecule of this.instance.getMoleculeList()) {
             for (const representation of this.instance.representation.getList(molecule.uniqueId)) {
@@ -629,20 +639,21 @@ export class MoorhenUserSceneManager {
                 params,
                 kept: shown.get(drawnKey(moleculeUniqueId, params, sceneRules(moleculeUniqueId)))?.shift(),
             }));
+        // Deleted by id: before the kept ones take theirs, which a deleted one may still hold
         for (const representation of [...shown.values()].flat()) {
             await this.instance.representation.delete(representation.uniqueId);
         }
+        // Give the kept ones their new ids at once, with no await in between: a representation left
+        // out of the store if something failed would stay drawn, but never be captured or deleted
+        // again. All out first, since ids can swap between kept representations.
+        const kept = wanted.filter(item => item.kept);
+        kept.forEach(({ kept }) => this.instance.dispatch(removeCustomRepresentation(kept)));
+        kept.forEach(({ kept, params }) => (kept.uniqueId = params.uniqueId));
+        kept.forEach(({ kept }) => this.instance.dispatch(addCustomRepresentation(kept)));
         // Before rebuilding: new representations are drawn with them
         for (const molecule of this.instance.getMoleculeList()) {
             const rules = sceneRules(molecule.uniqueId);
             if (drawnJson(rules) !== drawnJson(shownRules.get(molecule.uniqueId))) await this.setDefaultColourRules(molecule, rules);
-        }
-        // Take the kept ones out of the list and give them their new ids before anything is
-        // added: ids can swap between kept representations, and a new one must not find its id taken
-        for (const { kept, params } of wanted) {
-            if (!kept) continue;
-            this.instance.dispatch(removeCustomRepresentation(kept));
-            kept.uniqueId = params.uniqueId;
         }
         if (content.camera) {
             // Before the scene settings: automatic fog and clipping follow the zoom
@@ -651,11 +662,12 @@ export class MoorhenUserSceneManager {
             this.instance.dispatch(setQuat([...content.camera.quat]));
         }
         this.applySceneSettings(content);
-        // In the scene's order, as if every representation was rebuilt
+        this.showAnnotations(content);
         for (const { moleculeUniqueId, params, kept } of wanted) {
             if (kept) {
-                this.instance.dispatch(addCustomRepresentation(kept));
-                // As create() does: both default to shown
+                // As a rebuilt one: unfaded (a movie fade is not part of the scene), shown or hidden
+                // as create() does (both default to shown)
+                kept.resetFade();
                 const visible = params.visible ?? true;
                 kept.interfaceOption.visible = params.interfaceVisible ?? true;
                 if (visible && !kept.visible) await kept.show();
@@ -666,6 +678,7 @@ export class MoorhenUserSceneManager {
                 await this.instance.representation.create(moleculeUniqueId, copy);
             }
         }
+        this.putInSceneOrder(wanted.map(({ params }) => params.uniqueId));
         // Molecules loaded since the scene was saved get the scene's default style
         const { wizard } = sceneStyle(sceneId);
         for (const molecule of this.instance.getMoleculeList()) {
@@ -674,6 +687,49 @@ export class MoorhenUserSceneManager {
             }
         }
         this.reportMissingMolecules(sceneId, content);
+        this.instance.dispatch(sceneShown());
+    }
+
+    /**
+     * Show the scene's vectors and 3D shapes, if it has them (an older scene keeps the shown ones).
+     * A list already shown is left alone, so it is not redrawn.
+     */
+    private showAnnotations(content: SceneContent) {
+        const { vectors, threeDObjects, generalStates } = this.instance.store.getState();
+        const { vectors: sceneVectors, threeDObjects: sceneObjects } = content.sections;
+        if (sceneVectors && JSON.stringify(sceneVectors) !== JSON.stringify(vectors.vectorsList)) {
+            this.instance.dispatch(emptyVectors());
+            // Copies: the scene's are frozen in the store, the shown ones can be edited
+            this.instance.dispatch(addVectors(structuredClone(sceneVectors)));
+        }
+        if (sceneObjects && JSON.stringify(sceneObjects) !== JSON.stringify(threeDObjects.objects)) {
+            this.instance.dispatch(emptyObjects());
+            structuredClone(sceneObjects).forEach(object => this.instance.dispatch(addObject(object)));
+            // The selected shape (its handles) may not be in this scene
+            const selected = generalStates.selectedThreeDObjectId;
+            if (selected && !sceneObjects.some(object => object.uniqueId === selected)) this.instance.dispatch(setSelectedThreeDObject(null));
+        }
+    }
+
+    /**
+     * Order the custom representations (in the store and in each molecule's own list) as the scene
+     * lists them, as if they were all rebuilt: kept ones would otherwise stay where they were.
+     * @param uniqueIds - The scene's representations, in its order.
+     */
+    private putInSceneOrder(uniqueIds: string[]) {
+        const rank = new Map(uniqueIds.map((uniqueId, index) => [uniqueId, index]));
+        const inScene = (representation: MoleculeRepresentation) => representation.isCustom && rank.has(representation.uniqueId);
+        const byRank = (a: MoleculeRepresentation, b: MoleculeRepresentation) => rank.get(a.uniqueId) - rank.get(b.uniqueId);
+        const custom: MoleculeRepresentation[] = this.instance.store.getState().molecules.customRepresentations;
+        const ordered = [...custom.filter(rep => !inScene(rep)), ...custom.filter(inScene).sort(byRank)];
+        if (ordered.some((rep, index) => rep !== custom[index])) {
+            ordered.forEach(rep => this.instance.dispatch(removeCustomRepresentation(rep)));
+            ordered.forEach(rep => this.instance.dispatch(addCustomRepresentation(rep)));
+        }
+        for (const molecule of this.instance.getMoleculeList()) {
+            const others = molecule.representations.filter(rep => !inScene(rep));
+            molecule.representations = [...others, ...molecule.representations.filter(inScene).sort(byRank)];
+        }
     }
 
     /**

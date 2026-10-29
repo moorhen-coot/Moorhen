@@ -18,6 +18,8 @@ type MoorhenPopoverButtonType = {
     closeButton?: boolean;
     label?: string;
     extraOnClick?: () => void;
+    /** Accessible name of the button (an icon-only button otherwise reads as its icon's name) */
+    ariaLabel?: string;
     /** Control whether the popover is open (e.g. to close it from its content); it manages itself when absent */
     isShown?: boolean;
     setIsShown?: (isShown: boolean) => void;
@@ -44,6 +46,7 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
             style={style}
             label={label}
             disabled={props.disabled}
+            ariaLabel={props.ariaLabel}
         />
     );
 

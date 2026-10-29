@@ -41,6 +41,10 @@ export async function openMovieFile(
     onProgress: (message: string) => void = () => { /* nowhere to say it */ },
 ): Promise<OpenedMovie> {
     const dispatch = moorhenInstance.store.dispatch;
+    // Also without a session: the movie playing would be replaced under the player
+    if (moorhenInstance.store.getState().movie.isPlaying) {
+        return { ok: false, restoredScene: false, message: `${file.name} not opened. ${MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE}` };
+    }
     try {
         onProgress(`Opening ${file.name}...`);
         const container = await unpackMovie(await file.arrayBuffer());

@@ -19,20 +19,26 @@ export const CopySceneButton = (props: { sceneId: string; withLabel?: boolean })
     const snapshots = useSelector((state: RootState) => state.userScenes.snapshots);
     const isLocked = useSelector((state: RootState) => state.userScenes.isSceneChanging || state.movie.isPlaying);
     const [source, setSource] = useState<string>("");
+    const [isShown, setIsShown] = useState<boolean>(false);
 
     const sources = [...scenes, ...snapshots].filter(scene => scene.id !== props.sceneId);
     const targetName = scenes.find(scene => scene.id === props.sceneId)?.name ?? props.sceneId;
 
     const copy = async (withRepresentations: boolean) => {
         const sourceName = sources.find(scene => scene.id === source)?.name ?? source;
-        if (await moorhenInstance.userScene.copyFrom(props.sceneId, source, withRepresentations)) {
-            dispatch(
-                enqueueSnackbar({
-                    message: `"${targetName}" now has the ${withRepresentations ? "settings and representations" : "settings"} of "${sourceName}"`,
-                    variant: "info",
-                })
-            );
-        }
+        setIsShown(false);
+        const copied = await moorhenInstance.userScene.copyFrom(props.sceneId, source, withRepresentations);
+        dispatch(
+            enqueueSnackbar(
+                copied
+                    ? {
+                          message: `"${targetName}" now has the ${withRepresentations ? "settings and representations" : "settings"} of "${sourceName}"`,
+                          variant: "info",
+                      }
+                    : // e.g. the source was deleted meanwhile, or a scene switch started
+                      { message: `Could not copy "${sourceName}" into "${targetName}"`, variant: "warning" }
+            )
+        );
     };
 
     return (
@@ -42,7 +48,10 @@ export const CopySceneButton = (props: { sceneId: string; withLabel?: boolean })
             icon="MatSymCopyAll"
             extraOnClick={() => setSource(sources[0]?.id ?? "")}
             tooltip="Copy the parameters of another scene into this one"
+            ariaLabel={`Copy the parameters of another scene into "${targetName}"`}
             disabled={isLocked}
+            isShown={isShown}
+            setIsShown={setIsShown}
         >
             <MoorhenStack>
                 <MoorhenSelect label="Copy from" value={source} onChange={event => setSource(event.target.value)}>

@@ -1,7 +1,9 @@
 import type { ColourRuleData } from "../utils/MoorhenColourRule";
 import type { RepresentationBackup } from "../utils/Representation/RepresentationBuilder";
 import type { SceneSettingsSnapshot } from "./sceneSettingsSlice";
+import type { ThreeDObject } from "./threeDObjectsSlice";
 import type { UserScene } from "./userScenesSlice";
+import type { MoorhenVector } from "./vectorsSlice";
 
 /** Version of the scene data format saved in session files ({@link UserSceneState}) */
 export const USER_SCENE_FORMAT_VERSION = 1;
@@ -21,6 +23,10 @@ export type SceneSections = {
     sceneSettings: SceneSettingsSnapshot;
     /** Absent in scenes saved before it existed */
     moleculeDefaults?: MoleculeDefaults;
+    /** The vectors (arrows, distances...) the scene shows. Absent (older scene): the shown ones are kept */
+    vectors?: MoorhenVector[];
+    /** The 3D shapes the scene shows. Absent (older scene): the shown ones are kept */
+    threeDObjects?: ThreeDObject[];
     /** Sections this version does not know (read from a newer file): saved back unchanged */
     [section: string]: unknown;
 };
@@ -73,23 +79,36 @@ export const emptyContent = (sceneSettings: SceneSettingsSnapshot): SceneContent
 
 export const toFileEntry = ({ id, name, content }: UserScene): UserSceneFileEntry => ({ id, name, ...content });
 
-/** Keep the molecules whose colour rules are a list of rule objects, or null */
+/** Keep the objects of a list that have a unique id (vectors, 3D shapes) */
+const readIdentified = (value: unknown): Record<string, unknown>[] =>
+    Array.isArray(value) ? value.filter(item => isObject(item) && typeof item.uniqueId === "string") : [];
+
+/** Whether a value has what ColourRule.initFromDataObject reads, so applying it cannot fail mid-switch */
+const isColourRuleData = (rule: unknown): boolean =>
+    isObject(rule) &&
+    typeof rule.ruleType === "string" &&
+    typeof rule.cid === "string" &&
+    typeof rule.color === "string" &&
+    (rule.isMultiColourRule !== true || (Array.isArray(rule.args) && typeof rule.args[0] === "string"));
+
+/** Keep the molecules whose colour rules are a list of valid rules, or null */
 const readMoleculeDefaults = (value: unknown): MoleculeDefaults =>
     isObject(value)
-        ? Object.fromEntries(
+        ? (Object.fromEntries(
               Object.entries(value).filter(
                   ([, defaults]) =>
                       isObject(defaults) &&
-                      (defaults.colourRules === null || (Array.isArray(defaults.colourRules) && defaults.colourRules.every(isObject)))
+                      (defaults.colourRules === null ||
+                          (Array.isArray(defaults.colourRules) && defaults.colourRules.every(isColourRuleData)))
               )
-          ) as MoleculeDefaults
+          ) as MoleculeDefaults)
         : {};
 
 /** Read a saved entry, dropping anything malformed. Its content is undefined when it has none saved */
 export const fromFileEntry = (entry: UserSceneFileEntry): UserScene => {
     const scene: UserScene = { id: entry.id, name: entry.name };
     if (!isObject(entry.sections)) return scene;
-    const { representations, sceneSettings, moleculeDefaults } = entry.sections;
+    const { representations, sceneSettings, moleculeDefaults, vectors, threeDObjects } = entry.sections;
     const molecules = isObject(entry.objects?.molecules) ? entry.objects.molecules : {};
     const content: SceneContent = {
         objects: {
@@ -104,6 +123,11 @@ export const fromFileEntry = (entry: UserSceneFileEntry): UserScene => {
         },
     };
     if (moleculeDefaults !== undefined) content.sections.moleculeDefaults = readMoleculeDefaults(moleculeDefaults);
+    if (vectors !== undefined) content.sections.vectors = readIdentified(vectors) as unknown as MoorhenVector[];
+    if (threeDObjects !== undefined)
+        content.sections.threeDObjects = readIdentified(threeDObjects).filter(
+            item => typeof item.type === "string"
+        ) as unknown as ThreeDObject[];
     const camera = entry.camera;
     if (isObject(camera) && isNumberArray(camera.origin, 3) && typeof camera.zoom === "number" && isNumberArray(camera.quat, 4)) {
         content.camera = { origin: [...camera.origin] as [number, number, number], zoom: camera.zoom, quat: [...camera.quat] };
