@@ -42,6 +42,7 @@ export const CopySceneButton = (props: { sceneId: string; withLabel?: boolean })
             icon="MatSymCopyAll"
             extraOnClick={() => setSource(sources[0]?.id ?? "")}
             tooltip="Copy the parameters of another scene into this one"
+            disabled={isLocked}
         >
             <MoorhenStack>
                 <MoorhenSelect label="Copy from" value={source} onChange={event => setSource(event.target.value)}>

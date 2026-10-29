@@ -54,6 +54,7 @@ export const UserSceneSelector = () => {
     // In the store so the View menu can open it too
     const isShown = useSelector((state: RootState) => state.globalUI.isSceneSelectorOpen);
     const [renameInputValue, setRenameInputValue] = useState<string>("");
+    const [openPopover, setOpenPopover] = useState<string | null>(null);
     // A snapshot taken from anywhere (e.g. with a screenshot) plays an animation on the button. Only
     // for one added snapshot: loading a session replaces the whole list
     const [snapshotCount, setSnapshotCount] = useState<number>(userSnapshots.length);
@@ -112,6 +113,19 @@ export const UserSceneSelector = () => {
         </MoorhenTooltip>
     );
 
+    // Which row popover is open ("rename:<id>", "restore:<id>"...), so its own buttons can close it
+    const popoverProps = (key: string) => ({
+        isShown: openPopover === key,
+        setIsShown: (isShown: boolean) => setOpenPopover(isShown ? key : null),
+    });
+
+    const applyRename = (id: string) => {
+        const name = renameInputValue.trim();
+        if (name === "") return;
+        moorhenInstance.userScene.rename(id, name);
+        setOpenPopover(null);
+    };
+
     const extraControls = (id: string) => {
         if (!isBuiltInScene(id)) {
             const kind = id.startsWith("snapshot-") ? "Snapshot" : "Scene";
@@ -120,31 +134,63 @@ export const UserSceneSelector = () => {
                 <>
                     {/* The movie plays in its scene: it cannot be deleted while the movie has keyframes */}
                     {!(isMovieScene(id) && hasMovieKeyframes) && (
-                        <MoorhenPopoverButton type="icon-only" icon="MatSymDelete" tooltip={`Delete this ${kind.toLowerCase()}`}>
-                            <MoorhenButton variant="danger" onClick={() => moorhenInstance.userScene.delete(id)}>
+                        <MoorhenPopoverButton
+                            type="icon-only"
+                            icon="MatSymDelete"
+                            tooltip={`Delete this ${kind.toLowerCase()}`}
+                            disabled={isLocked}
+                            {...popoverProps(`delete:${id}`)}
+                        >
+                            <MoorhenButton
+                                variant="danger"
+                                disabled={isLocked}
+                                onClick={() => {
+                                    moorhenInstance.userScene.delete(id);
+                                    setOpenPopover(null);
+                                }}
+                            >
                                 Delete This {kind}
                             </MoorhenButton>
                         </MoorhenPopoverButton>
                     )}
-                    <MoorhenPopoverButton type="icon-only" icon="MatSymEdit" extraOnClick={() => setRenameInputValue(name)} tooltip={`Rename this ${kind.toLowerCase()}`}>
-                        <MoorhenTextInput text={renameInputValue} setText={setRenameInputValue} />
-                        <MoorhenButton onClick={() => moorhenInstance.userScene.rename(id, renameInputValue)}>Apply</MoorhenButton>
+                    {/* One rename popover is open at a time, so they share one input */}
+                    <MoorhenPopoverButton
+                        type="icon-only"
+                        icon="MatSymEdit"
+                        extraOnClick={() => setRenameInputValue(name)}
+                        tooltip={`Rename this ${kind.toLowerCase()}`}
+                        {...popoverProps(`rename:${id}`)}
+                    >
+                        <MoorhenTextInput text={renameInputValue} setText={setRenameInputValue} onSubmit={() => applyRename(id)} />
+                        <MoorhenButton disabled={renameInputValue.trim() === ""} onClick={() => applyRename(id)}>
+                            Apply
+                        </MoorhenButton>
                     </MoorhenPopoverButton>
                     {kind === "Scene" && <CopySceneButton sceneId={id} />}
                 </>
             );
         } else {
+            const restore = (to: "saved" | "default") => {
+                moorhenInstance.userScene.reset(id, to, true);
+                setOpenPopover(null);
+            };
             return (
                 <>
                     <SaveSceneButton sceneId={id} iconOnly={true} />
                     <CopySceneButton sceneId={id} />
-                    <MoorhenPopoverButton type="icon-only" icon="MatSymReplay" tooltip="Restore this scene">
+                    <MoorhenPopoverButton
+                        type="icon-only"
+                        icon="MatSymReplay"
+                        tooltip="Restore this scene: its settings and representations"
+                        disabled={isLocked}
+                        {...popoverProps(`restore:${id}`)}
+                    >
                         <MoorhenStack>
-                            <MoorhenButton onClick={() => moorhenInstance.userScene.reset(id, "saved", true)}>
-                                Restore Saved Settings
+                            <MoorhenButton disabled={isLocked} onClick={() => restore("saved")}>
+                                Revert to Saved Settings and Default Representations
                             </MoorhenButton>
-                            <MoorhenButton variant="danger" onClick={() => moorhenInstance.userScene.reset(id, "default", true)}>
-                                Restore Default Settings
+                            <MoorhenButton variant="danger" disabled={isLocked} onClick={() => restore("default")}>
+                                Reset to Default Settings and Representations
                             </MoorhenButton>
                         </MoorhenStack>
                     </MoorhenPopoverButton>

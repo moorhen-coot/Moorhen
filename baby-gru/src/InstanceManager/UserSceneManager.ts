@@ -69,15 +69,17 @@ export const DEFAULT_REPRESENTATION_STYLE = "ribbons-and-ligands";
 
 type DefaultStyle = MoorhenInstance["representation"]["defaultStyle"];
 
+type SceneStyle = { defaultStyle: DefaultStyle; wizard: "bonds" | typeof DEFAULT_REPRESENTATION_STYLE };
+
 /**
- * How each built-in scene, and every scene or snapshot made from it, draws molecules it has not
- * seen: `defaultStyle` for molecules loaded while it is shown, `wizard` for molecules loaded since
- * it was last shown.
+ * How a scene draws molecules it has not seen: `defaultStyle` for molecules loaded while it is
+ * shown, `wizard` for molecules loaded since it was last shown. Bonds in "Model Building", ribbons
+ * and ligands in every other scene, including the custom scenes and snapshots made from it.
  */
-const BUILT_IN_SCENE_STYLES: Record<BuiltInSceneId, { defaultStyle: DefaultStyle; wizard: "bonds" | typeof DEFAULT_REPRESENTATION_STYLE }> = {
-    Default: { defaultStyle: DEFAULT_REPRESENTATION_STYLE, wizard: DEFAULT_REPRESENTATION_STYLE },
-    "Model Building": { defaultStyle: "CBs", wizard: "bonds" },
-};
+const sceneStyle = (sceneId: string): SceneStyle =>
+    sceneId === "Model Building"
+        ? { defaultStyle: "CBs", wizard: "bonds" }
+        : { defaultStyle: DEFAULT_REPRESENTATION_STYLE, wizard: DEFAULT_REPRESENTATION_STYLE };
 
 /**
  * Scene presets: named sets of representations the user can switch between.
@@ -88,9 +90,8 @@ const BUILT_IN_SCENE_STYLES: Record<BuiltInSceneId, { defaultStyle: DefaultStyle
  *
  * Switching scene saves the current custom representations of every molecule, deletes them,
  * then restores the representations saved for the new scene. A scene visited for the first
- * time starts as a copy of the current one. Every scene and snapshot is made from a built-in
- * scene ("base scene", itself for a built-in one), which decides how molecules it has not seen are
- * drawn (BUILT_IN_SCENE_STYLES): bonds for "Model Building", ribbons and ligands for "Default".
+ * time starts as a copy of the current one. Molecules a scene has not seen are drawn as bonds in
+ * "Model Building" and as ribbons and ligands in every other scene (sceneStyle).
  * Access it through `moorhenInstance.userScene`.
  *
  * The scenes and snapshots, with what each shows (`content`), the selected scene and whether a
@@ -131,6 +132,23 @@ export class MoorhenUserSceneManager {
     public async waitUntilIdle(): Promise<void> {
         while (this.isChanging) {
             await new Promise(resolve => setTimeout(resolve, 100));
+        }
+    }
+
+    /**
+     * Run a task during which no scene may change (a session load, which deletes every molecule):
+     * waits for a running switch first, then refuses switches until the task ends.
+     *
+     * **Internal use only.** Called by the session loader.
+     * @private
+     */
+    public async whileLocked<T>(task: () => Promise<T>): Promise<T> {
+        await this.waitUntilIdle();
+        this.setChanging(true);
+        try {
+            return await task();
+        } finally {
+            this.setChanging(false);
         }
     }
 
@@ -318,7 +336,7 @@ export class MoorhenUserSceneManager {
                 id,
                 name: uniqueName(this.allScenes, name ?? `Snapshot ${snapshotNumber}`),
                 content: {
-                    ...this.capture(id),
+                    ...this.capture(),
                     camera: { origin: [...sceneSettings.origin], zoom: sceneSettings.zoom, quat: [...glRef.quat] },
                 },
             })
@@ -355,8 +373,8 @@ export class MoorhenUserSceneManager {
     /**
      * Reset a scene's settings to its defaults (a built-in scene's original settings, the default
      * settings for other scenes) or, for a built-in scene, to its saved ones; optionally also give
-     * every molecule the default representations of the scene's base scene (bonds for "Model
-     * Building", ribbons and ligands otherwise). The settings saved as preferences and the camera are
+     * every molecule the scene's default representations (bonds for "Model Building", ribbons and
+     * ligands otherwise). The settings saved as preferences and the camera are
      * not changed. Applied now if the scene is shown, otherwise on its next visit.
      * @param sceneId - The id of the scene.
      * @param to - "default" (the default) or "saved".
@@ -449,17 +467,32 @@ export class MoorhenUserSceneManager {
         return null;
     }
 
-    /** Run a change of what is shown: other switches are refused until it ends, errors are logged */
+    private setChanging(value: boolean) {
+        this.isChanging = value;
+        this.instance.dispatch(setSceneChanging(value));
+    }
+
+    /**
+     * Run a change of what is shown: other switches are refused until it ends. An error is logged
+     * and reported to the user: what is shown may then be incomplete.
+     */
     private async runSwitch(change: () => Promise<void>) {
-        this.isChanging = true;
-        this.instance.dispatch(setSceneChanging(true));
+        this.setChanging(true);
         try {
             await change();
         } catch (error) {
             console.error("Error changing scene:", error);
+            this.instance.dispatch(
+                enqueueSnackbar({
+                    message:
+                        "Something went wrong while changing scene: the view may be incomplete. " +
+                        "Please report it at https://github.com/moorhen-coot/Moorhen/issues",
+                    variant: "error",
+                    autoHideDuration: 15000,
+                })
+            );
         } finally {
-            this.isChanging = false;
-            this.instance.dispatch(setSceneChanging(false));
+            this.setChanging(false);
         }
     }
 
@@ -482,7 +515,7 @@ export class MoorhenUserSceneManager {
     /** What a scene shows if it is selected or never visited (it starts as a copy of the shown one), otherwise its content */
     private workingContent(sceneId: string): SceneContent {
         const content = this.contentOf(sceneId);
-        return sceneId === this.selected || !content ? this.capture(sceneId) : content;
+        return sceneId === this.selected || !content ? this.capture() : content;
     }
 
     /**
@@ -502,26 +535,16 @@ export class MoorhenUserSceneManager {
         this.instance.dispatch(applySceneSettingsSnapshot(content.sections.sceneSettings));
     }
 
-    /**
-     * The built-in scene a scene or snapshot was made from (itself for a built-in one), which decides
-     * how molecules it has not seen are drawn. "Default" when unknown (e.g. a session without it).
-     */
-    private baseSceneOf(sceneId: string): BuiltInSceneId {
-        if (isBuiltInScene(sceneId)) return sceneId;
-        const baseScene = this.contentOf(sceneId)?.baseScene;
-        return baseScene !== undefined && isBuiltInScene(baseScene) ? baseScene : "Default";
-    }
-
-    /** Molecules loaded from now on get the style of the scene's base scene */
+    /** Molecules loaded from now on get the scene's style */
     private applyDefaultStyle(sceneId: string) {
-        this.instance.representation.defaultStyle = BUILT_IN_SCENE_STYLES[this.baseSceneOf(sceneId)].defaultStyle;
+        this.instance.representation.defaultStyle = sceneStyle(sceneId).defaultStyle;
     }
 
     /**
      * Record what is shown now, as the content of a scene: the shown one, or one never visited (which
-     * starts as a copy of the shown one). Keeps the scene's base scene; a new scene takes the shown one's.
+     * starts as a copy of the shown one).
      */
-    private capture(sceneId: string): SceneContent {
+    private capture(): SceneContent {
         const content = emptyContent(getSceneSettingsSnapshot(this.instance.store.getState().sceneSettings));
         for (const molecule of this.instance.getMoleculeList()) {
             content.objects.molecules[molecule.uniqueId] = molecule.name;
@@ -531,13 +554,12 @@ export class MoorhenUserSceneManager {
                 content.sections.representations.push({ moleculeUniqueId: molecule.uniqueId, params });
             }
         }
-        if (!isBuiltInScene(sceneId)) content.baseScene = this.contentOf(sceneId)?.baseScene ?? this.baseSceneOf(this.selected);
         return content;
     }
 
     /** Store what is shown now as the scene's content (snapshots are immutable) */
     private recordScene(sceneId: string) {
-        if (!isSnapshot(sceneId)) this.setContent(sceneId, this.capture(sceneId));
+        if (!isSnapshot(sceneId)) this.setContent(sceneId, this.capture());
     }
 
     /** Replace what is shown by a scene's content: its settings and representations */
@@ -563,7 +585,7 @@ export class MoorhenUserSceneManager {
             await this.instance.representation.create(moleculeUniqueId, copy);
         }
         // Molecules loaded since the scene was saved get the scene's default style
-        const { wizard } = BUILT_IN_SCENE_STYLES[this.baseSceneOf(sceneId)];
+        const { wizard } = sceneStyle(sceneId);
         for (const molecule of this.instance.getMoleculeList()) {
             if (!Object.hasOwn(content.objects.molecules, molecule.uniqueId)) {
                 await this.instance.representation.wizard(molecule.uniqueId, wizard, false);
@@ -593,8 +615,8 @@ export class MoorhenUserSceneManager {
             await this.showScene(sceneId, content);
         } else {
             // A scene visited for the first time (e.g. Custom) starts as a copy of the current one,
-            // and is made from the same built-in scene
-            this.setContent(sceneId, this.capture(sceneId));
+            // but draws new molecules in its own style
+            this.setContent(sceneId, this.capture());
             this.applyDefaultStyle(sceneId);
         }
     }

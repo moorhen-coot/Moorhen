@@ -75,3 +75,21 @@ describe("the movie's scene", () => {
         expect(userScene.list.filter(scene => scene.id === MOVIE_SCENE_ID)).toHaveLength(1);
     });
 });
+
+describe("scene changes during a session load", () => {
+    test("are refused while the load runs, and allowed again after, even if it fails", async () => {
+        const userScene = cloud.instance.userScene;
+        let selectedDuringLoad: boolean | null = null;
+        await userScene.whileLocked(async () => {
+            selectedDuringLoad = await userScene.select("Model Building");
+        });
+        expect(selectedDuringLoad).toBe(false);
+        expect(userScene.selected).toBe("Default");
+
+        await expect(userScene.whileLocked(async () => {
+            throw new Error("load failed");
+        })).rejects.toThrow("load failed");
+        expect(userScene.isBusy).toBe(false);
+        expect(await userScene.select("Model Building")).toBe(true);
+    });
+});

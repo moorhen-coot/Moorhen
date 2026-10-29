@@ -22,8 +22,6 @@ export type SceneSections = {
  * (newer file) is kept as is.
  */
 export type SceneContent = {
-    /** Not for built-in scenes: the built-in scene this one was made from, whose default style new molecules get */
-    baseScene?: string;
     /** Snapshots only: the camera when the snapshot was taken */
     camera?: SceneCamera;
     /**
@@ -38,7 +36,6 @@ export type SceneContent = {
 export type UserSceneFileEntry = {
     id: string;
     name: string;
-    baseScene?: string;
     camera?: SceneCamera;
     objects?: { molecules?: { [uniqueId: string]: string } };
     /** Absent for a scene that was never shown, which starts as a copy of the current scene */
@@ -84,7 +81,6 @@ export const fromFileEntry = (entry: UserSceneFileEntry): UserScene => {
             sceneSettings: isObject(sceneSettings) ? sceneSettings : {},
         },
     };
-    if (typeof entry.baseScene === "string") content.baseScene = entry.baseScene;
     const camera = entry.camera;
     if (isObject(camera) && isNumberArray(camera.origin, 3) && typeof camera.zoom === "number" && isNumberArray(camera.quat, 4)) {
         content.camera = { origin: [...camera.origin] as [number, number, number], zoom: camera.zoom, quat: [...camera.quat] };

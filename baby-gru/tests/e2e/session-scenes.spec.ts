@@ -48,8 +48,19 @@ const loadPreSceneSession = async (page: Page) => {
             return counts.moleculeCount === 1 && counts.mapCount === 2;
         }, { timeout: 120_000 })
         .toBe(true);
-    // The session restores representations and scenes after the objects
-    await expect.poll(async () => (await getSceneSummary(page)).customRepresentations.length, { timeout: 60_000 }).toBe(2);
+    // The session restores representations and scenes after the objects. Wait for the whole load:
+    // scene switches are refused while it runs (isSceneChanging), and it rebuilds the scenes last
+    await expect
+        .poll(
+            () =>
+                page.evaluate(async () => {
+                    const instance = await (document.getElementById("moorhen-test") as any).getMoorhenInstance();
+                    const state = instance.store.getState();
+                    return state.molecules.customRepresentations.length === 2 && !state.userScenes.isSceneChanging;
+                }),
+            { timeout: 60_000 }
+        )
+        .toBe(true);
     return moorhen;
 };
 

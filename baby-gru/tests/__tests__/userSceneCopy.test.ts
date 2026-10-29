@@ -107,27 +107,24 @@ describe("scene names", () => {
 });
 
 describe("how scenes draw new molecules", () => {
-    test("a scene or snapshot made from Model Building keeps its style", async () => {
+    test("only Model Building draws them as bonds, not the scenes and snapshots made from it", async () => {
         const userScene = cloud.instance.userScene;
         const representation = cloud.instance.representation;
         await userScene.select("Model Building");
         expect(representation.defaultStyle).toBe("CBs");
 
         const customId = await userScene.create("From Model Building");
-        expect(representation.defaultStyle).toBe("CBs");
+        expect(representation.defaultStyle).toBe("ribbons-and-ligands");
+        await userScene.select("Model Building");
         const snapshotId = userScene.takeSnapshot();
 
-        await userScene.select("Default");
-        expect(representation.defaultStyle).toBe("ribbons-and-ligands");
-        await userScene.select(customId);
-        expect(representation.defaultStyle).toBe("CBs");
-        await userScene.select("Default");
         await userScene.select(snapshotId);
+        expect(representation.defaultStyle).toBe("ribbons-and-ligands");
+        await userScene.select("Model Building");
         expect(representation.defaultStyle).toBe("CBs");
-
-        // A scene made from Default draws as Default
+        await userScene.select(customId);
+        expect(representation.defaultStyle).toBe("ribbons-and-ligands");
         await userScene.select("Default");
-        await userScene.create("From Default");
         expect(representation.defaultStyle).toBe("ribbons-and-ligands");
     });
 });

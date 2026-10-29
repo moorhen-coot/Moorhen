@@ -49,6 +49,7 @@ import {
     setUseOffScreenBuffers,
     MoorhenReduxStoreType,
 } from "../store";
+import { newMovie } from "../store/movieSlice";
 
 import type {
     Overlay2DFracPath,
@@ -246,6 +247,9 @@ export class MoorhenTimeCapsule {
     /** Status returned by the session loaders for a session saved by a more recent version of Moorhen */
     static readonly NEWER_VERSION_STATUS = -2;
     static readonly NEWER_VERSION_MESSAGE = "This session file is for a more recent version of Moorhen, open it at moorhen.org";
+    /** A session cannot be loaded while a movie plays or is exported: loading replaces what it shows */
+    static readonly MOVIE_PLAYING_STATUS = -3;
+    static readonly MOVIE_PLAYING_MESSAGE = "A movie is playing: stop it before loading a session";
 
     /**
      * Session versions older than the current one that can still be loaded. Add the outgoing
@@ -836,12 +840,7 @@ export class MoorhenTimeCapsule {
     ): Promise<number> {
 
         const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
-        const molecules = moorhenInstance.getMoleculeList();
-        const maps = moorhenInstance.getMapList();
-        const commandCentre = moorhenInstance.getCommandCentreRef();
         const store = moorhenInstance.store;
-        const dispatch = moorhenInstance.dispatch;
-        const monomerLibraryPath = moorhenInstance.paths.monomerLibraryPath;
 
         if (!sessionData) {
             return -1;
@@ -864,8 +863,10 @@ export class MoorhenTimeCapsule {
                 return MoorhenTimeCapsule.NEWER_VERSION_STATUS;
             }
         }
-        // Loading deletes every molecule: let a running scene switch finish first
-        await moorhenInstance.userScene.waitUntilIdle();
+        if (store.getState().movie.isPlaying) {
+            console.warn(MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE);
+            return MoorhenTimeCapsule.MOVIE_PLAYING_STATUS;
+        }
 
         if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
             if (!MoorhenTimeCapsule.supportedLegacyVersions.includes(sessionData.version)) {
@@ -873,7 +874,39 @@ export class MoorhenTimeCapsule {
                 return -1;
             }
         }
-        timeCapsuleRef.current.setBusy(true);
+        // Loading deletes every molecule: no scene switch may run meanwhile (a running one finishes first)
+        return moorhenInstance.userScene.whileLocked(async () => {
+            timeCapsuleRef.current.setBusy(true);
+            // A session replaces everything, the movie included: its scene and the objects it
+            // fades are about to go (a movie file sets its own movie after loading its session)
+            store.dispatch(newMovie());
+            try {
+                await MoorhenTimeCapsule.restoreSessionData(sessionData, sceneState, moorhenInstance, fetchExternalUrl);
+            } catch (error) {
+                // Molecules may already be deleted: drop the old scenes, which refer to them
+                moorhenInstance.userScene.resetForLegacySession();
+                throw error;
+            } finally {
+                timeCapsuleRef.current.setBusy(false);
+            }
+            return 0;
+        });
+    }
+
+    /** The session restore proper, once loadSessionData has checked the session can be loaded */
+    private static async restoreSessionData(
+        sessionData: backupSession,
+        sceneState: UserSceneState | null,
+        moorhenInstance: MoorhenInstance,
+        fetchExternalUrl?: (uniqueId: string) => Promise<string>
+    ): Promise<void> {
+        const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
+        const molecules = moorhenInstance.getMoleculeList();
+        const maps = moorhenInstance.getMapList();
+        const commandCentre = moorhenInstance.getCommandCentreRef();
+        const store = moorhenInstance.store;
+        const dispatch = moorhenInstance.dispatch;
+        const monomerLibraryPath = moorhenInstance.paths.monomerLibraryPath;
 
         // Ids handed out to restored representations, so that a file carrying a duplicate - one
         // stitched together from two sessions, say - cannot make two representations answer to
@@ -1276,9 +1309,6 @@ export class MoorhenTimeCapsule {
         } else {
             moorhenInstance.userScene.resetForLegacySession();
         }
-
-        timeCapsuleRef.current.setBusy(false);
-        return 0;
     }
 
     /**
@@ -1301,14 +1331,13 @@ export class MoorhenTimeCapsule {
     ): Promise<number> {
         const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
-        const bytes = new Uint8Array(sessionArrayBuffer);
-        const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
-        const status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
-            sessionMessage,
-            moorhenInstance
-        );
-        timeCapsuleRef.current.setBusy(false);
-        return status;
+        try {
+            const bytes = new Uint8Array(sessionArrayBuffer);
+            const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
+            return await MoorhenTimeCapsule.loadSessionFromProtoMessage(sessionMessage, moorhenInstance);
+        } finally {
+            timeCapsuleRef.current.setBusy(false);
+        }
     }
 
     /**
@@ -1330,14 +1359,12 @@ export class MoorhenTimeCapsule {
     ): Promise<number> {
         const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
-        const sessionData = moorhensession.Session.toObject(sessionProtoMessage) as backupSession;
-        const status = await MoorhenTimeCapsule.loadSessionData(
-            sessionData,
-            moorhenInstance
-
-        );
-        timeCapsuleRef.current.setBusy(false);
-        return status;
+        try {
+            const sessionData = moorhensession.Session.toObject(sessionProtoMessage) as backupSession;
+            return await MoorhenTimeCapsule.loadSessionData(sessionData, moorhenInstance);
+        } finally {
+            timeCapsuleRef.current.setBusy(false);
+        }
     }
 
     /**
@@ -1359,12 +1386,11 @@ export class MoorhenTimeCapsule {
     ): Promise<number> {
         const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
-        const sessionData: backupSession = JSON.parse(sessionDataString);
-        const status = await MoorhenTimeCapsule.loadSessionData(
-            sessionData,
-            moorhenInstance
-        );
-        timeCapsuleRef.current.setBusy(false);
-        return status;
+        try {
+            const sessionData: backupSession = JSON.parse(sessionDataString);
+            return await MoorhenTimeCapsule.loadSessionData(sessionData, moorhenInstance);
+        } finally {
+            timeCapsuleRef.current.setBusy(false);
+        }
     }
 }

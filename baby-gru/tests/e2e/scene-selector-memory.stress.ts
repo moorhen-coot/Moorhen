@@ -4,6 +4,11 @@ import { startAndGetInstance, type MoorhenStartedSession } from "./helpers";
 /**
  * Stress test for the user scene selector (Default <-> Model Building).
  *
+ * NOT RUN with the e2e suite: it takes up to half an hour, and `playwright test` only picks up
+ * *.spec.ts files. Kept for reference and for checking leaks by hand: to run it, copy it to a
+ * .spec.ts name (e.g. `cp scene-selector-memory.stress.ts scene-selector-memory.spec.ts`), run
+ * `npx playwright test scene-selector-memory`, then delete the copy.
+ *
  * Each switch deletes every custom representation and rebuilds a new set, so repeating it
  * with many representations is a good way to surface leaks in:
  *  - the redux store (displayBuffers / labelBuffers / customRepresentations),

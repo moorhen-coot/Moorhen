@@ -537,18 +537,22 @@ const CurrentScenePanel = () => {
                     {isBuiltIn && <SaveSceneButton sceneId={selectedScene} />}
                     <MoorhenButton
                         disabled={isLocked}
-                        tooltip={isBuiltIn ? "Back to this scene's original settings (saved settings are kept)" : "Back to the default settings"}
+                        tooltip={
+                            isBuiltIn
+                                ? "Back to this scene's original settings (saved settings and representations are kept)"
+                                : "Back to the default settings (representations are kept)"
+                        }
                         onClick={() => moorhenInstance.userScene.reset(selectedScene, "default")}
                     >
-                        Reset to Default
+                        Reset to Default Settings
                     </MoorhenButton>
                     {isBuiltIn && (
                         <MoorhenButton
                             disabled={isLocked || !hasUnsavedChanges}
-                            tooltip="Back to the settings saved for this scene"
+                            tooltip="Back to the settings saved for this scene (representations are kept)"
                             onClick={() => moorhenInstance.userScene.reset(selectedScene, "saved")}
                         >
-                            Reset to Saved
+                            Revert to Saved Settings
                         </MoorhenButton>
                     )}
                     <CopySceneButton sceneId={selectedScene} withLabel={true} />

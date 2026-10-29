@@ -16,6 +16,8 @@ jest.mock("../../src/utils/MoorhenTimeCapsule", () => ({
         loadSessionFromArrayBuffer: (...args: any[]) => mockLoadSession(...args),
         NEWER_VERSION_STATUS: -2,
         NEWER_VERSION_MESSAGE: "This session file is for a more recent version of Moorhen",
+        MOVIE_PLAYING_STATUS: -3,
+        MOVIE_PLAYING_MESSAGE: "A movie is playing: stop it before loading a session",
     },
 }));
 
@@ -52,7 +54,7 @@ const anInstance = (sceneIds: string[] = ["Default", "Model Building"]) => {
         select,
         instance: {
             store: { dispatch: (action: any) => dispatched.push(action) },
-            userScene: { list: sceneIds.map(id => ({ id, name: id })), select },
+            userScene: { list: sceneIds.map(id => ({ id, name: id })), selected: "Default", select, waitUntilIdle: async () => {} },
         } as any,
     };
 };
@@ -96,6 +98,23 @@ describe("opening a movie file", () => {
         const { instance, select } = anInstance(["Default", "Model Building", "movie"]);
         await openMovieFile(await movieFile("tour.mhm", new Uint8Array([8, 1])), instance);
         expect(select).toHaveBeenCalledWith("movie");
+    });
+
+    it("says so when the movie scene cannot be shown", async () => {
+        const { instance, select } = anInstance(["Default", "movie"]);
+        select.mockResolvedValue(false);
+        const result = await openMovieFile(await movieFile("tour.mhm", new Uint8Array([8, 1])), instance);
+        expect(result.ok).toBe(true);
+        expect(result.message).toMatch(/could not show its scene/);
+    });
+
+    it("refuses while a movie plays, saying why", async () => {
+        mockLoadSession.mockResolvedValue(-3);
+        const { instance, dispatched } = anInstance();
+        const result = await openMovieFile(await movieFile("tour.mhm", new Uint8Array([8, 1])), instance);
+        expect(result.ok).toBe(false);
+        expect(result.message).toMatch(/movie is playing/);
+        expect(dispatched).toHaveLength(0);
     });
 
     it("leaves the scene alone when there is no movie scene", async () => {

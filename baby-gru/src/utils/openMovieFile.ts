@@ -58,7 +58,9 @@ export async function openMovieFile(
                     restoredScene: false,
                     message: status === MoorhenTimeCapsule.NEWER_VERSION_STATUS
                         ? `${file.name} opened, but its scene would not load. ${MoorhenTimeCapsule.NEWER_VERSION_MESSAGE}`
-                        : `${file.name} opened, but its scene would not load`,
+                        : status === MoorhenTimeCapsule.MOVIE_PLAYING_STATUS
+                          ? `${file.name} not opened. ${MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE}`
+                          : `${file.name} opened, but its scene would not load`,
                 };
             }
             restoredScene = true;
@@ -66,9 +68,13 @@ export async function openMovieFile(
 
         dispatch(setMovieDocument(container.movie));
         dispatch(setMovieFileName(file.name));
-        // Show the movie scene, whichever one the session was saved on
-        if (moorhenInstance.userScene.list.some(scene => scene.id === MOVIE_SCENE_ID)) {
-            await moorhenInstance.userScene.select(MOVIE_SCENE_ID);
+        // Show the movie scene, whichever one the session was saved on. A running scene switch
+        // finishes first; a switch can still be refused (a movie playing), and then the user is told
+        const { userScene } = moorhenInstance;
+        let showsMovieScene = true;
+        if (userScene.list.some(scene => scene.id === MOVIE_SCENE_ID)) {
+            await userScene.waitUntilIdle();
+            showsMovieScene = userScene.selected === MOVIE_SCENE_ID || (await userScene.select(MOVIE_SCENE_ID));
         }
         // Show the panel. Opening a movie with nothing visibly happening is the most likely way
         // to conclude that nothing did - and the panel is where every next thing is done.
@@ -77,7 +83,9 @@ export async function openMovieFile(
         return {
             ok: true,
             restoredScene,
-            message: restoredScene
+            message: !showsMovieScene
+                ? `Opened ${file.name}, but could not show its scene: select it in the scene selector before playing`
+                : restoredScene
                 ? `Opened ${file.name} with its scene`
                 : `Opened ${file.name}. It carries no scene, so it will play over this one.`,
         };

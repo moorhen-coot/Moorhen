@@ -150,6 +150,9 @@ const loadSession = async (session: string | object, moorhenInstance: MoorhenIns
     if (status === MoorhenTimeCapsule.NEWER_VERSION_STATUS) {
         throw new Error(MoorhenTimeCapsule.NEWER_VERSION_MESSAGE);
     }
+    if (status === MoorhenTimeCapsule.MOVIE_PLAYING_STATUS) {
+        throw new Error(MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE);
+    }
     if (status === -1) {
         throw new Error("Failed to read backup (deprecated format)");
     }
