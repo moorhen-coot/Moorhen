@@ -13,7 +13,7 @@ export const createOtherDataOtherContext = (jsondata: any, gl: any) : any => {
         const theseBuffers = [];
 
         for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
-            const theBuffer = createWebGLBuffers(jsondata,idat, gl)
+            const theBuffer = createWebGLBuffers(jsondata,idat)
             theseBuffers.push(theBuffer);
         }
         return theseBuffers;
