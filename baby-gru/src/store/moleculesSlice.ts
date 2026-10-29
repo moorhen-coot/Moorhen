@@ -20,6 +20,9 @@ const moleculesSlice = createSlice({
     reducers: {
         addMolecule: (state, action: PayloadAction<MoorhenMolecule>) => {
             state.moleculeList.push(action.payload as unknown as typeof state.moleculeList[number]);
+            if (!state.visibleMolecules.includes(action.payload.molNo)) {
+                state.visibleMolecules.push(action.payload.molNo);
+            }
         },
         removeMolecule: (state, action: PayloadAction<MoorhenMolecule>) => {
             state.generalRepresentations = state.generalRepresentations.filter(
@@ -36,6 +39,11 @@ const moleculesSlice = createSlice({
         },
         addMoleculeList: (state, action: PayloadAction<MoorhenMolecule[]>) => {
             state.moleculeList.push(...(action.payload as unknown as typeof state.moleculeList));
+            action.payload.forEach(molecule => {
+                if (!state.visibleMolecules.includes(molecule.molNo)) {
+                    state.visibleMolecules.push(molecule.molNo);
+                }
+            });
         },
         showMolecule: (state, action: PayloadAction<MoorhenMolecule>) => {
             if (!state.visibleMolecules.includes(action.payload.molNo)) {
