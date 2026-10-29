@@ -58,6 +58,7 @@
 #endif
 
 #include <emscripten.h>
+#include <malloc.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 
@@ -456,6 +457,20 @@ std::pair<coot::simple_mesh_t,std::vector<std::vector<std::pair<unsigned,float>>
 
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
 bool isSugar(const std::string &resName);
+
+// Heap usage for leak hunting (see baby-gru/tests/e2e/worker-memory.spec.ts). A free function,
+// so it can be called on the worker's module and on the main thread's alike. wasm memory only
+// ever grows, so its size is the peak; mallinfo is what is allocated right now, which is what
+// has to come back down after an operation.
+inline std::string get_heap_stats_json() {
+    struct mallinfo info = mallinfo();
+    const unsigned long long wasm_bytes = (unsigned long long) __builtin_wasm_memory_size(0) * 65536ULL;
+    return "{\"wasm_memory_bytes\":" + std::to_string(wasm_bytes)
+        + ",\"arena_bytes\":" + std::to_string((unsigned long long) info.arena)
+        + ",\"in_use_bytes\":" + std::to_string((unsigned long long) info.uordblks)
+        + ",\"free_bytes\":" + std::to_string((unsigned long long) info.fordblks)
+        + ",\"mmap_bytes\":" + std::to_string((unsigned long long) info.hblkhd) + "}";
+}
 
 class molecules_container_js : public molecules_container_t {
     public:

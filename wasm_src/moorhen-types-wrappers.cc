@@ -78,6 +78,7 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     function("cloneGemmiStructureWithTrimmedAtomNames", &cloneGemmiStructureWithTrimmedAtomNames);
 
     function("unpackCootDataFile",&unpackCootDataFile);
+    function("get_heap_stats_json", &get_heap_stats_json);
     function("testFloat32Array", &testFloat32Array);
     function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);
     function("getReversedNormalsFromSimpleMesh2", &getReversedNormalsFromSimpleMesh2);
