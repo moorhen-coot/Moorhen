@@ -886,7 +886,7 @@ export const autoOpenFiles = async (
         ) {
             try {
                 let newMap: MoorhenMap = null;
-                const isDiff = file.name.includes("_fofc.mrc") || file.name.includes("_diff.ccp4");
+                const isDiff = /fofc|diff|delfwt|mfo-?dfc/i.test(file.name);
                 const isLocres = file.name.includes("_locres.mrc");
                 try {
                     if (file.name.endsWith(".gz")) {

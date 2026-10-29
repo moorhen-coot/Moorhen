@@ -448,6 +448,14 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                     // edges off wherever the resolved depth sample happened to be background, and
                     // no FXAA on top of real multisampling.
                     self.gl.uniform1i(theShader.resolvedLayer, (msaaOpaque && ipeel === 0) ? 1 : 0);
+                    // FXAA only where the layer is dense enough for its neighbourhood taps to
+                    // land on geometry. With the opaque scene drawn into layer 0 of its own,
+                    // layers 1 upwards hold nothing but transparent surfaces surrounded by the
+                    // colour they were cleared to - and filtering those averages the background
+                    // into every silhouette. Without separateOpaque each layer still holds the
+                    // whole scene, which is the arrangement FXAA was added for, so it stays on.
+                    const sparseTransparentLayer = separateOpaque && ipeel > 0;
+                    self.gl.uniform1i(theShader.filterEdges, sparseTransparentLayer ? 0 : 1);
                     if (self.ext) {
                         self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
                     } else {
@@ -599,10 +607,18 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             // layer, which is what used to happen, meant the opaque geometry - most of the
             // triangles in a molecule with a map contoured around it - was rendered once per
             // layer for a result that was identical each time.
-            const isTransparent = displayBuffers[idx].transparent && !self.drawingGBuffers
-                                  && !displayBuffers[idx].isHoverBuffer;
-            // A hover ball is see-through on purpose - its colour is [1, 0.5, 0, 0.35] - but it
-            // is not transparent geometry in the sense this skip means.
+            //
+            // Hover balls go with the transparent geometry here. They are see-through on purpose -
+            // [1, 0.5, 0, 0.35] - and the peel layers draw with blending off, keeping each
+            // fragment's alpha for the composite to blend. Routed to the opaque layer, as they
+            // used to be, a ball overwrote whatever was behind it and was then blended at 35% over
+            // the bare background instead of over the scene: orange on white, which is the washed-
+            // out cream balls seen whenever anything else in the scene was transparent. Behind a
+            // transparent surface it was hidden by that surface's layer, which is why only balls
+            // in front of one looked wrong.
+            const isTransparent = displayBuffers[idx].transparent && !self.drawingGBuffers;
+            // The skip below is a different question, and there a hover ball is exempt: it is not
+            // transparent geometry in the sense this skip means.
             //
             // THE REGRESSION THIS FIXES
             //
@@ -618,8 +634,8 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             //
             // Hover buffers are the only casualty, which is why exempting them is the whole fix:
             // any other transparent buffer makes doPeel true by its own existence, so it is never
-            // reached by this skip. The exemption also puts this line in step with the two places
-            // that already make it - the doPeel scan, and isTransparent just above.
+            // reached by this skip. The exemption also puts this line in step with the doPeel scan,
+            // which makes it too. isTransparent above deliberately does not: see there.
             if (displayBuffers[idx].transparent && !self.drawingGBuffers
                 && !displayBuffers[idx].isHoverBuffer) {
                 if(!self.doPeel)

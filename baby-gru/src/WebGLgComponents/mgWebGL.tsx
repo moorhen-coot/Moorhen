@@ -277,6 +277,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doCrossEyedStereo: boolean;
         doAnaglyphStereo: boolean;
         doneEvents: boolean;
+        destroyTouchGestures?: () => void;
         fpsText: string;
         measurePointsArray: any[];
         mspfArray: number[];
@@ -989,6 +990,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         stopPumpingCamera(this)
         this.unsubscribeCamera?.()
         this.unsubscribeCamera = null
+        // Removes the touch recognisers and cancels a pending long-press timer, which would
+        // otherwise call doRightClick on an unmounted viewer.
+        this.destroyTouchGestures?.()
+        this.destroyTouchGestures = undefined
     }
 
     /**
@@ -1999,7 +2004,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if(this.measureCylinderBuffers){
             this.measureCylinderBuffers.forEach((buffer) => {
                 if("clearBuffers" in buffer){
-                    buffer.clearBuffers()
+                    buffer.clearBuffers(this.gl)
                     this.displayBuffers = this.displayBuffers.filter(glBuffer => glBuffer.id !== buffer.id)
                 }
             })
