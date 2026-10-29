@@ -210,7 +210,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     }, [symmetryRadius]);
 
     useEffect(() => {
-        dispatch(showMolecule(props.molecule));
         props.molecule.representations
             .filter(item => {
                 return !item.isCustom && item.style !== "hover";
