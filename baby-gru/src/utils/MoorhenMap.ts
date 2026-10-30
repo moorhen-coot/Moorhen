@@ -1654,6 +1654,11 @@ export class MoorhenMap {
 
     toggleOriginLock(val: boolean = !this.isOriginLocked): void {
         this.isOriginLocked = val;
+        // Coot sets drawOrigin on its first locked contour, but GPU contours never go through
+        // doCootContour, so fix it here. Same convention: the view origin as stored in the scene.
+        if (val && this.drawOrigin === null) {
+            this.drawOrigin = [...this.store.getState().sceneSettings.origin] as [number, number, number];
+        }
     }
 
 }
