@@ -16,6 +16,33 @@ const locateBaseColourTextureUniforms = (program, gl) => {
     program.baseColourTexture = gl.getUniformLocation(program, "baseColourTexture");
 };
 
+/**
+ * Locate the object fade on a program built from the triangle fragment shader, and start it solid.
+ *
+ * Same rule as above - share the fragment shader, call this - and the same trap one step further
+ * along. The fade multiplies the fragment alpha, and **a float uniform that nobody has written is
+ * 0.0**, so a program that declares it and is never told its value draws nothing at all.
+ *
+ * That is what happened to lit lines: the thick-lines-normal programs are built from the triangle
+ * fragment shader, so they inherited `alphaMultiplier` the moment it was added there, while the
+ * draw code set it only on the triangle and sphere programs. Lit-lines maps vanished outright, and
+ * mesh and surface were untouched, because those are drawn by programs built from other fragment
+ * shaders. The symptom carries no hint of a uniform in it.
+ *
+ * Initialising to 1.0 makes the failure mode "solid", which is wrong in a way somebody can see,
+ * rather than "absent", which reads as a missing feature. The per-draw write still happens; this
+ * is what the program says before anybody writes it.
+ *
+ * Null on WebGL1, whose shaders declare no such uniform - fading is simply absent there.
+ */
+const locateAlphaMultiplier = (program, gl) => {
+    program.alphaMultiplier = gl.getUniformLocation(program, "alphaMultiplier");
+    if (program.alphaMultiplier != null) {
+        gl.useProgram(program);
+        gl.uniform1f(program.alphaMultiplier, 1.0);
+    }
+};
+
 export function getShader(gl, str, type) {
 
     let shader;
@@ -911,6 +938,7 @@ export function initShadersDepthPeelAccum(vertexShader, fragmentShader, gl) {
     shaderProgramDepthPeelAccum.ySSAOScaling = gl.getUniformLocation(shaderProgramDepthPeelAccum, "ySSAOScaling");
     shaderProgramDepthPeelAccum.colorPeelSamplers = gl.getUniformLocation(shaderProgramDepthPeelAccum, "colorPeelSamplers");
     shaderProgramDepthPeelAccum.resolvedLayer = gl.getUniformLocation(shaderProgramDepthPeelAccum, "resolvedLayer");
+    shaderProgramDepthPeelAccum.filterEdges = gl.getUniformLocation(shaderProgramDepthPeelAccum, "filterEdges");
 
     return shaderProgramDepthPeelAccum
 
@@ -1049,6 +1077,7 @@ export function initShaders(vertexShader, fragmentShader, gl) {
     shaderProgram.light_colours_diffuse = gl.getUniformLocation(shaderProgram, "light_colours_diffuse");
 
     shaderProgram.specularPower = gl.getUniformLocation(shaderProgram, "specularPower");
+    locateAlphaMultiplier(shaderProgram, gl);
     shaderProgram.screenZ = gl.getUniformLocation(shaderProgram, "screenZFrag");
 
     shaderProgram.peelNumber = gl.getUniformLocation(shaderProgram, "peelNumber");
@@ -1158,6 +1187,7 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
     shaderProgramInstanced.light_colours_diffuse = gl.getUniformLocation(shaderProgramInstanced, "light_colours_diffuse");
 
     shaderProgramInstanced.specularPower = gl.getUniformLocation(shaderProgramInstanced, "specularPower");
+    locateAlphaMultiplier(shaderProgramInstanced, gl);
     shaderProgramInstanced.screenZ = gl.getUniformLocation(shaderProgramInstanced, "screenZFrag");
 
     shaderProgramInstanced.peelNumber = gl.getUniformLocation(shaderProgramInstanced, "peelNumber");
@@ -1416,6 +1446,7 @@ export function initThickLineNormalShaders(vertexShader, fragmentShader, gl) {
     shaderProgramThickLinesNormal.light_colours_diffuse = gl.getUniformLocation(shaderProgramThickLinesNormal, "light_colours_diffuse");
 
     shaderProgramThickLinesNormal.specularPower = gl.getUniformLocation(shaderProgramThickLinesNormal, "specularPower");
+    locateAlphaMultiplier(shaderProgramThickLinesNormal, gl);
 
     shaderProgramThickLinesNormal.peelNumber = gl.getUniformLocation(shaderProgramThickLinesNormal, "peelNumber");
     shaderProgramThickLinesNormal.depthPeelSamplers = gl.getUniformLocation(shaderProgramThickLinesNormal, "depthPeelSamplers");
@@ -1731,6 +1762,7 @@ export function initPerfectSphereShaders(vertexShader, fragmentShader, gl) {
     shaderProgramPerfectSpheres.light_colours_diffuse = gl.getUniformLocation(shaderProgramPerfectSpheres, "light_colours_diffuse");
 
     shaderProgramPerfectSpheres.specularPower = gl.getUniformLocation(shaderProgramPerfectSpheres, "specularPower");
+    locateAlphaMultiplier(shaderProgramPerfectSpheres, gl);
 
     shaderProgramPerfectSpheres.clipPlane0 = gl.getUniformLocation(shaderProgramPerfectSpheres, "clipPlane0");
     shaderProgramPerfectSpheres.clipPlane1 = gl.getUniformLocation(shaderProgramPerfectSpheres, "clipPlane1");

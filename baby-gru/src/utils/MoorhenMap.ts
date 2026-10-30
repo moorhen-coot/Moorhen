@@ -492,8 +492,10 @@ export class MoorhenMap {
             return [];
         }
 
+        const validMaps = response.data.result.result.filter(item => item.idx !== -1);
+
         const isDiffMapResponses = await Promise.all(
-            response.data.result.result.map(autoReadInfo => {
+            validMaps.map(autoReadInfo => {
                 return moorhenInstance.commandCentre.cootCommand(
                     {
                         returnType: "status",
@@ -512,8 +514,7 @@ export class MoorhenMap {
         }
 
         const newMaps = await Promise.all(
-            response.data.result.result
-                .filter(item => item.idx !== -1)
+            validMaps
                 .map(async (autoReadInfo, index) => {
                     const newMap = new MoorhenMap(moorhenInstance);
                     newMap.molNo = autoReadInfo.idx;
@@ -676,7 +677,7 @@ export class MoorhenMap {
         //Empty existing buffers of this type
         let newBuffers = displayBuffers;
         this.displayObjects[style].forEach(buffer => {
-            buffer.clearBuffers();
+            buffer.clearBuffers(this.store.getState().glRef.glCtx);
             newBuffers = newBuffers?.filter(glBuffer => glBuffer.id !== buffer.id);
         });
         this.displayObjects[style] = [];

@@ -4,6 +4,7 @@ import * as mat4 from 'gl-matrix/mat4';
 import { setIsWebGL2, setGLCtx } from '../../store/glRefSlice';
 import { TextCanvasTexture } from '../textCanvasTexture';
 import { initGL, MGWebGL } from '../mgWebGL';
+import { attachTouchGestures } from './touchGestures';
 
 /**
  * componentDidMount, decomposed into ordered phases. The mount used to be one
@@ -141,10 +142,9 @@ export function initInstanceState(self: MGWebGL): void {
     self.doOrderIndependentTransparency = true;//Request OIT user/state setting
     self.doPeel = false;//Requested and required - above set and there are transparent objects.
 
-    //Debugging only
+    //Debugging only - see MGWebGL.setShadowDepthDebug. Shadows must be on separately for there
+    //to be a map to look at.
     self.doShadowDepthDebug = false;
-    if(self.doShadowDepthDebug)
-        self.doShadow = true;
 
     self.drawingGBuffers = false;
     self.offScreenFramebuffer = null;
@@ -156,6 +156,10 @@ export function initInstanceState(self: MGWebGL): void {
     self.useOffScreenBuffers = false; //This means "doDepthBlur" and is historically named.
     self.blurSize = 3;
     self.depthPeelLayers = 4;
+    // On by default; see sceneSettingsSlice for what it buys and the rim it costs.
+    // Kept in step with the store's default because this is what a renderer used without
+    // the React app - the web component, the scripting API - starts from, and what the
+    // first frames draw with before the reconciling effect runs.
     self.peelOpaqueSeparately = true;
     self.peelTransparentOnly = null;
     self.blurDepth = 0.2;
@@ -336,56 +340,11 @@ export function attachCanvasListeners(self: MGWebGL): void {
                 evt.preventDefault();
             },
             false);
-        self.canvas.addEventListener('touchstart',
-            function (e) {
-                const touchobj = e.changedTouches[0];
-                const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
-                //alert(e.changedTouches.length)
-                if (e.changedTouches.length === 2) {
-                    evt.shiftKey = true;
-                    evt.altKey = true;
-                }
-                self.doMouseDown(evt, self);
-                self.mouseDownedAt = (e.timeStamp)
-                e.stopPropagation();
-                e.preventDefault();
-                // Create a timeout that will check if the user is holding down on the same spot to open the context menu
-                setTimeout(() => {
-                    if (self.mouseDown && !self.mouseMoved) {
-                        self.doRightClick(evt, self);
-                    }
-                }, 1000)
-            }, false)
-
-        self.canvas.addEventListener('touchmove',
-            function (e) {
-                const touchobj = e.touches[0]; // reference first touch point for this event
-                const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, buttons: 1 };
-                if (e.touches.length === 2) {
-                    evt.shiftKey = true;
-                    evt.altKey = true;
-                }
-                self.doMouseMove(evt, self);
-                e.stopPropagation();
-                e.preventDefault();
-            }, false)
-
-        self.canvas.addEventListener('touchend',
-            function (e) {
-                const touchobj = e.changedTouches[0]; // reference first touch point for this event
-                const evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
-                if (e.changedTouches.length === 2) {
-                    evt.shiftKey = true;
-                    evt.altKey = true;
-                }
-                const deltaTime = e.timeStamp - self.mouseDownedAt;
-                if (deltaTime < 300) {
-                    self.doClick(evt, self);
-                }
-                self.doMouseUp(evt, self);
-                e.stopPropagation();
-                e.preventDefault();
-            }, false)
+        // Touch input is handled by the @use-gesture recognisers (rotate /
+        // translate / z-rotate / pinch-zoom / tap / long-press), which map
+        // finger gestures onto the same mouse handlers used above. The teardown
+        // it returns is kept on `self` so it can be destroyed on unmount.
+        self.destroyTouchGestures = attachTouchGestures(self);
     }
     self.doneEvents = true;
 }

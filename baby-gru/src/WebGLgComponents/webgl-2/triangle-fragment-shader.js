@@ -54,7 +54,13 @@ const clipAndPeelDiscards = `
           vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
           highp float max_depth;
           max_depth = texture(depthPeelSamplers,tex_coord).r;
-          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 || gl_FrontFacing!=true ) {
+          // No gl_FrontFacing test. There used to be one here, and only here: the first transparent
+          // layer runs without this block, so it kept back faces and every later layer threw them
+          // away. Whether a back-facing surface showed therefore depended on whether anything
+          // transparent was in front of it - the far inside wall of a clipped-open surface vanished
+          // behind a hover ball, which was then blended over the bare background and came out
+          // cream. Every layer now keeps every face, as a see-through surface really looks.
+          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
               discard;
           }
       }
@@ -73,6 +79,11 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
     vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
 
     in lowp vec4 vColor;
+
+    // A fade applied to the whole buffer: 1.0 leaves it alone, 0.0 makes it vanish. Set per draw
+    // from DisplayBuffer.alphaMultiplier, so a movie can fade an object in or out without touching
+    // a single vertex. Defaults to 1.0 for the many draws that never set it.
+    uniform float alphaMultiplier;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
 
@@ -283,6 +294,10 @@ ${discards ? clipAndPeelDiscards : ""}
       float boost = clamp(vHighlight - 1.0, 0.0, 1.0);
       fragColor.rgb = mix(fragColor.rgb, vec3(1.0, 1.0, 1.0), 0.5 * boost);
       fragColor.a *= min(vHighlight, 1.0);
+
+      // Last, so it scales whatever the rest of the shader decided the alpha was - the vertex
+      // colour, the hover highlight's fade, all of it.
+      fragColor.a *= alphaMultiplier;
 
     }
 `;

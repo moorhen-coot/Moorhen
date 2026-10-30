@@ -211,7 +211,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     }, [symmetryRadius]);
 
     useEffect(() => {
-        dispatch(showMolecule(props.molecule));
         props.molecule.representations
             .filter(item => {
                 return !item.isCustom && item.style !== "hover";
@@ -646,7 +645,31 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                             <>
                                                 <b>NEF restraints</b>
                                                 <br />
-                                                Visualisation settings for NMR restraints loaded in from NEF files.
+                                                Draws the NMR distance restraints from the loaded NEF file for the residue at
+                                                the centre of the view, as lines between restrained atom pairs.
+                                                <br />
+                                                <span
+                                                    style={{
+                                                        display: "inline-block",
+                                                        width: "0.8em",
+                                                        height: "0.8em",
+                                                        background: "rgb(179, 51, 179)",
+                                                        verticalAlign: "middle",
+                                                    }}
+                                                />
+                                                &nbsp;Magenta: ambiguous restraint (all possible atom pairs are drawn)
+                                                <br />
+                                                <span
+                                                    style={{
+                                                        display: "inline-block",
+                                                        width: "0.8em",
+                                                        height: "0.8em",
+                                                        background: "black",
+                                                        border: "1px solid grey",
+                                                        verticalAlign: "middle",
+                                                    }}
+                                                />
+                                                &nbsp;Black: unambiguous restraint
                                             </>
                                         }
                                     />

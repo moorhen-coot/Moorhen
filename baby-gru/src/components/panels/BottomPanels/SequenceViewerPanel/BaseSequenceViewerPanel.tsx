@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
 import { MoorhenSelectionToSeqViewer, handleResiduesSelection, useHoveredResidue } from "@/components/sequence-viewer/utils";
@@ -32,7 +32,6 @@ export const BaseSequenceViewerPanel = ({
 }: BaseSequenceViewerPanelProps) => {
     const dispatch = useDispatch();
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
-    const sidePanelIsOpen = useSelector((state: RootState) => state.globalUI.shownSidePanel !== null);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
 
     const molecule: MoorhenMolecule | null = useMemo(() => {
@@ -41,7 +40,6 @@ export const BaseSequenceViewerPanel = ({
             : null;
     }, [moleculeList, selectedMolecule]);
 
-    const [panelKeyRef, setPanelKeyRef] = useState<number>(0);
     const sequenceSelection = useMemo(() => MoorhenSelectionToSeqViewer(residueSelection), [residueSelection]);
     const hoveredResidue = useHoveredResidue();
 
@@ -69,17 +67,6 @@ export const BaseSequenceViewerPanel = ({
         [dispatch, molecule]
     );
 
-    useEffect(() => {
-        const animation = () => {
-            for (let i = 0; i < 600 / 10; i++) {
-                setTimeout(() => {
-                    setPanelKeyRef(current => current + 1);
-                }, 10 * (i + 1));
-            }
-        };
-        animation();
-    }, [sidePanelIsOpen]);
-
     const seqViewerKey = useMemo(() => {
         return molecule?.molNo !== undefined ? molecule.molNo : "no-molecule";
     }, [molecule?.molNo]);
@@ -95,7 +82,6 @@ export const BaseSequenceViewerPanel = ({
             onResidueClick={handleClick}
             setSelectedResidues={residueSelectionCallback}
             onHoverResidue={handleHoverResidue}
-            forceRedrawScrollBarKey={panelKeyRef}
             showValidationData={showValidationData}
             nameColumnWidth={nameColumnWidth}
             validationTracks={validationTracks}

@@ -11,6 +11,9 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
 
     in lowp vec4 vColor;
+
+    // A fade applied to the whole buffer; see DisplayBuffer.alphaMultiplier and objectFade.
+    uniform float alphaMultiplier;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
     in lowp vec2 vTexture;
@@ -101,9 +104,14 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       pos.z += silly_scale*z*size_v;
       pos = projMatrix * pos;
       gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
+      // gl_FragDepth, not gl_FragCoord.z. This is an impostor: gl_FragCoord.z is the depth of the
+      // flat quad it is drawn on, at the sphere's centre, while the sphere's real surface is the
+      // gl_FragDepth just computed. Testing the quad put every transparent sphere's front half
+      // behind any opaque sphere it enclosed - a hover ball around an atom was cut away wherever
+      // the atom was, leaving a ring. The peel test below already used gl_FragDepth.
       if(haveOpaqueDepth) {
           vec2 opaque_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
-          if(gl_FragCoord.z > texture(opaqueDepthSampler,opaque_coord).r) {
+          if(gl_FragDepth > texture(opaqueDepthSampler,opaque_coord).r) {
               discard;
           }
       }
@@ -232,6 +240,9 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
             discard;
         }
       }
+
+      // Last, and after the clip cap's own assignment, so a capped sphere fades with the rest.
+      fragColor.a *= alphaMultiplier;
     }
 `;
 
