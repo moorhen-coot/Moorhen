@@ -17,7 +17,7 @@ import {
 } from "../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { MOORHEN_ATOM_TAG_KIND } from "../../utils/enums";
+import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND } from "../../utils/enums";
 import { addAvailableFontList, emptyAvailableFonts } from "../../store/labelSettingsSlice";
 import { setRefinementSelection } from "../../store/refinementSettingsSlice";
 import {
@@ -190,13 +190,25 @@ export const MoorhenContainer = (props: ContainerProps) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    /**
+     * The molecule the atom channel landed on during this pointer move, or null.
+     *
+     * The renderer reports its two findings in order - the nearest atom, then the labelled mesh
+     * piece - within one handler, so a ref is read back reliably in the second from the first.
+     * Which of the two should be believed is decided in onSectionHovered, and this is how it
+     * knows what the other channel said.
+     */
+    const atomHoverMoleculeRef = useRef<moorhen.Molecule | null>(null);
+
     const onAtomHovered = useCallback(
         (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => {
+            atomHoverMoleculeRef.current = null;
             if (identifier == null) {
                 dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
             } else {
                 molecules.forEach(molecule => {
                     if (molecule.buffersInclude(identifier.buffer)) {
+                        atomHoverMoleculeRef.current = molecule;
                         const newCid = parseAtomInfoLabel(identifier.atom);
                         dispatch(setHoveredAtom({ molecule: molecule, cid: newCid, atomInfo: identifier.atom }));
                     }
@@ -220,20 +232,52 @@ export const MoorhenContainer = (props: ContainerProps) => {
      */
     const onSectionHovered = useCallback(
         (identifier: { buffer: { id: string }; kind: string; tag: string }) => {
-            if (identifier == null || identifier.kind !== MOORHEN_ATOM_TAG_KIND) {
+            if (identifier == null) {
                 return;
             }
-            // "<uniqueId>|<chain>|<residue>|<cid>". Only the first and last fields matter here;
-            // the middle two exist so the reverse direction can match without parsing a CID.
-            const fields = identifier.tag.split("|");
-            if (fields.length < 4) {
+            /**
+             * Whether this labelled piece outranks whatever the atom channel just reported.
+             *
+             * The renderer no longer decides this for pieces that stand for a residue, because
+             * the question is about molecules and the renderer knows only buffers. A mesh that
+             * names a residue of the *same molecule* as the hovered atom wins: it is the
+             * representation being pointed at, and a surface patch or ribbon section that stays
+             * lit should not be labelled with an atom that wanders beneath it. An atom of some
+             * other molecule is left alone - it is a different object and has its own claim.
+             *
+             * When the atom channel found nothing, there is nothing to outrank and the piece
+             * speaks for itself, which is what it has always done.
+             */
+            const atomMolecule = atomHoverMoleculeRef.current;
+            const outranksAtom = (molecule: moorhen.Molecule) =>
+                atomMolecule === null || atomMolecule === molecule;
+
+            if (identifier.kind === MOORHEN_ATOM_TAG_KIND) {
+                // "<uniqueId>|<chain>|<residue>|<cid>". Only the first and last fields matter
+                // here; the middle two exist so the reverse direction can match without
+                // parsing a CID.
+                const fields = identifier.tag.split("|");
+                if (fields.length < 4) {
+                    return;
+                }
+                const moleculeUniqueId = fields[0];
+                const cid = fields.slice(3).join("|");
+                const molecule = molecules.find(item => item.uniqueId === moleculeUniqueId);
+                if (molecule && cid && outranksAtom(molecule)) {
+                    dispatch(setHoveredAtom({ molecule: molecule, cid: cid, atomInfo: null }));
+                }
                 return;
             }
-            const moleculeUniqueId = fields[0];
-            const cid = fields.slice(3).join("|");
-            const molecule = molecules.find(item => item.uniqueId === moleculeUniqueId);
-            if (molecule && cid) {
-                dispatch(setHoveredAtom({ molecule: molecule, cid: cid, atomInfo: null }));
+            if (identifier.kind === MOORHEN_MESH_RESIDUE_TAG_KIND) {
+                // A molecular surface names the residue behind the triangle under the pointer,
+                // and the tag is the CID Coot wrote. Which molecule it belongs to is not in the
+                // tag - it does not need to be, because the buffer is here and a molecule can
+                // be asked whether it owns one. That is how an atom hover finds its molecule
+                // too.
+                const molecule = molecules.find(item => item.buffersInclude(identifier.buffer));
+                if (molecule && identifier.tag && outranksAtom(molecule)) {
+                    dispatch(setHoveredAtom({ molecule: molecule, cid: identifier.tag, atomInfo: null }));
+                }
             }
         },
         [molecules, dispatch]

@@ -268,10 +268,11 @@ using namespace emscripten;
  * the C++ data, handed to the array's own `set`, so the whole thing moves in one memcpy rather
  * than a million calls to a bound vector's `get`.
  *
- * Takes the vector rather than the struct holding it, deliberately. getPositionsFromSimpleMesh2
+ * Takes the vector rather than the struct holding it, deliberately. getPositionsFromSimpleMesh
  * and its siblings take a whole simple_mesh_t back from JavaScript, which means embind rebuilds
  * the mesh - copying every vertex - on the way in. That is unavoidable when the data wanted is
  * inside the mesh. Here it is beside it, so taking the vector alone skips that copy entirely.
+ * The getPositionsFromVertices family does the same for the mesh's own arrays.
  */
 void getFloatsFromVector(const std::vector<float> &values, const emscripten::val &out){
     const emscripten::val view{emscripten::typed_memory_view(values.size(), values.data())};

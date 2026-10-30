@@ -14,10 +14,27 @@ export const ActivityIndicator = () => {
     const chemShifts = useSelector((state: RootState) => state.molecules[0]?.chemShifts);
     const NMRMode = (hoveredAtom.molecule?.chemShifts?.length ?? 0) > 0;
     const updatingMapsIsEnabled = useSelector((state: RootState) => state.moleculeMapUpdate.updatingMapsIsEnabled);
+    // A hover does not always name an atom. One that came from a molecular surface names the
+    // residue behind the triangle under the pointer and stops there, so the CID is
+    // "/1/A/23(ALA)" with no fifth field - and a residue with no name at all, from a CID
+    // written elsewhere in the app, leaves nothing in the brackets to read.
+    // A hover does not always name an atom. One that came from a molecular surface names the
+    // residue behind the triangle under the pointer and stops there - "/1/A/23(ALA)", with no
+    // fifth field - and its residue may carry an insertion code, "/1/A/52(ALA).B".
+    //
+    // The name is read out of the brackets rather than by counting characters in from each
+    // end. That was exact for a three-letter code and nothing else: an insertion code after
+    // the bracket turned ALA into "ALAla).", and a two-letter nucleotide came out as "a".
     const cidAsArray = hoveredAtom.cid?.split("/") || [];
-    const residueName = cidAsArray[3]?.split(`(`)[1].slice(0, -3) + cidAsArray[3]?.split(`(`)[1].slice(1, -1).toLowerCase();
-    const residueNumber = cidAsArray[3]?.split(`(`)[0];
-    const reformatedCid = `${cidAsArray[2]} - ${residueName} ${residueNumber} - ${cidAsArray[4]}`;
+    const residueField = cidAsArray[3] ?? "";
+    const residueCode = residueField.match(/\(([^)]*)\)/)?.[1] ?? "";
+    const residueName = residueCode ? residueCode[0] + residueCode.slice(1).toLowerCase() : "";
+    const insertionCode = residueField.split(").")[1] ?? "";
+    const residueNumber = residueField.split("(")[0] + insertionCode;
+    const atomName = cidAsArray[4];
+    const reformatedCid = [cidAsArray[2], `${residueName} ${residueNumber}`.trim(), atomName]
+        .filter(Boolean)
+        .join(" - ");
     const bFactorNOccupancy = hoveredAtom.atomInfo
         ? `B-Fact: ${hoveredAtom.atomInfo.tempFactor.toFixed(1)} Occ: ${hoveredAtom.atomInfo.occupancy.toFixed(2)}`
         : "";

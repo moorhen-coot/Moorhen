@@ -392,7 +392,7 @@ const vectorVectorToJSArray = (vectorVector): number[][] => {
 
 const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false, keepNorm: boolean = false): libcootApi.SimpleMeshJS => {
 
-    const print_timing = false
+    const print_timing = true
     const ts = performance.now()
 
     const vertices = simpleMesh.vertices;
@@ -406,20 +406,66 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     let totNorm_C = new Float32Array(verticesSize * 3)
     let totCol_C = new Float32Array(verticesSize * 4)
 
-    cootModule.getPositionsFromSimpleMesh2(simpleMesh, totPos_C)
-    cootModule.getColoursFromSimpleMesh2(simpleMesh, totCol_C)
+    // The vectors, not the mesh. Passing simpleMesh reconstructed the whole thing on every
+    // one of these calls - a value_object crosses by copy - so four calls copied a 400 MB
+    // mesh four times before reading a vertex. These handles are the ones deleted below, so
+    // nothing extra is held.
+    cootModule.getPositionsFromVertices(vertices, totPos_C)
+    cootModule.getColoursFromVertices(vertices, totCol_C)
 
     if (perm) {
+        // keepNorm leaves the normals alone while the winding is reversed. It used to call a
+        // separate getReversedNormalsFromSimpleMesh3, which despite its name negated nothing
+        // and was identical to the unreversed version.
         if (keepNorm) {
-            cootModule.getReversedNormalsFromSimpleMesh3(simpleMesh, totNorm_C)
+            cootModule.getNormalsFromVertices(vertices, totNorm_C)
         } else {
-            cootModule.getReversedNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
+            cootModule.getReversedNormalsFromVertices(vertices, totNorm_C)
         }
-        cootModule.getPermutedTriangleIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
+        cootModule.getPermutedTriangleIndicesFromTriangles(triangles, totIdxs_C)
     } else {
-        cootModule.getNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
-        cootModule.getTriangleIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
+        cootModule.getNormalsFromVertices(vertices, totNorm_C)
+        cootModule.getTriangleIndicesFromTriangles(triangles, totIdxs_C)
     }
+
+    // Which residue each vertex belongs to, for a mesh that knows.
+    //
+    // Coot records the generating atom against every vertex of a molecular surface as it
+    // builds it - see simple_mesh_t::vertex_owner. Only the surface fills these in so far, so
+    // every other mesh arrives with them empty and is unaffected.
+    //
+    // Note the permuted case: getPermutedTriangleIndicesFromTriangles reorders the corners
+    // within each triangle, not the vertices themselves, so the owner of vertex i is still the
+    // owner of vertex i and this needs no equivalent.
+    let vertexOwners: Uint32Array | null = null
+    let vertexOwnersOther: Uint32Array | null = null
+    let vertexOwnerWeights: Float32Array | null = null
+    let owners: string[] | null = null
+    const vertexOwnerVec = simpleMesh.vertex_owner
+    const vertexOwnerOtherVec = simpleMesh.vertex_owner_other
+    const vertexOwnerWeightVec = simpleMesh.vertex_owner_weight
+    const ownerVec = simpleMesh.owners
+    if (vertexOwnerVec && ownerVec && vertexOwnerVec.size() === verticesSize && ownerVec.size() > 0) {
+        vertexOwners = new Uint32Array(verticesSize)
+        cootModule.getUint32ArrayFromVector(vertexOwnerVec, vertexOwners)
+        const ownersSize = ownerVec.size()
+        owners = new Array(ownersSize)
+        for (let i = 0; i < ownersSize; i++) owners[i] = ownerVec.get(i)
+        // The second owner of a saddle. Kept together with the first: a mesh either has both
+        // or neither, so half of it arriving would be a bug rather than a case to handle.
+        if (vertexOwnerOtherVec && vertexOwnerWeightVec
+            && vertexOwnerOtherVec.size() === verticesSize
+            && vertexOwnerWeightVec.size() === verticesSize) {
+            vertexOwnersOther = new Uint32Array(verticesSize)
+            cootModule.getUint32ArrayFromVector(vertexOwnerOtherVec, vertexOwnersOther)
+            vertexOwnerWeights = new Float32Array(verticesSize)
+            cootModule.getFloat32ArrayFromVector(vertexOwnerWeightVec, vertexOwnerWeights)
+        }
+    }
+    vertexOwnerVec?.delete()
+    vertexOwnerOtherVec?.delete()
+    vertexOwnerWeightVec?.delete()
+    ownerVec?.delete()
 
     const tm = performance.now()
     if (print_timing) console.log("DEBUG: SIMPLE MESH TO MESH DATA C++", tm - ts)
@@ -437,12 +483,42 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     vertices.delete();
     triangles.delete();
 
+    // Report the size of the WebAssembly heap alongside a mesh that failed to build.
+    //
+    // This is the one number that says which problem we have. The heap can only grow, never
+    // shrink, and a failed allocation can mean either of two quite different things: the heap
+    // is at its 8 GB ceiling and there is genuinely no more (exhaustion), or the heap is far
+    // short of the ceiling and the request failed for want of one contiguous block of the size
+    // asked for (fragmentation). The fixes are unrelated - use less in total, versus ask in
+    // smaller pieces - so guessing between them is expensive.
+    //
+    // Printed on failure only, so it costs nothing in normal use.
+    if (simpleMesh.status === 0) {
+        // In a try, because reading HEAPU8 is not a plain property access: when it is absent
+        // from EXPORTED_RUNTIME_METHODS the module installs a getter that calls abort(), which
+        // raises a RuntimeError the optional-chaining operator never gets to see. A diagnostic
+        // that can take the worker down is worse than no diagnostic.
+        let heap = "not exported"
+        try {
+            const heapBytes = (cootModule as any).HEAPU8?.length
+            if (typeof heapBytes === "number") heap = (heapBytes / (1024 * 1024)).toFixed(0) + " MB"
+        } catch (e) { /* leave it as "not exported" */ }
+        console.log("DEBUG: mesh failed to build; WASM heap is", heap,
+                    "and the mesh reached", verticesSize, "vertices and", trianglesSize, "triangles")
+    }
+
     return {
+        // Carried through so a caller can tell a mesh that failed to build from one that is
+        // legitimately empty. Coot sets it to 0 only when it caught an exception.
+        status: simpleMesh.status,
         prim_types: [["TRIANGLES"]],
         idx_tri: [[totIdxs]],
         vert_tri: [[totPos]],
         norm_tri: [[totNorm]],
-        col_tri: [[totCol]]
+        col_tri: [[totCol]],
+        ...(vertexOwners ? { vertex_owners: vertexOwners, owners } : {}),
+        ...(vertexOwnersOther ? { vertex_owners_other: vertexOwnersOther,
+                                  vertex_owner_weights: vertexOwnerWeights } : {})
     };
 }
 
@@ -1153,10 +1229,10 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
     let totPos_C = new Float32Array(verticesSize * 3)
     let totNorm_C = new Float32Array(verticesSize * 3)
     let totCol_C = new Float32Array(verticesSize * 4)
-    cootModule.getLineIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
-    cootModule.getPositionsFromSimpleMesh2(simpleMesh, totPos_C)
-    cootModule.getNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
-    cootModule.getColoursFromSimpleMesh2(simpleMesh, totCol_C)
+    cootModule.getLineIndicesFromTriangles(triangles, totIdxs_C)
+    cootModule.getPositionsFromVertices(vertices, totPos_C)
+    cootModule.getNormalsFromVertices(vertices, totNorm_C)
+    cootModule.getColoursFromVertices(vertices, totCol_C)
 
     const tm = performance.now()
     if (print_timing) console.log("DEBUG: SIMPLE MESH TO LINE MESH DATA C++", tm - ts)
@@ -1173,11 +1249,18 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
 
     vertices.delete();
     triangles.delete();
+    // simple_mesh_t now carries two more vectors, and every field of a value_object arrives as
+    // a handle that has to be freed whether or not this function looks at it. A line mesh
+    // never has owners, but the empty vectors are still allocated.
+    simpleMesh.vertex_owner?.delete();
+    simpleMesh.vertex_owner_other?.delete();
+    simpleMesh.vertex_owner_weight?.delete();
+    simpleMesh.owners?.delete();
 
     if (normalLighting)
-        return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+        return { status: simpleMesh.status, prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
     else
-        return { prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+        return { status: simpleMesh.status, prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
 
 }
 
@@ -1401,10 +1484,13 @@ const load_gltf_groups = (
                 const normals = new Float32Array(vertexCount * 3)
                 const colours = new Float32Array(vertexCount * 4)
                 const indices = new Uint32Array(triangleCount * 3)
-                cootModule.getPositionsFromSimpleMesh2(mesh, vertices)
-                cootModule.getNormalsFromSimpleMesh2(mesh, normals)
-                cootModule.getColoursFromSimpleMesh2(mesh, colours)
-                cootModule.getTriangleIndicesFromSimpleMesh2(mesh, indices)
+                // The vectors, not the mesh. A simple_mesh_t is a value_object and crosses by
+                // copy, so handing the whole mesh back makes embind rebuild it - every vertex -
+                // on the way in; a registered vector crosses by reference and costs nothing.
+                cootModule.getPositionsFromVertices(mesh.vertices, vertices)
+                cootModule.getNormalsFromVertices(mesh.vertices, normals)
+                cootModule.getColoursFromVertices(mesh.vertices, colours)
+                cootModule.getTriangleIndicesFromTriangles(mesh.triangles, indices)
 
                 // One memcpy rather than a call per element: a bound vector's `get` is a call
                 // across the boundary, and a large mesh has millions of these.

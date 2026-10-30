@@ -445,6 +445,20 @@ export const moorhenAtomTagKey = (moleculeUniqueId: string, chainId: string, res
     `${moleculeUniqueId}|${chainId}|${parseInt(String(residueNumber))}`;
 
 /**
+ * Tag scheme for a residue named by a mesh that knows which residue made each of its vertices.
+ * The tag is the CID Coot wrote, "/1/A/23(ALA)".
+ *
+ * A molecular surface knows, because it is built one atom at a time; so does a ribbon, which
+ * is swept along a spline half a residue either side of each alpha carbon. Neither is named
+ * here - the scheme is about what the mesh can say, not about which representation said it.
+ *
+ * Deliberately not the atom scheme above. A reader of that scheme expects to find a contiguous
+ * range of vertices for the section it names, which a surface cannot offer: one residue's
+ * vertices are scattered through the mesh wherever its atoms reach the air.
+ */
+export const MOORHEN_MESH_RESIDUE_TAG_KIND = "moorhen-mesh-residue";
+
+/**
  * Tag scheme for manipulation handles, written "<action>|<axis>" - "translate|x", "rotate|z".
  *
  * A separate scheme from the atom one so that the bridges which turn a section hover into an

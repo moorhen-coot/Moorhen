@@ -15,6 +15,7 @@ import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInS
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { wholeMeshPickInfo } from "../../WebGLgComponents/wholeMeshPick";
+import { ownedMeshPickInfo } from "../../WebGLgComponents/ownedMeshPick";
 
 /**
  * The styles that actually put individual atoms on the screen, and so the only ones a per-atom
@@ -130,6 +131,29 @@ export type gaussianSurfSettings = {
     gridScale: number;
     bFactor: number;
 };
+
+/**
+ * A mesh without the ownership arrays Coot now sends alongside it.
+ *
+ * Those four are the raw material for pick information and nothing else reads them: once
+ * ownedMeshPickInfo has turned them into pick points, codes and influence lists, they are
+ * finished with. Leaving them on the buffer object was doing two kinds of harm - they sat in
+ * memory for the life of the buffer, megabytes of it on a ribosome, and mergeBufferObjects
+ * calls concat on every key it finds, which a Uint32Array does not have.
+ */
+const withoutOwnershipArrays = (mesh: libcootApi.SimpleMeshJS) => {
+    const { vertex_owners, owners, vertex_owners_other, vertex_owner_weights, ...rest } =
+        mesh as libcootApi.SimpleMeshJS;
+    return rest;
+};
+
+/**
+ * Every name a water goes by in the structures this project reads.
+ *
+ * Copied from the water entries of MoorhenMolecule's `ligandsCid`, which is the one place that
+ * already enumerates them - so the two agree by construction rather than by memory.
+ */
+const WATER_RESIDUE_NAMES = ["WAT", "HOH", "OH2", "H2O"];
 
 export class MoleculeRepresentation {
     uniqueId: string;
@@ -476,6 +500,39 @@ export class MoleculeRepresentation {
     }
 
     /**
+     * Whether a mesh Coot returned is an answer or a failure, saying so if it is the latter.
+     *
+     * simple_mesh_t carries a status: 1 if it was built, 0 if Coot caught an exception while
+     * building it - in practice a bad_alloc on a mesh too large to fit. Before that flag was
+     * honoured the two were indistinguishable, because a failed mesh arrives empty and an
+     * empty mesh is a perfectly good answer for a selection that matched nothing. So nothing
+     * appeared, nothing was said, and the only trace was one line of Coot's stdout among
+     * hundreds.
+     *
+     * The message hedges on the cause deliberately: the catch that sets the flag is a
+     * catch(...) and cannot know it was memory, however likely that is.
+     *
+     * No throttling needed - the snackbar slice drops an existing entry with the same tag
+     * before pushing, so a representation that fails on every redraw replaces its own toast
+     * rather than stacking them.
+     */
+    meshFailedToBuild(mesh: { status?: number }): boolean {
+        if (mesh?.status !== 0) {
+            return false;
+        }
+        const message = `Could not draw ${this.style} for ${this.parentMolecule.name}: `
+            + `Coot failed to build the mesh, most likely from running out of memory. `
+            + `Try a smaller selection or a simpler style.`;
+        console.warn(message);
+        this.parentMolecule.store.dispatch(enqueueSnackbar({
+            message,
+            variant: "warning",
+            tag: `mesh-build-failed-${this.parentMolecule.molNo}-${this.style}`,
+        }));
+        return true;
+    }
+
+    /**
      * Set the representation buffers
      * @param {moorhen.DisplayObject[]} buffers - The new buffers
      */
@@ -491,6 +548,34 @@ export class MoleculeRepresentation {
         if (atomBuffers?.length > 0 && this.buffers?.length > 0) {
             this.buffers[0].atoms = atomBuffers;
         }
+    }
+
+    /**
+     * The atoms this representation is willing to be asked about, from the atoms of its selection.
+     *
+     * A buffer's `atoms` array is what the pick loop's atom channel searches, so it is the list of
+     * things the pointer can land on and the status box can name. It is filled from
+     * `gemmiAtomsForCid(this.cid)`, which for "All Chains" is every atom in the molecule - and a
+     * ribbon drawn over the whole chain therefore offered up its waters, which it does not draw.
+     * Hovering a surface with a ribbon also displayed reported "Hoh 1044" while highlighting a
+     * patch of protein: the water was never on screen, but the ribbon was holding it.
+     *
+     * Only the M2T styles that keep atom buffers at all - CRs, DishyBases, StickBases, Calpha -
+     * and every one of those draws polymer and nothing else. The bond representations are
+     * untouched, and must be: CBs and its relatives *do* draw waters, and picking one there is
+     * the whole point.
+     *
+     * Waters only, deliberately. A ligand sitting under a ribbon is still offered, which is not
+     * right either - but the set of residues M2T will actually ribbon is not written down
+     * anywhere (the ribbon styles pass "//" and let M2T decide), so narrowing further would mean
+     * inventing a polymer list and risking a nucleic acid or a modified residue losing its hover.
+     * This removes what is certainly wrong without guessing at what is merely probably wrong.
+     */
+    private atomsThisStyleDraws(atomBuffers: moorhen.AtomInfo[]): moorhen.AtomInfo[] {
+        if (!this.styleIsM2tRepresentation || !atomBuffers?.length) {
+            return atomBuffers;
+        }
+        return atomBuffers.filter(atom => !WATER_RESIDUE_NAMES.includes(atom.res_name));
     }
 
     /**
@@ -562,7 +647,9 @@ export class MoleculeRepresentation {
         this.buildBuffers(objects);
         const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
         if (this.styleHasAtomBuffers) {
-            this.setAtomBuffers(atomBuffers);
+            // Narrowed, not the raw selection: see atomsThisStyleDraws. The unnarrowed list is
+            // still what the centre below is measured from - that wants the whole selection.
+            this.setAtomBuffers(this.atomsThisStyleDraws(atomBuffers));
         }
         const selectionCentre = centreOnGemmiAtoms(atomBuffers);
         if (this.buffers) {
@@ -592,7 +679,9 @@ export class MoleculeRepresentation {
         this.buildBuffers(objects);
         const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
         if (this.styleHasAtomBuffers) {
-            this.setAtomBuffers(atomBuffers);
+            // Narrowed, not the raw selection: see atomsThisStyleDraws. The unnarrowed list is
+            // still what the centre below is measured from - that wants the whole selection.
+            this.setAtomBuffers(this.atomsThisStyleDraws(atomBuffers));
         }
         const selectionCentre = centreOnGemmiAtoms(atomBuffers);
         this.buffers.forEach(buf => {
@@ -927,6 +1016,14 @@ export class MoleculeRepresentation {
                 if (key === "pick_info") continue
                 if (!(key in bufferObj2[i])) {
                     console.warn(`Failed to merge: attr. ${key} with index ${i} not found in buffer object no. 2, skipping...`);
+                } else if (typeof bufferObj1[i][key]?.concat !== "function") {
+                    // Every key used to be a plain array of arrays. When Coot began sending
+                    // per-vertex ownership as typed arrays this threw, because a Uint32Array
+                    // has no concat - and it threw from here, three frames away from anything
+                    // that mentions ownership. Those arrays are stripped before a buffer is
+                    // built now, so this should not fire; it says so rather than crashing if
+                    // something else ever arrives in a form that cannot be joined end to end.
+                    console.warn(`Failed to merge: attr. ${key} with index ${i} is not concatenable, skipping...`);
                 } else {
                     iObjects[key] = bufferObj1[i][key].concat(bufferObj2[i][key]);
                 }
@@ -1423,7 +1520,24 @@ export class MoleculeRepresentation {
             ),
         ]);
 
-        const objects = [{ ...result.data.result.result, pick_info: {} }];
+        // Nucleotide bases are drawn with cylinders, and cylinders name the atom behind each
+        // vertex, so these carry ownership like any other mesh that knows - which means the
+        // bases are hoverable on the same terms as the ribbon beside them.
+        const nucleotideMesh = result.data.result.result as libcootApi.SimpleMeshJS
+        if (this.meshFailedToBuild(nucleotideMesh)) {
+            return [];
+        }
+        const pick_info = ownedMeshPickInfo(
+            nucleotideMesh.vert_tri?.[0]?.[0] ?? [], nucleotideMesh.vertex_owners,
+            nucleotideMesh.owners, nucleotideMesh.vertex_owners_other,
+            nucleotideMesh.vertex_owner_weights)
+        // TEMPORARY: is the geometry arriving at all? Remove once the dishy bases are sorted.
+        console.log(`Nucleotide mesh, style "${style}": `
+            + `${(nucleotideMesh.vert_tri?.[0]?.[0]?.length ?? 0) / 3} vertices, `
+            + `${(nucleotideMesh.idx_tri?.[0]?.[0]?.length ?? 0) / 3} triangles, `
+            + `${nucleotideMesh.owners?.length ?? 0} residues named`)
+
+        const objects = [{ ...withoutOwnershipArrays(nucleotideMesh), pick_info: pick_info ?? {} }];
         return objects;
     }
 
@@ -1461,12 +1575,43 @@ export class MoleculeRepresentation {
             false
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
 
-        const ribbonBufferObjects = [{ ...response.data.result.result, pick_info: {} }];
+        // A mesh that knows which residue made each of its vertices is hoverable per residue.
+        //
+        // Coot fills this in for the molecular surface and for nothing else so far, so this is
+        // a question about the mesh rather than about the style: ask what arrived. Ribbons and
+        // the rest simply have no owners and fall through unchanged.
+        const m2tMesh = response.data.result.result as libcootApi.SimpleMeshJS
+        if (this.meshFailedToBuild(m2tMesh)) {
+            return [];
+        }
+        const meshPickInfo = ownedMeshPickInfo(
+            m2tMesh.vert_tri?.[0]?.[0] ?? [], m2tMesh.vertex_owners, m2tMesh.owners,
+            m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights)
+        const ribbonBufferObjects = [{ ...withoutOwnershipArrays(m2tMesh), pick_info: meshPickInfo ?? {} }];
 
         let resultBufferObjects: PickableMesh[];
         if (m2tStyle === "Ribbon" && this.parentMolecule.hasDNA) {
+            // Kept as two buffers rather than merged into one.
+            //
+            // Pick information is per buffer and describes that buffer's own vertices, so
+            // merging two meshes would mean merging two sets of it: remapping owner indices,
+            // renumbering chains that were numbered independently, and rebasing every offset
+            // in the influence lists. mergeBufferObjects did none of that - it set pick_info
+            // to {} - so on any structure with nucleotides the ribbon lost its ownership and
+            // nothing hovered at all, protein included.
+            //
+            // Two buffers cost one more draw call and need no remapping, and each keeps what
+            // it knows about itself. buildBuffers has always taken a list; a cavities
+            // representation returns one buffer per cavity.
+            //
+            // Nucleotides first, because that is the order the merge produced.
+            //
+            // No stronger claim than that. The merge concatenated nucleotides then ribbon, so
+            // this keeps the draw order unchanged from before the split - buffers are drawn in
+            // the order given here, and coincident geometry is decided by depth on LESS, so
+            // the order is not free in general even if nothing is known to depend on it.
             const nucleotideBufferObjects = await this.getNucleotideRepresentationBuffers(m2tSelection);
-            resultBufferObjects = MoleculeRepresentation.mergeBufferObjects(nucleotideBufferObjects, ribbonBufferObjects);
+            resultBufferObjects = [...nucleotideBufferObjects, ...ribbonBufferObjects];
         } else {
             resultBufferObjects = ribbonBufferObjects;
         }

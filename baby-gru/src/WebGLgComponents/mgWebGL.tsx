@@ -117,7 +117,7 @@ import { drawPeel, drawTriangles, drawScene, applySymmetryMatrix, bindFramebuffe
 import { pickHalfExtents } from './mgWebGLParts/projection'
 import { initInstanceState, initGraphicsContext, attachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
 import { getDeviceScale} from './webGLUtils'
-import { rayMeshHit } from './rayMesh'
+import { rayMeshHit, buildMeshIndex } from './rayMesh'
 import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
 import { Root } from 'react-dom/client';
@@ -2179,10 +2179,29 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     const verts = displayBuffers[idx].triangleVertices?.[0]
                     const tris = displayBuffers[idx].triangleIndexs?.[0]
                     if(verts && tris && tris.length > 2){
+                        // A mesh with many owners gets its triangles grouped by owner, each
+                        // group with its own box, the first time it is hovered.
+                        //
+                        // Without it a surface is swept whole on every hover, because its
+                        // bounding box is the molecule: 24 ms on a ribosome, against 0.08 ms
+                        // grouped. Built here rather than when the pick information is made,
+                        // so a surface nobody hovers costs nothing - the price is that the
+                        // first hover after a surface is drawn pauses for about 60 ms at that
+                        // size.
+                        //
+                        // A mesh that is one whole thing, like a cavity, has a single owner
+                        // and would group into a single box, so it is left alone.
+                        const pickInfo = displayBuffers[idx].pick_info
+                        const ownerCount = pickInfo.pick_points?.length ?? 0
+                        if(pickInfo.vertex_pick_points && ownerCount > 1 && !pickInfo.mesh_index){
+                            pickInfo.mesh_index = buildMeshIndex(
+                                verts, tris, pickInfo.vertex_pick_points, ownerCount)
+                        }
                         const hit = rayMeshHit(
                             verts, tris,
                             modelPointArrayResultsFront, modelPointArrayResultsBack,
-                            displayBuffers[idx].pick_info.pick_bounds
+                            pickInfo.pick_bounds,
+                            pickInfo.mesh_index
                         )
                         if(hit){
                             // The chord the ray cuts through the mesh, in eye space, where a
@@ -2198,16 +2217,51 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                             const exitTrans = vec3Create([0, 0, 0]);
                             vec3.transformMat4(entryTrans, vec3Create(hit.entry.point), mvMatrix);
                             vec3.transformMat4(exitTrans, vec3Create(hit.exit.point), mvMatrix);
-                            const nearestZ = Math.max(entryTrans[2], exitTrans[2]);
-                            const farthestZ = Math.min(entryTrans[2], exitTrans[2]);
+                            const entryZ = entryTrans[2];
+                            const exitZ = exitTrans[2];
+                            const nearestZ = Math.max(entryZ, exitZ);
+                            const farthestZ = Math.min(entryZ, exitZ);
                             // Some of the chord has to lie within the slab for any of the mesh
                             // to be on screen here...
                             const onScreen = nearestZ > -this.gl_clipPlane1[3]
                                           && farthestZ < this.gl_clipPlane0[3];
-                            // ...and the nearest part of it that is, which is the clip plane
-                            // itself where the front of the pocket has been cut away and you
-                            // are looking at its inside.
-                            const depth = Math.min(nearestZ, this.gl_clipPlane0[3]);
+                            // The face you are actually looking at: the nearer of the two,
+                            // unless the front clip plane has cut it away, in which case you
+                            // are seeing through to the far wall.
+                            const nearer = entryZ >= exitZ ? hit.entry : hit.exit;
+                            const further = entryZ >= exitZ ? hit.exit : hit.entry;
+                            const frontCutAway = nearestZ >= this.gl_clipPlane0[3];
+                            const seen = frontCutAway ? further : nearer;
+                            // ...and how near that face is, which is what ranks this candidate
+                            // against the others: `depth > bestDepth_pi` means nearer wins.
+                            //
+                            // The depth of the face `seen` above, for the same reason it is the
+                            // one picked. This was `Math.min(nearestZ, gl_clipPlane0[3])` - the
+                            // nearest part of the chord still inside the slab - which for a mesh
+                            // cut open by the front clip is the clip plane itself, the nearest
+                            // depth anything in the scene can have. A cut-open surface therefore
+                            // outranked every piece of geometry inside it: clip into a molecule
+                            // with a surface and a ribbon both shown, and hovering the ribbon lit
+                            // a patch of the surface's *back* wall instead, because that patch
+                            // was claiming to be at the very front.
+                            //
+                            // Scoring the far wall as far away is a trade, not purely a fix: a
+                            // pocket you have deliberately clipped into becomes harder to pick,
+                            // because anything inside it now wins. That is the right way round
+                            // for a ribbon inside a surface, which is the case this came from.
+                            const depth = frontCutAway ? farthestZ : nearestZ;
+                            // Which pickable piece that is. A mesh that knows where its
+                            // vertices came from names the residue at a corner of the triangle
+                            // the ray crossed; a mesh that is one whole thing - a cavity - has
+                            // only pick point zero, its centroid, which is what centring wants
+                            // however it was hit.
+                            let pickPoint = 0;
+                            const vertexPickPoints = displayBuffers[idx].pick_info.vertex_pick_points
+                            if(vertexPickPoints && seen.triangle > -1){
+                                const corner = tris[3 * seen.triangle]
+                                const owner = vertexPickPoints[corner]
+                                if(owner !== undefined && owner < 0xFFFFFFFF) pickPoint = owner;
+                            }
                             const claimsPointer = !!displayBuffers[idx].pick_info.claims_pointer
                             const priority = displayBuffers[idx].pick_info.pick_priority ?? 0
                             const claimsThis = claimsPointer;
@@ -2218,9 +2272,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                 : true;
                             if(beatsBest && onScreen){
                                 minidx_pi = idx;
-                                // Pick point zero is the centroid, which is what centring wants
-                                // however the mesh was hit.
-                                minj_pi = 0;
+                                minj_pi = pickPoint;
                                 mindist_pi = 0;
                                 bestIsHit_pi = true;
                                 bestDepth_pi = depth;
