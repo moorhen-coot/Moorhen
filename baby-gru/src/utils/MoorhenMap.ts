@@ -252,7 +252,7 @@ export class MoorhenMap {
         )) as moorhen.WorkerResponse<number>;
 
         if (cootResponse.data.result.status === "Completed") {
-            return this.drawMapContour();
+            return this.redrawWithNewData();
         }
 
         return Promise.reject(cootResponse.data.result.status);
@@ -675,18 +675,32 @@ export class MoorhenMap {
     /**
      * Contour the map with parameters from the redux store.
      *
-     * This is what is called after the map's data has changed in Coot (updating maps, a new MTZ,
-     * a new sampling rate), so it also marks the data changed: the GPU contours, which keep a copy
-     * of the map, fetch it again. The other callers (an origin lock, colouring by another map)
-     * cost them one needless fetch. Moving the origin or changing the level does not come here.
+     * The map's data is taken to be as it was: the GPU contours keep their copy of it. After a
+     * command that changes the data, call redrawWithNewData instead, or markDataChanged where the
+     * map is not to be contoured now (a hidden map). Moving the origin or changing the level does
+     * not come here.
      */
     async drawMapContour(): Promise<void> {
         const originState = this.store.getState().sceneSettings.origin;
         const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams();
         const [x, y, z] = originState.map(coord => -coord) as [number, number, number];
-        if (gpuMapContourSetting.enabled) await this.bringUpdatingMapsUpToDate(x, y, z, contourLevel);
-        this.markDataChanged();
         return this.doCootContour(x, y, z, mapRadius, contourLevel, mapStyle);
+    }
+
+    /**
+     * Contour the map again after its data has changed in Coot (a new MTZ, a new sampling rate,
+     * updating maps after a model change): the GPU contours, which keep a copy of the map, fetch it
+     * again (markDataChanged), and Coot contours it as drawMapContour does.
+     */
+    async redrawWithNewData(): Promise<void> {
+        if (gpuMapContourSetting.enabled) {
+            const [x, y, z] = this.store.getState().sceneSettings.origin.map(coord => -coord) as [number, number, number];
+            await this.bringUpdatingMapsUpToDate(x, y, z, this.getMapContourParams().contourLevel);
+        }
+        // Only now: a frame in between would fetch the map before Coot had brought it up to date,
+        // and keep that.
+        this.markDataChanged();
+        return this.drawMapContour();
     }
 
     /**

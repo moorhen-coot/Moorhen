@@ -70,6 +70,8 @@ export const ConnectMoleculeToMaps = () => {
                 },
                 false
             );
+            // The 2Fo-Fc and Fo-Fc maps were made again in place.
+            maps.filter(map => map.molNo === twoFoFcMap || map.molNo === foFcMap).forEach(map => map.markDataChanged());
 
             // If there was a previous connected molecule, disconnect it
             if (connectedMoleculeMolNo) {
