@@ -21,8 +21,6 @@ import { MOORHEN_ATOM_TAG_KIND } from "../../utils/enums";
 import { addAvailableFontList, emptyAvailableFonts } from "../../store/labelSettingsSlice";
 import { setRefinementSelection } from "../../store/refinementSettingsSlice";
 import {
-    setBackgroundColor,
-    setDefaultBackgroundColor,
     setGlViewportHeight,
     setGlViewportWidth,
     setHeight,
@@ -125,7 +123,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const GlViewportWidth = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
-    const defaultBackgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.defaultBackgroundColor);
 
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate);
 
@@ -318,9 +315,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
     useEffect(() => {
         const _isDark = isDarkBackground(...backgroundColor);
 
-        if (defaultBackgroundColor !== backgroundColor) {
-            dispatch(setDefaultBackgroundColor(backgroundColor));
-        }
         if (isDark !== _isDark) {
             dispatch(setIsDark(_isDark));
         }
@@ -373,7 +367,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 moorhenInstance.setAceDRGInstance(aceDRGInstance);
             }
 
-            dispatch(setBackgroundColor(defaultBackgroundColor));
             cootAPIHelpers.setSamplingRate(commandCentre, defaultMapSamplingRate);
             cootAPIHelpers.setDrawMissingLoops(commandCentre, drawMissingLoops);
             const shortCuts = store.getState().shortcutSettings.shortCuts;

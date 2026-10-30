@@ -16,6 +16,7 @@
 
 import type { MoorhenInstance } from "@/InstanceManager";
 import { setMovieDocument, setMovieFileName, setShownSidePanel } from "@/store";
+import { MOVIE_SCENE_ID } from "@/store/userScenesSlice";
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { MovieFileError, unpackMovie } from "./movieContainer";
 
@@ -40,6 +41,10 @@ export async function openMovieFile(
     onProgress: (message: string) => void = () => { /* nowhere to say it */ },
 ): Promise<OpenedMovie> {
     const dispatch = moorhenInstance.store.dispatch;
+    // Also without a session: the movie playing would be replaced under the player
+    if (moorhenInstance.store.getState().movie.isPlaying) {
+        return { ok: false, restoredScene: false, message: `${file.name} not opened. ${MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE}` };
+    }
     try {
         onProgress(`Opening ${file.name}...`);
         const container = await unpackMovie(await file.arrayBuffer());
@@ -49,13 +54,17 @@ export async function openMovieFile(
             onProgress("Restoring the scene the movie was made with...");
             const status = await MoorhenTimeCapsule.loadSessionFromArrayBuffer(
                 container.session.buffer as ArrayBuffer, moorhenInstance);
-            if (status === -1) {
+            if (status !== 0) {
                 // The document is deliberately not loaded here. A movie over the wrong scene is
                 // worse than no movie: it plays, and everything it shows is wrong.
                 return {
                     ok: false,
                     restoredScene: false,
-                    message: `${file.name} opened, but its scene would not load`,
+                    message: status === MoorhenTimeCapsule.NEWER_VERSION_STATUS
+                        ? `${file.name} opened, but its scene would not load. ${MoorhenTimeCapsule.NEWER_VERSION_MESSAGE}`
+                        : status === MoorhenTimeCapsule.MOVIE_PLAYING_STATUS
+                          ? `${file.name} not opened. ${MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE}`
+                          : `${file.name} opened, but its scene would not load`,
                 };
             }
             restoredScene = true;
@@ -63,6 +72,14 @@ export async function openMovieFile(
 
         dispatch(setMovieDocument(container.movie));
         dispatch(setMovieFileName(file.name));
+        // Show the movie scene, whichever one the session was saved on. A running scene switch
+        // finishes first; a switch can still be refused (a movie playing), and then the user is told
+        const { userScene } = moorhenInstance;
+        let showsMovieScene = true;
+        if (userScene.list.some(scene => scene.id === MOVIE_SCENE_ID)) {
+            await userScene.waitUntilIdle();
+            showsMovieScene = userScene.selected === MOVIE_SCENE_ID || (await userScene.select(MOVIE_SCENE_ID));
+        }
         // Show the panel. Opening a movie with nothing visibly happening is the most likely way
         // to conclude that nothing did - and the panel is where every next thing is done.
         dispatch(setShownSidePanel("movie"));
@@ -70,7 +87,9 @@ export async function openMovieFile(
         return {
             ok: true,
             restoredScene,
-            message: restoredScene
+            message: !showsMovieScene
+                ? `Opened ${file.name}, but could not show its scene: select it in the scene selector before playing`
+                : restoredScene
                 ? `Opened ${file.name} with its scene`
                 : `Opened ${file.name}. It carries no scene, so it will play over this one.`,
         };

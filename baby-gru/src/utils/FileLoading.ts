@@ -147,6 +147,12 @@ const loadSession = async (session: string | object, moorhenInstance: MoorhenIns
     } else {
         status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(session, moorhenInstance);
     }
+    if (status === MoorhenTimeCapsule.NEWER_VERSION_STATUS) {
+        throw new Error(MoorhenTimeCapsule.NEWER_VERSION_MESSAGE);
+    }
+    if (status === MoorhenTimeCapsule.MOVIE_PLAYING_STATUS) {
+        throw new Error(MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE);
+    }
     if (status === -1) {
         throw new Error("Failed to read backup (deprecated format)");
     }
@@ -830,7 +836,11 @@ export const autoOpenFiles = async (
             try {
                 await handleSessionUpload(file, moorhenInstance);
             } catch (e) {
-                dispatch(enqueueSnackbar({ message: `Failed to load session ${file.name}`, variant: "warning" }));
+                const message =
+                    e instanceof Error && e.message === MoorhenTimeCapsule.NEWER_VERSION_MESSAGE
+                        ? e.message
+                        : `Failed to load session ${file.name}`;
+                dispatch(enqueueSnackbar({ message, variant: "warning" }));
             }
             break; //We only load the first session.
         } else if (file.name.toLowerCase().endsWith(MOVIE_EXTENSION)) {

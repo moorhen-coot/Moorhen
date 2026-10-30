@@ -14,6 +14,10 @@ const mockLoadSession = jest.fn<(...args: any[]) => Promise<number>>();
 jest.mock("../../src/utils/MoorhenTimeCapsule", () => ({
     MoorhenTimeCapsule: {
         loadSessionFromArrayBuffer: (...args: any[]) => mockLoadSession(...args),
+        NEWER_VERSION_STATUS: -2,
+        NEWER_VERSION_MESSAGE: "This session file is for a more recent version of Moorhen",
+        MOVIE_PLAYING_STATUS: -3,
+        MOVIE_PLAYING_MESSAGE: "A movie is playing: stop it before loading a session",
     },
 }));
 
@@ -38,12 +42,20 @@ const movieFile = async (name: string, session?: Uint8Array): Promise<File> => {
     return new File([packed as BlobPart], name);
 };
 
-/** Only what openMovieFile touches: somewhere to dispatch, and somewhere to look afterwards. */
-const anInstance = () => {
+/**
+ * Only what openMovieFile touches: somewhere to dispatch, somewhere to look afterwards, and the
+ * scenes, to show the movie scene if the session has one.
+ */
+const anInstance = (sceneIds: string[] = ["Overview", "Model Building"], isPlaying = false) => {
     const dispatched: { type: string; payload?: unknown }[] = [];
+    const select = jest.fn(async (_sceneId: string) => true);
     return {
         dispatched,
-        instance: { store: { dispatch: (action: any) => dispatched.push(action) } } as any,
+        select,
+        instance: {
+            store: { dispatch: (action: any) => dispatched.push(action), getState: () => ({ movie: { isPlaying } }) },
+            userScene: { list: sceneIds.map(id => ({ id, name: id })), selected: "Overview", select, waitUntilIdle: async () => {} },
+        } as any,
     };
 };
 
@@ -80,6 +92,55 @@ describe("opening a movie file", () => {
         expect(result.message).toMatch(/carries no scene/);
         expect(mockLoadSession).not.toHaveBeenCalled();
         expect(types(dispatched)).toContain("movie/setMovieDocument");
+    });
+
+    it("shows the movie scene when the session has one", async () => {
+        const { instance, select } = anInstance(["Overview", "Model Building", "movie"]);
+        await openMovieFile(await movieFile("tour.mhm", new Uint8Array([8, 1])), instance);
+        expect(select).toHaveBeenCalledWith("movie");
+    });
+
+    it("says so when the movie scene cannot be shown", async () => {
+        const { instance, select } = anInstance(["Overview", "movie"]);
+        select.mockResolvedValue(false);
+        const result = await openMovieFile(await movieFile("tour.mhm", new Uint8Array([8, 1])), instance);
+        expect(result.ok).toBe(true);
+        expect(result.message).toMatch(/could not show its scene/);
+    });
+
+    it("refuses a file without a session too while a movie plays", async () => {
+        const { instance, dispatched } = anInstance(undefined, true);
+        const result = await openMovieFile(await movieFile("path-only.mhm"), instance);
+        expect(result.ok).toBe(false);
+        expect(result.message).toMatch(/movie is playing/);
+        expect(dispatched).toHaveLength(0);
+        expect(mockLoadSession).not.toHaveBeenCalled();
+    });
+
+    it("refuses while a movie plays, saying why", async () => {
+        mockLoadSession.mockResolvedValue(-3);
+        const { instance, dispatched } = anInstance();
+        const result = await openMovieFile(await movieFile("tour.mhm", new Uint8Array([8, 1])), instance);
+        expect(result.ok).toBe(false);
+        expect(result.message).toMatch(/movie is playing/);
+        expect(dispatched).toHaveLength(0);
+    });
+
+    it("leaves the scene alone when there is no movie scene", async () => {
+        const { instance, select } = anInstance();
+        await openMovieFile(await movieFile("path-only.mhm"), instance);
+        expect(select).not.toHaveBeenCalled();
+    });
+
+    it("loads no document when the session is from a more recent Moorhen", async () => {
+        mockLoadSession.mockResolvedValue(-2);
+        const { instance, dispatched } = anInstance();
+        const result = await openMovieFile(
+            await movieFile("tour.mhm", new Uint8Array([8, 1])), instance);
+
+        expect(result.ok).toBe(false);
+        expect(result.message).toMatch(/more recent version/);
+        expect(dispatched).toHaveLength(0);
     });
 
     it("loads no document when the scene will not load", async () => {

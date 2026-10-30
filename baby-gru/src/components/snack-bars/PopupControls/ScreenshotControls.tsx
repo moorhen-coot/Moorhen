@@ -18,10 +18,12 @@ export const Screenshot = () => {
     const dispatch = useDispatch();
 
     const handleScreenShot = async () => {
+        const _pictureName = pictureName !== "" ? pictureName : "moorhen_screenshot";
+        // Keep the view behind the picture as a scene snapshot, before the crosshairs are hidden for the capture
+        moorhenInstance.userScene.takeSnapshot(_pictureName);
         dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
         dispatch(setDrawCrosshairs(false));
         molecules.forEach(molecule => molecule.clearBuffersOfStyle("hover"));
-        const _pictureName = pictureName !== "" ? pictureName : "moorhen_screenshot";
 
         await videoRecorderRef.current?.takeScreenShot(`${_pictureName}.png`, doTransparentBackground);
         dispatch(setShownControl(null));

@@ -317,3 +317,6 @@ export class ColourRule {
         }
     }
 }
+
+/** A colour rule as plain data (see ColourRule.objectify), e.g. to save it in a scene or a session */
+export type ColourRuleData = ReturnType<ColourRule["objectify"]>;

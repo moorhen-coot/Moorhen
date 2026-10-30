@@ -1,4 +1,4 @@
-import React, { ReactNode, createContext, useEffect, useRef } from "react";
+import React, { ReactNode, createContext, useEffect, useMemo, useRef, useState } from "react";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
 import { MoorhenInstance } from ".";
 
@@ -16,20 +16,18 @@ export interface MoorhenInstanceProviderProps {
     menuSystem: MoorhenMenuSystem;
 }
 export const MoorhenInstanceProvider = (props: MoorhenInstanceProviderProps) => {
-    // Create or use provided instance - only created once per provider
     const popOverContainerRef = useRef<HTMLDivElement>(null);
-    const instanceRef = useRef<MoorhenInstance>(new MoorhenInstance(popOverContainerRef, props.menuSystem));
+    // Lazy initialiser: the instance is only constructed once per provider, not on every render
+    const [instance] = useState(() => new MoorhenInstance(popOverContainerRef, props.menuSystem));
 
     // Add cleanup for unmount and HMR
     useEffect(() => {
         return () => {
-            instanceRef.current.cleanup();
+            instance.cleanup();
         };
-    }, []);
+    }, [instance]);
 
-    const contextValue: MoorhenInstanceContextType = {
-        instance: instanceRef.current,
-    };
+    const contextValue = useMemo<MoorhenInstanceContextType>(() => ({ instance }), [instance]);
 
     return (
         <div ref={popOverContainerRef}>

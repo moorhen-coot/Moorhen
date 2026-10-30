@@ -1,7 +1,7 @@
 import { ActionCreatorWithOptionalPayload, PayloadAction } from "@reduxjs/toolkit";
 import React from "react";
 import type { ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
-import { setShownControl } from "@/store";
+import { setSceneSelectorOpen, setShownControl } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
@@ -609,10 +609,10 @@ export const subMenuMap: SubMenuMap = {
             {
                 id: "scene-preset",
                 label: "Scene preset...",
-                type: "popover",
-                keywords: ["scene", "preset"],
-                description: "Apply scene preset",
-                content: MenuItems.ScenePreset,
+                type: "dispatch",
+                keywords: ["scene", "preset", "snapshot", "model building"],
+                description: "Open the scene selector: switch, create or save scenes and snapshots",
+                action: setSceneSelectorOpen(true),
             },
             {
                 id: "scene-settings",
