@@ -261,12 +261,17 @@ describe("default colour rules of a molecule", () => {
         expect(rulesOf()).toBe(redRules);
     });
 
-    test("go back to Coot's when a scene is reset with its representations", async () => {
+    test("are kept when a scene is reset with its representations", async () => {
         const { userScene } = cloud.instance;
-        const cootRules = rulesOf();
         colourRed();
+        const redRules = rulesOf();
         expect(await userScene.reset("Overview", "default", true)).toBe(true);
-        expect(rulesOf()).toBe(cootRules);
+        expect(rulesOf()).toBe(redRules);
+        // Also for a scene that is not shown: its colours come back with it
+        await userScene.select("Model Building");
+        expect(await userScene.reset("Overview", "default", true)).toBe(true);
+        await userScene.select("Overview");
+        expect(rulesOf()).toBe(redRules);
     });
 });
 

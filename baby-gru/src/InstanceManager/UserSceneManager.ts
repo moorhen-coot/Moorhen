@@ -435,10 +435,14 @@ export class MoorhenUserSceneManager {
         } else if (to === "saved") {
             return false;
         }
-        // Default representations, in Coot's default colours
-        const cootColours = Object.fromEntries(this.instance.getMoleculeList().map(molecule => [molecule.uniqueId, { colourRules: null }]));
-        const representations = withRepresentations ? { representations: [], molecules: {}, moleculeDefaults: cootColours } : undefined;
-        await this.replaceScene(sceneId, replaceContent(this.workingContent(sceneId), sceneSettings, representations), withRepresentations);
+        const working = this.workingContent(sceneId);
+        // Default representations, keeping each molecule's colour rules: there is no fixed default to
+        // go back to (Coot's chain colours, or what the molecule was loaded with: pLDDT, a fragment
+        // colour...). The colour rules card changes them.
+        const representations = withRepresentations
+            ? { representations: [], molecules: {}, moleculeDefaults: working.sections.moleculeDefaults }
+            : undefined;
+        await this.replaceScene(sceneId, replaceContent(working, sceneSettings, representations), withRepresentations);
         return true;
     }
 
