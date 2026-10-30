@@ -7,6 +7,7 @@ import { RootState, setSceneSelectorOpen, setShownSidePanel } from "@/store";
 import { MOVIE_SCENE_ID, UserScene, isBuiltInScene } from "@/store/userScenesSlice";
 import { MoorhenInfoCard, MoorhenMenuItem, MoorhenPopover, MoorhenStack, MoorhenTooltip } from "../../interface-base";
 import { CopySceneButton } from "./CopySceneButton";
+import { ResetSceneButton } from "./ResetSceneButton";
 import { SaveSceneButton } from "./SaveSceneButton";
 import "./scene-selector.css";
 
@@ -20,8 +21,8 @@ const scenesInfo = (
         <br />
         <b>Overview and Model Building</b>
         <br />
-        Built in. Save their settings (background colour, lightning...) to start Moorhen with them; restore brings back the saved or the default settings, with the default
-        representations.
+        Built in. Save their settings (background colour, lightning...) to start Moorhen with them; reset brings back the saved or the default settings, and the default
+        representations if you tick the box.
         <br />
         <br />
         <b>Custom scenes</b>
@@ -173,32 +174,11 @@ export const UserSceneSelector = () => {
                 </>
             );
         } else {
-            const restore = (to: "saved" | "default") => {
-                moorhenInstance.userScene.reset(id, to, true);
-                setOpenPopover(null);
-            };
             return (
                 <>
                     <SaveSceneButton sceneId={id} iconOnly={true} />
                     <CopySceneButton sceneId={id} />
-                    <MoorhenPopoverButton
-                        type="icon-only"
-                        icon="MatSymReplay"
-                        tooltip="Reset this scene"
-                        ariaLabel={`Reset scene "${userScenes.find(scene => scene.id === id)?.name ?? id}"`}
-                        disabled={isLocked}
-                        {...popoverProps(`restore:${id}`)}
-                    >
-                        <MoorhenStack align="center" gap="0.1rem">
-                            This will remove your custom representation
-                            <MoorhenButton disabled={isLocked} onClick={() => restore("saved")}>
-                                Load Saved parameters
-                            </MoorhenButton>
-                            <MoorhenButton variant="danger" disabled={isLocked} onClick={() => restore("default")}>
-                                Reset to Default parameters
-                            </MoorhenButton>
-                        </MoorhenStack>
-                    </MoorhenPopoverButton>
+                    <ResetSceneButton sceneId={id} />
                 </>
             );
         }

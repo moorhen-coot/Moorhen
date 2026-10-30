@@ -28,7 +28,7 @@ import { MAX_EYE_DISTANCE, MIN_EYE_DISTANCE } from "../../WebGLgComponents/mgWeb
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import type { ShadowMapQuality } from "../../WebGLgComponents/mgWebGLParts/framebuffers";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -36,6 +36,7 @@ import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSw
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { MoorhenSlidersSettings } from "./MoorhenSceneSlidersModal";
 import { CopySceneButton } from "../menu-system/SceneSelector/CopySceneButton";
+import { ResetSceneButton } from "../menu-system/SceneSelector/ResetSceneButton";
 import { SaveSceneButton } from "../menu-system/SceneSelector/SaveSceneButton";
 import { isBuiltInScene } from "../../store/userScenesSlice";
 
@@ -501,12 +502,12 @@ const CurrentScenePanel = () => {
     const snapshots = useSelector((state: RootState) => state.userScenes.snapshots);
     const selectedScene = useSelector((state: RootState) => state.userScenes.selectedScene);
     const isLocked = useSelector((state: RootState) => state.userScenes.isSceneChanging || state.movie.isPlaying);
-    const hasUnsavedChanges = useSelector((state: RootState) => moorhenInstance.userScene.hasUnsavedChanges(selectedScene, state));
     const isSnapshot = snapshots.some(snapshot => snapshot.id === selectedScene);
     const isBuiltIn = isBuiltInScene(selectedScene);
 
     return (
-        <MoorhenStack direction="vertical" card={true}>
+        <MoorhenStack card>
+        <MoorhenStack direction="line" style={{ flexWrap: "wrap", minWidth: 0 }}>
             <MoorhenSelect
                 label="Scene"
                 value={selectedScene}
@@ -530,35 +531,19 @@ const CurrentScenePanel = () => {
                     </optgroup>
                 )}
             </MoorhenSelect>
-            {isSnapshot ? (
-                <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>Snapshots cannot be changed: changes made here are not kept.</div>
-            ) : (
-                <MoorhenStack direction="line" gap="0.25rem">
-                    {isBuiltIn && <SaveSceneButton sceneId={selectedScene} />}
-                    <MoorhenButton
-                        disabled={isLocked}
-                        tooltip={
-                            isBuiltIn
-                                ? "Back to this scene's original settings (saved settings and representations are kept)"
-                                : "Back to the default settings (representations are kept)"
-                        }
-                        onClick={() => moorhenInstance.userScene.reset(selectedScene, "default")}
-                    >
-                        Reset to Default Settings
-                    </MoorhenButton>
-                    {isBuiltIn && (
-                        <MoorhenButton
-                            disabled={isLocked || !hasUnsavedChanges}
-                            tooltip="Back to the settings saved for this scene (representations are kept)"
-                            onClick={() => moorhenInstance.userScene.reset(selectedScene, "saved")}
-                        >
-                            Revert to Saved Settings
-                        </MoorhenButton>
-                    )}
-                    <CopySceneButton sceneId={selectedScene} withLabel={true} />
+            {!isSnapshot && (
+                <MoorhenStack direction="line" align="center">
+                    {/* The same controls as the scene's row in the scene selector */}
+                    {isBuiltIn && <SaveSceneButton sceneId={selectedScene} iconOnly={true} />}
+                    <CopySceneButton sceneId={selectedScene} />
+                    {isBuiltIn && <ResetSceneButton sceneId={selectedScene} />}
                 </MoorhenStack>
-            )}
+            )}</MoorhenStack>
+         {isSnapshot && (
+            <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>Snapshots cannot be changed: changes made here are not kept, unless you create a new scene or snapshot.</div>)}
+        
         </MoorhenStack>
+       
     );
 };
 
