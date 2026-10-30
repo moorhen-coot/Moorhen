@@ -1,5 +1,15 @@
-import { expect, test, type CDPSession, type Locator, type Page } from "@playwright/test";
-import { getWebGLCanvasLocator, startAndGetInstance } from "./helpers";
+import { expect, test, type CDPSession, type Page } from "@playwright/test";
+import { startAndGetInstance } from "./helpers";
+import {
+    loadTutorial1,
+    lookAround,
+    parseResidueActions,
+    prepareResidueWalk,
+    runResidueAction,
+    waitForIdle,
+    type CanvasBox,
+    type ResidueAction,
+} from "./helpers/residueWalk";
 
 /**
  * Reproduces the slow-down reported after working through many residues.
@@ -17,7 +27,7 @@ import { getWebGLCanvasLocator, startAndGetInstance } from "./helpers";
  * Tuning, all optional:
  *   MOORHEN_SLOWDOWN_RESIDUES   residues to visit (default 30)
  *   MOORHEN_SLOWDOWN_PROBE_EVERY residues between probes (default 5)
- *   MOORHEN_SLOWDOWN_ACTIONS    comma list from ACTIONS below, or "none" for navigation only
+ *   MOORHEN_SLOWDOWN_ACTIONS    comma list of RESIDUE_ACTIONS (helpers/residueWalk.ts), or "none"
  *                               (default: all of them, in turn)
  *   MOORHEN_SLOWDOWN_MAX_RATIO  last-probe / first-probe ratio that counts as a slow-down (default 2)
  *
@@ -29,18 +39,7 @@ const RESIDUES = Number(process.env.MOORHEN_SLOWDOWN_RESIDUES ?? 30);
 const PROBE_EVERY = Number(process.env.MOORHEN_SLOWDOWN_PROBE_EVERY ?? 5);
 const MAX_RATIO = Number(process.env.MOORHEN_SLOWDOWN_MAX_RATIO ?? 2);
 
-const ACTIONS = ["sphere-refine-key", "autofit-rotamer-key", "refine-context-menu", "drag-atoms", "triple-refine-key"] as const;
-type Action = (typeof ACTIONS)[number];
-
-const selectedActions: Action[] = (() => {
-    const raw = process.env.MOORHEN_SLOWDOWN_ACTIONS;
-    if (!raw) return [...ACTIONS];
-    if (raw === "none") return [];
-    const names = raw.split(",").map(name => name.trim());
-    const unknown = names.filter(name => !ACTIONS.includes(name as Action));
-    if (unknown.length > 0) throw new Error(`Unknown MOORHEN_SLOWDOWN_ACTIONS ${unknown.join(", ")}; expected ${ACTIONS.join(", ")} or none`);
-    return names as Action[];
-})();
+const selectedActions = parseResidueActions(process.env.MOORHEN_SLOWDOWN_ACTIONS, "MOORHEN_SLOWDOWN_ACTIONS");
 
 type Counters = {
     glLive: Record<string, number>;
@@ -83,7 +82,7 @@ type Probe = {
     chromium?: { jsHeapMB: number; nodes: number; jsEventListeners: number; documents: number };
 };
 
-type Step = { index: number; residue: string; action: Action | "none"; jumpMs: number; actionMs: number; note?: string };
+type Step = { index: number; residue: string; action: ResidueAction | "none"; jumpMs: number; actionMs: number; note?: string };
 
 /** Runs in the page before any app code, so everything is counted from the start. */
 function installInstrumentation() {
@@ -272,142 +271,6 @@ async function readAppCounters(page: Page, elementId: string): Promise<AppCounte
     }, elementId);
 }
 
-async function readAppState(page: Page, elementId: string) {
-    return page.evaluate(async targetId => {
-        const host = document.getElementById(targetId) as any;
-        const instance = await host.getMoorhenInstance();
-        const state = instance.store.getState();
-        return {
-            origin: state.sceneSettings.origin as number[],
-            activeMessages: instance.commandCentre.activeMessages.length as number,
-            isDraggingAtoms: state.generalStates.isDraggingAtoms as boolean,
-            hoveredCid: state.hoveringStates.hoveredAtom?.cid as string | null,
-        };
-    }, elementId);
-}
-
-/** The app is idle once no coot command has been pending for `quietMs`. */
-async function waitForIdle(page: Page, elementId: string, quietMs = 300, timeoutMs = 60_000) {
-    const startedAt = Date.now();
-    let quietSince: number | null = null;
-    while (Date.now() - startedAt < timeoutMs) {
-        const { activeMessages } = await readAppState(page, elementId);
-        if (activeMessages === 0) {
-            quietSince ??= Date.now();
-            if (Date.now() - quietSince >= quietMs) return;
-        } else {
-            quietSince = null;
-        }
-        await page.waitForTimeout(50);
-    }
-    throw new Error(`App still busy after ${timeoutMs} ms`);
-}
-
-/** Waits for the view to move away from `from` and then stop. Returns false if it never moved. */
-async function waitForOriginSettled(page: Page, elementId: string, from: number[], timeoutMs = 15_000): Promise<boolean> {
-    const same = (a: number[], b: number[]) => a.every((v, i) => Math.abs(v - b[i]) < 1e-4);
-    const startedAt = Date.now();
-    let moved = false;
-    let previous = from;
-    let stableTicks = 0;
-    while (Date.now() - startedAt < timeoutMs) {
-        await page.waitForTimeout(50);
-        const { origin } = await readAppState(page, elementId);
-        if (!moved) {
-            moved = !same(origin, from);
-            previous = origin;
-            continue;
-        }
-        stableTicks = same(origin, previous) ? stableTicks + 1 : 0;
-        previous = origin;
-        if (stableTicks >= 3) return true;
-    }
-    return moved;
-}
-
-/**
- * Finds a screen point over an atom near the centre of the canvas, where the residue just
- * jumped to sits. Starts from a corner so a stale hover from the last residue is cleared.
- */
-async function findAtomNearCentre(page: Page, elementId: string, box: { x: number; y: number; width: number; height: number }) {
-    const cx = box.x + box.width / 2;
-    const cy = box.y + box.height / 2;
-    await page.mouse.move(box.x + 10, box.y + 10);
-    await page.waitForTimeout(60);
-    for (const radius of [0, 4, 8, 12, 18, 26, 36]) {
-        const angles = radius === 0 ? [0] : [0, 45, 90, 135, 180, 225, 270, 315];
-        for (const angle of angles) {
-            const x = cx + radius * Math.cos((angle * Math.PI) / 180);
-            const y = cy + radius * Math.sin((angle * Math.PI) / 180);
-            await page.mouse.move(x, y);
-            await page.waitForTimeout(40);
-            const { hoveredCid } = await readAppState(page, elementId);
-            if (hoveredCid) return { x, y, cid: hoveredCid };
-        }
-    }
-    return null;
-}
-
-/** Turns the camera a little and back, like looking at the residue from another side. */
-async function lookAround(page: Page, box: { x: number; y: number; width: number; height: number }) {
-    const x = box.x + box.width / 2;
-    const y = box.y + box.height * 0.75;
-    await page.mouse.move(x, y);
-    await page.mouse.down();
-    await page.mouse.move(x + 80, y, { steps: 10 });
-    await page.mouse.move(x, y, { steps: 10 });
-    await page.mouse.up();
-}
-
-async function pressShortcut(page: Page, box: { x: number; y: number; width: number; height: number }, key: string) {
-    // The canvas only takes keys while the pointer is over it (document.onkeydown is set on mouseenter).
-    await page.mouse.move(box.x + box.width / 2 + 1, box.y + box.height / 2 + 1);
-    await page.keyboard.press(key);
-}
-
-async function contextMenuButton(page: Page, host: Locator, elementId: string, box: { x: number; y: number; width: number; height: number }, iconAlt: string) {
-    const atom = await findAtomNearCentre(page, elementId, box);
-    if (!atom) return null;
-    await page.mouse.click(atom.x, atom.y, { button: "right" });
-    const button = host.locator(`button.moorhen__context-menu-button:has(img[alt="${iconAlt}"])`);
-    await expect(button).toBeVisible({ timeout: 5_000 });
-    return { button, atom };
-}
-
-async function runAction(page: Page, host: Locator, elementId: string, box: { x: number; y: number; width: number; height: number }, action: Action): Promise<string | undefined> {
-    switch (action) {
-        case "sphere-refine-key":
-            await pressShortcut(page, box, "Shift+R");
-            return;
-        case "triple-refine-key":
-            await pressShortcut(page, box, "Shift+H");
-            return;
-        case "autofit-rotamer-key":
-            await pressShortcut(page, box, "Shift+J");
-            return;
-        case "refine-context-menu": {
-            const found = await contextMenuButton(page, host, elementId, box, "Refine Residues");
-            if (!found) return "no atom under the centre, skipped";
-            await found.button.click();
-            return;
-        }
-        case "drag-atoms": {
-            const found = await contextMenuButton(page, host, elementId, box, "drag atoms");
-            if (!found) return "no atom under the centre, skipped";
-            await found.button.click();
-            await expect.poll(async () => (await readAppState(page, elementId)).isDraggingAtoms, { timeout: 5_000 }).toBe(true);
-            await page.mouse.move(found.atom.x, found.atom.y);
-            await page.mouse.down();
-            await page.mouse.move(found.atom.x + 25, found.atom.y + 15, { steps: 15 });
-            await page.mouse.up();
-            await waitForIdle(page, elementId);
-            await host.getByRole("button", { name: "Accept dragged atoms" }).click();
-            await expect.poll(async () => (await readAppState(page, elementId)).isDraggingAtoms, { timeout: 30_000 }).toBe(false);
-            return;
-        }
-    }
-}
-
 const percentile = (values: number[], p: number) => {
     if (values.length === 0) return NaN;
     const sorted = [...values].sort((a, b) => a - b);
@@ -415,7 +278,7 @@ const percentile = (values: number[], p: number) => {
 };
 const round = (value: number, digits = 1) => Math.round(value * 10 ** digits) / 10 ** digits;
 
-async function probe(page: Page, elementId: string, box: { x: number; y: number; width: number; height: number }, residuesVisited: number, cdp: CDPSession | null): Promise<Probe> {
+async function probe(page: Page, elementId: string, box: CanvasBox, residuesVisited: number, cdp: CDPSession | null): Promise<Probe> {
     await waitForIdle(page, elementId, 500);
 
     // Idle: nothing is happening, so anything still drawing or scheduling is background churn.
@@ -525,35 +388,8 @@ test.describe("residue walk slow-down", () => {
         const moorhen = await startAndGetInstance(page);
         const { elementId, host } = moorhen;
 
-        // Same as File > Load tutorial data... > Tutorial 1.
-        const firstResidue = await page.evaluate(async targetId => {
-            const hostElement = document.getElementById(targetId) as any;
-            const instance = await hostElement.getMoorhenInstance();
-            const oldStyle = instance.representation.defaultStyle;
-            instance.representation.defaultStyle = "CBs";
-            const loaded = await instance.files.loadFiles([
-                "MoorhenAssets/tutorials/moorhen-tutorial-structure-number-1.ent",
-                "MoorhenAssets/tutorials/moorhen-tutorial-map-number-1.mtz",
-            ]);
-            instance.representation.defaultStyle = oldStyle;
-            const moleculeEntry = loaded.find((file: any) => file.type === "molecule");
-            const molecule = instance.getMolecule(moleculeEntry.uniqueID);
-            const chain = molecule.sequences.find((sequence: any) => sequence.chain === "A");
-            return chain.sequence[0].resNum as number;
-        }, elementId);
-
-        await expect
-            .poll(async () => page.evaluate(async targetId => {
-                const hostElement = document.getElementById(targetId) as any;
-                const instance = await hostElement.getMoorhenInstance();
-                return Boolean(instance.store.getState().generalStates.activeMap);
-            }, elementId), { timeout: 60_000, message: "tutorial 1 map becomes the active map" })
-            .toBe(true);
-        await moorhen.waitForWebGLRenderSettle({ minSettleMs: 1_500, timeoutMs: 60_000 });
-
-        // Space does not advance until the Models panel has been opened once (known bug, fix pending).
-        await moorhen.buttonClick("Open Models Panel");
-        await page.waitForTimeout(1_000);
+        const { firstResidue } = await loadTutorial1(moorhen);
+        const { box, nextResidue } = await prepareResidueWalk(moorhen, firstResidue);
 
         const renderer = await page.evaluate(() => {
             const gl = document.createElement("canvas").getContext("webgl2") ?? document.createElement("canvas").getContext("webgl");
@@ -563,21 +399,6 @@ test.describe("residue walk slow-down", () => {
         });
         console.log(`[${browserName}] WebGL renderer: ${renderer.name}`);
 
-        const canvas = await getWebGLCanvasLocator(page, elementId);
-        const box = (await canvas.boundingBox())!;
-        expect(box, "WebGL canvas has a layout box").toBeTruthy();
-
-        const centreOnFirstResidue = async () => {
-            const { origin } = await readAppState(page, elementId);
-            await page.evaluate(async ({ targetId, resNum }) => {
-                const hostElement = document.getElementById(targetId) as any;
-                const instance = await hostElement.getMoorhenInstance();
-                await instance.getMoleculeList()[0].centreAndAlignViewOn(`/*/A/${resNum}-${resNum}/`, true);
-            }, { targetId: elementId, resNum: firstResidue });
-            await waitForOriginSettled(page, elementId, origin);
-        };
-        await centreOnFirstResidue();
-
         const cdp = browserName === "chromium" ? await page.context().newCDPSession(page) : null;
         await cdp?.send("Performance.enable");
 
@@ -586,22 +407,15 @@ test.describe("residue walk slow-down", () => {
         console.log(`[${browserName}] baseline: ${JSON.stringify(probes[0])}`);
 
         for (let index = 1; index <= RESIDUES; index++) {
-            const before = await readAppState(page, elementId);
             const jumpStartedAt = Date.now();
-            await pressShortcut(page, box, " ");
-            let moved = await waitForOriginSettled(page, elementId, before.origin);
-            if (!moved) {
-                // End of the chain: start again from the first residue.
-                await centreOnFirstResidue();
-                moved = true;
-            }
+            await nextResidue();
             const jumpMs = Date.now() - jumpStartedAt;
 
             await lookAround(page, box);
 
-            const action: Action | "none" = selectedActions.length > 0 ? selectedActions[(index - 1) % selectedActions.length] : "none";
+            const action: ResidueAction | "none" = selectedActions.length > 0 ? selectedActions[(index - 1) % selectedActions.length] : "none";
             const actionStartedAt = Date.now();
-            const note = action === "none" ? undefined : await runAction(page, host, elementId, box, action);
+            const note = action === "none" ? undefined : await runResidueAction(page, host, elementId, box, action);
             await waitForIdle(page, elementId);
             const actionMs = Date.now() - actionStartedAt;
 
