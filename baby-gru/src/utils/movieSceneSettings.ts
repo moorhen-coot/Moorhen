@@ -5,7 +5,7 @@
  * whether SSAO runs, how wide the depth-of-field blur is. The store holds the same things under
  * names that mostly agree and twice do not. This is the translation, in one place, so that a
  * mismatched field is a compile error here rather than a movie that quietly exports without the
- * outline the author could see on screen.
+ * edges the author could see on screen.
  *
  * The source is typed structurally rather than as the Redux slice, so nothing about movies has to
  * import the store - and so this can be tested with an object literal.
@@ -24,7 +24,6 @@ export interface SceneSettingsSource {
     edgeDetectNormalScale: number;
     edgeDetectDepthThreshold: number;
     edgeDetectNormalThreshold: number;
-    doOutline: boolean;
     useOffScreenBuffers: boolean;
     /** The store's name for the depth-of-field blur width, which a movie calls blurRadius. */
     depthBlurRadius: number;
@@ -51,7 +50,6 @@ export const movieSceneFrom = (
     edgeDetectNormalScale: settings.edgeDetectNormalScale,
     edgeDetectDepthThreshold: settings.edgeDetectDepthThreshold,
     edgeDetectNormalThreshold: settings.edgeDetectNormalThreshold,
-    doOutline: settings.doOutline,
     useOffScreenBuffers: settings.useOffScreenBuffers,
     // The two that are not a straight copy. Both renamed deliberately when the movie document was
     // defined: "depthBlur" says how it is implemented, "blur radius" says what it does.

@@ -1,3 +1,5 @@
+import {anaglyph_colour_snippet} from './anaglyph-colour-snippet.js';
+
 /*
  * Two variants of one shader, differing only in whether they can discard.
  *
@@ -89,7 +91,13 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
 
     // The vertex shader has forwarded this for years with nothing on the other side to read it,
     // so it was dropped at link time. Declaring it here is what connects aVertexTexture through.
-    in lowp vec2 vTexture;
+    // highp: a lowp coordinate is ten bits on hardware that honours it, a few texels' error
+    // across a 2048 image, and the normal map's derivatives below are taken of it.
+    in highp vec2 vTexture;
+
+    // The position in the frame vNormal is in, for the normal map's tangent frame (below). Every
+    // vertex shader paired with this one writes it; only the normal map reads it.
+    in highp vec3 vModelPos;
 
     // Multiplied into the vertex colour rather than replacing it, which is what glTF specifies
     // for a baseColorTexture against its baseColorFactor: a white vertex colour shows the texture
@@ -102,6 +110,25 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
     // peel in a way that depends on draw order.
     uniform bool hasBaseColourTexture;
     uniform sampler2D baseColourTexture;
+
+    // glTF's normal and metallic-roughness maps (textureRegistry.ts, SurfaceMaps). Each changes
+    // nothing while its flag is off, which it is for everything but a textured mesh that has one,
+    // so the arithmetic every other surface goes through is exactly what it was.
+    //
+    // The normal map is in tangent space, and the meshes carry no tangents: the frame is worked
+    // out per pixel from how the position and the texture coordinate change across the screen
+    // (materialFrame). normalScale is glTF's normalTexture.scale.
+    uniform bool hasNormalTexture;
+    uniform sampler2D normalTexture;
+    uniform float normalScale;
+
+    // Roughness in G, metallic in B, times glTF's factors (x metallic, y roughness). This is not a
+    // physically based shader and does not pretend to be: roughness widens and dims the Phong
+    // highlight, and metallic tints the highlight with the base colour and trades diffuse light
+    // for a reflection of a simple studio (metalReflection). Ambient light is left alone.
+    uniform bool hasMetallicRoughnessTexture;
+    uniform sampler2D metallicRoughnessTexture;
+    uniform vec2 metallicRoughnessFactors;
 
     in highp vec4 ShadowCoord;
     uniform sampler2DShadow ShadowMap;
@@ -124,6 +151,8 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
     in float vHighlight;
 
     uniform vec4 fogColour;
+
+${anaglyph_colour_snippet}
 
     uniform float fog_end;
     uniform float fog_start;
@@ -183,6 +212,52 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
       return texture(ShadowMap, vec3(uv, ShadowCoord.z - 0.005));
     }
 
+    // The normal map's normal, in the frame of N, from the surface's tangent frame at this pixel.
+    //
+    // T and B are the directions in which u and v increase along the surface, solved for from the
+    // screen-space derivatives of position and coordinate: dP = T du + B dv along both screen
+    // axes. Solving it outright, rather than with the usual cross-product shortcut, makes the
+    // result independent of which way the screen's y axis runs and right for mirrored mappings.
+    // Both are then made perpendicular to N, which is interpolated and so not quite in the plane
+    // of the triangle.
+    //
+    // glTF puts +Y "up" in the image, which with v increasing downwards is minus B.
+    // highp throughout: the derivatives are small numbers multiplied together, which mediump's
+    // range (down to about 6e-5) would flush to zero on hardware that honours it.
+    vec3 mappedNormal(highp vec3 N) {
+        // Sampled before anything can return early, since the sampler's level of detail comes
+        // from derivatives that have no defined value outside uniform control flow.
+        highp vec3 m = texture(normalTexture, vTexture).xyz * 2.0 - 1.0;
+        m.xy *= normalScale;
+        highp vec3 dp1 = dFdx(vModelPos);
+        highp vec3 dp2 = dFdy(vModelPos);
+        highp vec2 duv1 = dFdx(vTexture);
+        highp vec2 duv2 = dFdy(vTexture);
+        highp float det = duv1.x * duv2.y - duv1.y * duv2.x;
+        highp vec3 t = dp1 * duv2.y - dp2 * duv1.y;
+        highp vec3 b = dp2 * duv1.x - dp1 * duv2.x;
+        t -= N * dot(N, t);
+        b -= N * dot(N, b);
+        // A coordinate that does not change across the pixel (a degenerate mapping) leaves no
+        // frame to speak of; the geometric normal is the honest answer there.
+        if(abs(det) < 1e-20 || dot(t, t) < 1e-20 || dot(b, b) < 1e-20) return N;
+        highp float handed = det < 0.0 ? -1.0 : 1.0;
+        return normalize(handed * (normalize(t) * m.x - normalize(b) * m.y) + N * m.z);
+    }
+
+    // What a metal shows in place of diffuse light: a reflection of a plain studio, bright towards
+    // the light and dim away from it, as a fraction of the diffuse light. A metal has no diffuse
+    // light of its own - it only reflects - and with nothing to reflect but the one light's
+    // highlight it went dark and flat. Taken from the view direction's reflection, so it moves
+    // over the surface as the view turns, which is what reads as metal; a rough metal blurs it
+    // towards the normal's own view of the light, which is to say back towards diffuse.
+    float metalReflection(vec3 N, vec3 E, vec3 L, float roughness) {
+        vec3 Rv = reflect(-E, N);
+        float t = mix(dot(Rv, L), dot(N, L), roughness);
+        float w = 0.25 + 0.75 * roughness;
+        return mix(0.2, 1.0, smoothstep(-w, w, t));
+    }
+
     void main(void) {
 ${discards ? clipAndPeelDiscards : ""}
       float shad = 1.0;
@@ -221,26 +296,51 @@ ${discards ? clipAndPeelDiscards : ""}
       vec4 Idiff=vec4(0.0,0.0,0.0,0.0);
       vec4 Ispec=vec4(0.0,0.0,0.0,0.0);
       vec3 norm = normalize(vNormal);
+      if(hasNormalTexture){
+          norm = mappedNormal(norm);
+      }
+
+      vec4 theColor = vec4(vColor);
+      if(hasBaseColourTexture){
+          theColor.rgb *= texture(baseColourTexture, vTexture).rgb;
+      }
+
+      // The metallic-roughness map's say in the lighting; exactly the old values without one.
+      float shininess = specularPower;
+      vec4 specularTint = vec4(1.0);
+      float diffuseShare = 1.0;
+      float roughness = 1.0;
+      float metallic = 0.0;
+      if(hasMetallicRoughnessTexture){
+          vec4 mr = texture(metallicRoughnessTexture, vTexture);
+          roughness = clamp(mr.g * metallicRoughnessFactors.y, 0.05, 1.0);
+          metallic = clamp(mr.b * metallicRoughnessFactors.x, 0.0, 1.0);
+          // The Phong exponent with roughly the spread of a microfacet lobe of this roughness
+          // (Blinn-Phong's 2/a^2 - 2 with a = roughness^2, a quarter of it for Phong's reflected
+          // ray), and less of it the rougher the surface.
+          float r2 = roughness * roughness;
+          shininess = clamp((2.0 / (r2 * r2) - 2.0) / 4.0, 1.0, 1024.0);
+          specularTint = vec4(mix(vec3(1.0), theColor.rgb, metallic) * (1.0 - roughness), 1.0);
+          diffuseShare = 1.0 - metallic;
+      }
 
       E = screenZFrag;
       L = light_positions.xyz;
       R = normalize(-reflect(L,norm));
       Iamb += light_colours_ambient;
 
-      Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
+      Idiff += light_colours_diffuse * max(dot(norm,L), 0.0) * diffuseShare;
+      if(hasMetallicRoughnessTexture){
+          Idiff += light_colours_diffuse * metallic * metalReflection(norm, E, normalize(L), roughness);
+      }
 
       float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
-      Ispec += light_colours_specular * pow(max(dot(R,E),0.0),specularPower);
+      Ispec += specularTint * light_colours_specular * pow(max(dot(R,E),0.0),shininess);
       Ispec.a *= y;
 
       float FogFragCoord = abs(eyePos.z/eyePos.w);
       float fogFactor = (fog_end - FogFragCoord)/(fog_end - fog_start);
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);
-
-      vec4 theColor = vec4(vColor);
-      if(hasBaseColourTexture){
-          theColor.rgb *= texture(baseColourTexture, vTexture).rgb;
-      }
 
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor*Idiff);
       color *= occ;
@@ -276,7 +376,7 @@ ${discards ? clipAndPeelDiscards : ""}
       }
       color.a = vColor.a;
 
-      fragColor = mix(color, fogColour, fogFactor );
+      fragColor = mix(anaglyphColour(color), fogColour, fogFactor );
       fragColor.a = vColor.a;
 
       float ring = smoothstep(0.4, 0.45, vHighlight) - smoothstep(0.45, 0.5, vHighlight);

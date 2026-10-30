@@ -5,11 +5,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { usePaths } from "../../InstanceManager";
 import {
+    setAnaglyphColours,
     setMultiViewColumns,
     setMultiViewRows,
     setSpecifyMultiViewRowsColumns,
     setThreeWayViewOrder,
 } from "../../store/sceneSettingsSlice";
+import { ANAGLYPH_COLOURS, type AnaglyphColours } from "../../WebGLgComponents/anaglyph";
 import { moorhen } from "../../types/moorhen";
 import { get_grid } from "../../utils/utils";
 import { MoorhenButton, MoorhenNumberInput, MoorhenToggle } from "../inputs";
@@ -92,6 +94,7 @@ export const ViewLayoutPreferences = () => {
     const threeWayViewOrder = useSelector((state: moorhen.State) => state.sceneSettings.threeWayViewOrder);
     const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns);
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    const anaglyphColours = useSelector((state: moorhen.State) => state.sceneSettings.anaglyphColours);
     const urlPrefix = usePaths().urlPrefix;
 
     let theTiles = ["Z", "X", "Y", " "];
@@ -267,6 +270,21 @@ export const ViewLayoutPreferences = () => {
                             </Grid>
                         </SortableContext>
                     </DndContext>
+                </MoorhenTab>
+                <MoorhenTab id="anaglyph" label="Anaglyph stereo">
+                    <MoorhenStack>
+                        <div>The colours of the glasses, left eye first</div>
+                        {(Object.keys(ANAGLYPH_COLOURS) as AnaglyphColours[]).map(colours => (
+                            <MoorhenToggle
+                                key={colours}
+                                type="radio"
+                                name="anaglyphcolours"
+                                checked={anaglyphColours === colours}
+                                onChange={() => dispatch(setAnaglyphColours(colours))}
+                                label={ANAGLYPH_COLOURS[colours].label}
+                            />
+                        ))}
+                    </MoorhenStack>
                 </MoorhenTab>
             </MoorhenTabContainer>
             <MoorhenButton onClick={onCompleted}>Ok</MoorhenButton>

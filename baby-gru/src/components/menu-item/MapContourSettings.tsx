@@ -59,8 +59,10 @@ export const MapContourSettings = () => {
                                     true
                                 )) as moorhen.WorkerResponse<number>;
                                 if (visibleMaps.includes(map.molNo)) {
-                                    return map.drawMapContour();
+                                    return map.redrawWithNewData();
                                 } else {
+                                    // Contoured when shown; the GPU contours fetch it then.
+                                    map.markDataChanged();
                                     return Promise.resolve();
                                 }
                             })

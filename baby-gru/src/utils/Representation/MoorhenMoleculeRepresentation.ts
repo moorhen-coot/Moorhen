@@ -15,6 +15,10 @@ import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInS
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { wholeMeshPickInfo } from "../../WebGLgComponents/wholeMeshPick";
+import {
+    METABALLS_GRID_SIZE, METABALLS_ISO_LEVEL, METABALLS_RADIUS, METABALLS_SPHERE_ARGS,
+    gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
+} from "../../WebGPUComponents/metaballs";
 
 /**
  * The styles that actually put individual atoms on the screen, and so the only ones a per-atom
@@ -1571,6 +1575,8 @@ export class MoleculeRepresentation {
     drawSymmetry() {
         if (this.parentMolecule.symmetryMatrices && this.buffers && this.styleHasSymmetry) {
             this.buffers.forEach((displayObject: moorhen.DisplayObject) => {
+                // Only meshes: text-label and image records ride along in buffers, frozen by the store.
+                if (!("bufferTypes" in displayObject)) return;
                 displayObject.symmetryMatrices = this.parentMolecule.symmetryMatrices;
                 displayObject.updateSymmetryAtoms();
             });
@@ -1638,7 +1644,6 @@ export class MoleculeRepresentation {
         const objects = [{ ...gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours), pick_info: {} }]
         objects.forEach(object => {
             object["clickTol"] = 1e-6;
-            object["doStencil"] = true;
             object["isHoverBuffer"] = true;
         });
         return objects
@@ -1817,16 +1822,62 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
      */
     async getMetaBallBuffers(cid: string) : Promise<PickableMesh[]>{
+        if (gpuMetaBallsSetting.enabled) {
+            try {
+                const objects = await this.getMetaBallBuffersOnGpu(cid);
+                if (objects) return objects;
+            } catch (err) {
+                console.warn("GPU MetaBalls failed; making them with Coot instead.", err);
+            }
+        }
         const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "PickableMeshPerm",
                 command: "DrawMoorhenMetaBalls",
-                commandArgs: [this.parentMolecule.molNo, cid, 0.2, 0.67, 1.8, 4],
+                commandArgs: [this.parentMolecule.molNo, cid, METABALLS_GRID_SIZE, METABALLS_RADIUS, METABALLS_ISO_LEVEL, 4],
             },
             false
         )) as moorhen.WorkerResponse<{mesh:libcootApi.SimpleMeshJS,pick_info:{pick_points:number[][]}}>;
         const objects = [{ ...response.data.result.result.mesh, pick_info: response.data.result.result.pick_info }];
         return objects;
+    }
+
+    /**
+     * The same MetaBalls mesh made with WebGPU compute: Coot supplies the spheres, as it does for
+     * DrawMoorhenMetaBalls, and the field, marching cubes and per-vertex pass run on the GPU.
+     * Null when WebGPU is not available. See WebGPUComponents/metaballs.
+     */
+    async getMetaBallBuffersOnGpu(cid: string) : Promise<PickableMesh[] | null>{
+        const generator = await sharedGpuMetaBalls();
+        if (!generator) return null;
+        const started = performance.now();
+        const response = (await this.commandCentre.cootCommand(
+            {
+                returnType: "instanced_mesh_perfect_spheres",
+                command: "get_bonds_mesh_for_selection_instanced",
+                commandArgs: [this.parentMolecule.molNo, cid, ...METABALLS_SPHERE_ARGS],
+            },
+            false
+        )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+        const spheresMs = performance.now() - started;
+        const { input, pickPoints } = metaballsInputFromSpheres(response.data.result.result as never, METABALLS_RADIUS);
+        const mesh = await generator.generate(input, {
+            gridSize: METABALLS_GRID_SIZE, isoLevel: METABALLS_ISO_LEVEL, splitField: gpuMetaBallsSetting.splitField, pickable: true,
+        });
+        const grid = mesh.grid ? mesh.grid.n.join("x") : "none";
+        const t = mesh.timings;
+        const other = t.totalMs - t.setupMs - t.encodeMs - t.waitMs - t.copyMs;
+        console.debug(`GPU MetaBalls: ${pickPoints.length} points, grid ${grid}, ${mesh.positions.length / 3} vertices, ` +
+            `${mesh.indices.length / 3} triangles; spheres from Coot ${spheresMs.toFixed(0)} ms, ` +
+            `GPU ${t.totalMs.toFixed(0)} ms in ${t.slabs} slab(s), ${t.field ?? "no"} field: ` +
+            `setup ${t.setupMs.toFixed(0)}, encode ${t.encodeMs.toFixed(0)}, wait ${t.waitMs.toFixed(0)}, ` +
+            `copy ${t.copyMs.toFixed(0)}, other ${other.toFixed(0)}` + (t.retries ? `, ${t.retries} retry(s)` : ""));
+        // Read back after the mesh is made, so as not to hold it up.
+        t.gpuMs?.then(gpuMs => {
+            if (gpuMs) console.debug(`GPU MetaBalls, GPU time per kernel: ${Object.entries(gpuMs).map(([k, ms]) => `${k} ${ms.toFixed(1)}`).join(", ")}`);
+        });
+        const data = metaballsMeshData(mesh, pickPoints);
+        return [data as unknown as PickableMesh];
     }
 
     /**

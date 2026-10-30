@@ -242,6 +242,16 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const setWindowDimensions = useCallback(() => {
         const parent = props.parentElementRef?.current
         let [newWidth, newHeight]: [number, number] = [1,1];
+        // The page's own size, as the viewport tag sets it, rather than window.innerWidth/Height:
+        // on a phone those report the visual viewport, which grows when the browser zooms out to
+        // fit anything wider than the screen. Moorhen sized itself from that, which kept the page
+        // too wide, which kept the zoom out - a 384-wide phone drew a 952-wide canvas, five times
+        // the pixels. The root element's client size stays the screen's, and is the same as the
+        // window's on a desktop, where the scrollbar is hidden (stop-scrolling).
+        const pageSize = (): [number, number] => {
+            const root = document.documentElement;
+            return [root?.clientWidth || window.innerWidth, root?.clientHeight || window.innerHeight];
+        };
         
         if (props.size) {
             [newWidth, newHeight] = props.size;
@@ -249,12 +259,12 @@ export const MoorhenContainer = (props: ContainerProps) => {
             const parentSize = parent.getBoundingClientRect();
             if (parentSize.width === 0 || parentSize.height === 0) {
                 console.warn("Parent element has zero width or height. Defaulting to window dimensions. You might want to place moorhen into a div container with appropriate size.");
-                [newWidth, newHeight] = [window.innerWidth, window.innerHeight];
+                [newWidth, newHeight] = pageSize();
             } else {
                 [newWidth, newHeight] = [parentSize.width, parentSize.height];
             }
         } else {
-        [newWidth, newHeight] = [window.innerWidth, window.innerHeight];}
+        [newWidth, newHeight] = pageSize();}
 
         const GLviewWidth = newWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
         const GLviewHeigth = newHeight - (bottomPanelHeight ? bottomPanelHeight -35: 0);

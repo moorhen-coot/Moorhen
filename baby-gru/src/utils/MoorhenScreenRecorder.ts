@@ -6,6 +6,7 @@ import { Store } from "redux";
 import { doDownload, downloadUrl } from "./utils";
 import { DEFAULT_QUALITY, bitrateFor } from "./videoBitrate";
 import type { VideoQuality } from "./videoBitrate";
+import { SCREENSHOT_SIDE, screenshotSize } from "./screenshotSize";
 
 export interface ImageFrac2D {
     x: number
@@ -48,6 +49,12 @@ export class ScreenRecorder  {
     glRef: React.RefObject<webGL.MGWebGL>;
     store: Store<RootState>;
     _isRecording: boolean;
+    /**
+     * The canvas the recording in progress is taken from: WebGL's, or the WebGPU main view's if
+     * that was drawing when it started. The WebGPU main view hands frames back to WebGL only while
+     * WebGL's canvas is the one being recorded.
+     */
+    recordingCanvas: HTMLCanvasElement | null = null;
     videoName = "moorhen_video";
     videoQuality: VideoQuality = DEFAULT_QUALITY;
     private recordedMimeType = "";
@@ -82,7 +89,9 @@ export class ScreenRecorder  {
      * encoder that has already written a header. Only a resize between recordings is fixed here.
      */
     private createRecorder = (): MediaRecorder | null => {
-        const canvas = this.canvasRef?.current;
+        // The canvas showing the view now (MGWebGL.getCanvasRef): WebGPU's while it draws.
+        const canvas = this.glRef?.current?.getCanvasRef()?.current ?? this.canvasRef?.current;
+        this.recordingCanvas = canvas ?? null;
         if (!canvas) {
             console.warn("Attempted to record the screen before the canvas existed...");
             return null;
@@ -210,10 +219,19 @@ export class ScreenRecorder  {
         const canvasWidth = canvasSize[0]
         const canvasHeight = canvasSize[1]
 
-        //Transparent backgound currently only works with WebGL2
-        pixels = this.glRef.current.getPixelData(doTransparentBackground)
-
-        if(!isWebGL2){
+        // Drawn by WebGPU when that is what shows the view (externalRenderer.ts): offscreen, at the size
+        // WebGL's screenshot would be, with its soft shadows, and transparent if asked.
+        const external = this.glRef.current?.externalRenderer;
+        if (external?.isShowing()) {
+            const { width, height } = screenshotSize(canvasWidth, canvasHeight, SCREENSHOT_SIDE);
+            const rgba = await external.snapshot(width, height, { transparentBackground: doTransparentBackground });
+            saveCanvas.width = width;
+            saveCanvas.height = height;
+            imgData = ctx.createImageData(width, height);
+            imgData.data.set(rgba);
+        } else if(!isWebGL2){
+            //Transparent backgound currently only works with WebGL2
+            pixels = this.glRef.current.getPixelData(doTransparentBackground)
 
             saveCanvas.width = canvasWidth
             saveCanvas.height = canvasHeight
@@ -228,6 +246,7 @@ export class ScreenRecorder  {
             }
         } else {
 
+            pixels = this.glRef.current.getPixelData(doTransparentBackground)
             const fbSize = this.store.getState().glRef.rttFramebufferSize
             const w = fbSize[0]
             const h = fbSize[1]

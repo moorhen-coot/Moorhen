@@ -1,4 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
+import { webGPUChromium, webGPUFirefox } from "./tests/webgpuBrowsers";
+
+// The WebGPU e2e tests need browsers started with WebGPU on (and, for Chromium, the full
+// browser rather than the headless shell), so they run in projects of their own; the strict
+// screenshot baselines of the other projects stay as they are.
+const webGPUTests = "**/webgpu-*.spec.ts";
 
 // A dedicated port, so the e2e server never collides with (or silently reuses) a dev
 // server on vite's default 5173. Override with MOORHEN_E2E_PORT.
@@ -26,10 +32,22 @@ export default defineConfig({
         {
             name: "chromium",
             use: { ...devices["Desktop Chrome"] },
+            testIgnore: webGPUTests,
         },
         {
             name: "firefox",
             use: { ...devices["Desktop Firefox"] },
+            testIgnore: webGPUTests,
+        },
+        {
+            name: "chromium-webgpu",
+            use: webGPUChromium,
+            testMatch: webGPUTests,
+        },
+        {
+            name: "firefox-webgpu",
+            use: webGPUFirefox,
+            testMatch: webGPUTests,
         },
     ],
     webServer: {

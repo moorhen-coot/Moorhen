@@ -1,3 +1,5 @@
+import {anaglyph_colour_snippet} from './anaglyph-colour-snippet.js';
+
 var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
     precision mediump float;
@@ -16,7 +18,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     uniform float alphaMultiplier;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
-    in lowp vec2 vTexture;
+    in highp vec2 vTexture;
     in mediump mat4 mvMatrix;
 
     uniform float fog_end;
@@ -32,6 +34,8 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     uniform vec4 clipPlane7;
     uniform int nClipPlanes;
     uniform vec4 fogColour;
+
+${anaglyph_colour_snippet}
 
     uniform vec4 light_positions;
     uniform vec4 light_colours_ambient;
@@ -227,16 +231,23 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
           color *= edge;
       }
       color.a = vColor.a;
-      fragColor = mix(color, fogColour, fogFactor );
+      fragColor = mix(anaglyphColour(color), fogColour, fogFactor );
       //fragColor = vec4(occ,occ,occ, vColor.a);
 
       //if(doSSAO) fragColor = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) );
 
       if(clipCap){
         if(clipd<0.0){
-            fragColor = mix(vColor, fogColour, fogFactor );
+            fragColor = mix(anaglyphColour(vColor), fogColour, fogFactor );
         }
-        if(clipd_back<0.0||((1.0-z)*silly_scale*size_v>clipd_back&&clipd<0.0)){
+        // Discard only where the whole chord through the sphere is in front of the plane. The
+        // cap is then the plane's whole cut through the sphere, meeting the lit surface exactly
+        // where the front surface crosses the plane (clipd = 0). This used to discard also where
+        // (1-z)*r > clipd_back while capped, which cut a ring out of the cap's edge whenever the
+        // centre was less than r/3 behind the plane. (A sphere whose centre is in front of the
+        // plane is not drawn at all: its square sits at the centre's depth, nearer than the
+        // projection's near plane, which is this plane.)
+        if(clipd_back<0.0){
             discard;
         }
       }

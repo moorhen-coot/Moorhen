@@ -172,7 +172,14 @@ var perfect_sphere_fragment_shader_source = `
         if(clipd<0.0){
             gl_FragColor = mix(vColor, fogColour, fogFactor );
         }
-        if(clipd_back<0.0||((1.0-z)*silly_scale*size_v>clipd_back&&clipd<0.0)){
+        // Discard only where the whole chord through the sphere is in front of the plane. The
+        // cap is then the plane's whole cut through the sphere, meeting the lit surface exactly
+        // where the front surface crosses the plane (clipd = 0). This used to discard also where
+        // (1-z)*r > clipd_back while capped, which cut a ring out of the cap's edge whenever the
+        // centre was less than r/3 behind the plane. (A sphere whose centre is in front of the
+        // plane is not drawn at all: its square sits at the centre's depth, nearer than the
+        // projection's near plane, which is this plane.)
+        if(clipd_back<0.0){
             discard;
         }
       }
