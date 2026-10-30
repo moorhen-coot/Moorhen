@@ -220,7 +220,12 @@ export class GpuMapLayer {
 
     /** A first fetch failing stops the map being drawn; a later one leaves the old grid drawn. */
     private fetchFailed(map: MoorhenMap, entry: MapEntry, why: string): void {
-        if (entry.grid) console.warn(`GPU map contours: map ${map.molNo} changed but could not be fetched again: ${why}`);
-        else entry.failed = why;
+        if (entry.grid) {
+            console.warn(`GPU map contours: map ${map.molNo} changed but could not be fetched again: ${why}`);
+        } else {
+            entry.failed = why;
+            // MoorhenWebGPUMainView gives every map back to Coot for good (`failed`).
+            console.warn(`GPU map contours: map ${map.molNo} could not be fetched: ${why}. Coot contours the maps from now on.`);
+        }
     }
 }
