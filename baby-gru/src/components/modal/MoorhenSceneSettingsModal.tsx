@@ -1,5 +1,5 @@
 import { HexColorInput, RgbColorPicker } from "react-colorful";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { RootState } from "@/store";
 import { useMoorhenInstance } from "@/hooks";
@@ -28,7 +28,9 @@ import { MAX_EYE_DISTANCE, MIN_EYE_DISTANCE } from "../../WebGLgComponents/mgWeb
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { SCENE_LOOKS, currentLook, withLook } from "../../store/sceneLooks";
+import { applySceneSettingsSnapshot } from "../../store/sceneSettingsSlice";
 import type { ShadowMapQuality } from "../../WebGLgComponents/mgWebGLParts/framebuffers";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -495,6 +497,31 @@ const LightingPanel = () => {
     );
 };
 
+/** Ready-made looks (lighting and effects) for the scene shown: the one its settings match shows as selected */
+const SceneLooks = () => {
+    const dispatch = useDispatch();
+    const store = useStore<RootState>();
+    const isLocked = useSelector((state: RootState) => state.userScenes.isSceneChanging || state.movie.isPlaying);
+    const selectedLook = useSelector((state: RootState) => currentLook(state.sceneSettings)?.id);
+
+    return (
+        <MoorhenStack direction="line" align="center" gap="0.3rem" style={{ flexWrap: "wrap" }}>
+            <span>Look:</span>
+            {SCENE_LOOKS.map(look => (
+                <MoorhenButton
+                    key={look.id}
+                    variant={look.id === selectedLook ? "primary" : "secondary"}
+                    tooltip={look.description}
+                    disabled={isLocked}
+                    onClick={() => dispatch(applySceneSettingsSnapshot(withLook(store.getState().sceneSettings, look)))}
+                >
+                    {look.label}
+                </MoorhenButton>
+            ))}
+        </MoorhenStack>
+    );
+};
+
 /** Which scene these settings belong to, a way to switch, and saving / resetting its settings */
 const CurrentScenePanel = () => {
     const moorhenInstance = useMoorhenInstance();
@@ -539,6 +566,7 @@ const CurrentScenePanel = () => {
                     {isBuiltIn && <ResetSceneButton sceneId={selectedScene} />}
                 </MoorhenStack>
             )}</MoorhenStack>
+         <SceneLooks />
          {isSnapshot && (
             <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>Snapshots cannot be changed: changes made here are not kept, unless you create a new scene or snapshot.</div>)}
         
