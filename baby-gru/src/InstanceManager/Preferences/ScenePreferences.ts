@@ -3,7 +3,7 @@ import { PER_SCENE_PREFERENCE_KEYS, type PerSceneKey } from "@/store/sceneSettin
 import { BUILT_IN_SCENE_IDS, builtInSceneDefaults, setSavedSceneSetting, type BuiltInSceneId } from "@/store/userScenesSlice";
 import type { PreferenceEntry } from "./PreferencesList";
 
-/** The preference label of a built-in scene's setting, e.g. "Default.doSSAO" */
+/** The preference label of a built-in scene's setting, e.g. "Overview.doSSAO" */
 export const sceneKey = (sceneId: BuiltInSceneId, key: PerSceneKey): string => `${sceneId}.${key}`;
 
 /**
@@ -14,7 +14,7 @@ const SCENE_PREFERENCE_VERSIONS: Partial<Record<BuiltInSceneId, Partial<Record<P
 
 const sceneVersion = (sceneId: BuiltInSceneId, key: PerSceneKey) => SCENE_PREFERENCE_VERSIONS[sceneId]?.[key] ?? 1;
 
-/** The saved settings of the built-in scenes, as preferences ("Default.doSSAO", "Model Building.doSSAO"...) */
+/** The saved settings of the built-in scenes, as preferences ("Overview.doSSAO", "Model Building.doSSAO"...) */
 export const SCENE_PREFERENCES: PreferenceEntry[] = BUILT_IN_SCENE_IDS.flatMap(sceneId => {
     const defaults = builtInSceneDefaults(sceneId);
     return PER_SCENE_PREFERENCE_KEYS.map(

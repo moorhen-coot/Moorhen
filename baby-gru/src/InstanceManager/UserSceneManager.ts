@@ -103,7 +103,7 @@ const drawnKey = (moleculeUniqueId: string, params: RepresentationBackup, defaul
 const colourRulesData = (molecule: MoorhenMolecule): ColourRuleData[] | null =>
     molecule.defaultColourRules?.map(rule => rule.objectify()) ?? null;
 
-/** The style of molecules in the "Default" scene, which MoorhenInstance starts with */
+/** The style of molecules in the "Overview" scene, which MoorhenInstance starts with */
 export const DEFAULT_REPRESENTATION_STYLE = "ribbons-and-ligands";
 
 type DefaultStyle = MoorhenInstance["representation"]["defaultStyle"];
@@ -210,7 +210,7 @@ export class MoorhenUserSceneManager {
     /**
      * Save the current settings of a built-in scene as user preferences, used the next time Moorhen
      * starts. What is shown does not change.
-     * @param sceneId - "Default" or "Model Building".
+     * @param sceneId - "Overview" or "Model Building".
      * @returns True if the scene was saved, false if it is not built-in.
      * @example
      * moorhenInstance.userScene.saveScene("Model Building");
@@ -271,7 +271,7 @@ export class MoorhenUserSceneManager {
         scenes.unshift(...missingBuiltIns.map(sceneId => this.savedBuiltInScene(sceneId)));
         const snapshots = readSceneList(state.snapshots, isSnapshot);
         const isListed = [...scenes, ...snapshots].some(scene => scene.id === state.selectedScene);
-        const selectedScene = isListed ? state.selectedScene : "Default";
+        const selectedScene = isListed ? state.selectedScene : "Overview";
 
         this.instance.dispatch(setUserSceneState({ scenes, snapshots, selectedScene }));
         this.applyDefaultStyle(selectedScene);
@@ -281,7 +281,7 @@ export class MoorhenUserSceneManager {
 
     /**
      * Start from the built-in scenes after loading a session saved without scenes: what the session
-     * shows becomes the "Default" scene (its own view settings are kept, not the Default preset).
+     * shows becomes the "Overview" scene (its own view settings are kept, not the Overview preset).
      *
      * **Internal use only.** Called by the session loader.
      * @private
@@ -291,10 +291,10 @@ export class MoorhenUserSceneManager {
             setUserSceneState({
                 scenes: BUILT_IN_SCENE_IDS.map(sceneId => this.savedBuiltInScene(sceneId)),
                 snapshots: [],
-                selectedScene: "Default",
+                selectedScene: "Overview",
             })
         );
-        this.applyDefaultStyle("Default");
+        this.applyDefaultStyle("Overview");
     }
 
     /**
@@ -396,7 +396,7 @@ export class MoorhenUserSceneManager {
      * @returns True if the scene changed, false if one of them does not exist, the target is a
      * snapshot or the source itself, a switch is running or a movie is playing.
      * @example
-     * await moorhenInstance.userScene.copyFrom("movie", "Default");
+     * await moorhenInstance.userScene.copyFrom("movie", "Overview");
      */
     public async copyFrom(targetId: string, sourceId: string, withRepresentations: boolean = false): Promise<boolean> {
         if (!this.canChange || isSnapshot(targetId) || targetId === sourceId || !this.find(targetId) || !this.find(sourceId)) return false;
@@ -444,7 +444,7 @@ export class MoorhenUserSceneManager {
 
     /**
      * Delete a custom scene or a snapshot, with its saved representations. Deleting the current
-     * one switches back to "Default" first. Built-in scenes, and the movie scene while the movie has
+     * one switches back to "Overview" first. Built-in scenes, and the movie scene while the movie has
      * keyframes, cannot be deleted.
      * @param sceneId - The id of the scene or snapshot to delete.
      * @returns True if the scene was deleted.
@@ -455,7 +455,7 @@ export class MoorhenUserSceneManager {
         // The movie scene holds the look of the movie's keyframes
         if (sceneId === MOVIE_SCENE_ID && hasKeyframes) return false;
         // Leaving the deleted scene must not save it again
-        if (this.selected === sceneId) await this.select("Default", false);
+        if (this.selected === sceneId) await this.select("Overview", false);
         this.instance.dispatch(removeUserScene(sceneId));
         this.recordInHistory();
         return true;

@@ -46,7 +46,7 @@ const movieFile = async (name: string, session?: Uint8Array): Promise<File> => {
  * Only what openMovieFile touches: somewhere to dispatch, somewhere to look afterwards, and the
  * scenes, to show the movie scene if the session has one.
  */
-const anInstance = (sceneIds: string[] = ["Default", "Model Building"], isPlaying = false) => {
+const anInstance = (sceneIds: string[] = ["Overview", "Model Building"], isPlaying = false) => {
     const dispatched: { type: string; payload?: unknown }[] = [];
     const select = jest.fn(async (_sceneId: string) => true);
     return {
@@ -54,7 +54,7 @@ const anInstance = (sceneIds: string[] = ["Default", "Model Building"], isPlayin
         select,
         instance: {
             store: { dispatch: (action: any) => dispatched.push(action), getState: () => ({ movie: { isPlaying } }) },
-            userScene: { list: sceneIds.map(id => ({ id, name: id })), selected: "Default", select, waitUntilIdle: async () => {} },
+            userScene: { list: sceneIds.map(id => ({ id, name: id })), selected: "Overview", select, waitUntilIdle: async () => {} },
         } as any,
     };
 };
@@ -95,13 +95,13 @@ describe("opening a movie file", () => {
     });
 
     it("shows the movie scene when the session has one", async () => {
-        const { instance, select } = anInstance(["Default", "Model Building", "movie"]);
+        const { instance, select } = anInstance(["Overview", "Model Building", "movie"]);
         await openMovieFile(await movieFile("tour.mhm", new Uint8Array([8, 1])), instance);
         expect(select).toHaveBeenCalledWith("movie");
     });
 
     it("says so when the movie scene cannot be shown", async () => {
-        const { instance, select } = anInstance(["Default", "movie"]);
+        const { instance, select } = anInstance(["Overview", "movie"]);
         select.mockResolvedValue(false);
         const result = await openMovieFile(await movieFile("tour.mhm", new Uint8Array([8, 1])), instance);
         expect(result.ok).toBe(true);

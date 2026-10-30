@@ -135,14 +135,14 @@ describe("per-scene preferences", () => {
 
     it("restores the saved settings of each scene, with each scene's own defaults", async () => {
         const prefs = makePreferences("pp-scene-3");
-        await prefs.localStorageInstance.setItem("Default.doSSAO", { version: 1, value: true });
+        await prefs.localStorageInstance.setItem("Overview.doSSAO", { version: 1, value: true });
         const { store, unsubscribe } = init(prefs);
         await waitMounted(store);
 
         const saved = store.getState().userScenes.savedSceneSettings;
-        expect(saved.Default.doSSAO).toBe(true);
+        expect(saved.Overview.doSSAO).toBe(true);
         expect(saved["Model Building"].doSSAO).toBe(builtInSceneDefaults("Model Building").doSSAO);
-        expect(saved.Default.resetClippingFogging).toBe(false);
+        expect(saved.Overview.resetClippingFogging).toBe(false);
         expect(saved["Model Building"].resetClippingFogging).toBe(true);
         unsubscribe();
     });
@@ -153,25 +153,25 @@ describe("per-scene preferences", () => {
         const { store, unsubscribe } = init(prefs, { onUserPreferencesChange });
         await waitMounted(store);
 
-        const saved = store.getState().userScenes.savedSceneSettings.Default;
+        const saved = store.getState().userScenes.savedSceneSettings.Overview;
         // New arrays with the same values, as a save button builds them
         const settings = { ...saved, lightPosition: [...saved.lightPosition], backgroundColor: [...saved.backgroundColor] };
-        store.dispatch(saveSceneSettings({ sceneId: "Default", settings }));
+        store.dispatch(saveSceneSettings({ sceneId: "Overview", settings }));
         await flush();
         expect(onUserPreferencesChange).not.toHaveBeenCalled();
-        expect(store.getState().userScenes.savedSceneSettings.Default).toBe(saved);
+        expect(store.getState().userScenes.savedSceneSettings.Overview).toBe(saved);
         unsubscribe();
     });
 
     it("a stored value of the wrong type is replaced by the scene's default", async () => {
         const prefs = makePreferences("pp-scene-5");
-        await prefs.localStorageInstance.setItem("Default.backgroundColor", { version: 1, value: "red" });
-        await prefs.localStorageInstance.setItem("Default.resetClippingFogging", { version: 1, value: 1 });
+        await prefs.localStorageInstance.setItem("Overview.backgroundColor", { version: 1, value: "red" });
+        await prefs.localStorageInstance.setItem("Overview.resetClippingFogging", { version: 1, value: 1 });
         const { store, unsubscribe } = init(prefs);
         await waitMounted(store);
 
-        const saved = store.getState().userScenes.savedSceneSettings.Default;
-        expect(saved.backgroundColor).toEqual(builtInSceneDefaults("Default").backgroundColor);
+        const saved = store.getState().userScenes.savedSceneSettings.Overview;
+        expect(saved.backgroundColor).toEqual(builtInSceneDefaults("Overview").backgroundColor);
         // The Default scene's default, not the global one (true)
         expect(saved.resetClippingFogging).toBe(false);
         unsubscribe();

@@ -202,7 +202,7 @@ export type SceneSettingsState = typeof initialState;
 
 /**
  * The scene settings that make up the look of a scene: switching scene saves and restores them,
- * and they are the user preferences of each built-in scene ("Default.doSSAO",
+ * and they are the user preferences of each built-in scene ("Overview.doSSAO",
  * "Model Building.doSSAO"), saved explicitly with the scene's save button. Every other field is
  * not part of scenes, and switching scene leaves it alone: the viewport, camera and app theme, the
  * machine or debug settings kept as global preferences (depthPeelLayers, shadowMapQuality, drawFPS,

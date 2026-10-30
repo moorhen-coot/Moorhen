@@ -13,20 +13,20 @@ import "./scene-selector.css";
 const scenesInfo = (
     <span>
         <b>Scenes</b>
-        <br />A scene is a whole look of the view: the representations of every molecule and the scene settings (lighting, background,
+        <br />A scene is a whole look of the view: the representations of every molecule, the drawings, and the scene settings (lighting, background,
         effects, fog and clipping). Switching scene swaps all of it, the camera stays where it is. A scene keeps its changes while you work
         in another one.
         <br />
         <br />
-        <b>Default and Model Building</b>
+        <b>Overview and Model Building</b>
         <br />
-        Built in. Save their settings to start Moorhen with them; restore brings back the saved or the default settings, with the default
+        Built in. Save their settings (background colour, lightning...) to start Moorhen with them; restore brings back the saved or the default settings, with the default
         representations.
         <br />
         <br />
         <b>Custom scenes</b>
         <br />
-        Start as a copy of the current scene. Kept in session files.
+        Click + to create a new scene, it starts as a copy of the current scene. They are saved in the session files.
         <br />
         <br />
         <b>Movie</b>
@@ -184,17 +184,18 @@ export const UserSceneSelector = () => {
                     <MoorhenPopoverButton
                         type="icon-only"
                         icon="MatSymReplay"
-                        tooltip="Restore this scene: its settings and representations"
-                        ariaLabel={`Restore scene "${userScenes.find(scene => scene.id === id)?.name ?? id}"`}
+                        tooltip="Reset this scene"
+                        ariaLabel={`Reset scene "${userScenes.find(scene => scene.id === id)?.name ?? id}"`}
                         disabled={isLocked}
                         {...popoverProps(`restore:${id}`)}
                     >
-                        <MoorhenStack>
+                        <MoorhenStack align="center" gap="0.1rem">
+                            This will remove your custom representation
                             <MoorhenButton disabled={isLocked} onClick={() => restore("saved")}>
-                                Revert to Saved Settings and Default Representations
+                                Load Saved parameters
                             </MoorhenButton>
                             <MoorhenButton variant="danger" disabled={isLocked} onClick={() => restore("default")}>
-                                Reset to Default Settings and Representations
+                                Reset to Default parameters
                             </MoorhenButton>
                         </MoorhenStack>
                     </MoorhenPopoverButton>
@@ -244,20 +245,21 @@ export const UserSceneSelector = () => {
             >
                 <MoorhenStack className="moorhen__scene-selector-menu" style={{ maxHeight: "80vh", overflowY: "auto" }}>
                     <MoorhenStack direction="line" align="center">
-                        <div className="moorhen__submenu-title" style={{ flex: 1 }}>
+                        <div className="moorhen__submenu-title" style={{ flex: 1, display: "flex", alignItems: "center", pointerEvents: "auto" }}>
                             Scenes
-                        </div>
+                        
                         <MoorhenInfoCard infoText={scenesInfo} popoverPlacement="right" width="25rem" />
                         <MoorhenButton
                             type="icon-only"
                             icon="MatSymSettings"
                             tooltip="Scene settings"
                             ariaLabel="Scene settings"
+                            style={{ alignSelf: "top", position: "absolute", right: "0.5rem" }}
                             onClick={() => {
                                 dispatch(setShownSidePanel("sceneSettings"));
                                 setIsShown(false);
                             }}
-                        />
+                        /></div>
                     </MoorhenStack>
                     {userScenes.filter(userScene => !isMovieScene(userScene.id)).map(sceneItem)}
                     <MoorhenButton

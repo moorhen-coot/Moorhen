@@ -86,7 +86,7 @@ describe("PRF: preferences", () => {
         const fixture = moorhen10();
         await cloud.instance.preferences.import(fixture);
         expect(valueOf(cloud, "defaultMapSamplingRate")).toBe(2.5);
-        expect(valueOf(cloud, "Default.backgroundColor")).toEqual([0.1, 0.1, 0.1, 1]);
+        expect(valueOf(cloud, "Overview.backgroundColor")).toEqual([0.1, 0.1, 0.1, 1]);
         expect(valueOf(cloud, "shortCuts")).toBe(fixture.entries.shortCuts.value);
         expect(JSON.parse(valueOf(cloud, "shortCuts") as string).show_shortcuts.keyPress).toBe("j");
     });
@@ -198,10 +198,10 @@ describe("PRF: preferences", () => {
 
     test("PRF-12 round trip: change several, export, import into a new instance gives identical store values", async () => {
         await changeAndPersist(cloud, "defaultMapSamplingRate", 3.0);
-        await changeAndPersist(cloud, "Default.backgroundColor", [0.2, 0.3, 0.4, 1]);
+        await changeAndPersist(cloud, "Overview.backgroundColor", [0.2, 0.3, 0.4, 1]);
         await changeAndPersist(cloud, "defaultBondSmoothness", 3);
         const exported = await cloud.instance.preferences.export();
-        expect(Object.keys(exported.entries).sort()).toEqual(["Default.backgroundColor", "defaultBondSmoothness", "defaultMapSamplingRate"]);
+        expect(Object.keys(exported.entries).sort()).toEqual(["Overview.backgroundColor", "defaultBondSmoothness", "defaultMapSamplingRate"]);
 
         const other = await newInstance();
         expect(allValues(other)).not.toEqual(allValues(cloud));
@@ -249,9 +249,9 @@ describe("PRF: preferences", () => {
         // Not a spec row: preferences imported after start-up must reach the view, as PRF-15 does for Coot
         const stored = moorhen10();
         await cloud.instance.preferences.import(stored);
-        const imported = stored.entries["Default.backgroundColor"].value;
-        expect(cloud.store.getState().userScenes.selectedScene).toBe("Default");
-        expect(cloud.store.getState().userScenes.savedSceneSettings.Default.backgroundColor).toEqual(imported);
+        const imported = stored.entries["Overview.backgroundColor"].value;
+        expect(cloud.store.getState().userScenes.selectedScene).toBe("Overview");
+        expect(cloud.store.getState().userScenes.savedSceneSettings.Overview.backgroundColor).toEqual(imported);
         expect(cloud.store.getState().sceneSettings.backgroundColor).toEqual(imported);
     });
 

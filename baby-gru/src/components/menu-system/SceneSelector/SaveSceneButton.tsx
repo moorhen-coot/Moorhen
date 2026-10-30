@@ -6,7 +6,7 @@ import { RootState } from "@/store";
 /**
  * Save a built-in scene's settings for the next time Moorhen starts. Disabled while they are
  * already saved, so it doubles as the unsaved-changes indicator.
- * @param sceneId - "Default" or "Model Building".
+ * @param sceneId - "Overview" or "Model Building".
  * @param iconOnly - An icon button (scene selector) instead of a labelled one (scene settings).
  */
 export const SaveSceneButton = (props: { sceneId: string; iconOnly?: boolean }) => {
@@ -19,7 +19,7 @@ export const SaveSceneButton = (props: { sceneId: string; iconOnly?: boolean }) 
 
     const buttonProps = {
         disabled: !hasUnsavedChanges || isSceneChanging,
-        tooltip: hasUnsavedChanges ? `Save the settings of "${sceneName}" for the next time Moorhen starts` : `"${sceneName}" settings are saved`,
+        tooltip: hasUnsavedChanges ? `Save the settings of "${sceneName}"` : `"${sceneName}" settings are saved`,
         onClick: () => moorhenInstance.userScene.saveScene(props.sceneId),
         icon: "MatSymSave" as const,
     };

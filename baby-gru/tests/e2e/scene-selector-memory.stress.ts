@@ -2,7 +2,7 @@ import { expect, test, type CDPSession, type Page } from "@playwright/test";
 import { startAndGetInstance, type MoorhenStartedSession } from "./helpers";
 
 /**
- * Stress test for the user scene selector (Default <-> Model Building).
+ * Stress test for the user scene selector (Overview <-> Model Building).
  *
  * NOT RUN with the e2e suite: it takes up to half an hour, and `playwright test` only picks up
  * *.spec.ts files. Kept for reference and for checking leaks by hand: to run it, copy it to a
@@ -19,7 +19,7 @@ import { startAndGetInstance, type MoorhenStartedSession } from "./helpers";
  * The coot worker's WASM heap is not measured: the emscripten build does not export its memory.
  *
  * Tunable through env vars:
- *  - MOORHEN_E2E_SCENE_CYCLES: number of Default -> Model Building -> Default cycles (default 8)
+ *  - MOORHEN_E2E_SCENE_CYCLES: number of Overview -> Model Building -> Overview cycles (default 8)
  *  - MOORHEN_E2E_SCENE_MAX_CHAIN_REPS: extra per-chain representations per molecule (default 6)
  */
 
@@ -32,7 +32,7 @@ const MOLECULES = [
     { url: "/tests/test_data/3j2w.pdb", filename: "3j2w.pdb" },
 ];
 
-type SceneName = "Default" | "Model Building";
+type SceneName = "Overview" | "Model Building";
 
 type CustomRepSummary = { uniqueId: string; style: string; cid: string; molecule: string };
 
@@ -234,7 +234,7 @@ async function clickScene(page: Page, elementId: string, scene: SceneName) {
 const repKey = (rep: CustomRepSummary) => `${rep.molecule}|${rep.uniqueId}|${rep.style}|${rep.cid}`;
 
 function isSceneReached(state: SceneState, scene: SceneName, defaultReps: CustomRepSummary[], moleculeCount: number) {
-    if (scene === "Default") {
+    if (scene === "Overview") {
         const expected = defaultReps.map(repKey).sort();
         const actual = state.customReps.map(repKey).sort();
         return expected.length === actual.length && expected.every((key, i) => key === actual[i]);
@@ -343,7 +343,7 @@ test.describe("User scene selector memory/performance", () => {
         for (let cycle = 1; cycle <= CYCLES; cycle++) {
             const toModelBuildingMs = await switchSceneAndWait(moorhen, "Model Building", defaultReps, moleculeCount);
             if (cycle === 1) samples.push(await sampleMemory(page, cdp, moorhen.elementId, "model-building-1"));
-            const toDefaultMs = await switchSceneAndWait(moorhen, "Default", defaultReps, moleculeCount);
+            const toDefaultMs = await switchSceneAndWait(moorhen, "Overview", defaultReps, moleculeCount);
             timings.push({ cycle, toModelBuildingMs, toDefaultMs });
             samples.push(await sampleMemory(page, cdp, moorhen.elementId, `default-${cycle}`));
             const last = samples[samples.length - 1];
@@ -400,7 +400,7 @@ test.describe("User scene selector memory/performance", () => {
         const initial = await getSceneState(page, moorhen.elementId);
 
         // Fire switches back to back: each click lands as soon as the previous switch has finished
-        const sequence: SceneName[] = ["Model Building", "Default", "Model Building", "Default", "Model Building", "Default"];
+        const sequence: SceneName[] = ["Model Building", "Overview", "Model Building", "Overview", "Model Building", "Overview"];
         for (const scene of sequence) {
             await clickScene(page, moorhen.elementId, scene);
         }
@@ -408,7 +408,7 @@ test.describe("User scene selector memory/performance", () => {
         // The menu items stay disabled until the last switch has finished
         const host = page.locator(`#${moorhen.elementId}`);
         await host.locator("button.moorhen__scene-selector").click();
-        await expect(host.locator(".moorhen__scene-selector-menu").getByText("Default", { exact: true })).toBeEnabled({ timeout: 180_000 });
+        await expect(host.locator(".moorhen__scene-selector-menu").getByText("Overview", { exact: true })).toBeEnabled({ timeout: 180_000 });
 
         const final = await getSceneState(page, moorhen.elementId);
         expect.soft(final.customReps.map(repKey).sort(), "custom representations restored").toEqual(initial.customReps.map(repKey).sort());

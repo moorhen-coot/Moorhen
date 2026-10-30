@@ -163,20 +163,20 @@ describe("E2E: a CCP4 Cloud job from start to exit", () => {
         store.dispatch(setDoSSAO(changed));
         await flush(100);
         expect(host.savedPreferences).toEqual([]);
-        instance.userScene.saveScene("Default");
-        await waitFor(() => host.savedPreferences.some(stored => stored.entries["Default.doSSAO"]?.value === changed));
-        const addedIndex = host.savedPreferences.findIndex(stored => stored.entries["Default.doSSAO"]?.value === changed);
+        instance.userScene.saveScene("Overview");
+        await waitFor(() => host.savedPreferences.some(stored => stored.entries["Overview.doSSAO"]?.value === changed));
+        const addedIndex = host.savedPreferences.findIndex(stored => stored.entries["Overview.doSSAO"]?.value === changed);
 
         store.dispatch(setDoSSAO(sceneSettingsInitialState.doSSAO));
-        instance.userScene.saveScene("Default");
-        await waitFor(() => host.savedPreferences.slice(addedIndex + 1).some(stored => !("Default.doSSAO" in stored.entries)));
+        instance.userScene.saveScene("Overview");
+        await waitFor(() => host.savedPreferences.slice(addedIndex + 1).some(stored => !("Overview.doSSAO" in stored.entries)));
 
         const savedBeforeExit = host.savedPreferences.length;
         await exit();
         // exit saves nothing: the last onChange already holds the reset
         expect(host.savedPreferences).toHaveLength(savedBeforeExit);
         const last = host.savedPreferences[host.savedPreferences.length - 1];
-        expect(last.entries).not.toHaveProperty("Default.doSSAO");
+        expect(last.entries).not.toHaveProperty("Overview.doSSAO");
         expect(last).toEqual(readPreferences());
         expect(host.exitPayloads).toHaveLength(1);
     });

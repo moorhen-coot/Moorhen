@@ -196,7 +196,7 @@ export type backupSession = {
     threeDObjectData?: ThreeDObject[];
     /**
      * The scenes and snapshots (JSON of a UserSceneState). The fields above describe the scene shown
-     * when the session was saved; sessions saved without it load into the "Default" scene.
+     * when the session was saved; sessions saved without it load into the "Overview" scene.
      */
     sceneData?: string;
 };

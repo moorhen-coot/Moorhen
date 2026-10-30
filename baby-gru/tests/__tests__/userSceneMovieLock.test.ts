@@ -37,8 +37,8 @@ describe("scene changes while a movie plays", () => {
         cloud.store.dispatch(setMoviePlaying(true));
 
         expect(await userScene.select("Model Building")).toBe(false);
-        expect(userScene.selected).toBe("Default");
-        expect(await userScene.reset("Default", "default", true)).toBe(false);
+        expect(userScene.selected).toBe("Overview");
+        expect(await userScene.reset("Overview", "default", true)).toBe(false);
 
         cloud.store.dispatch(setMoviePlaying(false));
         expect(await userScene.select("Model Building")).toBe(true);
@@ -68,7 +68,7 @@ describe("the movie's scene", () => {
     test("there is only one: a later movie plays in the same scene", async () => {
         const userScene = cloud.instance.userScene;
         expect(await userScene.createMovieScene("Movie: first")).toBe(MOVIE_SCENE_ID);
-        await userScene.select("Default");
+        await userScene.select("Overview");
 
         expect(await userScene.createMovieScene("Movie: second")).toBe(MOVIE_SCENE_ID);
         expect(userScene.selected).toBe(MOVIE_SCENE_ID);
@@ -84,7 +84,7 @@ describe("scene changes during a session load", () => {
             selectedDuringLoad = await userScene.select("Model Building");
         });
         expect(selectedDuringLoad).toBe(false);
-        expect(userScene.selected).toBe("Default");
+        expect(userScene.selected).toBe("Overview");
 
         await expect(userScene.whileLocked(async () => {
             throw new Error("load failed");

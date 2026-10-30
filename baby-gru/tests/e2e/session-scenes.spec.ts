@@ -5,7 +5,7 @@ import { startAndGetInstance } from "./helpers";
  * Scenes in session files (sceneData, see src/.roadmaps/sessions-to-scenes.md).
  *
  * tests/test_data/session/1.0.1.pb was saved by Moorhen 1.0.1, before scenes existed: one molecule
- * (custom CBs + CRs), two vectors. Old sessions must keep loading, into the "Default" scene. Its two
+ * (custom CBs + CRs), two vectors. Old sessions must keep loading, into the "Overview" scene. Its two
  * maps were removed (they made it 6.5 MB and are not about scenes); the rest is as 1.0.1 wrote it.
  */
 
@@ -69,19 +69,19 @@ test.describe("Scenes in session files", () => {
         test.skip(browserName !== "chromium", "Session loading is browser independent; run once");
     });
 
-    test("a session saved before scenes loads into the Default scene", async ({ page }) => {
+    test("a session saved before scenes loads into the Overview scene", async ({ page }) => {
         test.setTimeout(180_000);
         await loadPreSceneSession(page);
 
         const summary = await getSceneSummary(page);
-        expect(summary.selectedScene).toBe("Default");
-        expect(summary.scenes).toEqual(["Default", "Model Building"]);
+        expect(summary.selectedScene).toBe("Overview");
+        expect(summary.scenes).toEqual(["Overview", "Model Building"]);
         expect(summary.snapshots).toEqual([]);
         expect(summary.moleculeUids).toEqual([SESSION_MOLECULE_UID]);
         expect(summary.mapCount).toBe(0);
         expect(summary.vectorCount).toBe(2);
         expect(summary.customRepresentations).toEqual(["CBs", "CRs"]);
-        // The session's own view is kept, not replaced by the Default preset
+        // The session's own view is kept, not replaced by the Overview preset
         expect(summary.zoom).toBeCloseTo(0.2661, 3);
     });
 
@@ -127,7 +127,7 @@ test.describe("Scenes in session files", () => {
 
         expect(result.afterLoad.status).toBe(0);
         expect(result.afterLoad.selectedScene).toBe("Model Building");
-        expect(result.afterLoad.scenes).toEqual(["Default", "Building", "Figure"]);
+        expect(result.afterLoad.scenes).toEqual(["Overview", "Building", "Figure"]);
         expect(result.afterLoad.snapshots).toEqual(["Close-up"]);
         expect(result.afterLoad.representations).toEqual(["CBs"]);
         expect(result.customRepresentations).toEqual(["CAs", "CBs", "CRs"]);
