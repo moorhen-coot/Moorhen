@@ -8,6 +8,7 @@ import { RootState } from "@/store";
 //import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "./moorhen";
 import type { CameraController, CameraTarget, MoveResult, Transition } from "../WebGLgComponents/cameraController";
+import type { ExternalRenderer } from "../WebGLgComponents/externalRenderer";
 
 export namespace webGL {
     interface MGWebGLRenderingContext extends WebGLRenderingContext {
@@ -347,17 +348,6 @@ export namespace webGL {
         vertexInstanceOrientationAttribute: GLint;
     }
 
-    interface ShaderOutLine extends MGWebGLShader {
-        outlineSize: WebGLUniformLocation;
-        cursorPos: WebGLUniformLocation;
-        textureMatrixUniform: WebGLUniformLocation;
-    }
-
-    interface ShaderOverlay extends MGWebGLShader {
-        vertexTextureAttribute: GLint;
-        inputTexture: WebGLUniformLocation;
-    }
-
     interface MGWebGLPropsInterface {
         reContourMapOnlyOnMouseUp: boolean | null;
         onAtomHovered: (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => void;
@@ -388,6 +378,8 @@ export namespace webGL {
         //These 2 are used in MoorhenScreenRecorder
         getCanvasRef(): React.RefObject<HTMLCanvasElement>;
         getPixelData(doTransparentBackground?: boolean): Uint8Array;
+        /** Another renderer drawing the view (the WebGPU main view); screenshots ask it. */
+        externalRenderer: ExternalRenderer | null;
         //These 2 are used in MoorhenVercelBuild
         origin: [number, number, number];
         background_colour: [number, number, number, number];
@@ -433,5 +425,17 @@ export namespace webGL {
         set_clip_range(clipStart: number, clipEnd: number, update?: boolean): void;
         set_fog_range(fogStart: number, fogEnd: number, update?: boolean): void;
         setDrawingBufferSize(width: number, height: number): void;
+        // The camera, slab and lighting, which the WebGPU renderer reads too (PreviewCameraSource).
+        fogClipOffset: number;
+        gl_clipPlane0: ArrayLike<number>;
+        gl_clipPlane1: ArrayLike<number>;
+        gl_fog_start: number | null;
+        gl_fog_end: number;
+        doPerspectiveProjection: boolean;
+        light_positions: ArrayLike<number>;
+        light_colours_ambient: ArrayLike<number>;
+        light_colours_diffuse: ArrayLike<number>;
+        light_colours_specular: ArrayLike<number>;
+        specularPower: number;
     }
 }

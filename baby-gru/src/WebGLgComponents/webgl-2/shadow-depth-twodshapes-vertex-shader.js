@@ -11,7 +11,7 @@ var shadow_depth_twod_vertex_shader_source = `#version 300 es\n
     uniform mat4 uPMatrix;
 
     out lowp vec4 vColor;
-    out lowp vec2 vTexture;
+    out highp vec2 vTexture;
     out lowp vec4 eyePos;
 
     void main(void) {

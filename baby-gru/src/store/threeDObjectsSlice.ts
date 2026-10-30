@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { matchesTags, Tags } from "../utils/tags";
+import type { SurfaceMaps } from "../WebGLgComponents/textureRegistry";
 
 export type Position3D = [number, number, number];
 export type Scale3D = [number, number, number];
@@ -396,6 +397,12 @@ export interface MeshPart {
     texCoords?: number[];
     /** A texture id. The object's own texture when absent. */
     texture?: string;
+    /**
+     * Normal and metallic-roughness maps, as texture ids with their glTF factors. Read with the
+     * same `texCoords`, so ignored without them. A part's own only: there is no object-wide
+     * equivalent, since only an import has these and an import sets them per material.
+     */
+    maps?: SurfaceMaps;
 }
 
 export interface MeshObject extends ThreeDObjectBase {

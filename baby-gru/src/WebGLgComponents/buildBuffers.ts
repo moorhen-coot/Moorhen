@@ -4,14 +4,16 @@ import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRef
 import { DisplayBuffer } from './displayBuffer'
 import { TexturedShape } from './texturedShape'
 import { createWebGLBuffers } from './createWebGLBuffers'
+import { GL_SLOT_ARRAYS, MGWebGLBuffer, pendingGLBuffer, realiseGLResources } from './glResources'
 import { RootState } from '../store/MoorhenReduxStore';
 import { Store } from '@reduxjs/toolkit';
+import { webGLUploadsDeferred } from './webGLUploads';
 
 export const createOtherDataOtherContext = (jsondata: any, gl: any) : any => {
         const theseBuffers = [];
 
         for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
-            const theBuffer = createWebGLBuffers(jsondata,idat, gl)
+            const theBuffer = createWebGLBuffers(jsondata,idat)
             theseBuffers.push(theBuffer);
         }
         return theseBuffers;
@@ -22,8 +24,9 @@ export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebu
         const theseBuffers = [];
         const theseTexturedShapes = [];
         const theseLabelBuffers = [];
+        // May be null. Display buffers are built without one (their GL objects are made by
+        // buildBuffers when there is a context); only textured shapes still need it here.
         const gl = store.getState().glRef.glCtx
-        if(!gl) return theseBuffers
         const labelBuffers = store.getState().glRef.labelBuffers
         const texturedShapes = store.getState().glRef.texturedShapes
         const GLLabelsFontFamily = store.getState().labelSettings.GLLabelsFontFamily
@@ -34,7 +37,9 @@ export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebu
         const glTextFont = ""+GLLabelsFontSize*deviceScale+"px "+GLLabelsFontFamily;
 
         if(jsondata.image_data){
-            if(jsondata.width && jsondata.height && jsondata.x_size && jsondata.y_size){
+            if(!gl){
+                console.warn("appendOtherData: image data needs a WebGL context; skipped");
+            } else if(jsondata.width && jsondata.height && jsondata.x_size && jsondata.y_size){
                 const uuid =  guid();
                 const texturedShape = new TexturedShape(jsondata,gl,uuid);
                 theseTexturedShapes.push(texturedShape)
@@ -70,7 +75,7 @@ export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebu
                 }
             }
 
-            const theBuffer = createWebGLBuffers(jsondata,idat, gl)
+            const theBuffer = createWebGLBuffers(jsondata,idat)
             theseBuffers.push(theBuffer);
 
             const displayBuffers = store.getState().glRef.displayBuffers
@@ -124,7 +129,7 @@ const linesToThickLinesWithIndicesAndNormals = (axesVertices, axesNormals, axesC
         return linesToThickLinesWithIndices(axesVertices, axesColours, axesIndices, size, axesNormals, doColour, isWebGL2)
     }
 
-const linesToThickLinesWithIndices = (axesVertices: number[], axesColours: number[], axesIndices: number[], size: number, axesNormals_old? : number[], doColour=false, isWebGL2=true) => {
+const linesToThickLinesWithIndices = (axesVertices: ArrayLike<number>, axesColours: ArrayLike<number>, axesIndices: ArrayLike<number>, size: number, axesNormals_old? : ArrayLike<number>, doColour=false, isWebGL2=true) => {
 
         //FIXME - This could all be pushed upstairs into the C++ -> JS mesh conversions
         const print_timing = false;
@@ -461,11 +466,6 @@ export const linesToThickLines = (axesVertices, axesColours, size) => {
 
     }
 
-interface MGWebGLBuffer {
-    itemSize: number;
-    numItems: number;
-}
-
 export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingContext) : DisplayBuffer[] => {
     const newBuffers: DisplayBuffer[] = []
 
@@ -508,51 +508,9 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
         theBuffer.statsLabel = oldBuffer.statsLabel
         theBuffer.multiViewGroup = oldBuffer.multiViewGroup
         theBuffer.clickTol = oldBuffer.clickTol
-        theBuffer.doStencil = oldBuffer.doStencil
 
-        for(const buf of oldBuffer.triangleVertexRealNormalBuffer){
-            theBuffer.triangleVertexRealNormalBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleVertexRealNormalBuffer[theBuffer.triangleVertexRealNormalBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleVertexNormalBuffer){
-            theBuffer.triangleVertexNormalBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleVertexNormalBuffer[theBuffer.triangleVertexNormalBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleVertexPositionBuffer){
-            theBuffer.triangleVertexPositionBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleVertexPositionBuffer[theBuffer.triangleVertexPositionBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleVertexIndexBuffer){
-            theBuffer.triangleVertexIndexBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleVertexIndexBuffer[theBuffer.triangleVertexIndexBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleVertexTextureBuffer){
-            theBuffer.triangleVertexTextureBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleVertexTextureBuffer[theBuffer.triangleVertexTextureBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleInstanceOriginBuffer){
-            theBuffer.triangleInstanceOriginBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleInstanceOriginBuffer[theBuffer.triangleInstanceOriginBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleInstanceOrientationBuffer){
-            theBuffer.triangleInstanceOrientationBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleInstanceOrientationBuffer[theBuffer.triangleInstanceOrientationBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleInstanceSizeBuffer){
-            theBuffer.triangleInstanceSizeBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleInstanceSizeBuffer[theBuffer.triangleInstanceSizeBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleColourBuffer){
-            theBuffer.triangleColourBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleColourBuffer[theBuffer.triangleColourBuffer.length-1].numItems = buf.numItems
+        for (const name of GL_SLOT_ARRAYS) {
+            for (const buf of oldBuffer[name]) theBuffer[name].push(pendingGLBuffer(buf.numItems));
         }
 
         if(oldBuffer.textNormalBuffer){
@@ -618,6 +576,7 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
 }
 
 export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootState>, gl_in: WebGLRenderingContext = null) : void => {
+        if (!gl_in && webGLUploadsDeferred(store)) return
         const print_timing = false
 
         const mapLineWidth = store.getState().mapContourSettings.mapLineWidth
@@ -628,6 +587,10 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootSt
             gl = gl_in
         else
             gl = store.getState().glRef.glCtx
+
+        // Without a context there is nothing to upload to. The buffers stay dirty, so whichever
+        // WebGL context comes along later builds them then.
+        if(!gl) return
 
         const tbb1 = performance.now()
 
@@ -641,6 +604,9 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootSt
             if (!displayBuffers[idx].isDirty) {
                 continue;
             }
+            // Every slot, not only the ones this pass uploads: the draw code binds some (the
+            // vertex buffers of PERFECT_SPHERES, say) that nothing here fills.
+            realiseGLResources(gl, displayBuffers[idx]);
             for (let j = 0; j < displayBuffers[idx].triangleVertexIndexBuffer.length; j++) {
                 displayBuffers[idx].isDirty = false;
                 if (displayBuffers[idx].bufferTypes[j] === "PERFECT_SPHERES" || displayBuffers[idx].bufferTypes[j] === "IMAGES" || displayBuffers[idx].bufferTypes[j] === "TEXT") {

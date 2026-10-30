@@ -84,6 +84,15 @@ export type NEFRestraint = {
 }
 
 /**
+ * Whether a representation's buffer is a mesh, rather than one of the plain records appendOtherData
+ * also returns for text labels and textured images ({labels, uuid}, {texturedShapes, uuid}).
+ * Those records are published to the store with the meshes, and the store freezes plain objects,
+ * so setting a property on one throws ("Cannot add property ..., object is not extensible").
+ */
+const isMeshBuffer = (buffer: unknown): buffer is moorhen.DisplayObject =>
+    typeof buffer === "object" && buffer !== null && "bufferTypes" in buffer;
+
+/**
  * Represents a molecule
  * @property {string} name - The name assigned to this molecule instance
  * @property {number} molNo - The imol assigned to this molecule instance
@@ -336,8 +345,8 @@ export class MoorhenMolecule {
             this.symmetryOn = false;
         } else {
             this.representations.forEach(representation => {
-                representation.buffers.forEach(buffer => {
-                    buffer.changeColourWithSymmetry = true;
+                representation.buffers?.forEach(buffer => {
+                    if (isMeshBuffer(buffer)) buffer.changeColourWithSymmetry = true;
                 });
             });
         }
@@ -352,8 +361,8 @@ export class MoorhenMolecule {
         if (this.symmetryOn) {
             this.biomolOn = false;
             this.representations.forEach(representation => {
-                representation.buffers.forEach(buffer => {
-                    buffer.changeColourWithSymmetry = true;
+                representation.buffers?.forEach(buffer => {
+                    if (isMeshBuffer(buffer)) buffer.changeColourWithSymmetry = true;
                 });
             });
         }
@@ -506,8 +515,8 @@ export class MoorhenMolecule {
         }
         this.representations.forEach(representation => representation.drawSymmetry());
         this.representations.forEach(representation => {
-            representation.buffers.forEach(buffer => {
-                buffer.changeColourWithSymmetry = false;
+            representation.buffers?.forEach(buffer => {
+                if (isMeshBuffer(buffer)) buffer.changeColourWithSymmetry = false;
             });
         });
         if (this.adaptativeBondsEnabled) {

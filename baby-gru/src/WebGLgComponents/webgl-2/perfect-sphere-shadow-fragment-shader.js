@@ -3,7 +3,7 @@ var perfect_sphere_shadow_fragment_shader_source = `#version 300 es\n
     in lowp vec4 vColor;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
-    in lowp vec2 vTexture;
+    in highp vec2 vTexture;
     in mediump mat4 mvMatrix;
 
     in highp vec4 ShadowCoord;

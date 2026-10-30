@@ -95,6 +95,7 @@
         "test:e2e:ui": "playwright test --ui",
         "test:e2e:debug": "playwright test --debug",
         "test:e2e:install": "playwright install chromium firefox",
+        "test:gpu": "playwright test -c playwright.gpu.config.ts",
         "test:e2e:update-snapshots": "playwright test --update-snapshots",
         "copy-draco": "node scripts/copy-draco.mjs",
         "copy-draco:if-needed": "if ! test -r public/MoorhenAssets/wasm/draco_decoder_gltf.wasm; then npm run copy-draco; fi"

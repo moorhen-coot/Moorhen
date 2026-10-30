@@ -1293,6 +1293,9 @@ export class MoorhenTimeCapsule {
                 },
                 false
             );
+            // The 2Fo-Fc and Fo-Fc maps were made again in place, perhaps after they were first
+            // fetched for the GPU contours.
+            newMaps.filter(map => map.molNo === twoFoFcMap || map.molNo === foFcMap).forEach(map => map.markDataChanged());
 
             batch(() => {
                 dispatch(setFoFcMapMolNo(foFcMap));

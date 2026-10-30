@@ -56,7 +56,7 @@ export const UpdatingMapsManager = () => {
                     maps
                         .filter(map => uniqueMaps.includes(map.molNo))
                         .map(map => {
-                            return map.drawMapContour();
+                            return map.redrawWithNewData();
                         })
                 );
 

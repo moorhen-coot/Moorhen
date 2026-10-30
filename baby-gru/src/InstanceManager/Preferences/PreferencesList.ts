@@ -57,6 +57,8 @@ import {
     setDoShadowDepthDebug,
     setDrawFPS,
     setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast, 
+    setUseWebGPU,
+    setAnaglyphColours,
     RootState
 } from "@/store";
 import { initialState as sceneSettingsInitialState } from "@/store/sceneSettingsSlice";
@@ -272,6 +274,21 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         valueSetter: setDepthPeelLayers,
         selector: (state: RootState) => state.sceneSettings.depthPeelLayers,
         defaultValue: sceneSettingsInitialState.depthPeelLayers,
+    },
+    55: {
+        label: "useWebGPU",
+        valueSetter: setUseWebGPU,
+        selector: (state: RootState) => state.sceneSettings.useWebGPU,
+        defaultValue: sceneSettingsInitialState.useWebGPU,
+        // 2: on by default (where the browser offers WebGPU) from now on, whatever was chosen
+        // while it was a test.
+        version: 2,
+    },
+    56: {
+        label: "anaglyphColours",
+        valueSetter: setAnaglyphColours,
+        selector: (state: RootState) => state.sceneSettings.anaglyphColours,
+        defaultValue: sceneSettingsInitialState.anaglyphColours,
     },
 };
 

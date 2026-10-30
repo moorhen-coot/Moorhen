@@ -126,37 +126,6 @@ export {
 export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
 export {
-    setBusy,
-    setTimeCapsuleBusy,
-    setGlobalInstanceReady,
-    setSearchBarActive,
-    setMainMenuOpen,
-    setSceneSelectorOpen,
-    setShortCutsBlocked,
-    setShownSidePanel,
-    setSidePanelWidth,
-    setBottomPanelHeight,
-    setShownControl,
-    lockControls,
-    unlockControls,
-    closeResidueSelectionTools,
-    pauseClickAwayListener,
-    resumeClickAwayListener,
-}  from "./globalUISlice";
-export {
-    addMolecule,
-    removeMolecule,
-    emptyMolecules,
-    addMoleculeList,
-    addGeneralRepresentation,
-    showMolecule,
-    hideMolecule,
-    addCustomRepresentation,
-    removeCustomRepresentation,
-    removeGeneralRepresentation,
-}  from "./moleculesSlice";
-export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
-export {
     setSelectedThreeDObject,
     setActiveMap,
     setViewOnly,
@@ -191,15 +160,6 @@ export {
 }  from "./generalStatesSlice";
 export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
 export {
-    addObject,
-    removeObject,
-    removeObjectById,
-    removeObjectsByTag,
-    updateObject,
-    emptyObjects,
-
-}  from "./threeDObjectsSlice";
-export {
     addVector,
     removeVector,
     emptyVectors,
@@ -210,6 +170,59 @@ export {
     removeVectorById,
     removeVectorsByIds
 }  from "./vectorsSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
+export {
+    addMolecule,
+    removeMolecule,
+    emptyMolecules,
+    addMoleculeList,
+    addGeneralRepresentation,
+    showMolecule,
+    hideMolecule,
+    addCustomRepresentation,
+    removeCustomRepresentation,
+    removeGeneralRepresentation,
+}  from "./moleculesSlice";
+export {
+    setBusy,
+    setTimeCapsuleBusy,
+    setGlobalInstanceReady,
+    setSearchBarActive,
+    setMainMenuOpen,
+    setSceneSelectorOpen,
+    setShortCutsBlocked,
+    setShownSidePanel,
+    setSidePanelWidth,
+    setBottomPanelHeight,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
+    pauseClickAwayListener,
+    resumeClickAwayListener,
+}  from "./globalUISlice";
+export {
+    setMovieDocument, setMovieName, setMovieFileName, newMovie,
+    setMoviePlaying, selectKeyframe,
+    appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
+    duplicateKeyframe,
+    updateSegment, updateMotion, clearTrailingMotion,
+    spreadSceneFromKeyframe, updateMovieOutput,
+    updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
+}  from "./movieSlice";
+export {
+    addUserScene,
+    addUserSnapshot,
+    removeUserScene,
+    renameUserScene,
+    setSelectedScene,
+    setSceneChanging,
+    sceneShown,
+    setSceneContent,
+    setUserSceneState,
+    setSavedSceneSetting,
+    saveSceneSettings,
+}  from "./userScenesSlice";
 export {
     setOrigin,
     setDrawCrosshairs,
@@ -229,10 +242,11 @@ export {
     setDoShadow,
     setShadowMapQuality,
     setDoSpin,
-    setDoOutline,
     setDepthBlurRadius,
     setDepthPeelLayers,
     setPeelOpaqueSeparately,
+    setUseWebGPU,
+    setAnaglyphColours,
     setBackgroundColor,
     setDepthBlurDepth,
     setDrawAxes,
@@ -272,27 +286,14 @@ export {
     applySceneSettingsSnapshot,
 }  from "./sceneSettingsSlice";
 export {
-    addUserScene,
-    addUserSnapshot,
-    removeUserScene,
-    renameUserScene,
-    setSelectedScene,
-    setSceneChanging,
-    setUserSceneState,
-    setSavedSceneSetting,
-    saveSceneSettings,
-}  from "./userScenesSlice";
+    addObject,
+    removeObject,
+    removeObjectById,
+    removeObjectsByTag,
+    updateObject,
+    emptyObjects,
 
-export {
-    setMovieDocument, setMovieName, setMovieFileName, newMovie,
-    setMoviePlaying, selectKeyframe,
-    appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
-    duplicateKeyframe,
-    updateSegment, updateMotion, clearTrailingMotion,
-    spreadSceneFromKeyframe, updateMovieOutput,
-    updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
-    type MovieState,
-} from "./movieSlice";
+}  from "./threeDObjectsSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

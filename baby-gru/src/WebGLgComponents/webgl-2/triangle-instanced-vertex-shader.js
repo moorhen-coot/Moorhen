@@ -16,7 +16,10 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
 
     out lowp vec4 vColor;
     out lowp vec3 vNormal;
-    out lowp vec2 vTexture;
+    out highp vec2 vTexture;
+    // Where the vertex is, in the frame vNormal is in: the fragment shader's normal map works out
+    // its tangent frame from how this changes across the screen.
+    out highp vec3 vModelPos;
     out mediump mat4 mvInvMatrix;
     out highp vec4 ShadowCoord;
 
@@ -56,6 +59,7 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
       mvInvMatrix = uMVINVMatrix;
 
       vTexture = aVertexTexture;
+      vModelPos = theVert.xyz;
 
       // Only the hovered instance changes: above 1, so the fragment shader brightens it.
       //

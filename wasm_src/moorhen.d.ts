@@ -222,6 +222,7 @@ export interface ClassHandle {
 }
 export interface molecules_container_t extends ClassHandle {
   use_gemmi: boolean;
+  get_xmap(_0: number): Xmap_float;
   dedust_map(_0: number): number;
   set_max_number_of_simple_mesh_vertices(_0: number): void;
   get_max_number_of_simple_mesh_vertices(): number;

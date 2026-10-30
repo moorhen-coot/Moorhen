@@ -433,3 +433,60 @@ describe("a textured instanced shape", () => {
         expect(buffers[0].materials).toBeUndefined();
     });
 });
+
+describe("normal and metallic-roughness maps on a mesh part", () => {
+    const parted = (part: Partial<MeshPart>): ThreeDObject => ({
+        ...newObjectOfType("mesh"),
+        type: "mesh",
+        origin: [0, 0, 0],
+        vertices: [],
+        indices: [],
+        parts: [{ vertices: [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0], indices: [0, 1, 2, 0, 2, 3], ...part }],
+    } as ThreeDObject);
+
+    const emitMaps = async (obj: ThreeDObject) =>
+        (await getBuffersForShapes([obj])) as {
+            tex_tri?: number[][][];
+            materials?: (Record<string, unknown> | undefined)[][];
+        }[];
+
+    it("go into the material beside the base colour", async () => {
+        const buffers = await emitMaps(parted({
+            texCoords: SQUARE_UVS, texture: "wood",
+            maps: { normalTexture: "bumps", normalScale: 0.5, metallicRoughnessTexture: "grain", metallicFactor: 0, roughnessFactor: 0.7 },
+        }));
+        expect(buffers[0].materials?.[0][0]).toEqual({
+            baseColourTexture: "wood", normalTexture: "bumps", normalScale: 0.5,
+            metallicRoughnessTexture: "grain", metallicFactor: 0, roughnessFactor: 0.7,
+        });
+    });
+
+    it("bring their coordinates with them when there is no image of the part's colour", async () => {
+        const buffers = await emitMaps(parted({ texCoords: SQUARE_UVS, maps: { normalTexture: "bumps" } }));
+        expect(buffers[0].tex_tri?.[0][0]).toEqual(SQUARE_UVS);
+        expect(buffers[0].materials?.[0][0]).toEqual({ normalTexture: "bumps" });
+    });
+
+    it("are withheld without coordinates", async () => {
+        const buffers = await emitMaps(parted({ maps: { normalTexture: "bumps" } }));
+        expect(buffers[0].materials).toBeUndefined();
+    });
+
+    it("drop factors that have no map to go with", async () => {
+        const buffers = await emitMaps(parted({ texCoords: SQUARE_UVS, texture: "wood", maps: { metallicFactor: 1, normalScale: 2 } }));
+        expect(buffers[0].materials?.[0][0]).toEqual({ baseColourTexture: "wood" });
+    });
+
+    it("keep their textures alive while the part is drawn", async () => {
+        const normal = registerTexture({ width: 1, height: 1, rgba: new Uint8Array([128, 128, 255, 255]) });
+        const grain = registerTexture({ width: 1, height: 1, rgba: new Uint8Array([0, 200, 0, 255]) });
+        const obj = parted({ texCoords: SQUARE_UVS, maps: { normalTexture: normal, metallicRoughnessTexture: grain } });
+        for (let i = 0; i < 3; i++) await getBuffersForShapes([obj]);
+        expect(getTextureSource(normal)).toBeDefined();
+        expect(getTextureSource(grain)).toBeDefined();
+        await getBuffersForShapes([]);
+        await getBuffersForShapes([]);
+        expect(getTextureSource(normal)).toBeUndefined();
+        expect(getTextureSource(grain)).toBeUndefined();
+    });
+});
