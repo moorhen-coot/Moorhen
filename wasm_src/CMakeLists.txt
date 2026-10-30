@@ -608,7 +608,7 @@ if (EMSCRIPTEN)
     message(STATUS "Emscripten version: ${EMCC_VERSION}")
 endif()
 
-add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc gltf-import.cc ${coot_src}/lhasa/embind.cpp)
+add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../wasm_src_frontend/headers.cc privateer-wrappers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc small_molecule_to_cif.cc smilestopdb.cc gltf-import.cc ${coot_src}/lhasa/embind.cpp)
 
 # No TINYGLTF_IMPLEMENTATION here. libcoot already compiles tinygltf's function bodies, in
 # coot-utils/gltf-export.cc, so defining it again for this file produces a second copy of every
@@ -768,10 +768,11 @@ install(FILES ${coot_src}/data/Components-inchikey.ich DESTINATION ${CMAKE_CURRE
 install(DIRECTORY ${lhasa_react_src}/public/icons DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets/pixmaps/lhasa_icons)
 
 # Standalone gemmi WASM module — no pthreads, no coot, no SharedArrayBuffer required
-add_executable(gemmi-wasm gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc gemmi-types-wrappers.cc)
+add_executable(gemmi-wasm privateer-wrappers.cc gemmi-wrappers.cc gemmi-cif-wrappers.cc gemmi-data-wrappers.cc gemmi-types-wrappers.cc)
 target_compile_options(gemmi-wasm PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations)
 set_target_properties(gemmi-wasm PROPERTIES COMPILE_FLAGS "-Wno-deprecated-builtins -Wno-deprecated-declarations")
 target_include_directories(gemmi-wasm PRIVATE
+    ${coot_src}
     ${CMAKE_INSTALL_PREFIX}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${DEPS_INCLUDE_DIRS}

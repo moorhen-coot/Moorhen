@@ -26,7 +26,7 @@ export type ValidationOption = {
 
 
 const updateValidationData = async (moorhenInstance: MoorhenInstance, molecule: MoorhenMolecule, map?: number, ) => {
-        const skipDensity = map ? false : true;
+        const skipDensity = map === undefined || map === null;
         if (!molecule || molecule.molNo === null) {
             return;
         }
@@ -48,23 +48,23 @@ const updateValidationData = async (moorhenInstance: MoorhenInstance, molecule: 
             addValidationDataToSeqViewerSequences(sequences, BValidationData, "B Factor", "mpl Viridis", undefined, (value) => { return Math.min(value / 100 , 1); });
 
             if (!skipDensity) {
-                const MMRRCC = (await moorhenInstance.commandCentre.cootCommand(
-                    {
-                        message: "coot_command",
-                        command: "mmrrcc",
-                        returnType: "mmrrcc_stats",
-                        commandArgs: [molecule.molNo, "A", map],
-                    },
-                    false
-                )) as WorkerResponse<libcootApi.MMRCCStatsJS>;
+                // const MMRRCC = (await moorhenInstance.commandCentre.cootCommand(
+                //     {
+                //         message: "coot_command",
+                //         command: "mmrrcc",
+                //         returnType: "mmrrcc_stats",
+                //         commandArgs: [molecule.molNo, "A", map],
+                //     },
+                //     false
+                // )) as WorkerResponse<libcootApi.MMRCCStatsJS>;
 
-                addValidationDataToSeqViewerSequences(
-                    sequences,
-                    cootMMRCCToSeqViewer(MMRRCC.data.result.result),
-                    "Density",
-                    undefined,
-                    true,              
-                );
+                // addValidationDataToSeqViewerSequences(
+                //     sequences,
+                //     cootMMRCCToSeqViewer(MMRRCC.data.result.result),
+                //     "Density",
+                //     undefined,
+                //     true,              
+                // );
 
                 const newCootDensityCorrelationData = await moorhenInstance.cootCommand.getDensityCorrelationAnalysis(
                     molecule.molNo,
