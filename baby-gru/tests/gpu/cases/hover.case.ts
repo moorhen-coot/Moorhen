@@ -125,6 +125,28 @@ function blob(colour = BLUE, only: number | null = null, whole = false): Display
     } as unknown as DisplayBuffer;
 }
 
+/**
+ * A closed slab, one point's: a front face towards the viewer, then a back face 2 A behind it
+ * facing away, drawn after it. Transparent, both show; lit, only the front should.
+ */
+function slab(colour: number[]): DisplayBuffer {
+    const front = quads([-8], 16, colour);
+    const positions = [...front.positions, -8, -2, -2, -8, 2, -2, 8, 2, -2, 8, -2, -2];
+    const normals = [...front.normals, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1];
+    const colours = [...front.colours, ...colour, ...colour, ...colour, ...colour];
+    const indices = [...front.indices, 4, 5, 6, 4, 6, 7];
+    return {
+        id: "slab", visible: true, alphaMultiplier: 1, dataVersion: 1, bufferTypes: ["TRIANGLES"],
+        triangleVertices: [new Float32Array(positions)], triangleNormals: [new Float32Array(normals)],
+        triangleColours: [new Float32Array(colours)], triangleIndexs: [new Uint32Array(indices)],
+        transparent: colour[3] < 0.99,
+        pick_info: {
+            pick_points: [[0, 0, -1]],
+            influence: { weights: new Float32Array(8).fill(1), point_indexes: new Uint32Array(8), index_offsets: Uint32Array.from({ length: 8 }, (_, v) => v + 1) },
+        },
+    } as unknown as DisplayBuffer;
+}
+
 /** Pixels covered at all (anything but the black background). */
 function coverage(data: Uint8ClampedArray): boolean[] {
     const out: boolean[] = [];
@@ -182,6 +204,9 @@ export interface HoverReport {
     overlayChunkedDiffer: number;
     overlayOverTransparentPeeled: Comparison;
     overlayOverTransparentBlended: Comparison;
+    /** A transparent closed slab: the overlay shows its front only, as the opaque orange slab. */
+    slabPeeled: Comparison;
+    slabBlended: Comparison;
     nothingHoveredDiffer: number;
     rendererErrors: string[];
 }
@@ -230,6 +255,13 @@ export default defineCase(async (_device: GPUDevice): Promise<HoverReport> => {
         const glassBlended = await shot([blob(glass)], camera({ transparency: false }));
         const overlayBlended = await shot([blob(glass)], camera({ hoveridx: 0, hover_point: 0, transparency: false }));
 
+        const slabOrange = await shot([slab(ORANGE)]);
+        const slabRegion = coverage(slabOrange);
+        const slabGlassPeeled = await shot([slab(glass)], camera({ transparency: true }));
+        const slabPeeled = await shot([slab(glass)], camera({ hoveridx: 0, hover_point: 0, transparency: true }));
+        const slabGlassBlended = await shot([slab(glass)], camera({ transparency: false }));
+        const slabBlended = await shot([slab(glass)], camera({ hoveridx: 0, hover_point: 0, transparency: false }));
+
         // A hover on something with nothing to light (an instance index past the end, a point of a
         // mesh with no lists): the picture as it was.
         const nothing = await shot([strip(), blob(BLUE, null)], camera({ hoveridx: 5, hover_point: 0 }));
@@ -248,6 +280,8 @@ export default defineCase(async (_device: GPUDevice): Promise<HoverReport> => {
             overlayChunkedDiffer: differ(overlayChunked, overlayPoint),
             overlayOverTransparentPeeled: compare(overlayPeeled, glassPeeled, blobOrange, left),
             overlayOverTransparentBlended: compare(overlayBlended, glassBlended, blobOrange, left),
+            slabPeeled: compare(slabPeeled, slabGlassPeeled, slabOrange, slabRegion),
+            slabBlended: compare(slabBlended, slabGlassBlended, slabOrange, slabRegion),
             nothingHoveredDiffer: differ(nothing, nothingPlain),
             rendererErrors,
         };

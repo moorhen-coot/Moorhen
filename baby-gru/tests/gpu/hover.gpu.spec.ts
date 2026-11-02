@@ -29,6 +29,9 @@ test("the hover lights sections, instances and smooth meshes as WebGL does", asy
     // Over a transparent mesh, peeled or blended: on top, as opaque as the share.
     litExactlyThere(r.overlayOverTransparentPeeled);
     litExactlyThere(r.overlayOverTransparentBlended);
+    // Only the nearest surface of a transparent mesh lights, not its back faces too.
+    litExactlyThere(r.slabPeeled);
+    litExactlyThere(r.slabBlended);
     // A stale hover lights nothing.
     expect(r.nothingHoveredDiffer).toBe(0);
 });

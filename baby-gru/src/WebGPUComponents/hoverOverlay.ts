@@ -6,6 +6,12 @@
  * WebGL packs a mesh's influence lists into three textures; here they are storage buffers, made
  * the first time the mesh is hovered and kept while it stays in the scene with the same lists.
  * A mesh whose lists are bigger than one storage binding goes without the overlay, with a warning.
+ *
+ * Only the mesh's nearest surface lights, as in WebGL. Drawn over a transparent mesh - whose depth
+ * is in no depth buffer - the overlay alone would show every layer of the mesh at once, its back
+ * faces (flat, paler) blended over its front ones in whatever order they come. So the mesh's depth
+ * is laid down first, in the pass's depth buffer, and the overlay then draws only where it is
+ * level with that. For an opaque mesh the depth is already there and nothing changes.
  */
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
 import type { InfluenceData } from '../WebGLgComponents/glResources';
@@ -40,6 +46,7 @@ export class HoverOverlayLayer {
     readonly layout: GPUBindGroupLayout;
     private readonly pipelineLayout: GPUPipelineLayout;
     private pipeline: GPURenderPipeline | null = null;
+    private depthPipeline: GPURenderPipeline | null = null;
     private readonly uniforms: GPUBuffer;
     /** Per buffer: its lists on the GPU. */
     private readonly influences = new Map<DisplayBuffer, InfluenceBuffers>();
@@ -71,17 +78,20 @@ export class HoverOverlayLayer {
         const group = overlay.whole ? this.wholeBindGroup() : this.influenceBindGroup(overlay.buffer, overlay.influence);
         if (!group) return false;
         this.device.queue.writeBuffer(this.uniforms, 0, new Uint32Array([overlay.point >>> 0, overlay.mask >>> 0, overlay.whole ? 1 : 0, 0]));
-        pass.setPipeline(this.ensurePipeline());
         pass.setBindGroup(2, group);
-        chunks.forEach((chunk, c) => {
-            // A gathered chunk's vertex numbers are not the mesh's, so its lists cannot be found.
-            if (chunk.firstVertex === null || !drawGroups[c]) return;
-            pass.setBindGroup(1, drawGroups[c]);
-            pass.setVertexBuffer(0, chunk.position);
-            pass.setVertexBuffer(1, chunk.normal);
-            pass.setIndexBuffer(chunk.index, "uint32");
-            pass.drawIndexed(chunk.indexCount, 1, 0, chunk.baseVertex);
-        });
+        // The mesh's depth, then the overlay level with it.
+        for (const pipeline of [this.ensureDepthPipeline(), this.ensurePipeline()]) {
+            pass.setPipeline(pipeline);
+            chunks.forEach((chunk, c) => {
+                // A gathered chunk's vertex numbers are not the mesh's, so its lists cannot be found.
+                if (chunk.firstVertex === null || !drawGroups[c]) return;
+                pass.setBindGroup(1, drawGroups[c]);
+                pass.setVertexBuffer(0, chunk.position);
+                pass.setVertexBuffer(1, chunk.normal);
+                pass.setIndexBuffer(chunk.index, "uint32");
+                pass.drawIndexed(chunk.indexCount, 1, 0, chunk.baseVertex);
+            });
+        }
         return true;
     }
 
@@ -157,18 +167,27 @@ export class HoverOverlayLayer {
      * none, as drawCore draws its overlay (depthFunc LEQUAL, depthMask false, blending on).
      */
     private ensurePipeline(): GPURenderPipeline {
-        if (this.pipeline) return this.pipeline;
+        this.pipeline ??= this.makePipeline("hover overlay", this.target, false);
+        return this.pipeline;
+    }
+
+    /** The mesh's depth alone, colour untouched: the same vertex shader, so the same depths. */
+    private ensureDepthPipeline(): GPURenderPipeline {
+        this.depthPipeline ??= this.makePipeline("hover overlay depth", { format: this.target.format, writeMask: 0 }, true);
+        return this.depthPipeline;
+    }
+
+    private makePipeline(label: string, target: GPUColorTargetState, writeDepth: boolean): GPURenderPipeline {
         const vec3 = (location: number): GPUVertexBufferLayout =>
             ({ arrayStride: 12, stepMode: "vertex", attributes: [{ shaderLocation: location, offset: 0, format: "float32x3" }] });
-        this.pipeline = this.device.createRenderPipeline({
-            label: "hover overlay",
+        return this.device.createRenderPipeline({
+            label,
             layout: this.pipelineLayout,
             vertex: { module: this.module, entryPoint: "vs_hover_overlay", buffers: [vec3(0), vec3(1)] },
-            fragment: { module: this.module, entryPoint: "fs_main", targets: [this.target] },
+            fragment: { module: this.module, entryPoint: "fs_main", targets: [target] },
             primitive: { topology: "triangle-list", cullMode: "none", frontFace: "ccw" },
-            depthStencil: { format: this.depthFormat, depthWriteEnabled: false, depthCompare: "less-equal" },
+            depthStencil: { format: this.depthFormat, depthWriteEnabled: writeDepth, depthCompare: "less-equal" },
             multisample: { count: this.sampleCount },
         });
-        return this.pipeline;
     }
 }
