@@ -169,6 +169,13 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
         setInternalValue(props.value?.toFixed(decimalDigits) ?? "");
     };
 
+    // A step added to the value (0.1 + 0.2…) is rounded to the decimal digits shown
+    const setValueFromButton = (value: number) => {
+        const rounded = parseFloat(value.toFixed(decimalDigits));
+        props.setValue(rounded);
+        setInternalValue(rounded.toFixed(decimalDigits));
+    };
+
     const inputWidth = width ? width : `${3 + 0.6 * decimalDigits}rem`;
     const showButtons = type === "number" || type === "numberForm" || props.showButtons;
     if (showButtons) {
@@ -216,7 +223,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                     <PlusMinusButton
                         step={buttonSteps ?? Math.pow(10, -decimalDigits)}
                         value={props.value}
-                        setValue={(val) => {props.setValue(val); setInternalValue(val.toFixed(decimalDigits));}}
+                        setValue={setValueFromButton}
                         type="arrow"
                         style={buttonStyle}
                         isDisabled={disabled}
@@ -225,7 +232,7 @@ export const MoorhenNumberInput = (props: MoorhenNumberInputProps) => {
                     <PlusMinusButton
                         step={-(buttonSteps ?? Math.pow(10, -decimalDigits))}
                         value={props.value}
-                        setValue={(val) => {props.setValue(val); setInternalValue(val.toFixed(decimalDigits));}}
+                        setValue={setValueFromButton}
                         type="arrow"
                         style={buttonStyle}
                         isDisabled={disabled}

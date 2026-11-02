@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { Provider } from "react-redux";
@@ -175,5 +175,15 @@ describe("MoorhenNumberInput", () => {
         renderWithinInstance(<MoorhenNumberInput value={42} />);
         const input = screen.getByRole("textbox");
         expect(input.className).toContain("moorhen__input__valid");
+    });
+
+    test("an arrow button step is rounded to the decimal digits, without floating point noise", () => {
+        const setValue = jest.fn();
+        const { container } = renderWithinInstance(<MoorhenNumberInput value={19.9} setValue={setValue} decimalDigits={1} showButtons={true} />);
+        // The second arrow is the decrement: 19.9 - 0.1 is 19.799999999999997 in floating point
+        const down = container.querySelectorAll("button")[1];
+        fireEvent.mouseDown(down);
+        fireEvent.mouseUp(down);
+        expect(setValue).toHaveBeenLastCalledWith(19.8);
     });
 });

@@ -4,6 +4,7 @@ import { MoorhenColourPickerElement } from "./MoorhenColourPickerElement";
 import { MoorhenInfoCardElement } from "./MoorhenInfoCardElement";
 import { MoorhenMapSelectElement } from "./MoorhenMapSelectElement";
 import { MoorhenMoleculeSelectElement } from "./MoorhenMoleculeSelectElement";
+import { MoorhenNumberInputElement } from "./MoorhenNumberInputElement";
 import { MoorhenSliderElement } from "./MoorhenSliderElement";
 import { MoorhenToggleElement } from "./MoorhenToggleElement";
 
@@ -24,6 +25,8 @@ export { MoorhenColourPickerElement } from "./MoorhenColourPickerElement";
 export type { MoorhenColourPickerElementAttributes } from "./MoorhenColourPickerElement";
 export { MoorhenInfoCardElement } from "./MoorhenInfoCardElement";
 export type { MoorhenInfoCardElementAttributes } from "./MoorhenInfoCardElement";
+export { MoorhenNumberInputElement } from "./MoorhenNumberInputElement";
+export type { MoorhenNumberInputElementAttributes } from "./MoorhenNumberInputElement";
 
 const elements: Record<string, CustomElementConstructor> = {
     "moorhen-button": MoorhenButtonElement,
@@ -34,6 +37,7 @@ const elements: Record<string, CustomElementConstructor> = {
     "moorhen-slider": MoorhenSliderElement,
     "moorhen-colour-picker": MoorhenColourPickerElement,
     "moorhen-info-card": MoorhenInfoCardElement,
+    "moorhen-number-input": MoorhenNumberInputElement,
 };
 
 /** Defines the Moorhen UI elements (`<moorhen-button>`, …). Called by `registerMoorhenWebComponent`. */

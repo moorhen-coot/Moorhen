@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { waitFor } from "@testing-library/react";
+import { fireEvent, waitFor } from "@testing-library/react";
 import {
     MoorhenButtonElement,
     MoorhenChainSelectElement,
@@ -7,6 +7,7 @@ import {
     MoorhenInfoCardElement,
     MoorhenMapSelectElement,
     MoorhenMoleculeSelectElement,
+    MoorhenNumberInputElement,
     MoorhenSliderElement,
     MoorhenToggleElement,
 } from "../../../src/WebComponent/elements";
@@ -45,6 +46,7 @@ beforeAll(() => {
     customElements.define("moorhen-slider", MoorhenSliderElement);
     customElements.define("moorhen-colour-picker", MoorhenColourPickerElement);
     customElements.define("moorhen-info-card", MoorhenInfoCardElement);
+    customElements.define("moorhen-number-input", MoorhenNumberInputElement);
 });
 
 afterEach(() => {
@@ -524,5 +526,86 @@ describe("<moorhen-info-card>", () => {
     test("uses a template's content", async () => {
         const { card } = await openCard(`<moorhen-info-card><template><h2>From a template</h2></template></moorhen-info-card>`);
         expect(card().querySelector(".moorhen__info-card-copy > h2")!.textContent).toBe("From a template");
+    });
+});
+
+describe("<moorhen-number-input>", () => {
+    const mountNumber = async (html: string) => {
+        const mounted = await mountElement<MoorhenNumberInputElement>(html, "moorhen-number-input", "input");
+        const input = () => mounted.inner<HTMLInputElement>("input");
+        const onInput = jest.fn(() => mounted.element.value);
+        const onChange = jest.fn(() => mounted.element.value);
+        mounted.element.addEventListener("input", onInput);
+        mounted.element.addEventListener("change", onChange);
+        return { ...mounted, input, onInput, onChange };
+    };
+    const later = () => new Promise(resolve => setTimeout(resolve, 10));
+
+    test("input while typing, change once when focus leaves", async () => {
+        const { element, input, onInput, onChange } = await mountNumber(`<moorhen-number-input value="8" decimal-digits="1"></moorhen-number-input>`);
+        expect(element.value).toBe(8);
+        await waitFor(() => expect(input().value).toBe("8.0"));
+
+        input().focus();
+        userSetsValue(input(), "1");
+        userSetsValue(input(), "12");
+        await waitFor(() => expect(element.value).toBe(12));
+        expect(onInput).toHaveBeenCalledTimes(2);
+        expect(onChange).not.toHaveBeenCalled();
+
+        input().blur();
+        await later();
+        expect(onChange).toHaveBeenCalledTimes(1);
+        expect(onChange).toHaveReturnedWith(12);
+    });
+
+    test("with wait-return, nothing until Enter, then input and change", async () => {
+        const { element, input, onInput, onChange } = await mountNumber(`<moorhen-number-input value="1" wait-return></moorhen-number-input>`);
+        input().focus();
+        userSetsValue(input(), "5");
+        await later();
+        expect(element.value).toBe(1);
+        expect(onInput).not.toHaveBeenCalled();
+
+        fireEvent.keyDown(input(), { key: "Enter" });
+        await later();
+        expect(element.value).toBe(5);
+        expect(onInput).toHaveBeenCalledTimes(1);
+        expect(onChange).toHaveBeenCalledTimes(1);
+    });
+
+    test("a committed value is kept within min and max", async () => {
+        const { element, input, onChange } = await mountNumber(`<moorhen-number-input value="5" min="0" max="10" wait-return></moorhen-number-input>`);
+        input().focus();
+        userSetsValue(input(), "42");
+        fireEvent.keyDown(input(), { key: "Enter" });
+        await later();
+        expect(element.value).toBe(10);
+        expect(onChange).toHaveReturnedWith(10);
+    });
+
+    test("the inner field's own input events stay inside: the page only hears the element's", async () => {
+        const { input, onInput } = await mountNumber(`<moorhen-number-input value="1"></moorhen-number-input>`);
+        input().dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+        await later();
+        // The inner field's value did not change, so the element has nothing to report
+        expect(onInput).not.toHaveBeenCalled();
+        input().focus();
+        userSetsValue(input(), "2");
+        await later();
+        expect(onInput).toHaveBeenCalledTimes(1);
+    });
+
+    test("a script setting the value fires nothing", async () => {
+        const { element, input, onInput, onChange } = await mountNumber(`<moorhen-number-input value="1" integer></moorhen-number-input>`);
+        element.value = 7;
+        await waitFor(() => expect(input().value).toBe("7"));
+        // Focus then leave, as a user would (a tick apart: the field takes the value on focus)
+        input().focus();
+        await later();
+        input().blur();
+        await later();
+        expect(onInput).not.toHaveBeenCalled();
+        expect(onChange).not.toHaveBeenCalled();
     });
 });

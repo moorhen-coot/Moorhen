@@ -110,7 +110,14 @@ export abstract class MoorhenUIElement extends HTMLElement {
         // Removed (or moved and reconnected) while waiting
         if (connection !== this._connection || !this.isConnected) return;
 
-        const shadow = this.shadowRoot ?? this.attachShadow({ mode: "open" });
+        let shadow = this.shadowRoot;
+        if (!shadow) {
+            shadow = this.attachShadow({ mode: "open" });
+            // Native `input` events cross the shadow boundary: keep the inner fields' own events in,
+            // so the page only hears the element's `input` (with its value). React's handlers, below
+            // the shadow root, still get them.
+            shadow.addEventListener("input", event => event.stopPropagation());
+        }
         const sheet = host.moorhenStyleSheet;
         if (sheet instanceof CSSStyleSheet) {
             shadow.adoptedStyleSheets = [sheet, getElementSheet()];

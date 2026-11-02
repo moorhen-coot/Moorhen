@@ -10,6 +10,7 @@ export {
     MoorhenSliderElement,
     MoorhenColourPickerElement,
     MoorhenInfoCardElement,
+    MoorhenNumberInputElement,
 } from "./elements";
 export type {
     MoorhenButtonElementAttributes,
@@ -20,6 +21,7 @@ export type {
     MoorhenSliderElementAttributes,
     MoorhenColourPickerElementAttributes,
     MoorhenInfoCardElementAttributes,
+    MoorhenNumberInputElementAttributes,
 } from "./elements";
 export type { MoorhenInstance } from "../InstanceManager";
 export type { MenuItem, MenuItemType, SubMenu, SubMenuMap } from "../components/menu-system/subMenuConfig";
