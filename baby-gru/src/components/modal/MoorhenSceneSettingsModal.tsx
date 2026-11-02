@@ -1,9 +1,9 @@
 import { HexColorInput, RgbColorPicker } from "react-colorful";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { RootState } from "@/store";
+import { useMoorhenInstance } from "@/hooks";
 import {
-    resetSceneSettings,
     setBackgroundColor,
     setClipCap,
     setDepthBlurDepth,
@@ -29,12 +29,18 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { SCENE_LOOKS, currentLook, withLook } from "../../store/sceneLooks";
+import { applySceneSettingsSnapshot } from "../../store/sceneSettingsSlice";
 import type { ShadowMapQuality } from "../../WebGLgComponents/mgWebGLParts/framebuffers";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSwatch";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { MoorhenSlidersSettings } from "./MoorhenSceneSlidersModal";
+import { CopySceneButton } from "../menu-system/SceneSelector/CopySceneButton";
+import { ResetSceneButton } from "../menu-system/SceneSelector/ResetSceneButton";
+import { SaveSceneButton } from "../menu-system/SceneSelector/SaveSceneButton";
+import { isBuiltInScene } from "../../store/userScenesSlice";
 
 const EdgeDetectPanel = () => {
     const dispatch = useDispatch();
@@ -491,14 +497,91 @@ const LightingPanel = () => {
     );
 };
 
+/** Ready-made looks (lighting and effects) for the scene shown: the one its settings match shows as selected */
+const SceneLooks = () => {
+    const dispatch = useDispatch();
+    const store = useStore<RootState>();
+    const isLocked = useSelector((state: RootState) => state.userScenes.isSceneChanging || state.movie.isPlaying);
+    const selectedLook = useSelector((state: RootState) => currentLook(state.sceneSettings)?.id);
+
+    return (
+        <MoorhenStack direction="line" align="center" gap="0.3rem" style={{ flexWrap: "wrap" }}>
+            <span>Look:</span>
+            {SCENE_LOOKS.map(look => (
+                <MoorhenButton
+                    key={look.id}
+                    variant={look.id === selectedLook ? "primary" : "secondary"}
+                    tooltip={look.description}
+                    disabled={isLocked}
+                    onClick={() => dispatch(applySceneSettingsSnapshot(withLook(store.getState().sceneSettings, look)))}
+                >
+                    {look.label}
+                </MoorhenButton>
+            ))}
+        </MoorhenStack>
+    );
+};
+
+/** Which scene these settings belong to, a way to switch, and saving / resetting its settings */
+const CurrentScenePanel = () => {
+    const moorhenInstance = useMoorhenInstance();
+    const scenes = useSelector((state: RootState) => state.userScenes.scenes);
+    const snapshots = useSelector((state: RootState) => state.userScenes.snapshots);
+    const selectedScene = useSelector((state: RootState) => state.userScenes.selectedScene);
+    const isLocked = useSelector((state: RootState) => state.userScenes.isSceneChanging || state.movie.isPlaying);
+    const isSnapshot = snapshots.some(snapshot => snapshot.id === selectedScene);
+    const isBuiltIn = isBuiltInScene(selectedScene);
+
+    return (
+        <MoorhenStack card>
+        <MoorhenStack direction="line" style={{ flexWrap: "wrap", minWidth: 0 }}>
+            <MoorhenSelect
+                label="Scene"
+                value={selectedScene}
+                disabled={isLocked}
+                onChange={event => moorhenInstance.userScene.select(event.target.value)}
+            >
+                <optgroup label="Scenes">
+                    {scenes.map(scene => (
+                        <option key={scene.id} value={scene.id}>
+                            {scene.name}
+                        </option>
+                    ))}
+                </optgroup>
+                {snapshots.length > 0 && (
+                    <optgroup label="Snapshots">
+                        {snapshots.map(snapshot => (
+                            <option key={snapshot.id} value={snapshot.id}>
+                                {snapshot.name}
+                            </option>
+                        ))}
+                    </optgroup>
+                )}
+            </MoorhenSelect>
+            {!isSnapshot && (
+                <MoorhenStack direction="line" align="center">
+                    {/* The same controls as the scene's row in the scene selector */}
+                    {isBuiltIn && <SaveSceneButton sceneId={selectedScene} iconOnly={true} />}
+                    <CopySceneButton sceneId={selectedScene} />
+                    {isBuiltIn && <ResetSceneButton sceneId={selectedScene} />}
+                </MoorhenStack>
+            )}</MoorhenStack>
+         <SceneLooks />
+         {isSnapshot && (
+            <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>Snapshots cannot be changed: changes made here are not kept, unless you create a new scene or snapshot.</div>)}
+        
+        </MoorhenStack>
+       
+    );
+};
+
 export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
     const panelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const [newSlidersMode, setNewSlidersMode] = useState<boolean>(true);
-    const dispatch = useDispatch();
     return (
         <MoorhenStack direction={props.stackDirection}>
-            <MoorhenButton onClick={() => dispatch(resetSceneSettings())} > Reset </MoorhenButton>
+            <CurrentScenePanel />
             <MoorhenToggle
                 label="Use new fog/clip/blur sliders"
                 checked={newSlidersMode}

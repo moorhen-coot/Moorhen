@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { RootState } from '../store/MoorhenReduxStore';
 import { setContourLevel, setMapFastRadius } from '../store/mapContourSettingsSlice';
 import { moorhen } from '../types/moorhen';
+import { gpuMapContourSetting } from '../WebGPUComponents/mapContour/setting';
 import { useStateWithRef } from './useStateWithRef';
 
 interface UseFastContourModeProps {
@@ -91,7 +92,8 @@ export const useFastContourMode = ({
     const fastMapContourLevel = (newContourLevel: number) => {
         if (!map) return;
 
-        if (mapRadius <= radiusThreshold && !isInFastMode) {
+        // GPU contours ignore the fast radius, so fast mode would only unlock the origin.
+        if ((mapRadius <= radiusThreshold || gpuMapContourSetting.enabled) && !isInFastMode) {
             dispatch(setContourLevel({ molNo: map.molNo, contourLevel: newContourLevel }));
             return;
         }

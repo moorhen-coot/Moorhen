@@ -25,10 +25,8 @@ export const ImportMapCoefficients = () => {
     const sigFobsSelectRef = useRef<null | HTMLSelectElement>(null);
     const fobsSelectRef = useRef<null | HTMLSelectElement>(null);
     const freeRSelectRef = useRef<null | HTMLSelectElement>(null);
-    const isDiffRef = useRef<null | HTMLInputElement>(null);
-    const useWeightRef = useRef<null | HTMLInputElement>(null);
-    const calcStructFactRef = useRef<null | HTMLInputElement>(null);
-
+    const [isDiff, setIsDiff] = useState<boolean>(false);
+    const [useWeight, setUseWeight] = useState<boolean>(false);
     const [calcStructFact, setCalcStructFact] = useState<boolean>(false);
     const [columns, setColumns] = useState<{ [colType: string]: string }>({});
 
@@ -52,12 +50,12 @@ export const ImportMapCoefficients = () => {
                 F: fSelectRef.current.value,
                 PHI: phiSelectRef.current.value,
                 W: wSelectRef.current.value,
-                isDifference: isDiffRef.current.checked,
-                useWeight: useWeightRef.current.checked,
+                isDifference: isDiff,
+                useWeight: useWeight,
                 Fobs: fobsSelectRef.current.value,
                 SigFobs: sigFobsSelectRef.current.value,
                 FreeR: freeRSelectRef.current.value,
-                calcStructFact: calcStructFactRef.current.checked,
+                calcStructFact: calcStructFact,
             };
 
             try {
@@ -79,7 +77,7 @@ export const ImportMapCoefficients = () => {
                 console.log(`Cannot read file`);
             }
         }
-    }, [filesRef.current, isDiffRef.current, commandCentre, molecules, maps]);
+    }, [isDiff, useWeight, calcStructFact, commandCentre, molecules, maps]);
 
     return (
         <>
@@ -123,25 +121,21 @@ export const ImportMapCoefficients = () => {
                         ))}
                 </MoorhenSelect>
             </MoorhenStack>
-            <MoorhenToggle label="is diff map" name="isDifference" type="checkbox" ref={isDiffRef} />
-            <MoorhenToggle label="use weight" name="useWeight" type="checkbox" ref={useWeightRef} />
+            <MoorhenToggle label="is diff map" name="isDifference" type="checkbox" checked={isDiff} toggle={setIsDiff} />
+            <MoorhenToggle label="use weight" name="useWeight" type="checkbox" checked={useWeight} toggle={setUseWeight} />
             <p />
             <MoorhenToggle
-                ref={calcStructFactRef}
                 label="assign labels for structure factor calculation?"
                 name="calcStructFactors"
                 type="checkbox"
-                onChange={() =>
-                    setCalcStructFact(prev => {
-                        return !prev;
-                    })
-                }
+                checked={calcStructFact}
+                toggle={setCalcStructFact}
             />
             <MoorhenStack direction="line">
                 <MoorhenSelect
                     label="Fobs"
                     inline={false}
-                    disabled={!calcStructFactRef.current?.checked}
+                    disabled={!calcStructFact}
                     ref={fobsSelectRef}
                     defaultValue="FP"
                     onChange={() => {}}
@@ -157,7 +151,7 @@ export const ImportMapCoefficients = () => {
                 <MoorhenSelect
                     label="SIGFobs"
                     inline={false}
-                    disabled={!calcStructFactRef.current?.checked}
+                    disabled={!calcStructFact}
                     ref={sigFobsSelectRef}
                     defaultValue="SIGFP"
                     onChange={() => {}}
@@ -173,7 +167,7 @@ export const ImportMapCoefficients = () => {
                 <MoorhenSelect
                     label="Free R"
                     inline={false}
-                    disabled={!calcStructFactRef.current?.checked}
+                    disabled={!calcStructFact}
                     ref={freeRSelectRef}
                     defaultValue="FREER"
                     onChange={() => {}}

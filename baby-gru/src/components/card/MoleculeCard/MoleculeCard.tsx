@@ -64,6 +64,8 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     const commandCentre = useCommandCentre();
     const urlPrefix = usePaths().urlPrefix;
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    // Default colour rules belong to the scene: the colour rules card starts again whenever one is shown
+    const shownRevision = useSelector((state: RootState) => state.userScenes.shownRevision);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted);
@@ -211,7 +213,6 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     }, [symmetryRadius]);
 
     useEffect(() => {
-        dispatch(showMolecule(props.molecule));
         props.molecule.representations
             .filter(item => {
                 return !item.isCustom && item.style !== "hover";
@@ -465,7 +466,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         tooltip="Edit general color rules"
                         style={{ width: "5rem" }}
                     >
-                        <MoorhenModifyColourRulesCard molecule={props.molecule} />
+                        <MoorhenModifyColourRulesCard key={shownRevision} molecule={props.molecule} />
                     </MoorhenPopoverButton>
                     <MoorhenPopoverButton
                         type="default"
@@ -646,7 +647,31 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                                             <>
                                                 <b>NEF restraints</b>
                                                 <br />
-                                                Visualisation settings for NMR restraints loaded in from NEF files.
+                                                Draws the NMR distance restraints from the loaded NEF file for the residue at
+                                                the centre of the view, as lines between restrained atom pairs.
+                                                <br />
+                                                <span
+                                                    style={{
+                                                        display: "inline-block",
+                                                        width: "0.8em",
+                                                        height: "0.8em",
+                                                        background: "rgb(179, 51, 179)",
+                                                        verticalAlign: "middle",
+                                                    }}
+                                                />
+                                                &nbsp;Magenta: ambiguous restraint (all possible atom pairs are drawn)
+                                                <br />
+                                                <span
+                                                    style={{
+                                                        display: "inline-block",
+                                                        width: "0.8em",
+                                                        height: "0.8em",
+                                                        background: "black",
+                                                        border: "1px solid grey",
+                                                        verticalAlign: "middle",
+                                                    }}
+                                                />
+                                                &nbsp;Black: unambiguous restraint
                                             </>
                                         }
                                     />

@@ -28,7 +28,9 @@ var thick_lines_normal_vertex_shader_source = `#version 300 es\n
     // Lit thick lines are not textured and are not meant to be: the texture work is for the mesh
     // and instanced-mesh paths. Zero here, and the fragment shader never samples because
     // hasBaseColourTexture is false for anything that is not a textured mesh sub-buffer.
-    out lowp vec2 vTexture;
+    out highp vec2 vTexture;
+    // Likewise only to satisfy the fragment shader; read only by its normal map.
+    out highp vec3 vModelPos;
 
     void main(void) {
 
@@ -41,6 +43,7 @@ var thick_lines_normal_vertex_shader_source = `#version 300 es\n
 
         gl_Position =  uPMatrix * vec4(lineY+aVertexPosition.xyz,1.0);
         vTexture = vec2(0.0, 0.0);
+        vModelPos = theVert.xyz;
         vColor = aVertexColour;
         vNormal = -aVertexRealNormal;
         if(dot(vNormal,screenZ)<0.0)

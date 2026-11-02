@@ -15,6 +15,7 @@ import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule, ColourRuleType } from "./MoorhenColourRule";
 import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
+import { cidBuildParams } from "./Representation/RepresentationBuilder";
 import {
     centreOnGemmiAtoms,
     doDownload,
@@ -81,6 +82,15 @@ export type NEFRestraint = {
     ambiguityFlag: boolean;
     restraintID: number;
 }
+
+/**
+ * Whether a representation's buffer is a mesh, rather than one of the plain records appendOtherData
+ * also returns for text labels and textured images ({labels, uuid}, {texturedShapes, uuid}).
+ * Those records are published to the store with the meshes, and the store freezes plain objects,
+ * so setting a property on one throws ("Cannot add property ..., object is not extensible").
+ */
+const isMeshBuffer = (buffer: unknown): buffer is moorhen.DisplayObject =>
+    typeof buffer === "object" && buffer !== null && "bufferTypes" in buffer;
 
 /**
  * Represents a molecule
@@ -163,6 +173,7 @@ export class MoorhenMolecule {
     isLigand: boolean;
     coordsFormat: moorhen.coorFormats;
     cachedPrivateerValidation: privateer.ResultsEntry[];
+    cachedPrivateerCremerPopleParameters: privateer.CremerPopleParameters[];
     cachedGemmiAtoms: moorhen.AtomInfo[];
     cachedLigandSVGs: { [key: string]: string };
     moleculeDiameter: number;
@@ -334,8 +345,8 @@ export class MoorhenMolecule {
             this.symmetryOn = false;
         } else {
             this.representations.forEach(representation => {
-                representation.buffers.forEach(buffer => {
-                    buffer.changeColourWithSymmetry = true;
+                representation.buffers?.forEach(buffer => {
+                    if (isMeshBuffer(buffer)) buffer.changeColourWithSymmetry = true;
                 });
             });
         }
@@ -350,8 +361,8 @@ export class MoorhenMolecule {
         if (this.symmetryOn) {
             this.biomolOn = false;
             this.representations.forEach(representation => {
-                representation.buffers.forEach(buffer => {
-                    buffer.changeColourWithSymmetry = true;
+                representation.buffers?.forEach(buffer => {
+                    if (isMeshBuffer(buffer)) buffer.changeColourWithSymmetry = true;
                 });
             });
         }
@@ -504,8 +515,8 @@ export class MoorhenMolecule {
         }
         this.representations.forEach(representation => representation.drawSymmetry());
         this.representations.forEach(representation => {
-            representation.buffers.forEach(buffer => {
-                buffer.changeColourWithSymmetry = false;
+            representation.buffers?.forEach(buffer => {
+                if (isMeshBuffer(buffer)) buffer.changeColourWithSymmetry = false;
             });
         });
         if (this.adaptativeBondsEnabled) {
@@ -1561,6 +1572,7 @@ export class MoorhenMolecule {
         representation.hbondedTo = hbondedTo;
         representation.neighboursDistance = neighboursDistance;
         representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
+        representation.buildParams = cidBuildParams(representation);
 
         await representation.draw();
         this.representations.push(representation);
@@ -3011,10 +3023,12 @@ export class MoorhenMolecule {
             return this.cachedPrivateerValidation;
         }
 
+        const input_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(this.gemmiStructure)
         const result = (await this.commandCentre.cootCommand(
             {
                 command: "privateer_validate",
-                commandArgs: [this.molNo],
+                message: "privateer_validate",
+                commandArgs: [input_cif_string],
                 returnType: "privateer_results",
             },
             false
@@ -3026,6 +3040,35 @@ export class MoorhenMolecule {
 
         return result.data.result.result;
     }
+
+    /**
+     * Get results of privateer validation for this molecule instance
+     * @param {boolean} useCache - Whether to use the cached results or not
+     * @returns {Promise<privateer.CremerPopleParameters[]>} A list of results from privateer validation
+     */
+    async getPrivateerCremerPopleParameters(useCache: boolean = false): Promise<privateer.CremerPopleParameters[]> {
+        if (useCache && this.cachedPrivateerCremerPopleParameters && !this.atomsDirty) {
+            return this.cachedPrivateerCremerPopleParameters;
+        }
+
+        const input_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(this.gemmiStructure)
+        const result = (await this.commandCentre.cootCommand(
+            {
+                command: "privateer_calculate_cremer_pople_parameters",
+                message: "privateer_calculate_cremer_pople_parameters",
+                commandArgs: [input_cif_string],
+                returnType: "privateer_cremer_pople_parameters",
+            },
+            false
+        )) as moorhen.WorkerResponse<privateer.CremerPopleParameters[]>;
+
+        if (useCache) {
+            this.cachedPrivateerCremerPopleParameters = result.data.result.result;
+        }
+
+        return result.data.result.result;
+    }
+
 
     /**
      * Get SVG descriptions for the ligand environment

@@ -19,10 +19,12 @@ import { loadMtzMaps } from "./MtzLoading";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { modalKeys } from "./enums";
+import { MOVIE_EXTENSION } from "./movieContainer";
+import { openMovieFile } from "./openMovieFile";
 import { decompressDracoGltf } from "./gltfDraco";
 import { createDracoDecode } from "./gltfDracoDecoder";
 import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
-import { gltfMaterialTextures } from "./gltfTextures";
+import { gltfMaterials } from "./gltfTextures";
 // import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
@@ -144,6 +146,12 @@ const loadSession = async (session: string | object, moorhenInstance: MoorhenIns
         status = await MoorhenTimeCapsule.loadSessionFromJsonString(session as string, moorhenInstance);
     } else {
         status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(session, moorhenInstance);
+    }
+    if (status === MoorhenTimeCapsule.NEWER_VERSION_STATUS) {
+        throw new Error(MoorhenTimeCapsule.NEWER_VERSION_MESSAGE);
+    }
+    if (status === MoorhenTimeCapsule.MOVIE_PLAYING_STATUS) {
+        throw new Error(MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE);
     }
     if (status === -1) {
         throw new Error("Failed to read backup (deprecated format)");
@@ -604,7 +612,7 @@ export const loadGltfFile = async (
     // a line, and handing sixteen megabytes of pixels across the worker boundary per texture to
     // avoid that would be a poor trade. A material with no image, or one we could not decode,
     // simply gets no entry and its geometry draws in its base colour.
-    const textures = await gltfMaterialTextures(
+    const materials = await gltfMaterials(
         payload.buffer.slice(payload.byteOffset, payload.byteOffset + payload.byteLength) as ArrayBuffer,
         new Map(payloadSidecars.map(sidecar => [sidecar.name, sidecar.data]))
     );
@@ -653,7 +661,7 @@ export const loadGltfFile = async (
     const parts = (mesh.groups ?? [])
         .filter(group => group.vertices.length > 0 && group.indices.length >= 3)
         .map(group => {
-            const texture = textures.get(group.material);
+            const material = materials.get(group.material);
             const vertexCount = group.vertices.length / 3;
             return {
                 vertices: asNumbers(group.vertices),
@@ -662,8 +670,13 @@ export const loadGltfFile = async (
                 colours: asNumbers(group.colours),
                 // Both or neither: coordinates with no texture leave the attribute enabled for
                 // nothing, and a texture with no coordinates would paint the part one flat colour.
-                ...(texture && group.texCoords.length === vertexCount * 2
-                    ? { texCoords: asNumbers(group.texCoords), texture }
+                // Any of the material's textures needs them - a normal map as much as an image.
+                ...(material && group.texCoords.length === vertexCount * 2
+                    ? {
+                        texCoords: asNumbers(group.texCoords),
+                        ...(material.baseColour ? { texture: material.baseColour } : {}),
+                        ...(material.maps ? { maps: material.maps } : {}),
+                    }
                     : {}),
             };
         });
@@ -823,9 +836,23 @@ export const autoOpenFiles = async (
             try {
                 await handleSessionUpload(file, moorhenInstance);
             } catch (e) {
-                dispatch(enqueueSnackbar({ message: `Failed to load session ${file.name}`, variant: "warning" }));
+                const message =
+                    e instanceof Error && e.message === MoorhenTimeCapsule.NEWER_VERSION_MESSAGE
+                        ? e.message
+                        : `Failed to load session ${file.name}`;
+                dispatch(enqueueSnackbar({ message, variant: "warning" }));
             }
             break; //We only load the first session.
+        } else if (file.name.toLowerCase().endsWith(MOVIE_EXTENSION)) {
+            // A movie file, which is a movie description plus the session it was made against.
+            // Handled like a session and for the same reason: it rebuilds the whole scene, so
+            // there is nothing sensible to do with a second one, or with anything opened after it.
+            const opened = await openMovieFile(file, moorhenInstance);
+            dispatch(enqueueSnackbar({
+                message: opened.message,
+                variant: opened.ok ? "info" : "warning",
+            }));
+            break;
         } else if (file.name.toLowerCase().endsWith(".gltf") || file.name.toLowerCase().endsWith(".glb")) {
             try {
                 // The whole selection, not just this file: a .gltf takes its buffers and images
@@ -867,7 +894,7 @@ export const autoOpenFiles = async (
         ) {
             try {
                 let newMap: MoorhenMap = null;
-                const isDiff = file.name.includes("_fofc.mrc") || file.name.includes("_diff.ccp4");
+                const isDiff = /fofc|diff|delfwt|mfo-?dfc/i.test(file.name);
                 const isLocres = file.name.includes("_locres.mrc");
                 try {
                     if (file.name.endsWith(".gz")) {

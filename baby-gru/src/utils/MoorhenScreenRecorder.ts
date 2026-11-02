@@ -4,6 +4,9 @@ import { getMathJaxSVG } from '../utils/mathJaxUtils';
 import { RootState } from "../store/MoorhenReduxStore";
 import { Store } from "redux";
 import { doDownload, downloadUrl } from "./utils";
+import { DEFAULT_QUALITY, bitrateFor } from "./videoBitrate";
+import type { VideoQuality } from "./videoBitrate";
+import { SCREENSHOT_SIDE, screenshotSize } from "./screenshotSize";
 
 export interface ImageFrac2D {
     x: number
@@ -17,30 +20,12 @@ export interface ImageFrac2D {
 /** Frames per second requested from the canvas. */
 const CAPTURE_FPS = 30;
 
-export type VideoQuality = "low" | "medium" | "high";
-
 /**
- * Bits spent per pixel per frame for each quality preset, from which the bitrate is derived.
- *
- * A fixed bitrate cannot suit both a small window and a 4K one: the same number is wasteful for
- * the first and blocky for the second. Moorhen's thin bonds and map mesh are the first thing to
- * break up when bits run short, and Firefox's realtime VP8 encoder needs noticeably more than
- * Chrome's for the same result. At 1080p these come to roughly 9, 25 and 62 Mbps. VP9 encoders
- * (Chrome) spend only what the content needs, so they often stay well below the request.
- *
- * It replaces a literal 25000000000 carrying the comment "2.5Mbps". That was ten thousand times
- * its stated intent; browsers clamp the request, so it had been harmless, but nobody reading it
- * could tell what was meant.
+ * Re-exported so `import type { VideoQuality } from ".../MoorhenScreenRecorder"` keeps working.
+ * The presets and the arithmetic now live in videoBitrate, shared with the movie export - see
+ * there for why a bitrate has to scale with the frame.
  */
-const BITS_PER_PIXEL_PER_FRAME: Record<VideoQuality, number> = {
-    low: 0.15,
-    medium: 0.4,
-    high: 1.0,
-};
-
-const MIN_BITRATE = 4_000_000;
-// Keeps a 4K canvas on "high" (~250 Mbps uncapped) to a file size people can still handle.
-const MAX_BITRATE = 160_000_000;
+export type { VideoQuality } from "./videoBitrate";
 
 /**
  * Container and codec, in order of preference, filtered by what the browser admits to.
@@ -64,8 +49,14 @@ export class ScreenRecorder  {
     glRef: React.RefObject<webGL.MGWebGL>;
     store: Store<RootState>;
     _isRecording: boolean;
+    /**
+     * The canvas the recording in progress is taken from: WebGL's, or the WebGPU main view's if
+     * that was drawing when it started. The WebGPU main view hands frames back to WebGL only while
+     * WebGL's canvas is the one being recorded.
+     */
+    recordingCanvas: HTMLCanvasElement | null = null;
     videoName = "moorhen_video";
-    videoQuality: VideoQuality = "medium";
+    videoQuality: VideoQuality = DEFAULT_QUALITY;
     private recordedMimeType = "";
 
     constructor(glRef: React.RefObject<webGL.MGWebGL>, canvasRef:React.RefObject<HTMLCanvasElement>, store: Store<RootState>){
@@ -98,16 +89,16 @@ export class ScreenRecorder  {
      * encoder that has already written a header. Only a resize between recordings is fixed here.
      */
     private createRecorder = (): MediaRecorder | null => {
-        const canvas = this.canvasRef?.current;
+        // The canvas showing the view now (MGWebGL.getCanvasRef): WebGPU's while it draws.
+        const canvas = this.glRef?.current?.getCanvasRef()?.current ?? this.canvasRef?.current;
+        this.recordingCanvas = canvas ?? null;
         if (!canvas) {
             console.warn("Attempted to record the screen before the canvas existed...");
             return null;
         }
 
         const stream = canvas.captureStream(CAPTURE_FPS);
-        const pixels = Math.max(1, canvas.width * canvas.height);
-        const bitrate = Math.round(
-            Math.min(MAX_BITRATE, Math.max(MIN_BITRATE, pixels * CAPTURE_FPS * BITS_PER_PIXEL_PER_FRAME[this.videoQuality])));
+        const bitrate = bitrateFor(this.videoQuality, canvas.width, canvas.height, CAPTURE_FPS);
 
         // isTypeSupported saying yes does not guarantee the constructor will accept it at this
         // resolution and bitrate, so a refusal falls back to letting the browser choose rather
@@ -228,10 +219,19 @@ export class ScreenRecorder  {
         const canvasWidth = canvasSize[0]
         const canvasHeight = canvasSize[1]
 
-        //Transparent backgound currently only works with WebGL2
-        pixels = this.glRef.current.getPixelData(doTransparentBackground)
-
-        if(!isWebGL2){
+        // Drawn by WebGPU when that is what shows the view (externalRenderer.ts): offscreen, at the size
+        // WebGL's screenshot would be, with its soft shadows, and transparent if asked.
+        const external = this.glRef.current?.externalRenderer;
+        if (external?.isShowing()) {
+            const { width, height } = screenshotSize(canvasWidth, canvasHeight, SCREENSHOT_SIDE);
+            const rgba = await external.snapshot(width, height, { transparentBackground: doTransparentBackground });
+            saveCanvas.width = width;
+            saveCanvas.height = height;
+            imgData = ctx.createImageData(width, height);
+            imgData.data.set(rgba);
+        } else if(!isWebGL2){
+            //Transparent backgound currently only works with WebGL2
+            pixels = this.glRef.current.getPixelData(doTransparentBackground)
 
             saveCanvas.width = canvasWidth
             saveCanvas.height = canvasHeight
@@ -246,6 +246,7 @@ export class ScreenRecorder  {
             }
         } else {
 
+            pixels = this.glRef.current.getPixelData(doTransparentBackground)
             const fbSize = this.store.getState().glRef.rttFramebufferSize
             const w = fbSize[0]
             const h = fbSize[1]

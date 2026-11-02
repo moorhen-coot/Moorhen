@@ -1,57 +1,16 @@
 import { setRttFramebufferSize } from "../../store/glRefSlice"
 import type { MGWebGL } from '../mgWebGL';
 import type { webGL } from "../../types/mgWebGL";
+import { SHADOW_MAP_TEXELS, type ShadowMapQuality } from '../shadowMapQuality';
 
 /**
  * Framebuffer / offscreen-buffer setup. These methods create and resize the
- * WebGL framebuffer objects used by the render pipeline (silhouette, edge
+ * WebGL framebuffer objects used by the render pipeline (edge
  * detect, gbuffers, SSAO, simple blur, depth peel, generic offscreen, texture).
  * They are self-contained: no cross-calls, no shader-init dependencies. The
  * buffer/framebuffer fields stay on the MGWebGL instance (the draw pipeline
  * reads them); only the setup logic moves here. `self` is the live instance.
  */
-
-export function recreateSilhouetteBuffers(self: MGWebGL) {
-        if(!self.silhouetteFramebuffer){
-            self.silhouetteFramebuffer = self.gl.createFramebuffer();
-
-            self.silhouetteTexture = self.gl.createTexture();
-            self.gl.bindTexture(self.gl.TEXTURE_2D, self.silhouetteTexture);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_MIN_FILTER, self.gl.LINEAR);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_S, self.gl.CLAMP_TO_EDGE);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_T, self.gl.CLAMP_TO_EDGE);
-
-            self.silhouetteDepthTexture = self.gl.createTexture();
-            self.gl.bindTexture(self.gl.TEXTURE_2D, self.silhouetteDepthTexture);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_MAG_FILTER, self.gl.NEAREST);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_MIN_FILTER, self.gl.NEAREST);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_S, self.gl.CLAMP_TO_EDGE);
-            self.gl.texParameteri(self.gl.TEXTURE_2D, self.gl.TEXTURE_WRAP_T, self.gl.CLAMP_TO_EDGE);
-
-            self.silhouetteRenderbufferDepth = self.gl.createRenderbuffer();
-            self.silhouetteRenderbufferColor = self.gl.createRenderbuffer();
-
-        }
-        self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.silhouetteFramebuffer);
-        self.silhouetteFramebuffer.width = self.canvas.width;
-        self.silhouetteFramebuffer.height = self.canvas.height;
-
-        self.gl.bindRenderbuffer(self.gl.RENDERBUFFER, self.silhouetteRenderbufferColor);
-        self.gl.framebufferRenderbuffer(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.RENDERBUFFER, self.silhouetteRenderbufferColor);
-        self.gl.renderbufferStorage(self.gl.RENDERBUFFER, self.gl.DEPTH_COMPONENT16, self.canvas.width, self.canvas.height);
-
-        self.gl.bindTexture(self.gl.TEXTURE_2D, self.silhouetteTexture);
-        self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.RGBA, self.canvas.width, self.canvas.height, 0, self.gl.RGBA, self.gl.UNSIGNED_BYTE, null);
-        self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.COLOR_ATTACHMENT0, self.gl.TEXTURE_2D, self.silhouetteTexture, 0);
-
-        self.gl.bindTexture(self.gl.TEXTURE_2D, self.silhouetteDepthTexture);
-        self.gl.texImage2D(self.gl.TEXTURE_2D, 0, self.gl.DEPTH_COMPONENT24, self.canvas.width, self.canvas.height, 0, self.gl.DEPTH_COMPONENT, self.gl.UNSIGNED_INT, null);
-        self.gl.framebufferTexture2D(self.gl.FRAMEBUFFER, self.gl.DEPTH_ATTACHMENT, self.gl.TEXTURE_2D, self.silhouetteDepthTexture, 0);
-
-        self.gl.bindTexture(self.gl.TEXTURE_2D, null);
-        self.silhouetteBufferReady = true;
-
-}
 
 export function createEdgeDetectFramebufferBuffer(self: MGWebGL, width : number,height : number) {
 
@@ -605,23 +564,10 @@ export function recreateOffScreeenBuffers(self: MGWebGL, width,height) {
  * The renderbuffers used to be local consts, so they could not have been freed even by a caller
  * that wanted to. They are kept on the instance now for that reason alone.
  */
-/**
- * How finely shadows are resolved, named the way the mesh settings are.
- *
- * Measured on 1ibm drawn as ribbons, with GPU timer queries in Chrome: 9.1 ms a frame at 2048,
- * 10.5 at 4096, 17.6 at 8192. The step to 4096 is nearly free because the shadow pass is still
- * dominated by vertex work; by 8192 fill has taken over and the cost is close to linear in
- * texels. 16384 measured 75.8 ms - eight times coarse, for no visible gain over 8192 - so it is
- * deliberately not offered.
- */
-export type ShadowMapQuality = "coarse" | "nice" | "smooth";
-
-/** Edge length of the shadow map for each quality. Still bounded by what the hardware allows. */
-export const SHADOW_MAP_TEXELS: Record<ShadowMapQuality, number> = {
-    coarse: 2048,
-    nice: 4096,
-    smooth: 8192,
-};
+// The quality setting and its map sizes live in ../shadowMapQuality, where the WebGPU renderer can
+// read them without bringing this file's WebGL and store dependencies along; re-exported here for
+// the code that has always found them here.
+export { SHADOW_MAP_TEXELS, type ShadowMapQuality } from '../shadowMapQuality';
 
 export function deleteTextureFramebuffer(self: MGWebGL) : void {
         if (!self.gl) return;

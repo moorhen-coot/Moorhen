@@ -79,20 +79,8 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
                         }
                     }
                 }
-                if(self.stencilPass){
-                    self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                    if(bright_y<0.5)
-                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
-                    else
-                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
-                }
             }
             if (self.WEBGL2) {
-                if(self.doAnaglyphStereo) {
-                    self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                    self.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
-                    self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...self.currentAnaglyphColor)
-                }
                 self.gl.drawElementsInstanced(vertexType, drawBuffer.numItems, self.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
             } else {
                 self.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, self.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
@@ -172,11 +160,6 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
         } else {
             const theShader = theShaderIn as webGL.MGWebGLShader;
             if (self.WEBGL2) {
-                if(self.doAnaglyphStereo) {
-                    self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                    self.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
-                    self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...self.currentAnaglyphColor)
-                }
                 drawMaxElementsUInt(self, vertexType, drawBuffer.numItems);
             } else {
                 self.gl.drawElements(vertexType, drawBuffer.numItems, self.gl.UNSIGNED_INT, 0);
@@ -195,11 +178,6 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
 
                     self.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
                     if (self.WEBGL2) {
-                        if(self.doAnaglyphStereo) {
-                            self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                            self.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
-                            self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...self.currentAnaglyphColor)
-                        }
                         drawMaxElementsUInt(self, vertexType, drawBuffer.numItems);
                     } else {
                         self.gl.drawElements(vertexType, drawBuffer.numItems, self.gl.UNSIGNED_INT, 0);

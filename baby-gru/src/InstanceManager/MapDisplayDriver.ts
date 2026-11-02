@@ -4,6 +4,7 @@ import type { MoorhenMap } from "../utils/MoorhenMap";
 import { MapRepresentation } from "../utils/Representation/MapRepresentation";
 import type { MapRepresentationData } from "../utils/Representation/mapRepresentationData";
 import { guid } from "../utils/utils";
+import { onGpuMapContoursChanged } from "../WebGPUComponents/mapContour/setting";
 import {
     ensureLockedDrawOrigin,
     followViewWithLockedCell,
@@ -41,6 +42,7 @@ export class MapDisplayDriver {
     private lastFastRadii = new Map<string, number | null>();
 
     private unsubscribe: (() => void) | null = null;
+    private unsubscribeGpuMode: (() => void) | null = null;
     private processing = false;
     private changedWhileProcessing = false;
     private legacyFieldsChanged = false;
@@ -55,6 +57,10 @@ export class MapDisplayDriver {
         this.lastOrigin = state.sceneSettings.origin;
         this.lastLineWidth = state.mapContourSettings.mapLineWidth;
         this.unsubscribe = this.instance.store.subscribe(() => this.onStoreChange());
+        // Maps moved to the GPU contours (Coot's buffers come off) or back to Coot (contour them again)
+        this.unsubscribeGpuMode = onGpuMapContoursChanged(() => {
+            this.representations.forEach(representation => void representation.redraw());
+        });
         // No document in Node (API tests)
         if (typeof document !== "undefined") {
             document.addEventListener("mouseup", this.onMouseUp, { capture: true });
@@ -65,6 +71,8 @@ export class MapDisplayDriver {
     stop(): void {
         this.unsubscribe?.();
         this.unsubscribe = null;
+        this.unsubscribeGpuMode?.();
+        this.unsubscribeGpuMode = null;
         if (typeof document !== "undefined") {
             document.removeEventListener("mouseup", this.onMouseUp, { capture: true });
         }

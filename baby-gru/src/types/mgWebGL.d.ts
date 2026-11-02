@@ -8,6 +8,7 @@ import { RootState } from "@/store";
 //import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "./moorhen";
 import type { CameraController, CameraTarget, MoveResult, Transition } from "../WebGLgComponents/cameraController";
+import type { ExternalRenderer } from "../WebGLgComponents/externalRenderer";
 
 export namespace webGL {
     interface MGWebGLRenderingContext extends WebGLRenderingContext {
@@ -55,6 +56,7 @@ export namespace webGL {
         xSSAOScaling: WebGLUniformLocation;
         ySSAOScaling: WebGLUniformLocation;
         resolvedLayer: WebGLUniformLocation;
+        filterEdges: WebGLUniformLocation;
     }
 
     interface MGWebGLTextureQuadShader extends WebGLProgram {
@@ -123,6 +125,8 @@ export namespace webGL {
         shadowQuality: WebGLUniformLocation;
         pixelZoom: WebGLUniformLocation;
         specularPower: WebGLUniformLocation;
+        /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
+        alphaMultiplier: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
         shinyBack: WebGLUniformLocation;
     }
@@ -201,6 +205,8 @@ export namespace webGL {
         doPerspective: WebGLUniformLocation;
         clipCap: WebGLUniformLocation;
         specularPower: WebGLUniformLocation;
+        /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
+        alphaMultiplier: WebGLUniformLocation;
         scaleMatrix: WebGLUniformLocation;
         ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
         zoom: WebGLUniformLocation;
@@ -208,6 +214,8 @@ export namespace webGL {
 
     interface ShaderTriangles extends MGWebGLShader {
         specularPower: WebGLUniformLocation;
+        /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
+        alphaMultiplier: WebGLUniformLocation;
         shinyBack: WebGLUniformLocation;
         backColour: WebGLUniformLocation;
         defaultColour: WebGLUniformLocation;
@@ -340,17 +348,6 @@ export namespace webGL {
         vertexInstanceOrientationAttribute: GLint;
     }
 
-    interface ShaderOutLine extends MGWebGLShader {
-        outlineSize: WebGLUniformLocation;
-        cursorPos: WebGLUniformLocation;
-        textureMatrixUniform: WebGLUniformLocation;
-    }
-
-    interface ShaderOverlay extends MGWebGLShader {
-        vertexTextureAttribute: GLint;
-        inputTexture: WebGLUniformLocation;
-    }
-
     interface MGWebGLPropsInterface {
         reContourMapOnlyOnMouseUp: boolean | null;
         onAtomHovered: (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => void;
@@ -381,24 +378,33 @@ export namespace webGL {
         //These 2 are used in MoorhenScreenRecorder
         getCanvasRef(): React.RefObject<HTMLCanvasElement>;
         getPixelData(doTransparentBackground?: boolean): Uint8Array;
+        /** Another renderer drawing the view (the WebGPU main view); screenshots ask it. */
+        externalRenderer: ExternalRenderer | null;
         //These 2 are used in MoorhenVercelBuild
         origin: [number, number, number];
         background_colour: [number, number, number, number];
-        //These are used in MoorhenMovieSpike, which steps the view a frame at a time and can
+        //These are used in moviePlayer, which steps the view a frame at a time and can
         //render off-screen at a size that does not depend on the window
         drawScene(): void;
         myQuat: quat4;
         zoom: number;
         /**
-         * Set while a camera move is in flight. MoorhenMovieSpike also sets it while driving the
-         * camera itself, because moveCameraTo declines to start when it is - which is what stops
-         * the reconciling effect in MoorhenWebMG fighting a movie. Acquiring a "movie" driver on
-         * the camera controller is the better way to say the same thing, and will replace it.
+         * True while a centring move is in flight. Informational only.
+         *
+         * @deprecated Read `cameraController.moving`, which covers a movie as well as a move, or
+         * `cameraController.driver` to ask who is moving the camera. Setting this no longer does
+         * anything: it used to make moveCameraTo decline, which was a flag standing in for
+         * ownership, and ownership is now something the camera can be asked about directly.
          */
         animating: boolean;
         /**
          * The camera. Owns where the view is; see WebGLgComponents/cameraController.
          */
+        /**
+         * Whether objects can be faded in and out. False on a WebGL1 context, where the
+         * shaders have no fade uniform and an object stays solid however it is animated.
+         */
+        supportsObjectFading: boolean;
         cameraController: CameraController;
         /**
          * Put the camera somewhere, over whatever time the caller asks for. A transition of
@@ -419,5 +425,17 @@ export namespace webGL {
         set_clip_range(clipStart: number, clipEnd: number, update?: boolean): void;
         set_fog_range(fogStart: number, fogEnd: number, update?: boolean): void;
         setDrawingBufferSize(width: number, height: number): void;
+        // The camera, slab and lighting, which the WebGPU renderer reads too (PreviewCameraSource).
+        fogClipOffset: number;
+        gl_clipPlane0: ArrayLike<number>;
+        gl_clipPlane1: ArrayLike<number>;
+        gl_fog_start: number | null;
+        gl_fog_end: number;
+        doPerspectiveProjection: boolean;
+        light_positions: ArrayLike<number>;
+        light_colours_ambient: ArrayLike<number>;
+        light_colours_diffuse: ArrayLike<number>;
+        light_colours_specular: ArrayLike<number>;
+        specularPower: number;
     }
 }

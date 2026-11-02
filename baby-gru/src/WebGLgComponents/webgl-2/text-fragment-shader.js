@@ -1,7 +1,7 @@
 var text_fragment_shader_source = `#version 300 es\n
     precision mediump float;
     in lowp vec4 eyePos;
-    in lowp vec2 vTexture;
+    in highp vec2 vTexture;
 
     uniform float fog_end;
     uniform float fog_start;
@@ -47,7 +47,13 @@ var text_fragment_shader_source = `#version 300 es\n
           vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
           highp float max_depth;
           max_depth = texture(depthPeelSamplers,tex_coord).r;
-          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 || gl_FrontFacing!=true ) {
+          // No gl_FrontFacing test. There used to be one here, and only here: the first transparent
+          // layer runs without this block, so it kept back faces and every later layer threw them
+          // away. Whether a back-facing surface showed therefore depended on whether anything
+          // transparent was in front of it - the far inside wall of a clipped-open surface vanished
+          // behind a hover ball, which was then blended over the bare background and came out
+          // cream. Every layer now keeps every face, as a see-through surface really looks.
+          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
               discard;
           }
       }

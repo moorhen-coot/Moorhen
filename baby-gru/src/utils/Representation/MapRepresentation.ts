@@ -16,6 +16,7 @@ import { selectMapRepresentation } from "../../store/mapRepresentationsSlice";
 import type { MoorhenInstance } from "../../InstanceManager/MoorhenInstance";
 import type { MapContourMesh, MapContourMeshType } from "../../InstanceManager/CommandCentre/WorkerWrapper";
 import { CommandSquashedError } from "../../InstanceManager/CommandCentre/CootCommandError";
+import { gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
 import type { MoorhenMap } from "../MoorhenMap";
 import { type MapColour, type MapRepresentationData, type MapStyle, type Vec3, currentAlpha, currentRadius } from "./mapRepresentationData";
 
@@ -77,7 +78,7 @@ export class MapRepresentation {
     /** Called by the driver when the record changed: does the minimum (hide, re-contour or recolour) */
     update(): void {
         const data = this.data;
-        if (!data || !data.visible) {
+        if (!data || !data.visible || gpuMapContourSetting.enabled) {
             this.hide();
             return;
         }
@@ -166,7 +167,8 @@ export class MapRepresentation {
      */
     private requestContour(): Promise<void> {
         const data = this.data;
-        if (!data?.visible) {
+        // On the GPU, the WebGPU main view contours and draws the map itself (mapContour/setting.ts)
+        if (!data?.visible || gpuMapContourSetting.enabled) {
             this.hide();
             return Promise.resolve();
         }
@@ -195,8 +197,8 @@ export class MapRepresentation {
                   options
               )
             : await worker.get_map_contours_mesh(this.map.molNo, key.centre, key.radius, key.level, meshType, options);
-        // Hidden or removed while the contour was running
-        if (this.disposed || !this.data?.visible) {
+        // Hidden, removed or moved to the GPU while the contour was running
+        if (this.disposed || !this.data?.visible || gpuMapContourSetting.enabled) {
             return;
         }
         this.buildContourBuffers(mesh, appearance, key.colourByMap !== null);
@@ -295,7 +297,7 @@ export class MapRepresentation {
     /** Swap this representation's buffers in the renderer's list (still in the store: serialisable-store.md Phase 2) */
     private replaceBuffers(newBuffers: ContourBuffer[]): void {
         const oldIds = new Set(this.buffers.map(({ buffer }) => buffer.id));
-        this.buffers.forEach(({ buffer }) => buffer.clearBuffers());
+        this.buffers.forEach(({ buffer }) => buffer.clearBuffers(this.instance.store.getState().glRef.glCtx));
         const others = (this.instance.store.getState().glRef.displayBuffers ?? []).filter(buffer => !oldIds.has(buffer.id));
         this.buffers = newBuffers;
         this.instance.dispatch(setDisplayBuffers([...others, ...newBuffers.map(({ buffer }) => buffer)]));

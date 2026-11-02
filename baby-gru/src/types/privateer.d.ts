@@ -24,4 +24,12 @@ export namespace privateer {
         chirality_err: number;
         torsions: emscripten.vector<TorsionEntry> ;
     }
+
+    type CremerPopleParameters = {
+        q: number;
+        phi: number; 
+        theta: number;
+        chain_id: string; 
+        residue_id: string;
+    }
 }

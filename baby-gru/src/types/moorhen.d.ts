@@ -222,7 +222,6 @@ export namespace moorhen {
         setEdgeDetectNormalThreshold: React.Dispatch<React.SetStateAction<number>>;
         setEdgeDetectDepthScale: React.Dispatch<React.SetStateAction<number>>;
         setEdgeDetectNormalScale: React.Dispatch<React.SetStateAction<number>>;
-        setDoOutline: React.Dispatch<React.SetStateAction<boolean>>;
         setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
         setResetClippingFogging: React.Dispatch<React.SetStateAction<boolean>>;
         setUseOffScreenBuffers: React.Dispatch<React.SetStateAction<boolean>>;

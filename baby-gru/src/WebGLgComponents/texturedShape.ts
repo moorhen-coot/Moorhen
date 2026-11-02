@@ -10,6 +10,14 @@ export class TexturedShape {
     vertexBuffer = WebGLBuffer;
     texCoordBuffer = WebGLBuffer;
     gl: WebGL2RenderingContext;
+    /**
+     * The values and the colour ramp as uploaded, kept for renderers other than this one's GL
+     * (the WebGPU renderer makes its own textures from them): the values width x height, one per
+     * texel; the ramp RGBA, one texel per colour. `revision` goes up when either changes.
+     */
+    imageData: Float32Array;
+    colourRamp: Float32Array;
+    revision = 0;
     constructor(textureInfo,gl,uuid) {
         this.width = textureInfo.width;
         this.height = textureInfo.height;
@@ -24,6 +32,7 @@ export class TexturedShape {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, this.width, this.height, 0, gl.RED, gl.FLOAT, textureInfo.image_data);
+        this.imageData = textureInfo.image_data instanceof Float32Array ? textureInfo.image_data : Float32Array.from(textureInfo.image_data);
         //TODO - Populate the color ramp texture with a default black to white.
         this.color_ramp_texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, this.color_ramp_texture);
@@ -99,7 +108,9 @@ export class TexturedShape {
         } else {
             colour_ramp_values_interp = colour_ramp_values.flat();
         }
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, colour_ramp_values_interp.length/4, 1, 0, this.gl.RGBA, this.gl.FLOAT, new Float32Array(colour_ramp_values_interp));
+        this.colourRamp = new Float32Array(colour_ramp_values_interp);
+        this.revision++;
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, this.colourRamp.length/4, 1, 0, this.gl.RGBA, this.gl.FLOAT, this.colourRamp);
         this.gl.bindTexture(this.gl.TEXTURE_2D, null);
     }
 }

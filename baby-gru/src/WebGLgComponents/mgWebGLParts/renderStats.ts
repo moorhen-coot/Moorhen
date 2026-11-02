@@ -294,7 +294,7 @@ export const resetRenderStats = () => {
  *   Spheres (POINTS_SPHERES, SPHEROIDS) draw a shared sphere mesh once per sphere, so their
  *   triangle count lives on a buffer this function never sees. They are counted as unknown.
  *
- *   A buffer drawn more than once per frame - a shadow pass, an outline - is counted once.
+ *   A buffer drawn more than once per frame - a shadow pass, say - is counted once.
  *
  * Which is why the caller is given the instrumented per-frame figure alongside it. If the two
  * agree, the model holds and the attribution can be trusted; if they do not, the difference is

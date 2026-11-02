@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCommandCentre } from "../../InstanceManager";
 import {
     setAnimateRefine,
@@ -13,11 +13,6 @@ import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
 
 export const RefinementSettings = () => {
-    const useRamaRestraintsCheckRef = useRef<null | HTMLInputElement>(null);
-    const useTorsionRestraintsCheckRef = useRef<null | HTMLInputElement>(null);
-    const ramaWeightSliderRef = useRef<number>(null);
-    const torsionWeightSliderRef = useRef<number>(null);
-
     const [ramaWeight, setRamaWeight] = useState<number>(null);
     const [torsionWeight, setTorsionWeight] = useState<number>(null);
 
@@ -48,8 +43,6 @@ export const RefinementSettings = () => {
                 false
             );
 
-            ramaWeightSliderRef.current = rama.data.result.result;
-            torsionWeightSliderRef.current = torsion.data.result.result;
             setRamaWeight(rama.data.result.result);
             setTorsionWeight(torsion.data.result.result);
         };
@@ -57,30 +50,33 @@ export const RefinementSettings = () => {
         if (!ramaWeight && !torsionWeight) {
             fetchInitialData();
         }
-
-        return () => {
-            if (ramaWeightSliderRef.current) {
-                commandCentre.current.cootCommand(
-                    {
-                        command: "set_rama_plot_restraints_weight",
-                        commandArgs: [ramaWeightSliderRef.current],
-                        returnType: "status",
-                    },
-                    false
-                );
-            }
-            if (torsionWeightSliderRef.current) {
-                commandCentre.current.cootCommand(
-                    {
-                        command: "set_torsion_restraints_weight",
-                        commandArgs: [torsionWeightSliderRef.current],
-                        returnType: "status",
-                    },
-                    false
-                );
-            }
-        };
     }, []);
+
+    useEffect(() => {
+        if (ramaWeight) {
+            commandCentre.current.cootCommand(
+                {
+                    command: "set_rama_plot_restraints_weight",
+                    commandArgs: [ramaWeight],
+                    returnType: "status",
+                },
+                false
+            );
+        }
+    }, [ramaWeight]);
+
+    useEffect(() => {
+        if (torsionWeight) {
+            commandCentre.current.cootCommand(
+                {
+                    command: "set_torsion_restraints_weight",
+                    commandArgs: [torsionWeight],
+                    returnType: "status",
+                },
+                false
+            );
+        }
+    }, [torsionWeight]);
 
     useEffect(() => {
         commandCentre.current.cootCommand(
@@ -146,7 +142,6 @@ export const RefinementSettings = () => {
                 label="Automatic refinement post-modification"
             />
             <MoorhenToggle
-                ref={useRamaRestraintsCheckRef}
                 type="switch"
                 checked={useRamaRestraints}
                 onChange={() => {
@@ -155,7 +150,6 @@ export const RefinementSettings = () => {
                 label="Use ramachandran restraints"
             />
             <MoorhenToggle
-                ref={useTorsionRestraintsCheckRef}
                 type="switch"
                 checked={useTorsionRestraints}
                 onChange={() => {
