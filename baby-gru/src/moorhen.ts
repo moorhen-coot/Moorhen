@@ -40,6 +40,8 @@ export { MoorhenInstance, MoorhenInstanceProvider } from "./InstanceManager";
 export type { LoadFilesResult } from "./InstanceManager/MoorhenInstance";
 export type { MtzMapRequest } from "./utils/MtzLoading";
 export { MoorhenMenuSystem } from "./components/menu-system/MenuSystem";
+export { MoorhenUiExtensions } from "./InstanceManager/UiExtensions";
+export type { ModalExtension, SlotModalExtension, ComponentModalExtension, SidePanelExtension, SlotSidePanelExtension, ContentSidePanelExtension } from "./InstanceManager/UiExtensions";
 export { reducers as MoorhenStoreReducers } from "./store/MoorhenReduxStore";
 export type { RootState } from "./store/MoorhenReduxStore" ;
 export { useCommandCentre, useCommandAndCapsule, useMoorhenInstance } from '@/InstanceManager';
@@ -77,7 +79,7 @@ export type { SequenceViewerOption } from "./components/panels/BottomPanels/Sequ
 export type { ValidationOption } from "./components/panels/BottomPanels/SequenceViewerPanel/ValidationPanel";
 export type { ShownControl } from "./components/snack-bars/PopupControls/PopupControlList";
 // Modals
-export type { ModalKey, ModalComponentProps } from "./components/interface-base/ModalBase/ModalsContainer";
+export type { ModalKey, BuiltInModalKey, ModalComponentProps } from "./components/interface-base/ModalBase/ModalsContainer";
 export type { ModalCall } from "./store/modalsSlice";
 // Representation
 export type { RepresentationStyles, m2tParameters, residueEnvironmentOptions, gaussianSurfSettings } from "./utils/Representation/MoorhenMoleculeRepresentation";

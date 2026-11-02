@@ -76,7 +76,16 @@ interface ContainerOptionalProps {
     disableFileUploads?: boolean;
     urlPrefix?: string;
     viewOnly: boolean;
+    /**
+     * Extra modals for React hosts, added to `instance.uiExtensions` (web component hosts call
+     * `instance.uiExtensions.addModal` instead). Each element is rendered all the time and decides
+     * itself when to show; its `modalId` prop is its id.
+     */
     extraDraggableModals?: React.JSX.Element[];
+    /**
+     * Extra side panels for React hosts, keyed by id and added to `instance.uiExtensions` (web
+     * component hosts call `instance.uiExtensions.addSidePanel` instead).
+     */
     extraSidePanels?: Record<string, import("../panels").MoorhenPanel>;
     monomerLibraryPath?: string;
     allowScripting?: boolean;
@@ -154,12 +163,32 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const store = useStore<RootState>();
 
     const moorhenInstance = useMoorhenInstance();
+    // Hosts can only register once the instance is ready, so this runs before any of them
+    if (webComponentMode) moorhenInstance.uiExtensions.restrictToSlots();
 
     useEffect(() => {
         if (props.moorhenInstanceRef) {
             props.moorhenInstanceRef.current = moorhenInstance;
         }
     }, [props.moorhenInstanceRef]);
+
+    // The extra modals and side panels props go through the instance's uiExtensions, like everything added at run time
+    useEffect(() => {
+        if (!props.extraDraggableModals?.length) return;
+        const removers = props.extraDraggableModals.map((element, index) => {
+            const modalId = (element as React.ReactElement<{ modalId?: string }>).props?.modalId;
+            return moorhenInstance.uiExtensions.addModal({ id: modalId ?? `extra-draggable-modal-${index}`, element });
+        });
+        return () => removers.forEach(remove => remove());
+    }, [props.extraDraggableModals, moorhenInstance]);
+
+    useEffect(() => {
+        if (!props.extraSidePanels) return;
+        const removers = Object.entries(props.extraSidePanels).map(([id, panel]) =>
+            moorhenInstance.uiExtensions.addSidePanel({ id, label: panel.label, icon: panel.icon, content: panel.panelContent })
+        );
+        return () => removers.forEach(remove => remove());
+    }, [props.extraSidePanels, moorhenInstance]);
 
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
 
@@ -490,7 +519,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     <PopupControls />
                     <SnackBars />
                     <ActivityIndicator />
-                    <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
+                    <MoorhenModalsContainer />
                     <AtomClickManager />
                     <UpdatingMapsManager />
                     <MoorhenMapsHeadManager />
@@ -510,7 +539,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 </div>
                 <BottomPanelContainer />
 
-                <MoorhenSidePanel extraSidePanels={props.extraSidePanels} />
+                <MoorhenSidePanel />
             </div>
         </>
     );
