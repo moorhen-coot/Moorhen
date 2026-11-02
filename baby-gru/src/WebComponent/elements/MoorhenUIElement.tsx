@@ -29,11 +29,18 @@ const findMoorhenHost = (element: Element): MoorhenWebComponent | null => {
     return null;
 };
 
-/** Follows the app's theme from the store, so the element's own shadow root gets the same colours. */
+/**
+ * Follows the app's theme from the store, so the element's own shadow root gets the same colours.
+ * Also gives text the app's font and colour, as Moorhen's main container does: the base stylesheet
+ * resets the element (`:host { all: initial }`), which would leave the browser's default font.
+ */
 const Themed = (props: { children: React.ReactNode }) => {
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
     return (
-        <div data-theme={isDark ? "dark" : "light"} style={{ display: "contents" }}>
+        <div
+            data-theme={isDark ? "dark" : "light"}
+            style={{ display: "contents", fontFamily: "var(--moorhen-font-family)", color: "var(--moorhen-primary)" }}
+        >
             {props.children}
         </div>
     );

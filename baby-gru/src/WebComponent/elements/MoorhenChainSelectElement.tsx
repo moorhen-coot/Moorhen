@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
 import React, { useEffect } from "react";
+import { MoorhenChainCheckList } from "@/components/inputs/CheckList/MoorhenChainCheckList";
 import { MoorhenChainSelect } from "@/components/inputs/Selector/MoorhenChainSelect";
 import type { RootState } from "@/store";
 import { booleanAttribute, MoorhenUIElement } from "./MoorhenUIElement";
@@ -47,28 +48,57 @@ const ChainSelectWithDefault = (props: {
  * Fires `change` (bubbling) when the user picks a chain. With no valid selection — at first, or after
  * the molecule changed — the dropdown picks the first chain by itself, without an event.
  *
+ * With the boolean `multiple`, a list of checkboxes with "Check all" / "Uncheck all" replaces the
+ * dropdown, like a native `<select multiple>`: `values` holds the selected chain ids (all at first,
+ * and all again when the molecule changes) and `value` the first of them. `change` fires for each
+ * tick and for the buttons. `allow-all` does not apply.
+ *
  * @example
  * moleculeSelect.addEventListener("change", () => chainSelect.molecule = moleculeSelect.value);
+ * <moorhen-chain-select molecule="…" multiple></moorhen-chain-select>
+ * chainSelect.addEventListener("change", () => console.log(chainSelect.values));
  */
 export class MoorhenChainSelectElement extends MoorhenUIElement {
-    static observedAttributes = ["molecule", "label", "value", "allow-all", "disabled"];
-    static upgradedProperties = ["value", "molecule", "allowedTypes"];
+    static observedAttributes = ["molecule", "label", "value", "allow-all", "disabled", "multiple"];
+    static upgradedProperties = ["value", "values", "molecule", "allowedTypes"];
 
     private _value: string | undefined = undefined;
     private _molecule: string | null | undefined = undefined;
     private _allowedTypes: number[] | undefined = undefined;
+    /** With `multiple`: the ticked chain ids; unset until the list (all) or a script set them. */
+    private _values: string[] | undefined = undefined;
+
+    private get multiple() {
+        return booleanAttribute(this, "multiple");
+    }
 
     private get componentValue(): string | undefined {
         return this._value ?? this.getAttribute("value") ?? undefined;
     }
 
     get value(): string | null | undefined {
+        if (this.multiple) return this._values?.[0];
         const value = this.componentValue;
         return value === ALL ? null : value;
     }
 
     set value(value: string | null | undefined) {
+        if (this.multiple) {
+            this.values = value ? [value] : [];
+            return;
+        }
         this._value = value === null ? ALL : (value ?? undefined);
+        this.requestRender();
+    }
+
+    /** With `multiple`: the selected chain ids, in the molecule's order (in the given order when a script set them). Otherwise `[value]`. */
+    get values(): string[] {
+        if (this.multiple) return [...(this._values ?? [])];
+        return this.value ? [this.value] : [];
+    }
+
+    set values(values: string[]) {
+        this._values = [...(values ?? [])];
         this.requestRender();
     }
 
@@ -92,6 +122,24 @@ export class MoorhenChainSelectElement extends MoorhenUIElement {
     }
 
     protected renderComponent() {
+        if (this.multiple) {
+            return (
+                <MoorhenChainCheckList
+                    moleculeUniqueId={this.molecule}
+                    allowedTypes={this._allowedTypes}
+                    label={this.getAttribute("label") ?? undefined}
+                    disabled={booleanAttribute(this, "disabled")}
+                    selected={this._values}
+                    // The list's own changes (all at first, all again for another molecule): no event
+                    setSelected={values => {
+                        this._values = values;
+                        this.requestRender();
+                    }}
+                    // The user's: setSelected has run already
+                    onChange={() => this.dispatchEvent(new Event("change", { bubbles: true }))}
+                />
+            );
+        }
         const setValue = (chain: string | undefined) => {
             this._value = chain;
             this.requestRender();
@@ -129,4 +177,6 @@ export interface MoorhenChainSelectElementAttributes extends React.HTMLAttribute
     value?: string;
     "allow-all"?: boolean;
     disabled?: boolean;
+    /** Checkboxes for any number of chains instead of a dropdown. */
+    multiple?: boolean;
 }

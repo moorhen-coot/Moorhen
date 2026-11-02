@@ -4,6 +4,7 @@ import {
     MoorhenButtonElement,
     MoorhenChainSelectElement,
     MoorhenColourPickerElement,
+    MoorhenInfoCardElement,
     MoorhenMapSelectElement,
     MoorhenMoleculeSelectElement,
     MoorhenSliderElement,
@@ -43,6 +44,7 @@ beforeAll(() => {
     customElements.define("moorhen-chain-select", MoorhenChainSelectElement);
     customElements.define("moorhen-slider", MoorhenSliderElement);
     customElements.define("moorhen-colour-picker", MoorhenColourPickerElement);
+    customElements.define("moorhen-info-card", MoorhenInfoCardElement);
 });
 
 afterEach(() => {
@@ -86,6 +88,13 @@ describe("<moorhen-button>", () => {
         await waitFor(() => expect(button()).toBeDisabled());
         element.setAttribute("disabled", "false");
         await waitFor(() => expect(button()).not.toBeDisabled());
+    });
+
+    test("gives its content Moorhen's font", async () => {
+        const { element } = await mount(`<moorhen-button label="Run"></moorhen-button>`);
+        const wrapper = element.shadowRoot!.querySelector("[data-theme]") as HTMLElement;
+        expect(wrapper.style.fontFamily).toBe("var(--moorhen-font-family)");
+        // The colour (var(--moorhen-primary)) is dropped by jsdom's style parser; checked in a browser
     });
 
     test("follows the app's theme from the store", async () => {
@@ -390,5 +399,130 @@ describe("<moorhen-chain-select>", () => {
         await waitFor(() => expect(element.value).toBeNull());
         element.value = "A";
         await waitFor(() => expect(inner<HTMLSelectElement>("select").value).toBe("A"));
+    });
+});
+
+/** The checkboxes of a check list in an element's shadow root, by label. */
+const checkBoxes = (element: HTMLElement) =>
+    [...element.shadowRoot!.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')].map(input => ({
+        input,
+        label: input.closest("label")?.textContent ?? "",
+    }));
+const shadowButton = (element: HTMLElement, name: string) =>
+    [...element.shadowRoot!.querySelectorAll("button")].find(button => button.textContent?.trim() === name)!;
+
+describe("multiple", () => {
+    test("<moorhen-molecule-select multiple>: all at first, change for ticks and buttons, values by unique id", async () => {
+        const { host, element } = await mountElement<MoorhenMoleculeSelectElement>(
+            `<moorhen-molecule-select multiple></moorhen-molecule-select>`,
+            "moorhen-molecule-select",
+            ".moorhen__check-list"
+        );
+        const onChange = jest.fn(() => element.values);
+        element.addEventListener("change", onChange);
+
+        host.store.dispatch(addMolecule(fakeMolecule(0, "first")));
+        host.store.dispatch(addMolecule(fakeMolecule(1, "second")));
+        await waitFor(() => expect(element.values).toEqual(["uid-0", "uid-1"]));
+        expect(element.value).toBe("uid-0");
+        expect(onChange).not.toHaveBeenCalled();
+
+        checkBoxes(element)[0].input.click();
+        await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+        expect(onChange).toHaveReturnedWith(["uid-1"]);
+
+        shadowButton(element, "Uncheck all").click();
+        await waitFor(() => expect(onChange).toHaveBeenCalledTimes(2));
+        expect(element.values).toEqual([]);
+        expect(element.value).toBeUndefined();
+
+        // Narrowed by the user: a molecule loaded now is not ticked, and no event
+        host.store.dispatch(addMolecule(fakeMolecule(2, "third")));
+        await waitFor(() => expect(checkBoxes(element)).toHaveLength(3));
+        expect(element.values).toEqual([]);
+        expect(onChange).toHaveBeenCalledTimes(2);
+
+        // A script sets the selection: no event
+        element.values = ["uid-2", "uid-0"];
+        await waitFor(() => expect(checkBoxes(element).filter(box => box.input.checked).map(box => box.label)).toEqual(["0: first", "2: third"]));
+        expect(onChange).toHaveBeenCalledTimes(2);
+    });
+
+    test("<moorhen-chain-select multiple>: all chains at first and again for another molecule, without events", async () => {
+        const { host, element } = await mountElement<MoorhenChainSelectElement>(
+            `<moorhen-chain-select molecule="uid-0" multiple></moorhen-chain-select>`,
+            "moorhen-chain-select",
+            ".moorhen__check-list"
+        );
+        const onChange = jest.fn(() => element.values);
+        element.addEventListener("change", onChange);
+
+        host.store.dispatch(addMolecule(fakeMoleculeWithChains(0, ["A", "B"])));
+        host.store.dispatch(addMolecule(fakeMoleculeWithChains(1, ["C", "D"])));
+        await waitFor(() => expect(element.values).toEqual(["A", "B"]));
+
+        checkBoxes(element)[0].input.click();
+        await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+        expect(onChange).toHaveReturnedWith(["B"]);
+        expect(element.value).toBe("B");
+
+        element.molecule = "uid-1";
+        await waitFor(() => expect(element.values).toEqual(["C", "D"]));
+        expect(onChange).toHaveBeenCalledTimes(1);
+
+        shadowButton(element, "Uncheck all").click();
+        await waitFor(() => expect(onChange).toHaveBeenCalledTimes(2));
+        shadowButton(element, "Check all").click();
+        await waitFor(() => expect(onChange).toHaveBeenCalledTimes(3));
+        expect(onChange).toHaveLastReturnedWith(["C", "D"]);
+    });
+
+    test("without multiple, values is the single value as a list", async () => {
+        const { host, element } = await mountElement<MoorhenMoleculeSelectElement>(
+            `<moorhen-molecule-select></moorhen-molecule-select>`,
+            "moorhen-molecule-select",
+            "select"
+        );
+        host.store.dispatch(addMolecule(fakeMolecule(0, "first")));
+        await waitFor(() => expect(element.values).toEqual(["uid-0"]));
+    });
+});
+
+describe("<moorhen-info-card>", () => {
+    /** Mounts the card, opens it, and returns Moorhen's popup layer where the card is drawn. */
+    const openCard = async (html: string) => {
+        const { host, element, inner } = await mountElement<MoorhenInfoCardElement>(html, "moorhen-info-card", "button");
+        const popupLayer = document.createElement("div");
+        document.body.appendChild(popupLayer);
+        host.popupContainer.current = popupLayer;
+        inner<HTMLButtonElement>("button").click();
+        await waitFor(() => expect(popupLayer.querySelector(".moorhen__info-card")).not.toBeNull());
+        return { element, card: () => popupLayer.querySelector(".moorhen__info-card")! };
+    };
+
+    test("shows the info attribute", async () => {
+        const { card } = await openCard(`<moorhen-info-card info="Keeps residues within the radius."></moorhen-info-card>`);
+        expect(card().textContent).toBe("Keeps residues within the radius.");
+    });
+
+    test("shows a copy of its rich content, as the card's own children for Moorhen's styles", async () => {
+        const { card } = await openCard(`<moorhen-info-card large><h1>My plugin</h1><p>What it does.</p></moorhen-info-card>`);
+        expect(card().className).toContain("moorhen__info-card--large");
+        const copy = card().querySelector(".moorhen__info-card-copy")!;
+        expect(copy.querySelector(":scope > h1")!.textContent).toBe("My plugin");
+        expect(copy.querySelector(":scope > p")!.textContent).toBe("What it does.");
+    });
+
+    test("follows its content as the page changes it", async () => {
+        const { element, card } = await openCard(`<moorhen-info-card><p>Before</p></moorhen-info-card>`);
+        element.querySelector("p")!.textContent = "After";
+        await waitFor(() => expect(card().textContent).toBe("After"));
+        element.insertAdjacentHTML("beforeend", "<p>More</p>");
+        await waitFor(() => expect(card().textContent).toBe("AfterMore"));
+    });
+
+    test("uses a template's content", async () => {
+        const { card } = await openCard(`<moorhen-info-card><template><h2>From a template</h2></template></moorhen-info-card>`);
+        expect(card().querySelector(".moorhen__info-card-copy > h2")!.textContent).toBe("From a template");
     });
 });
