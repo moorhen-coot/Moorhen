@@ -7,6 +7,7 @@ import { parseAtomInfoLabel } from '../../utils/utils';
 import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND } from '../../utils/enums';
 import { getDeviceScale } from '../webGLUtils';
 import { influenceOf } from '../glResources';
+import { coarseSectionPosition, pickedMeshPosition } from '../meshCentre';
 import { getOffsetRect, MGWebGL } from '../mgWebGL';
 import type { moorhen } from '../../types/moorhen';
 import { webGL } from '../../types/mgWebGL';
@@ -350,7 +351,19 @@ export function doMouseUp(self: MGWebGL, event) {
         if(Math.abs(event_x - self.mouseDown_x) < 5 && Math.abs(event_y - self.mouseDown_y) < 5){
             if(displayBuffers.length > 0){
                 const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
-                if(displayBuffers[minidx] && displayBuffers[minidx].atoms) {
+                // Zoomed out, a surface or ribbon under the pointer lights its whole chain or
+                // molecule, and centring goes where the light is - ahead of any atom the pick
+                // also found. Atoms are measured against a tolerance that grows with the zoom,
+                // so pulled back there is nearly always one near the ray: an atom of the ribbon
+                // inside the surface, or of anything else shown. Taking it centred a surface on
+                // one residue while the whole chain was lit. At the residue grain the atom keeps
+                // its precedence, as before.
+                const coarse = minidx_pi > -1 && !displayBuffers[minidx_pi]?.pick_info?.claims_pointer
+                    ? coarseSectionPosition(displayBuffers, minidx_pi, minj_pi, self.pickLevel)
+                    : null
+                if(coarse) {
+                    self.props.onOriginChanged([-coarse[0], -coarse[1], -coarse[2]])
+                } else if(displayBuffers[minidx] && displayBuffers[minidx].atoms) {
                     const atx = displayBuffers[minidx].atoms[minj].x;
                     const aty = displayBuffers[minidx].atoms[minj].y;
                     const atz = displayBuffers[minidx].atoms[minj].z;
@@ -420,45 +433,6 @@ function clickWasFree(self: MGWebGL): boolean {
     return !self.keysDown['label_atom']
         && !self.keysDown['measure_distances']
         && !self.keysDown['residue_selection']
-}
-
-/**
- * Where on a mesh a pick landed, in scene coordinates, or null if it did not land on one.
- *
- * A buffer divided into sections gives the section that was picked, so that a trace centres on
- * the residue pointed at rather than on the middle of the whole chain. Anything else gives the
- * centre of the instance, which is the first pick point it offers - the rest are scattered over
- * its surface to make it hoverable, and centring on one of those would put the view on the
- * shape's edge.
- *
- * A position rather than an identity, because a mesh need not stand for anything at all.
- *
- * `level` says how much of a sectioned mesh counts as one thing at the current zoom: centring
- * lands on the middle of whatever is highlighted, so pulled back far enough it goes to the
- * middle of a whole chain rather than of the residue happening to be under the pointer.
- */
-function pickedMeshPosition(
-    displayBuffers, bufferIndex: number, pickIndex: number, level: number = 0
-): number[] | null {
-    const pickInfo = bufferIndex > -1 ? displayBuffers[bufferIndex]?.pick_info : null;
-    if (!pickInfo?.pick_points || pickIndex < 0) {
-        return null;
-    }
-    // A section's aim point at this grain, when the mesh offers coarser ones.
-    const section = pickInfo.pick_point_sections?.[pickIndex];
-    const coarse = section !== undefined
-        ? pickInfo.section_level_points?.[level]?.[section]
-        : undefined;
-    if (coarse) return coarse;
-    let index = pickIndex;
-    if (!pickInfo.pick_point_sections) {
-        const instances = pickInfo.pick_point_instances;
-        if (instances) {
-            const first = instances.indexOf(instances[pickIndex]);
-            if (first > -1) index = first;
-        }
-    }
-    return pickInfo.pick_points[index] ?? null;
 }
 
 export function doMiddleClick(self: MGWebGL, evt) {
