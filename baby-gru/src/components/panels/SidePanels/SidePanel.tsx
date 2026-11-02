@@ -87,14 +87,16 @@ export const MoorhenSidePanel = () => {
         }
     }, [shownPanel]);
 
-    // Tell extensions when they are shown or hidden
-    const previousShownPanel = useRef<SidePanelIDs | null>(null);
+    // Tell extensions when they are shown or hidden. An extension registered while its id is already
+    // shown counts as opening then, and one removed while shown as closing.
+    const previouslyShown = useRef<SidePanelExtension | null>(null);
     useEffect(() => {
-        if (previousShownPanel.current === shownPanel) return;
-        if (previousShownPanel.current) uiExtensions.getSidePanel(previousShownPanel.current)?.onClose?.();
-        if (shownPanel) uiExtensions.getSidePanel(shownPanel)?.onOpen?.();
-        previousShownPanel.current = shownPanel;
-    }, [shownPanel, uiExtensions]);
+        const shown = (shownPanel && extensionPanels.find(panel => panel.id === shownPanel)) || null;
+        if (shown === previouslyShown.current) return;
+        previouslyShown.current?.onClose?.();
+        shown?.onOpen?.();
+        previouslyShown.current = shown;
+    }, [shownPanel, extensionPanels]);
 
     // A panel removed from the registry while open has nothing left to render
     const shownPanels = activePanels.filter(id => allPanels[id]);

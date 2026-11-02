@@ -79,4 +79,22 @@ describe("uiExtensions rendering", () => {
         expect(getByText("Plugin panel", { selector: "span" })).toBeInTheDocument();
         expect(onOpen).toHaveBeenCalledTimes(1);
     });
+
+    test("a modal registered while its key is already open gets onOpen, and onClose when removed", () => {
+        renderContainers();
+        const onOpen = jest.fn();
+        const onClose = jest.fn();
+        act(() => {
+            dispatch(showModal({ key: "late-plugin" }));
+        });
+        act(() => {
+            instance.uiExtensions.addModal({ id: "late-plugin", title: "Late", slotName: "late", onOpen, onClose });
+        });
+        expect(onOpen).toHaveBeenCalledTimes(1);
+
+        act(() => {
+            instance.uiExtensions.removeModal("late-plugin");
+        });
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
 });

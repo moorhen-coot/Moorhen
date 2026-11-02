@@ -4,6 +4,7 @@ import type { MoorhenInstance } from "@/InstanceManager";
 import { MoorhenProvider } from "@/components/MoorhenProvider";
 import { MoorhenContainer } from "@/components/container";
 import type { LocalStorageInstance } from "@/InstanceManager/Preferences/MoorhenPreferences";
+import { registerMoorhenUIElements } from "./elements";
 
 export class MoorhenWebComponent extends HTMLElement {
     private _moorhenInstanceRef: React.RefObject<MoorhenInstance | null>;
@@ -197,21 +198,36 @@ export class MoorhenWebComponent extends HTMLElement {
         );
     }
 
-    private async loadStylesheets()  {
-            const shadow = this.shadowRoot!;
-            const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
-            const moorhenCss = await moorhenRes.text();
+    private _styleSheet: CSSStyleSheet | null = null;
+    private _styleText: string | null = null;
 
-            if ("adoptedStyleSheets" in shadow) {
-                const moorhenSheet = new CSSStyleSheet();
-                moorhenSheet.replaceSync(moorhenCss);
-                shadow.adoptedStyleSheets = [moorhenSheet];
-            } else {
-                const moorhenStyle = document.createElement("style");
-                moorhenStyle.textContent = moorhenCss;
-                (shadow as ShadowRoot).appendChild(moorhenStyle);
-            }
-        };
+    /**
+     * Moorhen's stylesheet, once loaded, for the Moorhen UI elements (`<moorhen-button>`, …)
+     * placed in this component's light DOM. A `CSSStyleSheet` where adoptedStyleSheets is
+     * supported, the CSS text otherwise.
+     * @internal
+     */
+    get moorhenStyleSheet(): CSSStyleSheet | string | null {
+        return this._styleSheet ?? this._styleText;
+    }
+
+    private async loadStylesheets() {
+        const shadow = this.shadowRoot!;
+        const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
+        const moorhenCss = await moorhenRes.text();
+
+        if ("adoptedStyleSheets" in shadow) {
+            const moorhenSheet = new CSSStyleSheet();
+            moorhenSheet.replaceSync(moorhenCss);
+            shadow.adoptedStyleSheets = [moorhenSheet];
+            this._styleSheet = moorhenSheet;
+        } else {
+            const moorhenStyle = document.createElement("style");
+            moorhenStyle.textContent = moorhenCss;
+            (shadow as ShadowRoot).appendChild(moorhenStyle);
+            this._styleText = moorhenCss;
+        }
+    }
 
     public async connectedCallback() {
         this._rootElement = document.createElement("div");
@@ -274,6 +290,7 @@ export const registerMoorhenWebComponent = () => {
     if (!customElements.get("moorhen-web-component")) {
         customElements.define("moorhen-web-component", MoorhenWebComponent);
     }
+    registerMoorhenUIElements();
 };
 
 export interface MoorhenWebComponentAttributes extends React.HTMLAttributes<HTMLElement> {

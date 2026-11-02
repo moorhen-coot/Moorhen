@@ -1,6 +1,8 @@
 export { MoorhenWebComponent, registerMoorhenWebComponent } from "./MoorhenWebComponent";
 export type { RootState } from "../store";
 export type { MoorhenWebComponentAttributes } from "./MoorhenWebComponent";
+export { MoorhenButtonElement } from "./elements";
+export type { MoorhenButtonElementAttributes } from "./elements";
 export type { MoorhenInstance } from "../InstanceManager";
 export type { MenuItem, MenuItemType, SubMenu, SubMenuMap } from "../components/menu-system/subMenuConfig";
 export type {

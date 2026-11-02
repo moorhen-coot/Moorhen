@@ -145,18 +145,23 @@ export const MoorhenModalsContainer = memo(() => {
     const extensionsById = useMemo(() => new Map(extensionModals.map(modal => [modal.id, modal])), [extensionModals]);
     const activeModals = useSelector((state: RootState) => state.modals.activeModals);
 
-    // Tell extensions when they open or close
-    const previousActiveKeys = useRef<Set<string>>(new Set());
+    // Tell extensions when they open or close. An extension registered while its key is already
+    // open counts as opening then, and one removed while open as closing.
+    const previouslyOpen = useRef<Map<string, ModalExtension>>(new Map());
     useEffect(() => {
-        const activeKeys = new Set<string>(activeModals.map(modalCall => modalCall.key));
-        activeKeys.forEach(key => {
-            if (!previousActiveKeys.current.has(key)) uiExtensions.getModal(key)?.onOpen?.();
+        const open = new Map<string, ModalExtension>();
+        activeModals.forEach(modalCall => {
+            const extension = extensionsById.get(modalCall.key);
+            if (extension) open.set(modalCall.key, extension);
         });
-        previousActiveKeys.current.forEach(key => {
-            if (!activeKeys.has(key)) uiExtensions.getModal(key)?.onClose?.();
+        previouslyOpen.current.forEach((extension, key) => {
+            if (open.get(key) !== extension) extension.onClose?.();
         });
-        previousActiveKeys.current = activeKeys;
-    }, [activeModals, uiExtensions]);
+        open.forEach((extension, key) => {
+            if (previouslyOpen.current.get(key) !== extension) extension.onOpen?.();
+        });
+        previouslyOpen.current = open;
+    }, [activeModals, extensionsById]);
 
     // extraDraggableModals elements are always rendered, they decide themselves when to show
     const alwaysMounted = extensionModals
