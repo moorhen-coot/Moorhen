@@ -48,17 +48,51 @@ const Themed = (props: { children: React.ReactNode }) => {
  * store and `MoorhenInstanceContext`, so the component reads and changes the app's live state exactly
  * as it would inside the app. It renders in its own shadow root with the host's Moorhen stylesheet.
  *
- * Subclasses list their attributes in `static observedAttributes` and implement `renderComponent`.
+ * Subclasses list their attributes in `static observedAttributes`, their JavaScript properties in
+ * `static upgradedProperties`, and implement `renderComponent`. Controls with a value keep it on the
+ * element (the component is rendered controlled), call `requestRender` when it changes, and fire
+ * `change` for user changes, like native inputs.
  */
 export abstract class MoorhenUIElement extends HTMLElement {
     private _root: Root | null = null;
     private _instance: MoorhenInstance | null = null;
     private _connection = 0;
 
-    /** Renders the component from the element's current attributes. */
+    /**
+     * Properties with accessors on the subclass. A value assigned before the element was defined (a
+     * framework rendering ahead of `registerMoorhenWebComponent`) sits on the instance and would hide
+     * the accessor, so it is moved onto it on connection.
+     */
+    static upgradedProperties: readonly string[] = [];
+
+    /** Renders the component from the element's current attributes and state. */
     protected abstract renderComponent(): React.ReactNode;
 
+    /**
+     * Calls `callback` when the user is done with an interaction that started on this element: the
+     * pointer released (anywhere, as drags end outside the element), a key released, or focus leaving.
+     * It runs on the next tick, after the `click` that follows a pointer release.
+     */
+    protected onUserRelease(callback: () => void) {
+        const later = () => setTimeout(callback, 0);
+        this.addEventListener("pointerdown", () => window.addEventListener("pointerup", later, { once: true, capture: true }));
+        this.addEventListener("keyup", later);
+        this.addEventListener("focusout", later);
+    }
+
+    private upgradeProperties() {
+        const properties = (this.constructor as typeof MoorhenUIElement).upgradedProperties;
+        for (const property of properties) {
+            if (Object.prototype.hasOwnProperty.call(this, property)) {
+                const value = (this as Record<string, unknown>)[property];
+                delete (this as Record<string, unknown>)[property];
+                (this as Record<string, unknown>)[property] = value;
+            }
+        }
+    }
+
     public async connectedCallback() {
+        this.upgradeProperties();
         const connection = ++this._connection;
         const host = findMoorhenHost(this);
         if (!host) {
@@ -85,7 +119,7 @@ export abstract class MoorhenUIElement extends HTMLElement {
 
         this._instance = instance;
         this._root = createRoot(container);
-        this.render();
+        this.requestRender();
     }
 
     public disconnectedCallback() {
@@ -101,10 +135,11 @@ export abstract class MoorhenUIElement extends HTMLElement {
     }
 
     public attributeChangedCallback() {
-        this.render();
+        this.requestRender();
     }
 
-    private render() {
+    /** Re-renders the component; does nothing until the element is connected to a ready Moorhen. */
+    protected requestRender() {
         if (!this._root || !this._instance) return;
         this._root.render(
             <Provider store={this._instance.store}>
@@ -120,4 +155,12 @@ export abstract class MoorhenUIElement extends HTMLElement {
 export const booleanAttribute = (element: HTMLElement, name: string): boolean => {
     const value = element.getAttribute(name);
     return value !== null && value !== "false";
+};
+
+/** Reads a number attribute; `undefined` when absent or not a number. */
+export const numberAttribute = (element: HTMLElement, name: string): number | undefined => {
+    const value = element.getAttribute(name);
+    if (value === null || value.trim() === "") return undefined;
+    const number = Number(value);
+    return Number.isNaN(number) ? undefined : number;
 };

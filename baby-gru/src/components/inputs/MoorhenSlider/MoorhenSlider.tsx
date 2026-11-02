@@ -265,40 +265,45 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         }
     };
 
-    function handleSetValue(newVal: number) {
-        let appliedVal = newVal;
-        if (props.type === "range") {
-            if (newVal > props.value2) {
-                appliedVal = props.value2;
-            }
-        }
+    /**
+     * Brings a value from any input path (thumb drag, track click, keyboard, buttons, precise input,
+     * labels) onto the values the slider allows: within min/max, on a `step` if given (otherwise rounded
+     * to the slider's precision on a linear scale), and on the closest of `allowedValues`.
+     */
+    function snapValue(newVal: number): number {
+        // Decimal digits of a number such as 0.25, to trim floating point noise (0.1 + 0.2)
+        const decimalsOf = (n: number) => (n.toString().split(".")[1] ?? "").length;
+        let value = clampValue(newVal, minVal, maxVal);
         if (step) {
-            const stepsFromMin = Math.round((appliedVal - minVal) / step);
-            appliedVal = minVal + stepsFromMin * step;
+            // A step decides on its own, also when finer than the precision
+            const stepsFromMin = Math.round((value - minVal) / step);
+            value = parseFloat((minVal + stepsFromMin * step).toFixed(Math.max(decimalsOf(step), decimalsOf(minVal))));
+        } else if (!logScale && precision > 0) {
+            value = parseFloat((Math.round(value / precision) * precision).toFixed(decimalsOf(precision)));
         }
-        if (allowedValues) {
-            
-            if (allowedValues.length > 0) {
-                const closestValue = allowedValues.reduce((prev, curr) => (Math.abs(curr - appliedVal) < Math.abs(prev - appliedVal) ? curr : prev));
-                appliedVal = closestValue;
-            }
+        if (allowedValues && allowedValues.length > 0) {
+            value = allowedValues.reduce((prev, curr) => (Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev));
         }
-            
+        return value;
+    }
+
+    function handleSetValue(newVal: number) {
+        let appliedVal = snapValue(newVal);
+        // The first thumb of a range stays at or below the second one
+        if (props.type === "range" && appliedVal > props.value2) {
+            appliedVal = props.value2;
+        }
         props.setValue(+appliedVal);
     }
 
     function handleSetValue2(newVal: number) {
-        let appliedVal = newVal;
-        if (props.type === "range") {
-            if (newVal < props.value) {
-                appliedVal = props.value;
-            }
-            if (step) {
-                const stepsFromMin = Math.round((appliedVal - minVal) / step);
-                appliedVal = minVal + stepsFromMin * step;
-            }
-            props.setValue2(+appliedVal);
+        if (props.type !== "range") return;
+        let appliedVal = snapValue(newVal);
+        // The second thumb stays at or above the first one
+        if (appliedVal < props.value) {
+            appliedVal = props.value;
         }
+        props.setValue2(+appliedVal);
     }
 
     function calculatePositionOnSlider(value: number) {
@@ -438,7 +443,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
             ? ratio * (resolveScaling(maxVal) - resolveScaling(minVal)) + resolveScaling(minVal)
             : ratio * (maxVal - minVal) + minVal;
 
-        handleChange(logScale ? nextValue : parseFloat(nextValue.toFixed(decimalPlaces)), thumbIndex);
+        handleChange(nextValue, thumbIndex);
     };
 
     const drawTitle = () => {
