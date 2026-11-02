@@ -36,6 +36,7 @@ import { MoorhenValidationPlotModal } from "../../modal/MoorhenValidationPlotMod
 import { MoorhenVectorsModal } from "../../modal/MoorhenVectorsModal";
 import { MoorhenWaterValidationModal } from "../../modal/MoorhenWaterValidationModal";
 import { MoorhenNOERestraints } from "../../modal/MoorhenNOERestraints";
+import { MoorhenCheckListTestModal } from "../../modal/MoorhenCheckListTestModal";
 
 export type BuiltInModalKey =
     | "acedrg"
@@ -68,7 +69,8 @@ export type BuiltInModalKey =
     | "pae-plot"
     | "NOE"
     | "config-shortcuts"
-    | "fourier-shell-correlation";
+    | "fourier-shell-correlation"
+    | "check-list-test";
 
 /** A built-in modal, or the id of one added through `instance.uiExtensions`. */
 export type ModalKey = BuiltInModalKey | (string & {});
@@ -109,7 +111,8 @@ const modalsMap: Record<BuiltInModalKey, React.FC<ModalComponentProps>> = {
     conkit: MoorhenConKitModal,
     "config-shortcuts": MoorhenShortcutConfigModal,
     NOE: MoorhenNOERestraints,
-    "fourier-shell-correlation": MoorhenFourierShellCorrelationModal
+    "fourier-shell-correlation": MoorhenFourierShellCorrelationModal,
+    "check-list-test": MoorhenCheckListTestModal,
 };
 
 export type ExtraDraggableModals = React.JSX.Element[];
