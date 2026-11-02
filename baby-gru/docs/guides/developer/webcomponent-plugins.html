@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Writing a plugin - Moorhen Developer Guide</title>
+    <link rel="stylesheet" href="../../assets/site.css">
+    <script src="../../assets/theme-toggle.js" defer></script>
+</head>
+
+<body>
+    <header class="site-header">
+        <img src="../../assets/MoorhenLogo.png" alt="Moorhen logo">
+        <h1>Writing a plugin</h1>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">Dark mode</button>
+    </header>
+    <nav class="site-nav">
+        <ul>
+            <li><a href="../../index.html">Docs Home</a></li>
+            <li><a href="index.html">Developer Guide</a></li>
+            <li><a href="../user/index.html">User Guide</a></li>
+            <li><a href="../../api/index.html">API Reference</a></li>
+        </ul>
+    </nav>
+
+    <article class="guide-article">
+        <h2>Adding your own tools to Moorhen</h2>
+
+        <p>
+            A <em>plugin</em> is code in your page that adds tools to Moorhen: a modal or a side panel of its own,
+            opened from Moorhen&rsquo;s menus, with controls that look like Moorhen&rsquo;s and act on the structures and
+            maps loaded in it. You do not change Moorhen&rsquo;s code; three pieces make this work together:
+        </p>
+
+        <ul>
+            <li><strong>Slots</strong>: your UI is ordinary HTML in your page, placed inside
+                <code>&lt;moorhen-web-component&gt;</code> with a <code>slot</code> attribute
+                (see <a href="webcomponent-slots.html">Custom HTML slots</a>).</li>
+            <li><strong>UI extensions</strong>: <code>moorhenInstance.uiExtensions</code> registers a modal or side panel
+                whose content is one of those slots.</li>
+            <li><strong>Moorhen UI elements</strong>: <code>&lt;moorhen-button&gt;</code>,
+                <code>&lt;moorhen-toggle&gt;</code>, <code>&lt;moorhen-molecule-select&gt;</code>&hellip; custom elements
+                that render Moorhen&rsquo;s own controls inside your slotted HTML, with Moorhen&rsquo;s look and live
+                access to its state.</li>
+        </ul>
+
+        <p>
+            This tutorial builds a small plugin step by step: a modal with a button, then view controls that stay in sync
+            with Moorhen, then molecule and chain pickers, and finally the same plugin packaged as one React component.
+        </p>
+
+        <p class="note-technical">
+            <strong>Prerequisite:</strong> the examples assume you can already put Moorhen in a page and get its
+            <code>moorhenInstance</code> (see <a href="webcomponent-setup.html">Setting up the WebComponent</a> or
+            <a href="webcomponent-react.html">Using the WebComponent in React</a>), and that you have read
+            <a href="webcomponent-menu.html">Adding custom menus</a> and <a href="webcomponent-slots.html">Custom HTML
+                slots</a>. Everything here comes from <code>moorhen/web-component</code>; no other package is needed.
+        </p>
+
+        <section>
+            <h2>1. A modal from a slot</h2>
+
+            <p>
+                Write the modal&rsquo;s content as a child of the web component, with a <code>slot</code> name of your
+                choice:
+            </p>
+
+            <pre class="code-block" data-lang="html"><code>&lt;moorhen-web-component id="moorhen-1" width="1000" height="800"&gt;
+    &lt;div slot="my-plugin-body"&gt;
+        &lt;p&gt;Hello from my plugin.&lt;/p&gt;
+        &lt;moorhen-button id="my-plugin-load" icon="MatSymAdd" label="Load my structure"&gt;&lt;/moorhen-button&gt;
+    &lt;/div&gt;
+&lt;/moorhen-web-component&gt;</code></pre>
+
+            <p>
+                Then register a modal that shows that slot, and a menu entry to open it:
+            </p>
+
+            <pre class="code-block" data-lang="typescript"><code>const removeModal = moorhenInstance.uiExtensions.addModal({
+    id: "my-plugin",              // the modal's key, used to open and close it
+    title: "My plugin",           // the modal's header
+    slotName: "my-plugin-body",   // matched by slot="my-plugin-body" in your HTML
+    initialWidth: 420,            // optional: initialHeight, minWidth, maxWidth, allowDocking…
+    onOpen: () =&gt; console.log("opened"),
+    onClose: () =&gt; console.log("closed"),
+});
+
+moorhenInstance.menuSystem?.addToExistingSubmenu(
+    [{ id: "open-my-plugin", label: "My plugin", type: "showModal", modal: "my-plugin" }],
+    "file"
+);
+
+document.getElementById("my-plugin-load")?.addEventListener("click", () =&gt; {
+    moorhenInstance.files.loadFiles("/my-structure.pdb");
+});</code></pre>
+
+            <p>
+                Moorhen draws the modal (header, dragging, resizing, docking) and puts your content in its body. You can
+                also open and close it from code, with <code>moorhenInstance.modals.showModal({ key: "my-plugin" })</code>
+                and <code>moorhenInstance.modals.hideModal("my-plugin")</code>. <code>addModal</code> returns a function
+                that removes the modal again.
+            </p>
+
+            <ul>
+                <li>Your content stays in your page while the modal is closed, so its state (a typed value, a scroll
+                    position) survives closing and reopening. <code>onOpen</code> / <code>onClose</code> tell you when it
+                    is shown.</li>
+                <li>Use ids and slot names that cannot clash with Moorhen&rsquo;s or another plugin&rsquo;s: prefix them
+                    with your plugin&rsquo;s name. A modal id equal to one of Moorhen&rsquo;s own replaces it.</li>
+                <li>Inside the web component, a modal or panel can only be a slot: the <code>component</code> and
+                    <code>content</code> options (React components) are for the <code>moorhen/react-lib</code>
+                    integration, and <code>addModal</code> throws if you use them here.</li>
+            </ul>
+
+            <h3>A side panel</h3>
+
+            <p>
+                A side panel works the same way. Moorhen adds the title bar and a tab with your icon:
+            </p>
+
+            <pre class="code-block" data-lang="typescript"><code>moorhenInstance.uiExtensions.addSidePanel({
+    id: "my-plugin-panel",
+    label: "My plugin",           // tab label, and title unless you give `title`
+    icon: "MatSymAdd",
+    slotName: "my-plugin-panel-body",
+});
+
+// Open it from a menu ({ type: "showPanel", panel: "my-plugin-panel" }) or from code:
+moorhenInstance.globalUI.setShownSidePanel("my-plugin-panel");</code></pre>
+
+            <p class="note">
+                A slot can only be shown in one place at a time. To offer the same tools in a modal and in a side panel,
+                render them twice, under two slot names, as the full example below does.
+            </p>
+        </section>
+
+        <section>
+            <h2>2. Moorhen&rsquo;s UI elements</h2>
+
+            <p>
+                Plain HTML works in a slot, but it is styled by your page. To give your plugin Moorhen&rsquo;s look, use
+                Moorhen&rsquo;s own controls as custom elements. <code>registerMoorhenWebComponent()</code> defines them
+                along with <code>&lt;moorhen-web-component&gt;</code>:
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Element</th>
+                        <th>Value</th>
+                        <th>Main attributes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>&lt;moorhen-button&gt;</code></td>
+                        <td>&ndash; (listen to <code>click</code>)</td>
+                        <td><code>label</code>, <code>icon</code>, <code>type</code> (<code>default</code>,
+                            <code>icon-only</code>, <code>toggle</code>), <code>variant</code>, <code>size</code>,
+                            <code>tooltip</code>, <code>disabled</code>, <code>checked</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;moorhen-toggle&gt;</code></td>
+                        <td><code>checked</code></td>
+                        <td><code>label</code> (or the element&rsquo;s text), <code>type</code> (<code>switch</code>,
+                            <code>checkbox</code>, <code>radio</code>), <code>disabled</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;moorhen-number-input&gt;</code></td>
+                        <td><code>value</code>: number or <code>null</code></td>
+                        <td><code>label</code>, <code>min</code>, <code>max</code>, <code>decimal-digits</code>,
+                            <code>integer</code>, <code>show-buttons</code>, <code>step</code>, <code>wait-return</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;moorhen-slider&gt;</code></td>
+                        <td><code>value</code> (and <code>value2</code> with <code>type="range"</code>)</td>
+                        <td><code>label</code>, <code>min</code>, <code>max</code>, <code>step</code>,
+                            <code>scale</code> (<code>linear</code>, <code>log</code>, <code>asinh</code>),
+                            <code>unit</code>, <code>decimal-places</code>, <code>hide-buttons</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;moorhen-colour-picker&gt;</code></td>
+                        <td><code>value</code>: <code>"#rrggbb"</code> (<code>"#rrggbbaa"</code> with
+                            <code>use-alpha</code>)</td>
+                        <td><code>tooltip</code>, <code>position</code>, <code>inline</code>, <code>hide-swatches</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;moorhen-molecule-select&gt;</code></td>
+                        <td><code>value</code>: a molecule&rsquo;s unique id; <code>values</code> with
+                            <code>multiple</code></td>
+                        <td><code>label</code>, <code>allow-any</code>, <code>multiple</code>; property
+                            <code>filter</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;moorhen-chain-select&gt;</code></td>
+                        <td><code>value</code>: a chain id; <code>values</code> with <code>multiple</code></td>
+                        <td><code>molecule</code> (a unique id), <code>label</code>, <code>allow-all</code>,
+                            <code>multiple</code>; property <code>allowedTypes</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;moorhen-map-select&gt;</code></td>
+                        <td><code>value</code>: a map&rsquo;s unique id</td>
+                        <td><code>label</code>; property <code>filter</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>&lt;moorhen-info-card&gt;</code></td>
+                        <td>&ndash;</td>
+                        <td><code>info</code> (or the element&rsquo;s content, which can be rich HTML),
+                            <code>placement</code>, <code>large</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>
+                Each element&rsquo;s full list of attributes and properties is in its class documentation in the
+                <a href="../../api/index.html">API Reference</a> (<code>MoorhenButtonElement</code>,
+                <code>MoorhenToggleElement</code>&hellip;).
+            </p>
+
+            <h3>They behave like native inputs</h3>
+
+            <p>
+                The elements follow the rules of <code>&lt;input&gt;</code> and <code>&lt;select&gt;</code>, so the usual
+                DOM code works:
+            </p>
+
+            <ul>
+                <li><strong>Attribute vs property</strong>: the <code>value</code> / <code>checked</code> attribute is the
+                    starting value; the property is the current one. Read and set the property from code:
+                    <code>toggle.checked = true</code>, <code>select.value</code>.</li>
+                <li><strong><code>change</code></strong> fires when the user has made a change: a tick, a pick, a slider
+                    released, a number committed with Enter or by leaving the field, a colour picker closed.</li>
+                <li><strong><code>input</code></strong> fires while the user is still changing a value: dragging a slider,
+                    typing a number, picking a colour. Use it for live feedback.</li>
+                <li><strong>Changes made by code fire no event</strong>: setting <code>value</code> /
+                    <code>checked</code> from a script, or a dropdown picking its first item by itself.</li>
+            </ul>
+
+            <pre class="code-block" data-lang="html"><code>&lt;div slot="my-plugin-body"&gt;
+    &lt;moorhen-toggle id="axes"&gt;Draw axes&lt;/moorhen-toggle&gt;
+    &lt;moorhen-slider id="zoom" label="Zoom" min="0.05" max="5" scale="log" decimal-places="2"&gt;&lt;/moorhen-slider&gt;
+&lt;/div&gt;</code></pre>
+
+            <pre class="code-block" data-lang="typescript"><code>import type { MoorhenSliderElement, MoorhenToggleElement } from "moorhen/web-component";
+
+const axes = document.getElementById("axes") as MoorhenToggleElement;
+const zoom = document.getElementById("zoom") as MoorhenSliderElement;
+
+axes.addEventListener("change", () =&gt; moorhenInstance.sceneSettings.setDrawAxes(axes.checked));
+// `input`: the view zooms while the slider is dragged, not only when it is released
+zoom.addEventListener("input", () =&gt; moorhenInstance.sceneSettings.setZoom(zoom.value));</code></pre>
+
+            <p class="note-technical">
+                <strong>How they work:</strong> each element finds the <code>&lt;moorhen-web-component&gt;</code> it is
+                in, waits for its instance, and renders Moorhen&rsquo;s own React component in its own shadow root, with
+                that instance&rsquo;s store. That is why a molecule select lists the molecules loaded in <em>this</em>
+                Moorhen, and why the elements follow Moorhen&rsquo;s light and dark themes. They must therefore be placed
+                inside a <code>&lt;moorhen-web-component&gt;</code> (usually in a slot); elsewhere they log an error and
+                render nothing. They use Moorhen&rsquo;s stylesheet, already loaded by the web component, so they cost no
+                extra download.
+            </p>
+        </section>
+
+        <section>
+            <h2>3. Staying in sync with Moorhen</h2>
+
+            <p>
+                The toggle above changes Moorhen, but it does not notice when the user turns the axes off from
+                Moorhen&rsquo;s own menu. To keep a control right whatever changes the setting, also follow Moorhen&rsquo;s
+                state, and set the element&rsquo;s property when it changes:
+            </p>
+
+            <pre class="code-block" data-lang="typescript"><code>const state = () =&gt; moorhenInstance.store.getState();
+
+axes.checked = state().sceneSettings.drawAxes;
+const unsubscribe = moorhenInstance.subscribeToStore(
+    s =&gt; s.sceneSettings.drawAxes,
+    drawAxes =&gt; { axes.checked = drawAxes; }
+);</code></pre>
+
+            <p>
+                Setting the property fires no event, so this cannot loop back into <code>setDrawAxes</code>. The same
+                pattern keeps two copies of a control (one in the modal, one in the side panel) in agreement: both follow
+                the store. See <a href="webcomponent-events.html">Callbacks and subscriptions</a> for the store and its
+                subscriptions.
+            </p>
+        </section>
+
+        <section>
+            <h2>4. Picking molecules, chains and maps</h2>
+
+            <p>
+                The selection elements list what is loaded in Moorhen and keep up as structures and maps are loaded and
+                deleted. Their values are <strong>unique ids</strong>, as in the rest of the API, so you can find the
+                object in the store or pass the id on:
+            </p>
+
+            <pre class="code-block" data-lang="html"><code>&lt;moorhen-molecule-select id="molecule" label="Molecule"&gt;&lt;/moorhen-molecule-select&gt;
+&lt;moorhen-chain-select id="chains" label="Chains" multiple&gt;&lt;/moorhen-chain-select&gt;
+&lt;moorhen-map-select id="map" label="Map"&gt;&lt;/moorhen-map-select&gt;</code></pre>
+
+            <ul>
+                <li><code>&lt;moorhen-chain-select&gt;</code> lists the chains of the molecule given by its
+                    <code>molecule</code> attribute or property (a unique id).</li>
+                <li><code>multiple</code> turns a dropdown into a list of checkboxes with <em>Check all</em> and
+                    <em>Uncheck all</em>, like <code>&lt;select multiple&gt;</code>. <code>values</code> holds the selected
+                    ids, all of them at first; <code>value</code> is the first one. A chain list ticks all chains again
+                    when its molecule changes.</li>
+                <li><code>filter</code> (a function, so a property) lists only some molecules or maps, e.g.
+                    <code>mapSelect.filter = map =&gt; map.isDifference</code>.</li>
+            </ul>
+
+            <p>
+                To make the chain list follow the molecule dropdown, pass the molecule on. The dropdown picks its first
+                molecule by itself, without an event, so also read it when molecules are loaded:
+            </p>
+
+            <pre class="code-block" data-lang="typescript"><code>import type { MoorhenChainSelectElement, MoorhenMoleculeSelectElement } from "moorhen/web-component";
+
+const molecule = document.getElementById("molecule") as MoorhenMoleculeSelectElement;
+const chains = document.getElementById("chains") as MoorhenChainSelectElement;
+
+const followMolecule = () =&gt; { chains.molecule = molecule.value ?? null; };
+molecule.addEventListener("change", followMolecule);
+// The dropdown's own first pick: after the molecule list changed and it has updated
+moorhenInstance.subscribeToStore(s =&gt; s.molecules.moleculeList, () =&gt; setTimeout(followMolecule, 0));
+
+chains.addEventListener("change", () =&gt; console.log("chains", chains.values));</code></pre>
+
+            <p>
+                Plugins can report back inside Moorhen too, for instance with a snackbar message:
+            </p>
+
+            <pre class="code-block" data-lang="typescript"><code>const selected = state().molecules.moleculeList.find(m =&gt; m.uniqueId === molecule.value);
+moorhenInstance.snackbar.enqueueSnackbar({
+    message: `${selected?.name}: chains ${chains.values.join(", ")}`,
+    variant: "info",
+});</code></pre>
+        </section>
+
+        <section>
+            <h2>5. Help with an info card</h2>
+
+            <p>
+                <code>&lt;moorhen-info-card&gt;</code> is Moorhen&rsquo;s info button: it opens a card with help text.
+                Short text goes in the <code>info</code> attribute; longer help is the element&rsquo;s own content, styled
+                like Moorhen&rsquo;s info cards:
+            </p>
+
+            <pre class="code-block" data-lang="html"><code>&lt;moorhen-info-card info="Keeps only the residues within the radius."&gt;&lt;/moorhen-info-card&gt;
+
+&lt;moorhen-info-card large&gt;
+    &lt;h1&gt;My plugin&lt;/h1&gt;
+    &lt;p&gt;What it does, step by step&hellip;&lt;/p&gt;
+&lt;/moorhen-info-card&gt;</code></pre>
+
+            <p class="note">
+                The card opens in Moorhen&rsquo;s popup layer, outside your page, so it shows a <em>copy</em> of the
+                content, kept up to date when the content changes; the content itself is not shown in the page. It is
+                meant for static help: buttons or inputs in it would not be wired up.
+            </p>
+        </section>
+
+        <section>
+            <h2>6. The whole plugin as a React component</h2>
+
+            <p>
+                In a React app, a plugin can be one self-contained component that the app renders inside the web
+                component, with nothing else to set up:
+            </p>
+
+            <pre class="code-block" data-lang="tsx"><code>&lt;moorhen-web-component id="my-moorhen" width={1000} height={800}&gt;
+    &lt;ExamplePlugin /&gt;
+&lt;/moorhen-web-component&gt;</code></pre>
+
+            <p>
+                The component renders its slots and registers itself. It does not need the instance as a prop: its slots
+                are children of the web component, so it finds it from there:
+            </p>
+
+            <pre class="code-block" data-lang="tsx"><code>import { useEffect, useRef, useState } from "react";
+import type { MoorhenInstance, MoorhenWebComponent } from "moorhen/web-component";
+
+/** The instance of the &lt;moorhen-web-component&gt; that `anchor` is in, once it is ready. */
+function useHostInstance(anchor: React.RefObject&lt;HTMLElement | null&gt;) {
+    const [instance, setInstance] = useState&lt;MoorhenInstance | null&gt;(null);
+    useEffect(() =&gt; {
+        const host = anchor.current?.closest("moorhen-web-component") as MoorhenWebComponent | null;
+        let cancelled = false;
+        host?.getMoorhenInstance().then(found =&gt; { if (!cancelled) setInstance(found); });
+        return () =&gt; { cancelled = true; };
+    }, [anchor]);
+    return instance;
+}
+
+export function ExamplePlugin() {
+    const anchor = useRef&lt;HTMLDivElement&gt;(null);
+    const instance = useHostInstance(anchor);
+
+    useEffect(() =&gt; {
+        if (!instance) return;
+        const removeModal = instance.uiExtensions.addModal({
+            id: "example-plugin",
+            title: "Example plugin",
+            slotName: "example-plugin-body",
+        });
+        instance.menuSystem?.addToExistingSubmenu(
+            [{ id: "open-example-plugin", label: "Example plugin", type: "showModal", modal: "example-plugin" }],
+            "file"
+        );
+        // Undo everything when the plugin is removed from the page
+        return () =&gt; {
+            removeModal();
+            instance.menuSystem?.deleteItemById("open-example-plugin");
+        };
+    }, [instance]);
+
+    return (
+        &lt;div slot="example-plugin-body" ref={anchor}&gt;
+            {instance ? &lt;MyTools instance={instance} /&gt; : null}
+        &lt;/div&gt;
+    );
+}</code></pre>
+
+            <ul>
+                <li><strong>Clean up</strong> in the effect&rsquo;s return: remove what you registered.
+                    <code>addModal</code>, <code>addSidePanel</code> and <code>addMainMenu</code> each return a function
+                    that removes what they added; submenu items go with <code>deleteItemById</code>. React&rsquo;s
+                    StrictMode runs effects twice in development, which this also covers.</li>
+                <li><strong>Type the elements for JSX</strong>, as for <code>&lt;moorhen-web-component&gt;</code> (see
+                    <a href="webcomponent-react.html">Using the WebComponent in React</a>). Each element exports its
+                    attribute type, e.g. <code>MoorhenToggleElementAttributes</code>:
+                    <pre class="code-block" data-lang="tsx"><code>declare module "react" {
+    namespace JSX {
+        interface IntrinsicElements {
+            "moorhen-toggle": React.DetailedHTMLProps&lt;MoorhenToggleElementAttributes, MoorhenToggleElement&gt;;
+            // …one line per element you use
+        }
+    }
+}</code></pre>
+                </li>
+                <li><strong>React 18 does not pass <code>onChange</code> to custom elements.</strong> Listen to
+                    <code>change</code> and <code>input</code> through a ref instead, and set properties
+                    (<code>checked</code>, <code>value</code>) through it too. With React 19, <code>onChange</code>,
+                    <code>onInput</code> and properties work directly on the elements.
+                    <pre class="code-block" data-lang="tsx"><code>function useElementEvent&lt;E extends HTMLElement&gt;(
+    ref: React.RefObject&lt;E | null&gt;,
+    type: "input" | "change",
+    handler: (element: E) =&gt; void
+) {
+    const latest = useRef(handler);
+    useEffect(() =&gt; { latest.current = handler; });
+    useEffect(() =&gt; {
+        const element = ref.current;
+        if (!element) return;
+        const listener = () =&gt; latest.current(element);
+        element.addEventListener(type, listener);
+        return () =&gt; element.removeEventListener(type, listener);
+    }, [ref, type]);
+}</code></pre>
+                </li>
+                <li><strong>Follow Moorhen&rsquo;s state</strong> with React&rsquo;s
+                    <code>useSyncExternalStore</code> on <code>instance.store</code>; it re-renders your component when
+                    the value changes:
+                    <pre class="code-block" data-lang="tsx"><code>import { useCallback, useSyncExternalStore } from "react";
+import type { MoorhenInstance, RootState } from "moorhen/web-component";
+
+function useMoorhenState&lt;T&gt;(instance: MoorhenInstance, selector: (state: RootState) =&gt; T): T {
+    const subscribe = useCallback(
+        (onChange: () =&gt; void) =&gt; instance.store.subscribe(onChange),
+        [instance]
+    );
+    return useSyncExternalStore(subscribe, () =&gt; selector(instance.store.getState()));
+}</code></pre>
+                </li>
+            </ul>
+
+            <p class="note">
+                <strong>Complete example:</strong> the React demo
+                <a href="https://github.com/cdegut/MoorhenWebComponentReact" target="_blank"
+                    rel="noopener noreferrer">MoorhenWebComponentReact</a> has this plugin in full in
+                <code>src/plugin.tsx</code>: a <em>Plugin</em> main menu with a quick-settings item that is itself a
+                slot, a modal and a side panel, data loading, view controls that stay in sync with Moorhen, and the
+                molecule, chain and map pickers reporting to the snackbar. Its <code>App.tsx</code> only renders
+                <code>&lt;ExamplePlugin /&gt;</code> inside the web component.
+            </p>
+        </section>
+
+        <section>
+            <h2>Styling your content</h2>
+
+            <ul>
+                <li>Slotted content is part of your page: <strong>your CSS styles it</strong>, Moorhen&rsquo;s does not.
+                    Moorhen&rsquo;s UI elements are the exception: they bring Moorhen&rsquo;s styles with them.</li>
+                <li>Moorhen&rsquo;s theme colours are CSS variables (<code>--moorhen-primary</code>,
+                    <code>--moorhen-background</code>, <code>--moorhen-border</code>&hellip;) that reach slotted content
+                    and follow the light and dark themes. Use them to match Moorhen:
+                    <code>color: var(--moorhen-primary)</code>.</li>
+                <li>Text without its own colour inherits Moorhen&rsquo;s, so it also follows the dark theme.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Current limitations</h2>
+
+            <ul>
+                <li>A slot modal is sized once, when it opens. Content that grows afterwards scrolls inside it; give
+                    <code>initialWidth</code> / <code>initialHeight</code> when you know the size you need.</li>
+                <li>Inside the web component, modals and side panels can only be slots (see section 1).</li>
+                <li>A molecule dropdown&rsquo;s automatic first pick fires no event: read <code>value</code> rather than
+                    waiting for <code>change</code> (see section 4).</li>
+                <li>Inputs inside the elements are in their shadow roots, so they do not take part in a
+                    <code>&lt;form&gt;</code> of your page: read the elements&rsquo; values instead.</li>
+            </ul>
+
+            <p>
+                See <code>MoorhenUiExtensions</code> and the element classes in the
+                <a href="../../api/index.html">API Reference</a>.
+            </p>
+
+            <p>
+                <a class="button" href="webcomponent-slots.html">Prev: Custom HTML slots</a>
+                <a class="button" href="webcomponent-events.html">Next: Callbacks and subscriptions</a>
+                <a class="button" href="index.html">Back to Developer Guide</a>
+            </p>
+        </section>
+    </article>
+</body>
+
+</html>

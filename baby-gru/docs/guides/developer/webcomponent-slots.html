@@ -35,9 +35,9 @@
         </p>
 
         <p class="note">
-            <strong>Current limitation:</strong> slots can only be placed in the menu bar, as an
-            <code>HTMLslot</code> menu item. See
-            <a href="#current-limitations">Current limitations</a> below for the details.
+            This page puts slots in the menu bar, as an <code>HTMLslot</code> menu item. Slots can also be whole
+            modals and side panels, with Moorhen&rsquo;s own controls inside: see
+            <a href="webcomponent-plugins.html">Writing a plugin</a>.
         </p>
 
         <p class="note-technical">
@@ -150,12 +150,14 @@ moorhenInstance.menuSystem?.addSubmenu(slotMenu);</code></pre>
         </section>
 
         <section>
-            <h2 id="current-limitations">Current limitations</h2>
+            <h2 id="current-limitations">Beyond the menu bar</h2>
 
-            <ul>
-                <li>Slots can only be inserted in the menu bar, as an <code>HTMLslot</code> menu item.</li>
-                <li>Using slots to build custom modals and side panels is planned, but not available yet.</li>
-            </ul>
+            <p>
+                A slot can also be the content of a modal or a side panel of your own, registered with
+                <code>moorhenInstance.uiExtensions</code>, and Moorhen&rsquo;s controls are available as custom elements
+                (<code>&lt;moorhen-button&gt;</code>, <code>&lt;moorhen-molecule-select&gt;</code>&hellip;) to fill them.
+                <a href="webcomponent-plugins.html">Writing a plugin</a> walks through both.
+            </p>
 
             <p>
                 See the <a href="../../api/types/moorhen.MenuItemHTMLSlot.html"><code>MenuItemHTMLSlot</code></a> type
@@ -173,7 +175,7 @@ moorhenInstance.menuSystem?.addSubmenu(slotMenu);</code></pre>
 
             <p>
                 <a class="button" href="webcomponent-menu.html">Prev: Adding custom menus</a>
-                <a class="button" href="webcomponent-events.html">Next: Callbacks and subscriptions</a>
+                <a class="button" href="webcomponent-plugins.html">Next: Writing a plugin</a>
                 <a class="button" href="index.html">Back to Developer Guide</a>
             </p>
         </section>
