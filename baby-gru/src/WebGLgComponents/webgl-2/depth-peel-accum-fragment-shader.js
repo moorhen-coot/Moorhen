@@ -4,7 +4,7 @@ precision mediump float;
 
 vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
 
-in lowp vec2 vTexture;
+in highp vec2 vTexture;
 
 uniform int peelNumber;
 uniform sampler2D depthPeelSamplers;

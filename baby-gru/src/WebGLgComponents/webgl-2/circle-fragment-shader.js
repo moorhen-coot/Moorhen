@@ -1,7 +1,7 @@
 var circles_fragment_shader_source = `#version 300 es\n
     precision mediump float;
     in lowp vec4 eyePos;
-    in lowp vec2 vTexture;
+    in highp vec2 vTexture;
 
     uniform float fog_end;
     uniform float fog_start;

@@ -37,7 +37,34 @@ export type BufferMaterial = {
      * one tints it.
      */
     baseColourTexture?: string;
+} & SurfaceMaps;
+
+/**
+ * The maps beyond the base colour that shape how a surface is lit: glTF's normalTexture and
+ * pbrMetallicRoughness.metallicRoughnessTexture, with their factors.
+ *
+ * Both are data rather than colour - registered undecoded from any colour space - and both are
+ * sampled with the same texture coordinates as the base colour. Each is optional, and each changes
+ * nothing when it is absent: the factors in particular are only ever applied with their texture,
+ * because glTF's default metallic factor is 1, and applying that to every plain imported mesh would
+ * turn it from the colour it has always been into a dark metal.
+ */
+export type SurfaceMaps = {
+    /** A registered tangent-space normal map: RGB is the normal, +X along u, +Y up the image. */
+    normalTexture?: string;
+    /** glTF normalTexture.scale: multiplies the map's X and Y. 1 when absent. */
+    normalScale?: number;
+    /** A registered map with roughness in G and metallic in B, as glTF packs them. */
+    metallicRoughnessTexture?: string;
+    /** glTF metallicFactor, multiplied into B. 1 when absent. */
+    metallicFactor?: number;
+    /** glTF roughnessFactor, multiplied into G. 1 when absent. */
+    roughnessFactor?: number;
 };
+
+/** Every texture id a material refers to, for the sweep and for uploading. */
+export const materialTextureIds = (material: BufferMaterial | undefined | null): string[] =>
+    material ? [material.baseColourTexture, material.normalTexture, material.metallicRoughnessTexture].filter((id): id is string => !!id) : [];
 
 const sources = new Map<string, TextureSource>();
 

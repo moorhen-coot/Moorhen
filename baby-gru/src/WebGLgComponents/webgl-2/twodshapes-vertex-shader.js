@@ -17,7 +17,7 @@ var twod_vertex_shader_source = `#version 300 es\n
 
     out lowp vec4 vColor;
     out lowp vec3 vNormal;
-    out lowp vec2 vTexture;
+    out highp vec2 vTexture;
     out mediump mat4 mvMatrix;
     out mediump mat4 projMatrix;
     out lowp vec3 v;

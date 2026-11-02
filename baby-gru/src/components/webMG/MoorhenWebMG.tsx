@@ -26,6 +26,8 @@ import { isSilent, viewDifference } from "../../WebGLgComponents/viewEcho";
 import { HighlightHoveredSection } from './HoverSection';
 import { DragHandles } from './DragHandles';
 import { SelectClickedObject } from './SelectObject';
+import { MoorhenWebGPUMainView } from './MoorhenWebGPUMainView';
+import { webGPUUnavailableReason } from '../../WebGPUComponents/gpu';
 
 
 interface MoorhenWebMGPropsInterface {
@@ -77,6 +79,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
     const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
+    // The main view drawn with WebGPU, where the browser offers it (MoorhenWebGPUMainView).
+    const useWebGPU = useSelector((state: moorhen.State) => state.sceneSettings.useWebGPU)
+    const webGPUAvailable = webGPUUnavailableReason() === null
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
     const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
     const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
@@ -94,6 +99,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
+    const anaglyphColours = useSelector((state: moorhen.State) => state.sceneSettings.anaglyphColours)
     const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
     const doSideBySideStereo = useSelector((state: moorhen.State) => state.sceneSettings.doSideBySideStereo)
     const doThreeWayView = useSelector((state: moorhen.State) => state.sceneSettings.doThreeWayView)
@@ -103,7 +109,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns)
     const doMultiView = useSelector((state: moorhen.State) => state.sceneSettings.doMultiView)
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
-    const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
     const depthPeelLayers = useSelector((state: moorhen.State) => state.sceneSettings.depthPeelLayers)
     const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately)
@@ -370,13 +375,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [shadowMapQuality])
 
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setOutlinesOn(doOutline)
-            glRef.current.drawScene()
-        }
-    }, [doOutline])
-
     /*
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -519,6 +517,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [doAnaglyphStereo])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.anaglyphColours = anaglyphColours
+            glRef.current.drawScene()
+        }
+    }, [anaglyphColours, glRef])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -936,6 +941,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}
                     store={store}
                     dispatch={dispatch} />
+                    {useWebGPU && webGPUAvailable && <MoorhenWebGPUMainView glRef={glRef as React.RefObject<MGWebGL>} />}
                     <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>;
                 </figure>
                 {showContextMenu &&

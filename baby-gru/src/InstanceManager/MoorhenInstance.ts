@@ -49,6 +49,8 @@ import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
 import { startStoreSyncs } from "./StoreSync";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
+import { makeWebGPUApi } from "@/WebGPUComponents/instanceApi";
+import type { WebGPUApi } from "@/WebGPUComponents/instanceApi";
 import type { AppDispatch, MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 
 
@@ -706,6 +708,24 @@ export class MoorhenInstance extends StoreExtension {
                 return result;
             },
         };
+    }
+
+    /**
+     * The WebGPU renderer: who draws the main view, and WebGPU for tests and the console.
+     *
+     * `mainView()` says whether WebGPU or WebGL draws the main view and why, and `setMainView()`
+     * asks for one (the preference). `report()` gives one line on how this machine draws Moorhen,
+     * for a tester to paste back. `snapshot()` draws what the main view shows with WebGPU,
+     * offscreen, with the main view's camera (anything it cannot draw is listed in `skipped`), and
+     * `webGLSnapshot()` reads the WebGL view's own pixels to compare with. See instanceApi.ts.
+     * @example
+     * if (instance.webGPU.available()) {
+     *     const gpu = await instance.webGPU.snapshot();
+     *     const gl = instance.webGPU.webGLSnapshot();
+     * }
+     */
+    public get webGPU(): WebGPUApi {
+        return makeWebGPUApi(this);
     }
 
     //========================================

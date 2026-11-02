@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { MoorhenIcon, MoorhenSpinner } from "../../icons";
@@ -5,8 +6,32 @@ import { MoorhenStack } from "../../interface-base";
 import { UpdatingMapsSnackBar } from "./UpdatingMaps";
 import "./activity-indicator.css";
 
+/** How long the app must stay busy before the spinner shows, ms. */
+const BUSY_SPINNER_DELAY = 300;
+
+/**
+ * `value`, but true only once it has stayed true for `delay` ms; false at once.
+ *
+ * The busy flag is set whenever any command is in flight in the Coot worker, and map recontours
+ * send one on every camera move. Shown directly, the spinner flashed in and out of the hover box
+ * the whole time the view moved. Delayed, quick commands never show it; long jobs still do.
+ */
+const useDelayedTrue = (value: boolean, delay: number): boolean => {
+    const [delayed, setDelayed] = useState(false);
+    useEffect(() => {
+        if (!value) return;
+        const timer = setTimeout(() => setDelayed(true), delay);
+        // When value goes false (or the delay changes): forget it was ever shown.
+        return () => {
+            clearTimeout(timer);
+            setDelayed(false);
+        };
+    }, [value, delay]);
+    return value && delayed;
+};
+
 export const ActivityIndicator = () => {
-    const busy = useSelector((state: RootState) => state.globalUI.busy);
+    const busy = useDelayedTrue(useSelector((state: RootState) => state.globalUI.busy), BUSY_SPINNER_DELAY);
     const hoveredAtom = useSelector((state: RootState) => state.hoveringStates.hoveredAtom);
     const showHoverInfo = useSelector((state: RootState) => state.generalStates.showHoverInfo);
     const timeCapsuleBusy = useSelector((state: RootState) => state.globalUI.isTimeCapsuleBusy);    

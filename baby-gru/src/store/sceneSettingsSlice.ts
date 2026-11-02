@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { ShadowMapQuality } from "../WebGLgComponents/mgWebGLParts/framebuffers";
+import { type AnaglyphColours, DEFAULT_ANAGLYPH_COLOURS } from "../WebGLgComponents/anaglyph";
 
 const execAutoClipFogByZoom = (state: typeof initialState) => {
     const fieldDepthFront: number = 8;
@@ -76,6 +77,14 @@ export const initialState: {
      * whichever they last tried.
      */
     peelOpaqueSeparately: boolean;
+    /**
+     * Draw the main view with WebGPU (components/webMG/MoorhenWebGPUMainView.tsx) where the browser
+     * offers it; WebGL still draws what WebGPU does not (the shadow map debug view), and
+     * everything where there is no WebGPU. On by default.
+     */
+    useWebGPU: boolean;
+    /** Anaglyph stereo's colours, left eye first (WebGLgComponents/anaglyph.ts): red and green by default. */
+    anaglyphColours: AnaglyphColours;
     depthBlurDepth: number;
     lightPosition: [number, number, number, number];
     ambient: [number, number, number, number];
@@ -100,7 +109,6 @@ export const initialState: {
     edgeDetectNormalThreshold: number;
     edgeDetectDepthScale: number;
     edgeDetectNormalScale: number;
-    doOutline: boolean;
     doSpin: boolean;
     doThreeWayView: boolean;
     multiViewRows: number;
@@ -170,10 +178,11 @@ export const initialState: {
     doMultiView: false,
     doCrossEyedStereo: false,
     doAnaglyphStereo: false,
-    doOutline: false,
     depthBlurRadius: 3.0,
     depthPeelLayers: 4,
     peelOpaqueSeparately: true,
+    useWebGPU: true,
+    anaglyphColours: DEFAULT_ANAGLYPH_COLOURS,
     // Where the depth blur starts, in angstroms from the view centre; negative is towards the
     // viewer. Zero puts it on the rotation centre, which is what you are usually looking at.
     // This was a 0 to 1 fraction, so a saved value lands a fraction of an angstrom from centre -
@@ -366,10 +375,6 @@ const sceneSettingsSlice = createSlice({
             state.threeWayViewOrder = action.payload;
         },
         // API
-        setDoOutline: (state, action: PayloadAction<boolean>) => {
-            state.doOutline = action.payload;
-        },
-        // API
         setDepthBlurRadius: (state, action: PayloadAction<number>) => {
             state.depthBlurRadius = action.payload;
         },
@@ -380,6 +385,12 @@ const sceneSettingsSlice = createSlice({
         // API
         setPeelOpaqueSeparately: (state, action: PayloadAction<boolean>) => {
             state.peelOpaqueSeparately = action.payload;
+        },
+        setUseWebGPU: (state, action: PayloadAction<boolean>) => {
+            state.useWebGPU = action.payload;
+        },
+        setAnaglyphColours: (state, action: PayloadAction<AnaglyphColours>) => {
+            state.anaglyphColours = action.payload;
         },
         // API
         setDepthBlurDepth: (state, action: PayloadAction<number>) => {
@@ -488,10 +499,11 @@ export const {
     setDoShadow,
     setShadowMapQuality,
     setDoSpin,
-    setDoOutline,
     setDepthBlurRadius,
     setDepthPeelLayers,
     setPeelOpaqueSeparately,
+    setUseWebGPU,
+    setAnaglyphColours,
     setBackgroundColor,
     setDepthBlurDepth,
     setDrawAxes,

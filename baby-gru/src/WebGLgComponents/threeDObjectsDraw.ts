@@ -29,10 +29,10 @@ import {
     getTorusWireframe,
 } from './shapeGeometry'
 import { IDENTITY_ORIENTATION, PICK_POINTS_PER_INSTANCE, createMeshInstances } from './meshInstancing'
-import { DEFAULT_WIREFRAME_RADIUS, MeshObject, PathObject, ThreeDObject, meshParts } from '../store/threeDObjectsSlice'
+import { DEFAULT_WIREFRAME_RADIUS, MeshObject, MeshPart, PathObject, ThreeDObject, meshParts } from '../store/threeDObjectsSlice'
 import { MOORHEN_3D_OBJECT_TAG_KIND } from '../utils/enums'
 import { wholeMeshPickInfo, wholeMeshPickInfoOfParts } from './wholeMeshPick'
-import { sweepTextures } from './textureRegistry'
+import { BufferMaterial, materialTextureIds, sweepTextures } from './textureRegistry'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 
@@ -251,6 +251,27 @@ export const getThreeDObjectsBuffers = async (store: Store<RootState>): Promise<
         tagKind: MOORHEN_3D_OBJECT_TAG_KIND,
         pathCache: scenePathMeshCache
     })
+
+/**
+ * What a mesh part is drawn with besides its vertex colours: its base colour texture and its
+ * maps, or undefined when it has none of them. Only the ids and factors it actually has are set,
+ * so a part with just a base colour gives exactly the `{ baseColourTexture }` it always did.
+ */
+const partMaterial = (part: MeshPart): BufferMaterial | undefined => {
+    const material: BufferMaterial = {}
+    if (part.texture) material.baseColourTexture = part.texture
+    const maps = part.maps
+    if (maps?.normalTexture) {
+        material.normalTexture = maps.normalTexture
+        if (maps.normalScale !== undefined) material.normalScale = maps.normalScale
+    }
+    if (maps?.metallicRoughnessTexture) {
+        material.metallicRoughnessTexture = maps.metallicRoughnessTexture
+        if (maps.metallicFactor !== undefined) material.metallicFactor = maps.metallicFactor
+        if (maps.roughnessFactor !== undefined) material.roughnessFactor = maps.roughnessFactor
+    }
+    return Object.keys(material).length > 0 ? material : undefined
+}
 
 /**
  * Shapes to buffers, knowing nothing about where the shapes came from.
@@ -920,7 +941,7 @@ export const getBuffersForShapes = async (
         const norm_tri: number[][] = []
         const col_tri: number[][] = []
         const tex_tri: number[][] = []
-        const materials: ({ baseColourTexture?: string } | undefined)[] = []
+        const materials: (BufferMaterial | undefined)[] = []
         // The pick test works on one object, not one sub-buffer, so it is given every part's
         // vertices - otherwise a fifteen-material model would only be pickable where its first
         // material happened to be. Kept as a list of parts rather than joined into one array:
@@ -965,7 +986,11 @@ export const getBuffersForShapes = async (
             // describe its vertices. One pair per vertex is the whole requirement; a mismatch
             // means the two disagree, and drawing it untextured is better than reading the
             // attribute past the end of its buffer.
-            const textured = part.texCoords?.length === count * 2 && !!part.texture
+            //
+            // Any map counts, not only a base colour: a part can have a normal map and no image
+            // of its own colour, and its coordinates are needed for that just the same.
+            const material = partMaterial(part)
+            const textured = part.texCoords?.length === count * 2 && !!material
             if (textured) anyTextured = true
 
             prim_types.push("TRIANGLES")
@@ -976,7 +1001,7 @@ export const getBuffersForShapes = async (
             // Pushed for every part, textured or not, so that the arrays stay index-aligned with
             // the sub-buffers. A gap would shift every later part's texture onto the wrong one.
             tex_tri.push(textured ? part.texCoords! : [])
-            materials.push(textured ? { baseColourTexture: part.texture } : undefined)
+            materials.push(textured ? material : undefined)
 
             partVertices.push(vertices)
         }
@@ -1015,7 +1040,7 @@ export const getBuffersForShapes = async (
         if (obj.texture) texturesInUse.add(obj.texture)
         if (obj.type === "mesh") {
             meshParts(obj as MeshObject).forEach(part => {
-                if (part.texture) texturesInUse.add(part.texture)
+                materialTextureIds(partMaterial(part)).forEach(id => texturesInUse.add(id))
             })
         }
     })

@@ -24,7 +24,7 @@ import { openMovieFile } from "./openMovieFile";
 import { decompressDracoGltf } from "./gltfDraco";
 import { createDracoDecode } from "./gltfDracoDecoder";
 import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
-import { gltfMaterialTextures } from "./gltfTextures";
+import { gltfMaterials } from "./gltfTextures";
 // import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
@@ -606,7 +606,7 @@ export const loadGltfFile = async (
     // a line, and handing sixteen megabytes of pixels across the worker boundary per texture to
     // avoid that would be a poor trade. A material with no image, or one we could not decode,
     // simply gets no entry and its geometry draws in its base colour.
-    const textures = await gltfMaterialTextures(
+    const materials = await gltfMaterials(
         payload.buffer.slice(payload.byteOffset, payload.byteOffset + payload.byteLength) as ArrayBuffer,
         new Map(payloadSidecars.map(sidecar => [sidecar.name, sidecar.data]))
     );
@@ -655,7 +655,7 @@ export const loadGltfFile = async (
     const parts = (mesh.groups ?? [])
         .filter(group => group.vertices.length > 0 && group.indices.length >= 3)
         .map(group => {
-            const texture = textures.get(group.material);
+            const material = materials.get(group.material);
             const vertexCount = group.vertices.length / 3;
             return {
                 vertices: asNumbers(group.vertices),
@@ -664,8 +664,13 @@ export const loadGltfFile = async (
                 colours: asNumbers(group.colours),
                 // Both or neither: coordinates with no texture leave the attribute enabled for
                 // nothing, and a texture with no coordinates would paint the part one flat colour.
-                ...(texture && group.texCoords.length === vertexCount * 2
-                    ? { texCoords: asNumbers(group.texCoords), texture }
+                // Any of the material's textures needs them - a normal map as much as an image.
+                ...(material && group.texCoords.length === vertexCount * 2
+                    ? {
+                        texCoords: asNumbers(group.texCoords),
+                        ...(material.baseColour ? { texture: material.baseColour } : {}),
+                        ...(material.maps ? { maps: material.maps } : {}),
+                    }
                     : {}),
             };
         });

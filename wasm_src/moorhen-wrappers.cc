@@ -3,6 +3,7 @@
 EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("get_xmap",&molecules_container_t::get_xmap)
     .function("dedust_map",&molecules_container_t::dedust_map)
     .function("get_overlap_dots",&molecules_container_t::get_overlap_dots)
     .function("set_max_number_of_simple_mesh_vertices",&molecules_container_t::set_max_number_of_simple_mesh_vertices)
@@ -282,6 +283,8 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .constructor<bool>()
     .function("get_validation",&molecules_container_js::get_validation)
     .function("debug_throw_exception",&molecules_container_js::debug_throw_exception)
+    .function("get_map_unit_cell_grid_info",&molecules_container_js::get_map_unit_cell_grid_info)
+    .function("get_map_unit_cell_grid",&molecules_container_js::get_map_unit_cell_grid)
     .function("debug_abort",&molecules_container_js::debug_abort)
     .function("get_B_validation",&molecules_container_js::get_B_validation)
     .function("rotamer_analysis_json",&molecules_container_js::rotamer_analysis_json)

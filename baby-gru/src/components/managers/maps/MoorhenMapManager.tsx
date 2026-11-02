@@ -2,6 +2,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useEffect, useMemo, useRef } from "react";
 import type { RootState } from "../../../store/MoorhenReduxStore";
 import { setContourLevel, setMapFastRadius, setMapRadius, setMapStyle, showMap } from "../../../store/mapContourSettingsSlice";
+import { gpuMapContourSetting } from "../../../WebGPUComponents/mapContour/setting";
 import { SelectorEffect } from "../../hookComponent/SelectorEffect";
 import { MapOriginListener, MapOriginListenerMouseUp } from "./MapOriginListener";
 import { MapScrollWheelListener } from "./MapScrollWheelListener";
@@ -116,15 +117,18 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         isWorkingRef.current = true;
         const { x, y, z, radius, contourLevel, style } = drawQueue.current[drawQueue.current.length - 1];
         drawQueue.current = [];
+        // As doCootContour decides it, on entry: on the GPU it returns at once.
+        const onGpu = gpuMapContourSetting.enabled;
         await map.doCootContour(x, y, z, radius, contourLevel, style);
-        _postDraw(now);
+        _postDraw(now, onGpu);
     };
 
-    const _postDraw = (startTime: number) => {
+    const _postDraw = (startTime: number, onGpu: boolean) => {
         const now = Date.now();
         isWorkingRef.current = false;
         const timing = now - startTime;
         console.debug(`Map redraw took ${timing} ms`);
+        console.debug(`Mesh created on ${onGpu ? "WebGPU" : "wasmWorker"}`);
     };
 
     function drawMap() {

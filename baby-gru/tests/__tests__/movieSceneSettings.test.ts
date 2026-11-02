@@ -3,7 +3,7 @@
  *
  * A translation between two sets of names that mostly agree. The interesting cases are the two
  * that do not, because a field copied to the wrong name does not fail - it exports a movie without
- * the outline or the blur the author could see on screen, which is only noticed after waiting for
+ * the edges or the blur the author could see on screen, which is only noticed after waiting for
  * the render.
  */
 import { describe, expect, it } from "@jest/globals";
@@ -20,7 +20,6 @@ const storeSettings: SceneSettingsSource = {
     edgeDetectNormalScale: 2.5,
     edgeDetectDepthThreshold: 0.75,
     edgeDetectNormalThreshold: 0.25,
-    doOutline: true,
     useOffScreenBuffers: true,
     depthBlurRadius: 7,
     doPerspectiveProjection: true,
@@ -44,7 +43,7 @@ describe("recording the scene's modes", () => {
             doShadow: true, doSSAO: true, ssaoRadius: 2.5, ssaoBias: 0.05,
             doEdgeDetect: true, edgeDetectDepthScale: 1.5, edgeDetectNormalScale: 2.5,
             edgeDetectDepthThreshold: 0.75, edgeDetectNormalThreshold: 0.25,
-            doOutline: true, useOffScreenBuffers: true, blurRadius: 7,
+            useOffScreenBuffers: true, blurRadius: 7,
             doPerspectiveProjection: true, eyeDistance: 250,
         });
     });
