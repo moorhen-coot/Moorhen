@@ -6,6 +6,7 @@ import { createQuatFromDXAngle, createQuatFromAngle, createZQuatFromDX } from '.
 import { parseAtomInfoLabel } from '../../utils/utils';
 import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND } from '../../utils/enums';
 import { getDeviceScale } from '../webGLUtils';
+import { influenceOf } from '../glResources';
 import { getOffsetRect, MGWebGL } from '../mgWebGL';
 import type { moorhen } from '../../types/moorhen';
 import { webGL } from '../../types/mgWebGL';
@@ -161,7 +162,10 @@ export function doHover(self: MGWebGL, event) {
         }
 
             const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
-            if(minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.influence_weights_texture && displayBuffers[minidx_pi].pick_info.influence_point_indexes_texture && displayBuffers[minidx_pi].pick_info.influence_index_offsets_texture && displayBuffers[minidx_pi].pick_info.pick_points){
+            // A smooth mesh with influence lists (MetaBalls, surfaces). Asked of the lists, not of
+            // WebGL's textures made from them: those exist only once WebGL has drawn the buffer,
+            // and with WebGPU drawing the view they may never.
+            if(minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && influenceOf(displayBuffers[minidx_pi].pick_info) && displayBuffers[minidx_pi].pick_info.pick_points){
                 setHover(minidx_pi, minj_pi, [])
             } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj_pi].length>0) {
                 //Hmm, I am worried, could triangleIndexs.length > 1 ?

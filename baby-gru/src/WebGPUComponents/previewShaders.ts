@@ -66,6 +66,9 @@ struct Draw {
     ambient: vec4f,      // w = 1: this ambient light instead of the frame's (the drag's pulse)
     output: vec4f,       // x: 1 where the pipeline writes its colour as it is (opaque), 0 where it
                          // blends it over what is there (transparent, or into a peel layer)
+    highlight: vec4i,    // the hover (hoverHighlight.ts), for instanced meshes: x the instance lit
+                         // whole, y and z the mesh vertices [y, z) lit (a section), -1 for none;
+                         // w the mesh vertex this chunk's vertex 0 is (see MeshChunk)
 };
 
 fn ambientLight() -> vec4f {
@@ -183,12 +186,17 @@ fn edgeAt(fragCoord: vec4f) -> f32 {
 }
 
 struct VOut {
-    @builtin(position) position: vec4f,
+    // Invariant: the hover overlay (vs_hover_overlay) draws a mesh again over itself, depth-tested
+    // less-equal, so both must land on exactly the same depth.
+    @builtin(position) @invariant position: vec4f,
     @location(0) colour: vec4f,
     @location(1) normal: vec3f,
     @location(2) eyeDistance: f32,
     // Where this is in the shadow map (shadowAt).
     @location(5) shadowPos: vec4f,
+    // The hover highlight, as vHighlight in triangle-fragment-shader.js (withHighlight): 1 for
+    // nothing, 2 for lit (an instance or section), 0..1 a smooth mesh's share of the hovered point.
+    @location(6) highlight: f32,
 };
 
 fn finish(world: vec4f, normal: vec3f, colour: vec4f) -> VOut {
@@ -201,6 +209,7 @@ fn finish(world: vec4f, normal: vec3f, colour: vec4f) -> VOut {
     out.normal = (draw.model * vec4f(normal, 0.0)).xyz;
     out.eyeDistance = abs(eye.z / eye.w);
     out.shadowPos = frame.shadowMatrix * (draw.model * world);
+    out.highlight = 1.0;
     return out;
 }
 
@@ -232,22 +241,40 @@ fn placeInstance(position: vec3f, normal: vec3f, origin: vec3f, size: vec3f,
     return finish(instanceWorld(position, origin, size, o0, o1, o2, o3), instanceNormal(normal, o0, o1, o2, o3), colour);
 }
 
+// The hover highlight of an instanced mesh, as triangle-instanced-vertex-shader.js has it: 2 (lit:
+// halfway to white) for the hovered instance, or for the vertices of the hovered section (by the
+// mesh's own numbering: vertex_index counts from the chunk's first vertex), 1 otherwise. Siblings
+// are left alone, as WebGL leaves them.
+fn instanceHighlight(instance: u32, vertex: u32) -> f32 {
+    let h = draw.highlight;
+    let id = i32(vertex) + h.w;
+    let wholeInstance = h.x >= 0 && i32(instance) == h.x;
+    let section = h.y >= 0 && id >= h.y && id < h.z;
+    return select(1.0, 2.0, wholeInstance || section);
+}
+
 // Used for both per-vertex and per-instance colours: the pipeline's step mode is the difference.
 @vertex
 fn vs_instanced_attribute_colour(@location(0) position: vec3f, @location(1) normal: vec3f,
                                  @location(2) colour: vec4f,
                                  @location(3) origin: vec3f, @location(4) size: vec3f,
                                  @location(5) o0: vec4f, @location(6) o1: vec4f,
-                                 @location(7) o2: vec4f, @location(8) o3: vec4f) -> VOut {
-    return placeInstance(position, normal, origin, size, o0, o1, o2, o3, colour);
+                                 @location(7) o2: vec4f, @location(8) o3: vec4f,
+                                 @builtin(instance_index) instance: u32, @builtin(vertex_index) vertex: u32) -> VOut {
+    var out = placeInstance(position, normal, origin, size, o0, o1, o2, o3, colour);
+    out.highlight = instanceHighlight(instance, vertex);
+    return out;
 }
 
 @vertex
 fn vs_instanced_uniform_colour(@location(0) position: vec3f, @location(1) normal: vec3f,
                                @location(3) origin: vec3f, @location(4) size: vec3f,
                                @location(5) o0: vec4f, @location(6) o1: vec4f,
-                               @location(7) o2: vec4f, @location(8) o3: vec4f) -> VOut {
-    return placeInstance(position, normal, origin, size, o0, o1, o2, o3, draw.colour);
+                               @location(7) o2: vec4f, @location(8) o3: vec4f,
+                               @builtin(instance_index) instance: u32, @builtin(vertex_index) vertex: u32) -> VOut {
+    var out = placeInstance(position, normal, origin, size, o0, o1, o2, o3, draw.colour);
+    out.highlight = instanceHighlight(instance, vertex);
+    return out;
 }
 
 // occ: the ambient occlusion here, which darkens the ambient and diffuse light but not the
@@ -284,12 +311,27 @@ fn fogged(colour: vec4f, alpha: f32, eyeDistance: f32) -> vec4f {
     return out;
 }
 
+// The hover highlight on a finished colour, as the end of triangle-fragment-shader.js has it: a
+// green ring where a smooth mesh's share of the hovered point crosses 0.45; above 1, lightened
+// halfway to white (an instance or a section lit); below 1, that much of the alpha (the smooth
+// mesh overlay fading away from the hovered point). At exactly 1, nothing changes. Where the
+// colour is premultiplied (an opaque pipeline in a transparent snapshot: fogged), so is the change.
+fn withHighlight(colour: vec4f, h: f32) -> vec4f {
+    let premultiplied = frame.fog.x > 0.5 && draw.output.x > 0.5;
+    let scale = select(1.0, colour.a, premultiplied);
+    let ring = smoothstep(0.4, 0.45, h) - smoothstep(0.45, 0.5, h);
+    var rgb = colour.rgb + ring * vec3f(0.4, 1.0, 0.0) * scale;
+    rgb = mix(rgb, vec3f(scale), 0.5 * clamp(h - 1.0, 0.0, 1.0));
+    let fade = min(h, 1.0);
+    return vec4f(select(rgb, rgb * fade, premultiplied), colour.a * fade);
+}
+
 // The edge factor scales everything, back faces too; the occlusion only the lit front.
 fn meshColour(in: VOut, frontFacing: bool) -> vec4f {
     // Back faces are drawn flat in their own colour, as in WebGL.
     let shadow = shadowAt(in.shadowPos);
     let colour = select(in.colour * backShade(shadow), lit(in.colour, in.normal, occlusionAt(in.position), shadow), frontFacing);
-    return fogged(colour * edgeAt(in.position), in.colour.a, in.eyeDistance);
+    return withHighlight(fogged(colour * edgeAt(in.position), in.colour.a, in.eyeDistance), in.highlight);
 }
 
 @fragment
@@ -304,6 +346,46 @@ fn fs_main_peel(in: VOut, @builtin(front_facing) frontFacing: bool) -> @location
     let colour = meshColour(in, frontFacing);
     if (!peelKeep(in.position, in.position.z)) { discard; }
     return colour;
+}
+
+// The hover overlay on a smooth mesh (MetaBalls, molecular surfaces), as drawCore draws it after
+// the scene: the hovered mesh again, orange, blended over itself, each vertex as opaque as the share
+// of it the hovered point has (triangle-vertex-shader.js, weightForHoveredPoint). The influence
+// lists are CSR: vertex v's are [ends[v - 1], ends[v]) of the points and weights. A point matches
+// when its owner code equals the hovered one under the mask: all ones for one point; a surface
+// masks off the residue half to light a chain, or everything to light the molecule. A vertex in
+// the groove between two residues of one chain belongs to both, so the matches are summed, not the
+// first taken. whole: every vertex fully (a cavity, which has no lists).
+struct Hover {
+    point: u32,
+    mask: u32,
+    whole: u32,
+    unused: u32,
+};
+
+@group(2) @binding(12) var<uniform> hover: Hover;
+@group(2) @binding(13) var<storage, read> influenceEnds: array<u32>;
+@group(2) @binding(14) var<storage, read> influencePoints: array<u32>;
+@group(2) @binding(15) var<storage, read> influenceWeights: array<f32>;
+
+fn hoverWeight(v: u32) -> f32 {
+    if (hover.whole != 0u) { return 1.0; }
+    let begin = select(influenceEnds[v - 1u], 0u, v == 0u);
+    let end = influenceEnds[v];
+    let wanted = hover.point & hover.mask;
+    var total = 0.0;
+    for (var i = begin; i < end; i++) {
+        if ((influencePoints[i] & hover.mask) == wanted) { total += influenceWeights[i]; }
+    }
+    return min(total, 1.0);
+}
+
+@vertex
+fn vs_hover_overlay(@location(0) position: vec3f, @location(1) normal: vec3f,
+                    @builtin(vertex_index) vertex: u32) -> VOut {
+    var out = finish(vec4f(position, 1.0), normal, vec4f(0.9, 0.5, 0.0, 1.0));
+    out.highlight = hoverWeight(u32(i32(vertex) + draw.highlight.w));
+    return out;
 }
 
 // The g-buffer (effectPasses.ts): the surface's normal in eye space, w = 1 where anything is drawn.
@@ -339,6 +421,7 @@ struct TexturedOut {
     // Where the vertex is, in the frame the normal is in, for the normal map's tangent frame.
     @location(4) world: vec3f,
     @location(5) shadowPos: vec4f,
+    @location(6) highlight: f32,
 };
 
 fn textured(world: vec4f, normal: vec3f, colour: vec4f, uv: vec2f) -> TexturedOut {
@@ -351,6 +434,7 @@ fn textured(world: vec4f, normal: vec3f, colour: vec4f, uv: vec2f) -> TexturedOu
     out.uv = uv;
     out.world = (draw.model * world).xyz;
     out.shadowPos = v.shadowPos;
+    out.highlight = v.highlight;
     return out;
 }
 
@@ -372,8 +456,11 @@ fn vs_instanced_attribute_colour_textured(@location(0) position: vec3f, @locatio
                                           @location(3) origin: vec3f, @location(4) size: vec3f,
                                           @location(5) o0: vec4f, @location(6) o1: vec4f,
                                           @location(7) o2: vec4f, @location(8) o3: vec4f,
-                                          @location(9) uv: vec2f) -> TexturedOut {
-    return textured(instanceWorld(position, origin, size, o0, o1, o2, o3), instanceNormal(normal, o0, o1, o2, o3), colour, uv);
+                                          @location(9) uv: vec2f,
+                                          @builtin(instance_index) instance: u32, @builtin(vertex_index) vertex: u32) -> TexturedOut {
+    var out = textured(instanceWorld(position, origin, size, o0, o1, o2, o3), instanceNormal(normal, o0, o1, o2, o3), colour, uv);
+    out.highlight = instanceHighlight(instance, vertex);
+    return out;
 }
 
 @vertex
@@ -381,8 +468,11 @@ fn vs_instanced_uniform_colour_textured(@location(0) position: vec3f, @location(
                                         @location(3) origin: vec3f, @location(4) size: vec3f,
                                         @location(5) o0: vec4f, @location(6) o1: vec4f,
                                         @location(7) o2: vec4f, @location(8) o3: vec4f,
-                                        @location(9) uv: vec2f) -> TexturedOut {
-    return textured(instanceWorld(position, origin, size, o0, o1, o2, o3), instanceNormal(normal, o0, o1, o2, o3), draw.colour, uv);
+                                        @location(9) uv: vec2f,
+                                        @builtin(instance_index) instance: u32, @builtin(vertex_index) vertex: u32) -> TexturedOut {
+    var out = textured(instanceWorld(position, origin, size, o0, o1, o2, o3), instanceNormal(normal, o0, o1, o2, o3), draw.colour, uv);
+    out.highlight = instanceHighlight(instance, vertex);
+    return out;
 }
 
 // metalReflection in triangle-fragment-shader.js: what a metal shows in place of diffuse light, a
@@ -452,7 +542,7 @@ fn texturedColour(in: TexturedOut, frontFacing: bool) -> vec4f {
     let shadow = shadowAt(in.shadowPos);
     let surface = select(colour * backShade(shadow),
         litSurface(colour, n, shininess, specularTint, metallic, roughness, occlusionAt(in.position), shadow), frontFacing);
-    return fogged(surface * edgeAt(in.position), in.colour.a, in.eyeDistance);
+    return withHighlight(fogged(surface * edgeAt(in.position), in.colour.a, in.eyeDistance), in.highlight);
 }
 
 @fragment

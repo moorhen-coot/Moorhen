@@ -357,14 +357,17 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
     if(jsondata.pick_info){
         if(jsondata.pick_info.influence_weights && jsondata.pick_info.influence_point_indexes && jsondata.pick_info.influence_index_offsets && jsondata.pick_info.pick_points){
             // The influence data becomes three textures, made by realiseGLResources once there
-            // is a context. Until then the buffer still picks by pick_points alone.
+            // is a context. Until then the buffer still picks by pick_points alone. The lists
+            // themselves stay, as `influence`, for the WebGPU renderer (glResources.ts).
+            const influence = {
+                weights: jsondata.pick_info.influence_weights,
+                point_indexes: jsondata.pick_info.influence_point_indexes,
+                index_offsets: jsondata.pick_info.influence_index_offsets,
+            }
             theBuffer.pick_info = {
                 pick_points: jsondata.pick_info.pick_points,
-                pending_influence: {
-                    weights: jsondata.pick_info.influence_weights,
-                    point_indexes: jsondata.pick_info.influence_point_indexes,
-                    index_offsets: jsondata.pick_info.influence_index_offsets,
-                },
+                pending_influence: influence,
+                influence,
             }
 
             // This branch builds pick_info afresh rather than copying it, so anything the

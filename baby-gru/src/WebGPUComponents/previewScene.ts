@@ -57,7 +57,16 @@ export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
     store?: { getState(): {
         glRef?: { hoverSize?: number; texturedShapes?: TexturedShapeSource[] };
         sceneSettings?: { shadowMapQuality?: ShadowMapQuality; depthPeelLayers?: number };
+        /** The section the sequence viewer hovers (hoverHighlight.ts). */
+        hoveringStates?: { hoveredSection?: { bufferId: string; section: number } | null };
     } };
+    /**
+     * The pointer's hover, as the pick wrote it (hoveridx indexes glRef.displayBuffers, hover_point
+     * that buffer's pick points), and the grain the zoom has chosen (utils/pickLevel.ts): what the
+     * hover highlight lights (hoverHighlight.ts).
+     */
+    state?: { hoveridx?: number; hover_point?: number };
+    pickLevel?: number;
     /**
      * Depth peeling for transparent geometry (MGWebGL's, on unless switched off), with the scene's
      * depthPeelLayers counting the opaque layer (depthPeel.ts).
