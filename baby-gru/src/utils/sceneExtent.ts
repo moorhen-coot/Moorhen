@@ -147,3 +147,51 @@ export const sceneSpan = ({ positioned = [], sizes = [] }: SceneExtentInput): nu
     const span = Math.max(fromPositions, largestSize);
     return span > 0 ? span : EMPTY_SCENE_SPAN;
 };
+
+/**
+ * A ball containing something: what the side-on view's framing measures, see reachFrom.
+ */
+export interface Sphere {
+    centre: [number, number, number];
+    radius: number;
+}
+
+/**
+ * A ball about the box's centre containing every point: the box's middle, and the farthest point
+ * from it. Not the smallest ball, but within a few percent of it for anything molecule-shaped,
+ * and unlike the box's own half diagonal it does not overstate a round thing by sqrt(3).
+ */
+export const sphereOfPoints = (points: Iterable<[number, number, number]>, bounds: Bounds | null): Sphere | null => {
+    if (!bounds) return null;
+    const centre: [number, number, number] = [0, 1, 2].map(i => (bounds.min[i] + bounds.max[i]) / 2) as [number, number, number];
+    let r2 = 0;
+    for (const p of points) {
+        if (!Number.isFinite(p[0]) || !Number.isFinite(p[1]) || !Number.isFinite(p[2])) continue;
+        const d2 = (p[0] - centre[0]) ** 2 + (p[1] - centre[1]) ** 2 + (p[2] - centre[2]) ** 2;
+        if (d2 > r2) r2 = d2;
+    }
+    return { centre, radius: Math.sqrt(r2) };
+};
+
+/**
+ * How far from `centre` (the view centre, as a point, not the negated scene origin) anything in
+ * these balls reaches: the half width the side-on view needs to show all of them, or 0 when there
+ * are none.
+ *
+ * Measured from the view centre because that is what the side-on view is centred on: a molecule
+ * the view has moved away from needs a wider view than its own size, and one centred in it a
+ * narrower one. A distance, so it is the same however the view is turned, and the view does not
+ * breathe while the main view rotates.
+ *
+ * Unlike sceneSpan, a map here is the ball it is contoured in (its radius about its draw centre),
+ * not its cell: what is drawn, which for an EM map is a small part of a large box.
+ */
+export const reachFrom = (centre: readonly number[], spheres: (Sphere | null)[]): number => {
+    let reach = 0;
+    for (const s of spheres) {
+        if (!s || !Number.isFinite(s.radius)) continue;
+        const d = Math.hypot(s.centre[0] - centre[0], s.centre[1] - centre[1], s.centre[2] - centre[2]);
+        if (Number.isFinite(d)) reach = Math.max(reach, d + Math.max(0, s.radius));
+    }
+    return reach;
+};

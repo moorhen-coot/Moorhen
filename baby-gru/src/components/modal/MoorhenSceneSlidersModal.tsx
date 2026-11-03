@@ -11,7 +11,7 @@ import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
 import {RootState } from '../../store/MoorhenReduxStore';
 import { MoorhenStack } from "../interface-base";
 import { MoorhenToggle, MoorhenSlider } from "../inputs";
-import { Bounds, boundsAround, mapSpan, sceneSpan } from "../../utils/sceneExtent";
+import { Bounds, Sphere, boundsAround, mapSpan, reachFrom, sceneSpan, sphereOfPoints } from "../../utils/sceneExtent";
 import {
     Handle,
     HandleId,
@@ -147,7 +147,8 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const [grabbed, setGrabbed] = useState<HandleId | null>(null)
 
     /**
-     * How far this widget's scale has to reach.
+     * The size of the whole scene, for the reset clip distances, and for the widget's scale when
+     * viewReach has nothing to measure.
      *
      * Everything on screen counts, not only atoms. This used to measure the molecules alone and
      * fall back to 9999 when there were none, so a scene holding a mesh, a primitive or a map
@@ -156,36 +157,73 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
      * Maps contribute their unit cell rather than their contour radius - see sceneExtent - so
      * that changing how much of a map is drawn does not move the scale underfoot.
      */
-    const atomSpan = useMemo(() => {
+    const { atomSpan, atomSphere } = useMemo(() => {
         // Accumulated in place rather than collected into an array: a large structure has
         // hundreds of thousands of atoms and this runs whenever the buffers change.
         let haveAtoms = false;
         const min: [number, number, number] = [Infinity, Infinity, Infinity];
         const max: [number, number, number] = [-Infinity, -Infinity, -Infinity];
+        const visibleAtoms = displayBuffers.filter(buffer => buffer.visible && buffer.atoms)
 
-        displayBuffers.forEach(buffer => {
-            if (buffer.visible && buffer.atoms) {
-                buffer.atoms.forEach(atom => {
-                    const p = [atom.x, atom.y, atom.z];
-                    if (!p.every(Number.isFinite)) return;
-                    haveAtoms = true;
-                    for (let i = 0; i < 3; i++) {
-                        if (p[i] < min[i]) min[i] = p[i];
-                        if (p[i] > max[i]) max[i] = p[i];
-                    }
-                })
-            }
+        visibleAtoms.forEach(buffer => {
+            buffer.atoms.forEach(atom => {
+                const p = [atom.x, atom.y, atom.z];
+                if (!p.every(Number.isFinite)) return;
+                haveAtoms = true;
+                for (let i = 0; i < 3; i++) {
+                    if (p[i] < min[i]) min[i] = p[i];
+                    if (p[i] > max[i]) max[i] = p[i];
+                }
+            })
         })
+        const atomBounds: Bounds | null = haveAtoms ? { min, max } : null
 
         // Atom coordinates and 3D object centres share a coordinate space, so they go in together
         // and a scene with two things far apart gets a span covering both.
-        const positioned: (Bounds | null)[] = [haveAtoms ? { min, max } : null];
+        const positioned: (Bounds | null)[] = [atomBounds];
         threeDObjects.forEach(obj => {
             positioned.push(boundsAround(centreOfObject(obj), extentOfObject(obj)));
         })
 
-        return sceneSpan({ positioned, sizes: maps.map(mapSpan) })
+        // The ball the atoms are in, for the side-on view's framing (viewReach below).
+        function* atomPositions(): Generator<[number, number, number]> {
+            for (const buffer of visibleAtoms) for (const atom of buffer.atoms) yield [atom.x, atom.y, atom.z]
+        }
+
+        return {
+            atomSpan: sceneSpan({ positioned, sizes: maps.map(mapSpan) }),
+            atomSphere: sphereOfPoints(atomPositions(), atomBounds),
+        }
     }, [displayBuffers, threeDObjects, maps])
+
+    /**
+     * How far what is drawn reaches from the view centre, in angstroms, or 0 when nothing is: what
+     * the side-on view is framed on.
+     *
+     * Not atomSpan, which this used to be (times spanScaling). That is the diagonal of everything's
+     * box, a map's whole cell included, and pays no attention to where the view centre is: an EM
+     * map, contoured in a small ball inside a box hundreds of angstroms across, was a speck, a
+     * centred molecule had half again the room it needed, and one the view had moved away from
+     * could be off the edge. Here a molecule is the ball its atoms are in, a 3D object its extent,
+     * and a visible map the ball it is contoured in: its radius about where it is drawn, the view
+     * centre, or the point it is locked to.
+     */
+    const viewReach = useMemo(() => {
+        // The scene origin is the negated view centre, as are a map's locked draw origin.
+        const centre = originState.map(c => -c)
+        const spheres: (Sphere | null)[] = [atomSphere]
+        threeDObjects.forEach(obj => {
+            spheres.push({ centre: centreOfObject(obj) as [number, number, number], radius: extentOfObject(obj) })
+        })
+        maps.forEach(map => {
+            if (!mapContourSettings.visibleMaps.includes(map.molNo)) return
+            const radius = mapContourSettings.mapRadii.find(r => r.molNo === map.molNo)?.radius
+            if (!Number.isFinite(radius)) return
+            const drawOrigin = map.isOriginLocked ? (map.drawOrigin ?? map.mapCentre) : null
+            spheres.push({ centre: (drawOrigin ? drawOrigin.map(c => -c) : centre) as [number, number, number], radius })
+        })
+        return reachFrom(centre, spheres)
+    }, [atomSphere, threeDObjects, maps, mapContourSettings, originState])
 
     /**
      * Each handle as a signed distance from the view centre, which is the one convention the
@@ -203,15 +241,15 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     /**
      * Half the plot's extent, in angstroms.
      *
-     * The scene span is the floor, not the answer: the range also stretches to contain every
+     * The scene's reach is the floor, not the answer: the range also stretches to contain every
      * visible handle. Handles used to be clamped to the edge when their value fell outside the
      * scene, and because the clamped pixel was then used to hit-test and to guard the drag, two
      * handles off the same end became one unreachable pixel. Fitting the range instead means
      * nothing is ever off the plot, so neither failure has anywhere to happen.
      */
     const plotRange = useMemo(
-        () => plotHalfRange(atomSpan * spanScaling, handles),
-        [atomSpan, handles])
+        () => plotHalfRange(viewReach > 0 ? viewReach : atomSpan * spanScaling, handles),
+        [viewReach, atomSpan, handles])
 
     /** Where each handle is drawn, by id. */
     const handlePixels = useMemo(() => {
