@@ -908,7 +908,8 @@ export const autoOpenFiles = async (
                     newMap.showOnLoad = false;
                 }
                 dispatch(addMap(newMap));
-                if (!isLocres) {
+                // Difference maps are never made active by default
+                if (!isLocres && !newMap.isDifference) {
                     dispatch(setActiveMap(newMap));
                 }
                 mapsCreated.push(newMap);

@@ -383,8 +383,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 dispatch(enqueueSnackbar({ message: `Press ${getTooltipShortcutLabel(shortCut)} to show help`, variant: "info" }));
             } catch (error) {
                 console.error("Error parsing shortcuts:", error);
-                const json = JSON.parse(shortCuts);
-                console.log("Parsed Shortcuts", json, "keys", Object.keys(json));
             }
             if (!window.MathJax) setTimeout(() => loadMathjax(`${urlPrefix}`), 500);
             return true;

@@ -404,7 +404,6 @@ export const moorhenKeyPress = (
             // the backbone; residues without one (nucleic acids, ligands) use the whole residue.
             const nextResidueCid = `/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/`
             const caAtoms = await selectedMolecule.gemmiAtomsForCid(nextResidueCid + "CA")
-            console.log(`Ste  pping to ${nextResidueCid} (CA atoms: ${caAtoms.length})`)
             await store.dispatch(setOrigin([-caAtoms[0].x, -caAtoms[0].y, -caAtoms[0].z]))
         })
         .catch(err => console.log(err))
