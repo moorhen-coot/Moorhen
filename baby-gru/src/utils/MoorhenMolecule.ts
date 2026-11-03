@@ -20,11 +20,13 @@ import {
     doDownload,
     formatLigandSVG,
     getCentreAtom,
+    getCidAltConf,
     getRandomMoleculeColour,
     guid,
     parseAtomInfoLabel,
     readGemmiCifDocument,
     readGemmiStructure,
+    restrictCidToAltConf,
 } from "./utils";
 import { ZOOM_DIVISOR, moleculeDiameter } from "./moleculeExtent";
 import { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
@@ -2438,22 +2440,174 @@ export class MoorhenMolecule {
     }
 
     /**
+     * Check whether a residue is partial, i.e. has atoms missing compared to its dictionary.
+     * Atoms missing in only some of a residue's alt confs do not count.
+     * @param {string} chainId - The chain ID of the residue
+     * @param {number} resNo - The residue number
+     * @param {string} [insCode=""] - The insertion code of the residue
+     * @returns {Promise<boolean>} True if the residue has missing atoms
+     */
+    async residueHasMissingAtoms(chainId: string, resNo: number, insCode: string = ""): Promise<boolean> {
+        const response = (await this.commandCentre.cootCommand(
+            {
+                returnType: "residue_specs",
+                command: "residues_with_missing_atoms",
+                commandArgs: [this.molNo],
+            },
+            false
+        )) as moorhen.WorkerResponse<libcootApi.ResidueSpecJS[]>;
+        return (response.data.result.result ?? []).some(
+            residue => residue.chainId === chainId && residue.resNum === resNo && (residue.insCode ?? "") === (insCode ?? "")
+        );
+    }
+
+    /**
+     * Auto-fit the rotamer of a residue into a map
+     *
+     * With an alt conf only that conformation is fitted. libcoot's auto_fit_rotamer copies the fitted
+     * coordinates onto every conformation of the residue, so the fit is done on a fragment holding only
+     * that alt conf (and the atoms without one) and merged back.
+     * @param {string} chainId - The chain ID of the residue
+     * @param {number} resNo - The residue number
+     * @param {string} insCode - The insertion code of the residue
+     * @param {string} altConf - The alt conf to fit, or "" for a residue without alt confs
+     * @param {moorhen.Map} map - The map to fit into
+     * @returns {Promise<number>} 1 if the rotamer was fitted, 0 otherwise
+     */
+    async autoFitRotamer(chainId: string, resNo: number, insCode: string, altConf: string, map: moorhen.Map): Promise<number> {
+        if (!altConf) {
+            const result = (await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "auto_fit_rotamer",
+                    commandArgs: [this.molNo, chainId, resNo, insCode, "", map.molNo],
+                    changesMolecules: [this.molNo],
+                },
+                true
+            )) as moorhen.WorkerResponse<number>;
+            this.setAtomsDirty(true);
+            return result.data.result.result;
+        }
+
+        // The flanking residues give the fit its backrub neighbours
+        const residue = `${resNo - 1}-${resNo + 1}`;
+        const fragmentCid = restrictCidToAltConf(`//${chainId}/${residue}`, altConf);
+        const copyResult = (await this.commandCentre.cootCommand(
+            {
+                returnType: "status",
+                command: "copy_fragment_using_cid",
+                commandArgs: [this.molNo, fragmentCid],
+            },
+            false
+        )) as moorhen.WorkerResponse<number>;
+        const fragmentMolNo = copyResult.data.result.result;
+        if (fragmentMolNo === -1) {
+            return 0;
+        }
+
+        try {
+            const fitResult = (await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "auto_fit_rotamer",
+                    commandArgs: [fragmentMolNo, chainId, resNo, insCode, altConf, map.molNo],
+                },
+                false
+            )) as moorhen.WorkerResponse<number>;
+            if (fitResult.data.result.result !== 1) {
+                return 0;
+            }
+            await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "replace_fragment",
+                    commandArgs: [this.molNo, fragmentMolNo, fragmentCid],
+                    changesMolecules: [this.molNo],
+                },
+                true
+            );
+            this.setAtomsDirty(true);
+            return 1;
+        } finally {
+            await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "close_molecule",
+                    commandArgs: [fragmentMolNo],
+                },
+                false
+            );
+        }
+    }
+
+    /**
+     * Get the residue CIDs that libcoot's refinement `mode` would select around `cid`
+     * (mirrors coot::molecule_t::select_residues). Only used for alt-conf refinement, where
+     * libcoot cannot be asked to do the selection itself.
+     * @param {string} cid - The (multi-)CID of the central residue(s)
+     * @param {string} mode - Refinement mode (SINGLE, LITERAL, TRIPLE, QUINTUPLE, HEPTUPLE, SPHERE, BIG_SPHERE, CHAIN, ALL)
+     * @returns {Promise<string[]>} Residue CIDs
+     */
+    private async getResidueCidsForRefinementMode(cid: string, mode: string): Promise<string[]> {
+        const sequenceWindow = { TRIPLE: 1, QUINTUPLE: 2, HEPTUPLE: 3 }[mode];
+        const sphereRadius = { SPHERE: 4.2, BIG_SPHERE: 8.0 }[mode];
+        const parts = cid.split("||");
+        if (sphereRadius) {
+            return this.getNeighborResiduesCids(cid, sphereRadius);
+        } else if (mode === "ALL") {
+            return ["//*/*"];
+        } else if (mode === "CHAIN") {
+            return parts.map(part => `//${part.split("/")[2] || "*"}/*`);
+        } else if (sequenceWindow) {
+            return parts.map(part => {
+                const [, model = "", chain = "", residue = ""] = part.split("/");
+                const resNo = /^-?\d+$/.test(residue) ? parseInt(residue) : null;
+                return resNo === null ? part : `/${model}/${chain}/${resNo - sequenceWindow}-${resNo + sequenceWindow}`;
+            });
+        }
+        return parts;
+    }
+
+    /**
      * Refine a set of residues
+     *
+     * If the CID ends in `:X` (e.g. `//A/42/*:B`) only alternate conformation X and the atoms without
+     * an alt conf are refined, the other conformations stay fixed. libcoot's in-place refinement
+     * ignores alt confs, so that case goes through a refinement fragment restricted to the alt conf.
      * @param {string} cid - The CID selection with the atoms that should be refined
      * @param {string} mode - Refinement mode (SINGLE, TRIPLE ...etc.)
      * @param {number} [ncyc=4000] - Number of refinement cycles
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
     async refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number = 4000, redraw: boolean = true): Promise<void> {
-        await this.commandCentre.cootCommand(
-            {
-                command: "refine_residues_using_atom_cid",
-                returnType: "status",
-                commandArgs: [this.molNo, cid, mode, ncyc],
-                changesMolecules: [this.molNo],
-            },
-            true
-        );
+        const altConf = getCidAltConf(cid);
+        const refinementMap = this.store.getState().generalStates.activeMap as unknown as moorhen.Map | null;
+        if (altConf && refinementMap) {
+            const residueCids = await this.getResidueCidsForRefinementMode(cid, mode);
+            const fragmentCid = residueCids.map(residueCid => restrictCidToAltConf(residueCid, altConf)).join("||");
+            const fragment = await this.copyFragmentForRefinement([fragmentCid], refinementMap, false);
+            if (fragment.molNo !== null) {
+                await this.commandCentre.cootCommand(
+                    {
+                        returnType: "status_instanced_mesh_pair",
+                        command: "refine",
+                        commandArgs: [fragment.molNo, ncyc],
+                    },
+                    false
+                );
+                await this.mergeFragmentFromRefinement(fragmentCid, fragment, true, false);
+            }
+        } else {
+            await this.commandCentre.cootCommand(
+                {
+                    command: "refine_residues_using_atom_cid",
+                    returnType: "status",
+                    commandArgs: [this.molNo, cid, mode, ncyc],
+                    changesMolecules: [this.molNo],
+                },
+                true
+            );
+        }
 
         this.setAtomsDirty(true);
         if (redraw) {
@@ -2510,6 +2664,11 @@ export class MoorhenMolecule {
             cidList = [cid];
         } else {
             cidList = await this.getNeighborResiduesCids(cid, dist);
+        }
+        // A CID ending in `:X` refines only alt conf X (plus the atoms with no alt conf)
+        const altConf = getCidAltConf(cid);
+        if (altConf) {
+            cidList = cidList.map(residueCid => restrictCidToAltConf(residueCid, altConf));
         }
 
         const newMolecule = await this.copyFragmentForRefinement(cidList, activeMap, redraw, redrawFragmentFirst);
