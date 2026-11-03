@@ -528,6 +528,7 @@ export interface molecules_container_js extends molecules_container_t {
   count_simple_mesh_vertices(_0: simple_mesh_t): number;
   DrawMoorhenMetaBalls(_0: number, _1: EmbindString, _2: number, _3: number, _4: number, _5: number): simple_mesh_t;
   DrawGlycoBlocks(_0: number, _1: EmbindString): instanced_mesh_t;
+  DrawBloboids(_0: number, _1: EmbindString, _2: VectorString, _3: VectorFloat): simple_mesh_t;
   smiles_to_pdb(_0: EmbindString, _1: EmbindString, _2: number, _3: number): string_string_pair;
   mol_text_to_pdb(_0: EmbindString, _1: EmbindString, _2: number, _3: number, _4: boolean, _5: boolean): string_string_pair;
   read_coords_string(_0: EmbindString, _1: EmbindString): int_string_pair;

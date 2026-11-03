@@ -63,6 +63,7 @@ export type RepresentationStyles =
     | "restraints"
     | "residueSelection"
     | "MetaBalls"
+    | "bloboids"
     | "adaptativeBonds"
     | "StickBases"
     | "residue_environment"
@@ -867,6 +868,9 @@ export class MoleculeRepresentation {
                 break;
             case "MetaBalls":
                 objects = await this.getMetaBallBuffers(_cid);
+                break;
+            case "bloboids":
+                objects = await this.getBloboidsBuffers(_cid);
                 break;
             case "adaptativeBonds":
                 objects = await this.getAdaptativeBondBuffers(
@@ -1700,6 +1704,32 @@ export class MoleculeRepresentation {
     }
 
     /**
+     * Get representation buffers for the bloboids representation: an ellipsoid for each chain,
+     * showing where its atoms are (wasm_src/bloboids.hh), in the colours this representation's
+     * colour rules give the chain - passed to Coot with the request, rather than set on the
+     * molecule as for bonds (applyColourRules), as a blob is coloured whole.
+     * @param {string} cid - The CID selection for this representation
+     * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
+     */
+    async getBloboidsBuffers(cid: string): Promise<PickableMesh[]> {
+        const colours = (this.colourRules ?? []).flatMap(rule => rule.getUserDefinedColours());
+        try {
+            const response = (await this.commandCentre.cootCommand(
+                {
+                    returnType: "mesh",
+                    command: "shim_draw_bloboids",
+                    commandArgs: [this.parentMolecule.molNo, cid, colours],
+                },
+                false
+            )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+            return [{ ...response.data.result.result, pick_info: {} }];
+        } catch (err) {
+            console.log(err);
+            return [];
+        }
+    }
+
+    /**
      * Get representation buffers for the glycoblocks representation
      * @param {string} cid - The CID selection for this representation
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
@@ -2040,7 +2070,8 @@ export class MoleculeRepresentation {
      * Apply the colour rules associated with this molecule representation
      */
     async applyColourRules() {
-        if (!this.styleHasColourRules) {
+        // Bloboids take their colours with the request (getBloboidsBuffers).
+        if (!this.styleHasColourRules || this.style === "bloboids") {
             return;
         }
 

@@ -1513,6 +1513,23 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgba: [
     colourMap.delete()
 }
 
+/**
+ * Bloboids (DrawBloboids, wasm_src/bloboids.hh): an ellipsoid per chain of `cid`, coloured by the
+ * representation's colour rules, each a CID and an RGBA colour, as getUserDefinedColours gives them.
+ */
+const drawBloboids = (imol: number, cid: string, colours: { cid: string; rgba: [number, number, number, number] }[]) => {
+    const cids = new cootModule.VectorString()
+    const rgba = new cootModule.VectorFloat()
+    colours.forEach(colour => {
+        cids.push_back(colour.cid)
+        colour.rgba.forEach(c => rgba.push_back(c))
+    })
+    const mesh = molecules_container.DrawBloboids(imol, cid, cids, rgba)
+    cids.delete()
+    rgba.delete()
+    return mesh
+}
+
 const privateerValidationToJSArray = (results: emscriptem.vector<privateer.ResultsEntry>): privateer.ResultsEntry[] => {
 
     const sanitizeID = (id: string): string => {
@@ -1731,6 +1748,9 @@ const doCootCommand = (messageData: {
                 break
             case 'shim_set_bond_colours':
                 cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgba: [number, number, number, number] }[], boolean])
+                break
+            case 'shim_draw_bloboids':
+                cootResult = drawBloboids(...commandArgs as [number, string, { cid: string; rgba: [number, number, number, number] }[]])
                 break
             case 'shim_export_map_as_mesh_file':
                 cootResult = export_map_as_mesh_file(...commandArgs as [number, number, number, number, number, number, string])
