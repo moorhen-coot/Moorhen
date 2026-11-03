@@ -69,10 +69,10 @@ export class MoorhenNumberInputElement extends MoorhenUIElement {
         return super.connectedCallback();
     }
 
-    public attributeChangedCallback() {
+    protected attributeValueChanged(name: string) {
+        if (name === "value") this._value = undefined;
         // A value changed by the page (attribute) is not a user change
-        if (this._value === undefined) this._committed = this.value;
-        super.attributeChangedCallback();
+        this._committed = this.value;
     }
 
     private commitIfChanged() {
@@ -114,7 +114,9 @@ export class MoorhenNumberInputElement extends MoorhenUIElement {
 }
 
 /** Attributes of `<moorhen-number-input>`, for declaring it in JSX. */
-export interface MoorhenNumberInputElementAttributes extends React.HTMLAttributes<HTMLElement> {
+export interface MoorhenNumberInputElementAttributes extends React.HTMLAttributes<MoorhenNumberInputElement> {
+    /** The id of the `<moorhen-web-component>` to work with, when the element is not inside it. */
+    moorhen?: string;
     value?: number;
     min?: number;
     max?: number;

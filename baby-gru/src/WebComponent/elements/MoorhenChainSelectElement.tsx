@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { MoorhenChainCheckList } from "@/components/inputs/CheckList/MoorhenChainCheckList";
 import { MoorhenChainSelect } from "@/components/inputs/Selector/MoorhenChainSelect";
 import type { RootState } from "@/store";
+import { MOLECULE_VALUE_EVENT, type MoorhenMoleculeSelectElement } from "./MoorhenMoleculeSelectElement";
 import { booleanAttribute, MoorhenUIElement } from "./MoorhenUIElement";
 
 // What MoorhenChainSelect uses for its "All" option
@@ -37,7 +38,8 @@ const ChainSelectWithDefault = (props: {
  * `<moorhen-chain-select>`: a dropdown of the chains of one loaded molecule, chosen by unique id.
  * For content placed inside `<moorhen-web-component>`.
  *
- * Attributes: `molecule` (the molecule's unique id, e.g. the value of a `<moorhen-molecule-select>`),
+ * Attributes: `for` (the id of a `<moorhen-molecule-select>`: its molecule is followed, also its own
+ * first pick), or `molecule` (the molecule's unique id),
  * `label` (default "Chain"), `value` (starting chain id), the boolean `allow-all` (adds "All") and
  * `disabled` (without it, the dropdown is disabled only while the molecule has no chain).
  *
@@ -59,7 +61,7 @@ const ChainSelectWithDefault = (props: {
  * chainSelect.addEventListener("change", () => console.log(chainSelect.values));
  */
 export class MoorhenChainSelectElement extends MoorhenUIElement {
-    static observedAttributes = ["molecule", "label", "value", "allow-all", "disabled", "multiple"];
+    static observedAttributes = ["molecule", "for", "label", "value", "allow-all", "disabled", "multiple"];
     static upgradedProperties = ["value", "values", "molecule", "allowedTypes"];
 
     private _value: string | undefined = undefined;
@@ -68,7 +70,7 @@ export class MoorhenChainSelectElement extends MoorhenUIElement {
     /** With `multiple`: the ticked chain ids; unset until the list (all) or a script set them. */
     private _values: string[] | undefined = undefined;
 
-    private get multiple() {
+    private get isMultiple() {
         return booleanAttribute(this, "multiple");
     }
 
@@ -76,14 +78,61 @@ export class MoorhenChainSelectElement extends MoorhenUIElement {
         return this._value ?? this.getAttribute("value") ?? undefined;
     }
 
+    protected attributeValueChanged(name: string) {
+        if (name === "value") this._value = undefined;
+        if (name === "molecule") this._molecule = undefined;
+        if (name === "for") this.followSource();
+    }
+
+    /** With `for`: the molecule select whose molecule this follows, and how to stop following it. */
+    private _source: MoorhenMoleculeSelectElement | null = null;
+    private _unfollow: (() => void) | null = null;
+
+    private followSource() {
+        this._unfollow?.();
+        this._unfollow = null;
+        this._source = null;
+        const id = this.getAttribute("for");
+        if (!id || !this.isConnected) return;
+        // In the same document or shadow root, as for <label for>
+        const root = this.getRootNode() as Document | ShadowRoot;
+        const source = root.getElementById?.(id) as MoorhenMoleculeSelectElement | null;
+        if (!source) {
+            console.warn(`<moorhen-chain-select for="${id}">: no element with that id`);
+            return;
+        }
+        const update = () => this.requestRender();
+        source.addEventListener(MOLECULE_VALUE_EVENT, update);
+        source.addEventListener("change", update);
+        this._source = source;
+        this._unfollow = () => {
+            source.removeEventListener(MOLECULE_VALUE_EVENT, update);
+            source.removeEventListener("change", update);
+        };
+        update();
+    }
+
+    public connectedCallback() {
+        const connecting = super.connectedCallback();
+        // After the elements around it are in the page too
+        queueMicrotask(() => this.followSource());
+        return connecting;
+    }
+
+    public disconnectedCallback() {
+        this._unfollow?.();
+        this._unfollow = null;
+        super.disconnectedCallback();
+    }
+
     get value(): string | null | undefined {
-        if (this.multiple) return this._values?.[0];
+        if (this.isMultiple) return this._values?.[0];
         const value = this.componentValue;
         return value === ALL ? null : value;
     }
 
     set value(value: string | null | undefined) {
-        if (this.multiple) {
+        if (this.isMultiple) {
             this.values = value ? [value] : [];
             return;
         }
@@ -93,7 +142,7 @@ export class MoorhenChainSelectElement extends MoorhenUIElement {
 
     /** With `multiple`: the selected chain ids, in the molecule's order (in the given order when a script set them). Otherwise `[value]`. */
     get values(): string[] {
-        if (this.multiple) return [...(this._values ?? [])];
+        if (this.isMultiple) return [...(this._values ?? [])];
         return this.value ? [this.value] : [];
     }
 
@@ -104,6 +153,7 @@ export class MoorhenChainSelectElement extends MoorhenUIElement {
 
     /** The unique id of the molecule whose chains are listed. */
     get molecule(): string | null {
+        if (this._source) return this._source.value ?? null;
         return this._molecule !== undefined ? this._molecule : this.getAttribute("molecule");
     }
 
@@ -122,7 +172,7 @@ export class MoorhenChainSelectElement extends MoorhenUIElement {
     }
 
     protected renderComponent() {
-        if (this.multiple) {
+        if (this.isMultiple) {
             return (
                 <MoorhenChainCheckList
                     moleculeUniqueId={this.molecule}
@@ -169,8 +219,12 @@ export class MoorhenChainSelectElement extends MoorhenUIElement {
 }
 
 /** Attributes of `<moorhen-chain-select>`, for declaring it in JSX. */
-export interface MoorhenChainSelectElementAttributes extends React.HTMLAttributes<HTMLElement> {
-    /** The molecule's unique id. */
+export interface MoorhenChainSelectElementAttributes extends React.HTMLAttributes<MoorhenChainSelectElement> {
+    /** The id of the `<moorhen-web-component>` to work with, when the element is not inside it. */
+    moorhen?: string;
+    /** The id of a `<moorhen-molecule-select>` whose molecule is followed. */
+    for?: string;
+    /** The molecule's unique id (without `for`). */
     molecule?: string;
     label?: string;
     /** Starting chain id. */

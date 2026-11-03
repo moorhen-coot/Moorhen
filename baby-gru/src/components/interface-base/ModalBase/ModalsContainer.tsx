@@ -132,6 +132,8 @@ const SlotModal = (props: { modal: SlotModalExtension } & ModalComponentProps) =
             minHeight={modal.minHeight}
             maxWidth={modal.maxWidth}
             maxHeight={modal.maxHeight}
+            // Slotted content can arrive or grow after opening (e.g. a plugin rendering on first open)
+            fitContent={true}
         />
     );
 };

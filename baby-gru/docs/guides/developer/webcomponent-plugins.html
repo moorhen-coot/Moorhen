@@ -46,7 +46,8 @@
 
         <p>
             This tutorial builds a small plugin step by step: a modal with a button, then view controls that stay in sync
-            with Moorhen, then molecule and chain pickers, and finally the same plugin packaged as one React component.
+            with Moorhen, then molecule and chain pickers, and finally the same plugin packaged as one React component
+            that only loads its tools when the user first opens it.
         </p>
 
         <p class="note-technical">
@@ -225,9 +226,10 @@ moorhenInstance.globalUI.setShownSidePanel("my-plugin-panel");</code></pre>
             </p>
 
             <ul>
-                <li><strong>Attribute vs property</strong>: the <code>value</code> / <code>checked</code> attribute is the
-                    starting value; the property is the current one. Read and set the property from code:
-                    <code>toggle.checked = true</code>, <code>select.value</code>.</li>
+                <li><strong>The value</strong> is in the <code>value</code> / <code>checked</code> property: read and set
+                    it from code (<code>toggle.checked = true</code>, <code>select.value</code>). The attribute of the
+                    same name gives the starting value, and sets the value again whenever it changes, which is what a
+                    framework rendering <code>&lt;moorhen-toggle checked={on}&gt;</code> needs.</li>
                 <li><strong><code>change</code></strong> fires when the user has made a change: a tick, a pick, a slider
                     released, a number committed with Enter or by leaving the field, a colour picker closed.</li>
                 <li><strong><code>input</code></strong> fires while the user is still changing a value: dragging a slider,
@@ -254,10 +256,27 @@ zoom.addEventListener("input", () =&gt; moorhenInstance.sceneSettings.setZoom(zo
                 <strong>How they work:</strong> each element finds the <code>&lt;moorhen-web-component&gt;</code> it is
                 in, waits for its instance, and renders Moorhen&rsquo;s own React component in its own shadow root, with
                 that instance&rsquo;s store. That is why a molecule select lists the molecules loaded in <em>this</em>
-                Moorhen, and why the elements follow Moorhen&rsquo;s light and dark themes. They must therefore be placed
-                inside a <code>&lt;moorhen-web-component&gt;</code> (usually in a slot); elsewhere they log an error and
-                render nothing. They use Moorhen&rsquo;s stylesheet, already loaded by the web component, so they cost no
-                extra download.
+                Moorhen, and why the elements follow Moorhen&rsquo;s light and dark themes. They use Moorhen&rsquo;s
+                stylesheet, already loaded by the web component, so they cost no extra download.
+            </p>
+
+            <h3>Outside Moorhen</h3>
+
+            <p>
+                The elements also work in the rest of your page, outside the web component: a Moorhen switch in your own
+                toolbar, say. An element works with the <code>&lt;moorhen-web-component&gt;</code> it is in; outside
+                one, with the only one in the page. With several in the page, give the id of one in its
+                <code>moorhen</code> attribute:
+            </p>
+
+            <pre class="code-block" data-lang="html"><code>&lt;div class="my-toolbar"&gt;
+    &lt;moorhen-toggle id="spin" moorhen="moorhen-1"&gt;Spin&lt;/moorhen-toggle&gt;
+&lt;/div&gt;</code></pre>
+
+            <p>
+                Wire it as any other element. Its tooltips and cards still open next to it. Without a Moorhen to work
+                with (none in the page, or several and no <code>moorhen</code> attribute), an element logs an error and
+                renders nothing.
             </p>
         </section>
 
@@ -282,7 +301,7 @@ const unsubscribe = moorhenInstance.subscribeToStore(
                 Setting the property fires no event, so this cannot loop back into <code>setDrawAxes</code>. The same
                 pattern keeps two copies of a control (one in the modal, one in the side panel) in agreement: both follow
                 the store. See <a href="webcomponent-events.html">Callbacks and subscriptions</a> for the store and its
-                subscriptions.
+                subscriptions; in React, section 6 does the same in two lines.
             </p>
         </section>
 
@@ -296,12 +315,14 @@ const unsubscribe = moorhenInstance.subscribeToStore(
             </p>
 
             <pre class="code-block" data-lang="html"><code>&lt;moorhen-molecule-select id="molecule" label="Molecule"&gt;&lt;/moorhen-molecule-select&gt;
-&lt;moorhen-chain-select id="chains" label="Chains" multiple&gt;&lt;/moorhen-chain-select&gt;
+&lt;moorhen-chain-select id="chains" for="molecule" label="Chains" multiple&gt;&lt;/moorhen-chain-select&gt;
 &lt;moorhen-map-select id="map" label="Map"&gt;&lt;/moorhen-map-select&gt;</code></pre>
 
             <ul>
-                <li><code>&lt;moorhen-chain-select&gt;</code> lists the chains of the molecule given by its
-                    <code>molecule</code> attribute or property (a unique id).</li>
+                <li><code>&lt;moorhen-chain-select for="molecule"&gt;</code> lists the chains of the molecule picked in
+                    the molecule select with that id, and follows it: when the user picks another molecule, and when the
+                    dropdown picks one by itself as structures are loaded. No code is needed. Without <code>for</code>,
+                    give the molecule&rsquo;s unique id in its <code>molecule</code> attribute or property.</li>
                 <li><code>multiple</code> turns a dropdown into a list of checkboxes with <em>Check all</em> and
                     <em>Uncheck all</em>, like <code>&lt;select multiple&gt;</code>. <code>values</code> holds the selected
                     ids, all of them at first; <code>value</code> is the first one. A chain list ticks all chains again
@@ -311,8 +332,8 @@ const unsubscribe = moorhenInstance.subscribeToStore(
             </ul>
 
             <p>
-                To make the chain list follow the molecule dropdown, pass the molecule on. The dropdown picks its first
-                molecule by itself, without an event, so also read it when molecules are loaded:
+                Read the selection when you need it, or listen to <code>change</code>. Plugins can report back inside
+                Moorhen too, for instance with a snackbar message:
             </p>
 
             <pre class="code-block" data-lang="typescript"><code>import type { MoorhenChainSelectElement, MoorhenMoleculeSelectElement } from "moorhen/web-component";
@@ -320,18 +341,7 @@ const unsubscribe = moorhenInstance.subscribeToStore(
 const molecule = document.getElementById("molecule") as MoorhenMoleculeSelectElement;
 const chains = document.getElementById("chains") as MoorhenChainSelectElement;
 
-const followMolecule = () =&gt; { chains.molecule = molecule.value ?? null; };
-molecule.addEventListener("change", followMolecule);
-// The dropdown's own first pick: after the molecule list changed and it has updated
-moorhenInstance.subscribeToStore(s =&gt; s.molecules.moleculeList, () =&gt; setTimeout(followMolecule, 0));
-
-chains.addEventListener("change", () =&gt; console.log("chains", chains.values));</code></pre>
-
-            <p>
-                Plugins can report back inside Moorhen too, for instance with a snackbar message:
-            </p>
-
-            <pre class="code-block" data-lang="typescript"><code>const selected = state().molecules.moleculeList.find(m =&gt; m.uniqueId === molecule.value);
+const selected = state().molecules.moleculeList.find(m =&gt; m.uniqueId === molecule.value);
 moorhenInstance.snackbar.enqueueSnackbar({
     message: `${selected?.name}: chains ${chains.values.join(", ")}`,
     variant: "info",
@@ -362,11 +372,49 @@ moorhenInstance.snackbar.enqueueSnackbar({
         </section>
 
         <section>
-            <h2>6. The whole plugin as a React component</h2>
+            <h2>6. In React</h2>
 
             <p>
-                In a React app, a plugin can be one self-contained component that the app renders inside the web
-                component, with nothing else to set up:
+                Everything above works in React too, but <code>moorhen/web-component/react</code> makes it read like
+                React: a component for each of Moorhen&rsquo;s UI elements, with React props and callbacks that receive
+                the new value, and hooks to find Moorhen and follow its state. It uses your app&rsquo;s own React (any
+                version from 18; it does not need to match Moorhen&rsquo;s) and adds a few kilobytes.
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Export</th>
+                        <th>What it does</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>MoorhenButton</code>, <code>MoorhenToggle</code>, <code>MoorhenSlider</code>,
+                            <code>MoorhenNumberInput</code>, <code>MoorhenColourPicker</code>,
+                            <code>MoorhenMoleculeSelect</code>, <code>MoorhenChainSelect</code>,
+                            <code>MoorhenMapSelect</code>, <code>MoorhenInfoCard</code></td>
+                        <td>Render the elements. Props in camelCase (<code>decimalPlaces</code>, <code>allowAny</code>);
+                            <code>onChange</code> / <code>onInput</code> receive the new value (<code>checked</code>,
+                            <code>value</code>, or the list of <code>values</code> with <code>multiple</code>); a
+                            <code>ref</code> is the element.</td>
+                    </tr>
+                    <tr>
+                        <td><code>useMoorhenInstance(target)</code></td>
+                        <td>The <code>MoorhenInstance</code>, once ready (<code>null</code> until then).
+                            <code>target</code> is the web component&rsquo;s element id, or a ref to an element inside it,
+                            such as your slotted content: a plugin then needs no id.</td>
+                    </tr>
+                    <tr>
+                        <td><code>useMoorhenSelector(target, selector)</code></td>
+                        <td>A value of Moorhen&rsquo;s state, kept up to date: the component re-renders when it
+                            changes.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>
+                A plugin is then a component that the app renders inside the web component:
             </p>
 
             <pre class="code-block" data-lang="tsx"><code>&lt;moorhen-web-component id="my-moorhen" width={1000} height={800}&gt;
@@ -374,115 +422,122 @@ moorhenInstance.snackbar.enqueueSnackbar({
 &lt;/moorhen-web-component&gt;</code></pre>
 
             <p>
-                The component renders its slots and registers itself. It does not need the instance as a prop: its slots
-                are children of the web component, so it finds it from there:
+                It registers its modal and menu entry, and renders the modal&rsquo;s content in the slot. Its controls show
+                Moorhen&rsquo;s state and change it:
             </p>
 
-            <pre class="code-block" data-lang="tsx"><code>import { useEffect, useRef, useState } from "react";
-import type { MoorhenInstance, MoorhenWebComponent } from "moorhen/web-component";
-
-/** The instance of the &lt;moorhen-web-component&gt; that `anchor` is in, once it is ready. */
-function useHostInstance(anchor: React.RefObject&lt;HTMLElement | null&gt;) {
-    const [instance, setInstance] = useState&lt;MoorhenInstance | null&gt;(null);
-    useEffect(() =&gt; {
-        const host = anchor.current?.closest("moorhen-web-component") as MoorhenWebComponent | null;
-        let cancelled = false;
-        host?.getMoorhenInstance().then(found =&gt; { if (!cancelled) setInstance(found); });
-        return () =&gt; { cancelled = true; };
-    }, [anchor]);
-    return instance;
-}
+            <pre class="code-block" data-lang="tsx"><code>import { useEffect, useRef } from "react";
+import {
+    MoorhenChainSelect,
+    MoorhenMoleculeSelect,
+    MoorhenToggle,
+    useMoorhenInstance,
+    useMoorhenSelector,
+} from "moorhen/web-component/react";
 
 export function ExamplePlugin() {
-    const anchor = useRef&lt;HTMLDivElement&gt;(null);
-    const instance = useHostInstance(anchor);
+    const ref = useRef&lt;HTMLDivElement&gt;(null);
+    const instance = useMoorhenInstance(ref);
+
+    useEffect(() =&gt; {
+        if (!instance) return;
+        const removeModal = instance.uiExtensions.addModal({ id: "example-plugin", title: "Example plugin", slotName: "example-plugin" });
+        const removeMenu = instance.menuSystem?.addMainMenu({ type: "modal", label: "Plugin", icon: "MatSymAdd", modal: "example-plugin" });
+        return () =&gt; { removeModal(); removeMenu?.(); };
+    }, [instance]);
+
+    const drawAxes = useMoorhenSelector(ref, state =&gt; state.sceneSettings.drawAxes);
+
+    return (
+        &lt;div slot="example-plugin" ref={ref}&gt;
+            &lt;MoorhenToggle checked={drawAxes ?? false} onChange={checked =&gt; instance?.sceneSettings.setDrawAxes(checked)}&gt;
+                Draw axes
+            &lt;/MoorhenToggle&gt;
+            &lt;MoorhenMoleculeSelect id="example-molecule" label="Molecule" /&gt;
+            &lt;MoorhenChainSelect for="example-molecule" multiple label="Chains" /&gt;
+        &lt;/div&gt;
+    );
+}</code></pre>
+
+            <ul>
+                <li><strong>Clean up</strong> in the effect&rsquo;s return. <code>addModal</code>,
+                    <code>addSidePanel</code> and <code>addMainMenu</code> each return a function that removes what they
+                    added; submenu items go with <code>deleteItemById</code>. This also covers React&rsquo;s StrictMode,
+                    which runs effects twice in development.</li>
+                <li><strong>A value prop is applied when it changes</strong>, so a re-render does not undo the
+                    user&rsquo;s own change. To read the current selection at any time (also a select&rsquo;s own first
+                    pick, which calls no <code>onChange</code>), keep a <code>ref</code> and read <code>.value</code> /
+                    <code>.values</code>.</li>
+                <li>The custom elements also work in JSX directly: with React 19, <code>onChange</code> and
+                    <code>onInput</code> receive their events. React 18 does not pass those to custom elements; there,
+                    use the components above, or listen through a ref with <code>useMoorhenEvent</code>.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>7. Loading a plugin only when it is first opened</h2>
+
+            <p>
+                A plugin can be heavy: a large component tree, a library of its own, data to fetch. Register its menu and
+                modal straight away, so that they are there to be opened, but render the tools only on the first
+                <code>onOpen</code>, and load their code then with <code>React.lazy</code>:
+            </p>
+
+            <pre class="code-block" data-lang="tsx"><code>import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { useMoorhenInstance } from "moorhen/web-component/react";
+
+// A separate chunk, downloaded on first use only
+const PluginTools = lazy(() =&gt; import("./tools"));
+
+export function ExamplePlugin() {
+    const ref = useRef&lt;HTMLDivElement&gt;(null);
+    const instance = useMoorhenInstance(ref);
+    const [opened, setOpened] = useState(false);
 
     useEffect(() =&gt; {
         if (!instance) return;
         const removeModal = instance.uiExtensions.addModal({
             id: "example-plugin",
             title: "Example plugin",
-            slotName: "example-plugin-body",
+            slotName: "example-plugin",
+            onOpen: () =&gt; setOpened(true),
         });
-        instance.menuSystem?.addToExistingSubmenu(
-            [{ id: "open-example-plugin", label: "Example plugin", type: "showModal", modal: "example-plugin" }],
-            "file"
-        );
-        // Undo everything when the plugin is removed from the page
-        return () =&gt; {
-            removeModal();
-            instance.menuSystem?.deleteItemById("open-example-plugin");
-        };
+        const removeMenu = instance.menuSystem?.addMainMenu({ type: "modal", label: "Plugin", icon: "MatSymAdd", modal: "example-plugin" });
+        return () =&gt; { removeModal(); removeMenu?.(); };
     }, [instance]);
 
     return (
-        &lt;div slot="example-plugin-body" ref={anchor}&gt;
-            {instance ? &lt;MyTools instance={instance} /&gt; : null}
+        &lt;div slot="example-plugin" ref={ref}&gt;
+            {opened ? (
+                &lt;Suspense fallback={&lt;p&gt;Loading…&lt;/p&gt;}&gt;
+                    &lt;PluginTools /&gt;
+                &lt;/Suspense&gt;
+            ) : null}
         &lt;/div&gt;
     );
 }</code></pre>
 
             <ul>
-                <li><strong>Clean up</strong> in the effect&rsquo;s return: remove what you registered.
-                    <code>addModal</code>, <code>addSidePanel</code> and <code>addMainMenu</code> each return a function
-                    that removes what they added; submenu items go with <code>deleteItemById</code>. React&rsquo;s
-                    StrictMode runs effects twice in development, which this also covers.</li>
-                <li><strong>Type the elements for JSX</strong>, as for <code>&lt;moorhen-web-component&gt;</code> (see
-                    <a href="webcomponent-react.html">Using the WebComponent in React</a>). Each element exports its
-                    attribute type, e.g. <code>MoorhenToggleElementAttributes</code>:
-                    <pre class="code-block" data-lang="tsx"><code>declare module "react" {
-    namespace JSX {
-        interface IntrinsicElements {
-            "moorhen-toggle": React.DetailedHTMLProps&lt;MoorhenToggleElementAttributes, MoorhenToggleElement&gt;;
-            // …one line per element you use
-        }
-    }
-}</code></pre>
-                </li>
-                <li><strong>React 18 does not pass <code>onChange</code> to custom elements.</strong> Listen to
-                    <code>change</code> and <code>input</code> through a ref instead, and set properties
-                    (<code>checked</code>, <code>value</code>) through it too. With React 19, <code>onChange</code>,
-                    <code>onInput</code> and properties work directly on the elements.
-                    <pre class="code-block" data-lang="tsx"><code>function useElementEvent&lt;E extends HTMLElement&gt;(
-    ref: React.RefObject&lt;E | null&gt;,
-    type: "input" | "change",
-    handler: (element: E) =&gt; void
-) {
-    const latest = useRef(handler);
-    useEffect(() =&gt; { latest.current = handler; });
-    useEffect(() =&gt; {
-        const element = ref.current;
-        if (!element) return;
-        const listener = () =&gt; latest.current(element);
-        element.addEventListener(type, listener);
-        return () =&gt; element.removeEventListener(type, listener);
-    }, [ref, type]);
-}</code></pre>
-                </li>
-                <li><strong>Follow Moorhen&rsquo;s state</strong> with React&rsquo;s
-                    <code>useSyncExternalStore</code> on <code>instance.store</code>; it re-renders your component when
-                    the value changes:
-                    <pre class="code-block" data-lang="tsx"><code>import { useCallback, useSyncExternalStore } from "react";
-import type { MoorhenInstance, RootState } from "moorhen/web-component";
-
-function useMoorhenState&lt;T&gt;(instance: MoorhenInstance, selector: (state: RootState) =&gt; T): T {
-    const subscribe = useCallback(
-        (onChange: () =&gt; void) =&gt; instance.store.subscribe(onChange),
-        [instance]
-    );
-    return useSyncExternalStore(subscribe, () =&gt; selector(instance.store.getState()));
-}</code></pre>
-                </li>
+                <li>Before the first open, the plugin costs one small component and its menu entry. Its tools are neither
+                    downloaded nor mounted.</li>
+                <li><code>opened</code> never goes back to <code>false</code>: once loaded, the tools stay mounted, so
+                    their state survives closing and reopening.</li>
+                <li><code>PluginTools</code> finds Moorhen itself, with <code>useMoorhenInstance</code> on a ref of its
+                    own: it needs no props.</li>
+                <li>Moorhen grows a slot modal to fit content that arrives after it opened (the loading text, then the
+                    tools), up to the size of the view. Once the user resizes or docks the modal, its size is theirs.</li>
+                <li>Without React, the same works with <code>onOpen</code> and a dynamic <code>import()</code> of the
+                    module that builds the content.</li>
             </ul>
 
             <p class="note">
                 <strong>Complete example:</strong> the React demo
                 <a href="https://github.com/cdegut/MoorhenWebComponentReact" target="_blank"
-                    rel="noopener noreferrer">MoorhenWebComponentReact</a> has this plugin in full in
-                <code>src/plugin.tsx</code>: a <em>Plugin</em> main menu with a quick-settings item that is itself a
-                slot, a modal and a side panel, data loading, view controls that stay in sync with Moorhen, and the
-                molecule, chain and map pickers reporting to the snackbar. Its <code>App.tsx</code> only renders
-                <code>&lt;ExamplePlugin /&gt;</code> inside the web component.
+                    rel="noopener noreferrer">MoorhenWebComponentReact</a> has this plugin in <code>src/plugin/</code>:
+                <code>index.tsx</code> adds the <em>Plugin</em> menu entry and the modal, and loads
+                <code>tools.tsx</code> on first open. The tools load a structure, show and change the axes and zoom,
+                pick a molecule and its chains, and report them to the snackbar. The app&rsquo;s <code>App.tsx</code>
+                only renders <code>&lt;ExamplePlugin /&gt;</code> inside the web component.
             </p>
         </section>
 
@@ -504,11 +559,10 @@ function useMoorhenState&lt;T&gt;(instance: MoorhenInstance, selector: (state: R
             <h2>Current limitations</h2>
 
             <ul>
-                <li>A slot modal is sized once, when it opens. Content that grows afterwards scrolls inside it; give
-                    <code>initialWidth</code> / <code>initialHeight</code> when you know the size you need.</li>
+                <li>A slot modal grows to fit its content, but does not shrink when the content does.</li>
                 <li>Inside the web component, modals and side panels can only be slots (see section 1).</li>
                 <li>A molecule dropdown&rsquo;s automatic first pick fires no event: read <code>value</code> rather than
-                    waiting for <code>change</code> (see section 4).</li>
+                    waiting for <code>change</code>. (A chain select with <code>for</code> follows it anyway.)</li>
                 <li>Inputs inside the elements are in their shadow roots, so they do not take part in a
                     <code>&lt;form&gt;</code> of your page: read the elements&rsquo; values instead.</li>
             </ul>

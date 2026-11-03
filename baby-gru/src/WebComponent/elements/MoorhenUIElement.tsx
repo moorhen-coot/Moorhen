@@ -4,7 +4,7 @@ import React from "react";
 import type { MoorhenInstance } from "@/InstanceManager/MoorhenInstance";
 import { MoorhenInstanceContext } from "@/InstanceManager/MoorhenInstanceContext";
 import type { RootState } from "@/store";
-import type { MoorhenWebComponent } from "../MoorhenWebComponent";
+import { waitForMoorhenHost } from "../findMoorhenHost";
 
 /** Makes the element sit inline like a native control; global.css gives `:host` `display: block`. */
 const ELEMENT_CSS = ":host { display: inline-block; vertical-align: middle; }";
@@ -15,18 +15,6 @@ const getElementSheet = () => {
         elementSheet.replaceSync(ELEMENT_CSS);
     }
     return elementSheet;
-};
-
-/** The `<moorhen-web-component>` this element is in: an ancestor, also across shadow roots. */
-const findMoorhenHost = (element: Element): MoorhenWebComponent | null => {
-    let node: Element | null = element;
-    while (node) {
-        const host = node.closest("moorhen-web-component");
-        if (host) return host as MoorhenWebComponent;
-        const root = node.getRootNode();
-        node = root instanceof ShadowRoot ? root.host : null;
-    }
-    return null;
 };
 
 /**
@@ -51,7 +39,8 @@ const Themed = (props: { children: React.ReactNode }) => {
  * components for content placed inside a `<moorhen-web-component>` (typically slotted plugin content).
  *
  * Each element is its own React root, compiled into the same bundle as the web component. It finds
- * the enclosing `<moorhen-web-component>`, waits for its instance, and provides that instance's
+ * its `<moorhen-web-component>` — the one whose id is in its `moorhen` attribute, else the one it is
+ * in (slotted content), else the only one in the page — waits for its instance, and provides that instance's
  * store and `MoorhenInstanceContext`, so the component reads and changes the app's live state exactly
  * as it would inside the app. It renders in its own shadow root with the host's Moorhen stylesheet.
  *
@@ -101,9 +90,13 @@ export abstract class MoorhenUIElement extends HTMLElement {
     public async connectedCallback() {
         this.upgradeProperties();
         const connection = ++this._connection;
-        const host = findMoorhenHost(this);
+        const host = await waitForMoorhenHost(this, this.getAttribute("moorhen"));
+        if (connection !== this._connection || !this.isConnected) return;
         if (!host) {
-            console.error(`<${this.localName}> must be placed inside a <moorhen-web-component>.`);
+            console.error(
+                `<${this.localName}>: no <moorhen-web-component> found. Place it inside one, give the id of one in its ` +
+                    `\`moorhen\` attribute, or have a single one in the page.`
+            );
             return;
         }
         const instance = await host.getMoorhenInstance();
@@ -148,9 +141,18 @@ export abstract class MoorhenUIElement extends HTMLElement {
         }
     }
 
-    public attributeChangedCallback() {
+    public attributeChangedCallback(name?: string, oldValue?: string | null, newValue?: string | null) {
+        if (name !== undefined && oldValue !== newValue) this.attributeValueChanged(name);
         this.requestRender();
     }
+
+    /**
+     * An attribute changed. Elements with a value use it so that a changed `value` / `checked`
+     * attribute becomes the current value: a framework rendering `<moorhen-toggle checked={on}>` drives
+     * the element. An attribute that does not change (a re-render with the same value) does nothing,
+     * so the user's own changes are kept until then.
+     */
+    protected attributeValueChanged(_name: string) {}
 
     /** Re-renders the component; does nothing until the element is connected to a ready Moorhen. */
     protected requestRender() {

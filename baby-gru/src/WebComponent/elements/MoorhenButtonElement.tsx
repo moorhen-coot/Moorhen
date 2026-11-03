@@ -55,7 +55,9 @@ export class MoorhenButtonElement extends MoorhenUIElement {
 }
 
 /** Attributes of `<moorhen-button>`, for declaring it in JSX. */
-export interface MoorhenButtonElementAttributes extends React.HTMLAttributes<HTMLElement> {
+export interface MoorhenButtonElementAttributes extends React.HTMLAttributes<MoorhenButtonElement> {
+    /** The id of the `<moorhen-web-component>` to work with, when the element is not inside it. */
+    moorhen?: string;
     label?: string;
     icon?: MoorhenSVG;
     type?: "default" | "icon-only" | "toggle";

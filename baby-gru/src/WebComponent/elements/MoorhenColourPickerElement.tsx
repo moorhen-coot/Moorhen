@@ -91,10 +91,10 @@ export class MoorhenColourPickerElement extends MoorhenUIElement {
         return super.connectedCallback();
     }
 
-    public attributeChangedCallback() {
+    protected attributeValueChanged(name: string) {
+        if (name === "value") this._colour = undefined;
         // A value changed by the page (attribute) is not a user change
         this._committed = this.value;
-        super.attributeChangedCallback();
     }
 
     private commitIfChanged() {
@@ -127,7 +127,9 @@ export class MoorhenColourPickerElement extends MoorhenUIElement {
 }
 
 /** Attributes of `<moorhen-colour-picker>`, for declaring it in JSX. */
-export interface MoorhenColourPickerElementAttributes extends React.HTMLAttributes<HTMLElement> {
+export interface MoorhenColourPickerElementAttributes extends React.HTMLAttributes<MoorhenColourPickerElement> {
+    /** The id of the `<moorhen-web-component>` to work with, when the element is not inside it. */
+    moorhen?: string;
     /** Starting colour: `#rgb`, `#rrggbb` or `#rrggbbaa`. */
     value?: string;
     label?: string;

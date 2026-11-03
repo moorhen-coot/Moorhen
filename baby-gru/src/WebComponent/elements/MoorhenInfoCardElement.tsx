@@ -72,7 +72,9 @@ export class MoorhenInfoCardElement extends MoorhenUIElement {
 }
 
 /** Attributes of `<moorhen-info-card>`, for declaring it in JSX. */
-export interface MoorhenInfoCardElementAttributes extends React.HTMLAttributes<HTMLElement> {
+export interface MoorhenInfoCardElementAttributes extends React.HTMLAttributes<MoorhenInfoCardElement> {
+    /** The id of the `<moorhen-web-component>` to work with, when the element is not inside it. */
+    moorhen?: string;
     /** Plain text; without it, the element's content is shown. */
     info?: string;
     placement?: "top" | "bottom" | "left" | "right";

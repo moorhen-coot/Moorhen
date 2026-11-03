@@ -23,6 +23,10 @@ export class MoorhenToggleElement extends MoorhenUIElement {
     /** Set once the user or a script changed it; until then the attribute decides. */
     private _checked: boolean | null = null;
 
+    protected attributeValueChanged(name: string) {
+        if (name === "checked") this._checked = null;
+    }
+
     get checked(): boolean {
         return this._checked ?? booleanAttribute(this, "checked");
     }
@@ -51,7 +55,9 @@ export class MoorhenToggleElement extends MoorhenUIElement {
 }
 
 /** Attributes of `<moorhen-toggle>`, for declaring it in JSX. */
-export interface MoorhenToggleElementAttributes extends React.HTMLAttributes<HTMLElement> {
+export interface MoorhenToggleElementAttributes extends React.HTMLAttributes<MoorhenToggleElement> {
+    /** The id of the `<moorhen-web-component>` to work with, when the element is not inside it. */
+    moorhen?: string;
     label?: string;
     type?: "switch" | "checkbox" | "radio";
     disabled?: boolean;

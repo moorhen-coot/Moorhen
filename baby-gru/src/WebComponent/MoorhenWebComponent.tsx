@@ -127,8 +127,13 @@ export class MoorhenWebComponent extends HTMLElement {
     private _allowScripting: boolean | undefined = undefined;
     private _backupStorage: LocalStorageInstance | undefined = undefined;
 
+    /** Set by the first render, which reads the start-up settings. */
+    private _rendered = false;
+
+    // Accepted until the first render, which comes once the stylesheet has loaded: also just after the
+    // element was appended, as frameworks set properties then.
     private _canSetStartupProperty(name: string): boolean {
-        if (this._reactRoot) {
+        if (this._rendered) {
             console.warn(`moorhen-web-component: ${name} is only read at start-up, set it before appending the element`);
             return false;
         }
@@ -171,7 +176,8 @@ export class MoorhenWebComponent extends HTMLElement {
     }
     // --------------------------------
     private _triggerUpdate(name: string, newValue: string, oldValue: string) {
-        if (this._reactRoot) {
+        // Before the first render, the first render takes the new value
+        if (this._rendered) {
             this._renderReactTree();
         }
     }
@@ -180,6 +186,7 @@ export class MoorhenWebComponent extends HTMLElement {
 
     private _renderReactTree() {
         if (!this._reactRoot) return;
+        this._rendered = true;
         this._reactRoot.render(
             <MoorhenProvider>
                 <MoorhenContainer

@@ -57,11 +57,11 @@ export class MoorhenSliderElement extends MoorhenUIElement {
         this.onUserRelease(() => this.commitIfChanged());
     }
 
-    private get min() {
+    private get minimum() {
         return numberAttribute(this, "min") ?? 0;
     }
 
-    private get max() {
+    private get maximum() {
         return numberAttribute(this, "max") ?? 100;
     }
 
@@ -70,7 +70,7 @@ export class MoorhenSliderElement extends MoorhenUIElement {
     }
 
     get value(): number {
-        return this._value ?? numberAttribute(this, "value") ?? this.min;
+        return this._value ?? numberAttribute(this, "value") ?? this.minimum;
     }
 
     set value(value: number) {
@@ -81,7 +81,7 @@ export class MoorhenSliderElement extends MoorhenUIElement {
 
     /** The second thumb of a `type="range"` slider. */
     get value2(): number {
-        return this._value2 ?? numberAttribute(this, "value2") ?? this.max;
+        return this._value2 ?? numberAttribute(this, "value2") ?? this.maximum;
     }
 
     set value2(value: number) {
@@ -113,10 +113,11 @@ export class MoorhenSliderElement extends MoorhenUIElement {
         return super.connectedCallback();
     }
 
-    public attributeChangedCallback() {
+    protected attributeValueChanged(name: string) {
+        if (name === "value") this._value = undefined;
+        if (name === "value2") this._value2 = undefined;
         // A value changed by the page (attribute) is not a user change
         this._committed = this.snapshot();
-        super.attributeChangedCallback();
     }
 
     private snapshot() {
@@ -138,8 +139,8 @@ export class MoorhenSliderElement extends MoorhenUIElement {
 
     protected renderComponent() {
         const common = {
-            minVal: this.min,
-            maxVal: this.max,
+            minVal: this.minimum,
+            maxVal: this.maximum,
             value: this.value,
             setValue: (value: number) => this.userChanged(() => (this._value = value)),
             step: numberAttribute(this, "step"),
@@ -172,7 +173,9 @@ export class MoorhenSliderElement extends MoorhenUIElement {
 }
 
 /** Attributes of `<moorhen-slider>`, for declaring it in JSX. */
-export interface MoorhenSliderElementAttributes extends React.HTMLAttributes<HTMLElement> {
+export interface MoorhenSliderElementAttributes extends React.HTMLAttributes<MoorhenSliderElement> {
+    /** The id of the `<moorhen-web-component>` to work with, when the element is not inside it. */
+    moorhen?: string;
     min?: number;
     max?: number;
     step?: number;

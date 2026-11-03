@@ -30,6 +30,10 @@ export class MoorhenMapSelectElement extends MoorhenUIElement {
     private _value: string | undefined = undefined;
     private _filter: ((map: MoorhenMap) => boolean) | undefined = undefined;
 
+    protected attributeValueChanged(name: string) {
+        if (name === "value") this._value = undefined;
+    }
+
     get value(): string | undefined {
         return this._value ?? this.getAttribute("value") ?? undefined;
     }
@@ -71,7 +75,9 @@ export class MoorhenMapSelectElement extends MoorhenUIElement {
 }
 
 /** Attributes of `<moorhen-map-select>`, for declaring it in JSX. */
-export interface MoorhenMapSelectElementAttributes extends React.HTMLAttributes<HTMLElement> {
+export interface MoorhenMapSelectElementAttributes extends React.HTMLAttributes<MoorhenMapSelectElement> {
+    /** The id of the `<moorhen-web-component>` to work with, when the element is not inside it. */
+    moorhen?: string;
     label?: string;
     /** Starting selection: a map unique id. */
     value?: string;

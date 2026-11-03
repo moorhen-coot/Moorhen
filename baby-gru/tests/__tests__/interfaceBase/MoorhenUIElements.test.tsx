@@ -110,14 +110,14 @@ describe("<moorhen-button>", () => {
     test("reports an error and renders nothing outside a <moorhen-web-component>", async () => {
         const error = jest.spyOn(console, "error").mockImplementation(() => {});
         document.body.innerHTML = `<moorhen-button label="Lost"></moorhen-button>`;
-        expect(error).toHaveBeenCalledWith(expect.stringContaining("must be placed inside a <moorhen-web-component>"));
+        await waitFor(() => expect(error).toHaveBeenCalledWith(expect.stringContaining("no <moorhen-web-component> found")));
         expect(document.querySelector("moorhen-button")!.shadowRoot).toBeNull();
         error.mockRestore();
     });
 });
 
 describe("<moorhen-toggle>", () => {
-    test("the attribute is the starting state, the property the current one, and only the user fires change", async () => {
+    test("a changed attribute sets the state, the same one does not undo the user's, and only the user fires change", async () => {
         const { element, inner } = await mountElement<MoorhenToggleElement>(`<moorhen-toggle checked label="Option"></moorhen-toggle>`, "moorhen-toggle", "input");
         const input = () => inner<HTMLInputElement>("input");
         const onChange = jest.fn();
@@ -130,12 +130,18 @@ describe("<moorhen-toggle>", () => {
         expect(input().checked).toBe(false);
         expect(onChange).toHaveBeenCalledTimes(1);
 
-        // The attribute no longer decides once the state was changed
+        // The same attribute again (a framework re-rendering with an unchanged value) keeps the user's state
         element.setAttribute("checked", "");
         await waitFor(() => expect(element.checked).toBe(false));
 
-        element.checked = true;
+        // A changed attribute sets it, as a framework drives the element: <moorhen-toggle checked={on}>
+        element.setAttribute("checked", "false");
+        element.setAttribute("checked", "true");
         await waitFor(() => expect(input().checked).toBe(true));
+        expect(element.checked).toBe(true);
+
+        element.checked = false;
+        await waitFor(() => expect(input().checked).toBe(false));
         expect(onChange).toHaveBeenCalledTimes(1);
     });
 
@@ -607,5 +613,97 @@ describe("<moorhen-number-input>", () => {
         await later();
         expect(onInput).not.toHaveBeenCalled();
         expect(onChange).not.toHaveBeenCalled();
+    });
+});
+
+describe("driven by attributes", () => {
+    test("a changed value attribute sets the value of a number input, a slider and a molecule select, without events", async () => {
+        const number = await mountElement<MoorhenNumberInputElement>(`<moorhen-number-input value="1"></moorhen-number-input>`, "moorhen-number-input", "input");
+        const onEvent = jest.fn();
+        number.element.addEventListener("change", onEvent);
+        number.element.addEventListener("input", onEvent);
+        number.element.value = 5;
+        number.element.setAttribute("value", "3");
+        await waitFor(() => expect(number.inner<HTMLInputElement>("input").value).toBe("3.00"));
+        expect(number.element.value).toBe(3);
+        expect(onEvent).not.toHaveBeenCalled();
+
+        const slider = await mountElement<MoorhenSliderElement>(`<moorhen-slider value="10"></moorhen-slider>`, "moorhen-slider", 'input[type="range"]');
+        slider.element.value = 20;
+        slider.element.setAttribute("value", "30");
+        await waitFor(() => expect(slider.element.value).toBe(30));
+
+        const select = await mountElement<MoorhenMoleculeSelectElement>(`<moorhen-molecule-select></moorhen-molecule-select>`, "moorhen-molecule-select", "select");
+        select.host.store.dispatch(addMolecule(fakeMolecule(0, "first")));
+        select.host.store.dispatch(addMolecule(fakeMolecule(1, "second")));
+        await waitFor(() => expect(select.element.value).toBe("uid-0"));
+        select.element.setAttribute("value", "uid-1");
+        await waitFor(() => expect(select.inner<HTMLSelectElement>("select").value).toBe("uid-1"));
+    });
+});
+
+describe('<moorhen-chain-select for="…">', () => {
+    test("follows the molecule select it names, also its own first pick, without wiring", async () => {
+        document.body.innerHTML = `<moorhen-web-component><div slot="plugin">
+            <moorhen-molecule-select id="the-molecule"></moorhen-molecule-select>
+            <moorhen-chain-select for="the-molecule" multiple></moorhen-chain-select>
+        </div></moorhen-web-component>`;
+        const host = document.querySelector("moorhen-web-component") as FakeMoorhenHost;
+        const molecule = document.querySelector("moorhen-molecule-select") as MoorhenMoleculeSelectElement;
+        const chains = document.querySelector("moorhen-chain-select") as MoorhenChainSelectElement;
+        await waitFor(() => expect(chains.shadowRoot?.querySelector(".moorhen__check-list")).toBeTruthy());
+
+        // Loading molecules: the dropdown picks the first by itself (no change event), the chains follow
+        host.store.dispatch(addMolecule(fakeMoleculeWithChains(0, ["A", "B"])));
+        host.store.dispatch(addMolecule(fakeMoleculeWithChains(1, ["C"])));
+        await waitFor(() => expect(molecule.value).toBe("uid-0"));
+        await waitFor(() => expect(chains.values).toEqual(["A", "B"]));
+        expect(chains.molecule).toBe("uid-0");
+
+        // The user picks the other molecule
+        const select = molecule.shadowRoot!.querySelector("select")!;
+        select.value = "uid-1";
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        await waitFor(() => expect(chains.values).toEqual(["C"]));
+
+        // A script sets it
+        molecule.value = "uid-0";
+        await waitFor(() => expect(chains.values).toEqual(["A", "B"]));
+    });
+});
+
+describe("elements outside the web component", () => {
+    test("use the web component named by `moorhen`, or the only one in the page", async () => {
+        document.body.innerHTML = `
+            <moorhen-button id="before" label="Before Moorhen in the page"></moorhen-button>
+            <moorhen-web-component id="first"></moorhen-web-component>
+            <div class="page-toolbar"><moorhen-toggle id="outside" checked>Outside</moorhen-toggle></div>`;
+        const first = document.getElementById("first") as FakeMoorhenHost;
+        // The only one in the page: no attribute needed, also for an element placed before it
+        for (const id of ["before", "outside"]) {
+            const element = document.getElementById(id)!;
+            await waitFor(() => expect(element.shadowRoot?.querySelector("button, input")).toBeTruthy());
+        }
+        first.store.dispatch(setIsDark(true));
+        await waitFor(() => expect(document.getElementById("outside")!.shadowRoot!.querySelector("[data-theme]")!.getAttribute("data-theme")).toBe("dark"));
+
+        // Two in the page: the `moorhen` attribute says which
+        document.body.insertAdjacentHTML(
+            "beforeend",
+            `<moorhen-web-component id="second"></moorhen-web-component><moorhen-toggle id="named" moorhen="second">Named</moorhen-toggle>`
+        );
+        const named = document.getElementById("named")!;
+        await waitFor(() => expect(named.shadowRoot?.querySelector("input")).toBeTruthy());
+        expect(named.shadowRoot!.querySelector("[data-theme]")!.getAttribute("data-theme")).toBe("light");
+    });
+
+    test("with several web components and nothing saying which, an error", async () => {
+        const error = jest.spyOn(console, "error").mockImplementation(() => {});
+        document.body.innerHTML = `
+            <moorhen-web-component id="a"></moorhen-web-component>
+            <moorhen-web-component id="b"></moorhen-web-component>
+            <moorhen-toggle>Which one?</moorhen-toggle>`;
+        await waitFor(() => expect(error).toHaveBeenCalledWith(expect.stringContaining("no <moorhen-web-component> found")));
+        error.mockRestore();
     });
 });

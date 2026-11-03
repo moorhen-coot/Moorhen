@@ -126,7 +126,18 @@ declare module "react" {
                 returns the value selected by <code>selector</code> (or <code>null</code> until ready). This is the
                 React-friendly equivalent of <code>instance.subscribeToStore(...)</code>.</p>
             </li>
+            <li>
+                <p><code>useMoorhenInstance(elementId)</code> returns the <code>MoorhenInstance</code> itself, or
+                <code>null</code> until ready.</p>
+            </li>
         </ul>
+
+        <p class="note-technical">
+            The same hooks, and React components for Moorhen&rsquo;s UI elements (<code>MoorhenToggle</code>,
+            <code>MoorhenMoleculeSelect</code>&hellip;), are in <code>moorhen/web-component/react</code>. The hooks there
+            also accept a <strong>ref</strong> to an element inside the web component instead of an id: see
+            <a href="webcomponent-plugins.html">Writing a plugin</a>.
+        </p>
 
         <pre class="code-block" data-lang="tsx"><code>import { useMoorhenSelector, useWebComponentInstanceRef } from "moorhen/web-component/utils";
 

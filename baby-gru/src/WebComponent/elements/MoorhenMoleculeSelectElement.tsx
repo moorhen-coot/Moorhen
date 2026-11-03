@@ -7,6 +7,9 @@ import { booleanAttribute, MoorhenUIElement } from "./MoorhenUIElement";
 // What MoorhenMoleculeSelect uses for its "Any molecule" option in unique id mode
 const ANY = "";
 
+/** Fired on a molecule select whenever its value changes, for the chain selects that follow it. */
+export const MOLECULE_VALUE_EVENT = "moorhen-molecule-value";
+
 /**
  * `<moorhen-molecule-select>`: a dropdown of the molecules loaded in Moorhen, kept up to date as
  * molecules are loaded and deleted. For content placed inside `<moorhen-web-component>`.
@@ -43,7 +46,7 @@ export class MoorhenMoleculeSelectElement extends MoorhenUIElement {
     /** With `multiple`: the ticked unique ids; unset until the list (all) or a script set them. */
     private _values: string[] | undefined = undefined;
 
-    private get multiple() {
+    private get isMultiple() {
         return booleanAttribute(this, "multiple");
     }
 
@@ -51,29 +54,46 @@ export class MoorhenMoleculeSelectElement extends MoorhenUIElement {
         return this._value ?? this.getAttribute("value") ?? undefined;
     }
 
+    protected attributeValueChanged(name: string) {
+        if (name === "value") {
+            this._value = undefined;
+            this.announceValue();
+        }
+    }
+
+    /**
+     * Tells elements following this one (`<moorhen-chain-select for="…">`) that the value changed, also
+     * when it changed by itself. An internal event: it does not bubble, and is not `change`.
+     */
+    private announceValue() {
+        this.dispatchEvent(new Event(MOLECULE_VALUE_EVENT));
+    }
+
     get value(): string | null | undefined {
-        if (this.multiple) return this._values?.[0];
+        if (this.isMultiple) return this._values?.[0];
         const value = this.componentValue;
         return value === ANY ? null : value;
     }
 
     set value(value: string | null | undefined) {
-        if (this.multiple) {
+        if (this.isMultiple) {
             this.values = value ? [value] : [];
             return;
         }
         this._value = value === null ? ANY : (value ?? undefined);
+        this.announceValue();
         this.requestRender();
     }
 
     /** With `multiple`: the selected molecules' unique ids, in list order (in the given order when a script set them). Otherwise `[value]`. */
     get values(): string[] {
-        if (this.multiple) return [...(this._values ?? [])];
+        if (this.isMultiple) return [...(this._values ?? [])];
         return this.value ? [this.value] : [];
     }
 
     set values(values: string[]) {
         this._values = [...(values ?? [])];
+        this.announceValue();
         this.requestRender();
     }
 
@@ -87,7 +107,7 @@ export class MoorhenMoleculeSelectElement extends MoorhenUIElement {
     }
 
     protected renderComponent() {
-        if (this.multiple) {
+        if (this.isMultiple) {
             return (
                 <MoorhenMoleculeCheckList
                     label={this.getAttribute("label") ?? undefined}
@@ -97,6 +117,7 @@ export class MoorhenMoleculeSelectElement extends MoorhenUIElement {
                     // The list's own changes (all at first, molecules added or removed): no event
                     setSelected={values => {
                         this._values = values;
+                        this.announceValue();
                         this.requestRender();
                     }}
                     // The user's: setSelected has run already
@@ -115,6 +136,7 @@ export class MoorhenMoleculeSelectElement extends MoorhenUIElement {
                 // Selection made by the component itself (its default) or by the user: keep it, no event yet
                 setSelectedMolecule={(value: React.SetStateAction<string | undefined>) => {
                     this._value = typeof value === "function" ? value(this._value) : value;
+                    this.announceValue();
                     this.requestRender();
                 }}
                 // Only the user's own choice comes through onChange; it runs after setSelectedMolecule
@@ -125,7 +147,9 @@ export class MoorhenMoleculeSelectElement extends MoorhenUIElement {
 }
 
 /** Attributes of `<moorhen-molecule-select>`, for declaring it in JSX. */
-export interface MoorhenMoleculeSelectElementAttributes extends React.HTMLAttributes<HTMLElement> {
+export interface MoorhenMoleculeSelectElementAttributes extends React.HTMLAttributes<MoorhenMoleculeSelectElement> {
+    /** The id of the `<moorhen-web-component>` to work with, when the element is not inside it. */
+    moorhen?: string;
     label?: string;
     /** Starting selection: a molecule unique id. */
     value?: string;
