@@ -447,6 +447,39 @@ export const parseCid = (cid: string): ParsedCID => {
 
 
 
+/**
+ * Get the alternate conformation a CID is restricted to, i.e. the `X` of a CID ending in `:X`
+ * (e.g. `//A/42/*:B` or `//A/42/*:,B` -> `B`). Multi-CIDs (`||`) only count if every part names
+ * the same alt conf.
+ * @returns The alt conf, or null if the CID is not restricted to a single one
+ */
+export const getCidAltConf = (cid: string): string | null => {
+    const altConfs = cid.split("||").map(part => part.match(/\/[^/]*:[\s,]*([A-Za-z0-9])$/)?.[1] ?? null);
+    return altConfs.every(altConf => altConf !== null && altConf === altConfs[0]) ? altConfs[0] : null;
+};
+
+/**
+ * Turn a (multi-)CID into a residue-level selection of one alternate conformation plus the atoms
+ * with no alt conf, e.g. `//A/41-43/*` -> `//A/41-43/*:,B`. Any atom name in the CID is dropped.
+ */
+export const restrictCidToAltConf = (cid: string, altConf: string): string => {
+    return cid
+        .split("||")
+        .map(part => {
+            const [, model = "", chain = "", residue = ""] = part.split("/");
+            return `/${model}/${chain || "*"}/${residue || "*"}/*:,${altConf}`;
+        })
+        .join("||");
+};
+
+/**
+ * CID of the residue to refine for a clicked atom, keeping the clicked atom's alt conf
+ * (e.g. `//A/42` or `//A/42/*:B`), so that only that conformation gets refined.
+ */
+export const residueCidForRefinement = (atom: { chain_id: string; res_no: number; alt_conf?: string }): string => {
+    return `//${atom.chain_id}/${atom.res_no}${atom.alt_conf ? `/*:${atom.alt_conf}` : ""}`;
+};
+
 export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     //molNo, chain_id, res_no, ins_code, alt_conf
     const ResNameRegExp = /\(([^)]+)\)/;
