@@ -13,7 +13,7 @@ export class MoorhenWebComponent extends HTMLElement {
     private _rootElement: HTMLDivElement;
     private _reactRoot: ReturnType<typeof createRoot> | null = null;
     private _parentElementRef: React.RefObject<HTMLElement | null>;
-    
+    private _readyCheckInterval: ReturnType<typeof setInterval> | null = null;
 
     public onInit: (() => void) | null = null;
 
@@ -237,8 +237,12 @@ export class MoorhenWebComponent extends HTMLElement {
     }
 
     public async connectedCallback() {
+        // Already running: the element was moved, which fires disconnectedCallback then this one
+        if (this._reactRoot) return;
+
         this._rootElement = document.createElement("div");
-        this._reactRoot = createRoot(this._rootElement);
+        const reactRoot = createRoot(this._rootElement);
+        this._reactRoot = reactRoot;
 
         if (!this.style.display) this.style.display = "block";
         if (!this.style.width) this.style.width = "100%";
@@ -250,15 +254,18 @@ export class MoorhenWebComponent extends HTMLElement {
         this._rootElement.style.minHeight = "0";
         this._rootElement.style.minWidth = "0";
 
-        const shadow = this.attachShadow({ mode: "open" });
-        shadow.appendChild(this._rootElement);
+        // A shadow root can be attached only once, so a re-connected element reuses it
+        const shadow = this.shadowRoot ?? this.attachShadow({ mode: "open" });
+        shadow.replaceChildren(this._rootElement);
 
         await this.loadStylesheets();
+        // Removed while the stylesheet was loading
+        if (this._reactRoot !== reactRoot) return;
 
         this._renderReactTree();
         const checkRefsReady = () => {
             if (this._moorhenInstanceRef?.current?.isReady()) {
-                clearInterval(refCheckInterval);
+                this._clearReadyCheck();
                 this._moorhenInstance = this._moorhenInstanceRef.current;
                 this.onInit?.();
                 this._moorhenInstance.webComponent = this;
@@ -267,7 +274,38 @@ export class MoorhenWebComponent extends HTMLElement {
                 window.dispatchEvent(event);
             }
         };
-        const refCheckInterval = setInterval(checkRefsReady, 50);
+        this._readyCheckInterval = setInterval(checkRefsReady, 50);
+    }
+
+    /**
+     * Tear Moorhen down when the element leaves the page: unmounting the React tree closes the
+     * Coot worker and releases the WebGL context. The session in it is lost; appending the
+     * element again starts a fresh one.
+     */
+    public disconnectedCallback() {
+        // Moving the element also disconnects it, with connectedCallback following straight after;
+        // wait to see whether it is back before tearing down
+        queueMicrotask(() => {
+            if (!this.isConnected) this._teardown();
+        });
+    }
+
+    private _clearReadyCheck() {
+        if (this._readyCheckInterval !== null) {
+            clearInterval(this._readyCheckInterval);
+            this._readyCheckInterval = null;
+        }
+    }
+
+    private _teardown() {
+        if (!this._reactRoot) return;
+        this._clearReadyCheck();
+        this._reactRoot.unmount();
+        this._reactRoot = null;
+        this._rootElement.remove();
+        this._moorhenInstanceRef.current = null;
+        this._moorhenInstance = null;
+        this._ready = false;
     }
 }
 
