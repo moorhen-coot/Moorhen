@@ -1,4 +1,4 @@
-import Fasta from "biojs-io-fasta";
+import { parseFasta } from "./fasta";
 import { centreOfObject } from "../store/threeDObjectsSlice";
 import pako from "pako";
 import type { Dispatch, Store } from "redux";
@@ -168,7 +168,7 @@ const parseJSONAndGetModelFiles = (json_contents, dispatch) => {
     const modelFiles: string[] = [];
     if (fastaContents) {
         try {
-            const seqs = Fasta.parse(fastaContents);
+            const seqs = parseFasta(fastaContents);
             dispatch(setTargetSequence(seqs[0].seq));
         } catch (e) {
             console.log("Failed to extract sequence from input.fasta");
