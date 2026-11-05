@@ -5,7 +5,7 @@ import type { MoorhenSVG } from "./moorhen_icons";
 
 type BaseIconProps = {
     alt?: string;
-    size?: "small" | "medium" | "large" | "accordion";
+    size?: "small" | "medium" | "large" | "accordion" | "xsmall";
     style?: React.CSSProperties;
     isActive?: boolean;
     className?: string;

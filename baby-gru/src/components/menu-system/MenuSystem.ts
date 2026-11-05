@@ -62,9 +62,10 @@ export class MoorhenMenuSystem {
      *
      * @param mainMenuItem - The main menu item to add.
      * @param position - The position at which to insert the menu item (optional).
+     * @returns A function that removes this item again (and does nothing once it is gone).
      */
-    public addMainMenu = (mainMenuItem: MainMenuType, position: number = undefined) => {
-        const maxPosition = Math.max(...Object.keys(this.mainMenuMap).map(k => parseInt(k)));
+    public addMainMenu = (mainMenuItem: MainMenuType, position: number = undefined): (() => void) => {
+        const maxPosition = Math.max(0, ...Object.keys(this.mainMenuMap).map(k => parseInt(k)));
         if (position === undefined) {
             position = maxPosition + 1;
         } else {
@@ -74,6 +75,29 @@ export class MoorhenMenuSystem {
         }
         this.mainMenuMap[position] = mainMenuItem;
         this.notifyListeners();
+        return () => {
+            this.removeMainMenu(mainMenuItem);
+        };
+    };
+
+    /**
+     * Removes main menu items, and closes the gap they leave: the items after them move up.
+     *
+     * @param item - The item to remove, as given to {@link addMainMenu}, or its label (every item with
+     * that label is removed).
+     * @returns Whether anything was removed.
+     */
+    public removeMainMenu = (item: MainMenuType | string): boolean => {
+        const ordered = Object.keys(this.mainMenuMap)
+            .map(k => parseInt(k))
+            .sort((a, b) => a - b)
+            .map(k => this.mainMenuMap[k]);
+        const kept = ordered.filter(entry => (typeof item === "string" ? entry.label !== item : entry !== item));
+        if (kept.length === ordered.length) return false;
+        // Positions start at 1, as in the default menu
+        this.mainMenuMap = Object.fromEntries(kept.map((entry, i) => [i + 1, entry]));
+        this.notifyListeners();
+        return true;
     };
 
     /**

@@ -4,6 +4,7 @@ import type { MoorhenInstance } from "@/InstanceManager";
 import { MoorhenProvider } from "@/components/MoorhenProvider";
 import { MoorhenContainer } from "@/components/container";
 import type { LocalStorageInstance } from "@/InstanceManager/Preferences/MoorhenPreferences";
+import { registerMoorhenUIElements } from "./elements";
 
 export class MoorhenWebComponent extends HTMLElement {
     private _moorhenInstanceRef: React.RefObject<MoorhenInstance | null>;
@@ -12,7 +13,7 @@ export class MoorhenWebComponent extends HTMLElement {
     private _rootElement: HTMLDivElement;
     private _reactRoot: ReturnType<typeof createRoot> | null = null;
     private _parentElementRef: React.RefObject<HTMLElement | null>;
-    
+    private _readyCheckInterval: ReturnType<typeof setInterval> | null = null;
 
     public onInit: (() => void) | null = null;
 
@@ -126,8 +127,13 @@ export class MoorhenWebComponent extends HTMLElement {
     private _allowScripting: boolean | undefined = undefined;
     private _backupStorage: LocalStorageInstance | undefined = undefined;
 
+    /** Set by the first render, which reads the start-up settings. */
+    private _rendered = false;
+
+    // Accepted until the first render, which comes once the stylesheet has loaded: also just after the
+    // element was appended, as frameworks set properties then.
     private _canSetStartupProperty(name: string): boolean {
-        if (this._reactRoot) {
+        if (this._rendered) {
             console.warn(`moorhen-web-component: ${name} is only read at start-up, set it before appending the element`);
             return false;
         }
@@ -170,7 +176,8 @@ export class MoorhenWebComponent extends HTMLElement {
     }
     // --------------------------------
     private _triggerUpdate(name: string, newValue: string, oldValue: string) {
-        if (this._reactRoot) {
+        // Before the first render, the first render takes the new value
+        if (this._rendered) {
             this._renderReactTree();
         }
     }
@@ -179,6 +186,7 @@ export class MoorhenWebComponent extends HTMLElement {
 
     private _renderReactTree() {
         if (!this._reactRoot) return;
+        this._rendered = true;
         this._reactRoot.render(
             <MoorhenProvider>
                 <MoorhenContainer
@@ -197,25 +205,44 @@ export class MoorhenWebComponent extends HTMLElement {
         );
     }
 
-    private async loadStylesheets()  {
-            const shadow = this.shadowRoot!;
-            const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
-            const moorhenCss = await moorhenRes.text();
+    private _styleSheet: CSSStyleSheet | null = null;
+    private _styleText: string | null = null;
 
-            if ("adoptedStyleSheets" in shadow) {
-                const moorhenSheet = new CSSStyleSheet();
-                moorhenSheet.replaceSync(moorhenCss);
-                shadow.adoptedStyleSheets = [moorhenSheet];
-            } else {
-                const moorhenStyle = document.createElement("style");
-                moorhenStyle.textContent = moorhenCss;
-                (shadow as ShadowRoot).appendChild(moorhenStyle);
-            }
-        };
+    /**
+     * Moorhen's stylesheet, once loaded, for the Moorhen UI elements (`<moorhen-button>`, …)
+     * placed in this component's light DOM. A `CSSStyleSheet` where adoptedStyleSheets is
+     * supported, the CSS text otherwise.
+     * @internal
+     */
+    get moorhenStyleSheet(): CSSStyleSheet | string | null {
+        return this._styleSheet ?? this._styleText;
+    }
+
+    private async loadStylesheets() {
+        const shadow = this.shadowRoot!;
+        const moorhenRes = await fetch(new URL(`${this.urlPrefix}/moorhen.css`, window.location.href).href);
+        const moorhenCss = await moorhenRes.text();
+
+        if ("adoptedStyleSheets" in shadow) {
+            const moorhenSheet = new CSSStyleSheet();
+            moorhenSheet.replaceSync(moorhenCss);
+            shadow.adoptedStyleSheets = [moorhenSheet];
+            this._styleSheet = moorhenSheet;
+        } else {
+            const moorhenStyle = document.createElement("style");
+            moorhenStyle.textContent = moorhenCss;
+            (shadow as ShadowRoot).appendChild(moorhenStyle);
+            this._styleText = moorhenCss;
+        }
+    }
 
     public async connectedCallback() {
+        // Already running: the element was moved, which fires disconnectedCallback then this one
+        if (this._reactRoot) return;
+
         this._rootElement = document.createElement("div");
-        this._reactRoot = createRoot(this._rootElement);
+        const reactRoot = createRoot(this._rootElement);
+        this._reactRoot = reactRoot;
 
         if (!this.style.display) this.style.display = "block";
         if (!this.style.width) this.style.width = "100%";
@@ -227,15 +254,18 @@ export class MoorhenWebComponent extends HTMLElement {
         this._rootElement.style.minHeight = "0";
         this._rootElement.style.minWidth = "0";
 
-        const shadow = this.attachShadow({ mode: "open" });
-        shadow.appendChild(this._rootElement);
+        // A shadow root can be attached only once, so a re-connected element reuses it
+        const shadow = this.shadowRoot ?? this.attachShadow({ mode: "open" });
+        shadow.replaceChildren(this._rootElement);
 
         await this.loadStylesheets();
+        // Removed while the stylesheet was loading
+        if (this._reactRoot !== reactRoot) return;
 
         this._renderReactTree();
         const checkRefsReady = () => {
             if (this._moorhenInstanceRef?.current?.isReady()) {
-                clearInterval(refCheckInterval);
+                this._clearReadyCheck();
                 this._moorhenInstance = this._moorhenInstanceRef.current;
                 this.onInit?.();
                 this._moorhenInstance.webComponent = this;
@@ -244,7 +274,38 @@ export class MoorhenWebComponent extends HTMLElement {
                 window.dispatchEvent(event);
             }
         };
-        const refCheckInterval = setInterval(checkRefsReady, 50);
+        this._readyCheckInterval = setInterval(checkRefsReady, 50);
+    }
+
+    /**
+     * Tear Moorhen down when the element leaves the page: unmounting the React tree closes the
+     * Coot worker and releases the WebGL context. The session in it is lost; appending the
+     * element again starts a fresh one.
+     */
+    public disconnectedCallback() {
+        // Moving the element also disconnects it, with connectedCallback following straight after;
+        // wait to see whether it is back before tearing down
+        queueMicrotask(() => {
+            if (!this.isConnected) this._teardown();
+        });
+    }
+
+    private _clearReadyCheck() {
+        if (this._readyCheckInterval !== null) {
+            clearInterval(this._readyCheckInterval);
+            this._readyCheckInterval = null;
+        }
+    }
+
+    private _teardown() {
+        if (!this._reactRoot) return;
+        this._clearReadyCheck();
+        this._reactRoot.unmount();
+        this._reactRoot = null;
+        this._rootElement.remove();
+        this._moorhenInstanceRef.current = null;
+        this._moorhenInstance = null;
+        this._ready = false;
     }
 }
 
@@ -274,6 +335,7 @@ export const registerMoorhenWebComponent = () => {
     if (!customElements.get("moorhen-web-component")) {
         customElements.define("moorhen-web-component", MoorhenWebComponent);
     }
+    registerMoorhenUIElements();
 };
 
 export interface MoorhenWebComponentAttributes extends React.HTMLAttributes<HTMLElement> {

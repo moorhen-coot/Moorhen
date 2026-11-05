@@ -511,6 +511,14 @@ export const MoorhenDevMenu = () => {
                 2D Overlays
             </MoorhenMenuItem>
             <MoorhenMenuItem
+                onClick={() => {
+                    dispatch(showModal({ key: modalKeys.CHECK_LIST_TEST }));
+                    document.body.click();
+                }}
+            >
+                Check lists (test)
+            </MoorhenMenuItem>
+            <MoorhenMenuItem
                 onClick={() => { void (async () => {
                     document.body.click();
                     // How this machine draws: one line, to paste into a report (rendererReport.ts).

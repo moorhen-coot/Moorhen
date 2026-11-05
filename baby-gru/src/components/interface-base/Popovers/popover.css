@@ -108,6 +108,11 @@
     max-width: 26rem;
 }
 
+/* Content copied from a <moorhen-info-card> element: laid out as if it were the card's own */
+.moorhen__info-card-copy {
+    display: contents;
+}
+
 .moorhen__info-card--large {
     font-size: 1rem;
     max-width: min(60vw, 45rem);
@@ -115,7 +120,8 @@
     overflow-y: auto;
 }
 
-.moorhen__info-card > h1 {
+.moorhen__info-card > h1,
+.moorhen__info-card-copy > h1 {
     font-size: 1.5rem;
     font-style: normal;
     font-weight: 600;
@@ -123,21 +129,24 @@
     color: var(--moorhen-primary);
 }
 
-.moorhen__info-card > h2 {
+.moorhen__info-card > h2,
+.moorhen__info-card-copy > h2 {
     font-size: 1.25rem;
     font-weight: 600;
     margin: 0.75rem 0 0.5rem 0;
     color: var(--moorhen-primary);
 }
 
-.moorhen__info-card > h3 {
+.moorhen__info-card > h3,
+.moorhen__info-card-copy > h3 {
     font-size: 1rem;
     font-weight: 600;
     margin: 0.5rem 0 0.25rem 0;
     color: var(--moorhen-primary);
 }
 
-.moorhen__info-card > img {
+.moorhen__info-card > img,
+.moorhen__info-card-copy > img {
     max-width: 100%;
     height: auto;
     margin-top: 0.25rem;

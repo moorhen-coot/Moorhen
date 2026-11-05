@@ -1,23 +1,40 @@
 import { useDispatch, useSelector } from "react-redux";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useMoorhenInstance } from "@/InstanceManager/useMoorhenInstance";
+import type { SidePanelExtension } from "@/InstanceManager/UiExtensions";
 import { ActivityCompat } from "@/components/interface-base/Compatibility";
 import useStateWithRef from "@/hooks/useStateWithRef";
 import { RootState, setEnableAtomHovering, setShownSidePanel } from "@/store";
 import { setSidePanelWidth } from "@/store/globalUISlice";
 import { PanelsList, SidePanelIDs, MoorhenPanel } from "./SidePanelList";
 import { TabsToggle } from "./TabsToggle";
+import { SidePanelContainer } from "./utils/SidePanelContainer";
 import "./side-panels.css";
 import { PanelErrorBoundary } from "@/components/interface-base";
 
-interface MoorhenSidePanelProps {
-    extraSidePanels?: Record<string, MoorhenPanel>;
-}
+const toMoorhenPanel = (panel: SidePanelExtension): MoorhenPanel => ({
+    icon: panel.icon,
+    label: panel.label,
+    panelContent:
+        "slotName" in panel ? (
+            <SidePanelContainer title={panel.title ?? panel.label}>
+                <slot name={panel.slotName} />
+            </SidePanelContainer>
+        ) : (
+            <>{panel.content}</>
+        ),
+});
 
-export const MoorhenSidePanel = ({ extraSidePanels }: MoorhenSidePanelProps) => {
-    const allPanels: Record<string, MoorhenPanel> = useMemo(
-        () => (extraSidePanels ? { ...PanelsList, ...extraSidePanels } : PanelsList),
-        [extraSidePanels]
-    );
+export const MoorhenSidePanel = () => {
+    const uiExtensions = useMoorhenInstance().uiExtensions;
+    const extensionPanels = useSyncExternalStore(uiExtensions.subscribe, uiExtensions.getSidePanels);
+    const allPanels: Record<string, MoorhenPanel> = useMemo(() => {
+        const panels: Record<string, MoorhenPanel> = { ...PanelsList };
+        extensionPanels.forEach(panel => {
+            panels[panel.id] = toMoorhenPanel(panel);
+        });
+        return panels;
+    }, [extensionPanels]);
     const height = useSelector((state: RootState) => state.sceneSettings.height);
     const [showHintLabel, setShowHintLabel] = useState<boolean>(null);
     const shownPanel = useSelector((state: RootState) => state.globalUI.shownSidePanel);
@@ -69,6 +86,20 @@ export const MoorhenSidePanel = ({ extraSidePanels }: MoorhenSidePanelProps) => 
             setActivePanels(prev => prev.includes(shownPanel) ? prev : [...prev, shownPanel]);
         }
     }, [shownPanel]);
+
+    // Tell extensions when they are shown or hidden. An extension registered while its id is already
+    // shown counts as opening then, and one removed while shown as closing.
+    const previouslyShown = useRef<SidePanelExtension | null>(null);
+    useEffect(() => {
+        const shown = (shownPanel && extensionPanels.find(panel => panel.id === shownPanel)) || null;
+        if (shown === previouslyShown.current) return;
+        previouslyShown.current?.onClose?.();
+        shown?.onOpen?.();
+        previouslyShown.current = shown;
+    }, [shownPanel, extensionPanels]);
+
+    // A panel removed from the registry while open has nothing left to render
+    const shownPanels = activePanels.filter(id => allPanels[id]);
 
     //** Resizable logic */
     const handleResizeStart = (evt: React.MouseEvent<HTMLElement, MouseEvent>): void => {
@@ -123,7 +154,7 @@ export const MoorhenSidePanel = ({ extraSidePanels }: MoorhenSidePanelProps) => 
         });
     };
 
-    const toggles: React.JSX.Element[] = activePanels.map(id => {
+    const toggles: React.JSX.Element[] = shownPanels.map(id => {
         return (
             <TabsToggle
                 icon={allPanels[id].icon}
@@ -136,7 +167,7 @@ export const MoorhenSidePanel = ({ extraSidePanels }: MoorhenSidePanelProps) => 
         );
     });
 
-    const panels: React.JSX.Element[] = activePanels.map(id => {
+    const panels: React.JSX.Element[] = shownPanels.map(id => {
         return (
             <ActivityCompat mode={shownPanel === id ? "visible" : "hidden"} key={`${id}-activity-panel`}>
                 <PanelErrorBoundary panelName={allPanels[id].label}>

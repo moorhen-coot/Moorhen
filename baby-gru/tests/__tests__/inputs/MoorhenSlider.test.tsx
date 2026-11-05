@@ -326,4 +326,62 @@ describe("MoorhenSlider", () => {
         const thumb = container.querySelector(".moorhen__slider-thumb");
         expect((thumb as HTMLElement).style.left).toBe("0%");
     });
+
+    // -------------------------------------------------------
+    // Every input path snaps the same way
+    // -------------------------------------------------------
+    /** jsdom has no layout: give the custom track a width of 200px starting at x = 0. */
+    const layOutTrack = (container: HTMLElement) => {
+        const track = container.querySelector(".moorhen__slider-track") as HTMLDivElement;
+        Object.defineProperty(track, "clientWidth", { configurable: true, value: 200 });
+        track.getBoundingClientRect = () => ({ left: 0, right: 200, top: 0, bottom: 10, width: 200, height: 10, x: 0, y: 0, toJSON: () => ({}) });
+        return track;
+    };
+
+    test("a track click is rounded to the decimal places, like a drag", () => {
+        const setValue = jest.fn();
+        const { container } = renderWithinInstance(<MoorhenSlider value={0} setValue={setValue} minVal={0} maxVal={30} />);
+        // 45 / 200 of 30 = 6.75
+        fireEvent.click(layOutTrack(container), { clientX: 45 });
+        expect(setValue).toHaveBeenLastCalledWith(7);
+    });
+
+    test("a track click keeps the requested decimal places", () => {
+        const setValue = jest.fn();
+        const { container } = renderWithinInstance(<MoorhenSlider value={0} setValue={setValue} minVal={0} maxVal={30} decimalPlaces={1} />);
+        fireEvent.click(layOutTrack(container), { clientX: 45 });
+        expect(setValue).toHaveBeenLastCalledWith(6.8);
+    });
+
+    test("a step finer than the decimal places is kept, without floating point noise", () => {
+        const setValue = jest.fn();
+        const { container } = renderWithinInstance(<MoorhenSlider value={0} setValue={setValue} minVal={0} maxVal={1} step={0.1} />);
+        // 61 / 200 = 0.305 → 0.3
+        fireEvent.click(layOutTrack(container), { clientX: 61 });
+        expect(setValue).toHaveBeenLastCalledWith(0.3);
+    });
+
+    test("a log scale is not rounded to the decimal places", () => {
+        const setValue = jest.fn();
+        const { container } = renderWithinInstance(<MoorhenSlider value={1} setValue={setValue} minVal={0.01} maxVal={1} scale="log" />);
+        // Half way on a log scale from 0.01 to 1 is 0.1, which rounding to 0 decimals would turn into 0
+        fireEvent.click(layOutTrack(container), { clientX: 100 });
+        expect(setValue.mock.lastCall[0]).toBeCloseTo(0.1, 6);
+    });
+
+    test("the second thumb of a range snaps to the allowed values too", () => {
+        const setValue2 = jest.fn();
+        renderWithinInstance(
+            <MoorhenSlider type="range" value={0} setValue={() => {}} value2={100} setValue2={setValue2} allowedValues={[0, 25, 50, 75, 100]} />
+        );
+        fireEvent.change(screen.getAllByRole("slider")[1], { target: { value: "60" } });
+        expect(setValue2).toHaveBeenLastCalledWith(50);
+    });
+
+    test("values are kept within min and max", () => {
+        const setValue = jest.fn();
+        const { container } = renderWithinInstance(<MoorhenSlider value={5} setValue={setValue} minVal={0} maxVal={10} />);
+        fireEvent.click(layOutTrack(container), { clientX: 250 });
+        expect(setValue).toHaveBeenLastCalledWith(10);
+    });
 });

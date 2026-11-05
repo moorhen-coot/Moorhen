@@ -50,6 +50,18 @@
         filter 0.5s ease;
 }
 
+.moorhen__button__default.xsmall,
+.moorhen__button__toggle-checked.xsmall,
+.moorhen__button__toggle-unchecked.xsmall {
+    height: 1.2rem;
+    min-height: 1.2rem;
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+    padding-top: 0.2rem;
+    font-size: 0.8rem;
+
+}
+
 
 
 .moorhen__button__toggle-unchecked {

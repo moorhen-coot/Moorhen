@@ -4,6 +4,7 @@ import React from "react";
 import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "./Preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
+import { MoorhenUiExtensions } from "./UiExtensions";
 import { addCustomRepresentation, removeCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
@@ -124,6 +125,7 @@ export class MoorhenInstance extends StoreExtension {
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     private _cootCommand: CootCommandWrapper;
     private _menuSystem: MoorhenMenuSystem;
+    private _uiExtensions = new MoorhenUiExtensions();
     private ready: boolean = false;
     private _webComponent: MoorhenWebComponent | null = null;
     private readyCallbacks: Array<() => void | Promise<void>> = [];
@@ -402,6 +404,14 @@ export class MoorhenInstance extends StoreExtension {
      */
     public get menuSystem(): MoorhenMenuSystem | null {
         return this._menuSystem;
+    }
+
+    /**
+     * Modals and side panels added by the host or by plugins, either as React components or
+     * as `<slot>`s filled from the web component's light DOM. See {@link MoorhenUiExtensions}.
+     */
+    public get uiExtensions(): MoorhenUiExtensions {
+        return this._uiExtensions;
     }
 
     /**

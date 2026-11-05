@@ -300,6 +300,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
          * Held so that overlapping requests do not pump the scene at twice the frame rate.
          */
         cameraPumpHandle: number | null;
+        /** The once-a-second frame-stats timer, cleared on unmount so it stops holding the viewer alive. */
+        statsIntervalHandle: ReturnType<typeof setInterval> | null;
         /**
          * The time, in seconds, the camera is advanced to on the next draw. Null means wall clock.
          *
@@ -672,7 +674,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.store = props.store;
         this.dispatch = props.dispatch
 
-        setInterval(() => {
+        this.statsIntervalHandle = setInterval(() => {
             if(!this.gl) return;
             const sum = this.mspfArray.reduce((a, b) => a + b, 0);
             const avg = (sum / this.mspfArray.length) || 0;
@@ -986,6 +988,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         // otherwise call doRightClick on an unmounted viewer.
         this.destroyTouchGestures?.()
         this.destroyTouchGestures = undefined
+        // The interval's closure holds this viewer, and so its GL context, for the life of the page.
+        if (this.statsIntervalHandle !== null) {
+            clearInterval(this.statsIntervalHandle)
+            this.statsIntervalHandle = null
+        }
+        // Browsers allow only a handful of live contexts (16 in Chrome) and otherwise free one only
+        // at garbage collection, so opening and closing viewers would run into that limit.
+        this.gl?.getExtension("WEBGL_lose_context")?.loseContext()
     }
 
     /**
