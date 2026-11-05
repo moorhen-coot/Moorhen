@@ -338,6 +338,12 @@ export const MoorhenContainer = (props: ContainerProps) => {
         }
     }, [drawMissingLoops]);
 
+    // MathJax (about 0.5 MB, from a CDN) is only needed for LaTeX labels. Load it once libcoot is
+    // up, so that it isn't competing with the libcoot download for bandwidth during start-up.
+    useEffect(() => {
+        if (cootInitialized && !window.MathJax) loadMathjax(`${urlPrefix}`);
+    }, [cootInitialized]);
+
     useEffect(() => {
         const startupEffect = async () => {
             if (!window.gemmiModule) windowGemmiLoader(`${urlPrefix}/wasm/`);
@@ -386,7 +392,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 const json = JSON.parse(shortCuts);
                 console.log("Parsed Shortcuts", json, "keys", Object.keys(json));
             }
-            if (!window.MathJax) setTimeout(() => loadMathjax(`${urlPrefix}`), 500);
             return true;
         };
         startupEffect().then(started => {

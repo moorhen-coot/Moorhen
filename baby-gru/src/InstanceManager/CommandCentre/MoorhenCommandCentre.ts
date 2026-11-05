@@ -31,6 +31,19 @@ export interface cootCommandKwargs {
     [key: string]: any;
 }
 
+/** Commands that need the rotamer tables, which are fetched the first time one of them runs. */
+const ROTAMER_COMMANDS = [
+    "rotate_around_bond",
+    "change_to_next_rotamer",
+    "change_to_previous_rotamer",
+    "change_to_first_rotamer",
+    "get_rotamer_dodecs",
+    "get_rotamer_dodecs_instanced",
+    "auto_fit_rotamer",
+    "rotamer_analysis",
+    "get_validation",
+];
+
 export type WorkerMessage = {
     consoleMessage?: string;
     messageId: string;
@@ -87,10 +100,15 @@ export class CommandCentre {
     onMoleculeChanged: null | ((molNo: number) => void);
     loadedRotamerTables: boolean;
     loadedRotaRamaTables: boolean;
+    loadedPrivateerData: boolean;
+    /** Archives being fetched and unpacked on first use, so that concurrent commands share one load. */
+    private extraDataLoads: Map<string, Promise<void>>;
 
     constructor(urlPrefix: string, timeCapsule: React.RefObject<moorhen.TimeCapsule>, props: { [x: string]: any }) {
         this.loadedRotamerTables = false
         this.loadedRotaRamaTables = false
+        this.loadedPrivateerData = false
+        this.extraDataLoads = new Map();
         this.activeMessages = [];
         this.urlPrefix = urlPrefix;
         this.isClosed = false;
@@ -128,6 +146,11 @@ export class CommandCentre {
             console.error("Could not deserialise a reply from the coot worker", event);
             this.failActiveMessages(this.activeMessages.slice(0, 1), "A reply from the coot worker could not be deserialised");
         };
+        // Start the worker loading libcoot now, so that the WASM download and compile run alongside
+        // the fetch of data.tar.gz below instead of waiting for it. Not awaited: the worker replies
+        // as soon as loading has begun, and if loading fails, CootInitialize fails too and that is
+        // where the failure is reported.
+        this.postMessage({ message: "CootLoadModule" }).catch(() => {});
         const fileResponse = await fetch(`${this.urlPrefix}/data.tar.gz`);
         const fileData = await fileResponse.arrayBuffer();
         const initKwargs = { message: "CootInitialize", data: { cootData: new Uint8Array(fileData) } };
@@ -187,34 +210,34 @@ export class CommandCentre {
     }
 
     async cootCommand(kwargs: cootCommandKwargs, doJournal: boolean = true): Promise<WorkerResponse> {
-        if(kwargs.command && ["rotate_around_bond","change_to_next_rotamer","change_to_previous_rotamer",
-            "change_to_first_rotamer", "get_rotamer_dodecs",
-            "get_rotamer_dodecs_instanced","auto_fit_rotamer",
-            "rotamer_analysis","get_validation"
-            ].indexOf(kwargs.command)>-1){
-            if(!this.loadedRotamerTables){
-                console.log("A rotamer command, let's load the rotamers")
-                const fileResponseRota = await fetch(`${this.urlPrefix}/rota_other-data.tar.gz`);
-                const fileDataRota = await fileResponseRota.arrayBuffer();
-                await this.postMessage({ message: "loadExtraData", data: { cootData: new Uint8Array(fileDataRota) } });
-
-                const fileResponseRotaArgLys = await fetch(`${this.urlPrefix}/rota_arg_lys-data.tar.gz`);
-                const fileDataRotaArgLys = await fileResponseRotaArgLys.arrayBuffer();
-                await this.postMessage({ message: "loadExtraData", data: { cootData: new Uint8Array(fileDataRotaArgLys) } });
-
-                await this.postMessage({ message: "loadRotamerTables", data: { } });
-
-                this.loadedRotamerTables = true
-            }
+        if (kwargs.command && ROTAMER_COMMANDS.includes(kwargs.command) && !this.loadedRotamerTables) {
+            await this.loadExtraDataOnce("rotamers", async () => {
+                console.log("A rotamer command, let's load the rotamers");
+                const [rotaOther, rotaArgLys] = await Promise.all([
+                    this.fetchDataArchive("rota_other-data.tar.gz"),
+                    this.fetchDataArchive("rota_arg_lys-data.tar.gz"),
+                ]);
+                await this.postMessage({ message: "loadExtraData", data: { cootData: rotaOther } });
+                await this.postMessage({ message: "loadExtraData", data: { cootData: rotaArgLys } });
+                await this.postMessage({ message: "loadRotamerTables", data: {} });
+                this.loadedRotamerTables = true;
+            });
         }
-        if(kwargs.command && kwargs.command==="get_validation"){
-            if(!this.loadedRotaRamaTables){
-                console.log("A rotarama command, let's load the rotamers")
-                const fileResponse = await fetch(`${this.urlPrefix}/rotarama-data.tar.gz`);
-                const fileData = await fileResponse.arrayBuffer();
-                await this.postMessage({ message: "loadExtraData", data: { cootData: new Uint8Array(fileData) } });
-                this.loadedRotaRamaTables = true
-            }
+        if (kwargs.command === "get_validation" && !this.loadedRotaRamaTables) {
+            await this.loadExtraDataOnce("rotarama", async () => {
+                console.log("A rotarama command, let's load the rotamers");
+                const rotarama = await this.fetchDataArchive("rotarama-data.tar.gz");
+                await this.postMessage({ message: "loadExtraData", data: { cootData: rotarama } });
+                this.loadedRotaRamaTables = true;
+            });
+        }
+        if (kwargs.command === "privateer_validate" && !this.loadedPrivateerData) {
+            await this.loadExtraDataOnce("privateer", async () => {
+                console.log("A Privateer validation, let's load the torsion database");
+                const privateer = await this.fetchDataArchive("privateer-data.tar.gz");
+                await this.postMessage({ message: "loadExtraData", data: { cootData: privateer } });
+                this.loadedPrivateerData = true;
+            });
         }
 
         const message = "coot_command";
@@ -256,6 +279,34 @@ export class CommandCentre {
             });
         }
         return result;
+    }
+
+    /**
+     * Fetch one of the data archives that are loaded on first use rather than at start-up.
+     */
+    private async fetchDataArchive(fileName: string): Promise<Uint8Array> {
+        const response = await fetch(`${this.urlPrefix}/${fileName}`);
+        if (!response.ok) {
+            throw new Error(`Could not fetch ${this.urlPrefix}/${fileName}: ${response.status} ${response.statusText}`);
+        }
+        return new Uint8Array(await response.arrayBuffer());
+    }
+
+    /**
+     * Run an on-demand data load once. Commands that arrive while it is in progress wait for the
+     * same load instead of starting another download. If the load fails it is forgotten, so the
+     * next command that needs the data tries again.
+     */
+    private loadExtraDataOnce(key: string, load: () => Promise<void>): Promise<void> {
+        let pending = this.extraDataLoads.get(key);
+        if (!pending) {
+            pending = load().catch(err => {
+                this.extraDataLoads.delete(key);
+                throw err;
+            });
+            this.extraDataLoads.set(key, pending);
+        }
+        return pending;
     }
 
     postMessage(kwargs: cootCommandKwargs): Promise<WorkerResponse> {

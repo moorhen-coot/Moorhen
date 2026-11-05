@@ -1983,47 +1983,72 @@ onmessage = function (e) {
     }
 }
 
-const dispatchMessage = function (e: MessageEvent) {
+// The libcoot module, loaded once. Started by CootLoadModule, or by CootInitialize for a host
+// that sends only that.
+let cootModulePromise: Promise<{ returnedModule: libcootApi.CootModule; scriptName: string; memory64: boolean }> | null = null
 
-    if (e.data.message === 'CootInitialize') {
-        let mod
-        let scriptName
-        let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
-        if (memory64) {
-            try {
-                // @ts-ignore
-                importScripts('./moorhen64.js')
-                mod = createCoot64Module
-                scriptName = "moorhen64.js"
-                console.log("Successfully loaded 64-bit libcoot in worker thread")
-            } catch (e: any) {
-                if(e.name === 'NetworkError'){
-                   console.log('There was a NetworkError loading 64-bit WebAssembly module.')
-                   console.log('A retry *should* be attempted, errors below may not be real.');
-                }
-                console.error(e)
-                console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
-                memory64 = false
-                // @ts-ignore
-                importScripts('./moorhen.js')
-                mod = createCootModule
-                scriptName = "moorhen.js"
-                console.log("Successfully loaded 32-bit libcoot in worker thread")
+const loadCootModule = () => {
+    if (cootModulePromise) {
+        return cootModulePromise
+    }
+    let mod
+    let scriptName
+    let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
+    if (memory64) {
+        try {
+            // @ts-ignore
+            importScripts('./moorhen64.js')
+            mod = createCoot64Module
+            scriptName = "moorhen64.js"
+            console.log("Successfully loaded 64-bit libcoot in worker thread")
+        } catch (e: any) {
+            if(e.name === 'NetworkError'){
+               console.log('There was a NetworkError loading 64-bit WebAssembly module.')
+               console.log('A retry *should* be attempted, errors below may not be real.');
             }
-        } else {
+            console.error(e)
+            console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
+            memory64 = false
             // @ts-ignore
             importScripts('./moorhen.js')
             mod = createCootModule
             scriptName = "moorhen.js"
             console.log("Successfully loaded 32-bit libcoot in worker thread")
         }
-        mod({
-            onRuntimeInitialized: () => { },
-            mainScriptUrlOrBlob: scriptName,
-            print: print,
-            printErr: printErr,
-        })
-            .then((returnedModule) => {
+    } else {
+        // @ts-ignore
+        importScripts('./moorhen.js')
+        mod = createCootModule
+        scriptName = "moorhen.js"
+        console.log("Successfully loaded 32-bit libcoot in worker thread")
+    }
+    const loading = mod({
+        onRuntimeInitialized: () => { },
+        mainScriptUrlOrBlob: scriptName,
+        print: print,
+        printErr: printErr,
+    })
+        .then((returnedModule: libcootApi.CootModule) => ({ returnedModule, scriptName, memory64 }))
+    // Mark the promise handled here: CootInitialize may not attach its handler until data.tar.gz
+    // has arrived, and a rejection before then would otherwise be logged as unhandled.
+    loading.catch(() => { })
+    cootModulePromise = loading
+    return loading
+}
+
+const dispatchMessage = function (e: MessageEvent) {
+
+    if (e.data.message === 'CootLoadModule') {
+        // Sent by the command centre as soon as the worker exists, so libcoot downloads and
+        // compiles while the main thread is still fetching data.tar.gz. CootInitialize then
+        // waits for the same load. Reply now; a failure to load is reported by CootInitialize.
+        loadCootModule()
+        postMessage({ consoleMessage: 'Started loading libcoot', message: e.data.message, messageId: e.data.messageId })
+    }
+
+    else if (e.data.message === 'CootInitialize') {
+        loadCootModule()
+            .then(({ returnedModule, scriptName, memory64 }) => {
                 console.log("Loaded",scriptName,". Is 64-bit:",memory64)
 
                 cootModule = returnedModule;

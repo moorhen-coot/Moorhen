@@ -37,7 +37,9 @@
  * to show what it actually picked.
  */
 
-import { BufferTarget, CanvasSource, Mp4OutputFormat, Output, VideoCodec, canEncodeVideo } from "mediabunny";
+// Mediabunny is a large library that only movie export uses, so it is imported on demand in the
+// functions below rather than here, which would put it in every start-up's download.
+import type { VideoCodec } from "mediabunny";
 import { Movie, MovieSample, movieDuration } from "./cameraPath";
 import { holdCameraForMovie } from "./movieCamera";
 import { DEFAULT_QUALITY, bitrateFor } from "./videoBitrate";
@@ -135,6 +137,7 @@ export const describeEncoderSupport = async (
 ): Promise<{ supported: boolean; detail: string }> => {
     if (!webCodecsAvailable()) return { supported: false, detail: "WebCodecs is not available in this browser" };
     try {
+        const { canEncodeVideo } = await import("mediabunny");
         const supported = await canEncodeVideo(codec, {
             width: evenDown(width), height: evenDown(height), bitrate, frameRate: fps,
         });
@@ -184,6 +187,8 @@ export async function recordMovieToMp4(
 
     const support = await describeEncoderSupport(width, height, codec, fps, bitrate);
     if (!support.supported) throw new Error(`This machine will not encode that: ${support.detail}`);
+
+    const { BufferTarget, CanvasSource, Mp4OutputFormat, Output } = await import("mediabunny");
 
     const started = performance.now();
 

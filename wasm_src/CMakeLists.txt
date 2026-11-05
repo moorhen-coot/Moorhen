@@ -538,8 +538,13 @@ FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/d")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/h")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/n")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/list")
-FILE(MAKE_DIRECTORY "data/privateer_data")
-FILE(COPY ../checkout/privateer-wasm/data/linkage_torsions/privateer_torsions_z_score_database.json DESTINATION data/privateer_data )
+# The Privateer torsion database (7.8 MB unpacked) is only read by Privateer's carbohydrate
+# validation, so it goes in its own archive that the command centre fetches the first time
+# that validation runs, rather than in data.tar.gz, which every start-up has to download and
+# unpack. Remove any copy left in data/ by an earlier configure so it doesn't stay in both.
+FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/data/privateer_data)
+FILE(MAKE_DIRECTORY "privateer")
+FILE(COPY ../checkout/privateer-wasm/data/linkage_torsions/privateer_torsions_z_score_database.json DESTINATION privateer/data/privateer_data )
 
 FILE(COPY ../checkout/libccp4/data/syminfo.lib DESTINATION data/ccp4_lib/data )
 FILE(COPY ../checkout/monomers/a/ALA.cif DESTINATION data/ccp4_lib/data/monomers/a )
@@ -750,10 +755,17 @@ add_custom_target(create_tar_rota_other ALL COMMAND
 )
 add_dependencies(create_tar_rota_other moorhen)
 
+add_custom_target(create_tar_privateer ALL COMMAND
+    ${CMAKE_COMMAND} -E tar "cfvz" "${CMAKE_CURRENT_BINARY_DIR}/privateer-data.tar.gz" data
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/privateer/
+)
+add_dependencies(create_tar_privateer moorhen)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rotarama-data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rota_arg_lys-data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rota_other-data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/privateer-data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
