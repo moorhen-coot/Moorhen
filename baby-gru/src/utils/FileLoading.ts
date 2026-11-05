@@ -114,7 +114,7 @@ export const drawModels = async (newMolecules: MoorhenMolecule[], moorhenInstanc
             representation === "ribbons-and-side-chains" ||
             representation === "site-and-ribbons"
         ) {
-            await moorhenInstance.representation.wizard(newMolecule, representation, true);
+            await moorhenInstance.representation.wizard(newMolecule.uniqueId, representation, true);
         } else {
             await moorhenInstance.representation.create(newMolecule.uniqueId, { representationStyle: representation });
         }
@@ -288,9 +288,8 @@ export const loadMrParseFiles = async (
         backgroundColor,
         defaultBondSmoothness
     );
-
-    await drawModels(newMolecules, moorhenInstance);
-    dispatch(addMoleculeList(newMolecules));
+    await dispatch(addMoleculeList(newMolecules));
+    await drawModels(newMolecules, moorhenInstance); 
     newMolecules.at(-1).centreOn("/*/*/*/*", true);
 
     moorhenInstance.store.dispatch(setMrParseModels(newMolecules));
