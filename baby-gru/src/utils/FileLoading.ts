@@ -288,9 +288,8 @@ export const loadMrParseFiles = async (
         backgroundColor,
         defaultBondSmoothness
     );
-
-    await drawModels(newMolecules, moorhenInstance);
-    dispatch(addMoleculeList(newMolecules));
+    await dispatch(addMoleculeList(newMolecules));
+    await drawModels(newMolecules, moorhenInstance); 
     newMolecules.at(-1).centreOn("/*/*/*/*", true);
 
     moorhenInstance.store.dispatch(setMrParseModels(newMolecules));
