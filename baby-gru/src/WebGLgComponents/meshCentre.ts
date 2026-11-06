@@ -4,6 +4,13 @@
  * pick information a buffer carries.
  */
 
+/**
+ * Whether centring on a surface or ribbon follows the hover's grain: zoomed out, the middle of the
+ * chain or molecule it lights (true), or always the residue clicked (false, the default - people
+ * know their structures and want to go to the residue they clicked). A Dev menu switch.
+ */
+export const meshCentringSetting = { followHighlight: false };
+
 /** The parts of a DisplayBuffer these read. */
 export interface MeshPickSource {
     pick_info?: {

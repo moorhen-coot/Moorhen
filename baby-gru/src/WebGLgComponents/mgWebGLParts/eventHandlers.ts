@@ -7,7 +7,7 @@ import { parseAtomInfoLabel } from '../../utils/utils';
 import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND } from '../../utils/enums';
 import { getDeviceScale } from '../webGLUtils';
 import { influenceOf } from '../glResources';
-import { coarseSectionPosition, pickedMeshPosition } from '../meshCentre';
+import { coarseSectionPosition, meshCentringSetting, pickedMeshPosition } from '../meshCentre';
 import { getOffsetRect, MGWebGL } from '../mgWebGL';
 import type { moorhen } from '../../types/moorhen';
 import { webGL } from '../../types/mgWebGL';
@@ -351,15 +351,17 @@ export function doMouseUp(self: MGWebGL, event) {
         if(Math.abs(event_x - self.mouseDown_x) < 5 && Math.abs(event_y - self.mouseDown_y) < 5){
             if(displayBuffers.length > 0){
                 const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
-                // Zoomed out, a surface or ribbon under the pointer lights its whole chain or
-                // molecule, and centring goes where the light is - ahead of any atom the pick
-                // also found. Atoms are measured against a tolerance that grows with the zoom,
-                // so pulled back there is nearly always one near the ray: an atom of the ribbon
-                // inside the surface, or of anything else shown. Taking it centred a surface on
-                // one residue while the whole chain was lit. At the residue grain the atom keeps
-                // its precedence, as before.
+                // Which grain centring works at. By default the residue clicked, whatever the
+                // zoom: people know their structures and where they want to be. With the Dev menu
+                // switch (meshCentringSetting), the grain the hover lights at instead - zoomed out,
+                // a surface or ribbon under the pointer lights its whole chain or molecule, and
+                // centring then goes where the light is, ahead of any atom the pick also found
+                // (atoms are measured against a tolerance that grows with the zoom, so pulled back
+                // there is nearly always one near the ray). At the residue grain the atom keeps
+                // its precedence either way.
+                const grain = meshCentringSetting.followHighlight ? self.pickLevel : 0
                 const coarse = minidx_pi > -1 && !displayBuffers[minidx_pi]?.pick_info?.claims_pointer
-                    ? coarseSectionPosition(displayBuffers, minidx_pi, minj_pi, self.pickLevel)
+                    ? coarseSectionPosition(displayBuffers, minidx_pi, minj_pi, grain)
                     : null
                 if(coarse) {
                     self.props.onOriginChanged([-coarse[0], -coarse[1], -coarse[2]])
@@ -385,7 +387,7 @@ export function doMouseUp(self: MGWebGL, event) {
                         && !!displayBuffers[minidx_pi]?.pick_info?.claims_pointer
                     const meshPosition = claimsPointer
                         ? null
-                        : pickedMeshPosition(displayBuffers, minidx_pi, minj_pi, self.pickLevel)
+                        : pickedMeshPosition(displayBuffers, minidx_pi, minj_pi, grain)
                     if(meshPosition){
                         self.props.onOriginChanged([-meshPosition[0], -meshPosition[1], -meshPosition[2]])
                     }
