@@ -47,7 +47,6 @@ export { References } from "./References";
 export { RefinementSettings } from "./RefinementSettings";
 export { RenameDisplayObject } from "./RenameDisplayObject";
 export { ScaleMap } from "./ScaleMap";
-export { ScenePreset } from "./ScenePreset";
 export { ScoresToastPreferences } from "./ScoresToastPreferences";
 export { SelfRestraints } from "./SelfRestraints";
 export { SetMapWeight } from "./SetMapWeight";
