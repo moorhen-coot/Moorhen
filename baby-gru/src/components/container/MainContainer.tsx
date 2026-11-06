@@ -84,6 +84,8 @@ interface ContainerOptionalProps {
     allowMergeFittedLigand?: boolean;
     webComponentMode?: boolean;
     size?: [number, number];
+    /** The built-in scene Moorhen opens on: "Overview" (default) or "Model Building" */
+    startupScene?: string;
 }
 
 export interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> {}
@@ -380,6 +382,8 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 console.log("Parsed Shortcuts", json, "keys", Object.keys(json));
             }
             if (!window.MathJax) setTimeout(() => loadMathjax(`${urlPrefix}`), 500);
+            // Before onInitialisationCompleted, so a host sees Moorhen in its start-up scene
+            await moorhenInstance.userScene.showStartupScene(props.startupScene);
             return true;
         };
         startupEffect().then(started => {

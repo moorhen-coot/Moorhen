@@ -138,6 +138,9 @@ const sceneStyle = (sceneId: string): SceneStyle =>
  */
 export class MoorhenUserSceneManager {
     private instance: MoorhenInstance;
+    // The built-in scene Moorhen opens on, and whether start-up has shown it already
+    private _startupScene: BuiltInSceneId = "Overview";
+    private hasStarted: boolean = false;
     // Not read from the store: two calls in the same tick must already see each other
     private isChanging: boolean = false;
     // hasUnsavedChanges runs in selectors, so on every dispatch: recompute only when its inputs change
@@ -165,6 +168,44 @@ export class MoorhenUserSceneManager {
     /** Whether a scene switch is in progress (switching again is ignored until it ends) */
     public get isBusy(): boolean {
         return this.isChanging;
+    }
+
+    /** The built-in scene Moorhen opens on: "Overview" (the default) or "Model Building" */
+    public get startupScene(): BuiltInSceneId {
+        return this._startupScene;
+    }
+
+    /**
+     * Choose the built-in scene Moorhen opens on, e.g. "Model Building" for a host app made for
+     * model building. Before start-up it is the scene Moorhen opens on; once Moorhen has started
+     * it is shown now (the web component's `startup-scene` attribute sets it before start-up).
+     * @param sceneId - "Overview" or "Model Building".
+     * @returns False if the scene is not a built-in one, or (once started) if the switch is refused
+     * (a switch running, or a movie playing).
+     * @example
+     * await moorhenInstance.userScene.setStartupScene("Model Building");
+     */
+    public async setStartupScene(sceneId: string): Promise<boolean> {
+        if (!isBuiltInScene(sceneId)) {
+            console.warn(`setStartupScene: "${sceneId}" is not a built-in scene (${BUILT_IN_SCENE_IDS.join(", ")})`);
+            return false;
+        }
+        this._startupScene = sceneId;
+        return this.hasStarted ? this.selected === sceneId || this.select(sceneId) : true;
+    }
+
+    /**
+     * Show the start-up scene. Preferences must be restored first, so built-in scenes have their
+     * saved settings.
+     *
+     * **Internal use only.** Called once by MoorhenContainer when Moorhen starts.
+     * @private
+     * @param sceneId - The start-up scene the container was given, if any (else the one set by API).
+     */
+    public async showStartupScene(sceneId?: string): Promise<void> {
+        if (sceneId !== undefined) await this.setStartupScene(sceneId);
+        this.hasStarted = true;
+        if (this.selected !== this._startupScene) await this.select(this._startupScene);
     }
 
     /** Resolve once no scene switch is running (e.g. before loading a session, which deletes every molecule) */

@@ -183,3 +183,47 @@ describe("the preference registry", () => {
         }
     });
 });
+
+describe("the start-up scene", () => {
+    test("opens on Overview unless told otherwise", async () => {
+        const { instance } = await start();
+        await instance.userScene.showStartupScene();
+        expect(instance.userScene.selected).toBe("Overview");
+    });
+
+    test("set before start-up (web component attribute, container prop), it is the scene Moorhen opens on", async () => {
+        const { instance } = await start();
+        await instance.preferences.import({
+            format: "moorhen-1.0",
+            entries: { "Model Building.doSSAO": { version: 1, value: !builtInSceneDefaults("Model Building").doSSAO } },
+        });
+        await instance.userScene.showStartupScene("Model Building");
+        expect(instance.userScene.selected).toBe("Model Building");
+        // With its saved settings
+        expect(sceneSettings().doSSAO).toBe(!builtInSceneDefaults("Model Building").doSSAO);
+        expect(instance.userScene.startupScene).toBe("Model Building");
+    });
+
+    test("set by API after start-up, it is shown now", async () => {
+        const { instance } = await start();
+        await instance.userScene.showStartupScene();
+        expect(await instance.userScene.setStartupScene("Model Building")).toBe(true);
+        expect(instance.userScene.selected).toBe("Model Building");
+    });
+
+    test("set by API before start-up, it is used at start-up", async () => {
+        const { instance } = await start();
+        expect(await instance.userScene.setStartupScene("Model Building")).toBe(true);
+        expect(instance.userScene.selected).toBe("Overview");
+        await instance.userScene.showStartupScene();
+        expect(instance.userScene.selected).toBe("Model Building");
+    });
+
+    test("only a built-in scene can be the start-up scene", async () => {
+        const { instance } = await start();
+        const customId = await instance.userScene.create("Figure");
+        expect(await instance.userScene.setStartupScene(customId)).toBe(false);
+        expect(await instance.userScene.setStartupScene("no-such-scene")).toBe(false);
+        expect(instance.userScene.startupScene).toBe("Overview");
+    });
+});
