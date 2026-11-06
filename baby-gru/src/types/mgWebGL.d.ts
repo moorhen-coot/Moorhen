@@ -245,6 +245,7 @@ export namespace webGL {
         uWeightTexWidth: WebGLUniformLocation;
         uOffsetTexWidth: WebGLUniformLocation;
         uHoveredPoint: WebGLUniformLocation;
+        uHoverMask: WebGLUniformLocation;
     }
 
     interface ShaderGBuffersTriangles extends MGWebGLShader {}

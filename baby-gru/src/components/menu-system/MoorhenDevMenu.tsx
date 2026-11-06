@@ -32,6 +32,7 @@ import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "..
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
+import { meshCentringSetting } from "../../WebGLgComponents/meshCentre";
 import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
 
@@ -198,6 +199,7 @@ export const MoorhenDevMenu = () => {
     const [countingDraws, setCountingDraws] = useState<boolean>(renderStats.enabled);
     const [syncingGpu, setSyncingGpu] = useState<boolean>(renderStats.syncGpu);
     const [gpuMetaBalls, setGpuMetaBalls] = useState<boolean>(gpuMetaBallsSetting.enabled);
+    const [centreOnHighlight, setCentreOnHighlight] = useState<boolean>(meshCentringSetting.followHighlight);
     const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
     const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.wanted);
     // Why there is no WebGPU here, or null: no navigator.gpu at once, no adapter once asked. Then
@@ -532,6 +534,15 @@ export const MoorhenDevMenu = () => {
             >
                 Renderer report (a few seconds; copied to the clipboard)
             </MoorhenMenuItem>
+            <MoorhenToggle
+                type="switch"
+                checked={centreOnHighlight}
+                label="Zoomed out, centring on a surface or ribbon goes to the chain or molecule it lights (off: the residue clicked)"
+                onChange={() => {
+                    meshCentringSetting.followHighlight = !centreOnHighlight;
+                    setCentreOnHighlight(!centreOnHighlight);
+                }}
+            />
             <MoorhenToggle
                 type="switch"
                 checked={noWebGPU === null && useWebGPU}

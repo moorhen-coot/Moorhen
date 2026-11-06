@@ -1,6 +1,6 @@
 import * as vec3 from 'gl-matrix/vec3';
 import { guid } from '../utils/utils';
-import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
+import { setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
 import { DisplayBuffer } from './displayBuffer'
 import { TexturedShape } from './texturedShape'
 import { createWebGLBuffers } from './createWebGLBuffers'
@@ -8,6 +8,7 @@ import { GL_SLOT_ARRAYS, MGWebGLBuffer, pendingGLBuffer, realiseGLResources } fr
 import { RootState } from '../store/MoorhenReduxStore';
 import { Store } from '@reduxjs/toolkit';
 import { webGLUploadsDeferred } from './webGLUploads';
+import { hoverBallSizes } from './hoverBallSizes';
 
 export const createOtherDataOtherContext = (jsondata: any, gl: any) : any => {
         const theseBuffers = [];
@@ -78,32 +79,12 @@ export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebu
             const theBuffer = createWebGLBuffers(jsondata,idat)
             theseBuffers.push(theBuffer);
 
-            const displayBuffers = store.getState().glRef.displayBuffers
             if(jsondata.isHoverBuffer){
                 theBuffer.isHoverBuffer = jsondata.isHoverBuffer;
-                let maxSize = 0.27;
-                for (let idx = 0; idx < displayBuffers.length; idx++) {
-                    if (Object.prototype.hasOwnProperty.call(displayBuffers[idx],"atoms") && displayBuffers[idx].atoms.length > 0) {
-                        for(let ibuf2=0;ibuf2<displayBuffers[idx].bufferTypes.length;ibuf2++){
-                            if(displayBuffers[idx].bufferTypes[ibuf2]==="PERFECT_SPHERES"){
-                                if(displayBuffers[idx].triangleInstanceSizes[ibuf2][0]>0.27&&!displayBuffers[idx].isHoverBuffer&&displayBuffers[idx].visible){
-                                    let nhits = 0
-                                    theseBuffers[0].atoms.forEach(bufatom => {
-                                        displayBuffers[idx].atoms.forEach(atom => {
-                                            if(Math.abs(bufatom.x-atom.x)<1e-4&&Math.abs(bufatom.y-atom.y)<1e-4&&Math.abs(bufatom.z-atom.z)<1e-4){
-                                                nhits++;
-                                            }
-                                        })
-                                    })
-                                    if(theseBuffers[0].atoms.length===nhits){
-                                        maxSize = Math.max(displayBuffers[idx].triangleInstanceSizes[ibuf2][0],maxSize);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                // Each golden ball as big as the sphere drawn at its atom (hoverBallSizes.ts).
+                if(theBuffer.triangleInstanceOrigins[0] && theBuffer.triangleInstanceSizes[0]){
+                    theBuffer.triangleInstanceSizes[0] = hoverBallSizes(theBuffer.triangleInstanceOrigins[0], store.getState().glRef.displayBuffers);
                 }
-                store.dispatch(setHoverSize(maxSize))
             }
         }
 
