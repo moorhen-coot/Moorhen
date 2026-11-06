@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
-import { getTooltipShortcutLabel } from "../../utils/utils";
+import { getTooltipShortcutLabel, residueCidForRefinement } from "../../utils/utils";
 import { ContextButtonProps, MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { useMoorhenInstance } from "@/hooks";
 
@@ -28,11 +28,12 @@ export const MoorhenRefineResiduesButton = (props: ContextButtonProps) => {
         async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
             dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
             props.setShowContextMenu(false);
+            const cid = residueCidForRefinement(chosenAtom);
             if (animateRefine) {
                 const dist = refinementSelection === "SPHERE" ? 6 : refinementSelection === "TRIPLE" ? 2 : -1;
-                await molecule.refineResiduesUsingAtomCidAnimated(`//${chosenAtom.chain_id}/${chosenAtom.res_no}`, activeMap, dist);
+                await molecule.refineResiduesUsingAtomCidAnimated(cid, activeMap, dist);
             } else {
-                await molecule.refineResiduesUsingAtomCid(`//${chosenAtom.chain_id}/${chosenAtom.res_no}`, refinementSelection, 4000);
+                await molecule.refineResiduesUsingAtomCid(cid, refinementSelection, 4000);
             }
             dispatch(triggerUpdate(molecule.molNo));
             moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "refine")

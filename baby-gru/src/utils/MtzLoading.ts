@@ -56,7 +56,11 @@ export const loadMtzMaps = async (
             return [];
         }
         instance.dispatch(addMapList(newMaps));
-        instance.dispatch(setActiveMap(newMaps[0]));
+        // Difference maps are never made active by default
+        const firstNonDiffMap = newMaps.find(map => !map.isDifference);
+        if (firstNonDiffMap) {
+            instance.dispatch(setActiveMap(firstNonDiffMap));
+        }
         return newMaps.map(map => ({ type: "map", uniqueID: map.uniqueId, molNo: map.molNo, fileName: file.name }));
     }
 
@@ -130,10 +134,14 @@ export const loadMtzMaps = async (
     });
     instance.dispatch(addMapList(newMaps));
 
-    // The requested active map wins; otherwise the first map, unless one is already active
+    // The requested active map wins; otherwise the first non-difference map, unless one is already active.
+    // Difference maps are only made active when explicitly requested
     const requestedActive = newMaps.find((_, index) => requests[index].active);
-    if (requestedActive || !instance.store.getState().generalStates.activeMap) {
-        instance.dispatch(setActiveMap(requestedActive ?? newMaps[0]));
+    const defaultActive = newMaps.find(map => !map.isDifference);
+    if (requestedActive) {
+        instance.dispatch(setActiveMap(requestedActive));
+    } else if (defaultActive && !instance.store.getState().generalStates.activeMap) {
+        instance.dispatch(setActiveMap(defaultActive));
     }
 
     return newMaps.map(map => ({ type: "map", uniqueID: map.uniqueId, molNo: map.molNo, fileName: file.name }));

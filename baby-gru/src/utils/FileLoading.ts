@@ -1,4 +1,4 @@
-import Fasta from "biojs-io-fasta";
+import { parseFasta } from "./fasta";
 import { centreOfObject } from "../store/threeDObjectsSlice";
 import pako from "pako";
 import type { Dispatch, Store } from "redux";
@@ -168,7 +168,7 @@ const parseJSONAndGetModelFiles = (json_contents, dispatch) => {
     const modelFiles: string[] = [];
     if (fastaContents) {
         try {
-            const seqs = Fasta.parse(fastaContents);
+            const seqs = parseFasta(fastaContents);
             dispatch(setTargetSequence(seqs[0].seq));
         } catch (e) {
             console.log("Failed to extract sequence from input.fasta");
@@ -288,9 +288,8 @@ export const loadMrParseFiles = async (
         backgroundColor,
         defaultBondSmoothness
     );
-
-    await drawModels(newMolecules, moorhenInstance);
-    dispatch(addMoleculeList(newMolecules));
+    await dispatch(addMoleculeList(newMolecules));
+    await drawModels(newMolecules, moorhenInstance); 
     newMolecules.at(-1).centreOn("/*/*/*/*", true);
 
     moorhenInstance.store.dispatch(setMrParseModels(newMolecules));
@@ -908,7 +907,8 @@ export const autoOpenFiles = async (
                     newMap.showOnLoad = false;
                 }
                 dispatch(addMap(newMap));
-                if (!isLocres) {
+                // Difference maps are never made active by default
+                if (!isLocres && !newMap.isDifference) {
                     dispatch(setActiveMap(newMap));
                 }
                 mapsCreated.push(newMap);

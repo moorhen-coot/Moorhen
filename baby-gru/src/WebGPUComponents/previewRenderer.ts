@@ -305,6 +305,8 @@ export class WebGPUPreviewRenderer {
     private readonly frameData = new Float32Array(FRAME_FLOATS);
     private colourTarget: GPUTexture | null = null;
     private depthTarget: GPUTexture | null = null;
+    /** Other canvases drawn with renderTo: each one's context and multisampled targets. */
+    private readonly otherCanvases = new Map<HTMLCanvasElement, { context: GPUCanvasContext; colour: GPUTexture | null; depth: GPUTexture | null }>();
     /** Whether depthTarget can be read as a texture, as the depth blur reads it. */
     private depthTargetReadable = false;
     private destroyed = false;
@@ -480,6 +482,47 @@ export class WebGPUPreviewRenderer {
             width, height, tile: null, colour: this.colourTarget, depth: this.depthTarget,
             resolve: this.context.getCurrentTexture().createView(), timed: true,
         });
+    }
+
+    /**
+     * Draw one frame of `displayBuffers` as seen by `camera` into another canvas than the
+     * renderer's, at that canvas's current size: a second view of the same scene (the clip, fog
+     * and blur widget's side-on view). The buffers already on the GPU for the renderer's own frames
+     * are drawn from where they are, and `gpuDraws` (the GPU map contours) too: nothing is uploaded
+     * again. The canvas is configured on the renderer's device the first time; releaseCanvas, or
+     * destroy, lets it go. Not timed: the GPU timer is the main view's.
+     */
+    renderTo(canvas: HTMLCanvasElement, displayBuffers: readonly DisplayBuffer[], camera: PreviewCameraSource,
+             gpuDraws: readonly PreviewGpuDraw[] = []): PreviewFrameReport {
+        let other = this.otherCanvases.get(canvas);
+        if (!other) {
+            const context = canvas.getContext("webgpu") as unknown as GPUCanvasContext | null;
+            if (!context) throw new Error("The canvas would not give a WebGPU context.");
+            context.configure({ device: this.device, format: this.format, alphaMode: "opaque" });
+            other = { context, colour: null, depth: null };
+            this.otherCanvases.set(canvas, other);
+        }
+        const width = Math.max(1, canvas.width);
+        const height = Math.max(1, canvas.height);
+        if (!other.colour || other.colour.width !== width || other.colour.height !== height) {
+            other.colour?.destroy();
+            other.depth?.destroy();
+            ({ colour: other.colour, depth: other.depth } = this.multisampledTargets(width, height, "other view"));
+        }
+        return this.drawFrame(displayBuffers, camera, gpuDraws, {
+            width, height, tile: null, colour: other.colour, depth: other.depth,
+            resolve: other.context.getCurrentTexture().createView(), timed: false,
+        });
+    }
+
+    /** Stop drawing into a canvas renderTo drew into, and free what it kept for it. */
+    releaseCanvas(canvas: HTMLCanvasElement): void {
+        const other = this.otherCanvases.get(canvas);
+        if (!other) return;
+        other.colour?.destroy();
+        other.depth?.destroy();
+        other.context.unconfigure();
+        this.otherCanvases.delete(canvas);
     }
 
     /**
@@ -1086,6 +1129,7 @@ export class WebGPUPreviewRenderer {
         this.resources.clear();
         this.colourTarget?.destroy();
         this.depthTarget?.destroy();
+        [...this.otherCanvases.keys()].forEach(canvas => this.releaseCanvas(canvas));
         this.frameBuffer.destroy();
         this.gbufferFrameBuffer.destroy();
         this.shadowFrameBuffer.destroy();
