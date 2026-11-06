@@ -96,7 +96,7 @@ export class MoorhenWebComponent extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ["width", "height", "url-prefix", "disable-file-uploads", "view-only", "monomer-library", "allow-scripting"];
+        return ["width", "height", "url-prefix", "disable-file-uploads", "view-only", "monomer-library", "allow-scripting", "startup-scene"];
     }
 
     private _disableFileUploads: boolean = false;
@@ -124,6 +124,7 @@ export class MoorhenWebComponent extends HTMLElement {
     // Start-up settings: read once when the element is connected, so set them before appending it
     private _monomerLibraryPath: string | undefined = undefined;
     private _allowScripting: boolean | undefined = undefined;
+    private _startupScene: string | undefined = undefined;
     private _backupStorage: LocalStorageInstance | undefined = undefined;
 
     private _canSetStartupProperty(name: string): boolean {
@@ -150,6 +151,18 @@ export class MoorhenWebComponent extends HTMLElement {
         if (this._canSetStartupProperty("allowScripting")) this._allowScripting = value;
     }
 
+    /**
+     * The built-in scene Moorhen opens on: "Overview" (default) or "Model Building". Read at
+     * start-up; afterwards use `instance.userScene.setStartupScene()`.
+     */
+    get startupScene(): string | undefined {
+        return this._startupScene;
+    }
+
+    set startupScene(value: string | undefined) {
+        if (this._canSetStartupProperty("startupScene")) this._startupScene = value;
+    }
+
     /** Where time capsule backups are kept, e.g. from `createCallbackBackupStorage`. Property only */
     get backupStorage(): LocalStorageInstance | undefined {
         return this._backupStorage;
@@ -167,6 +180,7 @@ export class MoorhenWebComponent extends HTMLElement {
         if (name === "view-only") this.viewOnly = newValue === "true";
         if (name === "monomer-library") this.monomerLibraryPath = newValue ?? undefined;
         if (name === "allow-scripting") this.allowScripting = newValue === "true";
+        if (name === "startup-scene") this.startupScene = newValue ?? undefined;
     }
     // --------------------------------
     private _triggerUpdate(name: string, newValue: string, oldValue: string) {
@@ -192,6 +206,7 @@ export class MoorhenWebComponent extends HTMLElement {
                     monomerLibraryPath={this._monomerLibraryPath}
                     allowScripting={this._allowScripting}
                     backupStorageInstance={this._backupStorage}
+                    startupScene={this._startupScene}
                 />
             </MoorhenProvider>
         );
