@@ -92,7 +92,8 @@ describe("loading a session", () => {
         expect(state().userScenes.snapshots).toEqual([]);
         expect(userScene.selected).toBe("Overview");
         expect(state().sceneSettings.drawCrosshairs).toBe(crosshairs);
-        expect(cloud.instance.representation.defaultStyle).toBe("ribbons-and-ligands");
+        // Older sessions do not carry the default style: it is kept, like the other settings they lack
+        expect(cloud.instance.representation.defaultStyle).toBe("CBs");
     });
 
     test("from a more recent Moorhen is refused, leaving everything as it was", async () => {
@@ -497,7 +498,8 @@ describe("a session saved by Moorhen 1.0.1, before scenes", () => {
         expect(sceneNames()).toEqual(["Overview", "Model Building"]);
         expect(state().userScenes.snapshots).toEqual([]);
         expect(userScene.selected).toBe("Overview");
-        expect(cloud.instance.representation.defaultStyle).toBe("ribbons-and-ligands");
+        // Older sessions do not carry the default style: it is kept, like the other settings they lack
+        expect(cloud.instance.representation.defaultStyle).toBe("CBs");
         expect(cloud.instance.getMoleculeList().map(molecule => molecule.uniqueId)).toEqual([SESSION_MOLECULE_UID]);
         expect(representationStyles()).toEqual(["CBs", "CRs"]);
         expect(state().vectors.vectorsList).toHaveLength(2);

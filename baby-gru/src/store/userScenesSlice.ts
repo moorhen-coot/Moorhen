@@ -52,6 +52,7 @@ const BUILT_IN_SCENE_PRESETS: Record<BuiltInSceneId, SceneSettingsSnapshot> = {
     },
     "Model Building": {
         resetClippingFogging: true,
+        defaultRepresentationStyle: "CBs",
     },
 };
 

@@ -3,7 +3,7 @@
  * resetting a scene's settings (userScene.reset).
  */
 import { setDefaultBondSmoothness, setDoAnaglyphStereo, setDoSSAO, setDoSpin, setSsaoRadius } from "@/store/sceneSettingsSlice";
-import { createCloudInstance, loadCootModules, type CloudInstance } from "./cloudHost/cloudHostHarness";
+import { createCloudInstance, jobUrl, loadCootModules, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
 jest.setTimeout(60000);
 
@@ -107,25 +107,41 @@ describe("scene names", () => {
 });
 
 describe("how scenes draw new molecules", () => {
-    test("only Model Building draws them as bonds, not the scenes and snapshots made from it", async () => {
+    test("is a setting of each scene: Model Building's is bonds, a scene made from it copies it, each keeps its own", async () => {
         const userScene = cloud.instance.userScene;
         const representation = cloud.instance.representation;
+        expect(representation.defaultStyle).toBe("ribbons-and-ligands");
         await userScene.select("Model Building");
         expect(representation.defaultStyle).toBe("CBs");
 
+        // A copy of Model Building, then changed: Model Building keeps bonds
         const customId = await userScene.create("From Model Building");
-        expect(representation.defaultStyle).toBe("ribbons-and-ligands");
-        await userScene.select("Model Building");
-        const snapshotId = userScene.takeSnapshot();
-
-        await userScene.select(snapshotId);
-        expect(representation.defaultStyle).toBe("ribbons-and-ligands");
+        expect(representation.defaultStyle).toBe("CBs");
+        representation.defaultStyle = "CAs";
         await userScene.select("Model Building");
         expect(representation.defaultStyle).toBe("CBs");
         await userScene.select(customId);
-        expect(representation.defaultStyle).toBe("ribbons-and-ligands");
+        expect(representation.defaultStyle).toBe("CAs");
         await userScene.select("Overview");
         expect(representation.defaultStyle).toBe("ribbons-and-ligands");
+    });
+
+    test("is saved with a built-in scene, as a preference", async () => {
+        const { userScene, representation } = cloud.instance;
+        representation.defaultStyle = "site-and-ribbons";
+        expect(userScene.hasUnsavedChanges("Overview")).toBe(true);
+        userScene.saveScene("Overview");
+        expect(cloud.store.getState().userScenes.savedSceneSettings.Overview.defaultRepresentationStyle).toBe("site-and-ribbons");
+    });
+
+    test("draws the molecules a scene has not seen when it is shown again", async () => {
+        const { userScene } = cloud.instance;
+        await userScene.select("Model Building");
+        await userScene.select("Overview");
+        await cloud.instance.files.loadFiles({ url: jobUrl("5a3h.pdb"), filename: "molecule.pdb" }, "cloud");
+        await userScene.select("Model Building");
+        const styles = cloud.store.getState().molecules.customRepresentations.map(rep => rep.style);
+        expect(styles).toEqual(["CBs"]);
     });
 });
 

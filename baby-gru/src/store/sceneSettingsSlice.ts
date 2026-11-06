@@ -11,6 +11,18 @@ const execAutoClipFogByZoom = (state: typeof initialState) => {
     state.clipEnd = state.zoom * fieldDepthBack;
 }
 
+/** How a scene draws a molecule it has not seen (loaded while it is shown, or since it was last shown) */
+export const DEFAULT_REPRESENTATION_STYLES = [
+    "ribbons-and-ligands",
+    "ribbons-and-side-chains",
+    "site-and-ribbons",
+    "CBs",
+    "CAs",
+    "CRs",
+] as const;
+
+export type DefaultRepresentationStyle = (typeof DEFAULT_REPRESENTATION_STYLES)[number];
+
 export const initialState: {
     origin: [number, number, number];
     zoom: number;
@@ -120,6 +132,8 @@ export const initialState: {
     doAnaglyphStereo: boolean;
     defaultBondSmoothness: number;
     resetClippingFogging: boolean;
+    /** How molecules this scene has not seen are drawn (see DEFAULT_REPRESENTATION_STYLES) */
+    defaultRepresentationStyle: DefaultRepresentationStyle;
     clipCap: boolean;
     backgroundColor: [number, number, number, number];
     height: number;
@@ -164,6 +178,7 @@ export const initialState: {
     ssaoRadius: 5.0,
     ssaoBias: 1.3,
     resetClippingFogging: true,
+    defaultRepresentationStyle: "ribbons-and-ligands",
     clipCap: true,
     doPerspectiveProjection: false,
     useOffScreenBuffers: false,
@@ -214,6 +229,7 @@ export const PER_SCENE_PREFERENCE_KEYS = [
     "drawCrosshairs",
     "drawMissingLoops",
     "resetClippingFogging",
+    "defaultRepresentationStyle",
     "clipCap",
     "doPerspectiveProjection",
     "drawAxes",
@@ -401,6 +417,11 @@ const sceneSettingsSlice = createSlice({
         // API
         setSsaoBias: (state, action: PayloadAction<number>) => {
             state.ssaoBias = action.payload;
+        },
+        // API
+        /* How molecules the shown scene has not seen are drawn: "ribbons-and-ligands", "CBs"... */
+        setDefaultRepresentationStyle: (state, action: PayloadAction<DefaultRepresentationStyle>) => {
+            state.defaultRepresentationStyle = action.payload;
         },
         // API
         setResetClippingFogging: (state, action: PayloadAction<boolean>) => {
@@ -619,6 +640,7 @@ export const {
     setSsaoRadius,
     setSsaoBias,
     setResetClippingFogging,
+    setDefaultRepresentationStyle,
     setClipCap,
     resetSceneSettings,
     setEdgeDetectNormalScale,

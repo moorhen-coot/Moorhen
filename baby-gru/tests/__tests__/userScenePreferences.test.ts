@@ -7,6 +7,7 @@ import { createMoorhenStore } from "@/store/MoorhenReduxStore";
 import {
     PER_SCENE_PREFERENCE_KEYS,
     autoClipFogByZoom,
+    setBackgroundColor,
     initialState as sceneSettingsInitialState,
     setClipStart,
     setDoSSAO,
@@ -225,5 +226,45 @@ describe("the start-up scene", () => {
         expect(await instance.userScene.setStartupScene(customId)).toBe(false);
         expect(await instance.userScene.setStartupScene("no-such-scene")).toBe(false);
         expect(instance.userScene.startupScene).toBe("Overview");
+    });
+});
+
+describe("the background colour on a built-in scene's first visit", () => {
+    const dark: [number, number, number, number] = [0.1, 0.1, 0.1, 1];
+    const background = () => sceneSettings().backgroundColor;
+
+    test("is carried over from the scene shown, without changing the saved preferences", async () => {
+        const { instance } = await start();
+        cloud.store.dispatch(setBackgroundColor(dark));
+        await instance.userScene.select("Model Building");
+        expect(background()).toEqual(dark);
+        expect(saved("Model Building").backgroundColor).toEqual(builtInSceneDefaults("Model Building").backgroundColor);
+        expect(instance.userScene.hasUnsavedChanges("Model Building")).toBe(true);
+    });
+
+    test("only on the first visit: after that each scene keeps its own", async () => {
+        const { instance } = await start();
+        await instance.userScene.select("Model Building");
+        await instance.userScene.select("Overview");
+        cloud.store.dispatch(setBackgroundColor(dark));
+        await instance.userScene.select("Model Building");
+        expect(background()).toEqual(builtInSceneDefaults("Model Building").backgroundColor);
+    });
+
+    test("not when the user saved a background for that scene", async () => {
+        const { instance } = await start();
+        const red: [number, number, number, number] = [1, 0, 0, 1];
+        await instance.preferences.import({ format: "moorhen-1.0", entries: { "Model Building.backgroundColor": { version: 1, value: red } } });
+        cloud.store.dispatch(setBackgroundColor(dark));
+        await instance.userScene.select("Model Building");
+        expect(background()).toEqual(red);
+    });
+
+    test("not after the scene was reset or copied into on purpose", async () => {
+        const { instance } = await start();
+        cloud.store.dispatch(setBackgroundColor(dark));
+        expect(await instance.userScene.reset("Model Building", "default")).toBe(true);
+        await instance.userScene.select("Model Building");
+        expect(background()).toEqual(builtInSceneDefaults("Model Building").backgroundColor);
     });
 });

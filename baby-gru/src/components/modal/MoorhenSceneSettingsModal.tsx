@@ -30,7 +30,12 @@ import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { SCENE_LOOKS, currentLook, withLook } from "../../store/sceneLooks";
-import { applySceneSettingsSnapshot } from "../../store/sceneSettingsSlice";
+import {
+    DEFAULT_REPRESENTATION_STYLES,
+    type DefaultRepresentationStyle,
+    applySceneSettingsSnapshot,
+    setDefaultRepresentationStyle,
+} from "../../store/sceneSettingsSlice";
 import type { ShadowMapQuality } from "../../WebGLgComponents/mgWebGLParts/framebuffers";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -497,6 +502,34 @@ const LightingPanel = () => {
     );
 };
 
+/** How the scene shown draws molecules it has not seen (a scene setting: each scene has its own) */
+const DEFAULT_STYLE_LABELS: Record<DefaultRepresentationStyle, string> = {
+    "ribbons-and-ligands": "Ribbons and ligands",
+    "ribbons-and-side-chains": "Ribbons and side chains",
+    "site-and-ribbons": "Ribbons and binding sites",
+    CBs: "Bonds",
+    CAs: "C-alpha trace",
+    CRs: "Ribbons",
+};
+
+const DefaultRepresentationSelect = () => {
+    const dispatch = useDispatch();
+    const style = useSelector((state: RootState) => state.sceneSettings.defaultRepresentationStyle);
+    return (
+        <MoorhenSelect
+            label="New molecules shown as"
+            value={style}
+            onChange={event => dispatch(setDefaultRepresentationStyle(event.target.value as DefaultRepresentationStyle))}
+        >
+            {DEFAULT_REPRESENTATION_STYLES.map(item => (
+                <option key={item} value={item}>
+                    {DEFAULT_STYLE_LABELS[item]}
+                </option>
+            ))}
+        </MoorhenSelect>
+    );
+};
+
 /** Ready-made looks (lighting and effects) for the scene shown: the one its settings match shows as selected */
 const SceneLooks = () => {
     const dispatch = useDispatch();
@@ -567,6 +600,7 @@ const CurrentScenePanel = () => {
                 </MoorhenStack>
             )}</MoorhenStack>
          <SceneLooks />
+         <DefaultRepresentationSelect />
          {isSnapshot && (
             <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>Snapshots cannot be changed: changes made here are not kept, unless you create a new scene or snapshot.</div>)}
         

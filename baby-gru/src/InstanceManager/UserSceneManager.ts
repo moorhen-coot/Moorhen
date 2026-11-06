@@ -21,7 +21,13 @@ import {
     setZoom,
 } from "../store";
 import type { RootState } from "../store";
-import { type SceneSettingsSnapshot, getPerSceneSettings, getSceneSettingsSnapshot, isSamePerSceneSettings } from "../store/sceneSettingsSlice";
+import {
+    type SceneSettingsSnapshot,
+    getPerSceneSettings,
+    getSceneSettingsSnapshot,
+    isSamePerSceneSettings,
+    isSameSceneSettingValue,
+} from "../store/sceneSettingsSlice";
 import {
     type MoleculeDefaults,
     type SceneContent,
@@ -45,6 +51,7 @@ import {
 import { ColourRule, type ColourRuleData } from "../utils/MoorhenColourRule";
 import type { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import type { MoleculeRepresentation } from "../utils/Representation/MoorhenMoleculeRepresentation";
+import { drawDefaultRepresentation } from "../utils/Representation/defaultRepresentation";
 import type { RepresentationBackup } from "../utils/Representation/RepresentationBuilder";
 // Type only: MoorhenInstance imports this module, a value import would be undefined while it loads
 import type { MoorhenInstance } from "./MoorhenInstance";
@@ -103,23 +110,6 @@ const drawnKey = (moleculeUniqueId: string, params: RepresentationBackup, defaul
 const colourRulesData = (molecule: MoorhenMolecule): ColourRuleData[] | null =>
     molecule.defaultColourRules?.map(rule => rule.objectify()) ?? null;
 
-/** The style of molecules in the "Overview" scene, which MoorhenInstance starts with */
-export const DEFAULT_REPRESENTATION_STYLE = "ribbons-and-ligands";
-
-type DefaultStyle = MoorhenInstance["representation"]["defaultStyle"];
-
-type SceneStyle = { defaultStyle: DefaultStyle; wizard: "bonds" | typeof DEFAULT_REPRESENTATION_STYLE };
-
-/**
- * How a scene draws molecules it has not seen: `defaultStyle` for molecules loaded while it is
- * shown, `wizard` for molecules loaded since it was last shown. Bonds in "Model Building", ribbons
- * and ligands in every other scene, including the custom scenes and snapshots made from it.
- */
-const sceneStyle = (sceneId: string): SceneStyle =>
-    sceneId === "Model Building"
-        ? { defaultStyle: "CBs", wizard: "bonds" }
-        : { defaultStyle: DEFAULT_REPRESENTATION_STYLE, wizard: DEFAULT_REPRESENTATION_STYLE };
-
 /**
  * Scene presets: named sets of representations the user can switch between.
  *
@@ -129,8 +119,8 @@ const sceneStyle = (sceneId: string): SceneStyle =>
  *
  * Switching scene saves the current custom representations of every molecule, deletes them,
  * then restores the representations saved for the new scene. A scene visited for the first
- * time starts as a copy of the current one. Molecules a scene has not seen are drawn as bonds in
- * "Model Building" and as ribbons and ligands in every other scene (sceneStyle).
+ * time starts as a copy of the current one. Molecules a scene has not seen are drawn in its
+ * default style, a scene setting (`defaultRepresentationStyle`: bonds in "Model Building").
  * Access it through `moorhenInstance.userScene`.
  *
  * The scenes and snapshots, with what each shows (`content`), the selected scene and whether a
@@ -141,6 +131,12 @@ export class MoorhenUserSceneManager {
     // The built-in scene Moorhen opens on, and whether start-up has shown it already
     private _startupScene: BuiltInSceneId = "Overview";
     private hasStarted: boolean = false;
+    /**
+     * Built-in scenes not shown since they were set from their saved settings (start-up, a
+     * preferences import, a session without them): their first visit takes the background colour
+     * of the scene shown, unless the user saved one for them (see firstVisitContent)
+     */
+    private notShownYet = new Set<string>(BUILT_IN_SCENE_IDS);
     // Not read from the store: two calls in the same tick must already see each other
     private isChanging: boolean = false;
     // hasUnsavedChanges runs in selectors, so on every dispatch: recompute only when its inputs change
@@ -244,6 +240,7 @@ export class MoorhenUserSceneManager {
         for (const sceneId of BUILT_IN_SCENE_IDS) {
             const content = this.contentOf(sceneId) ?? emptyContent(savedSceneSettings[sceneId]);
             this.setContent(sceneId, replaceContent(content, savedSceneSettings[sceneId]));
+            if (sceneId !== this.selected) this.notShownYet.add(sceneId);
         }
         if (isBuiltInScene(this.selected)) this.applySceneSettings(this.contentOf(this.selected));
     }
@@ -305,7 +302,9 @@ export class MoorhenUserSceneManager {
     public importState(state: UserSceneState): void {
         // Built-in scenes are always available, in their usual place if the file lost them, and
         // start from their saved settings if the file has none
-        const scenes = readSceneList(state.scenes, id => !isSnapshot(id)).map(scene =>
+        const fromFile = readSceneList(state.scenes, id => !isSnapshot(id));
+        const withContent = new Set(fromFile.filter(scene => scene.content).map(scene => scene.id));
+        const scenes = fromFile.map(scene =>
             isBuiltInScene(scene.id) && !scene.content ? this.savedBuiltInScene(scene.id, scene.name) : scene
         );
         const missingBuiltIns = BUILT_IN_SCENE_IDS.filter(sceneId => !scenes.some(scene => scene.id === sceneId));
@@ -315,7 +314,8 @@ export class MoorhenUserSceneManager {
         const selectedScene = isListed ? state.selectedScene : "Overview";
 
         this.instance.dispatch(setUserSceneState({ scenes, snapshots, selectedScene }));
-        this.applyDefaultStyle(selectedScene);
+        // Built-in scenes the file had no content for start from their saved settings
+        this.notShownYet = new Set(BUILT_IN_SCENE_IDS.filter(sceneId => sceneId !== selectedScene && !withContent.has(sceneId)));
         const content = this.contentOf(selectedScene);
         if (content) this.applySceneSettings(content);
     }
@@ -335,7 +335,7 @@ export class MoorhenUserSceneManager {
                 selectedScene: "Overview",
             })
         );
-        this.applyDefaultStyle("Overview");
+        this.notShownYet = new Set(BUILT_IN_SCENE_IDS.filter(sceneId => sceneId !== "Overview"));
     }
 
     /**
@@ -613,6 +613,8 @@ export class MoorhenUserSceneManager {
      * @param rebuild - The representations changed: rebuild them, not only the scene settings.
      */
     private async replaceScene(sceneId: string, content: SceneContent, rebuild: boolean) {
+        // Set on purpose (a copy, a reset): its first visit must not change it
+        this.notShownYet.delete(sceneId);
         this.setContent(sceneId, content);
         if (sceneId === this.selected) {
             if (rebuild) await this.runSwitch(() => this.showScene(sceneId, content));
@@ -623,11 +625,6 @@ export class MoorhenUserSceneManager {
 
     private applySceneSettings(content: SceneContent) {
         this.instance.dispatch(applySceneSettingsSnapshot(content.sections.sceneSettings));
-    }
-
-    /** Molecules loaded from now on get the scene's style */
-    private applyDefaultStyle(sceneId: string) {
-        this.instance.representation.defaultStyle = sceneStyle(sceneId).defaultStyle;
     }
 
     /**
@@ -660,7 +657,6 @@ export class MoorhenUserSceneManager {
 
     /** Replace what is shown by a scene's content: its settings and representations */
     private async showScene(sceneId: string, content: SceneContent) {
-        this.applyDefaultStyle(sceneId);
         // Default colour rules: the shown ones, and the scene's (a molecule it does not mention keeps its own)
         const shownRules = new Map(this.instance.getMoleculeList().map(molecule => [molecule.uniqueId, colourRulesData(molecule)]));
         const sceneRules = (moleculeUniqueId: string) => {
@@ -724,11 +720,11 @@ export class MoorhenUserSceneManager {
             }
         }
         this.putInSceneOrder(wanted.map(({ params }) => params.uniqueId));
-        // Molecules loaded since the scene was saved get the scene's default style
-        const { wizard } = sceneStyle(sceneId);
+        // Molecules loaded since the scene was saved get its default style (its settings are applied by now)
+        const style = this.instance.store.getState().sceneSettings.defaultRepresentationStyle;
         for (const molecule of this.instance.getMoleculeList()) {
             if (!Object.hasOwn(content.objects.molecules, molecule.uniqueId)) {
-                await this.instance.representation.wizard(molecule.uniqueId, wizard, false);
+                await drawDefaultRepresentation(this.instance, molecule.uniqueId, style);
             }
         }
         this.reportMissingMolecules(sceneId, content);
@@ -809,16 +805,32 @@ export class MoorhenUserSceneManager {
         );
     }
 
+    /**
+     * A built-in scene shown for the first time since it was set from its saved settings keeps the
+     * background colour of the scene shown, so switching to it does not change the background - unless
+     * the user saved a background for it (its saved one is not its default). Its saved preferences
+     * are not changed: it then shows as unsaved.
+     */
+    private firstVisitContent(sceneId: string, content: SceneContent | undefined): SceneContent | undefined {
+        if (!content || !isBuiltInScene(sceneId) || !this.notShownYet.has(sceneId)) return content;
+        this.notShownYet.delete(sceneId);
+        const savedBackground = this.instance.store.getState().userScenes.savedSceneSettings[sceneId].backgroundColor;
+        if (!isSameSceneSettingValue(savedBackground, builtInSceneDefaults(sceneId).backgroundColor)) return content;
+        const backgroundColor = [...this.instance.store.getState().sceneSettings.backgroundColor] as [number, number, number, number];
+        const updated = replaceContent(content, { ...content.sections.sceneSettings, backgroundColor });
+        this.setContent(sceneId, updated);
+        return updated;
+    }
+
     private async changeScene(sceneId: string, saveCurrentScene: boolean) {
         if (saveCurrentScene) this.recordScene(this.selected);
-        const content = this.contentOf(sceneId);
+        const content = this.firstVisitContent(sceneId, this.contentOf(sceneId));
         if (content) {
             await this.showScene(sceneId, content);
         } else {
             // A scene visited for the first time (e.g. Custom) starts as a copy of the current one,
-            // but draws new molecules in its own style
+            // its default style included
             this.setContent(sceneId, this.capture());
-            this.applyDefaultStyle(sceneId);
         }
     }
 }
