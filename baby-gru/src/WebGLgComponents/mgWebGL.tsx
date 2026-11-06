@@ -2102,6 +2102,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let minz = 100000.0;
         let minidx = -1;
         let minj = -1;
+        // The eye-space depth of the atom picked (larger is nearer), to weigh against a mesh hit.
+        let minAtomZ = -Infinity;
 
         let mindist_pi = 100000.0;
         // Whether the winning pick candidate is one the cursor is actually over, and how near the
@@ -2365,6 +2367,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     minidx = idx;
                     minj = j;
                     mindist = dpl[0];
+                    minAtomZ = atPosTrans[2];
                 }
             }
             let isym = 0;
@@ -2386,6 +2389,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     minidx = idx;
                     minj = j;
                     mindist = dpl[0];
+                    minAtomZ = atPosTrans[2];
                     minsym = isym;
                     minx = p[0];
                     miny = p[1];
@@ -2395,6 +2399,24 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 })
                 isym++;
             })
+        }
+
+        // An atom drawn as an atom, in front of the face of the mesh the ray hit, is what the
+        // pointer is on: a ligand in a pocket of a surface, say. The two picks are made
+        // independently, and the mesh channel would otherwise report the pocket wall behind the
+        // ligand - lit, labelled, and (MainContainer letting a mesh outrank an atom of its own
+        // molecule) taking the hover from the ligand altogether. So the mesh is dropped here. An
+        // atom behind the face keeps the old arrangement, both reported and the mesh preferred
+        // for its own molecule; and an atom that only rides along with a mesh for picking (a
+        // ribbon's, whose buffer has pick points of its own) is not drawn as an atom and does not
+        // count. ATOM_FRONT_SLACK is about a drawn atom's radius: an atom whose front is level
+        // with the face is in front of it.
+        const ATOM_FRONT_SLACK = 0.5
+        if(minidx > -1 && minidx_pi > -1 && bestIsHit_pi
+           && !displayBuffers[minidx].pick_info?.pick_points
+           && minAtomZ + ATOM_FRONT_SLACK >= bestDepth_pi){
+            minidx_pi = -1;
+            minj_pi = -1;
         }
 
         return [minidx,minj,mindist,minsym,minx,miny,minz,minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi];
