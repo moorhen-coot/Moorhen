@@ -1095,6 +1095,8 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             if(program.vertexColourAttribute!=null) self.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
                             self.gl.vertexAttribDivisor(program.sizeAttribute, 1);
                             self.gl.vertexAttribDivisor(program.offsetAttribute, 1);
+                            // The hover balls carry their own sizes (hoverBallSizes.ts); one size for
+                            // them all only if a host has set it (setHoverSize).
                             if(displayBuffers[idx].isHoverBuffer&&hoverSize>0.27){
                                 self.gl.disableVertexAttribArray(program.sizeAttribute);
                                 self.gl.vertexAttribDivisor(program.sizeAttribute, 0);

@@ -269,8 +269,9 @@ export function previewViews(source: PreviewCameraSource, displayBuffers: readon
 }
 
 /**
- * The radius drawCore gives every sphere of a hover highlight, or null to keep their own: past
- * the default 0.27, the hovered spheres' size plus 0.4.
+ * The radius drawCore gives every sphere of a hover highlight, or null to keep their own (each
+ * ball's, from hoverBallSizes.ts): only a host's setHoverSize past the default 0.27 sets one, its
+ * size plus 0.4.
  */
 export function hoverSphereRadius(source: PreviewCameraSource): number | null {
     const hoverSize = source.store?.getState().glRef?.hoverSize ?? 0;
