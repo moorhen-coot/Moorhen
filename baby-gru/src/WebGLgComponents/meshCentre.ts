@@ -4,6 +4,8 @@
  * pick information a buffer carries.
  */
 
+import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND } from "../utils/enums";
+
 /**
  * Whether centring on a surface or ribbon follows the hover's grain: zoomed out, the middle of the
  * chain or molecule it lights (true), or always the residue clicked (false, the default - people
@@ -14,6 +16,8 @@ export const meshCentringSetting = { followHighlight: false };
 /** The parts of a DisplayBuffer these read. */
 export interface MeshPickSource {
     pick_info?: {
+        pick_point_tags?: string[];
+        pick_tag_kind?: string;
         pick_points?: number[][] | [];
         pick_point_sections?: number[];
         pick_point_instances?: number[];
@@ -80,4 +84,41 @@ export function coarseSectionPosition(
     const section = pickInfo.pick_point_sections?.[pickIndex];
     if (section === undefined) return null;
     return pickInfo.section_level_points?.[level]?.[section] ?? null;
+}
+
+/**
+ * The residue a mesh's pick point names, as the hover reports it (MainContainer's
+ * onSectionHovered): the CID itself for a mesh that names residues (a surface, a Coot ribbon), the
+ * last field of "<molecule>|<chain>|<residue>|<cid>" for one whose sections stand for residues
+ * (meshInstancing's paths). Null for anything else.
+ */
+export function meshResidueCid(displayBuffers: readonly MeshPickSource[], bufferIndex: number, pickIndex: number): string | null {
+    if (bufferIndex < 0 || pickIndex < 0) return null;
+    const pickInfo = displayBuffers[bufferIndex]?.pick_info;
+    const tag = pickInfo?.pick_point_tags?.[pickIndex];
+    if (!tag) return null;
+    if (pickInfo.pick_tag_kind === MOORHEN_MESH_RESIDUE_TAG_KIND) return tag;
+    if (pickInfo.pick_tag_kind === MOORHEN_ATOM_TAG_KIND) {
+        const fields = tag.split("|");
+        return fields.length >= 4 ? fields.slice(3).join("|") : null;
+    }
+    return null;
+}
+
+/**
+ * Whether centring should go to the mesh rather than the atom the pick also found: when the hover
+ * already says it is the mesh's residue (`hoveredCid`, the store's hoveredAtom.cid).
+ *
+ * The two picks are independent. The atom is the one nearest the ray within a tolerance that
+ * grows with the zoom, at any depth, so behind a ribbon there is often some atom far in the
+ * background nearer the ray than anything at the front. The hover decides between them by
+ * molecule (a mesh beats an atom of its own molecule) and labels and lights the mesh's residue;
+ * centring took the atom regardless, and went to the background while the ribbon in front stayed
+ * lit. Asking what the hover settled on keeps the two in step, and leaves the atom its say where
+ * the hover gave it the atom - another molecule's, say.
+ */
+export function centreOnMesh(displayBuffers: readonly MeshPickSource[], bufferIndex: number, pickIndex: number,
+                             hoveredCid: string | null | undefined): boolean {
+    const cid = meshResidueCid(displayBuffers, bufferIndex, pickIndex);
+    return cid !== null && !!hoveredCid && cid === hoveredCid;
 }

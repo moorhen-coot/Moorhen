@@ -7,7 +7,7 @@ import { parseAtomInfoLabel } from '../../utils/utils';
 import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND } from '../../utils/enums';
 import { getDeviceScale } from '../webGLUtils';
 import { influenceOf } from '../glResources';
-import { coarseSectionPosition, meshCentringSetting, pickedMeshPosition } from '../meshCentre';
+import { centreOnMesh, coarseSectionPosition, meshCentringSetting, pickedMeshPosition } from '../meshCentre';
 import { getOffsetRect, MGWebGL } from '../mgWebGL';
 import type { moorhen } from '../../types/moorhen';
 import { webGL } from '../../types/mgWebGL';
@@ -363,8 +363,17 @@ export function doMouseUp(self: MGWebGL, event) {
                 const coarse = minidx_pi > -1 && !displayBuffers[minidx_pi]?.pick_info?.claims_pointer
                     ? coarseSectionPosition(displayBuffers, minidx_pi, minj_pi, grain)
                     : null
+                // At the residue grain, the mesh's residue when the hover has settled on it rather
+                // than on the atom (centreOnMesh): what is lit and labelled is where centring goes.
+                const hoveredCid = self.store.getState().hoveringStates?.hoveredAtom?.cid
+                const meshResidue = !coarse && minidx_pi > -1 && !displayBuffers[minidx_pi]?.pick_info?.claims_pointer
+                    && centreOnMesh(displayBuffers, minidx_pi, minj_pi, hoveredCid)
+                    ? pickedMeshPosition(displayBuffers, minidx_pi, minj_pi, 0)
+                    : null
                 if(coarse) {
                     self.props.onOriginChanged([-coarse[0], -coarse[1], -coarse[2]])
+                } else if(meshResidue) {
+                    self.props.onOriginChanged([-meshResidue[0], -meshResidue[1], -meshResidue[2]])
                 } else if(displayBuffers[minidx] && displayBuffers[minidx].atoms) {
                     const atx = displayBuffers[minidx].atoms[minj].x;
                     const aty = displayBuffers[minidx].atoms[minj].y;
