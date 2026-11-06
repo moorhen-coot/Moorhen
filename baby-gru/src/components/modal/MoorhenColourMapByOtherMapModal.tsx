@@ -1,7 +1,7 @@
 import { Chart, registerables } from "chart.js";
 import { useDispatch, useSelector } from "react-redux";
 import { use, useEffect, useRef } from "react";
-import { setClipEnd, setClipStart, setMapStyle, setResetClippingFogging } from "@/store";
+import { setAutoClip, setAutoFog, setClipEnd, setClipStart, setMapStyle } from "@/store";
 import { useCommandCentre } from "../../InstanceManager";
 import { dispatchPersistentStates, usePersistent, usePersistentState } from "../../store/menusSlice";
 import { moorhen } from "../../types/moorhen";
@@ -121,7 +121,8 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
             getHistogram();
             dispatch(setClipStart(1000));
             dispatch(setClipEnd(1000));
-            dispatch(setResetClippingFogging(false));
+            dispatch(setAutoFog(false));
+            dispatch(setAutoClip(false));
             dispatch(
                 setMapStyle({
                     molNo: Number(mapSelectRef_1.current.value),

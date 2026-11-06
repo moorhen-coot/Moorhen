@@ -27,7 +27,10 @@ import {
     setDepthBlurDepth,
     setDepthBlurRadius,
     setDepthPeelLayers,
-    setResetClippingFogging,
+    setAutoFog,
+    setAutoClip,
+    setDoFog,
+    setDoClip,
     setUseOffScreenBuffers,
 } from "../../store/sceneSettingsSlice";
 import {
@@ -57,7 +60,8 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const store = useStore<RootState>()
     const dispatch = useDispatch();
     const moorhenInstance = useMoorhenInstance();
-    const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
+    const autoFog = useSelector((state: RootState) => state.sceneSettings.autoFog);
+    const autoClip = useSelector((state: RootState) => state.sceneSettings.autoClip);
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
 
     const gl_fog_start = useSelector((state: moorhen.State) => state.sceneSettings.fogStart);
@@ -67,15 +71,9 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const blurSize = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
     const depthPeelLayers = useSelector((state: moorhen.State) => state.sceneSettings.depthPeelLayers);
 
-    const [useFog, setUseFog] = useState<boolean>(true);
-    const [useClip, setUseClip] = useState<boolean>(true);
-    const [backupFogNear, setBackupFogNear] = useState<number>(500.0);
-    const [backupFogFar, setBackupFogFar] = useState<number>(500.0);
-    const [backupClipNear, setBackupClipNear] = useState<number>(500.0);
-    const [backupClipFar, setBackupClipFar] = useState<number>(500.0);
-
-    const fogOffNear = 998.0
-    const fogOffFar = 999.0
+    // Scene settings, saved with the scene: turning them off keeps the planes, the renderer just ignores them
+    const useFog = useSelector((state: moorhen.State) => state.sceneSettings.doFog);
+    const useClip = useSelector((state: moorhen.State) => state.sceneSettings.doClip);
 
     const blurLabel = <>
              <span style={{display: "inline-block", width:"100px"}}>Depth blur</span>
@@ -590,49 +588,32 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                 </div>
             </MoorhenStack>
             <MoorhenStack gap={2} direction="vertical">
-                <MoorhenToggle
-                    type="switch"
-                    checked={resetClippingFogging}
-                    onChange={() => {
-                        dispatch(setResetClippingFogging(!resetClippingFogging));
-                    }}
-                    label="Reset clip and fog on zoom"
-                />
+                {/* Each on / off, and whether it follows the zoom (only meaningful when on) */}
                 <MoorhenToggle
                     type="switch"
                     checked={useFog}
-                    disabled={resetClippingFogging}
-                    onChange={(e) => {
-                        if(useFog){
-                            setBackupFogNear(gl_fog_start)
-                            setBackupFogFar(gl_fog_end)
-                            dispatch(setFogStart(fogOffNear));
-                            dispatch(setFogEnd(fogOffFar));
-                        } else {
-                            dispatch(setFogStart(backupFogNear));
-                            dispatch(setFogEnd(backupFogFar));
-                        }
-                        setUseFog(e.target.checked)
-                    }}
+                    onChange={() => dispatch(setDoFog(!useFog))}
                     label={fogLabel}
                 />
                 <MoorhenToggle
                     type="switch"
+                    checked={autoFog}
+                    disabled={!useFog}
+                    onChange={() => dispatch(setAutoFog(!autoFog))}
+                    label="Auto fog (follows the zoom)"
+                />
+                <MoorhenToggle
+                    type="switch"
                     checked={useClip}
-                    disabled={resetClippingFogging}
-                    onChange={(e) => {
-                        if(useClip){
-                            setBackupClipNear(clipStart)
-                            setBackupClipFar(clipEnd)
-                            dispatch(setClipStart(1.5*atomSpan));
-                            dispatch(setClipEnd(1.5*atomSpan));
-                        } else {
-                            dispatch(setClipStart(backupClipNear));
-                            dispatch(setClipEnd(backupClipFar));
-                        }
-                        setUseClip(e.target.checked)
-                    }}
+                    onChange={() => dispatch(setDoClip(!useClip))}
                     label={clipLabel}
+                />
+                <MoorhenToggle
+                    type="switch"
+                    checked={autoClip}
+                    disabled={!useClip}
+                    onChange={() => dispatch(setAutoClip(!autoClip))}
+                    label="Auto clip (follows the zoom)"
                 />
                 <MoorhenToggle
                     type="switch"

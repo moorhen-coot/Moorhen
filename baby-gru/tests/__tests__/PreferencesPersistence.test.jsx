@@ -142,8 +142,8 @@ describe("per-scene preferences", () => {
         const saved = store.getState().userScenes.savedSceneSettings;
         expect(saved.Overview.doSSAO).toBe(true);
         expect(saved["Model Building"].doSSAO).toBe(builtInSceneDefaults("Model Building").doSSAO);
-        expect(saved.Overview.resetClippingFogging).toBe(false);
-        expect(saved["Model Building"].resetClippingFogging).toBe(true);
+        expect(saved.Overview.autoClip).toBe(false);
+        expect(saved["Model Building"].autoClip).toBe(true);
         unsubscribe();
     });
 
@@ -166,14 +166,14 @@ describe("per-scene preferences", () => {
     it("a stored value of the wrong type is replaced by the scene's default", async () => {
         const prefs = makePreferences("pp-scene-5");
         await prefs.localStorageInstance.setItem("Overview.backgroundColor", { version: 1, value: "red" });
-        await prefs.localStorageInstance.setItem("Overview.resetClippingFogging", { version: 1, value: 1 });
+        await prefs.localStorageInstance.setItem("Overview.autoClip", { version: 1, value: 1 });
         const { store, unsubscribe } = init(prefs);
         await waitMounted(store);
 
         const saved = store.getState().userScenes.savedSceneSettings.Overview;
         expect(saved.backgroundColor).toEqual(builtInSceneDefaults("Overview").backgroundColor);
         // The Default scene's default, not the global one (true)
-        expect(saved.resetClippingFogging).toBe(false);
+        expect(saved.autoClip).toBe(false);
         unsubscribe();
     });
 });

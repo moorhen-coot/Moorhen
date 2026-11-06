@@ -35,7 +35,7 @@ describe("copying scene settings", () => {
         expect(sceneSettings().doSSAO).toBe(true);
         expect(sceneSettings().ssaoRadius).toBe(7);
         // The whole scene is copied, not only what was changed: Overview fixes fog and clipping
-        expect(sceneSettings().resetClippingFogging).toBe(false);
+        expect(sceneSettings().autoClip).toBe(false);
     });
 
     test("into another scene is used on its next visit, and leaves its saved preferences alone", async () => {
@@ -49,7 +49,7 @@ describe("copying scene settings", () => {
 
         await userScene.select("Overview");
         expect(sceneSettings().ssaoRadius).toBe(9);
-        expect(sceneSettings().resetClippingFogging).toBe(true);
+        expect(sceneSettings().autoClip).toBe(true);
     });
 
     test("is refused into a snapshot or from the scene itself", async () => {
@@ -75,7 +75,7 @@ describe("resetting scene settings", () => {
 
         expect(await userScene.reset("Overview", "default")).toBe(true);
         expect(sceneSettings().ssaoRadius).not.toBe(7);
-        expect(sceneSettings().resetClippingFogging).toBe(false);
+        expect(sceneSettings().autoClip).toBe(false);
         expect(cloud.store.getState().userScenes.savedSceneSettings.Overview.ssaoRadius).toBe(7);
     });
 

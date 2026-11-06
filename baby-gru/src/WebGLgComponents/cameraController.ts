@@ -94,7 +94,25 @@ export type DriverName = "user" | "centring" | "movie" | "session" | "api";
  */
 export type SlabPolicy =
     | { kind: "manual" }
-    | { kind: "auto"; fieldDepthFront: number; fieldDepthBack: number };
+    | {
+          kind: "auto";
+          fieldDepthFront: number;
+          fieldDepthBack: number;
+          /** The fog follows the zoom (Auto fog). Default true */
+          fog?: boolean;
+          /** The clip planes follow the zoom (Auto clip). Default true */
+          clip?: boolean;
+      };
+
+/** The slab fields an auto policy sets for a zoom: only the fog, only the clip planes, or both */
+const autoSlab = (policy: Extract<SlabPolicy, { kind: "auto" }>, zoom: number): Partial<CameraState> => {
+    const front = zoom * policy.fieldDepthFront;
+    const back = zoom * policy.fieldDepthBack;
+    return {
+        ...(policy.clip !== false && { clipFront: front, clipBack: back }),
+        ...(policy.fog !== false && { fogFront: front, fogBack: back }),
+    };
+};
 
 export interface MoveResult {
     /** False when another driver took over before this move finished. */
@@ -303,12 +321,7 @@ export class CameraController {
      */
     reapplySlab(): void {
         if (this.slabPolicy.kind === "manual") return;
-        const { fieldDepthFront, fieldDepthBack } = this.slabPolicy;
-        const front = this.current.zoom * fieldDepthFront;
-        const back = this.current.zoom * fieldDepthBack;
-        this.current = {
-            ...this.current, clipFront: front, clipBack: back, fogFront: front, fogBack: back,
-        };
+        this.current = { ...this.current, ...autoSlab(this.slabPolicy, this.current.zoom) };
         this.notify();
     }
 
@@ -565,12 +578,9 @@ export class CameraController {
         if (wroteSlab) return state;
         // `this.current` is still the pre-write state here: every caller assigns the result.
         if (state.zoom === this.current.zoom) return state;
-        const { fieldDepthFront, fieldDepthBack } = this.slabPolicy;
         // Expressed as offsets from the centre, fog and clip are the same two distances. The old
         // derivation looked like four numbers because two of them were measured from the eye.
-        const front = state.zoom * fieldDepthFront;
-        const back = state.zoom * fieldDepthBack;
-        return { ...state, clipFront: front, clipBack: back, fogFront: front, fogBack: back };
+        return { ...state, ...autoSlab(this.slabPolicy, state.zoom) };
     }
 
     private notify(): void {

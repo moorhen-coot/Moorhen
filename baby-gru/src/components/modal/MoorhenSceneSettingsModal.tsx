@@ -18,7 +18,8 @@ import {
     setEdgeDetectDepthThreshold,
     setEdgeDetectNormalScale,
     setEdgeDetectNormalThreshold,
-    setResetClippingFogging,
+    setAutoFog,
+    setAutoClip,
     setSsaoBias,
     setSsaoRadius,
     setUseOffScreenBuffers,setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd , setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
@@ -330,7 +331,8 @@ const ClipFogPanel = () => {
     const clipEnd = useSelector((state: moorhen.State) => state.sceneSettings.clipEnd);
 
     const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap);
-    const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
+    const autoFog = useSelector((state: RootState) => state.sceneSettings.autoFog);
+    const autoClip = useSelector((state: RootState) => state.sceneSettings.autoClip);
 
     return (
         <MoorhenStack direction="vertical" card={true}>
@@ -381,11 +383,15 @@ const ClipFogPanel = () => {
 
             <MoorhenToggle
                 type="switch"
-                checked={resetClippingFogging}
-                onChange={() => {
-                    dispatch(setResetClippingFogging(!resetClippingFogging));
-                }}
-                label="Reset clipping and fogging on zoom"
+                checked={autoFog}
+                onChange={() => dispatch(setAutoFog(!autoFog))}
+                label="Auto fog (follows the zoom)"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={autoClip}
+                onChange={() => dispatch(setAutoClip(!autoClip))}
+                label="Auto clip (follows the zoom)"
             />
 
             <MoorhenToggle

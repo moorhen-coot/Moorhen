@@ -160,18 +160,6 @@ export {
 }  from "./generalStatesSlice";
 export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
 export {
-    addVector,
-    removeVector,
-    emptyVectors,
-    addVectors,
-    removeVectors,
-    removeVectorsMatchingIDString,
-    removeVectorsByTag,
-    removeVectorById,
-    removeVectorsByIds
-}  from "./vectorsSlice";
-export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
-export {
     addMolecule,
     removeMolecule,
     emptyMolecules,
@@ -183,6 +171,27 @@ export {
     removeCustomRepresentation,
     removeGeneralRepresentation,
 }  from "./moleculesSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
+export {
+    addObject,
+    removeObject,
+    removeObjectById,
+    removeObjectsByTag,
+    updateObject,
+    emptyObjects,
+
+}  from "./threeDObjectsSlice";
+export {
+    addVector,
+    removeVector,
+    emptyVectors,
+    addVectors,
+    removeVectors,
+    removeVectorsMatchingIDString,
+    removeVectorsByTag,
+    removeVectorById,
+    removeVectorsByIds
+}  from "./vectorsSlice";
 export {
     setBusy,
     setTimeCapsuleBusy,
@@ -233,7 +242,10 @@ export {
     setDoSSAO,
     setSsaoRadius,
     setSsaoBias,
-    setResetClippingFogging,
+    setAutoFog,
+    setAutoClip,
+    setDoFog,
+    setDoClip,
     setClipCap,
     resetSceneSettings,
     setEdgeDetectNormalScale,
@@ -285,15 +297,6 @@ export {
     autoClipFogByZoom,
     applySceneSettingsSnapshot,
 }  from "./sceneSettingsSlice";
-export {
-    addObject,
-    removeObject,
-    removeObjectById,
-    removeObjectsByTag,
-    updateObject,
-    emptyObjects,
-
-}  from "./threeDObjectsSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

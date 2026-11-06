@@ -2,13 +2,18 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { ShadowMapQuality } from "../WebGLgComponents/mgWebGLParts/framebuffers";
 import { type AnaglyphColours, DEFAULT_ANAGLYPH_COLOURS } from "../WebGLgComponents/anaglyph";
 
-const execAutoClipFogByZoom = (state: typeof initialState) => {
+/** Set the fog and / or clip planes from the zoom, as Auto fog and Auto clip do */
+const execAutoClipFogByZoom = (state: typeof initialState, fog: boolean = true, clip: boolean = true) => {
     const fieldDepthFront: number = 8;
     const fieldDepthBack: number = 21;
-    state.fogStart = state.fogClipOffset - (state.zoom * fieldDepthFront);
-    state.fogEnd = state.fogClipOffset + (state.zoom * fieldDepthBack);
-    state.clipStart = state.zoom * fieldDepthFront;
-    state.clipEnd = state.zoom * fieldDepthBack;
+    if (fog) {
+        state.fogStart = state.fogClipOffset - (state.zoom * fieldDepthFront);
+        state.fogEnd = state.fogClipOffset + (state.zoom * fieldDepthBack);
+    }
+    if (clip) {
+        state.clipStart = state.zoom * fieldDepthFront;
+        state.clipEnd = state.zoom * fieldDepthBack;
+    }
 }
 
 export const initialState: {
@@ -119,7 +124,14 @@ export const initialState: {
     doCrossEyedStereo: boolean;
     doAnaglyphStereo: boolean;
     defaultBondSmoothness: number;
-    resetClippingFogging: boolean;
+    /** Auto fog: the fog planes follow the zoom (fogStart, fogEnd are then not part of the scene) */
+    autoFog: boolean;
+    /** Auto clip: the clip planes follow the zoom (clipStart, clipEnd are then not part of the scene) */
+    autoClip: boolean;
+    /** Draw fog. Off: no fog; the fog planes (fogStart, fogEnd) are kept for when it is on again */
+    doFog: boolean;
+    /** Clip the view. Off: nothing clipped; the clip planes (clipStart, clipEnd) are kept for when it is on again */
+    doClip: boolean;
     clipCap: boolean;
     backgroundColor: [number, number, number, number];
     height: number;
@@ -163,7 +175,10 @@ export const initialState: {
     // both, and these are the values that look right on the common case.
     ssaoRadius: 5.0,
     ssaoBias: 1.3,
-    resetClippingFogging: true,
+    autoFog: true,
+    autoClip: true,
+    doFog: true,
+    doClip: true,
     clipCap: true,
     doPerspectiveProjection: false,
     useOffScreenBuffers: false,
@@ -213,7 +228,10 @@ export type SceneSettingsState = typeof initialState;
 export const PER_SCENE_PREFERENCE_KEYS = [
     "drawCrosshairs",
     "drawMissingLoops",
-    "resetClippingFogging",
+    "autoFog",
+    "autoClip",
+    "doFog",
+    "doClip",
     "clipCap",
     "doPerspectiveProjection",
     "drawAxes",
@@ -243,8 +261,13 @@ export const PER_SCENE_PREFERENCE_KEYS = [
     "clipEnd",
 ] as const satisfies readonly (keyof SceneSettingsState)[];
 
-/** Fog and clipping planes: only saved when they are set by hand (resetClippingFogging off), else they follow the zoom */
-const FOG_CLIP_KEYS: readonly string[] = ["fogStart", "fogEnd", "clipStart", "clipEnd"];
+/** Fog and clip planes: only saved when they are set by hand (Auto fog / Auto clip off), else they follow the zoom */
+const FOG_KEYS: readonly string[] = ["fogStart", "fogEnd"];
+const CLIP_KEYS: readonly string[] = ["clipStart", "clipEnd"];
+
+/** Whether `key` is a fog or clip plane that follows the zoom in these settings */
+const followsZoom = (key: string, autoFog: boolean, autoClip: boolean): boolean =>
+    (autoFog && FOG_KEYS.includes(key)) || (autoClip && CLIP_KEYS.includes(key));
 
 export type PerSceneKey = (typeof PER_SCENE_PREFERENCE_KEYS)[number];
 
@@ -272,10 +295,11 @@ const copyValue = <T>(value: T): T => (Array.isArray(value) ? ([...value] as T) 
  * @param sceneDefaults - The scene's default per-scene values.
  */
 export const getPerSceneSettings = (sceneSettings: SceneSettingsSnapshot, sceneDefaults: PerSceneSettings): PerSceneSettings => {
-    const autoFogClip = sceneSettings.resetClippingFogging ?? initialState.resetClippingFogging;
+    const autoFog = sceneSettings.autoFog ?? initialState.autoFog;
+    const autoClip = sceneSettings.autoClip ?? initialState.autoClip;
     const settings: Record<string, unknown> = {};
     for (const key of PER_SCENE_PREFERENCE_KEYS) {
-        if (autoFogClip && FOG_CLIP_KEYS.includes(key)) {
+        if (followsZoom(key, autoFog, autoClip)) {
             settings[key] = copyValue(sceneDefaults[key]);
         } else {
             settings[key] = copyValue(Object.hasOwn(sceneSettings, key) ? sceneSettings[key] : initialState[key]);
@@ -305,7 +329,7 @@ export const isValidSceneSettingValue = (key: PerSceneKey, value: unknown): bool
 export const getSceneSettingsSnapshot = (sceneSettings: SceneSettingsState): SceneSettingsSnapshot => {
     const snapshot: Record<string, unknown> = {};
     for (const key of PER_SCENE_PREFERENCE_KEYS) {
-        if (sceneSettings.resetClippingFogging && FOG_CLIP_KEYS.includes(key)) continue;
+        if (followsZoom(key, sceneSettings.autoFog, sceneSettings.autoClip)) continue;
         const value = sceneSettings[key];
         if (!isSameSceneSettingValue(value, initialState[key])) {
             snapshot[key] = Array.isArray(value) ? [...value] : value;
@@ -403,8 +427,24 @@ const sceneSettingsSlice = createSlice({
             state.ssaoBias = action.payload;
         },
         // API
-        setResetClippingFogging: (state, action: PayloadAction<boolean>) => {
-            state.resetClippingFogging = action.payload;
+        /* Turn fog on or off, keeping its planes */
+        setDoFog: (state, action: PayloadAction<boolean>) => {
+            state.doFog = action.payload;
+        },
+        // API
+        /* Turn clipping on or off, keeping its planes */
+        setDoClip: (state, action: PayloadAction<boolean>) => {
+            state.doClip = action.payload;
+        },
+        // API
+        /* Auto fog: the fog planes follow the zoom */
+        setAutoFog: (state, action: PayloadAction<boolean>) => {
+            state.autoFog = action.payload;
+        },
+        // API
+        /* Auto clip: the clip planes follow the zoom */
+        setAutoClip: (state, action: PayloadAction<boolean>) => {
+            state.autoClip = action.payload;
         },
         // API
         setClipCap: (state, action: PayloadAction<boolean>) => {
@@ -584,13 +624,14 @@ const sceneSettingsSlice = createSlice({
         setZoom: (state, action: PayloadAction<number>) => {
             state.zoom = action.payload;
         },
+        /* Set the planes that follow the zoom (Auto fog, Auto clip) from the current zoom */
         autoClipFogByZoom: (state) => {
-            execAutoClipFogByZoom(state);
+            execAutoClipFogByZoom(state, state.autoFog, state.autoClip);
         },
         /* Apply a scene preset snapshot (see getSceneSettingsSnapshot). Settings missing from the
         snapshot go back to their default, unknown or malformed entries are ignored, and the
         viewport, camera and theme are left untouched. Fog and clipping are recomputed from the
-        zoom unless the snapshot turns resetClippingFogging off. */
+        zoom where the snapshot has Auto fog / Auto clip on. */
         applySceneSettingsSnapshot: (state, action: PayloadAction<SceneSettingsSnapshot>) => {
             const snapshot = action.payload ?? {};
             const target = state as Record<PerSceneKey, unknown>;
@@ -602,7 +643,7 @@ const sceneSettingsSlice = createSlice({
                 if (isSameSceneSettingValue(target[key], newValue)) continue;
                 target[key] = Array.isArray(newValue) ? [...newValue] : newValue;
             }
-            if (state.resetClippingFogging) execAutoClipFogByZoom(state);
+            if (state.autoFog || state.autoClip) execAutoClipFogByZoom(state, state.autoFog, state.autoClip);
         },
 
     },
@@ -618,7 +659,10 @@ export const {
     setDoSSAO,
     setSsaoRadius,
     setSsaoBias,
-    setResetClippingFogging,
+    setAutoFog,
+    setAutoClip,
+    setDoFog,
+    setDoClip,
     setClipCap,
     resetSceneSettings,
     setEdgeDetectNormalScale,
