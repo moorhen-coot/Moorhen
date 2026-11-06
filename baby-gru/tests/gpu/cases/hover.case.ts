@@ -147,6 +147,25 @@ function slab(colour: number[]): DisplayBuffer {
     } as unknown as DisplayBuffer;
 }
 
+/**
+ * One quad of the blob as a buffer of its own, in highlight group `group` (or none), its vertices
+ * all owner code `code`: two of these are a backbone and its base sticks.
+ */
+function groupPart(side: number, colour: number[], code: number, group: string | null): DisplayBuffer {
+    const m = quads([[-8, 0][side]], 8, colour);
+    return {
+        id: `part${side}`, visible: true, alphaMultiplier: 1, dataVersion: 1, bufferTypes: ["TRIANGLES"],
+        triangleVertices: [new Float32Array(m.positions)], triangleNormals: [new Float32Array(m.normals)],
+        triangleColours: [new Float32Array(m.colours)], triangleIndexs: [new Uint32Array(m.indices)],
+        pick_info: {
+            pick_points: [[[-4, 4][side], 0, 0]],
+            owner_codes: new Uint32Array([code]),
+            highlight_group: group,
+            influence: { weights: new Float32Array(4).fill(1), point_indexes: new Uint32Array(4).fill(code), index_offsets: new Uint32Array([1, 2, 3, 4]) },
+        },
+    } as unknown as DisplayBuffer;
+}
+
 /** Pixels covered at all (anything but the black background). */
 function coverage(data: Uint8ClampedArray): boolean[] {
     const out: boolean[] = [];
@@ -204,6 +223,10 @@ export interface HoverReport {
     overlayChunkedDiffer: number;
     overlayOverTransparentPeeled: Comparison;
     overlayOverTransparentBlended: Comparison;
+    /** Two buffers of one highlight group, the same residue: hovering one lights both. */
+    groupBoth: Comparison;
+    /** The same two in no group: only the hovered one lights. */
+    noGroupOne: Comparison;
     /** A transparent closed slab: the overlay shows its front only, as the opaque orange slab. */
     slabPeeled: Comparison;
     slabBlended: Comparison;
@@ -262,6 +285,12 @@ export default defineCase(async (_device: GPUDevice): Promise<HoverReport> => {
         const slabGlassBlended = await shot([slab(glass)], camera({ transparency: false }));
         const slabBlended = await shot([slab(glass)], camera({ hoveridx: 0, hover_point: 0, transparency: false }));
 
+        const pair = (group: string | null, colour = BLUE) => [groupPart(0, colour, 5, group), groupPart(1, colour, 5, group)];
+        const pairPlain = await shot(pair("g"));
+        const pairOrange = await shot(pair("g", ORANGE));
+        const groupBoth = await shot(pair("g"), camera({ hoveridx: 1, hover_point: 0 }));
+        const noGroupOne = await shot(pair(null), camera({ hoveridx: 1, hover_point: 0 }));
+
         // A hover on something with nothing to light (an instance index past the end, a point of a
         // mesh with no lists): the picture as it was.
         const nothing = await shot([strip(), blob(BLUE, null)], camera({ hoveridx: 5, hover_point: 0 }));
@@ -280,6 +309,8 @@ export default defineCase(async (_device: GPUDevice): Promise<HoverReport> => {
             overlayChunkedDiffer: differ(overlayChunked, overlayPoint),
             overlayOverTransparentPeeled: compare(overlayPeeled, glassPeeled, blobOrange, left),
             overlayOverTransparentBlended: compare(overlayBlended, glassBlended, blobOrange, left),
+            groupBoth: compare(groupBoth, pairPlain, pairOrange, everywhere),
+            noGroupOne: compare(noGroupOne, pairPlain, pairOrange, right),
             slabPeeled: compare(slabPeeled, slabGlassPeeled, slabOrange, slabRegion),
             slabBlended: compare(slabBlended, slabGlassBlended, slabOrange, slabRegion),
             nothingHoveredDiffer: differ(nothing, nothingPlain),

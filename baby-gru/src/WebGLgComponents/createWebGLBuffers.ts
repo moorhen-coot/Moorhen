@@ -377,7 +377,7 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
             // hit triangle into a residue, and the labels to report it by.
             const carried = ["pick_exact", "pick_bounds", "vertex_pick_points",
                              "pick_point_tags", "pick_tag_kind", "pick_point_instances",
-                             "claims_pointer", "pick_priority", "highlight_whole",
+                             "claims_pointer", "pick_priority", "highlight_whole", "highlight_group",
                              // The owner codes the shader compares, and the coarser
                              // grains: without these a surface still picks, but the
                              // highlight never widens and alt-click never flies to a

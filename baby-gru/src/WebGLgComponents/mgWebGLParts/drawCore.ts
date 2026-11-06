@@ -12,6 +12,7 @@ import { advanceCamera } from './cameraAnimations';
 import { isInvisible, shouldCastShadow } from '../objectFade';
 import { beginDepthOnlyPass } from '../shadowPass';
 import { levelForHeight, visibleHeight, ownerMaskForLevel } from '../../utils/pickLevel';
+import { highlightSiblings } from '../highlightGroup';
 import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
 import { ensureDepthPeelResolveBuffer, resolveDepthPeelResolveBuffer } from './framebuffers';
@@ -1569,26 +1570,50 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             && !!hoveredBuffer?.pick_info?.highlight_whole
 
         if(drawingVisibleImage && hoveredBuffer && overlayPoint>-1
-           && (hoveredHasInfluenceTextures || hoveredWholeMesh)){
+           && (hoveredHasInfluenceTextures || hoveredWholeMesh)
+           && displayBuffers[overlayIdx].bufferTypes[0]==="TRIANGLES"){
             //TODO - We don't really need to do self.draw at all. This could be done in the
             //       general drawing above.
-            const bufferTypes = displayBuffers[overlayIdx].bufferTypes
-            if(bufferTypes[0]==="TRIANGLES"){
+            // The sentinel the vertex shader compares against: anything at or above it
+            // means "not hovering a particular point", which is the branch that sets
+            // vHighlight to 1 for every vertex. That is precisely the whole-mesh case.
+            //
+            // Otherwise the point is identified by its code, not by its index, where the
+            // mesh supplies codes - a surface does, packing the chain into the high half
+            // so that masking the low half lights the chain and masking everything
+            // lights the molecule. A mesh without codes, a metaball, keeps comparing
+            // whole indices and is unaffected.
+            const ownerCodes = displayBuffers[overlayIdx].pick_info?.owner_codes
+            const hoveredCode = ownerCodes && overlayPoint < ownerCodes.length
+                ? ownerCodes[overlayPoint] : overlayPoint
+            const hoverMask = ownerCodes ? ownerMaskForLevel(self.pickLevel) : 0xFFFFFFFF
 
-                 const triangleVertexNormalBuffer = displayBuffers[overlayIdx].triangleVertexNormalBuffer
-                 const triangleVertexPositionBuffer = displayBuffers[overlayIdx].triangleVertexPositionBuffer
-                 const triangleVertexIndexBuffer = displayBuffers[overlayIdx].triangleVertexIndexBuffer
-                 const influence_weights_texture = displayBuffers[overlayIdx].pick_info.influence_weights_texture
-                 const influence_point_indexes_texture = displayBuffers[overlayIdx].pick_info.influence_point_indexes_texture
-                 const influence_index_offsets_texture = displayBuffers[overlayIdx].pick_info.influence_index_offsets_texture
-                 const influence_weights_width = displayBuffers[overlayIdx].pick_info.influence_weights_width
-                 const influence_point_indexes_width = displayBuffers[overlayIdx].pick_info.influence_point_indexes_width
-                 const influence_index_offsets_width = displayBuffers[overlayIdx].pick_info.influence_index_offsets_width
+            // The hovered mesh, and the others of its highlight group (highlightGroup.ts: a
+            // nucleic acid's backbone and its base sticks), with the same code and mask - their
+            // owner codes come from one numbering, so the code names the same residue in each.
+            // A sibling needs influence textures of its own; the whole-mesh case is the hovered
+            // mesh's alone.
+            const targets = [overlayIdx, ...highlightSiblings(displayBuffers, overlayIdx).filter(idx =>
+                !!displayBuffers[idx].pick_info?.influence_weights_texture
+                && !!displayBuffers[idx].pick_info?.influence_point_indexes_texture
+                && !!displayBuffers[idx].pick_info?.influence_index_offsets_texture
+                && displayBuffers[idx].bufferTypes?.[0]==="TRIANGLES")]
+            for(const target of targets){
+                 const targetHasInfluenceTextures = target === overlayIdx ? hoveredHasInfluenceTextures : true
+                 const triangleVertexNormalBuffer = displayBuffers[target].triangleVertexNormalBuffer
+                 const triangleVertexPositionBuffer = displayBuffers[target].triangleVertexPositionBuffer
+                 const triangleVertexIndexBuffer = displayBuffers[target].triangleVertexIndexBuffer
+                 const influence_weights_texture = displayBuffers[target].pick_info.influence_weights_texture
+                 const influence_point_indexes_texture = displayBuffers[target].pick_info.influence_point_indexes_texture
+                 const influence_index_offsets_texture = displayBuffers[target].pick_info.influence_index_offsets_texture
+                 const influence_weights_width = displayBuffers[target].pick_info.influence_weights_width
+                 const influence_point_indexes_width = displayBuffers[target].pick_info.influence_point_indexes_width
+                 const influence_index_offsets_width = displayBuffers[target].pick_info.influence_index_offsets_width
                  const theShader = self.shaderProgram
                  self.gl.useProgram(theShader)
                  // Only for the smooth-mesh case; the whole-mesh one has no such textures and
                  // must not be handed undefined ones.
-                 if(hoveredHasInfluenceTextures){
+                 if(targetHasInfluenceTextures){
                  if(theShader.uPointTex !== null){
                      self.gl.uniform1i(theShader.uPointTex, 7);
                      self.gl.activeTexture(self.gl.TEXTURE7);
@@ -1608,19 +1633,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                      self.gl.uniform1ui(theShader.uOffsetTexWidth, influence_index_offsets_width);
                  }
                  }
-                 // The sentinel the vertex shader compares against: anything at or above it
-                 // means "not hovering a particular point", which is the branch that sets
-                 // vHighlight to 1 for every vertex. That is precisely the whole-mesh case.
-                 //
-                 // Otherwise the point is identified by its code, not by its index, where the
-                 // mesh supplies codes - a surface does, packing the chain into the high half
-                 // so that masking the low half lights the chain and masking everything
-                 // lights the molecule. A mesh without codes, a metaball, keeps comparing
-                 // whole indices and is unaffected.
-                 const ownerCodes = displayBuffers[overlayIdx].pick_info?.owner_codes
-                 const hoveredCode = ownerCodes && overlayPoint < ownerCodes.length
-                     ? ownerCodes[overlayPoint] : overlayPoint
-                 const hoverMask = ownerCodes ? ownerMaskForLevel(self.pickLevel) : 0xFFFFFFFF
                  self.gl.uniform1ui(theShader.uHoveredPoint,
                                     hoveredWholeMesh ? 0xFFFFFFFF : hoveredCode);
                  if(theShader.uHoverMask){

@@ -35,6 +35,33 @@ import type { Bounds } from "./rayMesh";
 import { MOORHEN_MESH_RESIDUE_TAG_KIND } from "../utils/enums";
 import { encodeOwner } from "../utils/pickLevel";
 
+/**
+ * How residues are numbered into owner codes: chains in the order first seen, residues within a
+ * chain likewise. One per mesh by default. Meshes that light together (highlightGroup.ts) share
+ * one, so that a code names the same residue in each - the order they are numbered in does not
+ * matter, only that it is the same table.
+ */
+export interface OwnerNumbering {
+    chains: Map<string, number>;
+    /** By model, chain and residue (residueKey), the residue's number within its chain. */
+    residues: Map<string, number>;
+    /** How many residues each chain has been given. */
+    perChain: Map<number, number>;
+}
+
+export const newOwnerNumbering = (): OwnerNumbering => ({ chains: new Map(), residues: new Map(), perChain: new Map() });
+
+/**
+ * A residue's CID, "/1/A/23(ALA)", as its model, chain and residue - "1", "A" and "23" - without
+ * the residue's name (an insertion code, "/1/A/23(ALA).B", stays: "23.B"), so that two meshes' tables agree on it however each spells that. The
+ * model keeps the same residue of two models of an ensemble apart, as it always was; chains are
+ * numbered by name alone, across models, also as they always were.
+ */
+export const residueKey = (cid: string): { model: string; chain: string; residue: string } => {
+    const parts = cid.split("/");
+    return { model: parts[1] ?? "", chain: parts[2] ?? "", residue: (parts[3] ?? "").replace(/\([^)]*\)/, "") };
+};
+
 /** The per-vertex owner value meaning "no residue known", as Coot writes it. */
 export const NO_OWNER = 0xFFFFFFFF;
 
@@ -93,14 +120,16 @@ export type OwnedMeshPickInfo = {
  * `vertices` is the flat x,y,z list, `vertexOwners` one entry per vertex, `owners` the residue
  * CIDs those entries index. Returns null if the mesh has no vertices or the arrays do not
  * agree, so a caller can attach the result unconditionally and a mesh Coot knew nothing about
- * simply stays as it was.
+ * simply stays as it was. `numbering`: the table to number residues with, shared by meshes that
+ * light together; a fresh one by default.
  */
 export const ownedMeshPickInfo = (
     vertices: number[] | Float32Array,
     vertexOwners: Uint32Array | number[] | undefined,
     owners: string[] | undefined,
     vertexOwnersOther?: Uint32Array | number[],
-    vertexOwnerWeights?: Float32Array | number[]
+    vertexOwnerWeights?: Float32Array | number[],
+    numbering: OwnerNumbering = newOwnerNumbering()
 ): OwnedMeshPickInfo | null => {
     const count = Math.floor(vertices.length / 3);
     if (count === 0) return null;
@@ -117,25 +146,29 @@ export const ownedMeshPickInfo = (
 
     // Which chain each owner is in, taken from its own CID rather than asked of the model:
     // "/1/A/23(ALA)" splits on "/" into ["", "1", "A", "23(ALA)"]. Chains are numbered in the
-    // order they are first seen, which is all the encoding needs - the number never leaves
-    // this mesh.
-    const chainNumber = new Map<string, number>();
+    // order they are first seen, residues within a chain likewise, in `numbering` - this mesh's
+    // own, or one shared with the meshes it lights together with, so that the codes agree.
     const owner_codes = new Uint32Array(owners.length);
     const chainOfOwner = new Uint32Array(owners.length);
-    const withinChain = new Map<number, number>();
     for (let o = 0; o < owners.length; o++) {
-        const chain = owners[o].split("/")[2] ?? "";
-        let chainIndex = chainNumber.get(chain);
+        const { model, chain, residue } = residueKey(owners[o]);
+        let chainIndex = numbering.chains.get(chain);
         if (chainIndex === undefined) {
-            chainIndex = chainNumber.size;
-            chainNumber.set(chain, chainIndex);
+            chainIndex = numbering.chains.size;
+            numbering.chains.set(chain, chainIndex);
         }
-        const seen = withinChain.get(chainIndex) ?? 0;
-        withinChain.set(chainIndex, seen + 1);
+        const key = `${model}/${chain}/${residue}`;
+        let within = numbering.residues.get(key);
+        if (within === undefined) {
+            within = numbering.perChain.get(chainIndex) ?? 0;
+            numbering.perChain.set(chainIndex, within + 1);
+            numbering.residues.set(key, within);
+        }
         chainOfOwner[o] = chainIndex;
-        owner_codes[o] = encodeOwner(chainIndex, seen);
+        owner_codes[o] = encodeOwner(chainIndex, within);
     }
-    const chainCount = chainNumber.size;
+    // Chains this mesh's own, for its centres; the table's numbers may run past them.
+    const chainCount = numbering.chains.size;
     const chainTotals = new Float64Array(chainCount * 3);
     const chainCounts = new Uint32Array(chainCount);
 

@@ -30,7 +30,7 @@ import { EffectMaps, EffectPasses, GBUFFER_DEPTH_FORMAT, GBUFFER_NORMAL_FORMAT, 
 import { DepthPeel, PEEL_COLOUR_FORMAT, PEEL_DEPTH_FORMAT, type PeelTargets, transparentLayers } from './depthPeel';
 import { DepthBlur, depthBlurMargin } from './depthBlur';
 import { AnaglyphCombine, anaglyphUniforms } from './anaglyphCombine';
-import { type HoverHighlight, NO_HIGHLIGHT, NO_HOVER, type SubBufferHighlight, hoverHighlight } from './hoverHighlight';
+import { type HoverHighlight, type HoverOverlay, NO_HIGHLIGHT, NO_HOVER, type SubBufferHighlight, hoverHighlight } from './hoverHighlight';
 import { HoverOverlayLayer } from './hoverOverlay';
 import {
     ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, PreviewView, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, previewViews, symmetryCopyGrey, viewShows,
@@ -1026,7 +1026,7 @@ export class WebGPUPreviewRenderer {
                 inView(composite);
                 this.depthPeel.composite(composite, peel);
                 composite.end();
-                if (this.hoverOverlayItem(items)) {
+                if (this.hoverOverlayItems(items).length > 0) {
                     const over = encoder.beginRenderPass({
                         label: "hover overlay (view)",
                         colorAttachments: [{ view: target.colour.createView(), loadOp: "load", storeOp: "store" }],
@@ -1351,26 +1351,28 @@ export class WebGPUPreviewRenderer {
     }
 
     /**
-     * The draw the hover overlay lights, if the frame (or view) draws it: the hovered smooth mesh's
+     * The draws the hover overlays light, those the frame (or view) draws: each lit smooth mesh's
      * first sub-buffer, a mesh not instanced, as drawCore requires.
      */
-    private hoverOverlayItem(items: readonly PreviewDraw[]): PreviewDraw | null {
-        const overlay = this.hover.overlay;
-        if (!overlay) return null;
-        return items.find(item => item.buffer === overlay.buffer && item.index === 0
-            && item.primitive === "triangles" && !item.instanced) ?? null;
+    private hoverOverlayItems(items: readonly PreviewDraw[]): { overlay: HoverOverlay; item: PreviewDraw }[] {
+        return this.hover.overlays.flatMap(overlay => {
+            const item = items.find(d => d.buffer === overlay.buffer && d.index === 0 && d.primitive === "triangles" && !d.instanced);
+            return item ? [{ overlay, item }] : [];
+        });
     }
 
     /**
-     * The smooth mesh hover overlay (hoverOverlay.ts), over what `pass` has drawn, with the mesh's
-     * own Draw blocks (written by its draw this frame): the original, each chunk.
+     * The smooth mesh hover overlays (hoverOverlay.ts), over what `pass` has drawn, each with its
+     * mesh's own Draw blocks (written by its draw this frame): the original, each chunk. All of a
+     * frame's overlays share the hovered point and mask, so one uniform does for them all.
      */
     private drawHoverOverlay(pass: GPURenderPassEncoder, items: readonly PreviewDraw[]): void {
-        const item = this.hoverOverlayItem(items);
-        const sub = item ? this.resources.get(item.buffer)?.[0] : undefined;
-        if (!item || !sub || sub.chunks.length === 0 || !this.hover.overlay) return;
-        const copies = 1 + item.copies.length;
-        this.hoverOverlay.draw(pass, this.hover.overlay, sub.chunks, sub.chunks.map((_, c) => sub.bindGroups[c * copies]));
+        for (const { overlay, item } of this.hoverOverlayItems(items)) {
+            const sub = this.resources.get(item.buffer)?.[0];
+            if (!sub || sub.chunks.length === 0) continue;
+            const copies = 1 + item.copies.length;
+            this.hoverOverlay.draw(pass, overlay, sub.chunks, sub.chunks.map((_, c) => sub.bindGroups[c * copies]));
+        }
     }
 
     private drawGpu(pass: GPURenderPassEncoder, item: PreviewGpuDraw, zoom: number, mode: PassKind = "main"): void {

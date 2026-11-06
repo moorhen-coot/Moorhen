@@ -32,6 +32,9 @@ test("the hover lights sections, instances and smooth meshes as WebGL does", asy
     // Only the nearest surface of a transparent mesh lights, not its back faces too.
     litExactlyThere(r.slabPeeled);
     litExactlyThere(r.slabBlended);
+    // A highlight group lights together; without one, only the mesh hovered.
+    litExactlyThere(r.groupBoth);
+    litExactlyThere(r.noGroupOne);
     // A stale hover lights nothing.
     expect(r.nothingHoveredDiffer).toBe(0);
 });

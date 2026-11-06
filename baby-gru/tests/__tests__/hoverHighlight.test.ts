@@ -34,7 +34,7 @@ const cavity = buffer({ id: "cavity", pick_info: { highlight_whole: true } });
 describe("hover highlight", () => {
     it("lights nothing with nothing hovered", () => {
         const h = hoverHighlight(source(-1, -1), [ribbon]);
-        expect(h.overlay).toBeNull();
+        expect(h.overlays).toEqual([]);
         expect(h.forBuffer(ribbon)).toEqual(NO_HIGHLIGHT);
     });
 
@@ -61,26 +61,39 @@ describe("hover highlight", () => {
     });
 
     it("gives a smooth mesh's overlay its point's owner code and the level's mask", () => {
-        const one = hoverHighlight(source(0, 1), [surface]).overlay;
+        const one = hoverHighlight(source(0, 1), [surface]).overlays[0];
         expect(one).toMatchObject({ buffer: surface, point: 0x00020006, mask: LEVEL_OWNER_MASKS[0] >>> 0, whole: false, influence });
-        expect(hoverHighlight(source(0, 1, { pickLevel: 1 }), [surface]).overlay?.mask).toBe(LEVEL_OWNER_MASKS[1] >>> 0);
+        expect(hoverHighlight(source(0, 1, { pickLevel: 1 }), [surface]).overlays[0]?.mask).toBe(LEVEL_OWNER_MASKS[1] >>> 0);
         // Without codes, the point's index, compared whole.
-        expect(hoverHighlight(source(0, 3), [metaballs]).overlay).toMatchObject({ point: 3, mask: WHOLE_MESH, influence });
+        expect(hoverHighlight(source(0, 3), [metaballs]).overlays[0]).toMatchObject({ point: 3, mask: WHOLE_MESH, influence });
         // A cavity lights whole, without lists.
-        expect(hoverHighlight(source(0, 0), [cavity]).overlay).toMatchObject({ point: WHOLE_MESH, mask: WHOLE_MESH, whole: true, influence: null });
+        expect(hoverHighlight(source(0, 0), [cavity]).overlays[0]).toMatchObject({ point: WHOLE_MESH, mask: WHOLE_MESH, whole: true, influence: null });
     });
 
     it("lights a smooth mesh the sequence viewer names, by its section as the point", () => {
-        const overlay = hoverHighlight(source(-1, -1, { section: { bufferId: "surface", section: 0 } }), [ribbon, surface]).overlay;
+        const overlay = hoverHighlight(source(-1, -1, { section: { bufferId: "surface", section: 0 } }), [ribbon, surface]).overlays[0];
         expect(overlay).toMatchObject({ buffer: surface, point: 0x00020005 });
         // Not a cavity (no lists), and not when the pointer is on something.
-        expect(hoverHighlight(source(-1, -1, { section: { bufferId: "cavity", section: 0 } }), [cavity]).overlay).toBeNull();
-        expect(hoverHighlight(source(0, 1, { section: { bufferId: "surface", section: 0 } }), [ribbon, surface]).overlay).toBeNull();
+        expect(hoverHighlight(source(-1, -1, { section: { bufferId: "cavity", section: 0 } }), [cavity]).overlays).toEqual([]);
+        expect(hoverHighlight(source(0, 1, { section: { bufferId: "surface", section: 0 } }), [ribbon, surface]).overlays).toEqual([]);
     });
 
     it("finds nothing for a stale index, or a buffer whose first sub-buffer is not triangles", () => {
-        expect(hoverHighlight(source(4, 0), [surface]).overlay).toBeNull();
+        expect(hoverHighlight(source(4, 0), [surface]).overlays).toEqual([]);
         const lines = buffer({ bufferTypes: ["LINES"], pick_info: { influence } });
-        expect(hoverHighlight(source(0, 0), [lines]).overlay).toBeNull();
+        expect(hoverHighlight(source(0, 0), [lines]).overlays).toEqual([]);
+    });
+
+    it("lights a mesh's highlight group with it, by the hovered code", () => {
+        const backbone = buffer({ id: "backbone", pick_info: { owner_codes: new Uint32Array([7, 8]), influence, highlight_group: "g" } });
+        const bases = buffer({ id: "bases", pick_info: { owner_codes: new Uint32Array([8]), influence, highlight_group: "g" } });
+        const hidden = buffer({ id: "hidden", visible: false, pick_info: { influence, highlight_group: "g" } });
+        const other = buffer({ id: "other", pick_info: { influence, highlight_group: "h" } });
+        const overlays = hoverHighlight(source(1, 0), [backbone, bases, hidden, other]).overlays;
+        // Hovered first, then its visible siblings, all with the hovered mesh's code.
+        expect(overlays.map(o => o.buffer)).toEqual([bases, backbone]);
+        expect(overlays.map(o => o.point)).toEqual([8, 8]);
+        // No group, no siblings.
+        expect(hoverHighlight(source(0, 0), [surface, backbone]).overlays.map(o => o.buffer)).toEqual([surface]);
     });
 });

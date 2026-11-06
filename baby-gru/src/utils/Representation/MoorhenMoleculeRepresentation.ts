@@ -15,7 +15,8 @@ import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInS
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { wholeMeshPickInfo } from "../../WebGLgComponents/wholeMeshPick";
-import { ownedMeshPickInfo } from "../../WebGLgComponents/ownedMeshPick";
+import { type OwnerNumbering, newOwnerNumbering, ownedMeshPickInfo } from "../../WebGLgComponents/ownedMeshPick";
+import { reassignNucleotideOwners } from "../../WebGLgComponents/nucleotideOwners";
 import {
     METABALLS_GRID_SIZE, METABALLS_ISO_LEVEL, METABALLS_RADIUS, METABALLS_SPHERE_ARGS,
     gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
@@ -1460,7 +1461,7 @@ export class MoleculeRepresentation {
      * @param {string} cidSelection - The CID selection for this representation
      * @returns {libcootApi.InstancedMeshJS[]} The buffer objects for this representation
      */
-    async getNucleotideRepresentationBuffers(cidSelection: string): Promise<PickableMesh[]> {
+    async getNucleotideRepresentationBuffers(cidSelection: string, numbering?: OwnerNumbering): Promise<PickableMesh[]> {
         const style = this.useDefaultM2tParams
             ? this.parentMolecule.defaultM2tParams.nucleotideRibbonStyle
             : this.m2tParams.nucleotideRibbonStyle;
@@ -1534,7 +1535,7 @@ export class MoleculeRepresentation {
         const pick_info = ownedMeshPickInfo(
             nucleotideMesh.vert_tri?.[0]?.[0] ?? [], nucleotideMesh.vertex_owners,
             nucleotideMesh.owners, nucleotideMesh.vertex_owners_other,
-            nucleotideMesh.vertex_owner_weights)
+            nucleotideMesh.vertex_owner_weights, numbering)
         // TEMPORARY: is the geometry arriving at all? Remove once the dishy bases are sorted.
         console.log(`Nucleotide mesh, style "${style}": `
             + `${(nucleotideMesh.vert_tri?.[0]?.[0]?.length ?? 0) / 3} vertices, `
@@ -1588,13 +1589,29 @@ export class MoleculeRepresentation {
         if (this.meshFailedToBuild(m2tMesh)) {
             return [];
         }
+        // A nucleic acid ribbon comes as two meshes (below), which light together when either
+        // is hovered (highlightGroup.ts): numbered from one table, so their owner codes agree,
+        // and in one highlight group.
+        const withBases = m2tStyle === "Ribbon" && this.parentMolecule.hasDNA;
+        const numbering = newOwnerNumbering();
+        const highlightGroup = withBases ? `ribbon-and-bases-${guid()}` : null;
+        // Coot gives a nucleotide the stretch of ribbon centred on its C3', which hands each
+        // phosphate to the residue before it; nucleotideOwners.ts moves the boundaries to the
+        // O3'-P links. Until Coot does that itself.
+        const ribbonOwners = withBases && m2tMesh.vertex_owners && m2tMesh.owners
+            ? reassignNucleotideOwners(m2tMesh.vert_tri?.[0]?.[0] ?? [], m2tMesh.vertex_owners, m2tMesh.owners,
+                await this.parentMolecule.gemmiAtomsForCid("/*/*/*/*"))
+            : m2tMesh.vertex_owners
         const meshPickInfo = ownedMeshPickInfo(
-            m2tMesh.vert_tri?.[0]?.[0] ?? [], m2tMesh.vertex_owners, m2tMesh.owners,
-            m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights)
-        const ribbonBufferObjects = [{ ...withoutOwnershipArrays(m2tMesh), pick_info: meshPickInfo ?? {} }];
+            m2tMesh.vert_tri?.[0]?.[0] ?? [], ribbonOwners as Uint32Array | number[] | undefined, m2tMesh.owners,
+            m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights, numbering)
+        const ribbonBufferObjects = [{
+            ...withoutOwnershipArrays(m2tMesh),
+            pick_info: meshPickInfo ? { ...meshPickInfo, highlight_group: highlightGroup } : {},
+        }];
 
         let resultBufferObjects: PickableMesh[];
-        if (m2tStyle === "Ribbon" && this.parentMolecule.hasDNA) {
+        if (withBases) {
             // Kept as two buffers rather than merged into one.
             //
             // Pick information is per buffer and describes that buffer's own vertices, so
@@ -1614,7 +1631,10 @@ export class MoleculeRepresentation {
             // this keeps the draw order unchanged from before the split - buffers are drawn in
             // the order given here, and coincident geometry is decided by depth on LESS, so
             // the order is not free in general even if nothing is known to depend on it.
-            const nucleotideBufferObjects = await this.getNucleotideRepresentationBuffers(m2tSelection);
+            const nucleotideBufferObjects = (await this.getNucleotideRepresentationBuffers(m2tSelection, numbering))
+                .map(object => Object.keys(object.pick_info ?? {}).length > 0
+                    ? { ...object, pick_info: { ...object.pick_info, highlight_group: highlightGroup } }
+                    : object);
             resultBufferObjects = [...nucleotideBufferObjects, ...ribbonBufferObjects];
         } else {
             resultBufferObjects = ribbonBufferObjects;
