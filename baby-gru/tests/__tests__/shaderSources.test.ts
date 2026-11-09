@@ -47,8 +47,9 @@ describe("shader sources", () => {
             expect(source).not.toMatch(/undefined/);
 
             // GL ES 3.0 shaders must declare their version first; the WebGL1 ones have no
-            // version line at all, so only the webgl-2 directory is held to it.
-            if (dir.endsWith("webgl-2") && !exportName.includes("fxaa")) {
+            // version line at all, so only the webgl-2 directory is held to it. Not the pieces
+            // other shaders are put together from (FXAA, *_snippet), which have none of their own.
+            if (dir.endsWith("webgl-2") && !exportName.includes("fxaa") && !exportName.endsWith("_snippet")) {
                 expect(source.startsWith("#version 300 es")).toBe(true);
             }
 

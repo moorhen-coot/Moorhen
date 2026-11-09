@@ -1,18 +1,22 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
-import { slabNearFar, viewportAspect, focalPlaneDepth, perspectiveScale, PERSPECTIVE_FOV} from './projection';
+import { slabNearFar, focalPlaneDepth, baseProjection, zoomScaleFor, CameraFrame, viewProjection } from './projection';
+import { gatherTextOverlays } from './overlays';
+import type { ExternalRenderer } from '../externalRenderer';
 import * as mat3 from 'gl-matrix/mat3';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 import { advanceCamera } from './cameraAnimations';
+import { isInvisible, shouldCastShadow } from '../objectFade';
 import { beginDepthOnlyPass } from '../shadowPass';
 import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
 import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
 import { ensureDepthPeelResolveBuffer, resolveDepthPeelResolveBuffer } from './framebuffers';
 import { fitShadowFrustum, lightAxes, radiusAbout, softShadowRegion } from '../shadowFrustum';
+import { anaglyphChannels } from '../anaglyph';
 
 /** A bounding box over the shadow casters, with the diagonal the rest of the renderer calls the atom span. */
 interface ShadowCasterBounds {
@@ -92,7 +96,9 @@ function shadowCasterBounds(self: MGWebGL, displayBuffers: any[]): ShadowCasterB
  *   4  glTF base colour.
  *   5  OPAQUE_DEPTH_TEXTURE_UNIT.
  *   6  SHADOW_TEXTURE_UNIT.
- *   7-9 the G-buffer attachments during the SSAO pass.
+ *   7-9 the G-buffer attachments during the SSAO pass, and the hover influence textures.
+ *  10  glTF normal map (NORMAL_MAP_TEXTURE_UNIT).
+ *  11  glTF metallic-roughness map (METALLIC_ROUGHNESS_TEXTURE_UNIT).
  */
 
 /**
@@ -108,6 +114,75 @@ function shadowCasterBounds(self: MGWebGL, displayBuffers: any[]): ShadowCasterB
  * and was fine the rest of the time. Hence the table above.
  */
 const SHADOW_TEXTURE_UNIT = 6;
+
+/** Where a mesh's glTF normal map is read from. */
+const NORMAL_MAP_TEXTURE_UNIT = 10;
+
+/** Where a mesh's glTF metallic-roughness map is read from. */
+const METALLIC_ROUGHNESS_TEXTURE_UNIT = 11;
+
+/**
+ * Everything a program built from the triangle fragment shader has to be told, per draw.
+ *
+ * ONE PLACE, BECAUSE THE LIST KEEPS GROWING AND THE PROGRAMS ARE NOT OBVIOUS
+ *
+ * `mgWebGL.initShaders` pairs that one fragment shader with three different vertex shaders, so it
+ * backs six programs: the triangle pair, the instanced pair, **and the thick-lines-normal pair**.
+ * Nothing in the shader source says so - you have to read the `init*Shaders(vertexShader,
+ * fragmentShader, gl)` call sites to find out - and the lines programs are the ones everybody
+ * forgets, because "lines" does not sound like something drawn with the triangle shader. (It is:
+ * lines are triangles here, for thickness.)
+ *
+ * Both uniforms below have now gone missing on the lines program once each, in separate pieces of
+ * work, and both times the result was that lit lines vanished completely while everything else
+ * looked perfect:
+ *
+ *   - `alphaMultiplier` unwritten is **0.0**, so every fragment's alpha is multiplied by zero.
+ *   - `ShadowMap` unassigned is unit **0**, and unit 0 holds ordinary colour textures. A
+ *     `sampler2DShadow` sharing a unit with a `sampler2D` fails draw-time validation outright -
+ *     "Two textures of different types use the same sampler location" - and every draw in the
+ *     frame is discarded. It was only ever safe before because `ShadowMap` was a plain
+ *     `sampler2D` like its neighbours.
+ *
+ * Neither failure resembles a uniform from the outside, and neither is logged anywhere obvious.
+ * So the rule is mechanical: if you draw with a program built from the triangle fragment shader,
+ * call this immediately after `useProgram`, and if you add a uniform to that shader, add it here.
+ *
+ * @param program must already be the current program; these are uniform writes.
+ */
+function setTriangleFragmentUniforms(self: MGWebGL, program: any, alphaMultiplier: number): void {
+    if (program.ShadowMap != null) {
+        self.gl.uniform1i(program.ShadowMap, SHADOW_TEXTURE_UNIT);
+    }
+    if (program.alphaMultiplier != null) {
+        self.gl.uniform1f(program.alphaMultiplier, alphaMultiplier);
+    }
+    // Their own units whether or not anything is bound there, so that an unassigned sampler
+    // never lands on unit 0 alongside whatever that holds. The flags that say whether to sample
+    // them are set per sub-buffer, in the triangle loop.
+    if (program.normalTexture != null) {
+        self.gl.uniform1i(program.normalTexture, NORMAL_MAP_TEXTURE_UNIT);
+    }
+    if (program.metallicRoughnessTexture != null) {
+        self.gl.uniform1i(program.metallicRoughnessTexture, METALLIC_ROUGHNESS_TEXTURE_UNIT);
+    }
+}
+
+/**
+ * Bind one of a mesh's textures (a base colour, a normal map, a metallic-roughness map) to its
+ * unit and point its sampler there, leaving that unit active. False, and nothing bound, when the
+ * mesh has no such texture, the program no such sampler, or the id does not resolve - which callers
+ * treat as "draw without it".
+ */
+function bindSurfaceMap(self: MGWebGL, id: string | undefined, unit: number, sampler: WebGLUniformLocation | null): boolean {
+    if (!id || sampler == null) return false;
+    const texture = glTextureFor(self.gl, id);
+    if (!texture) return false;
+    self.gl.uniform1i(sampler, unit);
+    self.gl.activeTexture(self.gl.TEXTURE0 + unit);
+    self.gl.bindTexture(self.gl.TEXTURE_2D, texture);
+    return true;
+}
 
 /** Where the previous peel layer's depth is read from. */
 const DEPTH_PEEL_TEXTURE_UNIT = 3;
@@ -154,14 +229,8 @@ function shadowComparisonSampler(self: MGWebGL): WebGLSampler | null {
  * `excess += 150; // ?? It works.` was compensating for.
  */
 function projectionZoomScale(self: MGWebGL, ratio: number): number {
-    if (self.doPerspectiveProjection) {
-        let perspMult = 1.0;
-        if (self.renderToTexture && self.gl.viewportWidth > self.gl.viewportHeight) {
-            perspMult = 1.0 / ratio;
-        }
-        return perspMult * perspectiveScale(self.fogClipOffset) / self.zoom;
-    }
-    return 1.0 / self.zoom;
+    // The same number GLrender scales pMatrix by (zoomScaleFor(frame)), from the same frame.
+    return zoomScaleFor(cameraFrame(self, ratio));
 }
 
 /**
@@ -409,6 +478,14 @@ export function drawPeel(self: MGWebGL, theShaders,doClear=true,ratioMult=1.0){
                     // edges off wherever the resolved depth sample happened to be background, and
                     // no FXAA on top of real multisampling.
                     self.gl.uniform1i(theShader.resolvedLayer, (msaaOpaque && ipeel === 0) ? 1 : 0);
+                    // FXAA only where the layer is dense enough for its neighbourhood taps to
+                    // land on geometry. With the opaque scene drawn into layer 0 of its own,
+                    // layers 1 upwards hold nothing but transparent surfaces surrounded by the
+                    // colour they were cleared to - and filtering those averages the background
+                    // into every silhouette. Without separateOpaque each layer still holds the
+                    // whole scene, which is the arrangement FXAA was added for, so it stays on.
+                    const sparseTransparentLayer = separateOpaque && ipeel > 0;
+                    self.gl.uniform1i(theShader.filterEdges, sparseTransparentLayer ? 0 : 1);
                     if (self.ext) {
                         self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
                     } else {
@@ -501,18 +578,24 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             if (!displayBuffers[idx].visible) {
                 continue;
             }
-            if(self.doStenciling){
-                if(self.stencilPass&&!displayBuffers[idx].doStencil){
-                    continue;
-                }
-                if(self.stenciling&&!displayBuffers[idx].doStencil){
-                    continue;
-                }
-                if (!self.stenciling&&displayBuffers[idx].doStencil){
-                    continue;
-                }
-            }
 
+            // What a fade has done to this buffer. Two separate decisions, both cheap, and both
+            // wrong in a visible way if skipped - see objectFade.
+            //
+            // Faded to nothing: drawing it costs a full pass through the vertex shader, the
+            // rasteriser and a peeling layer to contribute no pixels at all. A movie that fades
+            // four molecules out should get faster, not carry their cost to the end.
+            //
+            // Faded at all: it stops casting a shadow. An object that has half vanished while its
+            // shadow stays solid on the floor is the most obvious way to make a fade look wrong.
+            const bufferFade = displayBuffers[idx].alphaMultiplier ?? 1.0;
+            if (isInvisible(bufferFade)) {
+                continue;
+            }
+            if (calculatingShadowMap
+                && !shouldCastShadow(true, bufferFade, displayBuffers[idx].transparent)) {
+                continue;
+            }
             if(self.doMultiView&&displayBuffers[idx].origin&&displayBuffers[idx].origin.length===3){
                 if(Object.hasOwn(displayBuffers[idx], "isHoverBuffer")&&!displayBuffers[idx].isHoverBuffer){
                     if(displayBuffers[idx].multiViewGroup!==self.currentMultiViewGroup){
@@ -542,10 +625,18 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             // layer, which is what used to happen, meant the opaque geometry - most of the
             // triangles in a molecule with a map contoured around it - was rendered once per
             // layer for a result that was identical each time.
-            const isTransparent = displayBuffers[idx].transparent && !self.drawingGBuffers
-                                  && !displayBuffers[idx].isHoverBuffer;
-            // A hover ball is see-through on purpose - its colour is [1, 0.5, 0, 0.35] - but it
-            // is not transparent geometry in the sense this skip means.
+            //
+            // Hover balls go with the transparent geometry here. They are see-through on purpose -
+            // [1, 0.5, 0, 0.35] - and the peel layers draw with blending off, keeping each
+            // fragment's alpha for the composite to blend. Routed to the opaque layer, as they
+            // used to be, a ball overwrote whatever was behind it and was then blended at 35% over
+            // the bare background instead of over the scene: orange on white, which is the washed-
+            // out cream balls seen whenever anything else in the scene was transparent. Behind a
+            // transparent surface it was hidden by that surface's layer, which is why only balls
+            // in front of one looked wrong.
+            const isTransparent = displayBuffers[idx].transparent && !self.drawingGBuffers;
+            // The skip below is a different question, and there a hover ball is exempt: it is not
+            // transparent geometry in the sense this skip means.
             //
             // THE REGRESSION THIS FIXES
             //
@@ -561,8 +652,8 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             //
             // Hover buffers are the only casualty, which is why exempting them is the whole fix:
             // any other transparent buffer makes doPeel true by its own existence, so it is never
-            // reached by this skip. The exemption also puts this line in step with the two places
-            // that already make it - the doPeel scan, and isTransparent just above.
+            // reached by this skip. The exemption also puts this line in step with the doPeel scan,
+            // which makes it too. isTransparent above deliberately does not: see there.
             if (displayBuffers[idx].transparent && !self.drawingGBuffers
                 && !displayBuffers[idx].isHoverBuffer) {
                 if(!self.doPeel)
@@ -583,7 +674,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 let theShader;
-                let scaleZ = false;
 
                 if(displayBuffers[idx].triangleInstanceOriginBuffer[j]){
                     if(self.drawingGBuffers){
@@ -592,8 +682,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         theShader = self.shaderProgramInstanced;
                         if (calculatingShadowMap)
                             theShader = self.shaderProgramInstancedShadow;
-                        if(self.stencilPass)
-                            theShader = self.shaderProgramInstancedOutline;
                     }
                 } else {
                     if(self.drawingGBuffers){
@@ -602,14 +690,11 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         theShader = self.shaderProgram;
                         if (calculatingShadowMap)
                             theShader = self.shaderProgramShadow;
-                        if(self.stencilPass){
-                            theShader = self.shaderProgramOutline;
-                            scaleZ = true;
-                        }
                     }
                 }
 
                 self.gl.useProgram(theShader);
+                setTriangleFragmentUniforms(self, theShader, bufferFade);
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
 
@@ -685,16 +770,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.uniform1i(theShader.doShadows, false);
-                // The shadow sampler's unit, set whether or not shadows are being drawn.
-                //
-                // A sampler uniform that is never assigned reads as unit 0, and unit 0 carries
-                // ordinary colour textures. ShadowMap is a sampler2DShadow, and a shadow sampler
-                // sharing a unit with a plain sampler2D fails draw-time validation outright:
-                // "Two textures of different types use the same sampler location". Every draw is
-                // then discarded and nothing appears at all. It only used to be safe because
-                // ShadowMap was a sampler2D like its neighbours.
-                if(theShader.ShadowMap != null)
-                    self.gl.uniform1i(theShader.ShadowMap, SHADOW_TEXTURE_UNIT);
+                // ShadowMap's unit is set by setTriangleFragmentUniforms above, unconditionally.
                 if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
                     self.gl.uniform1f(theShader.xPixelOffset, 1.0/self.rttFramebufferDepth.width);
                     self.gl.uniform1f(theShader.yPixelOffset, 1.0/self.rttFramebufferDepth.height);
@@ -733,24 +809,25 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     }
                 }
 
-                // This sub-buffer's base colour texture, if it has one, on unit 4.
+                // This sub-buffer's base colour texture, if it has one, on unit 4, and its normal
+                // and metallic-roughness maps on 10 and 11 (the unit table at the top).
                 //
                 // Unit 4 because the whole of this loop assumes 0, 1 and 2 hold the shadow, SSAO
                 // and edge-detect maps, 3 is the depth peel, and 7 to 9 are the hover influence
-                // textures; 4 to 6 are the free ones. In particular unit 0 is bound to the shadow
-                // map once before this loop starts and only the uniform is re-set inside it, so
-                // binding anything there would silently turn shadows into nonsense.
+                // textures. In particular unit 0 is bound to the shadow map once before this loop
+                // starts and only the uniform is re-set inside it, so binding anything there
+                // would silently turn shadows into nonsense.
                 //
                 // Bound per sub-buffer rather than once per frame because the binding does not
                 // survive a frame: the depth-peel passes and the screenshot path both recreate
                 // framebuffers, which leaves textures unbound on whatever unit was current.
                 //
-                // activeTexture is put back to 0 afterwards, and that is not tidiness. The text,
-                // circle and perfect-sphere-outline shaders declare uSampler and never assign it
+                // activeTexture is put back to 0 afterwards, and that is not tidiness. The text
+                // and circle shaders declare uSampler and never assign it
                 // a unit, so they rely on 0 being current; and this loop leaves activeTexture on
                 // unit 9 after a hovered buffer, which is why it is set explicitly here too
                 // rather than assumed.
-                let boundBaseColourTexture: WebGLTexture | null = null;
+                let boundSurfaceTexture = false;
                 if(theShader.hasBaseColourTexture!=null){
                     const material = displayBuffers[idx].materials?.[j];
                     const textureBuffer = displayBuffers[idx].triangleVertexTextureBuffer[j];
@@ -767,24 +844,38 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     const wanted = self.WEBGL2
                         && !calculatingShadowMap
                         && !self.drawingGBuffers
-                        && !self.stencilPass
-                        && !!material?.baseColourTexture
+                        && !!material
                         && !!textureBuffer && textureBuffer.itemSize === 2
                         && theShader.vertexTextureAttribute!=null && theShader.vertexTextureAttribute>-1;
 
-                    if(wanted) boundBaseColourTexture = glTextureFor(self.gl, material.baseColourTexture);
-
-                    if(boundBaseColourTexture){
-                        self.gl.uniform1i(theShader.baseColourTexture, 4);
-                        self.gl.activeTexture(self.gl.TEXTURE4);
-                        self.gl.bindTexture(self.gl.TEXTURE_2D, boundBaseColourTexture);
-                        self.gl.activeTexture(self.gl.TEXTURE0);
-                        self.gl.uniform1i(theShader.hasBaseColourTexture, 1);
-                    } else {
-                        // Set every time, not just when turning it off: this is a uniform on a
-                        // shared program, so a previous sub-buffer's texture would otherwise go
-                        // on being sampled by an untextured one.
-                        self.gl.uniform1i(theShader.hasBaseColourTexture, 0);
+                    // Each map is bound, and its flag set, only if it resolves to a texture. The
+                    // base colour flag is written every time, not just when turning it on: it is a
+                    // uniform on a shared program, so a previous sub-buffer's texture would
+                    // otherwise go on being sampled by an untextured one. The two map flags are
+                    // written only when they change, remembered on the program, since nothing
+                    // else writes them and almost nothing has maps - so the untextured majority
+                    // pays one uniform write a sub-buffer here, as it always has.
+                    const base = wanted && bindSurfaceMap(self, material?.baseColourTexture, 4, theShader.baseColourTexture);
+                    self.gl.uniform1i(theShader.hasBaseColourTexture, base ? 1 : 0);
+                    const normal = wanted
+                        && bindSurfaceMap(self, material?.normalTexture, NORMAL_MAP_TEXTURE_UNIT, theShader.normalTexture);
+                    const metallicRoughness = wanted
+                        && bindSurfaceMap(self, material?.metallicRoughnessTexture, METALLIC_ROUGHNESS_TEXTURE_UNIT, theShader.metallicRoughnessTexture);
+                    if(theShader.hasNormalTexture!=null && theShader._normalMapOn !== normal){
+                        self.gl.uniform1i(theShader.hasNormalTexture, normal ? 1 : 0);
+                        theShader._normalMapOn = normal;
+                    }
+                    if(theShader.hasMetallicRoughnessTexture!=null && theShader._metallicRoughnessOn !== metallicRoughness){
+                        self.gl.uniform1i(theShader.hasMetallicRoughnessTexture, metallicRoughness ? 1 : 0);
+                        theShader._metallicRoughnessOn = metallicRoughness;
+                    }
+                    boundSurfaceTexture = base || normal || metallicRoughness;
+                    if(boundSurfaceTexture) self.gl.activeTexture(self.gl.TEXTURE0);
+                    if(normal && theShader.normalScale!=null){
+                        self.gl.uniform1f(theShader.normalScale, material?.normalScale ?? 1);
+                    }
+                    if(metallicRoughness && theShader.metallicRoughnessFactors!=null){
+                        self.gl.uniform2f(theShader.metallicRoughnessFactors, material?.metallicFactor ?? 1, material?.roughnessFactor ?? 1);
                     }
                 }
 
@@ -808,7 +899,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 // mesh vertex shaders and bound to location 3, and the loop above has just
                 // disabled every array - so leaving it alone gives the shader the generic
                 // attribute value, which is what every untextured mesh has always had.
-                if(boundBaseColourTexture){
+                if(boundSurfaceTexture){
                     self.gl.enableVertexAttribArray(theShader.vertexTextureAttribute);
                     self.gl.bindBuffer(self.gl.ARRAY_BUFFER, displayBuffers[idx].triangleVertexTextureBuffer[j]);
                     self.gl.vertexAttribPointer(theShader.vertexTextureAttribute, 2, self.gl.FLOAT, false, 0, 0);
@@ -816,31 +907,14 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
                 self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
 
-                if(self.stencilPass){
-                    self.gl.disable(self.gl.DEPTH_TEST);
-                    self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                    if(bright_y<0.5)
-                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
-                    else
-                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
-                    const outlineSize = vec3.create();
-                    vec3.set(outlineSize, 0.1, 0.1, 0.0);
-                    if(scaleZ)
-                        vec3.set(outlineSize, 0.1, 0.1, 0.1);
-                    self.gl.uniform3fv(theShader.outlineSize, outlineSize);
-                } else {
-                    if(theShader.vertexColourAttribute>-1){
-                        const outlineSize = vec3.create();
-                        vec3.set(outlineSize, 0.0, 0.0, 0.0);
-                        self.gl.uniform3fv(theShader.outlineSize, outlineSize);
-                        if(displayBuffers[idx].customColour&&displayBuffers[idx].customColour.length==4){
-                            self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                            self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...displayBuffers[idx].customColour)
-                        } else {
-                            self.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
-                            self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
-                            self.gl.vertexAttribPointer(theShader.vertexColourAttribute, triangleColourBuffer[j].itemSize, self.gl.FLOAT, false, 0, 0);
-                        }
+                if(theShader.vertexColourAttribute>-1){
+                    if(displayBuffers[idx].customColour&&displayBuffers[idx].customColour.length==4){
+                        self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...displayBuffers[idx].customColour)
+                    } else {
+                        self.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
+                        self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
+                        self.gl.vertexAttribPointer(theShader.vertexColourAttribute, triangleColourBuffer[j].itemSize, self.gl.FLOAT, false, 0, 0);
                     }
                 }
                 if (bufferTypes[j] === "TRIANGLES") {
@@ -861,16 +935,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         self.gl.uniform4fv(theShader.light_colours_ambient, self.light_colours_ambient);
                     } else {
                         self.gl.uniform3fv(theShader.screenZ, self.screenZ);
-                        if(self.stencilPass && scaleZ){
-                            const outlineSize = vec3.create();
-                            for(let i=0;i<10;i++){
-                                vec3.set(outlineSize, 0.01*i, 0.01*i, 0.01*i);
-                                self.gl.uniform3fv(theShader.outlineSize, outlineSize);
-                                self.drawBuffer(displayBuffers[idx],theShader,j,self.gl.TRIANGLES);
-                            }
-                        } else {
-                            self.drawBuffer(displayBuffers[idx],theShader,j,self.gl.TRIANGLES);
-                        }
+                        self.drawBuffer(displayBuffers[idx],theShader,j,self.gl.TRIANGLES);
                     }
                 } else if (bufferTypes[j] === "TRIANGLE_STRIP") {
                     if (displayBuffers[idx].transformMatrix) {
@@ -879,7 +944,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                         self.drawTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, displayBuffers[idx], self.shaderProgram, self.gl.TRIANGLE_STRIP, j);
                     } else {
                         if (self.ext) {
-                        if(self.doAnaglyphStereo) {
+                        if(self.doAnaglyphStereo && !self.WEBGL2) {
                             self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
                             self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...self.currentAnaglyphColor)
                         }
@@ -905,9 +970,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 if(self.drawingGBuffers){
                     program = self.shaderProgramGBuffersPerfectSpheres;
                 }
-                if(self.stencilPass){
-                    program = self.shaderProgramPerfectSpheresOutline;
-                }
                 mat4.set(invsymt,
                 1.0, 0.0, 0.0, 0.0,
                 0.0, 1.0, 0.0, 0.0,
@@ -915,6 +977,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 0.0, 0.0, 0.0, 1.0,
                 );
                 self.gl.useProgram(program);
+                setTriangleFragmentUniforms(self, program, bufferFade);
                 self.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                 self.setMatrixUniforms(program);
                 self.gl.disableVertexAttribArray(program.vertexColourAttribute);
@@ -929,16 +992,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 if(program.offsetAttribute!=null) self.gl.enableVertexAttribArray(program.offsetAttribute);
                 if(program.sizeAttribute!=null) self.gl.enableVertexAttribArray(program.sizeAttribute);
                 if(program.doShadows!=null) self.gl.uniform1i(program.doShadows, false);
-                // The shadow sampler's unit, set whether or not shadows are being drawn.
-                //
-                // A sampler uniform that is never assigned reads as unit 0, and unit 0 carries
-                // ordinary colour textures. ShadowMap is a sampler2DShadow, and a shadow sampler
-                // sharing a unit with a plain sampler2D fails draw-time validation outright:
-                // "Two textures of different types use the same sampler location". Every draw is
-                // then discarded and nothing appears at all. It only used to be safe because
-                // ShadowMap was a sampler2D like its neighbours.
-                if(program.ShadowMap != null)
-                    self.gl.uniform1i(program.ShadowMap, SHADOW_TEXTURE_UNIT);
+                // ShadowMap's unit is set by setTriangleFragmentUniforms above, unconditionally.
                 if(self.doShadow&&!calculatingShadowMap&&!self.drawingGBuffers){
                     self.gl.activeTexture(self.gl.TEXTURE0 + SHADOW_TEXTURE_UNIT);
                     self.gl.bindTexture(self.gl.TEXTURE_2D, self.rttTextureDepth);
@@ -981,17 +1035,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             self.gl.uniform1f(program.ySSAOScaling, 1.0/self.gl.viewportHeight );
                         }
                     }
-                }
-
-                if(self.stencilPass){
-                    self.gl.disable(self.gl.DEPTH_TEST);
-                    const outlineSize = vec3.create();
-                    vec3.set(outlineSize, 0.1, 0.1, 0.0);
-                    self.gl.uniform3fv(program.outlineSize, outlineSize);
-                } else {
-                    const outlineSize = vec3.create();
-                    vec3.set(outlineSize, 0.0, 0.0, 0.0);
-                    if(program.outlineSize!=null) self.gl.uniform3fv(program.outlineSize, outlineSize);
                 }
 
                 for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
@@ -1045,13 +1088,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             self.gl.bindBuffer(self.gl.ARRAY_BUFFER, displayBuffers[idx].triangleColourBuffer[j]);
                             self.gl.vertexAttribPointer(program.vertexColourAttribute, displayBuffers[idx].triangleColourBuffer[j].itemSize, self.gl.FLOAT, false, 0, 0);
                         }
-                        if(self.stencilPass){
-                            self.gl.disableVertexAttribArray(program.vertexColourAttribute);
-                            if(bright_y<0.5)
-                                self.gl.vertexAttrib4f(program.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
-                            else
-                                self.gl.vertexAttrib4f(program.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
-                        }
                         if (self.WEBGL2) {
                             if(program.vertexColourAttribute!=null) self.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
                             self.gl.vertexAttribDivisor(program.sizeAttribute, 1);
@@ -1061,11 +1097,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                                 self.gl.vertexAttribDivisor(program.sizeAttribute, 0);
                                 const adjustedHoverSize = hoverSize + 0.4;
                                 self.gl.vertexAttrib3f(program.sizeAttribute, adjustedHoverSize, adjustedHoverSize, adjustedHoverSize, 1.0);
-                            }
-                            if(self.doAnaglyphStereo) {
-                                self.gl.disableVertexAttribArray(program.vertexColourAttribute);
-                                self.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
-                                self.gl.vertexAttrib4f(program.vertexColourAttribute, ...self.currentAnaglyphColor)
                             }
                             self.gl.drawElementsInstanced(self.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, self.gl.UNSIGNED_INT, 0, displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                             if(program.vertexColourAttribute!=null) self.gl.vertexAttribDivisor(program.vertexColourAttribute, 0);
@@ -1111,11 +1142,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
                                 applySymmetryMatrix(self, program,displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix,false)
                                     if (self.WEBGL2) {
-                                        if(self.doAnaglyphStereo) {
-                                            self.gl.disableVertexAttribArray(program.vertexColourAttribute);
-                                            self.gl.vertexAttribDivisor(program.vertexColourAttribute,0);
-                                            self.gl.vertexAttrib4f(program.vertexColourAttribute, ...self.currentAnaglyphColor)
-                                        }
                                         self.gl.drawElementsInstanced(self.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, self.gl.UNSIGNED_INT, 0, displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                                     } else {
                                         self.instanced_ext.drawElementsInstancedANGLE(self.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, self.gl.UNSIGNED_INT, 0, displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
@@ -1154,6 +1180,10 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
             for(let i = 0; i<16; i++)
                 self.gl.disableVertexAttribArray(i);
+
+            // Lit lines are drawn with the triangle fragment shader, so they need everything a
+            // triangle needs. This line has now had to be restored twice; see the helper.
+            setTriangleFragmentUniforms(self, shaderProgramThickLinesNormal, bufferFade);
 
             self.gl.uniform1i(shaderProgramThickLinesNormal.shinyBack, true);
             self.setLightUniforms(shaderProgramThickLinesNormal);
@@ -1233,10 +1263,6 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 continue;
             }
 
-            if(self.stencilPass){
-                continue;
-            }
-
             if (calculatingShadowMap)
                 continue; //Nothing else implemented
             //Cylinders here
@@ -1299,9 +1325,8 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             self.drawTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, self.gl.TRIANGLES, j);
                         } else {
                             if (self.ext) {
-                                if(self.doAnaglyphStereo) {
+                                if(self.doAnaglyphStereo && !self.WEBGL2) {
                                     self.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
-                                    self.gl.vertexAttribDivisor(sphereProgram.vertexColourAttribute,0);
                                     self.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, ...self.currentAnaglyphColor)
                                 }
                                 self.drawMaxElementsUInt(self.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems);
@@ -1324,9 +1349,8 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             self.drawTransformMatrixInteractive(displayBuffers[idx].transformMatrixInteractive, displayBuffers[idx].transformOriginInteractive, buffer, sphereProgram, self.gl.TRIANGLES, j);
                         } else {
                             if (self.ext) {
-                                if(self.doAnaglyphStereo) {
+                                if(self.doAnaglyphStereo && !self.WEBGL2) {
                                     self.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
-                                    self.gl.vertexAttribDivisor(sphereProgram.vertexColourAttribute,0);
                                     self.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, ...self.currentAnaglyphColor)
                                 }
                                 self.drawMaxElementsUInt(self.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems);
@@ -1495,7 +1519,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         // transparent the whole scene switches to depth peeling, and the peel passes are then the
         // only place the geometry is drawn at all, so skipping them would lose the highlight
         // entirely. What it must not do is inherit their blend state - see below.
-        const drawingVisibleImage = !calculatingShadowMap && !self.drawingGBuffers && !self.stencilPass
+        const drawingVisibleImage = !calculatingShadowMap && !self.drawingGBuffers
 
         // hoveridx is an index into displayBuffers, and that array is rebuilt whenever buffers are
         // added or removed, so the index can outlive the buffer it referred to. Fetched once,
@@ -1649,7 +1673,79 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         }
     }
 
+/**
+ * A frame drawn by another renderer (MGWebGL.externalRenderer: the WebGPU main view), with
+ * everything drawScene does for a frame that is not WebGL drawing, so that the rest of Moorhen
+ * finds the frame it expects: the camera advanced; the matrices GLrender would have left, which
+ * picking (unProject) and the overlays read; picking's grain; the 2D overlay's quaternion; the
+ * overlay text's glyph atlas (which the other renderer draws from); and the FPS meter's timings.
+ *
+ * A divided canvas (three ways, stereo side by side or crossed, multiple views) as drawScene
+ * leaves it too: its layout kept current (getMultiViewInfo: multiple views get a cell a group);
+ * the overlay text gathered for the first view, where it is drawn; and the projection and
+ * viewport of the last view drawn, which picking reads with getThreeWayMatrixAndViewPort.
+ */
+function drawExternalFrame(self: MGWebGL, external: ExternalRenderer): void {
+        advanceCamera(self)
+
+        const width = self.gl.viewportWidth;
+        const height = self.gl.viewportHeight;
+        self.currentViewport = [0, 0, width, height];
+        const { projection, view } = viewProjection(cameraFrame(self, width / height));
+        self.pMatrix = projection;
+        self.mvMatrix = view;
+        const invQuat = quat4.create();
+        quat4Inverse(self.myQuat, invQuat);
+        const invMat = quatToMat4(invQuat);
+        self.mvInvMatrix = invMat;
+        vec3.set(self.screenZ, 0.0, 0.0, 1.0);
+        vec3.transformMat4(self.screenZ, self.screenZ, invMat);
+        // drawTriangles keeps this current for WebGL frames.
+        self.pickLevel = levelForHeight(visibleHeight(self.zoom), self.pickLevel)
+
+        // A copy, every frame, as WebGL's frames give one. The 2D overlay redraws - the axes, and the
+        // scale bar from the store's zoom - only when the quaternion it is handed changes by
+        // reference, and the camera's does not change on a zoom. WebGL's frames hand it a new one
+        // without saying so: GLrender replaces myQuat with a clone whenever it sets up the
+        // projection. Passing the camera's own here left the axes and scale bar still while WebGPU drew.
+        self.props.setDrawQuat(quat4.clone(self.myQuat))
+
+        const divided = self.doMultiView || self.doThreeWayView || self.doSideBySideStereo || self.doCrossEyedStereo;
+        const layout = divided ? getMultiViewInfo(self) : null;
+        const viewports = layout?.viewports ?? [];
+        if (layout && viewports.length > 0 && !(self.doMultiView && layout.multiViewGroupsKeys.length === 0)) {
+            const firstQuat = quat4.clone(self.myQuat);
+            quat4.multiply(firstQuat, firstQuat, layout.quats[0]);
+            const firstInverse = quat4.create();
+            quat4Inverse(firstQuat, firstInverse);
+            gatherTextOverlays(self, quatToMat4(firstInverse), layout.ratioMult, Math.sqrt(height / viewports[0][3]));
+            self.currentViewport = viewports[viewports.length - 1];
+            self.pMatrix = viewProjection(cameraFrame(self, width / height * layout.ratioMult)).projection;
+        } else {
+            gatherTextOverlays(self, invMat);
+        }
+
+        external.draw();
+
+        if(self.showFPS){
+            self.nFrames += 1;
+            const thisTime = performance.now();
+            const mspf = thisTime - self.prevTime;
+            self.mspfArray.push(mspf);
+            if(self.mspfArray.length>200) self.mspfArray.shift();
+            self.prevTime = thisTime;
+        }
+}
+
 export function drawScene(self: MGWebGL) : void {
+
+        // Another renderer drawing the main view takes the frame, unless it is one read back from
+        // the WebGL canvas (a screenshot, save_pixel_data) or one it declines. See externalRenderer.ts.
+        const external = self.externalRenderer;
+        if (external && !self.renderToTexture && !self.save_pixel_data && external.willDraw()) {
+            drawExternalFrame(self, external);
+            return;
+        }
 
         // Only read when the counters are installed, so an uninstrumented frame pays for one
         // branch and nothing else.
@@ -1682,28 +1778,27 @@ export function drawScene(self: MGWebGL) : void {
             console.log(self.myQuat)
         }
 
-        // A copy, and only when it has actually changed.
+        // Not while the camera is being driven. This used to test `animating`, which meant "a
+        // centring move is running" and so missed a movie entirely - the movie code had to set the flag
+        // by hand to get the same effect. `moving` is the condition that was always meant: a move
+        // or a movie is in flight, and the store will hear about it when the camera comes to rest.
         //
-        // The copy is needed because onQuatChanged dispatches into Redux, which freezes what it is
-        // given, while the camera writes this array in place on every frame of every move. But a
-        // fresh array every frame is a fresh *reference* every frame, so every selector reading
-        // the stored quaternion re-renders - MoorhenWebMG, the scene sliders, the 3D objects
-        // dialog - sixty times a second during a drag. This previously passed the live array,
-        // which Redux saw as unchanged and which therefore cost nothing; the copy fixed the
-        // freezing and paid for it in re-renders.
+        // The store's copy of the orientation is not sent from here any more.
         //
-        // Comparing against what the store already holds gets both: the store is never handed an
-        // array the renderer will mutate, and it is only handed one when the view has really
-        // turned. A drag dispatches once per distinct orientation, which is what it did before.
+        // It used to be, once per drawn frame, and that was expensive in a way that did not show
+        // up until recently: Redux freezes what it is given while the camera writes this array in
+        // place, so the dispatch had to send a *copy* - and a fresh array every frame is a fresh
+        // reference every frame, so every selector reading the stored quaternion re-rendered sixty
+        // times a second throughout a drag. MoorhenWebMG, the scene sliders and the 3D objects
+        // dialog all read it.
         //
-        // setDrawQuat is React state rather than Redux, does not freeze, and is deliberately given
-        // the live array so that a rotation does not re-render the 2D overlay either.
-        if(!self.animating){
-            const stored = self.store.getState().glRef.quat
-            const turned = !stored || [0,1,2,3].some(
-                i => !(Math.abs(self.myQuat[i] - stored[i]) < 1e-9))
-            if(turned) self.props.onQuatChanged([self.myQuat[0], self.myQuat[1], self.myQuat[2], self.myQuat[3]])
-        }
+        // echoViewToStore now sends it, from the camera's own subscription, and only when the
+        // value has actually changed. That fires when the camera is turned, set, released or
+        // arrives - never per frame of a move, which is the same restraint the `!moving` guard
+        // here was expressing. One echo, in one place, for every way of moving the camera.
+        //
+        // setDrawQuat stays: it is React state rather than Redux, does not freeze, and is
+        // deliberately given the live array so that a rotation does not re-render the 2D overlay.
         self.props.setDrawQuat(self.myQuat)
 
         // Decided here, before theShaders is built, because the shader variant chosen below
@@ -1797,8 +1892,7 @@ export function drawScene(self: MGWebGL) : void {
                     if(self.doMultiView){
                         if(multiViewGroupsKeys.length>0){
                             self.currentMultiViewGroup = parseInt(multiViewGroupsKeys[i])
-                            if(i<multiViewOrigins.length&& multiViewOrigins[i]&& multiViewOrigins[i].length===3)
-                                self.origin = multiViewOrigins[i]
+                            self.origin = groupOrigin(multiViewOrigins, self.currentMultiViewGroup, origOrigin)
                         } else {
                             continue
                         }
@@ -2057,59 +2151,9 @@ export function drawScene(self: MGWebGL) : void {
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
         }
 
-        self.stencilPass = false;
-
         let invMat;
 
-        self.renderSilhouettesToTexture = false;
-
-        if(self.doStenciling){
-            //Framebuffer way
-            self.renderSilhouettesToTexture = true;
-            self.stenciling = false;
-            invMat = GLrender(self, false);
-            self.gl.clear(self.gl.COLOR_BUFFER_BIT);
-            self.stenciling = true;
-            invMat = GLrender(self, false);
-            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
-            self.renderSilhouettesToTexture = false;
-            self.stenciling = false;
-            invMat = GLrender(self, false);
-
-            self.gl.useProgram(self.shaderProgramOverlay);
-            for(let i = 0; i<16; i++)
-                self.gl.disableVertexAttribArray(i);
-            self.gl.enableVertexAttribArray(self.shaderProgramOverlay.vertexTextureAttribute);
-            self.gl.enableVertexAttribArray(self.shaderProgramOverlay.vertexPositionAttribute);
-
-            self.gl.uniform1i(self.shaderProgramOverlay.inputTexture,0);
-            self.gl.bindTexture(self.gl.TEXTURE_2D, self.silhouetteTexture);
-
-            self.gl.viewport(0, 0, self.gl.viewportWidth, self.gl.viewportHeight);
-
-            const paintMvMatrix = mat4.create();
-            const paintPMatrix = mat4.create();
-            mat4.identity(paintMvMatrix);
-            mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
-
-            self.gl.uniformMatrix4fv(self.shaderProgramOverlay.pMatrixUniform, false, paintPMatrix);
-            self.gl.uniformMatrix4fv(self.shaderProgramOverlay.mvMatrixUniform, false, paintMvMatrix);
-
-            bindFramebufferDrawBuffers(self);
-
-            self.gl.depthFunc(self.gl.ALWAYS);
-            if (self.ext) {
-                self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_INT, 0);
-            } else {
-                self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_SHORT, 0);
-            }
-            self.gl.bindTexture(self.gl.TEXTURE_2D, null)
-            self.gl.depthFunc(self.gl.LESS);
-
-        } else {
-            self.gl.stencilMask(0x00);
-            self.gl.disable(self.gl.STENCIL_TEST);
-            self.gl.enable(self.gl.DEPTH_TEST);
+        self.gl.enable(self.gl.DEPTH_TEST);
                 if(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo){
 
                     const origQuat = quat4.clone(self.myQuat);
@@ -2123,8 +2167,7 @@ export function drawScene(self: MGWebGL) : void {
                         if(self.doMultiView){
                             if(multiViewGroupsKeys.length>0){
                                 self.currentMultiViewGroup = parseInt(multiViewGroupsKeys[i])
-                                if(i<multiViewOrigins.length&& multiViewOrigins[i]&& multiViewOrigins[i].length===3)
-                                    self.origin = multiViewOrigins[i]
+                                self.origin = groupOrigin(multiViewOrigins, self.currentMultiViewGroup, origOrigin)
                             } else {
                                 continue
                             }
@@ -2144,6 +2187,14 @@ export function drawScene(self: MGWebGL) : void {
                         if (self.doPeel) {
                             self.gl.activeTexture(self.gl.TEXTURE0);
                             self.gl.bindTexture(self.gl.TEXTURE_2D, self.textTex);
+                        }
+                        // Labels in every view, over it, as an undivided view has them (depth-tested
+                        // ones GLrender has drawn already). With the view's matrices and viewport, as
+                        // GLrender left them; after a peel, back on the screen in the view's part. Not
+                        // into a peeled screenshot, whose viewport there is the composite's.
+                        if(!self.atomLabelDepthMode && !(self.doPeel && self.renderToTexture)){
+                            if(self.doPeel) self.gl.viewport(self.currentViewport[0], self.currentViewport[1], self.currentViewport[2], self.currentViewport[3]);
+                            self.drawDistancesAndLabels();
                         }
                         if(invMat&&i==0) self.drawTextOverlays(invMat,ratioMult, Math.sqrt(self.gl.viewportHeight /self.currentViewport[3]));
                         if (self.showFPS&&i==0) {
@@ -2169,20 +2220,34 @@ export function drawScene(self: MGWebGL) : void {
                 }
 
             if(self.doAnaglyphStereo){
+                // Each eye grey, written only into its own colour channels (anaglyph.ts), the
+                // second eye depth-tested against nothing of the first: so through each filter one
+                // eye's picture shows on the background. (Before, the eyes were drawn red and green
+                // over each other, the second depth-tested against the first, and where both drew
+                // the nearer won.) The grey is each colour's brightest channel, made in the
+                // shaders before the fog (anaglyphGrey), as WebGPU greys an eye; WebGL1's shaders
+                // have no anaglyphGrey, so there everything is drawn white instead, as before.
                 const origQuat = quat4.clone(self.myQuat);
                 const quats = self.stereoQuats
+                const channels = anaglyphChannels(self.anaglyphColours)
 
+                self.gl.colorMask(true, true, true, true);
+                self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
+                setAnaglyphGrey(self, true);
                 for(let i=0;i<quats.length;i++){
                     const newXQuat = quat4.clone(origQuat);
                     quat4.multiply(newXQuat, newXQuat, quats[i]);
                     self.myQuat = newXQuat
-                    self.currentAnaglyphColor = i===0 ? [1.0,0.0,0.0,1.0] : [0.0,1.0,0.0,1.0]
-                    const doClear = i===0 ? true : false
-                    invMat = GLrender(self, false,doClear);
+                    self.currentAnaglyphColor = [1.0,1.0,1.0,1.0]
+                    const [r, g, b] = i===0 ? channels.left : channels.right
+                    if(i>0) self.gl.clear(self.gl.DEPTH_BUFFER_BIT);
+                    self.gl.colorMask(r, g, b, false);
+                    invMat = GLrender(self, false, false);
                 }
+                self.gl.colorMask(true, true, true, true);
+                setAnaglyphGrey(self, false);
                 self.myQuat = origQuat
             }
-        }
 
         //console.log(self.mvMatrix);
         //console.log(self.mvInvMatrix);
@@ -2437,6 +2502,38 @@ export function bindFramebufferDrawBuffers(self: MGWebGL) {
         self.gl.vertexAttribPointer(self.shaderProgramRenderFrameBuffer.vertexPositionAttribute, 3, self.gl.FLOAT, false, 0, 0);
         self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, self.framebufferDrawIndexesBuffer);
     }
+
+/**
+ * Turn anaglyph stereo's grey (the anaglyphGrey uniform of the scene's fragment shaders) on or off
+ * in every program that has it. The uniform keeps its value, so it is on only between the two
+ * calls round the eyes, and nothing else drawn is greyed.
+ */
+function setAnaglyphGrey(self: MGWebGL, on: boolean): void {
+    const gl = self.gl;
+    const current = gl.getParameter(gl.CURRENT_PROGRAM);
+    const programs = self as unknown as Record<string, unknown>;
+    for (const key of Object.keys(programs)) {
+        if (!key.startsWith("shaderProgram")) continue;
+        const program = programs[key] as (WebGLProgram & { anaglyphGrey?: WebGLUniformLocation | null }) | null;
+        if (!program || typeof WebGLProgram === "undefined" || !(program instanceof WebGLProgram)) continue;
+        if (program.anaglyphGrey === undefined) program.anaglyphGrey = gl.getUniformLocation(program, "anaglyphGrey");
+        if (!program.anaglyphGrey) continue;
+        gl.useProgram(program);
+        gl.uniform1f(program.anaglyphGrey, on ? 1 : 0);
+    }
+    gl.useProgram(current);
+}
+
+/**
+ * Where a multiple view of `group` is centred: its group's origin, kept by group in
+ * multiViewOrigins (getMultiViewInfo), or the camera's if it has none. The loops over the views used
+ * to read multiViewOrigins by view, which is the same only while the groups run 0, 1, 2...: with a
+ * map between two molecules they run 0 and 2, and the second view kept the first view's origin.
+ */
+function groupOrigin(multiViewOrigins: number[][], group: number, cameraOrigin: [number, number, number]): [number, number, number] {
+    const origin = Number.isInteger(group) ? multiViewOrigins[group] : undefined;
+    return origin && origin.length === 3 ? [origin[0], origin[1], origin[2]] : cameraOrigin;
+}
 
 export function getMultiViewInfo(self: MGWebGL) : {multiViewOrigins,multiViewGroupsKeys,quats,viewports,ratioMult,multi_rows_cols} {
 
@@ -2887,11 +2984,39 @@ export function depthBlur(self: MGWebGL, invMat) {
 
     }
 
+/**
+ * The renderer's camera state as projection.ts wants it, for the view GLrender is about to draw.
+ *
+ * The one place that says which MGWebGL fields mean what, so that anything else drawing the
+ * scene (viewProjection) can be handed the same frame and get the same matrices.
+ *
+ * @param ratio  GLrender's ratio: gl.viewportWidth / gl.viewportHeight * ratioMult
+ */
+export function cameraFrame(self: MGWebGL, ratio: number): CameraFrame {
+    const dividedView = !!(self.doMultiView || self.doThreeWayView || self.doSideBySideStereo || self.doCrossEyedStereo);
+    return {
+        quat: self.myQuat,
+        origin: self.origin,
+        zoom: self.zoom,
+        eyeDistance: self.fogClipOffset,
+        clipPlane0W: self.gl_clipPlane0[3],
+        clipPlane1W: self.gl_clipPlane1[3],
+        fogEnd: self.gl_fog_end,
+        perspective: !!self.doPerspectiveProjection,
+        viewport: self.currentViewport,
+        aspect: ratio,
+        offscreen: self.renderToTexture
+            ? { canvasLandscape: self.gl.viewportWidth > self.gl.viewportHeight, dividedView }
+            : undefined,
+    };
+}
+
 export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioMult=1.0) {
         const displayBuffers = self.store.getState().glRef.displayBuffers
         const ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight * ratioMult;
-
-        let fb_scale = 1.0
+        // Read before the shadow branch rotates the view towards the light, which it does on a
+        // copy (newQuat) - so this is the ordinary camera either way.
+        const frame = cameraFrame(self, ratio);
 
         if(self.WEBGL2){
             self.gl.useProgram(self.shaderProgram);
@@ -2912,19 +3037,15 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebufferDepth);
             self.gl.viewport(0, 0, self.rttFramebufferDepth.width, self.rttFramebufferDepth.height);
             // This is the first pass of the frame, so it starts with whatever the last frame left
-            // behind. The shadow map is only as good as the depth it writes, so it says what it
-            // needs rather than hoping.
-            beginDepthOnlyPass(self.gl);
+            // behind - depth state, and the shadow map still bound to its unit from the lit pass.
+            // The shadow map is only as good as the depth it writes, so it says what it needs
+            // rather than hoping.
+            beginDepthOnlyPass(self.gl, SHADOW_TEXTURE_UNIT);
         } else if(self.drawingGBuffers) {
             const width_ratio = self.gl.viewportWidth / self.gFramebuffer.width;
             const height_ratio = self.gl.viewportHeight / self.gFramebuffer.height;
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.gFramebuffer);
             self.gl.viewport(self.currentViewport[0]/ width_ratio, self.currentViewport[1]/ height_ratio, self.currentViewport[2]/ width_ratio, self.currentViewport[3]/ height_ratio);
-        } else if(self.renderSilhouettesToTexture) {
-            if(!self.silhouetteBufferReady)
-                self.recreateSilhouetteBuffers();
-            self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.silhouetteFramebuffer);
-            self.gl.viewport(0, 0, self.gl.viewportWidth, self.gl.viewportHeight);
         } else if(self.doDepthPeelPass&&self.renderToTexture&&(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo)) {
             if(!self.screenshotBuffersReady)
                 self.initTextureFramebuffer();
@@ -2999,18 +3120,12 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             self.gl.viewport(self.currentViewport[0], self.currentViewport[1], self.currentViewport[2], self.currentViewport[3]);
         }
 
-        if(self.renderSilhouettesToTexture||self.drawingGBuffers||(self.renderToTexture&&self.transparentScreenshotBackground)) {
+        if(self.drawingGBuffers||(self.renderToTexture&&self.transparentScreenshotBackground)) {
             self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], 0.0);
         } else {
             self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
         }
-        if(self.doStenciling){
-            if(!self.stenciling){
-                self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
-            }
-        } else {
-            if(doClear) self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
-        }
+        if(doClear) self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
 
         mat4.identity(self.mvMatrix);
 
@@ -3112,61 +3227,9 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
         } else {
             self.gl.disable(self.gl.CULL_FACE);
             self.gl.cullFace(self.gl.BACK);
-            if(self.renderToTexture){
-                //FIXME - drawingGBuffers stanza?
-                //
-                // The square extents below are deliberate and are half of a pair: this renders
-                // into a square buffer and takeScreenShot afterwards crops an aspect-correct band
-                // out of it. Neither half makes sense alone - give this projection a non-square
-                // buffer and the picture comes out stretched.
-                if(self.doPerspectiveProjection){
-                    // Aspect stays at 1.0. Measured, not derived: it is right on screen for both
-                    // plain and side-by-side capture, and deriving the aspect from the capture
-                    // viewport instead - (viewport * framebuffer / canvas), which gives 0.5 per
-                    // eye - visibly stretched the stereo screenshot. The arithmetic for that
-                    // viewport is not in dispute, so something downstream is already accounting
-                    // for it - the perspMult zoom applied to this matrix further down. Captures
-                    // were checked by eye afterwards, plain and side-by-side stereo, and both
-                    // frame correctly as they stand. The pair works; leave it alone.
-                    //
-                    // The near and far are a separate matter and do come from the slab: they
-                    // clip, they do not frame, so they cannot affect any of the above.
-                    const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, true);
-                    mat4.perspective(self.pMatrix, PERSPECTIVE_FOV, 1.0, slab.near, slab.far);
-                } else {
-                    const { near: f_, far: b } = slabNearFar(
-                        self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, false);
-                    // The call sites below were written against -f, so keep that spelling here
-                    // rather than touching four matrix calls: near is already -clipPlane0[3].
-                    const f = -f_;
-                    if(self.currentViewport[2] > self.currentViewport[3]){
-                        if(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo){
-                            mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24, 24, -f, b);
-                        } else {
-                            mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, -f, b);
-                        }
-                    } else {
-                        if(self.doMultiView||self.doThreeWayView||self.doSideBySideStereo||self.doCrossEyedStereo)
-                            fb_scale = self.currentViewport[2]/self.currentViewport[3]
-                        mat4.ortho(self.pMatrix, -24*fb_scale, 24*fb_scale, -24, 24, -f, b);
-                    }
-                }
-            } else {
-                if(self.doPerspectiveProjection){
-                    // Two fixes in one line. The aspect came from the canvas rather than the
-                    // viewport, so every mode that divides the canvas - side-by-side and
-                    // cross-eyed stereo, three-way, multiview - was drawn stretched by exactly
-                    // the factor the viewport had been divided by. And the near and far were
-                    // fixed at 100 and 1270, so the slab was enforced only by the fragment
-                    // discards, which cost the program its early depth rejection and spread the
-                    // depth buffer over ten times the range the geometry occupies.
-                    const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, true);
-                    mat4.perspective(self.pMatrix, PERSPECTIVE_FOV, viewportAspect(self.currentViewport), slab.near, slab.far);
-                } else {
-                    const slab = slabNearFar(self.gl_clipPlane0[3], self.gl_clipPlane1[3], self.gl_fog_end, false);
-                    mat4.ortho(self.pMatrix, -24 * ratio, 24 * ratio, -24, 24, slab.near, slab.far);
-                }
-            }
+            // Screen or offscreen capture, orthographic or perspective: see baseProjection,
+            // where the reasoning for each case now lives.
+            baseProjection(self.pMatrix, frame);
 
             mat4.translate(self.mvMatrix, self.mvMatrix, [0, 0, -self.fogClipOffset]);
 
@@ -3216,11 +3279,8 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
         }
         self.gl.uniform1i(self.shaderProgramInstanced.shinyBack, self.shinyBack);
 
-        // The 1/ratio for landscape offscreen capture pairs with the aspect of 1.0 that path
-        // uses. The perspective factor is derived from the eye distance rather than fixed at 5.7,
-        // so moving the eye changes how strongly the view converges while the framing stays put -
-        // see perspectiveScale. The shadow pass reads the same function, which is why it is one.
-        const zoomScale = projectionZoomScale(self, ratio);
+        // Applied to the shadow projection too. See zoomScaleFor.
+        const zoomScale = zoomScaleFor(frame);
         mat4.scale(self.pMatrix, self.pMatrix, [zoomScale, zoomScale, 1.0]);
         mat4.translate(self.mvMatrix, self.mvMatrix, self.origin);
 
@@ -3240,17 +3300,9 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
         self.setMatrixUniforms(self.shaderProgram);
         self.setLightUniforms(self.shaderProgram);
 
-        self.gl.useProgram(self.shaderProgramOutline);
-        self.setMatrixUniforms(self.shaderProgramOutline);
-        self.setLightUniforms(self.shaderProgramOutline);
-
         self.gl.useProgram(self.shaderProgramInstanced);
         self.setMatrixUniforms(self.shaderProgramInstanced);
         self.setLightUniforms(self.shaderProgramInstanced);
-
-        self.gl.useProgram(self.shaderProgramInstancedOutline);
-        self.setMatrixUniforms(self.shaderProgramInstancedOutline);
-        self.setLightUniforms(self.shaderProgramInstancedOutline);
 
         self.gl.useProgram(self.shaderProgramInstancedShadow);
         self.setMatrixUniforms(self.shaderProgramInstancedShadow);
@@ -3275,12 +3327,6 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
 
         self.gl.useProgram(self.shaderProgramGBuffersInstanced);
         self.gl.enableVertexAttribArray(self.shaderProgramGBuffersInstanced.vertexNormalAttribute);
-
-        self.gl.useProgram(self.shaderProgramOutline);
-        self.gl.enableVertexAttribArray(self.shaderProgramOutline.vertexNormalAttribute);
-
-        //self.gl.useProgram(self.shaderProgramInstancedOutline);
-        //self.gl.enableVertexAttribArray(self.shaderProgramInstancedOutline.vertexNormalAttribute);
 
         self.gl.useProgram(self.shaderProgramInstanced);
         self.gl.enableVertexAttribArray(self.shaderProgramInstanced.vertexNormalAttribute);

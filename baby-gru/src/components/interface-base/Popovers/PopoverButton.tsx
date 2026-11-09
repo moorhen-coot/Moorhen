@@ -17,10 +17,18 @@ type MoorhenPopoverButtonType = {
     popoverStyle?: React.CSSProperties;
     closeButton?: boolean;
     label?: string;
+    extraOnClick?: () => void;
+    /** Accessible name of the button (an icon-only button otherwise reads as its icon's name) */
+    ariaLabel?: string;
+    /** Control whether the popover is open (e.g. to close it from its content); it manages itself when absent */
+    isShown?: boolean;
+    setIsShown?: (isShown: boolean) => void;
 };
 
 export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
-    const [popoverIsShown, setPopOverIsShown] = useState<boolean>(false);
+    const [ownIsShown, setOwnIsShown] = useState<boolean>(false);
+    const popoverIsShown = props.isShown ?? ownIsShown;
+    const setPopOverIsShown = props.setIsShown ?? setOwnIsShown;
     const buttonRef = useRef<HTMLButtonElement>(null);
     const { tooltip = null, type = "icon-only", style, popoverPlacement = "top", closeButton = false, label, popoverStyle } = props;
 
@@ -30,11 +38,15 @@ export const MoorhenPopoverButton = (props: MoorhenPopoverButtonType) => {
             icon={props.icon ? props.icon : "MatSymSettings"}
             size={props.size}
             ref={buttonRef}
-            onClick={() => setPopOverIsShown(!popoverIsShown)}
+            onClick={() => {
+                setPopOverIsShown(!popoverIsShown);
+                props.extraOnClick?.();
+            }}
             tooltip={tooltip}
             style={style}
             label={label}
             disabled={props.disabled}
+            ariaLabel={props.ariaLabel}
         />
     );
 

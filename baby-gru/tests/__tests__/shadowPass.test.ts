@@ -1,5 +1,5 @@
 /**
- * The depth state the shadow pass must establish for itself.
+ * The state the shadow pass must establish for itself.
  *
  * This is a small function guarding a bug that was expensive to find: depth peeling left the depth
  * test disabled at the end of a frame, the shadow pass is the first thing the next frame does, and
@@ -10,14 +10,21 @@
 import { describe, expect, it } from "@jest/globals";
 import { beginDepthOnlyPass, type DepthStateContext } from "../../src/WebGLgComponents/shadowPass";
 
+/** Whatever unit drawCore reads the shadow map through; the value does not matter here. */
+const SHADOW_UNIT = 6;
+
 const recordingContext = () => {
     const calls: string[] = [];
     const gl: DepthStateContext = {
         DEPTH_TEST: 0x0b71,
         LESS: 0x0201,
+        TEXTURE0: 0x84c0,
+        TEXTURE_2D: 0x0de1,
         enable: (cap) => { calls.push(`enable(${cap})`); },
         depthFunc: (func) => { calls.push(`depthFunc(${func})`); },
         depthMask: (flag) => { calls.push(`depthMask(${flag})`); },
+        activeTexture: (unit) => { calls.push(`activeTexture(${unit})`); },
+        bindTexture: (target, texture) => { calls.push(`bindTexture(${target},${texture})`); },
     };
     return { gl, calls };
 };
@@ -28,13 +35,13 @@ describe("preparing a depth-only pass", () => {
         // passes", but GL also stops updating the depth buffer, so the texture keeps its cleared
         // value and every shadow lookup finds nothing in front of it.
         const { gl, calls } = recordingContext();
-        beginDepthOnlyPass(gl);
+        beginDepthOnlyPass(gl, SHADOW_UNIT);
         expect(calls).toContain(`enable(${gl.DEPTH_TEST})`);
     });
 
     it("keeps the nearest fragment", () => {
         const { gl, calls } = recordingContext();
-        beginDepthOnlyPass(gl);
+        beginDepthOnlyPass(gl, SHADOW_UNIT);
         expect(calls).toContain(`depthFunc(${gl.LESS})`);
     });
 
@@ -42,7 +49,7 @@ describe("preparing a depth-only pass", () => {
         // Transparent geometry elsewhere in the renderer draws with the mask off so it does not
         // occlude what is behind it. That setting must not reach a pass whose only output is depth.
         const { gl, calls } = recordingContext();
-        beginDepthOnlyPass(gl);
+        beginDepthOnlyPass(gl, SHADOW_UNIT);
         expect(calls).toContain("depthMask(true)");
     });
 
@@ -51,7 +58,29 @@ describe("preparing a depth-only pass", () => {
         // earlier pass in the same frame to have set any of this. Anything left unsaid is whatever
         // the previous frame happened to end with.
         const { gl, calls } = recordingContext();
-        beginDepthOnlyPass(gl);
-        expect(calls).toHaveLength(3);
+        beginDepthOnlyPass(gl, SHADOW_UNIT);
+        expect(calls).toHaveLength(5);
+    });
+
+    it("detaches the shadow map from the unit the shaders read it through", () => {
+        // Otherwise the pass renders into a texture that is still bound as an input, which is a
+        // feedback loop: "GL_INVALID_OPERATION: glDrawElements: Feedback loop formed between
+        // Framebuffer and active Texture", and the draw is dropped. It surfaces only on a program
+        // that declares the shadow sampler and has no shadow variant to swap to - the
+        // thick-lines-normal one - so the visible symptom is that lit lines disappear while
+        // everything else is drawn perfectly well.
+        const { gl, calls } = recordingContext();
+        beginDepthOnlyPass(gl, SHADOW_UNIT);
+        expect(calls).toContain(`activeTexture(${gl.TEXTURE0 + SHADOW_UNIT})`);
+        expect(calls).toContain(`bindTexture(${gl.TEXTURE_2D},null)`);
+    });
+
+    it("unbinds on the shadow unit, not on whichever unit happened to be active", () => {
+        // activeTexture first, bindTexture second. The other order unbinds a texture from some
+        // unrelated unit and leaves the loop in place.
+        const { gl, calls } = recordingContext();
+        beginDepthOnlyPass(gl, SHADOW_UNIT);
+        expect(calls.indexOf(`activeTexture(${gl.TEXTURE0 + SHADOW_UNIT})`))
+            .toBeLessThan(calls.indexOf(`bindTexture(${gl.TEXTURE_2D},null)`));
     });
 });

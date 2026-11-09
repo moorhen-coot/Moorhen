@@ -21,8 +21,6 @@ import { MOORHEN_ATOM_TAG_KIND } from "../../utils/enums";
 import { addAvailableFontList, emptyAvailableFonts } from "../../store/labelSettingsSlice";
 import { setRefinementSelection } from "../../store/refinementSettingsSlice";
 import {
-    setBackgroundColor,
-    setDefaultBackgroundColor,
     setGlViewportHeight,
     setGlViewportWidth,
     setHeight,
@@ -86,6 +84,8 @@ interface ContainerOptionalProps {
     allowMergeFittedLigand?: boolean;
     webComponentMode?: boolean;
     size?: [number, number];
+    /** The built-in scene Moorhen opens on: "General" (default) or "Model Building" */
+    startupScene?: string;
 }
 
 export interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> {}
@@ -125,7 +125,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const GlViewportWidth = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
-    const defaultBackgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.defaultBackgroundColor);
 
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate);
 
@@ -242,6 +241,16 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const setWindowDimensions = useCallback(() => {
         const parent = props.parentElementRef?.current
         let [newWidth, newHeight]: [number, number] = [1,1];
+        // The page's own size, as the viewport tag sets it, rather than window.innerWidth/Height:
+        // on a phone those report the visual viewport, which grows when the browser zooms out to
+        // fit anything wider than the screen. Moorhen sized itself from that, which kept the page
+        // too wide, which kept the zoom out - a 384-wide phone drew a 952-wide canvas, five times
+        // the pixels. The root element's client size stays the screen's, and is the same as the
+        // window's on a desktop, where the scrollbar is hidden (stop-scrolling).
+        const pageSize = (): [number, number] => {
+            const root = document.documentElement;
+            return [root?.clientWidth || window.innerWidth, root?.clientHeight || window.innerHeight];
+        };
         
         if (props.size) {
             [newWidth, newHeight] = props.size;
@@ -249,12 +258,12 @@ export const MoorhenContainer = (props: ContainerProps) => {
             const parentSize = parent.getBoundingClientRect();
             if (parentSize.width === 0 || parentSize.height === 0) {
                 console.warn("Parent element has zero width or height. Defaulting to window dimensions. You might want to place moorhen into a div container with appropriate size.");
-                [newWidth, newHeight] = [window.innerWidth, window.innerHeight];
+                [newWidth, newHeight] = pageSize();
             } else {
                 [newWidth, newHeight] = [parentSize.width, parentSize.height];
             }
         } else {
-        [newWidth, newHeight] = [window.innerWidth, window.innerHeight];}
+        [newWidth, newHeight] = pageSize();}
 
         const GLviewWidth = newWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
         const GLviewHeigth = newHeight - (bottomPanelHeight ? bottomPanelHeight -35: 0);
@@ -308,9 +317,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
     useEffect(() => {
         const _isDark = isDarkBackground(...backgroundColor);
 
-        if (defaultBackgroundColor !== backgroundColor) {
-            dispatch(setDefaultBackgroundColor(backgroundColor));
-        }
         if (isDark !== _isDark) {
             dispatch(setIsDark(_isDark));
         }
@@ -363,7 +369,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 moorhenInstance.setAceDRGInstance(aceDRGInstance);
             }
 
-            dispatch(setBackgroundColor(defaultBackgroundColor));
             cootAPIHelpers.setSamplingRate(commandCentre, defaultMapSamplingRate);
             cootAPIHelpers.setDrawMissingLoops(commandCentre, drawMissingLoops);
             const shortCuts = store.getState().shortcutSettings.shortCuts;
@@ -373,10 +378,10 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 dispatch(enqueueSnackbar({ message: `Press ${getTooltipShortcutLabel(shortCut)} to show help`, variant: "info" }));
             } catch (error) {
                 console.error("Error parsing shortcuts:", error);
-                const json = JSON.parse(shortCuts);
-                console.log("Parsed Shortcuts", json, "keys", Object.keys(json));
             }
             if (!window.MathJax) setTimeout(() => loadMathjax(`${urlPrefix}`), 500);
+            // Before onInitialisationCompleted, so a host sees Moorhen in its start-up scene
+            await moorhenInstance.userScene.showStartupScene(props.startupScene);
             return true;
         };
         startupEffect().then(started => {

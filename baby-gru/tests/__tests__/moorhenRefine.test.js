@@ -4,7 +4,8 @@ import { MoorhenMap } from "../../src/utils/MoorhenMap"
 import { MockMoorhenCommandCentre } from "../__mocks__/mockMoorhenCommandCentre"
 import { _MoorhenReduxStore as MoorhenReduxStore} from "../../src/store/MoorhenReduxStore"
 import { MockWebGL } from "../__mocks__/mockWebGL"
-import { parseAtomInfoLabel } from "../../src/utils/utils"
+import { getCidAltConf, parseAtomInfoLabel, residueCidForRefinement, restrictCidToAltConf } from "../../src/utils/utils"
+import { setActiveMap } from "../../src/store/generalStatesSlice"
 import moorhen_test_use_gemmi from '../MoorhenTestsSettings'
 import { MockMoorhenInstance } from '../__mocks__/mockMoorhenInstance'
 
@@ -136,6 +137,161 @@ describe("Testing MoorhenMolecule", () => {
         //console.log(acedrgTypesForBondData.data.result.result)
         expect(acedrgTypesForBondData.data.result.result).toHaveLength(14)
         expect(acedrgTypesForBondData.data.result.result.every(bond=>bond.bond_length<2.25)).toBeTruthy()
+    })
+})
+
+describe("Alternate conformation refinement (7avk)", () => {
+    // 7avk: A/1243-1252 has a whole alternate A/B segment, A/1221 has A/B side chains on a shared backbone
+
+    const atomsFromPdb = (pdbString) => {
+        const atoms = new Map()
+        pdbString.split('\n').filter(line => line.startsWith('ATOM') || line.startsWith('HETATM')).forEach(line => {
+            const alt = line.substring(16, 17).trim()
+            const key = `${line.substring(20, 22).trim()}/${parseInt(line.substring(22, 26))}/${line.substring(12, 16).trim()}:${alt}`
+            atoms.set(key, { alt, xyz: [30, 38, 46].map(i => parseFloat(line.substring(i, i + 8))) })
+        })
+        return atoms
+    }
+
+    // Number of atoms that moved, keyed by alt conf ('' for atoms without one)
+    const movedAtomsByAltConf = (before, after) => {
+        expect([...after.keys()].sort()).toEqual([...before.keys()].sort())
+        const moved = {}
+        before.forEach((atom, key) => {
+            const d = Math.hypot(...atom.xyz.map((v, i) => v - after.get(key).xyz[i]))
+            if (d > 0.001) moved[atom.alt] = (moved[atom.alt] ?? 0) + 1
+        })
+        return moved
+    }
+
+    const setupMoleculeAndMap = async () => {
+        const molecule = new MoorhenMolecule(mockMoorhenInstance)
+        await molecule.loadToCootFromURL(path.join(__dirname, '..', 'test_data', '7avk.cif'), '7avk')
+        const map = new MoorhenMap(mockInstance)
+        await map.loadToCootFromMtzURL(path.join(__dirname, '..', 'test_data', '7avk_map.mtz'), '7avk-map', {
+            F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false
+        })
+        await commandCentre.current.cootCommand({ returnType: 'status', command: 'set_imol_refinement_map', commandArgs: [map.molNo] })
+        MoorhenReduxStore.dispatch(setActiveMap(map))
+        const getAtoms = () => atomsFromPdb(molecules_container.molecule_to_PDB_string(molecule.molNo))
+        return { molecule, map, getAtoms }
+    }
+
+    beforeEach(() => {
+        if (molecules_container !== null) {
+            molecules_container.delete?.()
+        }
+        molecules_container = new cootModule.molecules_container_js(false)
+        molecules_container.set_use_gemmi(moorhen_test_use_gemmi)
+        commandCentre = { current: new MockMoorhenCommandCentre(molecules_container, cootModule) }
+        mockInstance = new MockMoorhenInstance(commandCentre.current)
+    })
+
+    afterEach(() => {
+        MoorhenReduxStore.dispatch(setActiveMap(null))
+    })
+
+    test("CID alt conf helpers", () => {
+        expect(getCidAltConf('//A/42')).toBeNull()
+        expect(getCidAltConf('//A/42/*:B')).toBe('B')
+        expect(getCidAltConf('//A/42/CA:B')).toBe('B')
+        expect(getCidAltConf('//A/41-43/*:,B')).toBe('B')
+        expect(getCidAltConf('//A/41-43/*:,B||//A/12/*:,B')).toBe('B')
+        expect(getCidAltConf('//A/41-43/*:,B||//A/12/*')).toBeNull()
+        expect(getCidAltConf('//A/41-43/*:A||//A/12/*:B')).toBeNull()
+        expect(restrictCidToAltConf('//A/41-43/*', 'B')).toBe('//A/41-43/*:,B')
+        expect(restrictCidToAltConf('//A/42/CA:A||//A/12', 'B')).toBe('//A/42/*:,B||//A/12/*:,B')
+        expect(residueCidForRefinement({ chain_id: 'A', res_no: 42, alt_conf: '' })).toBe('//A/42')
+        expect(residueCidForRefinement({ chain_id: 'A', res_no: 42, alt_conf: 'B' })).toBe('//A/42/*:B')
+    })
+
+    test("Refining without an alt conf moves every conformation", async () => {
+        const { molecule, getAtoms } = await setupMoleculeAndMap()
+        const before = getAtoms()
+        await molecule.refineResiduesUsingAtomCid('//A/1246', 'TRIPLE', 4000, false)
+        const moved = movedAtomsByAltConf(before, getAtoms())
+        expect(moved.A).toBeGreaterThan(0)
+        expect(moved.B).toBeGreaterThan(0)
+    })
+
+    test.each([
+        ['TRIPLE', '//A/1246/*:B', 'B', 'A'],
+        ['SINGLE', '//A/1246/*:A', 'A', 'B'],
+        ['SPHERE', '//A/1246/*:B', 'B', 'A'],
+    ])("refineResiduesUsingAtomCid %s %s only moves that alt conf", async (mode, cid, refined, fixed) => {
+        const { molecule, getAtoms } = await setupMoleculeAndMap()
+        const before = getAtoms()
+        await molecule.refineResiduesUsingAtomCid(cid, mode, 4000, false)
+        const moved = movedAtomsByAltConf(before, getAtoms())
+        expect(moved[refined]).toBeGreaterThan(0)
+        expect(moved[fixed]).toBeUndefined()
+    })
+
+    test("Alt conf side chain refinement keeps the shared backbone connected", async () => {
+        const { molecule, getAtoms } = await setupMoleculeAndMap()
+        const before = getAtoms()
+        await molecule.refineResiduesUsingAtomCid('//A/1221/*:A', 'TRIPLE', 4000, false)
+        const after = getAtoms()
+        const moved = movedAtomsByAltConf(before, after)
+        expect(moved.A).toBeGreaterThan(0)
+        expect(moved.B).toBeUndefined()
+        // N, C and O of 1221 have no alt conf: the CA of each conformation stays bonded to the shared N
+        expect(moved['']).toBeGreaterThan(0)
+        for (const alt of ['A', 'B']) {
+            const n = after.get('A/1221/N:').xyz
+            const ca = after.get(`A/1221/CA:${alt}`).xyz
+            expect(Math.hypot(...n.map((v, i) => v - ca[i]))).toBeCloseTo(1.46, 1)
+        }
+    })
+
+    test.each([
+        ['B', 'A'],
+        ['A', 'B'],
+    ])("autoFitRotamer alt conf %s keeps alt conf %s", async (fitted, fixed) => {
+        // libcoot's auto_fit_rotamer on A/1246 alt B also writes the fitted coordinates over alt A
+        const { molecule, map, getAtoms } = await setupMoleculeAndMap()
+        const before = getAtoms()
+        const status = await molecule.autoFitRotamer('A', 1246, '', fitted, map)
+        const after = getAtoms()
+        expect(status).toBe(1)
+        const moved = movedAtomsByAltConf(before, after)
+        expect(moved[fitted]).toBeGreaterThan(0)
+        expect(moved[fixed]).toBeUndefined()
+        expect(Object.keys(moved)).toEqual([fitted])
+        // the two conformations are still distinct
+        const ca = alt => after.get(`A/1246/CA:${alt}`).xyz
+        expect(Math.hypot(...ca('A').map((v, i) => v - ca('B')[i]))).toBeGreaterThan(0.5)
+    })
+
+    test("residueHasMissingAtoms", async () => {
+        // decides between fill_partial_residue and autoFitRotamer in the auto-fit rotamer context button
+        const { molecule } = await setupMoleculeAndMap()
+        expect(await molecule.residueHasMissingAtoms('A', 1221)).toBe(false)
+        expect(await molecule.residueHasMissingAtoms('A', 1246)).toBe(false)
+        expect(await molecule.residueHasMissingAtoms('A', 1222)).toBe(false)
+        const deleteAtoms = cid => commandCentre.current.cootCommand({ returnType: 'status', command: 'delete_using_cid', commandArgs: [molecule.molNo, cid, 'LITERAL'] })
+        await deleteAtoms('//A/1222/CZ||//A/1222/CE1||//A/1222/CE2||//A/1222/HZ||//A/1222/HE1||//A/1222/HE2')
+        expect(await molecule.residueHasMissingAtoms('A', 1222)).toBe(true)
+        // atoms missing from one alt conf only are not reported (fill_partial_residue cannot fill them anyway)
+        await deleteAtoms('//A/1221/CD:B||//A/1221/OE1:B||//A/1221/OE2:B||//A/1221/HG2:B||//A/1221/HG3:B')
+        expect(await molecule.residueHasMissingAtoms('A', 1221)).toBe(false)
+    })
+
+    test("autoFitRotamer without alt conf", async () => {
+        const { molecule, map, getAtoms } = await setupMoleculeAndMap()
+        const before = getAtoms()
+        const status = await molecule.autoFitRotamer('A', 1216, '', '', map)
+        expect(status).toBe(1)
+        movedAtomsByAltConf(before, getAtoms())
+    })
+
+    test("refineResiduesUsingAtomCidAnimated only moves the chosen alt conf", async () => {
+        const { molecule, map, getAtoms } = await setupMoleculeAndMap()
+        const before = getAtoms()
+        await molecule.refineResiduesUsingAtomCidAnimated('//A/1246/*:B', map, 2, false)
+        const moved = movedAtomsByAltConf(before, getAtoms())
+        expect(moved.B).toBeGreaterThan(0)
+        expect(moved.A).toBeUndefined()
     })
 })
 

@@ -1,6 +1,7 @@
 import { useEffect, useCallback, forwardRef, useState, useReducer, useRef } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import * as quat4 from 'gl-matrix/quat';
+import { FIELD_DEPTH_FRONT, FIELD_DEPTH_BACK } from '../../WebGLgComponents/slab';
 import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { buildBuffers, appendOtherData, } from '../../WebGLgComponents/buildBuffers'
@@ -21,9 +22,12 @@ import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
+import { isSilent, viewDifference } from "../../WebGLgComponents/viewEcho";
 import { HighlightHoveredSection } from './HoverSection';
 import { DragHandles } from './DragHandles';
 import { SelectClickedObject } from './SelectObject';
+import { MoorhenWebGPUMainView } from './MoorhenWebGPUMainView';
+import { webGPUUnavailableReason } from '../../WebGPUComponents/gpu';
 
 
 interface MoorhenWebMGPropsInterface {
@@ -75,6 +79,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const drawCrosshairs = useSelector((state: moorhen.State) => state.sceneSettings.drawCrosshairs)
     const drawFPS = useSelector((state: moorhen.State) => state.sceneSettings.drawFPS)
     const drawAxes = useSelector((state: moorhen.State) => state.sceneSettings.drawAxes)
+    // The main view drawn with WebGPU, where the browser offers it (MoorhenWebGPUMainView).
+    const useWebGPU = useSelector((state: moorhen.State) => state.sceneSettings.useWebGPU)
+    const webGPUAvailable = webGPUUnavailableReason() === null
     const doSSAO = useSelector((state: moorhen.State) => state.sceneSettings.doSSAO)
     const doEdgeDetect = useSelector((state: moorhen.State) => state.sceneSettings.doEdgeDetect)
     const edgeDetectDepthThreshold = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectDepthThreshold)
@@ -93,6 +100,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
+    const anaglyphColours = useSelector((state: moorhen.State) => state.sceneSettings.anaglyphColours)
     const doCrossEyedStereo = useSelector((state: moorhen.State) => state.sceneSettings.doCrossEyedStereo)
     const doSideBySideStereo = useSelector((state: moorhen.State) => state.sceneSettings.doSideBySideStereo)
     const doThreeWayView = useSelector((state: moorhen.State) => state.sceneSettings.doThreeWayView)
@@ -102,7 +110,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const specifyMultiViewRowsColumns = useSelector((state: moorhen.State) => state.sceneSettings.specifyMultiViewRowsColumns)
     const doMultiView = useSelector((state: moorhen.State) => state.sceneSettings.doMultiView)
     const drawEnvBOcc = useSelector((state: moorhen.State) => state.sceneSettings.drawEnvBOcc)
-    const doOutline = useSelector((state: moorhen.State) => state.sceneSettings.doOutline)
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius)
     const depthPeelLayers = useSelector((state: moorhen.State) => state.sceneSettings.depthPeelLayers)
     const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately)
@@ -233,7 +240,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
             const retired = vectorBuffersRef.current
             const retiredLabels = vectorLabelBuffersRef.current
-            retired.forEach(buffer => buffer.clearBuffers())
+            retired.forEach(buffer => buffer.clearBuffers(store.getState().glRef.glCtx))
 
             vectorBuffersRef.current = buildDisplayBuffers(objects, "vectors")
             vectorLabelBuffersRef.current = newLabelBuffers ?? []
@@ -257,7 +264,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             if (superseded) return
 
             const retired = threeDObjectsBuffersRef.current
-            retired.forEach(buffer => buffer.clearBuffers())
+            retired.forEach(buffer => buffer.clearBuffers(store.getState().glRef.glCtx))
 
             threeDObjectsBuffersRef.current = buildDisplayBuffers(objects, "3D objects")
 
@@ -281,7 +288,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             if (superseded) return
 
             const retired = gizmoBuffersRef.current
-            retired.forEach(buffer => buffer.clearBuffers())
+            retired.forEach(buffer => buffer.clearBuffers(store.getState().glRef.glCtx))
 
             gizmoBuffersRef.current = buildDisplayBuffers(objects)
 
@@ -369,19 +376,16 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [shadowMapQuality])
 
+    // Softness is pushed on mount too (the renderer starts at 0 and the store may hold a saved
+    // preference), but only redrawn on later changes, for the same first-frame reason as above.
+    const shadowSoftnessMounted = useRef(false)
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function' && glRef.current) {
             glRef.current.setShadowSoftness(shadowSoftness)
-            glRef.current.drawScene()
+            if (shadowSoftnessMounted.current) glRef.current.drawScene()
         }
+        shadowSoftnessMounted.current = true
     }, [shadowSoftness])
-
-    useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setOutlinesOn(doOutline)
-            glRef.current.drawScene()
-        }
-    }, [doOutline])
 
     /*
     useEffect(() => {
@@ -525,6 +529,13 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [doAnaglyphStereo])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.anaglyphColours = anaglyphColours
+            glRef.current.drawScene()
+        }
+    }, [anaglyphColours, glRef])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
@@ -739,7 +750,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
             glRef.current.cameraController.slabPolicy = resetClippingFogging
-                ? { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21 }
+                ? { kind: "auto", fieldDepthFront: FIELD_DEPTH_FRONT, fieldDepthBack: FIELD_DEPTH_BACK }
                 : { kind: "manual" }
             glRef.current.cameraController.reapplySlab()
             glRef.current.drawScene()
@@ -888,27 +899,32 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         dispatch(setCursorPosition([x,y]))
     })
 
+    /**
+     * Reconciliation: the store asks for a view, and the camera eases to it.
+     *
+     * The comparison is viewDifference, which is the same function the camera's own echo uses to
+     * decide what the store needs told - asked here in the other direction. That is deliberate.
+     * The two have to agree on when a difference counts, and they used to agree only because the
+     * same 1e-5 had been typed in both places: if the echo ever became the slacker of the two, a
+     * difference it never reported would still be large enough for this effect to act on, and the
+     * view would ease back a moment after something moved it. Sharing the function makes the
+     * tolerance a fact rather than a coincidence.
+     *
+     * Easing, not jumping, and through moveCameraTo - which declines outright while a driver holds
+     * the camera. So a movie is not disturbed by a store change arriving mid-playback.
+     */
     useEffect(() => {
-        if(glRef !== null && typeof glRef !== 'function') {
-            let doOrigin = false
-            let doQuat = false
-            let doZoom = false
-            if(Math.abs(originState[0]-glRef.current.origin[0])>1e-5||Math.abs(originState[1]-glRef.current.origin[1])>1e-5||Math.abs(originState[2]-glRef.current.origin[2])>1e-5){
-                doOrigin = true
-            }
-            if(Math.abs(quat[0]-glRef.current.myQuat[0])>1e-5||Math.abs(quat[1]-glRef.current.myQuat[1])>1e-5||Math.abs(quat[2]-glRef.current.myQuat[2])>1e-5||Math.abs(quat[3]-glRef.current.myQuat[3])>1e-5){
-                doQuat = true
-            }
-            //if(glRef.current.animating) doQuat = false
-            if(Math.abs(zoom-glRef.current.zoom)>1e-5){
-                doZoom = true
-            }
+        if(glRef !== null && typeof glRef !== 'function' && glRef.current) {
             if(isNaN(quat[0])||isNaN(quat[1])||isNaN(quat[2])||isNaN(quat[3])){
                 console.log(quat)
                 console.log(originState)
                 console.log(zoom)
+                return
             }
-            if(doOrigin||doQuat||doZoom){
+            const wanted = viewDifference(
+                { origin: originState, quat, zoom },
+                { origin: glRef.current.origin, quat: glRef.current.myQuat, zoom: glRef.current.zoom })
+            if(!isSilent(wanted)){
                 glRef.current.setOriginOrientationAndZoomAnimated(originState,quat,zoom)
             }
         }
@@ -937,6 +953,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}
                     store={store}
                     dispatch={dispatch} />
+                    {useWebGPU && webGPUAvailable && <MoorhenWebGPUMainView glRef={glRef as React.RefObject<MGWebGL>} />}
                     <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>;
                 </figure>
                 {showContextMenu &&

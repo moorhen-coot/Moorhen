@@ -1,4 +1,5 @@
-import Fasta from "biojs-io-fasta";
+import { parseFasta } from "./fasta";
+import { drawDefaultRepresentation } from "./Representation/defaultRepresentation";
 import { centreOfObject } from "../store/threeDObjectsSlice";
 import pako from "pako";
 import type { Dispatch, Store } from "redux";
@@ -19,10 +20,12 @@ import { loadMtzMaps } from "./MtzLoading";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
 import { modalKeys } from "./enums";
+import { MOVIE_EXTENSION } from "./movieContainer";
+import { openMovieFile } from "./openMovieFile";
 import { decompressDracoGltf } from "./gltfDraco";
 import { createDracoDecode } from "./gltfDracoDecoder";
 import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
-import { gltfMaterialTextures } from "./gltfTextures";
+import { gltfMaterials } from "./gltfTextures";
 // import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
@@ -106,16 +109,9 @@ export const drawModels = async (newMolecules: MoorhenMolecule[], moorhenInstanc
 
     for (const newMolecule of newMolecules) {
         const hasLongSequence = newMolecule.sequences.some(item => item.sequence.length > 10);
-        const representation = hasLongSequence ? moorhenInstance.representation.defaultStyle : "CBs";
-        if (
-            representation === "ribbons-and-ligands" ||
-            representation === "ribbons-and-side-chains" ||
-            representation === "site-and-ribbons"
-        ) {
-            await moorhenInstance.representation.wizard(newMolecule.uniqueId, representation, true);
-        } else {
-            await moorhenInstance.representation.create(newMolecule.uniqueId, { representationStyle: representation });
-        }
+        // The shown scene's default style; a short chain (a peptide, a ligand) as bonds
+        const style = hasLongSequence ? moorhenInstance.representation.defaultStyle : "CBs";
+        await drawDefaultRepresentation(moorhenInstance, newMolecule.uniqueId, style, true);
     }
 };
 
@@ -145,6 +141,12 @@ const loadSession = async (session: string | object, moorhenInstance: MoorhenIns
     } else {
         status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(session, moorhenInstance);
     }
+    if (status === MoorhenTimeCapsule.NEWER_VERSION_STATUS) {
+        throw new Error(MoorhenTimeCapsule.NEWER_VERSION_MESSAGE);
+    }
+    if (status === MoorhenTimeCapsule.MOVIE_PLAYING_STATUS) {
+        throw new Error(MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE);
+    }
     if (status === -1) {
         throw new Error("Failed to read backup (deprecated format)");
     }
@@ -166,7 +168,7 @@ const parseJSONAndGetModelFiles = (json_contents, dispatch) => {
     const modelFiles: string[] = [];
     if (fastaContents) {
         try {
-            const seqs = Fasta.parse(fastaContents);
+            const seqs = parseFasta(fastaContents);
             dispatch(setTargetSequence(seqs[0].seq));
         } catch (e) {
             console.log("Failed to extract sequence from input.fasta");
@@ -286,9 +288,8 @@ export const loadMrParseFiles = async (
         backgroundColor,
         defaultBondSmoothness
     );
-
-    await drawModels(newMolecules, moorhenInstance);
-    dispatch(addMoleculeList(newMolecules));
+    await dispatch(addMoleculeList(newMolecules));
+    await drawModels(newMolecules, moorhenInstance); 
     newMolecules.at(-1).centreOn("/*/*/*/*", true);
 
     moorhenInstance.store.dispatch(setMrParseModels(newMolecules));
@@ -604,7 +605,7 @@ export const loadGltfFile = async (
     // a line, and handing sixteen megabytes of pixels across the worker boundary per texture to
     // avoid that would be a poor trade. A material with no image, or one we could not decode,
     // simply gets no entry and its geometry draws in its base colour.
-    const textures = await gltfMaterialTextures(
+    const materials = await gltfMaterials(
         payload.buffer.slice(payload.byteOffset, payload.byteOffset + payload.byteLength) as ArrayBuffer,
         new Map(payloadSidecars.map(sidecar => [sidecar.name, sidecar.data]))
     );
@@ -653,7 +654,7 @@ export const loadGltfFile = async (
     const parts = (mesh.groups ?? [])
         .filter(group => group.vertices.length > 0 && group.indices.length >= 3)
         .map(group => {
-            const texture = textures.get(group.material);
+            const material = materials.get(group.material);
             const vertexCount = group.vertices.length / 3;
             return {
                 vertices: asNumbers(group.vertices),
@@ -662,8 +663,13 @@ export const loadGltfFile = async (
                 colours: asNumbers(group.colours),
                 // Both or neither: coordinates with no texture leave the attribute enabled for
                 // nothing, and a texture with no coordinates would paint the part one flat colour.
-                ...(texture && group.texCoords.length === vertexCount * 2
-                    ? { texCoords: asNumbers(group.texCoords), texture }
+                // Any of the material's textures needs them - a normal map as much as an image.
+                ...(material && group.texCoords.length === vertexCount * 2
+                    ? {
+                        texCoords: asNumbers(group.texCoords),
+                        ...(material.baseColour ? { texture: material.baseColour } : {}),
+                        ...(material.maps ? { maps: material.maps } : {}),
+                    }
                     : {}),
             };
         });
@@ -823,9 +829,23 @@ export const autoOpenFiles = async (
             try {
                 await handleSessionUpload(file, moorhenInstance);
             } catch (e) {
-                dispatch(enqueueSnackbar({ message: `Failed to load session ${file.name}`, variant: "warning" }));
+                const message =
+                    e instanceof Error && e.message === MoorhenTimeCapsule.NEWER_VERSION_MESSAGE
+                        ? e.message
+                        : `Failed to load session ${file.name}`;
+                dispatch(enqueueSnackbar({ message, variant: "warning" }));
             }
             break; //We only load the first session.
+        } else if (file.name.toLowerCase().endsWith(MOVIE_EXTENSION)) {
+            // A movie file, which is a movie description plus the session it was made against.
+            // Handled like a session and for the same reason: it rebuilds the whole scene, so
+            // there is nothing sensible to do with a second one, or with anything opened after it.
+            const opened = await openMovieFile(file, moorhenInstance);
+            dispatch(enqueueSnackbar({
+                message: opened.message,
+                variant: opened.ok ? "info" : "warning",
+            }));
+            break;
         } else if (file.name.toLowerCase().endsWith(".gltf") || file.name.toLowerCase().endsWith(".glb")) {
             try {
                 // The whole selection, not just this file: a .gltf takes its buffers and images
@@ -867,7 +887,7 @@ export const autoOpenFiles = async (
         ) {
             try {
                 let newMap: MoorhenMap = null;
-                const isDiff = file.name.includes("_fofc.mrc") || file.name.includes("_diff.ccp4");
+                const isDiff = /fofc|diff|delfwt|mfo-?dfc/i.test(file.name);
                 const isLocres = file.name.includes("_locres.mrc");
                 try {
                     if (file.name.endsWith(".gz")) {
@@ -891,7 +911,8 @@ export const autoOpenFiles = async (
                     newMap.showOnLoad = false;
                 }
                 dispatch(addMap(newMap));
-                if (!isLocres) {
+                // Difference maps are never made active by default
+                if (!isLocres && !newMap.isDifference) {
                     dispatch(setActiveMap(newMap));
                 }
                 mapsCreated.push(newMap);

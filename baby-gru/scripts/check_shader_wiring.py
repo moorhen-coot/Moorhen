@@ -245,6 +245,11 @@ WATCHED = {
     # Whether the composite draws the multisampled opaque layer as it is. Unlocated, the layer goes
     # through the depth gate and FXAA, and its antialiased edges are cut off again.
     "resolvedLayer": None,
+    # Whether the composite runs FXAA over this layer. Unlocated, uniform1i is a silent no-op and
+    # the uniform reads false everywhere - which would switch FXAA off for the dense layers too,
+    # where it is the only antialiasing a peeled scene gets. The polarity makes the failure quiet:
+    # nothing breaks, edges simply go soft-to-jagged and nobody connects it to a uniform.
+    "filterEdges": None,
 }
 
 # Some watched uniforms only matter to programs that use a particular feature. Several programs

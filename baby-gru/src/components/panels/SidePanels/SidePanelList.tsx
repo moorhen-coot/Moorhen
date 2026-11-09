@@ -6,9 +6,10 @@ import { Moorhen2DCanvasObjects } from "../../modal/Moorhen2DCanvasObjectsModal"
 import { Moorhen3DObjects } from "../../modal/Moorhen3DObjectsModal";
 import { MapsPanel } from "./MapsPanel";
 import { ModelsPanel } from "./ModelsPanel";
+import { MoviePanel } from "./MoviePanel/MoviePanel";
 import { SidePanelContainer } from "./utils/SidePanelContainer";
 
-export type SidePanelIDs = "models" | "maps" | "sceneSettings" | "vectors" | "overlay2DObjects"| "3DObjects" | (string & {});
+export type SidePanelIDs = "models" | "maps" | "sceneSettings" | "vectors" | "overlay2DObjects"| "3DObjects" | "movie" | (string & {});
 export type MoorhenPanel = { icon: MoorhenSVG; label: string; panelContent: React.JSX.Element };
 export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
     maps: { icon: "menuMaps", label: "Maps", panelContent: <MapsPanel /> },
@@ -40,12 +41,13 @@ export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
             </SidePanelContainer>
         )
     },
+    movie: { icon: "clapperboard", label: "Movie", panelContent: <MoviePanel /> },
     sceneSettings: {
         icon: "MatSymVisibility",
         label: "SceneSettings",
         panelContent: (
             <SidePanelContainer title="Scene Settings">
-                <MoorhenSceneSettings stackDirection="vertical" />
+                <MoorhenSceneSettings />
             </SidePanelContainer>
         ),
     },

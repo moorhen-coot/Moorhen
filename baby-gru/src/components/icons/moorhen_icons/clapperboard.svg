@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   viewBox="-7 37 214 214"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a84865, 2022-12-01)"
+   sodipodi:docname="clapperboard.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.7458566"
+     inkscape:cx="98.232584"
+     inkscape:cy="132.31328"
+     inkscape:window-width="1353"
+     inkscape:window-height="716"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 107 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="214 : 107 : 1"
+       inkscape:persp3d-origin="107 : 71.333333 : 1"
+       id="perspective1992" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:currentColor;stroke:currentColor;stroke-width:5.3975;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers fill stroke"
+       d="m 65.826568,135.32595 -12.00351,22.94257 -29.630343,0.57278 10.641147,-23.01638 c -9.211727,3.52899 -15.730469,12.41379 -15.730469,22.89648 v 53.48437 c 0,13.59529 10.943774,24.54102 24.539061,24.54101 H 163.19909 c 13.59529,0 24.53907,-10.94573 24.53907,-24.541 v -53.48439 c 0,-9.2492 -2.78093,-20.12717 -10.30066,-24.31118 l -10.77747,23.54386 h -31.92342 l 12.5367,-23.77369 -27.12695,10e-6 -12.41028,24.34646 H 76.960171 l 11.389193,-23.2009 z"
+       id="path2024"
+       sodipodi:nodetypes="ccccsscsssccccccccc" />
+    <path
+       style="fill:currentColor;stroke:currentColor;stroke-width:5.3975;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers fill stroke"
+       d="m 33.613281,96.335937 -8.498047,3.09375 c -8.353139,3.040293 -12.632093,12.213263 -9.591797,20.566403 2.058633,5.65605 6.931527,9.4316 12.455077,10.34375 z"
+       id="path2022" />
+    <path
+       style="fill:currentColor;stroke:currentColor;stroke-width:5.3975;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers fill stroke"
+       d="m 85.183594,77.566406 -24.328126,8.855469 -3.205473,33.079435 24.37801,-7.31141 z"
+       id="path2020"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:currentColor;stroke:currentColor;stroke-width:5.3975;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers fill stroke"
+       d="m 135.53647,61.06119 -23.10092,6.587248 -2.63269,34.225002 22.00326,-7.905201 z"
+       id="path2018"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:currentColor;stroke:currentColor;stroke-width:5.3975;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers fill stroke"
+       d="m 166.89413,46.606658 -6.16561,37.615999 5.44531,-1.982419 c 8.35313,-3.040292 12.63013,-12.213271 9.58984,-20.566405 -1.82274,-5.007923 -4.13662,-13.687829 -8.86954,-15.067175 z"
+       id="rect9930-5"
+       sodipodi:nodetypes="cccsc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:currentColor;stroke-width:5;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       d="M 26.295076,98.077273 165.29031,46.945549"
+       id="path418"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:currentColor;stroke-width:5;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       d="M 29.26785,131.41589 164.82638,81.429735"
+       id="path418-8"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:currentColor;stroke-width:5;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       d="M 34.813286,134.94619 177.43668,133.80062"
+       id="path2026"
+       sodipodi:nodetypes="cc" />
+  </g>
+</svg>

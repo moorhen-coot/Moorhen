@@ -21,7 +21,6 @@ export const SelfRestraints = () => {
     const moleculeSelectRef = useRef<HTMLSelectElement | null>(null);
     const chainSelectRef = useRef<HTMLSelectElement | null>(null);
     const cidSelectRef = useRef<HTMLInputElement | null>(null);
-    const maxDistSliderRef = useRef<number>(4.5);
 
     const [selectedMode, setSelectedMode] = useState<string>("Molecule");
     const [selectedMolNo, setSelectedMolNo] = useState<null | number>(null);
@@ -50,7 +49,7 @@ export const SelfRestraints = () => {
     };
 
     const onCompleted = useCallback(async () => {
-        if (!moleculeSelectRef.current.value || maxDistSliderRef.current === null) {
+        if (!moleculeSelectRef.current.value || maxDist === null) {
             return;
         }
 
@@ -77,7 +76,7 @@ export const SelfRestraints = () => {
         }
 
         if (cid) {
-            await selectedMolecule.generateSelfRestraints(cid, maxDistSliderRef.current);
+            await selectedMolecule.generateSelfRestraints(cid, maxDist);
             const restraintsRepresenation = selectedMolecule.representations.find(item => item.style === "restraints");
             if (restraintsRepresenation) {
                 await restraintsRepresenation.redraw();
@@ -93,7 +92,7 @@ export const SelfRestraints = () => {
             }
             dispatch(triggerUpdate(selectedMolecule.molNo));
         }
-    }, []);
+    }, [molecules, maxDist]);
 
     return (
         <>

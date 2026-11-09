@@ -9,6 +9,7 @@
 #include <thread>
 #include <unordered_map>
 #include <cmath>
+#include <climits>
 
 #define MC_IMPLEM_ENABLE
 #include "MC.h"
@@ -229,16 +230,25 @@ void smooth_mesh(
     }
 }
 
+// Adds every point's contribution to the grid planes iz0 <= iz < iz1.
+//
+// Threads are given disjoint ranges of planes, not of points. Splitting by point, as this used to,
+// had several threads adding into the same voxels at once - neighbouring atoms overlap by up to
+// the 5 A cutoff - with nothing to stop one += overwriting another, so the field (and the mesh)
+// changed with the thread count and from run to run. By plane, no voxel has more than one writer,
+// and each voxel still sums its points in index order, so the result is the same as one thread
+// to the last bit.
 void fill_field(
     const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points,
-    int ip0, int ip1,
+    int iz0, int iz1,
     std::vector<MC::MC_FLOAT> &field,
     float cutoff,
     int ncell_x, int ncell_y, int ncell_z,
     float min_x, float min_y, float min_z,
     float cell_x, float cell_y, float cell_z)
 {
-    for (int ip = ip0; ip < ip1; ip++) {
+    const int np = static_cast<int>(points.size());
+    for (int ip = 0; ip < np; ip++) {
 
         float x0 = points[ip].first[0];
         float y0 = points[ip].first[1];
@@ -256,6 +266,11 @@ void fill_field(
 
         int iz_min = std::max(0, (int)((z0 - cutoff - min_z) / cell_z));
         int iz_max = std::min(ncell_z - 1, (int)((z0 + cutoff - min_z) / cell_z));
+
+        // This thread's planes only.
+        iz_min = std::max(iz_min, iz0);
+        iz_max = std::min(iz_max, iz1 - 1);
+        if (iz_min > iz_max) continue;
 
         for (int iz = iz_min; iz <= iz_max; iz++) {
             float z = min_z + iz * cell_z;
@@ -356,18 +371,18 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
 
     float cutoff = 5.0f;
 
-    if(np>20&&n_threads>1){
+    if(np>20&&n_threads>1&&ncell_z>=n_threads){
         std::vector<std::thread> fill_threads;
         for(int i=0;i<n_threads;i++){
-            int start =     i * np / n_threads;
-            int end   = (i+1) * np / n_threads;
+            int start =     i * ncell_z / n_threads;
+            int end   = (i+1) * ncell_z / n_threads;
             fill_threads.push_back(std::thread(fill_field, std::cref(points), start, end, std::ref(field), cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, cell_x, cell_y, cell_z));
         }
         for(int i=0;i<n_threads;i++){
             fill_threads[i].join();
         }
     } else {
-        fill_field(points, 0, np, field, cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, cell_x, cell_y, cell_z);
+        fill_field(points, 0, ncell_z, field, cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, cell_x, cell_y, cell_z);
     }
 
     auto t_field = std::chrono::high_resolution_clock::now();
@@ -410,7 +425,8 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
         for(int i=0;i<n_threads;i++){
             int start =     i * np_smooth / n_threads;
             int end   = (i+1) * np_smooth / n_threads;
-            smooth_threads.push_back(std::thread(smooth_mesh, std::cref(points), grid, cell_size, start, end, cutoff, &mesh));
+            // std::cref: passed bare, std::thread copied the whole hash grid into every thread.
+            smooth_threads.push_back(std::thread(smooth_mesh, std::cref(points), std::cref(grid), cell_size, start, end, cutoff, &mesh));
         }
         for(int i=0;i<n_threads;i++){
             smooth_threads[i].join();

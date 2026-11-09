@@ -37,6 +37,36 @@ describe("MoorhenToggle", () => {
         expect(onChange).toHaveBeenCalledTimes(1);
     });
 
+    test("flips when used uncontrolled through a ref (no checked prop)", async () => {
+        const user = userEvent.setup();
+        const ref = { current: null as HTMLInputElement | null };
+        render(<MoorhenToggle label="Ref only" ref={ref} />);
+        const checkbox = screen.getByRole("checkbox");
+        expect(ref.current).toBe(checkbox);
+        expect(ref.current.checked).toBe(false);
+        await user.click(checkbox);
+        expect(ref.current.checked).toBe(true);
+        expect(checkbox).toBeChecked();
+        await user.click(checkbox);
+        expect(ref.current.checked).toBe(false);
+    });
+
+    test("stays controlled when checked is given without a state update", async () => {
+        const user = userEvent.setup();
+        render(<MoorhenToggle label="Pinned" checked={false} />);
+        const checkbox = screen.getByRole("checkbox");
+        await user.click(checkbox);
+        expect(checkbox).not.toBeChecked();
+    });
+
+    test("toggle receives the new value", async () => {
+        const user = userEvent.setup();
+        const toggle = jest.fn();
+        render(<MoorhenToggle label="Toggle cb" checked={false} toggle={toggle} />);
+        await user.click(screen.getByRole("checkbox"));
+        expect(toggle).toHaveBeenCalledWith(true);
+    });
+
     test("is disabled when disabled prop is true", () => {
         render(<MoorhenToggle label="Disabled toggle" disabled={true} />);
         const checkbox = screen.getByRole("checkbox");

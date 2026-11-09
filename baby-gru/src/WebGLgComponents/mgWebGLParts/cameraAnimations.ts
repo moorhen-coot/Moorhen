@@ -105,15 +105,15 @@ export function stopPumpingCamera(self: MGWebGL) {
  * drew nothing at all until the camera was wiggled, and the second centring was the one that
  * mattered. Between two requests from the same source the later one is simply the better one.
  *
- * `animating` with nothing holding the camera is checked separately because the movie spike still
- * sets it by hand. When the spike acquires a driver of its own, that test goes.
+ * `animating` is not consulted. It used to be, because a movie had no way to say it owned the
+ * camera and set that flag by hand instead; a movie acquires a driver now, so asking who is
+ * driving is the whole question. The flag is still written below - the superseding rule needs to
+ * know whether a move is the one that still holds the camera - but nothing decides anything from
+ * it any more, which is why it can mean one thing rather than two.
  */
 export function moveCameraTo(self: MGWebGL, target: CameraTarget, transition: Transition): Promise<MoveResult> {
     const driving = self.cameraController.driver
     if(driving !== null && driving !== "centring") {
-        return Promise.resolve({ completed: false })
-    }
-    if(driving === null && self.animating) {
         return Promise.resolve({ completed: false })
     }
 

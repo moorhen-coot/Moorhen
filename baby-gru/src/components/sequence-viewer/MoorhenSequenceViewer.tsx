@@ -509,7 +509,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     return (
         <>
             <div
-                className={`moorhen__seqviewer-container ${className}`}
+                className={`moorhen__seqviewer-container ${className ?? ""}`}
                 // style={{ ...props.style, height: (showTitleBar ? 72 : 50) + displayHeight * 26 + "px" }}
                 /** Detect mouse on the seq viewer to switch to css hover of the residues box => better (feeling of) performance*/
                 onMouseEnter={() => {

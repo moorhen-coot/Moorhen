@@ -15,7 +15,6 @@ export const ImportMap = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const maps = useSelector((state: moorhen.State) => state.maps);
     const filesRef = useRef<null | HTMLInputElement>(null);
-    const isDiffRef = useRef<undefined | HTMLInputElement>(null);
     const [isActiveButton, setIsActiveButton] = useState(true);
     const [isDiff, setIsDiff] = useState<boolean>(false);
 
@@ -70,10 +69,9 @@ export const ImportMap = () => {
         <>
             <MoorhenFileInput label="CCP4/MRC Map..." ref={filesRef} multiple={true} accept=".map, .mrc, .map.gz, .mrc.gz, .ccp4" />
             <MoorhenToggle
-                label={"is diff map"}
+                label={"is difference map"}
                 name={`isDifference`}
                 type="checkbox"
-                ref={isDiffRef}
                 checked={isDiff}
                 onChange={e => setIsDiff(e.target.checked)}
             />

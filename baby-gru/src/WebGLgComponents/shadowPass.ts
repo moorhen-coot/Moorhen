@@ -29,21 +29,55 @@
  * requirements rather than inheriting them. The cost is three GL calls per frame.
  */
 
+/**
+ * THE SECOND LEAK, SAME SHAPE
+ *
+ * Texture unit bindings are global and sticky too, and the shadow map is bound to its own unit
+ * during the lit pass so the shaders can read it. Nothing unbinds it, so the next frame's shadow
+ * pass begins with the shadow depth texture still bound - while rendering *into* that very
+ * texture. Sampling the framebuffer you are drawing to is a feedback loop, and the driver drops
+ * the draw:
+ *
+ *     GL_INVALID_OPERATION: glDrawElements: Feedback loop formed between Framebuffer and
+ *     active Texture.
+ *
+ * It only bites a program that actually declares the shadow sampler while being drawn in the
+ * shadow pass. The triangle and instanced programs swap to their shadow variants there, which
+ * declare no such uniform - but the thick-lines-normal program has no shadow variant, so it is
+ * drawn as-is, with `ShadowMap` live and pointing at the unit holding the texture being written.
+ * Lit lines therefore vanished, and every frame filled the console.
+ *
+ * Detaching it here rather than at the end of the lit pass is the same argument as the depth
+ * state: the pass that renders into the texture is the one with a stake in nothing else being
+ * able to read it, and it is one place rather than every place that might have bound it.
+ */
+
 /** The subset of a WebGL context this needs - so it can be checked without one. */
 export interface DepthStateContext {
     readonly DEPTH_TEST: number;
     readonly LESS: number;
+    readonly TEXTURE0: number;
+    readonly TEXTURE_2D: number;
     enable(cap: number): void;
     depthFunc(func: number): void;
     depthMask(flag: boolean): void;
+    activeTexture(unit: number): void;
+    bindTexture(target: number, texture: WebGLTexture | null): void;
 }
 
 /**
  * Put the context into the state a depth-only render requires: the test on, nearer fragments
- * winning, and writes enabled.
+ * winning, writes enabled, and the depth texture about to be written detached from the unit the
+ * shaders read it through.
+ *
+ * @param shadowTextureUnit the unit the shadow map is sampled from during the lit pass. Required
+ *     rather than defaulted: a wrong or forgotten unit here is a feedback loop, and a feedback
+ *     loop does not look like a texture problem from the outside.
  */
-export const beginDepthOnlyPass = (gl: DepthStateContext): void => {
+export const beginDepthOnlyPass = (gl: DepthStateContext, shadowTextureUnit: number): void => {
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LESS);
     gl.depthMask(true);
+    gl.activeTexture(gl.TEXTURE0 + shadowTextureUnit);
+    gl.bindTexture(gl.TEXTURE_2D, null);
 };

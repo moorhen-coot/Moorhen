@@ -14,7 +14,7 @@ var twod_gbuffer_vertex_shader_source = `#version 300 es\n
 
     out lowp vec4 eyePos;
     out lowp vec4 v;
-    out lowp vec2 vTexture;
+    out highp vec2 vTexture;
     out mediump mat4 projMatrix;
     out float size_v;
 

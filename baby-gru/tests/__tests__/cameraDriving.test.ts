@@ -254,16 +254,18 @@ describe("deferring rather than fighting", () => {
         expect(frames.queued).toBe(0);
     });
 
-    it("declines while `animating` is set by hand", async () => {
-        // How MoorhenMovieSpike keeps the effect out of the way today. It goes when the spike
-        // acquires a driver of its own; until then it has to keep working.
+    it("no longer consults `animating`, which only ever stood in for ownership", () => {
+        // It used to decline while this flag was set, because a movie had no way to say it owned
+        // the camera and set it by hand instead. A movie now acquires a driver, and asking who is
+        // driving is the whole question - so a stale flag cannot silently swallow a move.
         const self = fakeRenderer(new CameraController(startingAt({ zoom: 1 })));
         self.animating = true;
 
-        const result = await moveCameraTo(self as any, { zoom: 5 }, { kind: "ease", seconds: 1 });
+        moveCameraTo(self as any, { zoom: 5 }, { kind: "ease", seconds: CENTRING_SECONDS });
+        frames.step(0);
+        frames.step(CENTRING_SECONDS);
 
-        expect(result.completed).toBe(false);
-        expect(self.cameraController.state.zoom).toBe(1);
+        expect(self.cameraController.state.zoom).toBeCloseTo(5, 10);
     });
 
     it("supersedes a centring move of its own rather than declining it", async () => {
@@ -431,5 +433,31 @@ describe("tearing down", () => {
     it("is harmless when nothing is pumping", () => {
         const self = fakeRenderer(new CameraController(startingAt()));
         expect(() => stopPumpingCamera(self as any)).not.toThrow();
+    });
+});
+
+describe("a tick that happens inside a tick", () => {
+    it("is refused, so a sampler's side effects cannot advance the clock", () => {
+        // A driven movie's sampler runs from inside drawScene. Anything it does that causes
+        // another draw - and asking for a redraw after changing the scene is an ordinary thing to
+        // do - would tick again, sample at a later time, and recurse. Nothing in a fade converges,
+        // because every nested sample differs from the last, so a whole segment could be consumed
+        // inside one animation frame: the fade appeared to be skipped entirely.
+        const camera = new CameraController(startingAt());
+        const driver = camera.acquire("movie");
+        const times: number[] = [];
+
+        driver.drive(seconds => {
+            times.push(seconds);
+            // What a scene write that asks for a redraw amounts to, from in here.
+            camera.tick(seconds + 0.5);
+            return { zoom: 1 + seconds };
+        });
+
+        camera.tick(0);
+
+        expect(times).toEqual([0]);
+        expect(camera.state.zoom).toBe(1);
+        driver.release();
     });
 });

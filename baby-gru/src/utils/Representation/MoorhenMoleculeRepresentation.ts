@@ -8,13 +8,23 @@ import { libcootApi } from "../../types/libcoot";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
-import { createRepresentation } from "./RepresentationBuilder";
-import type { BuildRepresentationParams, CreateRepresentationParams } from "./RepresentationBuilder";
+import { createRepresentation, extractRepresentationParams, withCidModel } from "./RepresentationBuilder";
+import type { BuildRepresentationParams, CreateRepresentationParams, RepresentationBackup } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { wholeMeshPickInfo } from "../../WebGLgComponents/wholeMeshPick";
+import {
+    METABALLS_GRID_SIZE, METABALLS_ISO_LEVEL, METABALLS_RADIUS, METABALLS_SPHERE_ARGS,
+    gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
+} from "../../WebGPUComponents/metaballs";
+
+/**
+ * The styles that actually put individual atoms on the screen, and so the only ones a per-atom
+ * highlight such as the hover ball can sit on.
+ */
+export const ATOM_LEVEL_STYLES: string[] = ["CBs", "CAs", "VdwSpheres", "ligands"];
 
 export type MeshType =
     | libcootApi.InstancedMeshJS
@@ -251,6 +261,15 @@ export class MoleculeRepresentation {
     public edit(params: Omit<CreateRepresentationParams, "molecule" | "existingRepresentation">)  {createRepresentation({...params, molecule: this.parentMolecule, existingRepresentation: this })}
 
     /**
+     * Snapshot everything needed to rebuild this representation as plain, JSON-serialisable data
+     * (no molecule or colour rule references). Pass it to MoleculeRepresentation.create() with a
+     * molecule, or to the instance API's representation.create() with the molecule uid.
+     */
+    public backup(): RepresentationBackup {
+        return extractRepresentationParams(this);
+    }
+
+    /**
      * A method to set M2T style parameters for this molecule representation
      * @param {m2tParameters} m2tParams - The new M2T parameters
      */
@@ -263,11 +282,9 @@ export class MoleculeRepresentation {
         }
     }
 
+    /** Show one model of a multi-model molecule (0: all of them). The model is kept in the CID */
     setShownMultimodel(modelIndex: number) {
-        const splitCid = this.cid.split("/");
-        const _modelIndex = modelIndex === 0 ? "*" : modelIndex;
-        console.log("splitCid", splitCid);
-        this.cid = `/${_modelIndex}/${splitCid.slice(2).join("/")}`;
+        this.cid = withCidModel(this.cid, modelIndex);
         this.redraw();
     }
 
@@ -286,6 +303,22 @@ export class MoleculeRepresentation {
             buildBuffers(this.buffers, this.parentMolecule.store);
         }
         this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+    }
+
+    /**
+     * Undo a movie fade (DisplayBuffer.setAlphaMultiplier): back to the representation's own
+     * opacity. A rebuilt representation starts unfaded; a kept one (scene switch) must too.
+     */
+    resetFade() {
+        let wasFaded = false;
+        this.buffers?.forEach(buffer => {
+            if (buffer.alphaMultiplier === undefined || buffer.alphaMultiplier === 1) return;
+            wasFaded = true;
+            buffer.setAlphaMultiplier?.(1);
+            // setAlphaMultiplier only knows custom colours: a see-through representation stays see-through
+            if (this.nonCustomOpacity < 0.99) buffer.transparent = true;
+        });
+        if (wasFaded) this.parentMolecule.store.dispatch(setRequestDrawScene(true));
     }
 
     /**
@@ -324,6 +357,19 @@ export class MoleculeRepresentation {
             this.bondOptions = bondOptions;
         } else {
             this.useDefaultBondOptions = true;
+        }
+    }
+
+    /**
+     * A method to set gaussian surface settings for this molecule representation
+     * @param {gaussianSurfSettings} settings - The new gaussian surface settings
+     */
+    setGaussianSurfaceSettings(settings: gaussianSurfSettings) {
+        if (settings) {
+            this.useDefaultGaussianSurfaceSettings = false;
+            this.gaussianSurfaceSettings = settings;
+        } else {
+            this.useDefaultGaussianSurfaceSettings = true;
         }
     }
 
@@ -615,8 +661,10 @@ export class MoleculeRepresentation {
             newBuffers = displayBuffers;
         }
         if (this.buffers?.length > 0) {
+            const gl = this.parentMolecule.store.getState().glRef.glCtx;
             this.buffers.forEach(buffer => {
                 if ("clearBuffers" in buffer) {
+                    buffer.clearBuffers(gl);
                     newBuffers = newBuffers.filter(glBuffer => glBuffer !== buffer);
                 } else if ("labels" in buffer) {
                     newLabelBuffers = newLabelBuffers.filter(buf => buf.uuid !== buffer.uuid);
@@ -1563,10 +1611,37 @@ export class MoleculeRepresentation {
     drawSymmetry() {
         if (this.parentMolecule.symmetryMatrices && this.buffers && this.styleHasSymmetry) {
             this.buffers.forEach((displayObject: moorhen.DisplayObject) => {
+                // Only meshes: text-label and image records ride along in buffers, frozen by the store.
+                if (!("bufferTypes" in displayObject)) return;
                 displayObject.symmetryMatrices = this.parentMolecule.symmetryMatrices;
                 displayObject.updateSymmetryAtoms();
             });
         }
+    }
+
+    /**
+     * The models drawn by the parent molecule's visible atom-level representations, so a highlight
+     * lands only on atoms that are on screen. A representation restricted to "/2/*" contributes
+     * model 2; one with a wildcard, empty or chain-first model field shows every model, and "*"
+     * is returned.
+     * @returns {string[]} Model numbers, or ["*"] for all models
+     */
+    getDisplayedModels(): string[] {
+        const models = new Set<string>();
+        for (const representation of this.parentMolecule?.representations ?? []) {
+            if (!representation.visible || !ATOM_LEVEL_STYLES.includes(representation.style)) {
+                continue;
+            }
+            for (const part of (representation.cid ?? "").split("||")) {
+                const trimmed = part.trim();
+                const model = trimmed.split("/")[1];
+                if (!trimmed.startsWith("/") || !/^\d+$/.test(model ?? "")) {
+                    return ["*"];
+                }
+                models.add(model);
+            }
+        }
+        return models.size > 0 ? [...models] : ["*"];
     }
 
     /**
@@ -1586,15 +1661,13 @@ export class MoleculeRepresentation {
             modifiedSelection = selectionString;
         } else {
             const resSpec: moorhen.ResidueSpec = cidToSpec(selectionString);
-            if (this.parentMolecule.isLigand) {
-                modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/${resSpec.atom_name}${
-                    resSpec.alt_conf === "" ? "" : ":"
-                }${resSpec.alt_conf}`;
-            } else {
-                modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${
-                    resSpec.alt_conf === "" ? "" : ":"
-                }${resSpec.alt_conf}`;
-            }
+            const atomName = this.parentMolecule.isLigand ? resSpec.atom_name : "*";
+            const altConf = resSpec.alt_conf === "" ? "" : `:${resSpec.alt_conf}`;
+            // The model field of the hovered CID can't be trusted - the sequence viewer writes the
+            // molecule number there - so the models come from what is actually on screen instead.
+            modifiedSelection = this.getDisplayedModels()
+                .map(model => `/${model}/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/${atomName}${altConf}`)
+                .join("||");
         }
 
         const selectedGemmiAtoms = await this.parentMolecule.gemmiAtomsForCid(modifiedSelection);
@@ -1607,7 +1680,6 @@ export class MoleculeRepresentation {
         const objects = [{ ...gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours), pick_info: {} }]
         objects.forEach(object => {
             object["clickTol"] = 1e-6;
-            object["doStencil"] = true;
             object["isHoverBuffer"] = true;
         });
         return objects
@@ -1786,16 +1858,62 @@ export class MoleculeRepresentation {
      * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
      */
     async getMetaBallBuffers(cid: string) : Promise<PickableMesh[]>{
+        if (gpuMetaBallsSetting.enabled) {
+            try {
+                const objects = await this.getMetaBallBuffersOnGpu(cid);
+                if (objects) return objects;
+            } catch (err) {
+                console.warn("GPU MetaBalls failed; making them with Coot instead.", err);
+            }
+        }
         const response = (await this.commandCentre.cootCommand(
             {
                 returnType: "PickableMeshPerm",
                 command: "DrawMoorhenMetaBalls",
-                commandArgs: [this.parentMolecule.molNo, cid, 0.2, 0.67, 1.8, 4],
+                commandArgs: [this.parentMolecule.molNo, cid, METABALLS_GRID_SIZE, METABALLS_RADIUS, METABALLS_ISO_LEVEL, 4],
             },
             false
         )) as moorhen.WorkerResponse<{mesh:libcootApi.SimpleMeshJS,pick_info:{pick_points:number[][]}}>;
         const objects = [{ ...response.data.result.result.mesh, pick_info: response.data.result.result.pick_info }];
         return objects;
+    }
+
+    /**
+     * The same MetaBalls mesh made with WebGPU compute: Coot supplies the spheres, as it does for
+     * DrawMoorhenMetaBalls, and the field, marching cubes and per-vertex pass run on the GPU.
+     * Null when WebGPU is not available. See WebGPUComponents/metaballs.
+     */
+    async getMetaBallBuffersOnGpu(cid: string) : Promise<PickableMesh[] | null>{
+        const generator = await sharedGpuMetaBalls();
+        if (!generator) return null;
+        const started = performance.now();
+        const response = (await this.commandCentre.cootCommand(
+            {
+                returnType: "instanced_mesh_perfect_spheres",
+                command: "get_bonds_mesh_for_selection_instanced",
+                commandArgs: [this.parentMolecule.molNo, cid, ...METABALLS_SPHERE_ARGS],
+            },
+            false
+        )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+        const spheresMs = performance.now() - started;
+        const { input, pickPoints } = metaballsInputFromSpheres(response.data.result.result as never, METABALLS_RADIUS);
+        const mesh = await generator.generate(input, {
+            gridSize: METABALLS_GRID_SIZE, isoLevel: METABALLS_ISO_LEVEL, splitField: gpuMetaBallsSetting.splitField, pickable: true,
+        });
+        const grid = mesh.grid ? mesh.grid.n.join("x") : "none";
+        const t = mesh.timings;
+        const other = t.totalMs - t.setupMs - t.encodeMs - t.waitMs - t.copyMs;
+        console.debug(`GPU MetaBalls: ${pickPoints.length} points, grid ${grid}, ${mesh.positions.length / 3} vertices, ` +
+            `${mesh.indices.length / 3} triangles; spheres from Coot ${spheresMs.toFixed(0)} ms, ` +
+            `GPU ${t.totalMs.toFixed(0)} ms in ${t.slabs} slab(s), ${t.field ?? "no"} field: ` +
+            `setup ${t.setupMs.toFixed(0)}, encode ${t.encodeMs.toFixed(0)}, wait ${t.waitMs.toFixed(0)}, ` +
+            `copy ${t.copyMs.toFixed(0)}, other ${other.toFixed(0)}` + (t.retries ? `, ${t.retries} retry(s)` : ""));
+        // Read back after the mesh is made, so as not to hold it up.
+        t.gpuMs?.then(gpuMs => {
+            if (gpuMs) console.debug(`GPU MetaBalls, GPU time per kernel: ${Object.entries(gpuMs).map(([k, ms]) => `${k} ${ms.toFixed(1)}`).join(", ")}`);
+        });
+        const data = metaballsMeshData(mesh, pickPoints);
+        return [data as unknown as PickableMesh];
     }
 
     /**

@@ -2,16 +2,13 @@ import { useSelector } from "react-redux";
 import { useEffect, useRef } from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { moorhen } from "../../types/moorhen";
+import { ATOM_LEVEL_STYLES } from "../../utils/Representation/MoorhenMoleculeRepresentation";
 
 /**
- * The styles that actually put individual atoms on the screen.
- *
  * A hover ball is a sphere at an atom's position, so it only means anything where that atom is
  * drawn. On a molecule shown as ribbons or as a surface it would hang in space beside geometry
  * that never mentions the atom it is marking.
  */
-const ATOM_LEVEL_STYLES = ["CBs", "CAs", "VdwSpheres", "ligands"];
-
 const showsIndividualAtoms = (molecule: moorhen.Molecule): boolean =>
     molecule?.representations?.some(
         representation => representation.visible && ATOM_LEVEL_STYLES.includes(representation.style)

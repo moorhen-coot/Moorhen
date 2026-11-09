@@ -89,7 +89,11 @@ export const moorhenKeyPress = (
         }
     }
 
-    const doShortCut = async (cootCommand: string, formatArgs: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => any[]): Promise<boolean> => {
+    // cootCommand is either a coot command name, called with formatArgs, or a function doing the edit itself
+    const doShortCut = async (
+        cootCommand: string | ((arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => Promise<unknown>),
+        formatArgs?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => any[]
+    ): Promise<boolean> => {
         let chosenMolecule: moorhen.Molecule
         let chosenAtom: moorhen.ResidueSpec
         let residueCid: string
@@ -107,12 +111,15 @@ export const moorhenKeyPress = (
         }
         
         if (chosenAtom && chosenMolecule) {
-            return commandCentre.cootCommand({
-                returnType: "status",
-                command: cootCommand,
-                commandArgs: formatArgs(chosenMolecule, chosenAtom),
-                changesMolecules: [chosenMolecule.molNo]
-            }, true)
+            const edit = typeof cootCommand === "function"
+                ? cootCommand(chosenMolecule, chosenAtom)
+                : commandCentre.cootCommand({
+                    returnType: "status",
+                    command: cootCommand,
+                    commandArgs: formatArgs(chosenMolecule, chosenAtom),
+                    changesMolecules: [chosenMolecule.molNo]
+                }, true)
+            return edit
             .then(_ => {
                 apresEdit(chosenMolecule, moorhenInstance)
             })
@@ -203,18 +210,12 @@ export const moorhenKeyPress = (
     }
 
     else if (action === 'auto_fit_rotamer' && activeMap && !viewOnly) {
-        const formatArgs = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
-            return [
-                chosenMolecule.molNo,
-                chosenAtom.chain_id,
-                chosenAtom.res_no,
-                chosenAtom.ins_code,
-                chosenAtom.alt_conf,
-                activeMap.molNo
-            ]
+        // Goes through the molecule so that only the hovered alt conf is fitted (see MoorhenMolecule.autoFitRotamer)
+        const autoFit = (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
+            return chosenMolecule.autoFitRotamer(chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.ins_code, chosenAtom.alt_conf, activeMap)
         }
         if (showShortcutToast) dispatch(enqueueSnackbar({ message:"Auto fit rotamer",  variant: "info"}))
-        return doShortCut('auto_fit_rotamer', formatArgs)
+        return doShortCut(autoFit)
     }
 
     else if (action === 'add_terminal_residue' && activeMap && !viewOnly) {
@@ -371,10 +372,12 @@ export const moorhenKeyPress = (
 
     else if (action === 'jump_next_residue' || action === 'jump_previous_residue') {
         getCentreAtom(molecules, commandCentre, store)
-        .then(result => {
+        .then(async result => {
             if (!result) {
+                console.log('Cannot find atom in the centre of the view...') 
                 return
             }
+
             const [selectedMolecule, residueCid] = result
             if (typeof selectedMolecule === 'undefined' || !residueCid) {
                 return
@@ -397,7 +400,12 @@ export const moorhenKeyPress = (
             } else {
                 return
             }
-            selectedMolecule.centreAndAlignViewOn(`/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/`, true)
+            // Translate only: keep the current orientation and zoom, so stepping along the chain is a
+            // short slide rather than a re-orientation per residue. Centre on CA so the steps follow
+            // the backbone; residues without one (nucleic acids, ligands) use the whole residue.
+            const nextResidueCid = `/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/`
+            const caAtoms = await selectedMolecule.gemmiAtomsForCid(nextResidueCid + "CA")
+            await store.dispatch(setOrigin([-caAtoms[0].x, -caAtoms[0].y, -caAtoms[0].z]))
         })
         .catch(err => console.log(err))
 

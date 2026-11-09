@@ -6,6 +6,9 @@ import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { setDisplayBuffers, setCanvasSize } from "../store/glRefSlice"
 import { setClipStart, setClipEnd, setFogStart, setFogEnd } from "../store/sceneSettingsSlice"
+import { setOrigin as setStoreOrigin, setZoom as setStoreZoom } from "../store/sceneSettingsSlice"
+import { setQuat as setStoreQuat } from "../store/glRefSlice"
+import { isSilent, viewDifference } from "./viewEcho"
 import { parseAtomInfoLabel, guid, gemmiAtomPairsToCylindersInfo } from '../utils/utils';
 import  { unProject } from './GLU.js';
 
@@ -15,7 +18,6 @@ import { depth_peel_accum_fragment_shader_source as depth_peel_accum_fragment_sh
 import { blur_x_simple_fragment_shader_source as blur_x_simple_fragment_shader_source_webgl2 } from './webgl-2/blur_x_simple-fragment-shader.js';
 import { blur_y_simple_fragment_shader_source as blur_y_simple_fragment_shader_source_webgl2 } from './webgl-2/blur_y_simple-fragment-shader.js';
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl2 } from './webgl-2/blur-vertex-shader.js';
-import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl2 } from './webgl-2/overlay-fragment-shader.js';
 import { ssao_fragment_shader_source as ssao_fragment_shader_source_webgl2 } from './webgl-2/ssao-fragment-shader.js';
 import { edge_detect_fragment_shader_source as edge_detect_fragment_shader_source_webgl2 } from './webgl-2/edge-detect-fragment-shader.js';
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl2 } from './webgl-2/blur_x-fragment-shader.js';
@@ -24,14 +26,12 @@ import { lines_fragment_shader_source as lines_fragment_shader_source_webgl2 } f
 import { text_instanced_vertex_shader_source as text_instanced_vertex_shader_source_webgl2 } from './webgl-2/text-vertex-shader.js';
 import { lines_vertex_shader_source as lines_vertex_shader_source_webgl2 } from './webgl-2/lines-vertex-shader.js';
 import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl2 } from './webgl-2/perfect-sphere-fragment-shader.js';
-import { perfect_sphere_outline_fragment_shader_source as perfect_sphere_outline_fragment_shader_source_webgl2 } from './webgl-2/perfect-sphere-outline-fragment-shader.js';
 import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl2 } from './webgl-2/pointspheres-fragment-shader.js';
 import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl2 } from './webgl-2/pointspheres-vertex-shader.js';
 import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl2 } from './webgl-2/render-framebuffer-fragment-shader.js';
 import { shadow_depth_twod_vertex_shader_source as shadow_depth_twod_vertex_shader_source_webgl2 } from './webgl-2/shadow-depth-twodshapes-vertex-shader.js';
 import { shadow_depth_perfect_sphere_fragment_shader_source as shadow_depth_perfect_sphere_fragment_shader_source_webgl2 } from './webgl-2/shadow-depth-perfect-sphere-fragment-shader.js';
 import { shadow_fragment_shader_source as shadow_fragment_shader_source_webgl2 } from './webgl-2/shadow-depth-fragment-shader.js';
-import { flat_colour_fragment_shader_source as flat_colour_fragment_shader_source_webgl2 } from './webgl-2/flat-colour-fragment-shader.js';
 import { shadow_vertex_shader_source as shadow_vertex_shader_source_webgl2 } from './webgl-2/shadow-depth-vertex-shader.js';
 import { shadow_instanced_vertex_shader_source as shadow_instanced_vertex_shader_source_webgl2 } from './webgl-2/shadow-depth-instanced-vertex-shader.js';
 import { text_fragment_shader_source as text_fragment_shader_source_webgl2 } from './webgl-2/text-fragment-shader.js';
@@ -58,7 +58,6 @@ import { triangle_texture_fragment_shader_source as triangle_texture_fragment_sh
 import { depth_peel_accum_vertex_shader_source as depth_peel_accum_vertex_shader_source_webgl1 } from './webgl-1/depth-peel-accum-vertex-shader.js';
 import { depth_peel_accum_fragment_shader_source as depth_peel_accum_fragment_shader_source_webgl1 } from './webgl-1/depth-peel-accum-fragment-shader.js';
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl1 } from './webgl-1/blur-vertex-shader.js';
-import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl1 } from './webgl-1/overlay-fragment-shader.js';
 import { ssao_fragment_shader_source as ssao_fragment_shader_source_webgl1 } from './webgl-1/ssao-fragment-shader.js';
 import { edge_detect_fragment_shader_source as edge_detect_fragment_shader_source_webgl1 } from './webgl-1/edge-detect-fragment-shader.js';
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl1 } from './webgl-1/blur_x-fragment-shader.js';
@@ -67,14 +66,12 @@ import { lines_fragment_shader_source as lines_fragment_shader_source_webgl1 } f
 import { text_instanced_vertex_shader_source as text_instanced_vertex_shader_source_webgl1 } from './webgl-1/text-vertex-shader.js';
 import { lines_vertex_shader_source as lines_vertex_shader_source_webgl1 } from './webgl-1/lines-vertex-shader.js';
 import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-fragment-shader.js';
-import { perfect_sphere_outline_fragment_shader_source as perfect_sphere_outline_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-outline-fragment-shader.js';
 import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl1 } from './webgl-1/pointspheres-fragment-shader.js';
 import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl1 } from './webgl-1/pointspheres-vertex-shader.js';
 import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl1 } from './webgl-1/render-framebuffer-fragment-shader.js';
 import { shadow_depth_twod_vertex_shader_source as shadow_depth_twod_vertex_shader_source_webgl1 } from './webgl-1/shadow-depth-twodshapes-vertex-shader.js';
 import { shadow_depth_perfect_sphere_fragment_shader_source as shadow_depth_perfect_sphere_fragment_shader_source_webgl1 } from './webgl-1/shadow-depth-perfect-sphere-fragment-shader.js';
 import { shadow_fragment_shader_source as shadow_fragment_shader_source_webgl1 } from './webgl-1/shadow-depth-fragment-shader.js';
-import { flat_colour_fragment_shader_source as flat_colour_fragment_shader_source_webgl1 } from './webgl-1/flat-colour-fragment-shader.js';
 import { shadow_vertex_shader_source as shadow_vertex_shader_source_webgl1 } from './webgl-1/shadow-depth-vertex-shader.js';
 import { shadow_instanced_vertex_shader_source as shadow_instanced_vertex_shader_source_webgl1 } from './webgl-1/shadow-depth-instanced-vertex-shader.js';
 import { text_fragment_shader_source as text_fragment_shader_source_webgl1 } from './webgl-1/text-fragment-shader.js';
@@ -103,7 +100,7 @@ import type { CameraController, CameraState, CameraTarget, MoveResult, Transitio
 import { clipOffsets, fogOffsets, slabFromCamera } from './slab'
 import { MAX_SHADOW_SOFTNESS, type ShadowMapRegion } from './shadowFrustum'
 import { setupStereoTransformations, setupMultiWayTransformations, setupThreeWayTransformations } from './mgWebGLParts/viewTransforms'
-import { recreateSilhouetteBuffers, createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, ensureOffScreeenBuffers, initTextureFramebuffer, deleteTextureFramebuffer } from './mgWebGLParts/framebuffers'
+import { createEdgeDetectFramebufferBuffer, createGBuffers, createSSAOFramebufferBuffer, createSimpleBlurOffScreeenBuffers, recreateDepthPeelBuffers, recreateOffScreeenBuffers, ensureOffScreeenBuffers, initTextureFramebuffer, deleteTextureFramebuffer } from './mgWebGLParts/framebuffers'
 import { makeCircleCanvas, makeTextCanvas } from './mgWebGLParts/canvasTextures'
 import { makeBlurBuffers, initializeSSAOBuffers, bindSSAOBuffers } from './mgWebGLParts/postProcessUniformBuffers'
 import { renderStatsText } from './mgWebGLParts/renderStats'
@@ -116,10 +113,12 @@ import { pickHalfExtents } from './mgWebGLParts/projection'
 import { initInstanceState, initGraphicsContext, attachCanvasListeners, initGraphics } from './mgWebGLParts/lifecycle'
 import { getDeviceScale} from './webGLUtils'
 import { rayMeshHit } from './rayMesh'
-import {getShader, initInstancedOutlineShaders, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initOverlayShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initOutlineShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereOutlineShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
+import {getShader, initInstancedShadowShaders, initShadowShaders, initEdgeDetectShader, initSSAOShader, initBlurXShader, initBlurYShader, initSimpleBlurXShader, initSimpleBlurYShader, initRenderFrameBufferShaders, initCirclesShaders, initTextInstancedShaders, initTextBackgroundShaders, initGBufferShadersPerfectSphere, initGBufferShadersInstanced, initGBufferShaders, initShadersDepthPeelAccum, initShadersTextured, initShaders, initShadersInstanced, initGBufferThickLineNormalShaders, initThickLineNormalShaders, initThickLineShaders, initLineShaders, initDepthShadowPerfectSphereShaders, initPerfectSphereShaders, initImageShaders, initTwoDShapesShaders, initPointSpheresShaders } from './mgWebGLShaders'
 import { Dispatch, Store } from '@reduxjs/toolkit';
 import { Root } from 'react-dom/client';
 import { RootState } from '@/store/MoorhenReduxStore';
+import type { ExternalRenderer } from './externalRenderer';
+import { DEFAULT_ANAGLYPH_COLOURS, type AnaglyphColours } from './anaglyph';
 
 export function getOffsetRect(elem) {
     const box = elem.getBoundingClientRect();
@@ -183,6 +182,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         // already use. Getters return the LIVE objects so in-place mutation (e.g.
         // quat4.multiply(this.myQuat, this.myQuat, …)) keeps working unchanged.
         private _camera: Camera = new Camera();
+        /**
+         * Whether objects can be faded in and out.
+         *
+         * The fade is a shader uniform, and only the WebGL2 shaders declare it - so on a WebGL1
+         * context an object stays solid however its opacity is animated. Asked rather than
+         * inferred, so a movie's UI can say that plainly instead of appearing to work.
+         */
+        get supportsObjectFading(): boolean { return this.WEBGL2 === true; }
+
         /** The camera controller. Nothing drives it yet; see mgWebGLParts/camera.ts. */
         get cameraController(): CameraController { return this._camera.controller; }
         get myQuat(): quat4 { return this._camera.quat; }
@@ -199,6 +207,11 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         atomLabelDepthMode: boolean;
         clipCapPerfectSpheres: boolean;
         useOffScreenBuffers: boolean;
+        /**
+         * Another renderer drawing the main view in WebGL's place (the WebGPU main view), offered
+         * each frame first; null while WebGL draws everything. See externalRenderer.ts.
+         */
+        externalRenderer: ExternalRenderer | null;
         blurSize: number;
         /** Depth-peel layers; see setDepthPeelLayers. */
         depthPeelLayers: number;
@@ -260,7 +273,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doPeel: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
-        doStenciling: boolean;
         doMultiView: boolean;
         multiViewRowsColumns: number[];
         specifyMultiViewRowsColumns: boolean;
@@ -270,6 +282,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         doCrossEyedStereo: boolean;
         doAnaglyphStereo: boolean;
         doneEvents: boolean;
+        destroyTouchGestures?: () => void;
         fpsText: string;
         measurePointsArray: any[];
         mspfArray: number[];
@@ -424,7 +437,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         pmvMatrix: Float32Array;
         prevTime: number;
         ready: boolean;
-        renderSilhouettesToTexture: boolean;
         rttFramebufferColor: webGL.MGWebGLFrameBuffer;
         rttFramebufferDepth: webGL.MGWebGLFrameBuffer;
         rttTexture: WebGLTexture;
@@ -462,13 +474,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shaderProgramInstanced: webGL.ShaderTrianglesInstanced;
         shaderProgramInstancedClip: webGL.ShaderTrianglesInstanced;
         shaderProgramInstancedFast: webGL.ShaderTrianglesInstanced;
-        shaderProgramInstancedOutline: webGL.ShaderTrianglesInstanced;
         shaderProgramInstancedShadow: webGL.ShaderTrianglesInstanced;
         shaderProgramLines: webGL.MGWebGLShader;
-        shaderProgramOutline: webGL.ShaderOutLine;
-        shaderProgramOverlay: webGL.ShaderOverlay;
         shaderProgramPerfectSpheres: webGL.ShaderPerfectSpheres;
-        shaderProgramPerfectSpheresOutline: webGL.ShaderPerfectSpheres;
         shaderProgramPointSpheres: webGL.ShaderPointSpheres;
         shaderProgramPointSpheresShadow: webGL.ShaderPointSpheres;
         shaderProgramRenderFrameBuffer: webGL.ShaderFrameBuffer;
@@ -482,15 +490,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         shaderProgramTwoDShapes: webGL.ShaderTwodShapes;
         shaderDepthShadowProgramPerfectSpheres: webGL.ShaderPerfectSpheres;
         shinyBack: boolean;
-        silhouetteBufferReady: boolean;
-        silhouetteDepthTexture: WebGLTexture;
-        silhouetteFramebuffer: webGL.MGWebGLFrameBuffer;
-        silhouetteRenderbufferColor: WebGLRenderbuffer;
-        silhouetteRenderbufferDepth: WebGLRenderbuffer;
-        silhouetteTexture: WebGLTexture;
         sphereBuffer: DisplayBuffer;
-        stencilPass: boolean;
-        stenciling: boolean;
         textHeightScaling: number;
         textTex: WebGLTexture;
         ssaoNoiseTexture: WebGLTexture;
@@ -515,6 +515,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         hoverSize: number;
         currentViewport: number[];
         currentAnaglyphColor: number[];
+        /** Anaglyph stereo's colours, left eye first (anaglyph.ts; sceneSettings.anaglyphColours). */
+        anaglyphColours: AnaglyphColours;
         threeWayViewports: number[][];
         stereoViewports: number[][];
         threeWayQuats: quat4[];
@@ -530,7 +532,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         setupStereoTransformations(this)
     }
 
+    /**
+     * The canvas showing the view: another renderer's while it draws it (externalRenderer.ts), else
+     * WebGL's. Movie export, screen recording and keyframe thumbnails take their pictures from this.
+     * Input and sizing stay with WebGL's canvas, this.canvasRef.
+     */
     getCanvasRef() : React.RefObject<HTMLCanvasElement>{
+        const external = this.externalRenderer;
+        if (external?.isShowing()) return { current: external.canvas };
         return this.canvasRef
     }
 
@@ -601,7 +610,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.edgeDetectFramebuffer = null;
         }
 
-        this.silhouetteBufferReady = false;
         this.screenshotBuffersReady = false;
     }
 
@@ -632,7 +640,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         }
 
-        this.silhouetteBufferReady = false;
         this.screenshotBuffersReady = false;
     }
 
@@ -649,6 +656,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.fpsText = "";
         this.mspfArray = [];
         this.renderStatsText = "";
+        this.externalRenderer = null;
         this.pointsArray = [];
         this.mouseTrackPoints = [];
         this.hoverSize = 0.27;
@@ -665,6 +673,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.depthPeelMSAAFailed = null;
         this.currentViewport = [0,0, 400,400];
         this.currentAnaglyphColor = [1.0,0.0,0.0,1.0]
+        this.anaglyphColours = DEFAULT_ANAGLYPH_COLOURS
         this.store = props.store;
         this.dispatch = props.dispatch
 
@@ -676,7 +685,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.fpsText = avg.toFixed(2)+" ms/frame (" + (fps).toFixed(0)+" fps) ["+this.canvas.width+" x "+this.canvas.height+"]";
             // Kept separate rather than appended, because each string becomes one entry in the
             // glyph atlas and one wider than the atlas cannot be laid out.
-            this.renderStatsText = renderStatsText();
+            this.renderStatsText = this.externalRenderer ? this.externalRenderer.statsText() : renderStatsText();
             }, 1000);
 
         //Set to false to use WebGL 1
@@ -827,10 +836,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.doOrderIndependentTransparency = doOrderIndependentTransparency;
     }
 
-    setOutlinesOn(doOutline) {
-        this.doStenciling = doOutline;
-    }
-
     setShadowsOn(doShadow) {
         this.doShadow = doShadow;
     }
@@ -863,6 +868,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.occludeDiffuse = doOccludeDiffuse;
     }
 
+    setShadowSoftness(shadowSoftness: number) {
+        // Clamped here as well as on the slider, so a larger value saved before the limit existed
+        // cannot come back in through preferences.
+        this.shadowSoftness = Math.min(Math.max(shadowSoftness, 0), MAX_SHADOW_SOFTNESS);
+    }
+
     /**
      * Rebuild the shadow map at whatever size the current quality asks for.
      *
@@ -870,12 +881,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
      * changing its size means dropping the lot and letting the next render build them again -
      * which is exactly what deleteTextureFramebuffer plus a cleared screenshotBuffersReady does.
      */
-    setShadowSoftness(shadowSoftness: number) {
-        // Clamped here as well as on the slider, so a larger value saved before the limit existed
-        // cannot come back in through preferences.
-        this.shadowSoftness = Math.min(Math.max(shadowSoftness, 0), MAX_SHADOW_SOFTNESS);
-    }
-
     rebuildShadowMap() {
         // Nothing allocated yet - these buffers are built lazily, on the first render that wants
         // them - so there is nothing to free, and whenever that build happens it will read the
@@ -885,7 +890,23 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         deleteTextureFramebuffer(this);
     }
 
-    setShadowDepthDebug(doShadowDebug) {
+    /**
+     * Show the shadow map itself instead of the scene.
+     *
+     * No UI reaches this - it is set from a preference, or from the console - and that is
+     * deliberate. It is a debugging view, and an invaluable one: it is what finally localised a
+     * shadow bug that three plausible explanations had failed to, by showing that the map was
+     * simply empty.
+     *
+     * The body of this was missing, so the preference and the MoorhenWebMG effect that reads it
+     * both ran and did nothing.
+     *
+     * Shadows have to be on for there to be a map to look at, which drawScene's gate already
+     * requires. Switching them on here would be the convenient thing and the wrong one: a
+     * debugging view should not quietly change the setting it is there to inspect.
+     */
+    setShadowDepthDebug(doShadowDebug: boolean) {
+        this.doShadowDepthDebug = doShadowDebug;
     }
 
     componentDidUpdate(oldProps) {
@@ -960,7 +981,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         initGraphicsContext(this)
         attachCanvasListeners(this)
         initGraphics(this)
-        this.unsubscribeCamera = this._camera.controller.subscribe(() => this.echoSlabToStore())
+        this.unsubscribeCamera = this._camera.controller.subscribe(() => {
+            this.echoSlabToStore()
+            this.echoViewToStore()
+        })
     }
 
     componentWillUnmount() {
@@ -969,6 +993,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         stopPumpingCamera(this)
         this.unsubscribeCamera?.()
         this.unsubscribeCamera = null
+        // Removes the touch recognisers and cancels a pending long-press timer, which would
+        // otherwise call doRightClick on an unmounted viewer.
+        this.destroyTouchGestures?.()
+        this.destroyTouchGestures = undefined
     }
 
     /**
@@ -998,6 +1026,38 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if (!same(scene.fogEnd, slab.fogEnd)) this.dispatch(setFogEnd(slab.fogEnd))
     }
 
+    /**
+     * Tell the store where the view ended up.
+     *
+     * The companion to echoSlabToStore, and for the same reason: the camera owns the view, the
+     * store keeps a copy, and the copy has to stay current or MoorhenWebMG's reconciling effect
+     * will see a disagreement and resolve it the wrong way - easing the camera back to a stale
+     * value a moment after something put it somewhere.
+     *
+     * THIS REPLACES A RULE NOBODY COULD KNOW
+     *
+     * The copy used to be kept current by individual movers calling onOriginChanged,
+     * onZoomChanged and onQuatChanged by hand. Every mover written since had to rediscover that
+     * rule by watching the view slide away, and three features found it the hard way. Subscribed
+     * here it applies to any way of moving the camera, including ones not yet written.
+     *
+     * The decision is in viewEcho, so the equality guard that stops the store and the camera
+     * chasing each other can be reasoned about and tested without a renderer.
+     */
+    echoViewToStore() {
+        const state = this.store.getState()
+        const echo = viewDifference(this._camera.controller.state, {
+            origin: state.sceneSettings.origin,
+            quat: state.glRef.quat,
+            zoom: state.sceneSettings.zoom,
+        })
+        if (isSilent(echo)) return
+
+        if (echo.origin) this.dispatch(setStoreOrigin(echo.origin))
+        if (echo.quat) this.dispatch(setStoreQuat(echo.quat))
+        if (echo.zoom !== undefined) this.dispatch(setStoreZoom(echo.zoom))
+    }
+
     initializeShaders() : void {
         let vertexShader;
         let fragmentShader;
@@ -1010,7 +1070,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let blurVertexShader;
         let ssaoFragmentShader;
         let edgeDetectFragmentShader;
-        let overlayFragmentShader;
         let blurXFragmentShader;
         let blurYFragmentShader;
         let simpleBlurXFragmentShader;
@@ -1030,7 +1089,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let twoDShapesVertexShader;
         let renderFrameBufferFragmentShader;
         let perfectSphereFragmentShader;
-        let perfectSphereOutlineFragmentShader;
 
         let shadowVertexShader; //Depth pass
         let shadowVertexShaderInstanced; //Depth pass
@@ -1047,18 +1105,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //I'm giving up on WebGL1 now ...
         let blur_x_simple_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
         let blur_y_simple_fragment_shader_source = blur_y_fragment_shader_source_webgl1;
-        let overlay_fragment_shader_source = overlay_fragment_shader_source_webgl1;
         let blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl1;
         let lines_fragment_shader_source = lines_fragment_shader_source_webgl1;
         let text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl1;
         let lines_vertex_shader_source = lines_vertex_shader_source_webgl1;
         let perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl1+fxaa_shader_source_webgl1;
-        let perfect_sphere_outline_fragment_shader_source = perfect_sphere_outline_fragment_shader_source_webgl1;
         let pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl1;
         let pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl1;
         let render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl1;
         let shadow_fragment_shader_source = shadow_fragment_shader_source_webgl1;
-        let flat_colour_fragment_shader_source = flat_colour_fragment_shader_source_webgl1;
         let shadow_depth_perfect_sphere_fragment_shader_source = shadow_depth_perfect_sphere_fragment_shader_source_webgl1;
         let shadow_depth_twod_vertex_shader_source = shadow_depth_twod_vertex_shader_source_webgl1;
         let shadow_vertex_shader_source = shadow_vertex_shader_source_webgl1;
@@ -1092,18 +1147,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl2;
             blur_x_simple_fragment_shader_source = blur_x_simple_fragment_shader_source_webgl2;
             blur_y_simple_fragment_shader_source = blur_y_simple_fragment_shader_source_webgl2;
-            overlay_fragment_shader_source = overlay_fragment_shader_source_webgl2;
             blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl2;
             lines_fragment_shader_source = lines_fragment_shader_source_webgl2;
             text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl2;
             lines_vertex_shader_source = lines_vertex_shader_source_webgl2;
             perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl2+fxaa_shader_source_webgl2;
-            perfect_sphere_outline_fragment_shader_source = perfect_sphere_outline_fragment_shader_source_webgl2;
             pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl2;
             pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl2;
             render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl2;
             shadow_fragment_shader_source = shadow_fragment_shader_source_webgl2;
-            flat_colour_fragment_shader_source = flat_colour_fragment_shader_source_webgl2;
             shadow_depth_perfect_sphere_fragment_shader_source = shadow_depth_perfect_sphere_fragment_shader_source_webgl2;
             shadow_depth_twod_vertex_shader_source = shadow_depth_twod_vertex_shader_source_webgl2;
             shadow_vertex_shader_source = shadow_vertex_shader_source_webgl2;
@@ -1147,7 +1199,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         edgeDetectFragmentShader = getShader(this.gl, edge_detect_fragment_shader_source, "fragment");
         ssaoFragmentShader = getShader(this.gl, ssao_fragment_shader_source, "fragment");
         blurXFragmentShader = getShader(this.gl, blur_x_fragment_shader_source, "fragment");
-        overlayFragmentShader = getShader(this.gl, overlay_fragment_shader_source, "fragment");
         blurYFragmentShader = getShader(this.gl, blur_y_fragment_shader_source, "fragment");
         simpleBlurXFragmentShader = getShader(this.gl, blur_x_simple_fragment_shader_source, "fragment");
         simpleBlurYFragmentShader = getShader(this.gl, blur_y_simple_fragment_shader_source, "fragment");
@@ -1162,21 +1213,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         twoDShapesVertexShader = getShader(this.gl, twod_vertex_shader_source, "vertex");
         twoDShapesFragmentShader = getShader(this.gl, twod_fragment_shader_source, "fragment");
         renderFrameBufferFragmentShader = getShader(this.gl, render_framebuffer_fragment_shader_source, "fragment");
-        const flatColourFragmentShader = getShader(this.gl, flat_colour_fragment_shader_source, "fragment");
         if (this.frag_depth_ext) {
             perfectSphereFragmentShader = getShader(this.gl, perfect_sphere_fragment_shader_source, "fragment");
-            perfectSphereOutlineFragmentShader = getShader(this.gl, perfect_sphere_outline_fragment_shader_source, "fragment");
             shadowVertexShader = getShader(this.gl, shadow_vertex_shader_source, "vertex");
             shadowVertexShaderInstanced = getShader(this.gl, shadow_instanced_vertex_shader_source, "vertex");
             shadowFragmentShader = getShader(this.gl, shadow_fragment_shader_source, "fragment");
             this.shaderProgramShadow = initShadowShaders(shadowVertexShader, shadowFragmentShader, this.gl);
             this.shaderProgramInstancedShadow = initInstancedShadowShaders(shadowVertexShaderInstanced, shadowFragmentShader, this.gl);
-            this.shaderProgramInstancedOutline = initInstancedOutlineShaders(vertexShaderInstanced, flatColourFragmentShader, this.gl);
         }
 
         this.shaderProgramRenderFrameBuffer = initRenderFrameBufferShaders(blurVertexShader, renderFrameBufferFragmentShader, this.gl);
         this.shaderProgramLines = initLineShaders(lineVertexShader, lineFragmentShader, this.gl);
-        this.shaderProgramOverlay = initOverlayShader(blurVertexShader, overlayFragmentShader, this.gl);
         this.shaderProgramBlurX = initBlurXShader(blurVertexShader, blurXFragmentShader, this.gl, this.WEBGL2);
         this.shaderProgramSSAO = initSSAOShader(blurVertexShader, ssaoFragmentShader, this.gl, this.WEBGL2);
         this.shaderProgramEdgeDetect = initEdgeDetectShader(blurVertexShader, edgeDetectFragmentShader, this.gl);
@@ -1192,7 +1239,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramImages = initImageShaders(twoDShapesVertexShader, textFragmentShader, this.gl);
         if (this.frag_depth_ext) {
             this.shaderProgramPerfectSpheres = initPerfectSphereShaders(twoDShapesVertexShader, perfectSphereFragmentShader, this.gl);
-            this.shaderProgramPerfectSpheresOutline = initPerfectSphereOutlineShaders(twoDShapesVertexShader, perfectSphereOutlineFragmentShader, this.gl);
             shadowDepthPerfectSphereFragmentShader = getShader(this.gl, shadow_depth_perfect_sphere_fragment_shader_source, "fragment");
             shadowDeptTwoDShapesVertexShader = getShader(this.gl, shadow_depth_twod_vertex_shader_source, "vertex");
             this.shaderDepthShadowProgramPerfectSpheres = initDepthShadowPerfectSphereShaders(shadowDepthPerfectSphereFragmentShader, shadowDeptTwoDShapesVertexShader, this.gl);
@@ -1209,7 +1255,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramClip = initShaders(vertexShader, fragmentShader, this.gl);
         this.shaderProgramFast = initShaders(vertexShader, fragmentShaderFast, this.gl);
         this.shaderProgram = this.shaderProgramClip;
-        this.shaderProgramOutline = initOutlineShaders(vertexShader, flatColourFragmentShader, this.gl);
         this.shaderProgramInstancedClip = initShadersInstanced(vertexShaderInstanced, fragmentShader, this.gl);
         this.shaderProgramInstancedFast = initShadersInstanced(vertexShaderInstanced, fragmentShaderFast, this.gl);
         this.shaderProgramInstanced = this.shaderProgramInstancedClip;
@@ -1278,19 +1323,35 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
      * Put part of the slab on the camera and re-derive. The one way the slab is written.
      *
      * Not through `settle`, which stands aside for an active driver: these are the renderer's own
-     * direct writes and have always landed unconditionally. They become a driver in the last slice.
+     * direct writes and have always landed unconditionally.
      *
-     * The slab policy is applied here, so under auto-clip a manual write is immediately re-derived
-     * from zoom. That is why the clip and fog sliders are disabled while auto-clip is on - the
-     * alternative being a control that silently does nothing.
+     * A write that names clip or fog stands, even under auto-clip. The policy only re-derives when
+     * the zoom moves, which is what "reset clip and fog on zoom" says and what it did before the
+     * camera work. This comment used to claim the opposite and to explain why the settings sliders
+     * were disabled under auto-clip; they were disabled because the policy was overreaching, and
+     * both the overreach and the disabling are gone.
      */
     private setCameraSlab(part: Partial<CameraState>) {
         this._camera.controller.writeLive(part)
         this.applySlabToRenderer()
     }
 
+    /**
+     * Point the view in a given direction.
+     *
+     * Through the camera rather than through the `myQuat` setter, which writes the live state
+     * silently - no notify, so no subscriber hears it. That used not to matter: drawScene echoed
+     * the orientation to the store once per frame, so the store caught up on the next draw
+     * whatever had written it. That per-frame echo has gone, replaced by echoViewToStore on the
+     * camera's own subscription, and a silent write reaches neither.
+     *
+     * The consequence of getting this wrong is not a stale number. MoorhenWebMG reconciles from
+     * the store, and resolves a disagreement by easing the camera *back* - so a setQuat that did
+     * not notify would turn the view and have it drift away again a moment later, which is a
+     * maddening thing to debug and has already been found three times in other guises.
+     */
     setQuat(q: quat4) : void {
-        this.myQuat = q;
+        this._camera.controller.writeLive({ quat: [q[0], q[1], q[2], q[3]] });
         this.drawScene();
     }
 
@@ -1499,10 +1560,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.drawScene();
     }
 
-    recreateSilhouetteBuffers(){
-        recreateSilhouetteBuffers(this)
-    }
-
     createEdgeDetectFramebufferBuffer(width : number,height : number){
         createEdgeDetectFramebufferBuffer(this, width, height)
     }
@@ -1533,39 +1590,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     initTextureFramebuffer() : void {
         initTextureFramebuffer(this)
-    }
-
-    centreOn(idx) {
-        const displayBuffers = this.store.getState().glRef.displayBuffers
-        const self = this;
-        if (displayBuffers[idx].atoms.length > 0) {
-            let xtot = 0;
-            let ytot = 0;
-            let ztot = 0;
-            for (let j = 0; j < displayBuffers[idx].atoms.length; j++) {
-                xtot += displayBuffers[idx].atoms[j].x;
-                ytot += displayBuffers[idx].atoms[j].y;
-                ztot += displayBuffers[idx].atoms[j].z;
-            }
-            xtot /= displayBuffers[idx].atoms.length;
-            ytot /= displayBuffers[idx].atoms.length;
-            ztot /= displayBuffers[idx].atoms.length;
-
-            const new_origin = [-xtot, -ytot, -ztot];
-            const old_origin = [this.origin[0], this.origin[1], this.origin[2]];
-
-            const myVar = setInterval(function () { myTimer() }, 10);
-            let frac = 0;
-            function myTimer() {
-                const ffrac = 0.01 * frac;
-                self.origin = [ffrac * new_origin[0] + (1.0 - ffrac) * old_origin[0], ffrac * new_origin[1] + (1.0 - ffrac) * old_origin[1], ffrac * new_origin[2] + (1.0 - ffrac) * old_origin[2]];
-                self.drawScene();
-                if (frac > 99) {
-                    clearInterval(myVar);
-                }
-                frac += 1;
-            }
-        }
     }
 
     initTextBuffersBuffer(buffer) {
@@ -1706,7 +1730,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.imageBuffer.triangleVertexTextureBuffer[0].numItems = imageTextures.length / 2;
             this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageTextures), this.gl.STATIC_DRAW);
         }
-        buildBuffers(this.displayBuffers, this.store)
+        // The scene's buffers - the store's, which are what WebGL draws; this.displayBuffers is a
+        // leftover that nothing fills - and this context, given outright: WebGL is about to draw,
+        // so whatever was left dirty while another renderer drew (deferWebGLUploads) is uploaded
+        // now. Building only this.displayBuffers was harmless while every buffer was uploaded as
+        // it was made, and left WebGL drawing buffers with nothing in them once uploads waited.
+        buildBuffers(this.store.getState().glRef.displayBuffers, this.store, this.gl)
     }
 
     drawTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:webGL.MGWebGLShader, vertexType:number, bufferIdx:number, specialDrawBuffer?:number) {
@@ -1964,7 +1993,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         if(this.measureCylinderBuffers){
             this.measureCylinderBuffers.forEach((buffer) => {
                 if("clearBuffers" in buffer){
-                    buffer.clearBuffers()
+                    buffer.clearBuffers(this.gl)
                     this.displayBuffers = this.displayBuffers.filter(glBuffer => glBuffer.id !== buffer.id)
                 }
             })
