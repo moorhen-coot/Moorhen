@@ -1,4 +1,5 @@
 import os
+import re
 from pydoc import doc
 import subprocess
 
@@ -35,24 +36,22 @@ with open(output_file,"w") as f:
 
 
 # public exports
+# Actions kept out of the public API (they stay in store/index.ts for internal use). The scene lists
+# and backups are driven by MoorhenInstance.userScene, which keeps state outside the store, so
+# dispatching these directly would leave it out of sync. The movie is driven by its panel.
+INTERNAL_SLICES = {"userScenesSlice", "movieSlice"}
+INTERNAL_ACTIONS = {"applySceneSettingsSnapshot"}
+
 public_export: list[str] = []
 with open(output_file,"r") as f:
-    for line in f:
-        if line.startswith("//"):
-            continue
-
-        if line.startswith("export { reducers"):
-            break
-
-        line = line.strip()
-        line = line.replace("export {", "")
-        line = line.split("}")[0]
-        line = line.replace("\n","")
-        line = line.replace(",","")
-        lines = line.split(" ")
-        public_export.extend(lines)
-
-public_export = [item for item in public_export if item != '']
+    index_content = f.read().split("export { reducers")[0]
+for names, slice_name in re.findall(r'export\s*\{([^}]*)\}\s*from\s*"\./([\w-]+)"', index_content):
+    if slice_name in INTERNAL_SLICES:
+        continue
+    for name in names.replace("\n", " ").split(","):
+        name = name.strip()
+        if name != "" and not name.startswith("type ") and name not in INTERNAL_ACTIONS:
+            public_export.append(name)
 
 public_export_string = "export { " + ", ".join(public_export) + " } from \"@/store\";"
 

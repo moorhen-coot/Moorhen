@@ -8,8 +8,8 @@ import { libcootApi } from "../../types/libcoot";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
-import { createRepresentation } from "./RepresentationBuilder";
-import type { BuildRepresentationParams, CreateRepresentationParams } from "./RepresentationBuilder";
+import { createRepresentation, extractRepresentationParams, withCidModel } from "./RepresentationBuilder";
+import type { BuildRepresentationParams, CreateRepresentationParams, RepresentationBackup } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
@@ -261,6 +261,15 @@ export class MoleculeRepresentation {
     public edit(params: Omit<CreateRepresentationParams, "molecule" | "existingRepresentation">)  {createRepresentation({...params, molecule: this.parentMolecule, existingRepresentation: this })}
 
     /**
+     * Snapshot everything needed to rebuild this representation as plain, JSON-serialisable data
+     * (no molecule or colour rule references). Pass it to MoleculeRepresentation.create() with a
+     * molecule, or to the instance API's representation.create() with the molecule uid.
+     */
+    public backup(): RepresentationBackup {
+        return extractRepresentationParams(this);
+    }
+
+    /**
      * A method to set M2T style parameters for this molecule representation
      * @param {m2tParameters} m2tParams - The new M2T parameters
      */
@@ -273,11 +282,9 @@ export class MoleculeRepresentation {
         }
     }
 
+    /** Show one model of a multi-model molecule (0: all of them). The model is kept in the CID */
     setShownMultimodel(modelIndex: number) {
-        const splitCid = this.cid.split("/");
-        const _modelIndex = modelIndex === 0 ? "*" : modelIndex;
-        console.log("splitCid", splitCid);
-        this.cid = `/${_modelIndex}/${splitCid.slice(2).join("/")}`;
+        this.cid = withCidModel(this.cid, modelIndex);
         this.redraw();
     }
 
@@ -296,6 +303,22 @@ export class MoleculeRepresentation {
             buildBuffers(this.buffers, this.parentMolecule.store);
         }
         this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+    }
+
+    /**
+     * Undo a movie fade (DisplayBuffer.setAlphaMultiplier): back to the representation's own
+     * opacity. A rebuilt representation starts unfaded; a kept one (scene switch) must too.
+     */
+    resetFade() {
+        let wasFaded = false;
+        this.buffers?.forEach(buffer => {
+            if (buffer.alphaMultiplier === undefined || buffer.alphaMultiplier === 1) return;
+            wasFaded = true;
+            buffer.setAlphaMultiplier?.(1);
+            // setAlphaMultiplier only knows custom colours: a see-through representation stays see-through
+            if (this.nonCustomOpacity < 0.99) buffer.transparent = true;
+        });
+        if (wasFaded) this.parentMolecule.store.dispatch(setRequestDrawScene(true));
     }
 
     /**
@@ -334,6 +357,19 @@ export class MoleculeRepresentation {
             this.bondOptions = bondOptions;
         } else {
             this.useDefaultBondOptions = true;
+        }
+    }
+
+    /**
+     * A method to set gaussian surface settings for this molecule representation
+     * @param {gaussianSurfSettings} settings - The new gaussian surface settings
+     */
+    setGaussianSurfaceSettings(settings: gaussianSurfSettings) {
+        if (settings) {
+            this.useDefaultGaussianSurfaceSettings = false;
+            this.gaussianSurfaceSettings = settings;
+        } else {
+            this.useDefaultGaussianSurfaceSettings = true;
         }
     }
 

@@ -1,40 +1,63 @@
 import { HexColorInput, RgbColorPicker } from "react-colorful";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useRef, useState } from "react";
+import { useMoorhenInstance } from "@/hooks";
 import { RootState } from "@/store";
+import type { ShadowMapQuality } from "../../WebGLgComponents/mgWebGLParts/framebuffers";
+import { MAX_EYE_DISTANCE, MIN_EYE_DISTANCE } from "../../WebGLgComponents/mgWebGLParts/projection";
+import { SCENE_LOOKS, currentLook, withLook } from "../../store/sceneLooks";
 import {
-    resetSceneSettings,
+    setAmbient,
     setBackgroundColor,
     setClipCap,
+    setClipEnd,
+    setClipStart,
     setDepthBlurDepth,
-    setDoPerspectiveProjection,
-    setPerspectiveEyeDistance,
     setDepthBlurRadius,
+    setDiffuse,
     setDoEdgeDetect,
+    setDoPerspectiveProjection,
     setDoSSAO,
     setDoShadow,
-    setShadowMapQuality,
     setEdgeDetectDepthScale,
     setEdgeDetectDepthThreshold,
     setEdgeDetectNormalScale,
     setEdgeDetectNormalThreshold,
+    setFogClipOffset,
+    setFogEnd,
+    setFogStart,
+    setLightPosition,
+    setPerspectiveEyeDistance,
     setResetClippingFogging,
+    setShadowMapQuality,
+    setSpecular,
+    setSpecularPower,
     setSsaoBias,
     setSsaoRadius,
-    setUseOffScreenBuffers,setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd , setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower
+    setUseOffScreenBuffers,
 } from "../../store/sceneSettingsSlice";
+import {
+    DEFAULT_REPRESENTATION_STYLES,
+    type DefaultRepresentationStyle,
+    applySceneSettingsSnapshot,
+    setDefaultRepresentationStyle,
+} from "../../store/sceneSettingsSlice";
+import { isBuiltInScene } from "../../store/userScenesSlice";
 import { moorhen } from "../../types/moorhen";
-import { MAX_EYE_DISTANCE, MIN_EYE_DISTANCE } from "../../WebGLgComponents/mgWebGLParts/projection";
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
-import type { ShadowMapQuality } from "../../WebGLgComponents/mgWebGLParts/framebuffers";
+import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSwatch";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
-import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSwatch";
+import { MoorhenTooltip } from "../interface-base/Popovers/Tooltip";
+import { CopySceneButton } from "../menu-system/SceneSelector/CopySceneButton";
+import { ResetSceneButton } from "../menu-system/SceneSelector/ResetSceneButton";
+import { SaveSceneButton } from "../menu-system/SceneSelector/SaveSceneButton";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
 import { MoorhenSlidersSettings } from "./MoorhenSceneSlidersModal";
+
 
 const EdgeDetectPanel = () => {
     const dispatch = useDispatch();
@@ -46,7 +69,7 @@ const EdgeDetectPanel = () => {
     const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale);
 
     return (
-        <MoorhenStack direction="vertical" card={true}>
+        <MoorhenStack direction="vertical" card={true} title="Edge detection">
             {/* All four are disabled while auto-clip is on: the camera re-derives the slab from
                 zoom as part of writing its own state, so a value set here would be overwritten
                 before it was drawn. A control that silently does nothing is worse than one that
@@ -58,7 +81,7 @@ const EdgeDetectPanel = () => {
                 onChange={() => {
                     dispatch(setDoEdgeDetect(!doEdgeDetect));
                 }}
-                label="Edge detection"
+                label="Active"
             />
 
             <MoorhenSlider
@@ -116,14 +139,14 @@ const OcclusionPanel = () => {
     const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias);
 
     return (
-        <MoorhenStack direction="vertical" card={true}>
+        <MoorhenStack direction="vertical" card={true} title="Ambient occlusion">
             <MoorhenToggle
                 type="switch"
                 checked={doSSAO}
                 onChange={() => {
                     dispatch(setDoSSAO(!doSSAO));
                 }}
-                label="Ambient occlusion"
+                label="Active"
             />
 
             <MoorhenSlider
@@ -158,14 +181,14 @@ const PerspectivePanel = () => {
     const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset);
 
     return (
-        <MoorhenStack direction="vertical" card={true}>
+        <MoorhenStack direction="vertical" card={true} title="Perspective projection">
             <MoorhenToggle
                 type="switch"
                 checked={doPerspectiveProjection}
                 onChange={() => {
                     dispatch(setDoPerspectiveProjection(!doPerspectiveProjection));
                 }}
-                label="Perspective projection"
+                label="Active"
             />
 
             <MoorhenSlider
@@ -237,8 +260,7 @@ const BackgroundColorPanel = () => {
 
     const swatchCols = ["#000000", "#5c5c5c", "#8a8a8a", "#cccccc", "#ffffff"];
     return (
-        <MoorhenStack direction="vertical" card={true}>
-            <span>Background Colour</span>
+        <MoorhenStack direction="vertical" card={true} title="Background Colour">
             <div style={{ padding: 0, margin: 0, justifyContent: "center", display: "flex" }}>
                 <RgbColorPicker color={innerBackgroundColor} onChange={handleColorChange} />
             </div>
@@ -279,14 +301,14 @@ const DepthBlurPanel = () => {
     const depthBlurRadius = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
 
     return (
-        <MoorhenStack direction="vertical" card={true}>
+        <MoorhenStack direction="vertical" card={true} title="Depth blur">
             <MoorhenToggle
                 type="switch"
                 checked={useOffScreenBuffers}
                 onChange={() => {
                     dispatch(setUseOffScreenBuffers(!useOffScreenBuffers));
                 }}
-                label="Depth Blur"
+                label="Active"
             />
 
             <MoorhenSlider
@@ -327,7 +349,7 @@ const ClipFogPanel = () => {
     const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
 
     return (
-        <MoorhenStack direction="vertical" card={true}>
+        <MoorhenStack direction="vertical" card={true} title="Clipping and fog">
             <MoorhenSlider
                 minVal={0.1}
                 maxVal={1000}
@@ -401,13 +423,13 @@ const LightingPanel = () => {
     const diffuse = useSelector((state: moorhen.State) => state.sceneSettings.diffuse);
     const specularPower = useSelector((state: moorhen.State) => state.sceneSettings.specularPower);
 
-    const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
+    const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow);
     const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality);
 
     const dispatch = useDispatch();
 
     return (
-        <MoorhenStack direction="vertical" card={true}>
+        <MoorhenStack direction="vertical" card={true} title="Lighting">
             <MoorhenSlider
                 minVal={0.0}
                 maxVal={1.0}
@@ -479,8 +501,7 @@ const LightingPanel = () => {
                 <MoorhenSelect
                     label="Shadow quality"
                     value={shadowMapQuality}
-                    onChange={event =>
-                        dispatch(setShadowMapQuality(event.target.value as ShadowMapQuality))}
+                    onChange={event => dispatch(setShadowMapQuality(event.target.value as ShadowMapQuality))}
                 >
                     <option value="coarse">Coarse</option>
                     <option value="nice">Nice</option>
@@ -491,31 +512,136 @@ const LightingPanel = () => {
     );
 };
 
-export const MoorhenSceneSettings = (props: { stackDirection: "horizontal" | "vertical" }) => {
-    const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
-    const panelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
-    const [newSlidersMode, setNewSlidersMode] = useState<boolean>(true);
+/** How the scene shown draws molecules it has not seen (a scene setting: each scene has its own) */
+const DEFAULT_STYLE_LABELS: Record<DefaultRepresentationStyle, string> = {
+    "ribbons-and-ligands": "Ribbons and ligands",
+    "ribbons-and-side-chains": "Ribbons and side chains",
+    "site-and-ribbons": "Ribbons and binding sites",
+    CBs: "Bonds",
+    CAs: "C-alpha trace",
+    CRs: "Ribbons",
+};
+
+const DefaultRepresentationSelect = () => {
     const dispatch = useDispatch();
+    const style = useSelector((state: RootState) => state.sceneSettings.defaultRepresentationStyle);
     return (
-        <MoorhenStack direction={props.stackDirection}>
-            <MoorhenButton onClick={() => dispatch(resetSceneSettings())} > Reset </MoorhenButton>
-            <MoorhenToggle
+        <MoorhenSelect
+            label="New molecules shown as"
+            // Wrap so the label folds above the list when the panel is narrow
+            style={{ flexWrap: "wrap", rowGap: "0.2rem" }}
+            value={style}
+            onChange={event => dispatch(setDefaultRepresentationStyle(event.target.value as DefaultRepresentationStyle))}
+        >
+            {DEFAULT_REPRESENTATION_STYLES.map(item => (
+                <option key={item} value={item}>
+                    {DEFAULT_STYLE_LABELS[item]}
+                </option>
+            ))}
+        </MoorhenSelect>
+    );
+};
+
+/** Ready-made looks (lighting and effects) for the scene shown: the one its settings match shows as selected */
+const SceneLooks = () => {
+    const dispatch = useDispatch();
+    const store = useStore<RootState>();
+    const isLocked = useSelector((state: RootState) => state.userScenes.isSceneChanging || state.movie.isPlaying);
+    const selectedLook = useSelector((state: RootState) => currentLook(state.sceneSettings)?.id);
+
+    return (
+        <MoorhenStack card title="Look" aria-label="Look" direction="line" style={{ flexWrap: "wrap" }}>
+            {SCENE_LOOKS.map(look => (
+                <MoorhenButton
+                    key={look.id}
+                    tooltip={look.description}
+                    type="toggle"
+                    variant="small"
+                    checked={look.id === selectedLook}
+                    aria-pressed={look.id === selectedLook}
+                    disabled={isLocked}
+                    onClick={() => dispatch(applySceneSettingsSnapshot(withLook(store.getState().sceneSettings, look)))}
+                >
+                    {look.label}
+                </MoorhenButton>
+            ))}
+        </MoorhenStack>
+    );
+};
+
+/** Which scene these settings belong to, a way to switch, and saving / resetting its settings */
+const CurrentScenePanel = () => {
+    const moorhenInstance = useMoorhenInstance();
+    const scenes = useSelector((state: RootState) => state.userScenes.scenes);
+    const snapshots = useSelector((state: RootState) => state.userScenes.snapshots);
+    const selectedScene = useSelector((state: RootState) => state.userScenes.selectedScene);
+    const isLocked = useSelector((state: RootState) => state.userScenes.isSceneChanging || state.movie.isPlaying);
+    const isSnapshot = snapshots.some(snapshot => snapshot.id === selectedScene);
+    const isBuiltIn = isBuiltInScene(selectedScene);
+
+    return (
+        <MoorhenStack card title="Scene" gap="0.5rem">
+            {/* The one row in the card: the scene list with its buttons beside it */}
+            <MoorhenStack direction="line" align="center" gap="0.5rem" style={{ flexWrap: "wrap", minWidth: 0 }}>
+                <MoorhenSelect
+                    label="Scene"
+                    value={selectedScene}
+                    disabled={isLocked}
+                    onChange={event => moorhenInstance.userScene.select(event.target.value)}
+                >
+                    <optgroup label="Scenes">
+                        {scenes.map(scene => (
+                            <option key={scene.id} value={scene.id}>
+                                {scene.name}
+                            </option>
+                        ))}
+                    </optgroup>
+                    {snapshots.length > 0 && (
+                        <optgroup label="Snapshots">
+                            {snapshots.map(snapshot => (
+                                <option key={snapshot.id} value={snapshot.id}>
+                                    {snapshot.name}
+                                </option>
+                            ))}
+                        </optgroup>
+                    )}
+                </MoorhenSelect>
+                {/* The same controls as the scene's row in the scene selector */}
+                {!isSnapshot && isBuiltIn && <SaveSceneButton sceneId={selectedScene} iconOnly={true} />}
+                {!isSnapshot && <CopySceneButton sceneId={selectedScene} />}
+                {!isSnapshot && isBuiltIn && <ResetSceneButton sceneId={selectedScene} />}
+            </MoorhenStack>
+            <DefaultRepresentationSelect />
+            {isSnapshot && (
+                <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>
+                    Snapshots cannot be changed: changes made here are not kept, unless you create a new scene or snapshot.
+                </div>
+            )}
+        </MoorhenStack>
+    );
+};
+
+/** All the cards in one column, each a direct child so they share the same gap */
+export const MoorhenSceneSettings = () => {
+    const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
+    const [newSlidersMode, setNewSlidersMode] = useState<boolean>(true);
+    return (
+        <MoorhenStack direction="vertical" gap="0.6rem">
+            <CurrentScenePanel />
+            {/* <MoorhenToggle
                 label="Use new fog/clip/blur sliders"
                 checked={newSlidersMode}
                 onChange={() => setNewSlidersMode(!newSlidersMode)}
-            />
-            <MoorhenStack direction="vertical">
-                {newSlidersMode && <MoorhenSlidersSettings stackDirection="vertical" width={panelWidth - 50} />}
-                {!newSlidersMode && <ClipFogPanel />}
-                <BackgroundColorPanel />
-                <EdgeDetectPanel />
-            </MoorhenStack>
-            <MoorhenStack direction="vertical">
-                <LightingPanel />
-                {isWebGL2 && !newSlidersMode && <DepthBlurPanel />}
-                <OcclusionPanel />
-                <PerspectivePanel />
-            </MoorhenStack>
+            /> */}
+            <SceneLooks />
+            {newSlidersMode && <MoorhenSlidersSettings stackDirection="vertical" />}
+            {!newSlidersMode && <ClipFogPanel />}
+            <BackgroundColorPanel />
+            <EdgeDetectPanel />
+            <LightingPanel />
+            {isWebGL2 && !newSlidersMode && <DepthBlurPanel />}
+            <OcclusionPanel />
+            <PerspectivePanel />
         </MoorhenStack>
     );
 };
@@ -526,7 +652,7 @@ export const MoorhenSceneSettingsModal = () => {
             modalId={modalKeys.SCENE_SETTINGS}
             headerTitle="Scene settings"
             enforceMaxBodyDimensions={true}
-            body={<MoorhenSceneSettings stackDirection="horizontal" />}
+            body={<MoorhenSceneSettings />}
             footer={null}
         />
     );

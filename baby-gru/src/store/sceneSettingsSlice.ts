@@ -11,8 +11,19 @@ const execAutoClipFogByZoom = (state: typeof initialState) => {
     state.clipEnd = state.zoom * fieldDepthBack;
 }
 
+/** How a scene draws a molecule it has not seen (loaded while it is shown, or since it was last shown) */
+export const DEFAULT_REPRESENTATION_STYLES = [
+    "ribbons-and-ligands",
+    "ribbons-and-side-chains",
+    "site-and-ribbons",
+    "CBs",
+    "CAs",
+    "CRs",
+] as const;
+
+export type DefaultRepresentationStyle = (typeof DEFAULT_REPRESENTATION_STYLES)[number];
+
 export const initialState: {
-    defaultBackgroundColor: [number, number, number, number];
     origin: [number, number, number];
     zoom: number;
     drawScaleBar: boolean;
@@ -121,6 +132,8 @@ export const initialState: {
     doAnaglyphStereo: boolean;
     defaultBondSmoothness: number;
     resetClippingFogging: boolean;
+    /** How molecules this scene has not seen are drawn (see DEFAULT_REPRESENTATION_STYLES) */
+    defaultRepresentationStyle: DefaultRepresentationStyle;
     clipCap: boolean;
     backgroundColor: [number, number, number, number];
     height: number;
@@ -129,7 +142,6 @@ export const initialState: {
     GlViewportWidth: number;
     isDark: boolean;
 } = {
-    defaultBackgroundColor: [1, 1, 1, 1],
     origin: [0, 0, 0],
     zoom: 1.0,
     lightPosition: [25.0, 25.0, 50.0, 1.0],
@@ -166,6 +178,7 @@ export const initialState: {
     ssaoRadius: 5.0,
     ssaoBias: 1.3,
     resetClippingFogging: true,
+    defaultRepresentationStyle: "ribbons-and-ligands",
     clipCap: true,
     doPerspectiveProjection: false,
     useOffScreenBuffers: false,
@@ -200,6 +213,123 @@ export const initialState: {
     specifyMultiViewRowsColumns: false,
 };
 
+export type SceneSettingsState = typeof initialState;
+
+/**
+ * The scene settings that make up the look of a scene: switching scene saves and restores them,
+ * and they are the user preferences of each built-in scene ("General.doSSAO",
+ * "Model Building.doSSAO"), saved explicitly with the scene's save button. Every other field is
+ * not part of scenes, and switching scene leaves it alone: the viewport, camera and app theme, the
+ * machine or debug settings kept as global preferences (depthPeelLayers, shadowMapQuality, drawFPS,
+ * defaultBondSmoothness...), and the view modes and interaction aids (spin, stereo, multi-view,
+ * drawEnvBOcc). Add or remove a setting here to make it part of scenes or not.
+ * See src/.roadmaps/scene-preferences.md.
+ */
+export const PER_SCENE_PREFERENCE_KEYS = [
+    "drawCrosshairs",
+    "drawMissingLoops",
+    "resetClippingFogging",
+    "defaultRepresentationStyle",
+    "clipCap",
+    "doPerspectiveProjection",
+    "drawAxes",
+    "doShadow",
+    "useOffScreenBuffers",
+    "depthBlurRadius",
+    "depthBlurDepth",
+    "doSSAO",
+    "ssaoRadius",
+    "ssaoBias",
+    "drawScaleBar",
+    "doEdgeDetect",
+    "edgeDetectDepthThreshold",
+    "edgeDetectNormalThreshold",
+    "edgeDetectDepthScale",
+    "edgeDetectNormalScale",
+    "fogClipOffset",
+    "lightPosition",
+    "ambient",
+    "specular",
+    "diffuse",
+    "specularPower",
+    "backgroundColor",
+    "fogStart",
+    "fogEnd",
+    "clipStart",
+    "clipEnd",
+] as const satisfies readonly (keyof SceneSettingsState)[];
+
+/** Fog and clipping planes: only saved when they are set by hand (resetClippingFogging off), else they follow the zoom */
+const FOG_CLIP_KEYS: readonly string[] = ["fogStart", "fogEnd", "clipStart", "clipEnd"];
+
+export type PerSceneKey = (typeof PER_SCENE_PREFERENCE_KEYS)[number];
+
+/** The value of every per-scene preference of one scene */
+export type PerSceneSettings = Pick<SceneSettingsState, PerSceneKey>;
+
+/** The scene settings saved in a scene backup: only the values that differ from the defaults */
+export type SceneSettingsSnapshot = Partial<PerSceneSettings>;
+
+/** Whether two values of a scene setting are the same (arrays compared item by item) */
+export const isSameSceneSettingValue = (a: unknown, b: unknown): boolean => {
+    if (Array.isArray(a) && Array.isArray(b)) {
+        return a.length === b.length && a.every((value, i) => value === b[i]);
+    }
+    return a === b;
+};
+
+const copyValue = <T>(value: T): T => (Array.isArray(value) ? ([...value] as T) : value);
+
+/**
+ * The per-scene preference values of some scene settings (settings missing from a snapshot take
+ * their default). While fog and clipping follow the zoom their planes are not part of the scene, so
+ * they take `sceneDefaults`' values: zooming does not make a scene differ from its saved version.
+ * @param sceneSettings - The `sceneSettings` state, or a scene snapshot.
+ * @param sceneDefaults - The scene's default per-scene values.
+ */
+export const getPerSceneSettings = (sceneSettings: SceneSettingsSnapshot, sceneDefaults: PerSceneSettings): PerSceneSettings => {
+    const autoFogClip = sceneSettings.resetClippingFogging ?? initialState.resetClippingFogging;
+    const settings: Record<string, unknown> = {};
+    for (const key of PER_SCENE_PREFERENCE_KEYS) {
+        if (autoFogClip && FOG_CLIP_KEYS.includes(key)) {
+            settings[key] = copyValue(sceneDefaults[key]);
+        } else {
+            settings[key] = copyValue(Object.hasOwn(sceneSettings, key) ? sceneSettings[key] : initialState[key]);
+        }
+    }
+    return settings as PerSceneSettings;
+};
+
+/** Whether two sets of per-scene preference values are the same */
+export const isSamePerSceneSettings = (a: PerSceneSettings, b: PerSceneSettings): boolean =>
+    PER_SCENE_PREFERENCE_KEYS.every(key => isSameSceneSettingValue(a[key], b[key]));
+
+/** Whether a value can be stored in `key` (same type as its default), to reject malformed injected scenes or stored preferences */
+export const isValidSceneSettingValue = (key: PerSceneKey, value: unknown): boolean => {
+    const defaultValue = initialState[key];
+    if (Array.isArray(defaultValue)) {
+        return Array.isArray(value) && value.length === defaultValue.length && value.every(item => typeof item === typeof defaultValue[0]);
+    }
+    return typeof value === typeof defaultValue;
+};
+
+/**
+ * Snapshot the scene settings for a scene preset. Only values that differ from the defaults are
+ * kept, so a snapshot stays valid when settings are added to or removed from the store.
+ * @param sceneSettings - The current `sceneSettings` state.
+ */
+export const getSceneSettingsSnapshot = (sceneSettings: SceneSettingsState): SceneSettingsSnapshot => {
+    const snapshot: Record<string, unknown> = {};
+    for (const key of PER_SCENE_PREFERENCE_KEYS) {
+        if (sceneSettings.resetClippingFogging && FOG_CLIP_KEYS.includes(key)) continue;
+        const value = sceneSettings[key];
+        if (!isSameSceneSettingValue(value, initialState[key])) {
+            snapshot[key] = Array.isArray(value) ? [...value] : value;
+        }
+    }
+    return snapshot as SceneSettingsSnapshot;
+};
+
 const sceneSettingsSlice = createSlice({
     name: "sceneSettings",
     initialState: initialState,
@@ -224,10 +354,6 @@ const sceneSettingsSlice = createSlice({
             state.origin = origin;
 
             execAutoClipFogByZoom(state);
-        },
-        // API
-        setDefaultBackgroundColor: (state, action: PayloadAction<[number, number, number, number]>) => {
-            state.defaultBackgroundColor = action.payload;
         },
         // API
         setDrawScaleBar: (state, action: PayloadAction<boolean>) => {
@@ -291,6 +417,11 @@ const sceneSettingsSlice = createSlice({
         // API
         setSsaoBias: (state, action: PayloadAction<number>) => {
             state.ssaoBias = action.payload;
+        },
+        // API
+        /* How molecules the shown scene has not seen are drawn: "ribbons-and-ligands", "CBs"... */
+        setDefaultRepresentationStyle: (state, action: PayloadAction<DefaultRepresentationStyle>) => {
+            state.defaultRepresentationStyle = action.payload;
         },
         // API
         setResetClippingFogging: (state, action: PayloadAction<boolean>) => {
@@ -386,9 +517,11 @@ const sceneSettingsSlice = createSlice({
         setPeelOpaqueSeparately: (state, action: PayloadAction<boolean>) => {
             state.peelOpaqueSeparately = action.payload;
         },
+        // API
         setUseWebGPU: (state, action: PayloadAction<boolean>) => {
             state.useWebGPU = action.payload;
         },
+        // API
         setAnaglyphColours: (state, action: PayloadAction<AnaglyphColours>) => {
             state.anaglyphColours = action.payload;
         },
@@ -475,13 +608,29 @@ const sceneSettingsSlice = createSlice({
         autoClipFogByZoom: (state) => {
             execAutoClipFogByZoom(state);
         },
+        /* Apply a scene preset snapshot (see getSceneSettingsSnapshot). Settings missing from the
+        snapshot go back to their default, unknown or malformed entries are ignored, and the
+        viewport, camera and theme are left untouched. Fog and clipping are recomputed from the
+        zoom unless the snapshot turns resetClippingFogging off. */
+        applySceneSettingsSnapshot: (state, action: PayloadAction<SceneSettingsSnapshot>) => {
+            const snapshot = action.payload ?? {};
+            const target = state as Record<PerSceneKey, unknown>;
+            for (const key of PER_SCENE_PREFERENCE_KEYS) {
+                const value = snapshot[key];
+                const useSaved = Object.hasOwn(snapshot, key) && isValidSceneSettingValue(key, value);
+                const newValue = useSaved ? value : initialState[key];
+                // Leave unchanged values alone: a new array reference would re-trigger renderer effects
+                if (isSameSceneSettingValue(target[key], newValue)) continue;
+                target[key] = Array.isArray(newValue) ? [...newValue] : newValue;
+            }
+            if (state.resetClippingFogging) execAutoClipFogByZoom(state);
+        },
 
     },
 });
 
 export const {
     setOrigin,
-    setDefaultBackgroundColor,
     setDrawCrosshairs,
     setDrawScaleBar,
     setDrawFPS,
@@ -491,6 +640,7 @@ export const {
     setSsaoRadius,
     setSsaoBias,
     setResetClippingFogging,
+    setDefaultRepresentationStyle,
     setClipCap,
     resetSceneSettings,
     setEdgeDetectNormalScale,
@@ -540,6 +690,7 @@ export const {
     setClipEnd,
     setZoom,
     autoClipFogByZoom,
+    applySceneSettingsSnapshot,
 } = sceneSettingsSlice.actions;
 
 export default sceneSettingsSlice.reducer;

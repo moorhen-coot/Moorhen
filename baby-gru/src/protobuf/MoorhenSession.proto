@@ -351,4 +351,6 @@ message Session {
   optional Overlay2DSessionData overlay2dData = 8;
   repeated MoorhenVector vectorData = 9;
   repeated Moorhen3DObject threeDObjectData = 10;
+  // Scenes and snapshots, as JSON (see UserSceneState): kept out of the schema so they can evolve freely
+  optional string sceneData = 11;
 }

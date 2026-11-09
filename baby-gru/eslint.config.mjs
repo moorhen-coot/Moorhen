@@ -18,6 +18,8 @@ export default tseslint.config(
       // Lhasa, a separate project copied in at build time. It also looks elements up on document, which breaks
       // inside the web component's shadow root; that needs fixing in Lhasa itself.
       "src/LhasaReact/**",
+      // Vendored, minified MathJax bundle
+      "src/utils/tex-svg.js",
     ],
   },
 
@@ -74,6 +76,10 @@ export default tseslint.config(
     },
     rules: {
       ...pluginReactHooks.configs["recommended-latest"].rules,
+      // Flags mutating the imperative MoorhenInstance returned by useMoorhenInstance(), which is intended
+      "react-hooks/immutability": "off",
+      // Reading refs during render is often harmless here (refs set once), but can hide stale values
+      "react-hooks/refs": "warn",
     },
   },
 
@@ -103,6 +109,9 @@ export default tseslint.config(
     files: ["**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
+      // MoorhenInstance API getters return objects whose methods need both the instance (aliased)
+      // and the API object itself (`this`)
+      "@typescript-eslint/no-this-alias": ["error", { allowedNames: ["moorhenInstance"] }],
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },

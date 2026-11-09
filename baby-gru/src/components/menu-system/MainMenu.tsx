@@ -10,6 +10,8 @@ import { MenuFromItems } from "./MenuFromItems";
 import { MoorhenSearchBar } from "./SearchBar";
 import "./main-menu.css";
 import { useMenuHook } from "./menuHook";
+import { UserSceneSelector } from "./SceneSelector/UserSceneSelector";
+import { MoorhenTooltip } from "../interface-base";
 
 export const MoorhenMainMenu = memo(() => {
     const isOpen = useSelector((state: RootState) => state.globalUI.isMainMenuOpen);
@@ -105,8 +107,19 @@ export const MoorhenMainMenu = memo(() => {
             pointer-events: auto;            
             */}
 
-            <MoorhenSearchBar />
             <div className="moorhen__main-menu">
+                <div className="moorhen__main-menu-container">
+                    {menu}
+                    {subMenu ? (
+                        <MoorhenClickAwayListener onClickAway={event => handleClickAway(event)}>{subMenu}</MoorhenClickAwayListener>
+                    ) : null}
+                </div>
+            </div>
+            <div className="moorhen__top-horizontal-container">
+                <MoorhenTooltip
+                    tooltip="Toggle main menu"
+                    placement="bottom"
+                >
                 <button className="moorhen__main-menu-toggle" onClick={handleMainMenuToggle}>
                     {isOpen ? (
                         <MoorhenIcon moorhenSVG={`MatSymClose`} className="moorhen__icon menu" alt="Menu" />
@@ -116,12 +129,14 @@ export const MoorhenMainMenu = memo(() => {
                     &nbsp;&nbsp;
                     <MoorhenIcon moorhenSVG={`MoorhenLogo`} alt="Maps" className="moorhen__main-logo" />
                 </button>
-                <div className="moorhen__main-menu-container">
-                    {menu}
-                    {subMenu ? (
-                        <MoorhenClickAwayListener onClickAway={event => handleClickAway(event)}>{subMenu}</MoorhenClickAwayListener>
-                    ) : null}
-                </div>
+                </MoorhenTooltip>
+                <MoorhenTooltip
+                    tooltip="Search"
+                    placement="bottom"
+                >
+                <MoorhenSearchBar />
+                </MoorhenTooltip>
+                <UserSceneSelector />
             </div>
         </div>
     );
