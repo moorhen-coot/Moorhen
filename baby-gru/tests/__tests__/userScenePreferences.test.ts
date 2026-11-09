@@ -36,22 +36,22 @@ const start = async () => {
 };
 
 const sceneSettings = () => cloud.store.getState().sceneSettings;
-const saved = (sceneId: "Overview" | "Model Building") => cloud.store.getState().userScenes.savedSceneSettings[sceneId];
+const saved = (sceneId: "General" | "Model Building") => cloud.store.getState().userScenes.savedSceneSettings[sceneId];
 const storedKeys = async () => (await cloud.instance.getPreferences().localStorageInstance.keys()).sort();
 
 describe("saving a built-in scene", () => {
     test("stores its settings without changing what is shown", async () => {
         const { instance } = await start();
-        cloud.store.dispatch(setDoSSAO(!builtInSceneDefaults("Overview").doSSAO));
-        expect(instance.userScene.hasUnsavedChanges("Overview")).toBe(true);
+        cloud.store.dispatch(setDoSSAO(!builtInSceneDefaults("General").doSSAO));
+        expect(instance.userScene.hasUnsavedChanges("General")).toBe(true);
         const shownBefore = { ...sceneSettings() };
 
-        expect(instance.userScene.saveScene("Overview")).toBe(true);
-        expect(saved("Overview").doSSAO).toBe(!builtInSceneDefaults("Overview").doSSAO);
-        expect(instance.userScene.hasUnsavedChanges("Overview")).toBe(false);
+        expect(instance.userScene.saveScene("General")).toBe(true);
+        expect(saved("General").doSSAO).toBe(!builtInSceneDefaults("General").doSSAO);
+        expect(instance.userScene.hasUnsavedChanges("General")).toBe(false);
         expect(sceneSettings()).toEqual(shownBefore);
         await flush(100);
-        expect(await storedKeys()).toEqual(["Overview.doSSAO"]);
+        expect(await storedKeys()).toEqual(["General.doSSAO"]);
     });
 
     test("is not possible for custom scenes and snapshots", async () => {
@@ -68,46 +68,46 @@ describe("restoring a built-in scene", () => {
     test("to its saved or default settings leaves the saved preferences alone", async () => {
         const { instance } = await start();
         cloud.store.dispatch(setDoSSAO(true));
-        instance.userScene.saveScene("Overview");
+        instance.userScene.saveScene("General");
         await flush(100);
-        const savedBefore = saved("Overview");
+        const savedBefore = saved("General");
         const storedBefore = await storedKeys();
 
-        expect(await instance.userScene.reset("Overview", "default")).toBe(true);
-        expect(sceneSettings().doSSAO).toBe(builtInSceneDefaults("Overview").doSSAO);
-        expect(instance.userScene.hasUnsavedChanges("Overview")).toBe(true);
+        expect(await instance.userScene.reset("General", "default")).toBe(true);
+        expect(sceneSettings().doSSAO).toBe(builtInSceneDefaults("General").doSSAO);
+        expect(instance.userScene.hasUnsavedChanges("General")).toBe(true);
 
-        expect(await instance.userScene.reset("Overview", "saved")).toBe(true);
+        expect(await instance.userScene.reset("General", "saved")).toBe(true);
         expect(sceneSettings().doSSAO).toBe(true);
-        expect(instance.userScene.hasUnsavedChanges("Overview")).toBe(false);
+        expect(instance.userScene.hasUnsavedChanges("General")).toBe(false);
 
         await flush(100);
-        expect(saved("Overview")).toBe(savedBefore);
+        expect(saved("General")).toBe(savedBefore);
         expect(await storedKeys()).toEqual(storedBefore);
     });
 
     test("that is not shown updates its unsaved-changes indicator at once", async () => {
         const { instance } = await start();
-        cloud.store.dispatch(setDoSSAO(!builtInSceneDefaults("Overview").doSSAO));
+        cloud.store.dispatch(setDoSSAO(!builtInSceneDefaults("General").doSSAO));
         await instance.userScene.select("Model Building");
-        expect(instance.userScene.hasUnsavedChanges("Overview")).toBe(true);
+        expect(instance.userScene.hasUnsavedChanges("General")).toBe(true);
 
-        await instance.userScene.reset("Overview", "saved");
-        expect(instance.userScene.hasUnsavedChanges("Overview")).toBe(false);
+        await instance.userScene.reset("General", "saved");
+        expect(instance.userScene.hasUnsavedChanges("General")).toBe(false);
     });
 });
 
 describe("unsaved changes", () => {
     test("survive a switch to another scene and back", async () => {
         const { instance } = await start();
-        const changed = !builtInSceneDefaults("Overview").doSSAO;
+        const changed = !builtInSceneDefaults("General").doSSAO;
         cloud.store.dispatch(setDoSSAO(changed));
         await instance.userScene.select("Model Building");
         expect(sceneSettings().doSSAO).toBe(builtInSceneDefaults("Model Building").doSSAO);
-        await instance.userScene.select("Overview");
+        await instance.userScene.select("General");
         expect(sceneSettings().doSSAO).toBe(changed);
-        expect(instance.userScene.hasUnsavedChanges("Overview")).toBe(true);
-        expect(saved("Overview").doSSAO).toBe(builtInSceneDefaults("Overview").doSSAO);
+        expect(instance.userScene.hasUnsavedChanges("General")).toBe(true);
+        expect(saved("General").doSSAO).toBe(builtInSceneDefaults("General").doSSAO);
     });
 });
 
@@ -136,9 +136,9 @@ describe("fog and clipping", () => {
         const { instance } = await start();
         expect(sceneSettings().resetClippingFogging).toBe(false);
         cloud.store.dispatch(setClipStart(12));
-        expect(instance.userScene.hasUnsavedChanges("Overview")).toBe(true);
-        instance.userScene.saveScene("Overview");
-        expect(saved("Overview").clipStart).toBe(12);
+        expect(instance.userScene.hasUnsavedChanges("General")).toBe(true);
+        instance.userScene.saveScene("General");
+        expect(saved("General").clipStart).toBe(12);
     });
 });
 
@@ -152,8 +152,8 @@ describe("restoring preferences (start-up, import)", () => {
             entries: { "Model Building.doSSAO": { version: 1, value: modelBuildingSSAO } },
         });
 
-        expect(instance.userScene.selected).toBe("Overview");
-        expect(sceneSettings().doSSAO).toBe(builtInSceneDefaults("Overview").doSSAO);
+        expect(instance.userScene.selected).toBe("General");
+        expect(sceneSettings().doSSAO).toBe(builtInSceneDefaults("General").doSSAO);
         await instance.userScene.select("Model Building");
         expect(sceneSettings().doSSAO).toBe(modelBuildingSSAO);
         expect(instance.userScene.hasUnsavedChanges("Model Building")).toBe(false);
@@ -163,10 +163,10 @@ describe("restoring preferences (start-up, import)", () => {
         const { instance } = await start();
         await instance.preferences.import({
             format: "moorhen-1.0",
-            entries: { "Overview.doSSAO": { version: 0, value: true }, "Model Building.doSSAO": { version: 1, value: true } },
+            entries: { "General.doSSAO": { version: 0, value: true }, "Model Building.doSSAO": { version: 1, value: true } },
         });
 
-        expect(saved("Overview").doSSAO).toBe(builtInSceneDefaults("Overview").doSSAO);
+        expect(saved("General").doSSAO).toBe(builtInSceneDefaults("General").doSSAO);
         expect(saved("Model Building").doSSAO).toBe(true);
     });
 });
@@ -186,10 +186,10 @@ describe("the preference registry", () => {
 });
 
 describe("the start-up scene", () => {
-    test("opens on Overview unless told otherwise", async () => {
+    test("opens on General unless told otherwise", async () => {
         const { instance } = await start();
         await instance.userScene.showStartupScene();
-        expect(instance.userScene.selected).toBe("Overview");
+        expect(instance.userScene.selected).toBe("General");
     });
 
     test("set before start-up (web component attribute, container prop), it is the scene Moorhen opens on", async () => {
@@ -215,7 +215,7 @@ describe("the start-up scene", () => {
     test("set by API before start-up, it is used at start-up", async () => {
         const { instance } = await start();
         expect(await instance.userScene.setStartupScene("Model Building")).toBe(true);
-        expect(instance.userScene.selected).toBe("Overview");
+        expect(instance.userScene.selected).toBe("General");
         await instance.userScene.showStartupScene();
         expect(instance.userScene.selected).toBe("Model Building");
     });
@@ -225,7 +225,7 @@ describe("the start-up scene", () => {
         const customId = await instance.userScene.create("Figure");
         expect(await instance.userScene.setStartupScene(customId)).toBe(false);
         expect(await instance.userScene.setStartupScene("no-such-scene")).toBe(false);
-        expect(instance.userScene.startupScene).toBe("Overview");
+        expect(instance.userScene.startupScene).toBe("General");
     });
 });
 
@@ -245,7 +245,7 @@ describe("the background colour on a built-in scene's first visit", () => {
     test("only on the first visit: after that each scene keeps its own", async () => {
         const { instance } = await start();
         await instance.userScene.select("Model Building");
-        await instance.userScene.select("Overview");
+        await instance.userScene.select("General");
         cloud.store.dispatch(setBackgroundColor(dark));
         await instance.userScene.select("Model Building");
         expect(background()).toEqual(builtInSceneDefaults("Model Building").backgroundColor);

@@ -31,10 +31,10 @@ describe("copying scene settings", () => {
         await userScene.select("Model Building");
         expect(sceneSettings().doSSAO).toBe(false);
 
-        expect(await userScene.copyFrom("Model Building", "Overview")).toBe(true);
+        expect(await userScene.copyFrom("Model Building", "General")).toBe(true);
         expect(sceneSettings().doSSAO).toBe(true);
         expect(sceneSettings().ssaoRadius).toBe(7);
-        // The whole scene is copied, not only what was changed: Overview fixes fog and clipping
+        // The whole scene is copied, not only what was changed: General fixes fog and clipping
         expect(sceneSettings().resetClippingFogging).toBe(false);
     });
 
@@ -43,11 +43,11 @@ describe("copying scene settings", () => {
         await userScene.select("Model Building");
         cloud.store.dispatch(setSsaoRadius(9));
 
-        expect(await userScene.copyFrom("Overview", "Model Building")).toBe(true);
-        expect(cloud.store.getState().userScenes.savedSceneSettings.Overview.ssaoRadius).not.toBe(9);
-        expect(userScene.hasUnsavedChanges("Overview")).toBe(true);
+        expect(await userScene.copyFrom("General", "Model Building")).toBe(true);
+        expect(cloud.store.getState().userScenes.savedSceneSettings.General.ssaoRadius).not.toBe(9);
+        expect(userScene.hasUnsavedChanges("General")).toBe(true);
 
-        await userScene.select("Overview");
+        await userScene.select("General");
         expect(sceneSettings().ssaoRadius).toBe(9);
         expect(sceneSettings().resetClippingFogging).toBe(true);
     });
@@ -55,9 +55,9 @@ describe("copying scene settings", () => {
     test("is refused into a snapshot or from the scene itself", async () => {
         const userScene = cloud.instance.userScene;
         const snapshotId = userScene.takeSnapshot("Shot");
-        expect(await userScene.copyFrom(snapshotId, "Overview")).toBe(false);
-        expect(await userScene.copyFrom("Overview", "Overview")).toBe(false);
-        expect(await userScene.copyFrom("Overview", "no-such-scene")).toBe(false);
+        expect(await userScene.copyFrom(snapshotId, "General")).toBe(false);
+        expect(await userScene.copyFrom("General", "General")).toBe(false);
+        expect(await userScene.copyFrom("General", "no-such-scene")).toBe(false);
         // A snapshot can be a source
         expect(await userScene.copyFrom("Model Building", snapshotId)).toBe(true);
     });
@@ -67,16 +67,16 @@ describe("resetting scene settings", () => {
     test("a built-in scene goes back to its defaults or its saved settings, keeping the saved ones", async () => {
         const userScene = cloud.instance.userScene;
         cloud.store.dispatch(setSsaoRadius(7));
-        userScene.saveScene("Overview");
+        userScene.saveScene("General");
         cloud.store.dispatch(setSsaoRadius(9));
 
-        expect(await userScene.reset("Overview", "saved")).toBe(true);
+        expect(await userScene.reset("General", "saved")).toBe(true);
         expect(sceneSettings().ssaoRadius).toBe(7);
 
-        expect(await userScene.reset("Overview", "default")).toBe(true);
+        expect(await userScene.reset("General", "default")).toBe(true);
         expect(sceneSettings().ssaoRadius).not.toBe(7);
         expect(sceneSettings().resetClippingFogging).toBe(false);
-        expect(cloud.store.getState().userScenes.savedSceneSettings.Overview.ssaoRadius).toBe(7);
+        expect(cloud.store.getState().userScenes.savedSceneSettings.General.ssaoRadius).toBe(7);
     });
 
     test("another scene goes back to the default settings, and has nothing saved to go back to", async () => {
@@ -122,22 +122,22 @@ describe("how scenes draw new molecules", () => {
         expect(representation.defaultStyle).toBe("CBs");
         await userScene.select(customId);
         expect(representation.defaultStyle).toBe("CAs");
-        await userScene.select("Overview");
+        await userScene.select("General");
         expect(representation.defaultStyle).toBe("ribbons-and-ligands");
     });
 
     test("is saved with a built-in scene, as a preference", async () => {
         const { userScene, representation } = cloud.instance;
         representation.defaultStyle = "site-and-ribbons";
-        expect(userScene.hasUnsavedChanges("Overview")).toBe(true);
-        userScene.saveScene("Overview");
-        expect(cloud.store.getState().userScenes.savedSceneSettings.Overview.defaultRepresentationStyle).toBe("site-and-ribbons");
+        expect(userScene.hasUnsavedChanges("General")).toBe(true);
+        userScene.saveScene("General");
+        expect(cloud.store.getState().userScenes.savedSceneSettings.General.defaultRepresentationStyle).toBe("site-and-ribbons");
     });
 
     test("draws the molecules a scene has not seen when it is shown again", async () => {
         const { userScene } = cloud.instance;
         await userScene.select("Model Building");
-        await userScene.select("Overview");
+        await userScene.select("General");
         await cloud.instance.files.loadFiles({ url: jobUrl("5a3h.pdb"), filename: "molecule.pdb" }, "cloud");
         await userScene.select("Model Building");
         const styles = cloud.store.getState().molecules.customRepresentations.map(rep => rep.style);
@@ -152,7 +152,7 @@ describe("global settings", () => {
         await userScene.select("Model Building");
         expect(sceneSettings().defaultBondSmoothness).toBe(3);
         cloud.store.dispatch(setDefaultBondSmoothness(1));
-        await userScene.select("Overview");
+        await userScene.select("General");
         expect(sceneSettings().defaultBondSmoothness).toBe(1);
     });
 });
@@ -163,7 +163,7 @@ describe("view modes", () => {
         cloud.store.dispatch(setDoSpin(true));
         cloud.store.dispatch(setDoAnaglyphStereo(true));
         // First visit of Model Building, then later visits of both scenes
-        for (const sceneId of ["Model Building", "Overview", "Model Building", "Overview"]) {
+        for (const sceneId of ["Model Building", "General", "Model Building", "General"]) {
             await userScene.select(sceneId);
             expect(sceneSettings().doSpin).toBe(true);
             expect(sceneSettings().doAnaglyphStereo).toBe(true);
@@ -177,7 +177,7 @@ describe("view modes", () => {
         const userScene = cloud.instance.userScene;
         await userScene.select("Model Building");
         const firstVisit = { ...sceneSettings() };
-        await userScene.select("Overview");
+        await userScene.select("General");
         await userScene.select("Model Building");
         const { zoom: _zoomNow, origin: _originNow, ...rest } = sceneSettings();
         const { zoom: _zoom, origin: _origin, ...firstRest } = firstVisit;

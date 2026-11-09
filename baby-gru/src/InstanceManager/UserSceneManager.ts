@@ -129,7 +129,7 @@ const colourRulesData = (molecule: MoorhenMolecule): ColourRuleData[] | null =>
 export class MoorhenUserSceneManager {
     private instance: MoorhenInstance;
     // The built-in scene Moorhen opens on, and whether start-up has shown it already
-    private _startupScene: BuiltInSceneId = "Overview";
+    private _startupScene: BuiltInSceneId = "General";
     private hasStarted: boolean = false;
     /**
      * Built-in scenes not shown since they were set from their saved settings (start-up, a
@@ -166,7 +166,7 @@ export class MoorhenUserSceneManager {
         return this.isChanging;
     }
 
-    /** The built-in scene Moorhen opens on: "Overview" (the default) or "Model Building" */
+    /** The built-in scene Moorhen opens on: "General" (the default) or "Model Building" */
     public get startupScene(): BuiltInSceneId {
         return this._startupScene;
     }
@@ -175,7 +175,7 @@ export class MoorhenUserSceneManager {
      * Choose the built-in scene Moorhen opens on, e.g. "Model Building" for a host app made for
      * model building. Before start-up it is the scene Moorhen opens on; once Moorhen has started
      * it is shown now (the web component's `startup-scene` attribute sets it before start-up).
-     * @param sceneId - "Overview" or "Model Building".
+     * @param sceneId - "General" or "Model Building".
      * @returns False if the scene is not a built-in one, or (once started) if the switch is refused
      * (a switch running, or a movie playing).
      * @example
@@ -248,7 +248,7 @@ export class MoorhenUserSceneManager {
     /**
      * Save the current settings of a built-in scene as user preferences, used the next time Moorhen
      * starts. What is shown does not change.
-     * @param sceneId - "Overview" or "Model Building".
+     * @param sceneId - "General" or "Model Building".
      * @returns True if the scene was saved, false if it is not built-in.
      * @example
      * moorhenInstance.userScene.saveScene("Model Building");
@@ -311,7 +311,7 @@ export class MoorhenUserSceneManager {
         scenes.unshift(...missingBuiltIns.map(sceneId => this.savedBuiltInScene(sceneId)));
         const snapshots = readSceneList(state.snapshots, isSnapshot);
         const isListed = [...scenes, ...snapshots].some(scene => scene.id === state.selectedScene);
-        const selectedScene = isListed ? state.selectedScene : "Overview";
+        const selectedScene = isListed ? state.selectedScene : "General";
 
         this.instance.dispatch(setUserSceneState({ scenes, snapshots, selectedScene }));
         // Built-in scenes the file had no content for start from their saved settings
@@ -322,7 +322,7 @@ export class MoorhenUserSceneManager {
 
     /**
      * Start from the built-in scenes after loading a session saved without scenes: what the session
-     * shows becomes the "Overview" scene (its own view settings are kept, not the Overview preset).
+     * shows becomes the "General" scene (its own view settings are kept, not the General preset).
      *
      * **Internal use only.** Called by the session loader.
      * @private
@@ -332,10 +332,10 @@ export class MoorhenUserSceneManager {
             setUserSceneState({
                 scenes: BUILT_IN_SCENE_IDS.map(sceneId => this.savedBuiltInScene(sceneId)),
                 snapshots: [],
-                selectedScene: "Overview",
+                selectedScene: "General",
             })
         );
-        this.notShownYet = new Set(BUILT_IN_SCENE_IDS.filter(sceneId => sceneId !== "Overview"));
+        this.notShownYet = new Set(BUILT_IN_SCENE_IDS.filter(sceneId => sceneId !== "General"));
     }
 
     /**
@@ -437,7 +437,7 @@ export class MoorhenUserSceneManager {
      * @returns True if the scene changed, false if one of them does not exist, the target is a
      * snapshot or the source itself, a switch is running or a movie is playing.
      * @example
-     * await moorhenInstance.userScene.copyFrom("movie", "Overview");
+     * await moorhenInstance.userScene.copyFrom("movie", "General");
      */
     public async copyFrom(targetId: string, sourceId: string, withRepresentations: boolean = false): Promise<boolean> {
         if (!this.canChange || isSnapshot(targetId) || targetId === sourceId || !this.find(targetId) || !this.find(sourceId)) return false;
@@ -489,7 +489,7 @@ export class MoorhenUserSceneManager {
 
     /**
      * Delete a custom scene or a snapshot, with its saved representations. Deleting the current
-     * one switches back to "Overview" first. Built-in scenes, and the movie scene while the movie has
+     * one switches back to "General" first. Built-in scenes, and the movie scene while the movie has
      * keyframes, cannot be deleted.
      * @param sceneId - The id of the scene or snapshot to delete.
      * @returns True if the scene was deleted.
@@ -500,7 +500,7 @@ export class MoorhenUserSceneManager {
         // The movie scene holds the look of the movie's keyframes
         if (sceneId === MOVIE_SCENE_ID && hasKeyframes) return false;
         // Leaving the deleted scene must not save it again
-        if (this.selected === sceneId) await this.select("Overview", false);
+        if (this.selected === sceneId) await this.select("General", false);
         this.instance.dispatch(removeUserScene(sceneId));
         this.recordInHistory();
         return true;
