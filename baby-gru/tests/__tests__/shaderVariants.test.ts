@@ -74,10 +74,16 @@ describe("the fast triangle fragment shader", () => {
         const tailOf = (s: string) => s.slice(s.indexOf(marker) + marker.length);
 
         expect(headOf(fast)).toEqual(headOf(slow));
-        // The fast body is the full body with one block cut out of the front of main().
-        expect(tailOf(slow).endsWith(tailOf(fast))).toBe(true);
+        // The fast body is the full body with one block cut out of main(). Not necessarily at the
+        // very front: anything using derivatives (the shadow receiver-plane slope) has to run
+        // before a fragment can be dropped, so it sits above the cut in both variants.
+        const slowTail = tailOf(slow);
+        const fastTail = tailOf(fast);
+        let common = 0;
+        while (common < fastTail.length && slowTail[common] === fastTail[common]) common++;
+        expect(slowTail.endsWith(fastTail.slice(common))).toBe(true);
 
-        const removed = tailOf(slow).slice(0, tailOf(slow).length - tailOf(fast).length);
+        const removed = slowTail.slice(common, slowTail.length - (fastTail.length - common));
         expect(removed).toMatch(/clipPlane0/);
         expect(removed).toMatch(/peelNumber/);
         expect(occurrences(removed, "discard;")).toBe(4);

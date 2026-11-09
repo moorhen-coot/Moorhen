@@ -202,9 +202,10 @@ ${anaglyph_colour_snippet}
     highp vec2 shadowDepthSlope;
 
     // The receiver plane: solve the screen-space derivatives of ShadowCoord for dz/du and dz/dv.
-    // Done before any discard, because derivatives stop being meaningful once neighbouring fragments in
-    // the 2x2 quad have taken a different path. Zero where the surface is edge-on to the light
-    // and the system has no useful solution.
+    // Called at the top of main(), ahead of the clip and peel tests that can drop a fragment,
+    // because derivatives stop being meaningful once neighbouring fragments in the 2x2 quad have
+    // taken a different path. Zero where the surface is edge-on to the light and the system has
+    // no useful solution.
     highp vec2 receiverPlaneDepthSlope() {
       highp vec3 dx = dFdx(ShadowCoord.xyz);
       highp vec3 dy = dFdy(ShadowCoord.xyz);
