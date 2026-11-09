@@ -1,3 +1,5 @@
+import type { PreviewCameraSource } from "../WebGPUComponents/previewScene";
+
 /**
  * Another renderer drawing the main view in WebGL's place: the WebGPU main view
  * (components/webMG/MoorhenWebGPUMainView.tsx).
@@ -36,6 +38,15 @@ export interface ExternalRenderer {
      * soft shadows, and optionally a transparent background.
      */
     snapshot(width: number, height: number, options?: { transparentBackground?: boolean }): Promise<Uint8ClampedArray>;
+    /**
+     * Draw the scene as `camera` sees it into another canvas (the clip, fog and blur widget's
+     * side-on view), from what the main view's frames already hold on the GPU - its maps contoured
+     * on the GPU too - soon (at a capped rate), and again when the maps are contoured again. False
+     * when it is not drawing the main view, and the caller should draw the canvas itself.
+     */
+    drawSecondView?(canvas: HTMLCanvasElement, camera: PreviewCameraSource): boolean;
+    /** Stop drawing into a canvas drawSecondView drew into. */
+    releaseSecondView?(canvas: HTMLCanvasElement): void;
 }
 
 /** The parts of the view whose being on means WebGL must draw (webGLOnlyReason). */
