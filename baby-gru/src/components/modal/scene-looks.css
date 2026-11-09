@@ -1,0 +1,64 @@
+@import "../../colors.css";
+
+/* Ready-made scene looks: a small card of chips inside the current scene panel */
+.moorhen__scene-looks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.5rem 0.6rem 0.6rem;
+    border: 1px solid var(--moorhen-border);
+    border-radius: 0.4rem;
+    background: var(--moorhen-background-shaded);
+    margin: 0.5rem 0 0.5rem 0;
+}
+
+.moorhen__scene-looks__title {
+    font-size: 0.8rem;
+    color: var(--moorhen-primary);
+    opacity: 0.75;
+}
+
+.moorhen__scene-looks__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.moorhen__scene-look {
+    all: unset;
+    box-sizing: border-box;
+    padding: 0.15rem 0.65rem;
+    border: 1px solid var(--moorhen-border);
+    border-radius: 1rem;
+    background: var(--moorhen-input-background);
+    color: var(--moorhen-primary);
+    font-family: var(--moorhen-font-family);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.moorhen__scene-look:hover:not(:disabled) {
+    border-color: var(--moorhen-button-background);
+}
+
+.moorhen__scene-look:focus-visible {
+    outline: 2px solid var(--moorhen-button-background);
+    outline-offset: 1px;
+}
+
+.moorhen__scene-look.selected {
+    background: var(--moorhen-button-background);
+    border-color: var(--moorhen-button-background);
+    color: var(--moorhen-button-text);
+}
+
+.moorhen__scene-look:disabled {
+    cursor: default;
+    opacity: 0.5;
+}

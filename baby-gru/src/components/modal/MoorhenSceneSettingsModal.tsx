@@ -28,7 +28,7 @@ import { MAX_EYE_DISTANCE, MIN_EYE_DISTANCE } from "../../WebGLgComponents/mgWeb
 import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { SCENE_LOOKS, currentLook, withLook } from "../../store/sceneLooks";
 import {
     DEFAULT_REPRESENTATION_STYLES,
@@ -46,6 +46,8 @@ import { CopySceneButton } from "../menu-system/SceneSelector/CopySceneButton";
 import { ResetSceneButton } from "../menu-system/SceneSelector/ResetSceneButton";
 import { SaveSceneButton } from "../menu-system/SceneSelector/SaveSceneButton";
 import { isBuiltInScene } from "../../store/userScenesSlice";
+import { MoorhenTooltip } from "../interface-base/Popovers/Tooltip";
+import "./scene-looks.css";
 
 const EdgeDetectPanel = () => {
     const dispatch = useDispatch();
@@ -518,6 +520,8 @@ const DefaultRepresentationSelect = () => {
     return (
         <MoorhenSelect
             label="New molecules shown as"
+            // Wrap so the label folds above the list when the panel is narrow
+            style={{ flexWrap: "wrap", rowGap: "0.2rem" }}
             value={style}
             onChange={event => dispatch(setDefaultRepresentationStyle(event.target.value as DefaultRepresentationStyle))}
         >
@@ -538,20 +542,24 @@ const SceneLooks = () => {
     const selectedLook = useSelector((state: RootState) => currentLook(state.sceneSettings)?.id);
 
     return (
-        <MoorhenStack direction="line" align="center" gap="0.3rem" style={{ flexWrap: "wrap" }}>
-            <span>Look:</span>
-            {SCENE_LOOKS.map(look => (
-                <MoorhenButton
-                    key={look.id}
-                    variant={look.id === selectedLook ? "primary" : "secondary"}
-                    tooltip={look.description}
-                    disabled={isLocked}
-                    onClick={() => dispatch(applySceneSettingsSnapshot(withLook(store.getState().sceneSettings, look)))}
-                >
-                    {look.label}
-                </MoorhenButton>
-            ))}
-        </MoorhenStack>
+        <div className="moorhen__scene-looks" role="group" aria-label="Look">
+            <span className="moorhen__scene-looks__title">Look</span>
+            <div className="moorhen__scene-looks__chips">
+                {SCENE_LOOKS.map(look => (
+                    <MoorhenTooltip key={look.id} tooltip={look.description}>
+                        <button
+                            type="button"
+                            className={`moorhen__scene-look${look.id === selectedLook ? " selected" : ""}`}
+                            aria-pressed={look.id === selectedLook}
+                            disabled={isLocked}
+                            onClick={() => dispatch(applySceneSettingsSnapshot(withLook(store.getState().sceneSettings, look)))}
+                        >
+                            {look.label}
+                        </button>
+                    </MoorhenTooltip>
+                ))}
+            </div>
+        </div>
     );
 };
 
