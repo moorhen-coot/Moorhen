@@ -624,7 +624,6 @@ const CurrentScenePanel = () => {
 /** All the cards in one column, each a direct child so they share the same gap */
 export const MoorhenSceneSettings = () => {
     const isWebGL2 = useSelector((state: moorhen.State) => state.glRef.isWebGL2);
-    const panelWidth = useSelector((state: RootState) => state.globalUI.sidePanelWidth);
     const [newSlidersMode, setNewSlidersMode] = useState<boolean>(true);
     return (
         <MoorhenStack direction="vertical" gap="0.6rem">
@@ -635,7 +634,7 @@ export const MoorhenSceneSettings = () => {
                 onChange={() => setNewSlidersMode(!newSlidersMode)}
             /> */}
             <SceneLooks />
-            {newSlidersMode && <MoorhenSlidersSettings stackDirection="vertical" width={panelWidth - 50} />}
+            {newSlidersMode && <MoorhenSlidersSettings stackDirection="vertical" />}
             {!newSlidersMode && <ClipFogPanel />}
             <BackgroundColorPanel />
             <EdgeDetectPanel />
