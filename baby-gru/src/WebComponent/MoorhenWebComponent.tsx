@@ -152,7 +152,7 @@ export class MoorhenWebComponent extends HTMLElement {
     }
 
     /**
-     * The built-in scene Moorhen opens on: "Overview" (default) or "Model Building". Read at
+     * The built-in scene Moorhen opens on: "General" (default) or "Model Building". Read at
      * start-up; afterwards use `instance.userScene.setStartupScene()`.
      */
     get startupScene(): string | undefined {

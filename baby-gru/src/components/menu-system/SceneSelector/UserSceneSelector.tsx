@@ -19,7 +19,7 @@ const scenesInfo = (
         in another one.
         <br />
         <br />
-        <b>Overview and Model Building</b>
+        <b>General and Model Building</b>
         <br />
         Built in. Save their settings (background colour, lightning...) to start Moorhen with them; reset brings back the saved or the default settings, and the default
         representations if you tick the box.

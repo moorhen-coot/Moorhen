@@ -48,7 +48,8 @@ import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
 import { startStoreSyncs } from "./StoreSync";
-import { DEFAULT_REPRESENTATION_STYLE, MoorhenUserSceneManager } from "./UserSceneManager";
+import { MoorhenUserSceneManager } from "./UserSceneManager";
+import { type DefaultRepresentationStyle, setDefaultRepresentationStyle } from "../store/sceneSettingsSlice";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
 import { makeWebGPUApi } from "@/WebGPUComponents/instanceApi";
 import type { WebGPUApi } from "@/WebGPUComponents/instanceApi";
@@ -102,13 +103,6 @@ export type moleculeChangeAction = "new" | "add" | "delete" | "modify" | "refine
  * @extends StoreExtension
  */
 export class MoorhenInstance extends StoreExtension {
-    private _defaultStyle:
-        | "CAs"
-        | "CBs"
-        | "CRs"
-        | "ribbons-and-ligands"
-        | "ribbons-and-side-chains"
-        | "site-and-ribbons" = DEFAULT_REPRESENTATION_STYLE;
     private _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
     private _commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
@@ -1113,21 +1107,21 @@ export class MoorhenInstance extends StoreExtension {
         const moorhenInstance = this;
         return {
             /**
-             * Set the default representation style applied to molecules when they are
-             * loaded. Accepts plain styles ("CAs", "CBs", "CRs") or picture-wizard style
-             * names ("ribbons-and-ligands", "ribbons-and-side-chains", "site-and-ribbons").
+             * Set the default representation style of the scene shown: how it draws molecules
+             * when they are loaded (or loaded while it was not shown). A scene setting
+             * (`defaultRepresentationStyle`), so each scene has its own and the built-in ones save
+             * it. Accepts plain styles ("CAs", "CBs", "CRs") or picture-wizard style names
+             * ("ribbons-and-ligands", "ribbons-and-side-chains", "site-and-ribbons").
              * @param style - The default style to apply.
              */
-            set defaultStyle(
-                style: "CAs" | "CBs" | "CRs" | "ribbons-and-ligands" | "ribbons-and-side-chains" | "site-and-ribbons"
-            ) {
-                moorhenInstance._defaultStyle = style;
+            set defaultStyle(style: DefaultRepresentationStyle) {
+                moorhenInstance.dispatch(setDefaultRepresentationStyle(style));
             },
             /**
-             * The current default representation style applied to newly loaded molecules.
+             * The default representation style of the scene shown, applied to newly loaded molecules.
              */
-            get defaultStyle() {
-                return moorhenInstance._defaultStyle;
+            get defaultStyle(): DefaultRepresentationStyle {
+                return moorhenInstance.store.getState().sceneSettings.defaultRepresentationStyle;
             },
             
             /**

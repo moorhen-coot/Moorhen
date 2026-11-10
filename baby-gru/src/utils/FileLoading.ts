@@ -1,4 +1,5 @@
 import { parseFasta } from "./fasta";
+import { drawDefaultRepresentation } from "./Representation/defaultRepresentation";
 import { centreOfObject } from "../store/threeDObjectsSlice";
 import pako from "pako";
 import type { Dispatch, Store } from "redux";
@@ -108,16 +109,9 @@ export const drawModels = async (newMolecules: MoorhenMolecule[], moorhenInstanc
 
     for (const newMolecule of newMolecules) {
         const hasLongSequence = newMolecule.sequences.some(item => item.sequence.length > 10);
-        const representation = hasLongSequence ? moorhenInstance.representation.defaultStyle : "CBs";
-        if (
-            representation === "ribbons-and-ligands" ||
-            representation === "ribbons-and-side-chains" ||
-            representation === "site-and-ribbons"
-        ) {
-            await moorhenInstance.representation.wizard(newMolecule.uniqueId, representation, true);
-        } else {
-            await moorhenInstance.representation.create(newMolecule.uniqueId, { representationStyle: representation });
-        }
+        // The shown scene's default style; a short chain (a peptide, a ligand) as bonds
+        const style = hasLongSequence ? moorhenInstance.representation.defaultStyle : "CBs";
+        await drawDefaultRepresentation(moorhenInstance, newMolecule.uniqueId, style, true);
     }
 };
 

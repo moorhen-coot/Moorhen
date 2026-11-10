@@ -246,6 +246,7 @@ export {
     setAutoClip,
     setDoFog,
     setDoClip,
+    setDefaultRepresentationStyle,
     setClipCap,
     resetSceneSettings,
     setEdgeDetectNormalScale,

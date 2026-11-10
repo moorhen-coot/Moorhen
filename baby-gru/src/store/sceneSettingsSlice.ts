@@ -16,6 +16,18 @@ const execAutoClipFogByZoom = (state: typeof initialState, fog: boolean = true, 
     }
 }
 
+/** How a scene draws a molecule it has not seen (loaded while it is shown, or since it was last shown) */
+export const DEFAULT_REPRESENTATION_STYLES = [
+    "ribbons-and-ligands",
+    "ribbons-and-side-chains",
+    "site-and-ribbons",
+    "CBs",
+    "CAs",
+    "CRs",
+] as const;
+
+export type DefaultRepresentationStyle = (typeof DEFAULT_REPRESENTATION_STYLES)[number];
+
 export const initialState: {
     origin: [number, number, number];
     zoom: number;
@@ -132,6 +144,8 @@ export const initialState: {
     doFog: boolean;
     /** Clip the view. Off: nothing clipped; the clip planes (clipStart, clipEnd) are kept for when it is on again */
     doClip: boolean;
+    /** How molecules this scene has not seen are drawn (see DEFAULT_REPRESENTATION_STYLES) */
+    defaultRepresentationStyle: DefaultRepresentationStyle;
     clipCap: boolean;
     backgroundColor: [number, number, number, number];
     height: number;
@@ -179,6 +193,7 @@ export const initialState: {
     autoClip: true,
     doFog: true,
     doClip: true,
+    defaultRepresentationStyle: "ribbons-and-ligands",
     clipCap: true,
     doPerspectiveProjection: false,
     useOffScreenBuffers: false,
@@ -217,7 +232,7 @@ export type SceneSettingsState = typeof initialState;
 
 /**
  * The scene settings that make up the look of a scene: switching scene saves and restores them,
- * and they are the user preferences of each built-in scene ("Overview.doSSAO",
+ * and they are the user preferences of each built-in scene ("General.doSSAO",
  * "Model Building.doSSAO"), saved explicitly with the scene's save button. Every other field is
  * not part of scenes, and switching scene leaves it alone: the viewport, camera and app theme, the
  * machine or debug settings kept as global preferences (depthPeelLayers, shadowMapQuality, drawFPS,
@@ -232,6 +247,7 @@ export const PER_SCENE_PREFERENCE_KEYS = [
     "autoClip",
     "doFog",
     "doClip",
+    "defaultRepresentationStyle",
     "clipCap",
     "doPerspectiveProjection",
     "drawAxes",
@@ -425,6 +441,11 @@ const sceneSettingsSlice = createSlice({
         // API
         setSsaoBias: (state, action: PayloadAction<number>) => {
             state.ssaoBias = action.payload;
+        },
+        // API
+        /* How molecules the shown scene has not seen are drawn: "ribbons-and-ligands", "CBs"... */
+        setDefaultRepresentationStyle: (state, action: PayloadAction<DefaultRepresentationStyle>) => {
+            state.defaultRepresentationStyle = action.payload;
         },
         // API
         /* Turn fog on or off, keeping its planes */
@@ -663,6 +684,7 @@ export const {
     setAutoClip,
     setDoFog,
     setDoClip,
+    setDefaultRepresentationStyle,
     setClipCap,
     resetSceneSettings,
     setEdgeDetectNormalScale,

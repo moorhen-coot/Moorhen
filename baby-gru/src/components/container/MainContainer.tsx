@@ -84,7 +84,7 @@ interface ContainerOptionalProps {
     allowMergeFittedLigand?: boolean;
     webComponentMode?: boolean;
     size?: [number, number];
-    /** The built-in scene Moorhen opens on: "Overview" (default) or "Model Building" */
+    /** The built-in scene Moorhen opens on: "General" (default) or "Model Building" */
     startupScene?: string;
 }
 
