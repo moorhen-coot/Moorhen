@@ -57,6 +57,132 @@ const ensureCootModuleDirectory = (dirPath: string) => {
     })
 }
 
+const TAR_BLOCK = 512
+
+const isGzip = (data: Uint8Array) => data.length > 2 && data[0] === 0x1F && data[1] === 0x8B
+
+/** Read a NUL-terminated ASCII field from a tar header. */
+const tarString = (block: Uint8Array, start: number, length: number) => {
+    let end = start
+    while (end < start + length && block[end] !== 0) end++
+    return new TextDecoder().decode(block.subarray(start, end))
+}
+
+/** Read an octal number field from a tar header. */
+const tarOctal = (block: Uint8Array, start: number, length: number) => {
+    const text = tarString(block, start, length).trim()
+    return text ? parseInt(text, 8) : 0
+}
+
+/**
+ * Unpack a .tar or .tar.gz archive of Coot data into the in-memory filesystem, relative to its
+ * current directory, as unpackCootDataFile does. Done here rather than in the WASM because that
+ * path inflates into a temporary file, then copies each member out 512 bytes at a time (each
+ * write growing the file) and logs a line per entry, and it leaves the inflated .tar behind in
+ * memory. Here gzip is undone by the browser's native DecompressionStream and each file is
+ * written with one call.
+ *
+ * Handles ustar names (with prefix), GNU long names ('L') and pax 'path' records ('x'), which
+ * covers the archives CMake writes. Skips macOS AppleDouble "._" entries, which the Mac builds
+ * add to the archives.
+ */
+const unpackTarArchive = async (archive: Uint8Array): Promise<number> => {
+    let tar = archive
+    if (isGzip(archive)) {
+        const stream = new Blob([archive as unknown as BlobPart]).stream().pipeThrough(new DecompressionStream("gzip"))
+        tar = new Uint8Array(await new Response(stream).arrayBuffer())
+    }
+
+    const madeDirectories = new Set<string>()
+    const makeDirectory = (dir: string) => {
+        if (dir && !madeDirectories.has(dir)) {
+            ensureCootModuleDirectory(dir)
+            madeDirectories.add(dir)
+        }
+    }
+
+    let fileCount = 0
+    let longName: string | null = null
+    let offset = 0
+    while (offset + TAR_BLOCK <= tar.length) {
+        const header = tar.subarray(offset, offset + TAR_BLOCK)
+        if (header.every(byte => byte === 0)) break
+        const size = tarOctal(header, 124, 12)
+        const type = String.fromCharCode(header[156] || 0x30)
+        const dataStart = offset + TAR_BLOCK
+        offset = dataStart + Math.ceil(size / TAR_BLOCK) * TAR_BLOCK
+
+        if (type === "L") {
+            longName = tarString(tar, dataStart, size)
+            continue
+        }
+        if (type === "x") {
+            const pax = new TextDecoder().decode(tar.subarray(dataStart, dataStart + size))
+            const match = pax.match(/^\d+ path=(.*)$/m)
+            if (match) longName = match[1]
+            continue
+        }
+
+        let name = longName ?? tarString(header, 0, 100)
+        if (longName === null) {
+            // A ustar header can split a long path into prefix and name.
+            const prefix = tarString(header, 257, 5) === "ustar" ? tarString(header, 345, 155) : ""
+            if (prefix) name = `${prefix}/${name}`
+        }
+        longName = null
+        name = name.replace(/^\.\//, "").replace(/\/+$/, "")
+        const baseName = name.split("/").pop() ?? ""
+        if (!name || name === "." || baseName.startsWith("._")) continue
+
+        if (type === "5") {
+            makeDirectory(name)
+        } else if (type === "0" || type === "\0" || type === "7") {
+            const slash = name.lastIndexOf("/")
+            const parent = slash >= 0 ? name.slice(0, slash) : "."
+            makeDirectory(slash >= 0 ? parent : "")
+            try {
+                cootModule.FS_unlink(name)
+            } catch (_err) {
+                // Not there yet, which is the usual case.
+            }
+            // canOwn is false, so MEMFS copies just this file's bytes out of the archive.
+            cootModule.FS_createDataFile(parent, baseName, tar.subarray(dataStart, dataStart + size), true, true, false)
+            fileCount++
+        }
+        // Links, devices and FIFOs are skipped, as unpackCootDataFile skips them.
+    }
+    return fileCount
+}
+
+/**
+ * Unpack a Coot data archive, using the JavaScript unpacker where the browser has
+ * DecompressionStream (all current browsers) and unpackCootDataFile in the WASM otherwise.
+ */
+const unpackCootData = async (archive: Uint8Array): Promise<void> => {
+    if (typeof DecompressionStream !== "undefined") {
+        await unpackTarArchive(archive)
+        return
+    }
+    let tarFileName = guid() + "data.tar"
+    let doUnzip = false
+    let unzipName = ""
+    if (isGzip(archive)) {
+        doUnzip = true
+        unzipName = "data_tmp/" + tarFileName
+        tarFileName += ".gz"
+    }
+    cootModule.FS_createDataFile("data_tmp", tarFileName, archive, true, true)
+    cootModule.unpackCootDataFile("data_tmp/" + tarFileName, doUnzip, unzipName, "")
+    cootModule.FS_unlink("data_tmp/" + tarFileName)
+    if (doUnzip) {
+        try {
+            cootModule.FS_unlink(unzipName)
+        } catch (_err) {
+            // Already gone.
+        }
+    }
+}
+
 const cacheXhpiMonomerDictionary = (compId: string, dictionary: string) => {
     const upperCompId = compId.trim().toUpperCase()
     if (!upperCompId || !dictionary) return
@@ -2069,33 +2195,33 @@ const dispatchMessage = function (e: MessageEvent) {
 
                 cootModule = returnedModule;
 
-                const fileData = e.data.data.cootData
-                let doUnzip = false
-                let unzipName = ""
-
-
-                let tarFileName = "data.tar"
-                if(fileData[0]==0x1F && fileData[1]==0x8B){
-                    doUnzip = true
-                    tarFileName = "data.tar.gz"
-                    unzipName = "data_tmp/data.tar"
+                // Start-up timing, logged to the console and recorded as User Timing measures so
+                // they also appear in a DevTools Performance trace.
+                const recordStep = (label: string, start: number) => {
+                    const end = performance.now()
+                    performance.measure(`Coot start-up: ${label}`, { start, end })
+                    console.log(`Coot start-up: ${label} took ${(end - start).toFixed(1)} ms`)
                 }
 
                 cootModule.FS.mkdir("data_tmp")
-                cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
-                const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
-                cootModule.FS_unlink("data_tmp/"+tarFileName)
+                const unpackStart = performance.now()
+                return unpackCootData(e.data.data.cootData).then(() => {
+                    recordStep("unpack data.tar.gz", unpackStart)
 
-                molecules_container = new cootModule.molecules_container_js(false)
-                molecules_container.set_use_gemmi(false)
-                molecules_container.set_show_timings(false)
-                molecules_container.set_refinement_is_verbose(false)
-                molecules_container.set_map_sampling_rate(1.7)
-                molecules_container.set_map_is_contoured_with_thread_pool(true)
-                molecules_container.set_max_number_of_threads(8)
-                cootModule.FS.mkdir("COOT_BACKUP")
-                // Only report success once molecules_container actually exists.
-                postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
+                    const containerStart = performance.now()
+                    molecules_container = new cootModule.molecules_container_js(false)
+                    recordStep("new molecules_container", containerStart)
+
+                    molecules_container.set_use_gemmi(false)
+                    molecules_container.set_show_timings(false)
+                    molecules_container.set_refinement_is_verbose(false)
+                    molecules_container.set_map_sampling_rate(1.7)
+                    molecules_container.set_map_is_contoured_with_thread_pool(true)
+                    molecules_container.set_max_number_of_threads(8)
+                    cootModule.FS.mkdir("COOT_BACKUP")
+                    // Only report success once molecules_container actually exists.
+                    postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
+                })
             })
             .catch((err) => {
                 console.error(err)
@@ -2114,28 +2240,22 @@ const dispatchMessage = function (e: MessageEvent) {
         })
     }
     else if (e.data.message === 'loadExtraData') {
-        const fileData = e.data.data.cootData
-
-        let doUnzip = false
-        let unzipName = ""
-
-        let tarFileName = guid()+"data.tar"
-        if(fileData[0]==0x1F && fileData[1]==0x8B){
-            doUnzip = true
-            unzipName = "data_tmp/"+tarFileName
-            tarFileName += ".gz"
-        }
-
-        cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
-        const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
-        cootModule.FS_unlink("data_tmp/"+tarFileName)
-        postMessage({
-            messageId: e.data.messageId,
-            myTimeStamp: e.data.myTimeStamp,
-            consoleMessage: `Extracted data file`,
-            message: e.data.message,
-            result: { }
-        })
+        const unpackStart = performance.now()
+        unpackCootData(e.data.data.cootData)
+            .then(() => {
+                console.log(`Unpacked extra Coot data in ${(performance.now() - unpackStart).toFixed(1)} ms`)
+                postMessage({
+                    messageId: e.data.messageId,
+                    myTimeStamp: e.data.myTimeStamp,
+                    consoleMessage: `Extracted data file`,
+                    message: e.data.message,
+                    result: { }
+                })
+            })
+            .catch((err) => {
+                console.error(err)
+                postExceptionReply(e.data, err)
+            })
     }
 
     else if (e.data.message === 'close') {
