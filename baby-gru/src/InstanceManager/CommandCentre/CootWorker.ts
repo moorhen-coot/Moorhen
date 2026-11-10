@@ -1989,21 +1989,41 @@ let cootModulePromise: Promise<{ returnedModule: libcootApi.CootModule; scriptNa
 
 type LoadedCootModule = { returnedModule: libcootApi.CootModule; scriptName: string; memory64: boolean }
 
-const createModuleFrom = (scriptName: string, memory64: boolean): Promise<LoadedCootModule> => {
-    // @ts-ignore
-    importScripts(`./${scriptName}`)
+const createModuleFrom = async (scriptName: string, memory64: boolean): Promise<LoadedCootModule> => {
+    // Fetch the Emscripten glue once and run it from a blob: URL. Emscripten starts each of the
+    // 32 pthread workers from mainScriptUrlOrBlob, so handing it that blob: URL means they start
+    // from memory, instead of each requesting moorhen64.js from the server again (which showed up
+    // in the Network panel as 32 more downloads competing with the WASM). The glue still finds
+    // moorhen64.wasm next to this worker, because it locates it from self.location, not from the
+    // URL it was loaded from.
+    const response = await fetch(`./${scriptName}`)
+    if (!response.ok) {
+        throw new Error(`Could not fetch ${scriptName}: ${response.status} ${response.statusText}`)
+    }
+    let glueUrl = URL.createObjectURL(new Blob([await response.text()], { type: "text/javascript" }))
+    try {
+        // @ts-ignore
+        importScripts(glueUrl);
+    } catch (err) {
+        // A host page whose Content Security Policy forbids blob: scripts: load the glue by its
+        // URL, as before, and let the thread workers fetch it too.
+        console.warn(`Could not run ${scriptName} from a blob: URL; loading it from the server instead`, err)
+        glueUrl = `./${scriptName}`
+        // @ts-ignore
+        importScripts(glueUrl);
+    }
     // @ts-ignore
     const mod = memory64 ? createCoot64Module : createCootModule
     console.log(`Successfully loaded ${memory64 ? "64" : "32"}-bit libcoot in worker thread`)
-    // Wrapped so that a factory which throws, rather than rejects, is handled the same way.
-    return Promise.resolve()
-        .then(() => mod({
-            onRuntimeInitialized: () => { },
-            mainScriptUrlOrBlob: scriptName,
-            print: print,
-            printErr: printErr,
-        }))
-        .then((returnedModule: libcootApi.CootModule) => ({ returnedModule, scriptName, memory64 }))
+    // glueUrl is never revoked: the pthread workers are created from it, and the pool can grow
+    // later on.
+    const returnedModule: libcootApi.CootModule = await mod({
+        onRuntimeInitialized: () => { },
+        mainScriptUrlOrBlob: glueUrl,
+        print: print,
+        printErr: printErr,
+    })
+    return { returnedModule, scriptName, memory64 }
 }
 
 const loadCootModule = () => {
@@ -2014,19 +2034,10 @@ const loadCootModule = () => {
     const memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
     if (memory64) {
         // A browser can accept 64-bit memory yet still fail to run the 64-bit build: Safari
-        // Technology Preview validates memory64, but Emscripten's glue rejects every Safari
-        // because the 64-bit build was linked without Safari support. So fall back to the 32-bit
-        // build if the 64-bit one fails at any stage: fetching its script or starting the module.
-        let first: Promise<LoadedCootModule>
-        try {
-            first = createModuleFrom("moorhen64.js", true)
-        } catch (err: any) {
-            if (err?.name === 'NetworkError') {
-                console.log('There was a NetworkError loading 64-bit WebAssembly module.')
-            }
-            first = Promise.reject(err)
-        }
-        loading = first.catch((err: any) => {
+        // Technology Preview validates memory64, but Emscripten's glue rejects any Safari older
+        // than the 64-bit build's MIN_SAFARI_VERSION. So fall back to the 32-bit build if the
+        // 64-bit one fails at any stage: fetching its script or starting the module.
+        loading = createModuleFrom("moorhen64.js", true).catch((err: any) => {
             console.error(err)
             console.log("Failed to start 64-bit libcoot in worker thread. Falling back to 32-bit.")
             return createModuleFrom("moorhen.js", false)
