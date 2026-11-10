@@ -92,8 +92,27 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
              <span style={{color: "yellow", backgroundColor:"#aaaaaa"}}><b>&#x2E3B;</b></span>
          </>
 
-    const plotWidth = props.width ? props.width : 500
-    const plotHeight = plotWidth *0.6
+    /**
+     * The width the figure has to fill, measured: the canvases are drawn at a pixel size, so they
+     * cannot simply stretch to their container, and no width worked out from the panel's could
+     * account for every padding, border and scrollbar between the two. props.width only stands in
+     * until the first measurement.
+     */
+    const [measuredWidth, setMeasuredWidth] = useState<number | null>(null)
+    const resizeObserverRef = useRef<ResizeObserver | null>(null)
+    const attachFigureContainer = useCallback((element: HTMLDivElement | null) => {
+        resizeObserverRef.current?.disconnect()
+        resizeObserverRef.current = null
+        if (!element) return
+        // Whole pixels, rounded down: a canvas a fraction wider than its container overflows it
+        const measure = (width: number) => { if (width > 0) setMeasuredWidth(Math.floor(width)) }
+        measure(element.clientWidth)
+        resizeObserverRef.current = new ResizeObserver(entries => measure(entries[0].contentRect.width))
+        resizeObserverRef.current.observe(element)
+    }, [])
+
+    const plotWidth = measuredWidth ?? props.width ?? 500
+    const plotHeight = Math.round(plotWidth * 0.6)
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const canvasRefWebGL = useRef<HTMLCanvasElement>(null)
     /**
@@ -611,15 +630,17 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     // into, and the next draw waited on an unrelated change.
     useEffect(() => {
         plotTheData()
-    }, [glCanvas,atomSpan,plotRange,handles,grabbed,fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers,originState,mapContourSettings])
+    // plotWidth too: resizing a canvas clears it
+    }, [glCanvas,plotWidth,atomSpan,plotRange,handles,grabbed,fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers,originState,mapContourSettings])
 
 
     return (
         <>
-        <MoorhenStack direction={props.stackDirection} card={true}>
-            <span style={{ height: "2rem", margin: "0.2rem" }}>Clip, fog and depth blur</span>
+        <MoorhenStack direction={props.stackDirection} card={true} title="Clip, fog and depth blur">
             <MoorhenStack gap={1} direction="vertical">
-                <div>
+                {/* Measured for the figure's width: minWidth 0 so that the figure, before the
+                    first measurement, cannot widen what it is measured against */}
+                <div ref={attachFigureContainer} style={{ width: "100%", minWidth: 0 }}>
                 <figure style={{position: "relative", top: 0, left: 0, width: `${plotWidth}px`, height: `${plotHeight}px`, margin: "0px"}}>
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={attachGlCanvas}></canvas>
                 <canvas style={{position: "absolute", top: 0, left: 0, visibility: "hidden"}} height={plotHeight} width={plotWidth} ref={canvasRefWebGPU}></canvas>

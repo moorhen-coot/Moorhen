@@ -10,7 +10,7 @@
     box-shadow: none;
     box-sizing: border-box;
     color: var(--moorhen-primary);
-        position: relative;
+    position: relative;
     overflow: hidden;
 }
 
@@ -20,8 +20,7 @@
 }
 
 .moorhen__button__default,
-.moorhen__button__toggle-checked,
-.moorhen__button__toggle-unchecked {
+.moorhen__button__toggle {
     all: unset;
     display: flex;
     flex-direction: row;
@@ -50,12 +49,21 @@
         filter 0.5s ease;
 }
 
-
-
-.moorhen__button__toggle-unchecked {
+.moorhen__button__toggle.unchecked {
     background: var(--moorhen-background);
     color: var(--moorhen-primary);
 }
+
+.moorhen__button__toggle.small {
+    height: 1.5rem;
+    min-height: 1.5rem;
+    padding: 0.2rem;
+    border-radius: 0.75rem;
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+    font-size: 0.9rem;
+}
+
 .moorhen__button__default.danger {
     background: var(--moorhen-danger);
     box-shadow: var(--moorhen-shadow-shape) var(--moorhen-error-shadow);
@@ -98,7 +106,8 @@
     filter: none;
 }
 
-.moorhen__button__default:hover {
+.moorhen__button__default:hover,
+.moorhen__button__toggle:hover {
     box-shadow: var(--moorhen-shadow-shape) var(--moorhen-focus);
     border-color: var(--moorhen-secondary);
     filter: brightness(1.1);

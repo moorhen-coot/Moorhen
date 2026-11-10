@@ -64,6 +64,8 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
     const commandCentre = useCommandCentre();
     const urlPrefix = usePaths().urlPrefix;
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
+    // Default colour rules belong to the scene: the colour rules card starts again whenever one is shown
+    const shownRevision = useSelector((state: RootState) => state.userScenes.shownRevision);
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor);
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
     const userPreferencesMounted = useSelector((state: moorhen.State) => state.generalStates.userPreferencesMounted);
@@ -464,7 +466,7 @@ export const MoleculeCard = (props: MoleculeCardProps) => {
                         tooltip="Edit general color rules"
                         style={{ width: "5rem" }}
                     >
-                        <MoorhenModifyColourRulesCard molecule={props.molecule} />
+                        <MoorhenModifyColourRulesCard key={shownRevision} molecule={props.molecule} />
                     </MoorhenPopoverButton>
                     <MoorhenPopoverButton
                         type="default"

@@ -10,6 +10,8 @@ interface MoorhenMenuItemProps {
     disabled?: boolean;
     style?: React.CSSProperties;
     ariaLabel?: string;
+    /** Mark the item as the current one for assistive technology (e.g. the scene shown) */
+    ariaCurrent?: boolean;
 }
 /**
  * A thin wrapper around a standard HTML `<button>` element, applying Moorhen-specific styling.
@@ -35,7 +37,7 @@ export const MoorhenMenuItem: React.FC<MoorhenMenuItemProps> = props => {
         ? `moorhen__menu-item ${props.selected ? `moorhen__menu-item-selected` : ``}`
         : `moorhen__menu-item-disabled`;
     return (
-        <button className={className} onClick={onClick} ref={ref} disabled={props.disabled} style={{ ...props.style }} aria-label={props.ariaLabel ?? undefined}>
+        <button className={className} onClick={onClick} ref={ref} disabled={props.disabled} style={{ ...props.style }} aria-label={props.ariaLabel ?? undefined} aria-current={props.ariaCurrent ? "true" : undefined}>
             {animation && <span className={`moorhen__menu-item-animation`} />}
             {props.children}
         </button>
