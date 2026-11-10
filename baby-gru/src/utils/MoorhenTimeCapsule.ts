@@ -138,6 +138,8 @@ export type mapDataSession = {
     };
     style: "solid" | "lit-lines" | "lines";
     isDifference: boolean;
+    /** Made from a Gaussian Cube. Optional: sessions written before cubes were readable lack it. */
+    isCube?: boolean;
     selectedColumns: moorhen.selectedMtzColumns;
     hasReflectionData: boolean;
     associatedReflectionFileName: string;
@@ -505,6 +507,7 @@ export class MoorhenTimeCapsule {
                 },
                 style: state.mapContourSettings.mapStyles.find(item => item.molNo === map.molNo)?.style,
                 isDifference: map.isDifference,
+                isCube: map.isCube,
                 selectedColumns: map.selectedColumns,
                 hasReflectionData: map.hasReflectionData,
                 associatedReflectionFileName: map.associatedReflectionFileName,
@@ -1022,6 +1025,9 @@ export class MoorhenTimeCapsule {
             map.showOnLoad = storedMapData.showOnLoad;
             map.suggestedRadius = storedMapData.radius;
             map.suggestedContourLevel = storedMapData.contourLevel;
+            // Absent in sessions written before cubes were readable, which is why it is coerced
+            // rather than assigned: those maps are not orbitals and should get the full map card.
+            map.isCube = Boolean(storedMapData.isCube);
             batch(() => {
                 dispatch(
                     setMapColours({

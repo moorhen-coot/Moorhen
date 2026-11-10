@@ -450,6 +450,8 @@ export class MoorhenInstance extends StoreExtension {
              * - `.mrc`, `.map`, `.ccp4` (optionally `.gz`) are read as maps; names
              *   containing `_fofc.mrc`/`_diff.ccp4` are treated as difference maps and
              *   `_locres.mrc` as local-resolution maps
+             * - `.cube`, `.cub` are Gaussian Cubes, converted in memory and read as maps;
+             *   a cube holding several orbitals becomes one map per orbital
              *
              * @param files - The file(s), URL(s) or file-like object(s) to load. A
              * single value and an array of the same value type are both accepted.
