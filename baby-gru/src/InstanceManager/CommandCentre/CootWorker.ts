@@ -1987,48 +1987,53 @@ onmessage = function (e) {
 // that sends only that.
 let cootModulePromise: Promise<{ returnedModule: libcootApi.CootModule; scriptName: string; memory64: boolean }> | null = null
 
+type LoadedCootModule = { returnedModule: libcootApi.CootModule; scriptName: string; memory64: boolean }
+
+const createModuleFrom = (scriptName: string, memory64: boolean): Promise<LoadedCootModule> => {
+    // @ts-ignore
+    importScripts(`./${scriptName}`)
+    // @ts-ignore
+    const mod = memory64 ? createCoot64Module : createCootModule
+    console.log(`Successfully loaded ${memory64 ? "64" : "32"}-bit libcoot in worker thread`)
+    // Wrapped so that a factory which throws, rather than rejects, is handled the same way.
+    return Promise.resolve()
+        .then(() => mod({
+            onRuntimeInitialized: () => { },
+            mainScriptUrlOrBlob: scriptName,
+            print: print,
+            printErr: printErr,
+        }))
+        .then((returnedModule: libcootApi.CootModule) => ({ returnedModule, scriptName, memory64 }))
+}
+
 const loadCootModule = () => {
     if (cootModulePromise) {
         return cootModulePromise
     }
-    let mod
-    let scriptName
-    let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
+    let loading: Promise<LoadedCootModule>
+    const memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
     if (memory64) {
+        // A browser can accept 64-bit memory yet still fail to run the 64-bit build: Safari
+        // Technology Preview validates memory64, but Emscripten's glue rejects every Safari
+        // because the 64-bit build was linked without Safari support. So fall back to the 32-bit
+        // build if the 64-bit one fails at any stage: fetching its script or starting the module.
+        let first: Promise<LoadedCootModule>
         try {
-            // @ts-ignore
-            importScripts('./moorhen64.js')
-            mod = createCoot64Module
-            scriptName = "moorhen64.js"
-            console.log("Successfully loaded 64-bit libcoot in worker thread")
-        } catch (e: any) {
-            if(e.name === 'NetworkError'){
-               console.log('There was a NetworkError loading 64-bit WebAssembly module.')
-               console.log('A retry *should* be attempted, errors below may not be real.');
+            first = createModuleFrom("moorhen64.js", true)
+        } catch (err: any) {
+            if (err?.name === 'NetworkError') {
+                console.log('There was a NetworkError loading 64-bit WebAssembly module.')
             }
-            console.error(e)
-            console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
-            memory64 = false
-            // @ts-ignore
-            importScripts('./moorhen.js')
-            mod = createCootModule
-            scriptName = "moorhen.js"
-            console.log("Successfully loaded 32-bit libcoot in worker thread")
+            first = Promise.reject(err)
         }
+        loading = first.catch((err: any) => {
+            console.error(err)
+            console.log("Failed to start 64-bit libcoot in worker thread. Falling back to 32-bit.")
+            return createModuleFrom("moorhen.js", false)
+        })
     } else {
-        // @ts-ignore
-        importScripts('./moorhen.js')
-        mod = createCootModule
-        scriptName = "moorhen.js"
-        console.log("Successfully loaded 32-bit libcoot in worker thread")
+        loading = createModuleFrom("moorhen.js", false)
     }
-    const loading = mod({
-        onRuntimeInitialized: () => { },
-        mainScriptUrlOrBlob: scriptName,
-        print: print,
-        printErr: printErr,
-    })
-        .then((returnedModule: libcootApi.CootModule) => ({ returnedModule, scriptName, memory64 }))
     // Mark the promise handled here: CootInitialize may not attach its handler until data.tar.gz
     // has arrived, and a rejection before then would otherwise be logged as unhandled.
     loading.catch(() => { })
