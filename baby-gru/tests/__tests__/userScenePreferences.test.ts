@@ -9,6 +9,7 @@ import {
     autoClipFogByZoom,
     setBackgroundColor,
     initialState as sceneSettingsInitialState,
+    setAutoClip,
     setAutoFog,
     setClipStart,
     setDoClip,
@@ -295,18 +296,27 @@ describe("the background colour on a built-in scene's first visit", () => {
 describe("fog and clipping switched off", () => {
     test("is part of the scene: kept across switches, saved and restored, with the planes kept", async () => {
         const { instance } = await start();
+        // Model Building has both on and its clip planes following the zoom: fix them to set one by hand
+        await instance.userScene.select("Model Building");
+        cloud.store.dispatch(setAutoClip(false));
         cloud.store.dispatch(setClipStart(12));
         cloud.store.dispatch(setDoFog(false));
         cloud.store.dispatch(setDoClip(false));
-        expect(instance.userScene.hasUnsavedChanges("General")).toBe(true);
-        instance.userScene.saveScene("General");
+        expect(instance.userScene.hasUnsavedChanges("Model Building")).toBe(true);
+        instance.userScene.saveScene("Model Building");
         await flush(100);
-        expect(await storedKeys()).toEqual(["General.clipStart", "General.doClip", "General.doFog"]);
+        expect(await storedKeys()).toEqual([
+            "Model Building.autoClip",
+            "Model Building.clipEnd",
+            "Model Building.clipStart",
+            "Model Building.doClip",
+            "Model Building.doFog",
+        ]);
 
-        // Model Building has them on; General has them off again on return, planes unchanged
-        await instance.userScene.select("Model Building");
-        expect(sceneSettings().doFog).toBe(true);
+        // General has fog on; Model Building has both off again on return, planes unchanged
         await instance.userScene.select("General");
+        expect(sceneSettings().doFog).toBe(true);
+        await instance.userScene.select("Model Building");
         expect(sceneSettings().doFog).toBe(false);
         expect(sceneSettings().doClip).toBe(false);
         expect(sceneSettings().clipStart).toBe(12);
