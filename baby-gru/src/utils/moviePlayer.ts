@@ -38,7 +38,11 @@
  */
 
 // Mediabunny is a large library that only movie export uses, so it is imported on demand in the
-// functions below rather than here, which would put it in every start-up's download.
+// functions below rather than here. The Vite app build splits it into its own file, loaded on
+// first export. The webpack library builds (react-lib, web component) must not: they are
+// re-bundled or hosted by other apps, which don't serve webpack's extra chunk files, so the
+// import failed there. "eager" keeps mediabunny inside the main webpack bundle, still evaluated
+// only on first use.
 import type { VideoCodec } from "mediabunny";
 import { Movie, MovieSample, movieDuration } from "./cameraPath";
 import { holdCameraForMovie } from "./movieCamera";
@@ -137,7 +141,7 @@ export const describeEncoderSupport = async (
 ): Promise<{ supported: boolean; detail: string }> => {
     if (!webCodecsAvailable()) return { supported: false, detail: "WebCodecs is not available in this browser" };
     try {
-        const { canEncodeVideo } = await import("mediabunny");
+        const { canEncodeVideo } = await import(/* webpackMode: "eager" */ "mediabunny");
         const supported = await canEncodeVideo(codec, {
             width: evenDown(width), height: evenDown(height), bitrate, frameRate: fps,
         });
@@ -188,7 +192,7 @@ export async function recordMovieToMp4(
     const support = await describeEncoderSupport(width, height, codec, fps, bitrate);
     if (!support.supported) throw new Error(`This machine will not encode that: ${support.detail}`);
 
-    const { BufferTarget, CanvasSource, Mp4OutputFormat, Output } = await import("mediabunny");
+    const { BufferTarget, CanvasSource, Mp4OutputFormat, Output } = await import(/* webpackMode: "eager" */ "mediabunny");
 
     const started = performance.now();
 
