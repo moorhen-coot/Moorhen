@@ -31,14 +31,12 @@ export const SequenceRow = memo(
             showValidationData = true,
             validationTracks = undefined,
         } = props;
-        const refList: React.RefObject<HTMLDivElement>[] = sequence.residues?.map(() => useRef<HTMLDivElement>(null)) ?? [];
-
         const validationTracksLabels = showValidationData
             ? validationTracks?.map((value, index) => {
                 return (
 
-                    <MoorhenTooltip tooltip={`${value}`}>
-                        <div key={`validation-track-label-${index}`} className={`moorhen__seqviewer__sticky-left-column-validation-track-label`}
+                    <MoorhenTooltip key={`validation-track-label-${index}`} tooltip={`${value}`}>
+                        <div className={`moorhen__seqviewer__sticky-left-column-validation-track-label`}
                         >
                             {value}
                         </div>
@@ -49,36 +47,21 @@ export const SequenceRow = memo(
 
         const residueColumns =
             sequence.residues?.map((residue, j) => (
-                <div
+                <ResidueColumn
                     key={sequence.molNo + sequence.chain + (sequence.key ?? "") + `column${j}`}
-                    ref={refList[j]}
-                    style={{ display: "flex", flexDirection: "column" }}
-                >
-                    <ResidueBox
-                        sequence={sequence}
-                        residue={residue}
-                        index={j}
-                        columnWidth={columnWidth}
-                        fontSize={fontSize}
-                        hoveredResidue={hoveredResidue}
-                        isGliding={isGliding}
-                        handleResidueMouseOver={handleResidueMouseOver}
-                        handleResidueMouseDown={handleResidueMouseDown}
-                        handleResidueMouseUp={handleResidueMouseUp}
-                        showValidationData={showValidationData}
-                        validationTracks={validationTracks}
-                    />
-                    {showValidationData && (
-                        <ValidationTracks
-                            sequence={sequence}
-                            residue={residue}
-                            columnWidth={columnWidth}
-                            handleResidueMouseUp={handleResidueMouseUp}
-                            validationTracks={validationTracks}
-                            popoverRef={refList[j]}
-                        />
-                    )}
-                </div>
+                    sequence={sequence}
+                    residue={residue}
+                    index={j}
+                    columnWidth={columnWidth}
+                    fontSize={fontSize}
+                    hoveredResidue={hoveredResidue}
+                    isGliding={isGliding}
+                    handleResidueMouseOver={handleResidueMouseOver}
+                    handleResidueMouseDown={handleResidueMouseDown}
+                    handleResidueMouseUp={handleResidueMouseUp}
+                    showValidationData={showValidationData}
+                    validationTracks={validationTracks}
+                />
             )) ?? [];
 
         return (
@@ -104,3 +87,37 @@ export const SequenceRow = memo(
     }
 );
 SequenceRow.displayName = "SequenceRow";
+
+// One residue and its validation tracks. The column element anchors the
+// validation popover, so each column owns its ref.
+const ResidueColumn = (props: {
+    sequence: SeqElement;
+    residue: Residue | null;
+    index: number;
+    columnWidth?: number;
+    fontSize?: number;
+    hoveredResidue?: number | null;
+    isGliding?: boolean;
+    handleResidueMouseOver?: (evt: React.MouseEvent<HTMLDivElement>) => void;
+    handleResidueMouseDown?: (evt: React.MouseEvent<HTMLDivElement>) => void;
+    handleResidueMouseUp?: (evt: React.MouseEvent<HTMLDivElement>) => void;
+    showValidationData?: boolean;
+    validationTracks?: string[];
+}) => {
+    const columnRef = useRef<HTMLDivElement>(null);
+    return (
+        <div ref={columnRef} style={{ display: "flex", flexDirection: "column" }}>
+            <ResidueBox {...props} />
+            {props.showValidationData && (
+                <ValidationTracks
+                    sequence={props.sequence}
+                    residue={props.residue}
+                    columnWidth={props.columnWidth}
+                    handleResidueMouseUp={props.handleResidueMouseUp}
+                    validationTracks={props.validationTracks}
+                    popoverRef={columnRef}
+                />
+            )}
+        </div>
+    );
+};

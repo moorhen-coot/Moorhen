@@ -82,14 +82,11 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
         );
 
     useEffect(() => {
-        if (props.popoverRef?.current) {
-            const handleMouseLeave = () => setIsPopoverShown(false);
-            const currentRef = props.popoverRef.current;
-            currentRef.onmouseleave = handleMouseLeave;
-            return () => {
-                currentRef.onmouseleave = null;
-            };
-        }
+        const anchor = props.popoverRef?.current;
+        if (!anchor) return;
+        const handleMouseLeave = () => setIsPopoverShown(false);
+        anchor.addEventListener("mouseleave", handleMouseLeave);
+        return () => anchor.removeEventListener("mouseleave", handleMouseLeave);
     }, [props.popoverRef]);
 
     if (normalizedTracks.length > 0) {

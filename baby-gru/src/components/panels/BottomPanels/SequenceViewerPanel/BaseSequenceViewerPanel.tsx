@@ -1,4 +1,3 @@
-import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
 import { MoorhenSelectionToSeqViewer, handleResiduesSelection, useHoveredResidue } from "@/components/sequence-viewer/utils";
@@ -34,42 +33,28 @@ export const BaseSequenceViewerPanel = ({
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const residueSelection = useSelector((state: RootState) => state.generalStates.residueSelection);
 
-    const molecule: MoorhenMolecule | null = useMemo(() => {
-        return moleculeList.length > 0
-            ? (moleculeList.find(molecule => molecule.uniqueId === selectedMolecule) ?? moleculeList[0])
-            : null;
-    }, [moleculeList, selectedMolecule]);
+    const molecule: MoorhenMolecule | null =
+        moleculeList.length > 0 ? (moleculeList.find(molecule => molecule.uniqueId === selectedMolecule) ?? moleculeList[0]) : null;
 
-    const sequenceSelection = useMemo(() => MoorhenSelectionToSeqViewer(residueSelection), [residueSelection]);
+    const sequenceSelection = MoorhenSelectionToSeqViewer(residueSelection);
     const hoveredResidue = useHoveredResidue();
 
-    const handleClick = useCallback(
-        (modelIndex: number, molName: string, chain: string, seqNum: number) => {
-            if (!molecule) return;
-            molecule.centreOn(`//${chain}/${seqNum}/*`);
-        },
-        [molecule]
-    );
+    const handleClick = (modelIndex: number, molName: string, chain: string, seqNum: number) => {
+        if (!molecule) return;
+        molecule.centreOn(`//${chain}/${seqNum}/*`);
+    };
 
-    const residueSelectionCallback = useCallback(
-        (selection) => {
-            if (!molecule) return;
-            handleResiduesSelection(selection, molecule, dispatch);
-        },
-        [molecule, dispatch]
-    );
+    const residueSelectionCallback = selection => {
+        if (!molecule) return;
+        handleResiduesSelection(selection, molecule, dispatch);
+    };
 
-    const handleHoverResidue = useCallback(
-        (molName: string, chain: string, resNum: number, resCode: string, resCID: string) => {
-            if (!molecule) return;
-            dispatch(setHoveredAtom({ molecule: molecule, cid: resCID, atomInfo: null }));
-        },
-        [dispatch, molecule]
-    );
+    const handleHoverResidue = (molName: string, chain: string, resNum: number, resCode: string, resCID: string) => {
+        if (!molecule) return;
+        dispatch(setHoveredAtom({ molecule: molecule, cid: resCID, atomInfo: null }));
+    };
 
-    const seqViewerKey = useMemo(() => {
-        return molecule?.molNo !== undefined ? molecule.molNo : "no-molecule";
-    }, [molecule?.molNo]);
+    const seqViewerKey = molecule?.molNo !== undefined ? molecule.molNo : "no-molecule";
 
     return (
         <MoorhenSequenceViewer
