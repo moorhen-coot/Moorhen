@@ -36,8 +36,8 @@ export const MoorhenColourMapByOtherMapModal = (props: ModalComponentProps) => {
     const [minValue, setMinValue] = usePersistentState<number>(menu, "minValue", defaultMin);
     const [maxValue, setMaxValue] = usePersistentState<number>(menu, "maxValue", defaultMax);
 
-    const map1 = usePersistent<number>(menu, "map1", maps.find(map => map.name.endsWith("_locres_filtered.mrc"))?.molNo ?? -1);
-    const map2 = usePersistent<number>(menu, "map2", maps.find(map => map.name.endsWith("_locres.mrc"))?.molNo ?? -1);
+    const map1 = usePersistent<number>(menu, "map1", maps.find(map => map.name.toLowerCase().endsWith("_locres_filtered.mrc"))?.molNo ?? -1);
+    const map2 = usePersistent<number>(menu, "map2", maps.find(map => map.name.toLowerCase().endsWith("_locres.mrc"))?.molNo ?? -1);
 
     useEffect(() => {
         const openLocResFolder = async () => {
