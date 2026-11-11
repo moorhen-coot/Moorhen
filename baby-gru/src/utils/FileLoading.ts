@@ -1,4 +1,5 @@
-import Fasta from "biojs-io-fasta";
+import { parseFasta } from "./fasta";
+import { drawDefaultRepresentation } from "./Representation/defaultRepresentation";
 import { centreOfObject } from "../store/threeDObjectsSlice";
 import pako from "pako";
 import type { Dispatch, Store } from "redux";
@@ -108,16 +109,9 @@ export const drawModels = async (newMolecules: MoorhenMolecule[], moorhenInstanc
 
     for (const newMolecule of newMolecules) {
         const hasLongSequence = newMolecule.sequences.some(item => item.sequence.length > 10);
-        const representation = hasLongSequence ? moorhenInstance.representation.defaultStyle : "CBs";
-        if (
-            representation === "ribbons-and-ligands" ||
-            representation === "ribbons-and-side-chains" ||
-            representation === "site-and-ribbons"
-        ) {
-            await moorhenInstance.representation.wizard(newMolecule.uniqueId, representation, true);
-        } else {
-            await moorhenInstance.representation.create(newMolecule.uniqueId, { representationStyle: representation });
-        }
+        // The shown scene's default style; a short chain (a peptide, a ligand) as bonds
+        const style = hasLongSequence ? moorhenInstance.representation.defaultStyle : "CBs";
+        await drawDefaultRepresentation(moorhenInstance, newMolecule.uniqueId, style, true);
     }
 };
 
@@ -147,6 +141,12 @@ const loadSession = async (session: string | object, moorhenInstance: MoorhenIns
     } else {
         status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(session, moorhenInstance);
     }
+    if (status === MoorhenTimeCapsule.NEWER_VERSION_STATUS) {
+        throw new Error(MoorhenTimeCapsule.NEWER_VERSION_MESSAGE);
+    }
+    if (status === MoorhenTimeCapsule.MOVIE_PLAYING_STATUS) {
+        throw new Error(MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE);
+    }
     if (status === -1) {
         throw new Error("Failed to read backup (deprecated format)");
     }
@@ -168,7 +168,7 @@ const parseJSONAndGetModelFiles = (json_contents, dispatch) => {
     const modelFiles: string[] = [];
     if (fastaContents) {
         try {
-            const seqs = Fasta.parse(fastaContents);
+            const seqs = parseFasta(fastaContents);
             dispatch(setTargetSequence(seqs[0].seq));
         } catch (e) {
             console.log("Failed to extract sequence from input.fasta");
@@ -288,9 +288,8 @@ export const loadMrParseFiles = async (
         backgroundColor,
         defaultBondSmoothness
     );
-
-    await drawModels(newMolecules, moorhenInstance);
-    dispatch(addMoleculeList(newMolecules));
+    await dispatch(addMoleculeList(newMolecules));
+    await drawModels(newMolecules, moorhenInstance); 
     newMolecules.at(-1).centreOn("/*/*/*/*", true);
 
     moorhenInstance.store.dispatch(setMrParseModels(newMolecules));
@@ -830,7 +829,11 @@ export const autoOpenFiles = async (
             try {
                 await handleSessionUpload(file, moorhenInstance);
             } catch (e) {
-                dispatch(enqueueSnackbar({ message: `Failed to load session ${file.name}`, variant: "warning" }));
+                const message =
+                    e instanceof Error && e.message === MoorhenTimeCapsule.NEWER_VERSION_MESSAGE
+                        ? e.message
+                        : `Failed to load session ${file.name}`;
+                dispatch(enqueueSnackbar({ message, variant: "warning" }));
             }
             break; //We only load the first session.
         } else if (file.name.toLowerCase().endsWith(MOVIE_EXTENSION)) {
@@ -908,7 +911,8 @@ export const autoOpenFiles = async (
                     newMap.showOnLoad = false;
                 }
                 dispatch(addMap(newMap));
-                if (!isLocres) {
+                // Difference maps are never made active by default
+                if (!isLocres && !newMap.isDifference) {
                     dispatch(setActiveMap(newMap));
                 }
                 mapsCreated.push(newMap);

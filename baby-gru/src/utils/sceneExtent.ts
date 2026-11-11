@@ -102,12 +102,30 @@ export const spanOfCell = (cell: { a?: number, b?: number, c?: number } | null |
  * Written as a function taking the whole map rather than as a bare call to spanOfCell, so that
  * the rule "the contour radius is not an input" is something a test can hold the code to. The
  * radius is on the object this receives and is deliberately never read.
+ *
+ * THE CELL LIVES UNDER headerInfo, AND ONLY THERE
+ *
+ * This read `map.cell` for its whole life, and `MoorhenMap` declared a `cell` field that nothing
+ * ever assigned - so every map contributed zero, always. A scene holding only maps fell back to
+ * EMPTY_SCENE_SPAN, fifty angstroms, with two visible consequences: the side-on clip/fog widget
+ * scaled itself to a fifty angstrom scene whatever was loaded, and "Clip off", which sets the
+ * planes to 1.5 times this span, clipped a 550 angstrom EM map to a 150 angstrom slab. Turning
+ * the map radius up changed nothing, because the radius is deliberately not an input - the one
+ * input there was happened to be undefined.
+ *
+ * The real cell is `headerInfo.cell`, filled by MoorhenMap.initialise from the MTZ or MRC header,
+ * and already trusted elsewhere - cellCentre is derived from it one line later.
+ *
+ * Still zero when it is absent, which is a real case rather than a defensive one: initialise
+ * populates headerInfo only for the "mtz" and "mapFile" origins, and one loader catches a header
+ * failure and skips initialise altogether. Such a map contributes nothing and the scene falls
+ * back as before.
  */
 export const mapSpan = (map: {
-    cell?: { a?: number, b?: number, c?: number } | null,
+    headerInfo?: { cell?: { a?: number, b?: number, c?: number } | null } | null,
     suggestedRadius?: number | null,
     mapRadius?: number | null,
-} | null | undefined): number => spanOfCell(map?.cell);
+} | null | undefined): number => spanOfCell(map?.headerInfo?.cell);
 
 export interface SceneExtentInput {
     /** Atom positions and 3D object boxes, all in one coordinate space. */
