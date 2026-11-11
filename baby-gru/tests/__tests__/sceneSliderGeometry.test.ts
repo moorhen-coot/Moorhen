@@ -17,7 +17,11 @@ import {
     offsetOfPixel,
     pixelOfHandle,
     pixelOfOffset,
+    SIDE_VIEW_MIN_WIDTH,
+    maxSideViewZoom,
     plotHalfRange,
+    sideViewAutoWindow,
+    sideViewZoomCentre,
 } from "../../src/utils/sceneSliderGeometry";
 
 const WIDTH = 500;
@@ -176,3 +180,49 @@ describe("constraining a drag", () => {
     });
 });
 
+
+describe("the side view zoomed in", () => {
+    it("maps offsets about its centre, and back", () => {
+        expect(pixelOfOffset(12, 5, WIDTH, 12)).toBeCloseTo(WIDTH / 2);
+        for (const offset of [-30, 0, 7.5, 40]) {
+            expect(offsetOfPixel(pixelOfOffset(offset, 5, WIDTH, 12), 5, WIDTH, 12)).toBeCloseTo(offset);
+        }
+    });
+
+    it("cannot pick up a handle that is off the plot", () => {
+        const handles = [handle("clipStart", -20), handle("clipEnd", 20)];
+        // Centred on the back plane, 5 angstroms either side: the front one is far off the left edge
+        expect(handleAtPixel(WIDTH / 2, handles, 5, WIDTH, GRAB_TOLERANCE_PX, 20)).toBe("clipEnd");
+        for (const pixel of [0, 1, WIDTH / 4]) {
+            expect(handleAtPixel(pixel, handles, 5, WIDTH, GRAB_TOLERANCE_PX, 20)).toBeNull();
+        }
+    });
+
+    it("goes no further than about 10 angstroms across", () => {
+        for (const halfRange of [20, 60, 400]) {
+            expect(2 * halfRange / maxSideViewZoom(halfRange)).toBeCloseTo(SIDE_VIEW_MIN_WIDTH);
+        }
+        // A scene already that narrow is not zoomed at all
+        expect(maxSideViewZoom(3)).toBe(1);
+    });
+
+    it("centres on the middle of the clip slab, else of the fog, else on the view centre", () => {
+        expect(sideViewZoomCentre(handlesFrom(8, 21, 8, 21))).toBeCloseTo(6.5);
+        expect(sideViewZoomCentre(handlesFrom(8, 21, 4, 30, false))).toBeCloseTo(13);
+        expect(sideViewZoomCentre(handlesFrom(8, 21, 4, 30, false, false))).toBe(0);
+    });
+});
+
+describe("the side view's auto zoom", () => {
+    it("shows twice the slab Auto clip and Auto fog give the zoom, centred on it", () => {
+        // 8 zooms in front of the view centre to 21 behind
+        for (const zoom of [0.5, 1, 4, 10]) {
+            expect(sideViewAutoWindow(zoom).halfRange).toBeCloseTo(29 * zoom);
+            expect(sideViewAutoWindow(zoom).centre).toBeCloseTo(6.5 * zoom);
+        }
+    });
+
+    it("is no narrower than about 10 angstroms", () => {
+        expect(sideViewAutoWindow(0.05).halfRange).toBeCloseTo(SIDE_VIEW_MIN_WIDTH / 2);
+    });
+});

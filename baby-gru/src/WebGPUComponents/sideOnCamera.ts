@@ -2,11 +2,12 @@
  * The camera of the clip, fog and blur widget's side-on view (MoorhenSlidersSettings), for the
  * WebGPU renderer: the main view's scene and lights, turned a quarter about the screen's vertical
  * so that the main view's line of sight runs across the widget (its eye on the left), framed
- * orthographically `halfWidth` angstroms either side of the view centre, as the widget's WebGL
- * picture is. Nothing is clipped or fogged and there are no effects: the widget shows the whole
+ * orthographically `halfWidth` angstroms either side of `centre` - a depth along the main view's
+ * line of sight, away from its eye, 0 for the view centre - as the widget's WebGL picture is. Nothing is clipped or fogged and there are no effects: the widget shows the whole
  * scene, with the clip and fog it sets drawn over it.
  */
 import * as quat from "gl-matrix/quat";
+import { quatToMat4 } from "../WebGLgComponents/quatToMat4.js";
 import type { PreviewCameraSource } from "./previewScene";
 import { ORTHO_HALF_HEIGHT } from "../WebGLgComponents/mgWebGLParts/projection";
 
@@ -16,13 +17,17 @@ import { ORTHO_HALF_HEIGHT } from "../WebGLgComponents/mgWebGLParts/projection";
  */
 export const SIDE_ON_TURN: [number, number, number, number] = [0, Math.SQRT1_2, 0, Math.SQRT1_2];
 
-export function sideOnCamera(main: PreviewCameraSource, halfWidth: number, width: number, height: number): PreviewCameraSource {
+export function sideOnCamera(main: PreviewCameraSource, halfWidth: number, width: number, height: number, centre: number = 0): PreviewCameraSource {
+    // The centre moved `centre` away from the main view's eye: the main view's depth axis, in the
+    // scene's frame, is the third row of its turn, and the origin is minus the centre.
+    const turn = quatToMat4(main.myQuat);
+    const origin = [0, 1, 2].map(i => main.origin[i] + centre * turn[4 * i + 2]);
     const turned = quat.multiply(quat.create(), Array.from(main.myQuat) as quat.quat, SIDE_ON_TURN);
     // Far enough back that the whole scene is in front of the eye, whichever way it is turned.
     const eyeDistance = Math.max(500, 4 * halfWidth);
     return {
         myQuat: Array.from(turned),
-        origin: Array.from(main.origin),
+        origin,
         // The orthographic projection is ORTHO_HALF_HEIGHT x zoom high (and that x the aspect wide).
         zoom: (halfWidth * height) / (ORTHO_HALF_HEIGHT * Math.max(1, width)),
         fogClipOffset: eyeDistance,

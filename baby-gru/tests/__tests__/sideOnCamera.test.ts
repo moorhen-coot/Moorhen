@@ -6,6 +6,7 @@
 import { describe, expect, it } from "@jest/globals";
 import * as mat4 from "gl-matrix/mat4";
 import * as quat from "gl-matrix/quat";
+import * as vec4 from "gl-matrix/vec4";
 import { quatToMat4 } from "../../src/WebGLgComponents/quatToMat4.js";
 import { ORTHO_HALF_HEIGHT } from "../../src/WebGLgComponents/mgWebGLParts/projection";
 import { frameUniforms, type PreviewCameraSource } from "../../src/WebGPUComponents/previewScene";
@@ -47,6 +48,26 @@ describe("the side-on camera", () => {
         // Orthographic x scale: 1 / half width.
         expect(projection[0]).toBeCloseTo(1 / 30, 6);
         expect(projection[5]).toBeCloseTo(1 / (30 * 240 / 400), 6);
+    });
+
+    it("zoomed in on a depth, puts the scene where the widget's WebGL picture does", () => {
+        const [width, height, halfWidth, centre] = [400, 240, 6, 9];
+        const points = [[0, 0, 0], [3, -4, 5], [-7, 2, 11], [12, 8, -6]];
+        for (const myQuat of turns) {
+            const source = main(myQuat);
+            const side = frameUniforms(sideOnCamera(source, halfWidth, width, height, centre), width, height);
+            const gpu = mat4.multiply(mat4.create(), side.slice(0, 16) as unknown as mat4.mat4, side.slice(16, 32) as unknown as mat4.mat4);
+            // draw3D's projection: the depth across moved to the centre
+            const projection = mat4.ortho(mat4.create(), centre - halfWidth, centre + halfWidth,
+                -halfWidth * height / width, halfWidth * height / width, 0.1, 1000);
+            const gl = mat4.multiply(mat4.create(), projection, widgetModelView(source));
+            for (const p of points) {
+                const a = vec4.transformMat4(vec4.create(), [p[0], p[1], p[2], 1], gpu);
+                const b = vec4.transformMat4(vec4.create(), [p[0], p[1], p[2], 1], gl);
+                expect(a[0] / a[3]).toBeCloseTo(b[0] / b[3], 5);
+                expect(a[1] / a[3]).toBeCloseTo(b[1] / b[3], 5);
+            }
+        }
     });
 
     it("clips and fogs nothing of the scene, and has no effects", () => {
