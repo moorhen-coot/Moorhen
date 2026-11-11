@@ -9,7 +9,16 @@ set(coot_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/coot-1.0)
 set(lhasa_react_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/LhasaReact)
 
 # XDATADIR should be "${install_top_dir}/share/data"
-add_definitions(-DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -DUSE_GEMMI -DCLIPPER_HAS_TOP8000 -DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data" -DXDATADIR="${coot_src}/share/data")
+#
+# -DEMSCRIPTEN: coot tests "#ifdef EMSCRIPTEN" (not __EMSCRIPTEN__), most importantly
+# in api/validation-information.hh where it changes the layout of
+# coot::validation_information_t (std::string type vs enum type). Recent emcc no longer
+# predefines EMSCRIPTEN; only <emscripten.h> defines it. The embind wrappers include
+# <emscripten.h> before the coot headers but the coot library sources do not, so the two
+# disagreed on the class layout (an ODR violation). That corrupted every returned
+# validation_information_t (garbage "type") and crashed SSM_superpose when its
+# alignment_info_vec was destroyed. Define it everywhere so all TUs agree.
+add_definitions(-DEMSCRIPTEN -DHAVE_BOOST_BASED_THREAD_POOL_LIBRARY -DUSE_GEMMI -DCLIPPER_HAS_TOP8000 -DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data" -DXDATADIR="${coot_src}/share/data")
 
 set(coot_rotamer_data_arg_lys
 ${coot_src}/rama-data/rota500-arg.data
