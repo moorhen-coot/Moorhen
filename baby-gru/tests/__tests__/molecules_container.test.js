@@ -573,6 +573,35 @@ describe('Testing molecules_container_js', () => {
         expect(molecules_container.get_number_of_atoms(imolA)).toBe(nAtomsA)
     })
 
+    test('validation_information_t type is a readable string', () => {
+        // coot::validation_information_t has a std::string "type" only when EMSCRIPTEN is
+        // defined. If the coot library and the embind wrappers disagree on that macro the
+        // class layout differs between them and "type" comes back as garbage.
+        const imol = molecules_container.read_pdb('./5a3h.pdb')
+        const rota = molecules_container.rotamer_analysis(imol)
+        expect(rota.type).toBe('PROBABILITY')
+        const omega = molecules_container.peptide_omega_analysis(imol)
+        expect(omega.type).toBe('TORSION_ANGLE')
+        cleanUpVariables.push(rota, omega)
+    })
+
+    test('SSM_superpose', () => {
+        // Used to abort / "memory access out of bounds" when the result's
+        // alignment_info_vec was destroyed (same validation_information_t layout mismatch).
+        const imolRef = molecules_container.read_pdb('./5a3h.pdb')
+        const imolMov = molecules_container.read_pdb('./5a3h.pdb')
+        const result = molecules_container.SSM_superpose(imolRef, 'A', imolMov, 'A')
+        const info = JSON.parse(result.superpose_info)
+        expect(info.nalgn).toBe(300)
+        expect(info.rmsd).toBeLessThan(0.01)
+        expect(result.alignment_info_vec.size()).toBe(1)
+        const vi = result.alignment_info_vec.get(0)
+        expect(vi.cviv.size()).toBe(1)
+        expect(vi.cviv.get(0).rviv.size()).toBe(300)
+        expect(result.aligned_pairs.size()).toBe(300)
+        cleanUpVariables.push(vi, result.alignment_info_vec, result.aligned_pairs)
+    })
+
     test.skip('flip_peptide by residue spec', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo).toBe(0)
