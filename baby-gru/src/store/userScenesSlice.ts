@@ -44,14 +44,15 @@ const { fogClipOffset } = sceneSettingsInitialState;
  */
 const BUILT_IN_SCENE_PRESETS: Record<BuiltInSceneId, SceneSettingsSnapshot> = {
     General: {
-        resetClippingFogging: false,
-        clipStart: 40,
-        clipEnd: 40,
+        autoFog: true,
+        autoClip: false,
+        doClip: false,
         fogStart: fogClipOffset - 2,
         fogEnd: fogClipOffset + 120,
     },
     "Model Building": {
-        resetClippingFogging: true,
+        autoFog: true,
+        autoClip: true,
         defaultRepresentationStyle: "CBs",
     },
 };

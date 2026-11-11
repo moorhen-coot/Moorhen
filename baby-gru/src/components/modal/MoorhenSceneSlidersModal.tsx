@@ -13,21 +13,29 @@ import { MoorhenStack } from "../interface-base";
 import { MoorhenToggle, MoorhenSlider } from "../inputs";
 import { Bounds, Sphere, boundsAround, mapSpan, reachFrom, sceneSpan, sphereOfPoints } from "../../utils/sceneExtent";
 import {
+    GRAB_TOLERANCE_PX,
     Handle,
     HandleId,
+    PlotWindow,
     constrainOffset,
     handleAtPixel,
     offsetOfPixel,
     partnerOf,
     pixelOfHandle,
+    maxSideViewZoom,
     plotHalfRange,
+    sideViewAutoWindow,
+    sideViewZoomCentre,
 } from "../../utils/sceneSliderGeometry";
 import { centreOfObject, extentOfObject } from "../../store/threeDObjectsSlice";
 import {
     setDepthBlurDepth,
     setDepthBlurRadius,
     setDepthPeelLayers,
-    setResetClippingFogging,
+    setAutoFog,
+    setAutoClip,
+    setDoFog,
+    setDoClip,
     setUseOffScreenBuffers,
 } from "../../store/sceneSettingsSlice";
 import {
@@ -57,7 +65,8 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const store = useStore<RootState>()
     const dispatch = useDispatch();
     const moorhenInstance = useMoorhenInstance();
-    const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
+    const autoFog = useSelector((state: RootState) => state.sceneSettings.autoFog);
+    const autoClip = useSelector((state: RootState) => state.sceneSettings.autoClip);
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
 
     const gl_fog_start = useSelector((state: moorhen.State) => state.sceneSettings.fogStart);
@@ -67,15 +76,9 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const blurSize = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
     const depthPeelLayers = useSelector((state: moorhen.State) => state.sceneSettings.depthPeelLayers);
 
-    const [useFog, setUseFog] = useState<boolean>(true);
-    const [useClip, setUseClip] = useState<boolean>(true);
-    const [backupFogNear, setBackupFogNear] = useState<number>(500.0);
-    const [backupFogFar, setBackupFogFar] = useState<number>(500.0);
-    const [backupClipNear, setBackupClipNear] = useState<number>(500.0);
-    const [backupClipFar, setBackupClipFar] = useState<number>(500.0);
-
-    const fogOffNear = 998.0
-    const fogOffFar = 999.0
+    // Scene settings, saved with the scene: turning them off keeps the planes, the renderer just ignores them
+    const useFog = useSelector((state: moorhen.State) => state.sceneSettings.doFog);
+    const useClip = useSelector((state: moorhen.State) => state.sceneSettings.doClip);
 
     const blurLabel = <>
              <span style={{display: "inline-block", width:"100px"}}>Depth blur</span>
@@ -136,7 +139,9 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         setGlCanvas(element)
     }, [])
 
-    const spanScaling = 0.75
+    // Half the plot's width, as a share of the scene's diagonal. Half a diagonal would just fit a
+    // scene centred on the view centre; a little more leaves room when it is not.
+    const spanScaling = 0.6
 
     // For the scene span below: everything drawn counts towards it, not only the molecules.
     const maps = useSelector((state: moorhen.State) => state.maps);
@@ -270,12 +275,48 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         () => plotHalfRange(viewReach > 0 ? viewReach : atomSpan * spanScaling, handles),
         [viewReach, atomSpan, handles])
 
-    /** Where each handle is drawn, by id. */
+    /**
+     * The side view's zoom, for placing the planes precisely: 1 shows the whole of plotRange, more
+     * magnifies about zoomFocus, the middle of the slab the main view shows when the zoom was set
+     * (sideViewZoomCentre). That depth stays where it is on the plot as the zoom changes. The focus
+     * is kept, not followed: dragging a plane moves the slab's middle, and the plot would slide
+     * under the pointer. Not part of the scene, only of how this widget looks at it.
+     */
+    const [sideZoomSet, setSideZoom] = useState<number>(1)
+    const [zoomFocus, setZoomFocus] = useState<number>(0)
+    // Down to about 10 angstroms across. Capped here as well as on the slider: the plot's range
+    // shrinks when the scene does, and the zoom set for the larger one could then go further.
+    const maxSideZoom = maxSideViewZoom(plotRange)
+    /** Auto: framed on the slab Auto clip and Auto fog give the main view's zoom (sideViewAutoWindow); the slider is then unused. */
+    const [autoSideZoom, setAutoSideZoom] = useState<boolean>(false)
+    /**
+     * The window kept while a handle is dragged. Dragging a plane changes what auto zoom frames, and
+     * can change the whole plot's range, so the plot would otherwise move under the pointer.
+     */
+    const [heldWindow, setHeldWindow] = useState<PlotWindow | null>(null)
+
+    const mainZoom = useSelector((state: moorhen.State) => state.sceneSettings.zoom)
+    const autoWindow = useMemo(() => sideViewAutoWindow(mainZoom), [mainZoom])
+    const sideZoom = autoSideZoom
+        ? Math.min(Math.max(plotRange / autoWindow.halfRange, 1), maxSideZoom)
+        : Math.min(sideZoomSet, maxSideZoom)
+    const liveWindow: PlotWindow = autoSideZoom
+        ? autoWindow
+        : { centre: zoomFocus * (1 - 1 / sideZoom), halfRange: plotRange / sideZoom }
+    const viewHalfRange = (heldWindow ?? liveWindow).halfRange
+    const viewCentre = (heldWindow ?? liveWindow).centre
+
+    const changeSideZoom = (zoom: number) => {
+        if (sideZoom === 1) setZoomFocus(sideViewZoomCentre(handles))
+        setSideZoom(zoom)
+    }
+
+    /** Where each handle is drawn, by id. Zoomed in, some may be off the plot. */
     const handlePixels = useMemo(() => {
         const pixels = {} as Record<HandleId, number>
-        handles.forEach(h => { pixels[h.id] = pixelOfHandle(h, plotRange, plotWidth) })
+        handles.forEach(h => { pixels[h.id] = pixelOfHandle(h, viewHalfRange, plotWidth, viewCentre) })
         return pixels
-    }, [handles, plotRange, plotWidth])
+    }, [handles, viewHalfRange, viewCentre, plotWidth])
 
     /** The offset a handle must not cross, or null when it has no partner. */
     const partnerOffset = (id: HandleId): number | null => {
@@ -298,7 +339,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         if (!glCanvasNow || !gpuCanvas) return
 
         const main = externalRenderer()
-        const byWebGPU = !!main?.external.drawSecondView?.(gpuCanvas, sideOnCamera(main.view, plotRange, width, height))
+        const byWebGPU = !!main?.external.drawSecondView?.(gpuCanvas, sideOnCamera(main.view, viewHalfRange, width, height, viewCentre))
         gpuCanvas.style.visibility = byWebGPU ? "visible" : "hidden"
         glCanvasNow.style.visibility = byWebGPU ? "hidden" : "visible"
         if (byWebGPU) return
@@ -311,9 +352,11 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         }
 
         const pMatrix = mat4.create();
-        // plotRange, not the scene span: the 2D overlay is drawn to the same range, and the handles
-        // would no longer line up with the molecule behind them if these two disagreed.
-        mat4.ortho(pMatrix, -plotRange, plotRange, -plotRange * height/width, plotRange * height/width, 0.1, 1000.0);
+        // The plot's range, not the scene span: the 2D overlay is drawn to the same range, and the
+        // handles would no longer line up with the molecule behind them if these two disagreed.
+        // Zoomed in, the depth across is moved to the view's centre; up and down stays centred.
+        mat4.ortho(pMatrix, viewCentre - viewHalfRange, viewCentre + viewHalfRange,
+            -viewHalfRange * height/width, viewHalfRange * height/width, 0.1, 1000.0);
 
         // The main view's turn, then a quarter turn about the vertical: its line of sight runs
         // across this view, the eye on the left (sideOnCamera's SIDE_ON_TURN, for WebGPU).
@@ -538,12 +581,14 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         // Nearest visible handle, rather than the first one in a fixed order that happened to be
         // within five pixels. Hidden handles are skipped too: fog that has been switched off used
         // to sit at whatever edge its 998/999 clamped to and swallow clicks meant for clip.
-        setGrabbed(handleAtPixel(x, handles, plotRange, plotWidth))
+        const picked = handleAtPixel(x, handles, viewHalfRange, plotWidth, GRAB_TOLERANCE_PX, viewCentre)
+        setGrabbed(picked)
+        if (picked) setHeldWindow({ centre: viewCentre, halfRange: viewHalfRange })
 
         setClickX(x)
         setClickY(y)
 
-    },[handles, plotRange, plotWidth])
+    },[handles, viewHalfRange, viewCentre, plotWidth])
 
     const handleMouseMove = useCallback((evt) => {
 
@@ -559,16 +604,16 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                 // A distance, like every other handle. No partner to stay clear of: the focal
                 // plane may sit anywhere, including outside the slab, where it simply means
                 // everything visible is on one side of it.
-                dispatch(setDepthBlurDepth(offsetOfPixel(x, plotRange, plotWidth)))
+                dispatch(setDepthBlurDepth(offsetOfPixel(x, viewHalfRange, plotWidth, viewCentre)))
             } else {
                 // Clamp the value, do not gate the dispatch. The old code only dispatched when the
                 // pointer was past the partner's drawn pixel, so a partner pinned at the edge of
                 // the plot made that test impossible to satisfy and the handle silently froze.
                 const partner = partnerOffset(grabbed)
-                const wanted = offsetOfPixel(x, plotRange, plotWidth)
+                const wanted = offsetOfPixel(x, viewHalfRange, plotWidth, viewCentre)
                 const offset = partner === null
                     ? wanted
-                    : constrainOffset(grabbed, wanted, partner, plotRange, plotWidth)
+                    : constrainOffset(grabbed, wanted, partner, viewHalfRange, plotWidth)
 
                 switch(grabbed){
                     case "clipStart": dispatch(setClipStart(-offset)); break
@@ -582,12 +627,13 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         setMoveX(x)
         setMoveY(y)
 
-    },[grabbed, mouseHeldDown, handles, plotRange, plotWidth, fogClipOffset, dispatch])
+    },[grabbed, mouseHeldDown, handles, viewHalfRange, viewCentre, plotWidth, fogClipOffset, dispatch])
 
     const releaseGrab = useCallback((evt) => {
 
         setMouseHeldDown(false)
         setGrabbed(null)
+        setHeldWindow(null)
 
         if(!canvasRef||!canvasRef.current) return
 
@@ -631,7 +677,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     useEffect(() => {
         plotTheData()
     // plotWidth too: resizing a canvas clears it
-    }, [glCanvas,plotWidth,atomSpan,plotRange,handles,grabbed,fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers,originState,mapContourSettings])
+    }, [glCanvas,plotWidth,atomSpan,plotRange,viewHalfRange,viewCentre,handles,grabbed,fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers,originState,mapContourSettings])
 
 
     return (
@@ -647,51 +693,53 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRef}></canvas>
                 </figure>
                 </div>
+                <MoorhenStack gap={1} direction="horizontal" align="center">
+                    <MoorhenSlider
+                        minVal={1.0}
+                        maxVal={maxSideZoom}
+                        isDisabled={autoSideZoom || maxSideZoom <= 1}
+                        scale="log"
+                        sliderTitle="Side view zoom"
+                        value={sideZoom}
+                        setValue={changeSideZoom}
+                        decimalPlaces={1}
+                        style={{ flexGrow: 1 }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={autoSideZoom}
+                        onChange={() => setAutoSideZoom(!autoSideZoom)}
+                        label="Auto"
+                    />
+                </MoorhenStack>
             </MoorhenStack>
             <MoorhenStack gap={2} direction="vertical">
-                <MoorhenToggle
-                    type="switch"
-                    checked={resetClippingFogging}
-                    onChange={() => {
-                        dispatch(setResetClippingFogging(!resetClippingFogging));
-                    }}
-                    label="Reset clip and fog on zoom"
-                />
+                {/* Each on / off, and whether it follows the zoom (only meaningful when on) */}
                 <MoorhenToggle
                     type="switch"
                     checked={useFog}
-                    disabled={resetClippingFogging}
-                    onChange={(e) => {
-                        if(useFog){
-                            setBackupFogNear(gl_fog_start)
-                            setBackupFogFar(gl_fog_end)
-                            dispatch(setFogStart(fogOffNear));
-                            dispatch(setFogEnd(fogOffFar));
-                        } else {
-                            dispatch(setFogStart(backupFogNear));
-                            dispatch(setFogEnd(backupFogFar));
-                        }
-                        setUseFog(e.target.checked)
-                    }}
+                    onChange={() => dispatch(setDoFog(!useFog))}
                     label={fogLabel}
                 />
                 <MoorhenToggle
                     type="switch"
+                    checked={autoFog}
+                    disabled={!useFog}
+                    onChange={() => dispatch(setAutoFog(!autoFog))}
+                    label="Auto fog (follows the zoom)"
+                />
+                <MoorhenToggle
+                    type="switch"
                     checked={useClip}
-                    disabled={resetClippingFogging}
-                    onChange={(e) => {
-                        if(useClip){
-                            setBackupClipNear(clipStart)
-                            setBackupClipFar(clipEnd)
-                            dispatch(setClipStart(1.5*atomSpan));
-                            dispatch(setClipEnd(1.5*atomSpan));
-                        } else {
-                            dispatch(setClipStart(backupClipNear));
-                            dispatch(setClipEnd(backupClipFar));
-                        }
-                        setUseClip(e.target.checked)
-                    }}
+                    onChange={() => dispatch(setDoClip(!useClip))}
                     label={clipLabel}
+                />
+                <MoorhenToggle
+                    type="switch"
+                    checked={autoClip}
+                    disabled={!useClip}
+                    onChange={() => dispatch(setAutoClip(!autoClip))}
+                    label="Auto clip (follows the zoom)"
                 />
                 <MoorhenToggle
                     type="switch"
