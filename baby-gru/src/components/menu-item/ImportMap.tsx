@@ -30,7 +30,7 @@ export const ImportMap = () => {
                         newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff);
                     } catch (err) {
                         // Try again if this is a compressed file...
-                        if (file.name.includes(".gz")) {
+                        if (file.name.toLowerCase().includes(".gz")) {
                             newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, true);
                         } else {
                             console.warn(err);
