@@ -84,6 +84,14 @@ const setupFunctions = {
             cootModule.FS_createDataFile("data_tmp", "data.tar", cootData, true, true);
             cootModule.unpackCootDataFile("data_tmp/data.tar",false,"","")
             cootModule.FS_unlink("data_tmp/data.tar")
+            // The Privateer torsion database has its own archive, which the app fetches the
+            // first time it runs Privateer validation.
+            const privateerDataZipped = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'MoorhenAssets', 'privateer-data.tar.gz' ), { encoding: null, flag: 'r' })
+            return ungzip(privateerDataZipped)
+        }).then((privateerData) => {
+            cootModule.FS_createDataFile("data_tmp", "privateer-data.tar", privateerData, true, true);
+            cootModule.unpackCootDataFile("data_tmp/privateer-data.tar",false,"","")
+            cootModule.FS_unlink("data_tmp/privateer-data.tar")
         })
     }
 }

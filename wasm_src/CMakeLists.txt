@@ -538,8 +538,13 @@ FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/d")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/h")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/n")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/list")
-FILE(MAKE_DIRECTORY "data/privateer_data")
-FILE(COPY ../checkout/privateer-wasm/data/linkage_torsions/privateer_torsions_z_score_database.json DESTINATION data/privateer_data )
+# The Privateer torsion database (7.8 MB unpacked) is only read by Privateer's carbohydrate
+# validation, so it goes in its own archive that the command centre fetches the first time
+# that validation runs, rather than in data.tar.gz, which every start-up has to download and
+# unpack. Remove any copy left in data/ by an earlier configure so it doesn't stay in both.
+FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/data/privateer_data)
+FILE(MAKE_DIRECTORY "privateer")
+FILE(COPY ../checkout/privateer-wasm/data/linkage_torsions/privateer_torsions_z_score_database.json DESTINATION privateer/data/privateer_data )
 
 FILE(COPY ../checkout/libccp4/data/syminfo.lib DESTINATION data/ccp4_lib/data )
 FILE(COPY ../checkout/monomers/a/ALA.cif DESTINATION data/ccp4_lib/data/monomers/a )
@@ -587,7 +592,34 @@ FILE(COPY ../checkout/monomers/m/MG.cif DESTINATION data/ccp4_lib/data/monomers/
 FILE(COPY ../checkout/monomers/n/NI.cif DESTINATION data/ccp4_lib/data/monomers/n )
 FILE(COPY ../checkout/monomers/z/ZN.cif DESTINATION data/ccp4_lib/data/monomers/z )
 FILE(COPY ../checkout/monomers/ener_lib.cif DESTINATION data/ccp4_lib/data/monomers )
-FILE(COPY ../checkout/monomers/list/mon_lib_list.cif DESTINATION data/ccp4_lib/data/monomers/list )
+# mon_lib_list.cif goes in without its data_comp_list block. That block is 3.7 MB of the 4 MB
+# file (about 1 MB of data.tar.gz's 1.15 MB compressed): a one-line summary of every monomer
+# in the library, ~35,600 of them. Coot reads it only into
+# protein_geometry::simple_monomer_descriptions, whose only reader is matching_names()
+# (searching monomers by name), which neither the Coot API nor Moorhen calls. Building those
+# entries was most of the molecules_container constructor's time at start-up. Everything else
+# in the file (links, modifications, synonyms) is kept. Moorhen's monomer search fetches its
+# own copy of the full file.
+set(MON_LIB_LIST_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/monomers/list/mon_lib_list.cif)
+set(MON_LIB_LIST_DEST ${CMAKE_CURRENT_BINARY_DIR}/data/ccp4_lib/data/monomers/list/mon_lib_list.cif)
+file(READ ${MON_LIB_LIST_SOURCE} MON_LIB_LIST_TEXT)
+string(FIND "${MON_LIB_LIST_TEXT}" "\ndata_comp_list\n" MON_LIB_COMP_LIST_START)
+if (MON_LIB_COMP_LIST_START EQUAL -1)
+    message(WARNING "mon_lib_list.cif has no data_comp_list block; copying it unchanged")
+else()
+    math(EXPR MON_LIB_COMP_LIST_BODY "${MON_LIB_COMP_LIST_START} + 1")
+    string(SUBSTRING "${MON_LIB_LIST_TEXT}" ${MON_LIB_COMP_LIST_BODY} -1 MON_LIB_LIST_TAIL)
+    # The block runs to the next data_ block (or the end of the file).
+    string(FIND "${MON_LIB_LIST_TAIL}" "\ndata_" MON_LIB_COMP_LIST_LENGTH)
+    string(SUBSTRING "${MON_LIB_LIST_TEXT}" 0 ${MON_LIB_COMP_LIST_START} MON_LIB_LIST_HEAD)
+    if (MON_LIB_COMP_LIST_LENGTH EQUAL -1)
+        set(MON_LIB_LIST_TEXT "${MON_LIB_LIST_HEAD}\n")
+    else()
+        string(SUBSTRING "${MON_LIB_LIST_TAIL}" ${MON_LIB_COMP_LIST_LENGTH} -1 MON_LIB_LIST_REST)
+        set(MON_LIB_LIST_TEXT "${MON_LIB_LIST_HEAD}${MON_LIB_LIST_REST}")
+    endif()
+endif()
+file(WRITE ${MON_LIB_LIST_DEST} "${MON_LIB_LIST_TEXT}")
 FILE(COPY ${coot_src}/standard-residues.pdb DESTINATION data/coot )
 FILE(COPY ${coot_rotamer_data} DESTINATION rota_other/data/coot/rama-data )
 FILE(COPY ${coot_rotamer_data_arg_lys} DESTINATION rota_arg_lys/data/coot/rama-data )
@@ -618,9 +650,9 @@ add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc ../
 if(${MEMORY64} MATCHES "1")
 target_compile_definitions(moorhen PUBLIC _MOORHEN_MEMORY64_)
 if(${EMCC_VERSION} VERSION_GREATER 6.0.1)
-target_link_options(moorhen PRIVATE -sINCOMING_MODULE_JS_API=mainScriptUrlOrBlob,preRun,onRuntimeInitialized,print,printErr -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sINCOMING_MODULE_JS_API=mainScriptUrlOrBlob,preRun,onRuntimeInitialized,print,printErr -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js -sMIN_SAFARI_VERSION=260000)
 else()
-target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js -sMIN_SAFARI_VERSION=260000)
 endif()
 set_target_properties(moorhen PROPERTIES OUTPUT_NAME moorhen64)
 target_link_directories(moorhen PUBLIC 
@@ -750,10 +782,17 @@ add_custom_target(create_tar_rota_other ALL COMMAND
 )
 add_dependencies(create_tar_rota_other moorhen)
 
+add_custom_target(create_tar_privateer ALL COMMAND
+    ${CMAKE_COMMAND} -E tar "cfvz" "${CMAKE_CURRENT_BINARY_DIR}/privateer-data.tar.gz" data
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/privateer/
+)
+add_dependencies(create_tar_privateer moorhen)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rotarama-data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rota_arg_lys-data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rota_other-data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/privateer-data.tar.gz DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/MoorhenAssets)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen${MOORHEN_MODULE_SUFFIX}.js
@@ -782,7 +821,7 @@ target_include_directories(gemmi-wasm PRIVATE
 
 target_link_libraries(gemmi-wasm gemmi_cpp jsoncpp z)
 if(${MEMORY64} MATCHES "1")
-target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmi64Module -sEXPORTED_RUNTIME_METHODS=['FS'])
+target_link_options(gemmi-wasm PRIVATE -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createGemmi64Module -sEXPORTED_RUNTIME_METHODS=['FS'] -sMIN_SAFARI_VERSION=260000)
 set_target_properties(gemmi-wasm PROPERTIES OUTPUT_NAME gemmi64)
 else()
 if(${EMCC_VERSION} VERSION_LESS 5.0.8)
