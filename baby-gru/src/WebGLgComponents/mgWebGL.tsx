@@ -301,6 +301,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
          */
         cameraPumpHandle: number | null;
         /**
+         * The outstanding requestAnimationFrame of requestDrawScene, or null when no draw is queued.
+         */
+        drawRequestHandle: number | null = null;
+        /**
          * The time, in seconds, the camera is advanced to on the next draw. Null means wall clock.
          *
          * A movie export sets it to i/fps before asking for each frame, so every frame is kept and
@@ -980,6 +984,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         // The camera pump holds a requestAnimationFrame that calls drawScene. Left running, it
         // would draw into a torn-down GL context on the next frame.
         stopPumpingCamera(this)
+        if (this.drawRequestHandle !== null) cancelAnimationFrame(this.drawRequestHandle)
+        this.drawRequestHandle = null
         this.unsubscribeCamera?.()
         this.unsubscribeCamera = null
         // Removes the touch recognisers and cancels a pending long-press timer, which would
@@ -1765,6 +1771,22 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
     drawScene() : void {
         drawScene(this)
+    }
+
+    /**
+     * Draw the scene on the next animation frame, once however many times it is asked for before then.
+     *
+     * For redraws triggered by store changes (new buffers, labels, visibility): loading many
+     * molecules changes the store once per molecule, and drawing every molecule on each change
+     * made loading N molecules cost N full draws. Use drawScene when the frame must be drawn now
+     * (a screenshot, a movie frame).
+     */
+    requestDrawScene() : void {
+        if (this.drawRequestHandle !== null) return
+        this.drawRequestHandle = requestAnimationFrame(() => {
+            this.drawRequestHandle = null
+            this.drawScene()
+        })
     }
 
     bindFramebufferDrawBuffers() {
