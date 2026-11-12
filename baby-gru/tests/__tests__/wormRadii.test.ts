@@ -7,6 +7,7 @@ import {
     MIN_WORM_RADIUS,
     defaultWormOptions,
     parseResidueCid,
+    wormM2tIntParameters,
     wormResidueProperties,
     wormResidueRadii,
 } from "../../src/utils/Representation/wormRadii";
@@ -45,6 +46,15 @@ describe("worm radii", () => {
         const residueRadii = [{ chainId: "C", resNo: 5, radiusAniso: [1, 2, 3] as [number, number, number] }];
         expect(wormResidueRadii({ ...defaultWormOptions(), radiusSource: "custom", residueRadii }, bFactors)).toBe(residueRadii);
         expect(wormResidueRadii({ ...defaultWormOptions(), radiusSource: "custom", residueRadii: null }, bFactors)).toHaveLength(3);
+    });
+
+    it("is drawn more finely around than a ribbon's coil, unless told otherwise", () => {
+        expect(wormM2tIntParameters(defaultWormOptions())).toEqual({ ribbonStyleAxialSampling: 6, cylindersStyleAngularSampling: 12 });
+        expect(wormM2tIntParameters({ ...defaultWormOptions(), axialSampling: 10, angularSampling: 20.4 }))
+            .toEqual({ ribbonStyleAxialSampling: 10, cylindersStyleAngularSampling: 20 });
+        // as from a session written before these were saved
+        expect(wormM2tIntParameters({ ...defaultWormOptions(), axialSampling: undefined, angularSampling: 0 }))
+            .toEqual({ ribbonStyleAxialSampling: 6, cylindersStyleAngularSampling: 12 });
     });
 
     it("hands Coot multiples of the coil thickness, as JSON", () => {

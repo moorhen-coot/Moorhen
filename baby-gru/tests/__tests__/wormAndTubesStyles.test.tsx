@@ -26,8 +26,10 @@ describe("the Worm and Tubes styles", () => {
     test("a worm is scaled by B-factor unless told otherwise", async () => {
         const user = userEvent.setup();
         const representation = new MoleculeRepresentation("Worm", "/*/*/*/*:*", null);
-        expect(representation.wormOptions).toMatchObject({ radiusSource: "b-factor", bFactorScale: 0.05, uniformRadius: 1 });
+        expect(representation.wormOptions).toMatchObject({ radiusSource: "b-factor", bFactorScale: 0.05, uniformRadius: 1, axialSampling: 6, angularSampling: 12 });
         renderWithinInstance(<WormSettingsPanel representation={representation} />);
+        expect(screen.getByText(/Axial sampling \(steps per residue\): 6/)).toBeInTheDocument();
+        expect(screen.getByText(/Angular sampling \(sides\): 12/)).toBeInTheDocument();
 
         const source = screen.getByLabelText("Worm radius") as HTMLSelectElement;
         expect(source.value).toBe("b-factor");
@@ -35,6 +37,18 @@ describe("the Worm and Tubes styles", () => {
 
         await user.selectOptions(source, "uniform");
         expect(representation.wormOptions.radiusSource).toBe("uniform");
+    });
+
+    test("a worm uses the general worm options until given its own", () => {
+        const representation = new MoleculeRepresentation("Worm", "/*/*/*/*:*", null);
+        expect(representation.useDefaultWormOptions).toBe(true);
+        representation.wormOptions.angularSampling = 20;
+        expect(representation.drawnWormOptions.angularSampling).toBe(12);
+        representation.setWormOptions({ angularSampling: 20 });
+        expect(representation.useDefaultWormOptions).toBe(false);
+        expect(representation.drawnWormOptions.angularSampling).toBe(20);
+        representation.setWormOptions(null);
+        expect(representation.drawnWormOptions.angularSampling).toBe(12);
     });
 
     test("radii given through the API can be kept", () => {

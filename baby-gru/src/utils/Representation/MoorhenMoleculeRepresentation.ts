@@ -11,7 +11,7 @@ import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
 import { createRepresentation, extractRepresentationParams, withCidModel } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams, RepresentationBackup } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
-import { defaultWormOptions, wormOptions, wormResidueProperties, wormResidueRadii } from "./wormRadii";
+import { defaultWormOptions, wormM2tIntParameters, wormOptions, wormResidueProperties, wormResidueRadii } from "./wormRadii";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
@@ -169,8 +169,10 @@ export class MoleculeRepresentation {
     useDefaultGaussianSurfaceSettings: boolean;
     bondOptions: moorhen.cootBondOptions;
     m2tParams: m2tParameters;
-    /** Where the radii of a "Worm" come from (see wormRadii.ts). Always the representation's own. */
+    /** A "Worm"'s own options: where its radii come from, how finely it is drawn (see wormRadii.ts). */
     wormOptions: wormOptions;
+    /** Whether a "Worm" is drawn with the general (default) worm options rather than its own. */
+    useDefaultWormOptions: boolean;
     nonCustomOpacity: number;
     residueEnvironmentOptions: residueEnvironmentOptions;
     ligandsCid: string;
@@ -233,6 +235,7 @@ export class MoleculeRepresentation {
             ssUsageScheme: 2,
         };
         this.wormOptions = defaultWormOptions();
+        this.useDefaultWormOptions = true;
         this.residueEnvironmentOptions = {
             maxDist: 3.5,
             adaptiveDist: 8.0,
@@ -289,14 +292,22 @@ export class MoleculeRepresentation {
     }
 
     /**
-     * Set where the radii of a "Worm" come from (any options not given keep their defaults), e.g.
+     * Give a "Worm" its own options (any not given keep their defaults), e.g.
      * `{ radiusSource: "custom", residueRadii: [{ chainId: "A", resNo: 34, radius: 2.5 }] }`, in
-     * angstroms. Takes effect on the next draw.
+     * angstroms; or, with none, draw it with the general ones. Takes effect on the next draw.
      */
-    setWormOptions(options: Partial<wormOptions>) {
+    setWormOptions(options: Partial<wormOptions> | null | undefined) {
         if (options) {
+            this.useDefaultWormOptions = false;
             this.wormOptions = { ...defaultWormOptions(), ...options };
+        } else {
+            this.useDefaultWormOptions = true;
         }
+    }
+
+    /** The worm options a "Worm" is drawn with: its own, or the general ones. */
+    get drawnWormOptions(): wormOptions {
+        return this.useDefaultWormOptions ? defaultWormOptions() : this.wormOptions;
     }
 
     /** Show one model of a multi-model molecule (0: all of them). The model is kept in the CID */
@@ -1411,9 +1422,15 @@ export class MoleculeRepresentation {
     getWormResidueProperties(): string | null {
         if (this.style !== "Worm") return null;
         const params = this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams : this.m2tParams;
-        const needsBFactors = this.wormOptions.radiusSource !== "custom" || !this.wormOptions.residueRadii?.length;
-        const radii = wormResidueRadii(this.wormOptions, needsBFactors ? this.parentMolecule.getResidueBFactors() : []);
+        const options = this.drawnWormOptions;
+        const needsBFactors = options.radiusSource !== "custom" || !options.residueRadii?.length;
+        const radii = wormResidueRadii(options, needsBFactors ? this.parentMolecule.getResidueBFactors() : []);
         return wormResidueProperties(radii, params.ribbonStyleCoilThickness);
+    }
+
+    /** The M2T integer parameters a "Worm" is drawn with in place of the M2T parameters'; null for other styles. */
+    getWormM2tIntParameters(): Record<string, number> | null {
+        return this.style === "Worm" ? wormM2tIntParameters(this.drawnWormOptions) : null;
     }
 
     /**
@@ -1544,7 +1561,10 @@ export class MoleculeRepresentation {
             {
                 returnType: "mesh",
                 command: "shim_get_molecular_representation_mesh",
-                commandArgs: [this.parentMolecule.molNo, m2tSelection, colorStyle, m2tStyle, ssUsageScheme, this.getWormResidueProperties()],
+                commandArgs: [
+                    this.parentMolecule.molNo, m2tSelection, colorStyle, m2tStyle, ssUsageScheme,
+                    this.getWormResidueProperties(), this.getWormM2tIntParameters(),
+                ],
             },
             false
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
@@ -2246,7 +2266,10 @@ export class MoleculeRepresentation {
                 {
                     returnType: "string",
                     command: "shim_export_molecular_representation_as_mesh_file",
-                    commandArgs: [this.parentMolecule.molNo, m2tSelection, "", m2tStyle, ssUsageScheme, fileType, this.getWormResidueProperties()],
+                    commandArgs: [
+                        this.parentMolecule.molNo, m2tSelection, "", m2tStyle, ssUsageScheme, fileType,
+                        this.getWormResidueProperties(), this.getWormM2tIntParameters(),
+                    ],
                 },
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;

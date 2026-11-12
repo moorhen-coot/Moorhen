@@ -316,8 +316,9 @@ export interface CreateRepresentationParams {
     residueEnvironmentOptions?: residueEnvironmentOptions | null;
     gaussianSurfaceSettings?: gaussianSurfSettings | null;
     /**
-     * Where a "Worm"'s radii come from (any options not given keep their defaults): each residue's
-     * B-factor (the default), one radius, or a radius per residue in angstroms, e.g.
+     * A "Worm"'s own options (any not given keep their defaults; null: the general ones). Where its
+     * radii come from: each residue's B-factor (the default), one radius, or a radius per residue in
+     * angstroms, e.g.
      * `{ radiusSource: "custom", residueRadii: [{ chainId: "A", resNo: 34, radius: 2.5 }] }`
      * (`radiusAniso: [x, y, z]` in place of `radius` for different radii along x, y and z).
      */
@@ -365,7 +366,7 @@ export interface RepresentationBackup {
     m2tParams: m2tParameters | null;
     residueEnvironmentOptions: residueEnvironmentOptions | null;
     gaussianSurfaceSettings: gaussianSurfSettings | null;
-    /** A "Worm"'s; null for other styles */
+    /** A "Worm"'s own; null for a worm with the general ones, and for other styles */
     wormOptions: wormOptions | null;
     nonCustomOpacity: number | null;
     uniqueId: string;
@@ -449,7 +450,7 @@ export function extractRepresentationParams(representation: MoleculeRepresentati
         m2tParams: representation.useDefaultM2tParams ? null : copy(representation.m2tParams),
         residueEnvironmentOptions: representation.useDefaultResidueEnvironmentOptions ? null : copy(representation.residueEnvironmentOptions),
         gaussianSurfaceSettings: representation.useDefaultGaussianSurfaceSettings ? null : copy(representation.gaussianSurfaceSettings),
-        wormOptions: representation.style === "Worm" ? copy(representation.wormOptions) : null,
+        wormOptions: representation.style === "Worm" && !representation.useDefaultWormOptions ? copy(representation.wormOptions) : null,
         nonCustomOpacity: representation.nonCustomOpacity,
         uniqueId: representation.uniqueId,
         isCustom: representation.isCustom,

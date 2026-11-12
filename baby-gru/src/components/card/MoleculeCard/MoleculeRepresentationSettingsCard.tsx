@@ -555,8 +555,9 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
 
 /**
  * Where a "Worm"'s radii come from (see wormRadii.ts): each residue's B-factor, scaled, or one
- * radius for all; or radii set through the API, which can only be kept or replaced here. Sets the
- * representation's wormOptions, which the dialog applies.
+ * radius for all; or radii set through the API, which can only be kept or replaced here. And how
+ * finely it is drawn, along and around. Sets the representation's wormOptions, which the dialog
+ * applies.
  */
 export const WormSettingsPanel = (props: { representation: MoleculeRepresentation }) => {
     const { representation } = props;
@@ -606,6 +607,28 @@ export const WormSettingsPanel = (props: { representation: MoleculeRepresentatio
                     decimalPlaces={2}
                 />
             )}
+            <MoorhenSlider
+                sliderTitle="Axial sampling (steps per residue)"
+                value={options.axialSampling}
+                setValue={value => change({ axialSampling: Math.round(value) })}
+                showLabels={false}
+                stepButtons={1}
+                minVal={1}
+                maxVal={24}
+                scale="linear"
+                decimalPlaces={0}
+            />
+            <MoorhenSlider
+                sliderTitle="Angular sampling (sides)"
+                value={options.angularSampling}
+                setValue={value => change({ angularSampling: Math.round(value) })}
+                showLabels={false}
+                stepButtons={1}
+                minVal={3}
+                maxVal={32}
+                scale="linear"
+                decimalPlaces={0}
+            />
         </MoorhenStack>
     );
 };

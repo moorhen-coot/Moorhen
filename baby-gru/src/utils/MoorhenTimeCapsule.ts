@@ -103,7 +103,7 @@ export type moleculeSessionData = {
         colourRules: moorhen.ColourRuleObject[];
         bondOptions: moorhen.cootBondOptions;
         m2tParams: m2tParameters;
-        /** A "Worm"'s radius options; absent for other styles and in sessions written before them. */
+        /** A "Worm"'s own options; absent for a worm with the general ones, other styles and sessions written before them. */
         wormOptions?: Partial<wormOptions> | null;
         nonCustomOpacity: number;
         resEnvOptions: residueEnvironmentOptions;
@@ -484,7 +484,7 @@ export class MoorhenTimeCapsule {
                             colourRules: item.useDefaultColourRules ? null : item.colourRules.map(item => item.objectify()),
                             bondOptions: item.useDefaultBondOptions ? null : item.bondOptions,
                             m2tParams: item.useDefaultM2tParams ? null : item.m2tParams,
-                            wormOptions: item.style === "Worm" ? item.wormOptions : null,
+                            wormOptions: item.style === "Worm" && !item.useDefaultWormOptions ? item.wormOptions : null,
                             nonCustomOpacity: item.nonCustomOpacity,
                             resEnvOptions: item.useDefaultResidueEnvironmentOptions ? null : item.residueEnvironmentOptions,
                             neighboursCid: item.neighboursCid,

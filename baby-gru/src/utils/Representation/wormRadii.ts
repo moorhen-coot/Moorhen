@@ -36,6 +36,16 @@ export type wormOptions = {
     uniformRadius: number;
     /** The radii of "custom"; residues not listed are drawn at the coil thickness. */
     residueRadii: WormResidueRadius[] | null;
+    /**
+     * Steps along the worm per residue (M2T's ribbonStyleAxialSampling for this worm): how smooth
+     * its bends, and its changes of radius, are.
+     */
+    axialSampling: number;
+    /**
+     * Sides around the worm (M2T's cylindersStyleAngularSampling for this worm). More than a
+     * ribbon's coil (6): a worm is thicker, so its facets show more.
+     */
+    angularSampling: number;
 };
 
 export const defaultWormOptions = (): wormOptions => ({
@@ -43,7 +53,23 @@ export const defaultWormOptions = (): wormOptions => ({
     bFactorScale: 0.05,
     uniformRadius: 1.0,
     residueRadii: null,
+    axialSampling: 6,
+    angularSampling: 12,
 });
+
+/**
+ * The M2T integer parameters a worm is drawn with, in place of the representation's or molecule's
+ * (a value that is not a positive whole number, as from a session written before the option was,
+ * keeps the default).
+ */
+export function wormM2tIntParameters(options: wormOptions): { ribbonStyleAxialSampling: number; cylindersStyleAngularSampling: number } {
+    const defaults = defaultWormOptions();
+    const positive = (value: number, fallback: number) => (Number.isFinite(value) && value >= 1 ? Math.round(value) : fallback);
+    return {
+        ribbonStyleAxialSampling: positive(options.axialSampling, defaults.axialSampling),
+        cylindersStyleAngularSampling: positive(options.angularSampling, defaults.angularSampling),
+    };
+}
 
 /**
  * No residue thinner than this (A). Coot ignores a radius of zero, which would leave a residue with

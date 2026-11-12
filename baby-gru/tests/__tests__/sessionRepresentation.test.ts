@@ -54,7 +54,7 @@ describe("the representation message", () => {
 
     it("carries a worm's radii through an encode and decode", () => {
         const wormOptions = {
-            radiusSource: "custom", bFactorScale: 0.05, uniformRadius: 1,
+            radiusSource: "custom", bFactorScale: 0.05, uniformRadius: 1, axialSampling: 8, angularSampling: 16,
             residueRadii: [
                 { chainId: "A", resNo: 34, insCode: "B", radius: 2.5 },
                 { chainId: "A", resNo: 35, insCode: "", radiusAniso: [1, 2, 3] },
@@ -64,6 +64,8 @@ describe("the representation message", () => {
         const restored = Representation.toObject(Representation.decode(bytes)) as { wormOptions: typeof wormOptions };
 
         expect(restored.wormOptions.radiusSource).toBe("custom");
+        expect(restored.wormOptions.axialSampling).toBe(8);
+        expect(restored.wormOptions.angularSampling).toBe(16);
         expect(restored.wormOptions.bFactorScale).toBeCloseTo(0.05, 6);
         expect(restored.wormOptions.residueRadii[0]).toMatchObject({ chainId: "A", resNo: 34, insCode: "B" });
         expect(restored.wormOptions.residueRadii[0].radius).toBeCloseTo(2.5, 6);

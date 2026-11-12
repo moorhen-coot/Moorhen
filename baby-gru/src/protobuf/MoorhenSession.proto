@@ -75,6 +75,8 @@ message WormOptions {
     float bFactorScale = 2;
     float uniformRadius = 3;
     repeated WormResidueRadius residueRadii = 4;
+    int32 axialSampling = 5;
+    int32 angularSampling = 6;
 }
 
 message Representation {

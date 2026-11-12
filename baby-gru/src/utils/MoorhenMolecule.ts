@@ -1538,7 +1538,7 @@ export class MoorhenMolecule {
      * @param {moorhen.ColourRule[]} [colourRules=undefined] - A list of colour rules that will be applied to the new representation
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
      * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
-     * @param {wormOptions} [wormOptions=undefined] - Where a "Worm"'s radii come from (see wormRadii.ts).
+     * @param {wormOptions} [wormOptions=undefined] - A "Worm"'s own options (see wormRadii.ts); none: the general ones.
      * @deprecated Use MoleculeRepresentation.create() instead.
      */
     async addRepresentation(
