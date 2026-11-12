@@ -456,6 +456,7 @@ struct PickableMesh {
 std::pair<coot::simple_mesh_t,std::vector<std::vector<std::pair<unsigned,float>>>> GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads=4);
 
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
+#include "bloboids.hh"
 bool isSugar(const std::string &resName);
 
 class molecules_container_js : public molecules_container_t {
@@ -895,6 +896,106 @@ class molecules_container_js : public molecules_container_t {
         coot::instanced_mesh_t DrawGlycoBlocks(int imol, const std::string &cid_str) {
             mmdb::Manager *mol = get_mol(imol);
             return DrawSugarBlocks(mol,cid_str);
+        }
+
+        /*
+         * Bloboids (bloboids.hh): an ellipsoid for each chain of the atoms `cid` selects (each
+         * model's chains apart), waters left out. Coloured by the representation's colour rules,
+         * `colour_cids[i]` coloured `colour_rgba[4 i ...]`, later rules over earlier ones as Coot
+         * applies them, and on every atom (an element's colour means nothing for a blob): a chain
+         * takes the colour of its first coloured atom, as CCP4MG took its first atom's, else grey.
+         * The only part of bloboids that knows MMDB.
+         */
+        coot::simple_mesh_t DrawBloboids(int imol, const std::string &cid, const std::vector<std::string> &colour_cids,
+                                         const std::vector<float> &colour_rgba) {
+            coot::simple_mesh_t mesh;
+            mmdb::Manager *mol = get_mol(imol);
+            if (!mol) return mesh;
+
+            // A selection of the atoms in a CID, which may join several with "||".
+            auto select = [mol](const std::string &multi_cid) {
+                int selHnd = mol->NewSelection();
+                bool first = true;
+                std::string::size_type start = 0;
+                while (start <= multi_cid.size()) {
+                    std::string::size_type end = multi_cid.find("||", start);
+                    if (end == std::string::npos) end = multi_cid.size();
+                    std::string part = multi_cid.substr(start, end - start);
+                    if (!part.empty()) {
+                        mol->Select(selHnd, mmdb::STYPE_ATOM, part.c_str(), first ? mmdb::SKEY_NEW : mmdb::SKEY_OR);
+                        first = false;
+                    }
+                    start = end + 2;
+                }
+                return selHnd;
+            };
+
+            std::map<mmdb::Atom *, int> rule_of_atom;
+            const size_t n_rules = std::min(colour_cids.size(), colour_rgba.size() / 4);
+            for (size_t r = 0; r < n_rules; r++) {
+                int selHnd = select(colour_cids[r]);
+                mmdb::Atom **atoms = nullptr;
+                int n_atoms = 0;
+                mol->GetSelIndex(selHnd, atoms, n_atoms);
+                for (int i = 0; i < n_atoms; i++) rule_of_atom[atoms[i]] = r;
+                mol->DeleteSelection(selHnd);
+            }
+
+            struct Group {
+                std::vector<moorhen_bloboids::Vec3> points;
+                int rule = -1;
+            };
+            std::vector<mmdb::Chain *> chains;
+            std::map<mmdb::Chain *, Group> groups;
+            int selHnd = select(cid);
+            mmdb::Atom **atoms = nullptr;
+            int n_atoms = 0;
+            mol->GetSelIndex(selHnd, atoms, n_atoms);
+            for (int i = 0; i < n_atoms; i++) {
+                mmdb::Atom *at = atoms[i];
+                if (!at || at->isTer()) continue;
+                mmdb::Residue *res = at->GetResidue();
+                mmdb::Chain *chain = at->GetChain();
+                if (!res || !chain) continue;
+                std::string name(res->GetResName());
+                if (name == "HOH" || name == "WAT" || name == "DOD") continue;
+                auto found = groups.find(chain);
+                if (found == groups.end()) {
+                    chains.push_back(chain);
+                    found = groups.emplace(chain, Group()).first;
+                }
+                Group &group = found->second;
+                group.points.push_back({at->x, at->y, at->z});
+                if (group.rule < 0) {
+                    auto coloured = rule_of_atom.find(at);
+                    if (coloured != rule_of_atom.end()) group.rule = coloured->second;
+                }
+            }
+            mol->DeleteSelection(selHnd);
+
+            moorhen_bloboids::Mesh blobs;
+            for (mmdb::Chain *chain : chains) {
+                const Group &group = groups[chain];
+                if (group.points.empty()) continue;
+                std::array<float, 4> colour = {0.7f, 0.7f, 0.7f, 1.0f};
+                if (group.rule >= 0)
+                    for (int k = 0; k < 4; k++) colour[k] = colour_rgba[4 * group.rule + k];
+                moorhen_bloboids::append_ellipsoid(moorhen_bloboids::ellipsoid_of_points(group.points), colour, 3, blobs);
+            }
+
+            const size_t n_vertices = blobs.positions.size() / 3;
+            mesh.vertices.reserve(n_vertices);
+            for (size_t i = 0; i < n_vertices; i++) {
+                mesh.vertices.push_back(coot::api::vnc_vertex(
+                    glm::vec3(blobs.positions[3 * i], blobs.positions[3 * i + 1], blobs.positions[3 * i + 2]),
+                    glm::vec3(blobs.normals[3 * i], blobs.normals[3 * i + 1], blobs.normals[3 * i + 2]),
+                    glm::vec4(blobs.colours[4 * i], blobs.colours[4 * i + 1], blobs.colours[4 * i + 2], blobs.colours[4 * i + 3])));
+            }
+            mesh.triangles.reserve(blobs.indices.size() / 3);
+            for (size_t t = 0; t + 2 < blobs.indices.size(); t += 3)
+                mesh.triangles.push_back(g_triangle(blobs.indices[t], blobs.indices[t + 1], blobs.indices[t + 2]));
+            mesh.status = 1;
+            return mesh;
         }
 
         std::vector<TableEntry> privateer_validate(int imol) {

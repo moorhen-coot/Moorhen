@@ -52,6 +52,7 @@ export const representationLabelMapping = Object.freeze({
     glycoBlocks: "Glyco-Blocks",
     restraints: "Restraints",
     MetaBalls: "MetaBalls",
+    bloboids: "Bloboids",
     adaptativeBonds: "Adaptive Bonds",
     residue_environment: "Res. Environment",
     environment: "Environment",
