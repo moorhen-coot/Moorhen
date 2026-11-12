@@ -459,6 +459,9 @@ coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string 
 bool isSugar(const std::string &resName);
 
 class molecules_container_js : public molecules_container_t {
+    private:
+        // See save_and_clear_residue_secondary_structure.
+        std::map<int, std::vector<std::pair<mmdb::Residue *, int> > > saved_residue_sse;
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
         }
@@ -516,6 +519,45 @@ class molecules_container_js : public molecules_container_t {
                 emscripten::val view{ emscripten::typed_memory_view(plane.size(), plane.data()) };
                 out.call<void>("set", view, double(size_t(w) * plane.size()));
             }
+        }
+
+        // Each residue's secondary structure (SSE) belongs to the molecule and stays between M2T
+        // draws. CALC_SECONDARY_STRUCTURE recalculates it (CalcSecStructure resets every residue
+        // first), but USE_HEADER_INFO only adds the header's helices and strands to what is there
+        // and DONT_USE leaves it as it is - so after a calculated ribbon, both drew the calculated
+        // secondary structure (and Coot's worm, a DONT_USE Ribbon, the ribbon's helices). These
+        // clear every residue's secondary structure, keeping it, and put it back. Moorhen's worker
+        // calls them either side of an M2T draw with USE_HEADER_INFO or DONT_USE, within one
+        // command, so nothing else sees it cleared (withM2tMoleculeState in CootWorker.ts).
+        void save_and_clear_residue_secondary_structure(int imol) {
+            std::vector<std::pair<mmdb::Residue *, int> > &saved = saved_residue_sse[imol];
+            saved.clear();
+            mmdb::Manager *mol = get_mol(imol);
+            if (!mol) return;
+            for (int imod = 1; imod <= mol->GetNumberOfModels(); imod++) {
+                mmdb::Model *model_p = mol->GetModel(imod);
+                if (!model_p) continue;
+                for (int ichain = 0; ichain < model_p->GetNumberOfChains(); ichain++) {
+                    mmdb::Chain *chain_p = model_p->GetChain(ichain);
+                    if (!chain_p) continue;
+                    for (int ires = 0; ires < chain_p->GetNumberOfResidues(); ires++) {
+                        mmdb::Residue *residue_p = chain_p->GetResidue(ires);
+                        if (!residue_p) continue;
+                        saved.push_back(std::make_pair(residue_p, int(residue_p->SSE)));
+                        residue_p->SSE = mmdb::SSE_None;
+                    }
+                }
+            }
+        }
+
+        void restore_residue_secondary_structure(int imol) {
+            auto it = saved_residue_sse.find(imol);
+            if (it == saved_residue_sse.end()) return;
+            // The molecule has not changed since it was saved (the same worker command), so the
+            // residues are the same ones.
+            for (const auto &residue_and_sse : it->second)
+                residue_and_sse.first->SSE = residue_and_sse.second;
+            saved_residue_sse.erase(it);
         }
 
         std::string get_validation(int imol){

@@ -60,6 +60,23 @@ message SelectedMtzColumns {
   optional bool calcStructFact = 8;
 }
 
+/** One residue's worm radius (A): isotropic, or along x, y and z. See utils/Representation/wormRadii.ts */
+message WormResidueRadius {
+    string chainId = 1;
+    int32 resNo = 2;
+    string insCode = 3;
+    float radius = 4;
+    repeated float radiusAniso = 5;
+}
+
+/** Where a "Worm" representation's radii come from. See utils/Representation/wormRadii.ts */
+message WormOptions {
+    string radiusSource = 1;
+    float bFactorScale = 2;
+    float uniformRadius = 3;
+    repeated WormResidueRadius residueRadii = 4;
+}
+
 message Representation {
     string cid = 1;
     string style = 2;
@@ -99,6 +116,8 @@ message Representation {
      * ViewDataSession.eyeDistance.
      */
     optional float nonCustomOpacity = 15;
+    /** A "Worm"'s; absent for other styles. */
+    WormOptions wormOptions = 16;
 }
 
 message MoleculeSessionData {

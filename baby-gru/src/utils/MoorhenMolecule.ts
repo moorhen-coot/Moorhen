@@ -15,6 +15,7 @@ import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule, ColourRuleType } from "./MoorhenColourRule";
 import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
+import type { wormOptions } from "./Representation/wormRadii";
 import { cidBuildParams } from "./Representation/RepresentationBuilder";
 import {
     centreOnGemmiAtoms,
@@ -1537,6 +1538,7 @@ export class MoorhenMolecule {
      * @param {moorhen.ColourRule[]} [colourRules=undefined] - A list of colour rules that will be applied to the new representation
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
      * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
+     * @param {wormOptions} [wormOptions=undefined] - Where a "Worm"'s radii come from (see wormRadii.ts).
      * @deprecated Use MoleculeRepresentation.create() instead.
      */
     async addRepresentation(
@@ -1553,7 +1555,8 @@ export class MoorhenMolecule {
         excludeNeighbours: boolean = false,
         hbondedToCid: string = "",
         hbondedTo: boolean = false,
-        neighboursDistance: number = 6.0
+        neighboursDistance: number = 6.0,
+        wormOptions?: Partial<wormOptions>
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
@@ -1573,6 +1576,7 @@ export class MoorhenMolecule {
         representation.hbondedToCid = hbondedToCid;
         representation.hbondedTo = hbondedTo;
         representation.neighboursDistance = neighboursDistance;
+        representation.setWormOptions(wormOptions);
         representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
         representation.buildParams = cidBuildParams(representation);
 

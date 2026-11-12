@@ -87,6 +87,8 @@ export const AcceptRejectRotateTranslate = () => {
                         .filter(item => {
                             return [
                                 "CRs",
+                                "Worm",
+                                "Tubes",
                                 "CBs",
                                 "CAs",
                                 "ligands",

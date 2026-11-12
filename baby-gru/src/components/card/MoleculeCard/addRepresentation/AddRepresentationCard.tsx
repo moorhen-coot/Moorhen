@@ -14,6 +14,7 @@ import {
     MolSurfSettingsPanel,
     ResidueEnvironmentSettingsPanel,
     RibbonSettingsPanel,
+    WormSettingsPanel,
 } from "../MoleculeRepresentationSettingsCard";
 import { ColourSettingsSection } from "./components/ColourSettingsSection";
 import { FilterToggles } from "./components/FilterToggles";
@@ -172,6 +173,7 @@ export const AddCustomRepresentationCard = memo(
                         residueEnvironmentOptions: representationRef.current.useDefaultResidueEnvironmentOptions
                             ? null
                             : { ...representationRef.current.residueEnvironmentOptions },
+                        wormOptions: representationStyle === "Worm" ? { ...representationRef.current.wormOptions } : undefined,
                         nonCustomOpacity: nonCustomAlpha,
                         hbondedTo,
                     });
@@ -216,6 +218,7 @@ export const AddCustomRepresentationCard = memo(
                         residueEnvironmentOptions: representationRef.current.useDefaultResidueEnvironmentOptions
                             ? null
                             : { ...representationRef.current.residueEnvironmentOptions },
+                        wormOptions: representationStyle === "Worm" ? { ...representationRef.current.wormOptions } : undefined,
                         nonCustomOpacity: nonCustomAlpha,
                         hbondedTo,
                     });}
@@ -317,6 +320,7 @@ export const AddCustomRepresentationCard = memo(
                 {!useDefaultRepresentationSettings && representationStyle === "CRs" && (
                     <RibbonSettingsPanel representation={representationRef.current} />
                 )}
+                {representationStyle === "Worm" && <WormSettingsPanel representation={representationRef.current} />}
                 {!useDefaultRepresentationSettings &&
                     representationStyle !== "MetaBalls" &&
                     COOT_BOND_REPRESENTATIONS.includes(representationStyle) && (

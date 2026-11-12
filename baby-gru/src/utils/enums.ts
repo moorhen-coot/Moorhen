@@ -41,6 +41,8 @@ export const representationLabelMapping = Object.freeze({
     CBs: "Bonds",
     CAs: "C-Alpha",
     CRs: "Ribbons",
+    Worm: "Worm",
+    Tubes: "Bendix",
     CDs: "Contact dots",
     MolecularSurface: "Mol Surface",
     gaussian: "Gaussian Surface",
@@ -58,7 +60,7 @@ export const representationLabelMapping = Object.freeze({
 });
 
 export const COOT_BOND_REPRESENTATIONS = ["MetaBalls", "CBs", "VdwSpheres", "CAs", "ligands"];
-export const M2T_REPRESENTATIONS = ["CRs", "DishyBases", "StickBases", "VdWSurface", "Calpha", "MolecularSurface"];
+export const M2T_REPRESENTATIONS = ["CRs", "DishyBases", "StickBases", "VdWSurface", "Calpha", "MolecularSurface", "Worm", "Tubes"];
 
 export const residueCodesOneToThree = Object.freeze({
     C: "CYS",

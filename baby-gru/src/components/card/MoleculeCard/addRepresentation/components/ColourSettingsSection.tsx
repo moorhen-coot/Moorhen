@@ -95,7 +95,8 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
 
     return (
         <>
-            {!["allHBonds", "adaptativeBonds"].includes(representationStyle) && (
+            {/* Coot colours Bendix (Tubes) itself */}
+            {!["allHBonds", "adaptativeBonds", "Tubes"].includes(representationStyle) && (
                 <MoorhenToggle
                     type="switch"
                     label="Apply general colour settings"

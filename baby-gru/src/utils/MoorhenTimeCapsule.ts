@@ -66,6 +66,7 @@ import { ColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
+import type { wormOptions } from "./Representation/wormRadii";
 import { guid } from "./utils";
 import { representationIdForRestore } from "./sessionRepresentation";
 import { MoorhenInstance } from "@/InstanceManager";
@@ -102,6 +103,8 @@ export type moleculeSessionData = {
         colourRules: moorhen.ColourRuleObject[];
         bondOptions: moorhen.cootBondOptions;
         m2tParams: m2tParameters;
+        /** A "Worm"'s radius options; absent for other styles and in sessions written before them. */
+        wormOptions?: Partial<wormOptions> | null;
         nonCustomOpacity: number;
         resEnvOptions: residueEnvironmentOptions;
         neighboursCid: string;
@@ -481,6 +484,7 @@ export class MoorhenTimeCapsule {
                             colourRules: item.useDefaultColourRules ? null : item.colourRules.map(item => item.objectify()),
                             bondOptions: item.useDefaultBondOptions ? null : item.bondOptions,
                             m2tParams: item.useDefaultM2tParams ? null : item.m2tParams,
+                            wormOptions: item.style === "Worm" ? item.wormOptions : null,
                             nonCustomOpacity: item.nonCustomOpacity,
                             resEnvOptions: item.useDefaultResidueEnvironmentOptions ? null : item.residueEnvironmentOptions,
                             neighboursCid: item.neighboursCid,
@@ -1035,7 +1039,8 @@ export class MoorhenTimeCapsule {
                         item.excludeNeighbours,
                         item.hbondedToCid,
                         item.hbondedTo,
-                        item.neighboursDistance
+                        item.neighboursDistance,
+                        item.wormOptions ?? undefined
                     );
                     // Its identity, back as it was saved. A session written before the format
                     // carried this keeps the guid minted a moment ago, which is what has always
