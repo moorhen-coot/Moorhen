@@ -160,6 +160,18 @@ export {
     setDisableFileUpload,
 }  from "./generalStatesSlice";
 export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
+export {
+    addVector,
+    removeVector,
+    emptyVectors,
+    addVectors,
+    removeVectors,
+    removeVectorsMatchingIDString,
+    removeVectorsByTag,
+    removeVectorById,
+    removeVectorsByIds
+}  from "./vectorsSlice";
 export {
     addMolecule,
     removeMolecule,
@@ -172,7 +184,6 @@ export {
     removeCustomRepresentation,
     removeGeneralRepresentation,
 }  from "./moleculesSlice";
-export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
 export {
     addObject,
     removeObject,
@@ -182,17 +193,6 @@ export {
     emptyObjects,
 
 }  from "./threeDObjectsSlice";
-export {
-    addVector,
-    removeVector,
-    emptyVectors,
-    addVectors,
-    removeVectors,
-    removeVectorsMatchingIDString,
-    removeVectorsByTag,
-    removeVectorById,
-    removeVectorsByIds
-}  from "./vectorsSlice";
 export {
     setBusy,
     setTimeCapsuleBusy,

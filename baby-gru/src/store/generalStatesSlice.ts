@@ -90,6 +90,7 @@ const generalStatesSlice = createSlice({
         setIsShowingTomograms: (state, action: PayloadAction<boolean>) => {
             state.isShowingTomograms = action.payload;
         },
+        // API globalUI
         setJobProgress: (state, action: PayloadAction<{ label: string; done: number; total: number } | null>) => {
             state.jobProgress = action.payload;
         },
