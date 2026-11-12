@@ -1,0 +1,33 @@
+.moorhen__ligand-list-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.moorhen__ligand-list-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0.25rem;
+    min-height: 1.75rem;
+}
+
+.moorhen__ligand-list-row + .moorhen__ligand-list-row {
+    border-top: 1px solid var(--moorhen-border);
+}
+
+.moorhen__ligand-list-row-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.moorhen__ligand-list-drawing {
+    width: 18rem;
+}
+
+.moorhen__ligand-list-drawing svg {
+    width: 100%;
+    height: auto;
+}

@@ -49,6 +49,8 @@
                 <option value="dict">dictionary (.cif)</option>
             </select>
             <span></span><span class="hint">PDB: each dictionary's ideal coordinates written as a ligand PDB, moved to a random point in a 20 Å box (like a set of docking poses).</span>
+            <label for="sites">Sites</label><input id="sites" type="number" min="0" value="0" />
+            <span></span><span class="hint">PDB only. 0: the 20 Å box above, where poses overlap. N: poses spread over N pockets 60 Å apart, each within ±1.5 Å of its pocket's centre (for "group by position").</span>
         </fieldset>
         <fieldset>
             <legend>How to load</legend>
@@ -157,7 +159,17 @@
             if (!response.ok) throw new Error(`${rel}: ${response.status}`);
             const name = rel.split("/").pop();
             if ($("format").value === "dict") return new File([await response.blob()], name);
-            const centre = [0, 1, 2].map(() => (poseRandom() - 0.5) * 20);
+            const sites = +$("sites").value;
+            let centre;
+            if (sites > 0) {
+                // Pockets on a cubic grid, 60 Å apart (larger ligands are 20 Å or more across)
+                const site = Math.floor(poseRandom() * sites);
+                const side = Math.ceil(Math.cbrt(sites));
+                const pocket = [site % side, Math.floor(site / side) % side, Math.floor(site / side / side)].map(v => v * 60);
+                centre = pocket.map(v => v + (poseRandom() - 0.5) * 3);
+            } else {
+                centre = [0, 1, 2].map(() => (poseRandom() - 0.5) * 20);
+            }
             const pdb = dictToPdb(await response.text(), centre);
             return pdb ? new File([pdb], name.replace(/\.cif$/, ".pdb")) : null;
         };

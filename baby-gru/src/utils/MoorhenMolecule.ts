@@ -188,6 +188,11 @@ export class MoorhenMolecule {
     NEFRestraints: NEFRestraint[];
     NEFRestraintRepresentation: moorhen.MoleculeRepresentation;
     moleculeCardState: { showXpidList: boolean };
+    /**
+     * Loaded by `files.batchLoadLigands`. The Models panel lists these molecules together, by name
+     * with a show/hide button, instead of a full card each. Not saved in sessions.
+     */
+    batchLoadedLigand: boolean;
     private _seqViewerData: SeqElement[]
     moleculeChangedCallbacks: ((molecule: string, changeType: string) => void)[];
 
@@ -285,6 +290,7 @@ export class MoorhenMolecule {
         this.chemShifts = [];
         this.NEFRestraints = [];
         this.moleculeCardState = { showXpidList: false };
+        this.batchLoadedLigand = false;
         this.NEFRestraintRepresentation = new MoleculeRepresentation("NEFRestraints", null, this.commandCentre);
         this.NEFRestraintRepresentation.setParentMolecule(this);
     }

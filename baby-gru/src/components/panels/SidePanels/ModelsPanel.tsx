@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
+import { LigandListCard } from "@/components/card/LigandListCard/LigandListCard";
 import { MoleculeCard } from "@/components/card/MoleculeCard/MoleculeCard";
 import { MoorhenButton } from "@/components/inputs";
 import { RootState } from "@/store";
@@ -9,7 +10,10 @@ import { SidePanelContainer } from "./utils/SidePanelContainer";
 
 export const ModelsPanel = () => {
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1);
-    const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
+    const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
+    // Molecules loaded by files.batchLoadLigands are listed together, not given a card each
+    const molecules = moleculeList.filter(molecule => !molecule.batchLoadedLigand);
+    const batchLoadedLigands = moleculeList.filter(molecule => molecule.batchLoadedLigand);
 
     const [allOpen, setallOpen] = useState<boolean | null>(null);
     const [activeToggle, setActiveToggle] = useState<{ key: number; isOpen: boolean }>({ key: null, isOpen: null });
@@ -45,7 +49,8 @@ export const ModelsPanel = () => {
 
     return (
         <SidePanelContainer title="Molecules" extraControls={extraControl}>
-            {displayData.length === 0 ? <span>No models loaded</span> : displayData}
+            {displayData.length === 0 && batchLoadedLigands.length === 0 ? <span>No models loaded</span> : displayData}
+            {batchLoadedLigands.length > 0 && <LigandListCard molecules={batchLoadedLigands} />}
         </SidePanelContainer>
     );
 };

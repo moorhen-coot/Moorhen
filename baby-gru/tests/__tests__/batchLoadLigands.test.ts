@@ -137,6 +137,8 @@ describe("batchLoadLigands", () => {
             expect(molecule.representations[0].buffers.length).toBeGreaterThan(0);
         });
         expect(store.getState().molecules.customRepresentations).toHaveLength(LIGANDS);
+        // Marked for the Models panel's ligand list, instead of a card per molecule
+        expect(molecules.every(molecule => molecule.batchLoadedLigand)).toBe(true);
         expect(store.getState().glRef.displayBuffers.length - buffersBefore).toBe(
             molecules.reduce((sum, molecule) => sum + molecule.representations[0].buffers.length, 0)
         );

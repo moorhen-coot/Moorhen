@@ -575,6 +575,8 @@ export class MoorhenInstance extends StoreExtension {
              * The batch is a single step: it is not recorded in the undo history and does not trigger
              * backups. It does not move the camera unless `centre` is set, does not change the
              * sequence viewer, and shows one summary message if some files fail instead of one each.
+             * In the Models panel, ligands loaded this way are listed together by name with a show/hide
+             * button each, instead of a full card per molecule.
              *
              * @param sources - PDB or mmCIF files, one ligand each: `File`s, URLs, or `{ url, filename }`.
              * @param options.dictionaries - Restraint dictionaries known up front; the residue types they
