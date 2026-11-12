@@ -34,6 +34,7 @@ import { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
 import { MoleculeToSeqViewerSequences } from "@/components/sequence-viewer/utils";
 import { MoorhenInstance } from "@/InstanceManager/index";
 import { CommandCentre } from "@/InstanceManager/CommandCentre/index";
+import { fetchMonomerDictionary } from "./monomerLibrary";
 
 export type ResidueInfo = {
     resCode: string;
@@ -1138,45 +1139,7 @@ export class MoorhenMolecule {
      * @param {number} attachToMolecule - Molecule number for which the dicitonary will be associated
      */
     async loadMissingMonomer(newTlc: string, attachToMolecule: number): Promise<string> {
-        let fileContent = "";
-        let response: Response | null;
-        try {
-            response = await fetch(`${this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`);
-            if (response.ok) {
-                fileContent = await response.text();
-            }
-        } catch (err) {
-            console.log(err);
-            console.log(`Unable to fetch ligand dictionary ${newTlc} from local url`);
-        }
-        let dictContent: string;
-
-        if (!fileContent.includes("data_")) {
-            console.log(`Unable to fetch ligand dictionary ${newTlc} from local monomer library...`);
-            try {
-                const url = `https://raw.githubusercontent.com/MonomerLibrary/monomers/master/${
-                    newTlc.toLowerCase()[0]
-                }/${newTlc.toUpperCase()}.cif`;
-                response = await fetch(url);
-                if (response.ok) {
-                    dictContent = await response.text();
-                } else {
-                    console.log(`Unable to fetch ligand dictionary ${newTlc} from remote monomer library...`);
-                    const url = `https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${newTlc.toUpperCase()}.cif`;
-                    response = await fetch(url);
-                    if (response.ok) {
-                        dictContent = await response.text();
-                    } else {
-                        console.log(`Unable to fetch ligand dictionary ${newTlc} from PDBe chem...`);
-                    }
-                }
-            } catch (err) {
-                console.log(err);
-                console.log(`Unable to fetch ligand dictionary ${newTlc}`);
-            }
-        } else {
-            dictContent = fileContent;
-        }
+        const dictContent = await fetchMonomerDictionary(newTlc, this.monomerLibraryPath);
 
         if (dictContent) {
             await this.commandCentre.cootCommand(

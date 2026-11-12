@@ -17,6 +17,9 @@
             flex: 0 0 360px; overflow-y: auto; padding: 10px; box-sizing: border-box;
             border-right: 1px solid #ccc; display: flex; flex-direction: column; gap: 8px;
         }
+        /* Keep every block at its own height and let the panel scroll; otherwise a long results
+           table squeezes the chart, the only block without a minimum size, down to nothing. */
+        #panel > * { flex-shrink: 0; }
         #viewer { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
         fieldset { border: 1px solid #ccc; padding: 6px 8px; margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; align-items: center; }
         legend { font-weight: 600; }
@@ -49,8 +52,13 @@
         </fieldset>
         <fieldset>
             <legend>How to load</legend>
+            <label for="method">Method</label>
+            <select id="method">
+                <option value="loadFiles">files.loadFiles</option>
+                <option value="batch">files.batchLoadLigands</option>
+            </select>
             <label for="batch">Batch size</label><input id="batch" type="number" min="1" value="50" />
-            <span></span><span class="hint">Each batch is one <code>files.loadFiles(File[])</code> call. Batch size ≥ N = a single call, like a consumer loading everything at once.</span>
+            <span></span><span class="hint">Each batch is one call of the chosen method. Batch size ≥ N = a single call, like a consumer loading everything at once.</span>
             <label for="prefetch">Prefetch</label><label><input id="prefetch" type="checkbox" checked /> fetch all files before timing</label>
         </fieldset>
         <div class="buttons">
@@ -210,7 +218,7 @@
             drawChart([]);
 
             poseRandom = mulberry32(seed + 1);
-            const runResult = { n: paths.length, format: $("format").value, batchSize, mode, seed, prefetch, startMolecules: instance.getMoleculeList().length, batches: [] };
+            const runResult = { n: paths.length, method: $("method").value, format: $("format").value, batchSize, mode, seed, prefetch, startMolecules: instance.getMoleculeList().length, batches: [] };
             let files = null;
             if (prefetch) {
                 setStatus(`Fetching ${paths.length} files…`);
@@ -231,7 +239,14 @@
                 if (batchFiles.length === 0) continue;
                 longTaskMs = 0;
                 const t0 = performance.now();
-                await instance.files.loadFiles(batchFiles, "monomer-stress-test");
+                if ($("method").value === "batch") {
+                    const { failed } = await instance.files.batchLoadLigands(batchFiles, {
+                        onProgress: done => setStatus(`Loading ${i + done} of ${total}… (batchLoadLigands)`),
+                    }, "monomer-stress-test");
+                    if (failed.length > 0) console.warn("batchLoadLigands failures", failed);
+                } else {
+                    await instance.files.loadFiles(batchFiles, "monomer-stress-test");
+                }
                 const ms = performance.now() - t0;
                 const batch = {
                     index: runResult.batches.length + 1,

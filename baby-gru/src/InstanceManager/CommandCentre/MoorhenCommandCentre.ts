@@ -235,18 +235,26 @@ export class CommandCentre {
         return result;
     }
 
-    async cootCommandList(commandList: cootCommandKwargs[], doJournal: boolean = true): Promise<WorkerResponse> {
+    /**
+     * Run several commands in one message to the worker; the reply's `data.resultList` holds one
+     * result per command, in order.
+     * @param asOneJob - Report the list to onCommandStart / onCommandExit once instead of once per
+     * command (each report is a store update, which adds up for long lists).
+     */
+    async cootCommandList(commandList: cootCommandKwargs[], doJournal: boolean = true, asOneJob: boolean = false): Promise<WorkerResponse> {
         const message = "coot_command_list";
-        console.log("In cootCommandList", commandList);
+        // Names only: the arguments can be whole files, and the console keeps what it is given.
+        console.log("In cootCommandList", commandList.map(commandKwargs => commandKwargs.command));
+        const reported = asOneJob ? commandList.slice(0, 1) : commandList;
         if (this.onCommandStart) {
-            commandList.forEach(commandKwargs => this.onCommandStart(commandKwargs));
+            reported.forEach(commandKwargs => this.onCommandStart(commandKwargs));
         }
         if (doJournal) {
             await Promise.all(commandList.map(commandKwargs => this.history.addEntry(commandKwargs)));
         }
         const result = await this.postMessage({ message, commandList });
         if (this.onCommandExit) {
-            commandList.forEach(commandKwargs => this.onCommandExit(commandKwargs));
+            reported.forEach(commandKwargs => this.onCommandExit(commandKwargs));
         }
         if (commandList.some(commandKwargs => commandKwargs.changesMolecules) && this.onMoleculeChanged) {
             commandList.forEach(commandKwargs => {
