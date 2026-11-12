@@ -80,6 +80,7 @@ export const RotamerChange = () => {
                                 "gaussian",
                                 "MolecularSurface",
                                 "VdWSurface",
+                                "AccessibleSurface",
                                 "VdwSpheres",
                                 "allHBonds",
                                 "glycoBlocks",

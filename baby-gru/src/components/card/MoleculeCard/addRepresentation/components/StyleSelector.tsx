@@ -1,5 +1,5 @@
 import { MoorhenSelect } from "../../../../inputs";
-import { representationLabelMapping } from "../../../../../utils/enums";
+import { M2T_SURFACE_REPRESENTATIONS, representationLabelMapping, surfaceTypeLabelMapping } from "../../../../../utils/enums";
 import { moorhen } from "../../../../../types/moorhen";
 import { RepresentationStyles } from "../../../../../utils/Representation/MoorhenMoleculeRepresentation";
 
@@ -13,11 +13,13 @@ interface StyleSelectorProps {
 
 export const StyleSelector = (props: StyleSelectorProps) => {
     const { value, onChange, mode,  setAdaptBondOOF } = props;
+    // The three surfaces are one style here, "Mol Surface", with a surface type below it.
+    const isSurface = M2T_SURFACE_REPRESENTATIONS.includes(value);
 
     return (
         <>
             <MoorhenSelect
-                value={value}
+                value={isSurface ? "MolecularSurface" : value}
                 label={"Style"}
                 onChange={evt => {
                     onChange(evt.target.value as moorhen.RepresentationStyles);
@@ -43,6 +45,21 @@ export const StyleSelector = (props: StyleSelectorProps) => {
                         </option>
                     ))}
             </MoorhenSelect>
+            {isSurface && (
+                <MoorhenSelect
+                    value={value}
+                    label={"Surface type"}
+                    onChange={evt => {
+                        onChange(evt.target.value as moorhen.RepresentationStyles);
+                    }}
+                >
+                    {M2T_SURFACE_REPRESENTATIONS.map(key => (
+                        <option value={key} key={key}>
+                            {surfaceTypeLabelMapping[key]}
+                        </option>
+                    ))}
+                </MoorhenSelect>
+            )}
             {value === "adaptativeBonds" && (
                 <MoorhenSelect label="Out of Focus Style" setValue={setAdaptBondOOF}>
                     <option value="CRs" key="CRs">
