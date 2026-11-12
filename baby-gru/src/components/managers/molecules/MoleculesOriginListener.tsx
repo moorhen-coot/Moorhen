@@ -43,15 +43,14 @@ export const MoleculesOriginListener = () => {
         });
     };
 
-    (useEffect(() => {
+    useEffect(() => {
         const intervalId = setInterval(async () => {
             drawOriginRepresentations();
         }, 500);
         return () => {
             clearInterval(intervalId);
         };
-    }),
-        []);
+    }, []);
 
     return null;
 };
