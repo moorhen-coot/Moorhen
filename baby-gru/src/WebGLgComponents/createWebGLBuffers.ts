@@ -357,15 +357,36 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
     if(jsondata.pick_info){
         if(jsondata.pick_info.influence_weights && jsondata.pick_info.influence_point_indexes && jsondata.pick_info.influence_index_offsets && jsondata.pick_info.pick_points){
             // The influence data becomes three textures, made by realiseGLResources once there
-            // is a context. Until then the buffer still picks by pick_points alone.
+            // is a context. Until then the buffer still picks by pick_points alone. The lists
+            // themselves stay, as `influence`, for the WebGPU renderer (glResources.ts).
+            const influence = {
+                weights: jsondata.pick_info.influence_weights,
+                point_indexes: jsondata.pick_info.influence_point_indexes,
+                index_offsets: jsondata.pick_info.influence_index_offsets,
+            }
             theBuffer.pick_info = {
                 pick_points: jsondata.pick_info.pick_points,
-                pending_influence: {
-                    weights: jsondata.pick_info.influence_weights,
-                    point_indexes: jsondata.pick_info.influence_point_indexes,
-                    index_offsets: jsondata.pick_info.influence_index_offsets,
-                },
+                pending_influence: influence,
+                influence,
             }
+
+            // This branch builds pick_info afresh rather than copying it, so anything the
+            // caller put there and did not name here is silently lost. These are what a
+            // mesh that names its own vertices needs the pick loop to still have: the
+            // exact test and its bounding box, the vertex-to-pick-point map that turns a
+            // hit triangle into a residue, and the labels to report it by.
+            const carried = ["pick_exact", "pick_bounds", "vertex_pick_points",
+                             "pick_point_tags", "pick_tag_kind", "pick_point_instances",
+                             "claims_pointer", "pick_priority", "highlight_whole", "highlight_group",
+                             // The owner codes the shader compares, and the coarser
+                             // grains: without these a surface still picks, but the
+                             // highlight never widens and alt-click never flies to a
+                             // chain, with nothing to say why.
+                             "owner_codes", "pick_point_sections", "section_level_points"]
+            carried.forEach(field => {
+                if(jsondata.pick_info[field] !== undefined)
+                    theBuffer.pick_info[field] = jsondata.pick_info[field]
+            })
         } else {
             theBuffer.pick_info = jsondata.pick_info
         }

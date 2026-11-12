@@ -17,7 +17,10 @@
  * triangleVertexIndexBuffer.length.
  *
  * The influence textures used for hover highlighting are deferred in the same way. Their source
- * arrays wait in pick_info.pending_influence until there is a context to make textures in.
+ * arrays wait in pick_info.pending_influence until there is a context to make textures in. The
+ * same arrays are kept in pick_info.influence for good, whatever WebGL does: the WebGPU renderer
+ * draws the highlight from them (as storage buffers), and may take over the view from WebGL at
+ * any time, after WebGL has made its textures.
  *
  * Renderer-owned buffers that never pass through ingestion (the text and click-line buffers, the
  * image disc in mgWebGL) still create their handles directly. They belong to the WebGL renderer
@@ -59,16 +62,32 @@ export const GL_SLOT_ARRAYS = [
 
 export type GLSlotArrayName = typeof GL_SLOT_ARRAYS[number];
 
-/** The source arrays for the three influence textures, held until a context exists. */
+/**
+ * The influence lists of a smooth mesh, as CSR: for vertex v, the points that influence it are
+ * point_indexes[begin..end) with weights[begin..end), where end = index_offsets[v] and begin is
+ * the previous vertex's end (0 for the first). Used for the hover highlight; WebGL packs each into
+ * a texture, WebGPU binds them as storage.
+ */
 export interface PendingInfluence {
     weights: ArrayLike<number>;
     point_indexes: ArrayLike<number>;
     index_offsets: ArrayLike<number>;
 }
 
+/** The influence lists, by their other name: they are kept after WebGL has its textures. */
+export type InfluenceData = PendingInfluence;
+
+/**
+ * A buffer's influence lists, whichever renderer has or has not used them yet: null for a mesh
+ * without them.
+ */
+export const influenceOf = (pickInfo: { influence?: PendingInfluence; pending_influence?: PendingInfluence } | null | undefined): PendingInfluence | null =>
+    pickInfo?.influence ?? pickInfo?.pending_influence ?? null;
+
 type SlotHolder = { [K in GLSlotArrayName]: MGWebGLBuffer[] } & {
     pick_info?: {
         pending_influence?: PendingInfluence;
+        influence?: PendingInfluence;
         influence_weights_texture?: unknown;
         influence_weights_width?: number;
         influence_point_indexes_texture?: unknown;
