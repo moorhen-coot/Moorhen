@@ -51,6 +51,7 @@ export type RepresentationStyles =
     | "MolecularSurface"
     | "DishyBases"
     | "VdWSurface"
+    | "AccessibleSurface"
     | "Calpha"
     | "unitCell"
     | "hover"
@@ -399,6 +400,7 @@ export class MoleculeRepresentation {
             "unitCell",
             "MolecularSurface",
             "VdWSurface",
+            "AccessibleSurface",
             "residueSelection",
             "gaussian",
             "cavities",
@@ -421,7 +423,6 @@ export class MoleculeRepresentation {
             "contact_dots",
             "residue_environment",
             "chemical_features",
-            "VdWSurface",
             "restraints",
             "environment",
             "ligand_environment",
@@ -823,7 +824,7 @@ export class MoleculeRepresentation {
 
         if (this.restrictToNeighbours) {
             //Now we might not want to use the new method, maybe we should use the old one.
-            if (["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "Calpha"].includes(_style)) {
+            if (["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "AccessibleSurface", "Calpha"].includes(_style)) {
                 restrictedCid = window.gemmiModule.cidToNeighboursCid(
                     this.parentMolecule.gemmiStructure,
                     _cid,
@@ -870,6 +871,7 @@ export class MoleculeRepresentation {
             case "MolecularSurface":
             case "DishyBases":
             case "VdWSurface":
+            case "AccessibleSurface":
             case "Calpha":
                 objects = await this.getM2TRepresentationBuffers(_style, _cid, restrictedCid);
                 break;
@@ -1313,6 +1315,10 @@ export class MoleculeRepresentation {
                 break;
             case "VdWSurface":
                 m2tStyle = "VdWSurface";
+                m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,MSE,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)";
+                break;
+            case "AccessibleSurface":
+                m2tStyle = "AccessibleSurface";
                 m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,MSE,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)";
                 break;
             case "DishyBases":

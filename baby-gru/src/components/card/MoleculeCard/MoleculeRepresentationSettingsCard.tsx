@@ -5,6 +5,7 @@ import { setRequestDrawScene } from "../../../store/glRefSlice";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";
 import { MoorhenStack } from "../../interface-base";
+import { M2T_SURFACE_REPRESENTATIONS } from "../../../utils/enums";
 
 type MoleculeSettingPanelProps =
     | { molecule: MoorhenMolecule; representation?: never }
@@ -552,7 +553,11 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
     );
 };
 
-export const MolSurfSettingsPanel = (props: MoleculeSettingPanelProps) => {
+/**
+ * The probe radius and atom radius multiplier of the M2T surfaces. `surfaceStyle`, when given, is
+ * the surface being set up: a van der Waals surface has no probe, so then only the multiplier.
+ */
+export const MolSurfSettingsPanel = (props: MoleculeSettingPanelProps & { surfaceStyle?: moorhen.RepresentationStyles }) => {
     const { molecule, representation } = props;
     const [surfaceStyleProbeRadius, setSurfaceStyleProbeRadius] = useState<number>(
         molecule ? molecule.defaultM2tParams.surfaceStyleProbeRadius : representation.m2tParams.surfaceStyleProbeRadius
@@ -582,7 +587,8 @@ export const MolSurfSettingsPanel = (props: MoleculeSettingPanelProps) => {
             let representations: MoleculeRepresentation[];
             if (props.molecule) {
                 representations = props.molecule.representations.filter(
-                    representation => representation.useDefaultM2tParams && representation.visible && representation.style === "VdWSurface"
+                    representation =>
+                        representation.useDefaultM2tParams && representation.visible && M2T_SURFACE_REPRESENTATIONS.includes(representation.style)
                 );
 
                 molecule.defaultM2tParams = M2tParams;
@@ -600,17 +606,19 @@ export const MolSurfSettingsPanel = (props: MoleculeSettingPanelProps) => {
 
     return (
         <MoorhenStack card>
-            <MoorhenSlider
-                sliderTitle="Mol. Surf. Probe Radius"
-                value={surfaceStyleProbeRadius}
-                setValue={value => setSurfaceStyleProbeRadius(value)}
-                showLabels={false}
-                stepButtons={0.1}
-                minVal={0.01}
-                maxVal={3}
-                scale="linear"
-                decimalPlaces={2}
-            />
+            {props.surfaceStyle !== "VdWSurface" && (
+                <MoorhenSlider
+                    sliderTitle="Mol. Surf. Probe Radius"
+                    value={surfaceStyleProbeRadius}
+                    setValue={value => setSurfaceStyleProbeRadius(value)}
+                    showLabels={false}
+                    stepButtons={0.1}
+                    minVal={0.01}
+                    maxVal={3}
+                    scale="linear"
+                    decimalPlaces={2}
+                />
+            )}
             <MoorhenSlider
                 sliderTitle="Mol. Surf. Radius Multiplier"
                 value={ballsStyleRadiusMultiplier}

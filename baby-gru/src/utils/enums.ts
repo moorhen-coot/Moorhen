@@ -43,6 +43,8 @@ export const representationLabelMapping = Object.freeze({
     CRs: "Ribbons",
     CDs: "Contact dots",
     MolecularSurface: "Mol Surface",
+    VdWSurface: "VdW Surface",
+    AccessibleSurface: "Acc. Surface",
     gaussian: "Gaussian Surface",
     cavities: "Cavities",
     ligands: "Ligands",
@@ -58,7 +60,20 @@ export const representationLabelMapping = Object.freeze({
 });
 
 export const COOT_BOND_REPRESENTATIONS = ["MetaBalls", "CBs", "VdwSpheres", "CAs", "ligands"];
-export const M2T_REPRESENTATIONS = ["CRs", "DishyBases", "StickBases", "VdWSurface", "Calpha", "MolecularSurface"];
+export const M2T_REPRESENTATIONS = ["CRs", "DishyBases", "StickBases", "VdWSurface", "AccessibleSurface", "Calpha", "MolecularSurface"];
+
+/**
+ * The surfaces MoleculesToTriangles makes, each its own representation style: offered in the
+ * add/edit representation dialogs as one "Mol Surface" style with a surface type.
+ */
+export const M2T_SURFACE_REPRESENTATIONS = ["MolecularSurface", "VdWSurface", "AccessibleSurface"];
+
+/** The names of the surface types in the representation dialogs. */
+export const surfaceTypeLabelMapping = Object.freeze({
+    MolecularSurface: "Molecular",
+    VdWSurface: "Van der Waals",
+    AccessibleSurface: "Solvent accessible",
+});
 
 export const residueCodesOneToThree = Object.freeze({
     C: "CYS",
