@@ -22,6 +22,8 @@ const initialState: {
     residueSelection: ResidueSelection;
     selectedThreeDObjectId: string | null;
     isShowingTomograms: boolean;
+    /** Progress of a long task that reports it (e.g. files.batchLoadLigands), shown by the long job notification */
+    jobProgress: { label: string; done: number; total: number } | null;
     isAnimatingTrajectory: boolean;
     isChangingRotamers: boolean;
     isDraggingAtoms: boolean;
@@ -62,6 +64,7 @@ const initialState: {
     defaultExpandDisplayCards: null,
     transparentModalsOnMouseOut: null,
     isShowingTomograms: false,
+    jobProgress: null,
     isAnimatingTrajectory: false,
     isChangingRotamers: false,
     isDraggingAtoms: false,
@@ -86,6 +89,9 @@ const generalStatesSlice = createSlice({
         },
         setIsShowingTomograms: (state, action: PayloadAction<boolean>) => {
             state.isShowingTomograms = action.payload;
+        },
+        setJobProgress: (state, action: PayloadAction<{ label: string; done: number; total: number } | null>) => {
+            state.jobProgress = action.payload;
         },
         setIsAnimatingTrajectory: (state, action: PayloadAction<boolean>) => {
             state.isAnimatingTrajectory = action.payload;
@@ -224,6 +230,7 @@ export const {
     setIsAnimatingTrajectory,
     resetGeneralStates,
     setIsShowingTomograms,
+    setJobProgress,
     setDefaultExpandDisplayCards,
     setTransparentModalsOnMouseOut,
     setUseGemmi,

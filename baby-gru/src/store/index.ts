@@ -149,6 +149,7 @@ export {
     setIsAnimatingTrajectory,
     resetGeneralStates,
     setIsShowingTomograms,
+    setJobProgress,
     setDefaultExpandDisplayCards,
     setTransparentModalsOnMouseOut,
     setUseGemmi,

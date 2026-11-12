@@ -3,6 +3,7 @@ import type { cootCommandKwargs, WorkerResponse } from "@/InstanceManager/Comman
 import type { LoadFilesResult, MoorhenInstance } from "@/InstanceManager/MoorhenInstance";
 import { addCustomRepresentation, addMoleculeList } from "@/store/moleculesSlice";
 import { setRequestDrawScene } from "@/store/glRefSlice";
+import { setJobProgress } from "@/store/generalStatesSlice";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { fetchMonomerDictionary } from "./monomerLibrary";
 import { MoleculeRepresentation } from "./Representation/MoorhenMoleculeRepresentation";
@@ -270,55 +271,63 @@ export const batchLoadLigands = async (
         }
     };
 
-    // Read everything, then work through the chunks as a pipeline
-    const names = sources.map(sourceName);
-    const texts = await readAll(sources);
-    const readable: { index: number; fileName: string; text: string }[] = [];
-    texts.forEach((result, index) => {
-        if ("error" in result) fail(names[index], result.error);
-        else readable.push({ index, fileName: names[index], text: result.text });
-    });
-    const chunks: (typeof readable)[] = [];
-    for (let i = 0; i < readable.length; i += Math.max(1, chunkSize)) {
-        chunks.push(readable.slice(i, i + Math.max(1, chunkSize)));
-    }
-
-    const safePrepare = (chunk: typeof readable) =>
-        prepareChunk(chunk).catch(err => {
-            console.error(err);
-            chunk.forEach(item => fail(item.fileName, `failed while loading (${err instanceof Error ? err.message : err})`));
-            return [] as ChunkItem[];
+    // Progress for the long job notification, cleared however the batch ends
+    const showProgress = (done: number, total: number) => store.dispatch(setJobProgress({ label: "Loading ligands", done, total }));
+    try {
+        // Read everything, then work through the chunks as a pipeline
+        const names = sources.map(sourceName);
+        showProgress(0, sources.length);
+        const texts = await readAll(sources);
+        const readable: { index: number; fileName: string; text: string }[] = [];
+        texts.forEach((result, index) => {
+            if ("error" in result) fail(names[index], result.error);
+            else readable.push({ index, fileName: names[index], text: result.text });
         });
+        const chunks: (typeof readable)[] = [];
+        for (let i = 0; i < readable.length; i += Math.max(1, chunkSize)) {
+            chunks.push(readable.slice(i, i + Math.max(1, chunkSize)));
+        }
 
-    let done = 0;
-    let next = chunks.length > 0 ? safePrepare(chunks[0]) : null;
-    for (let k = 0; k < chunks.length; k++) {
-        const items = await next;
-        // Queue the next chunk's worker messages before building this one, so they overlap
-        next = k + 1 < chunks.length ? safePrepare(chunks[k + 1]) : null;
-        await addChunk(items);
-        done += chunks[k].length;
-        onProgress?.(done, readable.length);
-    }
+        const safePrepare = (chunk: typeof readable) =>
+            prepareChunk(chunk).catch(err => {
+                console.error(err);
+                chunk.forEach(item => fail(item.fileName, `failed while loading (${err instanceof Error ? err.message : err})`));
+                return [] as ChunkItem[];
+            });
 
-    // Molecules loaded before the batch that contain a newly read residue type draw differently now
-    await Promise.all(
-        moleculesBefore
-            .filter(molecule => molecule.ligands?.some(ligand => newlyReadCompIds.has(ligand.resName)))
-            .flatMap(molecule => molecule.representations.filter(representation => representation.style === "CBs"))
-            .map(representation => representation.redraw())
-    );
+        let done = 0;
+        let next = chunks.length > 0 ? safePrepare(chunks[0]) : null;
+        for (let k = 0; k < chunks.length; k++) {
+            const items = await next;
+            // Queue the next chunk's worker messages before building this one, so they overlap
+            next = k + 1 < chunks.length ? safePrepare(chunks[k + 1]) : null;
+            await addChunk(items);
+            done += chunks[k].length;
+            showProgress(done, readable.length);
+            onProgress?.(done, readable.length);
+        }
 
-    loaded.sort((a, b) => a.index - b.index);
-    const lastLoaded = loaded.at(-1);
-    if (centre && lastLoaded) {
-        await instance.getMolecule(lastLoaded.entry.uniqueID)?.centreOn("/*/*/*/*", true);
+        // Molecules loaded before the batch that contain a newly read residue type draw differently now
+        await Promise.all(
+            moleculesBefore
+                .filter(molecule => molecule.ligands?.some(ligand => newlyReadCompIds.has(ligand.resName)))
+                .flatMap(molecule => molecule.representations.filter(representation => representation.style === "CBs"))
+                .map(representation => representation.redraw())
+        );
+
+        loaded.sort((a, b) => a.index - b.index);
+        const lastLoaded = loaded.at(-1);
+        if (centre && lastLoaded) {
+            await instance.getMolecule(lastLoaded.entry.uniqueID)?.centreOn("/*/*/*/*", true);
+        }
+        if (failed.length > 0) {
+            instance.snackbar.enqueueSnackbar({
+                message: `${failed.length} of ${sources.length} ligand files could not be loaded`,
+                variant: "warning",
+            });
+        }
+        return { loaded: loaded.map(item => item.entry), failed };
+    } finally {
+        store.dispatch(setJobProgress(null));
     }
-    if (failed.length > 0) {
-        instance.snackbar.enqueueSnackbar({
-            message: `${failed.length} of ${sources.length} ligand files could not be loaded`,
-            variant: "warning",
-        });
-    }
-    return { loaded: loaded.map(item => item.entry), failed };
 };
