@@ -422,17 +422,16 @@ const readCifDictionary = async (
             newMonomer.setBackgroundColour(backgroundColor);
             newMonomer.defaultBondOptions.smoothness = defaultBondSmoothness;
             newMonomer.coordsFormat = "mmcif";
-            newMonomer.addDict(dict.dict_contents);
+            await newMonomer.addDict(dict.dict_contents);
             newMonomers.push(newMonomer);
-            moorhenInstance.getMoleculeList().forEach(molecule => {
-                if (molecule.ligands.length > 0) {
-                    molecule.representations.forEach(representation => {
-                        if (representation.style === "CBs") {
-                            representation.redraw();
-                        }
-                    });
-                }
-            });
+            // Only molecules containing this residue type draw differently with the new dictionary.
+            await Promise.all(
+                moorhenInstance
+                    .getMoleculeList()
+                    .filter(molecule => molecule.ligands?.some(ligand => ligand.resName === dict.comp_id))
+                    .flatMap(molecule => molecule.representations.filter(representation => representation.style === "CBs"))
+                    .map(representation => representation.redraw())
+            );
         }
     }
     return newMonomers;

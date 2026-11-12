@@ -1115,6 +1115,11 @@ export class MoorhenMolecule {
             )) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>;
             this.molNo = response.data.result.result.first;
             this.coordsFormat = response.data.result.result.second;
+            // Not a structure (e.g. a ligand dictionary): the caller checks molNo === -1 and tries
+            // something else, so don't query Coot about a molecule that does not exist.
+            if (this.molNo === -1) {
+                return this;
+            }
             await Promise.all([
                 this.getNumberOfAtoms(),
                 this.loadMissingMonomers(),
