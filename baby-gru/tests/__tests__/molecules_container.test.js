@@ -665,6 +665,93 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(simpleMesh)
     })
 
+    test("Tubes (Bendix: bendy helices)", () => {
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const simpleMesh = molecules_container.get_molecular_representation_mesh(coordMolNo, "//A", "", "Tubes", 2)
+        cleanUpVariables.push(simpleMesh)
+        expect(simpleMesh.vertices.size()).toBeGreaterThan(1000)
+        expect(simpleMesh.triangles.size()).toBeGreaterThan(1000)
+    })
+
+    test("worm radii from residue properties", () => {
+        // Coot's worm: a Ribbon with no secondary structure (all coil), each residue's radius a
+        // multiple ("worm-radius") of the coil thickness, until the properties are cleared.
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        molecules_container.M2T_updateFloatParameter(coordMolNo, "ribbonStyleCoilThickness", 0.3)
+        const width = () => {
+            const simpleMesh = molecules_container.get_molecular_representation_mesh(coordMolNo, "//A/10-30", "Chain", "Ribbon", 1)
+            cleanUpVariables.push(simpleMesh)
+            const vertices = simpleMesh.vertices
+            let lo = Infinity, hi = -Infinity
+            for (let i = 0; i < vertices.size(); i++) {
+                const x = vertices.get(i).pos[0]
+                lo = Math.min(lo, x)
+                hi = Math.max(hi, x)
+            }
+            return hi - lo
+        }
+        const thin = width()
+        const properties = []
+        for (let resNo = 5; resNo <= 35; resNo++) {
+            properties.push({ "chain-id": "A", "res-no": resNo, "ins-code": "", "worm-radius": 10 })
+        }
+        expect(molecules_container.set_residue_properties(coordMolNo, JSON.stringify(properties))).toBe(true)
+        const fat = width()
+        molecules_container.clear_residue_properties(coordMolNo)
+        const again = width()
+        // radius 0.3 A -> 3 A: wider by about twice the difference
+        expect(fat - thin).toBeGreaterThan(4)
+        expect(again).toBeCloseTo(thin, 3)
+    })
+
+    test("a worm has no secondary structure, even after a ribbon", () => {
+        // DONT_USE leaves the residues' secondary structure as the last Ribbon calculated it, so
+        // Moorhen clears it (keeping it) around a worm. Drawn that way, a worm after a ribbon is
+        // the same as one before any; drawn without clearing, it has the ribbon's helices.
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const nVertices = (ssUsage) => {
+            const simpleMesh = molecules_container.get_molecular_representation_mesh(coordMolNo, "//A", "Chain", "Ribbon", ssUsage)
+            cleanUpVariables.push(simpleMesh)
+            return simpleMesh.vertices.size()
+        }
+        const worm = () => {
+            molecules_container.save_and_clear_residue_secondary_structure(coordMolNo)
+            const n = nVertices(1)
+            molecules_container.restore_residue_secondary_structure(coordMolNo)
+            return n
+        }
+        const before = worm()
+        const ribbon = nVertices(2)
+        const stuck = nVertices(1)
+        const after = worm()
+        expect(after).toBe(before)
+        expect(stuck).not.toBe(before)
+        // and the ribbon's secondary structure is back
+        expect(nVertices(1)).toBe(stuck)
+        expect(ribbon).toBeGreaterThan(0)
+    })
+
+    test("a header-secondary-structure ribbon is the header's, even after a calculated one", () => {
+        // USE_HEADER only adds the header's helices and strands to the residues' secondary
+        // structure; Moorhen clears it (keeping it) first, so a calculated ribbon in between
+        // leaves no trace.
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const nVertices = (ssUsage) => {
+            const simpleMesh = molecules_container.get_molecular_representation_mesh(coordMolNo, "//A", "Chain", "Ribbon", ssUsage)
+            cleanUpVariables.push(simpleMesh)
+            return simpleMesh.vertices.size()
+        }
+        const fromHeader = () => {
+            molecules_container.save_and_clear_residue_secondary_structure(coordMolNo)
+            const n = nVertices(0)
+            molecules_container.restore_residue_secondary_structure(coordMolNo)
+            return n
+        }
+        const before = fromHeader()
+        nVertices(2)
+        expect(fromHeader()).toBe(before)
+    })
+
     test("ligand surface", () => {
 
         const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)

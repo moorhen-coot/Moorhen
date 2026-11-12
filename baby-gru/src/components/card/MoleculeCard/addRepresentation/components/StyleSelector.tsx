@@ -27,6 +27,8 @@ export const StyleSelector = (props: StyleSelectorProps) => {
                     "CBs",
                     "CAs",
                     "CRs",
+                    "Worm",
+                    "Tubes",
                     "gaussian",
                     "MolecularSurface",
                     "VdwSpheres",

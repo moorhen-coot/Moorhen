@@ -74,6 +74,8 @@ export const RotamerChange = () => {
                         .filter(item => {
                             return [
                                 "CRs",
+                                "Worm",
+                                "Tubes",
                                 "CBs",
                                 "CAs",
                                 "ligands",

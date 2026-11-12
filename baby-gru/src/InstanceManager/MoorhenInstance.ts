@@ -1155,7 +1155,7 @@ export class MoorhenInstance extends StoreExtension {
              * described below.
              * @param params.representationStyle - The visual style of the representation.
              * Public styles are: VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds,
-             * CRs, MolecularSurface, DishyBases, VdWSurface, Calpha, unitCell,
+             * CRs, Worm, Tubes, MolecularSurface, DishyBases, VdWSurface, Calpha, unitCell,
              * ligand_environment, contact_dots, restraints, MetaBalls, StickBases,
              * residue_environment, NEFRestraints and RMSD. Internal-only styles (hover,
              * environment, residueSelection, transformation, rama, rotamer,
@@ -1194,6 +1194,11 @@ export class MoorhenInstance extends StoreExtension {
              * internal representations set this to false.
              * @param params.bondOptions - Overrides for bond rendering (thickness, colour...).
              * @param params.m2tParams - Overrides for mesh-to-triangle rendering.
+             * @param params.wormOptions - For a "Worm" (Coot's worm: a ribbon trace whose
+             * radius varies by residue), where its radii come from: `radiusSource` "b-factor"
+             * (default; `bFactorScale` A per A^2, 0.05), "uniform" (`uniformRadius` A, 1.0) or
+             * "custom" (`residueRadii`: `[{ chainId, resNo, insCode?, radius }]` in A, or
+             * `radiusAniso: [x, y, z]` in place of `radius`).
              * @param params.residueEnvironmentOptions - Options for residue-environment
              * (neighbourhood) rendering.
              * @param params.nonCustomOpacity - Opacity applied when a non-custom (multi-colour)
@@ -1280,7 +1285,7 @@ export class MoorhenInstance extends StoreExtension {
              * @param params - The fields to change. `representationStyle` is required; all
              * other fields are optional and keep the representation's existing value when omitted.
              * @param params.representationStyle - The new visual style. Must be one of the
-             * public styles (VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds, CRs,
+             * public styles (VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds, CRs, Worm, Tubes,
              * MolecularSurface, DishyBases, VdWSurface, Calpha, unitCell, ligand_environment,
              * contact_dots, restraints, MetaBalls, StickBases, residue_environment,
              * NEFRestraints, RMSD). Internal-only styles (hover, environment,
@@ -1312,6 +1317,11 @@ export class MoorhenInstance extends StoreExtension {
              * @param params.isCustom - Whether the representation is marked as custom.
              * @param params.bondOptions - Overrides for bond rendering (thickness, colour...).
              * @param params.m2tParams - Overrides for mesh-to-triangle rendering.
+             * @param params.wormOptions - For a "Worm" (Coot's worm: a ribbon trace whose
+             * radius varies by residue), where its radii come from: `radiusSource` "b-factor"
+             * (default; `bFactorScale` A per A^2, 0.05), "uniform" (`uniformRadius` A, 1.0) or
+             * "custom" (`residueRadii`: `[{ chainId, resNo, insCode?, radius }]` in A, or
+             * `radiusAniso: [x, y, z]` in place of `radius`).
              * @param params.residueEnvironmentOptions - Options for residue-environment
              * (neighbourhood) rendering.
              * @param params.nonCustomOpacity - Opacity used with non-custom colour modes.

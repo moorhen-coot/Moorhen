@@ -765,6 +765,13 @@ export namespace libcootApi {
         set_refinement_is_verbose(arg0: boolean): void;
         set_use_gemmi(arg0: boolean): void;
         get_use_gemmi(): boolean;
+        get_molecular_representation_mesh(imol: number, cid: string, colourScheme: string, style: string, secondaryStructureUsageFlag: number): SimpleMeshJS;
+        /** Per-residue properties of a molecule's M2T Ribbon, as JSON: `[{"chain-id": "A", "res-no": 34, "ins-code": "", "worm-radius": 1.2}]` (or `"worm-radius-aniso": [x, y, z]`) */
+        set_residue_properties(imol: number, jsonString: string): boolean;
+        clear_residue_properties(imol: number): void;
+        /** Moorhen's (molecules_container_js): clear every residue's secondary structure, keeping it, for a worm */
+        save_and_clear_residue_secondary_structure(imol: number): void;
+        restore_residue_secondary_structure(imol: number): void;
         export_molecular_representation_as_gltf(
             imol: number,
             cid: string,

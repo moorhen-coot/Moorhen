@@ -5,6 +5,7 @@ import { setRequestDrawScene } from "../../../store/glRefSlice";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";
 import { MoorhenStack } from "../../interface-base";
+import type { WormRadiusSource, wormOptions } from "../../../utils/Representation/wormRadii";
 
 type MoleculeSettingPanelProps =
     | { molecule: MoorhenMolecule; representation?: never }
@@ -548,6 +549,86 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 <option value={"StickBases"}>Sticks</option>
                 <option value={"DishyBases"}>Dishes</option>
             </MoorhenSelect>
+        </MoorhenStack>
+    );
+};
+
+/**
+ * Where a "Worm"'s radii come from (see wormRadii.ts): each residue's B-factor, scaled, or one
+ * radius for all; or radii set through the API, which can only be kept or replaced here. And how
+ * finely it is drawn, along and around. Sets the representation's wormOptions, which the dialog
+ * applies.
+ */
+export const WormSettingsPanel = (props: { representation: MoleculeRepresentation }) => {
+    const { representation } = props;
+    const [options, setOptions] = useState<wormOptions>(() => ({ ...representation.wormOptions }));
+    const hasCustomRadii = (representation.wormOptions.residueRadii?.length ?? 0) > 0;
+
+    const change = (changes: Partial<wormOptions>) => {
+        const next = { ...options, ...changes };
+        setOptions(next);
+        representation.wormOptions = next;
+    };
+
+    return (
+        <MoorhenStack card>
+            <MoorhenSelect
+                label="Worm radius"
+                value={options.radiusSource}
+                onChange={evt => change({ radiusSource: evt.target.value as WormRadiusSource })}
+            >
+                <option value="b-factor">Scaled by B-factor</option>
+                <option value="uniform">Uniform</option>
+                {hasCustomRadii && <option value="custom">Custom</option>}
+            </MoorhenSelect>
+            {options.radiusSource === "b-factor" && (
+                <MoorhenSlider
+                    sliderTitle="Radius per B (Å per Å²)"
+                    value={options.bFactorScale}
+                    setValue={value => change({ bFactorScale: value })}
+                    showLabels={false}
+                    stepButtons={0.005}
+                    minVal={0.005}
+                    maxVal={0.2}
+                    scale="linear"
+                    decimalPlaces={3}
+                />
+            )}
+            {options.radiusSource === "uniform" && (
+                <MoorhenSlider
+                    sliderTitle="Radius (Å)"
+                    value={options.uniformRadius}
+                    setValue={value => change({ uniformRadius: value })}
+                    showLabels={false}
+                    stepButtons={0.1}
+                    minVal={0.1}
+                    maxVal={5}
+                    scale="linear"
+                    decimalPlaces={2}
+                />
+            )}
+            <MoorhenSlider
+                sliderTitle="Axial sampling (steps per residue)"
+                value={options.axialSampling}
+                setValue={value => change({ axialSampling: Math.round(value) })}
+                showLabels={false}
+                stepButtons={1}
+                minVal={1}
+                maxVal={24}
+                scale="linear"
+                decimalPlaces={0}
+            />
+            <MoorhenSlider
+                sliderTitle="Angular sampling (sides)"
+                value={options.angularSampling}
+                setValue={value => change({ angularSampling: Math.round(value) })}
+                showLabels={false}
+                stepButtons={1}
+                minVal={3}
+                maxVal={32}
+                scale="linear"
+                decimalPlaces={0}
+            />
         </MoorhenStack>
     );
 };
