@@ -13,6 +13,14 @@ interface MoorhenMapCardSettings {
     mapStyle: string;
     mapRadius: number;
     mapOpacity: number;
+    /**
+     * Leave out the radius slider and the full-map/local-map pair.
+     *
+     * Both only make sense for something larger than the view. An orbital's grid is a few angstrom
+     * across and is always drawn whole, so a radius here would be a control with nothing to do -
+     * every setting large enough to show the orbital looks the same.
+     */
+    hideRadiusControls?: boolean;
 }
 
 export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
@@ -95,8 +103,8 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
         <MoorhenAccordion title="Draw Settings">
             <MoorhenStack direction="line">
                 <MoorhenStack direction="vertical" gap={"0.5rem"}>
-                    {props.map.isEM &&
-                    <MoorhenStack card  style={{ margin: "0rem", padding: "0rem" }} gap={0} justify="center"> 
+                    {props.map.isEM && !props.hideRadiusControls &&
+                    <MoorhenStack card  style={{ margin: "0rem", padding: "0rem" }} gap={0} justify="center">
                     <MoorhenToggle
                         id={`lock-origin-toggle-${props.map.molNo}`}
                         type="radio"
@@ -162,7 +170,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                     /></MoorhenStack>
                 </MoorhenStack>
                 <MoorhenStack direction="vertical" style={{ width: "100%" }}>
-                    <MoorhenSlider
+                    {!props.hideRadiusControls && <MoorhenSlider
                         minVal={2}
                         maxVal={maxRadius}
                         showLabels={false}
@@ -182,7 +190,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         }}
                         usePreciseInput={true}
                         piWidth={"3rem"}
-                    />
+                    />}
                     {opacitySlider}
                 </MoorhenStack>
             </MoorhenStack>

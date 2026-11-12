@@ -16,6 +16,8 @@ import { setAfJson, setEsmJson, setHomologsJson, setMrParseModels, setTargetSequ
 import { moorhen } from "../types/moorhen";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
+import { CubeFormatError } from "./cubeFile";
+import { isCubeFileName, loadCubeFile } from "./loadCubeFile";
 import { loadMtzMaps } from "./MtzLoading";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
@@ -921,6 +923,40 @@ export const autoOpenFiles = async (
                 console.warn(err);
                 // dispatch(enqueueSnackbar({ message:"Error reading map files",  variant: "error" }));
                 console.log(`Cannot read files`);
+            } finally {
+                document.body.click();
+            }
+        } else if (isCubeFileName(file.name)) {
+            // A Gaussian Cube. Parsed here and converted to a map per field, so a file of several
+            // orbitals opens as several maps - one card each, named for the orbital.
+            try {
+                const cubeMaps = await loadCubeFile(file, moorhenInstance);
+                for (const newMap of cubeMaps) {
+                    if (newMap.molNo === -1) {
+                        throw new Error("Cannot read the cube file!");
+                    }
+                    dispatch(addMap(newMap));
+                    mapsCreated.push(newMap);
+                    returnValues.push({
+                        type: "map", uniqueID: newMap.uniqueId, molNo: newMap.molNo,
+                        fileName: file.name,
+                    });
+                }
+                // Centred on only when there is nothing else to look at, and only on the first -
+                // the fields of one cube share a grid, so they would all centre on the same place.
+                if (molecules.length === 0 && cubeMaps.length > 0) {
+                    await cubeMaps[0].centreOnMap();
+                }
+                // Deliberately no setActiveMap: an orbital is not something to refine against, and
+                // making one active would take the active map away from a real map already open.
+            } catch (err) {
+                console.warn(err);
+                dispatch(enqueueSnackbar({
+                    message: err instanceof CubeFormatError
+                        ? `${file.name}: ${err.message}`
+                        : `Failed to load cube file ${file.name}`,
+                    variant: "warning",
+                }));
             } finally {
                 document.body.click();
             }

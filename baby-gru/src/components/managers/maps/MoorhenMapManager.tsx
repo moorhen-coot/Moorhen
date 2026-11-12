@@ -149,12 +149,24 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     useEffect(() => {
         /* this should be moved to map initialisation in moorhen the instance*/
         const intialiseMap = async () => {
-            let mapRadius = map?.suggestedRadius * 1.2 || 15;
+            // The 1.2 is headroom so a map does not stop just past the edge of the view. A cube's
+            // suggested radius is a hard limit instead - the cell repeats beyond it - so it is
+            // taken as given.
+            let mapRadius = map.isCube
+                ? (map.suggestedRadius || 5)
+                : (map?.suggestedRadius * 1.2 || 15);
 
             const storeContourLevel = store.getState().mapContourSettings.contourLevels.find(item => item.molNo === mapMolNo)?.contourLevel;
 
             let contourLevel = 1;
-            if (map.isEM) {
+            if (map.isCube) {
+                // A cube says what level to contour at - Psi4 writes the range covering 85% of the
+                // density into the file - and that level is in the field's own units, so a multiple
+                // of the rms would ignore the one piece of advice the file gives. Signed cube
+                // fields are flagged as difference maps to get two surfaces, which is why this has
+                // to come before the isDifference tests below.
+                contourLevel = map.suggestedContourLevel;
+            } else if (map.isEM) {
                 contourLevel = map?.isDifference ? 5 * map.mapRmsd : map?.suggestedContourLevel;
 
             } else {

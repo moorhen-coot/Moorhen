@@ -133,6 +133,9 @@ message MapDataSession {
   SelectedMtzColumns selectedColumns = 12;
   bool hasReflectionData = 13;
   string associatedReflectionFileName = 14;
+  // Made from a Gaussian Cube. Optional and added last, so a session written before this existed
+  // still reads: the field is simply absent and the map comes back as an ordinary map.
+  optional bool isCube = 15;
 }
 
 message MapRgba {

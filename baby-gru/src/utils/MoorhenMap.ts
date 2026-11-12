@@ -86,6 +86,15 @@ export class MoorhenMap {
     displayObjects: any;
     cellCentre: [number, number, number];
     isDifference: boolean;
+    /**
+     * True when this map was made from a Gaussian Cube rather than read from a map file.
+     *
+     * Kept as a flag of its own rather than as a third `dataOrigin`: the data really did arrive
+     * through the map-file path and `getSimpleHeaderInfo` only knows the two origins, so inventing
+     * a third would leave `headerInfo` null and take the cell with it. This only tells the UI to
+     * offer the cut-down orbital card instead of the full map card.
+     */
+    isCube: boolean;
     hasReflectionData: boolean;
     selectedColumns: moorhen.selectedMtzColumns;
     associatedReflectionFileName: string;
@@ -122,6 +131,7 @@ export class MoorhenMap {
         this.showOnLoad = true;
         this.displayObjects = { Coot: [] };
         this.isDifference = false;
+        this.isCube = false;
         this.hasReflectionData = false;
         this.selectedColumns = null;
         this.associatedReflectionFileName = null;
@@ -1178,6 +1188,7 @@ export class MoorhenMap {
     private static readonly COPYABLE_KEYS = [
         "fileHeader",
         "isDifference",
+        "isCube",
         "type",
         "dataOrigin",
         "showOnLoad",
