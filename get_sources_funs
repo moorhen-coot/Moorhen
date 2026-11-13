@@ -336,7 +336,7 @@ getzlib() {
     else
         cdcheckout
         echo "Downloading zlib-$zlib_release"
-        curl -fL https://www.zlib.net/zlib-$zlib_release.tar.gz -o zlib-$zlib_release.tar.gz &&\
+        curl -fL https://www.zlib.net/fossils/zlib-$zlib_release.tar.gz -o zlib-$zlib_release.tar.gz &&\
         echo &&\
         echo "Unpacking zlib-$zlib_release" &&\
         tar xf zlib-$zlib_release.tar.gz || fail "Failed to download and unpack zlib"
