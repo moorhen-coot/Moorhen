@@ -54,6 +54,7 @@ import {
     setDefaultBondSmoothness,
     setDepthPeelLayers,
     setShadowMapQuality,
+    setShadowSoftness,
     setDoShadowDepthDebug,
     setDrawFPS,
     setShortCuts, setShortcutOnHoveredAtom, setShowShortcutToast, 
@@ -220,6 +221,12 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         valueSetter: setShadowMapQuality,
         selector: (state: RootState) => state.sceneSettings.shadowMapQuality,
         defaultValue: sceneSettingsInitialState.shadowMapQuality,
+    },
+    57: {
+        label: "shadowSoftness",
+        valueSetter: setShadowSoftness,
+        selector: (state: RootState) => state.sceneSettings.shadowSoftness,
+        defaultValue: sceneSettingsInitialState.shadowSoftness,
     },
     32: {
         label: "GLLabelsFontFamily",

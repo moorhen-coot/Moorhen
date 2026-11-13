@@ -19,6 +19,7 @@ import {
     setDoPerspectiveProjection,
     setDoSSAO,
     setDoShadow,
+    setShadowSoftness,
     setEdgeDetectDepthScale,
     setEdgeDetectDepthThreshold,
     setEdgeDetectNormalScale,
@@ -48,6 +49,7 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MAX_SHADOW_SOFTNESS } from "../../WebGLgComponents/shadowFrustum";
 import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSwatch";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -425,6 +427,7 @@ const LightingPanel = () => {
 
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow);
     const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality);
+    const shadowSoftness = useSelector((state: moorhen.State) => state.sceneSettings.shadowSoftness);
 
     const dispatch = useDispatch();
 
@@ -507,6 +510,19 @@ const LightingPanel = () => {
                     <option value="nice">Nice</option>
                     <option value="smooth">Smooth</option>
                 </MoorhenSelect>
+            )}
+            {/* Penumbra radius in angstrom, the same at every zoom and quality. 0 is a hard edge. */}
+            {doShadow && (
+                <MoorhenSlider
+                    minVal={0}
+                    maxVal={MAX_SHADOW_SOFTNESS}
+                    scale="linear"
+                    sliderTitle="Shadow softness (Å)"
+                    value={Math.min(shadowSoftness, MAX_SHADOW_SOFTNESS)}
+                    setValue={val => dispatch(setShadowSoftness(val))}
+                    stepButtons={0.05}
+                    decimalPlaces={2}
+                />
             )}
         </MoorhenStack>
     );

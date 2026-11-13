@@ -102,6 +102,8 @@ export function initInstanceState(self: MGWebGL): void {
     self.doSSAO = false;
     self.doEdgeDetect = false;
     self.occludeDiffuse = false;
+    self.shadowSoftness = 0;
+    self.shadowRegion = null;
 
     /*
         Suitable(?) Edge detect settings:

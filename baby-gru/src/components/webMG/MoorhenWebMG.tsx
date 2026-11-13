@@ -96,6 +96,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
     const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality)
+    const shadowSoftness = useSelector((state: moorhen.State) => state.sceneSettings.shadowSoftness)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
@@ -374,6 +375,17 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [shadowMapQuality])
+
+    // Softness is pushed on mount too (the renderer starts at 0 and the store may hold a saved
+    // preference), but only redrawn on later changes, for the same first-frame reason as above.
+    const shadowSoftnessMounted = useRef(false)
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.setShadowSoftness(shadowSoftness)
+            if (shadowSoftnessMounted.current) glRef.current.drawScene()
+        }
+        shadowSoftnessMounted.current = true
+    }, [shadowSoftness])
 
     /*
     useEffect(() => {
