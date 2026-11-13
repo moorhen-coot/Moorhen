@@ -1,14 +1,50 @@
 import parse from "html-react-parser";
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { batch, useSelector, useStore } from "react-redux";
 import { MoorhenButton, MoorhenPopoverButton } from "@/components/inputs";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
 import { MoorhenAccordion } from "@/components/interface-base";
-import type { RootState } from "@/store";
+import { setHoveredAtom, type RootState } from "@/store";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { setMoleculeVisible } from "@/utils/moleculeVisibility";
 import { centreOnSite, groupLigandsBySite, type LigandSite } from "@/utils/ligandSites";
 import "./ligand-list-card.css";
+
+const HOVERED_ROW_CLASS = "moorhen__ligand-list-row-hovered";
+
+/**
+ * Highlights the row of the molecule under the mouse in the 3D view (hoveringStates.hoveredAtom).
+ * The hover changes at mouse rate, so this does not go through React: a store subscription moves
+ * one CSS class from row element to row element, and no component re-renders. React never
+ * overwrites the class, as a row's className prop does not change.
+ * Returns the ref callback each row registers its element with.
+ */
+const useHoveredRowHighlight = (store: ReturnType<typeof useStore<RootState>>) => {
+    const rowElements = useRef(new Map<string, HTMLElement>());
+    const hoveredUid = useRef<string | null>(null);
+
+    useEffect(() => {
+        const update = () => {
+            const uid = store.getState().hoveringStates.hoveredAtom.molecule?.uniqueId ?? null;
+            if (uid === hoveredUid.current) return;
+            rowElements.current.get(hoveredUid.current)?.classList.remove(HOVERED_ROW_CLASS);
+            rowElements.current.get(uid)?.classList.add(HOVERED_ROW_CLASS);
+            hoveredUid.current = uid;
+        };
+        update();
+        return store.subscribe(update);
+    }, [store]);
+
+    return useCallback((uid: string, element: HTMLElement | null) => {
+        if (element) {
+            rowElements.current.set(uid, element);
+            // A row mounted while its molecule is hovered (list regrouped, site opened)
+            element.classList.toggle(HOVERED_ROW_CLASS, uid === hoveredUid.current);
+        } else {
+            rowElements.current.delete(uid);
+        }
+    }, []);
+};
 
 // Natural order ("pose_2" before "pose_10"), ignoring case
 const byName = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
@@ -22,6 +58,7 @@ const byName = new Intl.Collator(undefined, { numeric: true, sensitivity: "base"
 export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     const { molecules } = props;
     const store = useStore<RootState>();
+    const registerRow = useHoveredRowHighlight(store);
     const visibleMolecules = useSelector((state: RootState) => state.molecules.visibleMolecules);
     const visible = new Set(visibleMolecules);
     const anyVisible = (list: MoorhenMolecule[]) => list.some(molecule => visible.has(molecule.molNo));
@@ -64,7 +101,12 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     const rows = (list: MoorhenMolecule[]) => (
         <div className="moorhen__ligand-list-list">
             {sorted(list).map(molecule => (
-                <LigandListRow key={molecule.uniqueId} molecule={molecule} isVisible={visible.has(molecule.molNo)} />
+                <LigandListRow
+                    key={molecule.uniqueId}
+                    molecule={molecule}
+                    isVisible={visible.has(molecule.molNo)}
+                    registerRow={registerRow}
+                />
             ))}
         </div>
     );
@@ -127,10 +169,29 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     );
 };
 
-const LigandListRow = memo(function LigandListRow(props: { molecule: MoorhenMolecule; isVisible: boolean }) {
-    const { molecule, isVisible } = props;
+const LigandListRow = memo(function LigandListRow(props: {
+    molecule: MoorhenMolecule;
+    isVisible: boolean;
+    registerRow: (uid: string, element: HTMLElement | null) => void;
+}) {
+    const { molecule, isVisible, registerRow } = props;
+    const store = useStore<RootState>();
+    const rowRef = useCallback((element: HTMLDivElement | null) => registerRow(molecule.uniqueId, element), [molecule, registerRow]);
+
+    // Hovering a row hovers its ligand, as hovering a residue in the sequence viewer does: hover marker
+    // in 3D, hover info panel. Leaving clears it, unless something else (the 3D view) has hovered since.
+    const onMouseEnter = () => {
+        const cid = molecule.ligands?.[0]?.cid;
+        if (cid) store.dispatch(setHoveredAtom({ molecule, cid, atomInfo: null }));
+    };
+    const onMouseLeave = () => {
+        if (store.getState().hoveringStates.hoveredAtom.molecule === molecule) {
+            store.dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
+        }
+    };
+
     return (
-        <div className="moorhen__ligand-list-row">
+        <div className="moorhen__ligand-list-row" ref={rowRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
             <span className="moorhen__ligand-list-row-name" title={molecule.name}>
                 {molecule.name}
             </span>

@@ -34,6 +34,7 @@ import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
 import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
 import { readGzippedTextFile } from "../../utils/utils";
+import { devLoadLibraryLigands } from "../../utils/devLigands";
 import { newVector } from "../../utils/vectorFactories";
 import { MoorhenLinearProgress } from "../icons";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
@@ -502,6 +503,19 @@ export const MoorhenDevMenu = () => {
             >
                 2D Overlays
             </MoorhenMenuItem> */}
+            <MoorhenMenuItem
+                onClick={() => {
+                    document.body.click();
+                    devLoadLibraryLigands(moorhenInstance).then(({ loaded, failed }) =>
+                        moorhenInstance.snackbar.enqueueSnackbar({
+                            message: `Loaded ${loaded.length} library ligands${failed.length ? `, ${failed.length} failed` : ""}`,
+                            variant: failed.length ? "warning" : "success",
+                        })
+                    );
+                }}
+            >
+                Load 10 library ligands (batch, 3 sites)
+            </MoorhenMenuItem>
             <MoorhenMenuItem
                 onClick={() => { void (async () => {
                     document.body.click();

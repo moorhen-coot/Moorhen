@@ -11,6 +11,13 @@
     min-height: 1.75rem;
 }
 
+.moorhen__ligand-list-row-hovered {
+    background: color-mix(in srgb, var(--moorhen-focus) 25%, transparent);
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
 .moorhen__ligand-list-row + .moorhen__ligand-list-row {
     border-top: 1px solid var(--moorhen-border);
 }
