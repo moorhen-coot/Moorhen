@@ -3,12 +3,20 @@
     flex-direction: column;
 }
 
-.moorhen__ligand-list-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+/* Each row is a compact accordion: no gaps between rows, a light header */
+.moorhen__ligand-list-row > .moorhen__accordion-container {
+    margin: 0;
+    border-top: none;
+}
+
+.moorhen__ligand-list-row .moorhen__accordion-header {
+    background-color: transparent;
     padding: 0 0.25rem;
     min-height: 1.75rem;
+}
+
+.moorhen__ligand-list-row .moorhen__accordion-content-shown {
+    padding: 0.25rem 0.5rem 0.5rem;
 }
 
 .moorhen__ligand-list-row-hovered {
@@ -23,7 +31,7 @@
 }
 
 .moorhen__ligand-list-row-name {
-    flex: 1;
+    display: block;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -32,6 +40,7 @@
 
 .moorhen__ligand-list-drawing {
     width: 18rem;
+    min-height: 18rem;
 }
 
 .moorhen__ligand-list-drawing svg {

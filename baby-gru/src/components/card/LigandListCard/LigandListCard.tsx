@@ -1,13 +1,17 @@
 import parse from "html-react-parser";
+import { batch, shallowEqual, useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { batch, useSelector, useStore } from "react-redux";
-import { MoorhenButton, MoorhenPopoverButton } from "@/components/inputs";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
-import { MoorhenAccordion } from "@/components/interface-base";
-import { setHoveredAtom, type RootState } from "@/store";
+import { MoorhenButton, MoorhenColourPicker, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
+import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
+import { MoorhenAccordion, MoorhenStack } from "@/components/interface-base";
+import { type RootState, addCustomRepresentation, removeCustomRepresentation, setHoveredAtom } from "@/store";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
+import { MoleculeRepresentation, type RepresentationStyles } from "@/utils/Representation/MoorhenMoleculeRepresentation";
+import { type LigandSite, centreOnSite, groupLigandsBySite } from "@/utils/ligandSites";
 import { setMoleculeVisible } from "@/utils/moleculeVisibility";
-import { centreOnSite, groupLigandsBySite, type LigandSite } from "@/utils/ligandSites";
+import { hexToRGB, rgbToHex } from "@/utils/utils";
+import { selectCustomRepresentations } from "../MoleculeCard/moleculeCardSelectors";
 import "./ligand-list-card.css";
 
 const HOVERED_ROW_CLASS = "moorhen__ligand-list-row-hovered";
@@ -192,29 +196,159 @@ const LigandListRow = memo(function LigandListRow(props: {
 
     return (
         <div className="moorhen__ligand-list-row" ref={rowRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-            <span className="moorhen__ligand-list-row-name" title={molecule.name}>
-                {molecule.name}
-            </span>
-            <MoorhenPopoverButton size="accordion" icon="ligand" tooltip="2D view" popoverPlacement="left">
-                <LigandDrawing molecule={molecule} />
-            </MoorhenPopoverButton>
-            <MoorhenButton
-                size="accordion"
-                type="icon-only"
-                icon="MatSymFilterFocus"
-                tooltip="Centre on ligand"
-                onClick={() => molecule.centreOn()}
-            />
-            <MoorhenButton
-                size="accordion"
-                type="icon-only"
-                icon={isVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
-                tooltip="Toggle visibility"
-                onClick={() => setMoleculeVisible(molecule, !isVisible)}
-            />
+            <MoorhenAccordion
+                title={
+                    <span className="moorhen__ligand-list-row-name" title={molecule.name}>
+                        {molecule.name}
+                    </span>
+                }
+                extraControls={[
+                    <MoorhenPopoverButton key="2d" size="accordion" icon="ligand" tooltip="2D view" popoverPlacement="left">
+                        <LigandDrawing molecule={molecule} />
+                    </MoorhenPopoverButton>,
+                    <MoorhenButton
+                        key="centre"
+                        size="accordion"
+                        type="icon-only"
+                        icon="MatSymFilterFocus"
+                        tooltip="Centre on ligand"
+                        onClick={() => molecule.centreOn()}
+                    />,
+                    <MoorhenButton
+                        key="visibility"
+                        size="accordion"
+                        type="icon-only"
+                        icon={isVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
+                        tooltip="Toggle visibility"
+                        onClick={() => setMoleculeVisible(molecule, !isVisible)}
+                    />,
+                ]}
+            >
+                <LigandRepresentations molecule={molecule} />
+            </MoorhenAccordion>
         </div>
     );
 });
+
+/** The representations offered for a ligand, one at a time. */
+const LIGAND_STYLES: { style: RepresentationStyles; label: string }[] = [
+    { style: "CBs", label: "Bonds" },
+    { style: "MolecularSurface", label: "Surface" },
+    { style: "MetaBalls", label: "MetaBalls" },
+];
+
+// Shown on the colour button if the molecule has no single default colour to show
+const FALLBACK_SWATCH = "#a0a0a0";
+
+/** The carbon colour the molecule is drawn with by default: its first single-colour default rule. */
+const defaultCarbonColour = (molecule: MoorhenMolecule): string =>
+    molecule.defaultColourRules?.find(rule => !rule.isMultiColourRule && rule.color)?.color ?? FALLBACK_SWATCH;
+
+/**
+ * The open part of a ligand's row (mounted only while open): a choice of one representation among
+ * bonds, surface and MetaBalls, and one carbon colour for it (other elements keep their colours).
+ * These are the molecule's custom representations, the same ones the molecule card's chips edit.
+ */
+const LigandRepresentations = (props: { molecule: MoorhenMolecule }) => {
+    const { molecule } = props;
+    const dispatch = useDispatch();
+    const representations = useSelector((state: RootState) => selectCustomRepresentations(state, molecule.molNo), shallowEqual);
+    const ligandRepresentations = representations.filter(representation => LIGAND_STYLES.some(item => item.style === representation.style));
+    const shownStyle = ligandRepresentations[0]?.style ?? null;
+    const [busy, setBusy] = useState<boolean>(false);
+
+    // Hydrogens are left out through the representation's atom selection ([!H] in its cid), which
+    // Coot applies to bonds and MetaBalls but not to surfaces. Kept across style changes.
+    const [hideHydrogens, setHideHydrogens] = useState<boolean>(() =>
+        ligandRepresentations.some(representation => representation.cid.includes("[!H]"))
+    );
+    const hydrogensApply = shownStyle !== "MolecularSurface";
+
+    // The carbon colour: the one picked here, else the custom colour a representation already has
+    const [pickedColour, setPickedColour] = useState<string | null>(null);
+    const currentColour =
+        pickedColour ??
+        ligandRepresentations
+            .map(representation => (representation.useDefaultColourRules ? null : representation.colourRules[0]?.color))
+            .find(Boolean) ??
+        null;
+    const colourOptions = (colour: string | null) =>
+        colour
+            ? { useDefaultColours: false, colourMode: "custom", colour, applyColourToNonCarbonAtoms: false }
+            : { useDefaultColours: true };
+
+    // Draw the new style first, then remove the others, so the ligand never disappears in between
+    const switchStyle = async (style: RepresentationStyles) => {
+        setBusy(true);
+        try {
+            const representation = await MoleculeRepresentation.create({
+                representationStyle: style,
+                molecule,
+                ruleType: "molecule",
+                isCustom: true,
+                notH: hideHydrogens,
+                ...colourOptions(currentColour),
+            });
+            if (!representation) return;
+            batch(() => {
+                dispatch(addCustomRepresentation(representation));
+                for (const previous of ligandRepresentations) {
+                    molecule.removeRepresentation(previous.uniqueId);
+                    dispatch(removeCustomRepresentation(previous));
+                }
+            });
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const toggleHydrogens = () => {
+        const hide = !hideHydrogens;
+        setHideHydrogens(hide);
+        for (const representation of ligandRepresentations) {
+            representation.edit({ representationStyle: representation.style, notH: hide });
+        }
+    };
+
+    const applyColour = (colour: RGBAColour) => {
+        const hex = rgbToHex(colour[0], colour[1], colour[2]);
+        setPickedColour(hex);
+        for (const representation of ligandRepresentations) {
+            representation.edit({ representationStyle: representation.style, ...colourOptions(hex) });
+        }
+    };
+
+    return (
+        <MoorhenStack direction="row" gap={2} style={{ alignItems: "center", flexWrap: "wrap" }}>
+            {LIGAND_STYLES.map(({ style, label }) => (
+                <MoorhenToggle
+                    key={style}
+                    type="radio"
+                    name={`ligand-style-${molecule.uniqueId}`}
+                    label={label}
+                    checked={shownStyle === style}
+                    disabled={busy}
+                    onChange={() => {
+                        if (shownStyle !== style) switchStyle(style);
+                    }}
+                />
+            ))}
+            <MoorhenToggle
+                label="Hydrogens"
+                checked={!hideHydrogens}
+                disabled={busy || !hydrogensApply}
+                tooltip={hydrogensApply ? undefined : "Surfaces are drawn without hydrogens"}
+                onChange={toggleHydrogens}
+            />
+            <MoorhenColourPicker
+                colour={hexToRGB(currentColour ?? defaultCarbonColour(molecule))}
+                onApply={applyColour}
+                tooltip="Carbon colour of this ligand"
+                position="left"
+            />
+        </MoorhenStack>
+    );
+};
 
 /** The 2D drawing of the molecule's ligands. Asked of Coot when shown (the popover mounts it on opening), then cached. */
 const LigandDrawing = (props: { molecule: MoorhenMolecule }) => {
@@ -232,8 +366,13 @@ const LigandDrawing = (props: { molecule: MoorhenMolecule }) => {
         };
     }, [molecule]);
 
+    // Same box while loading, so the popover opens at its final size and is placed once
     if (svgs === null) {
-        return <MoorhenLinearProgress />;
+        return (
+            <div className="moorhen__ligand-list-drawing">
+                <MoorhenLinearProgress />
+            </div>
+        );
     }
     if (svgs.length === 0) {
         return <span>No ligand found in {molecule.name}</span>;
