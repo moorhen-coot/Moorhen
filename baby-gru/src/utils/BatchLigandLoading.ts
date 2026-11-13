@@ -169,7 +169,6 @@ export const batchLoadLigands = async (
         let items: ChunkItem[] = [];
         for (const { index, fileName, text } of chunk) {
             const molecule = new MoorhenMolecule(instance);
-            molecule.batchLoadedLigand = true;
             molecule.setBackgroundColour(backgroundColor);
             molecule.defaultBondOptions.smoothness = defaultBondSmoothness;
             molecule.name = fileName.replace(/\.(pdb|ent|mmcif|cif)$/, "");

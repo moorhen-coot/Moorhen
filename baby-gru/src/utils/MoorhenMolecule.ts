@@ -188,11 +188,6 @@ export class MoorhenMolecule {
     NEFRestraints: NEFRestraint[];
     NEFRestraintRepresentation: moorhen.MoleculeRepresentation;
     moleculeCardState: { showXpidList: boolean };
-    /**
-     * Loaded by `files.batchLoadLigands`. The Models panel lists these molecules together, by name
-     * with a show/hide button, instead of a full card each. Not saved in sessions.
-     */
-    batchLoadedLigand: boolean;
     private _seqViewerData: SeqElement[]
     moleculeChangedCallbacks: ((molecule: string, changeType: string) => void)[];
 
@@ -290,7 +285,6 @@ export class MoorhenMolecule {
         this.chemShifts = [];
         this.NEFRestraints = [];
         this.moleculeCardState = { showXpidList: false };
-        this.batchLoadedLigand = false;
         this.NEFRestraintRepresentation = new MoleculeRepresentation("NEFRestraints", null, this.commandCentre);
         this.NEFRestraintRepresentation.setParentMolecule(this);
     }
@@ -708,6 +702,16 @@ export class MoorhenMolecule {
      * Check if the molecule instance consists of a ligand
      * @returns {boolean} True if the molecule is a ligand
      */
+    /**
+     * Whether this molecule is only ligands: no polymer residue (see checkIsLigand, a gemmi test on
+     * entity types) and at least one ligand, so a molecule of waters only is not one. The Models panel
+     * lists these molecules together, by name, instead of a full card each, and a molecule that is not
+     * one cannot be merged into one.
+     */
+    isLigandOnly(): boolean {
+        return this.isLigand && (this.ligands?.length ?? 0) > 0;
+    }
+
     checkIsLigand(): boolean {
         const isLigand = true;
         this.isLigand = window.gemmiModule.structure_is_ligand(this.gemmiStructure);
@@ -1110,7 +1114,13 @@ export class MoorhenMolecule {
                 },
                 true
             );
-            this.updateGemmiStructure(coordData as string);
+            try {
+                await this.updateGemmiStructure(coordData as string);
+            } catch {
+                // Not a structure gemmi can read, e.g. a ligand dictionary (from a .cif file or from
+                // SMILES): Coot's read below says so too, and the caller then tries it as a dictionary.
+                // Unawaited, this used to surface as an unhandled rejection.
+            }
             this.atomsDirty = false;
             const response = (await this.commandCentre.cootCommand(
                 {

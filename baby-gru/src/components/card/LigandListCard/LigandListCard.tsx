@@ -14,10 +14,10 @@ import "./ligand-list-card.css";
 const byName = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 
 /**
- * The molecules loaded by `files.batchLoadLigands`, in the Models panel: a list of names with a
- * 2D view, centre-on and show/hide button each, instead of a full molecule card each (which does not
- * scale to the hundreds or thousands of ligands loaded that way). Optionally grouped by position:
- * one sub-card per site, i.e. per set of overlapping ligands.
+ * The ligand-only molecules (MoorhenMolecule.isLigandOnly) in the Models panel: a list of names with
+ * a 2D view, centre-on and show/hide button each, instead of a full molecule card each (which does
+ * not scale to the hundreds or thousands of ligands files.batchLoadLigands can load). Optionally
+ * grouped by position: one sub-card per site, i.e. per set of overlapping ligands.
  */
 export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     const { molecules } = props;

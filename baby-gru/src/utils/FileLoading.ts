@@ -809,6 +809,15 @@ export const autoOpenFiles = async (
                 await Promise.all(newMonomer.flatMap(monomer => [monomer.fetchIfDirtyAndDraw("CBs"), monomer.fetchDefaultColourRules()]));
                 dispatch(addMoleculeList(newMonomer));
                 moleculesCreated.push(...newMonomer);
+                // Reported like any other loaded molecule (ligandFromSmiles and loadCifString return this too)
+                returnValues.push(
+                    ...newMonomer.map(monomer => ({
+                        type: "molecule" as const,
+                        uniqueID: monomer.uniqueId,
+                        molNo: monomer.molNo,
+                        fileName: file.name,
+                    }))
+                );
             } else if (newMolecule.atomCount === 0) {
                 console.log(`Molecule ${file.name} has no atoms, skipping...`);
                 dispatch(enqueueSnackbar({ message: `Failed to read molecule ${file.name}, no atoms found`, variant: "warning" }));

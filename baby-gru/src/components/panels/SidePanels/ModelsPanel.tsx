@@ -11,9 +11,9 @@ import { SidePanelContainer } from "./utils/SidePanelContainer";
 export const ModelsPanel = () => {
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1);
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
-    // Molecules loaded by files.batchLoadLigands are listed together, not given a card each
-    const molecules = moleculeList.filter(molecule => !molecule.batchLoadedLigand);
-    const batchLoadedLigands = moleculeList.filter(molecule => molecule.batchLoadedLigand);
+    // Molecules of ligands only are listed together, not given a card each
+    const molecules = moleculeList.filter(molecule => !molecule.isLigandOnly());
+    const ligandMolecules = moleculeList.filter(molecule => molecule.isLigandOnly());
 
     const [allOpen, setallOpen] = useState<boolean | null>(null);
     const [activeToggle, setActiveToggle] = useState<{ key: number; isOpen: boolean }>({ key: null, isOpen: null });
@@ -49,8 +49,8 @@ export const ModelsPanel = () => {
 
     return (
         <SidePanelContainer title="Molecules" extraControls={extraControl}>
-            {displayData.length === 0 && batchLoadedLigands.length === 0 ? <span>No models loaded</span> : displayData}
-            {batchLoadedLigands.length > 0 && <LigandListCard molecules={batchLoadedLigands} />}
+            {displayData.length === 0 && ligandMolecules.length === 0 ? <span>No models loaded</span> : displayData}
+            {ligandMolecules.length > 0 && <LigandListCard molecules={ligandMolecules} />}
         </SidePanelContainer>
     );
 };
