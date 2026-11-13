@@ -10,7 +10,9 @@
 
 .moorhen__toggle-container.disabled {
     opacity: 0.5;
-    pointer-events: none;
+    /* Not pointer-events: none, which would also stop the tooltip saying why it is disabled;
+       the disabled input already ignores clicks */
+    cursor: not-allowed;
 }
 
 
