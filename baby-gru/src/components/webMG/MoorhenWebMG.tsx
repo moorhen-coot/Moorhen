@@ -717,7 +717,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(lab.label,lab.uuid)
             })
             glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
-            glRef.current.drawScene()
+            glRef.current.requestDrawScene()
         }
     }, [labelBuffers, glRef])
 
@@ -797,7 +797,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.drawScene()
+            glRef.current.requestDrawScene()
         }
     }, [requestDrawSceneSwitch])
 

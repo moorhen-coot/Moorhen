@@ -674,7 +674,11 @@ export class MoleculeRepresentation {
         }
         batch(() => {
             this.parentMolecule.store.dispatch(setDisplayBuffers(newBuffers));
-            this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
+            // filter() returns a new array even when nothing was removed, and a new label array
+            // re-renders every label and redraws the scene.
+            if (newLabelBuffers.length !== labelBuffers.length) {
+                this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
+            }
         });
     }
 
@@ -703,7 +707,12 @@ export class MoleculeRepresentation {
         } catch (err) {
             console.log(err);
         }
-        this.parentMolecule.store.dispatch(setLabelBuffers([...labelBuffers, ...newLabelBuffers]));
+        // A new label array redraws the labels; visibility alone only needs a redraw.
+        if (newLabelBuffers.length > 0) {
+            this.parentMolecule.store.dispatch(setLabelBuffers([...labelBuffers, ...newLabelBuffers]));
+        } else {
+            this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+        }
     }
 
     /**
@@ -725,7 +734,11 @@ export class MoleculeRepresentation {
         } catch (err) {
             console.log(err);
         }
-        this.parentMolecule.store.dispatch(setLabelBuffers([...newLabelBuffers]));
+        if (newLabelBuffers.length !== labelBuffers.length) {
+            this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
+        } else {
+            this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+        }
     }
 
     /**

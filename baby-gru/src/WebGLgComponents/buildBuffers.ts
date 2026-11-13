@@ -118,8 +118,12 @@ export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebu
         })
 
         //Could, maybe should do same with displayBuffers ...
-        store.dispatch(setLabelBuffers([...labelBuffers,...theseLabelBuffers]))
-        store.dispatch(setTexturedShapes([...texturedShapes,...theseTexturedShapes]))
+        // Only when something was added: a new array re-renders every label and redraws the scene,
+        // which for a structure without labels (most of them) is pure overhead.
+        if(theseLabelBuffers.length > 0)
+            store.dispatch(setLabelBuffers([...labelBuffers,...theseLabelBuffers]))
+        if(theseTexturedShapes.length > 0)
+            store.dispatch(setTexturedShapes([...texturedShapes,...theseTexturedShapes]))
 
         return theseBuffers;
 }

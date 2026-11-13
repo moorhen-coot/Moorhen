@@ -19,6 +19,11 @@
     align-items: center;
     padding-left: 1rem;
     padding-right: 1rem;
+    cursor: pointer;
+}
+
+.moorhen__accordion-header.disabled {
+    cursor: default;
 }
 
 .moorhen__accordion-header.two-lines {

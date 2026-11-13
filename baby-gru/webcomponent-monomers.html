@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Moorhen – monomer load stress test</title>
+    <!--
+        Loads N ligands from the monomer library served by vite.WebC.config.mts at /test-monomers/
+        (../../monomers by default, MOORHEN_TEST_MONOMERS_DIR to override), to see whether loading
+        slows down as the number of molecules grows.
+        Run with: npm run start:webcomponent, then open /webcomponent-monomers.html
+    -->
+    <style>
+        html, body { height: 100%; margin: 0; }
+        /* Only the page's own panel: Moorhen sizes its interface in rem, i.e. from the root font size */
+        #panel { font: 13px system-ui, sans-serif; }
+        body { display: flex; }
+        #panel {
+            flex: 0 0 360px; overflow-y: auto; padding: 10px; box-sizing: border-box;
+            border-right: 1px solid #ccc; display: flex; flex-direction: column; gap: 8px;
+        }
+        /* Keep every block at its own height and let the panel scroll; otherwise a long results
+           table squeezes the chart, the only block without a minimum size, down to nothing. */
+        #panel > * { flex-shrink: 0; }
+        #viewer { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+        fieldset { border: 1px solid #ccc; padding: 6px 8px; margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; align-items: center; }
+        legend { font-weight: 600; }
+        input[type=number] { width: 90px; }
+        .buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+        button { padding: 4px 10px; }
+        #status { font-weight: 600; }
+        #summary { white-space: pre; font-family: ui-monospace, monospace; font-size: 12px; background: #f4f4f4; padding: 6px; }
+        table { border-collapse: collapse; font-family: ui-monospace, monospace; font-size: 11px; width: 100%; }
+        th, td { border-bottom: 1px solid #ddd; padding: 2px 4px; text-align: right; }
+        #chart { width: 100%; height: 160px; background: #fafafa; border: 1px solid #ddd; }
+        .hint { color: #666; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <div id="panel">
+        <div><b>Monomer load stress test</b> <span id="libInfo" class="hint">loading index…</span></div>
+        <fieldset>
+            <legend>What to load</legend>
+            <label for="count">N monomers</label><input id="count" type="number" min="1" value="100" />
+            <label for="pick">Pick</label>
+            <select id="pick"><option value="random">random</option><option value="first">first N from offset</option></select>
+            <label for="seed">Seed / offset</label><input id="seed" type="number" min="0" value="1" />
+            <label for="format">Load as</label>
+            <select id="format">
+                <option value="pdb">coordinates (PDB)</option>
+                <option value="dict">dictionary (.cif)</option>
+            </select>
+            <span></span><span class="hint">PDB: each dictionary's ideal coordinates written as a ligand PDB, moved to a random point in a 20 Å box (like a set of docking poses).</span>
+            <label for="sites">Sites</label><input id="sites" type="number" min="0" value="0" />
+            <span></span><span class="hint">PDB only. 0: the 20 Å box above, where poses overlap. N: poses spread over N pockets 60 Å apart, each within ±1.5 Å of its pocket's centre (for "group by position").</span>
+        </fieldset>
+        <fieldset>
+            <legend>How to load</legend>
+            <label for="method">Method</label>
+            <select id="method">
+                <option value="loadFiles">files.loadFiles</option>
+                <option value="batch">files.batchLoadLigands</option>
+            </select>
+            <label for="batch">Batch size</label><input id="batch" type="number" min="1" value="50" />
+            <span></span><span class="hint">Each batch is one call of the chosen method. Batch size ≥ N = a single call, like a consumer loading everything at once.</span>
+            <label for="prefetch">Prefetch</label><label><input id="prefetch" type="checkbox" checked /> fetch all files before timing</label>
+        </fieldset>
+        <div class="buttons">
+            <button id="run" disabled>Load</button>
+            <button id="fps">Measure FPS (5 s)</button>
+            <button id="copy">Copy results JSON</button>
+            <button id="reset">Reset (reload)</button>
+        </div>
+        <div id="status">Waiting for Moorhen…</div>
+        <div id="summary"></div>
+        <svg id="chart" viewBox="0 0 340 160" preserveAspectRatio="none"></svg>
+        <div class="hint">Chart: ms per file (y) for each batch vs molecules loaded at the end of the batch (x).</div>
+        <table>
+            <thead><tr><th>#</th><th>files</th><th>mols</th><th>ms</th><th>ms/file</th><th>long tasks ms</th><th>heap MB</th></tr></thead>
+            <tbody id="rows"></tbody>
+        </table>
+    </div>
+    <div id="viewer">
+        <moorhen-web-component id="moorhen-test" monomer-library="/test-monomers"></moorhen-web-component>
+    </div>
+
+    <script type="module">
+        import { registerMoorhenWebComponent } from "./src/WebComponent/entry";
+        registerMoorhenWebComponent();
+
+        const $ = id => document.getElementById(id);
+        const element = $("moorhen-test");
+        const results = { runs: [] };
+        let libraryFiles = [];
+
+        // Main-thread long tasks (>50 ms): a proxy for UI freezing during a load (Chromium only).
+        let longTaskMs = 0;
+        try {
+            new PerformanceObserver(list => {
+                for (const entry of list.getEntries()) longTaskMs += entry.duration;
+            }).observe({ type: "longtask", buffered: false });
+        } catch {
+            /* not supported */
+        }
+        const heapMB = () => (performance.memory ? (performance.memory.usedJSHeapSize / 1048576).toFixed(0) : "–");
+
+        const setStatus = text => ($("status").textContent = text);
+
+        const mulberry32 = seed => () => {
+            seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+            let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+
+        const pickFiles = (n, mode, seed) => {
+            if (mode === "first") return libraryFiles.slice(seed, seed + n);
+            const rand = mulberry32(seed);
+            const pool = libraryFiles.slice();
+            for (let i = 0; i < Math.min(n, pool.length); i++) {
+                const j = i + Math.floor(rand() * (pool.length - i));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            return pool.slice(0, n);
+        };
+
+        // Split a CIF data line into tokens, keeping quoted atom names such as "C1'" whole.
+        const cifTokens = line => [...line.matchAll(/'([^']*)'(?=\s|$)|"([^"]*)"(?=\s|$)|(\S+)/g)].map(m => m[1] ?? m[2] ?? m[3]);
+
+        // A monomer library dictionary's _chem_comp_atom loop as a PDB of one ligand, centred on `centre`.
+        const dictToPdb = (text, centre) => {
+            const lines = text.split("\n");
+            const start = lines.findIndex(l => l.startsWith("_chem_comp_atom."));
+            if (start < 0) return null;
+            const columns = [];
+            let i = start;
+            for (; i < lines.length && lines[i].startsWith("_chem_comp_atom."); i++) columns.push(lines[i].trim().slice(16));
+            const col = name => columns.indexOf(name);
+            const atoms = [];
+            for (; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line || line.startsWith("loop_") || line.startsWith("_") || line.startsWith("data_") || line.startsWith("#")) break;
+                const t = cifTokens(line);
+                atoms.push({ comp: t[col("comp_id")], name: t[col("atom_id")], el: t[col("type_symbol")], x: +t[col("x")], y: +t[col("y")], z: +t[col("z")] });
+            }
+            if (atoms.length === 0 || atoms.some(a => Number.isNaN(a.x))) return null;
+            const mean = k => atoms.reduce((sum, a) => sum + a[k], 0) / atoms.length;
+            const [mx, my, mz] = [mean("x"), mean("y"), mean("z")];
+            const f = (v, w) => v.toFixed(3).padStart(w);
+            const name4 = n => (n.length < 4 ? " " + n : n).padEnd(4).slice(0, 4);
+            return atoms.map((a, k) =>
+                "HETATM" + String(k + 1).padStart(5) + " " + name4(a.name) + " " + a.comp.padStart(3).slice(-3) + " A   1    " +
+                f(a.x - mx + centre[0], 8) + f(a.y - my + centre[1], 8) + f(a.z - mz + centre[2], 8) +
+                "  1.00 20.00          " + a.el.padStart(2).slice(-2)
+            ).join("\n") + "\nEND\n";
+        };
+
+        let poseRandom = mulberry32(12345);
+        const fetchFile = async rel => {
+            const response = await fetch(`/test-monomers/${rel}`);
+            if (!response.ok) throw new Error(`${rel}: ${response.status}`);
+            const name = rel.split("/").pop();
+            if ($("format").value === "dict") return new File([await response.blob()], name);
+            const sites = +$("sites").value;
+            let centre;
+            if (sites > 0) {
+                // Pockets on a cubic grid, 60 Å apart (larger ligands are 20 Å or more across)
+                const site = Math.floor(poseRandom() * sites);
+                const side = Math.ceil(Math.cbrt(sites));
+                const pocket = [site % side, Math.floor(site / side) % side, Math.floor(site / side / side)].map(v => v * 60);
+                centre = pocket.map(v => v + (poseRandom() - 0.5) * 3);
+            } else {
+                centre = [0, 1, 2].map(() => (poseRandom() - 0.5) * 20);
+            }
+            const pdb = dictToPdb(await response.text(), centre);
+            return pdb ? new File([pdb], name.replace(/\.cif$/, ".pdb")) : null;
+        };
+
+        const fetchAll = async (paths, concurrency = 32) => {
+            const files = new Array(paths.length);
+            let next = 0;
+            await Promise.all(
+                Array.from({ length: concurrency }, async () => {
+                    while (next < paths.length) {
+                        const i = next++;
+                        files[i] = await fetchFile(paths[i]);
+                    }
+                })
+            );
+            // Dictionaries without coordinates cannot be written as PDB; skip them.
+            return files.filter(Boolean);
+        };
+
+        const drawChart = batches => {
+            const svg = $("chart");
+            svg.innerHTML = "";
+            if (batches.length === 0) return;
+            const W = 340, H = 160, pad = 24;
+            const maxX = Math.max(...batches.map(b => b.moleculesAfter), 1);
+            const maxY = Math.max(...batches.map(b => b.msPerFile), 1);
+            const x = v => pad + (v / maxX) * (W - pad - 6);
+            const y = v => H - pad + 4 - (v / maxY) * (H - pad - 4);
+            const points = batches.map(b => `${x(b.moleculesAfter)},${y(b.msPerFile)}`).join(" ");
+            svg.innerHTML = `
+                <line x1="${pad}" y1="${H - pad + 4}" x2="${W}" y2="${H - pad + 4}" stroke="#999" stroke-width="0.5"/>
+                <line x1="${pad}" y1="0" x2="${pad}" y2="${H - pad + 4}" stroke="#999" stroke-width="0.5"/>
+                <text x="2" y="10" font-size="9">${maxY.toFixed(0)}</text>
+                <text x="2" y="${H - pad + 4}" font-size="9">0</text>
+                <text x="${W - 4}" y="${H - 4}" font-size="9" text-anchor="end">${maxX} mols</text>
+                <polyline points="${points}" fill="none" stroke="#1565c0" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+                ${batches.map(b => `<circle cx="${x(b.moleculesAfter)}" cy="${y(b.msPerFile)}" r="2" fill="#1565c0"/>`).join("")}`;
+        };
+
+        const addRow = b => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = [b.index, b.files, b.moleculesAfter, b.ms.toFixed(0), b.msPerFile.toFixed(1), b.longTaskMs.toFixed(0), b.heapMB]
+                .map(v => `<td>${v}</td>`)
+                .join("");
+            $("rows").appendChild(tr);
+        };
+
+        const run = async instance => {
+            const n = +$("count").value;
+            const batchSize = Math.max(1, +$("batch").value);
+            const mode = $("pick").value;
+            const seed = +$("seed").value;
+            const prefetch = $("prefetch").checked;
+            const paths = pickFiles(n, mode, seed);
+
+            $("run").disabled = true;
+            $("rows").innerHTML = "";
+            drawChart([]);
+
+            poseRandom = mulberry32(seed + 1);
+            const runResult = { n: paths.length, method: $("method").value, format: $("format").value, batchSize, mode, seed, prefetch, startMolecules: instance.getMoleculeList().length, batches: [] };
+            let files = null;
+            if (prefetch) {
+                setStatus(`Fetching ${paths.length} files…`);
+                const t0 = performance.now();
+                files = await fetchAll(paths);
+                runResult.fetchMs = performance.now() - t0;
+                // Dictionaries without coordinates were dropped when writing PDBs.
+                runResult.n = files.length;
+            }
+
+            const total = files ? files.length : paths.length;
+            const tStart = performance.now();
+            for (let i = 0; i < total; i += batchSize) {
+                setStatus(`Loading ${i + 1}–${Math.min(i + batchSize, total)} of ${total}…`);
+                // Let the status repaint before the batch starts.
+                await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+                const batchFiles = files ? files.slice(i, i + batchSize) : await fetchAll(paths.slice(i, i + batchSize));
+                if (batchFiles.length === 0) continue;
+                longTaskMs = 0;
+                const t0 = performance.now();
+                if ($("method").value === "batch") {
+                    const { failed } = await instance.files.batchLoadLigands(batchFiles, {
+                        onProgress: done => setStatus(`Loading ${i + done} of ${total}… (batchLoadLigands)`),
+                    }, "monomer-stress-test");
+                    if (failed.length > 0) console.warn("batchLoadLigands failures", failed);
+                } else {
+                    await instance.files.loadFiles(batchFiles, "monomer-stress-test");
+                }
+                const ms = performance.now() - t0;
+                const batch = {
+                    index: runResult.batches.length + 1,
+                    files: batchFiles.length,
+                    moleculesAfter: instance.getMoleculeList().length,
+                    ms,
+                    msPerFile: ms / batchFiles.length,
+                    longTaskMs,
+                    heapMB: heapMB(),
+                };
+                runResult.batches.push(batch);
+                addRow(batch);
+                drawChart(runResult.batches);
+            }
+            runResult.totalLoadMs = performance.now() - tStart;
+            runResult.endMolecules = instance.getMoleculeList().length;
+            results.runs.push(runResult);
+            console.log("Monomer stress test run", runResult);
+
+            const first = runResult.batches[0], last = runResult.batches[runResult.batches.length - 1];
+            $("summary").textContent = [
+                `files requested   ${runResult.n}`,
+                `molecules         ${runResult.startMolecules} → ${runResult.endMolecules}`,
+                prefetch ? `fetch             ${(runResult.fetchMs / 1000).toFixed(2)} s` : `fetch             inside batches`,
+                `total load        ${(runResult.totalLoadMs / 1000).toFixed(2)} s`,
+                `avg ms/file       ${(runResult.totalLoadMs / runResult.n).toFixed(1)}`,
+                runResult.batches.length > 1
+                    ? `first→last batch  ${first.msPerFile.toFixed(1)} → ${last.msPerFile.toFixed(1)} ms/file (×${(last.msPerFile / first.msPerFile).toFixed(2)})`
+                    : "",
+            ].filter(Boolean).join("\n");
+            setStatus(`Done: ${runResult.n} files in ${(runResult.totalLoadMs / 1000).toFixed(2)} s. Run again to add more on top.`);
+            $("run").disabled = false;
+        };
+
+        const measureFps = async () => {
+            setStatus("Measuring FPS for 5 s – rotate/zoom the view now…");
+            let frames = 0, worst = 0, last = performance.now();
+            const end = last + 5000;
+            await new Promise(resolve => {
+                const tick = now => {
+                    frames++;
+                    worst = Math.max(worst, now - last);
+                    last = now;
+                    if (now < end) requestAnimationFrame(tick);
+                    else resolve();
+                };
+                requestAnimationFrame(tick);
+            });
+            const fps = { molecules: element.moorhenInstance?.getMoleculeList().length, fps: frames / 5, worstFrameMs: worst };
+            results.fps = [...(results.fps ?? []), fps];
+            setStatus(`FPS ${fps.fps.toFixed(1)}, worst frame ${worst.toFixed(0)} ms, ${fps.molecules} molecules`);
+        };
+
+        fetch("/test-monomers/index.json")
+            .then(r => r.json())
+            .then(({ root, files }) => {
+                libraryFiles = files;
+                $("libInfo").textContent = `${files.length} .cif in ${root}`;
+                if (files.length === 0) $("libInfo").textContent = `no monomers found in ${root} (set MOORHEN_TEST_MONOMERS_DIR)`;
+            })
+            .catch(err => ($("libInfo").textContent = `index failed: ${err}`));
+
+        // For scripted runs (Playwright): build the same files the page would load.
+        window.monomerStressTest = { pickFiles, fetchAll, results };
+
+        $("reset").onclick = () => location.reload();
+        $("copy").onclick = async () => {
+            const text = JSON.stringify(results, null, 2);
+            console.log(text);
+            try {
+                await navigator.clipboard.writeText(text);
+                setStatus("Results copied to clipboard (also logged to console).");
+            } catch {
+                setStatus("Clipboard blocked – results logged to console.");
+            }
+        };
+        $("fps").onclick = measureFps;
+
+        const instance = await element.getMoorhenInstance();
+        instance.sceneSettings.resetSceneSettings();
+        element.moorhenInstance = instance;
+        setStatus("Ready.");
+        $("run").disabled = false;
+        $("run").onclick = () =>
+            run(instance).catch(err => {
+                console.error(err);
+                setStatus(`Error: ${err.message ?? err}`);
+                $("run").disabled = false;
+            });
+    </script>
+</body>
+</html>

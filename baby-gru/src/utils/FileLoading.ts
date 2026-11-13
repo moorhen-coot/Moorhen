@@ -422,17 +422,16 @@ const readCifDictionary = async (
             newMonomer.setBackgroundColour(backgroundColor);
             newMonomer.defaultBondOptions.smoothness = defaultBondSmoothness;
             newMonomer.coordsFormat = "mmcif";
-            newMonomer.addDict(dict.dict_contents);
+            await newMonomer.addDict(dict.dict_contents);
             newMonomers.push(newMonomer);
-            moorhenInstance.getMoleculeList().forEach(molecule => {
-                if (molecule.ligands.length > 0) {
-                    molecule.representations.forEach(representation => {
-                        if (representation.style === "CBs") {
-                            representation.redraw();
-                        }
-                    });
-                }
-            });
+            // Only molecules containing this residue type draw differently with the new dictionary.
+            await Promise.all(
+                moorhenInstance
+                    .getMoleculeList()
+                    .filter(molecule => molecule.ligands?.some(ligand => ligand.resName === dict.comp_id))
+                    .flatMap(molecule => molecule.representations.filter(representation => representation.style === "CBs"))
+                    .map(representation => representation.redraw())
+            );
         }
     }
     return newMonomers;
@@ -810,6 +809,15 @@ export const autoOpenFiles = async (
                 await Promise.all(newMonomer.flatMap(monomer => [monomer.fetchIfDirtyAndDraw("CBs"), monomer.fetchDefaultColourRules()]));
                 dispatch(addMoleculeList(newMonomer));
                 moleculesCreated.push(...newMonomer);
+                // Reported like any other loaded molecule (ligandFromSmiles and loadCifString return this too)
+                returnValues.push(
+                    ...newMonomer.map(monomer => ({
+                        type: "molecule" as const,
+                        uniqueID: monomer.uniqueId,
+                        molNo: monomer.molNo,
+                        fileName: file.name,
+                    }))
+                );
             } else if (newMolecule.atomCount === 0) {
                 console.log(`Molecule ${file.name} has no atoms, skipping...`);
                 dispatch(enqueueSnackbar({ message: `Failed to read molecule ${file.name}, no atoms found`, variant: "warning" }));

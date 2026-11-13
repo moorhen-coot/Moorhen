@@ -34,6 +34,7 @@ import { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
 import { MoleculeToSeqViewerSequences } from "@/components/sequence-viewer/utils";
 import { MoorhenInstance } from "@/InstanceManager/index";
 import { CommandCentre } from "@/InstanceManager/CommandCentre/index";
+import { fetchMonomerDictionary } from "./monomerLibrary";
 
 export type ResidueInfo = {
     resCode: string;
@@ -701,6 +702,16 @@ export class MoorhenMolecule {
      * Check if the molecule instance consists of a ligand
      * @returns {boolean} True if the molecule is a ligand
      */
+    /**
+     * Whether this molecule is only ligands: no polymer residue (see checkIsLigand, a gemmi test on
+     * entity types) and at least one ligand, so a molecule of waters only is not one. The Models panel
+     * lists these molecules together, by name, instead of a full card each, and a molecule that is not
+     * one cannot be merged into one.
+     */
+    isLigandOnly(): boolean {
+        return this.isLigand && (this.ligands?.length ?? 0) > 0;
+    }
+
     checkIsLigand(): boolean {
         const isLigand = true;
         this.isLigand = window.gemmiModule.structure_is_ligand(this.gemmiStructure);
@@ -1103,7 +1114,13 @@ export class MoorhenMolecule {
                 },
                 true
             );
-            this.updateGemmiStructure(coordData as string);
+            try {
+                await this.updateGemmiStructure(coordData as string);
+            } catch {
+                // Not a structure gemmi can read, e.g. a ligand dictionary (from a .cif file or from
+                // SMILES): Coot's read below says so too, and the caller then tries it as a dictionary.
+                // Unawaited, this used to surface as an unhandled rejection.
+            }
             this.atomsDirty = false;
             const response = (await this.commandCentre.cootCommand(
                 {
@@ -1115,6 +1132,11 @@ export class MoorhenMolecule {
             )) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>;
             this.molNo = response.data.result.result.first;
             this.coordsFormat = response.data.result.result.second;
+            // Not a structure (e.g. a ligand dictionary): the caller checks molNo === -1 and tries
+            // something else, so don't query Coot about a molecule that does not exist.
+            if (this.molNo === -1) {
+                return this;
+            }
             await Promise.all([
                 this.getNumberOfAtoms(),
                 this.loadMissingMonomers(),
@@ -1133,45 +1155,7 @@ export class MoorhenMolecule {
      * @param {number} attachToMolecule - Molecule number for which the dicitonary will be associated
      */
     async loadMissingMonomer(newTlc: string, attachToMolecule: number): Promise<string> {
-        let fileContent = "";
-        let response: Response | null;
-        try {
-            response = await fetch(`${this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`);
-            if (response.ok) {
-                fileContent = await response.text();
-            }
-        } catch (err) {
-            console.log(err);
-            console.log(`Unable to fetch ligand dictionary ${newTlc} from local url`);
-        }
-        let dictContent: string;
-
-        if (!fileContent.includes("data_")) {
-            console.log(`Unable to fetch ligand dictionary ${newTlc} from local monomer library...`);
-            try {
-                const url = `https://raw.githubusercontent.com/MonomerLibrary/monomers/master/${
-                    newTlc.toLowerCase()[0]
-                }/${newTlc.toUpperCase()}.cif`;
-                response = await fetch(url);
-                if (response.ok) {
-                    dictContent = await response.text();
-                } else {
-                    console.log(`Unable to fetch ligand dictionary ${newTlc} from remote monomer library...`);
-                    const url = `https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${newTlc.toUpperCase()}.cif`;
-                    response = await fetch(url);
-                    if (response.ok) {
-                        dictContent = await response.text();
-                    } else {
-                        console.log(`Unable to fetch ligand dictionary ${newTlc} from PDBe chem...`);
-                    }
-                }
-            } catch (err) {
-                console.log(err);
-                console.log(`Unable to fetch ligand dictionary ${newTlc}`);
-            }
-        } else {
-            dictContent = fileContent;
-        }
+        const dictContent = await fetchMonomerDictionary(newTlc, this.monomerLibraryPath);
 
         if (dictContent) {
             await this.commandCentre.cootCommand(
