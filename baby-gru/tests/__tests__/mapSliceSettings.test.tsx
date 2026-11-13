@@ -10,7 +10,9 @@ import { MapSettingsAccordion } from "../../src/components/card/MapCard/MapSetti
 import { MoorhenMenuSystem } from "../../src/components/menu-system/MenuSystem";
 import { MoorhenInstanceProvider } from "../../src/InstanceManager";
 import { createMoorhenStore } from "../../src/store/MoorhenReduxStore";
-import { showMap } from "../../src/store/mapContourSettingsSlice";
+import { setMapSlice, showMap } from "../../src/store/mapContourSettingsSlice";
+import { setQuat } from "../../src/store/glRefSlice";
+import { quatToMat4 } from "../../src/WebGLgComponents/quatToMat4.js";
 import { moorhen } from "../../src/types/moorhen";
 import "./testUtils";
 
@@ -79,6 +81,21 @@ describe("the 2D slice in a map's Draw Settings", () => {
         expect(spacing.value).toBe("linear");
         await user.selectOptions(spacing, "geometric");
         expect(store.getState().mapContourSettings.mapSliceContourSpacings).toEqual([{ molNo: 7, spacing: "geometric" }]);
+    });
+
+    test("can turn the view to look straight at the slice, centred on it", async () => {
+        const { store, user, update } = await renderSettings(true);
+        await user.click(screen.getByText("Draw as 2D slice"));
+        // A slice standing in the xz plane (normal -y), away from the view's centre.
+        store.dispatch(setMapSlice({ molNo: 7, origin: [3, 4, 5], orientation: [1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1] }));
+        store.dispatch(setQuat([0.1, 0.05, 0, -0.99]));
+        update();
+        await user.click(screen.getByText("Align view"));
+        const m = quatToMat4(store.getState().glRef.quat);
+        // The line of sight along the normal; the slice's side nearest the screen's x along it.
+        expect(Math.abs(m[6])).toBeCloseTo(1, 6);
+        expect(m[0]).toBeCloseTo(1, 6);
+        expect(store.getState().sceneSettings.origin).toEqual([-3, -4, -5]);
     });
 
     test("offers no nodal lines for a map that is never negative", async () => {

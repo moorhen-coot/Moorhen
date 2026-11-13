@@ -1,8 +1,11 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { setMapAlpha, setMapRadius, setMapSliceContourSpacing, setMapSliceNodalLines, setMapStyle } from "../../../store/mapContourSettingsSlice";
 import type { MapStyle } from "../../../store/mapContourSettingsSlice";
 import { setMovingMapSlice } from "../../../store/generalStatesSlice";
+import { setQuat } from "../../../store/glRefSlice";
+import { setOrigin } from "../../../store/sceneSettingsSlice";
+import { quatFacingSlice } from "../../../utils/mapSlice/sliceView";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";
 import { DEFAULT_SLICE_CONTOUR_SPACING, type SliceContourSpacing } from "../../../utils/mapSlice/mapSlice";
@@ -80,6 +83,21 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
     const showsNodalLines = useSelector((state: moorhen.State) => state.mapContourSettings.mapSliceNodalLines.includes(props.map.molNo));
     const sliceContourSpacing = useSelector((state: moorhen.State) =>
         state.mapContourSettings.mapSliceContourSpacings.find(item => item.molNo === props.map.molNo)?.spacing ?? DEFAULT_SLICE_CONTOUR_SPACING);
+
+    const store = useStore<moorhen.State>();
+    /**
+     * Look straight at the slice, centred on it: along its normal from the side the view is on,
+     * the side of it nearest the screen's x made the screen's x (sliceView.ts). Read from the store
+     * when clicked, as the view and the slice are then.
+     */
+    const alignViewToSlice = () => {
+        const state = store.getState();
+        const slice = state.mapContourSettings.mapSlices.find(item => item.molNo === props.map.molNo);
+        if (!slice) return;
+        dispatch(setQuat(quatFacingSlice(state.glRef.quat, slice.orientation)));
+        // Moorhen's origin is the point that puts a centre in view: its negative.
+        dispatch(setOrigin(slice.origin.map(coord => -coord) as [number, number, number]));
+    };
 
     const chooseStyle = (style: MapStyle) => {
         // Handles belong to the slice: none once the map is drawn another way.
@@ -225,6 +243,9 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         onChange={() => dispatch(setMovingMapSlice(isMovingSlice ? null : props.map.molNo))}
                         label="Move & turn"
                     />
+                    <MoorhenButton size="small" disabled={!props.mapIsVisible} onClick={alignViewToSlice} tooltip="Look straight at the slice, centred on it; the side nearest the screen's x made horizontal">
+                        Align view
+                    </MoorhenButton>
                     <MoorhenSelect
                         label="Contours"
                         value={sliceContourSpacing}
