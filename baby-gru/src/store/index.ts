@@ -13,6 +13,7 @@ export {
 }  from "./threeDObjectsSlice";
 export {
     setSelectedThreeDObject,
+    setMovingMapSlice,
     setActiveMap,
     setViewOnly,
     setTheme,
@@ -239,6 +240,9 @@ export {
     setMapFastRadius,
     setMapAlpha,
     setMapStyle,
+    setMapSlice,
+    setMapSliceNodalLines,
+    setMapSliceContourSpacing,
     changeMapRadius,
     setDefaultMapSamplingRate,
     setDefaultMapLitLines,

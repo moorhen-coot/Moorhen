@@ -64,6 +64,8 @@ export class GpuMapLayer {
         const notes: string[] = [];
         for (const map of maps) {
             if (!settings.visibleMaps.includes(map.molNo)) continue;
+            // Drawn as a 2D slice (MoorhenMap.drawMapSlice), among the ordinary display buffers.
+            if (mapStyleOf(settings, map.molNo) === "slice") continue;
             let entry = this.maps.get(map);
             if (!entry) {
                 entry = { grid: null, revision: -1, loading: false, fetches: 0, failed: null, surfaces: new Map() };

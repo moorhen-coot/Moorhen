@@ -2,10 +2,12 @@ import {
     combineIntoSections, getEllipsoid, getFrustum, getTorus, mergeMeshes, placedMesh,
 } from './shapeGeometry'
 import { IDENTITY_ORIENTATION, createMeshInstances } from './meshInstancing'
-import { centreOfObject, extentOfObject, hasOrientation } from '../store/threeDObjectsSlice'
+import { ThreeDObject, centreOfObject, extentOfObject, hasOrientation } from '../store/threeDObjectsSlice'
 import { MOORHEN_GIZMO_TAG_KIND } from '../utils/enums'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
+import { mapStyleOf } from '../WebGPUComponents/mapContour/setting'
+import { MapSlicePlacement, sliceHalfSize } from '../utils/mapSlice/mapSlice'
 
 /**
  * The manipulation handles: an arrow along each axis to move an object, and a ring about each to
@@ -184,7 +186,50 @@ const ringSpan = (orientation: number[], scale: number) => {
 }
 
 /**
- * The handles for one object.
+ * What the handles are on: a 3D object, or a map's 2D slice (mapSlice.ts), which is placed the same
+ * way - an origin and, for turning, an orientation - and so moves and turns by the same handles.
+ *
+ * At most one of them at a time (setSelectedThreeDObject and setMovingMapSlice each clear the other).
+ */
+export type HandleTarget =
+    | { kind: 'object'; object: ThreeDObject; centre: [number, number, number]; extent: number; turnable: boolean }
+    | { kind: 'mapSlice'; molNo: number; slice: MapSlicePlacement; centre: [number, number, number]; extent: number; turnable: true }
+
+export const handleTargetOf = (state: RootState): HandleTarget | null => {
+    const molNo = state.generalStates.movingMapSlice
+    if (molNo !== null && molNo !== undefined) {
+        const settings = state.mapContourSettings
+        const slice = settings.mapSlices.find(item => item.molNo === molNo)
+        // A slice offers handles only while it is on the screen.
+        if (!slice || !settings.visibleMaps.includes(molNo) || mapStyleOf(settings, molNo) !== 'slice') {
+            return null
+        }
+        const map = state.maps.find(item => item.molNo === molNo)
+        return {
+            kind: 'mapSlice',
+            molNo,
+            slice: { origin: slice.origin, orientation: slice.orientation },
+            centre: [...slice.origin] as [number, number, number],
+            extent: sliceHalfSize(settings, molNo, map?.suggestedRadius),
+            turnable: true,
+        }
+    }
+    const selectedId = state.generalStates.selectedThreeDObjectId
+    if (!selectedId) {
+        return null
+    }
+    const object = state.threeDObjects.objects.find(item => item.uniqueId === selectedId)
+    // A locked object offers no handles. Selecting one still works - you can look at it, centre
+    // on it and read its properties - but there is nothing to drag, because its geometry follows
+    // from whatever owns it rather than from where the user last left it.
+    if (!object || object.locked) {
+        return null
+    }
+    return { kind: 'object', object, centre: centreOfObject(object), extent: extentOfObject(object), turnable: hasOrientation(object) }
+}
+
+/**
+ * The handles for one object, or a map's slice.
  *
  * One buffer per axis rather than one for the whole gizmo, because colour is a per-instance
  * attribute: three buffers is what lets x, y and z be told apart. Within each, the arrow and the
@@ -192,24 +237,14 @@ const ringSpan = (orientation: number[], scale: number) => {
  */
 export const getGizmoBuffers = async (store: Store<RootState>): Promise<any> => {
     const state = store.getState()
-    const selectedId = state.generalStates.selectedThreeDObjectId
-    if (!selectedId) {
-        return []
-    }
-    const object = state.threeDObjects.objects.find(item => item.uniqueId === selectedId)
-    if (!object) {
-        return []
-    }
-    // A locked object offers no handles. Selecting one still works - you can look at it, centre
-    // on it and read its properties - but there is nothing to drag, because its geometry follows
-    // from whatever owns it rather than from where the user last left it.
-    if (object.locked) {
+    const target = handleTargetOf(state)
+    if (!target) {
         return []
     }
 
-    const centre = centreOfObject(object)
-    const scale = Math.max(SIZE_PER_ZOOM * state.sceneSettings.zoom, extentOfObject(object) * CLEARANCE)
-    const turnable = hasOrientation(object)
+    const centre = target.centre
+    const scale = Math.max(SIZE_PER_ZOOM * state.sceneSettings.zoom, target.extent * CLEARANCE)
+    const turnable = target.turnable
 
     const meshes = createMeshInstances()
     AXES.forEach(axis => {

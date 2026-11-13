@@ -136,6 +136,20 @@ message MapDataSession {
   // Made from a Gaussian Cube. Optional and added last, so a session written before this existed
   // still reads: the field is simply absent and the map comes back as an ordinary map.
   optional bool isCube = 15;
+  // Where its 2D contour slice was (utils/mapSlice/mapSlice.ts), whether or not it is drawn as one
+  // now, so that it comes back there. Absent for a map that never had one, and in older sessions.
+  optional MapSliceSession slice = 16;
+}
+
+message MapSliceSession {
+  // The centre of the slice (angstroms): x, y, z.
+  repeated float origin = 1;
+  // Column-major 4x4: columns 0 and 1 run across the slice, column 2 is its normal.
+  repeated float orientation = 2;
+  // Whether it shows its nodal lines (the zero contour).
+  bool nodalLines = 3;
+  // How its contours are spaced: "linear" or "geometric" (empty: the default).
+  string contourSpacing = 4;
 }
 
 message MapRgba {

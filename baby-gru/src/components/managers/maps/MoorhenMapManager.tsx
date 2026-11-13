@@ -2,6 +2,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useEffect, useMemo, useRef } from "react";
 import type { RootState } from "../../../store/MoorhenReduxStore";
 import { setContourLevel, setMapFastRadius, setMapRadius, setMapStyle, showMap } from "../../../store/mapContourSettingsSlice";
+import type { MapStyle } from "../../../store/mapContourSettingsSlice";
 import { gpuMapContourSetting } from "../../../WebGPUComponents/mapContour/setting";
 import { SelectorEffect } from "../../hookComponent/SelectorEffect";
 import { MapOriginListener, MapOriginListenerMouseUp } from "./MapOriginListener";
@@ -17,7 +18,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
             z: number;
             radius: number;
             contourLevel: number;
-            style: "solid" | "lit-lines" | "lines";
+            style: MapStyle;
         }[]
     >([]);
     const isWorkingRef = useRef<boolean>(false);
@@ -78,7 +79,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
     const mapLineWidth = useSelector((state: RootState) => state.mapContourSettings.mapLineWidth);
 
 
-    const mapStyle: "solid" | "lit-lines" | "lines" = useSelector((state: RootState) => {
+    const mapStyle: MapStyle = useSelector((state: RootState) => {
         const style = state.mapContourSettings.mapStyles.find(item => item.molNo === mapMolNo);
         if (!style) {
             const defaultStyle = store.getState().mapContourSettings.defaultMapLitLines
@@ -90,6 +91,23 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         }
         return style.style;
     });
+
+    // What a 2D slice is drawn from besides the level and radius: where it is, the colours and
+    // opacity (a 3D contour is recoloured in place; a slice is drawn again), how its contours are
+    // spaced and whether it shows its nodal lines. The store keeps
+    // these objects as they are until they change, so they are compared by reference.
+    const mapSlice = useSelector((state: RootState) => state.mapContourSettings.mapSlices.find(item => item.molNo === mapMolNo));
+    const sliceColours = useSelector((state: RootState) => {
+        const settings = state.mapContourSettings;
+        return mapStyle !== "slice" ? null : [
+            settings.mapColours.find(item => item.molNo === mapMolNo),
+            settings.positiveMapColours.find(item => item.molNo === mapMolNo),
+            settings.negativeMapColours.find(item => item.molNo === mapMolNo),
+            settings.mapAlpha.find(item => item.molNo === mapMolNo),
+            settings.mapSliceNodalLines.includes(mapMolNo),
+            settings.mapSliceContourSpacings.find(item => item.molNo === mapMolNo),
+        ];
+    }, (a, b) => a === b || (a !== null && b !== null && a.every((item, i) => item === b[i])));
 
     const appendDrawQueue = () => {
         const currentOrigin = store.getState().sceneSettings.origin;
@@ -137,8 +155,17 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
         }
         if (!mapIsVisible) {
             map.hideMapContour();
+            map.hideMapSlice();
             return;
         }
+        if (mapStyle === "slice") {
+            // Contoured here rather than queued for Coot: the map's grid, once fetched, is
+            // sampled directly (MoorhenMap.drawMapSlice).
+            map.hideMapContour();
+            map.drawMapSlice();
+            return;
+        }
+        map.hideMapSlice();
         appendDrawQueue();
     }
 
@@ -187,7 +214,7 @@ export const MoorhenMapManager = memo((props: { mapMolNo: number }) => {
 
     useEffect(() => {
         drawMap();
-    }, [mapIsVisible, mapContourLevel, mapRadius, isOriginLocked, mapStyle]);
+    }, [mapIsVisible, mapContourLevel, mapRadius, isOriginLocked, mapStyle, mapSlice, sliceColours]);
 
     useEffect(() => {
         const intervalId = setInterval(() => {

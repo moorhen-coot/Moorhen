@@ -195,6 +195,7 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
                     mapRadius={mapRadius}
                     mapOpacity={mapOpacity}
                     hideRadiusControls={true}
+                    offerSlice={true}
                 />
             </MoorhenStack>
         </MoorhenAccordion>

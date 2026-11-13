@@ -22,6 +22,9 @@ import {
     setMapColours,
     setMapRadius,
     setMapStyle,
+    setMapSlice,
+    setMapSliceNodalLines,
+    setMapSliceContourSpacing,
     setNegativeMapColours,
     setPositiveMapColours, addMap, emptyMaps, enableUpdatingMaps,
     setConnectedMoleculeMolNo,
@@ -69,6 +72,7 @@ import { guid } from "./utils";
 import { representationIdForRestore } from "./sessionRepresentation";
 import { MoorhenInstance } from "@/InstanceManager";
 import { Root } from "protobufjs";
+import type { MapStyle } from "../store/mapContourSettingsSlice";
 
 export interface backupKey {
     name?: string;
@@ -136,10 +140,15 @@ export type mapDataSession = {
         negativeDiffColour: { r: number; g: number; b: number };
         a: number;
     };
-    style: "solid" | "lit-lines" | "lines";
+    style: MapStyle;
     isDifference: boolean;
     /** Made from a Gaussian Cube. Optional: sessions written before cubes were readable lack it. */
     isCube?: boolean;
+    /**
+     * Where its 2D slice was, whether or not drawn as one now (mapSlice.ts). Absent for a map that
+     * never had one, and in sessions written before slices.
+     */
+    slice?: { origin: number[]; orientation: number[]; nodalLines?: boolean; contourSpacing?: string } | null;
     selectedColumns: moorhen.selectedMtzColumns;
     hasReflectionData: boolean;
     associatedReflectionFileName: string;
@@ -508,6 +517,15 @@ export class MoorhenTimeCapsule {
                 style: state.mapContourSettings.mapStyles.find(item => item.molNo === map.molNo)?.style,
                 isDifference: map.isDifference,
                 isCube: map.isCube,
+                slice: (() => {
+                    const slice = state.mapContourSettings.mapSlices.find(item => item.molNo === map.molNo);
+                    return slice ? {
+                        origin: [...slice.origin],
+                        orientation: [...slice.orientation],
+                        nodalLines: state.mapContourSettings.mapSliceNodalLines.includes(map.molNo),
+                        contourSpacing: state.mapContourSettings.mapSliceContourSpacings.find(item => item.molNo === map.molNo)?.spacing,
+                    } : null;
+                })(),
                 selectedColumns: map.selectedColumns,
                 hasReflectionData: map.hasReflectionData,
                 associatedReflectionFileName: map.associatedReflectionFileName,
@@ -1065,6 +1083,22 @@ export class MoorhenTimeCapsule {
                         alpha: storedMapData.rgba.a,
                     })
                 );
+                // Before the style, so that a map saved as a slice is drawn where it was rather than
+                // through the centre of the view.
+                if (storedMapData.slice?.origin?.length === 3 && storedMapData.slice.orientation?.length === 16) {
+                    dispatch(
+                        setMapSlice({
+                            molNo: map.molNo,
+                            origin: storedMapData.slice.origin as [number, number, number],
+                            orientation: storedMapData.slice.orientation,
+                        })
+                    );
+                    dispatch(setMapSliceNodalLines({ molNo: map.molNo, show: Boolean(storedMapData.slice.nodalLines) }));
+                    const spacing = storedMapData.slice.contourSpacing;
+                    if (spacing === "linear" || spacing === "geometric") {
+                        dispatch(setMapSliceContourSpacing({ molNo: map.molNo, spacing }));
+                    }
+                }
                 dispatch(
                     setMapStyle({
                         molNo: map.molNo,

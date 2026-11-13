@@ -656,7 +656,9 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         <>
             <MoorhenStack style={{ color: props.colour ? props.colour : null, ...props.style }}>
                 {drawTitle()}
-                <MoorhenStack direction="row">
+                {/* Not grown (flex 0): stretched taller - beside a taller column, say - the buttons
+                    stayed at the top of the row while the track was centred in it, and came apart. */}
+                <MoorhenStack direction="row" flex={0}>
                     <div className={"moorhen__slider__leftPanel"}>{drawSidePanels("L")}</div>
                     <div className={`moorhen__slider-track-container ${buttonIsDown ? "moorhen__slider-track-container-active" : ""}`}>
                         <input
