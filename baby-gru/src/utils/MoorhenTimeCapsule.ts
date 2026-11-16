@@ -1000,7 +1000,8 @@ export class MoorhenTimeCapsule {
                     Object.keys(storedMoleculeData.ligandDicts).map(compId => molecule.addDict(storedMoleculeData.ligandDicts[compId]))
                 );
             }
-            molecule.defaultColourRules = storedMoleculeData.defaultColourRules.map(item => {
+            // An empty list is not written to a session file (protobuf), so it can be absent
+            molecule.defaultColourRules = (storedMoleculeData.defaultColourRules ?? []).map(item => {
                 const colourRule = ColourRule.initFromDataObject(item, moorhenInstance.commandCentre, molecule);
                 return colourRule;
             });

@@ -1196,7 +1196,8 @@ export class MoorhenMolecule {
                         return this.loadMissingMonomer(newTlc, this.molNo);
                     })
                 );
-                ligandDicts.forEach(ligandDict => this.cacheLigandDict(ligandDict));
+                // A type no source has a dictionary for (e.g. UNL) has nothing to cache
+                ligandDicts.filter(Boolean).forEach(ligandDict => this.cacheLigandDict(ligandDict));
                 await this.refreshMissingDictionaries();
             } catch (err) {
                 console.log(err);

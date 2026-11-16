@@ -481,6 +481,19 @@ describe("vectors and 3D shapes", () => {
     });
 });
 
+describe("a session with a molecule without default colour rules", () => {
+    // A session file (protobuf) does not write an empty list, so the field comes back absent. Loading
+    // used to stop at that molecule (a docked ligand, LTR_model2.pb), leaving no molecule loaded.
+    test("loads, the molecule with no rules", async () => {
+        const session = JSON.parse(await saveSession());
+        delete session.moleculeData[0].defaultColourRules;
+        expect(await loadSession(JSON.stringify(session))).toBe(0);
+        const [molecule] = cloud.instance.getMoleculeList();
+        expect(molecule.defaultColourRules).toEqual([]);
+        expect(representationStyles().length).toBeGreaterThan(0);
+    });
+});
+
 describe("a session saved by Moorhen 1.0.1, before scenes", () => {
     // tests/test_data/session/1.0.1.pb, as 1.0.1 wrote it but without its two maps
     const SESSION_MOLECULE_UID = "d2216c9c-ef0d-48f7-9b71-e38b92349348";
