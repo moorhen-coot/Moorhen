@@ -19,7 +19,8 @@
     padding: 0.25rem 0.5rem 0.5rem;
 }
 
-.moorhen__ligand-list-row-hovered {
+/* On the row's own header only, not on its open content (representations, contacts) */
+.moorhen__ligand-list-row-hovered > .moorhen__accordion-container > .moorhen__accordion-header {
     background: color-mix(in srgb, var(--moorhen-focus) 25%, transparent);
     position: relative;
     z-index: 1;
@@ -44,6 +45,55 @@
 }
 
 .moorhen__ligand-list-drawing svg {
+    width: 100%;
+    height: auto;
+}
+
+/* Sections inside an open row (Contacts): a nested accordion, kept flat */
+.moorhen__ligand-list-section {
+    margin-top: 0.25rem;
+}
+
+.moorhen__ligand-list-section > .moorhen__accordion-container {
+    margin: 0;
+}
+
+.moorhen__ligand-contacts-note {
+    font-size: 0.85em;
+    opacity: 0.75;
+}
+
+.moorhen__ligand-contacts-list {
+    display: grid;
+    grid-template-columns: auto auto auto 1fr auto;
+    column-gap: 0.5rem;
+    font-size: 0.85em;
+    max-height: 12rem;
+    overflow-y: auto;
+}
+
+/* Rows are grid rows: their cells are laid out by the list's columns */
+.moorhen__ligand-contacts-row {
+    display: contents;
+}
+
+.moorhen__ligand-contacts-row:hover > span {
+    background: color-mix(in srgb, var(--moorhen-focus) 25%, transparent);
+}
+
+.moorhen__ligand-contacts-swatch {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    align-self: center;
+}
+
+.moorhen__ligand-contacts-flev {
+    width: 100%;
+    max-width: 24rem;
+}
+
+.moorhen__ligand-contacts-flev svg {
     width: 100%;
     height: auto;
 }

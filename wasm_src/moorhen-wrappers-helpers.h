@@ -50,6 +50,7 @@
 #include "Eigen/Dense"
 
 #include "conkit/conkit_validate.h"
+#include "selection-contacts.h"
 #include "json/json.h"
 
 #include <math.h>
@@ -1259,6 +1260,80 @@ class molecules_container_js : public molecules_container_t {
         int add(int ic) {
             return ic + 1;
         }
+        // A temporary molecule holding the atoms of cid_1 in imol_1 and of cid_2 in imol_2, so that the
+        // single-molecule analyses (get_h_bonds_between_json, get_salt_bridges_json, XPID, FLEV...) can
+        // look across two molecules. The first selection keeps its chain ids; a chain of the second
+        // gets a new id if the first already uses its own. Residue numbers are kept. Dictionaries that
+        // only the source molecules have are made available to the new one. Delete it with
+        // delete_merged_molecule. Returns
+        //   {"imol": n, "chains": [{"chainId": "A", "imol": imol_1 or imol_2, "sourceChainId": "A"}]}
+        // or {"error": "..."}.
+        std::string make_merged_molecule_json(int imol_1, const std::string &cid_1, int imol_2, const std::string &cid_2) {
+            auto error = [] (const std::string &message) { return "{\"error\":\"" + message + "\"}"; };
+            if (!is_valid_model_molecule(imol_1) || !is_valid_model_molecule(imol_2)) return error("invalid molecule");
+            const int imol = copy_fragment_using_cid(imol_1, cid_1);
+            if (imol < 0) return error("nothing selected by the first cid");
+            mmdb::Manager *mol = get_mol(imol);
+
+            Json::Value chains(Json::arrayValue);
+            auto add_chain = [&chains] (const std::string &id, int source_imol, const std::string &source_id) {
+                Json::Value chain;
+                chain["chainId"] = id;
+                chain["imol"] = source_imol;
+                chain["sourceChainId"] = source_id;
+                chains.append(chain);
+            };
+            if (mmdb::Model *model = mol->GetModel(1))
+                for (int ic = 0; ic < model->GetNumberOfChains(); ic++)
+                    add_chain(model->GetChain(ic)->GetChainID(), imol_1, model->GetChain(ic)->GetChainID());
+            const auto added = moorhen::append_selection(mol, get_mol(imol_2), cid_2);
+            if (added.empty()) {
+                delete_merged_molecule(imol);
+                return error("nothing selected by the second cid");
+            }
+            for (const auto &[id, source_id] : added) add_chain(id, imol_2, source_id);
+            (*this)[imol].atom_sel = make_asc(mol);
+
+            // Dictionaries read for imol_1 or imol_2 only (not for every molecule)
+            coot::protein_geometry &geom = get_geometry();
+            std::set<std::string> types;
+            for (int i = 0; i < (*this)[imol].atom_sel.n_selected_atoms; i++)
+                types.insert((*this)[imol].atom_sel.atom_selection[i]->GetResName());
+            for (const auto &type : types) {
+                if (geom.have_dictionary_for_residue_type_no_dynamic_add(type, imol)) continue;
+                if (!geom.copy_monomer_restraints(type, imol_1, imol)) geom.copy_monomer_restraints(type, imol_2, imol);
+            }
+
+            Json::Value root;
+            root["imol"] = imol;
+            root["chains"] = chains;
+            Json::StreamWriterBuilder builder;
+            builder["indentation"] = "";
+            return Json::writeString(builder, root);
+        }
+
+        // Delete a molecule made by make_merged_molecule_json (and any closed molecules after it, so
+        // that their indices are reused).
+        int delete_merged_molecule(int imol) {
+            const int status = close_molecule(imol);
+            end_delete_closed_molecules();
+            return status;
+        }
+
+        // Hydrogen bonds between two selections of a molecule (the second without the atoms of the
+        // first). JSON, see selection-contacts.h.
+        std::string get_h_bonds_between_json(int imol, const std::string &cid_1, const std::string &cid_2,
+                                             bool mcdonald_and_thornton) {
+            if (!is_valid_model_molecule(imol)) return "{\"error\":\"invalid molecule\"}";
+            return moorhen::h_bonds_between_json(get_mol(imol), cid_1, cid_2, get_geometry(), imol, mcdonald_and_thornton);
+        }
+
+        // Salt bridges between two selections of a molecule. JSON, see selection-contacts.h.
+        std::string get_salt_bridges_json(int imol, const std::string &cid_1, const std::string &cid_2, float max_distance) {
+            if (!is_valid_model_molecule(imol)) return "{\"error\":\"invalid molecule\"}";
+            return moorhen::salt_bridges_json(get_mol(imol), cid_1, cid_2, get_geometry(), imol, max_distance);
+        }
+
         std::string rotamer_analysis_json(int imol_model) {
             coot::validation_information_t info = rotamer_analysis(imol_model);
             return moorhen::validation_information_t_to_json(info);

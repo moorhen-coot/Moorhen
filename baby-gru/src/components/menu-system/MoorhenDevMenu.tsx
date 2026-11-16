@@ -31,7 +31,7 @@ import { centreOfObject } from "../../store/threeDObjectsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
-import { devLoadLibraryLigands } from "../../utils/devLigands";
+import { devLoadLibraryLigands, devLogLigandContacts } from "../../utils/devLigands";
 import { modalKeys } from "../../utils/enums";
 import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
 import { readGzippedTextFile } from "../../utils/utils";
@@ -480,6 +480,19 @@ export const MoorhenDevMenu = () => {
                         }}
                     >
                         Load 10 library ligands (batch, 3 sites)
+                    </MoorhenMenuItem>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            document.body.click();
+                            devLogLigandContacts(moorhenInstance, true).then(logged =>
+                                moorhenInstance.snackbar.enqueueSnackbar({
+                                    message: `Logged contacts for ${logged} ligand / molecule pairs to the console`,
+                                    variant: "info",
+                                })
+                            );
+                        }}
+                    >
+                        Log ligand contacts (console)
                     </MoorhenMenuItem>
                     <MoorhenToggle
                         type="switch"

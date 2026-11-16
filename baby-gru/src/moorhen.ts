@@ -49,7 +49,7 @@ export { createMoorhenStore } from "@/store/MoorhenReduxStore";
 
 // Types referenced by the exported API. These are re-exported so
 // that the API reference (TypeDoc) documents them and can link to them.
-export type { ValidationData, ResidueValidationData, CootValidationData } from "./InstanceManager/CommandCentre/CootCommandWrapper";
+export type { ValidationData, ResidueValidationData, CootValidationData, CootContactAtom, MergedMolecule, SelectionHBond, SaltBridge, XhpiInteraction } from "./InstanceManager/CommandCentre/CootCommandWrapper";
 export type { WorkerResponse, WorkerMessage, cootCommandKwargs } from "./InstanceManager/CommandCentre/MoorhenCommandCentre";
 export type { moleculeChangeAction } from "./InstanceManager/MoorhenInstance";
 export type { CreateRepresentationParams, PublicRepresentationStyles } from "./utils/Representation/RepresentationBuilder";

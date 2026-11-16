@@ -2,15 +2,17 @@ import parse from "html-react-parser";
 import { batch, shallowEqual, useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
-import { MoorhenButton, MoorhenColourPicker, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
+import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
 import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
 import { MoorhenAccordion, MoorhenStack } from "@/components/interface-base";
-import { type RootState, addCustomRepresentation, removeCustomRepresentation, setHoveredAtom } from "@/store";
+import { type RootState, addCustomRepresentation, enqueueSnackbar, removeCustomRepresentation, setHoveredAtom } from "@/store";
+import { triggerUpdate } from "@/store/moleculeMapUpdateSlice";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { MoleculeRepresentation, type RepresentationStyles } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { type LigandSite, centreOnSite, groupLigandsBySite } from "@/utils/ligandSites";
 import { setMoleculeVisible } from "@/utils/moleculeVisibility";
 import { hexToRGB, rgbToHex } from "@/utils/utils";
+import { LigandContacts } from "./LigandContacts";
 import { selectCustomRepresentations } from "../MoleculeCard/moleculeCardSelectors";
 import "./ligand-list-card.css";
 
@@ -206,6 +208,9 @@ const LigandListRow = memo(function LigandListRow(props: {
                     <MoorhenPopoverButton key="2d" size="accordion" icon="ligand" tooltip="2D view" popoverPlacement="left">
                         <LigandDrawing molecule={molecule} />
                     </MoorhenPopoverButton>,
+                    <MoorhenPopoverButton key="merge" size="accordion" icon="MatSymMerge" tooltip="Merge into a molecule" popoverPlacement="left">
+                        <LigandMergeInto molecule={molecule} />
+                    </MoorhenPopoverButton>,
                     <MoorhenButton
                         key="centre"
                         size="accordion"
@@ -225,6 +230,11 @@ const LigandListRow = memo(function LigandListRow(props: {
                 ]}
             >
                 <LigandRepresentations molecule={molecule} />
+                <div className="moorhen__ligand-list-section">
+                    <MoorhenAccordion title="Contacts">
+                        <LigandContacts molecule={molecule} />
+                    </MoorhenAccordion>
+                </div>
             </MoorhenAccordion>
         </div>
     );
@@ -253,7 +263,13 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule }) => {
     const { molecule } = props;
     const dispatch = useDispatch();
     const representations = useSelector((state: RootState) => selectCustomRepresentations(state, molecule.molNo), shallowEqual);
-    const ligandRepresentations = representations.filter(representation => LIGAND_STYLES.some(item => item.style === representation.style));
+    const isLigandStyle = (representation: MoleculeRepresentation) => LIGAND_STYLES.some(item => item.style === representation.style);
+    // Plus the default bonds that some ways of loading a ligand draw (fetchIfDirtyAndDraw: dictionaries,
+    // Get Monomer...), which are not custom representations and so not in the store, but are shown
+    const ligandRepresentations = [
+        ...representations.filter(isLigandStyle),
+        ...molecule.representations.filter(representation => !representation.isCustom && representation.visible && isLigandStyle(representation)),
+    ];
     const shownStyle = ligandRepresentations[0]?.style ?? null;
     const [busy, setBusy] = useState<boolean>(false);
 
@@ -294,7 +310,7 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule }) => {
                 dispatch(addCustomRepresentation(representation));
                 for (const previous of ligandRepresentations) {
                     molecule.removeRepresentation(previous.uniqueId);
-                    dispatch(removeCustomRepresentation(previous));
+                    if (previous.isCustom) dispatch(removeCustomRepresentation(previous));
                 }
             });
         } finally {
@@ -346,6 +362,46 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule }) => {
                 tooltip="Carbon colour of this ligand"
                 position="left"
             />
+        </MoorhenStack>
+    );
+};
+
+/**
+ * Merge the ligand into another molecule (a model, not another ligand-only molecule), as the Merge
+ * molecules menu does: the ligand-only molecule is hidden, not deleted.
+ */
+const LigandMergeInto = (props: { molecule: MoorhenMolecule }) => {
+    const { molecule } = props;
+    const dispatch = useDispatch();
+    const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
+    const targets = moleculeList.filter(other => other !== molecule && !other.isLigandOnly());
+    const [targetUid, setTargetUid] = useState<string | undefined>(undefined);
+    const [busy, setBusy] = useState<boolean>(false);
+
+    const merge = async () => {
+        const target = targets.find(other => other.uniqueId === targetUid);
+        if (!target) return;
+        setBusy(true);
+        try {
+            await target.mergeMolecules([molecule], true);
+            dispatch(triggerUpdate(target.molNo));
+            dispatch(enqueueSnackbar({ message: `Merged ${molecule.name} into ${target.name}`, variant: "success" }));
+            document.body.click();
+        } catch (err) {
+            console.error(err);
+            dispatch(enqueueSnackbar({ message: `Failed to merge ${molecule.name}`, variant: "error" }));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    if (targets.length === 0) return <span>No model to merge into</span>;
+    return (
+        <MoorhenStack direction="row" gap="0.5rem" align="center">
+            <MoorhenMoleculeSelect useUniqueId={true} molecules={targets} selectedMolecule={targetUid} setSelectedMolecule={setTargetUid} label="Into" />
+            <MoorhenButton onClick={merge} disabled={busy || !targetUid}>
+                Merge
+            </MoorhenButton>
         </MoorhenStack>
     );
 };

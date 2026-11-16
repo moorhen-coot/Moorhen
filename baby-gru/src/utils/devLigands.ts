@@ -1,4 +1,5 @@
 import type { MoorhenInstance } from "@/InstanceManager/MoorhenInstance";
+import { getLigandContacts } from "./ligandContacts";
 import { fetchMonomerDictionary } from "./monomerLibrary";
 
 /**
@@ -67,4 +68,29 @@ export const devLoadLibraryLigands = async (instance: MoorhenInstance, count = 1
     }
     // Placed around the view centre already, so the view is left where it is
     return instance.files.batchLoadLigands(sources, { dictionaries });
+};
+
+/**
+ * Dev tool: the contacts (utils/ligandContacts) of every ligand-only molecule with every other
+ * molecule, logged to the console. Pairs without contacts are left out. Returns the number of pairs
+ * logged.
+ */
+export const devLogLigandContacts = async (instance: MoorhenInstance, withFlev = false) => {
+    const molecules = instance.getMoleculeList();
+    const partners = molecules.filter(molecule => !molecule.isLigandOnly());
+    let logged = 0;
+    for (const ligandMolecule of molecules.filter(molecule => molecule.isLigandOnly())) {
+        for (const partner of partners) {
+            const start = performance.now();
+            try {
+                const result = await getLigandContacts(ligandMolecule, partner, { xhpi: true, flev: withFlev });
+                if (result.contacts.length === 0) continue;
+                console.log(`Contacts ${ligandMolecule.name} -> ${partner.name} (${(performance.now() - start).toFixed(0)} ms)`, result);
+                logged++;
+            } catch (err) {
+                console.warn(`Contacts ${ligandMolecule.name} -> ${partner.name} failed`, err);
+            }
+        }
+    }
+    return logged;
 };

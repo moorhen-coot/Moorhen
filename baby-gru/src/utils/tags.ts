@@ -18,6 +18,7 @@ export const TAG_MOLECULE = "molecule";
 export const SOURCE_XPID = "xpid";
 export const SOURCE_NEF = "nef";
 export const SOURCE_DEV_TEST = "dev-test";
+export const SOURCE_LIGAND_CONTACTS = "ligand-contacts";
 
 /**
  * Does this thing carry all the tags asked for?
