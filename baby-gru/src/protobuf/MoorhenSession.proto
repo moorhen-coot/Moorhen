@@ -340,6 +340,15 @@ message Blur {
   float radius = 3;
 }
 
+// A ligand dictionary read into Coot (one data_comp_ block), see store/dictionariesSlice.ts
+message LigandDictionary {
+  string compId = 1;
+  string content = 2;
+  // The uniqueId of the molecule it was read for; empty for every molecule
+  string moleculeUid = 3;
+  string source = 4;
+}
+
 message Session {
   string version = 1;
   bool includesAdditionalMapData = 2;
@@ -353,4 +362,6 @@ message Session {
   repeated Moorhen3DObject threeDObjectData = 10;
   // Scenes and snapshots, as JSON (see UserSceneState): kept out of the schema so they can evolve freely
   optional string sceneData = 11;
+  // Every dictionary read into Coot, including those whose molecule has since been deleted
+  repeated LigandDictionary dictionaries = 12;
 }

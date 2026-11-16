@@ -3,6 +3,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState, enqueueSnackbar } from "@/store";
 import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
+import { readDictionary } from "../../utils/dictionaries";
 import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
@@ -201,15 +202,7 @@ export const GetMonomer = () => {
             if (selectedMolecule) {
                 await selectedMolecule.addDict(ligandDict);
             } else {
-                await moorhenInstance.commandCentre.cootCommand(
-                    {
-                        returnType: "status",
-                        command: "read_dictionary_string",
-                        commandArgs: [ligandDict, -999999],
-                        changesMolecules: [],
-                    },
-                    false
-                );
+                await readDictionary(moorhenInstance, ligandDict, null, "Get monomer");
             }
 
             const result = await getMonomerFromLibcootAPI(tlc, fromMolNo);

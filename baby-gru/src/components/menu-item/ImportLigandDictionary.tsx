@@ -8,6 +8,7 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { ALL_MOLECULES, readDictionary } from "../../utils/dictionaries";
 import { MoorhenButton, MoorhenFileInput, MoorhenNumberInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
@@ -69,16 +70,8 @@ const ImportLigandDictionary = (props: {
                     molNosToUpdate.push(selectedMolecule.molNo);
                 }
             } else {
-                selectedMoleculeIndex = -999999;
-                await commandCentre.cootCommand(
-                    {
-                        returnType: "status",
-                        command: "read_dictionary_string",
-                        commandArgs: [fileContent, selectedMoleculeIndex],
-                        changesMolecules: [],
-                    },
-                    false
-                );
+                selectedMoleculeIndex = ALL_MOLECULES;
+                await readDictionary(moorhenInstance, fileContent, null, "Import dictionary");
                 await Promise.all(
                     molecules.map(molecule => {
                         molecule.cacheLigandDict(fileContent);

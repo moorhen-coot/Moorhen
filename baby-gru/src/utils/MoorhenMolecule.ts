@@ -37,6 +37,7 @@ import { MoorhenInstance } from "@/InstanceManager/index";
 import { CommandCentre } from "@/InstanceManager/CommandCentre/index";
 import { fetchMonomerDictionary } from "./monomerLibrary";
 import { queueMoleculeRecord, queuedMoleculeRecord } from "./moleculeRecords";
+import { ALL_MOLECULES, readDictionary, splitDictionary } from "./dictionaries";
 
 export type ResidueInfo = {
     resCode: string;
@@ -1025,15 +1026,7 @@ export class MoorhenMolecule {
                 const coordContent = small_to_cif_response.data.result.result.first;
                 const dictContent = small_to_cif_response.data.result.result.second;
                 //FIXME - I think I want specific molecule, but there is a circular dependency between mol and dicts
-                const anyMolNo = -999999;
-                await this.commandCentre.cootCommand(
-                    {
-                        returnType: "status",
-                        command: "read_dictionary_string",
-                        commandArgs: [dictContent, anyMolNo],
-                    },
-                    false
-                );
+                await readDictionary(this, dictContent, null, source.name);
                 return await this.loadToCootFromString(coordContent, source.name);
             }
             if (source.name.endsWith(".mol")) {
@@ -1048,15 +1041,7 @@ export class MoorhenMolecule {
                 const pdb = response.data.result.result.first;
                 const dict = response.data.result.result.second;
                 const mol = await this.loadToCootFromString(pdb, source.name);
-                await this.commandCentre.cootCommand(
-                    {
-                        returnType: "status",
-                        command: "read_dictionary_string",
-                        commandArgs: [dict, mol.molNo],
-                        changesMolecules: [],
-                    },
-                    false
-                );
+                await readDictionary(this, dict, mol, source.name);
                 return mol;
             }
             return await this.loadToCootFromString(coordData, source.name);
@@ -1162,14 +1147,13 @@ export class MoorhenMolecule {
         const dictContent = await fetchMonomerDictionary(newTlc, this.monomerLibraryPath);
 
         if (dictContent) {
-            await this.commandCentre.cootCommand(
-                {
-                    returnType: "status",
-                    command: "read_dictionary_string",
-                    commandArgs: [dictContent, attachToMolecule],
-                },
-                false
-            );
+            const molecule =
+                attachToMolecule === ALL_MOLECULES
+                    ? null
+                    : attachToMolecule === this.molNo
+                      ? this
+                      : this.store.getState().molecules.moleculeList.find(other => other.molNo === attachToMolecule);
+            await readDictionary(this, dictContent, molecule ?? null, "monomer library");
         }
 
         return dictContent;
@@ -2112,30 +2096,8 @@ export class MoorhenMolecule {
             return;
         }
 
-        const possibleIndentedLines = fileContent.split("\n");
-        let unindentedLines: string[] = [];
-        let comp_id = "list";
-        const rx_1 = /data_comp_(.*)/;
-        const rx_2 = /data_(.*)/;
-
-        for (const line of possibleIndentedLines) {
-            const trimmedLine = line.trim();
-            const arr = rx_1.exec(trimmedLine) ?? rx_2.exec(trimmedLine);
-            if (arr !== null) {
-                //Had we encountered a previous compound ?  If so, add it into the energy lib
-                if (comp_id !== "list") {
-                    const reassembledCif = unindentedLines.join("\n");
-                    this.ligandDicts[comp_id] = reassembledCif;
-                    unindentedLines = [];
-                }
-                comp_id = arr[1];
-            }
-            unindentedLines.push(line.trim());
-        }
-
-        if (comp_id !== "list") {
-            const reassembledCif = unindentedLines.join("\n");
-            this.ligandDicts[comp_id] = reassembledCif;
+        for (const [compId, block] of splitDictionary(fileContent)) {
+            this.ligandDicts[compId] = block;
         }
         this.moorhenInstance.triggerMoleculeChanged(this.uniqueId)
     }
@@ -2150,14 +2112,7 @@ export class MoorhenMolecule {
             return;
         }
 
-        await this.commandCentre.cootCommand(
-            {
-                returnType: "status",
-                command: "read_dictionary_string",
-                commandArgs: [fileContent, this.molNo],
-            },
-            false
-        );
+        await readDictionary(this, fileContent, this);
 
         this.cacheLigandDict(fileContent);
         await this.refreshMissingDictionaries();
@@ -2248,7 +2203,8 @@ export class MoorhenMolecule {
      * when its ligands change and when it is given a dictionary.
      */
     async refreshMissingDictionaries(): Promise<void> {
-        if (this.recordClosed || this.molNo === -1) return;
+        // Not in Coot yet (a molecule's gemmi structure is read before Coot gives it a number)
+        if (this.recordClosed || typeof this.molNo !== "number" || this.molNo < 0) return;
         const ligandTypes = new Set((this.ligands ?? []).map(ligand => ligand.resName));
         if (ligandTypes.size === 0) {
             this.refreshRecord([]);

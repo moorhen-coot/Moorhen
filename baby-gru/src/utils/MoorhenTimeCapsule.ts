@@ -59,6 +59,8 @@ import type {
     Overlay2DTextFrac,
 } from "../store/overlaysSlice";
 import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
+import { type LoadedDictionary, emptyDictionaries } from "../store/dictionariesSlice";
+import { readDictionary } from "./dictionaries";
 import { ThreeDObject, addObject, emptyObjects } from "../store/threeDObjectsSlice";
 import { withMigratedTags } from "./tags";
 import { moorhen } from "../types/moorhen";
@@ -199,6 +201,11 @@ export type backupSession = {
      * when the session was saved; sessions saved without it load into the "General" scene.
      */
     sceneData?: string;
+    /**
+     * Every ligand dictionary read into Coot (store `dictionaries`), including those whose molecule has
+     * since been deleted. Older sessions only have each molecule's own copy (moleculeData[].ligandDicts).
+     */
+    dictionaries?: LoadedDictionary[];
 };
 
 export type Overlay2DSessionData = {
@@ -624,6 +631,7 @@ export class MoorhenTimeCapsule {
             overlay2dData: overlay2dData,
             vectorData: vectorData,
             threeDObjectData: threeDObjectData,
+            dictionaries: Object.values(this.store.getState().dictionaries?.loaded ?? {}),
         };
         const sceneData = this.getSceneData?.();
         if (sceneData) session.sceneData = sceneData;
@@ -925,7 +933,19 @@ export class MoorhenTimeCapsule {
         batch(() => {
             dispatch(emptyMolecules());
             dispatch(emptyMaps());
+            dispatch(emptyDictionaries());
         });
+
+        // Dictionaries for every molecule, before any molecule is loaded: they draw with them, and
+        // a ligand keeps its dictionary even if the molecule it came with was deleted before saving.
+        // (In a session file a dictionary for every molecule has an empty moleculeUid.)
+        const sessionDictionaries = (sessionData.dictionaries ?? []).map(dictionary => ({
+            ...dictionary,
+            moleculeUid: dictionary.moleculeUid || null,
+        }));
+        for (const dictionary of sessionDictionaries.filter(item => item.moleculeUid === null)) {
+            await readDictionary(moorhenInstance, dictionary.content, null, dictionary.source || undefined);
+        }
 
         // Load molecules stored in session from coords string
         const newMoleculePromises =
@@ -990,6 +1010,12 @@ export class MoorhenTimeCapsule {
         const loadPromises = await Promise.all([...newMoleculePromises, ...newMapPromises]);
         const newMolecules = loadPromises.filter(item => item.type === "molecule") as moorhen.Molecule[];
         const newMaps = loadPromises.filter(item => item.type === "map") as moorhen.Map[];
+
+        // Dictionaries read for one molecule, once it is loaded (its uniqueId is kept, its molNo is new)
+        for (const dictionary of sessionDictionaries.filter(item => item.moleculeUid !== null)) {
+            const molecule = newMolecules.find(item => item.uniqueId === dictionary.moleculeUid);
+            if (molecule) await readDictionary(moorhenInstance, dictionary.content, molecule, dictionary.source || undefined);
+        }
 
         // Draw the molecules with the styles stored in session (needs to be done sequentially due to colour rules)
         for (let i = 0; i < newMolecules.length; i++) {

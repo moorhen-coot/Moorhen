@@ -27,6 +27,7 @@ import { createDracoDecode } from "./gltfDracoDecoder";
 import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
 import { gltfMaterials } from "./gltfTextures";
 import { moleculeNameFromFileName } from "./utils";
+import { readDictionary } from "./dictionaries";
 // import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
@@ -397,15 +398,7 @@ const readCifDictionary = async (
     const newMonomers: MoorhenMolecule[] = [];
     for (const dict of dictionary) {
         const newMonomer = new MoorhenMolecule(moorhenInstance);
-        await moorhenInstance.commandCentre.cootCommand(
-            {
-                returnType: "status",
-                command: "read_dictionary_string",
-                commandArgs: [dict.dict_contents, -999999],
-                changesMolecules: [],
-            },
-            false
-        );
+        await readDictionary(moorhenInstance, dict.dict_contents, null, file.name);
         // dictionaryFilesContent.push(content);
         // const compIdsVector = window.gemmiModule.parse_ligand_dict_info(content);
 

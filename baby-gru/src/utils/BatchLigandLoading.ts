@@ -6,6 +6,7 @@ import { setRequestDrawScene } from "@/store/glRefSlice";
 import { setJobProgress } from "@/store/generalStatesSlice";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { fetchMonomerDictionary } from "./monomerLibrary";
+import { readDictionary as readDictionaryIntoCoot } from "./dictionaries";
 import { moleculeNameFromFileName } from "./utils";
 import { MoleculeRepresentation } from "./Representation/MoorhenMoleculeRepresentation";
 
@@ -128,9 +129,7 @@ export const batchLoadLigands = async (
     // chunks. The value is the dictionary text, or undefined if it could not be found.
     const dictionaries = new Map<string, Promise<string | undefined>>();
     const newlyReadCompIds = new Set<string>();
-    const readDictionary = async (text: string) => {
-        await commandCentre.cootCommand({ returnType: "status", command: "read_dictionary_string", commandArgs: [text, -999999] }, false);
-    };
+    const readDictionary = async (text: string) => readDictionaryIntoCoot(instance, text, null, "Batch ligand loading");
     // Supplied dictionaries are read first; molecules wait for them before looking anything up,
     // so a comp_id they define is never fetched.
     const suppliedReady = Promise.all(
