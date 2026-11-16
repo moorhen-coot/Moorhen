@@ -43,7 +43,7 @@ export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
         )
     },
     annotations: {
-        icon: "menu2DObjects",
+        icon: "annotations",
         label: "Annotations",
         panelContent: (
             <SidePanelContainer title="Annotations">
