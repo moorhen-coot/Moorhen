@@ -93,13 +93,13 @@ export const MainMenu: MainMenuMap = {
         menu: "validation",
         align: 3,
     },
+    // The ligand menu's items are at the top of the Ligands panel (and still in the "ligand" submenu)
     6: {
-        type: "sub-menu",
-        ariaLabel: "Ligand Menu",
+        type: "panel",
         label: "Ligand",
+        ariaLabel: "Open Ligands Panel",
         icon: `ligand`,
-        menu: "ligand",
-        align: 8,
+        panel: "ligands",
     },
     7: {
         type: "panel",
