@@ -97,3 +97,38 @@
     width: 100%;
     height: auto;
 }
+
+/* A ligand with no dictionary: a warning edge on its header (the hover background still shows) */
+.moorhen__ligand-list-row[data-no-dictionary] > .moorhen__accordion-container > .moorhen__accordion-header {
+    box-shadow: inset 3px 0 0 var(--moorhen-warning);
+}
+
+/* Both: the warning edge and the hover shadow */
+.moorhen__ligand-list-row-hovered[data-no-dictionary] > .moorhen__accordion-container > .moorhen__accordion-header {
+    box-shadow:
+        inset 3px 0 0 var(--moorhen-warning),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.moorhen__ligand-list-row-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.moorhen__ligand-list-no-dictionary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+    font-size: 0.8em;
+    color: var(--moorhen-warning);
+    white-space: nowrap;
+}
+
+.moorhen__ligand-list-no-dictionary-icon {
+    width: 1rem;
+    height: 1rem;
+    fill: var(--moorhen-warning);
+}

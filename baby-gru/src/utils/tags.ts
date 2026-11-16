@@ -13,6 +13,8 @@ export type Tags = Record<string, string>;
 /** Reserved keys, so a host application and Moorhen itself do not collide by accident. */
 export const TAG_SOURCE = "source";
 export const TAG_MOLECULE = "molecule";
+/** The other molecule of something drawn between two (a ligand contact's partner) */
+export const TAG_PARTNER = "partner";
 
 /** The values Moorhen's own code uses for `source`. */
 export const SOURCE_XPID = "xpid";

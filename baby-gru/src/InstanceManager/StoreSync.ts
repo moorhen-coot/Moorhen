@@ -1,4 +1,6 @@
 import type { RootState } from "@/store/MoorhenReduxStore";
+import { removeVectorsByTag } from "@/store/vectorsSlice";
+import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_PARTNER, TAG_SOURCE, matchesTags } from "@/utils/tags";
 import type { MoorhenInstance } from "./MoorhenInstance";
 
 /**
@@ -22,6 +24,25 @@ const STORE_SYNCS: StoreSync<unknown>[] = [
         selector: state => state.mapContourSettings.defaultMapSamplingRate,
         apply: (instance, rate) =>
             instance.commandCentre?.cootCommand({ command: "set_map_sampling_rate", commandArgs: [rate], returnType: "status" }, false),
+    }),
+    sync({
+        // However the molecule is hidden (eye button, scene, script): contacts are drawn between two
+        // shown molecules, so a hidden one, ligand or partner, takes its contact vectors with it
+        name: "hidden molecules lose their ligand contact vectors",
+        selector: state => state.molecules.visibleMolecules,
+        apply: (instance, visibleMolNos) => {
+            const visible = new Set(visibleMolNos);
+            const vectors = instance.store.getState().vectors.vectorsList;
+            for (const molecule of instance.getMoleculeList()) {
+                if (visible.has(molecule.molNo)) continue;
+                for (const query of [
+                    { [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_MOLECULE]: molecule.uniqueId },
+                    { [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_PARTNER]: molecule.uniqueId },
+                ]) {
+                    if (vectors.some(vector => matchesTags(vector, query))) instance.store.dispatch(removeVectorsByTag(query));
+                }
+            }
+        },
     }),
 ];
 

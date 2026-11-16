@@ -2,13 +2,40 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMolecule } from "@/utils";
 
+/** A ligand of a molecule, as gemmi lists it (get_ligand_info_for_structure) */
+export type MoleculeLigandRecord = {
+    resName: string;
+    chainName: string;
+    resNum: string;
+    modelName: string;
+    /** e.g. /1/A/301(ATP) */
+    cid: string;
+};
+
+/**
+ * What the UI groups and labels molecules by, as a plain record keyed by the molecule's uniqueId:
+ * the first step of .roadmaps/serialisable-store.md. Written only by the molecule itself
+ * (MoorhenMolecule.refreshRecord), from its central methods, and only when a field changes; a
+ * component never computes these. Fields are added when the UI filters, sorts or groups on them.
+ */
+export type MoleculeRecord = {
+    uniqueId: string;
+    /** MoorhenMolecule.isLigandOnly(): listed in the Ligands panel, not given a card in the Models panel */
+    isLigandOnly: boolean;
+    ligands: MoleculeLigandRecord[];
+    /** The ligand residue types Coot has no dictionary for */
+    missingDictionaries: string[];
+};
+
 const initialState: {
     visibleMolecules: number[];
+    moleculeRecords: Record<string, MoleculeRecord>;
     moleculeList: MoorhenMolecule[];
     customRepresentations: moorhen.MoleculeRepresentation[];
     generalRepresentations: moorhen.MoleculeRepresentation[];
 } = {
     visibleMolecules: [],
+    moleculeRecords: {},
     customRepresentations: [],
     generalRepresentations: [],
     moleculeList: [],
@@ -33,9 +60,19 @@ const moleculesSlice = createSlice({
             );
             state.visibleMolecules = state.visibleMolecules.filter(item => item !== action.payload.molNo);
             state.moleculeList = state.moleculeList.filter(item => item.molNo !== action.payload.molNo);
+            delete state.moleculeRecords[action.payload.uniqueId];
         },
         emptyMolecules: () => {
             return initialState;
+        },
+        /** Set molecule records (several at once: a batch of ligands refreshes many) */
+        setMoleculeRecords: (state, action: PayloadAction<MoleculeRecord[]>) => {
+            action.payload.forEach(record => {
+                state.moleculeRecords[record.uniqueId] = record;
+            });
+        },
+        removeMoleculeRecord: (state, action: PayloadAction<string>) => {
+            delete state.moleculeRecords[action.payload];
         },
         addMoleculeList: (state, action: PayloadAction<MoorhenMolecule[]>) => {
             state.moleculeList.push(...(action.payload as unknown as typeof state.moleculeList));
@@ -114,6 +151,8 @@ export const {
     removeMolecule,
     emptyMolecules,
     addMoleculeList,
+    setMoleculeRecords,
+    removeMoleculeRecord,
     addGeneralRepresentation,
     showMolecule,
     hideMolecule,

@@ -7,7 +7,7 @@ import "pako";
 import { quatToMat4 } from "../WebGLgComponents/quatToMat4.js";
 import { isDarkBackground } from "../WebGLgComponents/webGLUtils";
 import { setOrigin, setQuat, setRequestDrawScene, setZoom } from "../store";
-import { hideMolecule } from "../store/moleculesSlice";
+import { type MoleculeRecord, hideMolecule, removeMoleculeRecord } from "../store/moleculesSlice";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
 import { webGL } from "../types/mgWebGL";
@@ -35,6 +35,7 @@ import { MoleculeToSeqViewerSequences } from "@/components/sequence-viewer/utils
 import { MoorhenInstance } from "@/InstanceManager/index";
 import { CommandCentre } from "@/InstanceManager/CommandCentre/index";
 import { fetchMonomerDictionary } from "./monomerLibrary";
+import { queueMoleculeRecord, queuedMoleculeRecord } from "./moleculeRecords";
 
 export type ResidueInfo = {
     resCode: string;
@@ -729,6 +730,9 @@ export class MoorhenMolecule {
         this.selectionRepresentation?.deleteBuffers();
         this.adaptativeBondsRepresentation?.deleteBuffers();
         this.representations.forEach(representation => representation.deleteBuffers());
+        this.recordClosed = true;
+        queueMoleculeRecord(this.store, this.uniqueId, null);
+        this.store.dispatch(removeMoleculeRecord(this.uniqueId));
         this.store.dispatch(setRequestDrawScene(true));
         const response = (await this.commandCentre.cootCommand(
             {
@@ -1193,6 +1197,7 @@ export class MoorhenMolecule {
                     })
                 );
                 ligandDicts.forEach(ligandDict => this.cacheLigandDict(ligandDict));
+                await this.refreshMissingDictionaries();
             } catch (err) {
                 console.log(err);
                 console.warn("Error in loadMissingMonomers...");
@@ -2154,6 +2159,7 @@ export class MoorhenMolecule {
         );
 
         this.cacheLigandDict(fileContent);
+        await this.refreshMissingDictionaries();
     }
 
     /**
@@ -2210,6 +2216,51 @@ export class MoorhenMolecule {
 
         this.ligands = ligandList;
         this.checkIsLigand();
+        this.refreshRecord();
+        void this.refreshMissingDictionaries();
+    }
+
+    /** Set once deleted: a refresh still in flight must not write the record back */
+    private recordClosed = false;
+
+    /**
+     * Refresh this molecule's record in the store (molecules.moleculeRecords, see MoleculeRecord):
+     * written only when a field differs from what the store holds or will hold.
+     * @param missingDictionaries - New missing dictionaries; by default the record keeps its own
+     */
+    refreshRecord(missingDictionaries?: string[]): void {
+        if (this.recordClosed || !this.store) return;
+        const queued = queuedMoleculeRecord(this.store, this.uniqueId);
+        const previous: MoleculeRecord | undefined =
+            queued !== undefined ? (queued ?? undefined) : this.store.getState()?.molecules?.moleculeRecords?.[this.uniqueId];
+        const record: MoleculeRecord = {
+            uniqueId: this.uniqueId,
+            isLigandOnly: this.isLigandOnly(),
+            ligands: (this.ligands ?? []).map(({ resName, chainName, resNum, modelName, cid }) => ({ resName, chainName, resNum, modelName, cid })),
+            missingDictionaries: missingDictionaries ?? previous?.missingDictionaries ?? [],
+        };
+        if (JSON.stringify(record) !== JSON.stringify(previous)) queueMoleculeRecord(this.store, this.uniqueId, record);
+    }
+
+    /**
+     * Ask Coot which ligand residue types of this molecule have no dictionary, into its record. Done
+     * when its ligands change and when it is given a dictionary.
+     */
+    async refreshMissingDictionaries(): Promise<void> {
+        if (this.recordClosed || this.molNo === -1) return;
+        const ligandTypes = new Set((this.ligands ?? []).map(ligand => ligand.resName));
+        if (ligandTypes.size === 0) {
+            this.refreshRecord([]);
+            return;
+        }
+        let missing: string[] = [];
+        try {
+            missing = (await this.moorhenInstance?.cootCommand?.get_residue_names_with_no_dictionary(this.molNo)) ?? [];
+        } catch {
+            // Not known: the record keeps what it had
+            return;
+        }
+        this.refreshRecord(missing.filter(type => ligandTypes.has(type)).sort());
     }
 
     /**

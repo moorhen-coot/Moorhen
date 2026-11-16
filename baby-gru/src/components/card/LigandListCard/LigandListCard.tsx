@@ -1,25 +1,27 @@
 import parse from "html-react-parser";
 import { batch, shallowEqual, useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { MoorhenIcon } from "@/components/icons";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
 import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
 import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
-import { MoorhenAccordion, MoorhenStack } from "@/components/interface-base";
+import { MoorhenAccordion, MoorhenStack, MoorhenTooltip } from "@/components/interface-base";
 import { type RootState, addCustomRepresentation, enqueueSnackbar, removeCustomRepresentation, removeMolecule, setHoveredAtom } from "@/store";
 import { triggerUpdate } from "@/store/moleculeMapUpdateSlice";
-import type { LigandInfo, MoorhenMolecule } from "@/utils/MoorhenMolecule";
+import type { MoleculeLigandRecord } from "@/store/moleculesSlice";
+import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { MoleculeRepresentation, type RepresentationStyles } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { type LigandSite, centreOnSite, groupLigandsBySite } from "@/utils/ligandSites";
 import { setMoleculeVisible } from "@/utils/moleculeVisibility";
 import { hexToRGB, rgbToHex } from "@/utils/utils";
-import { LigandContacts } from "./LigandContacts";
+import { LigandContactsSection } from "./LigandContacts";
 import { selectCustomRepresentations } from "../MoleculeCard/moleculeCardSelectors";
 import "./ligand-list-card.css";
 
 const HOVERED_ROW_CLASS = "moorhen__ligand-list-row-hovered";
 
 /** The key a row registers under: its molecule, plus the residue for a ligand inside a model. */
-const rowKey = (molecule: MoorhenMolecule, ligand?: LigandInfo) =>
+const rowKey = (molecule: MoorhenMolecule, ligand?: MoleculeLigandRecord) =>
     ligand ? `${molecule.uniqueId}|${ligand.chainName}|${ligand.resNum}` : molecule.uniqueId;
 
 /**
@@ -75,11 +77,19 @@ const byName = new Intl.Collator(undefined, { numeric: true, sensitivity: "base"
  */
 export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     const store = useStore<RootState>();
-    // molecule.ligands is not in the store: re-read when a model is changed (merges included)
-    useSelector((state: RootState) => state.moleculeMapUpdate.moleculeUpdate);
-    const molecules = props.molecules.filter(molecule => molecule.isLigandOnly());
-    const hosts = props.molecules.filter(molecule => !molecule.isLigandOnly() && (molecule.ligands?.length ?? 0) > 0);
-    const hostedCount = hosts.reduce((n, host) => n + host.ligands.length, 0);
+    // What the list groups and labels by, from the molecule records (refreshed by the molecules)
+    const records = useSelector((state: RootState) => state.molecules.moleculeRecords);
+    const ligandsOf = (molecule: MoorhenMolecule) => records[molecule.uniqueId]?.ligands ?? [];
+    const molecules = props.molecules.filter(molecule => records[molecule.uniqueId]?.isLigandOnly);
+    const hosts = props.molecules.filter(molecule => !records[molecule.uniqueId]?.isLigandOnly && ligandsOf(molecule).length > 0);
+    const hostedCount = hosts.reduce((n, host) => n + ligandsOf(host).length, 0);
+    /** The ligand residue types of the row that have no dictionary */
+    const noDictionary = (molecule: MoorhenMolecule, ligand?: MoleculeLigandRecord): string[] => {
+        const missing = records[molecule.uniqueId]?.missingDictionaries ?? [];
+        if (missing.length === 0) return [];
+        const resNames = ligand ? [ligand.resName] : [...new Set(ligandsOf(molecule).map(info => info.resName))];
+        return resNames.filter(resName => missing.includes(resName));
+    };
     const registerRow = useHoveredRowHighlight(store);
     const visibleMolecules = useSelector((state: RootState) => state.molecules.visibleMolecules);
     const visible = new Set(visibleMolecules);
@@ -126,6 +136,7 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
                 <LigandListRow
                     key={molecule.uniqueId}
                     molecule={molecule}
+                    noDictionary={noDictionary(molecule).join(", ")}
                     isVisible={visible.has(molecule.molNo)}
                     registerRow={registerRow}
                 />
@@ -136,7 +147,7 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     const hostGroups = hosts.map(host => (
         <MoorhenAccordion
             key={host.uniqueId}
-            title={`${host.name} (${host.ligands.length})`}
+            title={`${host.name} (${ligandsOf(host).length})`}
             defaultOpen={true}
             extraControls={[
                 <MoorhenButton
@@ -150,11 +161,12 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
             ]}
         >
             <div className="moorhen__ligand-list-list">
-                {host.ligands.map(ligand => (
+                {ligandsOf(host).map(ligand => (
                     <LigandListRow
                         key={ligand.cid}
                         molecule={host}
                         ligand={ligand}
+                        noDictionary={noDictionary(host, ligand).join(", ")}
                         isVisible={visible.has(host.molNo)}
                         registerRow={registerRow}
                     />
@@ -234,11 +246,13 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
  */
 const LigandListRow = memo(function LigandListRow(props: {
     molecule: MoorhenMolecule;
-    ligand?: LigandInfo;
+    ligand?: MoleculeLigandRecord;
+    /** The ligand residue types with no dictionary, comma-separated; empty if none (a string, for memo) */
+    noDictionary: string;
     isVisible: boolean;
     registerRow: (uid: string, element: HTMLElement | null) => void;
 }) {
-    const { molecule, ligand, isVisible, registerRow } = props;
+    const { molecule, ligand, noDictionary, isVisible, registerRow } = props;
     const store = useStore<RootState>();
     const key = rowKey(molecule, ligand);
     const rowRef = useCallback((element: HTMLDivElement | null) => registerRow(key, element), [key, registerRow]);
@@ -257,11 +271,28 @@ const LigandListRow = memo(function LigandListRow(props: {
     };
 
     return (
-        <div className="moorhen__ligand-list-row" ref={rowRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        // A data attribute, not a class: the hover class is set on this element outside React
+        <div
+            className="moorhen__ligand-list-row"
+            data-no-dictionary={noDictionary ? "" : undefined}
+            ref={rowRef}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+        >
             <MoorhenAccordion
                 title={
-                    <span className="moorhen__ligand-list-row-name" title={name}>
-                        {name}
+                    <span className="moorhen__ligand-list-row-title">
+                        {noDictionary && (
+                            <MoorhenTooltip tooltip={`No dictionary for ${noDictionary}: bonds are guessed, and it cannot be refined`}>
+                                <span className="moorhen__ligand-list-no-dictionary">
+                                    <MoorhenIcon moorhenSVG="MatSymWarning" className="moorhen__ligand-list-no-dictionary-icon" alt="Warning" />
+                                    No dictionary
+                                </span>
+                            </MoorhenTooltip>
+                        )}
+                        <span className="moorhen__ligand-list-row-name" title={name}>
+                            {name}
+                        </span>
                     </span>
                 }
                 extraControls={[
@@ -295,9 +326,7 @@ const LigandListRow = memo(function LigandListRow(props: {
             >
                 <LigandRepresentations molecule={molecule} cid={ligand?.cid} />
                 <div className="moorhen__ligand-list-section">
-                    <MoorhenAccordion title="Contacts">
-                        <LigandContacts molecule={molecule} ligand={ligand} />
-                    </MoorhenAccordion>
+                    <LigandContactsSection molecule={molecule} ligand={ligand} />
                 </div>
             </MoorhenAccordion>
         </div>
@@ -447,7 +476,8 @@ const LigandMergeInto = (props: { molecule: MoorhenMolecule }) => {
     const { molecule } = props;
     const dispatch = useDispatch();
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
-    const targets = moleculeList.filter(other => other !== molecule && !other.isLigandOnly());
+    const records = useSelector((state: RootState) => state.molecules.moleculeRecords);
+    const targets = moleculeList.filter(other => other !== molecule && !records[other.uniqueId]?.isLigandOnly);
     const [targetUid, setTargetUid] = useState<string | undefined>(undefined);
     const [busy, setBusy] = useState<boolean>(false);
 

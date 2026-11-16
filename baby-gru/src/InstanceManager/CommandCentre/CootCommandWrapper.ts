@@ -165,6 +165,14 @@ export class CootCommandWrapper {
     }
 
     /**
+     * The residue types of a molecule for which Coot has no dictionary (no restraints in its
+     * geometry store): such residues are drawn from guessed bonds and cannot be refined.
+     */
+    async get_residue_names_with_no_dictionary(imol: number): Promise<string[]> {
+        return this.run<string[]>({ command: "get_residue_names_with_no_dictionary", commandArgs: [imol], returnType: "string_array" });
+    }
+
+    /**
      * Make a temporary molecule holding the atoms of `cid1` in molecule `imol1` and of `cid2` in
      * `imol2`, so that analyses of one molecule (H-bonds, salt bridges, XH-π, FLEV...) can look
      * across two. The first selection keeps its chain ids; a chain of the second gets a new id if

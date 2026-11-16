@@ -19,9 +19,8 @@ export const LigandsPanel = () => {
     useMenuHook();
     const menuItems = moorhenInstance.menuSystem.getItems("ligand");
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
-    // Re-read molecule.ligands, which is not in the store, when a model is changed
-    useSelector((state: RootState) => state.moleculeMapUpdate.moleculeUpdate);
-    const hasLigands = moleculeList.some(molecule => (molecule.ligands?.length ?? 0) > 0);
+    const records = useSelector((state: RootState) => state.molecules.moleculeRecords);
+    const hasLigands = moleculeList.some(molecule => (records[molecule.uniqueId]?.ligands.length ?? 0) > 0);
 
     return (
         <SidePanelContainer title="Ligands">

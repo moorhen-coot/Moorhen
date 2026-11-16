@@ -1,9 +1,9 @@
 import parse from "html-react-parser";
-import { useDispatch, useSelector, useStore } from "react-redux";
-import { useEffect, useState } from "react";
+import { batch, useDispatch, useSelector, useStore } from "react-redux";
+import { useEffect, useMemo, useState } from "react";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
 import { MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenToggle } from "@/components/inputs";
-import { MoorhenStack } from "@/components/interface-base";
+import { MoorhenAccordion, MoorhenStack } from "@/components/interface-base";
 import { type RootState, setHoveredAtom } from "@/store";
 import { type MoorhenVector, addVectors, removeVectorsByTag } from "@/store/vectorsSlice";
 import type { LigandInfo, MoorhenMolecule } from "@/utils/MoorhenMolecule";
@@ -14,7 +14,7 @@ import {
     type LigandContactsResult,
     getLigandContacts,
 } from "@/utils/ligandContacts";
-import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_SOURCE, type Tags } from "@/utils/tags";
+import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_PARTNER, TAG_SOURCE, type Tags, matchesTags } from "@/utils/tags";
 import { newVector } from "@/utils/vectorFactories";
 
 type ContactsState = (LigandContactsResult & { error?: undefined }) | { error: string; contacts?: undefined; flev?: undefined };
@@ -75,11 +75,58 @@ const contactVector = (contact: LigandContact, colour: Colour, tags: Tags): Moor
 };
 
 /**
+ * The tags of one ligand's contact vectors: a model has several ligands, each with its own. Each
+ * vector also carries its contact type and the partner molecule (TAG_CONTACT, TAG_PARTNER), from
+ * which the section's settings are read back when it is opened again.
+ */
+const ligandContactTags = (molecule: MoorhenMolecule, ligand?: LigandInfo): Tags => ({
+    [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS,
+    [TAG_MOLECULE]: molecule.uniqueId,
+    ligand: ligand?.cid ?? "",
+});
+const TAG_CONTACT = "contact";
+
+/**
+ * What the drawn vectors of a ligand say about how its contacts were shown: the partner molecule,
+ * and for each type whether it is drawn and in which colour. A type with no vector while others have
+ * some was switched off. Null if nothing is drawn.
+ */
+const readBackDrawn = (vectors: MoorhenVector[], tags: Tags): { partnerUid: string | undefined; styles: DrawStyles } | null => {
+    const drawn = vectors.filter(vector => matchesTags(vector, tags));
+    if (drawn.length === 0) return null;
+    const styles = Object.fromEntries(
+        TYPES.map(type => {
+            const vector = drawn.find(item => item.tags?.[TAG_CONTACT] === type);
+            return [type, vector ? { draw: true, colour: vector.vectorColour } : { draw: false, colour: CONTACT_TYPES[type].defaultColour }];
+        })
+    ) as DrawStyles;
+    return { partnerUid: drawn[0].tags?.[TAG_PARTNER], styles };
+};
+
+/**
+ * The Contacts section of a ligand card. Its vectors outlive it: they stay drawn when the card or
+ * the panel is closed (it unmounts), and go when the section itself is closed by the user. Opened
+ * again (the panel reopened), it starts open if they are still drawn.
+ */
+export const LigandContactsSection = (props: { molecule: MoorhenMolecule; ligand?: LigandInfo }) => {
+    const { molecule, ligand } = props;
+    const dispatch = useDispatch();
+    const tags = ligandContactTags(molecule, ligand);
+    // Only its first value matters: the section opens or closes on its own afterwards
+    const drawn = useSelector((state: RootState) => state.vectors.vectorsList.some(vector => matchesTags(vector, tags)));
+    return (
+        <MoorhenAccordion title="Contacts" defaultOpen={drawn} onClose={() => dispatch(removeVectorsByTag(tags))}>
+            <LigandContacts molecule={molecule} ligand={ligand} />
+        </MoorhenAccordion>
+    );
+};
+
+/**
  * The contacts of a ligand-only molecule with one other molecule (its protein, typically): H-bonds,
  * salt bridges and XH-π, drawn as dashed vectors (each type switched and coloured on its own),
- * listed, and the FLEV diagram. Mounted only while
- * its accordion is open: Coot is asked when it opens or the other molecule changes, and the vectors
- * are removed when it closes.
+ * listed, and the FLEV diagram. Mounted only while its accordion is open: Coot is asked when it opens
+ * or the other molecule changes. The vectors are left drawn when it unmounts (see
+ * LigandContactsSection).
  */
 export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: LigandInfo }) => {
     const { molecule, ligand } = props;
@@ -87,14 +134,21 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: Liga
     const store = useStore<RootState>();
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     // A ligand inside a model: that model first (the rest of it), then the others
-    const others = moleculeList.filter(other => other !== molecule && !other.isLigandOnly());
+    const records = useSelector((state: RootState) => state.molecules.moleculeRecords);
+    const others = moleculeList.filter(other => other !== molecule && !records[other.uniqueId]?.isLigandOnly);
     const partners = ligand ? [molecule, ...others] : others;
 
-    const [partnerUid, setPartnerUid] = useState<string | undefined>(undefined);
+    const tags = useMemo(() => ligandContactTags(molecule, ligand), [molecule, ligand]);
+    // As they were shown, if their vectors are still drawn (the section closed with the panel)
+    const [drawnBefore] = useState(() => readBackDrawn(store.getState().vectors.vectorsList, tags));
+
+    const [partnerUid, setPartnerUid] = useState<string | undefined>(() =>
+        partners.some(other => other.uniqueId === drawnBefore?.partnerUid) ? drawnBefore.partnerUid : undefined
+    );
     const partner = partners.find(other => other.uniqueId === partnerUid) ?? null;
     const [result, setResult] = useState<{ partnerUid: string; contacts: ContactsState } | null>(null);
     const current = result && partner && result.partnerUid === partner.uniqueId ? result.contacts : null;
-    const [styles, setStyles] = useState<DrawStyles>(DEFAULT_STYLES);
+    const [styles, setStyles] = useState<DrawStyles>(drawnBefore?.styles ?? DEFAULT_STYLES);
     const setStyle = (type: ContactType, change: Partial<DrawStyles[ContactType]>) =>
         setStyles(previous => ({ ...previous, [type]: { ...previous[type], ...change } }));
 
@@ -111,17 +165,32 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: Liga
         };
     }, [molecule, partner, ligand]);
 
-    // Redrawn whole when a type is switched or recoloured: there are tens of contacts, not thousands
+    // Redrawn whole, replacing what this ligand has drawn (also what was left drawn when it last
+    // unmounted), when the contacts arrive or a type is switched or recoloured: tens of contacts, not
+    // thousands. While they are being computed, what is drawn stays.
+    // Drawn only while both molecules are shown: hiding one removes the vectors (a store sync), and
+    // showing it again while this is open draws them again
+    const bothVisible = useSelector(
+        (state: RootState) =>
+            !!partner && state.molecules.visibleMolecules.includes(molecule.molNo) && state.molecules.visibleMolecules.includes(partner.molNo)
+    );
     useEffect(() => {
-        const shown = (current?.contacts ?? []).filter(contact => styles[contact.type].draw);
-        if (shown.length === 0) return;
-        // One ligand's vectors: a model has several ligands, each with its own contacts open or not
-        const tags: Tags = { [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_MOLECULE]: molecule.uniqueId, ligand: ligand?.cid ?? "" };
-        dispatch(addVectors(shown.map(contact => contactVector(contact, styles[contact.type].colour, tags))));
-        return () => {
+        if (current === null || !partner || !bothVisible) return;
+        const shown = (current.contacts ?? []).filter(contact => styles[contact.type].draw);
+        batch(() => {
             dispatch(removeVectorsByTag(tags));
-        };
-    }, [current, styles, molecule, ligand, dispatch]);
+            if (shown.length > 0) {
+                const vectors = shown.map(contact =>
+                    contactVector(contact, styles[contact.type].colour, {
+                        ...tags,
+                        [TAG_CONTACT]: contact.type,
+                        [TAG_PARTNER]: partner.uniqueId,
+                    })
+                );
+                dispatch(addVectors(vectors));
+            }
+        });
+    }, [current, styles, tags, partner, bothVisible, dispatch]);
 
     // Hovering a contact hovers the partner's atom (or residue, for a ring)
     const hoverPartner = (contact: LigandContact | null) => {

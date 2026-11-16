@@ -19,6 +19,8 @@ import {
     setSelectedThreeDObject,
     setUserSceneState,
     setZoom,
+    hideMolecule,
+    showMolecule,
 } from "../store";
 import type { RootState } from "../store";
 import {
@@ -727,8 +729,22 @@ export class MoorhenUserSceneManager {
                 await drawDefaultRepresentation(this.instance, molecule.uniqueId, style);
             }
         }
+        this.syncMoleculeVisibility();
         this.reportMissingMolecules(sceneId, content);
         this.instance.dispatch(sceneShown());
+    }
+
+    /**
+     * Mark each molecule shown or hidden (molecules.visibleMolecules, which the eye buttons show) by
+     * whether the scene left any of its representations shown: the scene sets the representations,
+     * not that list.
+     */
+    private syncMoleculeVisibility() {
+        const visible = new Set(this.instance.store.getState().molecules.visibleMolecules);
+        for (const molecule of this.instance.getMoleculeList()) {
+            const shown = molecule.representations.some(representation => representation.visible);
+            if (shown !== visible.has(molecule.molNo)) this.instance.dispatch(shown ? showMolecule(molecule) : hideMolecule(molecule));
+        }
     }
 
     /**

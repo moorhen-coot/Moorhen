@@ -12,8 +12,9 @@ export const ModelsPanel = () => {
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const dispatch = useDispatch();
     // Molecules of ligands only are listed in the Ligands panel, not given a card each here
-    const molecules = moleculeList.filter(molecule => !molecule.isLigandOnly());
-    const ligandMolecules = moleculeList.filter(molecule => molecule.isLigandOnly());
+    const records = useSelector((state: RootState) => state.molecules.moleculeRecords);
+    const molecules = moleculeList.filter(molecule => !records[molecule.uniqueId]?.isLigandOnly);
+    const ligandMolecules = moleculeList.filter(molecule => records[molecule.uniqueId]?.isLigandOnly);
 
     const [allOpen, setallOpen] = useState<boolean | null>(null);
     const [activeToggle, setActiveToggle] = useState<{ key: number; isOpen: boolean }>({ key: null, isOpen: null });

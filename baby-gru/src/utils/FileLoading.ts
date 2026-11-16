@@ -490,6 +490,23 @@ const loadMapFile = async (
     return;
 };
 
+/**
+ * A ligand-only molecule with several models (docking poses: a Vina PDBQT, conformers...) as one
+ * ligand-only molecule per model, in model order, so that each pose is a ligand of its own in the
+ * ligand list (to show, compare, take contacts of, merge). Any other molecule is returned as is: the
+ * models of a protein (NMR, ensembles) belong together.
+ * @returns The molecules to add: the poses, the original having been deleted; or the molecule itself.
+ */
+const splitLigandPoses = async (molecule: MoorhenMolecule): Promise<MoorhenMolecule[]> => {
+    if (!molecule.isLigandOnly() || molecule.numberOfModels < 2) return [molecule];
+    const poses = (await molecule.splitMultiModels(false)) as MoorhenMolecule[] | undefined;
+    if (!poses?.length) return [molecule];
+    await molecule.delete();
+    // Their ligands read, so that they are listed as ligand-only molecules from the start
+    await Promise.all(poses.map(pose => pose.updateAtoms()));
+    return poses;
+};
+
 const pdbqtToPdb = (pdbqtString: string) => {
     const lines = pdbqtString.split("\n");
     const pdbLines = lines.map(line => !line.startsWith("TER") ? line.slice(0, 66) : "").join("\n");
@@ -777,8 +794,7 @@ export const autoOpenFiles = async (
             let content = await file.text();
             if (file.name.endsWith(".pdbqt")) {
                 // keep only the first 66 characters of each line to make a kinda pdb
-                content =  pdbqtToPdb(content);
-                console.log(content);
+                content = pdbqtToPdb(content);
             }
             const newMolecule = await readCoordsString(
                 content,
@@ -824,11 +840,19 @@ export const autoOpenFiles = async (
                 continue;
             } else {
                 console.log(`Successfully read molecule ${file.name} molno ${newMolecule.molNo}`);
-                dispatch(addMoleculeList([newMolecule]));
-                await drawModels([newMolecule], moorhenInstance);
+                const loaded = await splitLigandPoses(newMolecule);
+                dispatch(addMoleculeList(loaded));
+                await drawModels(loaded, moorhenInstance);
 
-                moleculesCreated.push(newMolecule);
-                returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
+                moleculesCreated.push(...loaded);
+                returnValues.push(
+                    ...loaded.map(molecule => ({
+                        type: "molecule" as const,
+                        uniqueID: molecule.uniqueId,
+                        molNo: molecule.molNo,
+                        fileName: file.name,
+                    }))
+                );
             }
         } else if (file.name.endsWith(".mtz")) {
             returnValues.push(...(await loadMtzMaps(moorhenInstance, file)));
