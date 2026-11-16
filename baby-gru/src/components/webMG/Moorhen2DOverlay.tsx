@@ -7,7 +7,8 @@ import { moorhen } from "../../types/moorhen"
 import { get_grid } from "../../utils/utils"
 import { addImageOverlay, addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays } from "../../store/overlaysSlice"
 import { quatToMat4, quat4Inverse } from '../../WebGLgComponents/quatToMat4.js';
-import { getMathJaxSVG } from '../../utils/mathJaxUtils';
+import { contrastingTextColour, latexToImage } from '../../utils/textStyle';
+import type { Overlay2DTextFrac } from '../../store/overlaysSlice';
 import {  RootState } from '../../store/MoorhenReduxStore';
 import { Store } from '@reduxjs/toolkit';
 import { MoorhenStack } from "../interface-base";
@@ -20,6 +21,29 @@ interface ImageFrac2D {
     height: number
     img: HTMLImageElement
     zIndex: number;
+    /** Pixels from the top of the image to its baseline, which is what sits at y. 0 puts the top at y. */
+    ascent?: number;
+}
+
+/**
+ * The LaTeX text overlays, typeset as images to draw beside the image overlays.
+ *
+ * Placed by their baseline, as plain text is, so switching a string between text and LaTeX leaves
+ * it where it was.
+ *
+ * @param resolution - Device pixels per CSS pixel the images will be drawn at.
+ */
+export const latexOverlayImages = async (textOverlays: Overlay2DTextFrac[], backgroundColor: number[], resolution: number): Promise<ImageFrac2D[]> => {
+    const images: ImageFrac2D[] = []
+    for (const t of textOverlays) {
+        if (!t.latex) continue
+        const colour = t.fillStyle || t.strokeStyle || contrastingTextColour(backgroundColor)
+        const latex = await latexToImage(t.text, t.fontPixelSize, colour, resolution)
+        if (latex) {
+            images.push({ x: t.x, y: t.y, img: latex.img, width: latex.width, height: latex.height, ascent: latex.ascent, zIndex: t.zIndex })
+        }
+    }
+    return images
 }
 
 const stereoQuats = []
@@ -176,6 +200,8 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     })
 
     textOverlays.forEach(t => {
+        // LaTeX arrives typeset, among the images.
+        if(t.latex) return
         if((!t.zIndex&&zIndex===0)||(t.zIndex===zIndex)){
         canvas2D_ctx.save()
         canvas2D_ctx.beginPath()
@@ -256,7 +282,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
         if((!img.zIndex&&zIndex===0)||(img.zIndex===zIndex)){
             if(img.img){
                 try {
-                    canvas2D_ctx.drawImage(img.img,width*img.x,height*img.y,img.width*scale,img.height*scale)
+                    canvas2D_ctx.drawImage(img.img,width*img.x,height*img.y-(img.ascent ?? 0)*scale,img.width*scale,img.height*scale)
                 } catch(e) {
                     console.log("Failed to draw image")
                 }
@@ -656,7 +682,6 @@ export const Moorhen2DOverlay = ((props) => {
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
     const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList)
-    const latexOverlays = useSelector((state: moorhen.State) => state.overlays.latexOverlayList)
     const textOverlays = useSelector((state: moorhen.State) => state.overlays.textOverlayList)
     const svgPathOverlays = useSelector((state: moorhen.State) => state.overlays.svgPathOverlayList)
     const fracPathOverlays = useSelector((state: moorhen.State) => state.overlays.fracPathOverlayList)
@@ -706,24 +731,6 @@ export const Moorhen2DOverlay = ((props) => {
 
     useEffect(() => {
         const new_images = []
-        const buildLatexImages = async() => {
-            for(let ilo=0;ilo<latexOverlays.length;ilo++){
-                const mathJaxInfo = await getMathJaxSVG(latexOverlays[ilo].text)
-                if(mathJaxInfo.whratio>0){
-                    const img = new window.Image()
-                    const wh_ratio = mathJaxInfo.whratio
-                    const svg_height = latexOverlays[ilo].height
-                    const svg = mathJaxInfo.svg
-                    const blob = new Blob([svg], {type: 'image/svg+xml'})
-                    const blobUrl = URL.createObjectURL(blob)
-                    img.src = blobUrl
-                    img.crossOrigin = "Anonymous"
-                    const img_frac:ImageFrac2D = {x:latexOverlays[ilo].x,y:latexOverlays[ilo].y,img,width:svg_height*wh_ratio,height:svg_height,zIndex:latexOverlays[ilo].zIndex}
-                    new_images.push(img_frac)
-                }
-            }
-        }
-        buildLatexImages()
         imageOverlays.forEach(imgSrc => {
             const img = new window.Image()
             if(imgSrc.src.length>0){
@@ -751,8 +758,15 @@ export const Moorhen2DOverlay = ((props) => {
                 }
             }
         })
-        setImages(new_images)
-    }, [latexOverlays,imageOverlays])
+        // The LaTeX is typeset before anything is shown, so that it and the images arrive together
+        // (it used to be pushed into the array after it had been handed to React, and so only
+        // appeared at whatever redraw happened next).
+        let superseded = false
+        latexOverlayImages(textOverlays, backgroundColor, ratio).then(latexImages => {
+            if (!superseded) setImages([...new_images, ...latexImages])
+        })
+        return () => { superseded = true }
+    }, [textOverlays, imageOverlays, backgroundColor, ratio])
 
     const getContexts = useCallback(() => {
         const contexts = []

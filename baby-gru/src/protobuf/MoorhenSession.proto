@@ -185,8 +185,13 @@ message MoorhenOverlay2DTextFrac {
   optional string strokeStyle = 7;
   optional string drawStyle = 8;
   string uniqueId = 9;
+  optional float lineWidth = 10;
+  optional int32 zIndex = 11;
+  // Typeset text as LaTeX. Replaces MoorhenOverlay2DLatexSrcFrac, which is still read.
+  optional bool latex = 12;
 }
 
+// No longer written: LaTeX is text with latex set. Kept so older sessions load.
 message MoorhenOverlay2DLatexSrcFrac {
   float x = 1;
   float y = 2;
@@ -284,6 +289,30 @@ message MoorhenVector {
   RGB vectorColour = 17;
   RGB textColour = 18;
   optional float radius = 19;
+  // Typeset labelText as LaTeX. Absent in sessions from before the switch, whose $...$ labels
+  // are converted on load.
+  optional bool labelIsLatex = 20;
+  optional float labelFontSize = 21;
+}
+
+message MoorhenAnnotation {
+  string uniqueId = 1;
+  string text = 2;
+  optional bool latex = 3;
+  string fontFamily = 4;
+  float fontPixelSize = 5;
+  optional string colour = 6;
+  optional string drawStyle = 7;
+  optional float lineWidth = 8;
+  string positionMode = 9;
+  float x = 10;
+  float y = 11;
+  float z = 12;
+  optional string molUniqueId = 13;
+  optional string cid = 14;
+  optional bool alwaysOnTop = 15;
+  map<string, string> tags = 16;
+  optional bool locked = 17;
 }
 
 message ViewDataSession {
@@ -353,4 +382,5 @@ message Session {
   repeated Moorhen3DObject threeDObjectData = 10;
   // Scenes and snapshots, as JSON (see UserSceneState): kept out of the schema so they can evolve freely
   optional string sceneData = 11;
+  repeated MoorhenAnnotation annotationData = 12;
 }

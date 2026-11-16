@@ -2186,9 +2186,9 @@ export function drawScene(self: MGWebGL) : void {
                         // ones GLrender has drawn already). With the view's matrices and viewport, as
                         // GLrender left them; after a peel, back on the screen in the view's part. Not
                         // into a peeled screenshot, whose viewport there is the composite's.
-                        if(!self.atomLabelDepthMode && !(self.doPeel && self.renderToTexture)){
+                        if(!(self.doPeel && self.renderToTexture)){
                             if(self.doPeel) self.gl.viewport(self.currentViewport[0], self.currentViewport[1], self.currentViewport[2], self.currentViewport[3]);
-                            self.drawDistancesAndLabels();
+                            self.drawDistancesAndLabels("onTop");
                         }
                         if(invMat&&i==0) self.drawTextOverlays(invMat,ratioMult, Math.sqrt(self.gl.viewportHeight /self.currentViewport[3]));
                         if (self.showFPS&&i==0) {
@@ -2263,7 +2263,7 @@ export function drawScene(self: MGWebGL) : void {
                         self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, self.rttFramebuffer);
                     }
                 }
-                if(!self.atomLabelDepthMode) self.drawDistancesAndLabels();
+                self.drawDistancesAndLabels("onTop");
                 self.drawLineMeasures(invMat);
                 self.drawTextOverlays(invMat);
             }
@@ -2934,7 +2934,7 @@ export function depthBlur(self: MGWebGL, invMat) {
             self.gl.drawElements(self.gl.TRIANGLES, 6, self.gl.UNSIGNED_SHORT, 0);
         }
 
-        if(!self.atomLabelDepthMode) self.drawDistancesAndLabels();
+        self.drawDistancesAndLabels("onTop");
         self.drawLineMeasures(invMat);
         self.drawTextOverlays(invMat);
 
@@ -3330,7 +3330,7 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
 
         if(!calculatingShadowMap){
             self.drawImagesAndText(invMat);
-            if(self.atomLabelDepthMode) self.drawDistancesAndLabels();
+            self.drawDistancesAndLabels("inScene");
             self.drawTextLabels(up, right);
             if(self.WEBGL2){
                 self.drawTexturedShapes(theMatrix);

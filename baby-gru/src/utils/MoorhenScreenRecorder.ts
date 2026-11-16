@@ -1,6 +1,5 @@
 import { webGL } from "../types/mgWebGL";
-import { drawOn2DContext } from "../components/webMG/Moorhen2DOverlay"
-import { getMathJaxSVG } from '../utils/mathJaxUtils';
+import { drawOn2DContext, latexOverlayImages } from "../components/webMG/Moorhen2DOverlay"
 import { RootState } from "../store/MoorhenReduxStore";
 import { Store } from "redux";
 import { doDownload, downloadUrl } from "./utils";
@@ -15,6 +14,8 @@ export interface ImageFrac2D {
     height: number
     img: HTMLImageElement
     zIndex: number;
+    /** Pixels from the top of the image to its baseline, which is what sits at y. 0 puts the top at y. */
+    ascent?: number;
 }
 
 /** Frames per second requested from the canvas. */
@@ -131,20 +132,6 @@ export class ScreenRecorder  {
         } else {
             console.warn('Attempted to stop screen recorder that was not recording...')
         }
-    }
-
-    loadLatexImage = async(latexObject) => {
-        const mathJaxInfo = await getMathJaxSVG(latexObject.text)
-        const wh_ratio = mathJaxInfo.whratio
-        const img = new Image()
-        const svg = mathJaxInfo.svg
-        const svg_height = latexObject.height
-        const blob = new Blob([svg], {type: 'image/svg+xml'})
-        const blobUrl = URL.createObjectURL(blob)
-        img.src = blobUrl
-        img.crossOrigin = "Anonymous"
-        const img_frac:ImageFrac2D = {x:latexObject.x,y:latexObject.y,img,width:svg_height*wh_ratio,height:svg_height,zIndex:latexObject.zIndex}
-        return img_frac
     }
 
     loadImage = (url) => new Promise((resolve, reject) => {
@@ -279,7 +266,6 @@ export class ScreenRecorder  {
 
         ctx.putImageData(imgData, 0,0);
         const imageOverlays = this.store.getState().overlays.imageOverlayList
-        const latexOverlays = this.store.getState().overlays.latexOverlayList
 
         const promises = []
         const imgFracs = []
@@ -289,13 +275,9 @@ export class ScreenRecorder  {
             promises.push(p)
         })
 
-        const loadLatexThings = async() => {
-            for(let ilat=0;ilat<latexOverlays.length;ilat++){
-               const p = await this.loadLatexImage(latexOverlays[ilat])
-               imgFracs.push(p)
-            }
-        }
-        await loadLatexThings()
+        // Typeset at the saved image's resolution, so that LaTeX is as sharp as the text.
+        const latexScale = saveCanvas.width/window.visualViewport.width
+        imgFracs.push(...await latexOverlayImages(this.store.getState().overlays.textOverlayList, this.store.getState().sceneSettings.backgroundColor, latexScale))
 
         Promise.all(promises).then(images => {
             for(let i_img=0;i_img<images.length;i_img++){

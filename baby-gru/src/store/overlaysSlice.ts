@@ -38,6 +38,11 @@ export interface Overlay2DTextFrac {
     lineWidth?: number;
     uniqueId: string;
     zIndex?: number;
+    /**
+     * Typeset `text` as LaTeX. fontPixelSize is then the em size; fontFamily, drawStyle and
+     * lineWidth are kept but not used, and the colour is fillStyle (or strokeStyle).
+     */
+    latex?: boolean;
 }
 
 export interface Overlay2DImageSrcFrac {
@@ -51,6 +56,10 @@ export interface Overlay2DImageSrcFrac {
     zIndex?: number;
 }
 
+/**
+ * The old separate LaTeX overlay. LaTeX is now text with `latex: true`; this shape is still
+ * accepted by addLatexOverlay, and read from sessions saved before the change.
+ */
 export interface Overlay2DLatexSrcFrac {
     type: "Latex";
     x: number;
@@ -61,16 +70,33 @@ export interface Overlay2DLatexSrcFrac {
     zIndex?: number;
 }
 
+/**
+ * A LaTeX overlay in the old shape, as text.
+ *
+ * The old `height` was the typeset image's height in pixels. A one-line formula is about one em
+ * tall, so it carries over as the em size (fontPixelSize).
+ */
+export const latexToTextOverlay = (latex: Omit<Overlay2DLatexSrcFrac, "type">): Overlay2DTextFrac => ({
+    type: "Text",
+    x: latex.x,
+    y: latex.y,
+    text: latex.text,
+    fontFamily: "serif",
+    fontPixelSize: latex.height,
+    drawStyle: "fill",
+    uniqueId: latex.uniqueId,
+    zIndex: latex.zIndex,
+    latex: true,
+});
+
 const initialState: {
     imageOverlayList: Overlay2DImageSrcFrac[];
-    latexOverlayList: Overlay2DLatexSrcFrac[];
     textOverlayList: Overlay2DTextFrac[];
     svgPathOverlayList: Overlay2DSvgPath[];
     fracPathOverlayList: Overlay2DFracPath[];
     callBacks: Function[];
 } = {
     imageOverlayList: [],
-    latexOverlayList: [],
     textOverlayList: [],
     svgPathOverlayList: [],
     fracPathOverlayList: [],
@@ -91,15 +117,13 @@ const overlaysSlice = createSlice({
         removeImageOverlay: (state, action: PayloadAction<Overlay2DImageSrcFrac>) => {
             state.imageOverlayList = state.imageOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId);
         },
+        /** Add LaTeX given in the old shape. It becomes a text overlay with `latex: true`. */
         addLatexOverlay: (state, action: PayloadAction<Omit<Overlay2DLatexSrcFrac, "type">>) => {
-            const latexOverlay: Overlay2DLatexSrcFrac = {
-                ...action.payload,
-                type: "Latex",
-            };
-            state.latexOverlayList.push(latexOverlay);
+            state.textOverlayList.push(latexToTextOverlay(action.payload));
         },
-        removeLatexOverlay: (state, action: PayloadAction<Overlay2DLatexSrcFrac>) => {
-            state.latexOverlayList = state.latexOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId);
+        /** Remove LaTeX added with addLatexOverlay; the same as removeTextOverlay. */
+        removeLatexOverlay: (state, action: PayloadAction<{ uniqueId: string }>) => {
+            state.textOverlayList = state.textOverlayList.filter(item => item.uniqueId !== action.payload.uniqueId);
         },
         addTextOverlay: (state, action: PayloadAction<Omit<Overlay2DTextFrac, "type">>) => {
             const textOverlay: Overlay2DTextFrac = {

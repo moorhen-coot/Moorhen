@@ -443,6 +443,10 @@ export function initGraphics(self: MGWebGL): void {
     self.measureText2DCanvasTexture = new TextCanvasTexture(self.gl,self.ext,self.instanced_ext,self.shaderProgramTextInstanced,768,2048, self.store);
     self.measureTextCanvasTexture = new TextCanvasTexture(self.gl,self.ext,self.instanced_ext,self.shaderProgramTextInstanced,1024,2048, self.store);
     self.labelsTextCanvasTexture = new TextCanvasTexture(self.gl,self.ext,self.instanced_ext,self.shaderProgramTextInstanced,1024,2048, self.store);
+    // Annotations, in two atlases because they are drawn two ways: depth-tested with the scene,
+    // and over everything. Smaller than the label atlas: there are rarely more than a handful.
+    self.annotationsInSceneTextCanvasTexture = new TextCanvasTexture(self.gl,self.ext,self.instanced_ext,self.shaderProgramTextInstanced,1024,1024, self.store);
+    self.annotationsOnTopTextCanvasTexture = new TextCanvasTexture(self.gl,self.ext,self.instanced_ext,self.shaderProgramTextInstanced,1024,1024, self.store);
     self.texturedShapes = [];
 
     self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);

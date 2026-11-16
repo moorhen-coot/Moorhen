@@ -193,6 +193,14 @@ export {
     removeVectorsByIds
 }  from "./vectorsSlice";
 export {
+    addAnnotation,
+    addAnnotations,
+    updateAnnotation,
+    removeAnnotationById,
+    removeAnnotationsByTag,
+    emptyAnnotations,
+}  from "./annotationsSlice";
+export {
     setBusy,
     setTimeCapsuleBusy,
     setGlobalInstanceReady,

@@ -4,26 +4,24 @@ import { useEffect, useRef, useState } from "react";
 import {
     addFracPathOverlay,
     addImageOverlay,
-    addLatexOverlay,
     addSvgPathOverlay,
     addTextOverlay,
     removeFracPathOverlay,
     removeImageOverlay,
-    removeLatexOverlay,
     removeSvgPathOverlay,
     removeTextOverlay,
 } from "../../store/overlaysSlice";
 import type {
     Overlay2DFracPath,
     Overlay2DImageSrcFrac,
-    Overlay2DLatexSrcFrac,
     Overlay2DSvgPath,
     Overlay2DTextFrac,
 } from "../../store/overlaysSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { componentToHex, convertRemToPx, convertViewtoPx, getHexForCanvasColourName, hexToRGB, rgbToHex } from "../../utils/utils";
-import { MoorhenButton, MoorhenColourPicker, MoorhenFileInput, MoorhenNumberInput, MoorhenSelect, MoorhenTextInput } from "../inputs";
+import { MoorhenButton, MoorhenColourPicker, MoorhenFileInput, MoorhenNumberInput, MoorhenSelect, MoorhenTextInput, MoorhenTextStyleEditor } from "../inputs";
+import type { MoorhenTextStyle } from "../../utils/textStyle";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
@@ -32,11 +30,9 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
 
     const imageOverlays = useSelector((state: moorhen.State) => state.overlays.imageOverlayList);
-    const latexOverlays = useSelector((state: moorhen.State) => state.overlays.latexOverlayList);
     const textOverlays = useSelector((state: moorhen.State) => state.overlays.textOverlayList);
     const svgPathOverlays = useSelector((state: moorhen.State) => state.overlays.svgPathOverlayList);
     const fracPathOverlays = useSelector((state: moorhen.State) => state.overlays.fracPathOverlayList);
-    const availableFonts = useSelector((state: moorhen.State) => state.labelSettings.availableFonts);
 
     const dispatch = useDispatch();
 
@@ -66,6 +62,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
             fontFamily: "serif",
             lineWidth: 1,
             zIndex: 0,
+            latex: false,
             uniqueId: uuidv4(),
         };
         return anOverlayObject;
@@ -79,7 +76,6 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
 
     const [theOverlayObject, setOverlayObject] = useState<any>(newOverlayObject());
     const [selectedOption, setSelectedOption] = useState<string>("new");
-    const [selectedFont, setSelectedFont] = useState<string>("serif");
     const [selectedDepth, setSelectedDepth] = useState<number>(0);
     const [selectedDrawStyle, setSelectedDrawStyle] = useState<string>("stroke");
     const [pathText, setPathText] = useState<string>("");
@@ -107,12 +103,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
     };
 
     const deleteCurrentObject = () => {
-        let existingObject: Overlay2DLatexSrcFrac | Overlay2DTextFrac | Overlay2DImageSrcFrac | Overlay2DSvgPath | Overlay2DFracPath = null;
-        existingObject = latexOverlays.find(element => element.uniqueId === theOverlayObject.uniqueId);
-        if (existingObject) {
-            dispatch(removeLatexOverlay(existingObject));
-            setSelectedOption("new");
-        }
+        let existingObject: Overlay2DTextFrac | Overlay2DImageSrcFrac | Overlay2DSvgPath | Overlay2DFracPath = null;
         existingObject = imageOverlays.find(element => element.uniqueId === theOverlayObject.uniqueId);
         if (existingObject) {
             dispatch(removeImageOverlay(existingObject));
@@ -182,6 +173,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                     lineWidth: theOverlayObject.lineWidth,
                     uniqueId: theOverlayObject.uniqueId,
                     zIndex: theOverlayObject.zIndex,
+                    latex: !!theOverlayObject.latex,
                 })
             );
         } else if (objectType === "image") {
@@ -203,29 +195,6 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                     x: new_x,
                     y: new_y,
                     width: theOverlayObject.width,
-                    height: theOverlayObject.height,
-                    uniqueId: theOverlayObject.uniqueId,
-                    zIndex: theOverlayObject.zIndex,
-                })
-            );
-        } else if (objectType === "latex") {
-            let [new_x, new_y] = [0, 1];
-            try {
-                const [_new_x, _new_y] = positionText.split(",").map(a => parseFloat(a));
-                if (!Number.isNaN(_new_x) && !Number.isNaN(_new_y)) {
-                    new_x = _new_x;
-                    new_y = _new_y;
-                } else {
-                    console.log("Not a valid number pair in latex text position.", positionText.split(","));
-                }
-            } catch (e) {
-                console.log("Not a valid number pair in latex text position.");
-            }
-            dispatch(
-                addLatexOverlay({
-                    text: theOverlayObject.text,
-                    x: new_x,
-                    y: new_y,
                     height: theOverlayObject.height,
                     uniqueId: theOverlayObject.uniqueId,
                     zIndex: theOverlayObject.zIndex,
@@ -303,17 +272,8 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                 if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "text";
             } else {
                 try {
-                    let existingObject:
-                        | Overlay2DLatexSrcFrac
-                        | Overlay2DTextFrac
-                        | Overlay2DImageSrcFrac
-                        | Overlay2DSvgPath
-                        | Overlay2DFracPath = null;
-                    existingObject = latexOverlays.find(element => element.uniqueId === evt.target.value);
-                    if (existingObject) {
-                        if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "latex";
-                    }
-                    if (!existingObject) {
+                    let existingObject: Overlay2DTextFrac | Overlay2DImageSrcFrac | Overlay2DSvgPath | Overlay2DFracPath = null;
+                    {
                         existingObject = imageOverlays.find(element => element.uniqueId === evt.target.value);
                         if (existingObject) {
                             if (drawModeRef !== null && typeof drawModeRef !== "function") drawModeRef.current.value = "image";
@@ -399,24 +359,8 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                         } else {
                             setOverlayObject(existingObject);
                         }
-                    } else if (drawModeRef.current.value === "latex") {
-                        existingObject = existingObject as Overlay2DLatexSrcFrac;
-                        setPositionText(existingObject.x.toFixed(3) + ", " + existingObject.y.toFixed(3));
-                        setOverlayObject(existingObject);
                     } else {
                         setOverlayObject(existingObject);
-                    }
-                    if (drawModeRef.current.value === "text") {
-                        existingObject = existingObject as Overlay2DTextFrac;
-                        if (existingObject.fontFamily && existingObject.text) {
-                            if (availableFonts.includes(existingObject.fontFamily)) {
-                                setSelectedFont(existingObject.fontFamily);
-                            } else if (["serif", "sans-serif", "monospace", "cursive", "fantasy"].includes(existingObject.fontFamily)) {
-                                setSelectedFont(existingObject.fontFamily);
-                            } else {
-                                setSelectedFont("serif");
-                            }
-                        }
                     }
                     if (
                         drawModeRef.current.value === "text" ||
@@ -450,7 +394,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                     } else {
                         setSelectedDepth(existingObject.zIndex);
                     }
-                    if (drawModeRef.current.value !== "latex") {
+                    if (drawModeRef.current.value !== "image") {
                         existingObject = existingObject as Overlay2DTextFrac | Overlay2DSvgPath | Overlay2DFracPath;
                         if (existingObject.fillStyle && existingObject.fillStyle !== "gradient") {
                             if (existingObject.fillStyle.startsWith("#") && existingObject.fillStyle.length === 9) {
@@ -488,7 +432,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
         updateObject({ strokeStyle: color, fillStyle: color }, drawModeRef.current.value);
     };
 
-    const combinedArrays = [...latexOverlays, ...imageOverlays, ...textOverlays, ...svgPathOverlays, ...fracPathOverlays];
+    const combinedArrays = [...imageOverlays, ...textOverlays, ...svgPathOverlays, ...fracPathOverlays];
 
     const headerContent = (
         <MoorhenSelect ref={vectorSelectRef} label="Object" onChange={handleObjectChange} value={selectedOption}>
@@ -521,7 +465,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                     } else if (vec.text) {
                         return (
                             <option key={i} value={vec.uniqueId}>
-                                {"Text: " + vec.text.substring(0, 50)}
+                                {(vec.latex ? "LaTeX: " : "Text: ") + vec.text.substring(0, 50)}
                             </option>
                         );
                     } else {
@@ -570,7 +514,8 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
             lineWidth = undefined,
             zIndex = undefined,
             uniqueId = undefined,
-        },
+            latex = undefined,
+        }: Record<string, any>,
         objectType
     ) => {
         const newObject = {
@@ -592,8 +537,34 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
             lineWidth: lineWidth !== undefined ? lineWidth : theOverlayObject.lineWidth,
             zIndex: zIndex !== undefined ? zIndex : theOverlayObject.zIndex,
             uniqueId: uniqueId !== undefined ? uniqueId : theOverlayObject.uniqueId,
+            latex: latex !== undefined ? latex : theOverlayObject.latex,
         };
         setOverlayObject(newObject);
+    };
+
+    /** Text overlays keep separate fill and stroke colours; the editor shows one, which sets both. */
+    const textStyle: MoorhenTextStyle = {
+        text: theOverlayObject.text ?? "",
+        latex: !!theOverlayObject.latex,
+        fontFamily: theOverlayObject.fontFamily,
+        fontPixelSize: theOverlayObject.fontPixelSize,
+        colour: (theOverlayObject.drawStyle === "stroke" ? theOverlayObject.strokeStyle : theOverlayObject.fillStyle) || undefined,
+        drawStyle: theOverlayObject.drawStyle === "stroke" ? "stroke" : "fill",
+        lineWidth: theOverlayObject.lineWidth,
+    };
+
+    const handleTextStyleChange = (changes: Partial<MoorhenTextStyle>) => {
+        const { colour, drawStyle, ...rest } = changes;
+        const update: Record<string, unknown> = { ...rest };
+        if (colour !== undefined) {
+            update.fillStyle = colour;
+            update.strokeStyle = colour;
+        }
+        if (drawStyle !== undefined) {
+            update.drawStyle = drawStyle;
+            setSelectedDrawStyle(drawStyle);
+        }
+        updateObject(update, "text");
     };
 
     const isDefaultNew = !drawModeRef || (drawModeRef !== null && typeof drawModeRef !== "function" && drawModeRef.current === null);
@@ -722,21 +693,11 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                     <option value="svgpath">SVG path</option>
                     <option value="fracpath">Fractional points path</option>
                     <option value="image">Image</option>
-                    <option value="latex">Latex</option>
                 </MoorhenSelect>
 
-                {(isDefaultNew ||
-                    (drawModeRef.current && (drawModeRef.current.value === "text" || drawModeRef.current.value === "latex"))) && (
+                {(isDefaultNew || (drawModeRef.current && drawModeRef.current.value === "text")) && (
                     <>
-                        <MoorhenTextInput
-                            label="Text"
-                            text={theOverlayObject.text}
-                            onChange={evt => {
-                                updateObject({ text: evt.target.value }, drawModeRef.current.value);
-                            }}
-                            style={{ height: "2rem", margin: "0.3rem" }}
-                        />
-
+                        <MoorhenTextStyleEditor value={textStyle} onChange={handleTextStyleChange} />
                         <MoorhenTextInput
                             label="Position"
                             text={positionText}
@@ -744,23 +705,6 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                                 setPositionText(evt.target.value);
                             }}
                             isInvalid={!checkPositionText()}
-                            style={{ height: "2rem", margin: "0.3rem" }}
-                        />
-                        <MoorhenNumberInput
-                            type="number"
-                            label="Size"
-                            value={
-                                drawModeRef !== null && drawModeRef.current !== null && drawModeRef.current.value === "latex"
-                                    ? theOverlayObject.height
-                                    : theOverlayObject.fontPixelSize
-                            }
-                            onChange={evt => {
-                                try {
-                                    const h = parseFloat(evt.target.value);
-                                    if (drawModeRef.current.value === "latex") updateObject({ height: h }, drawModeRef.current.value);
-                                    else updateObject({ fontPixelSize: h }, drawModeRef.current.value);
-                                } catch (e) {}
-                            }}
                             style={{ height: "2rem", margin: "0.3rem" }}
                         />
                     </>
@@ -853,43 +797,8 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                         </MoorhenStack>
                     </>
                 )}
-                {drawModeRef.current && drawModeRef.current.value === "text" && (
-                    <MoorhenSelect
-                        label="Font"
-                        value={selectedFont}
-                        onChange={(evt: React.ChangeEvent<HTMLSelectElement>) => {
-                            setSelectedFont(evt.target.value);
-                            updateObject({ fontFamily: evt.target.value }, drawModeRef.current.value);
-                        }}
-                    >
-                        {availableFonts.map(item => {
-                            return (
-                                <option key={item} value={item}>
-                                    {item}
-                                </option>
-                            );
-                        })}
-                        <option key="serif" value="serif">
-                            Serif
-                        </option>
-                        <option key="sans-serif" value="sans-serif">
-                            Sans serif
-                        </option>
-                        <option key="monospace" value="monospace">
-                            Monospace
-                        </option>
-                        <option key="cursive" value="cursive">
-                            Cursive
-                        </option>
-                        <option key="fantasy" value="fantasy">
-                            Fantasy
-                        </option>
-                    </MoorhenSelect>
-                )}
                 {drawModeRef.current &&
-                    (drawModeRef.current.value === "text" ||
-                        drawModeRef.current.value === "svgpath" ||
-                        drawModeRef.current.value === "fracpath") && (
+                    (drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath") && (
                         <MoorhenSelect
                             label="Draw Style"
                             value={selectedDrawStyle}
@@ -929,9 +838,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                     )}
                 {drawModeRef.current &&
                     selectedDrawStyle === "stroke" &&
-                    (drawModeRef.current.value === "text" ||
-                        drawModeRef.current.value === "svgpath" ||
-                        drawModeRef.current.value === "fracpath") && (
+                    (drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath") && (
                         <MoorhenNumberInput
                             label="Line Width"
                             type="number"
@@ -943,9 +850,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                     )}
                 {selectedDrawStyle !== "gradient" &&
                     drawModeRef.current &&
-                    (drawModeRef.current.value === "svgpath" ||
-                        drawModeRef.current.value === "fracpath" ||
-                        drawModeRef.current.value === "text") && (
+                    (drawModeRef.current.value === "svgpath" || drawModeRef.current.value === "fracpath") && (
                         <MoorhenStack direction="line">
                             <label>Colour</label>
                             <MoorhenColourPicker
@@ -962,7 +867,7 @@ export const Moorhen2DCanvasObjects = (props: ModalComponentProps) => {
                         </MoorhenStack>
                     )}
             </MoorhenStack>
-            {selectedDrawStyle === "gradient" && drawModeRef.current.value !== "image" && (
+            {selectedDrawStyle === "gradient" && drawModeRef.current.value !== "image" && drawModeRef.current.value !== "text" && (
                 <MoorhenStack direction="column" card>
                     <MoorhenTextInput
                         label="Gradient boundaries"

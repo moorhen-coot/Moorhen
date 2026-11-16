@@ -58,7 +58,8 @@ import type {
     Overlay2DSvgPath,
     Overlay2DTextFrac,
 } from "../store/overlaysSlice";
-import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
+import { MoorhenVector, addVector, emptyVectors, migrateVectorLatexLabel } from "../store/vectorsSlice";
+import { MoorhenAnnotation, addAnnotations, emptyAnnotations, newAnnotation } from "../store/annotationsSlice";
 import { ThreeDObject, addObject, emptyObjects } from "../store/threeDObjectsSlice";
 import { withMigratedTags } from "./tags";
 import { moorhen } from "../types/moorhen";
@@ -192,6 +193,7 @@ export type backupSession = {
     activeMapIndex: number;
     dataIsEmbedded: boolean;
     vectorData?: MoorhenVector[];
+    annotationData?: MoorhenAnnotation[];
     overlay2dData?: Overlay2DSessionData;
     threeDObjectData?: ThreeDObject[];
     /**
@@ -205,7 +207,8 @@ export type Overlay2DSessionData = {
     fracPath2D: Overlay2DFracPath[];
     svgPath2D: Overlay2DSvgPath[];
     textFracPath2D: Overlay2DTextFrac[];
-    latexFracPath2D: Overlay2DLatexSrcFrac[];
+    /** Only in sessions saved before LaTeX became text with `latex` set; no longer written. */
+    latexFracPath2D?: Overlay2DLatexSrcFrac[];
     imageFracPath2D: Overlay2DImageSrcFrac[];
 };
 
@@ -609,7 +612,6 @@ export class MoorhenTimeCapsule {
             fracPath2D: this.store.getState().overlays.fracPathOverlayList,
             svgPath2D: this.store.getState().overlays.svgPathOverlayList,
             textFracPath2D: this.store.getState().overlays.textOverlayList,
-            latexFracPath2D: this.store.getState().overlays.latexOverlayList,
             imageFracPath2D: this.store.getState().overlays.imageOverlayList,
         };
 
@@ -623,6 +625,7 @@ export class MoorhenTimeCapsule {
             dataIsEmbedded: embedData,
             overlay2dData: overlay2dData,
             vectorData: vectorData,
+            annotationData: this.store.getState().annotations.annotationsList,
             threeDObjectData: threeDObjectData,
         };
         const sceneData = this.getSceneData?.();
@@ -1164,8 +1167,17 @@ export class MoorhenTimeCapsule {
         dispatch(emptyVectors());
         if (sessionData.vectorData) {
             withMigratedTags(sessionData.vectorData, knownMoleculeIds).forEach(d => {
-                dispatch(addVector(d));
+                // A label written $...$ before there was a LaTeX switch gets the switch instead.
+                dispatch(addVector(migrateVectorLatexLabel(d)));
             });
+        }
+
+        // Load annotations
+        dispatch(emptyAnnotations());
+        if (sessionData.annotationData) {
+            // Through the factory, so that fields protobuf leaves out (a coordinate of 0, say) get
+            // their defaults rather than coming back undefined.
+            dispatch(addAnnotations(sessionData.annotationData.map(d => newAnnotation(d))));
         }
 
         // Load 2D canvas overlays
