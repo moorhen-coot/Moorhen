@@ -146,6 +146,7 @@ export {
     setMoleculeRecords,
     removeMoleculeRecord,
     addGeneralRepresentation,
+    setMoleculesVisible,
     showMolecule,
     hideMolecule,
     addCustomRepresentation,

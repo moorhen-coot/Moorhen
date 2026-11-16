@@ -24,6 +24,7 @@ import {
     getCidAltConf,
     getRandomMoleculeColour,
     guid,
+    moleculeNameFromFileName,
     parseAtomInfoLabel,
     readGemmiCifDocument,
     readGemmiStructure,
@@ -1104,8 +1105,7 @@ export class MoorhenMolecule {
             this.gemmiStructure.delete();
         }
 
-        // One pattern, so ".mmcif" is not first stripped as ".cif" (which left "name.m")
-        this.name = name.replace(/\.(pdb|ent|mmcif|cif)$/, "");
+        this.name = moleculeNameFromFileName(name);
 
         try {
             const state = this.store.getState();

@@ -14,6 +14,34 @@ type StoreSync<T> = {
     apply(instance: MoorhenInstance, value: T): unknown;
 };
 
+/**
+ * Remove the ligand contact vectors whose ligand or partner molecule is not shown: not in
+ * visibleMolecules, or deleted.
+ */
+const removeContactVectorsOfHiddenMolecules = (instance: MoorhenInstance) => {
+    const { molecules, vectors } = instance.store.getState();
+    // Nothing to remove (the usual case): no need to look at the molecules
+    if (!vectors.vectorsList.some(vector => matchesTags(vector, { [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS }))) return;
+    const visible = new Set(molecules.visibleMolecules);
+    const shownUids = new Set(
+        instance
+            .getMoleculeList()
+            .filter(molecule => visible.has(molecule.molNo))
+            .map(molecule => molecule.uniqueId)
+    );
+    const gone = new Set<string>();
+    for (const vector of vectors.vectorsList) {
+        if (!matchesTags(vector, { [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS })) continue;
+        for (const uid of [vector.tags?.[TAG_MOLECULE], vector.tags?.[TAG_PARTNER]]) {
+            if (uid && !shownUids.has(uid)) gone.add(uid);
+        }
+    }
+    for (const uid of gone) {
+        instance.store.dispatch(removeVectorsByTag({ [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_MOLECULE]: uid }));
+        instance.store.dispatch(removeVectorsByTag({ [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_PARTNER]: uid }));
+    }
+};
+
 /** Helper so each entry's value type is inferred from its selector */
 const sync = <T>(entry: StoreSync<T>): StoreSync<T> => entry;
 
@@ -25,24 +53,13 @@ const STORE_SYNCS: StoreSync<unknown>[] = [
         apply: (instance, rate) =>
             instance.commandCentre?.cootCommand({ command: "set_map_sampling_rate", commandArgs: [rate], returnType: "status" }, false),
     }),
+    // However a molecule stops being shown (eye button, scene, delete, script): contacts are drawn
+    // between two shown molecules, so one that is not, ligand or partner, takes its contact vectors
+    // with it
     sync({
-        // However the molecule is hidden (eye button, scene, script): contacts are drawn between two
-        // shown molecules, so a hidden one, ligand or partner, takes its contact vectors with it
-        name: "hidden molecules lose their ligand contact vectors",
+        name: "hidden or deleted molecules lose their ligand contact vectors",
         selector: state => state.molecules.visibleMolecules,
-        apply: (instance, visibleMolNos) => {
-            const visible = new Set(visibleMolNos);
-            const vectors = instance.store.getState().vectors.vectorsList;
-            for (const molecule of instance.getMoleculeList()) {
-                if (visible.has(molecule.molNo)) continue;
-                for (const query of [
-                    { [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_MOLECULE]: molecule.uniqueId },
-                    { [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_PARTNER]: molecule.uniqueId },
-                ]) {
-                    if (vectors.some(vector => matchesTags(vector, query))) instance.store.dispatch(removeVectorsByTag(query));
-                }
-            }
-        },
+        apply: instance => removeContactVectorsOfHiddenMolecules(instance),
     }),
 ];
 

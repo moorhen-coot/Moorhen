@@ -6,13 +6,14 @@ import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress"
 import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
 import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
 import { MoorhenAccordion, MoorhenStack, MoorhenTooltip } from "@/components/interface-base";
-import { type RootState, addCustomRepresentation, enqueueSnackbar, removeCustomRepresentation, removeMolecule, setHoveredAtom } from "@/store";
+import { type RootState, addCustomRepresentation, enqueueSnackbar, removeCustomRepresentation, removeMolecule, removeVectorsByTag, setHoveredAtom } from "@/store";
 import { triggerUpdate } from "@/store/moleculeMapUpdateSlice";
 import type { MoleculeLigandRecord } from "@/store/moleculesSlice";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { MoleculeRepresentation, type RepresentationStyles } from "@/utils/Representation/MoorhenMoleculeRepresentation";
-import { type LigandSite, centreOnSite, groupLigandsBySite } from "@/utils/ligandSites";
-import { setMoleculeVisible } from "@/utils/moleculeVisibility";
+import { type LigandEntry, type LigandSite, centreOnSite, groupLigandsBySite } from "@/utils/ligandSites";
+import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_SOURCE } from "@/utils/tags";
+import { setMoleculeListVisible, setMoleculeVisible } from "@/utils/moleculeVisibility";
 import { hexToRGB, rgbToHex } from "@/utils/utils";
 import { LigandContactsSection } from "./LigandContacts";
 import { selectCustomRepresentations } from "../MoleculeCard/moleculeCardSelectors";
@@ -67,13 +68,14 @@ const useHoveredRowHighlight = (store: ReturnType<typeof useStore<RootState>>) =
 const byName = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 
 /**
- * The ligands of the Models panel, each with its ligand card (2D view, centre-on, representation,
+ * The ligands of the Ligands panel, each with its ligand card (2D view, centre-on, representation,
  * contacts...):
  * - the ligands inside models, one group per model, open by default;
  * - the ligand-only molecules (MoorhenMolecule.isLigandOnly), listed by name instead of a full
  *   molecule card each (which does not scale to the hundreds or thousands of ligands
- *   files.batchLoadLigands can load). Optionally grouped by position: one sub-card per site, i.e.
- *   per set of overlapping ligands.
+ *   files.batchLoadLigands can load).
+ * Or, grouped by position, only sites: one sub-card per set of overlapping ligands, whichever
+ * molecule each is in.
  */
 export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     const store = useStore<RootState>();
@@ -82,7 +84,6 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     const ligandsOf = (molecule: MoorhenMolecule) => records[molecule.uniqueId]?.ligands ?? [];
     const molecules = props.molecules.filter(molecule => records[molecule.uniqueId]?.isLigandOnly);
     const hosts = props.molecules.filter(molecule => !records[molecule.uniqueId]?.isLigandOnly && ligandsOf(molecule).length > 0);
-    const hostedCount = hosts.reduce((n, host) => n + ligandsOf(host).length, 0);
     /** The ligand residue types of the row that have no dictionary */
     const noDictionary = (molecule: MoorhenMolecule, ligand?: MoleculeLigandRecord): string[] => {
         const missing = records[molecule.uniqueId]?.missingDictionaries ?? [];
@@ -93,125 +94,139 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     const registerRow = useHoveredRowHighlight(store);
     const visibleMolecules = useSelector((state: RootState) => state.molecules.visibleMolecules);
     const visible = new Set(visibleMolecules);
-    const anyVisible = (list: MoorhenMolecule[]) => list.some(molecule => visible.has(molecule.molNo));
 
     // A–Z by default; load order kept as the other choice, since it may carry the caller's ranking
     const [order, setOrder] = useState<"name" | "load">("name");
-    const sorted = (list: MoorhenMolecule[]) => (order === "load" ? list : [...list].sort((a, b) => byName.compare(a.name, b.name)));
+    const entryName = ({ molecule, ligand }: LigandEntry) =>
+        ligand ? `${molecule.name} ${ligand.resName} ${ligand.chainName}/${ligand.resNum}` : molecule.name;
+    const sorted = (list: LigandEntry[]) => (order === "load" ? list : [...list].sort((a, b) => byName.compare(entryName(a), entryName(b))));
 
-    // Grouping by position: computed when switched on, again only if the ligands change
+    // Every ligand: those of the models, then the ligand-only molecules
+    const entries: LigandEntry[] = [
+        ...hosts.flatMap(host => ligandsOf(host).map(ligand => ({ molecule: host, ligand }))),
+        ...molecules.map(molecule => ({ molecule })),
+    ];
+    const entryKey = ({ molecule, ligand }: LigandEntry) => (ligand ? `${molecule.uniqueId}|${ligand.cid}` : molecule.uniqueId);
+
+    // Grouping by position, of all the ligands: computed when switched on, again only if the ligands change
     const [grouped, setGrouped] = useState<boolean>(false);
     const [computed, setComputed] = useState<{ membership: string; sites: LigandSite[] } | null>(null);
-    const membership = molecules.map(molecule => molecule.molNo).join(",");
+    const membership = entries.map(entryKey).join(",");
     const sites = computed?.membership === membership ? computed.sites : null;
     useEffect(() => {
         if (!grouped || sites) return;
         let cancelled = false;
-        groupLigandsBySite(molecules).then(result => {
+        groupLigandsBySite(entries).then(result => {
             if (!cancelled) setComputed({ membership, sites: result });
         });
         return () => {
             cancelled = true;
         };
-        // Keyed on which ligands are listed, not on the molecules array, which is new on every render
+        // Keyed on which ligands are listed, not on the entries array, which is new on every render
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [grouped, membership]);
 
-    const setAllVisible = (list: MoorhenMolecule[], show: boolean) => {
-        batch(() => list.forEach(molecule => setMoleculeVisible(molecule, show)));
+    /** Show / hide the ligand-only molecules of a list (a ligand of a model is shown with its model) */
+    const visibilityButton = (list: LigandEntry[], what: string): React.JSX.Element[] => {
+        const switchable = list.filter(entry => !entry.ligand).map(entry => entry.molecule);
+        if (switchable.length === 0) return [];
+        const anyShown = switchable.some(molecule => visible.has(molecule.molNo));
+        return [
+            <MoorhenButton
+                key="visibility"
+                size="accordion"
+                type="icon-only"
+                icon={anyShown ? "MatSymVisibility" : "MatSymVisibilityOff"}
+                tooltip={anyShown ? `Hide ${what}` : `Show ${what}`}
+                onClick={() => batch(() => setMoleculeListVisible(switchable, !anyShown))}
+            />,
+        ];
     };
-    const visibilityButton = (list: MoorhenMolecule[], what: string) => (
-        <MoorhenButton
-            key="visibility"
-            size="accordion"
-            type="icon-only"
-            icon={anyVisible(list) ? "MatSymVisibility" : "MatSymVisibilityOff"}
-            tooltip={anyVisible(list) ? `Hide ${what}` : `Show ${what}`}
-            onClick={() => setAllVisible(list, !anyVisible(list))}
-        />
-    );
-    const rows = (list: MoorhenMolecule[]) => (
+    const rows = (list: LigandEntry[]) => (
         <div className="moorhen__ligand-list-list">
-            {sorted(list).map(molecule => (
+            {sorted(list).map(entry => (
                 <LigandListRow
-                    key={molecule.uniqueId}
-                    molecule={molecule}
-                    noDictionary={noDictionary(molecule).join(", ")}
-                    isVisible={visible.has(molecule.molNo)}
+                    key={entryKey(entry)}
+                    molecule={entry.molecule}
+                    ligand={entry.ligand}
+                    noDictionary={noDictionary(entry.molecule, entry.ligand).join(", ")}
+                    isVisible={visible.has(entry.molecule.molNo)}
                     registerRow={registerRow}
                 />
             ))}
         </div>
     );
 
-    const hostGroups = hosts.map(host => (
-        <MoorhenAccordion
-            key={host.uniqueId}
-            title={`${host.name} (${ligandsOf(host).length})`}
-            defaultOpen={true}
-            extraControls={[
-                <MoorhenButton
-                    key="centre"
-                    size="accordion"
-                    type="icon-only"
-                    icon="MatSymFilterFocus"
-                    tooltip="Centre on molecule"
-                    onClick={() => host.centreOn()}
-                />,
-            ]}
-        >
-            <div className="moorhen__ligand-list-list">
-                {ligandsOf(host).map(ligand => (
-                    <LigandListRow
-                        key={ligand.cid}
-                        molecule={host}
-                        ligand={ligand}
-                        noDictionary={noDictionary(host, ligand).join(", ")}
-                        isVisible={visible.has(host.molNo)}
-                        registerRow={registerRow}
-                    />
-                ))}
-            </div>
-        </MoorhenAccordion>
-    ));
-
     let content: React.ReactNode;
-    if (molecules.length === 0) {
-        content = null;
-    } else if (!grouped) {
-        content = rows(molecules);
-    } else if (sites === null) {
-        content = <MoorhenLinearProgress />;
+    if (grouped) {
+        // Only sites: each holds every ligand at that position, whichever molecule it is in
+        content =
+            sites === null ? (
+                <MoorhenLinearProgress />
+            ) : (
+                sites.map((site, i) => {
+                    return (
+                        <MoorhenAccordion
+                            key={entryKey(site.ligands[0])}
+                            title={`Site ${i + 1} (${site.ligands.length})`}
+                            defaultOpen={sites.length === 1}
+                            extraControls={[
+                                <MoorhenButton
+                                    key="centre"
+                                    size="accordion"
+                                    type="icon-only"
+                                    icon="MatSymFilterFocus"
+                                    tooltip="Centre on site"
+                                    onClick={() => centreOnSite(site, store)}
+                                />,
+                                ...visibilityButton(site.ligands, "the ligand-only molecules of this site"),
+                            ]}
+                        >
+                            {rows(site.ligands)}
+                        </MoorhenAccordion>
+                    );
+                })
+            );
     } else {
-        content = sites.map((site, i) => (
-            <MoorhenAccordion
-                key={site.molecules[0].uniqueId}
-                title={`Site ${i + 1} (${site.molecules.length})`}
-                defaultOpen={sites.length === 1}
-                extraControls={[
-                    <MoorhenButton
-                        key="centre"
-                        size="accordion"
-                        type="icon-only"
-                        icon="MatSymFilterFocus"
-                        tooltip="Centre on site"
-                        onClick={() => centreOnSite(site, store)}
-                    />,
-                    visibilityButton(site.molecules, "site"),
-                ]}
-            >
-                {rows(site.molecules)}
-            </MoorhenAccordion>
-        ));
+        // One group per model with ligands, then the ligand-only molecules as a group of their own
+        content = (
+            <>
+                {hosts.map(host => (
+                    <MoorhenAccordion
+                        key={host.uniqueId}
+                        title={`${host.name} (${ligandsOf(host).length})`}
+                        defaultOpen={true}
+                        extraControls={[
+                            <MoorhenButton
+                                key="centre"
+                                size="accordion"
+                                type="icon-only"
+                                icon="MatSymFilterFocus"
+                                tooltip="Centre on molecule"
+                                onClick={() => host.centreOn()}
+                            />,
+                        ]}
+                    >
+                        {rows(ligandsOf(host).map(ligand => ({ molecule: host, ligand })))}
+                    </MoorhenAccordion>
+                ))}
+                {molecules.length > 0 && (
+                    <MoorhenAccordion
+                        key="ligand-only"
+                        title={`Ligand-only molecules (${molecules.length})`}
+                        defaultOpen={true}
+                        extraControls={visibilityButton(molecules.map(molecule => ({ molecule })), "the ligand-only molecules")}
+                    >
+                        {rows(molecules.map(molecule => ({ molecule })))}
+                    </MoorhenAccordion>
+                )}
+            </>
+        );
     }
 
     return (
         <MoorhenAccordion
-            title={
-                grouped && sites
-                    ? `Ligands (${molecules.length + hostedCount}, ${sites.length} sites)`
-                    : `Ligands (${molecules.length + hostedCount})`
-            }
+            title={grouped && sites ? `Ligands (${entries.length}, ${sites.length} sites)` : `Ligands (${entries.length})`}
             type="card"
             defaultOpen={true}
             extraControls={[
@@ -220,7 +235,7 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
                     size="accordion"
                     type="icon-only"
                     icon="MatSymGrain"
-                    tooltip={grouped ? "Grouped by position: click to list all" : "Group by position"}
+                    tooltip={grouped ? "Grouped by position: click to group by molecule" : "Group by position"}
                     onClick={() => setGrouped(!grouped)}
                 />,
                 <MoorhenButton
@@ -231,10 +246,8 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
                     tooltip={order === "name" ? "Sorted A–Z: click for load order" : "In load order: click to sort A–Z"}
                     onClick={() => setOrder(order === "name" ? "load" : "name")}
                 />,
-                visibilityButton(molecules, "ligand-only molecules"),
             ]}
         >
-            {hostGroups}
             {content}
         </MoorhenAccordion>
     );
@@ -258,6 +271,20 @@ const LigandListRow = memo(function LigandListRow(props: {
     const rowRef = useCallback((element: HTMLDivElement | null) => registerRow(key, element), [key, registerRow]);
     const ligandCid = ligand?.cid ?? molecule.ligands?.[0]?.cid;
     const name = ligand ? `${ligand.resName} ${ligand.chainName}/${ligand.resNum}` : molecule.name;
+
+    // A double-click on the eye isolates the ligand. Told apart here rather than by dblclick, which
+    // does not fire: the first click swaps the icon, so the second lands on a new element.
+    const lastVisibilityClick = useRef(0);
+    const onVisibilityClick = () => {
+        const now = performance.now();
+        if (now - lastVisibilityClick.current < DOUBLE_CLICK_MS) {
+            lastVisibilityClick.current = 0;
+            isolateLigand(molecule, store);
+        } else {
+            lastVisibilityClick.current = now;
+            setMoleculeVisible(molecule, !isVisible);
+        }
+    };
 
     // Hovering a row hovers its ligand, as hovering a residue in the sequence viewer does: hover marker
     // in 3D, hover info panel. Leaving clears it, unless something else (the 3D view) has hovered since.
@@ -312,14 +339,17 @@ const LigandListRow = memo(function LigandListRow(props: {
                         tooltip="Centre on ligand"
                         onClick={() => (ligand ? molecule.centreOn(ligand.cid) : molecule.centreOn())}
                     />,
+                    <MoorhenPopoverButton key="delete" size="accordion" icon="MatSymDelete" tooltip="Delete" popoverPlacement="left">
+                        <LigandDelete molecule={molecule} ligand={ligand} name={name} />
+                    </MoorhenPopoverButton>,
                     !ligand && (
                         <MoorhenButton
                             key="visibility"
                             size="accordion"
                             type="icon-only"
                             icon={isVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
-                            tooltip="Toggle visibility"
-                            onClick={() => setMoleculeVisible(molecule, !isVisible)}
+                            tooltip="Toggle visibility (double-click: show only this ligand)"
+                            onClick={onVisibilityClick}
                         />
                     ),
                 ].filter(Boolean)}
@@ -332,6 +362,25 @@ const LigandListRow = memo(function LigandListRow(props: {
         </div>
     );
 });
+
+const DOUBLE_CLICK_MS = 350;
+
+/**
+ * Show this ligand-only molecule and hide every other one, to look at it alone, in a fixed number of
+ * dispatches (setMoleculeListVisible) however many ligands there are. Ligands inside models are left
+ * as they are: they are shown and hidden with their model. (The first click of the double-click
+ * toggles it, so this shows it again either way.)
+ */
+const isolateLigand = (molecule: MoorhenMolecule, store: ReturnType<typeof useStore<RootState>>) => {
+    const { moleculeList, moleculeRecords } = store.getState().molecules;
+    batch(() => {
+        setMoleculeListVisible(
+            moleculeList.filter(other => other !== molecule && moleculeRecords[other.uniqueId]?.isLigandOnly),
+            false
+        );
+        setMoleculeVisible(molecule, true);
+    });
+};
 
 /** The representations offered for a ligand, one at a time. */
 const LIGAND_STYLES: { style: RepresentationStyles; label: string }[] = [
@@ -487,8 +536,8 @@ const LigandMergeInto = (props: { molecule: MoorhenMolecule }) => {
         setBusy(true);
         try {
             await target.mergeMolecules([molecule]);
-            await molecule.delete();
             dispatch(removeMolecule(molecule));
+            await molecule.delete();
             dispatch(triggerUpdate(target.molNo));
             dispatch(enqueueSnackbar({ message: `Merged ${molecule.name} into ${target.name}`, variant: "success" }));
             document.body.click();
@@ -506,6 +555,54 @@ const LigandMergeInto = (props: { molecule: MoorhenMolecule }) => {
             <MoorhenMoleculeSelect useUniqueId={true} molecules={targets} selectedMolecule={targetUid} setSelectedMolecule={setTargetUid} label="Into" />
             <MoorhenButton onClick={merge} disabled={busy || !targetUid}>
                 Merge
+            </MoorhenButton>
+        </MoorhenStack>
+    );
+};
+
+/**
+ * Delete a ligand, once confirmed: a ligand-only molecule as a molecule, a ligand inside a model as
+ * that residue of the model (an edit of the model, which its undo can take back; the model goes too
+ * if nothing is left of it). The ligand's contact vectors go with it.
+ *
+ * A molecule leaves the store before it is deleted: delete() frees its gemmi structure, and the
+ * store's dev checks read every object it holds on each dispatch.
+ */
+const LigandDelete = (props: { molecule: MoorhenMolecule; ligand?: MoleculeLigandRecord; name: string }) => {
+    const { molecule, ligand, name } = props;
+    const dispatch = useDispatch();
+    const [busy, setBusy] = useState<boolean>(false);
+
+    const deleteLigand = async () => {
+        setBusy(true);
+        try {
+            if (ligand) {
+                dispatch(removeVectorsByTag({ [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_MOLECULE]: molecule.uniqueId, ligand: ligand.cid }));
+                const result = await molecule.deleteCid(ligand.cid);
+                if (result.second < 1) {
+                    dispatch(removeMolecule(molecule));
+                    await molecule.delete();
+                } else {
+                    dispatch(triggerUpdate(molecule.molNo));
+                }
+            } else {
+                dispatch(removeMolecule(molecule));
+                await molecule.delete();
+            }
+            document.body.click();
+        } catch (err) {
+            console.error(err);
+            dispatch(enqueueSnackbar({ message: `Failed to delete ${name}`, variant: "error" }));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <MoorhenStack direction="row" gap="0.5rem" align="center">
+            <span>{ligand ? `Delete ${name} from ${molecule.name}?` : `Delete ${name}?`}</span>
+            <MoorhenButton variant="danger" onClick={deleteLigand} disabled={busy}>
+                Delete
             </MoorhenButton>
         </MoorhenStack>
     );

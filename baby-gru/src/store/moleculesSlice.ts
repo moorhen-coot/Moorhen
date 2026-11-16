@@ -82,6 +82,23 @@ const moleculesSlice = createSlice({
                 }
             });
         },
+        /**
+         * Show or hide many molecules in one dispatch (by molNo): each dispatch runs every selector,
+         * and in development walks the whole store, so per-molecule dispatches make group actions
+         * over a thousand ligands crawl.
+         */
+        setMoleculesVisible: (state, action: PayloadAction<{ molNos: number[]; visible: boolean }>) => {
+            const { molNos, visible } = action.payload;
+            if (visible) {
+                const shown = new Set(state.visibleMolecules);
+                molNos.forEach(molNo => {
+                    if (!shown.has(molNo)) state.visibleMolecules.push(molNo);
+                });
+            } else {
+                const hidden = new Set(molNos);
+                state.visibleMolecules = state.visibleMolecules.filter(molNo => !hidden.has(molNo));
+            }
+        },
         showMolecule: (state, action: PayloadAction<MoorhenMolecule>) => {
             if (!state.visibleMolecules.includes(action.payload.molNo)) {
                 state.visibleMolecules.push(action.payload.molNo);
@@ -154,6 +171,7 @@ export const {
     setMoleculeRecords,
     removeMoleculeRecord,
     addGeneralRepresentation,
+    setMoleculesVisible,
     showMolecule,
     hideMolecule,
     addCustomRepresentation,

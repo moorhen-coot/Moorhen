@@ -8,6 +8,7 @@ import "./moorhen-button.css";
 type MoorhenButtonPropsTypeBase = {
     label?: string;
     onClick?: (() => void) | ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void);
+    onDoubleClick?: (() => void) | ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void);
     onMouseDown?: (() => void) | ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void);
     onMouseUp?: () => void;
     onMouseLeave?: () => void;
@@ -158,6 +159,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
             className={resultClassName}
             onClick={onClick}
             onMouseDown={onMouseDown}
+            onDoubleClick={props.onDoubleClick}
             onMouseUp={onMouseUp}
             onMouseLeave={onMouseLeave}
             onMouseEnter={onMouseEnter}

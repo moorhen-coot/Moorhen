@@ -26,6 +26,7 @@ import { decompressDracoGltf } from "./gltfDraco";
 import { createDracoDecode } from "./gltfDracoDecoder";
 import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
 import { gltfMaterials } from "./gltfTextures";
+import { moleculeNameFromFileName } from "./utils";
 // import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
@@ -418,7 +419,7 @@ const readCifDictionary = async (
         );
         if (result.data.result.status === "Completed") {
             newMonomer.molNo = result.data.result.result;
-            newMonomer.name = file.name;
+            newMonomer.name = moleculeNameFromFileName(file.name);
             newMonomer.setBackgroundColour(backgroundColor);
             newMonomer.defaultBondOptions.smoothness = defaultBondSmoothness;
             newMonomer.coordsFormat = "mmcif";

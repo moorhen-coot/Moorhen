@@ -344,6 +344,13 @@ export const doDownloadText = (text: string, fileName: string) => {
     downloadFile(file, fileName);
 };
 
+/**
+ * A molecule's name from the file it was read from: the file name without its coordinate or
+ * dictionary extension (.pdb, .pdbqt, .ent, .cif, .mmcif, any case, optionally .gz). One pattern, so
+ * ".mmcif" is not first stripped as ".cif" (which left "name.m").
+ */
+export const moleculeNameFromFileName = (fileName: string): string => fileName.replace(/\.(pdbqt|pdb|ent|mmcif|cif)(\.gz)?$/i, "");
+
 export const readGemmiStructure = (coordData: ArrayBuffer | string, molName: string): gemmi.Structure => {
     const structure: gemmi.Structure = window.gemmiModule.read_structure_from_string(coordData, molName);
     return structure;

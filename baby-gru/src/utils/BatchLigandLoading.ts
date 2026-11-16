@@ -6,6 +6,7 @@ import { setRequestDrawScene } from "@/store/glRefSlice";
 import { setJobProgress } from "@/store/generalStatesSlice";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { fetchMonomerDictionary } from "./monomerLibrary";
+import { moleculeNameFromFileName } from "./utils";
 import { MoleculeRepresentation } from "./Representation/MoorhenMoleculeRepresentation";
 
 /*
@@ -171,7 +172,7 @@ export const batchLoadLigands = async (
             const molecule = new MoorhenMolecule(instance);
             molecule.setBackgroundColour(backgroundColor);
             molecule.defaultBondOptions.smoothness = defaultBondSmoothness;
-            molecule.name = fileName.replace(/\.(pdb|ent|mmcif|cif)$/, "");
+            molecule.name = moleculeNameFromFileName(fileName);
             try {
                 await molecule.updateGemmiStructure(text);
                 molecule.atomsDirty = false;

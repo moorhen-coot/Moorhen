@@ -1,11 +1,15 @@
 import type { MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
+import type { MoleculeLigandRecord } from "@/store/moleculesSlice";
 import { setOrigin, setZoom } from "@/store";
 import type { MoorhenMolecule } from "./MoorhenMolecule";
 import { centroidOf, moleculeDiameter, ZOOM_DIVISOR, type Point3 } from "./moleculeExtent";
 
+/** A ligand: a ligand-only molecule, or with `ligand` one ligand residue of a model. */
+export type LigandEntry = { molecule: MoorhenMolecule; ligand?: MoleculeLigandRecord };
+
 /** Ligands at the same position: they overlap one another, directly or through other ligands of the site. */
 export type LigandSite = {
-    molecules: MoorhenMolecule[];
+    ligands: LigandEntry[];
     /** Mean position of the site's heavy atoms */
     centre: [number, number, number];
     /** Extent of the site's heavy atoms, as moleculeDiameter measures it */
@@ -21,24 +25,24 @@ const isHydrogen = (element: string) => {
 };
 
 /**
- * Group ligand molecules by position: ligands that overlap (any heavy atoms closer than
+ * Group ligands by position, ligand-only molecules and ligands of models alike: ligands that overlap (any heavy atoms closer than
  * `contactDistance`) are in the same site, and so are ligands that overlap through others, e.g. all
  * the docking poses in one pocket. Sites are returned largest first.
  *
  * Linear in the number of atoms: heavy atoms go in a grid of `contactDistance` cells, and each atom
  * is only compared with the atoms of its own and neighbouring cells.
  */
-export const groupLigandsBySite = async (molecules: MoorhenMolecule[], contactDistance: number = SITE_CONTACT_DISTANCE): Promise<LigandSite[]> => {
+export const groupLigandsBySite = async (entries: LigandEntry[], contactDistance: number = SITE_CONTACT_DISTANCE): Promise<LigandSite[]> => {
     const atomsOf: Point3[][] = [];
-    for (const molecule of molecules) {
-        const atoms = await molecule.gemmiAtomsForCid("/*/*/*/*");
+    for (const { molecule, ligand } of entries) {
+        const atoms = await molecule.gemmiAtomsForCid(ligand ? ligand.cid : "/*/*/*/*");
         const heavyAtoms = atoms.filter(atom => !isHydrogen(atom.element));
         // A ligand of hydrogens only (e.g. a proton) still has a position
         atomsOf.push(heavyAtoms.length > 0 ? heavyAtoms : atoms);
     }
 
-    // Union-find over molecules
-    const parent = molecules.map((_, i) => i);
+    // Union-find over ligands
+    const parent = entries.map((_, i) => i);
     const find = (i: number): number => {
         while (parent[i] !== i) {
             parent[i] = parent[parent[i]];
@@ -79,7 +83,7 @@ export const groupLigandsBySite = async (molecules: MoorhenMolecule[], contactDi
     });
 
     const byRoot = new Map<number, number[]>();
-    molecules.forEach((_, i) => {
+    entries.forEach((_, i) => {
         const root = find(i);
         const members = byRoot.get(root);
         if (members) members.push(i);
@@ -90,9 +94,9 @@ export const groupLigandsBySite = async (molecules: MoorhenMolecule[], contactDi
         .map(members => {
             const atoms = members.flatMap(i => atomsOf[i]);
             const centre = centroidOf(atoms);
-            return { molecules: members.map(i => molecules[i]), centre, diameter: moleculeDiameter(atoms, centre) };
+            return { ligands: members.map(i => entries[i]), centre, diameter: moleculeDiameter(atoms, centre) };
         })
-        .sort((a, b) => b.molecules.length - a.molecules.length);
+        .sort((a, b) => b.ligands.length - a.ligands.length);
 };
 
 /** Centre and zoom the view on a site, as MoorhenMolecule.centreOn does for a molecule. */

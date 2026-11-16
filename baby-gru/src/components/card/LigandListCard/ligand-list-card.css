@@ -17,6 +17,8 @@
 
 .moorhen__ligand-list-row .moorhen__accordion-content-shown {
     padding: 0.25rem 0.5rem 0.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--moorhen-border);
 }
 
 /* On the row's own header only, not on its open content (representations, contacts) */

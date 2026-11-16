@@ -684,8 +684,10 @@ export class MoleculeRepresentation {
 
     /**
      * Make the representation visible
+     * @param requestDraw - Ask for the scene to be redrawn (default). Pass false when showing many at
+     * once and ask once at the end: each request is a store dispatch.
      */
-    async show() {
+    async show(requestDraw: boolean = true) {
         const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers;
         const newLabelBuffers = [];
         try {
@@ -710,15 +712,17 @@ export class MoleculeRepresentation {
         // A new label array redraws the labels; visibility alone only needs a redraw.
         if (newLabelBuffers.length > 0) {
             this.parentMolecule.store.dispatch(setLabelBuffers([...labelBuffers, ...newLabelBuffers]));
-        } else {
+        } else if (requestDraw) {
             this.parentMolecule.store.dispatch(setRequestDrawScene(true));
         }
     }
 
     /**
      * Make the representation not visible
+     * @param requestDraw - Ask for the scene to be redrawn (default). Pass false when hiding many at
+     * once and ask once at the end: each request is a store dispatch.
      */
-    hide() {
+    hide(requestDraw: boolean = true) {
         const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers;
         let newLabelBuffers = labelBuffers;
         try {
@@ -736,7 +740,7 @@ export class MoleculeRepresentation {
         }
         if (newLabelBuffers.length !== labelBuffers.length) {
             this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
-        } else {
+        } else if (requestDraw) {
             this.parentMolecule.store.dispatch(setRequestDrawScene(true));
         }
     }
