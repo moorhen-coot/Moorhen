@@ -6,9 +6,15 @@ import { MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenToggle } from "@/com
 import { MoorhenStack } from "@/components/interface-base";
 import { type RootState, setHoveredAtom } from "@/store";
 import { type MoorhenVector, addVectors, removeVectorsByTag } from "@/store/vectorsSlice";
-import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
-import { type ContactSide, type ContactType, type LigandContact, type LigandContactsResult, getLigandContacts } from "@/utils/ligandContacts";
-import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_SOURCE } from "@/utils/tags";
+import type { LigandInfo, MoorhenMolecule } from "@/utils/MoorhenMolecule";
+import {
+    type ContactSide,
+    type ContactType,
+    type LigandContact,
+    type LigandContactsResult,
+    getLigandContacts,
+} from "@/utils/ligandContacts";
+import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_SOURCE, type Tags } from "@/utils/tags";
 import { newVector } from "@/utils/vectorFactories";
 
 type ContactsState = (LigandContactsResult & { error?: undefined }) | { error: string; contacts?: undefined; flev?: undefined };
@@ -44,7 +50,7 @@ const hoverCid = (side: ContactSide) =>
  * A contact as a dashed vector labelled with its length. XH-π: an arrow from the X atom to the ring
  * centre, whichever side the donor is on.
  */
-const contactVector = (contact: LigandContact, colour: Colour, ligand: MoorhenMolecule): MoorhenVector => {
+const contactVector = (contact: LigandContact, colour: Colour, tags: Tags): MoorhenVector => {
     const fromPartner = contact.type === "xh-pi" && contact.ligandRole === "ring";
     const [xFrom, yFrom, zFrom] = fromPartner ? contact.partner.xyz : contact.ligand.xyz;
     const [xTo, yTo, zTo] = fromPartner ? contact.ligand.xyz : contact.partner.xyz;
@@ -64,7 +70,7 @@ const contactVector = (contact: LigandContact, colour: Colour, ligand: MoorhenMo
         dashSpacing: 0.22,
         labelFontSize: 20,
         ...(contact.type === "xh-pi" ? { arrowMode: "end", arrowHeadLength: 0.42, arrowHeadRadiusScale: 2.2 } : {}),
-        tags: { [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_MOLECULE]: ligand.uniqueId },
+        tags,
     });
 };
 
@@ -75,12 +81,14 @@ const contactVector = (contact: LigandContact, colour: Colour, ligand: MoorhenMo
  * its accordion is open: Coot is asked when it opens or the other molecule changes, and the vectors
  * are removed when it closes.
  */
-export const LigandContacts = (props: { molecule: MoorhenMolecule }) => {
-    const { molecule } = props;
+export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: LigandInfo }) => {
+    const { molecule, ligand } = props;
     const dispatch = useDispatch();
     const store = useStore<RootState>();
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
-    const partners = moleculeList.filter(other => other !== molecule && !other.isLigandOnly());
+    // A ligand inside a model: that model first (the rest of it), then the others
+    const others = moleculeList.filter(other => other !== molecule && !other.isLigandOnly());
+    const partners = ligand ? [molecule, ...others] : others;
 
     const [partnerUid, setPartnerUid] = useState<string | undefined>(undefined);
     const partner = partners.find(other => other.uniqueId === partnerUid) ?? null;
@@ -93,7 +101,7 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule }) => {
     useEffect(() => {
         if (!partner) return;
         let cancelled = false;
-        getLigandContacts(molecule, partner, { xhpi: true, flev: true })
+        getLigandContacts(molecule, partner, { xhpi: true, flev: true }, ligand)
             .catch((err: unknown): ContactsState => ({ error: err instanceof Error ? err.message : String(err) }))
             .then(contacts => {
                 if (!cancelled) setResult({ partnerUid: partner.uniqueId, contacts });
@@ -101,17 +109,19 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule }) => {
         return () => {
             cancelled = true;
         };
-    }, [molecule, partner]);
+    }, [molecule, partner, ligand]);
 
     // Redrawn whole when a type is switched or recoloured: there are tens of contacts, not thousands
     useEffect(() => {
         const shown = (current?.contacts ?? []).filter(contact => styles[contact.type].draw);
         if (shown.length === 0) return;
-        dispatch(addVectors(shown.map(contact => contactVector(contact, styles[contact.type].colour, molecule))));
+        // One ligand's vectors: a model has several ligands, each with its own contacts open or not
+        const tags: Tags = { [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_MOLECULE]: molecule.uniqueId, ligand: ligand?.cid ?? "" };
+        dispatch(addVectors(shown.map(contact => contactVector(contact, styles[contact.type].colour, tags))));
         return () => {
-            dispatch(removeVectorsByTag({ [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_MOLECULE]: molecule.uniqueId }));
+            dispatch(removeVectorsByTag(tags));
         };
-    }, [current, styles, molecule, dispatch]);
+    }, [current, styles, molecule, ligand, dispatch]);
 
     // Hovering a contact hovers the partner's atom (or residue, for a ring)
     const hoverPartner = (contact: LigandContact | null) => {
@@ -146,21 +156,21 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule }) => {
                 <span className="moorhen__ligand-contacts-note">{current.error}</span>
             ) : (
                 <>
-                    <MoorhenStack direction="row" gap="0.75rem" align="center" style={{ flexWrap: "wrap" }}>
+                    <MoorhenStack direction="column" align="flex-start">
                         {TYPES.map(type => (
                             <MoorhenStack key={type} direction="row" gap="0.25rem" align="center">
+                                <MoorhenColourPicker
+                                    colour={[styles[type].colour.r, styles[type].colour.g, styles[type].colour.b]}
+                                    setColour={colour => setStyle(type, { colour: { r: colour[0], g: colour[1], b: colour[2] } })}
+                                    tooltip={`Colour of the ${CONTACT_TYPES[type].plural}`}
+                                    position="left"
+                                />
                                 <MoorhenToggle
                                     label={`${CONTACT_TYPES[type].plural} (${count(type)})`}
                                     checked={styles[type].draw}
                                     disabled={count(type) === 0}
                                     tooltip={`Draw the ${CONTACT_TYPES[type].plural}`}
                                     onChange={() => setStyle(type, { draw: !styles[type].draw })}
-                                />
-                                <MoorhenColourPicker
-                                    colour={[styles[type].colour.r, styles[type].colour.g, styles[type].colour.b]}
-                                    setColour={colour => setStyle(type, { colour: { r: colour[0], g: colour[1], b: colour[2] } })}
-                                    tooltip={`Colour of the ${CONTACT_TYPES[type].plural}`}
-                                    position="left"
                                 />
                             </MoorhenStack>
                         ))}

@@ -14,6 +14,7 @@ export const ModelsPanel = () => {
     // Molecules of ligands only are listed together, not given a card each
     const molecules = moleculeList.filter(molecule => !molecule.isLigandOnly());
     const ligandMolecules = moleculeList.filter(molecule => molecule.isLigandOnly());
+    const hasLigands = moleculeList.some(molecule => (molecule.ligands?.length ?? 0) > 0);
 
     const [allOpen, setallOpen] = useState<boolean | null>(null);
     const [activeToggle, setActiveToggle] = useState<{ key: number; isOpen: boolean }>({ key: null, isOpen: null });
@@ -50,7 +51,7 @@ export const ModelsPanel = () => {
     return (
         <SidePanelContainer title="Molecules" extraControls={extraControl}>
             {displayData.length === 0 && ligandMolecules.length === 0 ? <span>No models loaded</span> : displayData}
-            {ligandMolecules.length > 0 && <LigandListCard molecules={ligandMolecules} />}
+            {hasLigands && <LigandListCard molecules={moleculeList} />}
         </SidePanelContainer>
     );
 };

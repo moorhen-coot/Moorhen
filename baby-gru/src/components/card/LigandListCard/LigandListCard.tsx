@@ -5,9 +5,9 @@ import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress"
 import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
 import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
 import { MoorhenAccordion, MoorhenStack } from "@/components/interface-base";
-import { type RootState, addCustomRepresentation, enqueueSnackbar, removeCustomRepresentation, setHoveredAtom } from "@/store";
+import { type RootState, addCustomRepresentation, enqueueSnackbar, removeCustomRepresentation, removeMolecule, setHoveredAtom } from "@/store";
 import { triggerUpdate } from "@/store/moleculeMapUpdateSlice";
-import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
+import type { LigandInfo, MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { MoleculeRepresentation, type RepresentationStyles } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { type LigandSite, centreOnSite, groupLigandsBySite } from "@/utils/ligandSites";
 import { setMoleculeVisible } from "@/utils/moleculeVisibility";
@@ -18,8 +18,13 @@ import "./ligand-list-card.css";
 
 const HOVERED_ROW_CLASS = "moorhen__ligand-list-row-hovered";
 
+/** The key a row registers under: its molecule, plus the residue for a ligand inside a model. */
+const rowKey = (molecule: MoorhenMolecule, ligand?: LigandInfo) =>
+    ligand ? `${molecule.uniqueId}|${ligand.chainName}|${ligand.resNum}` : molecule.uniqueId;
+
 /**
- * Highlights the row of the molecule under the mouse in the 3D view (hoveringStates.hoveredAtom).
+ * Highlights the row of the ligand under the mouse in the 3D view (hoveringStates.hoveredAtom): the
+ * row of the hovered residue if it is a listed ligand of a model, else the row of the molecule.
  * The hover changes at mouse rate, so this does not go through React: a store subscription moves
  * one CSS class from row element to row element, and no component re-renders. React never
  * overwrites the class, as a row's className prop does not change.
@@ -31,7 +36,11 @@ const useHoveredRowHighlight = (store: ReturnType<typeof useStore<RootState>>) =
 
     useEffect(() => {
         const update = () => {
-            const uid = store.getState().hoveringStates.hoveredAtom.molecule?.uniqueId ?? null;
+            const { molecule, cid } = store.getState().hoveringStates.hoveredAtom;
+            // A cid as hovering gives it: /1/A/301(ATP)/C1
+            const parts = cid?.split("/") ?? [];
+            const residueKey = molecule ? `${molecule.uniqueId}|${parts[2]}|${parts[3]?.split("(")[0]}` : null;
+            const uid = residueKey && rowElements.current.has(residueKey) ? residueKey : (molecule?.uniqueId ?? null);
             if (uid === hoveredUid.current) return;
             rowElements.current.get(hoveredUid.current)?.classList.remove(HOVERED_ROW_CLASS);
             rowElements.current.get(uid)?.classList.add(HOVERED_ROW_CLASS);
@@ -56,14 +65,21 @@ const useHoveredRowHighlight = (store: ReturnType<typeof useStore<RootState>>) =
 const byName = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 
 /**
- * The ligand-only molecules (MoorhenMolecule.isLigandOnly) in the Models panel: a list of names with
- * a 2D view, centre-on and show/hide button each, instead of a full molecule card each (which does
- * not scale to the hundreds or thousands of ligands files.batchLoadLigands can load). Optionally
- * grouped by position: one sub-card per site, i.e. per set of overlapping ligands.
+ * The ligands of the Models panel, each with its ligand card (2D view, centre-on, representation,
+ * contacts...):
+ * - the ligands inside models, one group per model, open by default;
+ * - the ligand-only molecules (MoorhenMolecule.isLigandOnly), listed by name instead of a full
+ *   molecule card each (which does not scale to the hundreds or thousands of ligands
+ *   files.batchLoadLigands can load). Optionally grouped by position: one sub-card per site, i.e.
+ *   per set of overlapping ligands.
  */
 export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
-    const { molecules } = props;
     const store = useStore<RootState>();
+    // molecule.ligands is not in the store: re-read when a model is changed (merges included)
+    useSelector((state: RootState) => state.moleculeMapUpdate.moleculeUpdate);
+    const molecules = props.molecules.filter(molecule => molecule.isLigandOnly());
+    const hosts = props.molecules.filter(molecule => !molecule.isLigandOnly() && (molecule.ligands?.length ?? 0) > 0);
+    const hostedCount = hosts.reduce((n, host) => n + host.ligands.length, 0);
     const registerRow = useHoveredRowHighlight(store);
     const visibleMolecules = useSelector((state: RootState) => state.molecules.visibleMolecules);
     const visible = new Set(visibleMolecules);
@@ -117,8 +133,40 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
         </div>
     );
 
+    const hostGroups = hosts.map(host => (
+        <MoorhenAccordion
+            key={host.uniqueId}
+            title={`${host.name} (${host.ligands.length})`}
+            defaultOpen={true}
+            extraControls={[
+                <MoorhenButton
+                    key="centre"
+                    size="accordion"
+                    type="icon-only"
+                    icon="MatSymFilterFocus"
+                    tooltip="Centre on molecule"
+                    onClick={() => host.centreOn()}
+                />,
+            ]}
+        >
+            <div className="moorhen__ligand-list-list">
+                {host.ligands.map(ligand => (
+                    <LigandListRow
+                        key={ligand.cid}
+                        molecule={host}
+                        ligand={ligand}
+                        isVisible={visible.has(host.molNo)}
+                        registerRow={registerRow}
+                    />
+                ))}
+            </div>
+        </MoorhenAccordion>
+    ));
+
     let content: React.ReactNode;
-    if (!grouped) {
+    if (molecules.length === 0) {
+        content = null;
+    } else if (!grouped) {
         content = rows(molecules);
     } else if (sites === null) {
         content = <MoorhenLinearProgress />;
@@ -147,7 +195,11 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
 
     return (
         <MoorhenAccordion
-            title={grouped && sites ? `Ligands (${molecules.length}, ${sites.length} sites)` : `Ligands (${molecules.length})`}
+            title={
+                grouped && sites
+                    ? `Ligands (${molecules.length + hostedCount}, ${sites.length} sites)`
+                    : `Ligands (${molecules.length + hostedCount})`
+            }
             type="card"
             defaultOpen={true}
             extraControls={[
@@ -167,28 +219,36 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
                     tooltip={order === "name" ? "Sorted A–Z: click for load order" : "In load order: click to sort A–Z"}
                     onClick={() => setOrder(order === "name" ? "load" : "name")}
                 />,
-                visibilityButton(molecules, "all"),
+                visibilityButton(molecules, "ligand-only molecules"),
             ]}
         >
+            {hostGroups}
             {content}
         </MoorhenAccordion>
     );
 };
 
+/**
+ * One ligand's card: a ligand-only molecule, or with `ligand` one ligand of a model. The latter has
+ * no merge or show/hide (its model's), and its representations are of its residue only.
+ */
 const LigandListRow = memo(function LigandListRow(props: {
     molecule: MoorhenMolecule;
+    ligand?: LigandInfo;
     isVisible: boolean;
     registerRow: (uid: string, element: HTMLElement | null) => void;
 }) {
-    const { molecule, isVisible, registerRow } = props;
+    const { molecule, ligand, isVisible, registerRow } = props;
     const store = useStore<RootState>();
-    const rowRef = useCallback((element: HTMLDivElement | null) => registerRow(molecule.uniqueId, element), [molecule, registerRow]);
+    const key = rowKey(molecule, ligand);
+    const rowRef = useCallback((element: HTMLDivElement | null) => registerRow(key, element), [key, registerRow]);
+    const ligandCid = ligand?.cid ?? molecule.ligands?.[0]?.cid;
+    const name = ligand ? `${ligand.resName} ${ligand.chainName}/${ligand.resNum}` : molecule.name;
 
     // Hovering a row hovers its ligand, as hovering a residue in the sequence viewer does: hover marker
     // in 3D, hover info panel. Leaving clears it, unless something else (the 3D view) has hovered since.
     const onMouseEnter = () => {
-        const cid = molecule.ligands?.[0]?.cid;
-        if (cid) store.dispatch(setHoveredAtom({ molecule, cid, atomInfo: null }));
+        if (ligandCid) store.dispatch(setHoveredAtom({ molecule, cid: ligandCid, atomInfo: null }));
     };
     const onMouseLeave = () => {
         if (store.getState().hoveringStates.hoveredAtom.molecule === molecule) {
@@ -200,39 +260,43 @@ const LigandListRow = memo(function LigandListRow(props: {
         <div className="moorhen__ligand-list-row" ref={rowRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
             <MoorhenAccordion
                 title={
-                    <span className="moorhen__ligand-list-row-name" title={molecule.name}>
-                        {molecule.name}
+                    <span className="moorhen__ligand-list-row-name" title={name}>
+                        {name}
                     </span>
                 }
                 extraControls={[
                     <MoorhenPopoverButton key="2d" size="accordion" icon="ligand" tooltip="2D view" popoverPlacement="left">
-                        <LigandDrawing molecule={molecule} />
+                        <LigandDrawing molecule={molecule} resName={ligand?.resName} />
                     </MoorhenPopoverButton>,
-                    <MoorhenPopoverButton key="merge" size="accordion" icon="MatSymMerge" tooltip="Merge into a molecule" popoverPlacement="left">
-                        <LigandMergeInto molecule={molecule} />
-                    </MoorhenPopoverButton>,
+                    !ligand && (
+                        <MoorhenPopoverButton key="merge" size="accordion" icon="MatSymMerge" tooltip="Merge into a molecule" popoverPlacement="left">
+                            <LigandMergeInto molecule={molecule} />
+                        </MoorhenPopoverButton>
+                    ),
                     <MoorhenButton
                         key="centre"
                         size="accordion"
                         type="icon-only"
                         icon="MatSymFilterFocus"
                         tooltip="Centre on ligand"
-                        onClick={() => molecule.centreOn()}
+                        onClick={() => (ligand ? molecule.centreOn(ligand.cid) : molecule.centreOn())}
                     />,
-                    <MoorhenButton
-                        key="visibility"
-                        size="accordion"
-                        type="icon-only"
-                        icon={isVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
-                        tooltip="Toggle visibility"
-                        onClick={() => setMoleculeVisible(molecule, !isVisible)}
-                    />,
-                ]}
+                    !ligand && (
+                        <MoorhenButton
+                            key="visibility"
+                            size="accordion"
+                            type="icon-only"
+                            icon={isVisible ? "MatSymVisibility" : "MatSymVisibilityOff"}
+                            tooltip="Toggle visibility"
+                            onClick={() => setMoleculeVisible(molecule, !isVisible)}
+                        />
+                    ),
+                ].filter(Boolean)}
             >
-                <LigandRepresentations molecule={molecule} />
+                <LigandRepresentations molecule={molecule} cid={ligand?.cid} />
                 <div className="moorhen__ligand-list-section">
                     <MoorhenAccordion title="Contacts">
-                        <LigandContacts molecule={molecule} />
+                        <LigandContacts molecule={molecule} ligand={ligand} />
                     </MoorhenAccordion>
                 </div>
             </MoorhenAccordion>
@@ -257,19 +321,25 @@ const defaultCarbonColour = (molecule: MoorhenMolecule): string =>
 /**
  * The open part of a ligand's row (mounted only while open): a choice of one representation among
  * bonds, surface and MetaBalls, and one carbon colour for it (other elements keep their colours).
- * These are the molecule's custom representations, the same ones the molecule card's chips edit.
+ * These are the molecule's custom representations, the same ones the molecule card's chips edit:
+ * of the whole molecule for a ligand-only one, of the residue `cid` for a ligand inside a model.
  */
-const LigandRepresentations = (props: { molecule: MoorhenMolecule }) => {
-    const { molecule } = props;
+const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string }) => {
+    const { molecule, cid } = props;
     const dispatch = useDispatch();
     const representations = useSelector((state: RootState) => selectCustomRepresentations(state, molecule.molNo), shallowEqual);
     const isLigandStyle = (representation: MoleculeRepresentation) => LIGAND_STYLES.some(item => item.style === representation.style);
     // Plus the default bonds that some ways of loading a ligand draw (fetchIfDirtyAndDraw: dictionaries,
     // Get Monomer...), which are not custom representations and so not in the store, but are shown
-    const ligandRepresentations = [
-        ...representations.filter(isLigandStyle),
-        ...molecule.representations.filter(representation => !representation.isCustom && representation.visible && isLigandStyle(representation)),
-    ];
+    // (A ligand cid names its residue type, /1/A/301(ATP), so no other residue's cid starts with it)
+    const ligandRepresentations = cid
+        ? representations.filter(representation => isLigandStyle(representation) && representation.cid?.startsWith(cid))
+        : [
+              ...representations.filter(isLigandStyle),
+              ...molecule.representations.filter(
+                  representation => !representation.isCustom && representation.visible && isLigandStyle(representation)
+              ),
+          ];
     const shownStyle = ligandRepresentations[0]?.style ?? null;
     const [busy, setBusy] = useState<boolean>(false);
 
@@ -300,7 +370,7 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule }) => {
             const representation = await MoleculeRepresentation.create({
                 representationStyle: style,
                 molecule,
-                ruleType: "molecule",
+                ...(cid ? { ruleType: "cid" as const, cid } : { ruleType: "molecule" as const }),
                 isCustom: true,
                 notH: hideHydrogens,
                 ...colourOptions(currentColour),
@@ -340,7 +410,7 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule }) => {
                 <MoorhenToggle
                     key={style}
                     type="radio"
-                    name={`ligand-style-${molecule.uniqueId}`}
+                    name={`ligand-style-${molecule.uniqueId}-${cid ?? ""}`}
                     label={label}
                     checked={shownStyle === style}
                     disabled={busy}
@@ -349,26 +419,29 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule }) => {
                     }}
                 />
             ))}
-            <MoorhenToggle
-                label="Hydrogens"
-                checked={!hideHydrogens}
-                disabled={busy || !hydrogensApply}
-                tooltip={hydrogensApply ? undefined : "Surfaces are drawn without hydrogens"}
-                onChange={toggleHydrogens}
-            />
+            <MoorhenStack direction="row" gap={"0.5rem"} style={{ alignItems: "center" }}>
             <MoorhenColourPicker
                 colour={hexToRGB(currentColour ?? defaultCarbonColour(molecule))}
                 onApply={applyColour}
                 tooltip="Carbon colour of this ligand"
                 position="left"
             />
+            Carbon colour</MoorhenStack>
+            <MoorhenToggle
+                label="Show Hydrogens"
+                checked={!hideHydrogens}
+                disabled={busy || !hydrogensApply}
+                tooltip={hydrogensApply ? undefined : "Surfaces are drawn without hydrogens"}
+                onChange={toggleHydrogens}
+            />
+
         </MoorhenStack>
     );
 };
 
 /**
- * Merge the ligand into another molecule (a model, not another ligand-only molecule), as the Merge
- * molecules menu does: the ligand-only molecule is hidden, not deleted.
+ * Merge the ligand into another molecule (a model, not another ligand-only molecule). The ligand-only
+ * molecule is then deleted: the ligand has moved, and lives on in the model's group of this list.
  */
 const LigandMergeInto = (props: { molecule: MoorhenMolecule }) => {
     const { molecule } = props;
@@ -383,7 +456,9 @@ const LigandMergeInto = (props: { molecule: MoorhenMolecule }) => {
         if (!target) return;
         setBusy(true);
         try {
-            await target.mergeMolecules([molecule], true);
+            await target.mergeMolecules([molecule]);
+            await molecule.delete();
+            dispatch(removeMolecule(molecule));
             dispatch(triggerUpdate(target.molNo));
             dispatch(enqueueSnackbar({ message: `Merged ${molecule.name} into ${target.name}`, variant: "success" }));
             document.body.click();
@@ -407,20 +482,20 @@ const LigandMergeInto = (props: { molecule: MoorhenMolecule }) => {
 };
 
 /** The 2D drawing of the molecule's ligands. Asked of Coot when shown (the popover mounts it on opening), then cached. */
-const LigandDrawing = (props: { molecule: MoorhenMolecule }) => {
-    const { molecule } = props;
+const LigandDrawing = (props: { molecule: MoorhenMolecule; resName?: string }) => {
+    const { molecule, resName } = props;
     const [svgs, setSvgs] = useState<string[] | null>(null);
 
     useEffect(() => {
         let cancelled = false;
-        const resNames = [...new Set((molecule.ligands ?? []).map(ligand => ligand.resName))];
+        const resNames = resName ? [resName] : [...new Set((molecule.ligands ?? []).map(ligand => ligand.resName))];
         Promise.all(resNames.map(resName => molecule.getLigandSVG(resName, true))).then(result => {
             if (!cancelled) setSvgs(result);
         });
         return () => {
             cancelled = true;
         };
-    }, [molecule]);
+    }, [molecule, resName]);
 
     // Same box while loading, so the popover opens at its final size and is placed once
     if (svgs === null) {

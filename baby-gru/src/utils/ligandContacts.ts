@@ -1,5 +1,5 @@
 import type { CootContactAtom } from "@/InstanceManager/CommandCentre/CootCommandWrapper";
-import type { MoorhenMolecule } from "./MoorhenMolecule";
+import type { LigandInfo, MoorhenMolecule } from "./MoorhenMolecule";
 
 /**
  * The contacts of a ligand with another molecule, from Coot's single-molecule analyses run on a
@@ -41,102 +41,155 @@ export type LigandContactsResult = {
 
 const SALT_BRIDGE_MAX_DISTANCE = 4.0;
 
+/** Where the ligand is in the molecule analysed, and how that molecule's chains map back. */
+type AnalysedMolecule = {
+    imol: number;
+    /** The ligand's atoms in it */
+    ligandSelection: string;
+    /** Whether a residue of it (chain, gemmi-style seqid such as "301A") is the ligand */
+    isLigand: (chainId: string, seqid: string) => boolean;
+    /** The chain id in the molecule it came from */
+    sourceChain: (chainId: string) => string;
+    /** The ligand residue, for FLEV; null if it cannot be named */
+    flevCid: string | null;
+};
+
 /**
- * The contacts of the first ligand of `ligand` with all of `partner`: H-bonds, salt bridges and,
- * optionally, XH-π (XPID adds hydrogens from the monomer library, so the ligand's dictionaries are
- * passed to it) and the FLEV diagram.
+ * The contacts of a ligand with another molecule, or with the rest of its own: H-bonds, salt bridges
+ * and, optionally, XH-π (XPID adds hydrogens from the monomer library, so the ligand's dictionaries
+ * are passed to it) and the FLEV diagram.
+ * @param ligand - The molecule the ligand is in.
+ * @param partner - The other molecule; `ligand` itself for the rest of the ligand's own molecule.
+ * @param ligandInfo - Which ligand of `ligand`: by default its first (a ligand-only molecule's).
  */
 export const getLigandContacts = async (
     ligand: MoorhenMolecule,
     partner: MoorhenMolecule,
-    options: { xhpi?: boolean; flev?: boolean } = {}
+    options: { xhpi?: boolean; flev?: boolean } = {},
+    ligandInfo: LigandInfo | undefined = ligand.ligands?.[0]
 ): Promise<LigandContactsResult> => {
-    const ligandInfo = ligand.ligands?.[0];
     if (!ligandInfo) throw new Error("No ligand found in this molecule");
     const coot = ligand.moorhenInstance.cootCommand;
+    const ligandDicts = ligand.ligandDicts ?? {};
+
+    // In its own molecule: no merge, the ligand is one of its residues
+    if (partner === ligand) {
+        return analyse(
+            ligand,
+            {
+                imol: ligand.molNo,
+                ligandSelection: ligandInfo.cid,
+                isLigand: (chainId, seqid) => chainId === ligandInfo.chainName && seqid === ligandInfo.resNum,
+                sourceChain: chainId => chainId,
+                flevCid: `//${ligandInfo.chainName}/${ligandInfo.resNum}`,
+            },
+            ligandDicts,
+            options
+        );
+    }
 
     // The partner first: it keeps its chain ids, the ligand's chain is renamed if they clash
     const merged = await coot.make_merged_molecule(partner.molNo, "/*", ligand.molNo, ligandInfo.cid);
     try {
-        const ligandChains = new Map(merged.chains.filter(chain => chain.imol === ligand.molNo).map(chain => [chain.chainId, chain]));
+        const ligandChains = merged.chains.filter(chain => chain.imol === ligand.molNo);
         const sourceChain = new Map(merged.chains.map(chain => [chain.chainId, chain.sourceChainId]));
-        const isLigand = (chainId: string) => ligandChains.has(chainId);
-        const ligandSelection = [...ligandChains.keys()].map(chainId => `//${chainId}`).join("||");
-        const side = (atom: CootContactAtom): ContactSide => ({
-            chainId: sourceChain.get(atom.chainId) ?? atom.chainId,
-            resNo: atom.resNo,
-            insCode: atom.insCode,
-            resName: atom.resName,
-            atomName: atom.atomName,
-            xyz: atom.xyz,
-        });
-
-        const contacts: LigandContact[] = [];
-
-        const hBonds = await coot.get_h_bonds_between(merged.imol, ligandSelection, "/*");
-        for (const bond of hBonds) {
-            const donor = bond.donor ?? bond.hydrogen;
-            const ligandDonates = bond.donorSelection === 1;
-            contacts.push({
-                type: "hbond",
-                ligand: side(ligandDonates ? donor : bond.acceptor),
-                partner: side(ligandDonates ? bond.acceptor : donor),
-                distance: bond.distance,
-                ligandRole: ligandDonates ? "donor" : "acceptor",
-            });
-        }
-
-        const saltBridges = await coot.get_salt_bridges(merged.imol, ligandSelection, "/*", SALT_BRIDGE_MAX_DISTANCE);
-        for (const bridge of saltBridges) {
-            contacts.push({
-                type: "salt-bridge",
-                ligand: side(bridge.atom1),
-                partner: side(bridge.atom2),
-                distance: bridge.distance,
-                ligandCharge: bridge.charge1,
-            });
-        }
-
-        if (options.xhpi) {
-            const rows = await coot.detect_xhpi_interactions(merged.imol, ligand.ligandDicts ?? {});
-            for (const row of rows) {
-                const ligandDonates = isLigand(row.X_chain);
-                if (ligandDonates === isLigand(row.pi_chain)) continue;
-                const donor: ContactSide = {
-                    chainId: sourceChain.get(row.X_chain) ?? row.X_chain,
-                    resNo: row.X_id,
-                    insCode: row.X_seqid.replace(/^-?\d+/, ""),
-                    resName: row.X_res,
-                    atomName: row.X_atom,
-                    xyz: [row.X_xyz_x, row.X_xyz_y, row.X_xyz_z],
-                };
-                const ring: ContactSide = {
-                    chainId: sourceChain.get(row.pi_chain) ?? row.pi_chain,
-                    resNo: row.pi_id,
-                    insCode: row.pi_seqid.replace(/^-?\d+/, ""),
-                    resName: row.pi_res,
-                    ring: row.pi_ring,
-                    xyz: [row.pi_center_x, row.pi_center_y, row.pi_center_z],
-                };
-                contacts.push({
-                    type: "xh-pi",
-                    ligand: ligandDonates ? donor : ring,
-                    partner: ligandDonates ? ring : donor,
-                    distance: row.dist_X_Pi,
-                    ligandRole: ligandDonates ? "donor" : "ring",
-                });
-            }
-        }
-
-        let flev: string | undefined;
-        if (options.flev) {
-            const mergedChain = [...ligandChains.values()].find(chain => chain.sourceChainId === ligandInfo.chainName);
-            flev = mergedChain
-                ? await coot.get_svg_for_2d_ligand_environment_view(merged.imol, `//${mergedChain.chainId}/${ligandInfo.resNum}`)
-                : "";
-        }
-        return { contacts, flev };
+        const flevChain = ligandChains.find(chain => chain.sourceChainId === ligandInfo.chainName);
+        return await analyse(
+            ligand,
+            {
+                imol: merged.imol,
+                ligandSelection: ligandChains.map(chain => `//${chain.chainId}`).join("||"),
+                isLigand: chainId => ligandChains.some(chain => chain.chainId === chainId),
+                sourceChain: chainId => sourceChain.get(chainId) ?? chainId,
+                flevCid: flevChain ? `//${flevChain.chainId}/${ligandInfo.resNum}` : null,
+            },
+            ligandDicts,
+            options
+        );
     } finally {
         await coot.delete_merged_molecule(merged.imol);
     }
+};
+
+/** The analyses, on the one molecule holding both the ligand and its partner. */
+const analyse = async (
+    ligand: MoorhenMolecule,
+    target: AnalysedMolecule,
+    ligandDicts: Record<string, string>,
+    options: { xhpi?: boolean; flev?: boolean }
+): Promise<LigandContactsResult> => {
+    const coot = ligand.moorhenInstance.cootCommand;
+    const { imol, ligandSelection, isLigand, sourceChain } = target;
+    const side = (atom: CootContactAtom): ContactSide => ({
+        chainId: sourceChain(atom.chainId),
+        resNo: atom.resNo,
+        insCode: atom.insCode,
+        resName: atom.resName,
+        atomName: atom.atomName,
+        xyz: atom.xyz,
+    });
+
+    const contacts: LigandContact[] = [];
+
+    // "/*" as the second selection: everything but the ligand
+    const hBonds = await coot.get_h_bonds_between(imol, ligandSelection, "/*");
+    for (const bond of hBonds) {
+        const donor = bond.donor ?? bond.hydrogen;
+        const ligandDonates = bond.donorSelection === 1;
+        contacts.push({
+            type: "hbond",
+            ligand: side(ligandDonates ? donor : bond.acceptor),
+            partner: side(ligandDonates ? bond.acceptor : donor),
+            distance: bond.distance,
+            ligandRole: ligandDonates ? "donor" : "acceptor",
+        });
+    }
+
+    const saltBridges = await coot.get_salt_bridges(imol, ligandSelection, "/*", SALT_BRIDGE_MAX_DISTANCE);
+    for (const bridge of saltBridges) {
+        contacts.push({
+            type: "salt-bridge",
+            ligand: side(bridge.atom1),
+            partner: side(bridge.atom2),
+            distance: bridge.distance,
+            ligandCharge: bridge.charge1,
+        });
+    }
+
+    if (options.xhpi) {
+        const rows = await coot.detect_xhpi_interactions(imol, ligandDicts);
+        for (const row of rows) {
+            const ligandDonates = isLigand(row.X_chain, row.X_seqid);
+            if (ligandDonates === isLigand(row.pi_chain, row.pi_seqid)) continue;
+            const donor: ContactSide = {
+                chainId: sourceChain(row.X_chain),
+                resNo: row.X_id,
+                insCode: row.X_seqid.replace(/^-?\d+/, ""),
+                resName: row.X_res,
+                atomName: row.X_atom,
+                xyz: [row.X_xyz_x, row.X_xyz_y, row.X_xyz_z],
+            };
+            const ring: ContactSide = {
+                chainId: sourceChain(row.pi_chain),
+                resNo: row.pi_id,
+                insCode: row.pi_seqid.replace(/^-?\d+/, ""),
+                resName: row.pi_res,
+                ring: row.pi_ring,
+                xyz: [row.pi_center_x, row.pi_center_y, row.pi_center_z],
+            };
+            contacts.push({
+                type: "xh-pi",
+                ligand: ligandDonates ? donor : ring,
+                partner: ligandDonates ? ring : donor,
+                distance: row.dist_X_Pi,
+                ligandRole: ligandDonates ? "donor" : "ring",
+            });
+        }
+    }
+
+    let flev: string | undefined;
+    if (options.flev) {
+        flev = target.flevCid ? await coot.get_svg_for_2d_ligand_environment_view(imol, target.flevCid) : "";
+    }
+    return { contacts, flev };
 };
