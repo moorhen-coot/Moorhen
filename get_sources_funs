@@ -534,8 +534,8 @@ getprivateer() {
         curl -fL https://github.com/glycojones/privateer/archive/refs/tags/moorhen-build-0.3.5.tar.gz -o privateer-wasm.tar.gz &&\
         tar xf privateer-wasm.tar.gz &&\
         mv privateer-moorhen-build-0.3.5 privateer-wasm &&\
-        echo "Getting updated simdjson.h" &&\
-        curl -fL https://raw.githubusercontent.com/simdjson/simdjson/master/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h &&\
+        echo "Getting simdjson.h ($simdjson_release)" &&\
+        curl -fL https://raw.githubusercontent.com/simdjson/simdjson/$simdjson_release/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h &&\
         patch -p0 < ../patches/privateer-gemmi070.patch || fail "Failed to download, unpack and patch privateer"
     fi
     echo
