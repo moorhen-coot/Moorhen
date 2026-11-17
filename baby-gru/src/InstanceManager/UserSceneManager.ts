@@ -743,7 +743,11 @@ export class MoorhenUserSceneManager {
         const toShow: number[] = [];
         const toHide: number[] = [];
         for (const molecule of this.instance.getMoleculeList()) {
-            const shown = molecule.representations.some(representation => representation.visible);
+            // Its environment and NEF restraints count too: what its eye button hides with it
+            const shown =
+                molecule.representations.some(representation => representation.visible) ||
+                !!molecule.environmentRepresentation?.visible ||
+                !!molecule.NEFRestraintRepresentation?.visible;
             if (shown !== visible.has(molecule.molNo)) (shown ? toShow : toHide).push(molecule.molNo);
         }
         // At most two dispatches, however many molecules (a thousand ligands): each runs every selector
