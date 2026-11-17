@@ -705,6 +705,7 @@ export namespace libcootApi {
         SeqId: { new (arg0: string): gemmi.SeqId };
         AtomAddress: { new (arg0: string, arg1: SeqId, arg2: string, arg3: string, arg4: number): gemmi.AtomAddress };
         VectorDouble: { new (): emscriptem.vector<double> };
+        VectorFloat: { new (): emscriptem.vector<number> };
         is64bit(): boolean;
         run_conkit_validate(options:ValidateOptions): number;
         get_nef_info(nef_input:string): string;
