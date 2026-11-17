@@ -165,8 +165,8 @@ export const MonomerPicker = (props: { onChange: (choice: MonomerChoice) => void
                     </label>
                 }
             >
-                <option value={"default"}>Default</option>
                 <option value={"libcoot-api"}>Imported dictionary</option>
+                <option value={"default"}>Default</option>
                 <option value={"local-monomer-library"}>Local monomer library</option>
                 <option value={"remote-monomer-library"}>Remote monomer library</option>
                 <option value={"pdbe"}>PDBe</option>

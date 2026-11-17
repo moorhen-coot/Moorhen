@@ -6,7 +6,7 @@ import { enqueueSnackbar } from "../../store/snackbarSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenSpinner } from "../icons";
-import { MoorhenButton, MoorhenNumberInput, MoorhenSelect, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenNumberInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenMapSelect } from "../inputs/Selector/MoorhenMapSelect";
 import { MoorhenStack } from "../interface-base";
@@ -93,7 +93,6 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
 
     const intoMoleculeRef = useRef<HTMLSelectElement | null>(null);
-    const ligandMoleculeRef = useRef<HTMLSelectElement | null>(null);
     const mapSelectRef = useRef<HTMLSelectElement | null>(null);
     
     const fitAnywhereRef = useRef<boolean>(false);
@@ -106,9 +105,11 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
     const [fitAnywhere, setFitAnywhere] = useState<boolean>(false);
     const [busy, setBusy] = useState<boolean>(false);
     const [ligandResults, setLigandResults] = useState<moorhen.Molecule[] | null>(null);
-    // The ligand to fit: a loaded ligand molecule, or a monomer by code, looked up as Get Monomer does
-    const [ligandFrom, setLigandFrom] = useState<"loaded" | "library">("loaded");
+    // The ligand to fit, by code or compound name, looked up as Get Monomer does: an imported
+    // dictionary (a ligand already loaded), else the monomer libraries and PDBe
     const [libraryChoice, setLibraryChoice] = useState<MonomerChoice>({ code: "", source: "default" });
+    // Whose dictionaries to use (as Get Monomer): one read for a single molecule is only found there
+    const [dictionaryMolNo, setDictionaryMolNo] = useState<number | undefined>(undefined);
     const moorhenInstance = useMoorhenInstance();
 
     const dispatch = useDispatch();
@@ -119,8 +120,7 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
     };
 
     const findLigand = useCallback(async () => {
-        const fromLibrary = ligandFrom === "library";
-        if (!mapSelectRef.current.value || !intoMoleculeRef.current.value || (fromLibrary ? !libraryChoice.code : !ligandMoleculeRef.current?.value)) {
+        if (!mapSelectRef.current.value || !intoMoleculeRef.current.value || !libraryChoice.code) {
             console.warn("Missing input, cannot find ligand...");
             return;
         }
@@ -133,11 +133,14 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
         }
         setBusy(true);
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(intoMoleculeRef.current.value));
-        // A ligand from the library: made in Coot as Get Monomer does, used as the template, then deleted
-        // (its dictionary stays read, for the poses)
+        // The ligand made in Coot as Get Monomer does, used as the template, then deleted (its dictionary
+        // stays read, for the poses)
         let templateMolNo: number | null = null;
-        if (selectedMolecule && fromLibrary) {
-            const monomer = await getMonomerMolecule(moorhenInstance, libraryChoice.code, { source: libraryChoice.source });
+        if (selectedMolecule) {
+            const monomer = await getMonomerMolecule(moorhenInstance, libraryChoice.code, {
+                source: libraryChoice.source,
+                fromMolNo: ["default", "libcoot-api"].includes(libraryChoice.source) ? dictionaryMolNo : undefined,
+            });
             if (!monomer) {
                 dispatch(enqueueSnackbar({ message: `No monomer ${libraryChoice.code} found. Missing dictionary?`, variant: "warning" }));
                 setBusy(false);
@@ -148,7 +151,7 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
         if (selectedMolecule) {
             const newMolecules = await selectedMolecule.fitLigand(
                 parseInt(mapSelectRef.current.value),
-                templateMolNo ?? parseInt(ligandMoleculeRef.current.value),
+                templateMolNo,
                 !fitAnywhereRef.current,
                 false,
                 useConformers,
@@ -178,7 +181,7 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
             setLigandResults(newMolecules);
         }
         setBusy(false);
-    }, [molecules, ligandResults, ligandFrom, libraryChoice, useConformers, conformerCount, moorhenInstance]);
+    }, [molecules, ligandResults, libraryChoice, dictionaryMolNo, useConformers, conformerCount, moorhenInstance]);
 
     const handleMoleculeSelectChange = useCallback(() => {
         if (ligandResults?.length > 0) {
@@ -202,21 +205,20 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
                     onChange={handleMoleculeSelectChange}
                 />
 
-                <MoorhenSelect label="Ligand from" value={ligandFrom} setValue={value => setLigandFrom(value as "loaded" | "library")}>
-                    <option value="loaded">A loaded ligand</option>
-                    <option value="library">The monomer library (as Get Monomer)</option>
-                </MoorhenSelect>
-                {ligandFrom === "loaded" ? (
-                    <MoorhenMoleculeSelect
-                        label="Ligand"
-                        allowAny={false}
-                        ref={ligandMoleculeRef}
-                        filterFunction={molecule => molecule.isLigand}
-                        onChange={handleMoleculeSelectChange}
-                    />
-                ) : (
-                    <MonomerPicker onChange={setLibraryChoice} />
-                )}
+                <MonomerPicker
+                    onChange={setLibraryChoice}
+                    afterSource={source =>
+                        ["default", "libcoot-api"].includes(source) && (
+                            <MoorhenMoleculeSelect
+                                label="Dictionaries of"
+                                molecules={molecules}
+                                allowAny={true}
+                                selectedMolecule={dictionaryMolNo}
+                                setSelectedMolecule={setDictionaryMolNo}
+                            />
+                        )
+                    }
+                />
             </MoorhenStack>
             <MoorhenToggle
                 style={{ margin: "0.5rem" }}
