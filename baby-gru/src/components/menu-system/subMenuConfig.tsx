@@ -649,6 +649,12 @@ export const subMenuMap: SubMenuMap = {
     ligand: {
         label: "Ligand",
         items: [
+                        {
+                id: "find-ligand",
+                label: "Fit ligand...",
+                type: "showModal",
+                modal: "fit-ligand",
+            },
             {
                 id: "get-monomer",
                 label: "Get monomer...",
@@ -681,12 +687,7 @@ export const subMenuMap: SubMenuMap = {
                 description: "Open ligand builder",
                 content: MenuItems.OpenLhasa,
             },
-            {
-                id: "find-ligand",
-                label: "Fit ligand...",
-                type: "showModal",
-                modal: "fit-ligand",
-            },
+
         ],
     },
     preferences: {
