@@ -20,7 +20,20 @@ import type * as mat4 from 'gl-matrix/mat4';
 import * as quat from 'gl-matrix/quat';
 import { BufferUsage, GpuSpanTimer, MapMode, ShaderStage, TextureUsage, getGpuContext } from './gpu';
 import { SnapshotTile, expandTile, narrowToTile, planTiles } from './snapshotTiles';
-import { type CasterBounds, casterBounds, shadowCamera, shadowFrameUniforms } from './shadowMap';
+import { type CasterBounds, type ShadowSoftness, casterBounds, shadowCamera, shadowFrameUniforms } from './shadowMap';
+import { SCREENSHOT_HARD_SHADOW_RADIUS_TEXELS, SCREENSHOT_SOFT_SHADOW_TARGET_TEXELS, SOFT_SHADOW_TARGET_TEXELS } from '../WebGLgComponents/shadowFrustum';
+
+/**
+ * How soft the shadow is, for shadowCamera: the scene's softness in a map of `texels`, with WebGL's
+ * filters. A snapshot (softShadows) is drawn better than the canvas, as WebGL's screenshots are:
+ * more texels for a soft shadow, and a hard one's edge smoothed rather than one compare.
+ */
+const shadowSoftness = (shadow: { softness: number }, texels: number, target: { softShadows?: boolean }): ShadowSoftness => ({
+    softness: shadow.softness,
+    mapSize: texels,
+    targetTexels: target.softShadows ? SCREENSHOT_SOFT_SHADOW_TARGET_TEXELS : SOFT_SHADOW_TARGET_TEXELS,
+    hardRadiusTexels: target.softShadows ? SCREENSHOT_HARD_SHADOW_RADIUS_TEXELS : 0,
+});
 import { PREVIEW_WGSL } from './previewShaders';
 import { TextLayer, textBatchesOf } from './textLayer';
 import { OverlayLines, overlayLineBatchesOf } from './overlayLines';
@@ -113,7 +126,10 @@ interface FrameTarget {
     resolve: GPUTextureView;
     /** Whether to time the frame (canvas frames only, for the status line). */
     timed: boolean;
-    /** Shadows with the 8 x 8 soft lookup, as WebGL's screenshots have them; the canvas has one tap. */
+    /**
+     * Shadows drawn as WebGL's screenshots draw them, better than the canvas: a hard edge smoothed,
+     * and a soft shadow in more texels. The canvas leaves it out.
+     */
     softShadows?: boolean;
     /** The background cleared to nothing (alpha 0), for a screenshot with a transparent background. */
     transparentBackground?: boolean;
@@ -637,7 +653,7 @@ export class WebGPUPreviewRenderer {
             const texels = Math.max(1, Math.min(settings.shadow.texels, this.device.limits.maxTextureDimension2D));
             shadowMap = this.ensureShadowMap(texels);
             this.casters = casterBounds(displayBuffers, this.casters);
-            const light = shadowCamera(camera, this.casters.bounds, target.width / target.height);
+            const light = shadowCamera(camera, this.casters.bounds, target.width / target.height, shadowSoftness(settings.shadow, texels, target));
             this.device.queue.writeBuffer(this.shadowFrameBuffer, 0, shadowFrameUniforms(light));
             const shadowPass = encoder.beginRenderPass({
                 label: "shadow map",
@@ -645,12 +661,15 @@ export class WebGPUPreviewRenderer {
                 depthStencilAttachment: { view: shadowMap, depthClearValue: 1, depthLoadOp: "clear", depthStoreOp: "store" },
                 timestampWrites: startTiming(),
             });
+            // Into the corner a soft shadow needs (the whole map for a hard one). The clear covers
+            // all of it, so the rest reads as lit.
+            shadowPass.setViewport(0, 0, light.region.width, light.region.height, 0, 1);
             shadowPass.setBindGroup(0, this.shadowFrameBindGroup);
             for (const item of plan.draws) this.drawOne(shadowPass, item, camera, "shadow");
             for (const item of gpuDraws) this.drawGpu(shadowPass, item, camera.zoom, "shadow");
             shadowPass.end();
             uniforms.set(light.textureMatrix, 84);
-            uniforms.set([1 / texels, 1 / texels, light.bias, target.softShadows ? 1 : 0], 100);
+            uniforms.set([1 / texels, 1 / texels, light.bias, light.region.radiusTexels], 100);
         }
 
         // Ambient occlusion and edges, if asked for: the scene into the g-buffer, then the maps.
@@ -923,7 +942,8 @@ export class WebGPUPreviewRenderer {
             const encoder = this.device.createCommandEncoder({ label: "preview view" });
 
             if (shadowMap) {
-                const light = shadowCamera(viewCamera, this.casters?.bounds ?? null, view.width / view.height);
+                const light = shadowCamera(viewCamera, this.casters?.bounds ?? null, view.width / view.height,
+                    shadowSoftness(settings.shadow, shadowTexels, target));
                 this.device.queue.writeBuffer(this.shadowFrameBuffer, 0, shadowFrameUniforms(light));
                 const shadowPass = encoder.beginRenderPass({
                     label: "shadow map",
@@ -931,12 +951,13 @@ export class WebGPUPreviewRenderer {
                     depthStencilAttachment: { view: shadowMap, depthClearValue: 1, depthLoadOp: "clear", depthStoreOp: "store" },
                     timestampWrites: startTiming(),
                 });
+                shadowPass.setViewport(0, 0, light.region.width, light.region.height, 0, 1);
                 shadowPass.setBindGroup(0, this.shadowFrameBindGroup);
                 for (const item of items) this.drawOne(shadowPass, item, viewCamera, "shadow");
                 for (const item of gpuDraws) this.drawGpu(shadowPass, item, camera.zoom, "shadow");
                 shadowPass.end();
                 uniforms.set(light.textureMatrix, 84);
-                uniforms.set([1 / shadowTexels, 1 / shadowTexels, light.bias, target.softShadows ? 1 : 0], 100);
+                uniforms.set([1 / shadowTexels, 1 / shadowTexels, light.bias, light.region.radiusTexels], 100);
             }
 
             let maps: EffectMaps | null = null;
