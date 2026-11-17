@@ -65,6 +65,7 @@ import SecondaryStructure from "./SecondaryStructure.svg"
 import clapperboard from "./clapperboard.svg"
 import ligand from "./ligand.svg"
 import menu2DObjects from "./menu2DObjects.svg"
+import menu3DObjects from "./menu3DObjects.svg"
 import annotations from "./annotations.svg"
 import menuLigands from "./menuLigands.svg"
 import menuMaps from "./menuMaps.svg"
@@ -163,6 +164,7 @@ export const moorhenSVGs = {"MatSymAdd": MatSymAdd,
  "clapperboard": clapperboard,
  "ligand": ligand,
  "menu2DObjects": menu2DObjects,
+ "menu3DObjects": menu3DObjects,
  "annotations": annotations,
  "menuLigands": menuLigands,
  "menuMaps": menuMaps,
@@ -262,6 +264,7 @@ export type MoorhenSVG = "MatSymAdd" |
  "clapperboard" |
  "ligand" |
  "menu2DObjects" |
+ "menu3DObjects" |
  "annotations" |
  "menuLigands" |
  "menuMaps" |

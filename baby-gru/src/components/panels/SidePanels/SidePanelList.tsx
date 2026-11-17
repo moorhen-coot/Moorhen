@@ -34,7 +34,7 @@ export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
         )
     },
     "3DObjects": {
-        icon: "menu2DObjects",
+        icon: "menu3DObjects",
         label: "3D Objects",
         panelContent: (
             <SidePanelContainer title="3D objects">
