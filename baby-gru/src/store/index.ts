@@ -223,6 +223,7 @@ export {
     removeCustomRepresentation,
     removeGeneralRepresentation,
 }  from "./moleculesSlice";
+export { addDictionaries, emptyDictionaries }  from "./dictionariesSlice";
 export {
     setOrigin,
     setDrawCrosshairs,
@@ -233,7 +234,10 @@ export {
     setDoSSAO,
     setSsaoRadius,
     setSsaoBias,
-    setResetClippingFogging,
+    setAutoFog,
+    setAutoClip,
+    setDoFog,
+    setDoClip,
     setDefaultRepresentationStyle,
     setClipCap,
     resetSceneSettings,
@@ -299,7 +303,6 @@ export {
     setSavedSceneSetting,
     saveSceneSettings,
 }  from "./userScenesSlice";
-export { addDictionaries, emptyDictionaries }  from "./dictionariesSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

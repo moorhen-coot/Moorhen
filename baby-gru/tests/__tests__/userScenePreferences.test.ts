@@ -9,7 +9,12 @@ import {
     autoClipFogByZoom,
     setBackgroundColor,
     initialState as sceneSettingsInitialState,
+    setAutoClip,
+    setAutoFog,
     setClipStart,
+    setDoClip,
+    setFogStart,
+    setDoFog,
     setDoSSAO,
     setZoom,
 } from "@/store/sceneSettingsSlice";
@@ -115,7 +120,7 @@ describe("fog and clipping", () => {
     test("following the zoom do not make a scene unsaved, and are saved as the scene's defaults", async () => {
         const { instance } = await start();
         await instance.userScene.select("Model Building");
-        expect(sceneSettings().resetClippingFogging).toBe(true);
+        expect(sceneSettings().autoClip).toBe(true);
         const fogBefore = sceneSettings().fogStart;
         // As the view does when zooming
         cloud.store.dispatch(setZoom(sceneSettings().zoom * 2));
@@ -132,9 +137,28 @@ describe("fog and clipping", () => {
         }
     });
 
+    test("Auto clip with the fog set by hand: only the fog planes are part of the scene", async () => {
+        const { instance } = await start();
+        await instance.userScene.select("Model Building");
+        cloud.store.dispatch(setAutoFog(false));
+        cloud.store.dispatch(setFogStart(200));
+        instance.userScene.saveScene("Model Building");
+        const clipBefore = sceneSettings().clipStart;
+        const defaults = builtInSceneDefaults("Model Building");
+
+        // Zooming moves the clip planes only, and does not make the scene unsaved
+        cloud.store.dispatch(setZoom(sceneSettings().zoom * 2));
+        cloud.store.dispatch(autoClipFogByZoom());
+        cloud.store.dispatch(setFogStart(200));
+        expect(sceneSettings().clipStart).not.toBe(clipBefore);
+        expect(instance.userScene.hasUnsavedChanges("Model Building")).toBe(false);
+        expect(saved("Model Building").fogStart).toBe(200);
+        expect(saved("Model Building").clipStart).toBe(defaults.clipStart);
+    });
+
     test("set by hand are part of the scene, and saved", async () => {
         const { instance } = await start();
-        expect(sceneSettings().resetClippingFogging).toBe(false);
+        expect(sceneSettings().autoClip).toBe(false);
         cloud.store.dispatch(setClipStart(12));
         expect(instance.userScene.hasUnsavedChanges("General")).toBe(true);
         instance.userScene.saveScene("General");
@@ -266,5 +290,41 @@ describe("the background colour on a built-in scene's first visit", () => {
         expect(await instance.userScene.reset("Model Building", "default")).toBe(true);
         await instance.userScene.select("Model Building");
         expect(background()).toEqual(builtInSceneDefaults("Model Building").backgroundColor);
+    });
+});
+
+describe("fog and clipping switched off", () => {
+    test("is part of the scene: kept across switches, saved and restored, with the planes kept", async () => {
+        const { instance } = await start();
+        // Model Building has both on and its clip planes following the zoom: fix them to set one by hand
+        await instance.userScene.select("Model Building");
+        cloud.store.dispatch(setAutoClip(false));
+        cloud.store.dispatch(setClipStart(12));
+        cloud.store.dispatch(setDoFog(false));
+        cloud.store.dispatch(setDoClip(false));
+        expect(instance.userScene.hasUnsavedChanges("Model Building")).toBe(true);
+        instance.userScene.saveScene("Model Building");
+        await flush(100);
+        expect(await storedKeys()).toEqual([
+            "Model Building.autoClip",
+            "Model Building.clipEnd",
+            "Model Building.clipStart",
+            "Model Building.doClip",
+            "Model Building.doFog",
+        ]);
+
+        // General has fog on; Model Building has both off again on return, planes unchanged
+        await instance.userScene.select("General");
+        expect(sceneSettings().doFog).toBe(true);
+        await instance.userScene.select("Model Building");
+        expect(sceneSettings().doFog).toBe(false);
+        expect(sceneSettings().doClip).toBe(false);
+        expect(sceneSettings().clipStart).toBe(12);
+
+        // As at start-up: the saved values come back
+        const stored = await instance.preferences.export();
+        await instance.preferences.import(stored);
+        expect(sceneSettings().doFog).toBe(false);
+        expect(sceneSettings().doClip).toBe(false);
     });
 });
