@@ -5,9 +5,9 @@ import { fetchMonomerDictionary } from "./monomerLibrary";
 
 /**
  * Where a monomer's dictionary is looked for:
- * - "default": what Coot already has (an imported dictionary, its own library), else the monomer
- *   libraries and PDBe, in that order (fetchMonomerDictionary);
- * - "libcoot-api": only what Coot already has;
+ * - "default": the dictionaries loaded in the session (store `dictionaries`), then what Coot has of
+ *   its own, else the monomer libraries and PDBe, in that order (fetchMonomerDictionary);
+ * - "libcoot-api": only the loaded dictionaries and what Coot has of its own;
  * - one source only: the local monomer library, the remote one (GitHub), or PDBe.
  */
 export type MonomerSource = "default" | "libcoot-api" | "local-monomer-library" | "remote-monomer-library" | "pdbe";
@@ -31,7 +31,8 @@ const dictionaryUrl = (source: MonomerSource, code: string, monomerLibraryPath: 
  * Monomer menu and for fitting a ligand by its code. The caller makes a MoorhenMolecule of it, or
  * deletes it when done.
  * @param code - The monomer's code (three letters, or more)
- * @param options.fromMolNo - Whose dictionaries to use, and to read a fetched one for; every molecule by default
+ * @param options.fromMolNo - Whose dictionaries to prefer, and to read a fetched one for; every molecule by
+ * default. A dictionary loaded for one molecule only is found whichever molecule that is.
  * @param options.position - Where to put it (Coot coordinates)
  * @returns Its Coot molecule number and, when the dictionary came with this call or from that molecule,
  * the dictionary text (to cache on the new molecule); null if no monomer could be made
@@ -80,6 +81,25 @@ export const getMonomerMolecule = async (
         return molNo === null ? null : { molNo, dictionary };
     }
 
+    // The dictionaries loaded in the session: one for every molecule, else the one read for the
+    // molecule asked for, else one read for any other molecule. Made with that molecule's number, so
+    // that Coot uses its dictionary as it is, neither read again nor for every molecule.
+    const loaded = Object.values(instance.store.getState().dictionaries.loaded).filter(dictionary => dictionary.compId === tlc);
+    const owners = instance.getMoleculeList();
+    const ownerOf = (uniqueId: string | null) => (uniqueId === null ? null : owners.find(molecule => molecule.uniqueId === uniqueId));
+    const candidates = [
+        ...loaded.filter(dictionary => dictionary.moleculeUid === null).map(dictionary => ({ dictionary, molNo: ALL_MOLECULES })),
+        ...loaded
+            .filter(dictionary => dictionary.moleculeUid !== null && ownerOf(dictionary.moleculeUid))
+            .sort((a, b) => Number(b.moleculeUid === fromMolecule?.uniqueId) - Number(a.moleculeUid === fromMolecule?.uniqueId))
+            .map(dictionary => ({ dictionary, molNo: ownerOf(dictionary.moleculeUid).molNo })),
+    ];
+    for (const candidate of candidates) {
+        const molNo = await getMonomer(candidate.molNo);
+        if (molNo !== null) return { molNo, dictionary: candidate.dictionary.content };
+    }
+
+    // What Coot has of its own (its monomer library), for the molecule asked for
     let molNo = await getMonomer(fromMolNo);
     if (molNo === null && source === "default") {
         // Not known to Coot: looked up in the monomer libraries, then PDBe

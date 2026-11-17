@@ -3,7 +3,7 @@
  * looked up as Get Monomer does. Shared by the Get Monomer menu and by fitting a ligand by its code.
  */
 import { getMonomerMolecule } from "@/utils/monomers";
-import { createCloudInstance, flush, jobUrl, loadCootModules, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
+import { createCloudInstance, flush, jobUrl, loadCootModules, readTestData, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
 jest.setTimeout(120_000);
 
@@ -54,6 +54,20 @@ describe("getMonomerMolecule", () => {
 
     test("imported dictionaries only: nothing is looked up", async () => {
         expect(await getMonomerMolecule(cloud.instance, "BGC", { source: "libcoot-api" })).toBeNull();
+        expect(fetched).toEqual([]);
+    });
+
+    test("a dictionary loaded for one molecule only is found, with no molecule chosen", async () => {
+        // The session's dictionary list is looked up first: the monomer is made with the number of
+        // the molecule the dictionary was read for, so Coot uses it as it is
+        const [entry] = await cloud.instance.files.loadFiles(jobUrl("5a3h.pdb"));
+        await cloud.instance.getMolecule(entry.uniqueID).addDict(readTestData("BGC.cif") as string);
+        await flush();
+        fetched.length = 0;
+        const monomer = await getMonomerMolecule(cloud.instance, "BGC", { source: "libcoot-api" });
+        expect(monomer).not.toBeNull();
+        expect(monomer.dictionary).toContain("data_comp_BGC");
+        expect(await atoms(monomer.molNo)).toBeGreaterThan(0);
         expect(fetched).toEqual([]);
     });
 
