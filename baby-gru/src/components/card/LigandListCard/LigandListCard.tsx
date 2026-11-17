@@ -423,8 +423,13 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string 
         ? representations.filter(representation => isLigandStyle(representation) && representation.cid?.startsWith(cid))
         : [
               ...representations.filter(isLigandStyle),
+              // Shown in the interface, not shown right now: a hidden molecule's bonds are still its style,
+              // and must be replaced with it (else they come back with the new style when it is shown)
               ...molecule.representations.filter(
-                  representation => !representation.isCustom && representation.visible && isLigandStyle(representation)
+                  representation =>
+                      !representation.isCustom &&
+                      (representation.interfaceOption.visible ?? representation.visible) &&
+                      isLigandStyle(representation)
               ),
           ];
     const shownStyle = ligandRepresentations[0]?.style ?? null;

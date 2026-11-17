@@ -2,7 +2,8 @@
  * Monomers made from a dictionary (a dictionary .cif through files.loadFiles, or files.ligandFromSmiles)
  * are returned like any other loaded molecule, and are ligand-only molecules.
  */
-import { createCloudInstance, jobUrl, loadCootModules, readTestData, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
+import { setMoleculeVisible } from "@/utils/moleculeVisibility";
+import { createCloudInstance, flush, jobUrl, loadCootModules, readTestData, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
 jest.setTimeout(120_000);
 
@@ -89,6 +90,20 @@ describe("monomers from dictionaries", () => {
         const result = await cloud.instance.files.loadFiles(new File([text], "ensemble.pdb"));
         expect(result).toHaveLength(1);
         expect(cloud.instance.getMolecule(result[0].uniqueID).numberOfModels).toBe(2);
+    });
+
+    test("a monomer hidden and shown again (its eye button) draws its bonds again", async () => {
+        // Its default bonds are not custom representations: no card chip ever set what the interface shows
+        const [entry] = await cloud.instance.files.loadFiles(jobUrl("BGC.cif"));
+        const monomer = cloud.instance.getMolecule(entry.uniqueID);
+        const bonds = monomer.representations.filter(representation => representation.style === "CBs");
+        expect(bonds.length).toBeGreaterThan(0);
+        expect(bonds.every(representation => representation.visible)).toBe(true);
+        setMoleculeVisible(monomer, false);
+        expect(bonds.some(representation => representation.visible)).toBe(false);
+        setMoleculeVisible(monomer, true);
+        await flush();
+        expect(bonds.every(representation => representation.visible)).toBe(true);
     });
 
     test("a protein with ligands is not ligand-only", async () => {
