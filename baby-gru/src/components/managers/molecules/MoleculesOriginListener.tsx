@@ -9,6 +9,9 @@ export const MoleculesOriginListener = () => {
     const _origin = useSelector((state: RootState) => state.sceneSettings.origin);
     const originRef = useRef(_origin);
     const lastOriginRef = useRef(_origin);
+    // The origin at the previous tick: acted on only once it has not moved for a whole tick, i.e.
+    // once a drag or an animated centring has stopped, not every 500 ms during it
+    const previousTickOriginRef = useRef(_origin);
     const moorhenInstance = useMoorhenInstance();
 
     originRef.current = _origin;
@@ -25,6 +28,19 @@ export const MoleculesOriginListener = () => {
             return;
         }
         if (lastOriginRef.current === originRef.current) {
+            return;
+        }
+        if (previousTickOriginRef.current !== originRef.current) {
+            previousTickOriginRef.current = originRef.current;
+            return;
+        }
+        // Nothing drawn around the origin: no need to ask Coot for the atom there
+        const followsOrigin = (molecule: MoorhenMolecule) =>
+            molecule.environmentRepresentation?.visible ||
+            molecule.adaptativeBondsEnabled ||
+            molecule.symmetryOn ||
+            molecule.NEFRestraintRepresentation?.visible;
+        if (!molecules.some(followsOrigin)) {
             return;
         }
         lastOriginRef.current = originRef.current;
