@@ -345,6 +345,16 @@ const LigandListRow = memo(function LigandListRow(props: {
                         tooltip="Centre on ligand"
                         onClick={() => (ligand ? molecule.centreOn(ligand.cid) : molecule.centreOn())}
                     />,
+                    !ligand && (
+                        <MoorhenButton
+                            key="download"
+                            size="accordion"
+                            type="icon-only"
+                            icon="MatSymDownload"
+                            tooltip="Download"
+                            onClick={() => molecule.downloadAtoms()}
+                        />
+                    ),
                     <MoorhenPopoverButton key="delete" size="accordion" icon="MatSymDelete" tooltip="Delete" popoverPlacement="left">
                         <LigandDelete molecule={molecule} ligand={ligand} name={name} />
                     </MoorhenPopoverButton>,
@@ -414,6 +424,7 @@ const defaultCarbonColour = (molecule: MoorhenMolecule): string =>
 const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string }) => {
     const { molecule, cid } = props;
     const dispatch = useDispatch();
+    const store = useStore<RootState>();
     const representations = useSelector((state: RootState) => selectCustomRepresentations(state, molecule.molNo), shallowEqual);
     const isLigandStyle = (representation: MoleculeRepresentation) => LIGAND_STYLES.some(item => item.style === representation.style);
     // Plus the default bonds that some ways of loading a ligand draw (fetchIfDirtyAndDraw: dictionaries,
@@ -464,6 +475,8 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string 
                 molecule,
                 ...(cid ? { ruleType: "cid" as const, cid } : { ruleType: "molecule" as const }),
                 isCustom: true,
+                // As the molecule is (its eye button): a hidden ligand given a new style stays hidden
+                visible: store.getState().molecules.visibleMolecules.includes(molecule.molNo),
                 notH: hideHydrogens,
                 ...colourOptions(currentColour),
             });
