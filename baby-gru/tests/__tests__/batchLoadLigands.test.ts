@@ -179,4 +179,34 @@ describe("batchLoadLigands", () => {
         expect(failed.map(entry => entry.fileName).sort()).toEqual(["missing.pdb", "notes.pdb"]);
         expect(instance.getMoleculeList()).toHaveLength(2);
     });
+
+    test("leaves nothing behind for the files it fails to load", async () => {
+        const { instance, store, commandCentre } = cloud;
+        const poses = makePoses(2);
+        const files = [
+            poses[0],
+            new File(["this is not a structure\n"], "notes.pdb"),
+            // Read by gemmi and by Coot, but no atoms
+            new File(["HEADER    EMPTY\nEND\n"], "empty.pdb"),
+            poses[1],
+        ];
+        const { loaded, failed } = await instance.files.batchLoadLigands(files);
+        expect(failed.map(entry => entry.fileName).sort()).toEqual(["empty.pdb", "notes.pdb"]);
+        await flush();
+
+        // Records only for the loaded molecules
+        expect(Object.keys(store.getState().molecules.moleculeRecords).sort()).toEqual(loaded.map(entry => entry.uniqueID).sort());
+        // In Coot, only the loaded molecules are valid
+        const count = (await commandCentre.cootCommand({ returnType: "int", command: "get_number_of_molecules", commandArgs: [] }, false))
+            .data.result.result as number;
+        const valid: number[] = [];
+        for (let molNo = 0; molNo < count; molNo++) {
+            const response = await commandCentre.cootCommand(
+                { returnType: "boolean", command: "is_valid_model_molecule", commandArgs: [molNo] },
+                false
+            );
+            if (response.data.result.result) valid.push(molNo);
+        }
+        expect(valid).toEqual(loaded.map(entry => entry.molNo).sort((a, b) => a - b));
+    });
 });

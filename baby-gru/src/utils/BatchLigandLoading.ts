@@ -162,13 +162,34 @@ export const batchLoadLigands = async (
         return dictionaries.get(compId);
     };
 
+    /**
+     * Forget molecules that will not be loaded: closed in Coot if it read them (not journaled, as the
+     * batch is not), their record and gemmi structure dropped. Else they would stay in Coot unseen.
+     */
+    const discard = (molecules: MoorhenMolecule[]) => Promise.all(molecules.map(molecule => molecule.delete(false, false)));
+
     /** Worker and network side of a chunk: everything up to having the meshes. */
     const prepareChunk = async (chunk: { index: number; fileName: string; text: string }[]): Promise<ChunkItem[]> => {
+        // Every molecule made for this chunk, so that all are discarded if it fails half way
+        const created: MoorhenMolecule[] = [];
+        try {
+            return await prepareChunkMolecules(chunk, created);
+        } catch (err) {
+            await discard(created).catch(() => undefined);
+            throw err;
+        }
+    };
+
+    const prepareChunkMolecules = async (
+        chunk: { index: number; fileName: string; text: string }[],
+        created: MoorhenMolecule[]
+    ): Promise<ChunkItem[]> => {
         // Parse on the main thread first: the molecule needs this gemmi structure anyway (ligand
         // info, sequences, atoms for picking), as loadToCootFromString does.
         let items: ChunkItem[] = [];
         for (const { index, fileName, text } of chunk) {
             const molecule = new MoorhenMolecule(instance);
+            created.push(molecule);
             molecule.setBackgroundColour(backgroundColor);
             molecule.defaultBondOptions.smoothness = defaultBondSmoothness;
             molecule.name = moleculeNameFromFileName(fileName);
@@ -177,6 +198,7 @@ export const batchLoadLigands = async (
                 molecule.atomsDirty = false;
             } catch {
                 fail(fileName, "could not be parsed as coordinates");
+                await discard([molecule]);
                 continue;
             }
             items.push({ index, fileName, text, molecule, missingCompIds: [] });
@@ -187,18 +209,20 @@ export const batchLoadLigands = async (
             { returnType: "status", command: "set_use_gemmi", commandArgs: [useGemmi] },
             ...items.map(item => ({ returnType: "status", command: "read_coords_string", commandArgs: [item.text, item.molecule.name] })),
         ]);
+        const unread: MoorhenMolecule[] = [];
         items = items.filter((item, i) => {
             const result = readResults[i + 1];
             const molNo = result?.result?.result?.first;
             if (commandFailed(result) || typeof molNo !== "number" || molNo === -1) {
                 fail(item.fileName, "not a coordinate file Coot can read");
-                item.molecule.gemmiStructure?.delete();
+                unread.push(item.molecule);
                 return false;
             }
             item.molecule.molNo = molNo;
             item.molecule.coordsFormat = result.result.result.second;
             return true;
         });
+        await discard(unread);
 
         // B: atom count, glycans, missing dictionaries, default colour rules
         const infoResults = await runList(
@@ -209,12 +233,14 @@ export const batchLoadLigands = async (
                 { returnType: "colour_rules", command: "get_colour_rules", commandArgs: [molecule.molNo] },
             ])
         );
+        const empty: MoorhenMolecule[] = [];
         items = items.filter((item, i) => {
             const [atoms, glycans, missing, rules] = infoResults.slice(4 * i, 4 * i + 4);
             const { molecule } = item;
             molecule.atomCount = atoms?.result?.result ?? 0;
             if (molecule.atomCount === 0) {
                 fail(item.fileName, "no atoms found");
+                empty.push(molecule);
                 return false;
             }
             molecule.hasGlycans = glycans?.result?.result ?? false;
@@ -227,6 +253,8 @@ export const batchLoadLigands = async (
             }
             return true;
         });
+
+        await discard(empty);
 
         // Missing dictionaries: fetched and read once per comp_id
         await suppliedReady;
@@ -255,11 +283,16 @@ export const batchLoadLigands = async (
         const representations = await Promise.all(
             chunkItems.map(item => MoleculeRepresentation.create({ representationStyle: "CBs", molecule: item.molecule }))
         );
+        const undrawn: MoorhenMolecule[] = [];
         const items = chunkItems.filter((item, i) => {
             item.representation = representations[i];
-            if (!item.representation) fail(item.fileName, "could not create its representation");
+            if (!item.representation) {
+                fail(item.fileName, "could not create its representation");
+                undrawn.push(item.molecule);
+            }
             return !!item.representation;
         });
+        await discard(undrawn);
         batch(() => {
             store.dispatch(addMoleculeList(items.map(item => item.molecule)));
             items.forEach(item => store.dispatch(addCustomRepresentation(item.representation)));

@@ -724,8 +724,10 @@ export class MoorhenMolecule {
     /**
      * Delete this molecule instance
      * @param {boolean} [popBackImol=false] - Indicates whether the imol for this molecule instance should be popped back (useful for ephemeral molecules)
+     * @param {boolean} [doJournal=true] - Record the deletion in the command history (false for a molecule that never made it into the session, e.g. a file a batch failed to load)
+     * @returns Coot's response; null for a molecule Coot never read (nothing to close there)
      */
-    async delete(popBackImol: boolean = false): Promise<moorhen.WorkerResponse> {
+    async delete(popBackImol: boolean = false, doJournal: boolean = true): Promise<moorhen.WorkerResponse | null> {
         this.hoverRepresentation?.deleteBuffers();
         this.unitCellRepresentation?.deleteBuffers();
         this.environmentRepresentation?.deleteBuffers();
@@ -736,14 +738,17 @@ export class MoorhenMolecule {
         queueMoleculeRecord(this.store, this.uniqueId, null);
         this.store.dispatch(removeMoleculeRecord(this.uniqueId));
         this.store.dispatch(setRequestDrawScene(true));
-        const response = (await this.commandCentre.cootCommand(
-            {
-                returnType: "status",
-                command: popBackImol ? "pop_back" : "close_molecule",
-                commandArgs: popBackImol ? [] : [this.molNo],
-            },
-            true
-        )) as moorhen.WorkerResponse<number>;
+        const inCoot = popBackImol || (typeof this.molNo === "number" && this.molNo >= 0);
+        const response = inCoot
+            ? ((await this.commandCentre.cootCommand(
+                  {
+                      returnType: "status",
+                      command: popBackImol ? "pop_back" : "close_molecule",
+                      commandArgs: popBackImol ? [] : [this.molNo],
+                  },
+                  doJournal
+              )) as moorhen.WorkerResponse<number>)
+            : null;
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete();
         }
