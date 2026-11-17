@@ -38,7 +38,9 @@ const initialState: {
     showHoverInfo: boolean;
     viewOnly: boolean;
     allowScripting: boolean;
+    /** @deprecated Read by nothing: the Fit ligand modal always offers to save a pose as a new molecule. */
     allowAddNewFittedLigand: boolean;
+    /** @deprecated Read by nothing: the Fit ligand modal no longer merges a pose into the model. */
     allowMergeFittedLigand: boolean;
     disableFileUpload: boolean;
 } = {
@@ -193,9 +195,11 @@ const generalStatesSlice = createSlice({
         setAllowScripting: (state, action: PayloadAction<boolean>) => {
             state.allowScripting = action.payload;
         },
+        /** @deprecated No effect (see allowAddNewFittedLigand); kept so hosts that call it still compile. */
         setAllowAddNewFittedLigand: (state, action: PayloadAction<boolean>) => {
             state.allowAddNewFittedLigand = action.payload;
         },
+        /** @deprecated No effect (see allowMergeFittedLigand); kept so hosts that call it still compile. */
         setAllowMergeFittedLigand: (state, action: PayloadAction<boolean>) => {
             state.allowMergeFittedLigand = action.payload;
         },
