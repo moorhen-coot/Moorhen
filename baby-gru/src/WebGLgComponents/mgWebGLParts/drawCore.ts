@@ -1565,9 +1565,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         // It can use this pass for the same reason a smooth mesh can: it is not instanced. What
         // it lacks is the influence data, and it does not need it. Leaving uHoveredPoint at the
         // sentinel makes the vertex shader take its other branch and set vHighlight to 1
-        // everywhere, which gives full alpha across the mesh - and no ring, since the ring is a
-        // contour of the influence field and a constant field has no contour. So the whole
-        // thing lights solid orange with no shader change at all.
+        // everywhere, which gives full alpha across the mesh. So the whole thing lights solid orange with no shader change at all.
         const hoveredWholeMesh = !hoveredHasInfluenceTextures
             && !!hoveredBuffer?.pick_info?.highlight_whole
 

@@ -16,8 +16,7 @@
  * - **A smooth mesh** (MetaBalls, molecular surfaces): an overlay, the hovered mesh drawn again
  *   in orange, blended, each vertex as opaque as the share of it the hovered point has - summed
  *   from its influence list over the points whose owner code matches the hovered one under the
- *   level's mask - with a green ring where the share is 0.45. A mesh that is one whole thing (a
- *   cavity, `highlight_whole`) lights solid. Meshes of one highlight group (a nucleic acid's
+ *   level's mask. A mesh that is one whole thing (a cavity, `highlight_whole`) lights solid. Meshes of one highlight group (a nucleic acid's
  *   backbone and base sticks: highlightGroup.ts) light together.
  *
  * The fourth, triangles of `point_triangles` drawn in black, is left out: nothing makes them.

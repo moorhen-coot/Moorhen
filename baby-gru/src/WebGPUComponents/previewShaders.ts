@@ -311,17 +311,14 @@ fn fogged(colour: vec4f, alpha: f32, eyeDistance: f32) -> vec4f {
     return out;
 }
 
-// The hover highlight on a finished colour, as the end of triangle-fragment-shader.js has it: a
-// green ring where a smooth mesh's share of the hovered point crosses 0.45; above 1, lightened
-// halfway to white (an instance or a section lit); below 1, that much of the alpha (the smooth
+// The hover highlight on a finished colour, as the end of triangle-fragment-shader.js has it:
+// above 1, lightened halfway to white (an instance or a section lit); below 1, that much of the alpha (the smooth
 // mesh overlay fading away from the hovered point). At exactly 1, nothing changes. Where the
 // colour is premultiplied (an opaque pipeline in a transparent snapshot: fogged), so is the change.
 fn withHighlight(colour: vec4f, h: f32) -> vec4f {
     let premultiplied = frame.fog.x > 0.5 && draw.output.x > 0.5;
     let scale = select(1.0, colour.a, premultiplied);
-    let ring = smoothstep(0.4, 0.45, h) - smoothstep(0.45, 0.5, h);
-    var rgb = colour.rgb + ring * vec3f(0.4, 1.0, 0.0) * scale;
-    rgb = mix(rgb, vec3f(scale), 0.5 * clamp(h - 1.0, 0.0, 1.0));
+    let rgb = mix(colour.rgb, vec3f(scale), 0.5 * clamp(h - 1.0, 0.0, 1.0));
     let fade = min(h, 1.0);
     return vec4f(select(rgb, rgb * fade, premultiplied), colour.a * fade);
 }
