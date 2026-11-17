@@ -61,6 +61,7 @@ import type {
 import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
 import { type LoadedDictionary, emptyDictionaries } from "../store/dictionariesSlice";
 import { readDictionary } from "./dictionaries";
+import { whileRestoringSession } from "../InstanceManager/StoreSync";
 import { ThreeDObject, addObject, emptyObjects } from "../store/threeDObjectsSlice";
 import { withMigratedTags } from "./tags";
 import { moorhen } from "../types/moorhen";
@@ -889,7 +890,9 @@ export class MoorhenTimeCapsule {
             // fades are about to go (a movie file sets its own movie after loading its session)
             store.dispatch(newMovie());
             try {
-                await MoorhenTimeCapsule.restoreSessionData(sessionData, sceneState, moorhenInstance, fetchExternalUrl);
+                await whileRestoringSession(moorhenInstance, () =>
+                    MoorhenTimeCapsule.restoreSessionData(sessionData, sceneState, moorhenInstance, fetchExternalUrl)
+                );
             } catch (error) {
                 // Molecules may already be deleted: drop the old scenes, which refer to them
                 moorhenInstance.userScene.resetForLegacySession();

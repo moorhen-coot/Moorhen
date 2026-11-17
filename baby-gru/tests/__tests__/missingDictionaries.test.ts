@@ -3,7 +3,8 @@
  * to see what the lookup found), kept in the molecule's record, and warned about from there, once
  * per change, rather than asked again after every draw of every representation.
  */
-import { createCloudInstance, flush, jobUrl, loadCootModules, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
+import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { createCloudInstance, flush, jobUrl, loadCootModules, readTestData, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
 jest.setTimeout(120_000);
 
@@ -54,5 +55,30 @@ describe("missing dictionaries", () => {
         await flush();
         expect(cloud.instance.store.getState().molecules.moleculeRecords[entry.uniqueID].missingDictionaries).toEqual(["G2F"]);
         expect(warnings()).toHaveLength(1);
+    });
+
+    test("opening a session warns only about what is still missing", async () => {
+        // BGC given a dictionary for the model only (restored after the model is read), G2F none
+        const [entry] = await cloud.instance.files.loadFiles(jobUrl("5a3h.pdb"));
+        await cloud.instance.getMolecule(entry.uniqueID).addDict(readTestData("BGC.cif") as string);
+        await flush();
+        const session = JSON.stringify(await cloud.instance.getTimeCapsuleRef().current.fetchSession(false));
+        await cloud.cleanup();
+
+        // A fresh page: nothing warned about yet
+        cloud = await createCloudInstance();
+        expect(await MoorhenTimeCapsule.loadSessionFromJsonString(session, cloud.instance)).toBe(0);
+        await flush();
+        expect(warnings()).toHaveLength(1);
+        expect(warnings()[0]).toContain("(G2F)");
+    });
+
+    test("a multi-model ligand file warns once, for its poses", async () => {
+        const atoms = (readTestData("5a3h.pdb") as string).split("\n").filter(line => line.startsWith("HETATM") && line.slice(17, 20) === "BGC");
+        const text = [1, 2].flatMap(model => [`MODEL     ${String(model).padStart(4)}`, ...atoms, "ENDMDL"]).join("\n") + "\nEND\n";
+        await cloud.instance.files.loadFiles(new File([text], "poses.pdb"));
+        await flush();
+        expect(warnings()).toHaveLength(1);
+        expect(warnings()[0]).toContain("(BGC)");
     });
 });

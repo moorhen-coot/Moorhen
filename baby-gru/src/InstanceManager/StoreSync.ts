@@ -1,4 +1,6 @@
+import { createSelector } from "@reduxjs/toolkit";
 import type { RootState } from "@/store/MoorhenReduxStore";
+import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import type { MoleculeRecord } from "@/store/moleculesSlice";
 import { setHoveredAtom } from "@/store/hoveringStatesSlice";
 import { enqueueSnackbar } from "@/store/snackbarSlice";
@@ -48,19 +50,27 @@ const removeContactVectorsOfHiddenMolecules = (instance: MoorhenInstance) => {
 /** The residue types each molecule (by uid) has been warned about having no dictionary, per instance */
 const warnedMissingDictionaries = new WeakMap<MoorhenInstance, Map<string, Set<string>>>();
 
+/** Instances restoring a session: their missing-dictionary warnings wait for the end of it */
+const restoringSession = new WeakSet<MoorhenInstance>();
+
 /**
- * Warn about residue types newly without a dictionary, in any molecule: one message for all of
- * them (a batch of a thousand ligands of the same unknown type gives one), each type once per
- * molecule while it stays missing.
+ * Warn about residue types newly without a dictionary, in any molecule of the list: one message for
+ * all of them (a batch of a thousand ligands of the same unknown type gives one), each type once per
+ * molecule while it stays missing. Molecules not in the list are left out (a multi-model file split
+ * into its poses, a file that failed to load): they would warn about what their replacements warn
+ * about, or about nothing the user sees.
  */
-const warnAboutMissingDictionaries = (instance: MoorhenInstance, records: Record<string, MoleculeRecord>) => {
+const warnAboutMissingDictionaries = (instance: MoorhenInstance, records: Record<string, MoleculeRecord>, moleculeList: MoorhenMolecule[]) => {
+    if (restoringSession.has(instance)) return;
     let warned = warnedMissingDictionaries.get(instance);
     if (!warned) {
         warned = new Map();
         warnedMissingDictionaries.set(instance, warned);
     }
+    const listed = new Set(moleculeList.map(molecule => molecule.uniqueId));
     const types = new Set<string>();
     for (const [uid, record] of Object.entries(records)) {
+        if (!listed.has(uid)) continue;
         const before = warned.get(uid);
         record.missingDictionaries.filter(type => !before?.has(type)).forEach(type => types.add(type));
         warned.set(uid, new Set(record.missingDictionaries));
@@ -74,6 +84,31 @@ const warnAboutMissingDictionaries = (instance: MoorhenInstance, records: Record
         })
     );
 };
+
+/**
+ * Run a session restore with its missing-dictionary warnings held until the end: a molecule is
+ * checked for missing monomers as soon as it is read, before the restore reads the dictionaries
+ * saved for it alone, which would warn about types the session does have. Then warns once about
+ * what is still missing.
+ */
+export const whileRestoringSession = async <T>(instance: MoorhenInstance, restore: () => Promise<T>): Promise<T> => {
+    restoringSession.add(instance);
+    try {
+        return await restore();
+    } finally {
+        restoringSession.delete(instance);
+        // The records queued in the restore's last tick are written in the next one
+        await new Promise<void>(resolve => queueMicrotask(resolve));
+        const { moleculeRecords, moleculeList } = instance.store.getState().molecules;
+        warnAboutMissingDictionaries(instance, moleculeRecords, moleculeList);
+    }
+};
+
+/** The records and the molecule list, one value while neither changes */
+const selectRecordsAndList = createSelector(
+    [(state: RootState) => state.molecules.moleculeRecords, (state: RootState) => state.molecules.moleculeList],
+    (records, moleculeList) => ({ records, moleculeList })
+);
 
 /** Helper so each entry's value type is inferred from its selector */
 const sync = <T>(entry: StoreSync<T>): StoreSync<T> => entry;
@@ -112,8 +147,9 @@ const STORE_SYNCS: StoreSync<unknown>[] = [
     // there, not after every draw of every representation (which asked Coot each time)
     sync({
         name: "warn about residue types with no dictionary",
-        selector: state => state.molecules.moleculeRecords,
-        apply: (instance, records) => warnAboutMissingDictionaries(instance, records),
+        // The list too: a record may be written before its molecule is added to the list
+        selector: selectRecordsAndList,
+        apply: (instance, { records, moleculeList }) => warnAboutMissingDictionaries(instance, records, moleculeList),
     }),
 ];
 
