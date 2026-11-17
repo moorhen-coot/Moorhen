@@ -1,0 +1,46 @@
+@import "../../../colors.css";
+
+.moorhen__check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0rem;
+    min-width: 12rem;
+}
+
+.moorhen__check-list-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.moorhen__check-list-count {
+    flex: 1;
+    color: var(--moorhen-disabled);
+    font-size: 0.85rem;
+}
+
+.moorhen__check-list-items {
+    display: flex;
+    flex-wrap: wrap;
+    /* flex-direction: column; */
+    gap: 0.15rem;
+    overflow-y: auto;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--moorhen-border);
+    border-radius: 0.5rem;
+    background-color: var(--moorhen-input-background);
+    /* transform: translateY(2rem); */
+}
+
+.moorhen__check-list.disabled .moorhen__check-list-items {
+    opacity: 0.6;
+}
+
+.moorhen__check-list-empty {
+    color: var(--moorhen-disabled);
+    font-style: italic;
+}

@@ -72,6 +72,9 @@ moorhenInstance.menuSystem?.addMainMenu(extraMenu, 2);</code></pre>
                 example <code>"MatSymDownload"</code>). Use <code>iconSrc</code> instead to point at an image URL.</li>
             <li>The second argument of <code>addMainMenu</code> is the position in the menu bar. Existing entries at
                 or after that position are shifted along; omit it to append the entry at the end.</li>
+            <li><code>addMainMenu</code> returns a function that removes the entry again; the entries after it move
+                back. You can also remove an entry by its label, with
+                <code>menuSystem.removeMainMenu("Extra")</code>.</li>
         </ul>
 
         <p>
@@ -272,6 +275,7 @@ moorhenInstance.menuSystem?.deleteItemById("my-open-custom");</code></pre>
             <li>
                 <a href="../../api/classes/moorhen.MoorhenMenuSystem.html"><code>MoorhenMenuSystem</code></a> &mdash;
                 <a href="../../api/classes/moorhen.MoorhenMenuSystem.html#addmainmenu"><code>addMainMenu()</code></a>,
+                <a href="../../api/classes/moorhen.MoorhenMenuSystem.html#removemainmenu"><code>removeMainMenu()</code></a>,
                 <a href="../../api/classes/moorhen.MoorhenMenuSystem.html#addsubmenu"><code>addSubmenu()</code></a>,
                 <a href="../../api/classes/moorhen.MoorhenMenuSystem.html#addtoexistingsubmenu"><code>addToExistingSubmenu()</code></a>,
                 <a href="../../api/classes/moorhen.MoorhenMenuSystem.html#deleteitembyid"><code>deleteItemById()</code></a>.
