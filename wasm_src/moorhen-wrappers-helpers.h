@@ -1272,9 +1272,19 @@ class molecules_container_js : public molecules_container_t {
             auto error = [] (const std::string &message) { return "{\"error\":\"" + message + "\"}"; };
             if (!is_valid_model_molecule(imol_1) || !is_valid_model_molecule(imol_2)) return error("invalid molecule");
             const int imol = copy_fragment_using_cid(imol_1, cid_1);
-            if (imol < 0) return error("nothing selected by the first cid");
-            closed_merged_molecules.erase(imol); // an index freed earlier, in use again
+            if (imol < 0) return error("could not copy the first selection");
+            // Named so that delete_merged_molecule knows its slot (and others') from a user's molecule
+            (*this)[imol].set_molecule_name(MERGED_MOLECULE_NAME);
+            // copy_fragment_using_cid makes a molecule even of an empty selection
+            if ((*this)[imol].atom_sel.n_selected_atoms == 0) {
+                delete_merged_molecule(imol);
+                return error("nothing selected by the first cid");
+            }
             mmdb::Manager *mol = get_mol(imol);
+            // Its first model only: the second selection is added to that one, and every other model
+            // would give the same contacts again
+            for (int model = mol->GetNumberOfModels(); model > 1; model--) mol->DeleteModel(model);
+            mol->FinishStructEdit();
 
             Json::Value chains(Json::arrayValue);
             auto add_chain = [&chains] (const std::string &id, int source_imol, const std::string &source_id) {
@@ -1328,8 +1338,10 @@ class molecules_container_js : public molecules_container_t {
 
         // Delete a molecule made by make_merged_molecule_json, with the dictionaries copied for it. Its
         // index is freed for reuse when it is the last one (and so are those of other merged molecules
-        // deleted before it, now last). Only merged molecules: the index of a molecule the user deleted
-        // stays taken, as elsewhere, so that a new molecule does not take its number.
+        // deleted before it, now last). Only merged molecules, told apart by their name (a closed
+        // molecule keeps it): the index of a molecule the user deleted stays taken, as elsewhere, so
+        // that a new molecule does not take its number. By name rather than a list of indices, which
+        // other code popping closed molecules (end_delete_closed_molecules) would leave stale.
         int delete_merged_molecule(int imol) {
             const int status = close_molecule(imol);
             const auto types = merged_molecule_types.find(imol);
@@ -1337,21 +1349,18 @@ class molecules_container_js : public molecules_container_t {
                 forget_dictionaries_of(imol, types->second);
                 merged_molecule_types.erase(types);
             }
-            closed_merged_molecules.insert(imol);
             while (get_number_of_molecules() > 0) {
                 const int last = static_cast<int>(get_number_of_molecules()) - 1;
-                if (!closed_merged_molecules.count(last) || !(*this)[last].is_closed()) break;
+                if (!(*this)[last].is_closed() || (*this)[last].get_name() != MERGED_MOLECULE_NAME) break;
                 pop_back();
-                closed_merged_molecules.erase(last);
             }
             return status;
         }
 
     private:
+        static constexpr const char *MERGED_MOLECULE_NAME = "moorhen-merged-molecule";
         // The residue types whose dictionaries were copied for each merged molecule
         std::map<int, std::set<std::string>> merged_molecule_types;
-        // Merged molecules deleted while not last: their index is freed once those after it are gone
-        std::set<int> closed_merged_molecules;
 
         // Remove the dictionaries filed under this molecule index only (not the global ones)
         void forget_dictionaries_of(int imol, const std::set<std::string> &types) {

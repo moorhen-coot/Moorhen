@@ -265,12 +265,55 @@ moorhen::append_selection(mmdb::Manager *target, mmdb::Manager *source, const st
 
 // ---------------------------------------------------------------- hydrogen bonds
 
+namespace {
+    bool has_hydrogens(mmdb::Manager *mol) {
+        mmdb::Atom **atoms = nullptr;
+        int n_atoms = 0;
+        mol->GetAtomTable(atoms, n_atoms);
+        for (int i = 0; i < n_atoms; i++) {
+            if (!atoms[i]) continue;
+            const std::string element = trim(atoms[i]->element);
+            if (element == "H" || element == "D") return true;
+        }
+        return false;
+    }
+
+    // A copy of the molecule without its hydrogens (and deuteriums), same chains, residues and atom
+    // names, so that atom cids from it name the same atoms in the original. Delete it after use.
+    mmdb::Manager *copy_without_hydrogens(mmdb::Manager *mol) {
+        const int sel = mol->NewSelection();
+        mol->SelectAtoms(sel, 0, "*", mmdb::ANY_RES, "*", mmdb::ANY_RES, "*", "*", "*", "*", "*", mmdb::SKEY_NEW);
+        mol->SelectAtoms(sel, 0, "*", mmdb::ANY_RES, "*", mmdb::ANY_RES, "*", "*", "*", "H,D", "*", mmdb::SKEY_CLR);
+        mmdb::Manager *copy = coot::util::create_mmdbmanager_from_atom_selection(mol, sel);
+        mol->DeleteSelection(sel);
+        return copy;
+    }
+
+    void h_bonds_between(mmdb::Manager *mol, const std::string &cid_1, const std::string &cid_2,
+                         const coot::protein_geometry &geom, int imol, bool mcdonald_and_thornton, Json::Value &bonds_json);
+}
+
 std::string moorhen::h_bonds_between_json(mmdb::Manager *mol, const std::string &cid_1, const std::string &cid_2,
                                           const coot::protein_geometry &geom, int imol, bool mcdonald_and_thornton) {
     Json::Value bonds_json(Json::arrayValue);
     if (!mol) return to_string(bonds_json);
+    // Coot's plain test (not McDonald & Thornton) rejects a bond when a neighbour of the donor makes a
+    // small angle with the acceptor, and the donor's own hydrogen, pointing at the acceptor, does: with
+    // explicit hydrogens it loses good bonds (9 -> 5 for 5a3h's BGC). It is run on a copy without them.
+    // McDonald & Thornton needs the hydrogens, so it keeps them.
+    mmdb::Manager *h_free = (!mcdonald_and_thornton && has_hydrogens(mol)) ? copy_without_hydrogens(mol) : nullptr;
+    h_bonds_between(h_free ? h_free : mol, cid_1, cid_2, geom, imol, mcdonald_and_thornton, bonds_json);
+    delete h_free;
+    return to_string(bonds_json);
+}
+
+namespace {
+// The bonds between two selections of mol, appended to bonds_json (see h_bonds_between_json)
+void h_bonds_between(mmdb::Manager *mol, const std::string &cid_1, const std::string &cid_2,
+                     const coot::protein_geometry &geom, int imol, bool mcdonald_and_thornton,
+                     Json::Value &bonds_json) {
     const selections_t s(mol, cid_1, cid_2);
-    if (s.atoms_1.empty() || s.atoms_2.empty()) return to_string(bonds_json);
+    if (s.atoms_1.empty() || s.atoms_2.empty()) return;
 
     coot::h_bonds hb;
     const std::vector<coot::h_bond> bonds = mcdonald_and_thornton
@@ -299,7 +342,7 @@ std::string moorhen::h_bonds_between_json(mmdb::Manager *mol, const std::string 
         j["donorSelection"] = donor_in_1 ? 1 : 2;
         bonds_json.append(j);
     }
-    return to_string(bonds_json);
+}
 }
 
 // ---------------------------------------------------------------- salt bridges

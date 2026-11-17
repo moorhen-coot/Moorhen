@@ -46,6 +46,9 @@ type AnalysedMolecule = {
     imol: number;
     /** The ligand's atoms in it */
     ligandSelection: string;
+    /** Where its partners are (the ligand's own atoms left out): one model, so that a multi-model
+     * molecule does not give each contact once per model */
+    partnerSelection: string;
     /** Whether a residue of it (chain, gemmi-style seqid such as "301A") is the ligand */
     isLigand: (chainId: string, seqid: string) => boolean;
     /** The chain id in the molecule it came from */
@@ -88,6 +91,7 @@ export const getLigandContacts = async (
             {
                 imol: ligand.molNo,
                 ligandSelection: ligandInfo.cid,
+                partnerSelection: `/${ligandInfo.modelName}`,
                 isLigand: (chainId, seqid) => chainId === ligandInfo.chainName && seqid === ligandInfo.resNum,
                 sourceChain: chainId => chainId,
                 flevCid: `//${ligandInfo.chainName}/${mmdbResidueNumber(ligandInfo.resNum)}`,
@@ -108,6 +112,8 @@ export const getLigandContacts = async (
             {
                 imol: merged.imol,
                 ligandSelection: ligandChains.map(chain => `//${chain.chainId}`).join("||"),
+                // A merged molecule has one model (the partner's first)
+                partnerSelection: "/*",
                 isLigand: chainId => ligandChains.some(chain => chain.chainId === chainId),
                 sourceChain: chainId => sourceChain.get(chainId) ?? chainId,
                 flevCid: flevChain ? `//${flevChain.chainId}/${mmdbResidueNumber(ligandInfo.resNum)}` : null,
@@ -128,7 +134,7 @@ const analyse = async (
     options: { xhpi?: boolean; flev?: boolean }
 ): Promise<LigandContactsResult> => {
     const coot = ligand.moorhenInstance.cootCommand;
-    const { imol, ligandSelection, isLigand, sourceChain } = target;
+    const { imol, ligandSelection, partnerSelection, isLigand, sourceChain } = target;
     const side = (atom: CootContactAtom): ContactSide => ({
         chainId: sourceChain(atom.chainId),
         resNo: atom.resNo,
@@ -140,8 +146,8 @@ const analyse = async (
 
     const contacts: LigandContact[] = [];
 
-    // "/*" as the second selection: everything but the ligand
-    const hBonds = await coot.get_h_bonds_between(imol, ligandSelection, "/*");
+    // The second selection never includes the first: everything but the ligand
+    const hBonds = await coot.get_h_bonds_between(imol, ligandSelection, partnerSelection);
     for (const bond of hBonds) {
         const donor = bond.donor ?? bond.hydrogen;
         const ligandDonates = bond.donorSelection === 1;
@@ -154,7 +160,7 @@ const analyse = async (
         });
     }
 
-    const saltBridges = await coot.get_salt_bridges(imol, ligandSelection, "/*", SALT_BRIDGE_MAX_DISTANCE);
+    const saltBridges = await coot.get_salt_bridges(imol, ligandSelection, partnerSelection, SALT_BRIDGE_MAX_DISTANCE);
     for (const bridge of saltBridges) {
         contacts.push({
             type: "salt-bridge",

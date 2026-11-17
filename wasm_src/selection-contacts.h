@@ -32,7 +32,8 @@ namespace moorhen {
     //   [{"donor": ATOM | null, "hydrogen": ATOM | null, "acceptor": ATOM, "distance": d,
     //     "donorSelection": 1 | 2}]
     // distance is H...A when the bond has its hydrogen, else D...A. Without McDonald & Thornton,
-    // donors and acceptors come from the dictionaries and hydrogens are not needed; with it, they are.
+    // donors and acceptors come from the dictionaries and hydrogens are not needed (the molecule's own
+    // hydrogens are left out: Coot's test would reject bonds through them); with it, they are needed.
     std::string h_bonds_between_json(mmdb::Manager *mol, const std::string &cid_1, const std::string &cid_2,
                                      const coot::protein_geometry &geom, int imol, bool mcdonald_and_thornton);
 

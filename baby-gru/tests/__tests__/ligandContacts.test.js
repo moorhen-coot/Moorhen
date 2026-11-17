@@ -160,8 +160,61 @@ describe('merged molecules and selection contacts', () => {
         molecules_container.close_molecule(imolNitro)
     })
 
+    test('explicit hydrogens do not hide H-bonds', () => {
+        // Coot's plain test rejects a bond through the donor's own hydrogen: the H-bonds are found on a
+        // copy without them, the same as for the molecule as deposited
+        const withHydrogens = molecules_container.copy_molecule(imolFull)
+        molecules_container.add_hydrogen_atoms(withHydrogens)
+        const keys = imol => hBonds(imol, LIGAND_CID, '/*').map(key).sort()
+        expect(keys(withHydrogens)).toEqual(keys(imolFull))
+        molecules_container.close_molecule(withHydrogens)
+    })
+
+    test('a multi-model partner gives each contact once', () => {
+        // The protein (no waters) as two identical models: only the first is merged, so the same
+        // contacts as with one model
+        const atoms = fs.readFileSync(path.join(__dirname, '..', 'test_data', '5a3h_no_ligand.pdb'), 'utf8')
+            .split('\n').filter(line => line.startsWith('ATOM'))
+        const twoModels = ['MODEL        1', ...atoms, 'ENDMDL', 'MODEL        2', ...atoms, 'ENDMDL', 'END'].join('\n')
+        cootModule.FS_createDataFile('.', 'two-models.pdb', twoModels, true, true)
+        cootModule.FS_createDataFile('.', 'one-model.pdb', [...atoms, 'END'].join('\n'), true, true)
+        const imolTwoModels = molecules_container.read_pdb('./two-models.pdb')
+        const imolOneModel = molecules_container.read_pdb('./one-model.pdb')
+        const single = json(molecules_container.make_merged_molecule_json(imolOneModel, '/*', imolLigand, LIGAND_CID))
+        const singleBonds = hBonds(single.imol, '//B', '/*').map(key).sort()
+        molecules_container.delete_merged_molecule(single.imol)
+        const double = json(molecules_container.make_merged_molecule_json(imolTwoModels, '/*', imolLigand, LIGAND_CID))
+        expect(hBonds(double.imol, '//B', '/*').map(key).sort()).toEqual(singleBonds)
+        molecules_container.delete_merged_molecule(double.imol)
+        molecules_container.close_molecule(imolTwoModels)
+        molecules_container.close_molecule(imolOneModel)
+    })
+
+    test('an index freed by other code is not taken for a merged one', () => {
+        // Merged molecule A deleted while B is after it: A's slot waits. Other code then pops every
+        // closed molecule at the end (as slice-n-dice does), the user loads a molecule into A's old
+        // index and deletes it: deleting B must not free that index
+        // (From a clean end: earlier tests leave closed molecules there, which that pop would take too)
+        molecules_container.end_delete_closed_molecules()
+        const a = json(molecules_container.make_merged_molecule_json(imolProtein, '/*', imolLigand, LIGAND_CID))
+        const b = json(molecules_container.make_merged_molecule_json(imolProtein, '/*', imolLigand, LIGAND_CID))
+        molecules_container.delete_merged_molecule(a.imol)
+        molecules_container.close_molecule(b.imol)
+        molecules_container.end_delete_closed_molecules()
+        const users = molecules_container.copy_fragment_using_cid(imolFull, LIGAND_CID)
+        expect(users).toBe(a.imol)
+        molecules_container.close_molecule(users)
+        const c = json(molecules_container.make_merged_molecule_json(imolProtein, '/*', imolLigand, LIGAND_CID))
+        molecules_container.delete_merged_molecule(c.imol)
+        expect(molecules_container.get_number_of_molecules()).toBe(users + 1)
+    })
+
     test('errors are JSON, not crashes', () => {
         expect(json(molecules_container.make_merged_molecule_json(imolProtein, '/*', imolLigand, '//Z/99')).error).toBeDefined()
+        // A first selection with nothing in it is an error too, and leaves nothing behind
+        const count = molecules_container.get_number_of_molecules()
+        expect(json(molecules_container.make_merged_molecule_json(imolProtein, '//Z/99', imolLigand, LIGAND_CID)).error).toBeDefined()
+        expect(molecules_container.get_number_of_molecules()).toBe(count)
         expect(json(molecules_container.get_h_bonds_between_json(9999, '/*', '/*', false)).error).toBeDefined()
     })
 })
