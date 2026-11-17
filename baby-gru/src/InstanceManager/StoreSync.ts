@@ -1,5 +1,6 @@
 import type { RootState } from "@/store/MoorhenReduxStore";
 import type { MoleculeRecord } from "@/store/moleculesSlice";
+import { setHoveredAtom } from "@/store/hoveringStatesSlice";
 import { enqueueSnackbar } from "@/store/snackbarSlice";
 import { removeVectorsByTag } from "@/store/vectorsSlice";
 import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_PARTNER, TAG_SOURCE, matchesTags } from "@/utils/tags";
@@ -92,6 +93,20 @@ const STORE_SYNCS: StoreSync<unknown>[] = [
         name: "hidden or deleted molecules lose their ligand contact vectors",
         selector: state => state.molecules.visibleMolecules,
         apply: instance => removeContactVectorsOfHiddenMolecules(instance),
+    }),
+    // A hovered atom of a molecule no longer in the list is not hovered any more: else middle-click,
+    // hover shortcuts and the hover box keep using a molecule being deleted (its gemmi structure
+    // freed). Removed from a ligand row's popover, for one, the row never gets its mouse leave.
+    // Applied as the molecule leaves the list, before it is deleted.
+    sync({
+        name: "a removed molecule is not hovered",
+        selector: state => state.molecules.moleculeList,
+        apply: (instance, moleculeList) => {
+            const hovered = instance.store.getState().hoveringStates.hoveredAtom.molecule;
+            if (hovered && !moleculeList.includes(hovered)) {
+                instance.store.dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
+            }
+        },
     }),
     // Records are refreshed when a molecule's atoms change or it gets a dictionary: warned about
     // there, not after every draw of every representation (which asked Coot each time)
