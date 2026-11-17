@@ -17,7 +17,7 @@ export type LigandSite = {
 };
 
 /** Two ligands overlap when a heavy atom of one is this close (Å) to a heavy atom of the other. */
-export const SITE_CONTACT_DISTANCE = 2.0;
+export const SITE_CONTACT_DISTANCE = 3.0;
 
 const isHydrogen = (element: string) => {
     const e = element.trim().toUpperCase();
