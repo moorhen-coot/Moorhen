@@ -2,7 +2,7 @@
  * Monomers made from a dictionary (a dictionary .cif through files.loadFiles, or files.ligandFromSmiles)
  * are returned like any other loaded molecule, and are ligand-only molecules.
  */
-import { createCloudInstance, jobUrl, loadCootModules, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
+import { createCloudInstance, jobUrl, loadCootModules, readTestData, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
 jest.setTimeout(120_000);
 
@@ -30,6 +30,65 @@ describe("monomers from dictionaries", () => {
         const monomer = cloud.instance.getMolecule(result[0].uniqueID);
         expect(monomer.ligands.map(ligand => ligand.resName)).toEqual(["NBZ"]);
         expect(monomer.isLigandOnly()).toBe(true);
+    });
+
+    /** 5a3h's BGC as `count` models (docking poses), each moved by `model` Å along x, as PDB records */
+    const ligandModels = (count: number) => {
+        const atoms = (readTestData("5a3h.pdb") as string)
+            .split("\n")
+            .filter(line => line.startsWith("HETATM") && line.slice(17, 20) === "BGC");
+        return Array.from({ length: count }, (_, model) => [
+            `MODEL     ${String(model + 1).padStart(4)}`,
+            ...atoms.map(line => line.slice(0, 30) + (+line.slice(30, 38) + model).toFixed(3).padStart(8) + line.slice(38)),
+            "ENDMDL",
+        ]);
+    };
+
+    test("a ligand-only file with several models is loaded as one molecule per model", async () => {
+        const text = ligandModels(3).flat().join("\n") + "\nEND\n";
+        const result = await cloud.instance.files.loadFiles(new File([text], "poses.pdb"));
+        expect(result).toHaveLength(3);
+        const poses = result.map(entry => cloud.instance.getMolecule(entry.uniqueID));
+        expect(poses.map(pose => pose.name)).toEqual(["poses-1", "poses-2", "poses-3"]);
+        poses.forEach(pose => {
+            expect(pose.isLigandOnly()).toBe(true);
+            expect(pose.numberOfModels).toBe(1);
+            expect(pose.ligands.map(ligand => ligand.resName)).toEqual(["BGC"]);
+        });
+        // The multi-model original is gone: only the poses are listed, each in Coot
+        const listed = cloud.instance.getMoleculeList();
+        expect(listed.map(molecule => molecule.uniqueId).sort()).toEqual(result.map(entry => entry.uniqueID).sort());
+        expect(new Set(result.map(entry => entry.molNo)).size).toBe(3);
+    });
+
+    test("a Vina PDBQT with several poses is loaded as one molecule per pose", async () => {
+        // Vina's layout: a result remark, ROOT / BRANCH torsion tree records, and each atom line carrying
+        // a partial charge and an AutoDock type after column 66
+        const text = ligandModels(2)
+            .map(([model, ...rest]) => {
+                const atoms = rest.slice(0, -1).map(line => line.slice(0, 66).padEnd(66) + "    +0.000 OA");
+                return [model, "REMARK VINA RESULT:    -6.5      0.000      0.000", "ROOT", ...atoms.slice(0, 6), "ENDROOT",
+                    "BRANCH   1   7", ...atoms.slice(6), "ENDBRANCH   1   7", "TORSDOF 1", "ENDMDL"];
+            })
+            .flat()
+            .join("\n") + "\n";
+        const result = await cloud.instance.files.loadFiles(new File([text], "docked.pdbqt"));
+        expect(result).toHaveLength(2);
+        result.forEach(entry => {
+            const pose = cloud.instance.getMolecule(entry.uniqueID);
+            expect(pose.isLigandOnly()).toBe(true);
+            expect(pose.ligands.map(ligand => ligand.resName)).toEqual(["BGC"]);
+        });
+    });
+
+    test("a protein with several models is not split", async () => {
+        const protein = (readTestData("5a3h_no_ligand.pdb") as string)
+            .split("\n")
+            .filter(line => line.startsWith("ATOM") && +line.slice(22, 26) <= 20);
+        const text = [1, 2].flatMap(model => [`MODEL     ${String(model).padStart(4)}`, ...protein, "ENDMDL"]).join("\n") + "\nEND\n";
+        const result = await cloud.instance.files.loadFiles(new File([text], "ensemble.pdb"));
+        expect(result).toHaveLength(1);
+        expect(cloud.instance.getMolecule(result[0].uniqueID).numberOfModels).toBe(2);
     });
 
     test("a protein with ligands is not ligand-only", async () => {
