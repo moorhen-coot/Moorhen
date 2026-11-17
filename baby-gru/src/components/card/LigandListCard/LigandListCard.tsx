@@ -646,6 +646,20 @@ const LigandDelete = (props: { molecule: MoorhenMolecule; ligand?: MoleculeLigan
 const LigandDrawing = (props: { molecule: MoorhenMolecule; resName?: string }) => {
     const { molecule, resName } = props;
     const [svgs, setSvgs] = useState<string[] | null>(null);
+    // A ligand-only molecule's metadata, every entry (a docking score, or whatever a host attached),
+    // read as the drawing opens. A ligand inside a model has none of its own (its model's is not its).
+    const entries = resName ? [] : Object.entries(molecule.metadata ?? {});
+    const metadataList =
+        entries.length > 0 ? (
+            <dl className="moorhen__ligand-list-metadata">
+                {entries.map(([key, value]) => (
+                    <div key={key}>
+                        <dt>{key}</dt>
+                        <dd>{value}</dd>
+                    </div>
+                ))}
+            </dl>
+        ) : null;
 
     useEffect(() => {
         let cancelled = false;
@@ -667,13 +681,21 @@ const LigandDrawing = (props: { molecule: MoorhenMolecule; resName?: string }) =
         );
     }
     if (svgs.length === 0) {
-        return <span>No ligand found in {molecule.name}</span>;
+        return (
+            <>
+                <span>No ligand found in {molecule.name}</span>
+                {metadataList}
+            </>
+        );
     }
     return (
-        <div className="moorhen__ligand-list-drawing">
-            {svgs.map((svg, i) => (
-                <div key={i}>{parse(svg)}</div>
-            ))}
-        </div>
+        <>
+            <div className="moorhen__ligand-list-drawing">
+                {svgs.map((svg, i) => (
+                    <div key={i}>{parse(svg)}</div>
+                ))}
+            </div>
+            {metadataList}
+        </>
     );
 };

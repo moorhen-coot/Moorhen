@@ -116,6 +116,8 @@ message MoleculeSessionData {
   float symmetryRadius = 12;
   residueEnvironmentOptions defaultResEnvOptions = 13;
   string uniqueId = 14;
+  // MoorhenMolecule.metadata: facts as strings by name (e.g. a docking score)
+  map<string, string> metadata = 15;
 }
 
 message MapDataSession {

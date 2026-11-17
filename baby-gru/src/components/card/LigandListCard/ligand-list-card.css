@@ -41,6 +41,28 @@
     white-space: nowrap;
 }
 
+/* A ligand's metadata, under its 2D drawing: one "key  value" line per entry */
+.moorhen__ligand-list-metadata {
+    margin: 0.5rem 0 0;
+    display: grid;
+    gap: 0.15rem;
+}
+
+.moorhen__ligand-list-metadata > div {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+
+.moorhen__ligand-list-metadata dt {
+    opacity: 0.7;
+}
+
+.moorhen__ligand-list-metadata dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+}
+
 .moorhen__ligand-list-drawing {
     width: 18rem;
     min-height: 18rem;

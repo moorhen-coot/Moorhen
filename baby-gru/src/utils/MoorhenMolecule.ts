@@ -152,6 +152,13 @@ export class MoorhenMolecule {
     representations: moorhen.MoleculeRepresentation[];
     ligands: LigandInfo[];
     ligandDicts: { [comp_id: string]: string };
+    /**
+     * Facts about the molecule as plain strings, by name: what a file said about it that is not a
+     * structure (a docking score: "Vina score" from a PDBQT), or whatever a host wants to attach (set
+     * entries on it directly). Every entry is shown under a ligand's 2D drawing on its ligand card,
+     * and saved in sessions.
+     */
+    metadata: Record<string, string>;
     connectedToMaps: number[];
     excludedSelections: string[];
     excludedCids: string[];
@@ -213,6 +220,7 @@ export class MoorhenMolecule {
         this.cachedPrivateerValidation = null;
         this.ligands = null;
         this.ligandDicts = {};
+        this.metadata = {};
         this.connectedToMaps = null;
         this.representations = [];
         this.excludedSelections = [];

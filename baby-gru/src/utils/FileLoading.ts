@@ -512,6 +512,34 @@ const splitLigandPoses = async (molecule: MoorhenMolecule, moorhenInstance: Moor
     return poses;
 };
 
+/** The metadata key of a pose's AutoDock Vina score (kcal/mol, lower is better) */
+export const VINA_SCORE_KEY = "Vina score";
+
+/**
+ * The Vina score of each model of a PDBQT, in model order: the first value of its
+ * `REMARK VINA RESULT:` line (the next two are RMSDs from the best pose). A file without MODEL
+ * records is one model. undefined for a model without the remark.
+ */
+export const vinaScores = (pdbqtString: string): (string | undefined)[] => {
+    const scores: (string | undefined)[] = [];
+    let current = -1;
+    for (const line of pdbqtString.split("\n")) {
+        if (line.startsWith("MODEL")) {
+            scores.push(undefined);
+            current = scores.length - 1;
+            continue;
+        }
+        const match = /^REMARK VINA RESULT:\s+(-?\d+(?:\.\d+)?)/.exec(line);
+        if (!match) continue;
+        if (current === -1) {
+            scores.push(undefined);
+            current = 0;
+        }
+        scores[current] ??= match[1];
+    }
+    return scores;
+};
+
 const pdbqtToPdb = (pdbqtString: string) => {
     const lines = pdbqtString.split("\n");
     const pdbLines = lines.map(line => !line.startsWith("TER") ? line.slice(0, 66) : "").join("\n");
@@ -797,6 +825,8 @@ export const autoOpenFiles = async (
         //Structures
         if (file.name.endsWith(".pdb") || file.name.endsWith(".pdbqt") ||file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
             let content = await file.text();
+            // Docking scores, read before the remarks go with the conversion to PDB
+            const scores = file.name.endsWith(".pdbqt") ? vinaScores(content) : [];
             if (file.name.endsWith(".pdbqt")) {
                 // keep only the first 66 characters of each line to make a kinda pdb
                 content = pdbqtToPdb(content);
@@ -847,6 +877,12 @@ export const autoOpenFiles = async (
             } else {
                 console.log(`Successfully read molecule ${file.name} molno ${newMolecule.molNo}`);
                 const loaded = await splitLigandPoses(newMolecule, moorhenInstance);
+                // One score per pose (the poses are in model order); none if they do not match up
+                if (scores.length === loaded.length) {
+                    loaded.forEach((molecule, index) => {
+                        if (scores[index] !== undefined) molecule.metadata[VINA_SCORE_KEY] = scores[index];
+                    });
+                }
                 dispatch(addMoleculeList(loaded));
                 await drawModels(loaded, moorhenInstance);
 

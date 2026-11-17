@@ -124,6 +124,8 @@ export type moleculeSessionData = {
     biomolOn: boolean;
     symmetryRadius: number;
     uniqueId: string;
+    /** MoorhenMolecule.metadata; absent in sessions written before it existed */
+    metadata?: Record<string, string>;
 };
 
 export type mapDataSession = {
@@ -508,6 +510,7 @@ export class MoorhenTimeCapsule {
                 symmetryOn: molecule.symmetryOn,
                 biomolOn: molecule.biomolOn,
                 symmetryRadius: molecule.symmetryRadius,
+                metadata: { ...molecule.metadata },
             };
         });
 
@@ -954,6 +957,8 @@ export class MoorhenTimeCapsule {
         const newMoleculePromises =
             sessionData.moleculeData?.map(async storedMoleculeData => {
                 const newMolecule = new MoorhenMolecule(moorhenInstance);
+                // Set before it is loaded, as the other fields of the molecule
+                newMolecule.metadata = { ...(storedMoleculeData.metadata ?? {}) };
                 if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
                     newMolecule.uniqueId = storedMoleculeData.uniqueId;
                     return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name);

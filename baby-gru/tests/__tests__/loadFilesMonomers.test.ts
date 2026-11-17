@@ -2,6 +2,9 @@
  * Monomers made from a dictionary (a dictionary .cif through files.loadFiles, or files.ligandFromSmiles)
  * are returned like any other loaded molecule, and are ligand-only molecules.
  */
+import { VINA_SCORE_KEY, vinaScores } from "@/utils/FileLoading";
+import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { moorhensession } from "@/protobuf/MoorhenSession";
 import { setMoleculeVisible } from "@/utils/moleculeVisibility";
 import { createCloudInstance, flush, jobUrl, loadCootModules, readTestData, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
@@ -89,24 +92,55 @@ describe("monomers from dictionaries", () => {
         }
     });
 
-    test("a Vina PDBQT with several poses is loaded as one molecule per pose", async () => {
+    test("a Vina PDBQT with several poses is loaded as one molecule per pose, each with its score", async () => {
         // Vina's layout: a result remark, ROOT / BRANCH torsion tree records, and each atom line carrying
         // a partial charge and an AutoDock type after column 66
+        const scores = ["-6.5", "-5.9"];
         const text = ligandModels(2)
-            .map(([model, ...rest]) => {
+            .map(([model, ...rest], index) => {
                 const atoms = rest.slice(0, -1).map(line => line.slice(0, 66).padEnd(66) + "    +0.000 OA");
-                return [model, "REMARK VINA RESULT:    -6.5      0.000      0.000", "ROOT", ...atoms.slice(0, 6), "ENDROOT",
+                return [model, `REMARK VINA RESULT:    ${scores[index]}      0.000      0.000`, "ROOT", ...atoms.slice(0, 6), "ENDROOT",
                     "BRANCH   1   7", ...atoms.slice(6), "ENDBRANCH   1   7", "TORSDOF 1", "ENDMDL"];
             })
             .flat()
             .join("\n") + "\n";
         const result = await cloud.instance.files.loadFiles(new File([text], "docked.pdbqt"));
         expect(result).toHaveLength(2);
-        result.forEach(entry => {
+        await flush();
+        result.forEach((entry, index) => {
             const pose = cloud.instance.getMolecule(entry.uniqueID);
             expect(pose.isLigandOnly()).toBe(true);
             expect(pose.ligands.map(ligand => ligand.resName)).toEqual(["BGC"]);
+            // Its own score, on the molecule (the ligand card reads it from there)
+            expect(pose.metadata).toEqual({ [VINA_SCORE_KEY]: scores[index] });
         });
+
+        // Kept in sessions (undo goes through them too)
+        const session = JSON.stringify(await cloud.instance.getTimeCapsuleRef().current.fetchSession(false));
+        expect(await MoorhenTimeCapsule.loadSessionFromJsonString(session, cloud.instance)).toBe(0);
+        await flush();
+        result.forEach((entry, index) => {
+            expect(cloud.instance.getMolecule(entry.uniqueID).metadata).toEqual({ [VINA_SCORE_KEY]: scores[index] });
+        });
+
+        // And in a session file (protobuf), as Save session writes it
+        const bytes = moorhensession.Session.encode(moorhensession.Session.fromObject(JSON.parse(session))).finish();
+        expect(await MoorhenTimeCapsule.loadSessionFromArrayBuffer(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer, cloud.instance)).toBe(0);
+        await flush();
+        result.forEach((entry, index) => {
+            expect(cloud.instance.getMolecule(entry.uniqueID).metadata).toEqual({ [VINA_SCORE_KEY]: scores[index] });
+        });
+    });
+
+    test("Vina scores are read per model", () => {
+        expect(vinaScores("MODEL 1\nREMARK VINA RESULT:    -7.1  0.0  0.0\nENDMDL\nMODEL 2\nENDMDL\nMODEL 3\nREMARK VINA RESULT:  -5  1.2  2.3\n")).toEqual([
+            "-7.1",
+            undefined,
+            "-5",
+        ]);
+        // No MODEL records: one model
+        expect(vinaScores("REMARK VINA RESULT:    -8.25  0.0  0.0\nATOM ...\n")).toEqual(["-8.25"]);
+        expect(vinaScores("ATOM ...\n")).toEqual([]);
     });
 
     test("a protein with several models is not split", async () => {
