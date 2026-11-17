@@ -83,7 +83,8 @@ export const LongJobSnackNotification = () => {
 
     // A task that reports its progress is shown at once, with how far it has got
     if (jobProgress) {
-        const percent = jobProgress.total > 0 ? (100 * jobProgress.done) / jobProgress.total : 0;
+        // Within 0-100 whatever a caller reports (setJobProgress is in the API)
+        const percent = jobProgress.total > 0 ? Math.min(100, Math.max(0, (100 * jobProgress.done) / jobProgress.total)) : 0;
         return (
             <div className="moorhen__long-job-notification" style={{ left: glWidth / 2, top: glHeight }}>
                 <MoorhenStack direction="vertical">

@@ -294,7 +294,9 @@ export const batchLoadLigands = async (
                 return [] as ChunkItem[];
             });
 
-        let done = 0;
+        // Counted against every source: a file that could not be read is done already
+        let done = sources.length - readable.length;
+        showProgress(done, sources.length);
         let next = chunks.length > 0 ? safePrepare(chunks[0]) : null;
         for (let k = 0; k < chunks.length; k++) {
             const items = await next;
@@ -302,8 +304,8 @@ export const batchLoadLigands = async (
             next = k + 1 < chunks.length ? safePrepare(chunks[k + 1]) : null;
             await addChunk(items);
             done += chunks[k].length;
-            showProgress(done, readable.length);
-            onProgress?.(done, readable.length);
+            showProgress(done, sources.length);
+            onProgress?.(done, sources.length);
         }
 
         // Molecules loaded before the batch that contain a newly read residue type draw differently now
