@@ -683,7 +683,7 @@ export const subMenuMap: SubMenuMap = {
             },
             {
                 id: "find-ligand",
-                label: "Find ligand...",
+                label: "Fit ligand...",
                 type: "showModal",
                 modal: "fit-ligand",
             },
