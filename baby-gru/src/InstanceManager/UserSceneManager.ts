@@ -19,9 +19,8 @@ import {
     setSelectedThreeDObject,
     setUserSceneState,
     setZoom,
-    hideMolecule,
-    showMolecule,
 } from "../store";
+import { setMoleculesVisible } from "../store/moleculesSlice";
 import type { RootState } from "../store";
 import {
     type SceneSettingsSnapshot,
@@ -741,10 +740,15 @@ export class MoorhenUserSceneManager {
      */
     private syncMoleculeVisibility() {
         const visible = new Set(this.instance.store.getState().molecules.visibleMolecules);
+        const toShow: number[] = [];
+        const toHide: number[] = [];
         for (const molecule of this.instance.getMoleculeList()) {
             const shown = molecule.representations.some(representation => representation.visible);
-            if (shown !== visible.has(molecule.molNo)) this.instance.dispatch(shown ? showMolecule(molecule) : hideMolecule(molecule));
+            if (shown !== visible.has(molecule.molNo)) (shown ? toShow : toHide).push(molecule.molNo);
         }
+        // At most two dispatches, however many molecules (a thousand ligands): each runs every selector
+        if (toShow.length > 0) this.instance.dispatch(setMoleculesVisible({ molNos: toShow, visible: true }));
+        if (toHide.length > 0) this.instance.dispatch(setMoleculesVisible({ molNos: toHide, visible: false }));
     }
 
     /**
