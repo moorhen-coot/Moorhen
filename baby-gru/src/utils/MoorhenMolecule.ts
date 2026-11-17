@@ -1170,7 +1170,9 @@ export class MoorhenMolecule {
                     : attachToMolecule === this.molNo
                       ? this
                       : this.store.getState().molecules.moleculeList.find(other => other.molNo === attachToMolecule);
-            await readDictionary(this, dictContent, molecule ?? null, "monomer library");
+            // A molecule number not in the store (a host's addLigandOfType) is still that molecule's,
+            // not every molecule's
+            await readDictionary(this, dictContent, molecule ?? (attachToMolecule === ALL_MOLECULES ? null : { molNo: attachToMolecule }), "monomer library");
         }
 
         return dictContent;

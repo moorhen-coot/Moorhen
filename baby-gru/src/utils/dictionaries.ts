@@ -66,7 +66,7 @@ export const splitDictionary = (text: string): [string, string][] => {
 export const readDictionary = async (
     target: { store: Store; commandCentre: CommandCentre },
     text: string,
-    molecule?: { molNo: number; uniqueId: string } | null,
+    molecule?: { molNo: number; uniqueId?: string } | null,
     source?: string
 ): Promise<void> => {
     if (!text) return;
@@ -80,7 +80,9 @@ export const readDictionary = async (
         false
     );
     const blocks = splitDictionary(text);
-    if (blocks.length === 0) return;
+    // A molecule Moorhen does not know (only its Coot number): read for it, as asked, but not
+    // recorded, as no molecule would save it
+    if (blocks.length === 0 || (molecule && !molecule.uniqueId)) return;
     recordDictionaries(
         target.store,
         blocks.map(([compId, content]) => ({ compId, content, moleculeUid: molecule?.uniqueId ?? null, source }))
