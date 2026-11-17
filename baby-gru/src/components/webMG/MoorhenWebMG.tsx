@@ -717,6 +717,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(lab.label,lab.uuid)
             })
             glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
+            // Every buffer rebuild dispatches a new label array, so this is also what redraws the
+            // scene after one. Once per frame: loading many molecules rebuilds once per molecule.
             glRef.current.requestDrawScene()
         }
     }, [labelBuffers, glRef])
@@ -797,7 +799,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.requestDrawScene()
+            glRef.current.drawScene()
         }
     }, [requestDrawSceneSwitch])
 

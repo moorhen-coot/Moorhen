@@ -674,18 +674,15 @@ export class MoleculeRepresentation {
         }
         batch(() => {
             this.parentMolecule.store.dispatch(setDisplayBuffers(newBuffers));
-            // filter() returns a new array even when nothing was removed, and a new label array
-            // re-renders every label and redraws the scene.
-            if (newLabelBuffers.length !== labelBuffers.length) {
-                this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
-            }
+            this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
         });
     }
 
     /**
      * Make the representation visible
-     * @param requestDraw - Ask for the scene to be redrawn (default). Pass false when showing many at
-     * once and ask once at the end: each request is a store dispatch.
+     * @param requestDraw - Redraw the scene (default), through a new label array. Pass false when
+     * showing many at once and ask for one redraw at the end: the store is then only updated if
+     * labels were added.
      */
     async show(requestDraw: boolean = true) {
         const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers;
@@ -709,18 +706,16 @@ export class MoleculeRepresentation {
         } catch (err) {
             console.log(err);
         }
-        // A new label array redraws the labels; visibility alone only needs a redraw.
-        if (newLabelBuffers.length > 0) {
+        if (requestDraw || newLabelBuffers.length > 0) {
             this.parentMolecule.store.dispatch(setLabelBuffers([...labelBuffers, ...newLabelBuffers]));
-        } else if (requestDraw) {
-            this.parentMolecule.store.dispatch(setRequestDrawScene(true));
         }
     }
 
     /**
      * Make the representation not visible
-     * @param requestDraw - Ask for the scene to be redrawn (default). Pass false when hiding many at
-     * once and ask once at the end: each request is a store dispatch.
+     * @param requestDraw - Redraw the scene (default), through a new label array. Pass false when
+     * hiding many at once and ask for one redraw at the end: the store is then only updated if
+     * labels were removed.
      */
     hide(requestDraw: boolean = true) {
         const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers;
@@ -738,10 +733,8 @@ export class MoleculeRepresentation {
         } catch (err) {
             console.log(err);
         }
-        if (newLabelBuffers.length !== labelBuffers.length) {
-            this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
-        } else if (requestDraw) {
-            this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+        if (requestDraw || newLabelBuffers.length !== labelBuffers.length) {
+            this.parentMolecule.store.dispatch(setLabelBuffers([...newLabelBuffers]));
         }
     }
 

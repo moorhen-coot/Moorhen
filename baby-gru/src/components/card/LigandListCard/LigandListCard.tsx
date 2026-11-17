@@ -7,6 +7,7 @@ import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenPopov
 import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
 import { MoorhenAccordion, MoorhenStack, MoorhenTooltip } from "@/components/interface-base";
 import { type RootState, addCustomRepresentation, enqueueSnackbar, removeCustomRepresentation, removeMolecule, removeVectorsByTag, setHoveredAtom } from "@/store";
+import { setRequestDrawScene } from "@/store/glRefSlice";
 import { triggerUpdate } from "@/store/moleculeMapUpdateSlice";
 import type { MoleculeLigandRecord } from "@/store/moleculesSlice";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
@@ -374,11 +375,14 @@ const DOUBLE_CLICK_MS = 350;
 const isolateLigand = (molecule: MoorhenMolecule, store: ReturnType<typeof useStore<RootState>>) => {
     const { moleculeList, moleculeRecords } = store.getState().molecules;
     batch(() => {
+        // One redraw request for both: two in the same tick would cancel out (setRequestDrawScene flips a switch)
         setMoleculeListVisible(
             moleculeList.filter(other => other !== molecule && moleculeRecords[other.uniqueId]?.isLigandOnly),
+            false,
             false
         );
-        setMoleculeVisible(molecule, true);
+        setMoleculeVisible(molecule, true, false);
+        store.dispatch(setRequestDrawScene(true));
     });
 };
 

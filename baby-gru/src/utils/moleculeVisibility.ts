@@ -7,15 +7,19 @@ import type { MoorhenMolecule } from "./MoorhenMolecule";
  * shown in the interface), its environment and NEF restraints if they are on, and its entry in
  * `molecules.visibleMolecules`.
  */
-export const setMoleculeVisible = (molecule: MoorhenMolecule, visible: boolean): void => setMoleculeListVisible([molecule], visible);
+export const setMoleculeVisible = (molecule: MoorhenMolecule, visible: boolean, requestDraw: boolean = true): void =>
+    setMoleculeListVisible([molecule], visible, requestDraw);
 
 /**
  * Show or hide many molecules, as setMoleculeVisible does each, in a fixed number of store dispatches:
  * one for visibleMolecules and one redraw request, whatever the number of molecules. Showing or
  * hiding a thousand ligands one dispatch at a time (each running every selector and, in development,
  * walking the whole store) took seconds.
+ * @param requestDraw - Ask for the redraw (default). Pass false to ask for it once yourself after
+ * several calls in the same tick: setRequestDrawScene flips a switch, so two requests before React
+ * renders cancel out and nothing is redrawn.
  */
-export const setMoleculeListVisible = (molecules: MoorhenMolecule[], visible: boolean): void => {
+export const setMoleculeListVisible = (molecules: MoorhenMolecule[], visible: boolean, requestDraw: boolean = true): void => {
     if (molecules.length === 0) return;
     const store = molecules[0].store;
     // Which molecules have their environment / NEF restraints on: looked up once, not per molecule
@@ -47,5 +51,5 @@ export const setMoleculeListVisible = (molecules: MoorhenMolecule[], visible: bo
         }
     }
     store.dispatch(setMoleculesVisible({ molNos: molecules.map(molecule => molecule.molNo), visible }));
-    store.dispatch(setRequestDrawScene(true));
+    if (requestDraw) store.dispatch(setRequestDrawScene(true));
 };
