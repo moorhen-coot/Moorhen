@@ -40,13 +40,20 @@ const testMonomersPlugin = (): Plugin => {
                     return;
                 }
                 const filePath = path.resolve(root, rel);
-                if (!filePath.startsWith(root + path.sep) || !fs.existsSync(filePath)) {
+                // A file only: a directory (or anything unreadable) streamed would throw EISDIR with no
+                // listener, which kills the dev server
+                if (!filePath.startsWith(root + path.sep) || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
                     res.statusCode = 404;
                     res.end(`Not found: ${rel}`);
                     return;
                 }
                 res.setHeader("Content-Type", "text/plain");
-                fs.createReadStream(filePath).pipe(res);
+                fs.createReadStream(filePath)
+                    .on("error", () => {
+                        res.statusCode = 500;
+                        res.end();
+                    })
+                    .pipe(res);
             });
         },
     };
