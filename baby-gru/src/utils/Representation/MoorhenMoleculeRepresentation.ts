@@ -21,11 +21,19 @@ import {
     METABALLS_GRID_SIZE, METABALLS_ISO_LEVEL, METABALLS_RADIUS, METABALLS_SPHERE_ARGS,
     gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
 } from "../../WebGPUComponents/metaballs";
+import { type Contourer, type M2tSurfaceMesh, type SurfaceAtom, contourOnCpu, smoothM2tSurface, smoothSurfaceSetting } from "../smoothSurface";
+import { m2tAtomRadius } from "../m2tAtomRadii";
 
 /**
  * The styles that actually put individual atoms on the screen, and so the only ones a per-atom
  * highlight such as the hover ball can sit on.
  */
+/** The residues getM2tArgs gives M2T for a MolecularSurface. */
+const SMOOTH_SURFACE_RESIDUES = new Set([
+    "ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", "MET", "MSE", "ASN", "PRO", "GLN", "ARG",
+    "SER", "THR", "VAL", "TRP", "TYR",
+]);
+
 export const ATOM_LEVEL_STYLES: string[] = ["CBs", "CAs", "VdwSpheres", "ligands"];
 
 export type MeshType =
@@ -1585,9 +1593,37 @@ export class MoleculeRepresentation {
         // Coot fills this in for the molecular surface and for nothing else so far, so this is
         // a question about the mesh rather than about the style: ask what arrived. Ribbons and
         // the rest simply have no owners and fall through unchanged.
-        const m2tMesh = response.data.result.result as libcootApi.SimpleMeshJS
+        let m2tMesh = response.data.result.result as libcootApi.SimpleMeshJS
         if (this.meshFailedToBuild(m2tMesh)) {
             return [];
+        }
+        // The dev-menu smooth surface (smoothSurface.ts): the M2T surface is still made, and its
+        // colours and owners are carried over to the smoothed one, so everything below is the same.
+        // Not for a residue environment's restricted surface, which this does not yet cut down.
+        if (smoothSurfaceSetting.enabled && m2tStyle === "MolecularSurface" && !restrictSelection) {
+            try {
+                const atoms = await this.smoothSurfaceAtoms(cidSelection);
+                const probe = this.useDefaultM2tParams
+                    ? this.parentMolecule.defaultM2tParams.surfaceStyleProbeRadius
+                    : this.m2tParams.surfaceStyleProbeRadius;
+                const gpu = smoothSurfaceSetting.gpu ? await sharedGpuMetaBalls() : null;
+                // Marching cubes with the WebGPU MetaBalls kernels when asked for and there; the
+                // CPU's if WebGPU reports an error, which gives the same mesh.
+                const contour: Contourer | undefined = gpu
+                    ? async (field, grid) => {
+                        try {
+                            return await gpu.contourField(field, [grid.nx, grid.ny, grid.nz], grid.origin, grid.spacing);
+                        } catch (err) {
+                            console.warn("GPU contour failed; contouring on the CPU.", err);
+                            return contourOnCpu(field, grid);
+                        }
+                    }
+                    : undefined;
+                m2tMesh = await smoothM2tSurface(m2tMesh as unknown as M2tSurfaceMesh, atoms, probe,
+                    { contour, contourLabel: gpu ? "WebGPU" : "CPU" }) as unknown as libcootApi.SimpleMeshJS;
+            } catch (err) {
+                console.warn("Smooth surface failed; drawing the M2T surface.", err);
+            }
         }
         // A nucleic acid ribbon comes as two meshes (below), which light together when either
         // is hovered (highlightGroup.ts): numbered from one table, so their owner codes agree,
@@ -1641,6 +1677,21 @@ export class MoleculeRepresentation {
         }
 
         return resultBufferObjects
+    }
+
+    /**
+     * The atoms a smooth MolecularSurface is made from, and their radii, as M2T has them: what
+     * getM2tArgs selects - the standard amino acids within the selection, or, if it has none, the
+     * selection itself - hydrogens included, with M2T's united-atom radii (m2tAtomRadii.ts). Any
+     * difference here shows as a difference in shape before any smoothing.
+     */
+    async smoothSurfaceAtoms(cidSelection?: string): Promise<SurfaceAtom[]> {
+        // M2T surfaces the first model only (MyMolecule::getModel); mol_name is the model number.
+        const atoms = await this.parentMolecule.gemmiAtomsForCid(cidSelection || "/*/*/*/*", true);
+        const all = atoms.filter(atom => atom.mol_name === atoms[0]?.mol_name);
+        const protein = all.filter(atom => SMOOTH_SURFACE_RESIDUES.has(atom.res_name));
+        const chosen = protein.length > 0 ? protein : all;
+        return chosen.map(atom => ({ x: atom.x, y: atom.y, z: atom.z, r: m2tAtomRadius(atom.name, atom.res_name) }));
     }
 
     /**

@@ -32,6 +32,8 @@ import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "..
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
+import { smoothSurfaceSetting } from "../../utils/smoothSurface";
+import type { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { meshCentringSetting } from "../../WebGLgComponents/meshCentre";
 import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
@@ -202,6 +204,18 @@ export const MoorhenDevMenu = () => {
     const [centreOnHighlight, setCentreOnHighlight] = useState<boolean>(meshCentringSetting.followHighlight);
     const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
     const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.wanted);
+    const [smoothSurface, setSmoothSurface] = useState<boolean>(smoothSurfaceSetting.enabled);
+    const [smoothSpacing, setSmoothSpacing] = useState<number>(smoothSurfaceSetting.spacing);
+    const [smoothSigma, setSmoothSigma] = useState<number>(smoothSurfaceSetting.sigma);
+    const [smoothOnGpu, setSmoothOnGpu] = useState<boolean>(smoothSurfaceSetting.gpu);
+    // Rebuild the molecular surfaces on show, so a change to the smooth surface is seen at once.
+    const redrawSurfaces = () => {
+        (store.getState().molecules.moleculeList as MoorhenMolecule[]).forEach(molecule => {
+            molecule.representations
+                .filter(representation => representation.style === "MolecularSurface" && representation.visible)
+                .forEach(representation => representation.redraw());
+        });
+    };
     // Why there is no WebGPU here, or null: no navigator.gpu at once, no adapter once asked. Then
     // every WebGPU switch shows off and cannot be changed, whatever it is set to.
     const [noWebGPU, setNoWebGPU] = useState<string | null>(webGPUUnavailableReason());
@@ -587,6 +601,49 @@ export const MoorhenDevMenu = () => {
                     applyGpuMapContours(store.getState().maps as unknown as MoorhenMap[], store.getState().mapContourSettings.visibleMaps);
                 }}
             />
+            <MoorhenToggle
+                type="switch"
+                checked={smoothSurface}
+                label="Smooth molecular surface (blurred SES distance field; test)"
+                onChange={() => {
+                    smoothSurfaceSetting.enabled = !smoothSurface;
+                    setSmoothSurface(!smoothSurface);
+                    redrawSurfaces();
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={noWebGPU === null && smoothOnGpu}
+                disabled={noWebGPU !== null}
+                label={`Smooth surface: marching cubes with the WebGPU MetaBalls kernels${noWebGPU ? " (no WebGPU here)" : ""}`}
+                onChange={() => {
+                    smoothSurfaceSetting.gpu = !smoothOnGpu;
+                    setSmoothOnGpu(!smoothOnGpu);
+                    if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                }}
+            />
+            <MoorhenStack direction="row">
+                <MoorhenNumberInput
+                    label="Smooth surface grid (Å)"
+                    value={smoothSpacing}
+                    minMax={[0.2, 1.5]}
+                    setValue={val => {
+                        smoothSurfaceSetting.spacing = val;
+                        setSmoothSpacing(val);
+                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                    }}
+                />
+                <MoorhenNumberInput
+                    label="blur σ (Å)"
+                    value={smoothSigma}
+                    minMax={[0, 3]}
+                    setValue={val => {
+                        smoothSurfaceSetting.sigma = val;
+                        setSmoothSigma(val);
+                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                    }}
+                />
+            </MoorhenStack>
             <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>
