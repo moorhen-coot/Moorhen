@@ -11,6 +11,7 @@ import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRe
 import { cidModel, withCidModel } from "@/utils/Representation/RepresentationBuilder";
 import { readSceneList } from "@/store/userSceneFormat";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { setMoleculeVisible } from "@/utils/moleculeVisibility";
 import type { Keyframe } from "@/utils/cameraPath";
 import * as quat4 from "gl-matrix/quat";
 import { createCloudInstance, flush, jobUrl, loadCootModules, readTestData, type CloudInstance } from "./cloudHost/cloudHostHarness";
@@ -133,6 +134,25 @@ describe("loading a session", () => {
         expect(sceneNames()).toEqual(["General", "Model Building", "Figure"]);
         expect(state().movie.document.path.keyframes).toHaveLength(1);
         expect(cloud.instance.getTimeCapsuleRef().current.busy).toBe(false);
+    });
+});
+
+describe("molecule visibility across scenes", () => {
+    test("follows what each scene shows of the molecule (its eye button)", async () => {
+        const { userScene } = cloud.instance;
+        const [molecule] = cloud.instance.getMoleculeList();
+        const shown = () => state().molecules.visibleMolecules.includes(molecule.molNo);
+        expect(shown()).toBe(true);
+        // Created as a copy of the current scene, and shown
+        const hidden = await userScene.create("Hidden");
+        setMoleculeVisible(molecule, false);
+        expect(shown()).toBe(false);
+        await userScene.select("General");
+        expect(molecule.representations.some(representation => representation.visible)).toBe(true);
+        expect(shown()).toBe(true);
+        await userScene.select(hidden);
+        expect(molecule.representations.some(representation => representation.visible)).toBe(false);
+        expect(shown()).toBe(false);
     });
 });
 
