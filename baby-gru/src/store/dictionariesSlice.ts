@@ -1,5 +1,5 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { emptyMolecules, removeMolecule } from "./moleculesSlice";
+import { emptyMolecules, removeMolecule, removeMoleculeRecord } from "./moleculesSlice";
 
 /**
  * A ligand dictionary read into Coot: one entry per data_comp_ block. The instance's one list of
@@ -44,6 +44,14 @@ const dictionariesSlice = createSlice({
             const uid = action.payload.uniqueId;
             for (const [key, dictionary] of Object.entries(state.loaded)) {
                 if (dictionary.moleculeUid === uid) delete state.loaded[key];
+            }
+        });
+        // MoorhenMolecule.delete() dispatches this, for molecules that never were in the list too
+        // (temporary fragments for refinement, drags, fitting): each recorded its dictionaries
+        // (transferLigandDicts), which would otherwise pile up and be saved in every backup
+        builder.addCase(removeMoleculeRecord, (state, action) => {
+            for (const [key, dictionary] of Object.entries(state.loaded)) {
+                if (dictionary.moleculeUid === action.payload) delete state.loaded[key];
             }
         });
         builder.addCase(emptyMolecules, state => {

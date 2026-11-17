@@ -6,7 +6,7 @@
  */
 import { removeMolecule } from "@/store/moleculesSlice";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
-import { createCloudInstance, jobUrl, loadCootModules, type CloudInstance } from "./cloudHost/cloudHostHarness";
+import { createCloudInstance, flush, jobUrl, loadCootModules, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
 jest.setTimeout(180000);
 
@@ -18,6 +18,9 @@ beforeAll(loadCootModules);
 afterEach(async () => {
     await first?.cleanup();
     await second?.cleanup();
+    // So that a test failing before it creates its own instances does not clean these up twice
+    first = undefined;
+    second = undefined;
 });
 
 const missingDictionaries = (cloud: CloudInstance, molNo: number) => cloud.instance.cootCommand.get_residue_names_with_no_dictionary(molNo);
@@ -82,4 +85,21 @@ test("a dictionary read for one molecule goes with it, and comes back on it", as
     // Deleting the molecule removes what was read for it alone
     second.store.dispatch(removeMolecule(restored));
     expect(second.store.getState().dictionaries.loaded).toEqual({});
+});
+
+test("temporary fragments leave no dictionary behind", async () => {
+    // Refinement, drags and fitting work on a copy of part of a molecule, given its dictionaries and
+    // then deleted: what was read for the copy goes with it
+    first = await createCloudInstance();
+    const [entry] = await first.instance.files.ligandFromSmiles("c1ccccc1[N+](=O)[O-]", "NBZ");
+    const ligand = first.instance.getMolecule(entry.uniqueID);
+    await flush();
+    const before = Object.keys(first.store.getState().dictionaries.loaded).sort();
+    for (let i = 0; i < 3; i++) {
+        const fragment = await ligand.copyFragmentUsingCid("/*", false);
+        await flush();
+        await fragment.delete();
+    }
+    await flush();
+    expect(Object.keys(first.store.getState().dictionaries.loaded).sort()).toEqual(before);
 });
