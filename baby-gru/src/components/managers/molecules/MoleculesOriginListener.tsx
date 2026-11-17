@@ -6,7 +6,6 @@ import { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { getCentreAtom } from "@/utils/utils";
 
 export const MoleculesOriginListener = () => {
-    const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
     const _origin = useSelector((state: RootState) => state.sceneSettings.origin);
     const originRef = useRef(_origin);
     const lastOriginRef = useRef(_origin);
@@ -16,6 +15,9 @@ export const MoleculesOriginListener = () => {
 
     const store = useStore<RootState>();
     const drawOriginRepresentations = async () => {
+        // Read at each tick: the interval is set up once, so a value captured at mount (usually no
+        // molecules) would be used forever
+        const molecules = store.getState().molecules.moleculeList;
         if (molecules.length === 0) {
             return;
         }
