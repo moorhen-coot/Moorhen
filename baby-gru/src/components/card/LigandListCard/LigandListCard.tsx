@@ -22,9 +22,13 @@ import "./ligand-list-card.css";
 
 const HOVERED_ROW_CLASS = "moorhen__ligand-list-row-hovered";
 
-/** The key a row registers under: its molecule, plus the residue for a ligand inside a model. */
+/**
+ * The key a row registers under: its molecule, plus the residue for a ligand inside a model (with its
+ * model: an ensemble has the same ligand residue in each). The residue number as gemmi writes it,
+ * insertion code appended (301A).
+ */
 const rowKey = (molecule: MoorhenMolecule, ligand?: MoleculeLigandRecord) =>
-    ligand ? `${molecule.uniqueId}|${ligand.chainName}|${ligand.resNum}` : molecule.uniqueId;
+    ligand ? `${molecule.uniqueId}|${ligand.modelName}|${ligand.chainName}|${ligand.resNum}` : molecule.uniqueId;
 
 /**
  * Highlights the row of the ligand under the mouse in the 3D view (hoveringStates.hoveredAtom): the
@@ -43,7 +47,8 @@ const useHoveredRowHighlight = (store: ReturnType<typeof useStore<RootState>>) =
             const { molecule, cid } = store.getState().hoveringStates.hoveredAtom;
             // A cid as hovering gives it: /1/A/301(ATP)/C1
             const parts = cid?.split("/") ?? [];
-            const residueKey = molecule ? `${molecule.uniqueId}|${parts[2]}|${parts[3]?.split("(")[0]}` : null;
+            // Its residue number as rowKey has it: an mmdb insertion code (301.A) without the dot
+            const residueKey = molecule ? `${molecule.uniqueId}|${parts[1]}|${parts[2]}|${parts[3]?.split("(")[0].replace(".", "")}` : null;
             const uid = residueKey && rowElements.current.has(residueKey) ? residueKey : (molecule?.uniqueId ?? null);
             if (uid === hoveredUid.current) return;
             rowElements.current.get(hoveredUid.current)?.classList.remove(HOVERED_ROW_CLASS);
