@@ -1,6 +1,6 @@
 import parse from "html-react-parser";
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
 import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenToggle } from "@/components/inputs";
 import { MoorhenAccordion, MoorhenStack } from "@/components/interface-base";
@@ -138,7 +138,13 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: Liga
     const others = moleculeList.filter(other => other !== molecule && !records[other.uniqueId]?.isLigandOnly);
     const partners = ligand ? [molecule, ...others] : others;
 
-    const tags = useMemo(() => ligandContactTags(molecule, ligand), [molecule, ligand]);
+    // By the ligand's cid, not the object: a ligand of a model is a new object at each refresh of its
+    // model's record (atoms changed, dictionary read), which must not recompute or redraw its contacts
+    const ligandCid = ligand?.cid;
+    const ligandRef = useRef(ligand);
+    ligandRef.current = ligand;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const tags = useMemo(() => ligandContactTags(molecule, ligandRef.current), [molecule, ligandCid]);
     // As they were shown, if their vectors are still drawn (the section closed with the panel)
     const [drawnBefore] = useState(() => readBackDrawn(store.getState().vectors.vectorsList, tags));
 
@@ -162,7 +168,7 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: Liga
     useEffect(() => {
         if (!partner) return;
         let cancelled = false;
-        getLigandContacts(molecule, partner, { xhpi: true, flev: true }, ligand)
+        getLigandContacts(molecule, partner, { xhpi: true, flev: true }, ligandRef.current)
             .catch((err: unknown): ContactsState => ({ error: err instanceof Error ? err.message : String(err) }))
             .then(contacts => {
                 if (!cancelled) setResult({ partnerUid: partner.uniqueId, contacts, computation });
@@ -170,7 +176,8 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: Liga
         return () => {
             cancelled = true;
         };
-    }, [molecule, partner, ligand, computation]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [molecule, partner, ligandCid, computation]);
 
     // Redrawn whole, replacing what this ligand has drawn (also what was left drawn when it last
     // unmounted), when the contacts arrive or a type is switched or recoloured: tens of contacts, not
@@ -182,7 +189,13 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: Liga
             !!partner && state.molecules.visibleMolecules.includes(molecule.molNo) && state.molecules.visibleMolecules.includes(partner.molNo)
     );
     useEffect(() => {
-        if (current === null || !partner || !bothVisible) return;
+        if (current === null || !partner) return;
+        // One of the two not shown: nothing drawn. Also removes what an earlier partner, still shown,
+        // had drawn (switching to a hidden partner); the store sync only removes a hidden one's.
+        if (!bothVisible) {
+            dispatch(removeVectorsByTag(tags));
+            return;
+        }
         const shown = (current.contacts ?? []).filter(contact => styles[contact.type].draw);
         batch(() => {
             dispatch(removeVectorsByTag(tags));
