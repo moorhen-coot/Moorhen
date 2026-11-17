@@ -9,7 +9,7 @@ const path = require('path')
 const { ungzip } = require('node-gzip')
 const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen')
 
-const TEST_FILES = ['5a3h.pdb', '5a3h_no_ligand.pdb', 'BGC.cif']
+const TEST_FILES = ['5a3h.pdb', '5a3h_no_ligand.pdb', '5a3h-nitrobenzene.pdb', 'BGC.cif']
 const MONOMER_LIBRARY = 'data/ccp4_lib/data/monomers'
 const LIGAND_CID = '//B/2'
 
@@ -147,6 +147,17 @@ describe('merged molecules and selection contacts', () => {
         molecules_container.delete_merged_molecule(merged.imol)
         // The merged molecule's slot is gone, the deleted molecule's stays: its number is not reused
         expect(molecules_container.get_number_of_molecules()).toBe(deleted + 1)
+    })
+
+    test('a nitro group is not a salt bridge partner', () => {
+        // Its dictionary gives N +1 and O -1: a charge-separated but neutral group, neither cation nor anion
+        const imolNitro = molecules_container.read_pdb('./5a3h-nitrobenzene.pdb')
+        const dictionary = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'nitrobenzene.cif'), 'utf8')
+        molecules_container.read_dictionary_string(dictionary, imolNitro)
+        // Far enough to reach charged residues of the pocket, which a charged nitro would pair with
+        const bridges = json(molecules_container.get_salt_bridges_json(imolNitro, '//A/301', '/*', 8.0))
+        expect(bridges.filter(bridge => bridge.atom1.resName === 'LIG' || bridge.atom2.resName === 'LIG')).toEqual([])
+        molecules_container.close_molecule(imolNitro)
     })
 
     test('errors are JSON, not crashes', () => {

@@ -182,8 +182,19 @@ namespace {
             return n;
         };
 
+        // A formal charge bonded to the opposite one is a charge-separated but neutral group (nitro
+        // N+ with O-, N-oxide, azide): neither a cation nor an anion, so no salt bridge from it
+        auto bonded_to_opposite_charge = [&] (const std::string &name, int q) {
+            for (const auto &other : bonded[name]) {
+                const auto it = formal.find(other);
+                if (it != formal.end() && (it->second > 0) != (q > 0)) return true;
+            }
+            return false;
+        };
+
         for (const auto &[name, q] : formal) {
             if (!chargeable_element(element[name])) continue;
+            if (bonded_to_opposite_charge(name, q)) continue;
             const int sign = q > 0 ? 1 : -1;
             std::string group = name;
             for (const auto &centre : bonded[name]) {
