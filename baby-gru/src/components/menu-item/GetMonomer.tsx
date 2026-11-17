@@ -1,5 +1,5 @@
 import parse from "html-react-parser";
-import { useDispatch, useSelector } from "react-redux";
+import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState, enqueueSnackbar } from "@/store";
 import { useMoorhenInstance } from "../../InstanceManager";
@@ -128,9 +128,31 @@ export const MonomerPicker = (props: { onChange: (choice: MonomerChoice) => void
         fetchMonLibList();
     }, [moorhenInstance, dispatch]);
 
-    // The code: as typed, or the three-letter code of the compound named
+    // The dictionaries loaded in the session, for the Imported dictionary source: one entry per code,
+    // labelled with where it came from ("BGC (BGC.cif)"), as strings so that the list compares by value
+    const importedDictionaries = useSelector((state: RootState) => {
+        const sources = new Map<string, string | undefined>();
+        for (const dictionary of Object.values(state.dictionaries.loaded)) {
+            if (!sources.get(dictionary.compId)) sources.set(dictionary.compId, dictionary.source);
+        }
+        return [...sources.entries()]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([compId, source]) => `${compId}\t${source ? `${compId} (${source})` : compId}`);
+    }, shallowEqual);
+    const [importedCode, setImportedCode] = useState<string>("");
+    // The first one by default, and again if the one chosen is no longer loaded
+    useEffect(() => {
+        const codes = importedDictionaries.map(item => item.split("\t")[0]);
+        if (!codes.includes(importedCode)) setImportedCode(codes[0] ?? "");
+    }, [importedDictionaries, importedCode]);
+
+    // The code: the imported dictionary chosen, as typed, or the three-letter code of the compound named
     const code =
-        searchMode === "tlc" ? autoCompleteValue.toUpperCase() : (monLibListRef.current.find(item => item.name === autoCompleteValue)?.three_letter_code ?? "");
+        source === "libcoot-api"
+            ? importedCode
+            : searchMode === "tlc"
+              ? autoCompleteValue.toUpperCase()
+              : (monLibListRef.current.find(item => item.name === autoCompleteValue)?.three_letter_code ?? "");
     const onChange = props.onChange;
     useEffect(() => {
         onChange({ code, source });
@@ -178,29 +200,46 @@ export const MonomerPicker = (props: { onChange: (choice: MonomerChoice) => void
                     <option value={"name"}>Compound name</option>
                 </MoorhenSelect>
             )}
-            <MoorhenStack direction="line">
-                <label>{searchMode === "tlc" ? "Three letter code" : "Compound name"}</label>
-                <MoorhenAutoComplete
-                    autocompleteOpen={autocompleteOpen}
-                    setAutocompleteOpen={setAutocompleteOpen}
-                    searchItems={monLibListRef.current}
-                    value={autoCompleteValue}
-                    setValue={searchMode === "tlc" ? val => setAutoCompleteValue(val.toUpperCase().slice(0, 3)) : setAutoCompleteValue}
-                    maxResults={5}
-                    //@ts-ignore
-                    keys={searchKeys}
-                    resultsRenderer={result => (
-                        <CompoundAutoCompleteOption
-                            compoundName={result.name}
-                            tlc={result.three_letter_code}
-                            setValue={() => {
-                                setAutoCompleteValue(searchMode === "tlc" ? result.three_letter_code : result.name);
-                                setAutocompleteOpen(false);
-                            }}
-                        />
-                    )}
-                />
-            </MoorhenStack>
+            {source === "libcoot-api" ? (
+                importedDictionaries.length > 0 ? (
+                    <MoorhenSelect label="Dictionary" value={importedCode} setValue={setImportedCode}>
+                        {importedDictionaries.map(item => {
+                            const [compId, label] = item.split("\t");
+                            return (
+                                <option key={compId} value={compId}>
+                                    {label}
+                                </option>
+                            );
+                        })}
+                    </MoorhenSelect>
+                ) : (
+                    <span>No dictionary loaded</span>
+                )
+            ) : (
+                <MoorhenStack direction="line">
+                    <label>{searchMode === "tlc" ? "Three letter code" : "Compound name"}</label>
+                    <MoorhenAutoComplete
+                        autocompleteOpen={autocompleteOpen}
+                        setAutocompleteOpen={setAutocompleteOpen}
+                        searchItems={monLibListRef.current}
+                        value={autoCompleteValue}
+                        setValue={searchMode === "tlc" ? val => setAutoCompleteValue(val.toUpperCase().slice(0, 3)) : setAutoCompleteValue}
+                        maxResults={5}
+                        //@ts-ignore
+                        keys={searchKeys}
+                        resultsRenderer={result => (
+                            <CompoundAutoCompleteOption
+                                compoundName={result.name}
+                                tlc={result.three_letter_code}
+                                setValue={() => {
+                                    setAutoCompleteValue(searchMode === "tlc" ? result.three_letter_code : result.name);
+                                    setAutocompleteOpen(false);
+                                }}
+                            />
+                        )}
+                    />
+                </MoorhenStack>
+            )}
         </>
     );
 };
