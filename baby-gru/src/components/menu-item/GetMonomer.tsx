@@ -12,6 +12,7 @@ import { MoorhenButton, MoorhenSelect, MoorhenTextInput } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenAutoComplete } from "../inputs/autocomplete/AutoComplete";
 import { MoorhenInfoCard, MoorhenMenuItem, MoorhenPopover, MoorhenStack } from "../interface-base";
+import { drawLigandBonds } from "@/utils/Representation/defaultRepresentation";
 
 function resizeSvgString(svg: string, size: number): string {
   const s = String(size);
@@ -189,7 +190,7 @@ export const GetMonomer = () => {
             if (ligandDict) {
                 await newMolecule.addDict(ligandDict);
             }
-            await newMolecule.fetchIfDirtyAndDraw("CBs");
+            await drawLigandBonds(newMolecule);
             dispatch(addMolecule(newMolecule));
             return newMolecule;
         },

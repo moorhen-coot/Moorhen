@@ -92,12 +92,14 @@ describe("monomers from dictionaries", () => {
         expect(cloud.instance.getMolecule(result[0].uniqueID).numberOfModels).toBe(2);
     });
 
-    test("a monomer hidden and shown again (its eye button) draws its bonds again", async () => {
-        // Its default bonds are not custom representations: no card chip ever set what the interface shows
+    test("a monomer is drawn as custom bonds, which come back when it is hidden and shown again", async () => {
         const [entry] = await cloud.instance.files.loadFiles(jobUrl("BGC.cif"));
         const monomer = cloud.instance.getMolecule(entry.uniqueID);
         const bonds = monomer.representations.filter(representation => representation.style === "CBs");
-        expect(bonds.length).toBeGreaterThan(0);
+        expect(bonds).toHaveLength(1);
+        // A custom representation, as every loaded molecule's: listed in the store, editable in the interface
+        expect(bonds[0].isCustom).toBe(true);
+        expect(cloud.instance.store.getState().molecules.customRepresentations).toContain(bonds[0]);
         expect(bonds.every(representation => representation.visible)).toBe(true);
         setMoleculeVisible(monomer, false);
         expect(bonds.some(representation => representation.visible)).toBe(false);

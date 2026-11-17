@@ -28,6 +28,7 @@ import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemo
 import { gltfMaterials } from "./gltfTextures";
 import { moleculeNameFromFileName } from "./utils";
 import { readDictionary } from "./dictionaries";
+import { drawLigandBonds } from "./Representation/defaultRepresentation";
 // import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
@@ -816,7 +817,8 @@ export const autoOpenFiles = async (
                     );
                     continue;
                 }
-                await Promise.all(newMonomer.flatMap(monomer => [monomer.fetchIfDirtyAndDraw("CBs"), monomer.fetchDefaultColourRules()]));
+                // Drawn with their default colour rules, fetched by the representation
+                await Promise.all(newMonomer.map(monomer => drawLigandBonds(monomer)));
                 dispatch(addMoleculeList(newMonomer));
                 moleculesCreated.push(...newMonomer);
                 // Reported like any other loaded molecule (ligandFromSmiles and loadCifString return this too)

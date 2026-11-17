@@ -12,6 +12,7 @@ import { ALL_MOLECULES, readDictionary } from "../../utils/dictionaries";
 import { MoorhenButton, MoorhenFileInput, MoorhenNumberInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
+import { drawLigandBonds } from "@/utils/Representation/defaultRepresentation";
 
 const ImportLigandDictionary = (props: {
     id: string;
@@ -99,7 +100,7 @@ const ImportLigandDictionary = (props: {
                     newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
                     newMolecule.coordsFormat = "mmcif";
                     await Promise.all([newMolecule.fetchDefaultColourRules(), newMolecule.addDict(fileContent)]);
-                    await newMolecule.fetchIfDirtyAndDraw("CBs");
+                    await drawLigandBonds(newMolecule);
                     dispatch(addMolecule(newMolecule));
                     if (addToMoleculeValueRef.current !== -1) {
                         const toMolecule = molecules.find(molecule => molecule.molNo === addToMoleculeValueRef.current);
