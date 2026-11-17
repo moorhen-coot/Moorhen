@@ -6,7 +6,8 @@ import { MockMoorhenInstance } from '../__mocks__/mockMoorhenInstance';
 import { setOrigin } from '@/store/sceneSettingsSlice';
 import { setActiveMap, setDevMode, setDisableFileUpload } from '@/store/generalStatesSlice';
 import { setEnableTimeCapsule } from '@/store/backupSettingsSlice';
-import { setBackgroundColor, setDefaultBondSmoothness } from '@/store/sceneSettingsSlice';
+import { setBackgroundColor } from '@/store/sceneSettingsSlice';
+import { setMouseSensitivity } from '@/store/mouseSettings';
 import { createCallbackBackupStorage } from '@/WebComponent/ccp4cloud/backupStorage';
 import { MoorhenTimeCapsule } from '@/utils/MoorhenTimeCapsule';
 import React from 'react';
@@ -864,16 +865,16 @@ describe('Host APIs', () => {
         const onChange = jest.fn();
         moorhenInstance.preferences.onChange(onChange);
 
-        await moorhenInstance.preferences.import({ version: 'v41', defaultBondSmoothness: 3 });
-        expect(MoorhenReduxStore.getState().sceneSettings.defaultBondSmoothness).toBe(2);
+        await moorhenInstance.preferences.import({ version: 'v41', mouseSensitivity: 0.8 });
+        expect(MoorhenReduxStore.getState().mouseSettings.mouseSensitivity).toBe(0.3);
 
-        await moorhenInstance.preferences.import({ format: 'moorhen-1.0', entries: { defaultBondSmoothness: { version: 2, value: 3 } } });
+        await moorhenInstance.preferences.import({ format: 'moorhen-1.0', entries: { mouseSensitivity: { version: 1, value: 0.8 } } });
         await flush();
-        expect(MoorhenReduxStore.getState().sceneSettings.defaultBondSmoothness).toBe(3);
+        expect(MoorhenReduxStore.getState().mouseSettings.mouseSensitivity).toBe(0.8);
         expect(onChange).not.toHaveBeenCalled();
-        expect((await moorhenInstance.preferences.export()).entries).toEqual({ defaultBondSmoothness: { version: 2, value: 3 } });
+        expect((await moorhenInstance.preferences.export()).entries).toEqual({ mouseSensitivity: { version: 1, value: 0.8 } });
 
-        MoorhenReduxStore.dispatch(setDefaultBondSmoothness(2));
+        MoorhenReduxStore.dispatch(setMouseSensitivity(0.3));
         await flush();
         expect(onChange).toHaveBeenCalledWith({ format: 'moorhen-1.0', entries: {} });
         unsubscribe();

@@ -144,6 +144,6 @@ export const MainMenu: MainMenuMap = {
         ariaLabel: "Developer Tools Menu",
         icon: `MatSymExperiment`,
         component: <MoorhenDevMenu />,
-        align: 15,
+        align: 1,
     },
 } as const;

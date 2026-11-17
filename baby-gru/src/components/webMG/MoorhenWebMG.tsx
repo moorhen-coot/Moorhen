@@ -90,12 +90,16 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale)
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
     const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias)
-    const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
+    const autoFog = useSelector((state: RootState) => state.sceneSettings.autoFog)
+    const autoClip = useSelector((state: RootState) => state.sceneSettings.autoClip)
+    const doFog = useSelector((state: RootState) => state.sceneSettings.doFog)
+    const doClip = useSelector((state: RootState) => state.sceneSettings.doClip)
     const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap)
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
     const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality)
+    const shadowSoftness = useSelector((state: moorhen.State) => state.sceneSettings.shadowSoftness)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
@@ -308,7 +312,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
      * listening for, and because removing it is a separate decision from this one.
      */
     const handleZoomChanged = useCallback(evt => {
-    }, [glRef, resetClippingFogging])
+    }, [glRef])
 
     const handleGoToBlobDoubleClick = useCallback(async (evt) => {
         const response = await commandCentre.current.cootCommand({
@@ -374,6 +378,17 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [shadowMapQuality])
+
+    // Softness is pushed on mount too (the renderer starts at 0 and the store may hold a saved
+    // preference), but only redrawn on later changes, for the same first-frame reason as above.
+    const shadowSoftnessMounted = useRef(false)
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.setShadowSoftness(shadowSoftness)
+            if (shadowSoftnessMounted.current) glRef.current.drawScene()
+        }
+        shadowSoftnessMounted.current = true
+    }, [shadowSoftness])
 
     /*
     useEffect(() => {
@@ -722,7 +737,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [labelBuffers, glRef])
 
     /**
-     * How the slab follows the camera: the switch the user sees as "Reset clip and fog on zoom".
+     * How the slab follows the camera: the switches the user sees as "Auto fog" and "Auto clip".
      *
      * It used to be a listener - a zoomChanged event, a dispatch, a reducer recomputing four
      * numbers, two effects pushing them back into the renderer. It is now a policy the camera
@@ -737,13 +752,20 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
      */
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.cameraController.slabPolicy = resetClippingFogging
-                ? { kind: "auto", fieldDepthFront: FIELD_DEPTH_FRONT, fieldDepthBack: FIELD_DEPTH_BACK }
+            glRef.current.cameraController.slabPolicy = autoFog || autoClip
+                ? { kind: "auto", fieldDepthFront: FIELD_DEPTH_FRONT, fieldDepthBack: FIELD_DEPTH_BACK, fog: autoFog, clip: autoClip }
                 : { kind: "manual" }
             glRef.current.cameraController.reapplySlab()
             glRef.current.drawScene()
         }
-    }, [resetClippingFogging, glRef])
+    }, [autoFog, autoClip, glRef])
+
+    // Fog and clipping on or off: applySlabToRenderer reads them on every frame, so a frame is enough
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.drawScene()
+        }
+    }, [doFog, doClip, glRef])
 
     /**
      * THE EYE MUST BE RECONCILED BEFORE THE SLAB. THIS EFFECT STAYS ABOVE THE NEXT TWO.

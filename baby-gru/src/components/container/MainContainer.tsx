@@ -21,8 +21,6 @@ import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND } from "../../util
 import { addAvailableFontList, emptyAvailableFonts } from "../../store/labelSettingsSlice";
 import { setRefinementSelection } from "../../store/refinementSettingsSlice";
 import {
-    setBackgroundColor,
-    setDefaultBackgroundColor,
     setGlViewportHeight,
     setGlViewportWidth,
     setHeight,
@@ -76,7 +74,16 @@ interface ContainerOptionalProps {
     disableFileUploads?: boolean;
     urlPrefix?: string;
     viewOnly: boolean;
+    /**
+     * Extra modals for React hosts, added to `instance.uiExtensions` (web component hosts call
+     * `instance.uiExtensions.addModal` instead). Each element is rendered all the time and decides
+     * itself when to show; its `modalId` prop is its id.
+     */
     extraDraggableModals?: React.JSX.Element[];
+    /**
+     * Extra side panels for React hosts, keyed by id and added to `instance.uiExtensions` (web
+     * component hosts call `instance.uiExtensions.addSidePanel` instead).
+     */
     extraSidePanels?: Record<string, import("../panels").MoorhenPanel>;
     monomerLibraryPath?: string;
     allowScripting?: boolean;
@@ -86,6 +93,8 @@ interface ContainerOptionalProps {
     allowMergeFittedLigand?: boolean;
     webComponentMode?: boolean;
     size?: [number, number];
+    /** The built-in scene Moorhen opens on: "General" (default) or "Model Building" */
+    startupScene?: string;
 }
 
 export interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> {}
@@ -125,7 +134,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const GlViewportWidth = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
-    const defaultBackgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.defaultBackgroundColor);
 
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate);
 
@@ -154,12 +162,32 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const store = useStore<RootState>();
 
     const moorhenInstance = useMoorhenInstance();
+    // Hosts can only register once the instance is ready, so this runs before any of them
+    if (webComponentMode) moorhenInstance.uiExtensions.restrictToSlots();
 
     useEffect(() => {
         if (props.moorhenInstanceRef) {
             props.moorhenInstanceRef.current = moorhenInstance;
         }
     }, [props.moorhenInstanceRef]);
+
+    // The extra modals and side panels props go through the instance's uiExtensions, like everything added at run time
+    useEffect(() => {
+        if (!props.extraDraggableModals?.length) return;
+        const removers = props.extraDraggableModals.map((element, index) => {
+            const modalId = (element as React.ReactElement<{ modalId?: string }>).props?.modalId;
+            return moorhenInstance.uiExtensions.addModal({ id: modalId ?? `extra-draggable-modal-${index}`, element });
+        });
+        return () => removers.forEach(remove => remove());
+    }, [props.extraDraggableModals, moorhenInstance]);
+
+    useEffect(() => {
+        if (!props.extraSidePanels) return;
+        const removers = Object.entries(props.extraSidePanels).map(([id, panel]) =>
+            moorhenInstance.uiExtensions.addSidePanel({ id, label: panel.label, icon: panel.icon, content: panel.panelContent })
+        );
+        return () => removers.forEach(remove => remove());
+    }, [props.extraSidePanels, moorhenInstance]);
 
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
 
@@ -362,9 +390,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
     useEffect(() => {
         const _isDark = isDarkBackground(...backgroundColor);
 
-        if (defaultBackgroundColor !== backgroundColor) {
-            dispatch(setDefaultBackgroundColor(backgroundColor));
-        }
         if (isDark !== _isDark) {
             dispatch(setIsDark(_isDark));
         }
@@ -417,7 +442,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 moorhenInstance.setAceDRGInstance(aceDRGInstance);
             }
 
-            dispatch(setBackgroundColor(defaultBackgroundColor));
             cootAPIHelpers.setSamplingRate(commandCentre, defaultMapSamplingRate);
             cootAPIHelpers.setDrawMissingLoops(commandCentre, drawMissingLoops);
             const shortCuts = store.getState().shortcutSettings.shortCuts;
@@ -429,6 +453,8 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 console.error("Error parsing shortcuts:", error);
             }
             if (!window.MathJax) setTimeout(() => loadMathjax(`${urlPrefix}`), 500);
+            // Before onInitialisationCompleted, so a host sees Moorhen in its start-up scene
+            await moorhenInstance.userScene.showStartupScene(props.startupScene);
             return true;
         };
         startupEffect().then(started => {
@@ -532,7 +558,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     <PopupControls />
                     <SnackBars />
                     <ActivityIndicator />
-                    <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
+                    <MoorhenModalsContainer />
                     <AtomClickManager />
                     <UpdatingMapsManager />
                     <MoorhenMapsHeadManager />
@@ -552,7 +578,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 </div>
                 <BottomPanelContainer />
 
-                <MoorhenSidePanel extraSidePanels={props.extraSidePanels} />
+                <MoorhenSidePanel />
             </div>
         </>
     );

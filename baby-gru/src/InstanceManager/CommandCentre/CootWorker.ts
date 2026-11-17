@@ -1563,9 +1563,9 @@ const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolea
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mapData)
     let fileExtension = ''
-    if (name.endsWith('.map.gz')) {
+    if (name.toLowerCase().endsWith('.map.gz')) {
         fileExtension = 'map.gz'
-    } else if (name.endsWith('.mrc.gz')) {
+    } else if (name.toLowerCase().endsWith('.mrc.gz')) {
         fileExtension = 'mrc.gz'
     }
     cootModule.FS_createDataFile(".", `${theGuid}${fileExtension}`, asUint8Array, true, true);
@@ -1597,6 +1597,23 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgba: [
 
     indexedResiduesVec.delete()
     colourMap.delete()
+}
+
+/**
+ * Bloboids (DrawBloboids, wasm_src/bloboids.hh): an ellipsoid per chain of `cid`, coloured by the
+ * representation's colour rules, each a CID and an RGBA colour, as getUserDefinedColours gives them.
+ */
+const drawBloboids = (imol: number, cid: string, colours: { cid: string; rgba: [number, number, number, number] }[]) => {
+    const cids = new cootModule.VectorString()
+    const rgba = new cootModule.VectorFloat()
+    colours.forEach(colour => {
+        cids.push_back(colour.cid)
+        colour.rgba.forEach(c => rgba.push_back(c))
+    })
+    const mesh = molecules_container.DrawBloboids(imol, cid, cids, rgba)
+    cids.delete()
+    rgba.delete()
+    return mesh
 }
 
 const privateerValidationToJSArray = (results: emscriptem.vector<privateer.ResultsEntry>): privateer.ResultsEntry[] => {
@@ -1817,6 +1834,9 @@ const doCootCommand = (messageData: {
                 break
             case 'shim_set_bond_colours':
                 cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgba: [number, number, number, number] }[], boolean])
+                break
+            case 'shim_draw_bloboids':
+                cootResult = drawBloboids(...commandArgs as [number, string, { cid: string; rgba: [number, number, number, number] }[]])
                 break
             case 'shim_export_map_as_mesh_file':
                 cootResult = export_map_as_mesh_file(...commandArgs as [number, number, number, number, number, number, string])

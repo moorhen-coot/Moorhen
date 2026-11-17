@@ -44,8 +44,15 @@ export class GpuMapLayer {
         return new GpuMapLayer(await MapContourKernels.create(device), requestDraw);
     }
 
-    /** Bring the contours up to date with the store, and return what to draw. */
-    frame(state: RootState): PreviewGpuDraw[] {
+    /**
+     * Bring the contours up to date and return what to draw.
+     *
+     * @param liveOrigin where the camera is *now*, overriding the store's copy of it. The store is
+     *     told where the camera ended up rather than where it is passing through, so during a
+     *     movie its copy is stale and contouring to it leaves the map behind. This layer runs once
+     *     per frame with the camera already to hand, so it can simply be told.
+     */
+    frame(state: RootState, liveOrigin?: readonly [number, number, number]): PreviewGpuDraw[] {
         if (!gpuMapContourSetting.enabled) {
             this.clear();
             this.status = "";
@@ -59,7 +66,7 @@ export class GpuMapLayer {
             }
         }
         const settings = state.mapContourSettings;
-        const origin = state.sceneSettings.origin;
+        const origin = liveOrigin ?? state.sceneSettings.origin;
         const draws: PreviewGpuDraw[] = [];
         const notes: string[] = [];
         for (const map of maps) {

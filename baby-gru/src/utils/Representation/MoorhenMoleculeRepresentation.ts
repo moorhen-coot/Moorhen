@@ -8,8 +8,8 @@ import { libcootApi } from "../../types/libcoot";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
-import { createRepresentation } from "./RepresentationBuilder";
-import type { BuildRepresentationParams, CreateRepresentationParams } from "./RepresentationBuilder";
+import { createRepresentation, extractRepresentationParams, withCidModel } from "./RepresentationBuilder";
+import type { BuildRepresentationParams, CreateRepresentationParams, RepresentationBackup } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
@@ -61,6 +61,7 @@ export type RepresentationStyles =
     | "MolecularSurface"
     | "DishyBases"
     | "VdWSurface"
+    | "AccessibleSurface"
     | "Calpha"
     | "unitCell"
     | "hover"
@@ -73,6 +74,7 @@ export type RepresentationStyles =
     | "restraints"
     | "residueSelection"
     | "MetaBalls"
+    | "bloboids"
     | "adaptativeBonds"
     | "StickBases"
     | "residue_environment"
@@ -294,6 +296,15 @@ export class MoleculeRepresentation {
     public edit(params: Omit<CreateRepresentationParams, "molecule" | "existingRepresentation">)  {createRepresentation({...params, molecule: this.parentMolecule, existingRepresentation: this })}
 
     /**
+     * Snapshot everything needed to rebuild this representation as plain, JSON-serialisable data
+     * (no molecule or colour rule references). Pass it to MoleculeRepresentation.create() with a
+     * molecule, or to the instance API's representation.create() with the molecule uid.
+     */
+    public backup(): RepresentationBackup {
+        return extractRepresentationParams(this);
+    }
+
+    /**
      * A method to set M2T style parameters for this molecule representation
      * @param {m2tParameters} m2tParams - The new M2T parameters
      */
@@ -306,11 +317,9 @@ export class MoleculeRepresentation {
         }
     }
 
+    /** Show one model of a multi-model molecule (0: all of them). The model is kept in the CID */
     setShownMultimodel(modelIndex: number) {
-        const splitCid = this.cid.split("/");
-        const _modelIndex = modelIndex === 0 ? "*" : modelIndex;
-        console.log("splitCid", splitCid);
-        this.cid = `/${_modelIndex}/${splitCid.slice(2).join("/")}`;
+        this.cid = withCidModel(this.cid, modelIndex);
         this.redraw();
     }
 
@@ -329,6 +338,22 @@ export class MoleculeRepresentation {
             buildBuffers(this.buffers, this.parentMolecule.store);
         }
         this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+    }
+
+    /**
+     * Undo a movie fade (DisplayBuffer.setAlphaMultiplier): back to the representation's own
+     * opacity. A rebuilt representation starts unfaded; a kept one (scene switch) must too.
+     */
+    resetFade() {
+        let wasFaded = false;
+        this.buffers?.forEach(buffer => {
+            if (buffer.alphaMultiplier === undefined || buffer.alphaMultiplier === 1) return;
+            wasFaded = true;
+            buffer.setAlphaMultiplier?.(1);
+            // setAlphaMultiplier only knows custom colours: a see-through representation stays see-through
+            if (this.nonCustomOpacity < 0.99) buffer.transparent = true;
+        });
+        if (wasFaded) this.parentMolecule.store.dispatch(setRequestDrawScene(true));
     }
 
     /**
@@ -371,6 +396,19 @@ export class MoleculeRepresentation {
     }
 
     /**
+     * A method to set gaussian surface settings for this molecule representation
+     * @param {gaussianSurfSettings} settings - The new gaussian surface settings
+     */
+    setGaussianSurfaceSettings(settings: gaussianSurfSettings) {
+        if (settings) {
+            this.useDefaultGaussianSurfaceSettings = false;
+            this.gaussianSurfaceSettings = settings;
+        } else {
+            this.useDefaultGaussianSurfaceSettings = true;
+        }
+    }
+
+    /**
      * A method to set res. env. options for this molecule representation
      * @param {moorhen.residueEnvironmentOptions} newOptions - The new res. env. options
      */
@@ -396,6 +434,7 @@ export class MoleculeRepresentation {
             "unitCell",
             "MolecularSurface",
             "VdWSurface",
+            "AccessibleSurface",
             "residueSelection",
             "gaussian",
             "cavities",
@@ -418,7 +457,6 @@ export class MoleculeRepresentation {
             "contact_dots",
             "residue_environment",
             "chemical_features",
-            "VdWSurface",
             "restraints",
             "environment",
             "ligand_environment",
@@ -885,7 +923,7 @@ export class MoleculeRepresentation {
 
         if (this.restrictToNeighbours) {
             //Now we might not want to use the new method, maybe we should use the old one.
-            if (["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "Calpha"].includes(_style)) {
+            if (["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "AccessibleSurface", "Calpha"].includes(_style)) {
                 restrictedCid = window.gemmiModule.cidToNeighboursCid(
                     this.parentMolecule.gemmiStructure,
                     _cid,
@@ -932,6 +970,7 @@ export class MoleculeRepresentation {
             case "MolecularSurface":
             case "DishyBases":
             case "VdWSurface":
+            case "AccessibleSurface":
             case "Calpha":
                 objects = await this.getM2TRepresentationBuffers(_style, _cid, restrictedCid);
                 break;
@@ -965,6 +1004,9 @@ export class MoleculeRepresentation {
                 break;
             case "MetaBalls":
                 objects = await this.getMetaBallBuffers(_cid);
+                break;
+            case "bloboids":
+                objects = await this.getBloboidsBuffers(_cid);
                 break;
             case "adaptativeBonds":
                 objects = await this.getAdaptativeBondBuffers(
@@ -1383,6 +1425,10 @@ export class MoleculeRepresentation {
                 break;
             case "VdWSurface":
                 m2tStyle = "VdWSurface";
+                m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,MSE,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)";
+                break;
+            case "AccessibleSurface":
+                m2tStyle = "AccessibleSurface";
                 m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,MSE,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)";
                 break;
             case "DishyBases":
@@ -1916,6 +1962,32 @@ export class MoleculeRepresentation {
     }
 
     /**
+     * Get representation buffers for the bloboids representation: an ellipsoid for each chain,
+     * showing where its atoms are (wasm_src/bloboids.hh), in the colours this representation's
+     * colour rules give the chain - passed to Coot with the request, rather than set on the
+     * molecule as for bonds (applyColourRules), as a blob is coloured whole.
+     * @param {string} cid - The CID selection for this representation
+     * @returns {libcootApi.SimpleMeshJS[]} The representation buffers
+     */
+    async getBloboidsBuffers(cid: string): Promise<PickableMesh[]> {
+        const colours = (this.colourRules ?? []).flatMap(rule => rule.getUserDefinedColours());
+        try {
+            const response = (await this.commandCentre.cootCommand(
+                {
+                    returnType: "mesh",
+                    command: "shim_draw_bloboids",
+                    commandArgs: [this.parentMolecule.molNo, cid, colours],
+                },
+                false
+            )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+            return [{ ...response.data.result.result, pick_info: {} }];
+        } catch (err) {
+            console.log(err);
+            return [];
+        }
+    }
+
+    /**
      * Get representation buffers for the glycoblocks representation
      * @param {string} cid - The CID selection for this representation
      * @returns {libcootApi.InstancedMeshJS[]} The representation buffers
@@ -2256,7 +2328,8 @@ export class MoleculeRepresentation {
      * Apply the colour rules associated with this molecule representation
      */
     async applyColourRules() {
-        if (!this.styleHasColourRules) {
+        // Bloboids take their colours with the request (getBloboidsBuffers).
+        if (!this.styleHasColourRules || this.style === "bloboids") {
             return;
         }
 

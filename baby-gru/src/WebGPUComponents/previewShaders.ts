@@ -45,7 +45,7 @@ struct Frame {
     effects: vec4f,      // 1 where the frame has them: ambient occlusion, edges, shadows; edge map texels a pixel
     effectsArea: vec4f,  // where this target's pixels are in the effects maps (x, y), and 1 / the maps' size
     shadowMatrix: mat4x4f, // model space to the shadow map: x, y in 0..1 (rows down), z the depth
-    shadowParams: vec4f, // the map's texel size (x, y), the depth bias, 1 for the 8 x 8 soft lookup
+    shadowParams: vec4f, // the map's texel size (x, y), the depth bias, the soft filter's radius in texels (0 hard)
     fog: vec4f,          // x: 1 to fade into nothing with distance rather than into fogColour (a
                          // transparent snapshot: the picture is premultiplied, on nothing)
 };
@@ -87,21 +87,75 @@ fn ambientLight() -> vec4f {
 @group(0) @binding(5) var shadowSampler: sampler_comparison;
 
 // How lit a point is by the light, 0 to 1, from where it lands in the shadow map: the lookup in
-// triangle-fragment-shader.js, one 2 x 2 compare, or (snapshots, as WebGL's screenshots) 64 of
-// them a texel apart. 1 without shadows.
-fn shadowAt(p: vec4f) -> f32 {
-    if (frame.effects.z < 0.5) { return 1.0; }
-    let depth = p.z - frame.shadowParams.z;
-    if (frame.shadowParams.w < 0.5) {
+// triangle-fragment-shader.js. 1 without shadows.
+//
+// Hard (radius 0): one compare, which blends the 2 x 2 texels round it. Soft: a tent-weighted grid
+// of those, no more than a texel apart, out to the radius - which softShadowRegion holds to a few
+// texels by drawing the map coarser, so the grid stays small (at most 9 x 9 on screen, 16 x 16 in
+// snapshots).
+//
+// Each compare is against the depth the surface itself has where that tap lands, not at the
+// fragment (the receiver plane, slope: d(depth)/du and /dv): over a wide kernel a surface sloped
+// to the light changes depth by more than the flat bias and would shadow itself in speckles. Capped
+// at twice the bias, so a surface near edge-on cannot push past a real occluder. And a texel's
+// worth of that slope on top of the bias, since each texel holds one depth for all its area and a
+// soft map's texels are big.
+fn shadowLookup(p: vec4f, slope: vec2f) -> f32 {
+    let texel = frame.shadowParams.xy;
+    let bias = frame.shadowParams.z;
+    let depth = p.z - bias - min(dot(abs(slope), texel), 2.0 * bias);
+    let radius = frame.shadowParams.w;
+    if (radius <= 0.0) {
         return textureSampleCompareLevel(shadowMap, shadowSampler, p.xy, depth);
     }
+    let n = clamp(i32(ceil(2.0 * radius)) + 1, 2, 16);
+    let spacing = 2.0 * radius / f32(n - 1);
+    let reach = radius + spacing;
     var lit = 0.0;
-    for (var y = -3.5; y <= 3.5; y += 1.0) {
-        for (var x = -3.5; x <= 3.5; x += 1.0) {
-            lit += textureSampleCompareLevel(shadowMap, shadowSampler, p.xy + vec2f(x, y) * frame.shadowParams.xy, depth);
+    var total = 0.0;
+    for (var j = 0; j < n; j++) {
+        for (var i = 0; i < n; i++) {
+            let offset = vec2f(f32(i), f32(j)) * spacing - radius;
+            let tent = 1.0 - abs(offset) / reach;
+            let w = tent.x * tent.y;
+            let duv = offset * texel;
+            let along = clamp(dot(slope, duv), -2.0 * bias, 2.0 * bias);
+            lit += w * textureSampleCompareLevel(shadowMap, shadowSampler, p.xy + duv, depth + along);
+            total += w;
         }
     }
-    return lit / 64.0;
+    return lit / total;
+}
+
+// The receiver plane's slope from two directions across the surface, each given as its change in
+// (u, v, depth): solved for d(depth)/du and d(depth)/dv. Zero where the plane is edge-on to the
+// light and there is no useful answer.
+fn planeSlope(a: vec3f, b: vec3f) -> vec2f {
+    let det = a.x * b.y - a.y * b.x;
+    if (abs(det) < 1e-14) { return vec2f(0.0); }
+    return vec2f(b.y * a.z - a.y * b.z, a.x * b.z - b.x * a.z) / det;
+}
+
+// For a surface drawn as itself: its plane from the screen derivatives of where it lands in the
+// map, as triangle-fragment-shader.js does. On a flat triangle these are the same however pixels
+// pair up in their 2 x 2 quads, so a snapshot drawn in tiles matches one drawn whole. The early
+// return is on a uniform, so the derivatives are taken in uniform control flow; and nothing is
+// paid with shadows off.
+fn shadowAt(p: vec4f) -> f32 {
+    if (frame.effects.z < 0.5) { return 1.0; }
+    return shadowLookup(p, planeSlope(dpdx(p.xyz), dpdy(p.xyz)));
+}
+
+// For a sphere impostor, whose surface is not the square it is drawn on: its tangent plane, from
+// the model-space normal there, taken into the map by the shadow matrix (an orthographic light, so
+// its 3 x 3 part maps directions). Exact, where screen derivatives of a curved surface would vary
+// with how pixels pair in their quads - which differs between a snapshot's tiles and the whole.
+fn shadowAtNormal(p: vec4f, n: vec3f) -> f32 {
+    if (frame.effects.z < 0.5) { return 1.0; }
+    let a = normalize(cross(n, select(vec3f(1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0), abs(n.x) > 0.9)));
+    let b = cross(n, a);
+    let m = mat3x3f(frame.shadowMatrix[0].xyz, frame.shadowMatrix[1].xyz, frame.shadowMatrix[2].xyz);
+    return shadowLookup(p, planeSlope(m * a, m * b));
 }
 
 // WebGL's use of it: in shadow (under a half), the light is dimmed to the shadow plus a half and
@@ -749,7 +803,7 @@ fn sphereFragment(in: SphereOut) -> SphereFragment {
     let occ = occlusionAt(in.position);
     // Shadowed at the surface point itself, where WebGL looks up the square's point: the same away
     // from the sphere's own edge, and it does not shadow itself.
-    let shadow = shadowAt(frame.shadowMatrix * vec4f(in.centre + in.radius * n, 1.0));
+    let shadow = shadowAtNormal(frame.shadowMatrix * vec4f(in.centre + in.radius * n, 1.0), n);
     let lit = shaded((1.5 * base * ambientLight() + 1.2 * base * (frame.diffuse * nl)) * occ, frame.specular * pow(nl, frame.params.z), shadow);
     let eyeDistance = abs(in.eye.z / in.eye.w);
     out.colour = fogged(lit * edgeAt(in.position), base.a, eyeDistance);

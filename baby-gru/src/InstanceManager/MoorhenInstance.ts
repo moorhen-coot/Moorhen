@@ -4,6 +4,7 @@ import React from "react";
 import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "./Preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
+import { MoorhenUiExtensions } from "./UiExtensions";
 import { addCustomRepresentation, removeCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
@@ -48,6 +49,8 @@ import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
 import { startStoreSyncs } from "./StoreSync";
+import { MoorhenUserSceneManager } from "./UserSceneManager";
+import { type DefaultRepresentationStyle, setDefaultRepresentationStyle } from "../store/sceneSettingsSlice";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
 import { makeWebGPUApi } from "@/WebGPUComponents/instanceApi";
 import type { WebGPUApi } from "@/WebGPUComponents/instanceApi";
@@ -101,13 +104,6 @@ export type moleculeChangeAction = "new" | "add" | "delete" | "modify" | "refine
  * @extends StoreExtension
  */
 export class MoorhenInstance extends StoreExtension {
-    private _defaultStyle:
-        | "CAs"
-        | "CBs"
-        | "CRs"
-        | "ribbons-and-ligands"
-        | "ribbons-and-side-chains"
-        | "site-and-ribbons" = "ribbons-and-ligands";
     private _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
     private _commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
@@ -124,11 +120,13 @@ export class MoorhenInstance extends StoreExtension {
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     private _cootCommand: CootCommandWrapper;
     private _menuSystem: MoorhenMenuSystem;
+    private _uiExtensions = new MoorhenUiExtensions();
     private ready: boolean = false;
     private _webComponent: MoorhenWebComponent | null = null;
     private readyCallbacks: Array<() => void | Promise<void>> = [];
     private preferencesUnsubscribe: (() => void) | null = null;
     private storeSyncsUnsubscribe: (() => void) | null = null;
+    private _userScene: MoorhenUserSceneManager;
 
     /**
      * Create a new Moorhen instance.
@@ -163,6 +161,7 @@ export class MoorhenInstance extends StoreExtension {
         this._preferences = new Preferences();
         this._menuSystem = menuSystem || null;
         this.containerRef = containerRef;
+        this._userScene = new MoorhenUserSceneManager(this);
     }
 
     /**
@@ -332,16 +331,22 @@ export class MoorhenInstance extends StoreExtension {
         if (this.preferencesUnsubscribe) {
             this.preferencesUnsubscribe();
         }
+        // Needed by userScene before startInstance runs
+        this.store = store;
+        this.dispatch = dispatch;
         const persistence = initPreferencePersistence({
             store,
             dispatch,
             localStorageInstance: this._preferences,
-            onUserPreferencesChange: (key, value) => {
-                onUserPreferencesChange?.(key, value);
+            onUserPreferencesChange,
+            // Once per store change: saving a scene changes many preferences at once
+            onPreferencesStored: () => {
                 if (this._preferencesChangeCallbacks.size > 0) {
                     this.preferences.export().then(stored => this._preferencesChangeCallbacks.forEach(callback => callback(stored)));
                 }
             },
+            // The built-in scenes start from their saved settings, at start-up and after an import
+            onRestored: () => this.userScene.applySavedScenes(),
         });
         this._preferencesRestore = persistence.restore;
         this.preferencesUnsubscribe = persistence;
@@ -402,6 +407,14 @@ export class MoorhenInstance extends StoreExtension {
      */
     public get menuSystem(): MoorhenMenuSystem | null {
         return this._menuSystem;
+    }
+
+    /**
+     * Modals and side panels added by the host or by plugins, either as React components or
+     * as `<slot>`s filled from the web component's light DOM. See {@link MoorhenUiExtensions}.
+     */
+    public get uiExtensions(): MoorhenUiExtensions {
+        return this._uiExtensions;
     }
 
     /**
@@ -760,6 +773,16 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     /**
+     * Scene presets API for this instance: switch between, create, rename and delete
+     * named sets of representations (see {@link MoorhenUserSceneManager}).
+     * @example
+     * await instance.userScene.select("Model Building");
+     */
+    public get userScene(): MoorhenUserSceneManager {
+        return this._userScene;
+    }
+
+    /**
      * 3D object API for this instance.
      *
      * Lets you get, create, edit and delete the geometric shapes - spheres, cylinders,
@@ -1094,21 +1117,21 @@ export class MoorhenInstance extends StoreExtension {
         const moorhenInstance = this;
         return {
             /**
-             * Set the default representation style applied to molecules when they are
-             * loaded. Accepts plain styles ("CAs", "CBs", "CRs") or picture-wizard style
-             * names ("ribbons-and-ligands", "ribbons-and-side-chains", "site-and-ribbons").
+             * Set the default representation style of the scene shown: how it draws molecules
+             * when they are loaded (or loaded while it was not shown). A scene setting
+             * (`defaultRepresentationStyle`), so each scene has its own and the built-in ones save
+             * it. Accepts plain styles ("CAs", "CBs", "CRs") or picture-wizard style names
+             * ("ribbons-and-ligands", "ribbons-and-side-chains", "site-and-ribbons").
              * @param style - The default style to apply.
              */
-            set defaultStyle(
-                style: "CAs" | "CBs" | "CRs" | "ribbons-and-ligands" | "ribbons-and-side-chains" | "site-and-ribbons"
-            ) {
-                moorhenInstance._defaultStyle = style;
+            set defaultStyle(style: DefaultRepresentationStyle) {
+                moorhenInstance.dispatch(setDefaultRepresentationStyle(style));
             },
             /**
-             * The current default representation style applied to newly loaded molecules.
+             * The default representation style of the scene shown, applied to newly loaded molecules.
              */
-            get defaultStyle() {
-                return moorhenInstance._defaultStyle;
+            get defaultStyle(): DefaultRepresentationStyle {
+                return moorhenInstance.store.getState().sceneSettings.defaultRepresentationStyle;
             },
             
             /**
@@ -1142,7 +1165,7 @@ export class MoorhenInstance extends StoreExtension {
              * described below.
              * @param params.representationStyle - The visual style of the representation.
              * Public styles are: VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds,
-             * CRs, MolecularSurface, DishyBases, VdWSurface, Calpha, unitCell,
+             * CRs, MolecularSurface, DishyBases, VdWSurface, AccessibleSurface, Calpha, unitCell,
              * ligand_environment, contact_dots, restraints, MetaBalls, StickBases,
              * residue_environment, NEFRestraints and RMSD. Internal-only styles (hover,
              * environment, residueSelection, transformation, rama, rotamer,
@@ -1221,6 +1244,17 @@ export class MoorhenInstance extends StoreExtension {
                 }
             },
 
+            getList(moleculeUid: string): MoleculeRepresentation[] {
+                const molecule = moorhenInstance.getMolecule(moleculeUid);
+                if (!molecule) {
+                    return [];
+                }
+                const representations = moorhenInstance.store.getState().molecules.customRepresentations.filter(
+                    (rep: MoleculeRepresentation) => rep.parentMolecule.uniqueId === molecule.uniqueId)
+                return representations;
+        
+            },
+
             /**
              * Delete an existing representation via the public API.
              *
@@ -1257,7 +1291,7 @@ export class MoorhenInstance extends StoreExtension {
              * other fields are optional and keep the representation's existing value when omitted.
              * @param params.representationStyle - The new visual style. Must be one of the
              * public styles (VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds, CRs,
-             * MolecularSurface, DishyBases, VdWSurface, Calpha, unitCell, ligand_environment,
+             * MolecularSurface, DishyBases, VdWSurface, AccessibleSurface, Calpha, unitCell, ligand_environment,
              * contact_dots, restraints, MetaBalls, StickBases, residue_environment,
              * NEFRestraints, RMSD). Internal-only styles (hover, environment,
              * residueSelection, transformation, rama, rotamer, chemical_features,
@@ -1667,6 +1701,7 @@ export class MoorhenInstance extends StoreExtension {
         if (timeCapsuleConfig?.modificationCountBackupThreshold) {
             newTimeCapsule.modificationCountBackupThreshold = timeCapsuleConfig?.modificationCountBackupThreshold;
         }
+        newTimeCapsule.getSceneData = () => JSON.stringify(this.userScene.exportState());
         await newTimeCapsule.init();
         this.setTimeCapsule(newTimeCapsule);
         if (externalTimeCapsuleRef) {

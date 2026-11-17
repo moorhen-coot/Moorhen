@@ -15,6 +15,7 @@ import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule, ColourRuleType } from "./MoorhenColourRule";
 import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
+import { cidBuildParams } from "./Representation/RepresentationBuilder";
 import {
     centreOnGemmiAtoms,
     doDownload,
@@ -994,7 +995,8 @@ export class MoorhenMolecule {
         try {
             const coordData = await source.text();
             let is_small = false;
-            if (source.name.endsWith(".mmcif") || source.name.endsWith(".cif") || source.name.endsWith(".pdbx"))
+            const lowerName = source.name.toLowerCase();
+            if (lowerName.endsWith(".mmcif") || lowerName.endsWith(".cif") || lowerName.endsWith(".pdbx"))
                 is_small = window.gemmiModule.is_small_structure(coordData as string);
             if (is_small) {
                 const small_to_cif_response = (await this.commandCentre.cootCommand(
@@ -1019,7 +1021,7 @@ export class MoorhenMolecule {
                 );
                 return await this.loadToCootFromString(coordContent, source.name);
             }
-            if (source.name.endsWith(".mol")) {
+            if (lowerName.endsWith(".mol")) {
                 const response = (await this.commandCentre.cootCommand(
                     {
                         command: "mol_text_to_pdb",
@@ -1089,7 +1091,7 @@ export class MoorhenMolecule {
         }
 
         // One pattern, so ".mmcif" is not first stripped as ".cif" (which left "name.m")
-        this.name = name.replace(/\.(pdb|ent|mmcif|cif)$/, "");
+        this.name = name.replace(/\.(pdb|ent|mmcif|cif)$/i, "");
 
         try {
             const state = this.store.getState();
@@ -1573,6 +1575,7 @@ export class MoorhenMolecule {
         representation.hbondedTo = hbondedTo;
         representation.neighboursDistance = neighboursDistance;
         representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
+        representation.buildParams = cidBuildParams(representation);
 
         await representation.draw();
         this.representations.push(representation);
@@ -2274,7 +2277,6 @@ export class MoorhenMolecule {
             "transformation",
             "contact_dots",
             "chemical_features",
-            "VdWSurface",
         ]
     ): boolean {
         const state = this.store.getState();
