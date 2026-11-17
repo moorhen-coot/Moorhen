@@ -149,6 +149,14 @@ describe("MoorhenButton", () => {
     test("renders toggle buttons with checked state", () => {
         renderWithinInstance(<MoorhenButton type="toggle" checked={true} label="Toggle" />);
         const button = screen.getByRole("button", { name: /toggle/i });
-        expect(button.className).toContain("moorhen__button__toggle-checked");
+        expect(button).toHaveClass("moorhen__button__toggle", "checked");
+        expect(button).not.toHaveClass("unchecked");
+    });
+
+    test("renders toggle buttons with unchecked state", () => {
+        renderWithinInstance(<MoorhenButton type="toggle" checked={false} label="Toggle" />);
+        const button = screen.getByRole("button", { name: /toggle/i });
+        expect(button).toHaveClass("moorhen__button__toggle", "unchecked");
+        expect(button).not.toHaveClass("checked");
     });
 });

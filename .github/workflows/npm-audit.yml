@@ -1,0 +1,40 @@
+name: npm audit
+
+# Fails if a runtime (non-dev) dependency of the published package has a known high or critical
+# vulnerability. Moderate and low ones are still listed in the log but do not fail the job.
+# Dev tooling is not checked: it never ships to users.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  # New advisories appear without any change on our side, so check daily as well.
+  # Scheduled runs only ever start from the default branch, so they audit the release
+  # branches explicitly; keep this list in step with the maintained releases.
+  schedule:
+  - cron: "0 6 * * *"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        ref: ${{ github.event_name == 'schedule' && fromJSON('["main", "release/1.1.x"]') || fromJSON('[""]') }}
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ matrix.ref }}
+
+    - name: Install Node.js v24
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24
+
+    # Reads package-lock.json only, so there is no need to install anything first.
+    - name: Audit runtime dependencies
+      working-directory: baby-gru
+      run: npm audit --omit=dev --audit-level=high

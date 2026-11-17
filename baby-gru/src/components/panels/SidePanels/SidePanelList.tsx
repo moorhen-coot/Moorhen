@@ -47,7 +47,7 @@ export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
         label: "SceneSettings",
         panelContent: (
             <SidePanelContainer title="Scene Settings">
-                <MoorhenSceneSettings stackDirection="vertical" />
+                <MoorhenSceneSettings />
             </SidePanelContainer>
         ),
     },

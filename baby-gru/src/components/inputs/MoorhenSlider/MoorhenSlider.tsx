@@ -652,9 +652,7 @@ export const MoorhenSlider = (props: MoorhenSliderProps) => {
         ];
     }
     if (showLabels && autoLabelMajorTicks) {
-        console.log("majorTickValues", majorTickValues);
         for (const tick of majorTickValues) {
-            console.log("tick", tick);
             labels?.push({ value: tick, label: tick.toString() });
         }
     }

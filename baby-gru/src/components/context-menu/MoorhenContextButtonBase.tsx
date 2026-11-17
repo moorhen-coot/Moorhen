@@ -5,6 +5,7 @@ import { useCommandCentre } from "../../InstanceManager";
 import { setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { moorhen } from "../../types/moorhen";
+import { residueCidForRefinement } from "../../utils/utils";
 import { MoorhenButton, MoorhenSelect } from "../inputs";
 import { MoorhenStack } from "../interface-base";
 import { ActionButtonSettings } from "./MoorhenContextMenu";
@@ -106,6 +107,8 @@ export const MoorhenContextButtonBase = (props: {
     needsAtomData?: boolean;
     nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2?: string) => Promise<void>;
     cootCommandInput?: moorhen.cootCommandKwargs;
+    /** Like cootCommandInput, but for edits that need more than one coot command; followed by the same refine/redraw */
+    editCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => Promise<unknown>;
     setOverlayContents: React.Dispatch<React.SetStateAction<React.JSX.Element>>;
     setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
     setShowContextMenu: React.Dispatch<React.SetStateAction<false | moorhen.AtomRightClickEventInfo>>;
@@ -138,27 +141,22 @@ export const MoorhenContextButtonBase = (props: {
 
     const dispatch = useDispatch();
 
-    const doEdit = async (cootCommandInput: moorhen.cootCommandKwargs) => {
+    const doEdit = async (edit: moorhen.cootCommandKwargs | (() => Promise<unknown>)) => {
         dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
         props.setShowContextMenu(false);
 
-        const cootResult = await commandCentre.current.cootCommand(cootCommandInput, true);
+        const cootResult = typeof edit === "function" ? await edit() : await commandCentre.current.cootCommand(edit, true);
 
         props.onCompleted?.(props.selectedMolecule, props.chosenAtom);
 
         if (refineAfterMod && enableRefineAfterMod && activeMap) {
             try {
+                const cid = residueCidForRefinement(props.chosenAtom);
                 if (animateRefine) {
-                    await props.selectedMolecule.refineResiduesUsingAtomCidAnimated(
-                        `//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`,
-                        activeMap,
-                        2,
-                        true,
-                        false
-                    );
+                    await props.selectedMolecule.refineResiduesUsingAtomCidAnimated(cid, activeMap, 2, true, false);
                 } else {
                     await props.selectedMolecule.refineResiduesUsingAtomCid(
-                        `//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`,
+                        cid,
                         "TRIPLE",
                         4000,
                         true
@@ -201,6 +199,8 @@ export const MoorhenContextButtonBase = (props: {
                 dispatch(enqueueSnackbar({ message: "Action could not be completed", variant: "warning" }));
                 props.setShowContextMenu(false);
             }
+        } else if (props.editCommand) {
+            await doEdit(() => props.editCommand(props.selectedMolecule, props.chosenAtom));
         } else if (props.cootCommandInput) {
             await doEdit(props.cootCommandInput);
         }

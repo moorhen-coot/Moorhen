@@ -21,8 +21,6 @@ import { MOORHEN_ATOM_TAG_KIND } from "../../utils/enums";
 import { addAvailableFontList, emptyAvailableFonts } from "../../store/labelSettingsSlice";
 import { setRefinementSelection } from "../../store/refinementSettingsSlice";
 import {
-    setBackgroundColor,
-    setDefaultBackgroundColor,
     setGlViewportHeight,
     setGlViewportWidth,
     setHeight,
@@ -95,6 +93,8 @@ interface ContainerOptionalProps {
     allowMergeFittedLigand?: boolean;
     webComponentMode?: boolean;
     size?: [number, number];
+    /** The built-in scene Moorhen opens on: "General" (default) or "Model Building" */
+    startupScene?: string;
 }
 
 export interface ContainerProps extends Partial<ContainerRefs>, Partial<ContainerOptionalProps> {}
@@ -134,7 +134,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const GlViewportWidth = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const drawMissingLoops = useSelector((state: moorhen.State) => state.sceneSettings.drawMissingLoops);
-    const defaultBackgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.defaultBackgroundColor);
 
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate);
 
@@ -347,9 +346,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
     useEffect(() => {
         const _isDark = isDarkBackground(...backgroundColor);
 
-        if (defaultBackgroundColor !== backgroundColor) {
-            dispatch(setDefaultBackgroundColor(backgroundColor));
-        }
         if (isDark !== _isDark) {
             dispatch(setIsDark(_isDark));
         }
@@ -402,7 +398,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 moorhenInstance.setAceDRGInstance(aceDRGInstance);
             }
 
-            dispatch(setBackgroundColor(defaultBackgroundColor));
             cootAPIHelpers.setSamplingRate(commandCentre, defaultMapSamplingRate);
             cootAPIHelpers.setDrawMissingLoops(commandCentre, drawMissingLoops);
             const shortCuts = store.getState().shortcutSettings.shortCuts;
@@ -412,10 +407,10 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 dispatch(enqueueSnackbar({ message: `Press ${getTooltipShortcutLabel(shortCut)} to show help`, variant: "info" }));
             } catch (error) {
                 console.error("Error parsing shortcuts:", error);
-                const json = JSON.parse(shortCuts);
-                console.log("Parsed Shortcuts", json, "keys", Object.keys(json));
             }
             if (!window.MathJax) setTimeout(() => loadMathjax(`${urlPrefix}`), 500);
+            // Before onInitialisationCompleted, so a host sees Moorhen in its start-up scene
+            await moorhenInstance.userScene.showStartupScene(props.startupScene);
             return true;
         };
         startupEffect().then(started => {

@@ -50,8 +50,6 @@ export const MoorhenSearchBar = () => {
         });
     }, [shortCuts]);
 
-    console.log("shortCuts", shortCuts);
-
     const fuse = useMemo(
         () => new Fuse([...menuSystem.getAllItems(), ...shortcutAsMenuItems], fuseOptions),
         [menuSystem, shortcutAsMenuItems]

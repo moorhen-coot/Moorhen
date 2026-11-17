@@ -25,7 +25,6 @@ export const MoorhenShortcutConfigModal = (props: ModalComponentProps) => {
 
     const restoreDefaults = () => {
         const defaultValues = Preferences.defaultPreferencesValues;
-        console.log(defaultValues.shortCuts);
         setStagedShortCuts(defaultValues.shortCuts);
     };
 

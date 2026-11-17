@@ -3,11 +3,8 @@
 
 .moorhen__search-bar-closed,
 .moorhen__search-bar-open {
-    position: absolute;
     direction: ltr;
     pointer-events: auto;
-    top: 1rem;
-    left: 8rem;
     z-index: var(--z-window-base);
     border-radius: 2rem;
     background: var(--moorhen-background);
