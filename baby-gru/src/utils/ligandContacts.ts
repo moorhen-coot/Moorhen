@@ -55,6 +55,15 @@ type AnalysedMolecule = {
 };
 
 /**
+ * A residue number as gemmi writes it (seqid.str(): "301", "301A" with an insertion code) as an mmdb cid
+ * wants it ("301", "301.A").
+ */
+export const mmdbResidueNumber = (seqid: string): string => {
+    const match = /^(-?\d+)([A-Za-z]?)$/.exec(seqid.trim());
+    return match ? `${match[1]}${match[2] ? `.${match[2]}` : ""}` : seqid;
+};
+
+/**
  * The contacts of a ligand with another molecule, or with the rest of its own: H-bonds, salt bridges
  * and, optionally, XH-π (XPID adds hydrogens from the monomer library, so the ligand's dictionaries
  * are passed to it) and the FLEV diagram.
@@ -81,7 +90,7 @@ export const getLigandContacts = async (
                 ligandSelection: ligandInfo.cid,
                 isLigand: (chainId, seqid) => chainId === ligandInfo.chainName && seqid === ligandInfo.resNum,
                 sourceChain: chainId => chainId,
-                flevCid: `//${ligandInfo.chainName}/${ligandInfo.resNum}`,
+                flevCid: `//${ligandInfo.chainName}/${mmdbResidueNumber(ligandInfo.resNum)}`,
             },
             ligandDicts,
             options
@@ -101,7 +110,7 @@ export const getLigandContacts = async (
                 ligandSelection: ligandChains.map(chain => `//${chain.chainId}`).join("||"),
                 isLigand: chainId => ligandChains.some(chain => chain.chainId === chainId),
                 sourceChain: chainId => sourceChain.get(chainId) ?? chainId,
-                flevCid: flevChain ? `//${flevChain.chainId}/${ligandInfo.resNum}` : null,
+                flevCid: flevChain ? `//${flevChain.chainId}/${mmdbResidueNumber(ligandInfo.resNum)}` : null,
             },
             ligandDicts,
             options
