@@ -38,10 +38,12 @@ export const MoorhenTooltip = (props: ToolTipProps) => {
             return;
         }
 
+        // focusin / focusout bubble: a link that does not take focus itself (a label around an input)
+        // shows the tooltip when what it holds is focused from the keyboard
         element.addEventListener("mouseenter", handleMouseEnter);
         element.addEventListener("mouseleave", handleMouseLeave);
-        element.addEventListener("focus", handleMouseEnter);
-        element.addEventListener("blur", handleMouseLeave);
+        element.addEventListener("focusin", handleMouseEnter);
+        element.addEventListener("focusout", handleMouseLeave);
 
         return () => {
             if (timeoutRef.current) {
@@ -49,8 +51,8 @@ export const MoorhenTooltip = (props: ToolTipProps) => {
             }
             element.removeEventListener("mouseenter", handleMouseEnter);
             element.removeEventListener("mouseleave", handleMouseLeave);
-            element.removeEventListener("focus", handleMouseEnter);
-            element.removeEventListener("blur", handleMouseLeave);
+            element.removeEventListener("focusin", handleMouseEnter);
+            element.removeEventListener("focusout", handleMouseLeave);
         };
     }, [ref, handleMouseEnter, handleMouseLeave]);
 
