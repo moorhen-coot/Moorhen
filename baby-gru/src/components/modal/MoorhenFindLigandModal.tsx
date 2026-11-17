@@ -1,8 +1,8 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hideModal } from "../../store/modalsSlice";
-import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
 import { addMolecule } from "../../store/moleculesSlice";
+import { enqueueSnackbar } from "../../store/snackbarSlice";
 import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { MoorhenSpinner } from "../icons";
@@ -13,26 +13,22 @@ import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
-import { useMoorhenInstance } from "@/hooks";
+import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
+import { drawLigandBonds } from "@/utils/Representation/defaultRepresentation";
 
+/**
+ * One fitted pose: view it, or save it as a new molecule (listed with the ligands). Saving instead of
+ * merging into the model keeps the pose on its own, to compare, refine, merge or delete like any
+ * ligand; the poses not saved are deleted when the search is run again or the modal closed.
+ */
 const LigandHitCard = (props: {
-    selectedMolNo: number;
     ligandMolecule: moorhen.Molecule;
     ligandCardMolNoFocus: number;
     setLigandCardMolNoFocus: React.Dispatch<React.SetStateAction<number>>;
-    ligandResults: moorhen.Molecule[];
     setLigandResults: React.Dispatch<React.SetStateAction<moorhen.Molecule[]>>;
 }) => {
     const dispatch = useDispatch();
-
-    const moorhenInstance = useMoorhenInstance();
-
-    const animateRefine = useSelector((state: moorhen.State) => state.refinementSettings.animateRefine);
-    const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
-    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
-    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    const allowAddNewFittedLigand = useSelector((state: moorhen.State) => state.generalStates.allowAddNewFittedLigand);
-    const allowMergeFittedLigand = useSelector((state: moorhen.State) => state.generalStates.allowMergeFittedLigand);
+    const [busy, setBusy] = useState<boolean>(false);
 
     const handleShow = useCallback(async () => {
         if (props.ligandMolecule.representations.length > 0) {
@@ -51,72 +47,38 @@ const LigandHitCard = (props: {
         }
     }, [props.ligandCardMolNoFocus]);
 
-    const handleRefinement = useCallback(
-        async (ligandMolecule: moorhen.Molecule) => {
-            if (animateRefine) {
-                ligandMolecule.refineResiduesUsingAtomCidAnimated("//", activeMap, -1);
-            } else {
-                ligandMolecule.refineResiduesUsingAtomCid("//", "ALL");
+    const handleSave = useCallback(async () => {
+        const ligand = props.ligandMolecule as MoorhenMolecule;
+        setBusy(true);
+        try {
+            // The preview's bonds are not a custom representation: drawn again as one, as any loaded
+            // molecule's, and shown whether or not this pose was the one being viewed
+            for (const representation of [...ligand.representations]) {
+                if (!representation.isCustom) ligand.removeRepresentation(representation.uniqueId);
             }
-        },
-        [animateRefine, activeMap]
-    );
-
-    const handleMerge = useCallback(async () => {
-        const selectedMolecule = molecules.find(molecule => molecule.molNo === props.selectedMolNo);
-        if (selectedMolecule) {
-            await selectedMolecule.mergeMolecules([props.ligandMolecule], true);
-            await props.ligandMolecule.delete();
-            const hasCBs = selectedMolecule.representations.some(representation => (representation.style === "CBs" && (representation.cid === "/*/*/*/:*" || representation.cid === "/*/*/*/:*" )));
-            if (!hasCBs) {
-                const cid = selectedMolecule.ligands?.find(ligand => ligand.resName === props.ligandMolecule.ligands[0].resName)?.cid;
-                console.log("Ligand", props.ligandMolecule.ligands[0].resName, "has cid", cid);
-                console.log(`Creating CBs representation for ${selectedMolecule.name} with ruleType ligands and cid ${cid}`);
-                await moorhenInstance.representation.create(selectedMolecule.uniqueId, {representationStyle: "CBs", ruleType: "ligands", cid: cid });
-            }
-            dispatch(triggerUpdate(selectedMolecule.molNo));
-            props.setLigandResults(prevLigands => prevLigands.filter(ligand => ligand.molNo !== props.ligandMolecule.molNo));
-        }
-    }, [molecules, dispatch]);
-
-    const handleAdd = useCallback(async () => {
-        if (props.ligandMolecule) {
-            dispatch(addMolecule(props.ligandMolecule));
-            props.setLigandResults(prevLigands => prevLigands.filter(ligand => ligand.molNo !== props.ligandMolecule.molNo));
+            await drawLigandBonds(ligand);
+            dispatch(addMolecule(ligand));
+            // Out of the results, so that it is not deleted with the poses not saved
+            props.setLigandResults(previous => previous.filter(other => other.molNo !== ligand.molNo));
+            dispatch(enqueueSnackbar({ message: `Saved ${ligand.name} as a new molecule`, variant: "success" }));
+        } catch (err) {
+            console.error(err);
+            dispatch(enqueueSnackbar({ message: `Failed to save ${ligand.name}`, variant: "error" }));
+        } finally {
+            setBusy(false);
         }
     }, []);
 
     return (
         <MoorhenStack card direction="row" align="center" gap={"0.5rem"}>
             <span>{props.ligandMolecule.name}</span>
-
             <MoorhenButton
                 onClick={() => props.setLigandCardMolNoFocus(props.ligandMolecule.molNo)}
                 type="icon-only"
                 tooltip="View"
                 icon="MatSymFilterFocus"
-            >
-            </MoorhenButton>
-
-            <MoorhenButton
-
-                onClick={() => handleRefinement(props.ligandMolecule)}
-                tooltip="Refine"
-                type="icon-only"
-                icon="MatSymCrisisAlert"
-            >
-            </MoorhenButton>
-            {allowAddNewFittedLigand && (
-
-                <MoorhenButton icon="MatSymCheck" onClick={handleAdd} tooltip="Add to new molecule" type="icon-only">
-                </MoorhenButton>
-            )}
-            {allowMergeFittedLigand && (
-
-                    <MoorhenButton tooltip="Merge to molecule" onClick={handleMerge} icon="MatSymMerge" type="icon-only">
-                    </MoorhenButton>
-
-            )}
+            />
+            <MoorhenButton onClick={handleSave} disabled={busy} tooltip="Save as a new molecule" type="icon-only" icon="MatSymSave" />
         </MoorhenStack>
     );
 };
@@ -256,10 +218,8 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
                                 <LigandHitCard
                                     key={ligandMolecule.molNo}
                                     ligandMolecule={ligandMolecule}
-                                    selectedMolNo={parseInt(intoMoleculeRef.current?.value)}
                                     ligandCardMolNoFocus={ligandCardMolNoFocus}
                                     setLigandCardMolNoFocus={setLigandCardMolNoFocus}
-                                    ligandResults={ligandResults}
                                     setLigandResults={setLigandResults}
                                 />
                             );
