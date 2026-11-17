@@ -2,7 +2,7 @@ import parse from "html-react-parser";
 import { batch, useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useMemo, useState } from "react";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
-import { MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenToggle } from "@/components/inputs";
+import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenToggle } from "@/components/inputs";
 import { MoorhenAccordion, MoorhenStack } from "@/components/interface-base";
 import { type RootState, setHoveredAtom } from "@/store";
 import { type MoorhenVector, addVectors, removeVectorsByTag } from "@/store/vectorsSlice";
@@ -145,9 +145,16 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: Liga
     const [partnerUid, setPartnerUid] = useState<string | undefined>(() =>
         partners.some(other => other.uniqueId === drawnBefore?.partnerUid) ? drawnBefore.partnerUid : undefined
     );
+    // A partner since deleted counts as none chosen, so that the selector picks one again (it only
+    // does when given none); else this would wait for its contacts forever
     const partner = partners.find(other => other.uniqueId === partnerUid) ?? null;
-    const [result, setResult] = useState<{ partnerUid: string; contacts: ContactsState } | null>(null);
+    const selectedUid = partner ? partnerUid : undefined;
+    const [result, setResult] = useState<{ partnerUid: string; contacts: ContactsState; computation: number } | null>(null);
+    // Contacts are not recomputed when either molecule's coordinates change (refined, moved...): asked
+    // for with the recompute button, each press a new computation
+    const [computation, setComputation] = useState(0);
     const current = result && partner && result.partnerUid === partner.uniqueId ? result.contacts : null;
+    const recomputing = result !== null && result.computation !== computation;
     const [styles, setStyles] = useState<DrawStyles>(drawnBefore?.styles ?? DEFAULT_STYLES);
     const setStyle = (type: ContactType, change: Partial<DrawStyles[ContactType]>) =>
         setStyles(previous => ({ ...previous, [type]: { ...previous[type], ...change } }));
@@ -158,12 +165,12 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: Liga
         getLigandContacts(molecule, partner, { xhpi: true, flev: true }, ligand)
             .catch((err: unknown): ContactsState => ({ error: err instanceof Error ? err.message : String(err) }))
             .then(contacts => {
-                if (!cancelled) setResult({ partnerUid: partner.uniqueId, contacts });
+                if (!cancelled) setResult({ partnerUid: partner.uniqueId, contacts, computation });
             });
         return () => {
             cancelled = true;
         };
-    }, [molecule, partner, ligand]);
+    }, [molecule, partner, ligand, computation]);
 
     // Redrawn whole, replacing what this ligand has drawn (also what was left drawn when it last
     // unmounted), when the contacts arrive or a type is switched or recoloured: tens of contacts, not
@@ -214,12 +221,19 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: Liga
                 <MoorhenMoleculeSelect
                     useUniqueId={true}
                     molecules={partners}
-                    selectedMolecule={partnerUid}
+                    selectedMolecule={selectedUid}
                     setSelectedMolecule={setPartnerUid}
                     label="With"
                 />
+                <MoorhenButton
+                    type="icon-only"
+                    icon="MatSymReplay"
+                    tooltip="Recompute the contacts (after either molecule has moved or been changed)"
+                    disabled={current === null || recomputing}
+                    onClick={() => setComputation(previous => previous + 1)}
+                />
             </MoorhenStack>
-            {current === null ? (
+            {current === null || recomputing ? (
                 <MoorhenLinearProgress />
             ) : current.error ? (
                 <span className="moorhen__ligand-contacts-note">{current.error}</span>
