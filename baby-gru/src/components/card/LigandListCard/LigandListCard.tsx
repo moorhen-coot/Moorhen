@@ -122,9 +122,16 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     useEffect(() => {
         if (!grouped || sites) return;
         let cancelled = false;
-        groupLigandsBySite(entries).then(result => {
-            if (!cancelled) setComputed({ membership, sites: result });
-        });
+        groupLigandsBySite(entries)
+            .then(result => {
+                if (!cancelled) setComputed({ membership, sites: result });
+            })
+            // A molecule deleted while its atoms were read, say: back to the plain list rather than
+            // waiting forever (an empty site list would show no ligand at all)
+            .catch(err => {
+                console.error(err);
+                if (!cancelled) setGrouped(false);
+            });
         return () => {
             cancelled = true;
         };

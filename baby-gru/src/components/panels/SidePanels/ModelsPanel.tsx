@@ -12,9 +12,18 @@ export const ModelsPanel = () => {
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
     const dispatch = useDispatch();
     // Molecules of ligands only are listed in the Ligands panel, not given a card each here
-    const records = useSelector((state: RootState) => state.molecules.moleculeRecords);
-    const molecules = moleculeList.filter(molecule => !records[molecule.uniqueId]?.isLigandOnly);
-    const ligandMolecules = moleculeList.filter(molecule => records[molecule.uniqueId]?.isLigandOnly);
+    // As a string, compared by value: the panel re-renders when that set changes, not at every record
+    // refresh of any molecule (atom edits, batch chunks, dictionaries)
+    const ligandOnlyUids = useSelector((state: RootState) =>
+        Object.values(state.molecules.moleculeRecords)
+            .filter(record => record.isLigandOnly)
+            .map(record => record.uniqueId)
+            .sort()
+            .join(",")
+    );
+    const ligandOnly = new Set(ligandOnlyUids ? ligandOnlyUids.split(",") : []);
+    const molecules = moleculeList.filter(molecule => !ligandOnly.has(molecule.uniqueId));
+    const ligandMolecules = moleculeList.filter(molecule => ligandOnly.has(molecule.uniqueId));
 
     const [allOpen, setallOpen] = useState<boolean | null>(null);
     const [activeToggle, setActiveToggle] = useState<{ key: number; isOpen: boolean }>({ key: null, isOpen: null });

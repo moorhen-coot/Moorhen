@@ -19,8 +19,10 @@ export const LigandsPanel = () => {
     useMenuHook();
     const menuItems = moorhenInstance.menuSystem.getItems("ligand");
     const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
-    const records = useSelector((state: RootState) => state.molecules.moleculeRecords);
-    const hasLigands = moleculeList.some(molecule => (records[molecule.uniqueId]?.ligands.length ?? 0) > 0);
+    // A boolean, so that record refreshes do not re-render the panel
+    const hasLigands = useSelector((state: RootState) =>
+        state.molecules.moleculeList.some(molecule => (state.molecules.moleculeRecords[molecule.uniqueId]?.ligands.length ?? 0) > 0)
+    );
 
     return (
         <SidePanelContainer title="Ligands">
