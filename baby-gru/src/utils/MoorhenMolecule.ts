@@ -3359,9 +3359,10 @@ export class MoorhenMolecule {
     /**
      * Split a molecule with multiple models into separate molecules (one for each model)
      * @param {boolean} [draw=false] - Indicates whether the new molecules should be drawn
+     * @param {boolean} [transferDicts=true] - Read this molecule's ligand dictionaries for each new molecule (false: the caller makes them available another way)
      * @returns {moorhen.Molecule[]} - A list with the new molecules
      */
-    async splitMultiModels(draw: boolean = false): Promise<moorhen.Molecule[]> {
+    async splitMultiModels(draw: boolean = false, transferDicts: boolean = true): Promise<moorhen.Molecule[]> {
         const result = (await this.commandCentre.cootCommand(
             {
                 returnType: "int_array",
@@ -3380,7 +3381,7 @@ export class MoorhenMolecule {
                     const newMolecule = new MoorhenMolecule(this.moorhenInstance);
                     newMolecule.name = `${this.name}-${index + 1}`;
                     newMolecule.molNo = molNo;
-                    await this.transferMetaData(newMolecule);
+                    await this.transferMetaData(newMolecule, transferDicts);
                     newMolecule.setAtomsDirty(true);
                     await newMolecule.fetchDefaultColourRules();
                     if (draw) {

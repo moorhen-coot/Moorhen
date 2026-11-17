@@ -11,7 +11,7 @@ import { setActiveMap } from "../store/generalStatesSlice";
 import { setValidationJson } from "../store/jsonValidation";
 import { addMap } from "../store/mapsSlice";
 import { showModal } from "../store/modalsSlice";
-import { addCustomRepresentation, addMoleculeList } from "../store/moleculesSlice";
+import { addCustomRepresentation, addMoleculeList, removeMolecule } from "../store/moleculesSlice";
 import { setAfJson, setEsmJson, setHomologsJson, setMrParseModels, setTargetSequence } from "../store/mrParseSlice";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMap } from "./MoorhenMap";
@@ -492,11 +492,21 @@ const loadMapFile = async (
  * models of a protein (NMR, ensembles) belong together.
  * @returns The molecules to add: the poses, the original having been deleted; or the molecule itself.
  */
-const splitLigandPoses = async (molecule: MoorhenMolecule): Promise<MoorhenMolecule[]> => {
+const splitLigandPoses = async (molecule: MoorhenMolecule, moorhenInstance: MoorhenInstance): Promise<MoorhenMolecule[]> => {
     if (!molecule.isLigandOnly() || molecule.numberOfModels < 2) return [molecule];
-    const poses = (await molecule.splitMultiModels(false)) as MoorhenMolecule[] | undefined;
+    // The dictionaries read for the file (its missing monomers), shared by the poses: read once for
+    // every molecule, as batch loading does, rather than once more for each pose
+    const dictionaries = Object.values(molecule.ligandDicts ?? {});
+    const poses = (await molecule.splitMultiModels(false, false)) as MoorhenMolecule[] | undefined;
     if (!poses?.length) return [molecule];
+    for (const dictionary of dictionaries) {
+        await readDictionary(moorhenInstance, dictionary, null, molecule.name);
+    }
+    // Cached on each pose all the same: what sessions and exports save with a molecule
+    poses.forEach(pose => dictionaries.forEach(dictionary => pose.cacheLigandDict(dictionary)));
     await molecule.delete();
+    // Never in the molecule list, but its dictionary entries were recorded for it: removed with it
+    moorhenInstance.store.dispatch(removeMolecule(molecule));
     // Their ligands read, so that they are listed as ligand-only molecules from the start
     await Promise.all(poses.map(pose => pose.updateAtoms()));
     return poses;
@@ -836,7 +846,7 @@ export const autoOpenFiles = async (
                 continue;
             } else {
                 console.log(`Successfully read molecule ${file.name} molno ${newMolecule.molNo}`);
-                const loaded = await splitLigandPoses(newMolecule);
+                const loaded = await splitLigandPoses(newMolecule, moorhenInstance);
                 dispatch(addMoleculeList(loaded));
                 await drawModels(loaded, moorhenInstance);
 

@@ -62,6 +62,33 @@ describe("monomers from dictionaries", () => {
         expect(new Set(result.map(entry => entry.molNo)).size).toBe(3);
     });
 
+    test("the poses of a file share one dictionary, and the original leaves none behind", async () => {
+        // A monomer library serving the committed BGC.cif, so the file's missing dictionary is found
+        const library = "http://monomers.test";
+        cloud.instance.setPaths(cloud.instance.paths.urlPrefix, library);
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = (async (input: string | URL | Request) => {
+            const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+            return originalFetch(url.startsWith(library) ? jobUrl(url.split("/").pop()) : input);
+        }) as typeof fetch;
+        try {
+            const text = ligandModels(3).flat().join("\n") + "\nEND\n";
+            const result = await cloud.instance.files.loadFiles(new File([text], "poses.pdb"));
+            await flush();
+            const poses = result.map(entry => cloud.instance.getMolecule(entry.uniqueID));
+            // One entry for BGC, for every molecule: none for the deleted original, none per pose
+            const loaded = Object.values(cloud.instance.store.getState().dictionaries.loaded);
+            expect(loaded.map(dictionary => [dictionary.compId, dictionary.moleculeUid])).toEqual([["BGC", null]]);
+            poses.forEach(pose => {
+                // Still cached on each pose (sessions save it with the molecule), and known to Coot
+                expect(Object.keys(pose.ligandDicts)).toEqual(["BGC"]);
+                expect(cloud.instance.store.getState().molecules.moleculeRecords[pose.uniqueId].missingDictionaries).toEqual([]);
+            });
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
     test("a Vina PDBQT with several poses is loaded as one molecule per pose", async () => {
         // Vina's layout: a result remark, ROOT / BRANCH torsion tree records, and each atom line carrying
         // a partial charge and an AutoDock type after column 66
