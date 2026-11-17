@@ -60,6 +60,9 @@ type ChunkItem = {
 
 const FETCH_CONCURRENCY = 16;
 
+/** How many batches are loading, per store (their progress notification is shared) */
+const runningBatches = new WeakMap<object, number>();
+
 const sourceName = (source: BatchLigandSource): string => {
     if (source instanceof File) return source.name;
     const url = typeof source === "object" && "url" in source ? source.url : source;
@@ -114,7 +117,14 @@ export const batchLoadLigands = async (
 
     const failed: BatchLoadLigandsResult["failed"] = [];
     const loaded: { index: number; entry: LoadFilesResult[number] }[] = [];
-    const fail = (fileName: string, error: string) => failed.push({ fileName, error });
+    // By source index: a file fails once (a chunk failing late fails only those not failed yet), and
+    // two sources with the same file name are two files
+    const failedIndices = new Set<number>();
+    const fail = (index: number, fileName: string, error: string) => {
+        if (failedIndices.has(index)) return;
+        failedIndices.add(index);
+        failed.push({ fileName, error });
+    };
 
     /** Run commands in one worker message, without journaling, reported as one job. */
     const runList = async (commands: cootCommandKwargs[]) => {
@@ -150,13 +160,19 @@ export const batchLoadLigands = async (
         if (!dictionaries.has(compId)) {
             dictionaries.set(
                 compId,
-                fetchMonomerDictionary(compId, instance.paths.monomerLibraryPath).then(async text => {
-                    if (text) {
-                        await readDictionary(text);
-                        newlyReadCompIds.add(compId);
-                    }
-                    return text;
-                })
+                fetchMonomerDictionary(compId, instance.paths.monomerLibraryPath)
+                    .then(async text => {
+                        if (text) {
+                            await readDictionary(text);
+                            newlyReadCompIds.add(compId);
+                        }
+                        return text;
+                    })
+                    // Not found, rather than a rejection every later chunk with this type would fail on
+                    .catch(err => {
+                        console.warn(`batchLoadLigands: could not read the dictionary of ${compId}`, err);
+                        return undefined;
+                    })
             );
         }
         return dictionaries.get(compId);
@@ -202,7 +218,7 @@ export const batchLoadLigands = async (
                 await molecule.updateGemmiStructure(text);
                 molecule.atomsDirty = false;
             } catch {
-                fail(fileName, "could not be parsed as coordinates");
+                fail(index, fileName, "could not be parsed as coordinates");
                 await discard([molecule]);
                 continue;
             }
@@ -219,7 +235,7 @@ export const batchLoadLigands = async (
             const result = readResults[i + 1];
             const molNo = result?.result?.result?.first;
             if (commandFailed(result) || typeof molNo !== "number" || molNo === -1) {
-                fail(item.fileName, "not a coordinate file Coot can read");
+                fail(item.index, item.fileName, "not a coordinate file Coot can read");
                 unread.push(item.molecule);
                 return false;
             }
@@ -244,7 +260,7 @@ export const batchLoadLigands = async (
             const { molecule } = item;
             molecule.atomCount = atoms?.result?.result ?? 0;
             if (molecule.atomCount === 0) {
-                fail(item.fileName, "no atoms found");
+                fail(item.index, item.fileName, "no atoms found");
                 empty.push(molecule);
                 return false;
             }
@@ -291,14 +307,21 @@ export const batchLoadLigands = async (
      * the worker queue stays full, then add the chunk to the molecule list in one store update.
      */
     const addChunk = async (chunkItems: ChunkItem[]) => {
-        const representations = await Promise.all(
+        // All settled, not Promise.all: one failing must not leave the others drawing on molecules
+        // being discarded. A rejected one is a file that could not be drawn.
+        const settled = await Promise.allSettled(
             chunkItems.map(item => MoleculeRepresentation.create({ representationStyle: "CBs", molecule: item.molecule }))
         );
+        const representations = settled.map(result => {
+            if (result.status === "fulfilled") return result.value;
+            console.error(result.reason);
+            return undefined;
+        });
         const undrawn: MoorhenMolecule[] = [];
         const items = chunkItems.filter((item, i) => {
             item.representation = representations[i];
             if (!item.representation) {
-                fail(item.fileName, "could not create its representation");
+                fail(item.index, item.fileName, "could not create its representation");
                 undrawn.push(item.molecule);
             }
             return !!item.representation;
@@ -316,6 +339,8 @@ export const batchLoadLigands = async (
 
     // Progress for the long job notification, cleared however the batch ends
     const showProgress = (done: number, total: number) => store.dispatch(setJobProgress({ label: "Loading ligands", done, total }));
+    // Batches running at once share the one progress notification: the last to finish clears it
+    runningBatches.set(store, (runningBatches.get(store) ?? 0) + 1);
     try {
         // Read everything, then work through the chunks as a pipeline
         const names = sources.map(sourceName);
@@ -323,7 +348,7 @@ export const batchLoadLigands = async (
         const texts = await readAll(sources);
         const readable: { index: number; fileName: string; text: string }[] = [];
         texts.forEach((result, index) => {
-            if ("error" in result) fail(names[index], result.error);
+            if ("error" in result) fail(index, names[index], result.error);
             else readable.push({ index, fileName: names[index], text: result.text });
         });
         const chunks: (typeof readable)[] = [];
@@ -334,7 +359,7 @@ export const batchLoadLigands = async (
         const safePrepare = (chunk: typeof readable) =>
             prepareChunk(chunk).catch(err => {
                 console.error(err);
-                chunk.forEach(item => fail(item.fileName, `failed while loading (${err instanceof Error ? err.message : err})`));
+                chunk.forEach(item => fail(item.index, item.fileName, `failed while loading (${err instanceof Error ? err.message : err})`));
                 return [] as ChunkItem[];
             });
 
@@ -346,7 +371,16 @@ export const batchLoadLigands = async (
             const items = await next;
             // Queue the next chunk's worker messages before building this one, so they overlap
             next = k + 1 < chunks.length ? safePrepare(chunks[k + 1]) : null;
-            await addChunk(items);
+            try {
+                await addChunk(items);
+            } catch (err) {
+                // Not added: forgotten, as a file that failed earlier is, and the batch goes on
+                console.error(err);
+                const added = new Set(loaded.map(item => item.index));
+                const notAdded = items.filter(item => !added.has(item.index));
+                notAdded.forEach(item => fail(item.index, item.fileName, `failed while drawing (${err instanceof Error ? err.message : err})`));
+                await discard(notAdded.map(item => item.molecule)).catch(() => undefined);
+            }
             done += chunks[k].length;
             showProgress(done, sources.length);
             onProgress?.(done, sources.length);
@@ -373,6 +407,8 @@ export const batchLoadLigands = async (
         }
         return { loaded: loaded.map(item => item.entry), failed };
     } finally {
-        store.dispatch(setJobProgress(null));
+        const stillRunning = (runningBatches.get(store) ?? 1) - 1;
+        runningBatches.set(store, stillRunning);
+        if (stillRunning === 0) store.dispatch(setJobProgress(null));
     }
 };

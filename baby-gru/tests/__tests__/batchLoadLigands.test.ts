@@ -16,6 +16,7 @@
  *   MOORHEN_BATCH_MAX_RATIO   slowest allowed ratio of late to early chunk time (default 1.5; flat runs give
  *                             about 1, the bug this guards against about 2 at 500 ligands)
  */
+import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { createCloudInstance, flush, jobUrl, loadCootModules, readTestData, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
 const LIGANDS = Number(process.env.MOORHEN_BATCH_LIGANDS ?? 500);
@@ -208,5 +209,21 @@ describe("batchLoadLigands", () => {
             if (response.data.result.result) valid.push(molNo);
         }
         expect(valid).toEqual(loaded.map(entry => entry.molNo).sort((a, b) => a - b));
+    });
+
+    test("a ligand that fails while drawing is reported and cleaned up, the others load", async () => {
+        const { instance, store } = cloud;
+        const poses = makePoses(4);
+        // The first representation fails (a worker error, say), while its chunk's other is drawn
+        const create = jest.spyOn(MoleculeRepresentation, "create");
+        create.mockRejectedValueOnce(new Error("worker error"));
+        const { loaded, failed } = await instance.files.batchLoadLigands(poses, { chunkSize: 2 });
+        create.mockRestore();
+        await flush();
+
+        expect(failed.map(entry => entry.fileName)).toEqual([poses[0].name]);
+        expect(loaded.map(entry => entry.fileName)).toEqual([poses[1].name, poses[2].name, poses[3].name]);
+        expect(Object.keys(store.getState().molecules.moleculeRecords).sort()).toEqual(loaded.map(entry => entry.uniqueID).sort());
+        expect(store.getState().generalStates.jobProgress).toBeNull();
     });
 });
