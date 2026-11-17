@@ -1477,9 +1477,9 @@ const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolea
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mapData)
     let fileExtension = ''
-    if (name.endsWith('.map.gz')) {
+    if (name.toLowerCase().endsWith('.map.gz')) {
         fileExtension = 'map.gz'
-    } else if (name.endsWith('.mrc.gz')) {
+    } else if (name.toLowerCase().endsWith('.mrc.gz')) {
         fileExtension = 'mrc.gz'
     }
     cootModule.FS_createDataFile(".", `${theGuid}${fileExtension}`, asUint8Array, true, true);
