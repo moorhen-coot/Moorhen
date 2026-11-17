@@ -2276,7 +2276,6 @@ export class MoorhenMolecule {
             "transformation",
             "contact_dots",
             "chemical_features",
-            "VdWSurface",
         ]
     ): boolean {
         const state = this.store.getState();
