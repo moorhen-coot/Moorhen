@@ -201,6 +201,21 @@ export interface ShadowMapRegion {
  */
 export const MAX_SHADOW_SOFTNESS = 1;
 
+/**
+ * The soft filter's radius to aim for, in texels (softShadowRegion's targetTexels): on screen, and
+ * in screenshots, which are drawn better than the view - more texels, and a filter that can afford
+ * more taps when it is drawn once rather than every frame.
+ */
+export const SOFT_SHADOW_TARGET_TEXELS = 4;
+export const SCREENSHOT_SOFT_SHADOW_TARGET_TEXELS = 7.5;
+
+/**
+ * A screenshot's filter radius for a hard shadow (softness 0), in texels of the whole map: about the
+ * 8 x 8 grid of compares screenshots had before soft shadows, which smooths the edge's staircase
+ * without making the shadow any softer than a texel or two. The view stays at one compare.
+ */
+export const SCREENSHOT_HARD_SHADOW_RADIUS_TEXELS = 4;
+
 /** Below this a filter cannot hide the staircase of the texels it reads. */
 export const MIN_SOFT_RADIUS_TEXELS = 1.5;
 
@@ -221,14 +236,17 @@ export const MIN_SOFT_RADIUS_TEXELS = 1.5;
  * @param softness - penumbra radius in angstrom. 0 or less leaves the map whole and hard.
  * @param mapSize - texels along each side of the square shadow texture.
  * @param targetTexels - the filter radius, in texels, to aim for.
+ * @param hardRadiusTexels - the filter radius for a hard shadow (softness 0), over the whole map:
+ * 0, one compare, on screen; SCREENSHOT_HARD_SHADOW_RADIUS_TEXELS to smooth a screenshot's edges.
  */
 export function softShadowRegion(
     frustum: Pick<ShadowFrustum, "halfWidth" | "halfHeight">,
     softness: number,
     mapSize: number,
     targetTexels: number,
+    hardRadiusTexels = 0,
 ): ShadowMapRegion {
-    if (!(softness > 0) || !(mapSize > 0)) return { width: mapSize, height: mapSize, radiusTexels: 0 };
+    if (!(softness > 0) || !(mapSize > 0)) return { width: mapSize, height: mapSize, radiusTexels: Math.max(0, hardRadiusTexels) };
     const spanX = 2 * frustum.halfWidth, spanY = 2 * frustum.halfHeight;
     // Never finer than the full map allows on its coarser axis, or that axis would run out of map.
     const texel = Math.max(softness / targetTexels, Math.max(spanX, spanY) / mapSize);

@@ -296,7 +296,11 @@ ${anaglyph_colour_snippet}
     }
 
     void main(void) {
-      shadowDepthSlope = receiverPlaneDepthSlope();
+      // Only with shadows: two derivatives and a 2x2 inverse that nothing else uses, in the
+      // fragment shader every surface goes through. doShadows is a uniform, so the branch is the
+      // same across the 2x2 quad and the derivatives inside it stay valid.
+      shadowDepthSlope = vec2(0.0);
+      if(doShadows) shadowDepthSlope = receiverPlaneDepthSlope();
 ${discards ? clipAndPeelDiscards : ""}
       float shad = 1.0;
       if(doShadows){

@@ -156,6 +156,12 @@ describe("sizing the shadow map to a soft shadow", () => {
         expect(softShadowRegion(square, 0, 2048, 4)).toEqual({ width: 2048, height: 2048, radiusTexels: 0 });
     });
 
+    it("smooths a hard shadow's edge over the whole map when asked, as screenshots do", () => {
+        expect(softShadowRegion(square, 0, 2048, 7.5, 4)).toEqual({ width: 2048, height: 2048, radiusTexels: 4 });
+        // A soft shadow is sized by its softness, whatever is asked for a hard one.
+        expect(softShadowRegion(square, 1, 2048, 4, 4)).toEqual(softShadowRegion(square, 1, 2048, 4));
+    });
+
     it("coarsens the map until the softness is the target in texels", () => {
         // 50 A across, 1 A of softness at 4 texels: 0.25 A texels, so 200 of them.
         const region = softShadowRegion(square, 1, 2048, 4);

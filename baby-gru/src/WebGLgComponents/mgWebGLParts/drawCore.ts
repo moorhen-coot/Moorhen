@@ -15,7 +15,7 @@ import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
 import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
 import { ensureDepthPeelResolveBuffer, resolveDepthPeelResolveBuffer } from './framebuffers';
-import { fitShadowFrustum, lightAxes, radiusAbout, softShadowRegion } from '../shadowFrustum';
+import { SCREENSHOT_HARD_SHADOW_RADIUS_TEXELS, SCREENSHOT_SOFT_SHADOW_TARGET_TEXELS, SOFT_SHADOW_TARGET_TEXELS, fitShadowFrustum, lightAxes, radiusAbout, softShadowRegion } from '../shadowFrustum';
 import { anaglyphChannels } from '../anaglyph';
 
 /** A bounding box over the shadow casters, with the diagonal the rest of the renderer calls the atom span. */
@@ -3213,13 +3213,15 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             self.shadowEyeDistance = frustum.eyeDistance;
 
             // A soft shadow is drawn into only as much of the map as its blur needs, so that the
-            // blur is always the same few texels - see softShadowRegion. More texels in screenshots,
-            // where the filter can afford more taps. The viewport set when this framebuffer was
-            // bound above is replaced; the clear still covers the whole texture, so the unused
-            // part reads as lit.
+            // blur is always the same few texels - see softShadowRegion. Screenshots are drawn
+            // better than the view: more texels for a soft shadow, where the filter can afford more
+            // taps, and a hard one's edge smoothed, as the 8 x 8 lookup screenshots had did. The
+            // viewport set when this framebuffer was bound above is replaced; the clear still covers
+            // the whole texture, so the unused part reads as lit.
             const mapSize = self.rttFramebufferDepth.width;
-            self.shadowRegion = softShadowRegion(frustum, self.shadowSoftness, mapSize,
-                                                 self.renderToTexture ? 7.5 : 4);
+            self.shadowRegion = self.renderToTexture
+                ? softShadowRegion(frustum, self.shadowSoftness, mapSize, SCREENSHOT_SOFT_SHADOW_TARGET_TEXELS, SCREENSHOT_HARD_SHADOW_RADIUS_TEXELS)
+                : softShadowRegion(frustum, self.shadowSoftness, mapSize, SOFT_SHADOW_TARGET_TEXELS);
             self.gl.viewport(0, 0, self.shadowRegion.width, self.shadowRegion.height);
 
             self.gl.disable(self.gl.CULL_FACE);

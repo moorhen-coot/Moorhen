@@ -126,7 +126,11 @@ ${anaglyph_colour_snippet}
     }
 
     void main(void) {
-      shadowDepthSlope = receiverPlaneDepthSlope();
+      // Only with shadows: two derivatives and a 2x2 inverse that nothing else uses, in the
+      // fragment shader every surface goes through. doShadows is a uniform, so the branch is the
+      // same across the 2x2 quad and the derivatives inside it stay valid.
+      shadowDepthSlope = vec2(0.0);
+      if(doShadows) shadowDepthSlope = receiverPlaneDepthSlope();
 
       float silly_scale = 0.7071067811865475;
       float x = 2.0*(vTexture.x-.5);
