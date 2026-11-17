@@ -51,7 +51,11 @@ import {
 } from "../store";
 import { newMovie } from "../store/movieSlice";
 
+import { addShapeOverlay, shapesFromSession } from "../store/overlaysSlice";
 import type {
+    Overlay2DCircle,
+    Overlay2DLine,
+    Overlay2DPolygon,
     Overlay2DFracPath,
     Overlay2DImageSrcFrac,
     Overlay2DLatexSrcFrac,
@@ -210,6 +214,9 @@ export type Overlay2DSessionData = {
     /** Only in sessions saved before LaTeX became text with `latex` set; no longer written. */
     latexFracPath2D?: Overlay2DLatexSrcFrac[];
     imageFracPath2D: Overlay2DImageSrcFrac[];
+    circle2D?: Overlay2DCircle[];
+    polygon2D?: Overlay2DPolygon[];
+    line2D?: Overlay2DLine[];
 };
 
 export type Moorhen3DObjectSessionData = {
@@ -613,6 +620,9 @@ export class MoorhenTimeCapsule {
             svgPath2D: this.store.getState().overlays.svgPathOverlayList,
             textFracPath2D: this.store.getState().overlays.textOverlayList,
             imageFracPath2D: this.store.getState().overlays.imageOverlayList,
+            circle2D: this.store.getState().overlays.shapeOverlayList.filter((s): s is Overlay2DCircle => s.type === "Circle"),
+            polygon2D: this.store.getState().overlays.shapeOverlayList.filter((s): s is Overlay2DPolygon => s.type === "Polygon"),
+            line2D: this.store.getState().overlays.shapeOverlayList.filter((s): s is Overlay2DLine => s.type === "Line"),
         };
 
         const session: backupSession = {
@@ -1203,6 +1213,7 @@ export class MoorhenTimeCapsule {
                     dispatch(addLatexOverlay(d));
                 });
             }
+            shapesFromSession(sessionData.overlay2dData).forEach(shape => dispatch(addShapeOverlay(shape)));
             if (sessionData.overlay2dData.imageFracPath2D) {
                 sessionData.overlay2dData.imageFracPath2D.forEach(d => {
                     dispatch(addImageOverlay(d));

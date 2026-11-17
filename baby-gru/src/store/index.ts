@@ -79,6 +79,9 @@ export {
     removeTextOverlay,
     removeSvgPathOverlay,
     removeFracPathOverlay,
+    addShapeOverlay,
+    removeShapeOverlay,
+    updateOverlay,
 }  from "./overlaysSlice";
 export {
     setAnimateRefine,
@@ -127,6 +130,7 @@ export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  
 export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
 export {
     setSelectedThreeDObject,
+    setSelected2DObject,
     setActiveMap,
     setViewOnly,
     setTheme,

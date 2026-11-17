@@ -21,6 +21,8 @@ const initialState: {
     theme: string;
     residueSelection: ResidueSelection;
     selectedThreeDObjectId: string | null;
+    /** Which 2D overlay object is showing its handles, or none. Like selectedThreeDObjectId. */
+    selected2DObjectId: string | null;
     isShowingTomograms: boolean;
     isAnimatingTrajectory: boolean;
     isChangingRotamers: boolean;
@@ -50,6 +52,7 @@ const initialState: {
 
     showHoverInfo: true,
     selectedThreeDObjectId: null,
+    selected2DObjectId: null,
     residueSelection: {
         molecule: null,
         first: null,
@@ -162,6 +165,10 @@ const generalStatesSlice = createSlice({
         setSelectedThreeDObject: (state, action: PayloadAction<string | null>) => {
             state.selectedThreeDObjectId = action.payload;
         },
+        /** Which 2D overlay object is showing its handles, or none. */
+        setSelected2DObject: (state, action: PayloadAction<string | null>) => {
+            state.selected2DObjectId = action.payload;
+        },
         setResidueSelection: (state, action: PayloadAction<ResidueSelection>) => {
             state.residueSelection = action.payload as unknown as typeof state.residueSelection; 
         },
@@ -202,6 +209,7 @@ const generalStatesSlice = createSlice({
 
 export const {
     setSelectedThreeDObject,
+    setSelected2DObject,
     setActiveMap,
     setViewOnly,
     setTheme,

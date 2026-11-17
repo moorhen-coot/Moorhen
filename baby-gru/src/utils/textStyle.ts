@@ -93,6 +93,52 @@ export const styleMathJaxSvg = (svg: string, colour: string, widthPx: number, he
     return svg.substring(0, start) + rootTag + svg.substring(end);
 };
 
+/** Typeset SVG by LaTeX source, most recently used last. Bounded, as sources are typed freely. */
+const typesetCache = new Map<string, string>();
+const TYPESET_CACHE_SIZE = 200;
+
+/**
+ * MathJax's SVG for a LaTeX string, typeset once per string.
+ *
+ * Its output depends only on the source - size and colour are set afterwards (styleMathJaxSvg) -
+ * so a string drawn at a new size, as it is at every step of a resize, need not be typeset again.
+ */
+const typesetLatex = async (tex: string): Promise<string> => {
+    const cached = typesetCache.get(tex);
+    if (cached !== undefined) {
+        typesetCache.delete(tex);
+        typesetCache.set(tex, cached);
+        return cached;
+    }
+    const { svg } = await getMathJaxSVG(tex);
+    if (svg) {
+        typesetCache.set(tex, svg);
+        if (typesetCache.size > TYPESET_CACHE_SIZE) typesetCache.delete(typesetCache.keys().next().value);
+    }
+    return svg;
+};
+
+const latexMetricsCache = new Map<string, { width: number; height: number; ascent: number }>();
+
+/**
+ * The size a LaTeX string will be drawn at, in CSS pixels, without making an image of it: what the
+ * 2D handles need to draw a box round it. Cached, as typesetting is not cheap.
+ */
+export const latexMetrics = async (tex: string, fontPixelSize: number): Promise<{ width: number; height: number; ascent: number } | null> => {
+    const key = fontPixelSize + "\u0000" + tex;
+    const cached = latexMetricsCache.get(key);
+    if (cached) return cached;
+    if (!tex) return null;
+    const svg = await typesetLatex(tex);
+    const metrics = svg ? parseMathJaxSvgMetrics(svg) : null;
+    if (!metrics) return null;
+    const exPx = MATHJAX_EX_PER_EM * fontPixelSize;
+    const height = metrics.heightEx * exPx;
+    const result = { width: metrics.widthEx * exPx, height, ascent: height - metrics.depthEx * exPx };
+    latexMetricsCache.set(key, result);
+    return result;
+};
+
 /** A typeset LaTeX string, ready to draw. */
 export interface LatexImage {
     img: HTMLImageElement;
@@ -115,7 +161,7 @@ export interface LatexImage {
  */
 export const latexToImage = async (tex: string, fontPixelSize: number, colour: string, resolution = 1): Promise<LatexImage | null> => {
     if (!tex) return null;
-    const { svg } = await getMathJaxSVG(tex);
+    const svg = await typesetLatex(tex);
     if (!svg) return null;
     const metrics = parseMathJaxSvgMetrics(svg);
     if (!metrics) return null;

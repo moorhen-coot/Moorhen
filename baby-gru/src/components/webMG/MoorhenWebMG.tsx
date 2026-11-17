@@ -21,6 +21,7 @@ import { setQuat, setOrigin, setZoom,
          autoClipFogByZoom,  } from "../../store"
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
+import { Overlay2DHandles } from './Overlay2DHandles';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
 import { isSilent, viewDifference } from "../../WebGLgComponents/viewEcho";
@@ -969,7 +970,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     store={store}
                     dispatch={dispatch} />
                     {useWebGPU && webGPUAvailable && <MoorhenWebGPUMainView glRef={glRef as React.RefObject<MGWebGL>} />}
-                    <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>;
+                    <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>
+                    <Overlay2DHandles />
                 </figure>
                 {showContextMenu &&
                 <MoorhenContextMenu

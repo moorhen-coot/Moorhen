@@ -281,7 +281,7 @@ export class ScreenRecorder  {
 
         Promise.all(promises).then(images => {
             for(let i_img=0;i_img<images.length;i_img++){
-                const img_frac = {x:imageOverlays[i_img].x,y:imageOverlays[i_img].y,img:images[i_img],width:imageOverlays[i_img].width,height:imageOverlays[i_img].height,zIndex:imageOverlays[i_img].zIndex}
+                const img_frac = {x:imageOverlays[i_img].x,y:imageOverlays[i_img].y,img:images[i_img],width:imageOverlays[i_img].width,height:imageOverlays[i_img].height,zIndex:imageOverlays[i_img].zIndex,rotation:imageOverlays[i_img].rotation}
                 imgFracs.push(img_frac)
             }
 

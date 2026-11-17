@@ -7,6 +7,8 @@ import { Provider } from "react-redux";
 import "./testUtils";
 import { createMoorhenStore } from "@/store/MoorhenReduxStore";
 import { setOrigin } from "@/store/sceneSettingsSlice";
+import { addSvgPathOverlay, addTextOverlay, updateOverlay } from "@/store/overlaysSlice";
+import { setSelected2DObject } from "@/store/generalStatesSlice";
 import { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
 import { MoorhenInstanceProvider } from "@/InstanceManager";
 import { Moorhen3DObjects } from "@/components/modal/Moorhen3DObjectsModal";
@@ -77,3 +79,111 @@ describe("2D objects panel", () => {
         expect(text.drawStyle).toBe("fill");
     });
 });
+
+describe("2D objects panel: shapes", () => {
+    const chooseType = (value: string) => {
+        const select = screen.getByDisplayValue("Text") as HTMLSelectElement;
+        act(() => {
+            fireEvent.change(select, { target: { value } });
+        });
+    };
+
+    test("a new polygon is a filled square in the middle of the view, and selected", () => {
+        const store = renderPanel(<Moorhen2DCanvasObjects />);
+        chooseType("polygon");
+        click("Apply");
+        const [polygon] = store.getState().overlays.shapeOverlayList;
+        expect(polygon).toMatchObject({ type: "Polygon", sides: 4, x: 0.5, y: 0.5, drawStyle: "fill" });
+        expect(polygon.type === "Polygon" && polygon.points).toHaveLength(8);
+        expect(store.getState().generalStates.selected2DObjectId).toBe(polygon.uniqueId);
+    });
+
+    test("changing the sides makes a regular polygon of that many", () => {
+        const store = renderPanel(<Moorhen2DCanvasObjects />);
+        chooseType("polygon");
+        const sidesInput = screen.getByLabelText("Sides") as HTMLInputElement;
+        expect(sidesInput.value).toBe("4");
+        act(() => {
+            fireEvent.change(sidesInput, { target: { value: "6" } });
+        });
+        click("Apply");
+        const [polygon] = store.getState().overlays.shapeOverlayList;
+        expect(polygon).toMatchObject({ type: "Polygon", sides: 6 });
+        expect(polygon.type === "Polygon" && polygon.points).toHaveLength(12);
+    });
+
+    test("a new line has an arrow at its end, and one can be added at its start", () => {
+        const store = renderPanel(<Moorhen2DCanvasObjects />);
+        chooseType("line");
+        const startArrow = screen.getByText("Arrow at start").nextElementSibling.querySelector("input") as HTMLInputElement;
+        act(() => {
+            fireEvent.click(startArrow);
+        });
+        click("Apply");
+        expect(store.getState().overlays.shapeOverlayList[0]).toMatchObject({ type: "Line", arrowStart: true, arrowEnd: true });
+    });
+});
+
+describe("2D objects panel: z-depth", () => {
+    const depthSelect = () => screen.getByDisplayValue("0") as HTMLSelectElement;
+
+    test.each([["text"], ["polygon"]])("a new %s goes to the depth chosen", type => {
+        const store = renderPanel(<Moorhen2DCanvasObjects />);
+        if (type !== "text") {
+            act(() => {
+                fireEvent.change(screen.getByDisplayValue("Text"), { target: { value: type } });
+            });
+        }
+        act(() => {
+            fireEvent.change(depthSelect(), { target: { value: "3" } });
+        });
+        click("Apply");
+        const all = [...store.getState().overlays.textOverlayList, ...store.getState().overlays.shapeOverlayList];
+        expect(all).toHaveLength(1);
+        expect(all[0].zIndex).toBe(3);
+    });
+
+    test("an existing object moves to a new depth, and stays there", () => {
+        const store = renderPanel(<Moorhen2DCanvasObjects />);
+        click("Apply");
+        act(() => {
+            fireEvent.change(depthSelect(), { target: { value: "2" } });
+        });
+        click("Apply");
+        expect(store.getState().overlays.textOverlayList.map(t => t.zIndex)).toEqual([2]);
+    });
+});
+
+describe("2D objects panel: Apply changes an object in place", () => {
+    test("a moved SVG path keeps its move when something else about it is changed", () => {
+        const store = renderPanel(<Moorhen2DCanvasObjects />);
+        act(() => {
+            store.dispatch(addSvgPathOverlay({ path: "M 10 10 L 50 50", drawStyle: "stroke", strokeStyle: "#000000ff", uniqueId: "svg" }));
+            // As the handles move it.
+            store.dispatch(updateOverlay({ uniqueId: "svg", changes: { offset: [30, 20] } }));
+            store.dispatch(setSelected2DObject("svg"));
+        });
+        act(() => {
+            fireEvent.change(screen.getByDisplayValue("Outline"), { target: { value: "fill" } });
+        });
+        click("Apply");
+        expect(store.getState().overlays.svgPathOverlayList).toEqual([expect.objectContaining({ uniqueId: "svg", drawStyle: "fill", offset: [30, 20] })]);
+    });
+
+    test("applying the lower of two objects at one depth leaves it lower, and keeps its turn", () => {
+        const store = renderPanel(<Moorhen2DCanvasObjects />);
+        act(() => {
+            store.dispatch(addTextOverlay({ x: 0.5, y: 0.5, text: "lower", fontFamily: "serif", fontPixelSize: 20, uniqueId: "lower", rotation: 30 }));
+            store.dispatch(addTextOverlay({ x: 0.5, y: 0.5, text: "upper", fontFamily: "serif", fontPixelSize: 20, uniqueId: "upper" }));
+            store.dispatch(setSelected2DObject("lower"));
+        });
+        act(() => {
+            fireEvent.change(screen.getByDisplayValue("lower"), { target: { value: "still lower" } });
+        });
+        click("Apply");
+        const texts = store.getState().overlays.textOverlayList;
+        expect(texts.map(t => t.text)).toEqual(["still lower", "upper"]);
+        expect(texts[0].rotation).toBe(30);
+    });
+});
+
