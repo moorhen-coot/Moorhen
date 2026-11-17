@@ -265,10 +265,16 @@ export const batchLoadLigands = async (
         await Promise.all(
             items.map(async item => {
                 const compIds = new Set([...item.missingCompIds, ...(item.molecule.ligands ?? []).map(ligand => ligand.resName)]);
+                const found = new Set<string>();
                 for (const compId of compIds) {
                     const text = dictionaries.has(compId) ? await dictionaries.get(compId) : undefined;
-                    if (text) item.molecule.cacheLigandDict(text);
+                    if (text) {
+                        item.molecule.cacheLigandDict(text);
+                        found.add(compId);
+                    }
                 }
+                // Its record's missing dictionaries from what Coot said and what was read since, without asking again
+                item.molecule.refreshRecord(item.missingCompIds.filter(compId => !found.has(compId)).sort());
             })
         );
 

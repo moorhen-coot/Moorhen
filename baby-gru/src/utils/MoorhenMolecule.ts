@@ -1179,6 +1179,11 @@ export class MoorhenMolecule {
         )) as moorhen.WorkerResponse<string[]>;
 
         if (response.data.result.status === "Completed") {
+            // Nothing missing: that is the record's answer, no need to ask again
+            if (response.data.result.result.length === 0) {
+                this.refreshRecord([]);
+                return;
+            }
             try {
                 const ligandDicts = await Promise.all(
                     response.data.result.result.map(newTlc => {
@@ -2204,17 +2209,13 @@ export class MoorhenMolecule {
     }
 
     /**
-     * Ask Coot which ligand residue types of this molecule have no dictionary, into its record. Done
-     * when its ligands change and when it is given a dictionary.
+     * Ask Coot which residue types of this molecule have no dictionary, into its record (a store sync
+     * warns about new ones). Done when its atoms change and when it is given a dictionary; drawing a
+     * representation does not ask.
      */
     async refreshMissingDictionaries(): Promise<void> {
         // Not in Coot yet (a molecule's gemmi structure is read before Coot gives it a number)
         if (this.recordClosed || typeof this.molNo !== "number" || this.molNo < 0) return;
-        const ligandTypes = new Set((this.ligands ?? []).map(ligand => ligand.resName));
-        if (ligandTypes.size === 0) {
-            this.refreshRecord([]);
-            return;
-        }
         let missing: string[] = [];
         try {
             missing = (await this.moorhenInstance?.cootCommand?.get_residue_names_with_no_dictionary(this.molNo)) ?? [];
@@ -2222,7 +2223,7 @@ export class MoorhenMolecule {
             // Not known: the record keeps what it had
             return;
         }
-        this.refreshRecord(missing.filter(type => ligandTypes.has(type)).sort());
+        this.refreshRecord([...missing].sort());
     }
 
     /**

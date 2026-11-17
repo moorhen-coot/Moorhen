@@ -1,4 +1,6 @@
 import type { RootState } from "@/store/MoorhenReduxStore";
+import type { MoleculeRecord } from "@/store/moleculesSlice";
+import { enqueueSnackbar } from "@/store/snackbarSlice";
 import { removeVectorsByTag } from "@/store/vectorsSlice";
 import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_PARTNER, TAG_SOURCE, matchesTags } from "@/utils/tags";
 import type { MoorhenInstance } from "./MoorhenInstance";
@@ -42,6 +44,36 @@ const removeContactVectorsOfHiddenMolecules = (instance: MoorhenInstance) => {
     }
 };
 
+/** The residue types each molecule (by uid) has been warned about having no dictionary, per instance */
+const warnedMissingDictionaries = new WeakMap<MoorhenInstance, Map<string, Set<string>>>();
+
+/**
+ * Warn about residue types newly without a dictionary, in any molecule: one message for all of
+ * them (a batch of a thousand ligands of the same unknown type gives one), each type once per
+ * molecule while it stays missing.
+ */
+const warnAboutMissingDictionaries = (instance: MoorhenInstance, records: Record<string, MoleculeRecord>) => {
+    let warned = warnedMissingDictionaries.get(instance);
+    if (!warned) {
+        warned = new Map();
+        warnedMissingDictionaries.set(instance, warned);
+    }
+    const types = new Set<string>();
+    for (const [uid, record] of Object.entries(records)) {
+        const before = warned.get(uid);
+        record.missingDictionaries.filter(type => !before?.has(type)).forEach(type => types.add(type));
+        warned.set(uid, new Set(record.missingDictionaries));
+    }
+    for (const uid of warned.keys()) if (!(uid in records)) warned.delete(uid);
+    if (types.size === 0) return;
+    instance.store.dispatch(
+        enqueueSnackbar({
+            message: `Monomers (${[...types].sort().join(", ")}) have no dictionary description. Some atoms/bonds may be drawn oddly.`,
+            variant: "warning",
+        })
+    );
+};
+
 /** Helper so each entry's value type is inferred from its selector */
 const sync = <T>(entry: StoreSync<T>): StoreSync<T> => entry;
 
@@ -60,6 +92,13 @@ const STORE_SYNCS: StoreSync<unknown>[] = [
         name: "hidden or deleted molecules lose their ligand contact vectors",
         selector: state => state.molecules.visibleMolecules,
         apply: instance => removeContactVectorsOfHiddenMolecules(instance),
+    }),
+    // Records are refreshed when a molecule's atoms change or it gets a dictionary: warned about
+    // there, not after every draw of every representation (which asked Coot each time)
+    sync({
+        name: "warn about residue types with no dictionary",
+        selector: state => state.molecules.moleculeRecords,
+        apply: (instance, records) => warnAboutMissingDictionaries(instance, records),
     }),
 ];
 

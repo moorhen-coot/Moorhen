@@ -23,7 +23,7 @@ export type MoleculeRecord = {
     /** MoorhenMolecule.isLigandOnly(): listed in the Ligands panel, not given a card in the Models panel */
     isLigandOnly: boolean;
     ligands: MoleculeLigandRecord[];
-    /** The ligand residue types Coot has no dictionary for */
+    /** The residue types (ligands or not) Coot has no dictionary for, sorted */
     missingDictionaries: string[];
 };
 

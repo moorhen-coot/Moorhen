@@ -85,4 +85,15 @@ export const readDictionary = async (
         target.store,
         blocks.map(([compId, content]) => ({ compId, content, moleculeUid: molecule?.uniqueId ?? null, source }))
     );
+    // Read for every molecule: those whose records list one of its types as missing ask Coot again
+    // (the one it was read for, if any, does so itself)
+    if (!molecule) {
+        const compIds = new Set(blocks.map(([compId]) => compId));
+        const { moleculeList, moleculeRecords } = target.store.getState().molecules;
+        for (const other of moleculeList) {
+            if (moleculeRecords[other.uniqueId]?.missingDictionaries.some(type => compIds.has(type))) {
+                void other.refreshMissingDictionaries();
+            }
+        }
+    }
 };
