@@ -1273,6 +1273,7 @@ class molecules_container_js : public molecules_container_t {
             if (!is_valid_model_molecule(imol_1) || !is_valid_model_molecule(imol_2)) return error("invalid molecule");
             const int imol = copy_fragment_using_cid(imol_1, cid_1);
             if (imol < 0) return error("nothing selected by the first cid");
+            closed_merged_molecules.erase(imol); // an index freed earlier, in use again
             mmdb::Manager *mol = get_mol(imol);
 
             Json::Value chains(Json::arrayValue);
@@ -1294,15 +1295,28 @@ class molecules_container_js : public molecules_container_t {
             for (const auto &[id, source_id] : added) add_chain(id, imol_2, source_id);
             (*this)[imol].atom_sel = make_asc(mol);
 
-            // Dictionaries read for imol_1 or imol_2 only (not for every molecule)
+            // Dictionaries read for imol_1 or imol_2 only (not for every molecule), each residue type taken
+            // from the molecule its atoms came from (imol_1 first if both have it): a lookup in the other
+            // one would find the global dictionary and copy it instead of the source's own.
+            // Coot never removes the dictionaries of a closed molecule, and this index may have been used
+            // before (an earlier merged molecule, a molecule since deleted): what is still filed under it
+            // is forgotten first, else it would be used instead of the copies.
             coot::protein_geometry &geom = get_geometry();
-            std::set<std::string> types;
-            for (int i = 0; i < (*this)[imol].atom_sel.n_selected_atoms; i++)
-                types.insert((*this)[imol].atom_sel.atom_selection[i]->GetResName());
-            for (const auto &type : types) {
-                if (geom.have_dictionary_for_residue_type_no_dynamic_add(type, imol)) continue;
-                if (!geom.copy_monomer_restraints(type, imol_1, imol)) geom.copy_monomer_restraints(type, imol_2, imol);
+            std::set<std::string> second_chains;
+            for (const auto &[id, source_id] : added) second_chains.insert(id);
+            std::map<std::string, std::pair<bool, bool>> types; // type -> (in imol_1's atoms, in imol_2's)
+            for (int i = 0; i < (*this)[imol].atom_sel.n_selected_atoms; i++) {
+                mmdb::Atom *atom = (*this)[imol].atom_sel.atom_selection[i];
+                auto &from = types[atom->GetResName()];
+                (second_chains.count(atom->GetChainID()) ? from.second : from.first) = true;
             }
+            std::set<std::string> type_names;
+            for (const auto &[type, from] : types) type_names.insert(type);
+            forget_dictionaries_of(imol, type_names);
+            for (const auto &[type, from] : types)
+                if (!(from.first && geom.copy_monomer_restraints(type, imol_1, imol)) && from.second)
+                    geom.copy_monomer_restraints(type, imol_2, imol);
+            merged_molecule_types[imol] = type_names;
 
             Json::Value root;
             root["imol"] = imol;
@@ -1312,13 +1326,41 @@ class molecules_container_js : public molecules_container_t {
             return Json::writeString(builder, root);
         }
 
-        // Delete a molecule made by make_merged_molecule_json (and any closed molecules after it, so
-        // that their indices are reused).
+        // Delete a molecule made by make_merged_molecule_json, with the dictionaries copied for it. Its
+        // index is freed for reuse when it is the last one (and so are those of other merged molecules
+        // deleted before it, now last). Only merged molecules: the index of a molecule the user deleted
+        // stays taken, as elsewhere, so that a new molecule does not take its number.
         int delete_merged_molecule(int imol) {
             const int status = close_molecule(imol);
-            end_delete_closed_molecules();
+            const auto types = merged_molecule_types.find(imol);
+            if (types != merged_molecule_types.end()) {
+                forget_dictionaries_of(imol, types->second);
+                merged_molecule_types.erase(types);
+            }
+            closed_merged_molecules.insert(imol);
+            while (get_number_of_molecules() > 0) {
+                const int last = static_cast<int>(get_number_of_molecules()) - 1;
+                if (!closed_merged_molecules.count(last) || !(*this)[last].is_closed()) break;
+                pop_back();
+                closed_merged_molecules.erase(last);
+            }
             return status;
         }
+
+    private:
+        // The residue types whose dictionaries were copied for each merged molecule
+        std::map<int, std::set<std::string>> merged_molecule_types;
+        // Merged molecules deleted while not last: their index is freed once those after it are gone
+        std::set<int> closed_merged_molecules;
+
+        // Remove the dictionaries filed under this molecule index only (not the global ones)
+        void forget_dictionaries_of(int imol, const std::set<std::string> &types) {
+            coot::protein_geometry &geom = get_geometry();
+            for (const auto &type : types)
+                while (geom.delete_mon_lib(type, imol)) {}
+        }
+
+    public:
 
         // Hydrogen bonds between two selections of a molecule (the second without the atoms of the
         // first). JSON, see selection-contacts.h.

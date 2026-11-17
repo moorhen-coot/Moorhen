@@ -103,6 +103,52 @@ describe('merged molecules and selection contacts', () => {
         console.log(bridges.map(b => `${b.atom1.resName} ${b.atom1.cid} (${b.charge1}) - ${b.atom2.resName} ${b.atom2.cid} ${b.distance.toFixed(2)}`).join('\n'))
     })
 
+    test('a merged molecule uses each source molecule\'s own dictionary, not a stale one at its index', () => {
+        // Two ligand molecules with the same residue type, each with its own dictionary read for it only
+        // (as .mol / SMILES ligands are): ligand 1 as the global BGC, ligand 2 a fluorinated variant (G2F
+        // renamed). Merged in turn, the second merge reuses the first one's index.
+        const fluorinated = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'G2F.cif'), 'utf8').replaceAll('G2F', 'BGC')
+        const plain = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'BGC.cif'), 'utf8')
+        const ligand1 = molecules_container.copy_fragment_using_cid(imolFull, LIGAND_CID)
+        const ligand2 = molecules_container.copy_fragment_using_cid(imolFull, LIGAND_CID)
+        molecules_container.read_dictionary_string(plain, ligand1)
+        molecules_container.read_dictionary_string(fluorinated, ligand2)
+
+        // Whether the BGC dictionary filed for this molecule has a fluorine (builds a monomer from it, then removes it)
+        const hasFluorine = imol => {
+            const monomer = molecules_container.get_monomer_from_dictionary('BGC', imol, false)
+            const pdb = molecules_container.molecule_to_PDB_string(monomer)
+            molecules_container.pop_back()
+            return pdb.split('\n').some(line => line.startsWith('HETATM') && line.slice(76, 78).trim() === 'F')
+        }
+        expect(hasFluorine(ligand2)).toBe(true)
+
+        const first = json(molecules_container.make_merged_molecule_json(imolProtein, '/*', ligand1, LIGAND_CID))
+        expect(hasFluorine(first.imol)).toBe(false)
+        molecules_container.delete_merged_molecule(first.imol)
+
+        const second = json(molecules_container.make_merged_molecule_json(imolProtein, '/*', ligand2, LIGAND_CID))
+        expect(second.imol).toBe(first.imol)
+        // Ligand 2's own dictionary: not the global BGC (the protein side would find that one), nor
+        // what the first merged molecule left at this index
+        expect(hasFluorine(second.imol)).toBe(true)
+        molecules_container.delete_merged_molecule(second.imol)
+        // Nothing left filed under the index: back to the global BGC
+        const third = json(molecules_container.make_merged_molecule_json(imolProtein, '/*', imolLigand, LIGAND_CID))
+        expect(hasFluorine(third.imol)).toBe(false)
+        molecules_container.delete_merged_molecule(third.imol)
+    })
+
+    test('deleting a merged molecule does not free the index of a molecule the user deleted', () => {
+        const deleted = molecules_container.copy_fragment_using_cid(imolFull, LIGAND_CID)
+        molecules_container.close_molecule(deleted)
+        const merged = json(molecules_container.make_merged_molecule_json(imolProtein, '/*', imolLigand, LIGAND_CID))
+        expect(merged.imol).toBe(deleted + 1)
+        molecules_container.delete_merged_molecule(merged.imol)
+        // The merged molecule's slot is gone, the deleted molecule's stays: its number is not reused
+        expect(molecules_container.get_number_of_molecules()).toBe(deleted + 1)
+    })
+
     test('errors are JSON, not crashes', () => {
         expect(json(molecules_container.make_merged_molecule_json(imolProtein, '/*', imolLigand, '//Z/99')).error).toBeDefined()
         expect(json(molecules_container.get_h_bonds_between_json(9999, '/*', '/*', false)).error).toBeDefined()
