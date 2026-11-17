@@ -6,6 +6,13 @@ import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { setDisplayBuffers, setCanvasSize } from "../store/glRefSlice"
 import { setClipStart, setClipEnd, setFogStart, setFogEnd } from "../store/sceneSettingsSlice"
+
+/**
+ * Where clip planes and fog go when they are turned off: far beyond anything drawn, in angstroms.
+ * Not larger: the clip planes are also the projection's near and far, so the depth buffer spreads
+ * its precision over twice this distance.
+ */
+const SLAB_OFF_DISTANCE = 1e4
 import { setOrigin as setStoreOrigin, setZoom as setStoreZoom } from "../store/sceneSettingsSlice"
 import { setQuat as setStoreQuat } from "../store/glRefSlice"
 import { isSilent, viewDifference } from "./viewEcho"
@@ -300,6 +307,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
          * Held so that overlapping requests do not pump the scene at twice the frame rate.
          */
         cameraPumpHandle: number | null;
+        /** The once-a-second frame-stats timer, cleared on unmount so it stops holding the viewer alive. */
+        statsIntervalHandle: ReturnType<typeof setInterval> | null;
         /**
          * The time, in seconds, the camera is advanced to on the next draw. Null means wall clock.
          *
@@ -672,7 +681,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.store = props.store;
         this.dispatch = props.dispatch
 
-        setInterval(() => {
+        this.statsIntervalHandle = setInterval(() => {
             if(!this.gl) return;
             const sum = this.mspfArray.reduce((a, b) => a + b, 0);
             const avg = (sum / this.mspfArray.length) || 0;
@@ -986,6 +995,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         // otherwise call doRightClick on an unmounted viewer.
         this.destroyTouchGestures?.()
         this.destroyTouchGestures = undefined
+        // The interval's closure holds this viewer, and so its GL context, for the life of the page.
+        if (this.statsIntervalHandle !== null) {
+            clearInterval(this.statsIntervalHandle)
+            this.statsIntervalHandle = null
+        }
+        // Browsers allow only a handful of live contexts (16 in Chrome) and otherwise free one only
+        // at garbage collection, so opening and closing viewers would run into that limit.
+        this.gl?.getExtension("WEBGL_lose_context")?.loseContext()
     }
 
     /**
@@ -1288,10 +1305,17 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
      */
     applySlabToRenderer() {
         const slab = slabFromCamera(this._camera.controller.liveState)
-        if (this.gl_clipPlane0) this.gl_clipPlane0[3] = slab.clipPlane0W
-        if (this.gl_clipPlane1) this.gl_clipPlane1[3] = slab.clipPlane1W
-        this.gl_fog_start = slab.fogStart
-        this.gl_fog_end = slab.fogEnd
+        // Fog or clipping turned off (doFog, doClip in the scene settings): only what is drawn
+        // changes. The camera and the store keep the planes, for when it is turned on again.
+        // The WebGPU view reads these four values too.
+        const sceneSettings = this.store?.getState().sceneSettings
+        const doClip = sceneSettings?.doClip ?? true
+        const doFog = sceneSettings?.doFog ?? true
+        // Front plane: (0,0,-1,w) keeps z <= w, so far in front is a large positive w
+        if (this.gl_clipPlane0) this.gl_clipPlane0[3] = doClip ? slab.clipPlane0W : SLAB_OFF_DISTANCE
+        if (this.gl_clipPlane1) this.gl_clipPlane1[3] = doClip ? slab.clipPlane1W : SLAB_OFF_DISTANCE
+        this.gl_fog_start = doFog ? slab.fogStart : SLAB_OFF_DISTANCE
+        this.gl_fog_end = doFog ? slab.fogEnd : SLAB_OFF_DISTANCE + 1
     }
 
     setFog(fog) {

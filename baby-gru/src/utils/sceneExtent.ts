@@ -113,6 +113,9 @@ export const spanOfCell = (cell: { a?: number, b?: number, c?: number } | null |
  * the map radius up changed nothing, because the radius is deliberately not an input - the one
  * input there was happened to be undefined.
  *
+ * ("Clip off" no longer depends on this span: since it became the doClip scene setting, the
+ * renderer draws with planes far beyond anything loaded, see MGWebGL.applySlabToRenderer.)
+ *
  * The real cell is `headerInfo.cell`, filled by MoorhenMap.initialise from the MTZ or MRC header,
  * and already trusted elsewhere - cellCentre is derived from it one line later.
  *

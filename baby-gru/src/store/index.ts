@@ -220,6 +220,19 @@ export {
     updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
 }  from "./movieSlice";
 export {
+    addUserScene,
+    addUserSnapshot,
+    removeUserScene,
+    renameUserScene,
+    setSelectedScene,
+    setSceneChanging,
+    sceneShown,
+    setSceneContent,
+    setUserSceneState,
+    setSavedSceneSetting,
+    saveSceneSettings,
+}  from "./userScenesSlice";
+export {
     setOrigin,
     setDrawCrosshairs,
     setDrawScaleBar,
@@ -229,7 +242,10 @@ export {
     setDoSSAO,
     setSsaoRadius,
     setSsaoBias,
-    setResetClippingFogging,
+    setAutoFog,
+    setAutoClip,
+    setDoFog,
+    setDoClip,
     setDefaultRepresentationStyle,
     setClipCap,
     resetSceneSettings,
@@ -282,19 +298,6 @@ export {
     autoClipFogByZoom,
     applySceneSettingsSnapshot,
 }  from "./sceneSettingsSlice";
-export {
-    addUserScene,
-    addUserSnapshot,
-    removeUserScene,
-    renameUserScene,
-    setSelectedScene,
-    setSceneChanging,
-    sceneShown,
-    setSceneContent,
-    setUserSceneState,
-    setSavedSceneSetting,
-    saveSceneSettings,
-}  from "./userScenesSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

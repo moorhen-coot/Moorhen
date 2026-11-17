@@ -27,6 +27,7 @@ export const modalKeys = Object.freeze({
     COLOR_MAP_BY_MAP : "colour-map-by-map",
     VECTORS : "vectors",
     OVERLAYS2D : "overlays-2d",
+    CHECK_LIST_TEST: "check-list-test",
     PAEPLOT : "pae-plot",
     SCENE_SLIDERS: "scene-sliders",
     CONKIT: "conkit",

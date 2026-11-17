@@ -35,7 +35,7 @@ type MoorhenButtonIconProps = MoorhenButtonPropsTypeBase & {
 
 type MoorhenButtonDefaultProps = MoorhenButtonPropsTypeBase & {
     type?: "default";
-    size?: "small" | "medium" | "large" | "sm" | "lg" | "md" | "accordion";
+    size?: "small" | "medium" | "large" | "sm" | "lg" | "md" | "accordion" | "xsmall";
     variant?: "primary" | "secondary" | "danger" | "white" | "outlined" | "light" | "mini";
     icon?: MoorhenSVG;
 };
@@ -128,7 +128,7 @@ export const MoorhenButton = (props: MoorhenButtonIconProps | MoorhenButtonDefau
 
     const isChecked = type === "toggle" && "checked" in props ? props.checked : undefined;
     const iconSize = type === "toggle" ? "medium" : size;
-    const resultClassName = `moorhen__button__${type} ${isChecked !== undefined ? (isChecked ? "checked" : "unchecked") : ""} ${variant ? `${variant}` : ""} ${className} ${disabled ? " disabled" : ""}`;
+    const resultClassName = `moorhen__button__${type} ${isChecked !== undefined ? (isChecked ? "checked" : "unchecked") : ""} ${variant ? `${variant}` : ""} ${className} ${disabled ? " disabled" : ""}${size === "xsmall" ? " xsmall" : ""}`;
     const [animation, setAnimation] = useState<boolean>(false);
 
     const onClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {

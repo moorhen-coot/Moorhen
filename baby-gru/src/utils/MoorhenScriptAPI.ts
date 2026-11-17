@@ -6,7 +6,7 @@ import { addMap } from "../store/mapsSlice";
 import { setOrigin, setZoom, setQuat, setRequestDrawScene, setLightPosition, setAmbient, setSpecular, setDiffuse, setSpecularPower, setFogClipOffset, setFogStart, setFogEnd, setClipStart, setClipEnd, setActiveMolecule, setDraggableMolecule, setDisplayBuffers} from "../store"
 import { addTextOverlay, addSvgPathOverlay, addFracPathOverlay, emptyOverlays} from "../store/overlaysSlice"
 import { setDrawCrosshairs, setDrawScaleBar, setDrawMissingLoops, setDefaultBondSmoothness,
-    setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, resetSceneSettings, setEdgeDetectNormalScale,
+    setDoSSAO, setSsaoRadius, setSsaoBias, setAutoFog, setAutoClip, setClipCap, resetSceneSettings, setEdgeDetectNormalScale,
     setDoShadow, setDoSpin,setDepthBlurRadius, setBackgroundColor,
     setDepthBlurDepth, setDrawAxes, setEdgeDetectDepthScale,
     setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setDrawEnvBOcc, setDoAnaglyphStereo,
@@ -150,7 +150,8 @@ export class MoorhenScriptApi  {
             setDoSSAO: setDoSSAO,
             setSsaoRadius: setSsaoRadius,
             setSsaoBias: setSsaoBias,
-            setResetClippingFogging: setResetClippingFogging,
+            setAutoFog: setAutoFog,
+            setAutoClip: setAutoClip,
             setClipCap: setClipCap,
             resetSceneSettings: resetSceneSettings,
             setEdgeDetectNormalScale: setEdgeDetectNormalScale,
