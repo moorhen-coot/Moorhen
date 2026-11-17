@@ -6,7 +6,7 @@ import { addAnnotation, newAnnotation, removeAnnotationById, updateAnnotation } 
 import type { AnnotationPositionMode, MoorhenAnnotation } from "../../store/annotationsSlice";
 import { modalKeys } from "../../utils/enums";
 import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
-import { MoorhenButton, MoorhenNumberInput, MoorhenSelect, MoorhenTextStyleEditor, MoorhenToggle } from "../inputs";
+import { MoorhenButton, MoorhenCoordinateInput, MoorhenSelect, MoorhenTextStyleEditor, MoorhenToggle } from "../inputs";
 import { MoorhenCidAndMoleculeSelect } from "../inputs/Cid/CidAndMoleculeSelect";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -79,7 +79,7 @@ export const MoorhenAnnotations = () => {
 
     const setPositionMode = (mode: AnnotationPositionMode) => update({ positionMode: mode });
 
-    const centreOfView = () => {
+    const currentOrigin = () => {
         const origin = store.getState().sceneSettings.origin;
         update({ x: -origin[0], y: -origin[1], z: -origin[2] });
     };
@@ -128,16 +128,14 @@ export const MoorhenAnnotations = () => {
                 </MoorhenStack>
             )}
             {theAnnotation.positionMode === "point" && (
-                <MoorhenStack card gap="0.5rem">
-                    <MoorhenStack inputGrid gridWidth={3}>
-                        <MoorhenNumberInput value={theAnnotation.x} type="number" label="x:" setValue={val => update({ x: Number(val) })} />
-                        <MoorhenNumberInput value={theAnnotation.y} type="number" label="y:" setValue={val => update({ y: Number(val) })} />
-                        <MoorhenNumberInput value={theAnnotation.z} type="number" label="z:" setValue={val => update({ z: Number(val) })} />
-                    </MoorhenStack>
-                    <MoorhenButton size="sm" onClick={centreOfView}>
-                        Centre of view
+                <MoorhenCoordinateInput
+                    value={[theAnnotation.x, theAnnotation.y, theAnnotation.z]}
+                    onChange={([x, y, z]) => update({ x, y, z })}
+                >
+                    <MoorhenButton size="sm" onClick={currentOrigin} tooltip="Put the annotation at the centre of the view">
+                        Current origin
                     </MoorhenButton>
-                </MoorhenStack>
+                </MoorhenCoordinateInput>
             )}
             <MoorhenStack card inputGrid>
                 <MoorhenTextStyleEditor value={theAnnotation} onChange={changes => update(changes)} />

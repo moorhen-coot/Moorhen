@@ -14,3 +14,4 @@ export { MoorhenChainSelect } from "./Selector/MoorhenChainSelect";
 export { MoorhenFileInput } from "./Files/Files";
 export { getColorFromGradient } from "./MoorhenGradientPicker/gradientPresets";
 export { MoorhenTextStyleEditor } from "./TextStyle/MoorhenTextStyleEditor";
+export { MoorhenCoordinateInput } from "./Coordinate/MoorhenCoordinateInput";
