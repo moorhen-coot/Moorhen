@@ -166,7 +166,12 @@ export const batchLoadLigands = async (
      * Forget molecules that will not be loaded: closed in Coot if it read them (not journaled, as the
      * batch is not), their record and gemmi structure dropped. Else they would stay in Coot unseen.
      */
-    const discard = (molecules: MoorhenMolecule[]) => Promise.all(molecules.map(molecule => molecule.delete(false, false)));
+    const discard = (molecules: MoorhenMolecule[]) =>
+        Promise.all(
+            molecules.map(molecule =>
+                typeof molecule.molNo === "number" && molecule.molNo >= 0 ? molecule.delete(false, false) : molecule.forget()
+            )
+        );
 
     /** Worker and network side of a chunk: everything up to having the meshes. */
     const prepareChunk = async (chunk: { index: number; fileName: string; text: string }[]): Promise<ChunkItem[]> => {

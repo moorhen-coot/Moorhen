@@ -725,34 +725,46 @@ export class MoorhenMolecule {
      * Delete this molecule instance
      * @param {boolean} [popBackImol=false] - Indicates whether the imol for this molecule instance should be popped back (useful for ephemeral molecules)
      * @param {boolean} [doJournal=true] - Record the deletion in the command history (false for a molecule that never made it into the session, e.g. a file a batch failed to load)
-     * @returns Coot's response; null for a molecule Coot never read (nothing to close there)
      */
-    async delete(popBackImol: boolean = false, doJournal: boolean = true): Promise<moorhen.WorkerResponse | null> {
+    async delete(popBackImol: boolean = false, doJournal: boolean = true): Promise<moorhen.WorkerResponse> {
         this.hoverRepresentation?.deleteBuffers();
         this.unitCellRepresentation?.deleteBuffers();
         this.environmentRepresentation?.deleteBuffers();
         this.selectionRepresentation?.deleteBuffers();
         this.adaptativeBondsRepresentation?.deleteBuffers();
         this.representations.forEach(representation => representation.deleteBuffers());
-        this.recordClosed = true;
-        queueMoleculeRecord(this.store, this.uniqueId, null);
-        this.store.dispatch(removeMoleculeRecord(this.uniqueId));
+        this.closeRecord();
         this.store.dispatch(setRequestDrawScene(true));
-        const inCoot = popBackImol || (typeof this.molNo === "number" && this.molNo >= 0);
-        const response = inCoot
-            ? ((await this.commandCentre.cootCommand(
-                  {
-                      returnType: "status",
-                      command: popBackImol ? "pop_back" : "close_molecule",
-                      commandArgs: popBackImol ? [] : [this.molNo],
-                  },
-                  doJournal
-              )) as moorhen.WorkerResponse<number>)
-            : null;
+        const response = (await this.commandCentre.cootCommand(
+            {
+                returnType: "status",
+                command: popBackImol ? "pop_back" : "close_molecule",
+                commandArgs: popBackImol ? [] : [this.molNo],
+            },
+            doJournal
+        )) as moorhen.WorkerResponse<number>;
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete();
         }
         return response;
+    }
+
+    /**
+     * Forget a molecule that Coot never read (e.g. a file that failed to load): its record, the
+     * dictionaries recorded for it and its gemmi structure. Use delete() for a molecule Coot read.
+     */
+    forget(): void {
+        this.closeRecord();
+        if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
+            this.gemmiStructure.delete();
+        }
+    }
+
+    /** No more record for this molecule, and none written back by a refresh still in flight */
+    private closeRecord(): void {
+        this.recordClosed = true;
+        queueMoleculeRecord(this.store, this.uniqueId, null);
+        this.store.dispatch(removeMoleculeRecord(this.uniqueId));
     }
 
     /**
