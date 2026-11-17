@@ -315,6 +315,12 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         /** The once-a-second frame-stats timer, cleared on unmount so it stops holding the viewer alive. */
         statsIntervalHandle: ReturnType<typeof setInterval> | null;
         /**
+         * Releases the GL context shortly after an unmount, unless the viewer is mounted again first.
+         * React's StrictMode unmounts and remounts every component once in development, on the same
+         * canvas, and a context lost there cannot be had back: getContext returns the lost one.
+         */
+        releaseContextHandle: ReturnType<typeof setTimeout> | null;
+        /**
          * The time, in seconds, the camera is advanced to on the next draw. Null means wall clock.
          *
          * A movie export sets it to i/fps before asking for each frame, so every frame is kept and
@@ -686,16 +692,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.store = props.store;
         this.dispatch = props.dispatch
 
-        this.statsIntervalHandle = setInterval(() => {
-            if(!this.gl) return;
-            const sum = this.mspfArray.reduce((a, b) => a + b, 0);
-            const avg = (sum / this.mspfArray.length) || 0;
-            const fps = 1.0/avg * 1000;
-            this.fpsText = avg.toFixed(2)+" ms/frame (" + (fps).toFixed(0)+" fps) ["+this.canvas.width+" x "+this.canvas.height+"]";
-            // Kept separate rather than appended, because each string becomes one entry in the
-            // glyph atlas and one wider than the atlas cannot be laid out.
-            this.renderStatsText = this.externalRenderer ? this.externalRenderer.statsText() : renderStatsText();
-            }, 1000);
+        // Started in componentDidMount, which is where unmounting's clearing is undone.
+        this.statsIntervalHandle = null;
+        this.releaseContextHandle = null;
 
         //Set to false to use WebGL 1
         this.WEBGL2 = false;
@@ -982,7 +981,28 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.setCameraSlab({ eyeDistance: fogClipOffset })
     }
 
+    /** The once-a-second frame-stats timer, if it is not already running. */
+    startStatsInterval() {
+        if (this.statsIntervalHandle !== null) return
+        this.statsIntervalHandle = setInterval(() => {
+            if(!this.gl) return;
+            const sum = this.mspfArray.reduce((a, b) => a + b, 0);
+            const avg = (sum / this.mspfArray.length) || 0;
+            const fps = 1.0/avg * 1000;
+            this.fpsText = avg.toFixed(2)+" ms/frame (" + (fps).toFixed(0)+" fps) ["+this.canvas.width+" x "+this.canvas.height+"]";
+            // Kept separate rather than appended, because each string becomes one entry in the
+            // glyph atlas and one wider than the atlas cannot be laid out.
+            this.renderStatsText = this.externalRenderer ? this.externalRenderer.statsText() : renderStatsText();
+            }, 1000);
+    }
+
     componentDidMount() {
+        // Mounted again on the same canvas (StrictMode, in development): keep its context.
+        if (this.releaseContextHandle !== null) {
+            clearTimeout(this.releaseContextHandle)
+            this.releaseContextHandle = null
+        }
+        this.startStatsInterval()
         // Startup sequence, split into ordered phases (see mgWebGLParts/lifecycle.ts).
         // Order matters: state defaults, then GL context + view layouts, then the
         // one-time listener wiring, then extensions / shaders / buffers / first draw.
@@ -1013,7 +1033,15 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         }
         // Browsers allow only a handful of live contexts (16 in Chrome) and otherwise free one only
         // at garbage collection, so opening and closing viewers would run into that limit.
-        this.gl?.getExtension("WEBGL_lose_context")?.loseContext()
+        //
+        // Not at once, though: StrictMode mounts again straight after this, on the same canvas, and
+        // a lost context cannot be got back - every shader would fail to compile. A remount cancels
+        // this; a real unmount lets it run.
+        const gl = this.gl
+        this.releaseContextHandle = setTimeout(() => {
+            this.releaseContextHandle = null
+            gl?.getExtension("WEBGL_lose_context")?.loseContext()
+        }, 0)
     }
 
     /**
