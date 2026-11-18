@@ -10,7 +10,7 @@ import { describe, expect, it } from "@jest/globals";
 import * as quat4 from "gl-matrix/quat";
 import { Keyframe, Movie, SceneKeyframe, sampleMovie } from "../../src/utils/cameraPath";
 import {
-    DEFAULT_OUTPUT, DEFAULT_SCENE, MovieDocument,
+    DEFAULT_OUTPUT, MovieDocument,
     documentFrameCount, emptyMovie, movieProblems,
 } from "../../src/utils/movieDocument";
 
@@ -91,25 +91,16 @@ describe("the scene quantities on a keyframe", () => {
 });
 
 describe("a new movie", () => {
-    it("starts empty, quiet, and at a sensible size", () => {
+    it("starts empty, at a sensible size", () => {
         const movie = emptyMovie();
         expect(movie.path.keyframes).toEqual([]);
-        expect(movie.scene).toEqual(DEFAULT_SCENE);
         expect(movie.output).toEqual(DEFAULT_OUTPUT);
-    });
-
-    it("does not acquire the expensive passes by accident", () => {
-        // A movie made without thinking about shadows should not have them, and the costly passes
-        // are the ones most likely to turn a smooth export into a slow one.
-        const { scene } = emptyMovie();
-        expect([scene.doShadow, scene.doSSAO, scene.doEdgeDetect, scene.useOffScreenBuffers])
-            .toEqual([false, false, false, false]);
     });
 
     it("does not share its settings between documents", () => {
         const one = emptyMovie();
-        one.scene.doShadow = true;
-        expect(emptyMovie().scene.doShadow).toBe(false);
+        one.output.fps = 60;
+        expect(emptyMovie().output.fps).toBe(DEFAULT_OUTPUT.fps);
     });
 });
 

@@ -201,5 +201,9 @@ export default defineConfig({
     base: "./",
     optimizeDeps: {
         exclude: ["iris-validation-backend"],
+        // Only imported dynamically (movie export), so the dev server wouldn't find it when it
+        // pre-bundles dependencies at start-up. Without this it is discovered on first use,
+        // re-optimised, and the page's in-flight import of the old version fails.
+        include: ["mediabunny"],
     },
 });

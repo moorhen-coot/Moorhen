@@ -15,12 +15,16 @@
  * what it shows - without it, helices clipped out of the slab stripe the ribbons below them. Here
  * that plane is the light's near plane, which clips the same fragments for nothing, with the bias
  * scaled so it is still the same distance in angstrom.
+ *
+ * Soft shadows as WebGL draws them (softShadowRegion): the shadow pass renders into only the corner
+ * of the map its blur needs, so that the blur is always the same few texels, and TextureMatrix maps
+ * onto that corner. Here the corner is the top left, where a WebGPU viewport at (0, 0) puts it.
  */
 import * as mat4 from 'gl-matrix/mat4';
 import * as quat from 'gl-matrix/quat';
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { DEPTH_MINUS_ONE_TO_ZERO_ONE, slabNearFar } from '../WebGLgComponents/mgWebGLParts/projection';
-import { fitShadowFrustum, lightAxes, radiusAbout } from '../WebGLgComponents/shadowFrustum';
+import { fitShadowFrustum, lightAxes, radiusAbout, softShadowRegion, type ShadowMapRegion } from '../WebGLgComponents/shadowFrustum';
 import type { DisplayBuffer } from '../WebGLgComponents/displayBuffer';
 import { FRAME_FLOATS, type PreviewCameraSource } from './previewScene';
 
@@ -45,6 +49,23 @@ export interface ShadowCamera {
     textureMatrix: Float32Array;
     /** The depth-test slack in this map's 0..1 depth: SHADOW_BIAS of WebGL's near-to-far range. */
     bias: number;
+    /**
+     * The part of the map the shadow pass draws into (from its top left), and the soft filter's
+     * radius in texels: the whole map and 0 for a hard shadow.
+     */
+    region: ShadowMapRegion;
+}
+
+/** How soft, and in what map: for softShadowRegion. Left out, the shadow is hard and the map whole. */
+export interface ShadowSoftness {
+    /** Penumbra radius in angstrom (sceneSettings.shadowSoftness). */
+    softness: number;
+    /** The shadow map's edge, in texels. */
+    mapSize: number;
+    /** The filter radius to aim for, in texels: SOFT_SHADOW_TARGET_TEXELS on screen, more in snapshots. */
+    targetTexels: number;
+    /** The filter radius for a hard shadow: 0 on screen, SCREENSHOT_HARD_SHADOW_RADIUS_TEXELS in snapshots. */
+    hardRadiusTexels?: number;
 }
 
 /**
@@ -74,7 +95,7 @@ export function casterBounds(buffers: readonly DisplayBuffer[], cache: { sources
  * The light's camera for a view of `aspect` (width / height), as GLrender's calculatingShadowMap
  * branch makes it.
  */
-export function shadowCamera(source: PreviewCameraSource, bounds: CasterBounds | null, aspect: number): ShadowCamera {
+export function shadowCamera(source: PreviewCameraSource, bounds: CasterBounds | null, aspect: number, soft?: ShadowSoftness): ShadowCamera {
     // rotX takes the light direction to +z, turning about their cross product.
     const light = [source.light_positions[0], source.light_positions[1], source.light_positions[2]];
     const length = Math.hypot(light[0], light[1], light[2]) || 1;
@@ -120,8 +141,15 @@ export function shadowCamera(source: PreviewCameraSource, bounds: CasterBounds |
     mat4.multiply(view, view, rotation);
     mat4.translate(view, view, [source.origin[0], source.origin[1], source.origin[2]]);
 
-    // x, y from -1..1 to 0..1 with y down; z is already 0..1.
-    const toTexture = mat4.fromValues(0.5, 0, 0, 0, 0, -0.5, 0, 0, 0, 0, 1, 0, 0.5, 0.5, 0, 1);
+    // A soft shadow uses the top-left corner of the map that its blur needs (softShadowRegion).
+    const mapSize = soft?.mapSize ?? 1;
+    const region = soft
+        ? softShadowRegion(frustum, soft.softness, soft.mapSize, soft.targetTexels, soft.hardRadiusTexels ?? 0)
+        : { width: mapSize, height: mapSize, radiusTexels: 0 };
+    const usedX = region.width / mapSize;
+    const usedY = region.height / mapSize;
+    // x, y from -1..1 to 0..1 with y down - to 0..used of that, for the corner - and z is already 0..1.
+    const toTexture = mat4.fromValues(0.5 * usedX, 0, 0, 0, 0, -0.5 * usedY, 0, 0, 0, 0, 1, 0, 0.5 * usedX, 0.5 * usedY, 0, 1);
     const textureMatrix = mat4.multiply(mat4.create(), toTexture, mat4.multiply(mat4.create(), projection, view));
     // The rotation's rows are the light camera's axes in model space.
     const row = (i: number): [number, number, number] => [rotation[i], rotation[4 + i], rotation[8 + i]];
@@ -130,6 +158,7 @@ export function shadowCamera(source: PreviewCameraSource, bounds: CasterBounds |
         rightDir: row(0), upDir: row(1), eyeDir: row(2),
         textureMatrix: new Float32Array(textureMatrix),
         bias,
+        region,
     };
 }
 

@@ -18,6 +18,8 @@ import {
     spanOfBounds,
     spanOfCell,
     unionBounds,
+    reachFrom,
+    sphereOfPoints,
 } from "../../src/utils/sceneExtent";
 
 /** A small protein's worth of atoms, give or take. */
@@ -210,5 +212,38 @@ describe("sceneSpan", () => {
             expect(Number.isFinite(span)).toBe(true);
             expect(span).toBeGreaterThan(0);
         }
+    });
+});
+
+describe("sphereOfPoints", () => {
+    it("is centred on the box and reaches the farthest point, not the box corner", () => {
+        // Points on a sphere of radius 10: the box's half diagonal would say 17.3.
+        const ball: [number, number, number][] = [[10, 0, 0], [-10, 0, 0], [0, 10, 0], [0, -10, 0], [0, 0, 10], [0, 0, -10]];
+        const s = sphereOfPoints(ball, boundsOfPoints(ball));
+        expect(s.centre).toEqual([0, 0, 0]);
+        expect(s.radius).toBeCloseTo(10, 6);
+    });
+
+    it("is null without bounds", () => {
+        expect(sphereOfPoints([], null)).toBeNull();
+    });
+});
+
+describe("reachFrom", () => {
+    it("is the radius for a ball about the centre", () => {
+        expect(reachFrom([0, 0, 0], [{ centre: [0, 0, 0], radius: 15 }])).toBeCloseTo(15, 6);
+    });
+
+    it("adds the distance to a ball the view has moved away from", () => {
+        expect(reachFrom([0, 0, 0], [{ centre: [30, 40, 0], radius: 5 }])).toBeCloseTo(55, 6);
+    });
+
+    it("takes the farthest of several, and skips nulls", () => {
+        expect(reachFrom([0, 0, 0], [null, { centre: [0, 0, 0], radius: 3 }, { centre: [10, 0, 0], radius: 2 }])).toBeCloseTo(12, 6);
+    });
+
+    it("is 0 with nothing to measure", () => {
+        expect(reachFrom([0, 0, 0], [])).toBe(0);
+        expect(reachFrom([0, 0, 0], [{ centre: [NaN, 0, 0], radius: 1 }])).toBe(0);
     });
 });

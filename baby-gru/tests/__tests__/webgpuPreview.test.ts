@@ -649,6 +649,56 @@ describe("the shadow map's camera", () => {
         expect(light.bias * range).toBeCloseTo(SHADOW_BIAS * (far - 1), 5);
     });
 
+    describe("soft shadows: the corner of the map the blur needs, as WebGL draws them", () => {
+        // In the map's x, y: a model-space point.
+        const mapAt = (m: Float32Array, p: number[]) => {
+            const h = [0, 1, 3].map(r => m[r] * p[0] + m[4 + r] * p[1] + m[8 + r] * p[2] + m[12 + r]);
+            return [h[0] / h[2], h[1] / h[2]];
+        };
+
+        it("a hard shadow, or none asked for, uses the whole map", () => {
+            expect(shadowCamera(turned(), null, 1.5).region).toEqual({ width: 1, height: 1, radiusTexels: 0 });
+            expect(shadowCamera(turned(), null, 1.5, { softness: 0, mapSize: 2048, targetTexels: 4 }).region)
+                .toEqual({ width: 2048, height: 2048, radiusTexels: 0 });
+        });
+
+        it("a soft one draws into the top-left corner its filter needs, and is read from there", () => {
+            const source = turned();
+            const soft = shadowCamera(source, null, 1.5, { softness: 1, mapSize: 2048, targetTexels: 4 });
+            const hard = shadowCamera(source, null, 1.5);
+            expect(soft.region.width).toBeLessThan(2048);
+            expect(soft.region.height).toBeLessThan(2048);
+            expect(soft.region.radiusTexels).toBeCloseTo(4, 5);
+            // The view centre lands in the middle of the corner rather than of the map...
+            const centre = [-source.origin[0], -source.origin[1], -source.origin[2]];
+            const [u, v] = mapAt(soft.textureMatrix, centre);
+            expect(u).toBeCloseTo(soft.region.width / 2048 / 2, 5);
+            expect(v).toBeCloseTo(soft.region.height / 2048 / 2, 5);
+            // ...and the light's camera itself is the same: only where its picture goes changes.
+            expect(Array.from(soft.projection)).toEqual(Array.from(hard.projection));
+            expect(Array.from(soft.view)).toEqual(Array.from(hard.view));
+            // Rows still run down: a point along the light camera's up is nearer the top.
+            const up = centre.map((c, i) => c + soft.upDir[i]);
+            expect(mapAt(soft.textureMatrix, up)[1]).toBeLessThan(v);
+        });
+
+        it("a snapshot is drawn better than the view: a finer corner for a soft shadow, a smoothed edge for a hard one", () => {
+            const screen = shadowCamera(turned(), null, 1.5, { softness: 1, mapSize: 2048, targetTexels: 4 });
+            const snapshot = shadowCamera(turned(), null, 1.5, { softness: 1, mapSize: 2048, targetTexels: 7.5, hardRadiusTexels: 4 });
+            expect(snapshot.region.radiusTexels).toBeGreaterThan(screen.region.radiusTexels);
+            expect(snapshot.region.width).toBeGreaterThan(screen.region.width);
+            const hard = shadowCamera(turned(), null, 1.5, { softness: 0, mapSize: 2048, targetTexels: 7.5, hardRadiusTexels: 4 });
+            expect(hard.region).toEqual({ width: 2048, height: 2048, radiusTexels: 4 });
+        });
+
+        it("takes the softness from the scene, with the map's size", () => {
+            const shadow = effectSettings(camera({ doShadow: true, shadowSoftness: 0.6 }), 1948, 1322).shadow;
+            expect(shadow.softness).toBe(0.6);
+            expect(shadow.texels).toBeGreaterThan(0);
+            expect(effectSettings(camera({ doShadow: true }), 1948, 1322).shadow.softness).toBe(0);
+        });
+    });
+
     it("draws the shadow pass from the light, clipping nothing", () => {
         const light = shadowCamera(turned(), null, 1);
         const u = shadowFrameUniforms(light);

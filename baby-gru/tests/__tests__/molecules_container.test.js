@@ -573,6 +573,36 @@ describe('Testing molecules_container_js', () => {
         expect(molecules_container.get_number_of_atoms(imolA)).toBe(nAtomsA)
     })
 
+    test('validation_information_t type is a readable string', () => {
+        // coot::validation_information_t only has a std::string "type" in wasm builds
+        // (#ifdef __EMSCRIPTEN__ in api/validation-information.hh). A coot checkout that
+        // still tested the old EMSCRIPTEN macro gave the coot library and the embind
+        // wrappers different layouts for this class, and "type" came back as garbage.
+        const imol = molecules_container.read_pdb('./5a3h.pdb')
+        const rota = molecules_container.rotamer_analysis(imol)
+        expect(rota.type).toBe('PROBABILITY')
+        const omega = molecules_container.peptide_omega_analysis(imol)
+        expect(omega.type).toBe('TORSION_ANGLE')
+        cleanUpVariables.push(rota, omega)
+    })
+
+    test('SSM_superpose', () => {
+        // With the layout mismatch above, destroying the result's alignment_info_vec
+        // aborted or raised "memory access out of bounds".
+        const imolRef = molecules_container.read_pdb('./5a3h.pdb')
+        const imolMov = molecules_container.read_pdb('./5a3h.pdb')
+        const result = molecules_container.SSM_superpose(imolRef, 'A', imolMov, 'A')
+        const info = JSON.parse(result.superpose_info)
+        expect(info.nalgn).toBe(300)
+        expect(info.rmsd).toBeLessThan(0.01)
+        expect(result.alignment_info_vec.size()).toBe(1)
+        const vi = result.alignment_info_vec.get(0)
+        expect(vi.cviv.size()).toBe(1)
+        expect(vi.cviv.get(0).rviv.size()).toBe(300)
+        expect(result.aligned_pairs.size()).toBe(300)
+        cleanUpVariables.push(vi, result.alignment_info_vec, result.aligned_pairs)
+    })
+
     test.skip('flip_peptide by residue spec', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo).toBe(0)
@@ -663,6 +693,34 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.vertices.size()).toBeCloseTo(147864, -4)
         expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -4)
         cleanUpVariables.push(simpleMesh)
+    })
+
+    test("Van der Waals and solvent accessible surfaces", () => {
+        // The other two surface types MoleculesToTriangles makes. The accessible surface is the van
+        // der Waals one grown by the probe radius: along x, wider by twice the probe radius (the
+        // atom furthest out is the same one; the tessellation misses its extreme by << 0.5 A).
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        molecules_container.M2T_updateFloatParameter(coordMolNo, "surfaceStyleProbeRadius", 1.4)
+        molecules_container.M2T_updateFloatParameter(coordMolNo, "ballsStyleRadiusMultiplier", 1.0)
+        const surface = (style) => {
+            const simpleMesh = molecules_container.get_molecular_representation_mesh(
+                coordMolNo, "//A/10-30", "Chain", style, true
+            )
+            cleanUpVariables.push(simpleMesh)
+            const vertices = simpleMesh.vertices
+            let lo = Infinity, hi = -Infinity
+            for (let i = 0; i < vertices.size(); i++) {
+                const x = vertices.get(i).pos[0]
+                lo = Math.min(lo, x)
+                hi = Math.max(hi, x)
+            }
+            return { nVertices: vertices.size(), nTriangles: simpleMesh.triangles.size(), width: hi - lo }
+        }
+        const vdw = surface("VdWSurface")
+        const accessible = surface("AccessibleSurface")
+        expect(vdw.nTriangles).toBeGreaterThan(100)
+        expect(accessible.nTriangles).toBeGreaterThan(100)
+        expect(accessible.width - vdw.width).toBeCloseTo(2 * 1.4, 0)
     })
 
     test("ligand surface", () => {

@@ -20,7 +20,7 @@
  */
 
 import type { Keyframe, Motion, Segment } from "./cameraPath";
-import type { MovieDocument, MovieSceneSettings } from "./movieDocument";
+import type { MovieDocument } from "./movieDocument";
 
 /** How long a newly added segment runs, before anyone has said otherwise. */
 export const DEFAULT_SEGMENT_SECONDS = 3;
@@ -325,7 +325,3 @@ export function animatedObjects(document: MovieDocument): string[] {
     return [...seen].sort();
 }
 
-/** The movie's scene settings, which apply throughout rather than per keyframe. */
-export const setSceneSettings = (
-    document: MovieDocument, change: Partial<MovieSceneSettings>,
-): MovieDocument => ({ ...document, scene: { ...document.scene, ...change } });

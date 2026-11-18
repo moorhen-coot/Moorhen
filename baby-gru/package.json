@@ -29,6 +29,10 @@
             "types": "./types/src/WebComponent/utils/entry.d.ts",
             "default": "./MoorhenWebComponentUtils.js"
         },
+        "./web-component/react": {
+            "types": "./types/src/WebComponent/react/entry.d.ts",
+            "default": "./MoorhenWebComponentReact.js"
+        },
         "./types/*": {
             "types": "./types/*",
             "default": "./types/*"
@@ -58,8 +62,7 @@
         "create-version": "npx genversion -e -p ./package.json -d -s ./src/version.js",
         "transpile-ts-worker": "npx tsc --project tsconfig.worker.json && sed -i.bak '/export {}/d' public/MoorhenAssets/wasm/CootWorker.js && rm public/MoorhenAssets/wasm/CootWorker.js.bak",
         "transpile-ts-worker:if-needed": "if ! test -r public/MoorhenAssets/wasm/CootWorker.js; then npm run transpile-ts-worker; fi",
-        "transpile-protobuf:if-needed": "if ! test -r src/protobuf/MoorhenSession.js; then npm run transpile-protobuf; fi",
-        "prepare:webcomponent:e2e": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf:if-needed && npm run transpile-graphql-codegen && npm run copy-draco:if-needed && npm run build-webcomponent-dev",
+        "prepare:webcomponent:e2e": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen && npm run copy-draco:if-needed && npm run build-webcomponent-dev",
         "transpile-ts-worker-jest": "npm run transpile-ts-worker",
         "prestart": "npm run create-version && npm run transpile-ts-worker && npm run transpile-protobuf && npm run transpile-graphql-codegen && npm run copy-draco",
         "start": "vite --config vite.config.mts",
@@ -76,10 +79,11 @@
         "build-webcomponent": "webpack --config webpack.webcomponent.config.js --mode production --devtool source-map",
         "build-webcomponent-dev": "webpack --config webpack.webcomponent.config.js --mode development --devtool inline-source-map",
         "build-utils": "webpack --config webpack.utils.config.js --mode production ",
+        "build-webcomponent-react": "webpack --config webpack.webcomponent-react.config.js --mode production ",
         "build-react": "webpack --config webpack.react.config.js --mode production --devtool source-map",
         "build-react-dev": "webpack --config webpack.react.config.js --mode development --devtool inline-source-map",
-        "build-release": "rm -rf dist/* && npm run prebuild && concurrently \"npm run build-webcomponent\"  \"npm run build-react\" \"npm run build-utils\" && npm run emit-declarations",
-        "build-release-dev": "rm -rf dist/* && npm run prebuild && concurrently \"npm run build-webcomponent-dev\"  \"npm run build-react-dev\" \"npm run build-utils\" && npm run emit-declarations",
+        "build-release": "rm -rf dist/* && npm run prebuild && concurrently \"npm run build-webcomponent\"  \"npm run build-react\" \"npm run build-utils\" \"npm run build-webcomponent-react\" && npm run emit-declarations",
+        "build-release-dev": "rm -rf dist/* && npm run prebuild && concurrently \"npm run build-webcomponent-dev\"  \"npm run build-react-dev\" \"npm run build-utils\" \"npm run build-webcomponent-react\" && npm run emit-declarations",
         "build-and-pack": "npm run build-release && cd dist && npm pack && cd ..",
         "build-and-pack-dev": "npm run build-release-dev && cd dist && npm pack && cd ..",
         "build-and-pack-versioned": "node scripts/pack-versioned.mjs",

@@ -102,7 +102,12 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
             entry.timer = 0;
             try {
                 const state = store.getState();
-                renderer.renderTo(target, state.glRef.displayBuffers ?? [], entry.camera, maps?.frame(state) ?? []);
+                // The scene's origin, not this view's camera: the maps are contoured once for the
+                // whole scene, and a second view that re-contoured them about its own viewpoint
+                // would be undoing the main view's work every frame.
+                renderer.renderTo(
+                    target, state.glRef.displayBuffers ?? [], entry.camera,
+                    maps?.frame(state, view.cameraController.state.origin) ?? []);
                 entry.contours = maps?.contoursMade ?? 0;
                 entry.drawn = performance.now();
             } catch (err) {
@@ -191,7 +196,7 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
             async snapshot(width: number, height: number, options: { transparentBackground?: boolean } = {}) {
                 if (!renderer) throw new Error("WebGPU is not drawing the main view");
                 const state = store.getState();
-                const shot = await renderer.snapshot(state.glRef.displayBuffers ?? [], view, maps?.frame(state) ?? [], width, height, {
+                const shot = await renderer.snapshot(state.glRef.displayBuffers ?? [], view, maps?.frame(state, view.cameraController.state.origin) ?? [], width, height, {
                     softShadows: true, transparentBackground: !!options.transparentBackground,
                 });
                 return shot.data;
@@ -239,7 +244,10 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
                 if (canvas.style.height !== glCanvas.style.height) canvas.style.height = glCanvas.style.height;
                 try {
                     const state = store.getState();
-                    const gpuDraws = maps?.frame(state) ?? [];
+                    // The camera rather than the store's copy of it: during a movie the store is
+                    // told where the camera settles, not where it is passing through, and a map
+                    // contoured to that stays where the movie started.
+                    const gpuDraws = maps?.frame(state, view.cameraController.state.origin) ?? [];
                     lastReport = renderer.render(state.glRef.displayBuffers ?? [], view, gpuDraws);
                     (external as { framesDrawn: number }).framesDrawn++;
                 } catch (err) {

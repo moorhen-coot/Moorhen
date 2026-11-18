@@ -58,8 +58,16 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
         showColourSwatches = true,
     } = props;
 
-    const [showColourPicker, setShowColourPicker] = useState<boolean>(false);
+    const [showColourPicker, setShowColourPickerState] = useState<boolean>(false);
     const popoverRef = useRef<HTMLButtonElement>(null);
+
+    // Opening and closing the popover, reported through onOpen / onClose
+    const setShowColourPicker = (shown: boolean) => {
+        if (shown === showColourPicker) return;
+        setShowColourPickerState(shown);
+        if (shown) props.onOpen?.();
+        else props.onClose?.();
+    };
 
     const toRgba = (inputColour: RGBAColour): [number, number, number, number] => {
         const [r, g, b] = inputColour;

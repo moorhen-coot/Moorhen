@@ -60,6 +60,7 @@ export {
     setGlobalInstanceReady,
     setSearchBarActive,
     setMainMenuOpen,
+    setSceneSelectorOpen,
     setShortCutsBlocked,
     setShownSidePanel,
     setSidePanelWidth,
@@ -91,6 +92,15 @@ export {
     setCanvasSize,
     setElementsIndicesRestrict,
 }  from "./glRefSlice";
+export {
+    setMovieDocument, setMovieName, setMovieFileName, newMovie,
+    setMoviePlaying, selectKeyframe,
+    appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
+    duplicateKeyframe,
+    updateSegment, updateMotion, clearTrailingMotion,
+    spreadSceneFromKeyframe, updateMovieOutput,
+    updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
+}  from "./movieSlice";
 export {
     setMrParseModels,
     setTargetSequence,
@@ -127,6 +137,19 @@ export {
     removeSvgPathOverlay,
     removeFracPathOverlay,
 }  from "./overlaysSlice";
+export {
+    addUserScene,
+    addUserSnapshot,
+    removeUserScene,
+    renameUserScene,
+    setSelectedScene,
+    setSceneChanging,
+    sceneShown,
+    setSceneContent,
+    setUserSceneState,
+    setSavedSceneSetting,
+    saveSceneSettings,
+}  from "./userScenesSlice";
 export { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings }  from "./shortCutsSlice";
 export {
     addMolecule,
@@ -142,7 +165,6 @@ export {
 }  from "./moleculesSlice";
 export {
     setOrigin,
-    setDefaultBackgroundColor,
     setDrawCrosshairs,
     setDrawScaleBar,
     setDrawFPS,
@@ -151,7 +173,11 @@ export {
     setDoSSAO,
     setSsaoRadius,
     setSsaoBias,
-    setResetClippingFogging,
+    setAutoFog,
+    setAutoClip,
+    setDoFog,
+    setDoClip,
+    setDefaultRepresentationStyle,
     setClipCap,
     resetSceneSettings,
     setEdgeDetectNormalScale,
@@ -159,6 +185,7 @@ export {
     setDoShadowDepthDebug,
     setDoShadow,
     setShadowMapQuality,
+    setShadowSoftness,
     setDoSpin,
     setDepthBlurRadius,
     setDepthPeelLayers,
@@ -201,6 +228,7 @@ export {
     setClipEnd,
     setZoom,
     autoClipFogByZoom,
+    applySceneSettingsSnapshot,
 }  from "./sceneSettingsSlice";
 export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
 export {
@@ -275,17 +303,6 @@ export {
     resetMoleculeMapUpdates,
 }  from "./moleculeMapUpdateSlice";
 export { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings }  from "./mouseSettings";
-
-export {
-    setMovieDocument, setMovieName, setMovieFileName, newMovie,
-    selectKeyframe,
-    appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
-    duplicateKeyframe,
-    updateSegment, updateMotion, clearTrailingMotion,
-    spreadSceneFromKeyframe, updateMovieScene, updateMovieOutput,
-    updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
-    type MovieState,
-} from "./movieSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

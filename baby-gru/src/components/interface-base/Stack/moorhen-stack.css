@@ -29,6 +29,26 @@
     padding-bottom: 1.5rem;
 }
 
+/* A titled card: the title sits on its top border, so the card is the positioning context
+   and leaves room above for the half of the title that sticks out, and inside for the other half */
+.moorhen__stack_card--titled {
+    position: relative;
+    margin-top: 1rem;
+    padding-top: 1.4rem;
+}
+
+.moorhen__stack_card_title {
+    position: absolute;
+    top: 0;
+    left: 1rem;
+    transform: translateY(-50%);
+    padding: 0 0.5rem;
+    font-size: 1.1rem;
+    line-height: 1.4rem;
+    white-space: nowrap;
+    background: var(--moorhen-background);
+}
+
 .moorhen__input-grid {
     box-sizing: border-box;
     display: grid;

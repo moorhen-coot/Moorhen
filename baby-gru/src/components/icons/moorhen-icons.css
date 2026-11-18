@@ -8,6 +8,12 @@
     fill: currentColor;
 }
 
+.moorhen__icon.xsmall {
+    color: inherit;
+    width: 16px;
+    height: 16px;
+}
+
 .moorhen__icon.small {
     color: inherit;
     width: 22px;
