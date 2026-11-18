@@ -158,10 +158,19 @@ fn shadowAtNormal(p: vec4f, n: vec3f) -> f32 {
     return shadowLookup(p, planeSlope(m * a, m * b));
 }
 
-// WebGL's use of it: in shadow (under a half), the light is dimmed to the shadow plus a half and
-// the highlight dropped; otherwise the highlight is added. A back face, flat, is just scaled.
+// WebGL's use of it: the light dimmed by up to a half and the highlight taken away, both
+// continuous in the shadow so a soft edge stays soft. A back face, flat, is just scaled.
 fn shaded(light: vec4f, specular: vec4f, shadow: f32) -> vec4f {
-    return select(light + specular, light * min(shadow + 0.5, 1.0), shadow < 0.5);
+    return light * min(shadow + 0.5, 1.0) + specular * smoothstep(0.3, 0.7, shadow);
+}
+
+// The shadow terminator, as triangle-fragment-shader.js: a front face turning away from the light
+// is in its own shadow whatever the map says, so the shadow is never lighter than N.L allows - only
+// ever darker, so a shadow cast from elsewhere stays as dark as it is. Only with shadows on.
+fn terminatorShadow(shadow: f32, n: vec3f) -> f32 {
+    if (frame.effects.z < 0.5) { return shadow; }
+    let facing = dot(normalize(n), normalize(frame.lightDir.xyz));
+    return min(shadow, smoothstep(-0.05, 0.1, facing));
 }
 
 fn backShade(shadow: f32) -> f32 {
@@ -262,7 +271,13 @@ fn finish(world: vec4f, normal: vec3f, colour: vec4f) -> VOut {
     out.colour = select(colour, draw.copyColour, draw.params.z > 0.5);
     out.normal = (draw.model * vec4f(normal, 0.0)).xyz;
     out.eyeDistance = abs(eye.z / eye.w);
-    out.shadowPos = frame.shadowMatrix * (draw.model * world);
+    // Looked up in the shadow map a texel and a half out along the normal, as
+    // triangle-vertex-shader.js (shadowNormalOffset): the map's units per model unit are the
+    // length of the shadow matrix's first row.
+    let perUnit = length(vec3f(frame.shadowMatrix[0].x, frame.shadowMatrix[1].x, frame.shadowMatrix[2].x));
+    let normalLength = length(out.normal);
+    let along = select(vec3f(0.0), out.normal / normalLength * (1.5 * frame.shadowParams.x / perUnit), normalLength > 0.0 && perUnit > 0.0);
+    out.shadowPos = frame.shadowMatrix * (draw.model * world + vec4f(along, 0.0));
     out.highlight = 1.0;
     return out;
 }
@@ -340,7 +355,7 @@ fn lit(base: vec4f, normal: vec3f, occ: f32, shadow: f32) -> vec4f {
     let R = normalize(-reflect(L, n));
     let diffuse = frame.diffuse * max(dot(n, L), 0.0);
     let specular = frame.specular * pow(max(dot(R, E), 0.0), frame.params.z);
-    return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, shadow);
+    return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, terminatorShadow(shadow, n));
 }
 
 // Fogged as triangle-fragment-shader.js: mixed towards the fog colour with distance. For a
@@ -547,7 +562,7 @@ fn litSurface(base: vec4f, n: vec3f, shininess: f32, specularTint: vec4f, metall
     let R = normalize(-reflect(L, n));
     let diffuse = frame.diffuse * (max(dot(n, L), 0.0) * (1.0 - metallic) + metallic * metalReflection(n, E, L, roughness));
     let specular = specularTint * frame.specular * pow(max(dot(R, E), 0.0), shininess);
-    return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, shadow);
+    return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, terminatorShadow(shadow, n));
 }
 
 // The normal map's normal, as mappedNormal in triangle-fragment-shader.js: the directions in

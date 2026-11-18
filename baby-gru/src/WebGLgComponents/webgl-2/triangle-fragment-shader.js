@@ -405,13 +405,26 @@ ${discards ? clipAndPeelDiscards : ""}
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor*Idiff);
       color *= occ;
 
-      if(shad<0.5) {
-          shad += .5;
-          shad = min(shad,1.0);
-          color *= shad;
-      } else {
-          color += Ispec;
+      // The shadow terminator. Where a surface turns away from the light, the map is tested against
+      // flat triangles while the shading follows the smooth normal, and at a grazing angle one
+      // triangle falls just inside the shadow and the next just outside: a checkerboard of lit and
+      // shadowed facets, worst on coarse meshes with smooth normals. The lit side's
+      // false shadows are taken away by looking the map up a little way out along the normal
+      // (shadowNormalOffset, triangle-vertex-shader.js); the dark side's false light here: a front
+      // face turning away from the light is in its own shadow whatever the map says, so the
+      // shadow is never lighter than N.L allows. Only ever darker - never lighter, which lit
+      // grazing faces inside a shadow cast from elsewhere. Front faces only: a back face's normal
+      // is the front's.
+      if(doShadows && gl_FrontFacing){
+          float facing = dot(norm, normalize(L));
+          shad = min(shad, smoothstep(-0.05, 0.1, facing));
       }
+
+      // In shadow, the light dimmed by up to a half and the highlight taken away; both continuous
+      // in the shadow, so a soft edge stays soft. (Was a switch at a half: dimmed below it, the
+      // highlight added above it, which made a flipping facet a hard-edged one.)
+      color *= min(shad + 0.5, 1.0);
+      color += Ispec * smoothstep(0.3, 0.7, shad);
 
       if(gl_FrontFacing!=true){
           // theColor, not vColor, so a back face is textured too. Identical to the old line for
