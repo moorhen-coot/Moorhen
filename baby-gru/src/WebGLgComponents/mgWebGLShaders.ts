@@ -907,6 +907,7 @@ export function initShaders(vertexShader, fragmentShader, gl) {
     shaderProgram.SSAOMap = gl.getUniformLocation(shaderProgram, "SSAOMap");
     shaderProgram.edgeDetectMap = gl.getUniformLocation(shaderProgram, "edgeDetectMap");
     shaderProgram.xPixelOffset = gl.getUniformLocation(shaderProgram, "xPixelOffset");
+    shaderProgram.shadowNormalOffset = gl.getUniformLocation(shaderProgram, "shadowNormalOffset");
     shaderProgram.yPixelOffset = gl.getUniformLocation(shaderProgram, "yPixelOffset");
     shaderProgram.xSSAOScaling = gl.getUniformLocation(shaderProgram, "xSSAOScaling");
     shaderProgram.ySSAOScaling = gl.getUniformLocation(shaderProgram, "ySSAOScaling");
@@ -1018,6 +1019,7 @@ export function initShadersInstanced(vertexShader, fragmentShader, gl) {
     shaderProgramInstanced.SSAOMap = gl.getUniformLocation(shaderProgramInstanced, "SSAOMap");
     shaderProgramInstanced.edgeDetectMap = gl.getUniformLocation(shaderProgramInstanced, "edgeDetectMap");
     shaderProgramInstanced.xPixelOffset = gl.getUniformLocation(shaderProgramInstanced, "xPixelOffset");
+    shaderProgramInstanced.shadowNormalOffset = gl.getUniformLocation(shaderProgramInstanced, "shadowNormalOffset");
     shaderProgramInstanced.yPixelOffset = gl.getUniformLocation(shaderProgramInstanced, "yPixelOffset");
     shaderProgramInstanced.xSSAOScaling = gl.getUniformLocation(shaderProgramInstanced, "xSSAOScaling");
     shaderProgramInstanced.ySSAOScaling = gl.getUniformLocation(shaderProgramInstanced, "ySSAOScaling");

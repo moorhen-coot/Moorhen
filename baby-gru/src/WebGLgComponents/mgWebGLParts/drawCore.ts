@@ -116,6 +116,18 @@ function shadowCasterBounds(self: MGWebGL, displayBuffers: any[]): ShadowCasterB
  */
 const SHADOW_TEXTURE_UNIT = 6;
 
+/**
+ * How far, in model units, the triangle shaders move the point a vertex is looked up at in the
+ * shadow map out along its normal (shadowNormalOffset in triangle-vertex-shader.js): a texel and a
+ * half of a map `width` texels wide. The texture matrix maps model space to the map's 0..1, so the
+ * length of its first row is map units per model unit (the light's projection is orthographic and
+ * the same scale across). WebGPU does the same in previewShaders.ts (finish).
+ */
+export function shadowNormalOffset(textureMatrix: ArrayLike<number>, width: number): number {
+    const perUnit = Math.hypot(textureMatrix[0], textureMatrix[4], textureMatrix[8]);
+    return perUnit > 0 ? 1.5 / width / perUnit : 0;
+}
+
 /** Where a mesh's glTF normal map is read from. */
 const NORMAL_MAP_TEXTURE_UNIT = 10;
 
@@ -780,6 +792,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     self.gl.uniform1f(theShader.xPixelOffset, 1.0/self.rttFramebufferDepth.width);
                     self.gl.uniform1f(theShader.yPixelOffset, 1.0/self.rttFramebufferDepth.height);
                     self.gl.uniformMatrix4fv(theShader.textureMatrixUniform, false, self.textureMatrix);
+                    if (theShader.shadowNormalOffset) self.gl.uniform1f(theShader.shadowNormalOffset, shadowNormalOffset(self.textureMatrix, self.rttFramebufferDepth.width));
                     self.gl.uniform1i(theShader.doShadows, true);
                     if(self.renderToTexture)
                         self.gl.uniform1i(theShader.shadowQuality, 1);
@@ -1009,6 +1022,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     self.gl.uniform1f(program.xPixelOffset, 1.0/self.rttFramebufferDepth.width);
                     self.gl.uniform1f(program.yPixelOffset, 1.0/self.rttFramebufferDepth.height);
                     self.gl.uniformMatrix4fv(program.textureMatrixUniform, false, self.textureMatrix);
+                    if (program.shadowNormalOffset) self.gl.uniform1f(program.shadowNormalOffset, shadowNormalOffset(self.textureMatrix, self.rttFramebufferDepth.width));
                     self.gl.uniform1i(program.doShadows, true);
                     if(self.renderToTexture)
                         self.gl.uniform1i(program.shadowQuality, 1);
