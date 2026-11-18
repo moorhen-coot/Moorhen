@@ -123,11 +123,14 @@ export namespace webGL {
         xPixelOffset: WebGLUniformLocation;
         yPixelOffset: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         pixelZoom: WebGLUniformLocation;
         specularPower: WebGLUniformLocation;
         /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
         alphaMultiplier: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         shinyBack: WebGLUniformLocation;
     }
 
@@ -153,6 +156,8 @@ export namespace webGL {
         pixelZoom: WebGLUniformLocation;
         vertexTextureAttribute: GLint;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         xSSAOScaling: WebGLUniformLocation;
         ySSAOScaling: WebGLUniformLocation;
         peelNumber: WebGLUniformLocation;
@@ -181,6 +186,8 @@ export namespace webGL {
         offset: WebGLUniformLocation;
         scaleMatrix: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
     }
 
     interface ShaderPerfectSpheres extends MGWebGLShader {
@@ -189,6 +196,8 @@ export namespace webGL {
         sizeAttribute: GLint;
         invSymMatrixUniform: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         xPixelOffset: WebGLUniformLocation;
         yPixelOffset: WebGLUniformLocation;
         xSSAOScaling: WebGLUniformLocation;
@@ -198,6 +207,7 @@ export namespace webGL {
         edgeDetectMap: WebGLUniformLocation;
         outlineSize: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         doShadows: WebGLUniformLocation;
         doSSAO: WebGLUniformLocation;
         doEdgeDetect: WebGLUniformLocation;
@@ -223,6 +233,7 @@ export namespace webGL {
         SSAOMap: WebGLUniformLocation;
         edgeDetectMap: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         doShadows: WebGLUniformLocation;
         doSSAO: WebGLUniformLocation;
         doEdgeDetect: WebGLUniformLocation;
@@ -234,6 +245,8 @@ export namespace webGL {
         occludeDiffuse: WebGLUniformLocation;
         doPerspective: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         screenZ: WebGLUniformLocation;
         ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
         zoom: WebGLUniformLocation;
@@ -245,6 +258,7 @@ export namespace webGL {
         uWeightTexWidth: WebGLUniformLocation;
         uOffsetTexWidth: WebGLUniformLocation;
         uHoveredPoint: WebGLUniformLocation;
+        uHoverMask: WebGLUniformLocation;
     }
 
     interface ShaderGBuffersTriangles extends MGWebGLShader {}
@@ -406,6 +420,14 @@ export namespace webGL {
          */
         supportsObjectFading: boolean;
         cameraController: CameraController;
+        /**
+         * The redux store this renderer was given.
+         *
+         * Already how the renderer reads the scene and echoes the view back; declared here so that
+         * code handed a renderer can read the scene the same way, rather than being passed the
+         * store a second time alongside it.
+         */
+        store: Store<RootState>;
         /**
          * Put the camera somewhere, over whatever time the caller asks for. A transition of
          * `{ kind: "instant" }` moves it with no animation at all, which is what an export wants.

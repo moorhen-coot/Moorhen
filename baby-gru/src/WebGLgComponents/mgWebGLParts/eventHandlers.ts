@@ -4,7 +4,10 @@ import * as mat4 from 'gl-matrix/mat4';
 import { quatToMat4, quat4Inverse } from '../quatToMat4.js';
 import { createQuatFromDXAngle, createQuatFromAngle, createZQuatFromDX } from '../quatUtils';
 import { parseAtomInfoLabel } from '../../utils/utils';
+import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND } from '../../utils/enums';
 import { getDeviceScale } from '../webGLUtils';
+import { influenceOf } from '../glResources';
+import { centreOnMesh, coarseSectionPosition, meshCentringSetting, pickedMeshPosition } from '../meshCentre';
 import { getOffsetRect, MGWebGL } from '../mgWebGL';
 import type { moorhen } from '../../types/moorhen';
 import { webGL } from '../../types/mgWebGL';
@@ -160,7 +163,10 @@ export function doHover(self: MGWebGL, event) {
         }
 
             const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
-            if(minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.influence_weights_texture && displayBuffers[minidx_pi].pick_info.influence_point_indexes_texture && displayBuffers[minidx_pi].pick_info.influence_index_offsets_texture && displayBuffers[minidx_pi].pick_info.pick_points){
+            // A smooth mesh with influence lists (MetaBalls, surfaces). Asked of the lists, not of
+            // WebGL's textures made from them: those exist only once WebGL has drawn the buffer,
+            // and with WebGPU drawing the view they may never.
+            if(minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && influenceOf(displayBuffers[minidx_pi].pick_info) && displayBuffers[minidx_pi].pick_info.pick_points){
                 setHover(minidx_pi, minj_pi, [])
             } else if (minidx_pi > -1 && displayBuffers[minidx_pi].pick_info && displayBuffers[minidx_pi].pick_info.point_triangles && displayBuffers[minidx_pi].pick_info.point_triangles.length>0 && displayBuffers[minidx_pi].pick_info.point_triangles[minj_pi].length>0) {
                 //Hmm, I am worried, could triangleIndexs.length > 1 ?
@@ -187,16 +193,40 @@ export function doHover(self: MGWebGL, event) {
                 self.props.onAtomHovered(null)
             }
 
-            // A buffer may label its pickable pieces with strings that mean nothing here. Report
-            // the one under the cursor and let whoever understands the scheme act on it.
-            //
-            // An atom under the cursor takes precedence: the two pick channels are independent,
-            // so both can find something at once, and this is the renderer saying which of its
-            // own answers wins. Reported after onAtomHovered, which has already cleared the
-            // hover state on the way past when there is no atom - so a labelled piece fills the
-            // gap rather than fighting over it.
+            /**
+             * A buffer may label its pickable pieces with strings that mean nothing here. Report
+             * the one under the cursor and let whoever understands the scheme act on it.
+             *
+             * WHO WINS IS NOT DECIDED HERE, FOR THE PIECES THAT STAND FOR A RESIDUE
+             *
+             * These are two independent nearest-point tests and they need not agree. A ribbon
+             * carries per-section pick points *and* the atoms of the residues it draws, and near a
+             * peptide bond the nearest atom flips between one residue's C and the next one's N
+             * with a pixel of mouse movement while the nearest section does not move at all. A
+             * surface is worse: it has no atoms of its own, so the competing atom always comes
+             * from some other buffer, and the label wanders over a patch that stays lit.
+             *
+             * Deciding it here was tried twice and neither rule holds. The renderer knows about
+             * buffers and distances; the question is about *molecules* - a mesh that names a
+             * residue of the same molecule as the hovered atom should win, because it is the
+             * representation you are pointing at, while an atom of some other molecule should not
+             * be overridden. So both findings are reported, in order, and MainContainer - which
+             * knows which molecule owns which buffer, and already asks exactly that question of
+             * both - decides between them.
+             *
+             * The old suppression stands for every other kind of label. A 3D object or a cavity
+             * has nothing downstream that could arbitrate for it, so an atom under the cursor
+             * still silences it, exactly as before.
+             */
+            const pickKind = minidx_pi > -1
+                ? displayBuffers[minidx_pi].pick_info?.pick_tag_kind
+                : null
+            const sectionStandsForResidue = pickKind === MOORHEN_ATOM_TAG_KIND
+                || pickKind === MOORHEN_MESH_RESIDUE_TAG_KIND
+
             if (self.props.onSectionHovered) {
-                const atomHasIt = minidx > -1
+                // Silenced by an atom only for labels nothing downstream can arbitrate.
+                const atomHasIt = minidx > -1 && !sectionStandsForResidue
                 const pickInfo = (!atomHasIt && minidx_pi > -1) ? displayBuffers[minidx_pi].pick_info : null
                 const tag = (pickInfo?.pick_point_tags && minj_pi > -1)
                     ? pickInfo.pick_point_tags[minj_pi]
@@ -321,7 +351,30 @@ export function doMouseUp(self: MGWebGL, event) {
         if(Math.abs(event_x - self.mouseDown_x) < 5 && Math.abs(event_y - self.mouseDown_y) < 5){
             if(displayBuffers.length > 0){
                 const [minidx, minj, mindist, minsym, minx, miny, minz, minidx_pi,minj_pi,mindist_pi,minsym_pi,minx_pi,miny_pi,minz_pi] = self.getAtomFomMouseXY(event, self);
-                if(displayBuffers[minidx] && displayBuffers[minidx].atoms) {
+                // Which grain centring works at. By default the residue clicked, whatever the
+                // zoom: people know their structures and where they want to be. With the Dev menu
+                // switch (meshCentringSetting), the grain the hover lights at instead - zoomed out,
+                // a surface or ribbon under the pointer lights its whole chain or molecule, and
+                // centring then goes where the light is, ahead of any atom the pick also found
+                // (atoms are measured against a tolerance that grows with the zoom, so pulled back
+                // there is nearly always one near the ray). At the residue grain the atom keeps
+                // its precedence either way.
+                const grain = meshCentringSetting.followHighlight ? self.pickLevel : 0
+                const coarse = minidx_pi > -1 && !displayBuffers[minidx_pi]?.pick_info?.claims_pointer
+                    ? coarseSectionPosition(displayBuffers, minidx_pi, minj_pi, grain)
+                    : null
+                // At the residue grain, the mesh's residue when the hover has settled on it rather
+                // than on the atom (centreOnMesh): what is lit and labelled is where centring goes.
+                const hoveredCid = self.store.getState().hoveringStates?.hoveredAtom?.cid
+                const meshResidue = !coarse && minidx_pi > -1 && !displayBuffers[minidx_pi]?.pick_info?.claims_pointer
+                    && centreOnMesh(displayBuffers, minidx_pi, minj_pi, hoveredCid)
+                    ? pickedMeshPosition(displayBuffers, minidx_pi, minj_pi, 0)
+                    : null
+                if(coarse) {
+                    self.props.onOriginChanged([-coarse[0], -coarse[1], -coarse[2]])
+                } else if(meshResidue) {
+                    self.props.onOriginChanged([-meshResidue[0], -meshResidue[1], -meshResidue[2]])
+                } else if(displayBuffers[minidx] && displayBuffers[minidx].atoms) {
                     const atx = displayBuffers[minidx].atoms[minj].x;
                     const aty = displayBuffers[minidx].atoms[minj].y;
                     const atz = displayBuffers[minidx].atoms[minj].z;
@@ -343,7 +396,7 @@ export function doMouseUp(self: MGWebGL, event) {
                         && !!displayBuffers[minidx_pi]?.pick_info?.claims_pointer
                     const meshPosition = claimsPointer
                         ? null
-                        : pickedMeshPosition(displayBuffers, minidx_pi, minj_pi, self.pickLevel)
+                        : pickedMeshPosition(displayBuffers, minidx_pi, minj_pi, grain)
                     if(meshPosition){
                         self.props.onOriginChanged([-meshPosition[0], -meshPosition[1], -meshPosition[2]])
                     }
@@ -391,45 +444,6 @@ function clickWasFree(self: MGWebGL): boolean {
     return !self.keysDown['label_atom']
         && !self.keysDown['measure_distances']
         && !self.keysDown['residue_selection']
-}
-
-/**
- * Where on a mesh a pick landed, in scene coordinates, or null if it did not land on one.
- *
- * A buffer divided into sections gives the section that was picked, so that a trace centres on
- * the residue pointed at rather than on the middle of the whole chain. Anything else gives the
- * centre of the instance, which is the first pick point it offers - the rest are scattered over
- * its surface to make it hoverable, and centring on one of those would put the view on the
- * shape's edge.
- *
- * A position rather than an identity, because a mesh need not stand for anything at all.
- *
- * `level` says how much of a sectioned mesh counts as one thing at the current zoom: centring
- * lands on the middle of whatever is highlighted, so pulled back far enough it goes to the
- * middle of a whole chain rather than of the residue happening to be under the pointer.
- */
-function pickedMeshPosition(
-    displayBuffers, bufferIndex: number, pickIndex: number, level: number = 0
-): number[] | null {
-    const pickInfo = bufferIndex > -1 ? displayBuffers[bufferIndex]?.pick_info : null;
-    if (!pickInfo?.pick_points || pickIndex < 0) {
-        return null;
-    }
-    // A section's aim point at this grain, when the mesh offers coarser ones.
-    const section = pickInfo.pick_point_sections?.[pickIndex];
-    const coarse = section !== undefined
-        ? pickInfo.section_level_points?.[level]?.[section]
-        : undefined;
-    if (coarse) return coarse;
-    let index = pickIndex;
-    if (!pickInfo.pick_point_sections) {
-        const instances = pickInfo.pick_point_instances;
-        if (instances) {
-            const first = instances.indexOf(instances[pickIndex]);
-            if (first > -1) index = first;
-        }
-    }
-    return pickInfo.pick_points[index] ?? null;
 }
 
 export function doMiddleClick(self: MGWebGL, evt) {

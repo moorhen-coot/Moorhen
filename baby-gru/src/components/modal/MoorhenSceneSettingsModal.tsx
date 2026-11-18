@@ -19,16 +19,18 @@ import {
     setDoPerspectiveProjection,
     setDoSSAO,
     setDoShadow,
+    setShadowSoftness,
     setEdgeDetectDepthScale,
     setEdgeDetectDepthThreshold,
     setEdgeDetectNormalScale,
     setEdgeDetectNormalThreshold,
+    setAutoFog,
+    setAutoClip,
     setFogClipOffset,
     setFogEnd,
     setFogStart,
     setLightPosition,
     setPerspectiveEyeDistance,
-    setResetClippingFogging,
     setShadowMapQuality,
     setSpecular,
     setSpecularPower,
@@ -48,6 +50,7 @@ import { ColourRule } from "../../utils/MoorhenColourRule";
 import { modalKeys } from "../../utils/enums";
 import { hexToRGB, rgbToHex } from "../../utils/utils";
 import { MoorhenButton, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MAX_SHADOW_SOFTNESS } from "../../WebGLgComponents/shadowFrustum";
 import { MoorhenColorSwatch } from "../inputs/MoorhenColourPicker/MoorhenColorSwatch";
 import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
@@ -346,7 +349,8 @@ const ClipFogPanel = () => {
     const clipEnd = useSelector((state: moorhen.State) => state.sceneSettings.clipEnd);
 
     const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap);
-    const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
+    const autoFog = useSelector((state: RootState) => state.sceneSettings.autoFog);
+    const autoClip = useSelector((state: RootState) => state.sceneSettings.autoClip);
 
     return (
         <MoorhenStack direction="vertical" card={true} title="Clipping and fog">
@@ -397,11 +401,15 @@ const ClipFogPanel = () => {
 
             <MoorhenToggle
                 type="switch"
-                checked={resetClippingFogging}
-                onChange={() => {
-                    dispatch(setResetClippingFogging(!resetClippingFogging));
-                }}
-                label="Reset clipping and fogging on zoom"
+                checked={autoFog}
+                onChange={() => dispatch(setAutoFog(!autoFog))}
+                label="Auto fog (follows the zoom)"
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={autoClip}
+                onChange={() => dispatch(setAutoClip(!autoClip))}
+                label="Auto clip (follows the zoom)"
             />
 
             <MoorhenToggle
@@ -425,6 +433,7 @@ const LightingPanel = () => {
 
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow);
     const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality);
+    const shadowSoftness = useSelector((state: moorhen.State) => state.sceneSettings.shadowSoftness);
 
     const dispatch = useDispatch();
 
@@ -507,6 +516,19 @@ const LightingPanel = () => {
                     <option value="nice">Nice</option>
                     <option value="smooth">Smooth</option>
                 </MoorhenSelect>
+            )}
+            {/* Penumbra radius in angstrom, the same at every zoom and quality. 0 is a hard edge. */}
+            {doShadow && (
+                <MoorhenSlider
+                    minVal={0}
+                    maxVal={MAX_SHADOW_SOFTNESS}
+                    scale="linear"
+                    sliderTitle="Shadow softness (Å)"
+                    value={Math.min(shadowSoftness, MAX_SHADOW_SOFTNESS)}
+                    setValue={val => dispatch(setShadowSoftness(val))}
+                    stepButtons={0.05}
+                    decimalPlaces={2}
+                />
             )}
         </MoorhenStack>
     );

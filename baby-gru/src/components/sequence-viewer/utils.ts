@@ -1,6 +1,6 @@
-import { useSelector } from "react-redux";
+import { useSelector, useStore } from "react-redux";
 import { Dispatch, UnknownAction } from "redux";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { ResidueValidationData, ValidationData } from "@/InstanceManager/CommandCentre/CootCommandWrapper";
 import { setShownControl } from "@/store/globalUISlice";
 import { libcootApi } from "@/types/libcoot";
@@ -9,7 +9,7 @@ import { type ResidueSelection, setResidueSelection } from "../../store/generalS
 import type { MoorhenMolecule, Sequence } from "../../utils/MoorhenMolecule";
 import { cidToSpec, sequenceIsValid } from "../../utils/utils";
 import { GradientPreset } from "../inputs/MoorhenGradientPicker/gradientPresets";
-import type { ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
+import type { HoveredResidue, HoveredResidueSubscription, ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
 
 export const stringToSeqViewer = (
     seqAsString: string,
@@ -219,4 +219,32 @@ export const useHoveredResidue = (): {
         }
     }, [hoveredAtom]);
     return hoveredResidue;
+};
+
+/**
+ * The hovered residue (hoveringStates.hoveredAtom) as a subscription for MoorhenSequenceViewer:
+ * the hover changes at mouse rate, so it is read from the store outside React and the viewer
+ * highlights the residue by DOM manipulation, with no component re-rendering.
+ */
+export const useHoveredResidueSubscription = (): HoveredResidueSubscription => {
+    const store = useStore<RootState>();
+    return useCallback(
+        (callback: (residue: HoveredResidue | null) => void) => {
+            let lastHoveredAtom: RootState["hoveringStates"]["hoveredAtom"] | undefined = undefined;
+            const update = () => {
+                const hoveredAtom = store.getState().hoveringStates.hoveredAtom;
+                if (hoveredAtom === lastHoveredAtom) return;
+                lastHoveredAtom = hoveredAtom;
+                if (hoveredAtom?.cid && hoveredAtom.molecule) {
+                    const resInfo = cidToSpec(hoveredAtom.cid);
+                    callback({ molNo: hoveredAtom.molecule.molNo, chain: resInfo.chain_id, resNum: resInfo.res_no });
+                } else {
+                    callback(null);
+                }
+            };
+            update();
+            return store.subscribe(update);
+        },
+        [store]
+    );
 };

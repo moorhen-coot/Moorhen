@@ -20,6 +20,8 @@
  * where it can always be satisfied.
  */
 
+import { FIELD_DEPTH_BACK, FIELD_DEPTH_FRONT } from "../WebGLgComponents/slab";
+
 /** The draggable handles, in the order they are drawn. */
 export type HandleId = "clipStart" | "clipEnd" | "fogStart" | "fogEnd" | "blurDepth";
 
@@ -71,19 +73,25 @@ export function plotHalfRange(sceneHalfRange: number, handles: Handle[]): number
     return Math.max(needed * PLOT_MARGIN, MIN_HALF_RANGE);
 }
 
-/** Where an offset falls on the plot, in pixels from its left edge. */
-export function pixelOfOffset(offset: number, halfRange: number, width: number): number {
-    return width * 0.5 * (1.0 + offset / halfRange);
+/**
+ * Where an offset falls on the plot, in pixels from its left edge.
+ *
+ * The plot shows `halfRange` angstroms either side of `centre`, which is the view centre (0) unless
+ * the widget is zoomed in on part of the depth. Zoomed in, a handle can be off the plot: its pixel
+ * is then outside the canvas, where it is neither drawn nor picked up.
+ */
+export function pixelOfOffset(offset: number, halfRange: number, width: number, centre: number = 0): number {
+    return width * 0.5 * (1.0 + (offset - centre) / halfRange);
 }
 
 /** What offset a pixel corresponds to. The exact inverse of pixelOfOffset. */
-export function offsetOfPixel(pixel: number, halfRange: number, width: number): number {
-    return (pixel / (width * 0.5) - 1.0) * halfRange;
+export function offsetOfPixel(pixel: number, halfRange: number, width: number, centre: number = 0): number {
+    return centre + (pixel / (width * 0.5) - 1.0) * halfRange;
 }
 
 /** Where a handle is drawn. */
-export function pixelOfHandle(handle: Handle, halfRange: number, width: number): number {
-    return pixelOfOffset(handle.offset, halfRange, width);
+export function pixelOfHandle(handle: Handle, halfRange: number, width: number, centre: number = 0): number {
+    return pixelOfOffset(handle.offset, halfRange, width, centre);
 }
 
 /**
@@ -100,13 +108,14 @@ export function handleAtPixel(
     halfRange: number,
     width: number,
     tolerance: number = GRAB_TOLERANCE_PX,
+    centre: number = 0,
 ): HandleId | null {
     let best: HandleId | null = null;
     let bestDistance = Infinity;
 
     for (const handle of handles) {
         if (!handle.visible) continue;
-        const distance = Math.abs(pixel - pixelOfHandle(handle, halfRange, width));
+        const distance = Math.abs(pixel - pixelOfHandle(handle, halfRange, width, centre));
         if (distance <= tolerance && distance < bestDistance) {
             best = handle.id;
             bestDistance = distance;
@@ -153,4 +162,50 @@ export function constrainOffset(
     return isNearHandle(id)
         ? Math.min(proposed, partnerOffset - gap)
         : Math.max(proposed, partnerOffset + gap);
+}
+
+/**
+ * The depth a zoomed-in side view centres on: the middle of what the main view shows, which is the
+ * clip slab, or the fog when nothing is clipped, or else the view centre. Not the view centre
+ * itself: the slab is rarely symmetric about it (Auto clip puts it 8 zooms in front and 21 behind),
+ * and zooming in on the centre would soon leave the planes the user wants to place off the plot.
+ */
+export function sideViewZoomCentre(handles: Handle[]): number {
+    const offsetOf = (id: HandleId) => handles.find(h => h.id === id && h.visible)?.offset;
+    for (const [near, far] of [["clipStart", "clipEnd"], ["fogStart", "fogEnd"]] as [HandleId, HandleId][]) {
+        const nearOffset = offsetOf(near);
+        const farOffset = offsetOf(far);
+        if (nearOffset !== undefined && farOffset !== undefined) return (nearOffset + farOffset) / 2;
+    }
+    return 0;
+}
+
+/** The narrowest depth, in angstroms, the side view shows across when zoomed in all the way. */
+export const SIDE_VIEW_MIN_WIDTH = 10.0;
+
+/** How far the side view can zoom in on a plot of this half range: until it is SIDE_VIEW_MIN_WIDTH across. */
+export function maxSideViewZoom(halfRange: number): number {
+    return Math.max(1.0, (2.0 * halfRange) / SIDE_VIEW_MIN_WIDTH);
+}
+
+/** The depth a plot shows: `halfRange` angstroms either side of `centre`. */
+export interface PlotWindow {
+    centre: number;
+    halfRange: number;
+}
+
+/** How much of the depth the side view's auto zoom shows, as a multiple of the auto slab's depth. */
+export const SIDE_VIEW_AUTO_SPAN = 2.0;
+
+/**
+ * The side view's auto zoom: the slab Auto clip and Auto fog would set for the main view's zoom,
+ * SIDE_VIEW_AUTO_SPAN times over and centred on it, so it follows the zoom. From the zoom, not from
+ * the planes: those stay put when Auto clip and Auto fog are off, and the window would then never
+ * move. No narrower than SIDE_VIEW_MIN_WIDTH.
+ */
+export function sideViewAutoWindow(zoom: number): PlotWindow {
+    const front = zoom * FIELD_DEPTH_FRONT;
+    const back = zoom * FIELD_DEPTH_BACK;
+    const halfRange = Math.max(SIDE_VIEW_AUTO_SPAN * (front + back) / 2, SIDE_VIEW_MIN_WIDTH / 2);
+    return { centre: (back - front) / 2, halfRange };
 }

@@ -88,13 +88,22 @@ export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`;
 };
 
+/**
+ * Which residue the view is centred on.
+ *
+ * @param origin where the camera is, in the store's negated convention. Defaults to the store's
+ *     copy, which is right whenever the store is current. A movie export passes the camera's live
+ *     origin instead: during an export the store is deliberately left behind, because the export
+ *     drives the origin-dependent updates itself rather than through the listeners that watch it.
+ */
 export const getCentreAtom = async (
     molecules: MoorhenMolecule[],
     commandCentre: CommandCentre,
-    store: MoorhenReduxStoreType
+    store: MoorhenReduxStoreType,
+    origin?: readonly [number, number, number]
 ): Promise<[MoorhenMolecule, string]> => {
     const visibleMolecules: MoorhenMolecule[] = molecules.filter((molecule: MoorhenMolecule) => molecule.isVisible());
-    const originState = store.getState().sceneSettings.origin;
+    const originState = origin ?? store.getState().sceneSettings.origin;
     if (visibleMolecules.length === 0) {
         return [null, null];
     }

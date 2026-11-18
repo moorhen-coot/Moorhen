@@ -123,7 +123,8 @@ export const loadCoordFiles = async (
 ): Promise<Promise<moorhen.Molecule>[]> => {
     const loadPromises: Promise<moorhen.Molecule>[] = [];
     for (const file of files) {
-        if (file.name.endsWith(".pdb") || file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
+        const lowerName = file.name.toLowerCase();
+        if (lowerName.endsWith(".pdb") || lowerName.endsWith(".ent") || lowerName.endsWith(".cif") || lowerName.endsWith(".mmcif")) {
             const contents = await file.text();
             loadPromises.push(
                 readCoordsString(contents, file.name, moorhenInstance, backgroundColor, defaultBondSmoothness)
@@ -222,16 +223,17 @@ const loadMrParseJson = async (files: File[]) => {
     let homologsContents = "";
 
     for (const file of files) {
-        if (file.name.endsWith("input.fasta")) {
+        const lowerName = file.name.toLowerCase();
+        if (lowerName.endsWith("input.fasta")) {
             fastaContents = await file.text();
         }
-        if (file.name.endsWith("af_models.json")) {
+        if (lowerName.endsWith("af_models.json")) {
             afModelContents = await file.text();
         }
-        if (file.name.endsWith("esm_models.json")) {
+        if (lowerName.endsWith("esm_models.json")) {
             esmModelContents = await file.text();
         }
-        if (file.name.endsWith("homologs.json")) {
+        if (lowerName.endsWith("homologs.json")) {
             homologsContents = await file.text();
         }
     }
@@ -725,7 +727,7 @@ export const autoOpenFiles = async (
 
     let isMrParse = false;
     let isRelionLocresFolder = false;
-    const fileNames = files.map(file => file.name);
+    const fileNames = files.map(file => file.name.toLowerCase());
 
     // Check for MrParse directory
     if (fileNames.some(name => name.endsWith("input.fasta"))) {
@@ -773,10 +775,12 @@ export const autoOpenFiles = async (
     }
 
     for (const file of files) {
+        // Extensions compared in lower case, so TEST.PDB or MAP.MRC load like test.pdb and map.mrc
+        const lowerName = file.name.toLowerCase();
         //Structures
-        if (file.name.endsWith(".pdb") || file.name.endsWith(".pdbqt") ||file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
+        if (lowerName.endsWith(".pdb") || lowerName.endsWith(".pdbqt") ||lowerName.endsWith(".ent") || lowerName.endsWith(".cif") || lowerName.endsWith(".mmcif")) {
             let content = await file.text();
-            if (file.name.endsWith(".pdbqt")) {
+            if (lowerName.endsWith(".pdbqt")) {
                 // keep only the first 66 characters of each line to make a kinda pdb
                 content =  pdbqtToPdb(content);
                 console.log(content);
@@ -822,9 +826,9 @@ export const autoOpenFiles = async (
                 moleculesCreated.push(newMolecule);
                 returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
             }
-        } else if (file.name.endsWith(".mtz")) {
+        } else if (lowerName.endsWith(".mtz")) {
             returnValues.push(...(await loadMtzMaps(moorhenInstance, file)));
-        } else if (file.name.endsWith(".pb")) {
+        } else if (lowerName.endsWith(".pb")) {
             //Session file
             try {
                 await handleSessionUpload(file, moorhenInstance);
@@ -836,7 +840,7 @@ export const autoOpenFiles = async (
                 dispatch(enqueueSnackbar({ message, variant: "warning" }));
             }
             break; //We only load the first session.
-        } else if (file.name.toLowerCase().endsWith(MOVIE_EXTENSION)) {
+        } else if (lowerName.endsWith(MOVIE_EXTENSION)) {
             // A movie file, which is a movie description plus the session it was made against.
             // Handled like a session and for the same reason: it rebuilds the whole scene, so
             // there is nothing sensible to do with a second one, or with anything opened after it.
@@ -846,7 +850,7 @@ export const autoOpenFiles = async (
                 variant: opened.ok ? "info" : "warning",
             }));
             break;
-        } else if (file.name.toLowerCase().endsWith(".gltf") || file.name.toLowerCase().endsWith(".glb")) {
+        } else if (lowerName.endsWith(".gltf") || lowerName.endsWith(".glb")) {
             try {
                 // The whole selection, not just this file: a .gltf takes its buffers and images
                 // from whatever was opened alongside it.
@@ -862,7 +866,7 @@ export const autoOpenFiles = async (
                 }));
                 console.warn(e);
             }
-        } else if (file.name.endsWith(".json")) {
+        } else if (lowerName.endsWith(".json")) {
             try {
                 const fileContents = await file.text();
                 const json = JSON.parse(fileContents);
@@ -871,7 +875,7 @@ export const autoOpenFiles = async (
             } catch (e) {
                 dispatch(enqueueSnackbar({ message: `Failed to load json validation ${file.name}`, variant: "warning" }));
             }
-        } else if (file.name.endsWith(".nef") || file.name.endsWith(".nef.gz")) {
+        } else if (lowerName.endsWith(".nef") || lowerName.endsWith(".nef.gz")) {
             const molecules = store.getState().molecules.moleculeList;
 
             await processNEFFileAutoLoader(file, molecules, dispatch);
@@ -879,18 +883,18 @@ export const autoOpenFiles = async (
         }
 
         else if (
-            file.name.endsWith(".mrc") ||
-            file.name.endsWith(".map") ||
-            file.name.endsWith(".ccp4") ||
-            file.name.endsWith(".mrc.gz") ||
-            file.name.endsWith(".map.gz")
+            lowerName.endsWith(".mrc") ||
+            lowerName.endsWith(".map") ||
+            lowerName.endsWith(".ccp4") ||
+            lowerName.endsWith(".mrc.gz") ||
+            lowerName.endsWith(".map.gz")
         ) {
             try {
                 let newMap: MoorhenMap = null;
                 const isDiff = /fofc|diff|delfwt|mfo-?dfc/i.test(file.name);
-                const isLocres = file.name.includes("_locres.mrc");
+                const isLocres = lowerName.includes("_locres.mrc");
                 try {
-                    if (file.name.endsWith(".gz")) {
+                    if (lowerName.endsWith(".gz")) {
                         newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, true);
                     } else {
                         newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, false);

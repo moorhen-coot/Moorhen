@@ -12,7 +12,6 @@ interface ResidueBoxProps {
     index: number;
     columnWidth?: number;
     fontSize?: number;
-    hoveredResidue?: number | null;
     isGliding?: boolean;
     handleResidueMouseOver?: (evt: React.MouseEvent<HTMLDivElement>) => void;
     handleResidueMouseDown?: (evt: React.MouseEvent<HTMLDivElement>) => void;
@@ -28,7 +27,6 @@ export const ResidueBox = memo((props: ResidueBoxProps) => {
         index,
         columnWidth,
         fontSize,
-        hoveredResidue = null,
         isGliding = false,
         handleResidueMouseOver,
         handleResidueMouseDown,
@@ -48,7 +46,7 @@ export const ResidueBox = memo((props: ResidueBoxProps) => {
         const colorAlternate = !sequence.blockAlternateColour ? (index % 2 === 0 ? "msv__even" : "msv__odd") : "msv__solid";
         const className = `moorhen__seqviewer__residue-box ${colorAlternate} ${
             residue.selected ? "msv__selected" : ""
-        } ${hoveredResidue === residue.resNum ? "msv__hover" : ""} ${isGliding ? "glideSelect" : ""}`;
+        } ${isGliding ? "glideSelect" : ""}`;
         return (
             <div
                 role="button"
