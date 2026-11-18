@@ -12,6 +12,7 @@ import {  RootState } from '../../store/MoorhenReduxStore';
 import { Store } from '@reduxjs/toolkit';
 import { MoorhenStack } from "../interface-base";
 import "./UoY-legal.css"
+import { useDrawQuat } from "./drawQuatStore"
 
 interface ImageFrac2D {
     x: number
@@ -649,6 +650,11 @@ export const Moorhen2DOverlay = ((props) => {
 
     const store = useStore<RootState>()
 
+    // The view rotation: from MoorhenWebMG's store (a frame renders only this component), or as a
+    // plain prop.
+    const storeQuat = useDrawQuat(props.drawQuatStore)
+    const drawQuat = props.drawQuat ?? storeQuat
+
     const [ isLegalVisible, setIsLegalVisible ] = useState(window.location.hostname==="moorhen.hosted.york.ac.uk" ? true : false)
     
     const width = useSelector((state: moorhen.State) => state.sceneSettings.GlViewportWidth)
@@ -895,7 +901,7 @@ export const Moorhen2DOverlay = ((props) => {
                 } else {
                     ctx.clearRect(0,0,width,height)
                 }
-                drawOn2DContext(ctx, width, height, 1.0, helpText, images, props.drawQuat, i, store)
+                drawOn2DContext(ctx, width, height, 1.0, helpText, images, drawQuat, i, store)
             }
         })
 
@@ -904,7 +910,7 @@ export const Moorhen2DOverlay = ((props) => {
 
     useEffect(() => {
         draw2D()
-    }, [draw2D,textOverlays,imageOverlays,svgPathOverlays,fracPathOverlays,callbacks,props.drawQuat])
+    }, [draw2D,textOverlays,imageOverlays,svgPathOverlays,fracPathOverlays,callbacks,drawQuat])
 
     return  <>
            <canvas style={{zIndex:0, pointerEvents: "none", position: "absolute", top: 0, left:0}} ref={canvas2DRef0} height={width} width={height} />

@@ -1759,6 +1759,7 @@ function drawExternalFrame(self: MGWebGL, external: ExternalRenderer): void {
         // reference, and the camera's does not change on a zoom. WebGL's frames hand it a new one
         // without saying so: GLrender replaces myQuat with a clone whenever it sets up the
         // projection. Passing the camera's own here left the axes and scale bar still while WebGPU drew.
+        // Only the 2D overlay renders for it (drawQuatStore.ts).
         self.props.setDrawQuat(quat4.clone(self.myQuat))
 
         const divided = self.doMultiView || self.doThreeWayView || self.doSideBySideStereo || self.doCrossEyedStereo;
@@ -1848,8 +1849,10 @@ export function drawScene(self: MGWebGL) : void {
         // arrives - never per frame of a move, which is the same restraint the `!moving` guard
         // here was expressing. One echo, in one place, for every way of moving the camera.
         //
-        // setDrawQuat stays: it is React state rather than Redux, does not freeze, and is
-        // deliberately given the live array so that a rotation does not re-render the 2D overlay.
+        // setDrawQuat stays: it is not Redux, does not freeze, and is deliberately given the live
+        // array, so handing over the same one again does nothing. It goes to a small store outside
+        // React state that only the 2D overlay listens to (drawQuatStore.ts), so a new array
+        // renders the overlay alone, not MoorhenWebMG and everything under it.
         self.props.setDrawQuat(self.myQuat)
 
         // Decided here, before theShaders is built, because the shader variant chosen below

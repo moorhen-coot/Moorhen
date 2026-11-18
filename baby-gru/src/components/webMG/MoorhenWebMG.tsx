@@ -20,6 +20,7 @@ import { setQuat, setOrigin, setZoom,
          autoClipFogByZoom,  } from "../../store"
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
+import { createDrawQuatStore } from './drawQuatStore';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
 import { isSilent, viewDifference } from "../../WebGLgComponents/viewEcho";
@@ -152,7 +153,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
     const GLLabelsFontSize = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontSize)
-    const [drawQuat,setDrawQuat] = useState<quat4>([0, 0, 0, -1])
+    // The 2D overlay's view rotation, set by every frame: outside React state, so a frame does not
+    // re-render this component and everything under it (drawQuatStore.ts).
+    const [drawQuatStore] = useState(() => createDrawQuatStore([0, 0, 0, -1] as unknown as quat4))
 
     const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
 
@@ -960,11 +963,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showAxes={drawAxes}
                     showFPS={drawFPS}
                     mapLineWidth={innerMapLineWidth}
-                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={setDrawQuat}
+                    reContourMapOnlyOnMouseUp={reContourMapOnlyOnMouseUp} setDrawQuat={drawQuatStore.set}
                     store={store}
                     dispatch={dispatch} />
                     {useWebGPU && webGPUAvailable && <MoorhenWebGPUMainView glRef={glRef as React.RefObject<MGWebGL>} />}
-                    <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>;
+                    <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuatStore={drawQuatStore}/>;
                 </figure>
                 {showContextMenu &&
                 <MoorhenContextMenu
