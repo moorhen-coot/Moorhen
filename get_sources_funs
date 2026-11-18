@@ -390,6 +390,18 @@ unapplycootpatches() {
     done
 }
 
+# True when the work tree in $1 is at the pinned commit $2. This compares HEAD
+# (what is actually checked out and built) rather than the "main" branch: the
+# pinned commit is checked out detached, so local main can sit at any commit,
+# including the pinned one while HEAD is somewhere else. Comparing main let a
+# stale checkout through with "Using existing ..." after VERSIONS was bumped.
+# Full hashes are compared, so the pin may be abbreviated to any length. If the
+# pinned commit has not been fetched yet, this is false and the caller fetches.
+at_pinned_commit() {
+    _pinned=$(git -C "$1" rev-parse --verify --quiet "$2^{commit}") || return 1
+    [ "x$(git -C "$1" rev-parse HEAD)" = "x$_pinned" ]
+}
+
 getcoot() {
     cdcheckout
     if [ -r coot-1.0 ]; then
@@ -400,10 +412,10 @@ getcoot() {
         else
             echo "Existing coot-1.0 is pointing to the target repository (${coot_fork}). Proceeding to check commit..."
         fi
-        if [ "x$(git -C coot-1.0 rev-parse --short=10 main)" = "x$coot_commit" ];then
+        if at_pinned_commit coot-1.0 "$coot_commit"; then
             echo "Using existing coot-1.0"
         else
-            echo "Checking-out existent coot-1.0 to a different version ($(git -C coot-1.0 rev-parse --short=10 main) -> $coot_commit)"
+            echo "Checking-out existent coot-1.0 to a different version ($(git -C coot-1.0 rev-parse --short=10 HEAD) -> $coot_commit)"
             unapplycootpatches
             git -C coot-1.0 fetch &&\
             git -C coot-1.0 checkout $coot_commit &&\
@@ -422,10 +434,10 @@ getcoot() {
 getlhasa() {
     cdcheckout
     if [ -r LhasaReact ]; then
-        if [ "x$(git -C LhasaReact rev-parse --short=10 main)" = "x$lhasa_commit" ];then
+        if at_pinned_commit LhasaReact "$lhasa_commit"; then
             echo "Using existing LhasaReact"
         else
-            echo "Checking-out existent LhasaReact to a different version ($(git -C LhasaReact rev-parse --short=10 main) -> $lhasa_commit)"
+            echo "Checking-out existent LhasaReact to a different version ($(git -C LhasaReact rev-parse --short=10 HEAD) -> $lhasa_commit)"
             git -C LhasaReact fetch &&\
             git -C LhasaReact checkout $lhasa_commit &&\
             echo Using checked-out LhasaReact || fail "Failed to checkout LhasaReact"

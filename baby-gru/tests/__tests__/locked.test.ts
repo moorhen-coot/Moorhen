@@ -147,7 +147,8 @@ describe("the handles", () => {
         // A source check rather than a render: drawing needs a GL context. What is asserted is
         // that the guard sits after the object is found and returns the empty list.
         const afterFind = source.slice(source.indexOf("objects.find(item => item.uniqueId === selectedId)"));
-        expect(afterFind.slice(0, 600)).toMatch(/object\.locked[\s\S]{0,80}return \[\]/);
+        expect(afterFind.slice(0, 600)).toMatch(/object\.locked[\s\S]{0,80}return null/);
+        expect(source).toMatch(/if \(!target\) \{\s*return \[\]/);
     });
 
     test("and DragHandles refuses both the start and the move", () => {
@@ -156,7 +157,9 @@ describe("the handles", () => {
             "utf8"
         );
         // Two guards, because a drag already in progress would otherwise be honoured to its end.
-        const guards = source.match(/!object \|\| object\.locked/g) ?? [];
-        expect(guards).toHaveLength(2);
+        // Both take what the handles are on from handleTargetOf, which gives nothing for a locked
+        // object: the start directly, each move through currentTarget.
+        expect(source.match(/if \(!target \|\| !action/g) ?? []).toHaveLength(2);
+        expect(source.match(/handleTargetOf\(store\.getState\(\)\)/g) ?? []).toHaveLength(2);
     });
 });
