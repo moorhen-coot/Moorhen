@@ -118,7 +118,8 @@
     background-color: rgb(var(--moorhen-background));
 }
 
-.moorhen__seqviewer__residue-box.msv__hover {
+/* The hovered residue, set outside React (see applyHoveredResidue) */
+.moorhen__seqviewer__residue-box[data-hovered] {
     background-color: rgb(230, 233, 166);
 }
 
