@@ -123,6 +123,7 @@ export namespace webGL {
         xPixelOffset: WebGLUniformLocation;
         yPixelOffset: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         pixelZoom: WebGLUniformLocation;
         specularPower: WebGLUniformLocation;
         /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
@@ -198,6 +199,7 @@ export namespace webGL {
         edgeDetectMap: WebGLUniformLocation;
         outlineSize: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         doShadows: WebGLUniformLocation;
         doSSAO: WebGLUniformLocation;
         doEdgeDetect: WebGLUniformLocation;
@@ -223,6 +225,7 @@ export namespace webGL {
         SSAOMap: WebGLUniformLocation;
         edgeDetectMap: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         doShadows: WebGLUniformLocation;
         doSSAO: WebGLUniformLocation;
         doEdgeDetect: WebGLUniformLocation;
@@ -245,6 +248,7 @@ export namespace webGL {
         uWeightTexWidth: WebGLUniformLocation;
         uOffsetTexWidth: WebGLUniformLocation;
         uHoveredPoint: WebGLUniformLocation;
+        uHoverMask: WebGLUniformLocation;
     }
 
     interface ShaderGBuffersTriangles extends MGWebGLShader {}
@@ -406,6 +410,14 @@ export namespace webGL {
          */
         supportsObjectFading: boolean;
         cameraController: CameraController;
+        /**
+         * The redux store this renderer was given.
+         *
+         * Already how the renderer reads the scene and echoes the view back; declared here so that
+         * code handed a renderer can read the scene the same way, rather than being passed the
+         * store a second time alongside it.
+         */
+        store: Store<RootState>;
         /**
          * Put the camera somewhere, over whatever time the caller asks for. A transition of
          * `{ kind: "instant" }` moves it with no animation at all, which is what an export wants.

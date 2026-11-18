@@ -23,7 +23,9 @@
  */
 
 import { MovieSample, Movie, sampleMovie } from "./cameraPath";
-import type { CameraState, CameraTarget, CameraController, SlabPolicy } from "../WebGLgComponents/cameraController";
+import type {
+    CameraState, CameraTarget, CameraController, MotionEcho, SlabPolicy,
+} from "../WebGLgComponents/cameraController";
 
 /** A movie's hold on the camera. Release it in a `finally`. */
 export interface CameraHold {
@@ -76,14 +78,23 @@ const copyOf = (state: Readonly<CameraState>): CameraState => ({
  * @param restoreView  put the view back on release. A preview and an export both want this; a
  *                     movie being authored in a panel might not, since the point is to land on
  *                     the frame you were looking at.
+ * @param motionEcho   tell the rest of the application where the camera is as the movie travels,
+ *                     so that whatever follows the view centre can keep up - see MotionEcho. A
+ *                     preview wants this. An export does not: it drives those same updates itself,
+ *                     frame by frame and in step, and a second source of them would land contours
+ *                     on arbitrary frames.
  */
-export function holdCameraForMovie(host: CameraHost, restoreView = true): CameraHold {
+export function holdCameraForMovie(
+    host: CameraHost, restoreView = true, motionEcho: MotionEcho | null = null,
+): CameraHold {
     const controller = host.cameraController;
     const wasLookingAt = copyOf(controller.state);
     const previousPolicy: SlabPolicy = controller.slabPolicy;
+    const previousEcho: MotionEcho | null = controller.motionEcho;
 
     const driver = controller.acquire("movie");
     controller.slabPolicy = { kind: "manual" };
+    controller.motionEcho = motionEcho;
 
     let released = false;
 
@@ -114,6 +125,7 @@ export function holdCameraForMovie(host: CameraHost, restoreView = true): Camera
             // Policy first: a restored view should be settled under the policy the user had, not
             // under the manual one the movie needed.
             controller.slabPolicy = previousPolicy;
+            controller.motionEcho = previousEcho;
             if (restoreView) driver.set(wasLookingAt);
             driver.release();
         },

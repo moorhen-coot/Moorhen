@@ -6,8 +6,9 @@
  * What WebGL's rules say should happen: the floor is darker where the plateau's and the sphere's
  * shadows fall and nowhere else, by half (shadowed light is halved, and loses its highlight); the
  * tops of the plateau and the sphere, facing the light with nothing over them, are untouched -
- * the sphere does not shadow itself; the soft lookup widens the shadow's edge; and a snapshot in
- * tiles comes out as one drawn whole.
+ * the sphere does not shadow itself; a soft shadow (shadowSoftness, a penumbra in angstrom) widens
+ * the shadow's edge, on screen and in screenshots, without shadowing anything that was lit or
+ * lightening the middle of a shadow; and a snapshot in tiles comes out as one drawn whole.
  */
 import { WebGPUPreviewRenderer } from "../../../src/WebGPUComponents/previewRenderer";
 import type { PreviewCameraSource } from "../../../src/WebGPUComponents/previewScene";
@@ -76,15 +77,64 @@ const difference = (a: Uint8ClampedArray, b: Uint8ClampedArray) => {
     return differing;
 };
 
+/**
+ * The largest difference in any channel of any pixel, in 8-bit steps.
+ *
+ * For a snapshot in tiles against one drawn whole. A tile is drawn with its own projection (the
+ * whole one narrowed to it), so a point's place in the shadow map differs between the two in the
+ * last bits; on a hard shadow's edge, where the compare blends the four texels round it, that can
+ * round to one step either way. Seen as three or four floor pixels on shadow edges, off by one, with
+ * shadows alone (no effect margins). A tile drawn wrongly - a seam, a missing shadow - is many
+ * steps out, so a step of tolerance loses nothing.
+ */
+const largestDifference = (a: Uint8ClampedArray, b: Uint8ClampedArray) => {
+    let largest = 0;
+    for (let i = 0; i < a.length; i += 4) {
+        largest = Math.max(largest, Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2]));
+    }
+    return largest;
+};
+
+/**
+ * Where two images differ, the first few: pixel, place on the floor's plane in angstrom (as
+ * brightness() takes it), and each image's colour. For a failure to say where, not just how many.
+ */
+const differingPixels = (a: Uint8ClampedArray, b: Uint8ClampedArray, limit = 8) => {
+    const ppa = HEIGHT / (48 * base.zoom);
+    const found: { px: number; py: number; x: number; y: number; a: number[]; b: number[] }[] = [];
+    for (let i = 0; i < a.length && found.length < limit; i += 4) {
+        if (a[i] === b[i] && a[i + 1] === b[i + 1] && a[i + 2] === b[i + 2]) continue;
+        const px = (i / 4) % WIDTH, py = Math.floor(i / 4 / WIDTH);
+        found.push({
+            px, py,
+            x: +((px + 0.5 - WIDTH / 2) / ppa).toFixed(2), y: +((HEIGHT / 2 - py - 0.5) / ppa).toFixed(2),
+            a: [a[i], a[i + 1], a[i + 2]], b: [b[i], b[i + 1], b[i + 2]],
+        });
+    }
+    return found;
+};
+
 export interface ShadowsReport {
     /** With shadows over without, at named places. */
     ratios: Record<string, number>;
-    /** Pixels along y = 0 between x = -4 and 0 whose brightness is strictly between shadowed and lit: the edge. */
-    edgeWidth: { hard: number; soft: number };
+    /**
+     * Pixels along y = 0 between x = -4 and 0 whose brightness is strictly between shadowed and
+     * lit: the edge. Hard and soft (1 A), each on screen and as a screenshot (softShadows).
+     */
+    edgeWidth: { hard: number; hardSnapshot: number; soft: number; softSnapshot: number };
+    /** With a 1 A soft shadow over without, at places at least the penumbra away from any edge. */
+    softRatios: Record<string, number>;
     /** Shadows off with the shadow map code in place: the same as never having had it. */
     offDiffers: number;
     /** Tiled (6 tiles) against whole, shadows and occlusion on. */
     tiledDiffers: number;
+    /** The first few of those: where, and the colours (tiled, whole). */
+    tiledDiffersAt: ReturnType<typeof differingPixels>;
+    /** The largest difference among them, in 8-bit steps (see largestDifference). */
+    tiledLargestDifference: number;
+    /** Tiled against whole with shadows alone, and with occlusion alone: how many differ, and by most how much. */
+    tiledDiffersShadowsOnly: { pixels: number; largest: number };
+    tiledDiffersOcclusionOnly: { pixels: number; largest: number };
     tiles: number;
     rendererErrors: string[];
 }
@@ -111,7 +161,21 @@ export default defineCase(async (_device: GPUDevice): Promise<ShadowsReport> => 
             floorUnderClippedSphere: ratio(CLIPPED.x - CLIPPED.z / 2, CLIPPED.y - CLIPPED.z / 2),
         };
 
-        const soft = (await shot({ doShadow: true }, { softShadows: true })).data;
+        // Soft: a 1 A penumbra. On screen, and as a screenshot, which is drawn better: a finer map.
+        const soft = (await shot({ doShadow: true, shadowSoftness: 1 })).data;
+        const softSnapshot = (await shot({ doShadow: true, shadowSoftness: 1 }, { softShadows: true })).data;
+        // Hard, as a screenshot draws it: the edge's staircase smoothed over a few texels.
+        const hardSnapshot = (await shot({ doShadow: true }, { softShadows: true })).data;
+        const softRatio = (x: number, y: number) => brightness(soft, x, y) / brightness(plain, x, y);
+        const softRatios = {
+            // The sphere's shadow is 1.5 A across its radius, so its middle is past the penumbra.
+            floorInSphereShadow: softRatio(-9, -1),
+            floorBesideSphereShadow: softRatio(-9, 3),
+            floorFarFromShadows: softRatio(2, 6),
+            plateauTop: softRatio(3, 0),
+            // Curved, so sloped to the light: shadows itself in speckles without the receiver plane.
+            sphereTop: softRatio(SPHERE.x, SPHERE.y),
+        };
         const edge = (data: Uint8ClampedArray) => {
             const lit = brightness(data, -3.5, 0), dark = brightness(data, -0.5, 0);
             let n = 0;
@@ -122,13 +186,24 @@ export default defineCase(async (_device: GPUDevice): Promise<ShadowsReport> => 
             }
             return n;
         };
-        const edgeWidth = { hard: edge(shadowed), soft: edge(soft) };
+        const edgeWidth = { hard: edge(shadowed), hardSnapshot: edge(hardSnapshot), soft: edge(soft), softSnapshot: edge(softSnapshot) };
 
         const offDiffers = difference((await shot({ doShadow: false })).data, plain);
         const both = { doShadow: true, doSSAO: true, ssaoRadius: 2, ssaoBias: 1 };
         const whole = (await shot(both)).data;
         const tiled = await shot(both, { maxTile: 90 });
-        return { ratios, edgeWidth, offDiffers, tiledDiffers: difference(tiled.data, whole), tiles: tiled.tiles, rendererErrors };
+        const tiledAgainstWhole = async (over: Partial<PreviewCameraSource>) => {
+            const a = (await shot(over, { maxTile: 90 })).data, b = (await shot(over)).data;
+            return { pixels: difference(a, b), largest: largestDifference(a, b) };
+        };
+        return {
+            ratios, edgeWidth, softRatios, offDiffers,
+            tiledDiffers: difference(tiled.data, whole), tiledDiffersAt: differingPixels(tiled.data, whole),
+            tiledLargestDifference: largestDifference(tiled.data, whole), tiles: tiled.tiles,
+            tiledDiffersShadowsOnly: await tiledAgainstWhole({ doShadow: true }),
+            tiledDiffersOcclusionOnly: await tiledAgainstWhole({ doSSAO: true, ssaoRadius: 2, ssaoBias: 1 }),
+            rendererErrors,
+        };
     } finally {
         renderer.destroy();
     }
