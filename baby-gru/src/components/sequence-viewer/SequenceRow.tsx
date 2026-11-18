@@ -10,7 +10,6 @@ export const SequenceRow = memo(
         nameColumnWidth?: number;
         columnWidth?: number;
         fontSize?: number;
-        hoveredResidue?: number | null;
         isGliding?: boolean;
         handleResidueMouseOver?: (evt: React.MouseEvent<HTMLDivElement>) => void;
         handleResidueMouseDown?: (evt: React.MouseEvent<HTMLDivElement>) => void;
@@ -23,7 +22,6 @@ export const SequenceRow = memo(
             nameColumnWidth,
             columnWidth,
             fontSize,
-            hoveredResidue = null,
             isGliding = false,
             handleResidueMouseOver,
             handleResidueMouseDown,
@@ -60,7 +58,6 @@ export const SequenceRow = memo(
                         index={j}
                         columnWidth={columnWidth}
                         fontSize={fontSize}
-                        hoveredResidue={hoveredResidue}
                         isGliding={isGliding}
                         handleResidueMouseOver={handleResidueMouseOver}
                         handleResidueMouseDown={handleResidueMouseDown}

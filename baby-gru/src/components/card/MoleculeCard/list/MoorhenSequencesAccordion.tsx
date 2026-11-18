@@ -9,7 +9,7 @@ import {
     MoleculeToSeqViewerSequences,
     MoorhenSelectionToSeqViewer,
     handleResiduesSelection,
-    useHoveredResidue,
+    useHoveredResidueSubscription,
 } from "../../../sequence-viewer/utils";
 
 export const MoorhenSequencesAccordion = (props: {
@@ -66,7 +66,7 @@ export const MoorhenSequencesAccordion = (props: {
         [dispatch, props.molecule]
     );
 
-    const hoveredResidue = useHoveredResidue();
+    const subscribeToHoveredResidue = useHoveredResidueSubscription();
 
     return (
         <MoorhenAccordion title="Sequences">
@@ -81,7 +81,7 @@ export const MoorhenSequencesAccordion = (props: {
                     onResidueClick={handleClickResidue}
                     setSelectedResidues={residueSelectionCallback}
                     onHoverResidue={handleHoverResidue}
-                    hoveredResidue={hoveredResidue}
+                    subscribeToHoveredResidue={subscribeToHoveredResidue}
                     maxDisplayHeight={8}
                 />
             )}
