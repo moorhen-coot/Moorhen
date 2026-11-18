@@ -22,6 +22,12 @@ var triangle_vertex_shader_source = `#version 300 es\n
     uniform mat4 uMVINVMatrix;
     uniform mat4 uPMatrix;
     uniform mat4 TextureMatrix;
+    // How far, in model units, the point a vertex is looked up at in the shadow map is moved out
+    // along its normal (drawCore.ts, shadowNormalOffset): a texel and a half of the map. Without
+    // it, at a grazing angle the flat triangles of a curved surface shadow their neighbours one
+    // facet in, one facet out - a checkerboard along the shadow terminator, worst on coarse
+    // meshes. Shadows cast from further away than that move by no more.
+    uniform highp float shadowNormalOffset;
 
     uniform vec3 outlineSize;
 
@@ -100,7 +106,8 @@ var triangle_vertex_shader_source = `#version 300 es\n
 
       vec4 theVert = vec4(aVertexPosition+outlineSize*aVertexNormal,1.0);
 
-      ShadowCoord = TextureMatrix * theVert;
+      highp float normalLength = length(aVertexNormal);
+      ShadowCoord = TextureMatrix * (theVert + vec4(normalLength > 0.0 ? aVertexNormal / normalLength * shadowNormalOffset : vec3(0.0), 0.0));
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
       vColor = aVertexColour;

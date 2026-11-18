@@ -129,6 +129,8 @@ export namespace webGL {
         /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
         alphaMultiplier: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         shinyBack: WebGLUniformLocation;
     }
 
@@ -154,6 +156,8 @@ export namespace webGL {
         pixelZoom: WebGLUniformLocation;
         vertexTextureAttribute: GLint;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         xSSAOScaling: WebGLUniformLocation;
         ySSAOScaling: WebGLUniformLocation;
         peelNumber: WebGLUniformLocation;
@@ -182,6 +186,8 @@ export namespace webGL {
         offset: WebGLUniformLocation;
         scaleMatrix: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
     }
 
     interface ShaderPerfectSpheres extends MGWebGLShader {
@@ -190,6 +196,8 @@ export namespace webGL {
         sizeAttribute: GLint;
         invSymMatrixUniform: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         xPixelOffset: WebGLUniformLocation;
         yPixelOffset: WebGLUniformLocation;
         xSSAOScaling: WebGLUniformLocation;
@@ -237,6 +245,8 @@ export namespace webGL {
         occludeDiffuse: WebGLUniformLocation;
         doPerspective: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         screenZ: WebGLUniformLocation;
         ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
         zoom: WebGLUniformLocation;

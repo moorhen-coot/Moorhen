@@ -266,13 +266,11 @@ ${anaglyph_colour_snippet}
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor*Idiff);
       color *= occ;
 
-      if(shad<0.5) {
-          shad += .5;
-          shad = min(shad,1.0);
-          color *= shad;
-      } else {
-          color += Ispec;
-      }
+      // In shadow, the light dimmed by up to a half and the highlight taken away, both continuous
+      // in the shadow, as triangle-fragment-shader.js. (A sphere needs no terminator treatment:
+      // its normal and its depth in the map are both exact.)
+      color *= min(shad + 0.5, 1.0);
+      color += Ispec * smoothstep(0.3, 0.7, shad);
       if(doEdgeDetect){
 
           vec2 resolution;
