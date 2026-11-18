@@ -1774,6 +1774,80 @@ const describeError = (err: any): string => {
     return String(err)
 }
 
+/**
+ * The smooth surface code (src/utils/smoothSurface.ts), bundled by esbuild into SmoothSurface.js
+ * next to this file (npm run build-smooth-surface-worker), as the global MoorhenSmoothSurface.
+ * Loaded the first time a smooth surface is asked for.
+ */
+type SmoothSurfaceBundle = {
+    smoothM2tSurfaceSync: <T>(mesh: T, atoms: unknown[], probe: number, options: SmoothSurfaceOptions) => T;
+    smoothFieldStage: (mesh: unknown, atoms: unknown[], probe: number, options: SmoothSurfaceOptions) => { input: Float32Array } | null;
+    smoothAttributes: (mesh: unknown, positions: Float32Array) => Record<string, unknown>;
+    m2tShell: <T>(mesh: T) => T;
+    unpackAtoms: (packed: Float32Array) => unknown[];
+    smoothedMeshTransferables: (mesh: unknown) => ArrayBuffer[];
+}
+type SmoothSurfaceOptions = Record<string, number | boolean>
+let smoothSurfaceBundle: SmoothSurfaceBundle | null = null
+const loadSmoothSurfaceBundle = (): SmoothSurfaceBundle => {
+    if (!smoothSurfaceBundle) {
+        // @ts-ignore
+        importScripts('./SmoothSurface.js')
+        smoothSurfaceBundle = (self as unknown as { MoorhenSmoothSurface: SmoothSurfaceBundle }).MoorhenSmoothSurface
+    }
+    return smoothSurfaceBundle
+}
+
+/**
+ * An M2T surface, smoothed here rather than on the main thread: the M2T mesh is made and
+ * smoothed in this worker, so only the atoms (x, y, z, r) come in and only the smoothed mesh goes
+ * out. Same arguments as get_molecular_representation_mesh, then the atoms, the probe radius the
+ * field uses (0 for the van der Waals and accessible surfaces) and the smoothing options.
+ */
+const smoothMolecularRepresentationMesh = (imol: number, selection: string, colourStyle: string, style: string, ssUsageScheme: number,
+                                          packedAtoms: Float32Array, probe: number, options: SmoothSurfaceOptions) => {
+    const bundle = loadSmoothSurfaceBundle()
+    const m2tMesh = molecules_container.get_molecular_representation_mesh(imol, selection, colourStyle, style, ssUsageScheme)
+    const meshData = simpleMeshToMeshData(m2tMesh)
+    try { m2tMesh.delete() } catch (err) { /* pass */ }
+    return bundle.smoothM2tSurfaceSync(meshData, bundle.unpackAtoms(packedAtoms), probe, options)
+}
+
+/**
+ * The same in two halves, for marching cubes on the GPU, on the main thread, in between - the
+ * field and the colours stay here, where the M2T mesh is. The first half makes the M2T mesh and
+ * the field and keeps the mesh under a token: { token, field }, or { mesh } (the M2T mesh as it
+ * is) if there is nothing to smooth. The second takes the smoothed positions and returns the
+ * colours and owners for them with what the smoothed mesh keeps of the M2T one, and forgets the
+ * token; with no positions (the main thread gave up), the M2T mesh as it is.
+ */
+const smoothSurfaceMeshes = new Map<number, unknown>()
+let smoothSurfaceToken = 0
+const smoothSurfaceField = (imol: number, selection: string, colourStyle: string, style: string, ssUsageScheme: number,
+                            packedAtoms: Float32Array, probe: number, options: SmoothSurfaceOptions) => {
+    const bundle = loadSmoothSurfaceBundle()
+    const m2tMesh = molecules_container.get_molecular_representation_mesh(imol, selection, colourStyle, style, ssUsageScheme)
+    const meshData = simpleMeshToMeshData(m2tMesh)
+    try { m2tMesh.delete() } catch (err) { /* pass */ }
+    const field = bundle.smoothFieldStage(meshData, bundle.unpackAtoms(packedAtoms), probe, options)
+    if (!field) return { mesh: meshData }
+    const token = ++smoothSurfaceToken
+    smoothSurfaceMeshes.set(token, meshData)
+    return { token, field }
+}
+const smoothSurfaceFinish = (token: number, positions: Float32Array | null) => {
+    const bundle = loadSmoothSurfaceBundle()
+    const meshData = smoothSurfaceMeshes.get(token) as { vert_tri: Float32Array[][] } | undefined
+    smoothSurfaceMeshes.delete(token)
+    if (!meshData) throw new Error(`No smooth surface waiting under token ${token}`)
+    if (!positions) return { mesh: meshData }
+    return {
+        attributes: bundle.smoothAttributes(meshData, positions),
+        shell: bundle.m2tShell(meshData),
+        m2tVertices: meshData.vert_tri[0][0].length / 3,
+    }
+}
+
 const doCootCommand = (messageData: {
     myTimeStamp: number;
     chainID?: string;
@@ -1867,6 +1941,15 @@ const doCootCommand = (messageData: {
                 break
             case "shim_get_map_unit_cell_grid":
                 cootResult = getMapUnitCellGrid(...commandArgs as [number])
+                break
+            case "shim_smooth_molecular_representation_mesh":
+                cootResult = smoothMolecularRepresentationMesh(...commandArgs as [number, string, string, string, number, Float32Array, number, SmoothSurfaceOptions])
+                break
+            case "shim_smooth_surface_field":
+                cootResult = smoothSurfaceField(...commandArgs as [number, string, string, string, number, Float32Array, number, SmoothSurfaceOptions])
+                break
+            case "shim_smooth_surface_finish":
+                cootResult = smoothSurfaceFinish(...commandArgs as [number, Float32Array | null])
                 break
             default:
                 console.log("Calling",command)
@@ -2359,6 +2442,19 @@ const dispatchMessage = function (e: MessageEvent) {
         // A unit-cell map grid can be hundreds of MB: hand its buffer over rather than copy it.
         const grid = e.data.command === "shim_get_map_unit_cell_grid"
             ? (result as { result?: { result?: { data?: unknown } } }).result?.result?.data : null
-        postMessage(result, grid instanceof Float32Array ? [grid.buffer] : [])
+        // A smoothed surface's arrays were made for this reply: hand them over too.
+        const reply = (result as { result?: { result?: any } }).result?.result
+        let smoothed: ArrayBuffer[] = []
+        if (smoothSurfaceBundle && reply) {
+            if (e.data.command === "shim_smooth_molecular_representation_mesh") {
+                smoothed = smoothSurfaceBundle.smoothedMeshTransferables(reply)
+            } else if (e.data.command === "shim_smooth_surface_field" && reply.field) {
+                smoothed = [reply.field.input.buffer]
+            } else if (e.data.command === "shim_smooth_surface_finish" && reply.attributes) {
+                smoothed = Object.values(reply.attributes as Record<string, unknown>)
+                    .filter((v): v is Float32Array | Uint32Array => ArrayBuffer.isView(v)).map(v => v.buffer as ArrayBuffer)
+            }
+        }
+        postMessage(result, grid instanceof Float32Array ? [grid.buffer] : smoothed)
     }
 }

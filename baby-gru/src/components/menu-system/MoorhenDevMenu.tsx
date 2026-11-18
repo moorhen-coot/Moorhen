@@ -28,7 +28,7 @@ import {
 import { centreOfObject } from "../../store/threeDObjectsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
-import { modalKeys } from "../../utils/enums";
+import { M2T_SURFACE_REPRESENTATIONS, modalKeys } from "../../utils/enums";
 import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
 import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
 import { smoothSurfaceSetting } from "../../utils/smoothSurface";
@@ -205,12 +205,15 @@ export const MoorhenDevMenu = () => {
     const [smoothSurface, setSmoothSurface] = useState<boolean>(smoothSurfaceSetting.enabled);
     const [smoothSpacing, setSmoothSpacing] = useState<number>(smoothSurfaceSetting.spacing);
     const [smoothSigma, setSmoothSigma] = useState<number>(smoothSurfaceSetting.sigma);
+    const [smoothMaxShift, setSmoothMaxShift] = useState<number>(smoothSurfaceSetting.maxShift);
+    const [smoothOpenRadius, setSmoothOpenRadius] = useState<number>(smoothSurfaceSetting.openRadius);
     const [smoothOnGpu, setSmoothOnGpu] = useState<boolean>(smoothSurfaceSetting.gpu);
+    const [smoothCavities, setSmoothCavities] = useState<boolean>(smoothSurfaceSetting.cavities);
     // Rebuild the molecular surfaces on show, so a change to the smooth surface is seen at once.
     const redrawSurfaces = () => {
         (store.getState().molecules.moleculeList as MoorhenMolecule[]).forEach(molecule => {
             molecule.representations
-                .filter(representation => representation.style === "MolecularSurface" && representation.visible)
+                .filter(representation => M2T_SURFACE_REPRESENTATIONS.includes(representation.style) && representation.visible)
                 .forEach(representation => representation.redraw());
         });
     };
@@ -604,7 +607,7 @@ export const MoorhenDevMenu = () => {
             <MoorhenToggle
                 type="switch"
                 checked={smoothSurface}
-                label="Smooth molecular surface (blurred SES distance field; test)"
+                label="Smooth surfaces: molecular, van der Waals, accessible (blurred distance field; test)"
                 onChange={() => {
                     smoothSurfaceSetting.enabled = !smoothSurface;
                     setSmoothSurface(!smoothSurface);
@@ -615,10 +618,20 @@ export const MoorhenDevMenu = () => {
                 type="switch"
                 checked={noWebGPU === null && smoothOnGpu}
                 disabled={noWebGPU !== null}
-                label={`Smooth surface: marching cubes with the WebGPU MetaBalls kernels${noWebGPU ? " (no WebGPU here)" : ""}`}
+                label={`Smooth surface: marching cubes on the GPU (on by default; off, or no WebGPU: on the CPU in the Coot worker${noWebGPU ? "; no WebGPU here" : ""})`}
                 onChange={() => {
                     smoothSurfaceSetting.gpu = !smoothOnGpu;
                     setSmoothOnGpu(!smoothOnGpu);
+                    if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={smoothCavities}
+                label="Smooth surface: smooth cavities (exact pits and pockets, about 3x slower; off by default until the field is on the GPU)"
+                onChange={() => {
+                    smoothSurfaceSetting.cavities = !smoothCavities;
+                    setSmoothCavities(!smoothCavities);
                     if (smoothSurfaceSetting.enabled) redrawSurfaces();
                 }}
             />
@@ -640,6 +653,27 @@ export const MoorhenDevMenu = () => {
                     setValue={val => {
                         smoothSurfaceSetting.sigma = val;
                         setSmoothSigma(val);
+                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                    }}
+                />
+                <MoorhenNumberInput
+                    label="max shift (Å, 0 = none)"
+                    value={smoothMaxShift}
+                    minMax={[0, 3]}
+                    setValue={val => {
+                        // 0 in the box means no cap: the plain blur.
+                        smoothSurfaceSetting.maxShift = val > 0 ? val : Infinity;
+                        setSmoothMaxShift(val);
+                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                    }}
+                />
+                <MoorhenNumberInput
+                    label="cut necks under (Å radius, 0 = none)"
+                    value={smoothOpenRadius}
+                    minMax={[0, 2]}
+                    setValue={val => {
+                        smoothSurfaceSetting.openRadius = val;
+                        setSmoothOpenRadius(val);
                         if (smoothSurfaceSetting.enabled) redrawSurfaces();
                     }}
                 />

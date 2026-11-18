@@ -10,7 +10,7 @@ import { moorhen } from "../../types/moorhen";
 import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
 import { createRepresentation, extractRepresentationParams, withCidModel } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams, RepresentationBackup } from "./RepresentationBuilder";
-import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
+import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, M2T_SURFACE_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
@@ -19,9 +19,12 @@ import { type OwnerNumbering, newOwnerNumbering, ownedMeshPickInfo } from "../..
 import { reassignNucleotideOwners } from "../../WebGLgComponents/nucleotideOwners";
 import {
     METABALLS_GRID_SIZE, METABALLS_ISO_LEVEL, METABALLS_RADIUS, METABALLS_SPHERE_ARGS,
-    gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
+    type GpuMetaBalls, gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
 } from "../../WebGPUComponents/metaballs";
-import { type Contourer, type M2tSurfaceMesh, type SurfaceAtom, contourOnCpu, smoothM2tSurface, smoothSurfaceSetting } from "../smoothSurface";
+import {
+    type M2tSurfaceMesh, type SmoothField, type SurfaceAtom, type SurfaceMesh, type TransferredAttributes,
+    assembleSmoothMesh, contourOnCpu, logSmoothing, packAtoms, smoothMeshFromContour, smoothSurfaceSetting,
+} from "../smoothSurface";
 import { m2tAtomRadius } from "../m2tAtomRadii";
 
 /**
@@ -1625,51 +1628,58 @@ export class MoleculeRepresentation {
             ssUsageScheme = this.m2tParams.ssUsageScheme;
         }
 
-        const response = (await this.commandCentre.cootCommand(
-            {
-                returnType: "mesh",
-                command: "get_molecular_representation_mesh",
-                commandArgs: [this.parentMolecule.molNo, m2tSelection, colorStyle, m2tStyle, ssUsageScheme],
-            },
-            false
-        )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+        const m2tArgs = [this.parentMolecule.molNo, m2tSelection, colorStyle, m2tStyle, ssUsageScheme];
+
+        // The dev-menu smooth surface (smoothSurface.ts): the M2T surface is still made, and its
+        // colours and owners are carried over to the smoothed one, so everything below is the same.
+        // Not for a residue environment's restricted surface, which this does not yet cut down.
+        //
+        // Made in the Coot worker, next to the M2T mesh it takes its colours and owners from: only
+        // the atoms go in and only the smoothed mesh comes out, and the UI is never blocked. With
+        // WebGPU, marching cubes on the GPU in between (smoothSurfaceWithGpuContour).
+        const smoothInput = smoothSurfaceSetting.enabled && M2T_SURFACE_REPRESENTATIONS.includes(m2tStyle) && !restrictSelection
+            ? await this.smoothSurfaceInput(m2tStyle, cidSelection).catch(err => {
+                console.warn("Smooth surface: no atoms; drawing the M2T surface.", err);
+                return null;
+            })
+            : null;
+
+        let m2tMesh: libcootApi.SimpleMeshJS | null = null;
+        if (smoothInput) {
+            const options = {
+                spacing: smoothSurfaceSetting.spacing, sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
+                openRadius: smoothSurfaceSetting.openRadius, cavities: smoothSurfaceSetting.cavities,
+            };
+            const smoothArgs = [...m2tArgs, packAtoms(smoothInput.atoms), smoothInput.probe, options];
+            // With WebGPU, marching cubes there and the rest in the worker; without it (no
+            // adapter, or turned off in the dev menu), all of it in the worker.
+            const gpu = smoothSurfaceSetting.gpu ? await sharedGpuMetaBalls() : null;
+            if (gpu) {
+                m2tMesh = await this.smoothSurfaceWithGpuContour(gpu, smoothArgs);
+            } else {
+                const response = (await this.commandCentre.cootCommand(
+                    { returnType: "smoothed_mesh", command: "shim_smooth_molecular_representation_mesh", commandArgs: smoothArgs },
+                    false
+                )) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS>;
+                if (response.data.result.status === "Completed") m2tMesh = response.data.result.result;
+            }
+            if (!m2tMesh) console.warn("Smooth surface failed; drawing the M2T surface.");
+        }
+        if (!m2tMesh) {
+            const response = (await this.commandCentre.cootCommand(
+                { returnType: "mesh", command: "get_molecular_representation_mesh", commandArgs: m2tArgs },
+                false
+            )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+            m2tMesh = response.data.result.result as libcootApi.SimpleMeshJS;
+        }
 
         // A mesh that knows which residue made each of its vertices is hoverable per residue.
         //
         // Coot fills this in for the molecular surface and for nothing else so far, so this is
         // a question about the mesh rather than about the style: ask what arrived. Ribbons and
         // the rest simply have no owners and fall through unchanged.
-        let m2tMesh = response.data.result.result as libcootApi.SimpleMeshJS
         if (this.meshFailedToBuild(m2tMesh)) {
             return [];
-        }
-        // The dev-menu smooth surface (smoothSurface.ts): the M2T surface is still made, and its
-        // colours and owners are carried over to the smoothed one, so everything below is the same.
-        // Not for a residue environment's restricted surface, which this does not yet cut down.
-        if (smoothSurfaceSetting.enabled && m2tStyle === "MolecularSurface" && !restrictSelection) {
-            try {
-                const atoms = await this.smoothSurfaceAtoms(cidSelection);
-                const probe = this.useDefaultM2tParams
-                    ? this.parentMolecule.defaultM2tParams.surfaceStyleProbeRadius
-                    : this.m2tParams.surfaceStyleProbeRadius;
-                const gpu = smoothSurfaceSetting.gpu ? await sharedGpuMetaBalls() : null;
-                // Marching cubes with the WebGPU MetaBalls kernels when asked for and there; the
-                // CPU's if WebGPU reports an error, which gives the same mesh.
-                const contour: Contourer | undefined = gpu
-                    ? async (field, grid) => {
-                        try {
-                            return await gpu.contourField(field, [grid.nx, grid.ny, grid.nz], grid.origin, grid.spacing);
-                        } catch (err) {
-                            console.warn("GPU contour failed; contouring on the CPU.", err);
-                            return contourOnCpu(field, grid);
-                        }
-                    }
-                    : undefined;
-                m2tMesh = await smoothM2tSurface(m2tMesh as unknown as M2tSurfaceMesh, atoms, probe,
-                    { contour, contourLabel: gpu ? "WebGPU" : "CPU" }) as unknown as libcootApi.SimpleMeshJS;
-            } catch (err) {
-                console.warn("Smooth surface failed; drawing the M2T surface.", err);
-            }
         }
         // A nucleic acid ribbon comes as two meshes (below), which light together when either
         // is hovered (highlightGroup.ts): numbered from one table, so their owner codes agree,
@@ -1723,6 +1733,72 @@ export class MoleculeRepresentation {
         }
 
         return resultBufferObjects
+    }
+
+    /**
+     * What a smooth surface of this M2T style is made from, as M2T sizes its spheres
+     * (CXXSurfaceMaker-gemmi.cc): the molecular surface rolls the probe over the atoms; the van
+     * der Waals surface is the atoms themselves (radii times ballsStyleRadiusMultiplier), which is
+     * a molecular surface with no probe; the accessible surface is the same on atoms grown by the
+     * probe radius.
+     */
+    async smoothSurfaceInput(m2tStyle: string, cidSelection?: string): Promise<{ atoms: SurfaceAtom[]; probe: number }> {
+        const params = this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams : this.m2tParams;
+        const surfaceProbe = params.surfaceStyleProbeRadius;
+        const multiplier = params.ballsStyleRadiusMultiplier > 0 ? params.ballsStyleRadiusMultiplier : 1;
+        const atoms = (await this.smoothSurfaceAtoms(cidSelection)).map(atom =>
+            m2tStyle === "MolecularSurface" ? atom
+            : m2tStyle === "VdWSurface" ? { ...atom, r: atom.r * multiplier }
+            : { ...atom, r: atom.r * multiplier + surfaceProbe });
+        return { atoms, probe: m2tStyle === "MolecularSurface" ? surfaceProbe : 0 };
+    }
+
+    /**
+     * A smooth surface with marching cubes on the GPU: the M2T mesh and the field are made in the
+     * Coot worker (shim_smooth_surface_field), the field comes here to be contoured by the WebGPU
+     * MetaBalls kernels, and the positions go back for their colours and owners
+     * (shim_smooth_surface_finish), so that the M2T mesh never leaves the worker. If the GPU
+     * fails, marching cubes on the CPU here, for this surface only. Null if the worker failed.
+     */
+    async smoothSurfaceWithGpuContour(gpu: GpuMetaBalls, smoothArgs: unknown[]): Promise<libcootApi.SimpleMeshJS | null> {
+        const fieldResponse = (await this.commandCentre.cootCommand(
+            { returnType: "smoothed_field", command: "shim_smooth_surface_field", commandArgs: smoothArgs },
+            false
+        )) as moorhen.WorkerResponse<{ mesh?: libcootApi.SimpleMeshJS; token?: number; field?: SmoothField }>;
+        if (fieldResponse.data.result.status !== "Completed") return null;
+        const { mesh: unsmoothed, token, field } = fieldResponse.data.result.result;
+        if (unsmoothed) return unsmoothed;
+
+        let mark = performance.now();
+        let mesh: SurfaceMesh | null = null;
+        let contourLabel = "WebGPU";
+        try {
+            const contour = await gpu.contourField(field.input, [field.grid.nx, field.grid.ny, field.grid.nz], field.grid.origin, field.grid.spacing);
+            mesh = smoothMeshFromContour(field, contour);
+        } catch (err) {
+            console.warn("GPU contour failed; contouring on the CPU.", err);
+            contourLabel = "CPU, after the GPU failed";
+            try {
+                mesh = smoothMeshFromContour(field, contourOnCpu(field.input, field.grid));
+            } catch (cpuErr) {
+                console.warn("Contouring the smooth surface failed.", cpuErr);
+            }
+        }
+        if (mesh && mesh.indices.length === 0) mesh = null;
+        const contourMs = performance.now() - mark;
+
+        // Always called, with null when there is no mesh, so the worker forgets the M2T mesh it
+        // kept - and hands it back, to draw as it is.
+        mark = performance.now();
+        const finishResponse = (await this.commandCentre.cootCommand(
+            { returnType: "smoothed_attributes", command: "shim_smooth_surface_finish", commandArgs: [token, mesh ? mesh.positions : null] },
+            false
+        )) as moorhen.WorkerResponse<{ mesh?: libcootApi.SimpleMeshJS; shell?: M2tSurfaceMesh; attributes?: TransferredAttributes; m2tVertices?: number }>;
+        if (finishResponse.data.result.status !== "Completed") return null;
+        const finished = finishResponse.data.result.result;
+        if (!mesh || finished.mesh) return finished.mesh ?? null;
+        logSmoothing(field, mesh, finished.m2tVertices, contourMs, performance.now() - mark, contourLabel);
+        return assembleSmoothMesh(finished.shell, mesh, finished.attributes) as unknown as libcootApi.SimpleMeshJS;
     }
 
     /**

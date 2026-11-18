@@ -33,16 +33,41 @@ import { MC_TRIANGLE_TABLE } from "../WebGPUComponents/metaballs/mcTable";
 
 /** The dev-menu switch and its parameters. Read when a MolecularSurface is (re)built. */
 export const smoothSurfaceSetting = {
-    enabled: false,
-    /** Grid spacing, Å. Raised automatically if the grid would be too large. */
-    spacing: 0.35,
+    enabled: true,
     /**
-     * Gaussian blur of the distance field, Å. 0: no blur (a voxelised SES). 0.8 rounded the
-     * molecule into blobs; around 0.3-0.4 softens the atom caps and keeps their shape.
+     * Grid spacing, Å. Raised automatically if the grid would be too large. The field is exact to
+     * well under a voxel, so 0.5 looks as good as finer grids did with voxel-centre distances.
      */
-    sigma: 0.35,
-    /** Marching cubes with the WebGPU MetaBalls kernels, when WebGPU is there. */
-    gpu: false,
+    spacing: 0.5,
+    /**
+     * Gaussian blur of the distance field, Å. 0: no blur (the SES itself). With maxShift capping
+     * how far it moves the surface, 0.5 softens the atom caps and keeps the shape.
+     */
+    sigma: 0.5,
+    /**
+     * How far, Å, the blur may move the surface from the exact SES, softly (tanh). The beads -
+     * the seams between atom caps - are a few tenths of an Å deep, so a cap about that size
+     * smooths them away and keeps anything bigger: pockets, grooves, the shape of a loop.
+     * Infinity: the plain blur.
+     */
+    maxShift: 0.3,
+    /**
+     * Radius, Å, of the ball rolled inside the surface (an opening): necks thinner than twice this
+     * are cut, so two atoms joined only by a pinched saddle become two rounded lobes. 0: off.
+     */
+    openRadius: 0.5,
+    /**
+     * Pits and pockets made exactly - every atom burying a projection followed, and probe
+     * positions too small for the grid found - at roughly three times the cost of the field
+     * (smoothSurface.test.ts, "concave patches match a brute-force SES"). Off: they can look
+     * crumbly. To be on by default once the field is made on the GPU.
+     */
+    cavities: false,
+    /**
+     * Marching cubes with the WebGPU MetaBalls kernels, when WebGPU is there; the field and the
+     * colours stay in the Coot worker. Without WebGPU, all of it in the worker, on the CPU.
+     */
+    gpu: true,
 };
 
 /** At most this many grid points; above it the spacing is raised until the grid fits. */
@@ -220,7 +245,8 @@ function buriedBy(q: number[], near: ArrayLike<number>, from: number, to: number
  * whichever candidate is not buried and is nearest. out gets x, y, z, a, b (b = -1: a sphere).
  * False if every candidate is buried (p over a point where three or more meet).
  */
-function nearestSasPoint(px: number, py: number, pz: number, near: readonly number[], atoms: SasAtoms, out: number[]): boolean {
+function nearestSasPoint(px: number, py: number, pz: number, near: readonly number[], atoms: SasAtoms, out: number[],
+                         within = Infinity): boolean {
     let best = Infinity;
     const q = NEAREST_SCRATCH;
     for (let i = 0; i < near.length; i++) {
@@ -232,6 +258,25 @@ function nearestSasPoint(px: number, py: number, pz: number, near: readonly numb
             if (d2 >= best || buriedBy(q, near, 0, near.length, a, b, atoms) >= 0) continue;
             best = d2;
             out[0] = q[0]; out[1] = q[1]; out[2] = q[2]; out[3] = a; out[4] = b;
+        }
+    }
+    if (best < Infinity) return true;
+    // Every sphere and circle point buried: p is over (or in) a dimple, where the probe touches
+    // three atoms at once. The point where their spheres meet; recorded as the circle of two of
+    // them, from which the refinement in step 3 finds the third again. Only atoms whose sphere's
+    // surface is within `within` of p can meet there within it.
+    const close = within === Infinity ? near : near.filter(a =>
+        Math.abs(Math.hypot(px - atoms.x[a], py - atoms.y[a], pz - atoms.z[a]) - atoms.R[a]) <= within);
+    for (let i = 0; i < close.length; i++) {
+        for (let j = i + 1; j < close.length; j++) {
+            for (let k = j + 1; k < close.length; k++) {
+                const a = close[i], b = close[j], c = close[k];
+                if (!projectOnVertex(px, py, pz, a, b, c, atoms, q)) continue;
+                const d2 = (q[0] - px) ** 2 + (q[1] - py) ** 2 + (q[2] - pz) ** 2;
+                if (d2 >= best || buriedBy(q, near, 0, near.length, a, b, atoms, c) >= 0) continue;
+                best = d2;
+                out[0] = q[0]; out[1] = q[1]; out[2] = q[2]; out[3] = a; out[4] = b;
+            }
         }
     }
     return best < Infinity;
@@ -268,7 +313,8 @@ export function gaussianBlur3d(field: Float32Array, nx: number, ny: number, nz: 
 }
 
 /** The blurred SES signed distance field of these atoms. Null if there are none. */
-export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: number, sigma: number): SesGrid | null {
+export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: number, sigma: number,
+                         maxShift = Infinity, openRadius = 0, cavities = true): SesGrid | null {
     if (atoms.length === 0) return null;
     let rMax = 0;
     const low = [Infinity, Infinity, Infinity];
@@ -298,11 +344,17 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
     let mark = performance.now();
     const lap = () => { const now = performance.now(); const ms = now - mark; mark = now; return ms; };
 
-    // 1. SAS occupancy.
+    // 1. SAS occupancy. Also marked: points deeper than a voxel diagonal inside some sphere. Any
+    // other interior point is within a voxel of the SAS's boundary, and may be next to probe
+    // positions too small for the grid to have caught (step 2).
     const exterior = new Uint8Array(count).fill(1);
+    const deep = new Uint8Array(count);
+    const diagonal = Math.sqrt(3) * h;
     for (const a of atoms) {
         const R = a.r + probe;
         const R2 = R * R;
+        const inner = Math.max(0, R - diagonal);
+        const inner2 = inner * inner;
         const x0 = Math.max(0, Math.floor((a.x - R - origin[0]) / h)), x1 = Math.min(nx - 1, Math.ceil((a.x + R - origin[0]) / h));
         const y0 = Math.max(0, Math.floor((a.y - R - origin[1]) / h)), y1 = Math.min(ny - 1, Math.ceil((a.y + R - origin[1]) / h));
         const z0 = Math.max(0, Math.floor((a.z - R - origin[2]) / h)), z1 = Math.min(nz - 1, Math.ceil((a.z + R - origin[2]) / h));
@@ -317,7 +369,11 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
                 const row = iz * plane + iy * nx;
                 for (let ix = x0; ix <= x1; ix++) {
                     const dx = origin[0] + ix * h - a.x;
-                    if (dx * dx + dyz2 <= R2) exterior[row + ix] = 0;
+                    const d2 = dx * dx + dyz2;
+                    if (d2 <= R2) {
+                        exterior[row + ix] = 0;
+                        if (d2 < inner2) deep[row + ix] = 1;
+                    }
                 }
             }
         }
@@ -326,10 +382,17 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
     const sasMs = lap();
 
     // 2. Seeds: exterior points with an interior neighbour - every interior point's nearest
-    // exterior point is one of them - each with the exact nearest point of the SAS surface, the
-    // primitive it is on, and the atoms near enough to bury points of that primitive close by.
-    const window = 2 * h;
-    const atomBins = binAtoms(atoms, rMax + probe + window);
+    // exterior point is one of them - each with the exact nearest point of the SAS surface and
+    // the primitive it is on (sphere, circle, or the circle of two of the three spheres meeting at
+    // a point); and interior points with probe positions too small for the grid within a voxel
+    // diagonal (below). The nearest point is looked for among the atoms whose expanded surface is
+    // within `window` of the voxel.
+    const window = 3 * h;
+    // How far in the field is kept exact: far enough for the blur, and for the opening (step 3b)
+    // to see where it is deeper than its radius.
+    const clamp = Math.max(3 * sigma, openRadius > 0 ? openRadius + 2 * h : 0) + 2 * h;
+    // Bins about the size of the atom lookups made; near() scans as many as a lookup needs.
+    const atomBins = binAtoms(atoms, rMax + probe + Math.max(window, clamp + h), rMax + probe);
     const sas: SasAtoms = {
         x: Float64Array.from(atoms, a => a.x), y: Float64Array.from(atoms, a => a.y), z: Float64Array.from(atoms, a => a.z),
         R: Float64Array.from(atoms, a => a.r + probe),
@@ -338,27 +401,40 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
     const seedPoints: number[] = [];
     const seedA: number[] = [];
     const seedB: number[] = [];
-    const seedNearEnd: number[] = [];
-    const seedNear: number[] = [];
     const near: number[] = [];
     const found = [0, 0, 0, -1, -1];
     for (let iz = 1; iz < nz - 1; iz++) {
         for (let iy = 1; iy < ny - 1; iy++) {
             for (let ix = 1; ix < nx - 1; ix++) {
                 const i = iz * plane + iy * nx + ix;
-                if (!exterior[i]) continue;
-                if (exterior[i - 1] && exterior[i + 1] && exterior[i - nx] && exterior[i + nx] && exterior[i - plane] && exterior[i + plane]) continue;
                 const px = origin[0] + ix * h, py = origin[1] + iy * h, pz = origin[2] + iz * h;
-                atomBins.near(px, py, pz, sas.x, sas.y, sas.z, sas.R, window, near);
-                if (!nearestSasPoint(px, py, pz, near, sas, found)) {
-                    found[0] = px; found[1] = py; found[2] = pz; found[3] = -1; found[4] = -1;
+                if (exterior[i]) {
+                    if (exterior[i - 1] && exterior[i + 1] && exterior[i - nx] && exterior[i + nx] && exterior[i - plane] && exterior[i + plane]) continue;
+                    atomBins.near(px, py, pz, sas.x, sas.y, sas.z, sas.R, window, near);
+                    if (!nearestSasPoint(px, py, pz, near, sas, found)) {
+                        found[0] = px; found[1] = py; found[2] = pz; found[3] = -1; found[4] = -1;
+                    }
+                } else {
+                    // Inside, but within a voxel of the boundary, and with no exterior neighbour
+                    // to have seeded it: probe positions too small for the grid to catch - the
+                    // bottom of a pit, a pocket the probe only just fits - can be right here. A
+                    // seed if there is an unburied boundary point within a voxel diagonal.
+                    if (!cavities || deep[i]) continue;
+                    // Not where the grid did see the outside next door: the seeds there, and the
+                    // exact projections from them, already reach anything this close.
+                    let outsideNear = false;
+                    for (let dz = -1; dz <= 1 && !outsideNear; dz++) for (let dy = -1; dy <= 1 && !outsideNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+                        if (exterior[i + dz * plane + dy * nx + dx]) { outsideNear = true; break; }
+                    }
+                    if (outsideNear) continue;
+                    atomBins.near(px, py, pz, sas.x, sas.y, sas.z, sas.R, window, near);
+                    if (!nearestSasPoint(px, py, pz, near, sas, found, diagonal)) continue;
+                    if (Math.hypot(found[0] - px, found[1] - py, found[2] - pz) > diagonal) continue;
                 }
                 feature[i] = seedA.length;
                 seedPoints.push(found[0], found[1], found[2]);
                 seedA.push(found[3]);
                 seedB.push(found[4]);
-                for (const a of near) seedNear.push(a);
-                seedNearEnd.push(seedNear.length);
             }
         }
     }
@@ -381,11 +457,8 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
     featureTransform3d(feature, field, nx, ny, nz);
     const transformMs = lap();
     const seeds = new Float64Array(seedPoints);
-    const nearList = Int32Array.from(seedNear);
-    const nearEnd = Int32Array.from(seedNearEnd);
     const primA = Int32Array.from(seedA);
     const primB = Int32Array.from(seedB);
-    const clamp = 3 * sigma + 2 * h;
     // Only near the SES (distance to the SAS within the blur's reach of the probe radius) does
     // the exact value matter; further in it is clamped, further out (towards the SAS) nothing
     // the blur reaches the surface from.
@@ -393,35 +466,62 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
     let interiorCount = 0;
 
     const q = [0, 0, 0];
-    let px = 0, py = 0, pz = 0, best = Infinity, from = 0, to = 0;
-    const tried: number[] = [];
-    const firstTry = (key: number) => {
-        if (tried.includes(key)) return false;
-        tried.push(key);
-        return true;
+    let px = 0, py = 0, pz = 0, best = Infinity;
+    // The atoms that can bury any projection worth having, looked up once per point: a
+    // projection nearer than the best so far is within that distance of the point, so anything
+    // burying it has its sphere within that distance of the point too.
+    const local: number[] = [];
+    const around: number[] = [];
+    // Every local atom burying q, other than a, b and c, into out.
+    const buriers = (a: number, b: number, c: number, out: number[]): void => {
+        out.length = 0;
+        for (let k = 0; k < local.length; k++) {
+            const d = local[k];
+            if (d === a || d === b || d === c) continue;
+            const dx = q[0] - sas.x[d], dy = q[1] - sas.y[d], dz = q[2] - sas.z[d];
+            const R = sas.R[d] - 1e-4;
+            if (dx * dx + dy * dy + dz * dz < R * R) out.push(d);
+        }
     };
+    // A projection buried by several atoms: its nearest unburied neighbour is where the circle
+    // (or point) leaves one of them, and not necessarily the first found - in a pocket two or
+    // three atoms often overlap there. So every one is followed, not just the first.
+    const sphereBuriers: number[] = [], circleBuriers: number[] = [], vertexBuriers: number[] = [];
+    // The spheres and circles already tried for this point (circles as negative keys).
+    const tried: number[] = [];
     const tryVertex = (a: number, b: number, c: number) => {
         if (!projectOnVertex(px, py, pz, a, b, c, sas, q)) return;
         const d2 = (q[0] - px) ** 2 + (q[1] - py) ** 2 + (q[2] - pz) ** 2;
-        if (d2 < best && buriedBy(q, nearList, from, to, a, b, sas, c) < 0) best = d2;
+        if (d2 >= best) return;
+        buriers(a, b, c, vertexBuriers);
+        if (vertexBuriers.length === 0) best = d2;
     };
     const tryCircle = (a: number, b: number) => {
-        if (!firstTry(-(Math.min(a, b) * atoms.length + Math.max(a, b)) - 1)) return;
+        const key = -(Math.min(a, b) * atoms.length + Math.max(a, b)) - 1;
+        if (tried.includes(key)) return;
+        tried.push(key);
         if (!projectOnPrimitive(px, py, pz, a, b, sas, q)) return;
         const d2 = (q[0] - px) ** 2 + (q[1] - py) ** 2 + (q[2] - pz) ** 2;
         if (d2 >= best) return;
-        const c = buriedBy(q, nearList, from, to, a, b, sas);
-        if (c < 0) best = d2;
-        else tryVertex(a, b, c);
+        buriers(a, b, -1, circleBuriers);
+        if (circleBuriers.length === 0) { best = d2; return; }
+        for (const c of circleBuriers) {
+            tryVertex(a, b, c);
+            if (!cavities) break;
+        }
     };
     const trySphere = (a: number) => {
-        if (!firstTry(a)) return;
+        if (tried.includes(a)) return;
+        tried.push(a);
         if (!projectOnPrimitive(px, py, pz, a, -1, sas, q)) return;
         const d2 = (q[0] - px) ** 2 + (q[1] - py) ** 2 + (q[2] - pz) ** 2;
         if (d2 >= best) return;
-        const c = buriedBy(q, nearList, from, to, a, -1, sas);
-        if (c < 0) best = d2;
-        else tryCircle(a, c);
+        buriers(a, -1, -1, sphereBuriers);
+        if (sphereBuriers.length === 0) { best = d2; return; }
+        for (const c of sphereBuriers) {
+            tryCircle(a, c);
+            if (!cavities) break;
+        }
     };
     const candidates = new Int32Array(7);
     const neighbours = new Int32Array(7);
@@ -429,11 +529,23 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
         for (let iy = 0; iy < ny; iy++) {
             for (let ix = 0; ix < nx; ix++) {
                 const i = iz * plane + iy * nx + ix;
+                px = origin[0] + ix * h; py = origin[1] + iy * h; pz = origin[2] + iz * h;
                 if (exterior[i] || feature[i] < 0) {
-                    field[i] = -probe;
+                    // Outside the SAS, where the probe's centre can be: the SES is the probe
+                    // radius further than the SAS, -(probe + gap). The gap to a union of spheres
+                    // from outside is the least gap to any of them, exact and cheap; only needed
+                    // within the clamp (the nearest seed says roughly how far that is).
+                    field[i] = -(probe + clamp);
+                    const f = feature[i];
+                    if (f < 0) continue;
+                    const rough = Math.hypot(seeds[3 * f] - px, seeds[3 * f + 1] - py, seeds[3 * f + 2] - pz);
+                    if (rough > clamp + h) continue;
+                    atomBins.near(px, py, pz, sas.x, sas.y, sas.z, sas.R, clamp + h, around);
+                    let gap = clamp;
+                    for (const a of around) gap = Math.min(gap, Math.hypot(px - sas.x[a], py - sas.y[a], pz - sas.z[a]) - sas.R[a]);
+                    field[i] = -(probe + Math.max(0, gap));
                     continue;
                 }
-                px = origin[0] + ix * h; py = origin[1] + iy * h; pz = origin[2] + iz * h;
                 neighbours[0] = feature[i];
                 neighbours[1] = ix > 0 ? feature[i - 1] : -1;
                 neighbours[2] = ix < nx - 1 ? feature[i + 1] : -1;
@@ -458,11 +570,10 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
                 const approximate = Math.sqrt(best);
                 if (approximate > exactLow && approximate < exactHigh) {
                     tried.length = 0;
+                    atomBins.near(px, py, pz, sas.x, sas.y, sas.z, sas.R, approximate, local);
                     for (let k = 0; k < n; k++) {
                         const f = candidates[k];
                         if (primA[f] < 0) continue;
-                        from = f > 0 ? nearEnd[f - 1] : 0;
-                        to = nearEnd[f];
                         if (primB[f] >= 0) tryCircle(primA[f], primB[f]);
                         else trySphere(primA[f]);
                     }
@@ -474,13 +585,91 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
         }
     }
 
+    // 3b. Opening: roll a ball of radius openRadius inside the surface and keep only where it
+    // reaches. A neck thinner than the ball - where two atoms are too close for the probe to pass
+    // between but too far apart for a proper saddle, and the SES pinches to a cusp - is cut, and
+    // its two sides become two rounded lobes. Anything the ball fits in is left as it was.
+    //
+    // E is where the field is deeper than the radius t; the opened surface is E grown by t, whose
+    // signed distance is t - dist(x, E). dist(x, E) is found by walking from x up the field's
+    // gradient, each step as long as the field still falls short of t, until it gets there: the
+    // path's length. Where the surface is regular the gradient lines are straight, the first step
+    // lands on E, and the length is exactly t - f(x): nothing changes. At a neck the first step
+    // lands on its axis, short of t, and the path turns along it to one of the lobes: longer, so
+    // the field there goes down. The length changes continuously, so there is no seam where the
+    // cut begins. Only points the blur can carry to the surface are walked from.
+    if (openRadius > 0) {
+        const t = openRadius;
+        const original = field.slice();
+        const sample = (x: number, y: number, z: number): number => {
+            const fx = Math.min(nx - 1.001, Math.max(0, (x - origin[0]) / h));
+            const fy = Math.min(ny - 1.001, Math.max(0, (y - origin[1]) / h));
+            const fz = Math.min(nz - 1.001, Math.max(0, (z - origin[2]) / h));
+            const i = Math.floor(fx), j = Math.floor(fy), k = Math.floor(fz);
+            const u = fx - i, v = fy - j, w = fz - k;
+            const c = k * plane + j * nx + i;
+            const c00 = original[c] + u * (original[c + 1] - original[c]);
+            const c10 = original[c + nx] + u * (original[c + nx + 1] - original[c + nx]);
+            const c01 = original[c + plane] + u * (original[c + plane + 1] - original[c + plane]);
+            const c11 = original[c + plane + nx] + u * (original[c + plane + nx + 1] - original[c + plane + nx]);
+            const c0 = c00 + v * (c10 - c00), c1 = c01 + v * (c11 - c01);
+            return c0 + w * (c1 - c0);
+        };
+        const reach = -(3 * sigma + 2 * h);
+        const floor = -(probe + clamp);
+        const half = h / 2;
+        // Sampling between grid points is out by about h^2 / 8R on a surface curved at radius R:
+        // a cut has to go deeper than that to count, so regular surfaces stay exactly as they were.
+        const allowance = (h * h) / 4;
+        interiorCount = 0;
+        for (let iz = 0; iz < nz; iz++) {
+            for (let iy = 0; iy < ny; iy++) {
+                for (let ix = 0; ix < nx; ix++) {
+                    const i = iz * plane + iy * nx + ix;
+                    const f = original[i];
+                    if (f < t && f > reach) {
+                        let x = origin[0] + ix * h, y = origin[1] + iy * h, z = origin[2] + iz * h;
+                        let value = f, length = 0;
+                        for (let step = 0; step < 8 && value < t - 1e-3; step++) {
+                            const gx = sample(x + half, y, z) - sample(x - half, y, z);
+                            const gy = sample(x, y + half, z) - sample(x, y - half, z);
+                            const gz = sample(x, y, z + half) - sample(x, y, z - half);
+                            const g = Math.hypot(gx, gy, gz);
+                            // On a neck's axis, halfway between its lobes, the gradient vanishes.
+                            if (g < 1e-6) break;
+                            const move = t - value;
+                            x += move * gx / g; y += move * gy / g; z += move * gz / g;
+                            length += move;
+                            value = sample(x, y, z);
+                        }
+                        // Whatever is left to go counts in full: an upper bound, so a path that
+                        // stopped short still cuts rather than not.
+                        const distance = length + Math.max(0, t - value);
+                        const opened = t - distance + allowance;
+                        if (opened < f) field[i] = Math.max(opened, floor);
+                    }
+                    if (field[i] > 0) interiorCount++;
+                }
+            }
+        }
+    }
+
     const distanceMs = lap();
 
     // 4. Blur, and contour where the blurred field encloses as much as the SES did. Blurring a
     // distance field pulls convex parts in (a sphere of radius R by about σ²/R) and pushes concave
     // ones out; contouring at 0 would shrink the molecule overall, every atom cap being convex.
     // Holding the volume makes it a smoothing rather than an erosion.
+    //
+    // With maxShift, the blur's change to the field - which, the field being a distance, is how
+    // far it moves the surface - is capped softly: d -> maxShift * tanh(d / maxShift). Small
+    // changes pass almost as they are, large ones level off, and the field stays smooth, so the
+    // normals show no edge where the cap starts to bite.
+    const exact = sigma > 0 && Number.isFinite(maxShift) && maxShift > 0 ? field.slice() : null;
     gaussianBlur3d(field, nx, ny, nz, sigma / h);
+    if (exact) {
+        for (let i = 0; i < count; i++) field[i] = exact[i] + maxShift * Math.tanh((field[i] - exact[i]) / maxShift);
+    }
     const iso = sigma > 0 ? levelEnclosing(field, interiorCount, clamp) : 0;
 
     const blurMs = lap();
@@ -491,8 +680,11 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
     };
 }
 
-/** Atoms binned on a coarse grid, to find those near a point: cell lists, CSR. */
-function binAtoms(atoms: readonly SurfaceAtom[], size: number) {
+/**
+ * Atoms binned on a coarse grid, to find those near a point: cell lists, CSR. `maxR` is the
+ * largest radius `near` will be asked about.
+ */
+function binAtoms(atoms: readonly SurfaceAtom[], size: number, maxR: number) {
     const low = [Infinity, Infinity, Infinity], high = [-Infinity, -Infinity, -Infinity];
     for (const a of atoms) {
         low[0] = Math.min(low[0], a.x); low[1] = Math.min(low[1], a.y); low[2] = Math.min(low[2], a.z);
@@ -521,9 +713,11 @@ function binAtoms(atoms: readonly SurfaceAtom[], size: number) {
              gap: number, out: number[]): void {
             out.length = 0;
             const ci = cellOf(x, 0), cj = cellOf(y, 1), ck = cellOf(z, 2);
-            for (let k = Math.max(0, ck - 1); k <= Math.min(dims[2] - 1, ck + 1); k++) {
-                for (let j = Math.max(0, cj - 1); j <= Math.min(dims[1] - 1, cj + 1); j++) {
-                    for (let i = Math.max(0, ci - 1); i <= Math.min(dims[0] - 1, ci + 1); i++) {
+            // As many cells out as an atom reaching within `gap` can be.
+            const span = Math.max(1, Math.ceil((maxR + gap) / size));
+            for (let k = Math.max(0, ck - span); k <= Math.min(dims[2] - 1, ck + span); k++) {
+                for (let j = Math.max(0, cj - span); j <= Math.min(dims[1] - 1, cj + span); j++) {
+                    for (let i = Math.max(0, ci - span); i <= Math.min(dims[0] - 1, ci + span); i++) {
                         const c = (k * dims[1] + j) * dims[0] + i;
                         for (let m = start[c]; m < start[c + 1]; m++) {
                             const a = members[m];
@@ -589,7 +783,10 @@ export interface EdgeContour {
  * WebGPU MetaBalls kernels (GpuMetaBalls.contourField), which share the table, the edge numbering
  * and the inside test, and so give the same mesh.
  */
-export type Contourer = (field: Float32Array, grid: SesGrid) => EdgeContour | Promise<EdgeContour>;
+export type Contourer = (field: Float32Array, grid: GridShape) => EdgeContour | Promise<EdgeContour>;
+
+/** The grid without its field: what marching cubes and the normals need to know of it. */
+export type GridShape = Pick<SesGrid, "nx" | "ny" | "nz" | "origin" | "spacing" | "iso">;
 
 /**
  * The field as marching cubes takes it: negative inside, the surface at 0. The GPU MetaBalls
@@ -598,7 +795,7 @@ export type Contourer = (field: Float32Array, grid: SesGrid) => EdgeContour | Pr
 export const contourInput = (grid: SesGrid): Float32Array => grid.field.map(v => grid.iso - v);
 
 /** Marching cubes on the CPU, as the WebGPU MetaBalls kernels do it. */
-export function contourOnCpu(field: Float32Array, grid: SesGrid): EdgeContour {
+export function contourOnCpu(field: Float32Array, grid: GridShape): EdgeContour {
     const { nx, ny, nz, origin, spacing: h } = grid;
     const plane = nx * ny;
     const edgeVertex = new Int32Array(3 * nx * ny * nz).fill(-1);
@@ -658,7 +855,7 @@ export function contourOnCpu(field: Float32Array, grid: SesGrid): EdgeContour {
  * position was: smooth as the field is, not as faceted as the triangles. `field` is the contour
  * input, rising outwards, so out is up its gradient.
  */
-export function edgeNormals(field: Float32Array, grid: SesGrid, keys: Uint32Array): Float32Array {
+export function edgeNormals(field: Float32Array, grid: GridShape, keys: Uint32Array): Float32Array {
     const { nx, ny, nz } = grid;
     const plane = nx * ny;
     const normals = new Float32Array(3 * keys.length);
@@ -687,7 +884,7 @@ export function edgeNormals(field: Float32Array, grid: SesGrid, keys: Uint32Arra
 }
 
 /** A contour finished: degenerate triangles dropped, normals added, wound counter-clockwise. */
-export function finishContour(field: Float32Array, grid: SesGrid, contour: EdgeContour): SurfaceMesh {
+export function finishContour(field: Float32Array, grid: GridShape, contour: EdgeContour): SurfaceMesh {
     const { indices: raw } = contour;
     let kept = 0;
     const indices = new Uint32Array(raw.length);
@@ -858,64 +1055,177 @@ export interface M2tSurfaceMesh {
     [key: string]: unknown;
 }
 
+/** Options for smoothing an M2T surface; anything left out comes from smoothSurfaceSetting. */
+export interface SmoothOptions {
+    spacing?: number;
+    sigma?: number;
+    maxShift?: number;
+    openRadius?: number;
+    /** The exact (and slow) handling of pits and pockets: see sesField's `cavities`. */
+    cavities?: boolean;
+}
+
 /**
- * The M2T surface replaced by the smoothed one, in the same shape and with the same owner table,
- * so the caller carries on as if Coot had made it. The M2T mesh is returned unchanged if there is
- * nothing to smooth.
+ * Smoothing is in four stages, so that the heavy ones can run where the M2T mesh is (the Coot
+ * worker) and marching cubes on the GPU (the main thread) - or all four in one place:
+ *
+ * 1. smoothFieldStage, where the M2T mesh is: the field, ready to contour, and the M2T mesh's
+ *    conventions (normals out or in, winding).
+ * 2. smoothMeshFromContour, wherever the contour was made: normals and winding. Cheap.
+ * 3. smoothAttributes, where the M2T mesh is: colours and owners from its nearest vertices.
+ * 4. assembleSmoothMesh: the M2T mesh's shape, with the smoothed arrays.
  */
-export async function smoothM2tSurface<T extends M2tSurfaceMesh>(m2tMesh: T, atoms: readonly SurfaceAtom[], probe: number,
-    options: { spacing?: number; sigma?: number; contour?: Contourer; contourLabel?: string } = {}): Promise<T> {
+export interface SmoothField {
+    grid: GridShape & { timings: SesGrid["timings"] };
+    /** The field as marching cubes takes it (contourInput). */
+    input: Float32Array;
+    conventions: { out: boolean; ccw: boolean };
+    atomCount: number;
+    sigma: number;
+    maxShift: number;
+    fieldMs: number;
+}
+
+export function smoothFieldStage(m2tMesh: M2tSurfaceMesh, atoms: readonly SurfaceAtom[], probe: number, options: SmoothOptions): SmoothField | null {
+    const started = performance.now();
     const spacing = options.spacing ?? smoothSurfaceSetting.spacing;
     const sigma = options.sigma ?? smoothSurfaceSetting.sigma;
-    const contour = options.contour ?? contourOnCpu;
-    const started = performance.now();
+    const maxShift = options.maxShift ?? smoothSurfaceSetting.maxShift;
+    const openRadius = options.openRadius ?? smoothSurfaceSetting.openRadius;
+    const cavities = options.cavities ?? smoothSurfaceSetting.cavities;
     const m2tPositions = m2tMesh.vert_tri?.[0]?.[0];
     const m2tNormals = m2tMesh.norm_tri?.[0]?.[0];
     const m2tIndices = m2tMesh.idx_tri?.[0]?.[0];
-    const m2tColours = m2tMesh.col_tri?.[0]?.[0];
-    if (!m2tPositions || !m2tNormals || !m2tIndices || !m2tColours || m2tPositions.length === 0) return m2tMesh;
-
-    const grid = sesField(atoms, probe, spacing, sigma);
-    if (!grid) return m2tMesh;
-    const fieldMs = performance.now() - started;
+    if (!m2tPositions || !m2tNormals || !m2tIndices || !m2tMesh.col_tri?.[0]?.[0] || m2tPositions.length === 0) return null;
+    const grid = sesField(atoms, probe, spacing, sigma, maxShift, openRadius, cavities);
+    if (!grid) return null;
     const input = contourInput(grid);
-    const mesh = finishContour(input, grid, await contour(input, grid));
-    if (mesh.indices.length === 0) return m2tMesh;
-    const contourMs = performance.now() - started - fieldMs;
+    const { nx, ny, nz, origin, spacing: h, iso, timings } = grid;
+    return {
+        grid: { nx, ny, nz, origin, spacing: h, iso, timings },
+        input,
+        conventions: meshConventions(m2tPositions, m2tNormals, m2tIndices),
+        atomCount: atoms.length, sigma, maxShift,
+        fieldMs: performance.now() - started,
+    };
+}
 
-    // Follow the M2T mesh's own conventions, whatever they are, so the renderer sees what it
-    // always has.
-    const conventions = meshConventions(m2tPositions, m2tNormals, m2tIndices);
-    if (!conventions.out) for (let i = 0; i < mesh.normals.length; i++) mesh.normals[i] = -mesh.normals[i];
-    orientTriangles(mesh, conventions.ccw);
+/** The contour finished - normals, winding - and laid out as the M2T mesh is. */
+export function smoothMeshFromContour(field: SmoothField, contour: EdgeContour): SurfaceMesh {
+    const mesh = finishContour(field.input, field.grid, contour);
+    if (!field.conventions.out) for (let i = 0; i < mesh.normals.length; i++) mesh.normals[i] = -mesh.normals[i];
+    orientTriangles(mesh, field.conventions.ccw);
+    return mesh;
+}
 
-    const m2tVertexCount = m2tPositions.length / 3;
-    const attributes = transferM2tAttributes(mesh.positions, {
+/** Colour and ownership for the smoothed vertices, from the M2T mesh's nearest. */
+export function smoothAttributes(m2tMesh: M2tSurfaceMesh, positions: Float32Array): TransferredAttributes {
+    const m2tPositions = m2tMesh.vert_tri[0][0];
+    const m2tColours = m2tMesh.col_tri[0][0];
+    return transferM2tAttributes(positions, {
         positions: m2tPositions,
         colours: m2tColours,
-        colourStride: Math.round(m2tColours.length / m2tVertexCount),
+        colourStride: Math.round(m2tColours.length / (m2tPositions.length / 3)),
         owners: m2tMesh.vertex_owners,
         ownersOther: m2tMesh.vertex_owners_other,
         ownerWeights: m2tMesh.vertex_owner_weights,
     });
-    const transferMs = performance.now() - started - fieldMs - contourMs;
-    console.debug(`Smooth surface: ${atoms.length} atoms, grid ${grid.nx}x${grid.ny}x${grid.nz} at ${grid.spacing.toFixed(2)} Å, ` +
-        `σ ${sigma} Å; ${mesh.positions.length / 3} vertices, ${mesh.indices.length / 3} triangles ` +
-        `(M2T: ${m2tVertexCount}, ${m2tIndices.length / 3}); field ${fieldMs.toFixed(0)} ms ` +
-        `(${Object.entries(grid.timings).map(([stage, ms]) => `${stage} ${ms.toFixed(0)}`).join(", ")}), ` +
-        `contour (${options.contourLabel ?? "CPU"}) ${contourMs.toFixed(0)} ms, transfer ${transferMs.toFixed(0)} ms`);
+}
 
-    const smoothed: T = {
-        ...m2tMesh,
+/** The M2T mesh without its per-vertex arrays: what the smoothed mesh keeps of it. */
+export function m2tShell<T extends M2tSurfaceMesh>(m2tMesh: T): T {
+    const shell = { ...m2tMesh } as Record<string, unknown>;
+    for (const key of ["vert_tri", "norm_tri", "col_tri", "idx_tri", "additional_norm_tri",
+        "vertex_owners", "vertex_owners_other", "vertex_owner_weights"]) delete shell[key];
+    return shell as T;
+}
+
+/** The smoothed mesh in the M2T mesh's shape, with the same owner table. */
+export function assembleSmoothMesh<T extends M2tSurfaceMesh>(m2tMesh: T, mesh: SurfaceMesh, attributes: TransferredAttributes): T {
+    const smoothed = {
+        ...m2tShell(m2tMesh),
         vert_tri: [[mesh.positions]],
         norm_tri: [[mesh.normals]],
         col_tri: [[attributes.colours]],
         idx_tri: [[mesh.indices]],
-    };
+    } as T;
     if (attributes.owners) smoothed.vertex_owners = attributes.owners;
     if (attributes.ownersOther) smoothed.vertex_owners_other = attributes.ownersOther;
     if (attributes.ownerWeights) smoothed.vertex_owner_weights = attributes.ownerWeights;
-    // Per-vertex extras of the M2T mesh no longer line up with the vertices.
-    delete (smoothed as Record<string, unknown>).additional_norm_tri;
     return smoothed;
+}
+
+/** One line for the console: sizes and where the time went. */
+export function logSmoothing(field: SmoothField, mesh: SurfaceMesh, m2tVertices: number, contourMs: number, transferMs: number, contourLabel: string): void {
+    const { grid } = field;
+    console.debug(`Smooth surface: ${field.atomCount} atoms, grid ${grid.nx}x${grid.ny}x${grid.nz} at ${grid.spacing.toFixed(2)} Å, ` +
+        `σ ${field.sigma} Å, max shift ${field.maxShift} Å; ${mesh.positions.length / 3} vertices, ${mesh.indices.length / 3} triangles ` +
+        `(M2T: ${m2tVertices} vertices); field ${field.fieldMs.toFixed(0)} ms ` +
+        `(${Object.entries(grid.timings).map(([stage, ms]) => `${stage} ${ms.toFixed(0)}`).join(", ")}), ` +
+        `contour (${contourLabel}) ${contourMs.toFixed(0)} ms, transfer ${transferMs.toFixed(0)} ms`);
+}
+
+/** All four stages in one place, with marching cubes by `contour`. */
+async function smoothAll<T extends M2tSurfaceMesh>(m2tMesh: T, atoms: readonly SurfaceAtom[], probe: number, options: SmoothOptions,
+    contour: Contourer, contourLabel: string): Promise<T> {
+    const field = smoothFieldStage(m2tMesh, atoms, probe, options);
+    if (!field) return m2tMesh;
+    let mark = performance.now();
+    const mesh = smoothMeshFromContour(field, await contour(field.input, field.grid));
+    if (mesh.indices.length === 0) return m2tMesh;
+    const contourMs = performance.now() - mark;
+    mark = performance.now();
+    const attributes = smoothAttributes(m2tMesh, mesh.positions);
+    logSmoothing(field, mesh, m2tMesh.vert_tri[0][0].length / 3, contourMs, performance.now() - mark, contourLabel);
+    return assembleSmoothMesh(m2tMesh, mesh, attributes);
+}
+
+/**
+ * The M2T surface replaced by the smoothed one, in the same shape and with the same owner table,
+ * so the caller carries on as if Coot had made it. The M2T mesh is returned unchanged if there is
+ * nothing to smooth. Marching cubes on the CPU; this is what the Coot worker runs when there is
+ * no GPU to contour on (see smoothSurfaceWorkerEntry.ts).
+ */
+export function smoothM2tSurfaceSync<T extends M2tSurfaceMesh>(m2tMesh: T, atoms: readonly SurfaceAtom[], probe: number,
+    options: SmoothOptions = {}): T {
+    const field = smoothFieldStage(m2tMesh, atoms, probe, options);
+    if (!field) return m2tMesh;
+    let mark = performance.now();
+    const mesh = smoothMeshFromContour(field, contourOnCpu(field.input, field.grid));
+    if (mesh.indices.length === 0) return m2tMesh;
+    const contourMs = performance.now() - mark;
+    mark = performance.now();
+    const attributes = smoothAttributes(m2tMesh, mesh.positions);
+    logSmoothing(field, mesh, m2tMesh.vert_tri[0][0].length / 3, contourMs, performance.now() - mark, "CPU");
+    return assembleSmoothMesh(m2tMesh, mesh, attributes);
+}
+
+/** smoothM2tSurfaceSync with marching cubes by `contour`, all on the calling thread. */
+export async function smoothM2tSurface<T extends M2tSurfaceMesh>(m2tMesh: T, atoms: readonly SurfaceAtom[], probe: number,
+    options: SmoothOptions & { contour?: Contourer; contourLabel?: string } = {}): Promise<T> {
+    return smoothAll(m2tMesh, atoms, probe, options, options.contour ?? contourOnCpu, options.contourLabel ?? "CPU");
+}
+
+/** Atoms as x, y, z, r per atom: how they travel to the Coot worker. */
+export function packAtoms(atoms: readonly SurfaceAtom[]): Float32Array {
+    const packed = new Float32Array(4 * atoms.length);
+    atoms.forEach((a, i) => packed.set([a.x, a.y, a.z, a.r], 4 * i));
+    return packed;
+}
+
+export function unpackAtoms(packed: ArrayLike<number>): SurfaceAtom[] {
+    const atoms: SurfaceAtom[] = [];
+    for (let i = 0; i + 3 < packed.length; i += 4) atoms.push({ x: packed[i], y: packed[i + 1], z: packed[i + 2], r: packed[i + 3] });
+    return atoms;
+}
+
+/** The buffers of a smoothed mesh that can be handed over by postMessage rather than copied. */
+export function smoothedMeshTransferables(mesh: M2tSurfaceMesh): ArrayBuffer[] {
+    const buffers = new Set<ArrayBuffer>();
+    const add = (v: unknown) => {
+        if (ArrayBuffer.isView(v) && v.buffer instanceof ArrayBuffer) buffers.add(v.buffer);
+    };
+    [mesh.vert_tri?.[0]?.[0], mesh.norm_tri?.[0]?.[0], mesh.col_tri?.[0]?.[0], mesh.idx_tri?.[0]?.[0],
+        mesh.vertex_owners, mesh.vertex_owners_other, mesh.vertex_owner_weights].forEach(add);
+    return [...buffers];
 }
