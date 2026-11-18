@@ -360,16 +360,18 @@ export namespace libcootApi {
     interface SimpleMeshT {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;
-        /** 1 if the mesh was built, 0 if it could not be. */
-        status: number;
-        /**
-         * What the mesh is, and - when status is 0 - why it is not.
-         *
-         * simple_mesh_t has no other field to put a reason in, so a failing generator writes one
-         * here. Both are plain value_object fields, so they are ordinary JavaScript values on
-         * this side and remain readable after the two vectors have been deleted.
-         */
-        name: string;
+        // 1 if the mesh is the answer, 0 if Coot threw while building it. Not the same as an
+        // empty mesh, which is a perfectly good answer for a selection that matched nothing.
+        status?: number;
+        // Which residue each vertex belongs to, and the residues as CIDs. Present but empty
+        // for every mesh that does not know where its vertices came from.
+        vertex_owner?: emscriptem.vector<number>;
+        // A vertex in the groove between two atoms belongs to both: the second residue, and
+        // how much of the vertex belongs to the first.
+        vertex_owner_other?: emscriptem.vector<number>;
+        vertex_owner_weight?: emscriptem.vector<number>;
+        owners?: emscriptem.vector<string>;
+        name?: string;
     }
     /**
      * One material's worth of an imported glTF.
@@ -395,15 +397,15 @@ export namespace libcootApi {
         additional_norm_tri?: [[number[] | Float32Array]];
         norm_tri: [[number[] | Float32Array]];
         col_tri: [[number[] | Float32Array]];
-        /**
-         * Carried through from simple_mesh_t by the callers that need it.
-         *
-         * simpleMeshToMeshData returns only the buffer arrays, so these are absent unless the
-         * worker function attaches them. A caller that has to tell a failure from an empty
-         * result - the glTF import, which must report which feature it could not read - needs
-         * them and says so in its own return type.
-         */
+        //! 1 if the mesh is the answer, 0 if Coot threw while building it.
         status?: number;
+        // One entry per vertex, indexing owners. Absent unless the mesh knows.
+        vertex_owners?: Uint32Array;
+        // The second owner of a saddle vertex, and the share belonging to the first. Present
+        // together with vertex_owners or not at all.
+        vertex_owners_other?: Uint32Array;
+        vertex_owner_weights?: Float32Array;
+        owners?: string[];
         name?: string;
     }
     interface SymmetryData {
@@ -674,19 +676,18 @@ export namespace libcootApi {
         getReversedNormalsFromSimpleMesh(arg0: any): Float32Array;
         getColoursFromSimpleMesh(arg0: any): Float32Array;
         getTextureArray(arg0: any, arg1: any): void;
-        getPositionsFromSimpleMesh2(arg0: any, arg1: any): void;
-        getNormalsFromSimpleMesh2(arg0: any, arg1: any): void;
-        getReversedNormalsFromSimpleMesh2(arg0: any, arg1: any): void;
-        getReversedNormalsFromSimpleMesh3(arg0: any, arg1: any): void;
-        getColoursFromSimpleMesh2(arg0: any, arg1: any): void;
+        getPositionsFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
+        getNormalsFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
+        getReversedNormalsFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
+        getColoursFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
         getFloat32ArrayFromVector(arg0: any, arg1: any): void;
         getUint32ArrayFromVector(arg0: any, arg1: any): void;
         getLineIndicesFromSimpleMesh(arg0: any): Uint32Array;
         getPermutedTriangleIndicesFromSimpleMesh(arg0: any): Uint32Array;
         getTriangleIndicesFromSimpleMesh(arg0: any): Uint32Array;
-        getLineIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
-        getPermutedTriangleIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
-        getTriangleIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
+        getLineIndicesFromTriangles(triangles: emscriptem.vector<gTriangle>, out: Uint32Array): void;
+        getPermutedTriangleIndicesFromTriangles(triangles: emscriptem.vector<gTriangle>, out: Uint32Array): void;
+        getTriangleIndicesFromTriangles(triangles: emscriptem.vector<gTriangle>, out: Uint32Array): void;
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
         validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
         calculate_cremer_pople_parameters(arg0: string, arg1: string): emscriptem.vector<PrivateerCremerPopleParameters>;

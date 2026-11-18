@@ -43,6 +43,8 @@ import { EffectMaps, EffectPasses, GBUFFER_DEPTH_FORMAT, GBUFFER_NORMAL_FORMAT, 
 import { DepthPeel, PEEL_COLOUR_FORMAT, PEEL_DEPTH_FORMAT, type PeelTargets, transparentLayers } from './depthPeel';
 import { DepthBlur, depthBlurMargin } from './depthBlur';
 import { AnaglyphCombine, anaglyphUniforms } from './anaglyphCombine';
+import { type HoverHighlight, type HoverOverlay, NO_HIGHLIGHT, NO_HOVER, type SubBufferHighlight, hoverHighlight } from './hoverHighlight';
+import { HoverOverlayLayer } from './hoverOverlay';
 import {
     ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, PreviewView, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, previewViews, symmetryCopyGrey, viewShows,
 } from './previewScene';
@@ -69,8 +71,8 @@ function pixelsPerAngstrom(frame: Float32Array, camera: PreviewCameraSource, wid
 }
 
 const SAMPLE_COUNT = 4;
-/** Floats in a Draw uniform block (previewShaders.ts): colour, params, copyColour, model, ambient, output. */
-const DRAW_FLOATS = 36;
+/** Floats in a Draw uniform block (previewShaders.ts): colour, params, copyColour, model, ambient, output, highlight. */
+const DRAW_FLOATS = 40;
 /** Bytes between one copy's Draw block and the next: the uniform offset alignment WebGPU guarantees. */
 const DRAW_STRIDE = 256;
 const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
@@ -79,15 +81,21 @@ const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
  * The Draw block for one copy of a draw. `copyColour` is set for symmetry copies drawn in one
  * grey; `model` places the copy (identity for the original). `opaque`: drawn by a pipeline that
  * writes its colour as it is, not blended (what a transparent snapshot's fading needs to know).
+ * `highlight`: what the hover lights in an instanced mesh, and `firstVertex` the mesh vertex the
+ * chunk drawn with this block starts at (null: its vertices were gathered, so no section can be
+ * found in it).
  */
 function drawBlock(colour: ArrayLike<number>, alpha: number, halfWidth: number, copyColour: number[] | null,
                    model: ArrayLike<number>, out: Float32Array, offset = 0, segmentColours = 0, ambient: number | null = null,
-                   opaque = true): void {
+                   opaque = true, highlight: SubBufferHighlight = NO_HIGHLIGHT, firstVertex: number | null = 0): void {
     out.set([colour[0], colour[1], colour[2], colour[3], alpha, halfWidth, copyColour ? 1 : 0, segmentColours], offset);
     out.set(copyColour ?? [0, 0, 0, 0], offset + 8);
     out.set(Array.from(model).slice(0, 16), offset + 12);
     out.set(ambient === null ? [0, 0, 0, 0] : [ambient, ambient, ambient, 1], offset + 28);
     out.set([opaque ? 1 : 0, 0, 0, 0], offset + 32);
+    const ints = new Int32Array(out.buffer, out.byteOffset, out.length);
+    const sectionKnown = firstVertex !== null && highlight.from >= 0;
+    ints.set([highlight.instance, sectionKnown ? highlight.from : -1, sectionKnown ? highlight.to : -1, firstVertex ?? 0], offset + 36);
 }
 
 const DEPTH_FORMAT: GPUTextureFormat = "depth24plus";
@@ -192,6 +200,11 @@ interface ChunkResources {
     indexCount: number;
     /** Added to each index: minus the first vertex of a window onto the mesh (see MeshChunk). */
     baseVertex: number;
+    /**
+     * The mesh vertex this chunk's vertex 0 is (vertex_index counts from there), for the hover
+     * highlight's vertex numbers; null for a chunk whose vertices were gathered (MeshChunk.remap).
+     */
+    firstVertex: number | null;
 }
 
 /** Some of a PERFECT_SPHERES sub-buffer's spheres: all of them, unless too many for one buffer. */
@@ -218,7 +231,11 @@ interface SubBufferResources {
     spheres: SphereChunk[];
     /** For LINES and NORMALLINES: their arrays bound as storage, and how many segments. */
     segments: { bindGroup: GPUBindGroup; count: number } | null;
-    /** A Draw block per copy, original first, DRAW_STRIDE apart; remade when the copies grow. */
+    /**
+     * A Draw block per copy, original first, DRAW_STRIDE apart; remade when the copies grow. A mesh
+     * in more than one chunk has a set of them per chunk, chunk after chunk (block c x copies + k),
+     * as the hover highlight needs each chunk's first vertex.
+     */
     drawUniforms: GPUBuffer;
     /** One per block. */
     bindGroups: GPUBindGroup[];
@@ -329,6 +346,10 @@ export class WebGPUPreviewRenderer {
     private readonly surfaceTextures: SurfaceTextures;
     /** Textured meshes: the frame, the draw, and the material at group 2. */
     private readonly texturedPipelineLayout: GPUPipelineLayout;
+    /** The smooth mesh hover overlay (MetaBalls, surfaces): drawn after the scene. */
+    private readonly hoverOverlay: HoverOverlayLayer;
+    /** What the hover lights in the frame being drawn (hoverHighlight.ts); set by drawFrame. */
+    private hover: HoverHighlight = NO_HOVER;
     /** On the shared device: removed again by destroy(), which must not destroy the device. */
     private readonly errorListener: (event: GPUUncapturedErrorEvent) => void;
 
@@ -445,6 +466,8 @@ export class WebGPUPreviewRenderer {
         this.texturedPipelineLayout = device.createPipelineLayout({
             bindGroupLayouts: [this.frameLayout, this.drawLayout, this.surfaceTextures.layout],
         });
+        this.hoverOverlay = new HoverOverlayLayer(device, this.module, this.frameLayout, this.drawLayout,
+            this.colourTargetState(true), DEPTH_FORMAT, SAMPLE_COUNT, maxBufferBytes);
     }
 
     /**
@@ -616,6 +639,8 @@ export class WebGPUPreviewRenderer {
         const started = performance.now();
         const plan = planPreview(displayBuffers);
         const uploads = this.syncResources(displayBuffers, plan.draws);
+        // What the hover lights: read by writeDrawBlocks and drawHoverOverlay, in every view.
+        this.hover = hoverHighlight(camera, displayBuffers);
         // A divided canvas - three ways, stereo side by side or crossed, multiple views - is drawn
         // view by view (drawViews); the ordinary view keeps the frame below, its passes unchanged.
         const views = previewViews(camera, displayBuffers, target.width, target.height);
@@ -802,6 +827,8 @@ export class WebGPUPreviewRenderer {
             }
             // Textured shapes after the meshes, as GLrender draws them after drawTriangles.
             shapes = this.texturedShapes.draw(scene, camera.store?.getState().glRef?.texturedShapes ?? []);
+            // The hover overlay last, as drawCore draws it after the scene (and so under the blur).
+            this.drawHoverOverlay(scene, plan.draws);
             if (blur) scene.end();
             else pass = scene;
         }
@@ -821,6 +848,9 @@ export class WebGPUPreviewRenderer {
             pass.setBindGroup(0, frameGroup);
         }
         if (!pass) throw new Error("No pass for the overlays");
+        // Peeled, the hover overlay goes over the composite, against the opaque depth: drawn with
+        // the peel layers it would be composited under the transparent ones, or out of them.
+        if (peel) this.drawHoverOverlay(pass, plan.draws);
         // Then the overlays, as drawCore ends its frame: the FPS meter and measuring lines, over
         // everything, then text - over everything, or (atomLabelDepthMode) depth-tested.
         const view = uniforms.slice(16, 32) as unknown as mat4.mat4;
@@ -1017,6 +1047,17 @@ export class WebGPUPreviewRenderer {
                 inView(composite);
                 this.depthPeel.composite(composite, peel);
                 composite.end();
+                if (this.hoverOverlayItems(items).length > 0) {
+                    const over = encoder.beginRenderPass({
+                        label: "hover overlay (view)",
+                        colorAttachments: [{ view: target.colour.createView(), loadOp: "load", storeOp: "store" }],
+                        depthStencilAttachment: { view: peel.opaqueDepthView, depthLoadOp: "load", depthStoreOp: "store" },
+                    });
+                    inView(over);
+                    over.setBindGroup(0, frameGroup);
+                    this.drawHoverOverlay(over, items);
+                    over.end();
+                }
             } else {
                 const scene = encoder.beginRenderPass({
                     label: "scene (view)",
@@ -1031,6 +1072,7 @@ export class WebGPUPreviewRenderer {
                     for (const item of gpuDraws) if (item.transparent === transparent) this.drawGpu(scene, item, camera.zoom);
                 }
                 shapes = this.texturedShapes.draw(scene, shapesSource);
+                this.drawHoverOverlay(scene, items);
                 if (labelsInScene.length) labels += this.textLayer.draw(scene, labelsInScene, camera.zoom, view.height, allText);
                 scene.end();
             }
@@ -1126,6 +1168,7 @@ export class WebGPUPreviewRenderer {
         this.overlayLines.destroy();
         this.texturedShapes.destroy();
         this.surfaceTextures.destroy();
+        this.hoverOverlay.destroy();
         this.effects.destroy();
         if (canvasOwners.get(this.context) === this) {
             this.context.unconfigure();
@@ -1217,7 +1260,9 @@ export class WebGPUPreviewRenderer {
     private writeDrawBlocks(sub: SubBufferResources, item: PreviewDraw, camera: PreviewCameraSource,
                             halfWidth = 0, segmentColours = 0): void {
         const background = camera.background_colour;
-        const count = 1 + item.copies.length;
+        const copies = 1 + item.copies.length;
+        const chunks: (ChunkResources | null)[] = sub.chunks.length > 0 ? sub.chunks : [null];
+        const count = copies * chunks.length;
         if (sub.bindGroups.length < count) {
             const old = sub.drawUniforms;
             sub.drawUniforms = this.device.createBuffer({
@@ -1238,8 +1283,16 @@ export class WebGPUPreviewRenderer {
         const b = item.buffer;
         const model = item.moving ? interactiveModel(b.transformMatrixInteractive, b.transformOriginInteractive, camera.origin) : IDENTITY;
         const glow = item.glow ? interactiveGlow(Date.now()) : null;
-        drawBlock(custom, alpha, halfWidth, null, model, data, 0, segmentColours, glow, !item.transparent);
-        item.copies.forEach((model, n) => drawBlock(custom, alpha, halfWidth, grey, model, data, (n + 1) * DRAW_STRIDE / 4, segmentColours, null, !item.transparent));
+        // The hover lights instanced meshes in their draw (hoverHighlight.ts); the copies too, as
+        // WebGL's uniforms stay set across them.
+        const highlight = item.instanced && item.primitive === "triangles" ? this.hover.forBuffer(item.buffer) : NO_HIGHLIGHT;
+        chunks.forEach((chunk, c) => {
+            const firstVertex = chunk ? chunk.firstVertex : 0;
+            const at = (k: number) => (c * copies + k) * DRAW_STRIDE / 4;
+            drawBlock(custom, alpha, halfWidth, null, model, data, at(0), segmentColours, glow, !item.transparent, highlight, firstVertex);
+            item.copies.forEach((model, n) => drawBlock(custom, alpha, halfWidth, grey, model, data, at(n + 1), segmentColours, null,
+                !item.transparent, highlight, firstVertex));
+        });
         this.device.queue.writeBuffer(sub.drawUniforms, 0, data);
     }
 
@@ -1305,8 +1358,9 @@ export class WebGPUPreviewRenderer {
         const uvSlot = slot;
         if (material) pass.setBindGroup(2, material);
         for (let copy = 0; copy < copies; copy++) {
-            pass.setBindGroup(1, sub.bindGroups[copy]);
-            for (const chunk of sub.chunks) {
+            for (let c = 0; c < sub.chunks.length; c++) {
+                const chunk = sub.chunks[c];
+                pass.setBindGroup(1, sub.bindGroups[c * copies + copy]);
                 pass.setVertexBuffer(0, chunk.position);
                 pass.setVertexBuffer(1, chunk.normal);
                 if (chunk.colour) pass.setVertexBuffer(2, chunk.colour);
@@ -1314,6 +1368,31 @@ export class WebGPUPreviewRenderer {
                 pass.setIndexBuffer(chunk.index, "uint32");
                 pass.drawIndexed(chunk.indexCount, item.instanceCount, 0, chunk.baseVertex);
             }
+        }
+    }
+
+    /**
+     * The draws the hover overlays light, those the frame (or view) draws: each lit smooth mesh's
+     * first sub-buffer, a mesh not instanced, as drawCore requires.
+     */
+    private hoverOverlayItems(items: readonly PreviewDraw[]): { overlay: HoverOverlay; item: PreviewDraw }[] {
+        return this.hover.overlays.flatMap(overlay => {
+            const item = items.find(d => d.buffer === overlay.buffer && d.index === 0 && d.primitive === "triangles" && !d.instanced);
+            return item ? [{ overlay, item }] : [];
+        });
+    }
+
+    /**
+     * The smooth mesh hover overlays (hoverOverlay.ts), over what `pass` has drawn, each with its
+     * mesh's own Draw blocks (written by its draw this frame): the original, each chunk. All of a
+     * frame's overlays share the hovered point and mask, so one uniform does for them all.
+     */
+    private drawHoverOverlay(pass: GPURenderPassEncoder, items: readonly PreviewDraw[]): void {
+        for (const { overlay, item } of this.hoverOverlayItems(items)) {
+            const sub = this.resources.get(item.buffer)?.[0];
+            if (!sub || sub.chunks.length === 0) continue;
+            const copies = 1 + item.copies.length;
+            this.hoverOverlay.draw(pass, overlay, sub.chunks, sub.chunks.map((_, c) => sub.bindGroups[c * copies]));
         }
     }
 
@@ -1369,6 +1448,7 @@ export class WebGPUPreviewRenderer {
                 this.resources.delete(buffer);
             }
         }
+        this.hoverOverlay.forget(present);
 
         let uploads = 0;
         for (const item of draws) {
@@ -1435,6 +1515,7 @@ export class WebGPUPreviewRenderer {
                     index: this.vertexBuffer(`index${label}`, local, BufferUsage.INDEX, created),
                     indexCount: chunk.indexCount,
                     baseVertex: 0,
+                    firstVertex: null,
                 };
             }
             const v0 = chunk.firstVertex, v1 = chunk.firstVertex + chunk.vertexCount;
@@ -1447,6 +1528,7 @@ export class WebGPUPreviewRenderer {
                     BufferUsage.INDEX, created),
                 indexCount: chunk.indexCount,
                 baseVertex: -v0,
+                firstVertex: v0,
             };
         });
     }

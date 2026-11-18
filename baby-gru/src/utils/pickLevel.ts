@@ -54,6 +54,49 @@ export const LEVEL_BAND = 0.1;
  * Stateful by design - that is what hysteresis is - but the state is the caller's, passed in and
  * returned, so this stays a function of its arguments.
  */
+/**
+ * How a mesh that names its vertices packs a chain and a residue into one owner id, so that
+ * one comparison in the shader can light either.
+ *
+ * The chain goes in the high half and the residue within that chain in the low half. Masking
+ * off the low half then matches every residue of a chain, and a mask of nothing at all matches
+ * every point there is - which is the whole-object grain, for free.
+ *
+ * Sixteen bits each: no structure has 65536 chains, and a chain with 65536 residues would have
+ * defeated the rest of this long before. `encodeOwner` says what happens if one ever does.
+ */
+export const OWNER_CHAIN_SHIFT = 16;
+export const OWNER_RESIDUE_MASK = 0xFFFF;
+
+/** Masks for the three grains, indexed by level: residue, chain, whole object. */
+export const LEVEL_OWNER_MASKS = [0xFFFFFFFF, 0xFFFF0000, 0x00000000];
+
+/**
+ * The mask for a grain, clamped so an unexpected level can only be coarser than intended and
+ * never accidentally zero - which would light everything.
+ */
+export const ownerMaskForLevel = (level: number): number => {
+    if (!Number.isFinite(level) || level <= 0) return LEVEL_OWNER_MASKS[0];
+    const index = Math.min(Math.round(level), LEVEL_OWNER_MASKS.length - 1);
+    return LEVEL_OWNER_MASKS[index];
+};
+
+/**
+ * One owner id from a chain and a residue within it.
+ *
+ * Both are clamped rather than allowed to overflow into each other's half: a residue index
+ * that ran past its 16 bits would otherwise land in a neighbouring chain and light the wrong
+ * part of the molecule, which is far worse than two residues at the end of an impossibly long
+ * chain sharing an id and lighting together.
+ */
+export const encodeOwner = (chainIndex: number, residueIndex: number): number => {
+    const chain = Math.min(Math.max(chainIndex, 0), OWNER_RESIDUE_MASK);
+    const residue = Math.min(Math.max(residueIndex, 0), OWNER_RESIDUE_MASK);
+    // >>> 0 to keep it an unsigned 32-bit value: a chain index of 0x8000 or more would
+    // otherwise make the shift negative.
+    return ((chain << OWNER_CHAIN_SHIFT) | residue) >>> 0;
+};
+
 export const levelForHeight = (height: number, previous: number): number => {
     // Tolerate a previous level from an older set of boundaries, or no previous level at all.
     let level = Number.isFinite(previous)
