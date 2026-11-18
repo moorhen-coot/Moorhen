@@ -77,6 +77,26 @@ describe("smoothSurface", () => {
         expect(e.worstDegrees).toBeLessThan(3);
     });
 
+    test("normals are reconstructed smoothly across grid cells", () => {
+        // A cubic along each vertex's grid edge, fourth-order differences across it: on a sphere
+        // the size of an atom cap, at the default grid, half the error of second-order differences
+        // interpolated linearly (0.145 degrees mean, 0.34 worst), whose error followed each vertex's
+        // place in its cell and showed the grid in the diffuse light as a pattern of squares.
+        const c = [0.13, 0.27, 0.05];
+        const mesh = contourField(sesField([{ x: c[0], y: c[1], z: c[2], r: 3 }], 1.4, 0.5, 0));
+        let sum = 0, worst = 0;
+        const n = mesh.positions.length / 3;
+        for (let v = 0; v < n; v++) {
+            const d = [0, 1, 2].map(k => mesh.positions[3 * v + k] - c[k]);
+            const l = Math.hypot(d[0], d[1], d[2]);
+            const degrees = Math.acos(Math.min(1, (d[0] * mesh.normals[3 * v] + d[1] * mesh.normals[3 * v + 1] + d[2] * mesh.normals[3 * v + 2]) / l)) * 180 / Math.PI;
+            sum += degrees;
+            worst = Math.max(worst, degrees);
+        }
+        expect(sum / n).toBeLessThan(0.1);
+        expect(worst).toBeLessThan(0.27);
+    });
+
     test("a saddle between two atoms is the probe's torus", () => {
         const r = 1.9, p = 1.4, d = 3.4, o = [0.13, 0.21, 0.07];
         const rc = Math.sqrt((r + p) ** 2 - (d / 2) ** 2);
@@ -239,17 +259,21 @@ describe("smoothSurface", () => {
             }
             return best;
         };
-        const mesh = contourField(sesField(atoms, P, 0.4, 0));
-        const errors: number[] = [];
-        for (let v = 0; v < mesh.positions.length / 3 && errors.length < 400; v += 13) {
-            const x: V = [mesh.positions[3 * v], mesh.positions[3 * v + 1], mesh.positions[3 * v + 2]];
-            if (atoms.some(a => len(sub([a.x, a.y, a.z], x)) - a.r < 0.05)) continue; // on an atom: convex
-            errors.push(Math.abs(truth(x) - P));
+        // With `cavities` (every burying atom followed) and without (the first only; probe
+        // positions too small for the grid are found either way).
+        for (const [cavities, worst95, worst] of [[true, 0.03, 0.3], [false, 0.08, 0.5]] as const) {
+            const mesh = contourField(sesField(atoms, P, 0.4, 0, Infinity, 0, cavities));
+            const errors: number[] = [];
+            for (let v = 0; v < mesh.positions.length / 3 && errors.length < 400; v += 13) {
+                const x: V = [mesh.positions[3 * v], mesh.positions[3 * v + 1], mesh.positions[3 * v + 2]];
+                if (atoms.some(a => len(sub([a.x, a.y, a.z], x)) - a.r < 0.05)) continue; // on an atom: convex
+                errors.push(Math.abs(truth(x) - P));
+            }
+            errors.sort((a, b) => a - b);
+            expect(errors.length).toBeGreaterThan(200);
+            expect(errors[Math.floor(0.95 * (errors.length - 1))]).toBeLessThan(worst95);
+            expect(errors[errors.length - 1]).toBeLessThan(worst);
         }
-        errors.sort((a, b) => a - b);
-        expect(errors.length).toBeGreaterThan(200);
-        expect(errors[Math.floor(0.95 * (errors.length - 1))]).toBeLessThan(0.03);
-        expect(errors[errors.length - 1]).toBeLessThan(0.3);
     });
 
     test("normals point out and triangles wind counter-clockwise about them", () => {

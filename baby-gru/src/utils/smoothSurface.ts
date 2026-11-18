@@ -57,10 +57,12 @@ export const smoothSurfaceSetting = {
      */
     openRadius: 0.5,
     /**
-     * Pits and pockets made exactly - every atom burying a projection followed, and probe
-     * positions too small for the grid found - at roughly three times the cost of the field
-     * (smoothSurface.test.ts, "concave patches match a brute-force SES"). Off: they can look
-     * crumbly. To be on by default once the field is made on the GPU.
+     * Pits and pockets made exactly: where a projection is buried by several atoms, every one is
+     * followed rather than the first. Probe positions too small for the grid are always found
+     * (step 2 of sesField), which is most of the accuracy (tutorial 1's concave patches, against a
+     * brute-force SES: 95% within 0.047 A, 0.012 A with this) for a quarter to a half more time;
+     * this adds the rest at about 1.7 times the field's cost again. To be on by default once the
+     * field is made on the GPU.
      */
     cavities: false,
     /**
@@ -312,7 +314,13 @@ export function gaussianBlur3d(field: Float32Array, nx: number, ny: number, nz: 
     for (let iy = 0; iy < ny; iy++) for (let ix = 0; ix < nx; ix++) blurLine(iy * nx + ix, nz, plane);
 }
 
-/** The blurred SES signed distance field of these atoms. Null if there are none. */
+/**
+ * The blurred SES signed distance field of these atoms. Null if there are none.
+ *
+ * `maxShift`: how far the blur may move the surface (soft cap); `openRadius`: the ball for
+ * cutting pinched necks (step 3b); `cavities`: follow every atom burying a projection, not just
+ * the first - exact pits and pockets, at about 1.7 times the cost.
+ */
 export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: number, sigma: number,
                          maxShift = Infinity, openRadius = 0, cavities = true): SesGrid | null {
     if (atoms.length === 0) return null;
@@ -419,7 +427,7 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
                     // to have seeded it: probe positions too small for the grid to catch - the
                     // bottom of a pit, a pocket the probe only just fits - can be right here. A
                     // seed if there is an unburied boundary point within a voxel diagonal.
-                    if (!cavities || deep[i]) continue;
+                    if (deep[i]) continue;
                     // Not where the grid did see the outside next door: the seeds there, and the
                     // exact projections from them, already reach anything this close.
                     let outsideNear = false;
@@ -485,7 +493,8 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
     };
     // A projection buried by several atoms: its nearest unburied neighbour is where the circle
     // (or point) leaves one of them, and not necessarily the first found - in a pocket two or
-    // three atoms often overlap there. So every one is followed, not just the first.
+    // three atoms often overlap there. So with `cavities` every one is followed, not just the
+    // first.
     const sphereBuriers: number[] = [], circleBuriers: number[] = [], vertexBuriers: number[] = [];
     // The spheres and circles already tried for this point (circles as negative keys).
     const tried: number[] = [];
@@ -851,34 +860,63 @@ export function contourOnCpu(field: Float32Array, grid: GridShape): EdgeContour 
 }
 
 /**
- * Each vertex's normal from the field's gradient, interpolated along its grid edge as its
- * position was: smooth as the field is, not as faceted as the triangles. `field` is the contour
- * input, rising outwards, so out is up its gradient.
+ * Each vertex's normal from the field's gradient, as smooth as the field is rather than as faceted
+ * as the triangles. `field` is the contour input, rising outwards, so out is up its gradient.
+ *
+ * Every vertex lies on a grid edge, so the gradient is reconstructed along it with a cubic
+ * (Catmull-Rom) through four grid points, P - 1, P, Q, Q + 1: along the edge, the cubic's own
+ * derivative at the vertex; across it, fourth-order central differences at those four points,
+ * interpolated by the same cubic. The simpler reconstruction - second-order differences at P and Q,
+ * interpolated linearly - was out by 3 degrees on average and 17 at worst (in 100) at a 0.5 A
+ * grid, and since its error follows each vertex's place in its cell, the diffuse light showed the
+ * grid as a pattern of squares.
  */
 export function edgeNormals(field: Float32Array, grid: GridShape, keys: Uint32Array): Float32Array {
     const { nx, ny, nz } = grid;
     const plane = nx * ny;
+    const dims = [nx, ny, nz];
+    const strides = [1, nx, plane];
     const normals = new Float32Array(3 * keys.length);
-    const ga = [0, 0, 0], gb = [0, 0, 0];
-    const gradient = (i: number, out: number[]) => {
-        const iz = Math.floor(i / plane), iy = Math.floor((i - iz * plane) / nx), ix = i - iz * plane - iy * nx;
-        out[0] = field[ix < nx - 1 ? i + 1 : i] - field[ix > 0 ? i - 1 : i];
-        out[1] = field[iy < ny - 1 ? i + nx : i] - field[iy > 0 ? i - nx : i];
-        out[2] = field[iz < nz - 1 ? i + plane : i] - field[iz > 0 ? i - plane : i];
+    const coord = [0, 0, 0];
+    // The field at grid point `coord` moved `step` along axis d, held inside the grid.
+    const valueAt = (d: number, step: number): number => {
+        let i = 0;
+        for (let k = 0; k < 3; k++) {
+            const c = Math.min(dims[k] - 1, Math.max(0, coord[k] + (k === d ? step : 0)));
+            i += c * strides[k];
+        }
+        return field[i];
     };
+    // d(field)/d(axis e) at `coord` moved `step` along axis d: fourth order, in grid units.
+    const derivativeAt = (d: number, step: number, e: number): number => {
+        const saved = coord[d];
+        coord[d] += step;
+        const fp1 = valueAt(e, 1), fm1 = valueAt(e, -1), fp2 = valueAt(e, 2), fm2 = valueAt(e, -2);
+        coord[d] = saved;
+        return (-fp2 + 8 * fp1 - 8 * fm1 + fm2) / 12;
+    };
+    const catmullRom = (p0: number, p1: number, p2: number, p3: number, t: number) =>
+        0.5 * (2 * p1 + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (3 * p1 - p0 - 3 * p2 + p3) * t * t * t);
+    const catmullRomSlope = (p0: number, p1: number, p2: number, p3: number, t: number) =>
+        0.5 * ((p2 - p0) + 2 * (2 * p0 - 5 * p1 + 4 * p2 - p3) * t + 3 * (3 * p1 - p0 - 3 * p2 + p3) * t * t);
+    const g = [0, 0, 0];
     for (let v = 0; v < keys.length; v++) {
         const axis = keys[v] % 3;
         const p = (keys[v] - axis) / 3;
-        const q = p + (axis === 0 ? 1 : axis === 1 ? nx : plane);
-        const a = field[p], b = field[q];
-        const t = a === b ? 0.5 : a / (a - b);
-        gradient(p, ga);
-        gradient(q, gb);
-        const gx = ga[0] + t * (gb[0] - ga[0]), gy = ga[1] + t * (gb[1] - ga[1]), gz = ga[2] + t * (gb[2] - ga[2]);
-        const len = Math.hypot(gx, gy, gz) || 1;
-        normals[3 * v] = gx / len;
-        normals[3 * v + 1] = gy / len;
-        normals[3 * v + 2] = gz / len;
+        coord[2] = Math.floor(p / plane);
+        coord[1] = Math.floor((p - coord[2] * plane) / nx);
+        coord[0] = p - coord[2] * plane - coord[1] * nx;
+        const f0 = valueAt(axis, -1), f1 = valueAt(axis, 0), f2 = valueAt(axis, 1), f3 = valueAt(axis, 2);
+        const t = f1 === f2 ? 0.5 : f1 / (f1 - f2);
+        for (let e = 0; e < 3; e++) {
+            g[e] = e === axis
+                ? catmullRomSlope(f0, f1, f2, f3, t)
+                : catmullRom(derivativeAt(axis, -1, e), derivativeAt(axis, 0, e), derivativeAt(axis, 1, e), derivativeAt(axis, 2, e), t);
+        }
+        const len = Math.hypot(g[0], g[1], g[2]) || 1;
+        normals[3 * v] = g[0] / len;
+        normals[3 * v + 1] = g[1] / len;
+        normals[3 * v + 2] = g[2] / len;
     }
     return normals;
 }

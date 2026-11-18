@@ -628,7 +628,7 @@ export const MoorhenDevMenu = () => {
             <MoorhenToggle
                 type="switch"
                 checked={smoothCavities}
-                label="Smooth surface: smooth cavities (exact pits and pockets, about 3x slower; off by default until the field is on the GPU)"
+                label="Smooth surface: smooth cavities (exact pits and pockets, about 1.7x slower; off by default until the field is on the GPU)"
                 onChange={() => {
                     smoothSurfaceSetting.cavities = !smoothCavities;
                     setSmoothCavities(!smoothCavities);
