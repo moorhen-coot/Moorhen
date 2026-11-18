@@ -364,7 +364,7 @@ getgsl() {
 
 # Patches to the pinned coot commit, for fixes not yet upstream. Paths in
 # git -C are relative to coot-1.0, hence ../../patches.
-coot_patches="coot-undo-backup-per-molecule.patch coot-gltf-export-byte-copy.patch"
+coot_patches="coot-undo-backup-per-molecule.patch"
 
 applycootpatches() {
     for p in $coot_patches; do
