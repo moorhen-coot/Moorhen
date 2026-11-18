@@ -1,11 +1,12 @@
 import { useDispatch } from "react-redux";
 import { setMapAlpha, setMapStyle } from "../../store/mapContourSettingsSlice";
+import type { MapStyle } from "../../store/mapContourSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider, MoorhenToggle } from "../inputs";
 
 export const MapSettings = (props: {
     map: moorhen.Map;
-    mapStyle: "solid" | "lit-lines" | "lines";
+    mapStyle: MapStyle;
     mapOpacity: number;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     disabled: boolean;
