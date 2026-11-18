@@ -66,6 +66,12 @@ export const smoothSurfaceSetting = {
      */
     cavities: false,
     /**
+     * Split every triangle once, with positions and normals from the field (refineContour): the
+     * diffuse light's diamonds at a 0.5 A grid mostly gone, for four times the triangles rather
+     * than eight times the field a 0.25 A grid costs.
+     */
+    refine: false,
+    /**
      * Marching cubes with the WebGPU MetaBalls kernels, when WebGPU is there; the field and the
      * colours stay in the Coot worker. Without WebGPU, all of it in the worker, on the CPU.
      */
@@ -921,8 +927,158 @@ export function edgeNormals(field: Float32Array, grid: GridShape, keys: Uint32Ar
     return normals;
 }
 
-/** A contour finished: degenerate triangles dropped, normals added, wound counter-clockwise. */
-export function finishContour(field: Float32Array, grid: GridShape, contour: EdgeContour): SurfaceMesh {
+/** Catmull-Rom weights for the four grid points around t in [0, 1): the cubic catmullRom is. */
+function catmullRomWeights(t: number, w: Float64Array): void {
+    const t2 = t * t, t3 = t2 * t;
+    w[0] = 0.5 * (-t + 2 * t2 - t3);
+    w[1] = 0.5 * (2 - 5 * t2 + 3 * t3);
+    w[2] = 0.5 * (t + 4 * t2 - 3 * t3);
+    w[3] = 0.5 * (-t2 + t3);
+}
+
+/**
+ * The field anywhere, not only on grid edges: Catmull-Rom tricubic through the 4 x 4 x 4 grid
+ * points around a point, for its value, and for its gradient the fourth-order differences of
+ * edgeNormals at those points, interpolated the same way - on a grid edge, the same cubics
+ * edgeNormals uses across the edge. Differences are kept per grid point once worked out: a
+ * surface touches a thin shell of the grid, and every point in it is read by many vertices.
+ */
+export function fieldSampler(field: Float32Array, grid: GridShape) {
+    const { nx, ny, nz, origin, spacing: h } = grid;
+    const plane = nx * ny;
+    const dims = [nx, ny, nz];
+    const clampTo = (c: number, d: number) => Math.min(dims[d] - 1, Math.max(0, c));
+    const valueAt = (x: number, y: number, z: number) => field[clampTo(z, 2) * plane + clampTo(y, 1) * nx + clampTo(x, 0)];
+    const slots = new Map<number, number>();
+    let derivatives = new Float32Array(3 * 4096);
+    let used = 0;
+    // The three fourth-order differences at grid point (x, y, z), in grid units: where they are.
+    const derivativesAt = (x: number, y: number, z: number): number => {
+        x = clampTo(x, 0); y = clampTo(y, 1); z = clampTo(z, 2);
+        const index = z * plane + y * nx + x;
+        let slot = slots.get(index);
+        if (slot !== undefined) return slot;
+        if (3 * (used + 1) > derivatives.length) {
+            const grown = new Float32Array(2 * derivatives.length);
+            grown.set(derivatives);
+            derivatives = grown;
+        }
+        slot = 3 * used++;
+        const c = [x, y, z];
+        for (let e = 0; e < 3; e++) {
+            const at = (step: number) => {
+                const saved = c[e];
+                c[e] = clampTo(saved + step, e);
+                const v = field[c[2] * plane + c[1] * nx + c[0]];
+                c[e] = saved;
+                return v;
+            };
+            derivatives[slot + e] = (-at(2) + 8 * at(1) - 8 * at(-1) + at(-2)) / 12;
+        }
+        slots.set(index, slot);
+        return slot;
+    };
+    const wx = new Float64Array(4), wy = new Float64Array(4), wz = new Float64Array(4);
+    /** The value at (x, y, z), in model units, and into `gradient` its gradient, per Å. */
+    const sample = (x: number, y: number, z: number, gradient: Float64Array): number => {
+        const u = (x - origin[0]) / h, v = (y - origin[1]) / h, w = (z - origin[2]) / h;
+        const i = Math.floor(u), j = Math.floor(v), k = Math.floor(w);
+        catmullRomWeights(u - i, wx);
+        catmullRomWeights(v - j, wy);
+        catmullRomWeights(w - k, wz);
+        let value = 0, gx = 0, gy = 0, gz = 0;
+        for (let c = 0; c < 4; c++) {
+            for (let b = 0; b < 4; b++) {
+                const wyz = wy[b] * wz[c];
+                if (wyz === 0) continue;
+                for (let a = 0; a < 4; a++) {
+                    const weight = wx[a] * wyz;
+                    if (weight === 0) continue;
+                    const gi = i - 1 + a, gj = j - 1 + b, gk = k - 1 + c;
+                    value += weight * valueAt(gi, gj, gk);
+                    const s = derivativesAt(gi, gj, gk);
+                    gx += weight * derivatives[s];
+                    gy += weight * derivatives[s + 1];
+                    gz += weight * derivatives[s + 2];
+                }
+            }
+        }
+        gradient[0] = gx / h; gradient[1] = gy / h; gradient[2] = gz / h;
+        return value;
+    };
+    return { sample };
+}
+
+/**
+ * Every triangle split in four at its edges' midpoints, and every vertex - old and new - moved onto
+ * the field's zero by Newton steps along the gradient and given the gradient as its normal, both
+ * from fieldSampler. The diffuse light follows the normal linearly across each triangle, which on
+ * the marching cubes mesh at a 0.5 A grid draws the grid as soft diamonds wherever the light
+ * changes slowly; halving the triangles takes most of that away at a quarter of the cost of
+ * halving the grid (which costs eight times the field). Winding is kept: each new triangle turns
+ * the way its parent did.
+ */
+export function refineContour(field: Float32Array, grid: GridShape, positions: Float32Array, indices: Uint32Array): SurfaceMesh {
+    const vertexCount = positions.length / 3;
+    // Each edge once, keyed by its ends: exact in a double up to ~9e7 vertices.
+    const midpoints = new Map<number, number>();
+    const extra: number[] = [];
+    const midpoint = (a: number, b: number): number => {
+        const key = a < b ? a * vertexCount + b : b * vertexCount + a;
+        let m = midpoints.get(key);
+        if (m === undefined) {
+            m = vertexCount + extra.length / 3;
+            extra.push(
+                0.5 * (positions[3 * a] + positions[3 * b]),
+                0.5 * (positions[3 * a + 1] + positions[3 * b + 1]),
+                0.5 * (positions[3 * a + 2] + positions[3 * b + 2]),
+            );
+            midpoints.set(key, m);
+        }
+        return m;
+    };
+    const refined = new Uint32Array(4 * indices.length);
+    let r = 0;
+    for (let t = 0; t + 2 < indices.length; t += 3) {
+        const a = indices[t], b = indices[t + 1], c = indices[t + 2];
+        const ab = midpoint(a, b), bc = midpoint(b, c), ca = midpoint(c, a);
+        refined.set([a, ab, ca, ab, b, bc, ca, bc, c, ab, bc, ca], r);
+        r += 12;
+    }
+    const out = new Float32Array(positions.length + extra.length);
+    out.set(positions);
+    out.set(extra, positions.length);
+    const normals = new Float32Array(out.length);
+    const { sample } = fieldSampler(field, grid);
+    const g = new Float64Array(3);
+    const maxStep = 0.5 * grid.spacing;
+    for (let v = 0; v < out.length / 3; v++) {
+        let x = out[3 * v], y = out[3 * v + 1], z = out[3 * v + 2];
+        for (let iteration = 0; iteration < 4; iteration++) {
+            const f = sample(x, y, z, g);
+            const g2 = g[0] * g[0] + g[1] * g[1] + g[2] * g[2];
+            if (g2 < 1e-20) break;
+            // Newton along the gradient; held to half a voxel, so a vertex in a flat spot of the
+            // field stays near where marching cubes put it.
+            let s = f / g2;
+            const length = Math.abs(s) * Math.sqrt(g2);
+            if (length > maxStep) s *= maxStep / length;
+            x -= s * g[0]; y -= s * g[1]; z -= s * g[2];
+            if (Math.abs(f) < 1e-5 * grid.spacing) break;
+        }
+        sample(x, y, z, g);
+        const len = Math.hypot(g[0], g[1], g[2]) || 1;
+        out[3 * v] = x; out[3 * v + 1] = y; out[3 * v + 2] = z;
+        normals[3 * v] = g[0] / len; normals[3 * v + 1] = g[1] / len; normals[3 * v + 2] = g[2] / len;
+    }
+    return { positions: out, normals, indices: refined };
+}
+
+/**
+ * A contour finished: degenerate triangles dropped, normals added, wound counter-clockwise.
+ * `refine`: and split once by refineContour.
+ */
+export function finishContour(field: Float32Array, grid: GridShape, contour: EdgeContour, refine = false): SurfaceMesh {
     const { indices: raw } = contour;
     let kept = 0;
     const indices = new Uint32Array(raw.length);
@@ -931,15 +1087,17 @@ export function finishContour(field: Float32Array, grid: GridShape, contour: Edg
         if (a === b || b === c || a === c) continue;
         indices[kept++] = a; indices[kept++] = b; indices[kept++] = c;
     }
-    const mesh = { positions: contour.positions, normals: edgeNormals(field, grid, contour.keys), indices: indices.slice(0, kept) };
+    const mesh = refine
+        ? refineContour(field, grid, contour.positions, indices.slice(0, kept))
+        : { positions: contour.positions, normals: edgeNormals(field, grid, contour.keys), indices: indices.slice(0, kept) };
     orientTriangles(mesh, true);
     return mesh;
 }
 
-/** Marching cubes on the CPU, finished. */
-export function contourField(grid: SesGrid): SurfaceMesh {
+/** Marching cubes on the CPU, finished (and split once, with `refine`). */
+export function contourField(grid: SesGrid, refine = false): SurfaceMesh {
     const field = contourInput(grid);
-    return finishContour(field, grid, contourOnCpu(field, grid));
+    return finishContour(field, grid, contourOnCpu(field, grid), refine);
 }
 
 /** Signed volume-ish test: does triangle t's winding agree with its vertices' normals? */
@@ -1101,6 +1259,8 @@ export interface SmoothOptions {
     openRadius?: number;
     /** The exact (and slow) handling of pits and pockets: see sesField's `cavities`. */
     cavities?: boolean;
+    /** Split the contour once (refineContour). */
+    refine?: boolean;
 }
 
 /**
@@ -1121,6 +1281,8 @@ export interface SmoothField {
     atomCount: number;
     sigma: number;
     maxShift: number;
+    /** Whether smoothMeshFromContour splits the contour (refineContour). */
+    refine: boolean;
     fieldMs: number;
 }
 
@@ -1144,13 +1306,14 @@ export function smoothFieldStage(m2tMesh: M2tSurfaceMesh, atoms: readonly Surfac
         input,
         conventions: meshConventions(m2tPositions, m2tNormals, m2tIndices),
         atomCount: atoms.length, sigma, maxShift,
+        refine: options.refine ?? smoothSurfaceSetting.refine,
         fieldMs: performance.now() - started,
     };
 }
 
 /** The contour finished - normals, winding - and laid out as the M2T mesh is. */
 export function smoothMeshFromContour(field: SmoothField, contour: EdgeContour): SurfaceMesh {
-    const mesh = finishContour(field.input, field.grid, contour);
+    const mesh = finishContour(field.input, field.grid, contour, field.refine);
     if (!field.conventions.out) for (let i = 0; i < mesh.normals.length; i++) mesh.normals[i] = -mesh.normals[i];
     orientTriangles(mesh, field.conventions.ccw);
     return mesh;

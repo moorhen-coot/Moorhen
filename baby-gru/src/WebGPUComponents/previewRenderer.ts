@@ -46,7 +46,7 @@ import { AnaglyphCombine, anaglyphUniforms } from './anaglyphCombine';
 import { type HoverHighlight, type HoverOverlay, NO_HIGHLIGHT, NO_HOVER, type SubBufferHighlight, hoverHighlight } from './hoverHighlight';
 import { HoverOverlayLayer } from './hoverOverlay';
 import {
-    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, PreviewView, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, previewViews, symmetryCopyGrey, viewShows,
+    ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, PreviewView, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, previewViews, shadingDebug, symmetryCopyGrey, viewShows,
 } from './previewScene';
 
 
@@ -722,7 +722,7 @@ export class WebGPUPreviewRenderer {
         uniforms.set([tile.x - area.x, tile.y - area.y, 1 / area.width, 1 / area.height], 80);
         // A transparent snapshot fades with distance rather than fogging into the background's
         // colour (fogged in previewShaders.ts): over that colour, the same picture.
-        uniforms.set([target.transparentBackground ? 1 : 0, 0, 0, 0], 104);
+        uniforms.set([target.transparentBackground ? 1 : 0, shadingDebug.stripes ? 1 : 0, 0, 0], 104);
         this.device.queue.writeBuffer(this.frameBuffer, 0, uniforms);
 
         let shapes = 0;
@@ -1010,7 +1010,7 @@ export class WebGPUPreviewRenderer {
             // The effects maps cover `area` of the view; a pixel of the target is the view's pixel
             // (it - rect + part), and so the map's (that - area).
             uniforms.set([part.x - area.x - rect.x, part.y - area.y - rect.y, 1 / area.width, 1 / area.height], 80);
-            uniforms.set([target.transparentBackground ? 1 : 0, 0, 0, 0], 104);
+            uniforms.set([target.transparentBackground ? 1 : 0, shadingDebug.stripes ? 1 : 0, 0, 0], 104);
             this.device.queue.writeBuffer(this.frameBuffer, 0, uniforms);
             const frameGroup = maps || shadowMap ? this.effectsBindGroup(maps, shadowMap) : this.frameBindGroup;
             const loadOp: GPULoadOp = first ? "clear" : "load";

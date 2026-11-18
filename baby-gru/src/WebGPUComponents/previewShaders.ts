@@ -47,7 +47,8 @@ struct Frame {
     shadowMatrix: mat4x4f, // model space to the shadow map: x, y in 0..1 (rows down), z the depth
     shadowParams: vec4f, // the map's texel size (x, y), the depth bias, the soft filter's radius in texels (0 hard)
     fog: vec4f,          // x: 1 to fade into nothing with distance rather than into fogColour (a
-                         // transparent snapshot: the picture is premultiplied, on nothing)
+                         // transparent snapshot: the picture is premultiplied, on nothing);
+                         // y: 1 to draw N.L as contour stripes (shadingDebug, temporary)
 };
 
 @group(0) @binding(0) var<uniform> frame: Frame;
@@ -355,6 +356,8 @@ fn lit(base: vec4f, normal: vec3f, occ: f32, shadow: f32) -> vec4f {
     let R = normalize(-reflect(L, n));
     let diffuse = frame.diffuse * max(dot(n, L), 0.0);
     let specular = frame.specular * pow(max(dot(R, E), 0.0), frame.params.z);
+    // BANDING TEST 3 (temporary): N.L as contour stripes, 20 per unit.
+    if (frame.fog.y > 0.5) { return vec4f(vec3f(step(0.5, fract(dot(n, normalize(L)) * 20.0))), 1.0); }
     return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, terminatorShadow(shadow, n));
 }
 
@@ -559,6 +562,8 @@ fn litSurface(base: vec4f, n: vec3f, shininess: f32, specularTint: vec4f, metall
     let R = normalize(-reflect(L, n));
     let diffuse = frame.diffuse * (max(dot(n, L), 0.0) * (1.0 - metallic) + metallic * metalReflection(n, E, L, roughness));
     let specular = specularTint * frame.specular * pow(max(dot(R, E), 0.0), shininess);
+    // BANDING TEST 3 (temporary): N.L as contour stripes, 20 per unit.
+    if (frame.fog.y > 0.5) { return vec4f(vec3f(step(0.5, fract(dot(n, normalize(L)) * 20.0))), 1.0); }
     return shaded((1.5 * base * ambientLight() + 1.2 * base * diffuse) * occ, specular, terminatorShadow(shadow, n));
 }
 

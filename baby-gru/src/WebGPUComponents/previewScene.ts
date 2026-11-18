@@ -587,6 +587,9 @@ function copiesOf(buffer: DisplayBuffer): { copies: ArrayLike<number>[]; greyCop
 }
 
 /** Floats in the per-frame uniform block; see Frame in previewShaders.ts. */
+/** Dev-menu shading diagnostics (temporary, banding investigation): N.L drawn as contour stripes. */
+export const shadingDebug = { stripes: false };
+
 export const FRAME_FLOATS = 108;
 
 /**

@@ -1649,6 +1649,7 @@ export class MoleculeRepresentation {
             const options = {
                 spacing: smoothSurfaceSetting.spacing, sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
                 openRadius: smoothSurfaceSetting.openRadius, cavities: smoothSurfaceSetting.cavities,
+                refine: smoothSurfaceSetting.refine,
             };
             const smoothArgs = [...m2tArgs, packAtoms(smoothInput.atoms), smoothInput.probe, options];
             // With WebGPU, marching cubes there and the rest in the worker; without it (no

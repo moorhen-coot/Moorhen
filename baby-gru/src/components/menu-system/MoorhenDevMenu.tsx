@@ -15,6 +15,8 @@ import { checkerboardTexture, registerTexture } from "../../WebGLgComponents/tex
 import { setUseGemmi } from "../../store/generalStatesSlice";
 import { setPeelOpaqueSeparately, setUseWebGPU } from "../../store/sceneSettingsSlice";
 import { webGPUAdapterSummary, webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
+import { shadingDebug } from "../../WebGPUComponents/previewScene";
+import { setRequestDrawScene } from "../../store/glRefSlice";
 import { showModal } from "../../store/modalsSlice";
 import {
     addCallback,
@@ -209,6 +211,8 @@ export const MoorhenDevMenu = () => {
     const [smoothOpenRadius, setSmoothOpenRadius] = useState<number>(smoothSurfaceSetting.openRadius);
     const [smoothOnGpu, setSmoothOnGpu] = useState<boolean>(smoothSurfaceSetting.gpu);
     const [smoothCavities, setSmoothCavities] = useState<boolean>(smoothSurfaceSetting.cavities);
+    const [smoothRefine, setSmoothRefine] = useState<boolean>(smoothSurfaceSetting.refine);
+    const [shadingStripes, setShadingStripes] = useState<boolean>(shadingDebug.stripes);
     // Rebuild the molecular surfaces on show, so a change to the smooth surface is seen at once.
     const redrawSurfaces = () => {
         (store.getState().molecules.moleculeList as MoorhenMolecule[]).forEach(molecule => {
@@ -635,6 +639,16 @@ export const MoorhenDevMenu = () => {
                     if (smoothSurfaceSetting.enabled) redrawSurfaces();
                 }}
             />
+            <MoorhenToggle
+                type="switch"
+                checked={smoothRefine}
+                label="Smooth surface: split every triangle once, from the field (test: 4x the triangles, little gain so far; off by default)"
+                onChange={() => {
+                    smoothSurfaceSetting.refine = !smoothRefine;
+                    setSmoothRefine(!smoothRefine);
+                    if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                }}
+            />
             <MoorhenStack direction="row">
                 <MoorhenNumberInput
                     label="Smooth surface grid (Å)"
@@ -699,6 +713,16 @@ export const MoorhenDevMenu = () => {
                 onChange={() => {
                     renderStats.syncGpu = !syncingGpu;
                     setSyncingGpu(!syncingGpu);
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={shadingStripes}
+                label="Shading: draw N.L as contour stripes (WebGPU only; banding diagnostic)"
+                onChange={() => {
+                    shadingDebug.stripes = !shadingStripes;
+                    setShadingStripes(!shadingStripes);
+                    dispatch(setRequestDrawScene(true));
                 }}
             />
             <MoorhenToggle

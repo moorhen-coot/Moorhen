@@ -97,6 +97,65 @@ describe("smoothSurface", () => {
         expect(worst).toBeLessThan(0.27);
     });
 
+    test("splitting the contour keeps it on the sphere and its normals as accurate", () => {
+        const c = [0.13, 0.27, 0.05];
+        const grid = sesField([{ x: c[0], y: c[1], z: c[2], r: 3 }], 1.4, 0.5, 0);
+        const coarse = contourField(grid);
+        const fine = contourField(grid, true);
+        expect(fine.indices.length).toBe(4 * coarse.indices.length);
+        const e = surfaceError(fine, () => c, -3);
+        expect(e.worstPosition).toBeLessThan(0.01);
+        expect(e.worstDegrees).toBeLessThan(0.27);
+        expect(meshConventions(fine.positions, fine.normals, fine.indices)).toEqual({ out: true, ccw: true });
+    });
+
+    test("splitting the contour takes most of the shading error away", () => {
+        // What the diffuse light sees: the normal interpolated linearly across a triangle, here at
+        // its centre, against the sphere's own normal there. Its error follows the triangles - the
+        // soft diamonds at a 0.5 A grid - and should fall by about four with half-sized triangles.
+        const c = [0.13, 0.27, 0.05];
+        const grid = sesField([{ x: c[0], y: c[1], z: c[2], r: 3 }], 1.4, 0.5, 0);
+        const centreError = (mesh: ReturnType<typeof contourField>) => {
+            let sum = 0, worst = 0;
+            const { positions: p, normals: n, indices } = mesh;
+            for (let t = 0; t < indices.length; t += 3) {
+                const at = [0, 0, 0], normal = [0, 0, 0];
+                for (let k = 0; k < 3; k++) {
+                    for (let d = 0; d < 3; d++) {
+                        at[d] += p[3 * indices[t + k] + d] / 3;
+                        normal[d] += n[3 * indices[t + k] + d];
+                    }
+                }
+                const radial = at.map((x, d) => x - c[d]);
+                const cos = (radial[0] * normal[0] + radial[1] * normal[1] + radial[2] * normal[2]) /
+                    (Math.hypot(...radial) * Math.hypot(...normal));
+                const degrees = Math.acos(Math.min(1, cos)) * 180 / Math.PI;
+                sum += degrees;
+                worst = Math.max(worst, degrees);
+            }
+            return { mean: sum / (indices.length / 3), worst };
+        };
+        const coarse = centreError(contourField(grid));
+        const fine = centreError(contourField(grid, true));
+        console.log(`centre normal error, coarse mean ${coarse.mean.toFixed(3)} worst ${coarse.worst.toFixed(3)}; split mean ${fine.mean.toFixed(3)} worst ${fine.worst.toFixed(3)} degrees`);
+        expect(fine.mean).toBeLessThan(0.5 * coarse.mean);
+        expect(fine.worst).toBeLessThan(0.5 * coarse.worst);
+    });
+
+    test("a split contour is closed", () => {
+        const grid = sesField([{ x: 0, y: 0, z: 0, r: 1.7 }, { x: 3, y: 0.5, z: 0, r: 1.52 }, { x: 1.4, y: 2.4, z: 0.3, r: 1.55 }], 1.4, 0.3, 0.6);
+        const { indices } = contourField(grid, true);
+        const edges = new Map<string, number>();
+        for (let t = 0; t < indices.length; t += 3) {
+            for (let k = 0; k < 3; k++) {
+                const a = indices[t + k], b = indices[t + (k + 1) % 3];
+                const key = a < b ? `${a},${b}` : `${b},${a}`;
+                edges.set(key, (edges.get(key) ?? 0) + 1);
+            }
+        }
+        expect([...edges.values()].every(count => count === 2)).toBe(true);
+    });
+
     test("a saddle between two atoms is the probe's torus", () => {
         const r = 1.9, p = 1.4, d = 3.4, o = [0.13, 0.21, 0.07];
         const rc = Math.sqrt((r + p) ** 2 - (d / 2) ** 2);
