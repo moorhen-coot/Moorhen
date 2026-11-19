@@ -210,6 +210,7 @@ export const MoorhenDevMenu = () => {
     const [smoothMaxShift, setSmoothMaxShift] = useState<number>(smoothSurfaceSetting.maxShift);
     const [smoothOpenRadius, setSmoothOpenRadius] = useState<number>(smoothSurfaceSetting.openRadius);
     const [smoothOnGpu, setSmoothOnGpu] = useState<boolean>(smoothSurfaceSetting.gpu);
+    const [smoothCpp, setSmoothCpp] = useState<boolean>(smoothSurfaceSetting.cpp);
     const [smoothRefine, setSmoothRefine] = useState<boolean>(smoothSurfaceSetting.refine);
     const [smoothColourBlend, setSmoothColourBlend] = useState<number>(smoothSurfaceSetting.colourBlend);
     const [smoothColourSmoothing, setSmoothColourSmoothing] = useState<number>(smoothSurfaceSetting.colourSmoothing);
@@ -627,6 +628,16 @@ export const MoorhenDevMenu = () => {
                 onChange={() => {
                     smoothSurfaceSetting.gpu = !smoothOnGpu;
                     setSmoothOnGpu(!smoothOnGpu);
+                    if (smoothSurface) redrawSurfaces();
+                }}
+            />
+            <MoorhenToggle
+                type="switch"
+                checked={smoothCpp}
+                label="Smooth surface: the C++ port in the Coot worker, when the WASM has it (on by default; off: the TS, the reference)"
+                onChange={() => {
+                    smoothSurfaceSetting.cpp = !smoothCpp;
+                    setSmoothCpp(!smoothCpp);
                     if (smoothSurface) redrawSurfaces();
                 }}
             />

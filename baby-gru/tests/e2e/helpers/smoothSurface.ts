@@ -32,6 +32,7 @@ export async function checkDefaultSmoothSurface(page: Page): Promise<{ hasAdapte
     expect(warnings, "no fallback to the plain M2T surface").toEqual([]);
     expect(report.buffers).toBeGreaterThan(0);
     expect(smoothLines.length).toBe(1);
-    expect(smoothLines[0]).toContain(report.hasAdapter ? "contour (WebGPU)" : "contour (CPU)");
+    // The C++ port (smooth-surface.cc) when the WASM build has it, else WebGPU or the CPU in the worker.
+    expect(smoothLines[0]).toMatch(report.hasAdapter ? /contour \((WebGPU|C\+\+)\)/ : /contour \((CPU|C\+\+)\)/);
     return { hasAdapter: report.hasAdapter };
 }

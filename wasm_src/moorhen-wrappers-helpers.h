@@ -457,6 +457,7 @@ std::pair<coot::simple_mesh_t,std::vector<std::vector<std::pair<unsigned,float>>
 
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
 #include "bloboids.hh"
+#include "smooth-surface.hh"
 bool isSugar(const std::string &resName);
 
 class molecules_container_js : public molecules_container_t {
@@ -2168,6 +2169,57 @@ inline emscripten::val getLineIndicesFromSimpleMesh(const coot::simple_mesh_t &m
 
     return uint32ArrayFromVector(uintArray);
 
+}
+
+/*
+ * Moorhen's smooth surface (smooth-surface.hh) of atoms packed as a Float32Array (x, y, z, van der
+ * Waals radius per atom), with an Int32Array residue index per atom, and the options object the TS
+ * takes (spacing, sigma, maxShift, openRadius, refine; threads) - anything left out is the default.
+ * Returns what the TS's smoothSurfaceFromAtomsSync does (positions, normals, indices, atom, other,
+ * weight, near, nearGap, as typed arrays) plus the grid and timings for the log; null if there is
+ * nothing to contour.
+ */
+inline emscripten::val smoothSurfaceFromAtoms(const emscripten::val &packedAtoms, const emscripten::val &residueOfObject,
+                                              double probe, const emscripten::val &optionsObject) {
+    auto packed = emscripten::convertJSArrayToNumberVector<float>(packedAtoms);
+    auto residue_of = emscripten::convertJSArrayToNumberVector<int32_t>(residueOfObject);
+    std::vector<smooth_surface::atom_t> atoms(packed.size() / 4);
+    for (size_t i = 0; i < atoms.size(); i++) atoms[i] = {packed[4 * i], packed[4 * i + 1], packed[4 * i + 2], packed[4 * i + 3]};
+    smooth_surface::options_t options;
+    auto option = [&](const char *name) { return optionsObject.isUndefined() || optionsObject.isNull() ? emscripten::val::undefined() : optionsObject[name]; };
+    if (!option("spacing").isUndefined()) options.spacing = option("spacing").as<double>();
+    if (!option("sigma").isUndefined()) options.sigma = option("sigma").as<double>();
+    if (!option("maxShift").isUndefined()) options.max_shift = option("maxShift").as<double>();  // Infinity passes as infinity
+    if (!option("openRadius").isUndefined()) options.open_radius = option("openRadius").as<double>();
+    if (!option("refine").isUndefined()) options.refine = option("refine").as<bool>();
+    if (!option("threads").isUndefined()) options.threads = option("threads").as<int>();
+    smooth_surface::surface_t s = smooth_surface::surface_from_atoms(atoms, residue_of, probe, options);
+    if (s.indices.empty()) return emscripten::val::null();
+    // A typed array of the JS type `type` holding a copy of `data`.
+    auto copy = [](const char *type, const auto &data) {
+        emscripten::val view{ emscripten::typed_memory_view(data.size(), data.data()) };
+        emscripten::val result = emscripten::val::global(type).new_(data.size());
+        result.template call<void>("set", view);
+        return result;
+    };
+    auto result = emscripten::val::object();
+    result.set("positions", copy("Float32Array", s.positions));
+    result.set("normals", copy("Float32Array", s.normals));
+    result.set("indices", copy("Uint32Array", s.indices));
+    result.set("atom", copy("Int32Array", s.atom));
+    result.set("other", copy("Int32Array", s.other));
+    result.set("weight", copy("Float32Array", s.weight));
+    result.set("near", copy("Int32Array", s.near));
+    result.set("nearGap", copy("Float32Array", s.near_gap));
+    auto grid = emscripten::val::object();
+    grid.set("nx", s.nx); grid.set("ny", s.ny); grid.set("nz", s.nz); grid.set("spacing", s.spacing);
+    result.set("grid", grid);
+    auto timings = emscripten::val::object();
+    timings.set("sas", s.timings.sas); timings.set("seeds", s.timings.seeds); timings.set("transform", s.timings.transform);
+    timings.set("distance", s.timings.distance); timings.set("blur", s.timings.blur); timings.set("contour", s.timings.contour);
+    timings.set("atoms", s.timings.atoms);
+    result.set("timings", timings);
+    return result;
 }
 
 inline emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){

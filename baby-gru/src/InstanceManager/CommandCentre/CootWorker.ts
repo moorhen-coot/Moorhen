@@ -1922,6 +1922,11 @@ type SmoothSurfaceBundle = {
 }
 type SmoothSurfaceOptions = Record<string, number | boolean>
 type SmoothContour = { positions: Float32Array; indices: Uint32Array; keys: Uint32Array }
+/** What the C++ smoothSurfaceFromAtoms (moorhen-wrappers-helpers.h) returns: the surface, its grid and timings. */
+type SmoothNativeSurface = SmoothAtomSurface & {
+    grid: { nx: number; ny: number; nz: number; spacing: number }
+    timings: { sas: number; seeds: number; transform: number; distance: number; blur: number; contour: number; atoms: number }
+}
 type SmoothAtomSurface = { positions: Float32Array; normals: Float32Array; indices: Uint32Array; atom: Int32Array; other: Int32Array; weight: Float32Array; near: Int32Array; nearGap: Float32Array }
 /** What a field from the atoms alone keeps here under its token until the contour comes back. */
 type SmoothAtomsWaiting = { fromAtoms: true; atoms: unknown[]; residueOf: Int32Array; probe: number }
@@ -1981,11 +1986,35 @@ const smoothSurfaceField = (imol: number, selection: string, colourStyle: string
  * cubes here: { surface } or { surface: null }. `residueOf`: each atom's residue, as an index.
  */
 const smoothSurfaceFromAtoms = (packedAtoms: Float32Array, residueOf: Int32Array, probe: number, options: SmoothSurfaceOptions) => {
+    // The C++ port (wasm_src/smooth-surface.cc, threaded) when this module has it: the same surface
+    // as the TS bundle's, several times faster. Older WASM builds have only the TS.
+    const native = (cootModule as unknown as { smoothSurfaceFromAtoms?: (atoms: Float32Array, residueOf: Int32Array, probe: number,
+        options: SmoothSurfaceOptions) => SmoothNativeSurface | null }).smoothSurfaceFromAtoms
+    if (native && options.cpp !== false) {
+        const surface = native(packedAtoms, residueOf, probe, options)
+        if (surface) {
+            const t = surface.timings
+            const field = t.sas + t.seeds + t.transform + t.distance + t.blur
+            console.debug(`Smooth surface: ${packedAtoms.length / 4} atoms, grid ${surface.grid.nx}x${surface.grid.ny}x${surface.grid.nz} ` +
+                `at ${surface.grid.spacing.toFixed(2)} Å, σ ${options.sigma} Å, max shift ${options.maxShift} Å; ` +
+                `${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles (no M2T mesh); field ${field.toFixed(0)} ms ` +
+                `(sas ${t.sas.toFixed(0)}, seeds ${t.seeds.toFixed(0)}, transform ${t.transform.toFixed(0)}, distance ${t.distance.toFixed(0)}, ` +
+                `blur ${t.blur.toFixed(0)}), contour (C++) ${(t.contour + t.atoms).toFixed(0)} ms, transfer 0 ms`)
+            const { grid, timings, ...arrays } = surface
+            return { surface: arrays }
+        }
+        return { surface: null }
+    }
     const bundle = loadSmoothSurfaceBundle()
     return { surface: bundle.smoothSurfaceFromAtomsSync(bundle.unpackAtoms(packedAtoms), residueOf, probe, options) }
 }
 /** The same in two halves around marching cubes on the GPU, as smoothSurfaceField / Finish. */
 const smoothSurfaceFieldFromAtoms = (packedAtoms: Float32Array, residueOf: Int32Array, probe: number, options: SmoothSurfaceOptions) => {
+    // With the C++ port, the whole surface here at once: faster than the field to the GPU and back.
+    // The main thread takes a reply with no field as the finished surface (smoothOnGpu).
+    if ((cootModule as unknown as { smoothSurfaceFromAtoms?: unknown }).smoothSurfaceFromAtoms && options.cpp !== false) {
+        return smoothSurfaceFromAtoms(packedAtoms, residueOf, probe, options)
+    }
     const bundle = loadSmoothSurfaceBundle()
     const atoms = bundle.unpackAtoms(packedAtoms)
     const field = bundle.smoothFieldStage(null, atoms, probe, options)

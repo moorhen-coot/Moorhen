@@ -90,6 +90,7 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
 
     function("unpackCootDataFile",&unpackCootDataFile);
     function("testFloat32Array", &testFloat32Array);
+    function("smoothSurfaceFromAtoms", &smoothSurfaceFromAtoms);
     // These take the bound vector rather than the whole mesh: a simple_mesh_t is a
     // value_object and crosses by copy, a registered vector is a class and crosses by
     // reference. See the comment above them in moorhen-wrappers-helpers.h.

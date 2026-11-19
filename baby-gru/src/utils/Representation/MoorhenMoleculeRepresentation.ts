@@ -1682,6 +1682,7 @@ export class MoleculeRepresentation {
             spacing: smoothSurfaceSetting.spacing, sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
             openRadius: smoothSurfaceSetting.openRadius,
             refine: smoothSurfaceSetting.refine,
+            cpp: smoothSurfaceSetting.cpp,
         };
 
         // One M2T-made surface (electrostatics, or no smoothing) of `selection`, smoothed from

@@ -82,6 +82,12 @@ export const smoothSurfaceSetting = {
      * colours stay in the Coot worker. Without WebGPU, all of it in the worker, on the CPU.
      */
     gpu: true,
+    /**
+     * The C++ port (wasm_src/smooth-surface.cc, threaded) in the Coot worker, when the WASM build has
+     * it: the same surface, several times faster. Off: the TS (and WebGPU marching cubes), the
+     * reference, to compare.
+     */
+    cpp: true,
 };
 
 /** At most this many grid points; above it the spacing is raised until the grid fits. */
