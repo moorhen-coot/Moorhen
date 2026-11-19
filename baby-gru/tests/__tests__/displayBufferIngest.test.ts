@@ -11,7 +11,7 @@ import { describe, expect, it, jest } from "@jest/globals";
 import { createWebGLBuffers } from "../../src/WebGLgComponents/createWebGLBuffers";
 import { appendOtherData, buildBuffers } from "../../src/WebGLgComponents/buildBuffers";
 import {
-    GL_SLOT_ARRAYS, hasPendingGLResources, isPendingGLBuffer, pendingGLBuffer, realiseGLResources,
+    GL_SLOT_ARRAYS, hasPendingGLResources, influenceOf, isPendingGLBuffer, pendingGLBuffer, realiseGLResources,
 } from "../../src/WebGLgComponents/glResources";
 
 // appendOtherData reads window.devicePixelRatio for the label font.
@@ -165,6 +165,9 @@ describe("ingesting worker output", () => {
         expect(buffer.pick_info.influence_point_indexes_texture).toBeDefined();
         expect(buffer.pick_info.influence_index_offsets_texture).toBeDefined();
         expect(gl.createTexture).toHaveBeenCalledTimes(3);
+        // The lists themselves stay, for the WebGPU renderer's hover highlight.
+        expect(influenceOf(buffer.pick_info)?.weights).toEqual(new Float32Array([1, 0.5]));
+        expect(influenceOf(buffer.pick_info)?.index_offsets).toEqual(new Uint32Array([0, 1, 2, 2, 2]));
     });
 
     it("produces display buffers from appendOtherData with no WebGL context", () => {

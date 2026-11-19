@@ -23,6 +23,8 @@ const initialState: {
     selectedThreeDObjectId: string | null;
     /** Which 2D overlay object is showing its handles, or none. Like selectedThreeDObjectId. */
     selected2DObjectId: string | null;
+    /** Which map's 2D slice is showing manipulation handles, or none (by its molNo). */
+    movingMapSlice: number | null;
     isShowingTomograms: boolean;
     isAnimatingTrajectory: boolean;
     isChangingRotamers: boolean;
@@ -53,6 +55,7 @@ const initialState: {
     showHoverInfo: true,
     selectedThreeDObjectId: null,
     selected2DObjectId: null,
+    movingMapSlice: null,
     residueSelection: {
         molecule: null,
         first: null,
@@ -164,6 +167,16 @@ const generalStatesSlice = createSlice({
          */
         setSelectedThreeDObject: (state, action: PayloadAction<string | null>) => {
             state.selectedThreeDObjectId = action.payload;
+            // One thing has handles at a time.
+            if (action.payload !== null) state.movingMapSlice = null;
+        },
+        /**
+         * Which map's 2D slice is showing manipulation handles, or none: as setSelectedThreeDObject
+         * for a 3D object, and the two take turns.
+         */
+        setMovingMapSlice: (state, action: PayloadAction<number | null>) => {
+            state.movingMapSlice = action.payload;
+            if (action.payload !== null) state.selectedThreeDObjectId = null;
         },
         /** Which 2D overlay object is showing its handles, or none. */
         setSelected2DObject: (state, action: PayloadAction<string | null>) => {
@@ -210,6 +223,7 @@ const generalStatesSlice = createSlice({
 export const {
     setSelectedThreeDObject,
     setSelected2DObject,
+    setMovingMapSlice,
     setActiveMap,
     setViewOnly,
     setTheme,

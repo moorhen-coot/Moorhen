@@ -115,7 +115,6 @@ export const subMenuMap: SubMenuMap = {
     file: {
         label: "Files",
         items: [
-            { id: "slotTest", label: "slot test", type: "HTMLslot", slotName: "test-slot" },
             {
                 id: "auto-load",
                 label: "Auto load files",

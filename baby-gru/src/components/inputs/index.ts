@@ -15,3 +15,6 @@ export { MoorhenFileInput } from "./Files/Files";
 export { getColorFromGradient } from "./MoorhenGradientPicker/gradientPresets";
 export { MoorhenTextStyleEditor } from "./TextStyle/MoorhenTextStyleEditor";
 export { MoorhenCoordinateInput } from "./Coordinate/MoorhenCoordinateInput";
+export { MoorhenCheckList } from "./CheckList/MoorhenCheckList";
+export { MoorhenChainCheckList } from "./CheckList/MoorhenChainCheckList";
+export { MoorhenMoleculeCheckList } from "./CheckList/MoorhenMoleculeCheckList";

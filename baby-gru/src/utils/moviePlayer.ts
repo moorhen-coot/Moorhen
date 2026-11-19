@@ -37,9 +37,17 @@
  * to show what it actually picked.
  */
 
-import { BufferTarget, CanvasSource, Mp4OutputFormat, Output, VideoCodec, canEncodeVideo } from "mediabunny";
+// Mediabunny is a large library that only movie export uses, so it is imported on demand in the
+// functions below rather than here. The Vite app build splits it into its own file, loaded on
+// first export. The webpack library builds (react-lib, web component) must not: they are
+// re-bundled or hosted by other apps, which don't serve webpack's extra chunk files, so the
+// import failed there. "eager" keeps mediabunny inside the main webpack bundle, still evaluated
+// only on first use.
+import type { VideoCodec } from "mediabunny";
 import { Movie, MovieSample, movieDuration } from "./cameraPath";
 import { holdCameraForMovie } from "./movieCamera";
+import { echoDistanceFor, sceneFollowingOrigin } from "./movieSceneFollowing";
+import { followOrigin } from "./originFollowing";
 import { DEFAULT_QUALITY, bitrateFor } from "./videoBitrate";
 import type { VideoQuality } from "./videoBitrate";
 import type { webGL } from "../types/mgWebGL";
@@ -135,6 +143,7 @@ export const describeEncoderSupport = async (
 ): Promise<{ supported: boolean; detail: string }> => {
     if (!webCodecsAvailable()) return { supported: false, detail: "WebCodecs is not available in this browser" };
     try {
+        const { canEncodeVideo } = await import(/* webpackMode: "eager" */ "mediabunny");
         const supported = await canEncodeVideo(codec, {
             width: evenDown(width), height: evenDown(height), bitrate, frameRate: fps,
         });
@@ -185,6 +194,8 @@ export async function recordMovieToMp4(
     const support = await describeEncoderSupport(width, height, codec, fps, bitrate);
     if (!support.supported) throw new Error(`This machine will not encode that: ${support.detail}`);
 
+    const { BufferTarget, CanvasSource, Mp4OutputFormat, Output } = await import(/* webpackMode: "eager" */ "mediabunny");
+
     const started = performance.now();
 
     const originalBufferWidth = canvas.width;
@@ -206,8 +217,15 @@ export async function recordMovieToMp4(
 
     // The camera is borrowed for the duration and handed back as it was, with the slab policy put
     // in manual so the movie's own clip and fog survive. See movieCamera.
-    const hold = holdCameraForMovie(gl);
+    //
+    // No motion echo, deliberately, where the preview has one. An echo would set the store's
+    // origin and leave React to notice, and React decides when - so a contour asked for at frame
+    // 90 would land on whichever frame happened to come after it finished, and the map would jump
+    // about rather than track. An exported frame says "this is the scene at this moment", so the
+    // scene is driven here instead, in step and awaited.
+    const hold = holdCameraForMovie(gl, true, null);
     hold.play(movie, options.onSample);
+    const scene = sceneFollowingOrigin(gl);
     let finalised = false;
     const cover = showCover("Rendering movie", options.coverOpacity ?? 1);
 
@@ -218,6 +236,16 @@ export async function recordMovieToMp4(
             // file runs at its authored speed however long rendering took. drawScene advances the
             // camera to it; nothing here touches myQuat, origin or zoom.
             gl.cameraTime = i * frameDuration;
+
+            // Advance the camera before drawing rather than letting the draw do it, so that what
+            // follows the view centre can be brought to this frame's origin and *finished* before
+            // the frame is captured. Ticking here and again inside drawScene costs nothing and
+            // lands in the same place: the clock is fixed for the frame, so the second tick
+            // samples the same moment as the first.
+            gl.cameraController.tick(gl.cameraTime);
+            const following = scene();
+            if (following) await followOrigin(following, gl.cameraController.state.origin);
+
             gl.drawScene();
             await source.add(i * frameDuration, frameDuration);
             cover.update(i + 1, frames);
@@ -361,7 +389,14 @@ export function previewMovie(
     // accessor logging stack traces on foreign writes, and a count of frames where the camera had
     // moved behind our back - is gone, because a driver makes the thing it was looking for
     // impossible rather than merely unlikely. Reconciliation now defers, by construction.
-    const hold = holdCameraForMovie(gl, options.restoreView ?? true);
+    // The echo is what lets a crystallographic map, the environment distances and the rest keep up
+    // with a travelling camera. A preview can have it the cheap way: the store is told once the
+    // centre has moved far enough to matter, and the listeners that already watch the store do the
+    // work on their own schedule. A frame or two of lag is the same deal the live application
+    // makes when the view is dragged, and the preview's whole contract is "what your machine can
+    // manage, honestly". The export does not take this path - see recordMovieToMp4.
+    const hold = holdCameraForMovie(
+        gl, options.restoreView ?? true, { distance: echoDistanceFor(gl) });
     hold.play(movie, options.onSample);
 
     let drawnFrames = 0;
