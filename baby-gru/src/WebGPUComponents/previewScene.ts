@@ -57,7 +57,16 @@ export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
     store?: { getState(): {
         glRef?: { hoverSize?: number; texturedShapes?: TexturedShapeSource[] };
         sceneSettings?: { shadowMapQuality?: ShadowMapQuality; depthPeelLayers?: number };
+        /** The section the sequence viewer hovers (hoverHighlight.ts). */
+        hoveringStates?: { hoveredSection?: { bufferId: string; section: number } | null };
     } };
+    /**
+     * The pointer's hover, as the pick wrote it (hoveridx indexes glRef.displayBuffers, hover_point
+     * that buffer's pick points), and the grain the zoom has chosen (utils/pickLevel.ts): what the
+     * hover highlight lights (hoverHighlight.ts).
+     */
+    state?: { hoveridx?: number; hover_point?: number };
+    pickLevel?: number;
     /**
      * Depth peeling for transparent geometry (MGWebGL's, on unless switched off), with the scene's
      * depthPeelLayers counting the opaque layer (depthPeel.ts).
@@ -65,6 +74,8 @@ export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
     doOrderIndependentTransparency?: boolean;
     /** Shadows from the light (doShadow), in a map of the scene's shadowMapQuality. */
     doShadow?: boolean;
+    /** Penumbra radius of soft shadows, in angstrom (MGWebGL.shadowSoftness). 0 or absent is hard. */
+    shadowSoftness?: number;
     /** Screen-space ambient occlusion (scene settings doSSAO, ssaoRadius in A, ssaoBias the strength). */
     doSSAO?: boolean;
     ssaoRadius?: number;
@@ -114,8 +125,11 @@ export interface PreviewCameraSource extends TextSource, OverlayLinesSource {
 /** What the effects passes do this frame, from the source's settings; null for an effect that is off. */
 export interface EffectSettings {
     ssao: { radius: number; strength: number } | null;
-    /** The shadow map's edge, in texels (SHADOW_MAP_TEXELS for the quality). */
-    shadow: { texels: number } | null;
+    /**
+     * The shadow map's edge, in texels (SHADOW_MAP_TEXELS for the quality), and the penumbra
+     * radius in angstrom (0 for a hard shadow).
+     */
+    shadow: { texels: number; softness: number } | null;
     edges: { depthThreshold: number; normalThreshold: number; depthStep: number; normalStep: number } | null;
     /** Depth blur (depthBlur.ts); absent, as null, is off. */
     depthBlur?: DepthBlurSettings | null;
@@ -144,7 +158,10 @@ export function effectSettings(source: PreviewCameraSource, width: number, heigh
     return {
         ssao: source.doSSAO ? { radius: source.ssaoRadius ?? 5, strength: source.ssaoBias ?? 1 } : null,
         shadow: source.doShadow
-            ? { texels: SHADOW_MAP_TEXELS[source.store?.getState().sceneSettings?.shadowMapQuality ?? "coarse"] ?? SHADOW_MAP_TEXELS.coarse }
+            ? {
+                  texels: SHADOW_MAP_TEXELS[source.store?.getState().sceneSettings?.shadowMapQuality ?? "coarse"] ?? SHADOW_MAP_TEXELS.coarse,
+                  softness: source.shadowSoftness ?? 0,
+              }
             : null,
         edges: source.doEdgeDetect
             ? {
@@ -260,8 +277,9 @@ export function previewViews(source: PreviewCameraSource, displayBuffers: readon
 }
 
 /**
- * The radius drawCore gives every sphere of a hover highlight, or null to keep their own: past
- * the default 0.27, the hovered spheres' size plus 0.4.
+ * The radius drawCore gives every sphere of a hover highlight, or null to keep their own (each
+ * ball's, from hoverBallSizes.ts): only a host's setHoverSize past the default 0.27 sets one, its
+ * size plus 0.4.
  */
 export function hoverSphereRadius(source: PreviewCameraSource): number | null {
     const hoverSize = source.store?.getState().glRef?.hoverSize ?? 0;

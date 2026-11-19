@@ -34,6 +34,7 @@ import type { MoorhenMap } from "../../utils/MoorhenMap";
 import { devLoadLibraryLigands, devLogLigandContacts } from "../../utils/devLigands";
 import { modalKeys } from "../../utils/enums";
 import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
+import { meshCentringSetting } from "../../WebGLgComponents/meshCentre";
 import { readGzippedTextFile } from "../../utils/utils";
 import { newVector } from "../../utils/vectorFactories";
 import { MoorhenLinearProgress } from "../icons";
@@ -197,6 +198,7 @@ export const MoorhenDevMenu = () => {
     const [countingDraws, setCountingDraws] = useState<boolean>(renderStats.enabled);
     const [syncingGpu, setSyncingGpu] = useState<boolean>(renderStats.syncGpu);
     const [gpuMetaBalls, setGpuMetaBalls] = useState<boolean>(gpuMetaBallsSetting.enabled);
+    const [centreOnHighlight, setCentreOnHighlight] = useState<boolean>(meshCentringSetting.followHighlight);
     const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
     const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.wanted);
     // Why there is no WebGPU here, or null: no navigator.gpu at once, no adapter once asked. Then
@@ -513,6 +515,14 @@ export const MoorhenDevMenu = () => {
                     <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
                     <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
                     <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            dispatch(showModal({ key: modalKeys.CHECK_LIST_TEST }));
+                            document.body.click();
+                        }}
+                    >
+                        Check lists (test)
+                    </MoorhenMenuItem>
                 </MoorhenStack>
             </MoorhenAccordion>
             <MoorhenAccordion title="WebGPU">
@@ -539,7 +549,7 @@ export const MoorhenDevMenu = () => {
                             })();
                         }}
                     >
-                        Renderer report (copied to the clipboard)
+                        Renderer report (a few seconds; copied to the clipboard)
                     </MoorhenMenuItem>
                     <MoorhenToggle
                         type="switch"
@@ -652,6 +662,16 @@ export const MoorhenDevMenu = () => {
             </MoorhenAccordion>
             <MoorhenAccordion title="View origin">
                 <MoorhenStack>
+                    <MoorhenToggle
+                        type="switch"
+                        checked={centreOnHighlight}
+                        label="Centre on what a surface or ribbon lights"
+                        tooltip="Zoomed out, centring on a surface or ribbon goes to the chain or molecule it lights. Off: the residue clicked."
+                        onChange={() => {
+                            meshCentringSetting.followHighlight = !centreOnHighlight;
+                            setCentreOnHighlight(!centreOnHighlight);
+                        }}
+                    />
                     Origin: x: {origin[0].toFixed(1)} y: {origin[1].toFixed(1)} z: {origin[2].toFixed(1)}
                     <MoorhenStack card>
                         set Origin

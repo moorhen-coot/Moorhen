@@ -201,7 +201,7 @@ export const processNEFFileAutoLoader = async (
 ) => {
     let fileContents: string;
 
-    if (file.name.endsWith(".gz")) {
+    if (file.name.toLowerCase().endsWith(".gz")) {
         const bin = await file.arrayBuffer();
         fileContents = pako.inflate(bin, { to: "string" });
     } else {

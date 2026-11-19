@@ -14,26 +14,6 @@ export {
 }  from "./labelSettingsSlice";
 export { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from "./lhasaSlice";
 export {
-    showMap,
-    hideMap,
-    setContourLevel,
-    setMapRadius,
-    setMapFastRadius,
-    setMapAlpha,
-    setMapStyle,
-    changeMapRadius,
-    setDefaultMapSamplingRate,
-    setDefaultMapLitLines,
-    setMapLineWidth,
-    setDefaultMapSurface,
-    setMapColours,
-    setNegativeMapColours,
-    setPositiveMapColours,
-    changeContourLevel,
-    setReContourMapOnlyOnMouseUp,
-    resetMapContourSettings,
-}  from "./mapContourSettingsSlice";
-export {
     setConnectedMolecule,
     enableUpdatingMaps,
     disableUpdatingMaps,
@@ -104,28 +84,8 @@ export {
     setPAEFileContents,
 }  from "./sliceNDiceSlice";
 export { setSeqViewerOption, setValidationOption, setShownBottomPanel }  from "./bottomPanelsSlice";
-export {
-    setRequestDrawScene,
-    setIsWebGL2,
-    setActiveMolecule,
-    setQuat,
-    setCursorPosition,
-    setShortCutHelp,
-    setDraggableMolecule,
-    triggerRedrawEnv,
-    triggerClearLabels,
-    setGLCtx,
-    setDisplayBuffers,
-    setHoverSize,
-    setLabelBuffers,
-    setTexturedShapes,
-    setRttFramebufferSize,
-    setCanvasSize,
-    setElementsIndicesRestrict,
-}  from "./glRefSlice";
 export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
-export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
 export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
 export {
     addVector,
@@ -138,6 +98,7 @@ export {
     removeVectorById,
     removeVectorsByIds
 }  from "./vectorsSlice";
+export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
 export {
     addObject,
     removeObject,
@@ -175,7 +136,42 @@ export {
     updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
 }  from "./movieSlice";
 export {
+    addUserScene,
+    addUserSnapshot,
+    removeUserScene,
+    renameUserScene,
+    setSelectedScene,
+    setSceneChanging,
+    sceneShown,
+    setSceneContent,
+    setUserSceneState,
+    setSavedSceneSetting,
+    saveSceneSettings,
+}  from "./userScenesSlice";
+export { addDictionaries, emptyDictionaries }  from "./dictionariesSlice";
+export {
+    setRequestDrawScene,
+    setDrawsThrottled,
+    setIsWebGL2,
+    setActiveMolecule,
+    setQuat,
+    setCursorPosition,
+    setShortCutHelp,
+    setDraggableMolecule,
+    triggerRedrawEnv,
+    triggerClearLabels,
+    setGLCtx,
+    setDisplayBuffers,
+    setHoverSize,
+    setLabelBuffers,
+    setTexturedShapes,
+    setRttFramebufferSize,
+    setCanvasSize,
+    setElementsIndicesRestrict,
+}  from "./glRefSlice";
+export {
     setSelectedThreeDObject,
+    setMovingMapSlice,
     setActiveMap,
     setViewOnly,
     setTheme,
@@ -199,6 +195,7 @@ export {
     resetGeneralStates,
     setIsShowingTomograms,
     setJobProgress,
+    setLigandBatchLoading,
     setDefaultExpandDisplayCards,
     setTransparentModalsOnMouseOut,
     setUseGemmi,
@@ -208,6 +205,29 @@ export {
     setAllowMergeFittedLigand,
     setDisableFileUpload,
 }  from "./generalStatesSlice";
+export {
+    showMap,
+    hideMap,
+    setContourLevel,
+    setMapRadius,
+    setMapFastRadius,
+    setMapAlpha,
+    setMapStyle,
+    setMapSlice,
+    setMapSliceNodalLines,
+    setMapSliceContourSpacing,
+    changeMapRadius,
+    setDefaultMapSamplingRate,
+    setDefaultMapLitLines,
+    setMapLineWidth,
+    setDefaultMapSurface,
+    setMapColours,
+    setNegativeMapColours,
+    setPositiveMapColours,
+    changeContourLevel,
+    setReContourMapOnlyOnMouseUp,
+    resetMapContourSettings,
+}  from "./mapContourSettingsSlice";
 export {
     addMolecule,
     removeMolecule,
@@ -220,10 +240,10 @@ export {
     showMolecule,
     hideMolecule,
     addCustomRepresentation,
+    addCustomRepresentationList,
     removeCustomRepresentation,
     removeGeneralRepresentation,
 }  from "./moleculesSlice";
-export { addDictionaries, emptyDictionaries }  from "./dictionariesSlice";
 export {
     setOrigin,
     setDrawCrosshairs,
@@ -246,6 +266,7 @@ export {
     setDoShadowDepthDebug,
     setDoShadow,
     setShadowMapQuality,
+    setShadowSoftness,
     setDoSpin,
     setDepthBlurRadius,
     setDepthPeelLayers,
@@ -290,19 +311,6 @@ export {
     autoClipFogByZoom,
     applySceneSettingsSnapshot,
 }  from "./sceneSettingsSlice";
-export {
-    addUserScene,
-    addUserSnapshot,
-    removeUserScene,
-    renameUserScene,
-    setSelectedScene,
-    setSceneChanging,
-    sceneShown,
-    setSceneContent,
-    setUserSceneState,
-    setSavedSceneSetting,
-    saveSceneSettings,
-}  from "./userScenesSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

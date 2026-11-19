@@ -93,6 +93,7 @@ export const AcceptRejectRotateTranslate = () => {
                                 "gaussian",
                                 "MolecularSurface",
                                 "VdWSurface",
+                                "AccessibleSurface",
                                 "VdwSpheres",
                                 "allHBonds",
                                 "glycoBlocks",

@@ -11,11 +11,12 @@ import type { MGWebGL } from '../mgWebGL';
 import { advanceCamera } from './cameraAnimations';
 import { isInvisible, shouldCastShadow } from '../objectFade';
 import { beginDepthOnlyPass } from '../shadowPass';
-import { levelForHeight, visibleHeight } from '../../utils/pickLevel';
+import { levelForHeight, visibleHeight, ownerMaskForLevel } from '../../utils/pickLevel';
+import { highlightSiblings } from '../highlightGroup';
 import { glTextureFor } from '../textureRegistry';
 import { beginGpuTimer, endGpuTimer, recordFrame, renderStats, waitForGpu } from './renderStats';
 import { ensureDepthPeelResolveBuffer, resolveDepthPeelResolveBuffer } from './framebuffers';
-import { fitShadowFrustum, lightAxes, radiusAbout } from '../shadowFrustum';
+import { SCREENSHOT_HARD_SHADOW_RADIUS_TEXELS, SCREENSHOT_SOFT_SHADOW_TARGET_TEXELS, SOFT_SHADOW_TARGET_TEXELS, fitShadowFrustum, lightAxes, radiusAbout, softShadowRegion } from '../shadowFrustum';
 import { anaglyphChannels } from '../anaglyph';
 
 /** A bounding box over the shadow casters, with the diagonal the rest of the renderer calls the atom span. */
@@ -114,6 +115,18 @@ function shadowCasterBounds(self: MGWebGL, displayBuffers: any[]): ShadowCasterB
  * and was fine the rest of the time. Hence the table above.
  */
 const SHADOW_TEXTURE_UNIT = 6;
+
+/**
+ * How far, in model units, the triangle shaders move the point a vertex is looked up at in the
+ * shadow map out along its normal (shadowNormalOffset in triangle-vertex-shader.js): a texel and a
+ * half of a map `width` texels wide. The texture matrix maps model space to the map's 0..1, so the
+ * length of its first row is map units per model unit (the light's projection is orthographic and
+ * the same scale across). WebGPU does the same in previewShaders.ts (finish).
+ */
+export function shadowNormalOffset(textureMatrix: ArrayLike<number>, width: number): number {
+    const perUnit = Math.hypot(textureMatrix[0], textureMatrix[4], textureMatrix[8]);
+    return perUnit > 0 ? 1.5 / width / perUnit : 0;
+}
 
 /** Where a mesh's glTF normal map is read from. */
 const NORMAL_MAP_TEXTURE_UNIT = 10;
@@ -697,6 +710,10 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 setTriangleFragmentUniforms(self, theShader, bufferFade);
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
+                // Always set alongside the hovered point, never left to default: an unset
+                // uint uniform is zero, and zero as a mask matches every point id there is,
+                // which would light whatever mesh forgot to set it from end to end.
+                if(theShader.uHoverMask) self.gl.uniform1ui(theShader.uHoverMask, 0xFFFFFFFF);
 
                 // Instanced buffers highlight a whole instance rather than a region of the mesh,
                 // because the mesh is shared between instances and gl_VertexID cannot tell them
@@ -775,11 +792,13 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     self.gl.uniform1f(theShader.xPixelOffset, 1.0/self.rttFramebufferDepth.width);
                     self.gl.uniform1f(theShader.yPixelOffset, 1.0/self.rttFramebufferDepth.height);
                     self.gl.uniformMatrix4fv(theShader.textureMatrixUniform, false, self.textureMatrix);
+                    if (theShader.shadowNormalOffset) self.gl.uniform1f(theShader.shadowNormalOffset, shadowNormalOffset(self.textureMatrix, self.rttFramebufferDepth.width));
                     self.gl.uniform1i(theShader.doShadows, true);
                     if(self.renderToTexture)
                         self.gl.uniform1i(theShader.shadowQuality, 1);
                     else
                         self.gl.uniform1i(theShader.shadowQuality, 0);
+                    self.gl.uniform1f(theShader.shadowSoftness, self.shadowRegion?.radiusTexels ?? 0);
                 }
                 if(theShader.doSSAO!=null) self.gl.uniform1i(theShader.doSSAO, self.doSSAO);
                 if(theShader.doEdgeDetect!=null) self.gl.uniform1i(theShader.doEdgeDetect, self.doEdgeDetect);
@@ -1003,11 +1022,13 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     self.gl.uniform1f(program.xPixelOffset, 1.0/self.rttFramebufferDepth.width);
                     self.gl.uniform1f(program.yPixelOffset, 1.0/self.rttFramebufferDepth.height);
                     self.gl.uniformMatrix4fv(program.textureMatrixUniform, false, self.textureMatrix);
+                    if (program.shadowNormalOffset) self.gl.uniform1f(program.shadowNormalOffset, shadowNormalOffset(self.textureMatrix, self.rttFramebufferDepth.width));
                     self.gl.uniform1i(program.doShadows, true);
                     if(self.renderToTexture)
                         self.gl.uniform1i(program.shadowQuality, 1);
                     else
                         self.gl.uniform1i(program.shadowQuality, 0);
+                    self.gl.uniform1f(program.shadowSoftness, self.shadowRegion?.radiusTexels ?? 0);
                 }
                 if(program.doSSAO!=null) self.gl.uniform1i(program.doSSAO, self.doSSAO);
                 if(program.doEdgeDetect!=null) self.gl.uniform1i(program.doEdgeDetect, self.doEdgeDetect);
@@ -1090,6 +1111,8 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                             if(program.vertexColourAttribute!=null) self.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
                             self.gl.vertexAttribDivisor(program.sizeAttribute, 1);
                             self.gl.vertexAttribDivisor(program.offsetAttribute, 1);
+                            // The hover balls carry their own sizes (hoverBallSizes.ts); one size for
+                            // them all only if a host has set it (setHoverSize).
                             if(displayBuffers[idx].isHoverBuffer&&hoverSize>0.27){
                                 self.gl.disableVertexAttribArray(program.sizeAttribute);
                                 self.gl.vertexAttribDivisor(program.sizeAttribute, 0);
@@ -1523,7 +1546,26 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         // added or removed, so the index can outlive the buffer it referred to. Fetched once,
         // rather than indexed repeatedly below, so a stale index cannot throw part-way through a
         // frame and take the rest of the draw with it.
-        const hoveredBuffer = self.state.hoveridx>-1 ? displayBuffers[self.state.hoveridx] : undefined
+        // Which buffer this pass lights, and which of its pick points.
+        //
+        // Usually the pointer: hoveridx and hover_point are what the pick wrote. But a hover
+        // can also come from somewhere with no pointer in it at all - the sequence viewer
+        // naming a residue - and a surface can light that residue just as well, because
+        // uHoveredPoint does not care where the index came from. The pointer wins where both
+        // have an opinion, matching the instanced path above.
+        let overlayIdx = self.state.hoveridx
+        let overlayPoint = self.state.hover_point
+        if(!(overlayIdx > -1 && overlayPoint > -1) && hoveredSection){
+            const asked = displayBuffers.findIndex(buffer => buffer.id === hoveredSection.bufferId)
+            // Only a mesh with the influence data can be lit this way. A sectioned mesh is
+            // handled during the main draw, by uHighlightFrom and uHighlightTo.
+            if(asked > -1 && displayBuffers[asked].pick_info?.influence_weights_texture){
+                overlayIdx = asked
+                overlayPoint = hoveredSection.section
+            }
+        }
+
+        const hoveredBuffer = overlayIdx>-1 ? displayBuffers[overlayIdx] : undefined
 
         // Only the smooth mesh highlight can be drawn by this pass, and it is the only thing that
         // should be: the pass uses the non-instanced program and a non-instanced draw, so pointing
@@ -1545,27 +1587,51 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         const hoveredWholeMesh = !hoveredHasInfluenceTextures
             && !!hoveredBuffer?.pick_info?.highlight_whole
 
-        if(drawingVisibleImage && hoveredBuffer && self.state.hover_point>-1
-           && (hoveredHasInfluenceTextures || hoveredWholeMesh)){
+        if(drawingVisibleImage && hoveredBuffer && overlayPoint>-1
+           && (hoveredHasInfluenceTextures || hoveredWholeMesh)
+           && displayBuffers[overlayIdx].bufferTypes[0]==="TRIANGLES"){
             //TODO - We don't really need to do self.draw at all. This could be done in the
             //       general drawing above.
-            const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
-            if(bufferTypes[0]==="TRIANGLES"){
+            // The sentinel the vertex shader compares against: anything at or above it
+            // means "not hovering a particular point", which is the branch that sets
+            // vHighlight to 1 for every vertex. That is precisely the whole-mesh case.
+            //
+            // Otherwise the point is identified by its code, not by its index, where the
+            // mesh supplies codes - a surface does, packing the chain into the high half
+            // so that masking the low half lights the chain and masking everything
+            // lights the molecule. A mesh without codes, a metaball, keeps comparing
+            // whole indices and is unaffected.
+            const ownerCodes = displayBuffers[overlayIdx].pick_info?.owner_codes
+            const hoveredCode = ownerCodes && overlayPoint < ownerCodes.length
+                ? ownerCodes[overlayPoint] : overlayPoint
+            const hoverMask = ownerCodes ? ownerMaskForLevel(self.pickLevel) : 0xFFFFFFFF
 
-                 const triangleVertexNormalBuffer = displayBuffers[self.state.hoveridx].triangleVertexNormalBuffer
-                 const triangleVertexPositionBuffer = displayBuffers[self.state.hoveridx].triangleVertexPositionBuffer
-                 const triangleVertexIndexBuffer = displayBuffers[self.state.hoveridx].triangleVertexIndexBuffer
-                 const influence_weights_texture = displayBuffers[self.state.hoveridx].pick_info.influence_weights_texture
-                 const influence_point_indexes_texture = displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_texture
-                 const influence_index_offsets_texture = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_texture
-                 const influence_weights_width = displayBuffers[self.state.hoveridx].pick_info.influence_weights_width
-                 const influence_point_indexes_width = displayBuffers[self.state.hoveridx].pick_info.influence_point_indexes_width
-                 const influence_index_offsets_width = displayBuffers[self.state.hoveridx].pick_info.influence_index_offsets_width
+            // The hovered mesh, and the others of its highlight group (highlightGroup.ts: a
+            // nucleic acid's backbone and its base sticks), with the same code and mask - their
+            // owner codes come from one numbering, so the code names the same residue in each.
+            // A sibling needs influence textures of its own; the whole-mesh case is the hovered
+            // mesh's alone.
+            const targets = [overlayIdx, ...highlightSiblings(displayBuffers, overlayIdx).filter(idx =>
+                !!displayBuffers[idx].pick_info?.influence_weights_texture
+                && !!displayBuffers[idx].pick_info?.influence_point_indexes_texture
+                && !!displayBuffers[idx].pick_info?.influence_index_offsets_texture
+                && displayBuffers[idx].bufferTypes?.[0]==="TRIANGLES")]
+            for(const target of targets){
+                 const targetHasInfluenceTextures = target === overlayIdx ? hoveredHasInfluenceTextures : true
+                 const triangleVertexNormalBuffer = displayBuffers[target].triangleVertexNormalBuffer
+                 const triangleVertexPositionBuffer = displayBuffers[target].triangleVertexPositionBuffer
+                 const triangleVertexIndexBuffer = displayBuffers[target].triangleVertexIndexBuffer
+                 const influence_weights_texture = displayBuffers[target].pick_info.influence_weights_texture
+                 const influence_point_indexes_texture = displayBuffers[target].pick_info.influence_point_indexes_texture
+                 const influence_index_offsets_texture = displayBuffers[target].pick_info.influence_index_offsets_texture
+                 const influence_weights_width = displayBuffers[target].pick_info.influence_weights_width
+                 const influence_point_indexes_width = displayBuffers[target].pick_info.influence_point_indexes_width
+                 const influence_index_offsets_width = displayBuffers[target].pick_info.influence_index_offsets_width
                  const theShader = self.shaderProgram
                  self.gl.useProgram(theShader)
                  // Only for the smooth-mesh case; the whole-mesh one has no such textures and
                  // must not be handed undefined ones.
-                 if(hoveredHasInfluenceTextures){
+                 if(targetHasInfluenceTextures){
                  if(theShader.uPointTex !== null){
                      self.gl.uniform1i(theShader.uPointTex, 7);
                      self.gl.activeTexture(self.gl.TEXTURE7);
@@ -1585,11 +1651,12 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                      self.gl.uniform1ui(theShader.uOffsetTexWidth, influence_index_offsets_width);
                  }
                  }
-                 // The sentinel the vertex shader compares against: anything at or above it
-                 // means "not hovering a particular point", which is the branch that sets
-                 // vHighlight to 1 for every vertex. That is precisely the whole-mesh case.
                  self.gl.uniform1ui(theShader.uHoveredPoint,
-                                    hoveredWholeMesh ? 0xFFFFFFFF : self.state.hover_point);
+                                    hoveredWholeMesh ? 0xFFFFFFFF : hoveredCode);
+                 if(theShader.uHoverMask){
+                     self.gl.uniform1ui(theShader.uHoverMask,
+                                        hoveredWholeMesh ? 0xFFFFFFFF : hoverMask);
+                 }
                  self.hoverBuffer ??= self.gl.createBuffer()
                  self.gl.enableVertexAttribArray(theShader.vertexNormalAttribute)
                  self.gl.bindBuffer(self.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[0])
@@ -2138,8 +2205,12 @@ export function drawScene(self: MGWebGL) : void {
             //FIXME - This is all following mgfbo.cc
             self.textureMatrix = mat4.create();
             mat4.identity(self.textureMatrix);
-            mat4.translate(self.textureMatrix, self.textureMatrix, [0.5, 0.5, 0.5]);
-            mat4.scale(self.textureMatrix, self.textureMatrix, [0.5, 0.5, 0.5]);
+            // Clip space to the corner of the map the shadow pass drew into: all of it, unless
+            // a soft shadow asked for less.
+            const usedX = self.shadowRegion ? self.shadowRegion.width / self.rttFramebufferDepth.width : 1;
+            const usedY = self.shadowRegion ? self.shadowRegion.height / self.rttFramebufferDepth.height : 1;
+            mat4.translate(self.textureMatrix, self.textureMatrix, [0.5 * usedX, 0.5 * usedY, 0.5]);
+            mat4.scale(self.textureMatrix, self.textureMatrix, [0.5 * usedX, 0.5 * usedY, 0.5]);
             mat4.multiply(self.textureMatrix, self.textureMatrix, self.pMatrix);
             mat4.multiply(self.textureMatrix, self.textureMatrix, self.mvMatrix);
             self.gl.bindFramebuffer(self.gl.FRAMEBUFFER, null);
@@ -3205,6 +3276,18 @@ export function GLrender(self: MGWebGL, calculatingShadowMap,doClear=true,ratioM
             // eye ended up, so it has to be told. It read atom_span before, which was this
             // distance until the frustum started being fitted to the view.
             self.shadowEyeDistance = frustum.eyeDistance;
+
+            // A soft shadow is drawn into only as much of the map as its blur needs, so that the
+            // blur is always the same few texels - see softShadowRegion. Screenshots are drawn
+            // better than the view: more texels for a soft shadow, where the filter can afford more
+            // taps, and a hard one's edge smoothed, as the 8 x 8 lookup screenshots had did. The
+            // viewport set when this framebuffer was bound above is replaced; the clear still covers
+            // the whole texture, so the unused part reads as lit.
+            const mapSize = self.rttFramebufferDepth.width;
+            self.shadowRegion = self.renderToTexture
+                ? softShadowRegion(frustum, self.shadowSoftness, mapSize, SCREENSHOT_SOFT_SHADOW_TARGET_TEXELS, SCREENSHOT_HARD_SHADOW_RADIUS_TEXELS)
+                : softShadowRegion(frustum, self.shadowSoftness, mapSize, SOFT_SHADOW_TARGET_TEXELS);
+            self.gl.viewport(0, 0, self.shadowRegion.width, self.shadowRegion.height);
 
             self.gl.disable(self.gl.CULL_FACE);
             self.gl.cullFace(self.gl.FRONT);

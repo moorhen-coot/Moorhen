@@ -457,6 +457,7 @@ struct PickableMesh {
 std::pair<coot::simple_mesh_t,std::vector<std::vector<std::pair<unsigned,float>>>> GenerateMoorhenMetaBallsCootInstancedMesh(const coot::instanced_mesh_t &spheres_mesh, float gridSize, float r, float isoLevel, int n_threads=4);
 
 coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
+#include "bloboids.hh"
 bool isSugar(const std::string &resName);
 
 class molecules_container_js : public molecules_container_t {
@@ -896,6 +897,106 @@ class molecules_container_js : public molecules_container_t {
         coot::instanced_mesh_t DrawGlycoBlocks(int imol, const std::string &cid_str) {
             mmdb::Manager *mol = get_mol(imol);
             return DrawSugarBlocks(mol,cid_str);
+        }
+
+        /*
+         * Bloboids (bloboids.hh): an ellipsoid for each chain of the atoms `cid` selects (each
+         * model's chains apart), waters left out. Coloured by the representation's colour rules,
+         * `colour_cids[i]` coloured `colour_rgba[4 i ...]`, later rules over earlier ones as Coot
+         * applies them, and on every atom (an element's colour means nothing for a blob): a chain
+         * takes the colour of its first coloured atom, as CCP4MG took its first atom's, else grey.
+         * The only part of bloboids that knows MMDB.
+         */
+        coot::simple_mesh_t DrawBloboids(int imol, const std::string &cid, const std::vector<std::string> &colour_cids,
+                                         const std::vector<float> &colour_rgba) {
+            coot::simple_mesh_t mesh;
+            mmdb::Manager *mol = get_mol(imol);
+            if (!mol) return mesh;
+
+            // A selection of the atoms in a CID, which may join several with "||".
+            auto select = [mol](const std::string &multi_cid) {
+                int selHnd = mol->NewSelection();
+                bool first = true;
+                std::string::size_type start = 0;
+                while (start <= multi_cid.size()) {
+                    std::string::size_type end = multi_cid.find("||", start);
+                    if (end == std::string::npos) end = multi_cid.size();
+                    std::string part = multi_cid.substr(start, end - start);
+                    if (!part.empty()) {
+                        mol->Select(selHnd, mmdb::STYPE_ATOM, part.c_str(), first ? mmdb::SKEY_NEW : mmdb::SKEY_OR);
+                        first = false;
+                    }
+                    start = end + 2;
+                }
+                return selHnd;
+            };
+
+            std::map<mmdb::Atom *, int> rule_of_atom;
+            const size_t n_rules = std::min(colour_cids.size(), colour_rgba.size() / 4);
+            for (size_t r = 0; r < n_rules; r++) {
+                int selHnd = select(colour_cids[r]);
+                mmdb::Atom **atoms = nullptr;
+                int n_atoms = 0;
+                mol->GetSelIndex(selHnd, atoms, n_atoms);
+                for (int i = 0; i < n_atoms; i++) rule_of_atom[atoms[i]] = r;
+                mol->DeleteSelection(selHnd);
+            }
+
+            struct Group {
+                std::vector<moorhen_bloboids::Vec3> points;
+                int rule = -1;
+            };
+            std::vector<mmdb::Chain *> chains;
+            std::map<mmdb::Chain *, Group> groups;
+            int selHnd = select(cid);
+            mmdb::Atom **atoms = nullptr;
+            int n_atoms = 0;
+            mol->GetSelIndex(selHnd, atoms, n_atoms);
+            for (int i = 0; i < n_atoms; i++) {
+                mmdb::Atom *at = atoms[i];
+                if (!at || at->isTer()) continue;
+                mmdb::Residue *res = at->GetResidue();
+                mmdb::Chain *chain = at->GetChain();
+                if (!res || !chain) continue;
+                std::string name(res->GetResName());
+                if (name == "HOH" || name == "WAT" || name == "DOD") continue;
+                auto found = groups.find(chain);
+                if (found == groups.end()) {
+                    chains.push_back(chain);
+                    found = groups.emplace(chain, Group()).first;
+                }
+                Group &group = found->second;
+                group.points.push_back({at->x, at->y, at->z});
+                if (group.rule < 0) {
+                    auto coloured = rule_of_atom.find(at);
+                    if (coloured != rule_of_atom.end()) group.rule = coloured->second;
+                }
+            }
+            mol->DeleteSelection(selHnd);
+
+            moorhen_bloboids::Mesh blobs;
+            for (mmdb::Chain *chain : chains) {
+                const Group &group = groups[chain];
+                if (group.points.empty()) continue;
+                std::array<float, 4> colour = {0.7f, 0.7f, 0.7f, 1.0f};
+                if (group.rule >= 0)
+                    for (int k = 0; k < 4; k++) colour[k] = colour_rgba[4 * group.rule + k];
+                moorhen_bloboids::append_ellipsoid(moorhen_bloboids::ellipsoid_of_points(group.points), colour, 3, blobs);
+            }
+
+            const size_t n_vertices = blobs.positions.size() / 3;
+            mesh.vertices.reserve(n_vertices);
+            for (size_t i = 0; i < n_vertices; i++) {
+                mesh.vertices.push_back(coot::api::vnc_vertex(
+                    glm::vec3(blobs.positions[3 * i], blobs.positions[3 * i + 1], blobs.positions[3 * i + 2]),
+                    glm::vec3(blobs.normals[3 * i], blobs.normals[3 * i + 1], blobs.normals[3 * i + 2]),
+                    glm::vec4(blobs.colours[4 * i], blobs.colours[4 * i + 1], blobs.colours[4 * i + 2], blobs.colours[4 * i + 3])));
+            }
+            mesh.triangles.reserve(blobs.indices.size() / 3);
+            for (size_t t = 0; t + 2 < blobs.indices.size(); t += 3)
+                mesh.triangles.push_back(g_triangle(blobs.indices[t], blobs.indices[t + 1], blobs.indices[t + 2]));
+            mesh.status = 1;
+            return mesh;
         }
 
         std::vector<TableEntry> privateer_validate(int imol) {
@@ -1907,6 +2008,120 @@ inline void setUint32ArrayFromVector(const std::vector<unsigned> &uintArray, con
     v.call<void>("set", view);
 }
 
+/*
+ * Getting a mesh out to JavaScript without copying it several times over.
+ *
+ * These used to take the whole `coot::simple_mesh_t` by const reference. That reads as free
+ * and is not: a simple_mesh_t crosses as an embind value_object, so every field is a separate
+ * owned copy on the JavaScript side - which is why the worker has to call vertices.delete() -
+ * and passing that object back to C++ reconstructs a simple_mesh_t, copying every field
+ * again. Four accessor calls per conversion therefore copied the entire mesh four times
+ * before any of them looked at a single vertex. On a ribosome's dishy bases, with a 400 MB
+ * mesh, that was about 1.6 GB of copying and 618 ms.
+ *
+ * A registered vector is a bound CLASS, not a value object, so it crosses by reference and
+ * costs nothing to pass. The caller already holds these handles - it needs them to delete
+ * them - so handing one over is strictly less work than handing over the mesh.
+ *
+ * Gathering one attribute out of interleaved vertices still needs a staging buffer, because
+ * typed_memory_view wants contiguous data and positions are 40 bytes apart. Indices do not:
+ * see getTriangleIndicesFromTriangles.
+ */
+
+//! Positions, three floats per vertex.
+inline void getPositionsFromVertices(const std::vector<coot::api::vnc_vertex> &vertices, const emscripten::val &v){
+    std::vector<float> floatArray(vertices.size()*3);
+    for(size_t i=0; i<vertices.size(); i++){
+        floatArray[3*i]   = vertices[i].pos[0];
+        floatArray[3*i+1] = vertices[i].pos[1];
+        floatArray[3*i+2] = vertices[i].pos[2];
+    }
+    setFloat32ArrayFromVector(floatArray,v);
+}
+
+//! Normals as they are, three floats per vertex.
+inline void getNormalsFromVertices(const std::vector<coot::api::vnc_vertex> &vertices, const emscripten::val &v){
+    std::vector<float> floatArray(vertices.size()*3);
+    for(size_t i=0; i<vertices.size(); i++){
+        floatArray[3*i]   = vertices[i].normal[0];
+        floatArray[3*i+1] = vertices[i].normal[1];
+        floatArray[3*i+2] = vertices[i].normal[2];
+    }
+    setFloat32ArrayFromVector(floatArray,v);
+}
+
+//! Normals negated, for a mesh whose winding is being reversed as well.
+//!
+//! There used to be a third function here, getReversedNormalsFromSimpleMesh3, which was
+//! byte-identical to the unreversed one - it negated nothing, despite the name. It served the
+//! permuted-but-keep-normals path, which is what getNormalsFromVertices already does, so it
+//! has gone rather than being carried over.
+inline void getReversedNormalsFromVertices(const std::vector<coot::api::vnc_vertex> &vertices, const emscripten::val &v){
+    std::vector<float> floatArray(vertices.size()*3);
+    for(size_t i=0; i<vertices.size(); i++){
+        floatArray[3*i]   = -vertices[i].normal[0];
+        floatArray[3*i+1] = -vertices[i].normal[1];
+        floatArray[3*i+2] = -vertices[i].normal[2];
+    }
+    setFloat32ArrayFromVector(floatArray,v);
+}
+
+//! Colours, four floats per vertex.
+inline void getColoursFromVertices(const std::vector<coot::api::vnc_vertex> &vertices, const emscripten::val &v){
+    std::vector<float> floatArray(vertices.size()*4);
+    for(size_t i=0; i<vertices.size(); i++){
+        floatArray[4*i]   = vertices[i].color[0];
+        floatArray[4*i+1] = vertices[i].color[1];
+        floatArray[4*i+2] = vertices[i].color[2];
+        floatArray[4*i+3] = vertices[i].color[3];
+    }
+    setFloat32ArrayFromVector(floatArray,v);
+}
+
+//! Triangle indices, viewed in place with no staging buffer at all.
+//!
+//! A g_triangle is three unsigned ints and nothing else, so a vector of them is already the
+//! flat index array JavaScript wants. The static_assert is the whole safety of this: add a
+//! member to g_triangle, or give it a vtable, and it fails to compile here rather than
+//! silently handing out garbage. g_triangle_with_colour_index exists and derives from it,
+//! which is exactly the sort of change that would otherwise slip through.
+inline void getTriangleIndicesFromTriangles(const std::vector<g_triangle> &triangles, const emscripten::val &v){
+    static_assert(sizeof(g_triangle) == 3*sizeof(unsigned int),
+                  "g_triangle is no longer three bare unsigned ints, so its vector cannot be "
+                  "viewed as a flat index array");
+    static_assert(std::is_standard_layout<g_triangle>::value,
+                  "g_triangle is no longer standard layout");
+    emscripten::val view{ emscripten::typed_memory_view(
+        triangles.size()*3, reinterpret_cast<const unsigned int *>(triangles.data())) };
+    v.call<void>("set", view);
+}
+
+//! Triangle indices with the second and third corners swapped, reversing the winding.
+inline void getPermutedTriangleIndicesFromTriangles(const std::vector<g_triangle> &triangles, const emscripten::val &v){
+    std::vector<unsigned int> uintArray(triangles.size()*3);
+    for(size_t i=0; i<triangles.size(); i++){
+        uintArray[3*i]   = triangles[i].point_id[0];
+        uintArray[3*i+1] = triangles[i].point_id[2];
+        uintArray[3*i+2] = triangles[i].point_id[1];
+    }
+    setUint32ArrayFromVector(uintArray,v);
+}
+
+//! The three edges of each triangle, as six indices, for drawing it as lines.
+inline void getLineIndicesFromTriangles(const std::vector<g_triangle> &triangles, const emscripten::val &v){
+    std::vector<unsigned int> uintArray(triangles.size()*6);
+    for(size_t i=0; i<triangles.size(); i++){
+        const auto &idx = triangles[i].point_id;
+        uintArray[6*i]   = idx[0];
+        uintArray[6*i+1] = idx[1];
+        uintArray[6*i+2] = idx[0];
+        uintArray[6*i+3] = idx[2];
+        uintArray[6*i+4] = idx[1];
+        uintArray[6*i+5] = idx[2];
+    }
+    setUint32ArrayFromVector(uintArray,v);
+}
+
 inline void getTextureArray(const texture_as_floats_t &m, const emscripten::val &v){
     const auto &image_data = m.image_data;
     const auto &width = m.width;
@@ -1925,125 +2140,12 @@ inline void getTextureArray(const texture_as_floats_t &m, const emscripten::val 
 
 }
 
-inline void getPositionsFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
-    const auto &vertices = m.vertices;
 
-    std::vector<float> floatArray;
-    floatArray.reserve(vertices.size()*3);
 
-    for(const auto &v : vertices){
-        floatArray.push_back(v.pos[0]);
-        floatArray.push_back(v.pos[1]);
-        floatArray.push_back(v.pos[2]);
-    }
 
-    setFloat32ArrayFromVector(floatArray,v);
-}
 
-inline void getReversedNormalsFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
 
-    const auto &vertices = m.vertices;
 
-    std::vector<float> floatArray;
-    floatArray.reserve(vertices.size()*3);
-
-    for(const auto &v : vertices){
-        floatArray.push_back(-v.normal[0]);
-        floatArray.push_back(-v.normal[1]);
-        floatArray.push_back(-v.normal[2]);
-    }
-
-    setFloat32ArrayFromVector(floatArray,v);
-
-}
-
-inline void getReversedNormalsFromSimpleMesh3(const coot::simple_mesh_t &m, const emscripten::val &v){
-
-    const auto &vertices = m.vertices;
-
-    std::vector<float> floatArray;
-    floatArray.reserve(vertices.size()*3);
-
-    for(const auto &v : vertices){
-        floatArray.push_back(v.normal[0]);
-        floatArray.push_back(v.normal[1]);
-        floatArray.push_back(v.normal[2]);
-    }
-
-    setFloat32ArrayFromVector(floatArray,v);
-
-}
-
-inline void getNormalsFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
-
-    const auto &vertices = m.vertices;
-
-    std::vector<float> floatArray;
-    floatArray.reserve(vertices.size()*3);
-
-    for(const auto &v : vertices){
-        floatArray.push_back(v.normal[0]);
-        floatArray.push_back(v.normal[1]);
-        floatArray.push_back(v.normal[2]);
-    }
-
-    setFloat32ArrayFromVector(floatArray,v);
-
-}
-
-inline void getColoursFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
-
-    const auto &vertices = m.vertices;
-
-    std::vector<float> floatArray;
-    floatArray.reserve(vertices.size()*4);
-
-    for(const auto &v : vertices){
-        floatArray.push_back(v.color[0]);
-        floatArray.push_back(v.color[1]);
-        floatArray.push_back(v.color[2]);
-        floatArray.push_back(v.color[3]);
-    }
-
-    setFloat32ArrayFromVector(floatArray,v);
-
-}
-
-inline void getTriangleIndicesFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
-
-    const auto &triangles = m.triangles;
-
-    std::vector<unsigned int> uintArray;
-    uintArray.reserve(triangles.size()*3);
-
-    for(const auto &t : triangles){
-        auto &idx = t.point_id;
-        uintArray.push_back(idx[0]);
-        uintArray.push_back(idx[1]);
-        uintArray.push_back(idx[2]);
-    }
-
-    setUint32ArrayFromVector(uintArray,v);
-
-}
-
-inline void getPermutedTriangleIndicesFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
-
-    const auto &triangles = m.triangles;
-
-    std::vector<unsigned int> uintArray;
-    uintArray.reserve(triangles.size()*3);
-
-    for(const auto &t : triangles){
-        auto &idx = t.point_id;
-        uintArray.push_back(idx[0]);
-        uintArray.push_back(idx[2]);
-        uintArray.push_back(idx[1]);
-    }
-
-    setUint32ArrayFromVector(uintArray,v);
-
-}
 
 inline emscripten::val getPositionsFromSimpleMesh(const coot::simple_mesh_t &m){
 
@@ -2172,26 +2274,6 @@ inline emscripten::val getPermutedTriangleIndicesFromSimpleMesh(const coot::simp
 
 }
 
-inline void getLineIndicesFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
-
-    const auto &triangles = m.triangles;
-
-    std::vector<unsigned int> uintArray;
-    uintArray.reserve(triangles.size()*6);
-
-    for(const auto &t : triangles){
-        auto &idx = t.point_id;
-        uintArray.push_back(idx[0]);
-        uintArray.push_back(idx[1]);
-        uintArray.push_back(idx[0]);
-        uintArray.push_back(idx[2]);
-        uintArray.push_back(idx[1]);
-        uintArray.push_back(idx[2]);
-    }
-
-    setUint32ArrayFromVector(uintArray,v);
-
-}
 
 inline emscripten::val getLineIndicesFromSimpleMesh(const coot::simple_mesh_t &m){
 

@@ -3,16 +3,16 @@ import { useEffect, useRef } from "react";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { moorhen } from "../../types/moorhen";
 import { ATOM_LEVEL_STYLES } from "../../utils/Representation/MoorhenMoleculeRepresentation";
+import { type AtomLevelRepresentation, residueDrawnAsAtoms } from "../../utils/drawnResidues";
 
 /**
  * A hover ball is a sphere at an atom's position, so it only means anything where that atom is
- * drawn. On a molecule shown as ribbons or as a surface it would hang in space beside geometry
- * that never mentions the atom it is marking.
+ * drawn. On a residue shown as ribbon or surface it would hang in space beside geometry that
+ * never mentions the atom it is marking - and that holds residue by residue: a molecule showing
+ * only its ligands as atoms puts no balls on the protein (utils/drawnResidues.ts).
  */
-const showsIndividualAtoms = (molecule: moorhen.Molecule): boolean =>
-    molecule?.representations?.some(
-        representation => representation.visible && ATOM_LEVEL_STYLES.includes(representation.style)
-    ) ?? false;
+const showsAtomsOf = (molecule: moorhen.Molecule, cid: string): boolean =>
+    residueDrawnAsAtoms(molecule?.representations as unknown as AtomLevelRepresentation[], ATOM_LEVEL_STYLES, cid);
 
 export const DrawHoverAtom = () => {
     const lastHoveredAtomRef = useRef<null | moorhen.HoveredAtom>(null);
@@ -24,7 +24,7 @@ export const DrawHoverAtom = () => {
         // whatever happens here - the info panel and the sequence highlight read it, and a hover
         // can now come from somewhere other than the mouse landing on an atom - but the ball
         // itself is only drawn where there are atoms on screen for it to sit on.
-        const shouldDraw = !!(molecule && hoveredAtom.cid && showsIndividualAtoms(molecule));
+        const shouldDraw = !!(molecule && hoveredAtom.cid && showsAtomsOf(molecule, hoveredAtom.cid));
 
         if (shouldDraw) {
             if (

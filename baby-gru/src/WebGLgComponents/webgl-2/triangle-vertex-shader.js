@@ -11,6 +11,9 @@ var triangle_vertex_shader_source = `#version 300 es\n
     uniform sampler2D uWeightTex;
     uniform usampler2D uOffsetTex;
     uniform uint uHoveredPoint;
+    // Which bits of a point id have to match. All ones compares the whole id, which is the
+    // one-point-at-a-time case; a surface masks off the residue half to light a whole chain.
+    uniform uint uHoverMask;
     uniform uint uPointTexWidth;
     uniform uint uOffsetTexWidth;
     uniform uint uWeightTexWidth;
@@ -19,6 +22,12 @@ var triangle_vertex_shader_source = `#version 300 es\n
     uniform mat4 uMVINVMatrix;
     uniform mat4 uPMatrix;
     uniform mat4 TextureMatrix;
+    // How far, in model units, the point a vertex is looked up at in the shadow map is moved out
+    // along its normal (drawCore.ts, shadowNormalOffset): a texel and a half of the map. Without
+    // it, at a grazing angle the flat triangles of a curved surface shadow their neighbours one
+    // facet in, one facet out - a checkerboard along the shadow terminator, worst on coarse
+    // meshes. Shadows cast from further away than that move by no more.
+    uniform highp float shadowNormalOffset;
 
     uniform vec3 outlineSize;
 
@@ -61,13 +70,28 @@ var triangle_vertex_shader_source = `#version 300 es\n
         uint begin = (vertexId == 0u) ? 0u : fetchOffset(vertexId - 1u);
         uint end = fetchOffset(vertexId);
 
+        // Summed rather than returned on the first match, and compared through a mask.
+        //
+        // The mask is what lets one hover light a group of points rather than one of them: a
+        // surface encodes the chain in the high half of a point id and the residue in the low
+        // half, so masking off the low half lights a whole chain, and a mask of zero lights
+        // everything. uHoverMask is all ones by default, where this is the comparison it
+        // always was.
+        //
+        // Summing matters as soon as the mask is not all ones. A vertex in the groove between
+        // two residues of one chain belongs to both, half each; matching only the first would
+        // light it at half strength and draw a seam down the middle of a chain that is
+        // supposed to be lit whole. Added together they come to one, which is what that
+        // vertex now is. At full mask only one point can match, so this is the same answer as
+        // before.
+        float total = 0.0;
         for(uint i = begin; i < end; ++i) {
-            if(fetchPoint(i) == uHoveredPoint) {
-                return fetchWeight(i);
+            if((fetchPoint(i) & uHoverMask) == (uHoveredPoint & uHoverMask)) {
+                total += fetchWeight(i);
             }
         }
 
-        return 0.0;
+        return min(total, 1.0);
     }
 
     void main(void) {
@@ -82,7 +106,8 @@ var triangle_vertex_shader_source = `#version 300 es\n
 
       vec4 theVert = vec4(aVertexPosition+outlineSize*aVertexNormal,1.0);
 
-      ShadowCoord = TextureMatrix * theVert;
+      highp float normalLength = length(aVertexNormal);
+      ShadowCoord = TextureMatrix * (theVert + vec4(normalLength > 0.0 ? aVertexNormal / normalLength * shadowNormalOffset : vec3(0.0), 0.0));
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
       vColor = aVertexColour;

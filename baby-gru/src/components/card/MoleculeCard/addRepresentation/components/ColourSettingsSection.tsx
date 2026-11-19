@@ -6,6 +6,7 @@ import { hexToRGB, rgbToHex } from "../../../../../utils/utils";
 import { ColourRule } from "../../../../../utils/MoorhenColourRule";
 import { moorhen } from "../../../../../types/moorhen";
 import { RepresentationStyles } from "@/utils";
+import { M2T_SURFACE_REPRESENTATIONS } from "../../../../../utils/enums";
 
 interface ColourSettingsSectionProps {
     useDefaultColours: boolean;
@@ -65,7 +66,7 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
     const handleCoulourChange = (newColour: number[]) => {
         setColour(rgbToHex(newColour[0], newColour[1], newColour[2]));
 
-        if ((representation?.buildParams) && (["cavities", "MolecularSurface", "gaussian"].includes(representationStyle))) {
+        if (representation?.buildParams && (["cavities", "gaussian"].includes(representationStyle) || M2T_SURFACE_REPRESENTATIONS.includes(representationStyle))) {
             // This directly mutate the represenation build parameter ar buffers so change of colour can be instant without cliking apply)
             setBufferColour(newColour[0]/256, newColour[1]/256, newColour[2]/256);
 
@@ -146,7 +147,7 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
                                 </option>
                             )}
                         </>
-                        {representationStyle === "MolecularSurface" && (
+                        {M2T_SURFACE_REPRESENTATIONS.includes(representationStyle) && (
                             <option value={"electrostatics"} key={"electrostatics"}>
                                 Electrostatics
                             </option>
