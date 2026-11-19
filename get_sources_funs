@@ -541,6 +541,21 @@ getprivateer() {
     echo
 }
 
+# Patches to the pinned Boost release, for fixes not yet in a release. Paths
+# are relative to checkout, hence ../patches.
+boost_patches="boost-locale-cmake45.patch"
+
+applyboostpatches() {
+    for p in $boost_patches; do
+        if patch -d boost-$boost_release -p1 -R -f -s --dry-run < ../patches/$p >/dev/null 2>&1; then
+            echo "boost patch $p already applied"
+        else
+            patch -d boost-$boost_release -p1 -N -s < ../patches/$p &&\
+            echo "Applied boost patch $p" || fail "Failed to apply boost patch $p"
+        fi
+    done
+}
+
 getboost() {
     cdcheckout
     if [ -r boost-$boost_release ]; then
@@ -550,6 +565,7 @@ getboost() {
         curl -fL https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release-cmake.tar.gz -o boost_$boost_release.tar.gz &&\
         tar xf boost_$boost_release.tar.gz || fail "Failed to download and unpack boost"
     fi
+    applyboostpatches
     echo
 }
 
