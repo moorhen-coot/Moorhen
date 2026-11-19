@@ -1908,6 +1908,9 @@ const describeError = (err: any): string => {
 type SmoothSurfaceBundle = {
     smoothM2tSurfaceSync: <T>(mesh: T, atoms: unknown[], probe: number, options: SmoothSurfaceOptions) => T;
     smoothFieldStage: (mesh: unknown, atoms: unknown[], probe: number, options: SmoothSurfaceOptions) => { input: Float32Array } | null;
+    atomSurfaceFromContour: (field: unknown, contour: SmoothContour, atoms: unknown[], residueOf: Int32Array, probe: number) => SmoothAtomSurface;
+    smoothSurfaceFromAtomsSync: (atoms: unknown[], residueOf: Int32Array, probe: number, options: SmoothSurfaceOptions) => SmoothAtomSurface | null;
+    atomSurfaceTransferables: (surface: SmoothAtomSurface) => ArrayBuffer[];
     smoothAttributes: (mesh: unknown, positions: Float32Array) => Record<string, unknown>;
     m2tShell: <T>(mesh: T) => T;
     contourOnCpu: (field: Float32Array, grid: unknown) => SmoothContour;
@@ -1919,6 +1922,9 @@ type SmoothSurfaceBundle = {
 }
 type SmoothSurfaceOptions = Record<string, number | boolean>
 type SmoothContour = { positions: Float32Array; indices: Uint32Array; keys: Uint32Array }
+type SmoothAtomSurface = { positions: Float32Array; normals: Float32Array; indices: Uint32Array; atom: Int32Array; other: Int32Array; weight: Float32Array; near: Int32Array; nearGap: Float32Array }
+/** What a field from the atoms alone keeps here under its token until the contour comes back. */
+type SmoothAtomsWaiting = { fromAtoms: true; atoms: unknown[]; residueOf: Int32Array; probe: number }
 type SmoothSurfaceFieldJS = { input: Float32Array; grid: unknown }
 let smoothSurfaceBundle: SmoothSurfaceBundle | null = null
 const loadSmoothSurfaceBundle = (): SmoothSurfaceBundle => {
@@ -1969,12 +1975,49 @@ const smoothSurfaceField = (imol: number, selection: string, colourStyle: string
     smoothSurfaceMeshes.set(token, meshData)
     return { token, field }
 }
+/**
+ * A smooth surface from the atoms alone - no M2T mesh - for colouring afterwards on the main thread
+ * (colours and residue owners come from each vertex's atoms). The one-call version, CPU marching
+ * cubes here: { surface } or { surface: null }. `residueOf`: each atom's residue, as an index.
+ */
+const smoothSurfaceFromAtoms = (packedAtoms: Float32Array, residueOf: Int32Array, probe: number, options: SmoothSurfaceOptions) => {
+    const bundle = loadSmoothSurfaceBundle()
+    return { surface: bundle.smoothSurfaceFromAtomsSync(bundle.unpackAtoms(packedAtoms), residueOf, probe, options) }
+}
+/** The same in two halves around marching cubes on the GPU, as smoothSurfaceField / Finish. */
+const smoothSurfaceFieldFromAtoms = (packedAtoms: Float32Array, residueOf: Int32Array, probe: number, options: SmoothSurfaceOptions) => {
+    const bundle = loadSmoothSurfaceBundle()
+    const atoms = bundle.unpackAtoms(packedAtoms)
+    const field = bundle.smoothFieldStage(null, atoms, probe, options)
+    if (!field) return { surface: null }
+    const token = ++smoothSurfaceToken
+    smoothSurfaceMeshes.set(token, { fromAtoms: true, atoms, residueOf, probe } as SmoothAtomsWaiting)
+    return { token, field }
+}
+
 const smoothSurfaceFinish = (token: number, field: SmoothSurfaceFieldJS | null, contour: SmoothContour | null,
                              contourMs: number, contourLabel: string) => {
     const bundle = loadSmoothSurfaceBundle()
-    const meshData = smoothSurfaceMeshes.get(token) as { vert_tri: Float32Array[][] } | undefined
+    const waiting = smoothSurfaceMeshes.get(token) as ({ vert_tri: Float32Array[][] } | SmoothAtomsWaiting) | undefined
     smoothSurfaceMeshes.delete(token)
-    if (!meshData) throw new Error(`No smooth surface waiting under token ${token}`)
+    if (!waiting) throw new Error(`No smooth surface waiting under token ${token}`)
+    if ("fromAtoms" in waiting) {
+        // From the atoms alone: the surface and its vertex atoms, or null to say there is none.
+        if (!field) return { surface: null }
+        const mark = performance.now()
+        try {
+            if (!contour) contourLabel = "CPU in the worker, after the GPU failed"
+            const surface = bundle.atomSurfaceFromContour(field, contour ?? bundle.contourOnCpu(field.input, field.grid),
+                                                          waiting.atoms, waiting.residueOf, waiting.probe)
+            if (surface.indices.length === 0) return { surface: null }
+            bundle.logSmoothing(field, surface, 0, contourMs + performance.now() - mark, 0, contourLabel)
+            return { surface }
+        } catch (err) {
+            console.warn("Contouring the smooth surface failed.", err)
+            return { surface: null }
+        }
+    }
+    const meshData = waiting
     if (!field) return { mesh: meshData }
     let mark = performance.now()
     let mesh: { positions: Float32Array; indices: Uint32Array }
@@ -2093,6 +2136,12 @@ const doCootCommand = (messageData: {
                 break
             case "shim_smooth_surface_field":
                 cootResult = smoothSurfaceField(...commandArgs as [number, string, string, string, number, Float32Array, number, SmoothSurfaceOptions])
+                break
+            case "shim_smooth_surface_from_atoms":
+                cootResult = smoothSurfaceFromAtoms(...commandArgs as [Float32Array, Int32Array, number, SmoothSurfaceOptions])
+                break
+            case "shim_smooth_surface_field_from_atoms":
+                cootResult = smoothSurfaceFieldFromAtoms(...commandArgs as [Float32Array, Int32Array, number, SmoothSurfaceOptions])
                 break
             case "shim_smooth_surface_finish":
                 cootResult = smoothSurfaceFinish(...commandArgs as [number, SmoothSurfaceFieldJS | null, SmoothContour | null, number, string])
@@ -2629,8 +2678,11 @@ const dispatchMessage = function (e: MessageEvent) {
         if (smoothSurfaceBundle && reply) {
             if (e.data.command === "shim_smooth_molecular_representation_mesh") {
                 smoothed = smoothSurfaceBundle.smoothedMeshTransferables(reply)
-            } else if (e.data.command === "shim_smooth_surface_field" && reply.field) {
+            } else if ((e.data.command === "shim_smooth_surface_field" || e.data.command === "shim_smooth_surface_field_from_atoms") && reply.field) {
                 smoothed = [reply.field.input.buffer]
+            } else if (reply.surface) {
+                // shim_smooth_surface_from_atoms, or shim_smooth_surface_finish for a surface from the atoms
+                smoothed = smoothSurfaceBundle.atomSurfaceTransferables(reply.surface)
             } else if (e.data.command === "shim_smooth_surface_finish" && reply.mesh) {
                 smoothed = smoothSurfaceBundle.smoothedMeshTransferables(reply.mesh)
             }

@@ -1,8 +1,10 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { m2tAtomRadius } from "../../src/utils/m2tAtomRadii";
+import { newOwnerNumbering, ownedMeshPickInfo } from "../../src/WebGLgComponents/ownedMeshPick";
 import {
-    contourField, featureTransform3d, meshConventions, nearestVertices, sesField, smoothM2tSurface, transferM2tAttributes,
+    atomSurfaceColours, atomSurfaceInfluences, atomSurfaceMesh, smoothVertexColours, vertexNeighbours, contourField, featureTransform3d, meshConventions, nearestVertices, residueCid, sesField,
+    smoothM2tSurface, smoothSurfaceFromAtomsSync, transferM2tAttributes, vertexAtoms,
 } from "../../src/utils/smoothSurface";
 
 const radialStats = (positions: Float32Array, centre: number[]) => {
@@ -338,6 +340,118 @@ describe("smoothSurface", () => {
         // Distance from (0, 0.8, 0) to either centre is ~1.79 > 1.7: outside both spheres.
         expect(at(0, 0.8, 0)).toBeGreaterThan(0);
         expect(at(0, 4, 0)).toBeLessThan(0);
+    });
+
+    test("residue owners are named as M2T names them", () => {
+        expect(residueCid("1", "A", "23", "ALA")).toBe("/1/A/23(ALA)");
+        expect(residueCid("1", "B", "23A", "GLY")).toBe("/1/B/23(GLY).A");
+        expect(residueCid("2", "C", "-4", "SER")).toBe("/2/C/-4(SER)");
+    });
+
+    test("a vertex belongs to the atom it lies on, and in a groove is shared with the other residue", () => {
+        // Atom 2 is residue 0's too, far away: it must not be anyone's other.
+        const atoms = [{ x: 0, y: 0, z: 0, r: 1.7 }, { x: 3, y: 0, z: 0, r: 1.7 }, { x: 0, y: 0, z: 10, r: 1.5 }];
+        const residueOf = [0, 1, 0];
+        // On atom 0's far side; in the groove, as near one sphere as the other; on atom 1's far side.
+        const positions = new Float32Array([-1.7, 0, 0, 1.5, 1.2, 0, 4.7, 0, 0]);
+        const v = vertexAtoms(positions, atoms, residueOf, 1.4);
+        expect(Array.from(v.atom)).toEqual([0, 0, 1]);
+        expect(Array.from(v.other)).toEqual([-1, 1, -1]);
+        expect(v.weight[0]).toBe(1);
+        expect(v.weight[1]).toBeCloseTo(0.5, 5);
+        expect(v.weight[2]).toBe(1);
+        // For colour, the nearest atoms whatever their residue, nearest first.
+        expect(Array.from(v.near.slice(0, 4))).toEqual([0, -1, -1, -1]);
+        expect(Array.from(v.near.slice(4, 8))).toEqual([0, 1, -1, -1]);
+        expect(v.nearGap[4]).toBeCloseTo(v.nearGap[5], 5);
+    });
+
+    test("vertex colours from atom colours, hard or blended by distance, and owners by residue", () => {
+        // Vertex 0: atom 0 only. Vertex 1: atoms 0 and 1 equally near. Vertex 2: atom 1 one width further.
+        const vertex = {
+            atom: Int32Array.from([0, 0, 0]), other: Int32Array.from([-1, 1, 1]), weight: Float32Array.from([1, 0.75, 0.6]),
+            near: Int32Array.from([0, -1, -1, -1, 0, 1, -1, -1, 0, 1, -1, -1]),
+            nearGap: Float32Array.from([0, 0, 0, 0, 0.2, 0.2, 0, 0, 0, 0.5, 0, 0]),
+        };
+        const atomColours = [1, 0, 0, 1, 0, 0, 1, 1];
+        // Hard edge: the nearest atom's.
+        expect(Array.from(atomSurfaceColours(vertex, atomColours, 0))).toEqual([1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1]);
+        const soft = atomSurfaceColours(vertex, atomColours, 0.5);
+        expect(Array.from(soft.slice(0, 4))).toEqual([1, 0, 0, 1]);
+        expect(soft[4]).toBeCloseTo(0.5, 6);
+        expect(soft[6]).toBeCloseTo(0.5, 6);
+        // One width further, half way to the reach of 2 widths: weight (1 - 1/2)² = 1/4 against 1.
+        expect(soft[10]).toBeCloseTo(0.25 / 1.25, 6);
+        const mesh = atomSurfaceMesh({
+            positions: new Float32Array(9), normals: new Float32Array(9), indices: new Uint32Array(0), ...vertex,
+        }, [3, 7], ["/1/A/1(ALA)", "", "", "/1/A/4(GLY)", "", "", "", "/1/B/2(SER)"], atomColours, 0);
+        expect(Array.from(mesh.vertex_owners)).toEqual([3, 3, 3]);
+        expect(Array.from(mesh.vertex_owners_other)).toEqual([0xFFFFFFFF, 7, 7]);
+        expect(Array.from(mesh.vertex_owner_weights)).toEqual([1, 0.75, Math.fround(0.6)]);
+    });
+
+    test("the hover shares a vertex as its colour does, residue by residue", () => {
+        // Vertex 0: two atoms of residue 5 as near as each other, one of residue 2 one width further.
+        // Vertex 1: one atom only.
+        const vertex = {
+            atom: Int32Array.from([0, 1]), other: Int32Array.from([-1, -1]), weight: Float32Array.from([1, 1]),
+            near: Int32Array.from([0, 1, 2, -1, 1, -1, -1, -1]),
+            nearGap: Float32Array.from([0.1, 0.1, 0.6, 0, 0, 0, 0, 0]),
+        };
+        const residueOf = [5, 5, 2];
+        const soft = atomSurfaceInfluences(vertex, residueOf, 0.5);
+        // Half way to the reach: (1 - 1/2)² = 1/4.
+        const total = 2.25;
+        expect(Array.from(soft.owners.slice(0, 4))).toEqual([5, 2, 0xFFFFFFFF, 0xFFFFFFFF]);
+        expect(soft.weights[0]).toBeCloseTo(2 / total, 6);
+        expect(soft.weights[1]).toBeCloseTo(0.25 / total, 6);
+        expect(Array.from(soft.owners.slice(4, 8))).toEqual([5, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]);
+        expect(soft.weights[4]).toBe(1);
+        // A hard edge: the nearest atom's residue, all of it.
+        const hard = atomSurfaceInfluences(vertex, residueOf, 0);
+        expect(Array.from(hard.owners.slice(0, 4))).toEqual([5, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF]);
+        expect(hard.weights[0]).toBe(1);
+        // And the pick info lists exactly those shares for the shader.
+        const owners = ["/1/A/0(A)", "/1/A/1(A)", "/1/A/2(GLY)", "/1/A/3(A)", "/1/A/4(A)", "/1/A/5(ALA)"];
+        const info = ownedMeshPickInfo([0, 0, 0, 1, 0, 0], [5, 5], owners, undefined, undefined, newOwnerNumbering(),
+                                       { stride: 4, ...soft })!;
+        expect(Array.from(info.influence_index_offsets)).toEqual([2, 3]);
+        expect(info.influence_weights[0]).toBeCloseTo(2 / total, 6);
+        expect(info.influence_point_indexes[0]).toBe(info.owner_codes[5]);
+        expect(info.influence_point_indexes[1]).toBe(info.owner_codes[2]);
+        expect(info.shared_vertices).toBe(1);
+    });
+
+    test("colour smoothing averages speckle away and leaves a uniform area alone", () => {
+        // A fan of four triangles round vertex 0; vertex 0 red, the rest blue.
+        const indices = Uint32Array.from([0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 1]);
+        const colours = new Float32Array(20);
+        for (let v = 0; v < 5; v++) colours.set(v === 0 ? [1, 0, 0, 1] : [0, 0, 1, 1], 4 * v);
+        const neighbours = vertexNeighbours(indices, 5);
+        const once = smoothVertexColours(colours, neighbours, 1);
+        // Vertex 0: itself and its four neighbours, each listed twice: 1 red in 9.
+        expect(once[0]).toBeCloseTo(1 / 9, 6);
+        expect(once[3]).toBeCloseTo(1, 6);
+        expect(Array.from(colours.slice(0, 4))).toEqual([1, 0, 0, 1]);
+        const uniform = new Float32Array(20).fill(0.5);
+        expect(Array.from(smoothVertexColours(uniform, neighbours, 3)).every(c => Math.abs(c - 0.5) < 1e-7)).toBe(true);
+    });
+
+    test("a surface from the atoms alone is closed, wound as M2T's, and every vertex has an atom", () => {
+        const atoms = [{ x: 0, y: 0, z: 0, r: 1.7 }, { x: 3, y: 0.5, z: 0, r: 1.52 }, { x: 1.4, y: 2.4, z: 0.3, r: 1.55 }];
+        const surface = smoothSurfaceFromAtomsSync(atoms, [0, 1, 1], 1.4, { spacing: 0.3, refine: true })!;
+        expect(surface).not.toBeNull();
+        expect(meshConventions(surface.positions, surface.normals, surface.indices)).toEqual({ out: true, ccw: true });
+        expect(Array.from(surface.atom).every(a => a >= 0 && a < 3)).toBe(true);
+        const edges = new Map<string, number>();
+        for (let t = 0; t < surface.indices.length; t += 3) {
+            for (let k = 0; k < 3; k++) {
+                const a = surface.indices[t + k], b = surface.indices[t + (k + 1) % 3];
+                const key = a < b ? `${a},${b}` : `${b},${a}`;
+                edges.set(key, (edges.get(key) ?? 0) + 1);
+            }
+        }
+        expect([...edges.values()].every(count => count === 2)).toBe(true);
     });
 
     test("nearestVertices finds the nearest source vertex", () => {

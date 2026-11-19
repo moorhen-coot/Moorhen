@@ -122,6 +122,11 @@ export type OwnedMeshPickInfo = {
  * agree, so a caller can attach the result unconditionally and a mesh Coot knew nothing about
  * simply stays as it was. `numbering`: the table to number residues with, shared by meshes that
  * light together; a fresh one by default.
+ *
+ * `influences`, if given, says who each vertex belongs to for the hover instead of owner, other and
+ * weight: `stride` (owner index, share) pairs per vertex in a row, NO_OWNER past the last - a
+ * smooth surface's blend over its nearest atoms (atomSurfaceInfluences), so the hover fades as its
+ * colours do. Picking still reports `vertexOwners`, the dominant residue.
  */
 export const ownedMeshPickInfo = (
     vertices: number[] | Float32Array,
@@ -129,7 +134,8 @@ export const ownedMeshPickInfo = (
     owners: string[] | undefined,
     vertexOwnersOther?: Uint32Array | number[],
     vertexOwnerWeights?: Float32Array | number[],
-    numbering: OwnerNumbering = newOwnerNumbering()
+    numbering: OwnerNumbering = newOwnerNumbering(),
+    influences?: { stride: number; owners: Uint32Array; weights: Float32Array }
 ): OwnedMeshPickInfo | null => {
     const count = Math.floor(vertices.length / 3);
     if (count === 0) return null;
@@ -181,6 +187,8 @@ export const ownedMeshPickInfo = (
     const weights: number[] = [];
     const hasSecond = !!vertexOwnersOther && !!vertexOwnerWeights
         && vertexOwnersOther.length === count && vertexOwnerWeights.length === count;
+    const hasInfluences = !!influences && influences.owners.length === influences.stride * count
+        && influences.weights.length === influences.stride * count;
     let shared_vertices = 0;
 
     let running = 0;
@@ -211,7 +219,18 @@ export const ownedMeshPickInfo = (
             const weight = hasSecond ? vertexOwnerWeights[v] : 1.0;
             // The shader compares encoded ids, not owner indices, so the contribution lists
             // carry the codes.
-            if (other < owners.length && other !== owner) {
+            if (hasInfluences) {
+                let listed = 0;
+                for (let k = 0; k < influences.stride; k++) {
+                    const o = influences.owners[influences.stride * v + k];
+                    const share = influences.weights[influences.stride * v + k];
+                    if (o >= owners.length || share <= 0) continue;
+                    pointIndexes.push(owner_codes[o]); weights.push(share);
+                    listed++;
+                }
+                running += listed;
+                if (listed > 1) shared_vertices++;
+            } else if (other < owners.length && other !== owner) {
                 pointIndexes.push(owner_codes[owner]); weights.push(weight);
                 pointIndexes.push(owner_codes[other]); weights.push(1.0 - weight);
                 running += 2;

@@ -211,6 +211,8 @@ export const MoorhenDevMenu = () => {
     const [smoothOpenRadius, setSmoothOpenRadius] = useState<number>(smoothSurfaceSetting.openRadius);
     const [smoothOnGpu, setSmoothOnGpu] = useState<boolean>(smoothSurfaceSetting.gpu);
     const [smoothRefine, setSmoothRefine] = useState<boolean>(smoothSurfaceSetting.refine);
+    const [smoothColourBlend, setSmoothColourBlend] = useState<number>(smoothSurfaceSetting.colourBlend);
+    const [smoothColourSmoothing, setSmoothColourSmoothing] = useState<number>(smoothSurfaceSetting.colourSmoothing);
     const [shadingStripes, setShadingStripes] = useState<boolean>(shadingDebug.stripes);
     // Rebuild the molecular surfaces on show, so a change to the smooth surface is seen at once.
     const redrawSurfaces = () => {
@@ -638,6 +640,28 @@ export const MoorhenDevMenu = () => {
                     if (smoothSurfaceSetting.enabled) redrawSurfaces();
                 }}
             />
+            <MoorhenStack direction="row">
+                <MoorhenNumberInput
+                    label="Smooth surface colour blend (Å, 0 = hard edge)"
+                    value={smoothColourBlend}
+                    minMax={[0, 2]}
+                    setValue={val => {
+                        smoothSurfaceSetting.colourBlend = val;
+                        setSmoothColourBlend(val);
+                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                    }}
+                />
+                <MoorhenNumberInput
+                    label="colour smoothing passes"
+                    value={smoothColourSmoothing}
+                    minMax={[0, 10]}
+                    setValue={val => {
+                        smoothSurfaceSetting.colourSmoothing = Math.round(val);
+                        setSmoothColourSmoothing(Math.round(val));
+                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                    }}
+                />
+            </MoorhenStack>
             <MoorhenStack direction="row">
                 <MoorhenNumberInput
                     label="Smooth surface grid (Å)"

@@ -63,6 +63,19 @@ export const smoothSurfaceSetting = {
      */
     refine: true,
     /**
+     * How softly the colours of a surface made from the atoms change from one atom's to the next,
+     * Å (atomSurfaceColours): 0 is a hard edge, each vertex its nearest atom's, as M2T has it -
+     * jagged along the triangles; above that, each vertex mixes its nearest atoms' colours by how
+     * much further each is than the nearest. Applied when colouring, so changing it rebuilds nothing.
+     */
+    colourBlend: 0.4,
+    /**
+     * Passes of averaging each vertex's colour with its neighbours' (smoothVertexColours), after
+     * colourBlend: takes out what is left of triangle-sized speckle at colour edges. Uniform areas
+     * are untouched. At colour time too.
+     */
+    colourSmoothing: 2,
+    /**
      * Marching cubes with the WebGPU MetaBalls kernels, when WebGPU is there; the field and the
      * colours stay in the Coot worker. Without WebGPU, all of it in the worker, on the CPU.
      */
@@ -1451,16 +1464,22 @@ export interface SmoothField {
     fieldMs: number;
 }
 
-export function smoothFieldStage(m2tMesh: M2tSurfaceMesh, atoms: readonly SurfaceAtom[], probe: number, options: SmoothOptions): SmoothField | null {
+/**
+ * The field, ready to contour. With an M2T mesh, its conventions are read off it; without one (a
+ * surface made from the atoms alone, coloured afterwards: smoothSurfaceFromAtoms), the mesh is wound
+ * as M2T's always is - normals out, counter-clockwise (both checked on 1df7 and 5a3h) - which is
+ * also how marching cubes leaves it.
+ */
+export function smoothFieldStage(m2tMesh: M2tSurfaceMesh | null, atoms: readonly SurfaceAtom[], probe: number, options: SmoothOptions): SmoothField | null {
     const started = performance.now();
     const spacing = options.spacing ?? smoothSurfaceSetting.spacing;
     const sigma = options.sigma ?? smoothSurfaceSetting.sigma;
     const maxShift = options.maxShift ?? smoothSurfaceSetting.maxShift;
     const openRadius = options.openRadius ?? smoothSurfaceSetting.openRadius;
-    const m2tPositions = m2tMesh.vert_tri?.[0]?.[0];
-    const m2tNormals = m2tMesh.norm_tri?.[0]?.[0];
-    const m2tIndices = m2tMesh.idx_tri?.[0]?.[0];
-    if (!m2tPositions || !m2tNormals || !m2tIndices || !m2tMesh.col_tri?.[0]?.[0] || m2tPositions.length === 0) return null;
+    const m2tPositions = m2tMesh?.vert_tri?.[0]?.[0];
+    const m2tNormals = m2tMesh?.norm_tri?.[0]?.[0];
+    const m2tIndices = m2tMesh?.idx_tri?.[0]?.[0];
+    if (m2tMesh && (!m2tPositions || !m2tNormals || !m2tIndices || !m2tMesh.col_tri?.[0]?.[0] || m2tPositions.length === 0)) return null;
     const grid = sesField(atoms, probe, spacing, sigma, maxShift, openRadius);
     if (!grid) return null;
     const input = contourInput(grid);
@@ -1468,7 +1487,7 @@ export function smoothFieldStage(m2tMesh: M2tSurfaceMesh, atoms: readonly Surfac
     return {
         grid: { nx, ny, nz, origin, spacing: h, iso, timings },
         input,
-        conventions: meshConventions(m2tPositions, m2tNormals, m2tIndices),
+        conventions: m2tMesh ? meshConventions(m2tPositions, m2tNormals, m2tIndices) : { out: true, ccw: true },
         atomCount: atoms.length, sigma, maxShift,
         refine: options.refine ?? smoothSurfaceSetting.refine,
         fieldMs: performance.now() - started,
@@ -1525,7 +1544,7 @@ export function logSmoothing(field: SmoothField, mesh: SurfaceMesh, m2tVertices:
     const { grid } = field;
     console.debug(`Smooth surface: ${field.atomCount} atoms, grid ${grid.nx}x${grid.ny}x${grid.nz} at ${grid.spacing.toFixed(2)} Å, ` +
         `σ ${field.sigma} Å, max shift ${field.maxShift} Å; ${mesh.positions.length / 3} vertices, ${mesh.indices.length / 3} triangles ` +
-        `(M2T: ${m2tVertices} vertices); field ${field.fieldMs.toFixed(0)} ms ` +
+        `(${m2tVertices > 0 ? `M2T: ${m2tVertices} vertices` : "no M2T mesh"}); field ${field.fieldMs.toFixed(0)} ms ` +
         `(${Object.entries(grid.timings).map(([stage, ms]) => `${stage} ${ms.toFixed(0)}`).join(", ")}), ` +
         `contour (${contourLabel}) ${contourMs.toFixed(0)} ms, transfer ${transferMs.toFixed(0)} ms`);
 }
@@ -1572,6 +1591,311 @@ export async function smoothM2tSurface<T extends M2tSurfaceMesh>(m2tMesh: T, ato
 }
 
 /** Atoms as x, y, z, r per atom: how they travel to the Coot worker. */
+/**
+ * A residue as M2T names it in a mesh's owner table (coot-molecule-moltris.cc, residue_cid):
+ * /model/chain/seqnum(RES), and .ins after the name for an insertion code. `resNo` as gemmi writes a
+ * SeqId ("23", "23A").
+ */
+export function residueCid(model: string, chain: string, resNo: string, resName: string): string {
+    const match = /^(-?\d+)(.*)$/.exec(resNo.trim());
+    const number = match ? match[1] : resNo.trim();
+    const insertion = match ? match[2].trim() : "";
+    return `/${model}/${chain}/${number}(${resName})${insertion ? `.${insertion}` : ""}`;
+}
+
+/** How many of its nearest atoms a vertex keeps for its colour (VertexAtoms.near). */
+export const COLOUR_ATOMS = 4;
+
+/** Each vertex's atom, and near a boundary between residues, the other residue's atom. */
+export interface VertexAtoms {
+    /** The atom whose sphere the vertex is nearest (index into the surface's atoms). */
+    atom: Int32Array;
+    /** The nearest atom of another residue, if its sphere is within the band; -1 if none. */
+    other: Int32Array;
+    /** How much of the vertex is `atom`'s (≥ 0.5), the rest `other`'s; 1 where there is no other. */
+    weight: Float32Array;
+    /**
+     * For its colour, whatever their residues: the vertex's COLOUR_ATOMS nearest atoms, nearest first
+     * (-1 past the last), and how far each one's sphere is, |v - a| - r: COLOUR_ATOMS in a row per
+     * vertex, `near[COLOUR_ATOMS * v + k]`.
+     */
+    near: Int32Array;
+    nearGap: Float32Array;
+}
+
+/**
+ * For each vertex, the atom it belongs to - the one whose sphere it is nearest, |v - a| - r, which
+ * on a convex patch is the atom it lies on, as M2T's generating atom is - and, where the sphere of an
+ * atom of another residue is within `band` too (a groove between residues, M2T's saddles), that atom
+ * and the split: weight = g2 / (g1 + g2), 1 on the first atom's sphere and 0.5 halfway. What
+ * ownership and colour are made from, instead of the M2T mesh's.
+ *
+ * Bins about the size of the search, so a lookup scans a few dozen atoms.
+ */
+export function vertexAtoms(positions: ArrayLike<number>, atoms: readonly SurfaceAtom[], residueOf: ArrayLike<number>, band: number): VertexAtoms {
+    const n = positions.length / 3;
+    const atom = new Int32Array(n).fill(-1), other = new Int32Array(n).fill(-1), weight = new Float32Array(n).fill(1);
+    const nearest = new Int32Array(COLOUR_ATOMS * n).fill(-1), nearGap = new Float32Array(COLOUR_ATOMS * n);
+    if (atoms.length === 0) return { atom, other, weight, near: nearest, nearGap };
+    let rMax = 0;
+    for (const a of atoms) rMax = Math.max(rMax, a.r);
+    const bins = binAtoms(atoms, rMax + band, rMax);
+    const ax = Float64Array.from(atoms, a => a.x), ay = Float64Array.from(atoms, a => a.y), az = Float64Array.from(atoms, a => a.z);
+    const ar = Float64Array.from(atoms, a => a.r);
+    const near: number[] = [];
+    for (let v = 0; v < n; v++) {
+        const x = positions[3 * v], y = positions[3 * v + 1], z = positions[3 * v + 2];
+        bins.near(x, y, z, ax, ay, az, ar, band, near);
+        let best = -1, g1 = Infinity;
+        for (const a of near) {
+            const g = Math.hypot(x - ax[a], y - ay[a], z - az[a]) - ar[a];
+            if (g < g1) { g1 = g; best = a; }
+        }
+        if (best < 0) {
+            // Further than the band from every sphere (nothing should be): the nearest of all.
+            for (let a = 0; a < atoms.length; a++) {
+                const g = Math.hypot(x - ax[a], y - ay[a], z - az[a]) - ar[a];
+                if (g < g1) { g1 = g; best = a; }
+            }
+            atom[v] = best;
+            nearest[COLOUR_ATOMS * v] = best; nearGap[COLOUR_ATOMS * v] = g1;
+            continue;
+        }
+        atom[v] = best;
+        // The few nearest, for the colour: insertion into a short sorted list.
+        const base = COLOUR_ATOMS * v;
+        let kept = 0;
+        for (const a of near) {
+            const g = Math.hypot(x - ax[a], y - ay[a], z - az[a]) - ar[a];
+            if (kept === COLOUR_ATOMS && g >= nearGap[base + kept - 1]) continue;
+            let k = Math.min(kept, COLOUR_ATOMS - 1);
+            while (k > 0 && nearGap[base + k - 1] > g) { nearest[base + k] = nearest[base + k - 1]; nearGap[base + k] = nearGap[base + k - 1]; k--; }
+            nearest[base + k] = a; nearGap[base + k] = g;
+            if (kept < COLOUR_ATOMS) kept++;
+        }
+        const residue = residueOf[best];
+        let second = -1, g2 = Infinity;
+        for (const a of near) {
+            if (residueOf[a] === residue) continue;
+            const g = Math.hypot(x - ax[a], y - ay[a], z - az[a]) - ar[a];
+            if (g < g2) { g2 = g; second = a; }
+        }
+        if (second < 0 || g2 > band) continue;
+        const d1 = Math.max(0, g1), d2 = Math.max(0, g2);
+        other[v] = second;
+        weight[v] = d1 + d2 > 0 ? d2 / (d1 + d2) : 0.5;
+    }
+    return { atom, other, weight, near: nearest, nearGap };
+}
+
+/** A surface made from the atoms alone: the mesh, and each vertex's atoms (vertexAtoms). */
+export interface AtomSurface extends SurfaceMesh, VertexAtoms {}
+
+/**
+ * How far from a second residue's atom a vertex is still shared with it: the probe radius, which
+ * is how wide a groove between two atoms is, or 1.4 A for a surface made without a probe (van der
+ * Waals, accessible), so they get the same soft boundaries.
+ */
+export const ownershipBand = (probe: number): number => Math.max(probe, 1.4);
+
+/** The contour finished (normals, winding, the split) and each vertex given its atoms. */
+export function atomSurfaceFromContour(field: SmoothField, contour: EdgeContour, atoms: readonly SurfaceAtom[],
+                                       residueOf: ArrayLike<number>, probe: number): AtomSurface {
+    const mesh = smoothMeshFromContour(field, contour);
+    return { ...mesh, ...vertexAtoms(mesh.positions, atoms, residueOf, ownershipBand(probe)) };
+}
+
+/**
+ * The whole of it in one place, marching cubes on the CPU: the surface of `atoms` with no M2T mesh,
+ * for colouring afterwards. Null if there is nothing to contour.
+ */
+export function smoothSurfaceFromAtomsSync(atoms: readonly SurfaceAtom[], residueOf: ArrayLike<number>, probe: number,
+                                           options: SmoothOptions): AtomSurface | null {
+    const field = smoothFieldStage(null, atoms, probe, options);
+    if (!field) return null;
+    const started = performance.now();
+    const surface = atomSurfaceFromContour(field, contourOnCpu(field.input, field.grid), atoms, residueOf, probe);
+    if (surface.indices.length === 0) return null;
+    logSmoothing(field, surface, 0, performance.now() - started, 0, "CPU");
+    return surface;
+}
+
+/**
+ * How much each of vertex v's nearest atoms counts, into `out` (COLOUR_ATOMS, summing to 1, 0 past
+ * the last atom): atom k weighted (1 - d / R)² for d = gap_k - gap_0 < R = 2 * width, nothing beyond
+ * - two atoms as near as each other count half each, whatever their residues, and one `width`
+ * further a quarter as much. The weight reaches zero at R, so an atom has faded out before it can
+ * drop off the end of a vertex's short list (an exp(-d / width) weight never did, and a vertex
+ * whose fourth atom was its neighbour's third jumped: single-triangle splatter at colour edges). A
+ * width of 0 is a hard edge: all of it the nearest atom's, as M2T has it. What colours and hover
+ * both use, so they agree.
+ */
+export function blendWeights(vertex: VertexAtoms, v: number, width: number, out: Float64Array): void {
+    const base = COLOUR_ATOMS * v;
+    out.fill(0);
+    if (vertex.near[base] < 0) return;
+    if (width <= 0) { out[0] = 1; return; }
+    const reach = 2 * width;
+    let total = 0;
+    for (let k = 0; k < COLOUR_ATOMS && vertex.near[base + k] >= 0; k++) {
+        const t = 1 - (vertex.nearGap[base + k] - vertex.nearGap[base]) / reach;
+        out[k] = t > 0 ? t * t : 0;
+        total += out[k];
+    }
+    for (let k = 0; k < COLOUR_ATOMS; k++) out[k] /= total;
+}
+
+/**
+ * A surface's vertex colours from its atoms' (RGBA, 4 per atom), mixed by blendWeights. Cheap - what
+ * a colour-rule or width change redoes, with no surface to rebuild. White where a vertex has no atom.
+ */
+export function atomSurfaceColours(vertex: VertexAtoms, atomColours: ArrayLike<number>, width: number): Float32Array {
+    const n = vertex.atom.length;
+    const colours = new Float32Array(4 * n);
+    const w = new Float64Array(COLOUR_ATOMS);
+    for (let v = 0; v < n; v++) {
+        const base = COLOUR_ATOMS * v;
+        if (vertex.near[base] < 0) { colours.fill(1, 4 * v, 4 * v + 4); continue; }
+        blendWeights(vertex, v, width, w);
+        for (let c = 0; c < 4; c++) {
+            let sum = 0;
+            for (let k = 0; k < COLOUR_ATOMS && w[k] > 0; k++) sum += w[k] * atomColours[4 * vertex.near[base + k] + c];
+            colours[4 * v + c] = sum;
+        }
+    }
+    return colours;
+}
+
+/**
+ * Who a vertex belongs to for the hover, by the same weights as its colour: its nearest atoms'
+ * residues, an atom's weight added to any other atom's of the same residue - up to COLOUR_ATOMS
+ * (residue, share) pairs per vertex, in a row, NO_OWNER and 0 past the last. So the hover fades
+ * across a boundary exactly as the colour does.
+ */
+export function atomSurfaceInfluences(vertex: VertexAtoms, residueOf: ArrayLike<number>, width: number): { owners: Uint32Array; weights: Float32Array } {
+    const n = vertex.atom.length;
+    const owners = new Uint32Array(COLOUR_ATOMS * n).fill(0xFFFFFFFF);
+    const weights = new Float32Array(COLOUR_ATOMS * n);
+    const w = new Float64Array(COLOUR_ATOMS);
+    for (let v = 0; v < n; v++) {
+        const base = COLOUR_ATOMS * v;
+        blendWeights(vertex, v, width, w);
+        let kept = 0;
+        for (let k = 0; k < COLOUR_ATOMS && w[k] > 0; k++) {
+            const residue = residueOf[vertex.near[base + k]];
+            let slot = 0;
+            while (slot < kept && owners[base + slot] !== residue) slot++;
+            if (slot === kept) { owners[base + slot] = residue; kept++; }
+            weights[base + slot] += w[k];
+        }
+    }
+    return { owners, weights };
+}
+
+/**
+ * Each vertex's neighbours along the mesh's edges (CSR), for smoothVertexColours: from every
+ * triangle each corner lists the other two, so on a closed mesh every neighbour is listed twice,
+ * evenly.
+ */
+export function vertexNeighbours(indices: ArrayLike<number>, vertexCount: number): { start: Int32Array; ids: Int32Array } {
+    const start = new Int32Array(vertexCount + 1);
+    for (let i = 0; i < indices.length; i++) start[indices[i] + 1] += 2;
+    for (let v = 0; v < vertexCount; v++) start[v + 1] += start[v];
+    const fill = start.slice(0, vertexCount);
+    const ids = new Int32Array(start[vertexCount]);
+    for (let t = 0; t + 2 < indices.length; t += 3) {
+        const a = indices[t], b = indices[t + 1], c = indices[t + 2];
+        ids[fill[a]++] = b; ids[fill[a]++] = c;
+        ids[fill[b]++] = c; ids[fill[b]++] = a;
+        ids[fill[c]++] = a; ids[fill[c]++] = b;
+    }
+    return { start, ids };
+}
+
+/**
+ * Colours (RGBA per vertex) averaged with their neighbours' `passes` times, each vertex with itself
+ * and its neighbours: a little diffusion along the surface, which takes out triangle-sized speckle
+ * where colours meet and leaves a uniform area as it was. A new array; `colours` is not changed.
+ */
+export function smoothVertexColours(colours: Float32Array, neighbours: { start: Int32Array; ids: Int32Array }, passes: number): Float32Array {
+    let from: Float32Array = colours, to: Float32Array = new Float32Array(colours.length);
+    const n = neighbours.start.length - 1;
+    for (let pass = 0; pass < passes; pass++) {
+        for (let v = 0; v < n; v++) {
+            let r = from[4 * v], g = from[4 * v + 1], b = from[4 * v + 2], a = from[4 * v + 3];
+            const s0 = neighbours.start[v], s1 = neighbours.start[v + 1];
+            for (let k = s0; k < s1; k++) {
+                const u = neighbours.ids[k];
+                r += from[4 * u]; g += from[4 * u + 1]; b += from[4 * u + 2]; a += from[4 * u + 3];
+            }
+            const scale = 1 / (1 + s1 - s0);
+            to[4 * v] = r * scale; to[4 * v + 1] = g * scale; to[4 * v + 2] = b * scale; to[4 * v + 3] = a * scale;
+        }
+        if (from === colours) { from = to; to = new Float32Array(colours.length); }
+        else { const swap = from; from = to; to = swap; }
+    }
+    return passes > 0 ? from : colours.slice();
+}
+
+/** A surface made from the atoms as Coot hands a mesh over (libcootApi.SimpleMeshJS's shape). */
+export interface AtomSurfaceMeshJS {
+    status: number;
+    prim_types: [[string]];
+    idx_tri: [[Uint32Array]];
+    vert_tri: [[Float32Array]];
+    norm_tri: [[Float32Array]];
+    col_tri: [[Float32Array]];
+    vertex_owners: Uint32Array;
+    vertex_owners_other: Uint32Array;
+    vertex_owner_weights: Float32Array;
+    /** The hover's shares, by the colours' weights (atomSurfaceInfluences): COLOUR_ATOMS per vertex. */
+    vertex_influence_owners: Uint32Array;
+    vertex_influence_weights: Float32Array;
+    owners: string[];
+}
+
+/**
+ * The mesh, coloured, with residue owners as M2T gives them: each vertex's atom's residue, and near
+ * a boundary the other residue and the share (owners as in coot-molecule-moltris.cc: the heavier
+ * first - vertexAtoms' weight is never below 0.5 - and 0xFFFFFFFF for none). `residues`: the owner
+ * table, residueCid strings, indexed by `residueOf`.
+ */
+export function atomSurfaceMesh(surface: AtomSurface, residueOf: ArrayLike<number>, residues: string[],
+                                atomColours: ArrayLike<number>, colourBlend: number, colourSmoothing = 0): AtomSurfaceMeshJS {
+    const n = surface.atom.length;
+    const owners = new Uint32Array(n), others = new Uint32Array(n).fill(0xFFFFFFFF), weights = new Float32Array(n).fill(1);
+    for (let v = 0; v < n; v++) {
+        const a = surface.atom[v], b = surface.other[v];
+        owners[v] = a >= 0 ? residueOf[a] : 0xFFFFFFFF;
+        if (b >= 0) { others[v] = residueOf[b]; weights[v] = surface.weight[v]; }
+    }
+    const influences = atomSurfaceInfluences(surface, residueOf, colourBlend);
+    return {
+        status: 1,
+        prim_types: [["TRIANGLES"]],
+        idx_tri: [[surface.indices]],
+        vert_tri: [[surface.positions]],
+        norm_tri: [[surface.normals]],
+        col_tri: [[colourSmoothing > 0
+            ? smoothVertexColours(atomSurfaceColours(surface, atomColours, colourBlend),
+                vertexNeighbours(surface.indices, surface.atom.length), colourSmoothing)
+            : atomSurfaceColours(surface, atomColours, colourBlend)]],
+        vertex_owners: owners,
+        vertex_owners_other: others,
+        vertex_owner_weights: weights,
+        vertex_influence_owners: influences.owners,
+        vertex_influence_weights: influences.weights,
+        owners: residues,
+    };
+}
+
+/** An AtomSurface's arrays, to hand over by postMessage rather than copy. */
+export function atomSurfaceTransferables(surface: AtomSurface): ArrayBuffer[] {
+    return [...new Set([surface.positions, surface.normals, surface.indices, surface.atom, surface.other, surface.weight,
+        surface.near, surface.nearGap]
+        .map(v => v.buffer as ArrayBuffer))];
+}
+
 export function packAtoms(atoms: readonly SurfaceAtom[]): Float32Array {
     const packed = new Float32Array(4 * atoms.length);
     atoms.forEach((a, i) => packed.set([a.x, a.y, a.z, a.r], 4 * i));

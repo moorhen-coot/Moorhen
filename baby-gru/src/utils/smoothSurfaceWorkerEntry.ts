@@ -7,4 +7,5 @@
 export {
     assembleSmoothMesh, contourOnCpu, logSmoothing, m2tShell, smoothAttributes, smoothFieldStage, smoothM2tSurfaceSync,
     smoothMeshFromContour, smoothedMeshTransferables, unpackAtoms,
+    atomSurfaceFromContour, atomSurfaceTransferables, smoothSurfaceFromAtomsSync,
 } from "./smoothSurface";
