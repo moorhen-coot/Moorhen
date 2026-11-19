@@ -7,7 +7,7 @@
  * all of them.
  */
 import { describe, expect, it } from "@jest/globals";
-import { withAllAltConfs } from "../../src/utils/MoorhenColourRule";
+import { ColourRule, withAllAltConfs } from "../../src/utils/MoorhenColourRule";
 
 describe("colour rule CIDs and alternate conformations", () => {
     it("widens a CID that names atoms but no altloc", () => {
@@ -24,5 +24,21 @@ describe("colour rule CIDs and alternate conformations", () => {
 
     it("treats each part of a || list on its own", () => {
         expect(withAllAltConfs("//A/10-20||/1/B/5/*")).toBe("//A/10-20||/1/B/5/*:*");
+    });
+});
+
+describe("editing a colour rule's selection", () => {
+    it("changes the CID, and the label with it unless the rule has a name", () => {
+        const plain = new ColourRule("cid", "//A", "#ff0000", null, false);
+        plain.setCid("//B/1-10");
+        expect(plain.cid).toBe("//B/1-10");
+        expect(plain.label).toBe("//B/1-10");
+        const named = new ColourRule("cid", "//A", "#ff0000", null, false);
+        named.setLabel("Active site");
+        named.setCid("//A/50/*");
+        expect(named.label).toBe("Active site");
+        // Both ways to Coot send the CID, widened to every conformation - never the name.
+        expect(named.getCootColourRuleArgs()).toEqual(["//A/50/*:*", "#ff0000"]);
+        expect(named.getUserDefinedColours()[0].cid).toBe("//A/50/*:*");
     });
 });

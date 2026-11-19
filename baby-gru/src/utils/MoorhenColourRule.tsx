@@ -242,6 +242,18 @@ export class ColourRule {
         this.color = color;
     }
 
+    /**
+     * Set the selection this colour rule applies to. The label follows it if it was showing the
+     * selection (as it does unless set to a name, e.g. "PLDDT").
+     * @param {string} cid - The new CID
+     */
+    setCid(cid: string) {
+        if (this.label === this.cid) {
+            this.label = cid;
+        }
+        this.cid = cid;
+    }
+
     setMultiColourData(multiColourData: string) {
         this.multiColourData = multiColourData;
     }
@@ -294,7 +306,9 @@ export class ColourRule {
             const [r, g, b, a] = ColourRule.parseHexToRgba(this.color);
             return [
                 {
-                    cid: withAllAltConfs(this.label),
+                    // The CID, not the label: a rule can be given a name (molecule.addColourRule's
+                    // label), and that name was being sent to Coot as the selection.
+                    cid: withAllAltConfs(this.cid),
                     rgba: [r / 255, g / 255, b / 255, a],
                     applyColourToNonCarbonAtoms: this.applyColourToNonCarbonAtoms,
                 },
