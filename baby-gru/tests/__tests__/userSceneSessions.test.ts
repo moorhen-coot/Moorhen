@@ -11,6 +11,7 @@ import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRe
 import { cidModel, withCidModel } from "@/utils/Representation/RepresentationBuilder";
 import { readSceneList } from "@/store/userSceneFormat";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { setMoleculeVisible } from "@/utils/moleculeVisibility";
 import type { Keyframe } from "@/utils/cameraPath";
 import * as quat4 from "gl-matrix/quat";
 import { createCloudInstance, flush, jobUrl, loadCootModules, readTestData, type CloudInstance } from "./cloudHost/cloudHostHarness";
@@ -133,6 +134,25 @@ describe("loading a session", () => {
         expect(sceneNames()).toEqual(["General", "Model Building", "Figure"]);
         expect(state().movie.document.path.keyframes).toHaveLength(1);
         expect(cloud.instance.getTimeCapsuleRef().current.busy).toBe(false);
+    });
+});
+
+describe("molecule visibility across scenes", () => {
+    test("follows what each scene shows of the molecule (its eye button)", async () => {
+        const { userScene } = cloud.instance;
+        const [molecule] = cloud.instance.getMoleculeList();
+        const shown = () => state().molecules.visibleMolecules.includes(molecule.molNo);
+        expect(shown()).toBe(true);
+        // Created as a copy of the current scene, and shown
+        const hidden = await userScene.create("Hidden");
+        setMoleculeVisible(molecule, false);
+        expect(shown()).toBe(false);
+        await userScene.select("General");
+        expect(molecule.representations.some(representation => representation.visible)).toBe(true);
+        expect(shown()).toBe(true);
+        await userScene.select(hidden);
+        expect(molecule.representations.some(representation => representation.visible)).toBe(false);
+        expect(shown()).toBe(false);
     });
 });
 
@@ -478,6 +498,19 @@ describe("vectors and 3D shapes", () => {
         await userScene.select("Model Building");
         expect(vectorIds()).toEqual([arrow]);
         expect(objectIds()).toEqual([sphere]);
+    });
+});
+
+describe("a session with a molecule without default colour rules", () => {
+    // A session file (protobuf) does not write an empty list, so the field comes back absent. Loading
+    // used to stop at that molecule (a docked ligand, LTR_model2.pb), leaving no molecule loaded.
+    test("loads, the molecule with no rules", async () => {
+        const session = JSON.parse(await saveSession());
+        delete session.moleculeData[0].defaultColourRules;
+        expect(await loadSession(JSON.stringify(session))).toBe(0);
+        const [molecule] = cloud.instance.getMoleculeList();
+        expect(molecule.defaultColourRules).toEqual([]);
+        expect(representationStyles().length).toBeGreaterThan(0);
     });
 });
 

@@ -20,6 +20,7 @@ import {
     setUserSceneState,
     setZoom,
 } from "../store";
+import { setMoleculesVisible } from "../store/moleculesSlice";
 import type { RootState } from "../store";
 import {
     type SceneSettingsSnapshot,
@@ -727,8 +728,31 @@ export class MoorhenUserSceneManager {
                 await drawDefaultRepresentation(this.instance, molecule.uniqueId, style);
             }
         }
+        this.syncMoleculeVisibility();
         this.reportMissingMolecules(sceneId, content);
         this.instance.dispatch(sceneShown());
+    }
+
+    /**
+     * Mark each molecule shown or hidden (molecules.visibleMolecules, which the eye buttons show) by
+     * whether the scene left any of its representations shown: the scene sets the representations,
+     * not that list.
+     */
+    private syncMoleculeVisibility() {
+        const visible = new Set(this.instance.store.getState().molecules.visibleMolecules);
+        const toShow: number[] = [];
+        const toHide: number[] = [];
+        for (const molecule of this.instance.getMoleculeList()) {
+            // Its environment and NEF restraints count too: what its eye button hides with it
+            const shown =
+                molecule.representations.some(representation => representation.visible) ||
+                !!molecule.environmentRepresentation?.visible ||
+                !!molecule.NEFRestraintRepresentation?.visible;
+            if (shown !== visible.has(molecule.molNo)) (shown ? toShow : toHide).push(molecule.molNo);
+        }
+        // At most two dispatches, however many molecules (a thousand ligands): each runs every selector
+        if (toShow.length > 0) this.instance.dispatch(setMoleculesVisible({ molNos: toShow, visible: true }));
+        if (toHide.length > 0) this.instance.dispatch(setMoleculesVisible({ molNos: toHide, visible: false }));
     }
 
     /**

@@ -1,0 +1,158 @@
+.moorhen__ligand-list-list {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Each row is a compact accordion: no gaps between rows, a light header */
+.moorhen__ligand-list-row > .moorhen__accordion-container {
+    margin: 0;
+    border-top: none;
+}
+
+.moorhen__ligand-list-row .moorhen__accordion-header {
+    background-color: transparent;
+    padding: 0 0.25rem;
+    min-height: 1.75rem;
+}
+
+.moorhen__ligand-list-row .moorhen__accordion-content-shown {
+    padding: 0.25rem 0.5rem 0.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--moorhen-border);
+}
+
+/* On the row's own header only, not on its open content (representations, contacts) */
+.moorhen__ligand-list-row-hovered > .moorhen__accordion-container > .moorhen__accordion-header {
+    background: color-mix(in srgb, var(--moorhen-focus) 25%, transparent);
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.moorhen__ligand-list-row + .moorhen__ligand-list-row {
+    border-top: 1px solid var(--moorhen-border);
+}
+
+.moorhen__ligand-list-row-name {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* A ligand's metadata, under its 2D drawing: one "key  value" line per entry */
+.moorhen__ligand-list-metadata {
+    margin: 0.5rem 0 0;
+    display: grid;
+    gap: 0.15rem;
+}
+
+.moorhen__ligand-list-metadata > div {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+
+.moorhen__ligand-list-metadata dt {
+    opacity: 0.7;
+}
+
+.moorhen__ligand-list-metadata dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.moorhen__ligand-list-drawing {
+    width: 18rem;
+    min-height: 18rem;
+}
+
+.moorhen__ligand-list-drawing svg {
+    width: 100%;
+    height: auto;
+}
+
+/* Sections inside an open row (Contacts): a nested accordion, kept flat */
+.moorhen__ligand-list-section {
+    margin-top: 0.25rem;
+}
+
+.moorhen__ligand-list-section > .moorhen__accordion-container {
+    margin: 0;
+}
+
+.moorhen__ligand-contacts-note {
+    font-size: 0.85em;
+    opacity: 0.75;
+}
+
+.moorhen__ligand-contacts-list {
+    display: grid;
+    grid-template-columns: auto auto auto 1fr auto;
+    column-gap: 0.5rem;
+    font-size: 0.85em;
+    max-height: 12rem;
+    overflow-y: auto;
+}
+
+/* Rows are grid rows: their cells are laid out by the list's columns */
+.moorhen__ligand-contacts-row {
+    display: contents;
+}
+
+.moorhen__ligand-contacts-row:hover > span {
+    background: color-mix(in srgb, var(--moorhen-focus) 25%, transparent);
+}
+
+.moorhen__ligand-contacts-swatch {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    align-self: center;
+}
+
+.moorhen__ligand-contacts-flev {
+    width: 100%;
+    max-width: 24rem;
+}
+
+.moorhen__ligand-contacts-flev svg {
+    width: 100%;
+    height: auto;
+}
+
+/* A ligand with no dictionary: a warning edge on its header (the hover background still shows) */
+.moorhen__ligand-list-row[data-no-dictionary] > .moorhen__accordion-container > .moorhen__accordion-header {
+    box-shadow: inset 3px 0 0 var(--moorhen-warning);
+}
+
+/* Both: the warning edge and the hover shadow */
+.moorhen__ligand-list-row-hovered[data-no-dictionary] > .moorhen__accordion-container > .moorhen__accordion-header {
+    box-shadow:
+        inset 3px 0 0 var(--moorhen-warning),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.moorhen__ligand-list-row-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.moorhen__ligand-list-no-dictionary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+    font-size: 0.8em;
+    color: var(--moorhen-warning);
+    white-space: nowrap;
+}
+
+.moorhen__ligand-list-no-dictionary-icon {
+    width: 1rem;
+    height: 1rem;
+    fill: var(--moorhen-warning);
+}

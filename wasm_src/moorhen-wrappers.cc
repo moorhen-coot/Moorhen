@@ -1,4 +1,17 @@
 #include "moorhen-wrappers-helpers.h"
+#include <emscripten/eventloop.h>
+
+// Keep the runtime alive for the life of the module.
+//
+// This module has no main(), and in a pthreads build with EXIT_RUNTIME=0 emscripten decides
+// whether the runtime may exit by runtimeKeepaliveCounter alone - which only main() (through
+// emscripten_exit_with_live_runtime) would raise. So it stays at 0, and the first callback the
+// glue runs on the main thread - such as a pthread proxying its stdout there - ends in
+// maybeExit() -> exit(): every pthread in the pool is terminated and the runtime is marked
+// aborted. Direct calls still work afterwards, but the next one to start a thread finds no
+// worker left ("Tried to spawn a new thread, but the thread pool is exhausted") and hangs.
+// Static initializers run once, on the main thread, before any pthread is started.
+static const bool moorhen_runtime_kept_alive = (emscripten_runtime_keepalive_push(), true);
 
 EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_t>("molecules_container_t")
@@ -287,6 +300,10 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("get_map_unit_cell_grid",&molecules_container_js::get_map_unit_cell_grid)
     .function("debug_abort",&molecules_container_js::debug_abort)
     .function("get_B_validation",&molecules_container_js::get_B_validation)
+    .function("make_merged_molecule_json",&molecules_container_js::make_merged_molecule_json)
+    .function("delete_merged_molecule",&molecules_container_js::delete_merged_molecule)
+    .function("get_h_bonds_between_json",&molecules_container_js::get_h_bonds_between_json)
+    .function("get_salt_bridges_json",&molecules_container_js::get_salt_bridges_json)
     .function("rotamer_analysis_json",&molecules_container_js::rotamer_analysis_json)
     .function("ramachandran_analysis_json",&molecules_container_js::ramachandran_analysis_json)
     .function("peptide_omega_analysis_json",&molecules_container_js::peptide_omega_analysis_json)

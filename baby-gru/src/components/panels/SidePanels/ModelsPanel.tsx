@@ -1,15 +1,29 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { MoleculeCard } from "@/components/card/MoleculeCard/MoleculeCard";
 import { MoorhenButton } from "@/components/inputs";
-import { RootState } from "@/store";
+import { RootState, setShownSidePanel } from "@/store";
 import { convertRemToPx } from "@/utils/utils";
 import { CollapseAllCardsToggle } from "./utils/CollapseAllCardsToggle";
 import { SidePanelContainer } from "./utils/SidePanelContainer";
 
 export const ModelsPanel = () => {
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1);
-    const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
+    const moleculeList = useSelector((state: RootState) => state.molecules.moleculeList);
+    const dispatch = useDispatch();
+    // Molecules of ligands only are listed in the Ligands panel, not given a card each here
+    // As a string, compared by value: the panel re-renders when that set changes, not at every record
+    // refresh of any molecule (atom edits, batch chunks, dictionaries)
+    const ligandOnlyUids = useSelector((state: RootState) =>
+        Object.values(state.molecules.moleculeRecords)
+            .filter(record => record.isLigandOnly)
+            .map(record => record.uniqueId)
+            .sort()
+            .join(",")
+    );
+    const ligandOnly = new Set(ligandOnlyUids ? ligandOnlyUids.split(",") : []);
+    const molecules = moleculeList.filter(molecule => !ligandOnly.has(molecule.uniqueId));
+    const ligandMolecules = moleculeList.filter(molecule => ligandOnly.has(molecule.uniqueId));
 
     const [allOpen, setallOpen] = useState<boolean | null>(null);
     const [activeToggle, setActiveToggle] = useState<{ key: number; isOpen: boolean }>({ key: null, isOpen: null });
@@ -45,7 +59,15 @@ export const ModelsPanel = () => {
 
     return (
         <SidePanelContainer title="Molecules" extraControls={extraControl}>
-            {displayData.length === 0 ? <span>No models loaded</span> : displayData}
+            {displayData.length === 0 && ligandMolecules.length === 0 ? <span>No models loaded</span> : displayData}
+            {ligandMolecules.length > 0 && (
+                <div className="moorhen__models-panel-ligands-note">
+                    <span>
+                        {ligandMolecules.length} ligand-only molecule{ligandMolecules.length === 1 ? "" : "s"}
+                    </span>
+                    <MoorhenButton onClick={() => dispatch(setShownSidePanel("ligands"))}>Ligands panel</MoorhenButton>
+                </div>
+            )}
         </SidePanelContainer>
     );
 };

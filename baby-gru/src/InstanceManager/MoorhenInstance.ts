@@ -34,6 +34,8 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/FileLoading";
+import { batchLoadLigands } from "@/utils/BatchLigandLoading";
+import type { BatchLigandSource, BatchLoadLigandsOptions, BatchLoadLigandsResult } from "@/utils/BatchLigandLoading";
 import { loadMtzMaps } from "@/utils/MtzLoading";
 import type { MtzMapRequest } from "@/utils/MtzLoading";
 import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
@@ -569,6 +571,51 @@ export class MoorhenInstance extends StoreExtension {
                     callbacks.callback(createdObjects as LoadFilesResult, origin ?? "unknown");
                 }
                 return createdObjects as LoadFilesResult;
+            },
+
+            /**
+             * Load many ligand coordinate files at once (hundreds to thousands, e.g. docking poses).
+             *
+             * This is a dedicated path for that purpose, not the normal way to load a ligand: use
+             * `loadFiles` for a few files. Each file becomes one molecule drawn as bonds, as with
+             * `loadFiles`, but the work is grouped so that the time per ligand stays flat as the
+             * number of molecules grows:
+             * - the worker is sent a few messages per chunk of files instead of about twelve per file;
+             * - a missing dictionary is fetched once per residue type for the whole batch, in parallel;
+             * - the scene and molecule list are updated once per chunk.
+             *
+             * The batch is a single step: it is not recorded in the undo history and does not trigger
+             * backups. It does not move the camera unless `centre` is set, does not change the
+             * sequence viewer, and shows one summary message if some files fail instead of one each.
+             * In the Models panel, these ligands are listed by name with the other ligand-only molecules,
+             * instead of a full card per molecule.
+             *
+             * @param sources - PDB or mmCIF files, one ligand each: `File`s, URLs, or `{ url, filename }`.
+             * @param options.dictionaries - Restraint dictionaries known up front; the residue types they
+             * define are not looked up.
+             * @param options.centre - Centre the view on the last loaded ligand at the end (default false).
+             * @param options.chunkSize - Ligands per chunk (default 20; larger chunks are no faster, only longer pauses).
+             * @param options.onProgress - Called with (done, total) after each chunk is added.
+             * @param origin - Optional label forwarded to subscribers registered via `newFilesLoadedCallback`.
+             * @returns `loaded`, one entry per loaded file in input order (as `loadFiles` returns), and
+             * `failed`, the files that could not be loaded with the reason.
+             * @example
+             * const { loaded, failed } = await instance.files.batchLoadLigands(poseUrls, {
+             *     onProgress: (done, total) => console.log(`${done}/${total}`),
+             * });
+             */
+            async batchLoadLigands(
+                sources: BatchLigandSource[],
+                options?: BatchLoadLigandsOptions,
+                origin?: string
+            ): Promise<BatchLoadLigandsResult> {
+                const result = await execWhenReady(() => batchLoadLigands(moorhenInstance, sources, options));
+                if (result.loaded.length > 0) {
+                    for (const callbacks of Object.values(filesLoadedCallbacks)) {
+                        callbacks.callback(result.loaded, origin ?? "unknown");
+                    }
+                }
+                return result;
             },
 
             /**
@@ -1716,17 +1763,25 @@ export class MoorhenInstance extends StoreExtension {
                 onCootInitialized: () => {
                     this.dispatch(setCootInitialized(true));
                 },
+                // Only for the long job notification, which shows a task's progress instead while one
+                // reports it: a batch of a thousand ligands would otherwise toggle these 8000 times.
                 onCommandExit: () => {
-                    this.dispatch(toggleCootCommandExit());
+                    if (!this.store.getState().generalStates.jobProgress) this.dispatch(toggleCootCommandExit());
                 },
                 onCommandStart: () => {
-                    this.dispatch(toggleCootCommandStart());
+                    if (!this.store.getState().generalStates.jobProgress) this.dispatch(toggleCootCommandStart());
                 },
                 // onMoleculeChanged: (cootMolNo: number) => {
                 //     this.triggerMoleculeChanged(cootMolNo);
                 // },
             });
-            newCommandCentre.onActiveMessagesChanged = newActiveMessages => this.dispatch(setBusy(newActiveMessages.length !== 0));
+            // Only when it changes: called twice per command, and each dispatch notifies every subscriber.
+            // Kept on while a task shows its progress: its worker queue empties for a moment between
+            // messages, and each of those would restart the spinner's delay (a blinking spinner).
+            newCommandCentre.onActiveMessagesChanged = newActiveMessages => {
+                const busy = newActiveMessages.length !== 0 || !!this.store.getState().generalStates.jobProgress;
+                if (this.store.getState().globalUI.busy !== busy) this.dispatch(setBusy(busy));
+            };
             this.setCommandCentre(newCommandCentre);
             if (externalCommandCentreRef) {
                 externalCommandCentreRef.current = this.commandCentre;
