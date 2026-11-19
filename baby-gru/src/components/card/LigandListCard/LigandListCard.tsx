@@ -2,6 +2,7 @@ import parse from "html-react-parser";
 import { batch, shallowEqual, useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { MoorhenIcon, MoorhenSpinner } from "@/components/icons";
+import { useMoleculeChanged } from "@/hooks";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
 import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
 import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
@@ -469,6 +470,24 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string 
     );
     const hydrogensApply = shownStyle !== "MolecularSurface";
 
+    // Whether this ligand has any hydrogen (its own atoms: a model's protein may have some when its
+    // ligand does not). Asked again when the molecule changes (hydrogens added, say). Null until known.
+    const [hasHydrogens, setHasHydrogens] = useState<boolean | null>(null);
+    const { changeId } = useMoleculeChanged({ uid: molecule.uniqueId });
+    useEffect(() => {
+        let cancelled = false;
+        molecule
+            .gemmiAtomsForCid(cid ?? "/*/*/*/*")
+            .then(atoms => {
+                if (!cancelled) setHasHydrogens(atoms.some(atom => atom.element.trim() === "H" || atom.element.trim() === "D"));
+            })
+            // Not known (a molecule being deleted, say): left as it was
+            .catch(() => undefined);
+        return () => {
+            cancelled = true;
+        };
+    }, [molecule, cid, changeId]);
+
     // The carbon colour: the one picked here, else the custom colour a representation already has
     const [pickedColour, setPickedColour] = useState<string | null>(null);
     const currentColour =
@@ -551,8 +570,10 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string 
             <MoorhenToggle
                 label="Show Hydrogens"
                 checked={!hideHydrogens}
-                disabled={busy || !hydrogensApply}
-                tooltip={hydrogensApply ? undefined : "Surfaces are drawn without hydrogens"}
+                disabled={busy || !hydrogensApply || hasHydrogens === false}
+                disabledTooltip={
+                    hasHydrogens === false ? "This ligand has no hydrogens" : !hydrogensApply && "Surfaces are drawn without hydrogens"
+                }
                 onChange={toggleHydrogens}
             />
 
