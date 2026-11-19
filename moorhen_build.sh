@@ -747,10 +747,10 @@ if [ $BUILD_BOOST = true ]; then
     getboost
     mkdir -p ${BUILD_DIR}/boost
     cd ${BUILD_DIR}/boost
-    # locale is excluded because nothing uses it and its CMakeLists.txt fails to configure with
-    # CMake >= 4.5 (source_group TREE given a file outside the tree). Fixed upstream in
-    # boostorg/locale 1d070743d, which is not yet in a Boost release (1.92.0 and 1.93.0.beta1 lack it).
-    emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_STACKTRACE_ENABLE_FROM_EXCEPTION=OFF -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide;process;locale"
+    # Boost.Locale is needed: RDKit's ChemDraw support uses it (External/ChemDraw/.../CDXUnicode.cpp),
+    # and Coot's layla/file_io.cpp and lhasa/lhasa.cpp include RDKit's chemdraw.h. Its CMakeLists.txt
+    # fails to configure with CMake >= 4.5; getboost applies patches/boost-locale-cmake45.patch.
+    emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_STACKTRACE_ENABLE_FROM_EXCEPTION=OFF -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide;process"
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing boost, giving up."
 fi
