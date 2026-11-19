@@ -393,6 +393,13 @@ else
     MOORHEN_CMAKE_FLAGS="-pthread -fwasm-exceptions"
 fi
 
+# Release unless told otherwise, for every emcmake cmake below. Without it a dependency whose own
+# CMakeLists.txt does not pick a build type (gemmi, privateer, coordgen, maeparser, zlib, libpng,
+# freetype) is compiled with no -O flag at all, i.e. -O0. CMake 3.22+ takes this from the
+# environment, but only on a first configure: an existing build directory keeps the (empty) build
+# type in its cache, so clear those directories once to rebuild them optimised.
+export CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-Release}
+
 BUILD_GSL=false
 BUILD_BOOST=false
 BUILD_MAEPARSER=false
