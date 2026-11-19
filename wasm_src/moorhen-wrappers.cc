@@ -1,4 +1,17 @@
 #include "moorhen-wrappers-helpers.h"
+#include <emscripten/eventloop.h>
+
+// Keep the runtime alive for the life of the module.
+//
+// This module has no main(), and in a pthreads build with EXIT_RUNTIME=0 emscripten decides
+// whether the runtime may exit by runtimeKeepaliveCounter alone - which only main() (through
+// emscripten_exit_with_live_runtime) would raise. So it stays at 0, and the first callback the
+// glue runs on the main thread - such as a pthread proxying its stdout there - ends in
+// maybeExit() -> exit(): every pthread in the pool is terminated and the runtime is marked
+// aborted. Direct calls still work afterwards, but the next one to start a thread finds no
+// worker left ("Tried to spawn a new thread, but the thread pool is exhausted") and hangs.
+// Static initializers run once, on the main thread, before any pthread is started.
+static const bool moorhen_runtime_kept_alive = (emscripten_runtime_keepalive_push(), true);
 
 EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_t>("molecules_container_t")
