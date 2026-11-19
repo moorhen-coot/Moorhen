@@ -568,9 +568,7 @@ export class MoorhenMolecule {
      * Update the cached gemmi structure for this molecule
      */
     async updateGemmiStructure(coordString: string): Promise<void> {
-        if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
-            this.gemmiStructure.delete();
-        }
+        this.freeGemmiStructure();
         this.cachedGemmiAtoms = null;
         this.gemmiStructure = readGemmiStructure(coordString, this.name);
         window.gemmiModule.gemmi_setup_entities(this.gemmiStructure);
@@ -751,9 +749,7 @@ export class MoorhenMolecule {
             },
             doJournal
         )) as moorhen.WorkerResponse<number>;
-        if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
-            this.gemmiStructure.delete();
-        }
+        this.freeGemmiStructure();
         return response;
     }
 
@@ -763,9 +759,23 @@ export class MoorhenMolecule {
      */
     forget(): void {
         this.closeRecord();
+        this.freeGemmiStructure();
+    }
+
+    /**
+     * Free the gemmi structure and drop the reference to it.
+     *
+     * Dropping it matters as much as freeing it: anything still holding this molecule (an old
+     * props object, a closure) would otherwise reach a freed embind object, and every property on
+     * it throws "cannot call emscripten binding method ... on deleted object" when read. React's
+     * development build reads them when it diffs a changed `molecules` prop for its performance
+     * track - it walks inherited enumerable keys, which embind getters are.
+     */
+    private freeGemmiStructure(): void {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete();
         }
+        this.gemmiStructure = null;
     }
 
     /** No more record for this molecule, and none written back by a refresh still in flight */
@@ -1112,9 +1122,7 @@ export class MoorhenMolecule {
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
     async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<moorhen.Molecule> {
-        if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
-            this.gemmiStructure.delete();
-        }
+        this.freeGemmiStructure();
 
         this.name = moleculeNameFromFileName(name);
 
@@ -1310,9 +1318,7 @@ export class MoorhenMolecule {
      * Update the cached atoms with the latest information from the libcoot api
      */
     async updateAtoms() {
-        if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
-            this.gemmiStructure.delete();
-        }
+        this.freeGemmiStructure();
         // The diameter used to be fetched here too, on every atom update. It fed only the initial
         // zoom, which now measures the atoms directly, so this is one fewer round trip to the
         // worker after every modification.
@@ -2255,7 +2261,7 @@ export class MoorhenMolecule {
      * @returns {Promise<moorhen.AtomInfo[]>} JS objects containing atom information
      */
     async gemmiAtomsForCid(cid: string, omitExcludedCids: boolean = false): Promise<moorhen.AtomInfo[]> {
-        if (this.atomsDirty || this.gemmiStructure.isDeleted()) {
+        if (this.atomsDirty || !this.gemmiStructure || this.gemmiStructure.isDeleted()) {
             await this.updateAtoms();
         }
 

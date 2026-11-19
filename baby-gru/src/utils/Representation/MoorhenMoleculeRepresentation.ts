@@ -2159,7 +2159,7 @@ export class MoleculeRepresentation {
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
         try {
             const objects = [{ ...response.data.result.result, pick_info: {} }];
-            if (objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+            if (objects.length > 0 && this.parentMolecule.gemmiStructure && !this.parentMolecule.gemmiStructure.isDeleted()) {
                 const flippedNormalsObjects = objects.map(object => {
                     const flippedNormalsObject = { ...object };
                     flippedNormalsObject.idx_tri = object.idx_tri.map(element => element.map(subElement => subElement.reverse()));
@@ -2205,7 +2205,7 @@ export class MoleculeRepresentation {
         if (this.cavities) {
             const _objects = this.cavities.mesh;
             const cavityIndex = this.cavities.index ?? 1;
-            if (_objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+            if (_objects.length > 0 && this.parentMolecule.gemmiStructure && !this.parentMolecule.gemmiStructure.isDeleted()) {
 
                 let objects = [];
                 if (cavityIndex === 0) {
