@@ -1,40 +1,28 @@
-import { useEffect, useState } from "react";
-import { RootState } from "../../store";
-import { MoorhenWebComponent } from "../MoorhenWebComponent";
+import { useCallback, useSyncExternalStore } from "react";
+import type { RootState } from "../../store";
+import { type MoorhenTarget, useMoorhenInstance } from "./useMoorhenInstance";
 
 /**
  * For use with MoorhenWebComponent only.
  *
- * This hook allows React components to access and subscribe to state from the Moorhen store.
+ * A value of the Moorhen store, kept up to date: the component re-renders when it changes.
  *
  * @template T - The type of the selected state value
- * @param elementID - The HTML element ID of the MoorhenWebComponent
+ * @param target - The element id of the web component, or a ref to an element inside it
  * @param selector - A function that extracts the desired value from RootState
- * @returns The selected value from the store, or null if not yet initialized
+ * @returns The selected value from the store, or null while Moorhen is not ready yet
+ *
+ * The selector must return part of the state (as in the examples), not build a new object or array
+ * on each call: React needs the same value back while the state has not changed, and reports an
+ * infinite loop otherwise. Select the pieces separately, or derive from them in the component.
  *
  * @example
- * const myValue = useMoorhenSelector<MyType>('moorhen-app', (state) => state.myValue);
+ * const molecules = useMoorhenSelector("moorhen-app", state => state.molecules.moleculeList);
+ * const drawAxes = useMoorhenSelector(ref, state => state.sceneSettings.drawAxes);
  */
-export const useMoorhenSelector = <T>(elementID: string, selector: (state: RootState) => T) => {
-    const [selectedValue, setSelectedValue] = useState<T | null>(null);
-
-    useEffect(() => {
-        const subscribe = async () => {
-            const moorhen = document.getElementById(elementID) as MoorhenWebComponent;
-            const moorhenInstance = await moorhen?.getMoorhenInstance();
-            return moorhenInstance.subscribeToStore(selector, setSelectedValue);
-        };
-
-        const unsubscribePromise = subscribe();
-
-        return () => {
-            unsubscribePromise.then(unsubscribe => {
-                if (unsubscribe) {
-                    unsubscribe();
-                }
-            });
-        };
-    }, [elementID, selector]);
-
-    return selectedValue;
+export const useMoorhenSelector = <T>(target: MoorhenTarget, selector: (state: RootState) => T): T | null => {
+    const instance = useMoorhenInstance(target);
+    const subscribe = useCallback((onChange: () => void) => (instance ? instance.store.subscribe(onChange) : () => {}), [instance]);
+    // An inline selector is fine: it is called on each render and store change
+    return useSyncExternalStore(subscribe, () => (instance ? selector(instance.store.getState()) : null));
 };

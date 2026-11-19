@@ -17,7 +17,7 @@ import {
 } from "../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
-import { MOORHEN_ATOM_TAG_KIND } from "../../utils/enums";
+import { MOORHEN_ATOM_TAG_KIND, MOORHEN_MESH_RESIDUE_TAG_KIND } from "../../utils/enums";
 import { addAvailableFontList, emptyAvailableFonts } from "../../store/labelSettingsSlice";
 import { setRefinementSelection } from "../../store/refinementSettingsSlice";
 import {
@@ -74,7 +74,16 @@ interface ContainerOptionalProps {
     disableFileUploads?: boolean;
     urlPrefix?: string;
     viewOnly: boolean;
+    /**
+     * Extra modals for React hosts, added to `instance.uiExtensions` (web component hosts call
+     * `instance.uiExtensions.addModal` instead). Each element is rendered all the time and decides
+     * itself when to show; its `modalId` prop is its id.
+     */
     extraDraggableModals?: React.JSX.Element[];
+    /**
+     * Extra side panels for React hosts, keyed by id and added to `instance.uiExtensions` (web
+     * component hosts call `instance.uiExtensions.addSidePanel` instead).
+     */
     extraSidePanels?: Record<string, import("../panels").MoorhenPanel>;
     monomerLibraryPath?: string;
     allowScripting?: boolean;
@@ -153,12 +162,32 @@ export const MoorhenContainer = (props: ContainerProps) => {
     const store = useStore<RootState>();
 
     const moorhenInstance = useMoorhenInstance();
+    // Hosts can only register once the instance is ready, so this runs before any of them
+    if (webComponentMode) moorhenInstance.uiExtensions.restrictToSlots();
 
     useEffect(() => {
         if (props.moorhenInstanceRef) {
             props.moorhenInstanceRef.current = moorhenInstance;
         }
     }, [props.moorhenInstanceRef]);
+
+    // The extra modals and side panels props go through the instance's uiExtensions, like everything added at run time
+    useEffect(() => {
+        if (!props.extraDraggableModals?.length) return;
+        const removers = props.extraDraggableModals.map((element, index) => {
+            const modalId = (element as React.ReactElement<{ modalId?: string }>).props?.modalId;
+            return moorhenInstance.uiExtensions.addModal({ id: modalId ?? `extra-draggable-modal-${index}`, element });
+        });
+        return () => removers.forEach(remove => remove());
+    }, [props.extraDraggableModals, moorhenInstance]);
+
+    useEffect(() => {
+        if (!props.extraSidePanels) return;
+        const removers = Object.entries(props.extraSidePanels).map(([id, panel]) =>
+            moorhenInstance.uiExtensions.addSidePanel({ id, label: panel.label, icon: panel.icon, content: panel.panelContent })
+        );
+        return () => removers.forEach(remove => remove());
+    }, [props.extraSidePanels, moorhenInstance]);
 
     const { commandCentre, timeCapsuleRef } = useCommandAndCapsule();
 
@@ -189,13 +218,25 @@ export const MoorhenContainer = (props: ContainerProps) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    /**
+     * The molecule the atom channel landed on during this pointer move, or null.
+     *
+     * The renderer reports its two findings in order - the nearest atom, then the labelled mesh
+     * piece - within one handler, so a ref is read back reliably in the second from the first.
+     * Which of the two should be believed is decided in onSectionHovered, and this is how it
+     * knows what the other channel said.
+     */
+    const atomHoverMoleculeRef = useRef<moorhen.Molecule | null>(null);
+
     const onAtomHovered = useCallback(
         (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => {
+            atomHoverMoleculeRef.current = null;
             if (identifier == null) {
                 dispatch(setHoveredAtom({ molecule: null, cid: null, atomInfo: null }));
             } else {
                 molecules.forEach(molecule => {
                     if (molecule.buffersInclude(identifier.buffer)) {
+                        atomHoverMoleculeRef.current = molecule;
                         const newCid = parseAtomInfoLabel(identifier.atom);
                         dispatch(setHoveredAtom({ molecule: molecule, cid: newCid, atomInfo: identifier.atom }));
                     }
@@ -219,20 +260,52 @@ export const MoorhenContainer = (props: ContainerProps) => {
      */
     const onSectionHovered = useCallback(
         (identifier: { buffer: { id: string }; kind: string; tag: string }) => {
-            if (identifier == null || identifier.kind !== MOORHEN_ATOM_TAG_KIND) {
+            if (identifier == null) {
                 return;
             }
-            // "<uniqueId>|<chain>|<residue>|<cid>". Only the first and last fields matter here;
-            // the middle two exist so the reverse direction can match without parsing a CID.
-            const fields = identifier.tag.split("|");
-            if (fields.length < 4) {
+            /**
+             * Whether this labelled piece outranks whatever the atom channel just reported.
+             *
+             * The renderer no longer decides this for pieces that stand for a residue, because
+             * the question is about molecules and the renderer knows only buffers. A mesh that
+             * names a residue of the *same molecule* as the hovered atom wins: it is the
+             * representation being pointed at, and a surface patch or ribbon section that stays
+             * lit should not be labelled with an atom that wanders beneath it. An atom of some
+             * other molecule is left alone - it is a different object and has its own claim.
+             *
+             * When the atom channel found nothing, there is nothing to outrank and the piece
+             * speaks for itself, which is what it has always done.
+             */
+            const atomMolecule = atomHoverMoleculeRef.current;
+            const outranksAtom = (molecule: moorhen.Molecule) =>
+                atomMolecule === null || atomMolecule === molecule;
+
+            if (identifier.kind === MOORHEN_ATOM_TAG_KIND) {
+                // "<uniqueId>|<chain>|<residue>|<cid>". Only the first and last fields matter
+                // here; the middle two exist so the reverse direction can match without
+                // parsing a CID.
+                const fields = identifier.tag.split("|");
+                if (fields.length < 4) {
+                    return;
+                }
+                const moleculeUniqueId = fields[0];
+                const cid = fields.slice(3).join("|");
+                const molecule = molecules.find(item => item.uniqueId === moleculeUniqueId);
+                if (molecule && cid && outranksAtom(molecule)) {
+                    dispatch(setHoveredAtom({ molecule: molecule, cid: cid, atomInfo: null }));
+                }
                 return;
             }
-            const moleculeUniqueId = fields[0];
-            const cid = fields.slice(3).join("|");
-            const molecule = molecules.find(item => item.uniqueId === moleculeUniqueId);
-            if (molecule && cid) {
-                dispatch(setHoveredAtom({ molecule: molecule, cid: cid, atomInfo: null }));
+            if (identifier.kind === MOORHEN_MESH_RESIDUE_TAG_KIND) {
+                // A molecular surface names the residue behind the triangle under the pointer,
+                // and the tag is the CID Coot wrote. Which molecule it belongs to is not in the
+                // tag - it does not need to be, because the buffer is here and a molecule can
+                // be asked whether it owns one. That is how an atom hover finds its molecule
+                // too.
+                const molecule = molecules.find(item => item.buffersInclude(identifier.buffer));
+                if (molecule && identifier.tag && outranksAtom(molecule)) {
+                    dispatch(setHoveredAtom({ molecule: molecule, cid: identifier.tag, atomInfo: null }));
+                }
             }
         },
         [molecules, dispatch]
@@ -334,6 +407,12 @@ export const MoorhenContainer = (props: ContainerProps) => {
         }
     }, [drawMissingLoops]);
 
+    // MathJax (about 0.5 MB, from a CDN) is only needed for LaTeX labels. Load it once libcoot is
+    // up, so that it isn't competing with the libcoot download for bandwidth during start-up.
+    useEffect(() => {
+        if (cootInitialized && !window.MathJax) loadMathjax(`${urlPrefix}`);
+    }, [cootInitialized]);
+
     useEffect(() => {
         const startupEffect = async () => {
             if (!window.gemmiModule) windowGemmiLoader(`${urlPrefix}/wasm/`);
@@ -379,7 +458,6 @@ export const MoorhenContainer = (props: ContainerProps) => {
             } catch (error) {
                 console.error("Error parsing shortcuts:", error);
             }
-            if (!window.MathJax) setTimeout(() => loadMathjax(`${urlPrefix}`), 500);
             // Before onInitialisationCompleted, so a host sees Moorhen in its start-up scene
             await moorhenInstance.userScene.showStartupScene(props.startupScene);
             return true;
@@ -485,7 +563,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                     <PopupControls />
                     <SnackBars />
                     <ActivityIndicator />
-                    <MoorhenModalsContainer extraDraggableModals={props.extraDraggableModals} />
+                    <MoorhenModalsContainer />
                     <AtomClickManager />
                     <UpdatingMapsManager />
                     <MoorhenMapsHeadManager />
@@ -505,7 +583,7 @@ export const MoorhenContainer = (props: ContainerProps) => {
                 </div>
                 <BottomPanelContainer />
 
-                <MoorhenSidePanel extraSidePanels={props.extraSidePanels} />
+                <MoorhenSidePanel />
             </div>
         </>
     );

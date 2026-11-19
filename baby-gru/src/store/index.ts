@@ -14,26 +14,6 @@ export {
 }  from "./labelSettingsSlice";
 export { resetLhasaSettings, addRdkitMoleculePickle, removeRdkitMoleculePickle, emptyRdkitMoleculePickleList }  from "./lhasaSlice";
 export {
-    showMap,
-    hideMap,
-    setContourLevel,
-    setMapRadius,
-    setMapFastRadius,
-    setMapAlpha,
-    setMapStyle,
-    changeMapRadius,
-    setDefaultMapSamplingRate,
-    setDefaultMapLitLines,
-    setMapLineWidth,
-    setDefaultMapSurface,
-    setMapColours,
-    setNegativeMapColours,
-    setPositiveMapColours,
-    changeContourLevel,
-    setReContourMapOnlyOnMouseUp,
-    resetMapContourSettings,
-}  from "./mapContourSettingsSlice";
-export {
     setConnectedMolecule,
     enableUpdatingMaps,
     disableUpdatingMaps,
@@ -125,8 +105,31 @@ export {
 }  from "./glRefSlice";
 export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
+export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
+export {
+    addVector,
+    removeVector,
+    emptyVectors,
+    addVectors,
+    removeVectors,
+    removeVectorsMatchingIDString,
+    removeVectorsByTag,
+    removeVectorById,
+    removeVectorsByIds
+}  from "./vectorsSlice";
+export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
+export {
+    addObject,
+    removeObject,
+    removeObjectById,
+    removeObjectsByTag,
+    updateObject,
+    emptyObjects,
+
+}  from "./threeDObjectsSlice";
 export {
     setSelectedThreeDObject,
+    setMovingMapSlice,
     setActiveMap,
     setViewOnly,
     setTheme,
@@ -158,40 +161,29 @@ export {
     setAllowMergeFittedLigand,
     setDisableFileUpload,
 }  from "./generalStatesSlice";
-export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
 export {
-    addMolecule,
-    removeMolecule,
-    emptyMolecules,
-    addMoleculeList,
-    addGeneralRepresentation,
-    showMolecule,
-    hideMolecule,
-    addCustomRepresentation,
-    removeCustomRepresentation,
-    removeGeneralRepresentation,
-}  from "./moleculesSlice";
-export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
-export {
-    addObject,
-    removeObject,
-    removeObjectById,
-    removeObjectsByTag,
-    updateObject,
-    emptyObjects,
-
-}  from "./threeDObjectsSlice";
-export {
-    addVector,
-    removeVector,
-    emptyVectors,
-    addVectors,
-    removeVectors,
-    removeVectorsMatchingIDString,
-    removeVectorsByTag,
-    removeVectorById,
-    removeVectorsByIds
-}  from "./vectorsSlice";
+    showMap,
+    hideMap,
+    setContourLevel,
+    setMapRadius,
+    setMapFastRadius,
+    setMapAlpha,
+    setMapStyle,
+    setMapSlice,
+    setMapSliceNodalLines,
+    setMapSliceContourSpacing,
+    changeMapRadius,
+    setDefaultMapSamplingRate,
+    setDefaultMapLitLines,
+    setMapLineWidth,
+    setDefaultMapSurface,
+    setMapColours,
+    setNegativeMapColours,
+    setPositiveMapColours,
+    changeContourLevel,
+    setReContourMapOnlyOnMouseUp,
+    resetMapContourSettings,
+}  from "./mapContourSettingsSlice";
 export {
     setBusy,
     setTimeCapsuleBusy,
@@ -211,6 +203,18 @@ export {
     resumeClickAwayListener,
 }  from "./globalUISlice";
 export {
+    addMolecule,
+    removeMolecule,
+    emptyMolecules,
+    addMoleculeList,
+    addGeneralRepresentation,
+    showMolecule,
+    hideMolecule,
+    addCustomRepresentation,
+    removeCustomRepresentation,
+    removeGeneralRepresentation,
+}  from "./moleculesSlice";
+export {
     setMovieDocument, setMovieName, setMovieFileName, newMovie,
     setMoviePlaying, selectKeyframe,
     appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
@@ -229,7 +233,10 @@ export {
     setDoSSAO,
     setSsaoRadius,
     setSsaoBias,
-    setResetClippingFogging,
+    setAutoFog,
+    setAutoClip,
+    setDoFog,
+    setDoClip,
     setDefaultRepresentationStyle,
     setClipCap,
     resetSceneSettings,
@@ -238,6 +245,7 @@ export {
     setDoShadowDepthDebug,
     setDoShadow,
     setShadowMapQuality,
+    setShadowSoftness,
     setDoSpin,
     setDepthBlurRadius,
     setDepthPeelLayers,

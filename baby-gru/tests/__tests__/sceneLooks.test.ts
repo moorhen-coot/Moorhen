@@ -4,7 +4,7 @@
  */
 import { createMoorhenStore } from "@/store/MoorhenReduxStore";
 import { SCENE_LOOKS, currentLook, withLook } from "@/store/sceneLooks";
-import { applySceneSettingsSnapshot, setBackgroundColor, setClipStart, setResetClippingFogging, setDoSSAO } from "@/store/sceneSettingsSlice";
+import { applySceneSettingsSnapshot, setBackgroundColor, setClipStart, setAutoClip, setDoSSAO } from "@/store/sceneSettingsSlice";
 
 const look = (id: string) => SCENE_LOOKS.find(item => item.id === id);
 
@@ -17,7 +17,7 @@ describe("scene looks", () => {
     test("applying one changes the lighting and effects only, and is recognised", () => {
         const store = createMoorhenStore();
         store.dispatch(setBackgroundColor([0.1, 0.2, 0.3, 1]));
-        store.dispatch(setResetClippingFogging(false));
+        store.dispatch(setAutoClip(false));
         store.dispatch(setClipStart(12));
 
         for (const item of SCENE_LOOKS) {
@@ -26,7 +26,7 @@ describe("scene looks", () => {
             expect(currentLook(settings)?.id).toBe(item.id);
             // Left alone
             expect(settings.backgroundColor).toEqual([0.1, 0.2, 0.3, 1]);
-            expect(settings.resetClippingFogging).toBe(false);
+            expect(settings.autoClip).toBe(false);
             expect(settings.clipStart).toBe(12);
         }
     });

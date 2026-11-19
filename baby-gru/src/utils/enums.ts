@@ -27,6 +27,7 @@ export const modalKeys = Object.freeze({
     COLOR_MAP_BY_MAP : "colour-map-by-map",
     VECTORS : "vectors",
     OVERLAYS2D : "overlays-2d",
+    CHECK_LIST_TEST: "check-list-test",
     PAEPLOT : "pae-plot",
     SCENE_SLIDERS: "scene-sliders",
     CONKIT: "conkit",
@@ -45,6 +46,8 @@ export const representationLabelMapping = Object.freeze({
     Tubes: "Bendix",
     CDs: "Contact dots",
     MolecularSurface: "Mol Surface",
+    VdWSurface: "VdW Surface",
+    AccessibleSurface: "Acc. Surface",
     gaussian: "Gaussian Surface",
     cavities: "Cavities",
     ligands: "Ligands",
@@ -54,13 +57,31 @@ export const representationLabelMapping = Object.freeze({
     glycoBlocks: "Glyco-Blocks",
     restraints: "Restraints",
     MetaBalls: "MetaBalls",
+    bloboids: "Bloboids",
     adaptativeBonds: "Adaptive Bonds",
     residue_environment: "Res. Environment",
     environment: "Environment",
 });
 
 export const COOT_BOND_REPRESENTATIONS = ["MetaBalls", "CBs", "VdwSpheres", "CAs", "ligands"];
+<<<<<<< HEAD
 export const M2T_REPRESENTATIONS = ["CRs", "DishyBases", "StickBases", "VdWSurface", "Calpha", "MolecularSurface", "Worm", "Tubes"];
+=======
+export const M2T_REPRESENTATIONS = ["CRs", "DishyBases", "StickBases", "VdWSurface", "AccessibleSurface", "Calpha", "MolecularSurface"];
+
+/**
+ * The surfaces MoleculesToTriangles makes, each its own representation style: offered in the
+ * add/edit representation dialogs as one "Mol Surface" style with a surface type.
+ */
+export const M2T_SURFACE_REPRESENTATIONS = ["MolecularSurface", "VdWSurface", "AccessibleSurface"];
+
+/** The names of the surface types in the representation dialogs. */
+export const surfaceTypeLabelMapping = Object.freeze({
+    MolecularSurface: "Molecular",
+    VdWSurface: "Van der Waals",
+    AccessibleSurface: "Solvent accessible",
+});
+>>>>>>> main
 
 export const residueCodesOneToThree = Object.freeze({
     C: "CYS",
@@ -445,6 +466,20 @@ export const MOORHEN_ATOM_TAG_KIND = "moorhen-atom";
 /** The residue key the first three fields of such a tag make up. */
 export const moorhenAtomTagKey = (moleculeUniqueId: string, chainId: string, residueNumber: number | string) =>
     `${moleculeUniqueId}|${chainId}|${parseInt(String(residueNumber))}`;
+
+/**
+ * Tag scheme for a residue named by a mesh that knows which residue made each of its vertices.
+ * The tag is the CID Coot wrote, "/1/A/23(ALA)".
+ *
+ * A molecular surface knows, because it is built one atom at a time; so does a ribbon, which
+ * is swept along a spline half a residue either side of each alpha carbon. Neither is named
+ * here - the scheme is about what the mesh can say, not about which representation said it.
+ *
+ * Deliberately not the atom scheme above. A reader of that scheme expects to find a contiguous
+ * range of vertices for the section it names, which a surface cannot offer: one residue's
+ * vertices are scattered through the mesh wherever its atoms reach the air.
+ */
+export const MOORHEN_MESH_RESIDUE_TAG_KIND = "moorhen-mesh-residue";
 
 /**
  * Tag scheme for manipulation handles, written "<action>|<axis>" - "translate|x", "rotate|z".

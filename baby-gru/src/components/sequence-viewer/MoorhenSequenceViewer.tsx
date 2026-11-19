@@ -1,9 +1,9 @@
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useStateWithRef } from "../../hooks/useStateWithRef";
 import { clickedResidueType } from "../card/MoleculeCard/MoleculeCard";
 import { MoorhenButton } from "../inputs";
 import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
-import type { ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
+import type { HoveredResidue, HoveredResidueSubscription, ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
 import "./MoorhenSequenceViewer.css";
 import { SequenceRow } from "./SequenceRow";
 
@@ -14,7 +14,10 @@ type MoorhenSequenceViewerPropsType = {
     selectedResidues?: ResiduesSelection;
     setSelectedResidues?: (selection: ResiduesSelection) => void;
     onHoverResidue?: (molName: string, chain: string, resNum: number, resCode: string, resCID: string) => void;
-    hoveredResidue?: { molNo: number; chain: string; resNum: number };
+    /** The residue to highlight as hovered. Prefer subscribeToHoveredResidue: a change of this prop re-renders the viewer. */
+    hoveredResidue?: HoveredResidue;
+    /** Highlights the hovered residue it reports, outside React (no re-render at mouse rate) */
+    subscribeToHoveredResidue?: HoveredResidueSubscription;
     maxDisplayHeight?: number;
     nameColumnWidth?: number;
     columnWidth?: number;
@@ -76,7 +79,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
 
     //const [displayHeight, setDisplayHeight] = useState<number>(_displayHeight > 0 ? _displayHeight : 1);
     const [sequencesSlice, setSequencesSlices] = useState<[number, number]>([0, displayHeight]);
-    const [mouseIsHovering, setMouseIsHovering, mouseIsHoveringRef] = useStateWithRef<boolean>(false);
+    const mouseIsHoveringRef = useRef<boolean>(false);
     
     const [_selectedResidues, _setSelectedResidues] = useState<ResiduesSelection>(
         props.selectedResidues ? props.selectedResidues : null
@@ -91,12 +94,6 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     const [glideSelectStartRes, setGlideSelectStartRes, glideSelectStartResRef] = useStateWithRef<ResiduesSelection>(null);
     const [isGliding, setIsGliding, isGlidingRef] = useStateWithRef<boolean>(false);
     const clickTimer = useRef<NodeJS.Timeout | null>(null);
-    const [hoveredResidue, setHoveredResidue] = useState<{
-        molName: string;
-        chain: string;
-        resNum: number;
-        resCode: string;
-    }>(null);
 
     const handleResidueMouseDown = useCallback(evt => {
         const molNo = Number(evt.currentTarget.dataset.molno);
@@ -106,8 +103,11 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
             return;
         } else {
             setGlideSelectStartRes({ molNo: molNo, chain: chain, range: [resNum, null] });
+            clearClickTimer();
+            // Long press: once the timer fires, the mouse up will select (single residue or range)
             clickTimer.current = setTimeout(() => {
-                clearClickTimer();
+                clickTimer.current = null;
+                setIsGliding(true);
             }, 300);
         }
     }, []);
@@ -116,7 +116,6 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         if (clickTimer.current) {
             clearTimeout(clickTimer.current);
             clickTimer.current = null;
-            setIsGliding(true);
         }
     };
 
@@ -129,17 +128,18 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
             handleShiftSelect(molNo, chain, resNum);
             return;
         }
-        if (clickTimer.current) {
-            clearClickTimer();
-            if (props.onResidueClick) {
-                props.onResidueClick(0, molName, chain, resNum);
-            }
-        }
-        if (!isGlidingRef.current) {
-            handleResidueClick(molName, chain, resNum);
-        } else {
+        const start = glideSelectStartResRef.current;
+        const isDrag = start && (start.molNo !== molNo || start.chain !== chain || start.range[0] !== resNum);
+        const isShortClick = clickTimer.current !== null;
+        clearClickTimer();
+        if (start && (isDrag || !isShortClick)) {
+            // Long click (selects the residue) or click-and-drag (selects the range)
             handleGlideSelect(molNo, chain, resNum);
+        } else {
+            // Short click on a single residue: center on it only, no selection
+            handleResidueClick(molName, chain, resNum);
         }
+        setGlideSelectStartRes(null);
         setIsGliding(false);
     }, []);
 
@@ -399,7 +399,54 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         return ticks;
     }, [maxVal, minVal, columnWidth, noSequence, invalidSequences]);
 
-    let hoveredRef: { molno: number; chain: string; resNum: number } | null = null;
+    /**
+     * The hovered residue (from the 3D view, or the viewer itself through onHoverResidue) is shown
+     * outside React: a data-hovered attribute moved from residue box to residue box, so no component
+     * re-renders at mouse rate. An attribute, not a class: React rewrites className when the
+     * selection changes, but leaves an attribute it does not manage alone.
+     */
+    const containerRef = useRef<HTMLDivElement>(null);
+    const hoveredInfoRef = useRef<HTMLDivElement>(null);
+    const hoveredResidueRef = useRef<HoveredResidue | null>(null);
+    const hoveredElementsRef = useRef<Element[]>([]);
+
+    const applyHoveredResidue = useCallback(() => {
+        const residue = hoveredResidueRef.current;
+        const container = containerRef.current;
+        const elements =
+            residue && container
+                ? Array.from(
+                      container.querySelectorAll(
+                          `.moorhen__seqviewer__residue-box[data-molno="${residue.molNo}"][data-chain="${CSS.escape(residue.chain)}"][data-resnum="${residue.resNum}"]`
+                      )
+                  )
+                : [];
+        hoveredElementsRef.current.forEach(element => {
+            if (!elements.includes(element)) element.removeAttribute("data-hovered");
+        });
+        elements.forEach(element => element.setAttribute("data-hovered", ""));
+        hoveredElementsRef.current = elements;
+    }, []);
+
+    const { subscribeToHoveredResidue, hoveredResidue: hoveredResidueProp } = props;
+    useEffect(() => {
+        if (!subscribeToHoveredResidue) return;
+        return subscribeToHoveredResidue(residue => {
+            hoveredResidueRef.current = residue;
+            applyHoveredResidue();
+        });
+    }, [subscribeToHoveredResidue, applyHoveredResidue]);
+
+    useEffect(() => {
+        if (subscribeToHoveredResidue) return;
+        hoveredResidueRef.current = hoveredResidueProp ?? null;
+        applyHoveredResidue();
+    }, [hoveredResidueProp, subscribeToHoveredResidue, applyHoveredResidue]);
+
+    // Residue boxes mounted by a render (scrolled into view, sequences changed) get the attribute too
+    useLayoutEffect(() => {
+        applyHoveredResidue();
+    });
 
     const handleResidueMouseOver = useCallback(
         evt => {
@@ -412,38 +459,19 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                 const resCID = evt.currentTarget.dataset.rescid;
                 onHoverResidue(molName, chain, resNum, resCode, resCID);
             }
-            setHoveredResidue({
-                molName: molName,
-                chain: chain,
-                resCode: resCode,
-                resNum: resNum,
-            });
+            // The title bar is written directly: a state would re-render the viewer at mouse rate
+            if (hoveredInfoRef.current) {
+                hoveredInfoRef.current.textContent = `Chain: ${chain} Res: ${resNum} ${resCode}`;
+            }
         },
-        [onHoverResidue, setHoveredResidue, mouseIsHoveringRef, isScrollingRef]
+        [onHoverResidue, isScrollingRef]
     );
-
-    if (props.hoveredResidue && !mouseIsHovering) {
-        if (sequencesArray.some(seqObj => seqObj.molNo === props.hoveredResidue.molNo)) {
-            hoveredRef = {
-                molno: props.hoveredResidue.molNo,
-                chain: props.hoveredResidue.chain,
-                resNum: props.hoveredResidue.resNum,
-            };
-        }
-    } else {
-        hoveredRef = null;
-    }
 
     const listOfSeqs: React.JSX.Element[] = useMemo(() => {
         if (noSequence || invalidSequences) {
             return null;
         }
         return sequencesToDisplay?.map((seqObj, index) => {
-            const hoveredResidue = hoveredRef
-                ? seqObj.molNo === hoveredRef.molno && seqObj.chain === hoveredRef.chain
-                    ? hoveredRef.resNum
-                    : null
-                : null;
             return (
                 <SequenceRow
                     key={`${seqObj.molNo}-${seqObj.chain}-${seqObj.key ? seqObj.key : index}`}
@@ -451,7 +479,6 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     nameColumnWidth={nameColumnWidth}
                     columnWidth={columnWidth}
                     fontSize={fontSize}
-                    hoveredResidue={hoveredResidue}
                     isGliding={isGlidingRef.current}
                     handleResidueMouseOver={handleResidueMouseOver}
                     handleResidueMouseDown={handleResidueMouseDown}
@@ -465,7 +492,6 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         noSequence,
         invalidSequences,
         sequencesToDisplay,
-        hoveredRef,
         nameColumnWidth,
         columnWidth,
         fontSize,
@@ -509,24 +535,21 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
     return (
         <>
             <div
+                ref={containerRef}
                 className={`moorhen__seqviewer-container ${className ?? ""}`}
                 // style={{ ...props.style, height: (showTitleBar ? 72 : 50) + displayHeight * 26 + "px" }}
                 /** Detect mouse on the seq viewer to switch to css hover of the residues box => better (feeling of) performance*/
                 onMouseEnter={() => {
-                    setMouseIsHovering(true);
+                    mouseIsHoveringRef.current = true;
                 }}
                 onMouseLeave={() => {
-                    setMouseIsHovering(false);
+                    mouseIsHoveringRef.current = false;
                 }}
             >
                 <div>
                     {showTitleBar && (
                         <div className="moorhen__seqviewer__hovered-residue-info">
-                            <div>
-                                {hoveredResidue
-                                    ? `Chain: ${hoveredResidue.chain} Res: ${hoveredResidue.resNum} ${hoveredResidue.resCode}`
-                                    : "Chain: - Res: -"}
-                            </div>
+                            <div ref={hoveredInfoRef}>Chain: - Res: -</div>
                         </div>
                     )}
                 </div>

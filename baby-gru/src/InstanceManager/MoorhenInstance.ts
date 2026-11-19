@@ -4,6 +4,7 @@ import React from "react";
 import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "./Preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
+import { MoorhenUiExtensions } from "./UiExtensions";
 import { addCustomRepresentation, removeCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
@@ -119,6 +120,7 @@ export class MoorhenInstance extends StoreExtension {
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     private _cootCommand: CootCommandWrapper;
     private _menuSystem: MoorhenMenuSystem;
+    private _uiExtensions = new MoorhenUiExtensions();
     private ready: boolean = false;
     private _webComponent: MoorhenWebComponent | null = null;
     private readyCallbacks: Array<() => void | Promise<void>> = [];
@@ -408,6 +410,14 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     /**
+     * Modals and side panels added by the host or by plugins, either as React components or
+     * as `<slot>`s filled from the web component's light DOM. See {@link MoorhenUiExtensions}.
+     */
+    public get uiExtensions(): MoorhenUiExtensions {
+        return this._uiExtensions;
+    }
+
+    /**
      * Whether the instance has completed `startInstance` initialisation.
      * @returns True once the instance is ready to interact with Coot.
      */
@@ -453,6 +463,8 @@ export class MoorhenInstance extends StoreExtension {
              * - `.mrc`, `.map`, `.ccp4` (optionally `.gz`) are read as maps; names
              *   containing `_fofc.mrc`/`_diff.ccp4` are treated as difference maps and
              *   `_locres.mrc` as local-resolution maps
+             * - `.cube`, `.cub` are Gaussian Cubes, converted in memory and read as maps;
+             *   a cube holding several orbitals becomes one map per orbital
              *
              * @param files - The file(s), URL(s) or file-like object(s) to load. A
              * single value and an array of the same value type are both accepted.
@@ -1155,7 +1167,11 @@ export class MoorhenInstance extends StoreExtension {
              * described below.
              * @param params.representationStyle - The visual style of the representation.
              * Public styles are: VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds,
+<<<<<<< HEAD
              * CRs, Worm, Tubes, MolecularSurface, DishyBases, VdWSurface, Calpha, unitCell,
+=======
+             * CRs, MolecularSurface, DishyBases, VdWSurface, AccessibleSurface, Calpha, unitCell,
+>>>>>>> main
              * ligand_environment, contact_dots, restraints, MetaBalls, StickBases,
              * residue_environment, NEFRestraints and RMSD. Internal-only styles (hover,
              * environment, residueSelection, transformation, rama, rotamer,
@@ -1285,8 +1301,13 @@ export class MoorhenInstance extends StoreExtension {
              * @param params - The fields to change. `representationStyle` is required; all
              * other fields are optional and keep the representation's existing value when omitted.
              * @param params.representationStyle - The new visual style. Must be one of the
+<<<<<<< HEAD
              * public styles (VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds, CRs, Worm, Tubes,
              * MolecularSurface, DishyBases, VdWSurface, Calpha, unitCell, ligand_environment,
+=======
+             * public styles (VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds, CRs,
+             * MolecularSurface, DishyBases, VdWSurface, AccessibleSurface, Calpha, unitCell, ligand_environment,
+>>>>>>> main
              * contact_dots, restraints, MetaBalls, StickBases, residue_environment,
              * NEFRestraints, RMSD). Internal-only styles (hover, environment,
              * residueSelection, transformation, rama, rotamer, chemical_features,

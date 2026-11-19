@@ -530,3 +530,22 @@ describe("ticking when there is nothing to do", () => {
         expect(camera.state.zoom).toBeCloseTo(2, 6);
     });
 });
+
+describe("auto fog and auto clip separately", () => {
+    const start = { quat: [0, 0, 0, -1] as [number, number, number, number], origin: [0, 0, 0] as [number, number, number], zoom: 1,
+        eyeDistance: 250, clipFront: 5, clipBack: 6, fogFront: 7, fogBack: 9 };
+
+    test("auto clip only: zooming moves the clip planes and leaves the fog", () => {
+        const controller = new CameraController({ ...start }, { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21, fog: false, clip: true });
+        controller.writeLive({ zoom: 2 });
+        expect([controller.state.clipFront, controller.state.clipBack]).toEqual([16, 42]);
+        expect([controller.state.fogFront, controller.state.fogBack]).toEqual([7, 9]);
+    });
+
+    test("auto fog only: zooming moves the fog and leaves the clip planes", () => {
+        const controller = new CameraController({ ...start }, { kind: "auto", fieldDepthFront: 8, fieldDepthBack: 21, fog: true, clip: false });
+        controller.writeLive({ zoom: 2 });
+        expect([controller.state.fogFront, controller.state.fogBack]).toEqual([16, 42]);
+        expect([controller.state.clipFront, controller.state.clipBack]).toEqual([5, 6]);
+    });
+});

@@ -1,7 +1,10 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useStore } from "react-redux";
 import { useEffect, useRef } from "react";
+import type { UnknownAction } from "@reduxjs/toolkit";
 import { RootState } from "../../store/MoorhenReduxStore";
-import { ThreeDObject, centreOfObject, updateObject } from "../../store/threeDObjectsSlice";
+import { ThreeDObject, updateObject } from "../../store/threeDObjectsSlice";
+import { setMapSlice } from "../../store/mapContourSettingsSlice";
+import { handleTargetOf } from "../../WebGLgComponents/gizmoDraw";
 import {
     actionOfTag,
     angleAboutAxis,
@@ -13,7 +16,7 @@ import {
 } from "../../utils/handleDrag";
 
 /**
- * Moving and turning an object by its handles.
+ * Moving and turning an object - a 3D object, or a map's 2D slice - by its handles.
  *
  * The renderer reports three things - a grab began, the pointer moved, the grab ended - each
  * carrying a label it does not interpret and the pointer as a ray through the scene. Here that
@@ -25,14 +28,16 @@ import {
  */
 export const DragHandles = () => {
     const dispatch = useDispatch();
-    const objects = useSelector((state: RootState) => state.threeDObjects.objects);
-    const selectedId = useSelector((state: RootState) => state.generalStates.selectedThreeDObjectId);
+    // Read when the pointer acts rather than subscribed to: what the handles are on is only needed
+    // then, and a subscription would re-render this on every move of the thing being dragged.
+    const store = useStore<RootState>();
 
     // The drag as it stood when the pointer went down. Held in a ref rather than state because
     // it changes on every mouse move and nothing renders from it.
     const dragRef = useRef<{
         tag: string;
-        objectId: string;
+        /** Which object, or which map's slice, the handles were on when the drag began. */
+        target: { kind: "object"; objectId: string } | { kind: "mapSlice"; molNo: number };
         centre: number[];
         origin: number[];
         // A cylinder and a cone are pinned by two points, and both have to travel together.
@@ -46,23 +51,20 @@ export const DragHandles = () => {
         startHit: number[] | null;
     } | null>(null);
 
-    // Held in a ref so the listeners, registered once, always see the current scene.
-    const sceneRef = useRef({ objects, selectedId });
-    sceneRef.current = { objects, selectedId };
-
     /**
      * The move waiting to be published, and the frame that will publish it.
      *
      * A pointer reports far more often than the scene can be rebuilt - every change rebuilds
-     * each object's geometry and uploads it to the card - so dispatching per event makes the
-     * events queue up, each one paying the full cost for a position already superseded. Holding
-     * only the latest and sending it once a frame means the work done is the work that shows.
+     * the object's geometry (or contours the slice again) and uploads it to the card - so
+     * dispatching per event makes the events queue up, each one paying the full cost for a
+     * position already superseded. Holding only the latest and sending it once a frame means the
+     * work done is the work that shows.
      *
      * Dropping the intermediate positions is free here because every move is measured from
      * where the drag began: the latest is the whole answer, and the ones skipped were only ever
      * going to be overwritten.
      */
-    const pendingRef = useRef<{ frame: number | null; next: ThreeDObject | null }>({
+    const pendingRef = useRef<{ frame: number | null; next: UnknownAction | null }>({
         frame: null, next: null,
     });
 
@@ -70,15 +72,15 @@ export const DragHandles = () => {
         const referenceFor = (axis: number[]) =>
             Math.abs(axis[0]) > 0.9 ? [0, 1, 0] : [1, 0, 0];
 
-        /** Put this version of the object on the next frame, replacing any not yet sent. */
-        const publish = (updated: ThreeDObject) => {
-            pendingRef.current.next = updated;
+        /** Put this move on the next frame, replacing any not yet sent. */
+        const publish = (action: UnknownAction) => {
+            pendingRef.current.next = action;
             if (pendingRef.current.frame !== null) return;
             pendingRef.current.frame = requestAnimationFrame(() => {
                 pendingRef.current.frame = null;
                 const next = pendingRef.current.next;
                 pendingRef.current.next = null;
-                if (next) dispatch(updateObject(next));
+                if (next) dispatch(next);
             });
         };
 
@@ -90,23 +92,31 @@ export const DragHandles = () => {
             }
             const next = pendingRef.current.next;
             pendingRef.current.next = null;
-            if (next) dispatch(updateObject(next));
+            if (next) dispatch(next);
+        };
+
+        /** What the handles are on now, if it is still what the drag began on. */
+        const currentTarget = () => {
+            const drag = dragRef.current;
+            const target = handleTargetOf(store.getState());
+            if (!drag || !target) return null;
+            if (drag.target.kind === "object" && target.kind === "object" && target.object.uniqueId === drag.target.objectId) return target;
+            if (drag.target.kind === "mapSlice" && target.kind === "mapSlice" && target.molNo === drag.target.molNo) return target;
+            return null;
         };
 
         const onStart = (event: CustomEvent) => {
             const { tag, front, back } = event.detail;
-            const { objects: current, selectedId: id } = sceneRef.current;
-            const object = current.find(item => item.uniqueId === id);
+            // No target if the object is locked (no handles are drawn for it either, so this
+            // should be unreachable) or the slice is hidden or drawn another way.
+            const target = handleTargetOf(store.getState());
             const axis = axisOfTag(tag);
             const action = actionOfTag(tag);
             // The free handle names no axis, which is the one case where that is not a fault.
-            // `locked` is checked here as well as in gizmoDraw: no handles are drawn for a
-            // locked object, so this should be unreachable, but a drag that began before the
-            // object was locked would otherwise still be honoured on the next pointer move.
-            if (!object || object.locked || !action || (!axis && action !== "planar")) {
+            if (!target || !action || (!axis && action !== "planar")) {
                 return;
             }
-            const centre = centreOfObject(object);
+            const centre = target.centre;
             // Which way the viewer is looking, taken from the pointer ray itself rather than
             // from the camera: the ray runs from the front of the scene to the back through the
             // cursor, so its direction is the view direction, and under the orthographic
@@ -114,16 +124,19 @@ export const DragHandles = () => {
             // handle needs no camera state - and it cannot go wrong, because a plane facing the
             // viewer is the one plane the pointer can never run parallel to.
             const viewDirection = [back[0] - front[0], back[1] - front[1], back[2] - front[2]];
+            const object = target.kind === "object" ? target.object : null;
             dragRef.current = {
                 tag,
-                objectId: object.uniqueId,
+                target: object ? { kind: "object", objectId: object.uniqueId } : { kind: "mapSlice", molNo: (target as { molNo: number }).molNo },
                 centre,
-                origin: [...object.origin],
+                origin: object ? [...object.origin] : [...(target.kind === "mapSlice" ? target.slice.origin : [])],
                 farPoint:
-                    "end" in object ? [...object.end]
-                    : "top" in object ? [...object.top]
+                    object && "end" in object ? [...object.end]
+                    : object && "top" in object ? [...object.top]
                     : null,
-                orientation: "orientation" in object ? [...object.orientation] : null,
+                orientation:
+                    object ? ("orientation" in object ? [...object.orientation] : null)
+                    : target.kind === "mapSlice" ? [...target.slice.orientation] : null,
                 startDistance: action === "translate" ? distanceAlongAxis(centre, axis, front, back) : null,
                 startAngle:
                     action === "rotate"
@@ -140,27 +153,32 @@ export const DragHandles = () => {
             const drag = dragRef.current;
             if (!drag) return;
             const { front, back } = event.detail;
-            const { objects: current } = sceneRef.current;
-            const object = current.find(item => item.uniqueId === drag.objectId);
+            // A drag in progress stops being honoured the moment its object is locked, or its
+            // slice hidden or drawn another way, rather than carrying on to the pointer release.
+            const target = currentTarget();
             const axis = axisOfTag(drag.tag);
             const action = actionOfTag(drag.tag);
-            // object.locked, so a drag in progress stops being honoured the moment its object is
-            // locked rather than carrying on to the pointer release.
-            if (!object || object.locked || !action || (!axis && action !== "planar")) return;
+            if (!target || !action || (!axis && action !== "planar")) return;
+
+            const moveFrom = (point: number[], shift: number[]) =>
+                point.map((c, i) => c + shift[i]) as [number, number, number];
 
             // Everything shifts by the same vector, always measured from where the drag began -
             // so the shape is carried along rigidly and repeated moves cannot drift. One
             // function for it, because a move along an axis and a move in the plane differ only
             // in how the vector is arrived at, and both have to carry a cylinder's far end.
             const moveBy = (shift: number[]) => {
-                const moveFrom = (point: number[]) =>
-                    point.map((c, i) => c + shift[i]) as [number, number, number];
-                publish({
+                if (target.kind === "mapSlice") {
+                    publish(setMapSlice({ molNo: target.molNo, origin: moveFrom(drag.origin, shift), orientation: target.slice.orientation }));
+                    return;
+                }
+                const object = target.object;
+                publish(updateObject({
                     ...object,
-                    origin: moveFrom(drag.origin),
-                    ...(drag.farPoint && "end" in object && { end: moveFrom(drag.farPoint) }),
-                    ...(drag.farPoint && "top" in object && { top: moveFrom(drag.farPoint) }),
-                } as typeof object);
+                    origin: moveFrom(drag.origin, shift),
+                    ...(drag.farPoint && "end" in object && { end: moveFrom(drag.farPoint, shift) }),
+                    ...(drag.farPoint && "top" in object && { top: moveFrom(drag.farPoint, shift) }),
+                } as ThreeDObject));
             };
 
             if (action === "translate" && drag.startDistance !== null) {
@@ -185,11 +203,13 @@ export const DragHandles = () => {
             if (action === "rotate" && drag.startAngle !== null && drag.orientation) {
                 const now = angleAboutAxis(drag.centre, axis, referenceFor(axis), front, back);
                 if (now === null) return;
-                const turned = shortestAngleBetween(drag.startAngle, now);
-                publish({
-                    ...object,
-                    orientation: rotatedOrientation(drag.orientation, axis, turned),
-                } as typeof object);
+                const orientation = rotatedOrientation(drag.orientation, axis, shortestAngleBetween(drag.startAngle, now));
+                // A slice turns about its centre, which is its origin, so only its orientation changes.
+                if (target.kind === "mapSlice") {
+                    publish(setMapSlice({ molNo: target.molNo, origin: target.slice.origin, orientation }));
+                } else {
+                    publish(updateObject({ ...target.object, orientation } as ThreeDObject));
+                }
             }
         };
 
@@ -203,7 +223,7 @@ export const DragHandles = () => {
             document.removeEventListener("handleGrabMove", onMove);
             document.removeEventListener("handleGrabEnd", onEnd);
         };
-    }, [dispatch]);
+    }, [dispatch, store]);
 
     return null;
 };
