@@ -215,6 +215,16 @@ export const MoorhenDevMenu = () => {
     const [smoothColourSmoothing, setSmoothColourSmoothing] = useState<number>(smoothSurfaceSetting.colourSmoothing);
     const [shadingStripes, setShadingStripes] = useState<boolean>(shadingDebug.stripes);
     // Rebuild the molecular surfaces on show, so a change to the smooth surface is seen at once.
+    // The colour blend and smoothing need no new surface: recolour, or redraw what cannot.
+    const recolourSurfaces = () => {
+        (store.getState().molecules.moleculeList as MoorhenMolecule[]).forEach(molecule => {
+            molecule.representations
+                .filter(representation => M2T_SURFACE_REPRESENTATIONS.includes(representation.style) && representation.visible)
+                .forEach(async representation => {
+                    if (!(await representation.recolour())) await representation.redraw();
+                });
+        });
+    };
     const redrawSurfaces = () => {
         (store.getState().molecules.moleculeList as MoorhenMolecule[]).forEach(molecule => {
             molecule.representations
@@ -648,7 +658,7 @@ export const MoorhenDevMenu = () => {
                     setValue={val => {
                         smoothSurfaceSetting.colourBlend = val;
                         setSmoothColourBlend(val);
-                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                        if (smoothSurfaceSetting.enabled) recolourSurfaces();
                     }}
                 />
                 <MoorhenNumberInput
@@ -658,7 +668,7 @@ export const MoorhenDevMenu = () => {
                     setValue={val => {
                         smoothSurfaceSetting.colourSmoothing = Math.round(val);
                         setSmoothColourSmoothing(Math.round(val));
-                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                        if (smoothSurfaceSetting.enabled) recolourSurfaces();
                     }}
                 />
             </MoorhenStack>

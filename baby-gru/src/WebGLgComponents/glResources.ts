@@ -101,6 +101,7 @@ type SlotHolder = { [K in GLSlotArrayName]: MGWebGLBuffer[] } & {
 export interface GLForResources {
     createBuffer(): unknown;
     createTexture?(): unknown;
+    deleteTexture?(texture: unknown): void;
     bindTexture?(target: number, texture: unknown): void;
     texParameteri?(target: number, pname: number, param: number): void;
     texImage2D?(...args: unknown[]): void;
@@ -172,6 +173,13 @@ function influenceTexture(
 function realiseInfluenceTextures(gl: GLForResources, pickInfo: NonNullable<SlotHolder["pick_info"]>): void {
     const pending = pickInfo.pending_influence;
     delete pickInfo.pending_influence;
+    // New lists for a buffer that had some (a smooth surface recoloured): the old textures go.
+    for (const name of ["influence_weights_texture", "influence_point_indexes_texture", "influence_index_offsets_texture"] as const) {
+        if (pickInfo[name]) {
+            gl.deleteTexture?.(pickInfo[name]);
+            delete pickInfo[name];
+        }
+    }
     try {
         const maxTexSize = gl.getParameter!((gl as unknown as Record<string, number>).MAX_TEXTURE_SIZE) as number;
         const weights = influenceTexture(gl, pending.weights, maxTexSize, true);

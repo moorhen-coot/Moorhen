@@ -163,6 +163,28 @@ export class DisplayBuffer {
     }
 
     /**
+     * New colours for the vertices of triangle set j (RGBA, 4 per vertex), drawn without rebuilding
+     * anything else: the buffer is marked dirty, so WebGL uploads it again and WebGPU sees its
+     * dataVersion move. What a recolour of a smooth surface does instead of a redraw.
+     */
+    setVertexColours(colours: Float32Array, j = 0) {
+        this.triangleColours[j] = colours;
+        this.isDirty = true;
+    }
+
+    /**
+     * New hover shares (the influence lists the shader sums), for a mesh that has them: WebGL makes
+     * its textures again from pending_influence (deleting the old ones), WebGPU uploads again for
+     * the new object.
+     */
+    setInfluence(influence: PendingInfluence) {
+        if (!this.pick_info) return;
+        this.pick_info.influence = influence;
+        this.pick_info.pending_influence = influence;
+        this.isDirty = true;
+    }
+
+    /**
      * Fade the whole buffer.
      *
      * A faded buffer has to be drawn as a transparent one, or it writes depth as though solid and

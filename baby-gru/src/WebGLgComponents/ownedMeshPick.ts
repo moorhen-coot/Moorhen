@@ -128,6 +128,40 @@ export type OwnedMeshPickInfo = {
  * smooth surface's blend over its nearest atoms (atomSurfaceInfluences), so the hover fades as its
  * colours do. Picking still reports `vertexOwners`, the dominant residue.
  */
+/**
+ * The shader's influence lists from per-vertex shares (a smooth surface's blend over its nearest
+ * atoms): for each vertex with a pick point, its (owner code, share) pairs with a share above 0,
+ * `stride` candidates per vertex, NO_OWNER past the last. Also what a recolour redoes when the
+ * blend width changes, with the owner codes the buffer already has. `shared`: how many vertices
+ * list more than one owner.
+ */
+export const influenceListsFromShares = (
+    vertexPickPoints: ArrayLike<number>,
+    influences: { stride: number; owners: Uint32Array; weights: Float32Array },
+    ownerCodes: ArrayLike<number>
+): { index_offsets: Uint32Array<ArrayBuffer>; point_indexes: Uint32Array<ArrayBuffer>; weights: Float32Array<ArrayBuffer>; shared: number } => {
+    const count = vertexPickPoints.length;
+    const index_offsets = new Uint32Array(count);
+    const points: number[] = [];
+    const shares: number[] = [];
+    let shared = 0;
+    for (let v = 0; v < count; v++) {
+        if (vertexPickPoints[v] !== NO_OWNER) {
+            let listed = 0;
+            for (let k = 0; k < influences.stride; k++) {
+                const o = influences.owners[influences.stride * v + k];
+                const share = influences.weights[influences.stride * v + k];
+                if (o >= ownerCodes.length || share <= 0) continue;
+                points.push(ownerCodes[o]); shares.push(share);
+                listed++;
+            }
+            if (listed > 1) shared++;
+        }
+        index_offsets[v] = points.length;
+    }
+    return { index_offsets, point_indexes: new Uint32Array(points), weights: new Float32Array(shares), shared };
+};
+
 export const ownedMeshPickInfo = (
     vertices: number[] | Float32Array,
     vertexOwners: Uint32Array | number[] | undefined,
@@ -220,16 +254,7 @@ export const ownedMeshPickInfo = (
             // The shader compares encoded ids, not owner indices, so the contribution lists
             // carry the codes.
             if (hasInfluences) {
-                let listed = 0;
-                for (let k = 0; k < influences.stride; k++) {
-                    const o = influences.owners[influences.stride * v + k];
-                    const share = influences.weights[influences.stride * v + k];
-                    if (o >= owners.length || share <= 0) continue;
-                    pointIndexes.push(owner_codes[o]); weights.push(share);
-                    listed++;
-                }
-                running += listed;
-                if (listed > 1) shared_vertices++;
+                // Listed after the loop, by influenceListsFromShares.
             } else if (other < owners.length && other !== owner) {
                 pointIndexes.push(owner_codes[owner]); weights.push(weight);
                 pointIndexes.push(owner_codes[other]); weights.push(1.0 - weight);
@@ -275,8 +300,16 @@ export const ownedMeshPickInfo = (
         owners.map(() => meshCentre.slice()),
     ];
 
-    const influence_point_indexes = new Uint32Array(pointIndexes);
-    const influence_weights = new Float32Array(weights);
+    let influence_point_indexes = new Uint32Array(pointIndexes);
+    let influence_weights = new Float32Array(weights);
+    let influence_index_offsets_out = influence_index_offsets;
+    if (hasInfluences) {
+        const lists = influenceListsFromShares(vertex_pick_points, influences, owner_codes);
+        influence_index_offsets_out = lists.index_offsets;
+        influence_point_indexes = lists.point_indexes;
+        influence_weights = lists.weights;
+        shared_vertices = lists.shared;
+    }
 
     return {
         pick_points,
@@ -286,7 +319,7 @@ export const ownedMeshPickInfo = (
         section_level_points,
         pick_tag_kind: MOORHEN_MESH_RESIDUE_TAG_KIND,
         vertex_pick_points,
-        influence_index_offsets,
+        influence_index_offsets: influence_index_offsets_out,
         influence_point_indexes,
         influence_weights,
         pick_bounds: { low, high },

@@ -132,7 +132,8 @@ export const MoorhenModifyColourRulesCard = memo((props: { molecule: moorhen.Mol
             const representations = props.molecule.representations.filter(representation => representation.useDefaultColourRules);
             for (const representation of representations) {
                 if (representation.visible) {
-                    await representation.redraw();
+                    // A smooth surface takes its new colours without being rebuilt.
+                    if (!(await representation.recolour())) await representation.redraw();
                 } else {
                     representation.deleteBuffers();
                 }

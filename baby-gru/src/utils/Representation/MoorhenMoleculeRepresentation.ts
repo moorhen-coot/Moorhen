@@ -22,8 +22,10 @@ import {
     type GpuMetaBalls, gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
 } from "../../WebGPUComponents/metaballs";
 import {
-    type AtomSurface, type EdgeContour, type SmoothField, type SurfaceAtom, atomSurfaceMesh, packAtoms, residueCid, smoothSurfaceSetting,
+    type AtomSurface, type EdgeContour, type SmoothField, type SurfaceAtom, type VertexAtoms, COLOUR_ATOMS, atomSurfaceColours,
+    atomSurfaceInfluences, atomSurfaceMesh, packAtoms, residueCid, smoothSurfaceSetting, smoothVertexColours, vertexNeighbours,
 } from "../smoothSurface";
+import { influenceListsFromShares } from "../../WebGLgComponents/ownedMeshPick";
 import { m2tAtomRadius } from "../m2tAtomRadii";
 
 /**
@@ -224,6 +226,17 @@ export class MoleculeRepresentation {
     /** Snapshot of the lossy build parameters (see BuildRepresentationParams). Null for legacy/deserialized reps. */
     buildParams: BuildRepresentationParams | null;
     cavities: {index: number, mesh: libcootApi.SimpleMeshJS[]} | null;
+    /**
+     * What a smooth surface made from the atoms keeps to be coloured again without being rebuilt
+     * (recolour): its atoms, each vertex's nearest atoms, and its triangles. Null for anything else.
+     */
+    smoothColouring: {
+        records: moorhen.AtomInfo[];
+        residueOf: Int32Array;
+        vertex: VertexAtoms;
+        indices: Uint32Array;
+        neighbours?: { start: Int32Array; ids: Int32Array };
+    } | null = null;
 
     constructor(style: RepresentationStyles, cid: string, commandCentre: CommandCentre) {
         this.uniqueId = guid();
@@ -1652,6 +1665,7 @@ export class MoleculeRepresentation {
             : null;
 
         let m2tMesh: libcootApi.SimpleMeshJS | null = null;
+        this.smoothColouring = null;
         if (smoothInput) {
             const options = {
                 spacing: smoothSurfaceSetting.spacing, sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
@@ -1852,6 +1866,11 @@ export class MoleculeRepresentation {
             if (response.data.result.status === "Completed") surface = response.data.result.result.surface;
         }
         if (!surface) return null;
+        // Kept for recolour: only what colours and hover shares are made from.
+        this.smoothColouring = {
+            records, residueOf, indices: surface.indices,
+            vertex: { atom: surface.atom, other: new Int32Array(0), weight: new Float32Array(0), near: surface.near, nearGap: surface.nearGap },
+        };
         const colours = await this.smoothSurfaceAtomColours(records);
         return atomSurfaceMesh(surface, residueOf, residues, colours, smoothSurfaceSetting.colourBlend,
             smoothSurfaceSetting.colourSmoothing) as unknown as libcootApi.SimpleMeshJS;
@@ -1863,6 +1882,39 @@ export class MoleculeRepresentation {
      * atom wins, and an atom no rule selects is white. Each rule as it is sent to Coot - its CID and
      * colour, or a multi-colour rule's CID^colour list.
      */
+    /**
+     * Colour this representation again without rebuilding it - its colour rules, or the colour
+     * blend and smoothing settings, changed - and say whether it could. Only a smooth surface made
+     * from the atoms can: its vertex colours and hover shares are worked out again from the atoms
+     * it kept (smoothColouring) and handed to its buffer, which uploads them on the next frame. No
+     * Coot, no field, no worker. Anything else returns false, for the caller to redraw it.
+     */
+    async recolour(): Promise<boolean> {
+        const state = this.smoothColouring;
+        if (!state || !this.buffers?.length) return false;
+        // Electrostatics colours from the M2T mesh's potential: that needs a redraw.
+        if (this.colourRules?.length > 0 && this.colourRules[0].ruleType === "electrostatics") return false;
+        const count = state.vertex.atom.length;
+        const buffer = this.buffers.find(b => b.triangleColours?.[0]?.length === 4 * count);
+        if (!buffer) return false;
+        const atomColours = await this.smoothSurfaceAtomColours(state.records);
+        let colours = atomSurfaceColours(state.vertex, atomColours, smoothSurfaceSetting.colourBlend);
+        if (smoothSurfaceSetting.colourSmoothing > 0) {
+            state.neighbours ??= vertexNeighbours(state.indices, count);
+            colours = smoothVertexColours(colours, state.neighbours, smoothSurfaceSetting.colourSmoothing);
+        }
+        buffer.setVertexColours(colours);
+        // The hover's shares follow the blend width; owners and their codes stay what they were.
+        const pickInfo = buffer.pick_info;
+        if (pickInfo?.vertex_pick_points && pickInfo.owner_codes) {
+            const shares = atomSurfaceInfluences(state.vertex, state.residueOf, smoothSurfaceSetting.colourBlend);
+            const lists = influenceListsFromShares(pickInfo.vertex_pick_points, { stride: COLOUR_ATOMS, ...shares }, pickInfo.owner_codes);
+            buffer.setInfluence({ weights: lists.weights, point_indexes: lists.point_indexes, index_offsets: lists.index_offsets });
+        }
+        this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+        return true;
+    }
+
     async smoothSurfaceAtomColours(records: moorhen.AtomInfo[]): Promise<Float32Array> {
         const colours = new Float32Array(4 * records.length).fill(1);
         const index = new Map<number, number>();
