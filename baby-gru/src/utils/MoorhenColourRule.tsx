@@ -29,6 +29,30 @@ export type ColourRulePropertyType =
 
 export type ColourRuleType = ColourRuleSelectionType | ColourRulePropertyType;
 
+/**
+ * A CID as Coot should get it in a colour rule: every alternate conformation included.
+ *
+ * Coot selects with mmdb, and in mmdb a CID that names atoms - even all of them, with an atom
+ * part of `*` after the residue, as the B-factor and pLDDT rules' CIDs have - matches only atoms
+ * with no altloc unless it says otherwise (`ParseSelectionPath`, mmdb_utils.cpp: the altloc is
+ * reset to "" once an atom part is read).
+ * So a rule like that left the A and B atoms of every residue with alternate conformations in the
+ * default colour, in bonds, ribbons and surfaces alike. A CID that stops at the residue
+ * (`//A/10-20`, or with an empty atom part, `//A/23(ALA)/`) already matches every conformation,
+ * and one that names an altloc (`:A`, `:*`) means it: both are left as they are. Each part of a
+ * `||` list is treated on its own.
+ */
+export const withAllAltConfs = (cid: string): string =>
+    cid.split("||").map(part => {
+        const trimmed = part.trim();
+        const slash = trimmed.lastIndexOf("/");
+        // An absolute CID has its atom part after the fourth "/": /model/chain/residue/atom.
+        const slashes = (trimmed.match(/\//g) ?? []).length;
+        const atomPart = trimmed.slice(slash + 1);
+        if (!trimmed.startsWith("/") || slashes < 4 || atomPart === "" || atomPart.includes(":")) return part;
+        return `${part}:*`;
+    }).join("||");
+
 const isColourRulePropertyType = (ruleType: ColourRuleType): ruleType is ColourRulePropertyType =>
     propertyTypes.includes(ruleType as ColourRulePropertyType);
 
@@ -261,7 +285,7 @@ export class ColourRule {
                 const [cid, hex] = colour.split("^");
                 const [r, g, b, a] = ColourRule.parseHexToRgba(hex);
                 return {
-                    cid: cid,
+                    cid: withAllAltConfs(cid),
                     rgba: [r / 255, g / 255, b / 255, a],
                     applyColourToNonCarbonAtoms: this.applyColourToNonCarbonAtoms,
                 };
@@ -270,7 +294,7 @@ export class ColourRule {
             const [r, g, b, a] = ColourRule.parseHexToRgba(this.color);
             return [
                 {
-                    cid: this.label,
+                    cid: withAllAltConfs(this.label),
                     rgba: [r / 255, g / 255, b / 255, a],
                     applyColourToNonCarbonAtoms: this.applyColourToNonCarbonAtoms,
                 },
@@ -280,7 +304,13 @@ export class ColourRule {
 
     /** Get the colour-rule payload expected by Coot's non-bond commands. */
     getCootColourRuleArgs(): [string] | [string, string] {
-        return this.isMultiColourRule ? [this.multiColourData] : [this.cid, this.color];
+        if (!this.isMultiColourRule) return [withAllAltConfs(this.cid), this.color];
+        // CID^colour entries joined by "|": each CID widened, the colours as they are.
+        const entries = this.multiColourData.split("|").map(entry => {
+            const caret = entry.lastIndexOf("^");
+            return caret < 0 ? entry : `${withAllAltConfs(entry.slice(0, caret))}${entry.slice(caret)}`;
+        });
+        return [entries.join("|")];
     }
 
     /**
