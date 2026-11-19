@@ -944,11 +944,7 @@ export class MoleculeRepresentation {
 
         if (this.restrictToNeighbours) {
             //Now we might not want to use the new method, maybe we should use the old one.
-<<<<<<< HEAD
-            if (["CRs", "Worm", "MolecularSurface", "DishyBases", "VdWSurface", "Calpha"].includes(_style)) {
-=======
-            if (["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "AccessibleSurface", "Calpha"].includes(_style)) {
->>>>>>> main
+            if (["CRs", "Worm", "MolecularSurface", "DishyBases", "VdWSurface", "AccessibleSurface", "Calpha"].includes(_style)) {
                 restrictedCid = window.gemmiModule.cidToNeighboursCid(
                     this.parentMolecule.gemmiStructure,
                     _cid,
@@ -1710,7 +1706,8 @@ export class MoleculeRepresentation {
         // A nucleic acid ribbon comes as two meshes (below), which light together when either
         // is hovered (highlightGroup.ts): numbered from one table, so their owner codes agree,
         // and in one highlight group.
-        const withBases = m2tStyle === "Ribbon" && this.parentMolecule.hasDNA;
+        // A worm is a trace: no bases.
+        const withBases = m2tStyle === "Ribbon" && this.style !== "Worm" && this.parentMolecule.hasDNA;
         const numbering = newOwnerNumbering();
         const highlightGroup = withBases ? `ribbon-and-bases-${guid()}` : null;
         // Coot gives a nucleotide the stretch of ribbon centred on its C3', which hands each
@@ -1729,12 +1726,6 @@ export class MoleculeRepresentation {
         }];
 
         let resultBufferObjects: PickableMesh[];
-<<<<<<< HEAD
-        // A worm is a trace: no bases.
-        if (m2tStyle === "Ribbon" && this.style !== "Worm" && this.parentMolecule.hasDNA) {
-            const nucleotideBufferObjects = await this.getNucleotideRepresentationBuffers(m2tSelection);
-            resultBufferObjects = MoleculeRepresentation.mergeBufferObjects(nucleotideBufferObjects, ribbonBufferObjects);
-=======
         if (withBases) {
             // Kept as two buffers rather than merged into one.
             //
@@ -1760,7 +1751,6 @@ export class MoleculeRepresentation {
                     ? { ...object, pick_info: { ...object.pick_info, highlight_group: highlightGroup } }
                     : object);
             resultBufferObjects = [...nucleotideBufferObjects, ...ribbonBufferObjects];
->>>>>>> main
         } else {
             resultBufferObjects = ribbonBufferObjects;
         }

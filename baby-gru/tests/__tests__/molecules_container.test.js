@@ -695,7 +695,6 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(simpleMesh)
     })
 
-<<<<<<< HEAD
     test("Tubes (Bendix: bendy helices)", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const simpleMesh = molecules_container.get_molecular_representation_mesh(coordMolNo, "//A", "", "Tubes", 2)
@@ -711,19 +710,6 @@ describe('Testing molecules_container_js', () => {
         molecules_container.M2T_updateFloatParameter(coordMolNo, "ribbonStyleCoilThickness", 0.3)
         const width = () => {
             const simpleMesh = molecules_container.get_molecular_representation_mesh(coordMolNo, "//A/10-30", "Chain", "Ribbon", 1)
-=======
-    test("Van der Waals and solvent accessible surfaces", () => {
-        // The other two surface types MoleculesToTriangles makes. The accessible surface is the van
-        // der Waals one grown by the probe radius: along x, wider by twice the probe radius (the
-        // atom furthest out is the same one; the tessellation misses its extreme by << 0.5 A).
-        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
-        molecules_container.M2T_updateFloatParameter(coordMolNo, "surfaceStyleProbeRadius", 1.4)
-        molecules_container.M2T_updateFloatParameter(coordMolNo, "ballsStyleRadiusMultiplier", 1.0)
-        const surface = (style) => {
-            const simpleMesh = molecules_container.get_molecular_representation_mesh(
-                coordMolNo, "//A/10-30", "Chain", style, true
-            )
->>>>>>> main
             cleanUpVariables.push(simpleMesh)
             const vertices = simpleMesh.vertices
             let lo = Infinity, hi = -Infinity
@@ -732,7 +718,6 @@ describe('Testing molecules_container_js', () => {
                 lo = Math.min(lo, x)
                 hi = Math.max(hi, x)
             }
-<<<<<<< HEAD
             return hi - lo
         }
         const thin = width()
@@ -795,7 +780,27 @@ describe('Testing molecules_container_js', () => {
         const before = fromHeader()
         nVertices(2)
         expect(fromHeader()).toBe(before)
-=======
+    })
+
+    test("Van der Waals and solvent accessible surfaces", () => {
+        // The other two surface types MoleculesToTriangles makes. The accessible surface is the van
+        // der Waals one grown by the probe radius: along x, wider by twice the probe radius (the
+        // atom furthest out is the same one; the tessellation misses its extreme by << 0.5 A).
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        molecules_container.M2T_updateFloatParameter(coordMolNo, "surfaceStyleProbeRadius", 1.4)
+        molecules_container.M2T_updateFloatParameter(coordMolNo, "ballsStyleRadiusMultiplier", 1.0)
+        const surface = (style) => {
+            const simpleMesh = molecules_container.get_molecular_representation_mesh(
+                coordMolNo, "//A/10-30", "Chain", style, true
+            )
+            cleanUpVariables.push(simpleMesh)
+            const vertices = simpleMesh.vertices
+            let lo = Infinity, hi = -Infinity
+            for (let i = 0; i < vertices.size(); i++) {
+                const x = vertices.get(i).pos[0]
+                lo = Math.min(lo, x)
+                hi = Math.max(hi, x)
+            }
             return { nVertices: vertices.size(), nTriangles: simpleMesh.triangles.size(), width: hi - lo }
         }
         const vdw = surface("VdWSurface")
@@ -803,7 +808,6 @@ describe('Testing molecules_container_js', () => {
         expect(vdw.nTriangles).toBeGreaterThan(100)
         expect(accessible.nTriangles).toBeGreaterThan(100)
         expect(accessible.width - vdw.width).toBeCloseTo(2 * 1.4, 0)
->>>>>>> main
     })
 
     test("ligand surface", () => {

@@ -64,10 +64,7 @@ export const representationLabelMapping = Object.freeze({
 });
 
 export const COOT_BOND_REPRESENTATIONS = ["MetaBalls", "CBs", "VdwSpheres", "CAs", "ligands"];
-<<<<<<< HEAD
-export const M2T_REPRESENTATIONS = ["CRs", "DishyBases", "StickBases", "VdWSurface", "Calpha", "MolecularSurface", "Worm", "Tubes"];
-=======
-export const M2T_REPRESENTATIONS = ["CRs", "DishyBases", "StickBases", "VdWSurface", "AccessibleSurface", "Calpha", "MolecularSurface"];
+export const M2T_REPRESENTATIONS = ["CRs", "DishyBases", "StickBases", "VdWSurface", "AccessibleSurface", "Calpha", "MolecularSurface", "Worm", "Tubes"];
 
 /**
  * The surfaces MoleculesToTriangles makes, each its own representation style: offered in the
@@ -81,7 +78,6 @@ export const surfaceTypeLabelMapping = Object.freeze({
     VdWSurface: "Van der Waals",
     AccessibleSurface: "Solvent accessible",
 });
->>>>>>> main
 
 export const residueCodesOneToThree = Object.freeze({
     C: "CYS",

@@ -5,11 +5,8 @@ import { setRequestDrawScene } from "../../../store/glRefSlice";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";
 import { MoorhenStack } from "../../interface-base";
-<<<<<<< HEAD
 import type { WormRadiusSource, wormOptions } from "../../../utils/Representation/wormRadii";
-=======
 import { M2T_SURFACE_REPRESENTATIONS } from "../../../utils/enums";
->>>>>>> main
 
 type MoleculeSettingPanelProps =
     | { molecule: MoorhenMolecule; representation?: never }
@@ -558,7 +555,6 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
 };
 
 /**
-<<<<<<< HEAD
  * Where a "Worm"'s radii come from (see wormRadii.ts): each residue's B-factor, scaled, or one
  * radius for all; or radii set through the API, which can only be kept or replaced here. And how
  * finely it is drawn, along and around. Sets the representation's wormOptions, which the dialog
@@ -638,13 +634,11 @@ export const WormSettingsPanel = (props: { representation: MoleculeRepresentatio
     );
 };
 
-export const MolSurfSettingsPanel = (props: MoleculeSettingPanelProps) => {
-=======
+/**
  * The probe radius and atom radius multiplier of the M2T surfaces. `surfaceStyle`, when given, is
  * the surface being set up: a van der Waals surface has no probe, so then only the multiplier.
  */
 export const MolSurfSettingsPanel = (props: MoleculeSettingPanelProps & { surfaceStyle?: moorhen.RepresentationStyles }) => {
->>>>>>> main
     const { molecule, representation } = props;
     const [surfaceStyleProbeRadius, setSurfaceStyleProbeRadius] = useState<number>(
         molecule ? molecule.defaultM2tParams.surfaceStyleProbeRadius : representation.m2tParams.surfaceStyleProbeRadius

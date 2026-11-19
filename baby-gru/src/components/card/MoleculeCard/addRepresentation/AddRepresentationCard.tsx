@@ -317,12 +317,8 @@ export const AddCustomRepresentationCard = memo(
                         ruleType={ruleType}
                     />
                 </MoorhenStack>
-<<<<<<< HEAD
-                {["CBs", "CAs", "ligands", "CRs", "Worm", "MolecularSurface", "residue_environment"].includes(representationStyle) && (
-=======
-                {(["CBs", "CAs", "ligands", "CRs", "residue_environment"].includes(representationStyle) ||
+                {(["CBs", "CAs", "ligands", "CRs", "Worm", "residue_environment"].includes(representationStyle) ||
                     M2T_SURFACE_REPRESENTATIONS.includes(representationStyle)) && (
->>>>>>> main
                     <MoorhenToggle
                         type="switch"
                         label="Apply general representation settings"
