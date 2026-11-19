@@ -747,9 +747,12 @@ if [ $BUILD_BOOST = true ]; then
     getboost
     mkdir -p ${BUILD_DIR}/boost
     cd ${BUILD_DIR}/boost
-    # locale is excluded because nothing uses it and its CMakeLists.txt fails to configure with
-    # CMake >= 4.5 (source_group TREE given a file outside the tree). Fixed upstream in
-    # boostorg/locale 1d070743d, which is not yet in a Boost release (1.92.0 and 1.93.0.beta1 lack it).
+    # locale is excluded because its CMakeLists.txt fails to configure with CMake >= 4.5
+    # (source_group TREE given a file outside the tree). Fixed upstream in boostorg/locale
+    # 1d070743d, which is not yet in a Boost release (1.92.0 and 1.93.0.beta1 lack it).
+    # Its only user was RDKit's ChemDraw support (External/ChemDraw/.../CDXUnicode.cpp), which
+    # Moorhen does not link and which the RDKit build below therefore turns off
+    # (RDK_BUILD_CHEMDRAW_SUPPORT=OFF). Turn that back on only together with locale.
     emcmake cmake -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/boost-$boost_release -DBOOST_STACKTRACE_ENABLE_FROM_EXCEPTION=OFF -DBOOST_EXCLUDE_LIBRARIES="context;fiber;fiber_numa;asio;log;coroutine;cobalt;nowide;process;locale"
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing boost, giving up."
@@ -813,8 +816,11 @@ fi
 if [ $BUILD_RDKIT = true ]; then
     getrdkit
     mkdir -p ${BUILD_DIR}/rdkit_build
+    # ChemDraw support is off: Moorhen never links RDKit's ChemDraw library, and it needs
+    # Boost.Locale, which the Boost build above excludes (see there). With it off, RDKit reads
+    # CDXML with its own built-in parser.
     cd ${BUILD_DIR}/rdkit_build
-    emcmake cmake -DRDK_BUILD_STATIC_LIBS_ONLY=ON -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DEIGEN3_INCLUDE_DIR=${INSTALL_DIR}/include/eigen3 -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release_stripped ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CHEMDRAW_SUPPORT=ON -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0 -D_LIBCPP_KEEP_TRANSITIVE_INCLUDES_LLVM23" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_LIBCPP_KEEP_TRANSITIVE_INCLUDES_LLVM23" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
+    emcmake cmake -DRDK_BUILD_STATIC_LIBS_ONLY=ON -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DEIGEN3_INCLUDE_DIR=${INSTALL_DIR}/include/eigen3 -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release_stripped ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CHEMDRAW_SUPPORT=OFF -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0 -D_LIBCPP_KEEP_TRANSITIVE_INCLUDES_LLVM23" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_LIBCPP_KEEP_TRANSITIVE_INCLUDES_LLVM23" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing RDKit, giving up."
     # Manually copy coordgen and maeparser headers
