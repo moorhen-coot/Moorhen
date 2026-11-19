@@ -1,12 +1,14 @@
 import { batch } from "react-redux";
 import type { cootCommandKwargs, WorkerResponse } from "@/InstanceManager/CommandCentre";
 import type { LoadFilesResult, MoorhenInstance } from "@/InstanceManager/MoorhenInstance";
-import { addCustomRepresentation, addMoleculeList } from "@/store/moleculesSlice";
-import { setRequestDrawScene } from "@/store/glRefSlice";
-import { setJobProgress } from "@/store/generalStatesSlice";
+import { addCustomRepresentationList, addMoleculeList } from "@/store/moleculesSlice";
+import { setDrawsThrottled, setRequestDrawScene } from "@/store/glRefSlice";
+import { setJobProgress, setLigandBatchLoading } from "@/store/generalStatesSlice";
+import { setBusy } from "@/store/globalUISlice";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { fetchMonomerDictionary } from "./monomerLibrary";
-import { readDictionary as readDictionaryIntoCoot } from "./dictionaries";
+import { flushDictionaryRecords, holdDictionaryRecords, readDictionary as readDictionaryIntoCoot } from "./dictionaries";
+import { flushMoleculeRecords, holdMoleculeRecords } from "./moleculeRecords";
 import { moleculeNameFromFileName } from "./utils";
 import { MoleculeRepresentation } from "./Representation/MoorhenMoleculeRepresentation";
 
@@ -36,7 +38,11 @@ export type BatchLoadLigandsOptions = {
     dictionaries?: (File | string | URL)[];
     /** Centre the view on the last loaded ligand at the end (default false). */
     centre?: boolean;
-    /** Ligands per chunk, i.e. per group of worker messages and per store update (default 50). */
+    /**
+     * Ligands per chunk, i.e. per group of worker messages and per store update (default 20). The
+     * worker prepares each chunk between the meshes of the others, and nothing new is drawn meanwhile:
+     * larger chunks are no faster, only longer pauses.
+     */
     chunkSize?: number;
     /** Called after each chunk is added to the scene. */
     onProgress?: (done: number, total: number) => void;
@@ -59,6 +65,9 @@ type ChunkItem = {
 };
 
 const FETCH_CONCURRENCY = 16;
+
+/** How many chunks are prepared (read into Coot, dictionaries) ahead of the one being drawn */
+const PREPARE_AHEAD = 2;
 
 /** How many batches are loading, per store (their progress notification is shared) */
 const runningBatches = new WeakMap<object, number>();
@@ -108,7 +117,7 @@ export const batchLoadLigands = async (
     sources: BatchLigandSource[],
     options: BatchLoadLigandsOptions = {}
 ): Promise<BatchLoadLigandsResult> => {
-    const { centre = false, chunkSize = 50, onProgress } = options;
+    const { centre = false, chunkSize = 20, onProgress } = options;
     const store = instance.store;
     const commandCentre = instance.commandCentre;
     const { backgroundColor, defaultBondSmoothness } = store.getState().sceneSettings;
@@ -283,21 +292,27 @@ export const batchLoadLigands = async (
         // Cache on each molecule every dictionary of this batch for its residue types, so sessions save
         // them. Not only the missing ones: a dictionary supplied, or fetched for an earlier chunk, is in
         // Coot already, so Coot does not report it as missing for the molecules after it.
+        // Every dictionary first, then all molecules in one go: their records are then written in one
+        // store update (they are queued per tick), not one per molecule.
+        const compIdsOf = items.map(item => new Set([...item.missingCompIds, ...(item.molecule.ligands ?? []).map(ligand => ligand.resName)]));
+        const texts = new Map<string, string | undefined>();
         await Promise.all(
-            items.map(async item => {
-                const compIds = new Set([...item.missingCompIds, ...(item.molecule.ligands ?? []).map(ligand => ligand.resName)]);
-                const found = new Set<string>();
-                for (const compId of compIds) {
-                    const text = dictionaries.has(compId) ? await dictionaries.get(compId) : undefined;
-                    if (text) {
-                        item.molecule.cacheLigandDict(text);
-                        found.add(compId);
-                    }
-                }
-                // Its record's missing dictionaries from what Coot said and what was read since, without asking again
-                item.molecule.refreshRecord(item.missingCompIds.filter(compId => !found.has(compId)).sort());
-            })
+            [...new Set(compIdsOf.flatMap(compIds => [...compIds]))]
+                .filter(compId => dictionaries.has(compId))
+                .map(async compId => texts.set(compId, await dictionaries.get(compId)))
         );
+        items.forEach((item, i) => {
+            const found = new Set<string>();
+            for (const compId of compIdsOf[i]) {
+                const text = texts.get(compId);
+                if (text) {
+                    item.molecule.cacheLigandDict(text);
+                    found.add(compId);
+                }
+            }
+            // Its record's missing dictionaries from what Coot said and what was read since, without asking again
+            item.molecule.refreshRecord(item.missingCompIds.filter(compId => !found.has(compId)).sort());
+        });
 
         return items;
     };
@@ -310,7 +325,13 @@ export const batchLoadLigands = async (
         // All settled, not Promise.all: one failing must not leave the others drawing on molecules
         // being discarded. A rejected one is a file that could not be drawn.
         const settled = await Promise.allSettled(
-            chunkItems.map(item => MoleculeRepresentation.create({ representationStyle: "CBs", molecule: item.molecule }))
+            chunkItems.map(item =>
+                // Each one drawn moves the progress bar on, rather than the whole chunk at its end
+                MoleculeRepresentation.create({ representationStyle: "CBs", molecule: item.molecule }).finally(() => {
+                    drawnInChunk++;
+                    reportProgress();
+                })
+            )
         );
         const representations = settled.map(result => {
             if (result.status === "fulfilled") return result.value;
@@ -328,8 +349,11 @@ export const batchLoadLigands = async (
         });
         await discard(undrawn);
         batch(() => {
+            // With the chunk, the records and dictionaries held since the last one (see the hold below)
+            flushDictionaryRecords(store);
+            flushMoleculeRecords(store);
             store.dispatch(addMoleculeList(items.map(item => item.molecule)));
-            items.forEach(item => store.dispatch(addCustomRepresentation(item.representation)));
+            store.dispatch(addCustomRepresentationList(items.map(item => item.representation)));
             store.dispatch(setRequestDrawScene(true));
         });
         for (const { index, fileName, molecule } of items) {
@@ -339,12 +363,44 @@ export const batchLoadLigands = async (
 
     // Progress for the long job notification, cleared however the batch ends
     const showProgress = (done: number, total: number) => store.dispatch(setJobProgress({ label: "Loading ligands", done, total }));
+    // Files finished (chunks added, or failed before drawing), and drawn so far in the chunk being added
+    let done = 0;
+    let drawnInChunk = 0;
+    // The progress bar follows each ligand drawn, at most once per frame
+    // (a timer where there are no frames, e.g. Node)
+    const hasFrames = typeof requestAnimationFrame === "function";
+    let progressFrame: ReturnType<typeof setTimeout> | number | null = null;
+    const cancelProgress = () => {
+        if (progressFrame === null) return;
+        if (hasFrames) cancelAnimationFrame(progressFrame as number);
+        else clearTimeout(progressFrame as ReturnType<typeof setTimeout>);
+        progressFrame = null;
+    };
+    const reportProgress = () => {
+        if (progressFrame !== null) return;
+        const update = () => {
+            progressFrame = null;
+            showProgress(Math.min(done + drawnInChunk, sources.length), sources.length);
+        };
+        progressFrame = hasFrames ? requestAnimationFrame(update) : setTimeout(update, 16);
+    };
     // Batches running at once share the one progress notification: the last to finish clears it
     runningBatches.set(store, (runningBatches.get(store) ?? 0) + 1);
+    // Each ligand asks for a redraw, and a frame costs more as they add up: a few frames a second
+    // still show the progress. Released (with a last redraw) however the batch ends.
+    store.dispatch(setDrawsThrottled(true));
+    // The ligand list shows a spinner rather than re-rendering every row for every chunk
+    store.dispatch(setLigandBatchLoading(true));
+    // Molecule records and dictionaries are written one tick at a time, and each molecule of a chunk
+    // and each dictionary is its own tick: written with each chunk instead (one dispatch each)
+    holdMoleculeRecords(store, true);
+    holdDictionaryRecords(store, true);
     try {
         // Read everything, then work through the chunks as a pipeline
         const names = sources.map(sourceName);
         showProgress(0, sources.length);
+        // Busy from start to end (the instance keeps it on while a progress is shown), not per message
+        store.dispatch(setBusy(true));
         const texts = await readAll(sources);
         const readable: { index: number; fileName: string; text: string }[] = [];
         texts.forEach((result, index) => {
@@ -364,13 +420,16 @@ export const batchLoadLigands = async (
             });
 
         // Counted against every source: a file that could not be read is done already
-        let done = sources.length - readable.length;
+        done = sources.length - readable.length;
         showProgress(done, sources.length);
-        let next = chunks.length > 0 ? safePrepare(chunks[0]) : null;
+        // Chunks being prepared, PREPARE_AHEAD of the one being drawn: a chunk's preparation is a few
+        // worker round trips in a row (read, info, dictionaries), each queued behind the meshes of the
+        // chunk being drawn, so started only one chunk ahead it was not ready when that one was done.
+        const prepared: Promise<ChunkItem[]>[] = chunks.slice(0, PREPARE_AHEAD).map(safePrepare);
         for (let k = 0; k < chunks.length; k++) {
-            const items = await next;
-            // Queue the next chunk's worker messages before building this one, so they overlap
-            next = k + 1 < chunks.length ? safePrepare(chunks[k + 1]) : null;
+            const items = await prepared[k];
+            if (k + PREPARE_AHEAD < chunks.length) prepared.push(safePrepare(chunks[k + PREPARE_AHEAD]));
+            delete prepared[k];
             try {
                 await addChunk(items);
             } catch (err) {
@@ -382,6 +441,7 @@ export const batchLoadLigands = async (
                 await discard(notAdded.map(item => item.molecule)).catch(() => undefined);
             }
             done += chunks[k].length;
+            drawnInChunk = 0;
             showProgress(done, sources.length);
             onProgress?.(done, sources.length);
         }
@@ -407,8 +467,17 @@ export const batchLoadLigands = async (
         }
         return { loaded: loaded.map(item => item.entry), failed };
     } finally {
+        // A frame still to come would show the bar again once it is cleared
+        cancelProgress();
         const stillRunning = (runningBatches.get(store) ?? 1) - 1;
         runningBatches.set(store, stillRunning);
-        if (stillRunning === 0) store.dispatch(setJobProgress(null));
+        if (stillRunning === 0) {
+            store.dispatch(setJobProgress(null));
+            store.dispatch(setBusy(commandCentre.activeMessages.length !== 0));
+        }
+        holdDictionaryRecords(store, false);
+        holdMoleculeRecords(store, false);
+        store.dispatch(setDrawsThrottled(false));
+        store.dispatch(setLigandBatchLoading(false));
     }
 };

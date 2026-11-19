@@ -81,6 +81,16 @@ export const LongJobSnackNotification = () => {
         }
     }, [newCommandExit]);
 
+    // Command exits are not reported while a task shows its progress: check again once it is done
+    useEffect(() => {
+        if (!jobProgress) {
+            const timeoutId = setTimeout(debouncedClearBusy, 500);
+            return () => {
+                clearTimeout(timeoutId);
+            };
+        }
+    }, [jobProgress]);
+
     // A task that reports its progress is shown at once, with how far it has got
     if (jobProgress) {
         // Within 0-100 whatever a caller reports (setJobProgress is in the API)

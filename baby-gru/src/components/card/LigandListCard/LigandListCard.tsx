@@ -1,7 +1,7 @@
 import parse from "html-react-parser";
 import { batch, shallowEqual, useDispatch, useSelector, useStore } from "react-redux";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { MoorhenIcon } from "@/components/icons";
+import { MoorhenIcon, MoorhenSpinner } from "@/components/icons";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
 import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
 import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
@@ -98,6 +98,9 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
         return resNames.filter(resName => missing.includes(resName));
     };
     const registerRow = useHoveredRowHighlight(store);
+    // A ligand batch load adds molecules chunk after chunk: rendering every row for each chunk made
+    // the load much slower with this panel open. The rows are rendered once it is done.
+    const batchLoading = useSelector((state: RootState) => state.generalStates.ligandBatchLoads > 0);
     const visibleMolecules = useSelector((state: RootState) => state.molecules.visibleMolecules);
     const visible = new Set(visibleMolecules);
 
@@ -120,7 +123,7 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     const membership = entries.map(entryKey).join(",");
     const sites = computed?.membership === membership ? computed.sites : null;
     useEffect(() => {
-        if (!grouped || sites) return;
+        if (!grouped || sites || batchLoading) return;
         let cancelled = false;
         groupLigandsBySite(entries)
             .then(result => {
@@ -137,7 +140,7 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
         };
         // Keyed on which ligands are listed, not on the entries array, which is new on every render
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [grouped, membership]);
+    }, [grouped, membership, batchLoading]);
 
     /** Show / hide the ligand-only molecules of a list (a ligand of a model is shown with its model) */
     const visibilityButton = (list: LigandEntry[], what: string): React.JSX.Element[] => {
@@ -171,7 +174,13 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     );
 
     let content: React.ReactNode;
-    if (grouped) {
+    if (batchLoading) {
+        content = (
+            <div style={{ display: "flex", justifyContent: "center", padding: "1rem" }}>
+                <MoorhenSpinner />
+            </div>
+        );
+    } else if (grouped) {
         // Only sites: each holds every ligand at that position, whichever molecule it is in
         content =
             sites === null ? (

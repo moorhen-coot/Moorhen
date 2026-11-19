@@ -17,6 +17,11 @@ const initialState: {
      * flip a switch back to the value React last rendered and the redraw would be lost.
      */
     requestDrawScene: { count: number };
+    /**
+     * How many tasks ask for store-triggered redraws to be throttled (see MGWebGL.requestDrawScene),
+     * e.g. a batch of ligands loading, which would otherwise redraw a growing scene every frame.
+     */
+    drawsThrottled: number;
     envUpdate: { switch: boolean };
     clearLabels: { switch: boolean };
     hoverSize: number;
@@ -33,6 +38,7 @@ const initialState: {
     envUpdate: { switch: false },
     clearLabels: { switch: false },
     requestDrawScene: { count: 0 },
+    drawsThrottled: 0,
     displayBuffers: [],
     texturedShapes: [],
     labelBuffers: [],
@@ -101,11 +107,18 @@ const glRefSlice = createSlice({
         setRequestDrawScene: (state, action: PayloadAction<boolean>) => {
             state.requestDrawScene.count += 1;
         },
+        /** true: one more task asks for throttled redraws; false: one fewer. Pair them (try / finally). */
+        setDrawsThrottled: (state, action: PayloadAction<boolean>) => {
+            state.drawsThrottled = Math.max(0, state.drawsThrottled + (action.payload ? 1 : -1));
+            // The last frame drawn may be up to a throttle interval old: draw what is there now
+            if (state.drawsThrottled === 0) state.requestDrawScene.count += 1;
+        },
     },
 });
 
 export const {
     setRequestDrawScene,
+    setDrawsThrottled,
     setIsWebGL2,
     setActiveMolecule,
     setQuat,

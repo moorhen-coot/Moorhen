@@ -9,14 +9,35 @@ import { type LoadedDictionary, addDictionaries } from "@/store/dictionariesSlic
  */
 const pending = new WeakMap<Store, LoadedDictionary[]>();
 
+/** How many tasks hold the records back, per store (see holdDictionaryRecords) */
+const held = new WeakMap<Store, number>();
+
+/** Record the queued dictionaries now, in one dispatch */
+export const flushDictionaryRecords = (store: Store): void => {
+    const queue = pending.get(store);
+    if (!queue) return;
+    pending.delete(store);
+    store.dispatch(addDictionaries(queue));
+};
+
+/**
+ * Keep queued dictionaries back past the end of the tick (true), until released (false) or flushed.
+ * For a task reading many, each in its own tick (a batch of ligands of many types). Pair them
+ * (try / finally): the last release records them.
+ */
+export const holdDictionaryRecords = (store: Store, hold: boolean): void => {
+    const count = Math.max(0, (held.get(store) ?? 0) + (hold ? 1 : -1));
+    held.set(store, count);
+    if (count === 0) flushDictionaryRecords(store);
+};
+
 const recordDictionaries = (store: Store, dictionaries: LoadedDictionary[]) => {
     let queue = pending.get(store);
     if (!queue) {
         queue = [];
         pending.set(store, queue);
         queueMicrotask(() => {
-            pending.delete(store);
-            store.dispatch(addDictionaries(queue));
+            if (!held.get(store) && pending.get(store) === queue) flushDictionaryRecords(store);
         });
     }
     queue.push(...dictionaries);

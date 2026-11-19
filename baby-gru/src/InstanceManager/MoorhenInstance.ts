@@ -582,7 +582,7 @@ export class MoorhenInstance extends StoreExtension {
              * @param options.dictionaries - Restraint dictionaries known up front; the residue types they
              * define are not looked up.
              * @param options.centre - Centre the view on the last loaded ligand at the end (default false).
-             * @param options.chunkSize - Ligands per chunk (default 50).
+             * @param options.chunkSize - Ligands per chunk (default 20; larger chunks are no faster, only longer pauses).
              * @param options.onProgress - Called with (done, total) after each chunk is added.
              * @param origin - Optional label forwarded to subscribers registered via `newFilesLoadedCallback`.
              * @returns `loaded`, one entry per loaded file in input order (as `loadFiles` returns), and
@@ -1751,17 +1751,25 @@ export class MoorhenInstance extends StoreExtension {
                 onCootInitialized: () => {
                     this.dispatch(setCootInitialized(true));
                 },
+                // Only for the long job notification, which shows a task's progress instead while one
+                // reports it: a batch of a thousand ligands would otherwise toggle these 8000 times.
                 onCommandExit: () => {
-                    this.dispatch(toggleCootCommandExit());
+                    if (!this.store.getState().generalStates.jobProgress) this.dispatch(toggleCootCommandExit());
                 },
                 onCommandStart: () => {
-                    this.dispatch(toggleCootCommandStart());
+                    if (!this.store.getState().generalStates.jobProgress) this.dispatch(toggleCootCommandStart());
                 },
                 // onMoleculeChanged: (cootMolNo: number) => {
                 //     this.triggerMoleculeChanged(cootMolNo);
                 // },
             });
-            newCommandCentre.onActiveMessagesChanged = newActiveMessages => this.dispatch(setBusy(newActiveMessages.length !== 0));
+            // Only when it changes: called twice per command, and each dispatch notifies every subscriber.
+            // Kept on while a task shows its progress: its worker queue empties for a moment between
+            // messages, and each of those would restart the spinner's delay (a blinking spinner).
+            newCommandCentre.onActiveMessagesChanged = newActiveMessages => {
+                const busy = newActiveMessages.length !== 0 || !!this.store.getState().generalStates.jobProgress;
+                if (this.store.getState().globalUI.busy !== busy) this.dispatch(setBusy(busy));
+            };
             this.setCommandCentre(newCommandCentre);
             if (externalCommandCentreRef) {
                 externalCommandCentreRef.current = this.commandCentre;

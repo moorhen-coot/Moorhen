@@ -110,6 +110,10 @@ const moleculesSlice = createSlice({
         addCustomRepresentation: (state, action: PayloadAction<moorhen.MoleculeRepresentation>) => {
             state.customRepresentations.push(action.payload as unknown as typeof state.customRepresentations[number]);
         },
+        /** Several at once, in one dispatch (a batch of ligands adds one per ligand) */
+        addCustomRepresentationList: (state, action: PayloadAction<moorhen.MoleculeRepresentation[]>) => {
+            state.customRepresentations.push(...(action.payload as unknown as typeof state.customRepresentations));
+        },
         removeCustomRepresentation: (state, action: PayloadAction<moorhen.MoleculeRepresentation>) => {
             state.customRepresentations = state.customRepresentations.filter(item => item.uniqueId !== action.payload.uniqueId);
         },
@@ -175,6 +179,7 @@ export const {
     showMolecule,
     hideMolecule,
     addCustomRepresentation,
+    addCustomRepresentationList,
     removeCustomRepresentation,
     removeGeneralRepresentation,
 } = moleculesSlice.actions;
