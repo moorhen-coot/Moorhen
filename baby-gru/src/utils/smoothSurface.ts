@@ -57,15 +57,6 @@ export const smoothSurfaceSetting = {
      */
     openRadius: 0.5,
     /**
-     * Pits and pockets made exactly: where a projection is buried by several atoms, every one is
-     * followed rather than the first. Probe positions too small for the grid are always found
-     * (step 2 of sesField), which is most of the accuracy (1df7's concave patches at a 0.4 A grid,
-     * against a brute-force SES: mean 0.0065 A, 95% within 0.014 A, worst 0.195 A; with this, 0.0047,
-     * 0.012, 0.069); this adds the rest at about 1.7 times the field's cost again. To be on by
-     * default once the field is made on the GPU.
-     */
-    cavities: false,
-    /**
      * Split every triangle once, with positions and normals from the field (refineContour): the
      * diffuse light's diamonds at a 0.5 A grid mostly gone, for four times the triangles rather
      * than eight times the field a 0.25 A grid costs.
@@ -174,67 +165,6 @@ interface SasAtoms {
     R: Float64Array;
 }
 
-/**
- * The nearest point to p of an SAS primitive - atom a's expanded sphere (b < 0), or the circle
- * where a's and b's meet - into out. False if there is no such point (the spheres do not meet, or
- * p is on the circle's axis).
- */
-function projectOnPrimitive(px: number, py: number, pz: number, a: number, b: number, atoms: SasAtoms, out: number[]): boolean {
-    const { x: ax, y: ay, z: az, R } = atoms;
-    if (b < 0) {
-        const dx = px - ax[a], dy = py - ay[a], dz = pz - az[a];
-        const len = Math.hypot(dx, dy, dz);
-        if (len < 1e-9) return false;
-        out[0] = ax[a] + R[a] * dx / len; out[1] = ay[a] + R[a] * dy / len; out[2] = az[a] + R[a] * dz / len;
-        return true;
-    }
-    const ux0 = ax[b] - ax[a], uy0 = ay[b] - ay[a], uz0 = az[b] - az[a];
-    const d = Math.hypot(ux0, uy0, uz0);
-    if (d < 1e-6 || d >= R[a] + R[b]) return false;
-    const ux = ux0 / d, uy = uy0 / d, uz = uz0 / d;
-    const t = (d * d + R[a] * R[a] - R[b] * R[b]) / (2 * d);
-    const r2 = R[a] * R[a] - t * t;
-    if (r2 <= 0) return false;
-    const rc = Math.sqrt(r2);
-    const cx = ax[a] + t * ux, cy = ay[a] + t * uy, cz = az[a] + t * uz;
-    let wx = px - cx, wy = py - cy, wz = pz - cz;
-    const along = wx * ux + wy * uy + wz * uz;
-    wx -= along * ux; wy -= along * uy; wz -= along * uz;
-    const wl = Math.hypot(wx, wy, wz);
-    if (wl < 1e-9) return false;
-    out[0] = cx + rc * wx / wl; out[1] = cy + rc * wy / wl; out[2] = cz + rc * wz / wl;
-    return true;
-}
-
-/**
- * The point where the expanded spheres of a, b and c meet that is nearer p, into out: the probe's
- * centre where it touches all three, over a concave spherical patch of the SES. False if they do
- * not meet.
- */
-function projectOnVertex(px: number, py: number, pz: number, a: number, b: number, c: number, atoms: SasAtoms, out: number[]): boolean {
-    const { x, y, z, R } = atoms;
-    const ex0 = x[b] - x[a], ey0 = y[b] - y[a], ez0 = z[b] - z[a];
-    const d = Math.hypot(ex0, ey0, ez0);
-    if (d < 1e-6) return false;
-    const e1x = ex0 / d, e1y = ey0 / d, e1z = ez0 / d;
-    const wx = x[c] - x[a], wy = y[c] - y[a], wz = z[c] - z[a];
-    const i = e1x * wx + e1y * wy + e1z * wz;
-    const vx = wx - i * e1x, vy = wy - i * e1y, vz = wz - i * e1z;
-    const j = Math.hypot(vx, vy, vz);
-    if (j < 1e-6) return false;
-    const e2x = vx / j, e2y = vy / j, e2z = vz / j;
-    const e3x = e1y * e2z - e1z * e2y, e3y = e1z * e2x - e1x * e2z, e3z = e1x * e2y - e1y * e2x;
-    const u = (R[a] * R[a] - R[b] * R[b] + d * d) / (2 * d);
-    const t = (R[a] * R[a] - R[c] * R[c] + i * i + j * j) / (2 * j) - (i / j) * u;
-    const h2 = R[a] * R[a] - u * u - t * t;
-    if (h2 < 0) return false;
-    const hz = Math.sqrt(h2);
-    const bx = x[a] + u * e1x + t * e2x, by = y[a] + u * e1y + t * e2y, bz = z[a] + u * e1z + t * e2z;
-    const side = (px - bx) * e3x + (py - by) * e3y + (pz - bz) * e3z >= 0 ? hz : -hz;
-    out[0] = bx + side * e3x; out[1] = by + side * e3y; out[2] = bz + side * e3z;
-    return true;
-}
-
 /** The first of `near`, other than a, b and c, whose expanded sphere q is inside; -1 if none. */
 function buriedBy(q: number[], near: ArrayLike<number>, from: number, to: number, a: number, b: number, atoms: SasAtoms, c = -1): number {
     for (let k = from; k < to; k++) {
@@ -248,119 +178,264 @@ function buriedBy(q: number[], near: ArrayLike<number>, from: number, to: number
 }
 
 /**
- * The nearest point of the SAS surface to p, which is just outside it, and the primitive it is on:
- * the expanded sphere of one of `near`, or the circle where two meet (p is over a crease) -
- * whichever candidate is not buried and is nearest. out gets x, y, z, a, b (b = -1: a sphere).
- * False if every candidate is buried (p over a point where three or more meet).
+ * The nearest point of the SAS surface to p, which is outside every expanded sphere: its projection
+ * onto the nearest of them (the least |p - c| - R among `near`), into out as x, y, z, a, -1, -1. Nothing
+ * buries it - a sphere b covering it would put p nearer b's surface than a's - so no circle or
+ * point where three meet can be nearer. (This was a search over spheres, circles and atom triples,
+ * from when it also served points inside the SAS; those are nearestExposedPoint's now.) False if
+ * `near` is empty or p is at the nearest centre.
  */
-function nearestSasPoint(px: number, py: number, pz: number, near: readonly number[], atoms: SasAtoms, out: number[],
-                         within = Infinity): boolean {
-    // Nothing further than `within` is any use to a caller that gives one (it is thrown away), so
-    // the search starts there, just past it - for the three-sphere points as well as the spheres
-    // and circles: a sphere or circle point further than `within` no longer ends the search
-    // before a nearer three-sphere point is looked for.
-    const limit = within === Infinity ? Infinity : within * within * (1 + 1e-12);
+function nearestSphere(px: number, py: number, pz: number, near: readonly number[], atoms: SasAtoms, out: number[]): boolean {
+    let best = Infinity, bestAtom = -1, bestDistance = 0;
+    for (const a of near) {
+        const distance = Math.hypot(px - atoms.x[a], py - atoms.y[a], pz - atoms.z[a]);
+        const gap = distance - atoms.R[a];
+        if (gap < best) { best = gap; bestAtom = a; bestDistance = distance; }
+    }
+    if (bestAtom < 0 || bestDistance < 1e-9) return false;
+    const scale = atoms.R[bestAtom] / bestDistance;
+    out[0] = atoms.x[bestAtom] + (px - atoms.x[bestAtom]) * scale;
+    out[1] = atoms.y[bestAtom] + (py - atoms.y[bestAtom]) * scale;
+    out[2] = atoms.z[bestAtom] + (pz - atoms.z[bestAtom]) * scale;
+    out[3] = bestAtom; out[4] = -1; out[5] = -1;
+    return true;
+}
+const NEAREST_SCRATCH = [0, 0, 0];
+
+/**
+ * The exposed part of the SAS, worked out once: for every pair of atoms whose expanded spheres
+ * meet, the arcs of their circle that no other sphere covers. Each other sphere covers one stretch
+ * of angle of a circle (or none, or all of it), in closed form; what is left of the circle once
+ * they are merged is its exposed arcs, and the ends of those arcs are the points where three
+ * spheres meet that the probe can reach. An atom is exposed if it has an exposed arc, or meets no
+ * other sphere and is inside none.
+ *
+ * Each circle's arcs depend on nothing but its two atoms' neighbours, so this is one independent
+ * job per pair: the same loop in C++, or one GPU thread per circle.
+ */
+interface ExposedSas {
+    /** 1 for an atom with exposed surface. */
+    exposed: Uint8Array;
+    /** Per atom (CSR), the circles it is the lower-numbered atom of: circle ids in `circleIds`. */
+    circleStart: Int32Array;
+    circleIds: Int32Array;
+    /** Per atom (CSR), every exposed circle on its sphere, either end: the boundary of its patch. */
+    atomCircleStart: Int32Array;
+    atomCircleIds: Int32Array;
+    /**
+     * Per atom (CSR), every other atom whose expanded sphere meets its own: the only atoms that can
+     * bury a point of its sphere, so a burial check needs no spatial lookup.
+     */
+    neighbourStart: Int32Array;
+    neighbourIds: Int32Array;
+    /** Per circle: the other atom; centre, axis, a basis of its plane, radius. */
+    other: Int32Array;
+    centre: Float64Array;
+    axis: Float64Array;
+    e1: Float64Array;
+    e2: Float64Array;
+    radius: Float64Array;
+    /** Per circle (CSR), its exposed arcs: start angle in [0, 2π) and length. */
+    arcStart: Int32Array;
+    arcFrom: Float64Array;
+    arcLength: Float64Array;
+}
+
+const TWO_PI = 2 * Math.PI;
+
+function exposedSas(sas: SasAtoms, neighbours: (a: number, out: number[]) => void): ExposedSas {
+    const { x, y, z, R } = sas;
+    const n = x.length;
+    const exposed = new Uint8Array(n);
+    const circleCount = new Int32Array(n);
+    const contained = new Uint8Array(n);
+    const circleOwner: number[] = [], other: number[] = [];
+    const centre: number[] = [], axis: number[] = [], e1s: number[] = [], e2s: number[] = [], radius: number[] = [];
+    const arcStart: number[] = [0], arcFrom: number[] = [], arcLength: number[] = [];
+    const near: number[] = [];
+    const neighbourStart = new Int32Array(n + 1);
+    const neighbourIds: number[] = [];
+    // Covered stretches of the current circle, as [from, to] within [0, 2π].
+    const lo: number[] = [], hi: number[] = [];
+    const order: number[] = [];
+    for (let a = 0; a < n; a++) {
+        neighbours(a, near);
+        for (const b of near) if (b !== a) neighbourIds.push(b);
+        neighbourStart[a + 1] = neighbourIds.length;
+        for (const b of near) {
+            if (b === a) continue;
+            const ux0 = x[b] - x[a], uy0 = y[b] - y[a], uz0 = z[b] - z[a];
+            const d = Math.hypot(ux0, uy0, uz0);
+            // Inside b (of two identical spheres, the later counts as inside the earlier).
+            if (d + R[a] <= R[b] && (d > 1e-9 || R[a] < R[b] || a > b)) contained[a] = 1;
+            if (b < a || d < 1e-6 || d >= R[a] + R[b]) continue;
+            const t = (d * d + R[a] * R[a] - R[b] * R[b]) / (2 * d);
+            const r2 = R[a] * R[a] - t * t;
+            if (r2 <= 0) continue;
+            circleCount[a]++; circleCount[b]++;
+            const rc = Math.sqrt(r2);
+            const ux = ux0 / d, uy = uy0 / d, uz = uz0 / d;
+            const cx = x[a] + t * ux, cy = y[a] + t * uy, cz = z[a] + t * uz;
+            // A basis of the circle's plane: e1 from the axis' smallest component, e2 = u x e1.
+            let px = 0, py = 0, pz = 0;
+            if (Math.abs(ux) <= Math.abs(uy) && Math.abs(ux) <= Math.abs(uz)) px = 1;
+            else if (Math.abs(uy) <= Math.abs(uz)) py = 1;
+            else pz = 1;
+            const along = px * ux + py * uy + pz * uz;
+            let ax1 = px - along * ux, ay1 = py - along * uy, az1 = pz - along * uz;
+            const l1 = Math.hypot(ax1, ay1, az1);
+            ax1 /= l1; ay1 /= l1; az1 /= l1;
+            const ax2 = uy * az1 - uz * ay1, ay2 = uz * ax1 - ux * az1, az2 = ux * ay1 - uy * ax1;
+            // Each other sphere c covers the circle where |X(θ) - c|² < Rc², X(θ) = C + rc(cos θ e1
+            // + sin θ e2): A cos θ + B sin θ < K. Held 1e-4 inside c, as buriedBy holds it.
+            lo.length = 0; hi.length = 0;
+            let whole = false;
+            for (const c of near) {
+                if (c === a || c === b) continue;
+                const wx = cx - x[c], wy = cy - y[c], wz = cz - z[c];
+                const A = 2 * rc * (wx * ax1 + wy * ay1 + wz * az1);
+                const B = 2 * rc * (wx * ax2 + wy * ay2 + wz * az2);
+                const Rc = R[c] - 1e-4;
+                const K = Rc * Rc - (wx * wx + wy * wy + wz * wz) - r2;
+                const M = Math.hypot(A, B);
+                if (K <= -M) continue;
+                if (K > M) { whole = true; break; }
+                // Covered where cos(θ - φ) < K / M: a stretch centred on φ + π.
+                const half = Math.PI - Math.acos(K / M);
+                let mid = Math.atan2(B, A) + Math.PI;
+                if (mid >= TWO_PI) mid -= TWO_PI;
+                const from = mid - half, to = mid + half;
+                if (from < 0) { lo.push(from + TWO_PI, 0); hi.push(TWO_PI, to); }
+                else if (to > TWO_PI) { lo.push(from, 0); hi.push(TWO_PI, to - TWO_PI); }
+                else { lo.push(from); hi.push(to); }
+            }
+            if (whole) continue;
+            // What the covered stretches leave of [0, 2π), in order.
+            order.length = 0;
+            for (let k = 0; k < lo.length; k++) order.push(k);
+            order.sort((p, q) => lo[p] - lo[q]);
+            const arcs: number[] = [];
+            let reached = 0;
+            for (const k of order) {
+                if (lo[k] > reached) arcs.push(reached, lo[k] - reached);
+                reached = Math.max(reached, hi[k]);
+            }
+            if (reached < TWO_PI) arcs.push(reached, TWO_PI - reached);
+            if (arcs.length === 0) continue;
+            // An arc through 0 is one arc, not two.
+            if (arcs.length >= 4 && arcs[0] === 0 && arcs[arcs.length - 2] + arcs[arcs.length - 1] >= TWO_PI) {
+                arcs[arcs.length - 1] += arcs[1];
+                arcs.splice(0, 2);
+            }
+            exposed[a] = 1; exposed[b] = 1;
+            circleOwner.push(a); other.push(b);
+            centre.push(cx, cy, cz); axis.push(ux, uy, uz); e1s.push(ax1, ay1, az1); e2s.push(ax2, ay2, az2); radius.push(rc);
+            for (let k = 0; k < arcs.length; k += 2) { arcFrom.push(arcs[k]); arcLength.push(arcs[k + 1]); }
+            arcStart.push(arcFrom.length);
+        }
+    }
+    // A sphere that meets no other and is inside none is exposed all over.
+    for (let a = 0; a < n; a++) if (circleCount[a] === 0 && !contained[a]) exposed[a] = 1;
+    // Circles by their lower-numbered atom.
+    const circleStart = new Int32Array(n + 1);
+    for (const a of circleOwner) circleStart[a + 1]++;
+    for (let a = 0; a < n; a++) circleStart[a + 1] += circleStart[a];
+    const fill = circleStart.slice(0, n);
+    const circleIds = new Int32Array(circleOwner.length);
+    circleOwner.forEach((a, id) => { circleIds[fill[a]++] = id; });
+    const atomCircleStart = new Int32Array(n + 1);
+    circleOwner.forEach((a, id) => { atomCircleStart[a + 1]++; atomCircleStart[other[id] + 1]++; });
+    for (let a = 0; a < n; a++) atomCircleStart[a + 1] += atomCircleStart[a];
+    const atomFill = atomCircleStart.slice(0, n);
+    const atomCircleIds = new Int32Array(2 * circleOwner.length);
+    circleOwner.forEach((a, id) => { atomCircleIds[atomFill[a]++] = id; atomCircleIds[atomFill[other[id]]++] = id; });
+    return {
+        exposed, circleStart, circleIds, atomCircleStart, atomCircleIds,
+        neighbourStart, neighbourIds: Int32Array.from(neighbourIds),
+        other: Int32Array.from(other), centre: Float64Array.from(centre), axis: Float64Array.from(axis),
+        e1: Float64Array.from(e1s), e2: Float64Array.from(e2s), radius: Float64Array.from(radius),
+        arcStart: Int32Array.from(arcStart), arcFrom: Float64Array.from(arcFrom), arcLength: Float64Array.from(arcLength),
+    };
+}
+
+/**
+ * The nearest exposed point of the SAS to p within `within`, into out as nearestSphere gives it
+ * (x, y, z, a, b, circle id; b and the id -1 for a sphere): p's projection onto an exposed atom's sphere, if nothing
+ * buries it, or the nearest point of an exposed arc - p's projection onto the circle if that is on
+ * an exposed arc, otherwise the nearer end of one, which is a point where three spheres meet. That
+ * is every place the nearest point of the exposed surface can be, so it is the nearest, with no
+ * search over triples. False if there is none within `within`.
+ *
+ * `candidates`: the exposed atoms whose sphere reaches within `within` of p (any atom with a sphere
+ * or circle point that near is one).
+ */
+function nearestExposedPoint(px: number, py: number, pz: number, candidates: readonly number[], exp: ExposedSas,
+                             atoms: SasAtoms, within: number, out: number[]): boolean {
+    const limit = within * within * (1 + 1e-12);
     let best = limit;
     const q = NEAREST_SCRATCH;
-    // The atoms by how far p is from their sphere's surface. Every point of a sphere is at least
-    // that far from p, so a circle of two spheres is no nearer than the further of the two, and a
-    // point where three meet no nearer than the furthest: in this order, each loop below can stop
-    // at the first atom already further than the best found. Skips only what could not win, so
-    // the answer is the one the full search gives - at a cost that no longer grows with the cube
-    // of the atoms in the window (it did, and a coarse grid's wider window made seeding six times
-    // slower per point: 3j2w at 0.76 A).
-    const n = near.length;
-    if (NEAREST_ORDER.length < n) { NEAREST_ORDER = new Int32Array(2 * n); NEAREST_GAP = new Float64Array(2 * n); }
-    // order: places in `near`, not atoms, so that what is recorded below - the pair of atoms -
-    // is the one the search in `near`'s order recorded: step 3 follows only the first atom burying
-    // that pair's circle (without `cavities`), so which two of three it is changes the field.
-    const order = NEAREST_ORDER, gap = NEAREST_GAP;
-    for (let i = 0; i < n; i++) {
-        const a = near[i];
-        const g = Math.abs(Math.hypot(px - atoms.x[a], py - atoms.y[a], pz - atoms.z[a]) - atoms.R[a]);
-        // Insertion sort: a few dozen atoms.
-        let k = i;
-        while (k > 0 && gap[k - 1] > g) { gap[k] = gap[k - 1]; order[k] = order[k - 1]; k--; }
-        gap[k] = g; order[k] = i;
-    }
-    for (let i = 0; i < n; i++) {
-        if (gap[i] * gap[i] >= best) break;
-        for (let j = i; j < n; j++) {
-            if (gap[j] * gap[j] >= best) break;
-            // j === i: the sphere of near[order[i]]; otherwise the circle of it and near[order[j]],
-            // the earlier in `near` first.
-            const oi = order[i], oj = order[j];
-            const a = near[Math.min(oi, oj)], b = j === i ? -1 : near[Math.max(oi, oj)];
-            if (!projectOnPrimitive(px, py, pz, a, b, atoms, q)) continue;
-            const d2 = (q[0] - px) ** 2 + (q[1] - py) ** 2 + (q[2] - pz) ** 2;
-            if (d2 >= best || buriedBy(q, near, 0, n, a, b, atoms) >= 0) continue;
-            best = d2;
-            out[0] = q[0]; out[1] = q[1]; out[2] = q[2]; out[3] = a; out[4] = b;
-        }
-    }
-    if (best < limit) return true;
-    // Every sphere and circle point buried (or, with `within`, too far): p is over (or in) a dimple, where the probe touches
-    // three atoms at once. The point where their spheres meet; recorded as the circle of two of
-    // them, from which the refinement in step 3 finds the third again. Only atoms whose sphere's
-    // surface is within `within` of p can meet there within it - in this order, a prefix.
-    let m = 0;
-    while (m < n && gap[m] <= within) m++;
-    // A point where three spheres meet is on each pair's circle, so no nearer than the furthest of
-    // the three circles: each pair's distance once (m^2), and every triple bounded by it. A pair
-    // whose spheres do not meet has no circle, and no point where it meets a third.
-    if (NEAREST_CIRCLE.length < m * m) NEAREST_CIRCLE = new Float64Array(2 * m * m);
-    const circle = NEAREST_CIRCLE;
-    for (let i = 0; i < m; i++) {
-        for (let j = i + 1; j < m; j++) {
-            circle[i * m + j] = circleDistance2(px, py, pz, near[order[i]], near[order[j]], atoms);
-        }
-    }
-    for (let i = 0; i < m; i++) {
-        if (gap[i] * gap[i] >= best) break;
-        for (let j = i + 1; j < m; j++) {
-            if (gap[j] * gap[j] >= best) break;
-            if (circle[i * m + j] >= best) continue;
-            for (let k = j + 1; k < m; k++) {
-                if (gap[k] * gap[k] >= best) break;
-                if (circle[i * m + k] >= best || circle[j * m + k] >= best) continue;
-                // In `near`'s order: a and b, the pair recorded, are the earlier two.
-                const o0 = order[i], o1 = order[j], o2 = order[k];
-                const first = Math.min(o0, o1, o2), last = Math.max(o0, o1, o2);
-                const a = near[first], b = near[o0 + o1 + o2 - first - last], c = near[last];
-                if (!projectOnVertex(px, py, pz, a, b, c, atoms, q)) continue;
-                const d2 = (q[0] - px) ** 2 + (q[1] - py) ** 2 + (q[2] - pz) ** 2;
-                if (d2 >= best || buriedBy(q, near, 0, n, a, b, atoms, c) >= 0) continue;
-                best = d2;
-                out[0] = q[0]; out[1] = q[1]; out[2] = q[2]; out[3] = a; out[4] = b;
+    for (const a of candidates) {
+        const dx = px - atoms.x[a], dy = py - atoms.y[a], dz = pz - atoms.z[a];
+        const dist = Math.hypot(dx, dy, dz);
+        const gap = Math.abs(dist - atoms.R[a]);
+        // Every point of a's sphere, its circles included, is at least gap from p.
+        if (gap * gap >= best) continue;
+        if (dist > 1e-9) {
+            q[0] = atoms.x[a] + atoms.R[a] * dx / dist; q[1] = atoms.y[a] + atoms.R[a] * dy / dist; q[2] = atoms.z[a] + atoms.R[a] * dz / dist;
+            if (buriedBy(q, exp.neighbourIds, exp.neighbourStart[a], exp.neighbourStart[a + 1], a, -1, atoms) < 0) {
+                best = gap * gap;
+                out[0] = q[0]; out[1] = q[1]; out[2] = q[2]; out[3] = a; out[4] = -1; out[5] = -1;
             }
+        }
+        for (let k = exp.circleStart[a]; k < exp.circleStart[a + 1]; k++) {
+            const id = exp.circleIds[k];
+            const d2 = nearestOnArcs(px, py, pz, exp, id, best, q);
+            if (d2 >= best) continue;
+            best = d2;
+            out[0] = q[0]; out[1] = q[1]; out[2] = q[2]; out[3] = a; out[4] = exp.other[id]; out[5] = id;
         }
     }
     return best < limit;
 }
 
 /**
- * The squared distance from p to the circle where a's and b's expanded spheres meet; Infinity if
- * they do not meet (no circle), and 0 - no bound - where p is on its axis.
+ * The squared distance from p to the nearest exposed point of circle `id` (its projection onto the
+ * circle if that is on an exposed arc, otherwise the nearer end of an arc: a point where three
+ * spheres meet), with that point into q; `bound` or more, q untouched, if the whole circle is no
+ * nearer than `bound`.
  */
-function circleDistance2(px: number, py: number, pz: number, a: number, b: number, atoms: SasAtoms): number {
-    const { x, y, z, R } = atoms;
-    const ux0 = x[b] - x[a], uy0 = y[b] - y[a], uz0 = z[b] - z[a];
-    const d = Math.hypot(ux0, uy0, uz0);
-    if (d < 1e-6 || d >= R[a] + R[b]) return Infinity;
-    const t = (d * d + R[a] * R[a] - R[b] * R[b]) / (2 * d);
-    const r2 = R[a] * R[a] - t * t;
-    if (r2 <= 0) return Infinity;
-    const ux = ux0 / d, uy = uy0 / d, uz = uz0 / d;
-    const wx = px - x[a] - t * ux, wy = py - y[a] - t * uy, wz = pz - z[a] - t * uz;
-    const along = wx * ux + wy * uy + wz * uz;
-    const across = Math.sqrt(Math.max(0, wx * wx + wy * wy + wz * wz - along * along));
-    const off = across - Math.sqrt(r2);
-    return along * along + off * off;
+function nearestOnArcs(px: number, py: number, pz: number, exp: ExposedSas, id: number, bound: number, q: number[]): number {
+    const cx = exp.centre[3 * id], cy = exp.centre[3 * id + 1], cz = exp.centre[3 * id + 2];
+    const wx = px - cx, wy = py - cy, wz = pz - cz;
+    const along = wx * exp.axis[3 * id] + wy * exp.axis[3 * id + 1] + wz * exp.axis[3 * id + 2];
+    const u = wx * exp.e1[3 * id] + wy * exp.e1[3 * id + 1] + wz * exp.e1[3 * id + 2];
+    const v = wx * exp.e2[3 * id] + wy * exp.e2[3 * id + 1] + wz * exp.e2[3 * id + 2];
+    const s = Math.hypot(u, v), rc = exp.radius[id];
+    // The circle's nearest point to p, arcs or not, bounds them all.
+    const nearest = along * along + (s - rc) * (s - rc);
+    if (nearest >= bound) return nearest;
+    let theta = Math.atan2(v, u);
+    if (theta < 0) theta += TWO_PI;
+    // The exposed angle nearest p's: its own, if on an arc; else the nearest arc end.
+    let chosen = theta, gapAngle = Infinity;
+    for (let m = exp.arcStart[id]; m < exp.arcStart[id + 1]; m++) {
+        let into = theta - exp.arcFrom[m];
+        if (into < 0) into += TWO_PI;
+        const length = exp.arcLength[m];
+        if (into <= length) { chosen = theta; gapAngle = 0; break; }
+        // Past the end by (into - length), short of the start by (2π - into).
+        const pastEnd = into - length, beforeStart = TWO_PI - into;
+        if (pastEnd < gapAngle) { gapAngle = pastEnd; chosen = exp.arcFrom[m] + length; }
+        if (beforeStart < gapAngle) { gapAngle = beforeStart; chosen = exp.arcFrom[m]; }
+    }
+    const d2 = along * along + s * s + rc * rc - 2 * s * rc * Math.cos(gapAngle);
+    if (d2 >= bound) return d2;
+    const cosC = Math.cos(chosen), sinC = Math.sin(chosen);
+    q[0] = cx + rc * (cosC * exp.e1[3 * id] + sinC * exp.e2[3 * id]);
+    q[1] = cy + rc * (cosC * exp.e1[3 * id + 1] + sinC * exp.e2[3 * id + 1]);
+    q[2] = cz + rc * (cosC * exp.e1[3 * id + 2] + sinC * exp.e2[3 * id + 2]);
+    return d2;
 }
-const NEAREST_SCRATCH = [0, 0, 0];
-let NEAREST_ORDER = new Int32Array(256);
-let NEAREST_GAP = new Float64Array(256);
-let NEAREST_CIRCLE = new Float64Array(4096);
 
 /** Separable Gaussian blur in place, sigma in grid units. Edges clamp. */
 export function gaussianBlur3d(field: Float32Array, nx: number, ny: number, nz: number, sigma: number): void {
@@ -395,11 +470,12 @@ export function gaussianBlur3d(field: Float32Array, nx: number, ny: number, nz: 
  * The blurred SES signed distance field of these atoms. Null if there are none.
  *
  * `maxShift`: how far the blur may move the surface (soft cap); `openRadius`: the ball for
- * cutting pinched necks (step 3b); `cavities`: follow every atom burying a projection, not just
- * the first - exact pits and pockets, at about 1.7 times the cost.
+ * cutting pinched necks (step 3b). Pits and pockets are exact: the nearest exposed point of the SAS
+ * comes from its exposed arcs (exposedSas), not from following burying atoms (the `cavities`
+ * option that used to choose between following the first or all of them is gone).
  */
 export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: number, sigma: number,
-                         maxShift = Infinity, openRadius = 0, cavities = true): SesGrid | null {
+                         maxShift = Infinity, openRadius = 0): SesGrid | null {
     if (atoms.length === 0) return null;
     let rMax = 0;
     const low = [Infinity, Infinity, Infinity];
@@ -482,12 +558,24 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
         x: Float64Array.from(atoms, a => a.x), y: Float64Array.from(atoms, a => a.y), z: Float64Array.from(atoms, a => a.z),
         R: Float64Array.from(atoms, a => a.r + probe),
     };
+    // The exposed SAS (exposedSas), for the interior points searched below, and the exposed atoms
+    // binned on their own: a point with none of them within a voxel diagonal has nothing to find.
+    const exposure = exposedSas(sas, (a, out) => atomBins.near(sas.x[a], sas.y[a], sas.z[a], sas.x, sas.y, sas.z, sas.R, sas.R[a], out));
+    const exposedIds: number[] = [];
+    for (let a = 0; a < atoms.length; a++) if (exposure.exposed[a]) exposedIds.push(a);
+    const exposedSasAtoms: SasAtoms = {
+        x: Float64Array.from(exposedIds, a => sas.x[a]), y: Float64Array.from(exposedIds, a => sas.y[a]),
+        z: Float64Array.from(exposedIds, a => sas.z[a]), R: Float64Array.from(exposedIds, a => sas.R[a]),
+    };
+    const exposedBins = binAtoms(exposedIds.map(a => atoms[a]), rMax + probe + diagonal, rMax + probe);
+    const exposedNear: number[] = [];
+    const exposedCandidates: number[] = [];
     const feature = new Int32Array(count).fill(-1);
     const seedPoints: number[] = [];
     const seedA: number[] = [];
-    const seedB: number[] = [];
     const near: number[] = [];
-    const found = [0, 0, 0, -1, -1];
+    const found = [0, 0, 0, -1, -1, -1];
+    const seedCircle: number[] = [];
     for (let iz = 1; iz < nz - 1; iz++) {
         for (let iy = 1; iy < ny - 1; iy++) {
             for (let ix = 1; ix < nx - 1; ix++) {
@@ -496,8 +584,8 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
                 if (exterior[i]) {
                     if (exterior[i - 1] && exterior[i + 1] && exterior[i - nx] && exterior[i + nx] && exterior[i - plane] && exterior[i + plane]) continue;
                     atomBins.near(px, py, pz, sas.x, sas.y, sas.z, sas.R, window, near);
-                    if (!nearestSasPoint(px, py, pz, near, sas, found)) {
-                        found[0] = px; found[1] = py; found[2] = pz; found[3] = -1; found[4] = -1;
+                    if (!nearestSphere(px, py, pz, near, sas, found)) {
+                        found[0] = px; found[1] = py; found[2] = pz; found[3] = -1; found[4] = -1; found[5] = -1;
                     }
                 } else {
                     // Inside, but within a voxel of the boundary, and with no exterior neighbour
@@ -512,14 +600,18 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
                         if (exterior[i + dz * plane + dy * nx + dx]) { outsideNear = true; break; }
                     }
                     if (outsideNear) continue;
-                    atomBins.near(px, py, pz, sas.x, sas.y, sas.z, sas.R, window, near);
-                    if (!nearestSasPoint(px, py, pz, near, sas, found, diagonal)) continue;
-                    if (Math.hypot(found[0] - px, found[1] - py, found[2] - pz) > diagonal) continue;
+                    // The nearest exposed SAS point within a voxel diagonal: from the arcs and spheres
+                    // worked out once (exposedSas), with no search over atom triples here.
+                    exposedBins.near(px, py, pz, exposedSasAtoms.x, exposedSasAtoms.y, exposedSasAtoms.z, exposedSasAtoms.R, diagonal, exposedNear);
+                    if (exposedNear.length === 0) continue;
+                    exposedCandidates.length = 0;
+                    for (const e of exposedNear) exposedCandidates.push(exposedIds[e]);
+                    if (!nearestExposedPoint(px, py, pz, exposedCandidates, exposure, sas, diagonal, found)) continue;
                 }
                 feature[i] = seedA.length;
                 seedPoints.push(found[0], found[1], found[2]);
                 seedA.push(found[3]);
-                seedB.push(found[4]);
+                seedCircle.push(found[5]);
             }
         }
     }
@@ -543,71 +635,45 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
     const transformMs = lap();
     const seeds = new Float64Array(seedPoints);
     const primA = Int32Array.from(seedA);
-    const primB = Int32Array.from(seedB);
     // Only near the SES (distance to the SAS within the blur's reach of the probe radius) does
     // the exact value matter; further in it is clamped, further out (towards the SAS) nothing
     // the blur reaches the surface from.
     const exactLow = probe - clamp - h, exactHigh = probe + clamp + h;
     let interiorCount = 0;
 
+    const primCircle = Int32Array.from(seedCircle);
     const q = [0, 0, 0];
     let px = 0, py = 0, pz = 0, best = Infinity;
-    // The atoms that can bury any projection worth having, looked up once per point: a
-    // projection nearer than the best so far is within that distance of the point, so anything
-    // burying it has its sphere within that distance of the point too.
-    const local: number[] = [];
     const around: number[] = [];
-    // Every local atom burying q, other than a, b and c, into out.
-    const buriers = (a: number, b: number, c: number, out: number[]): void => {
-        out.length = 0;
-        for (let k = 0; k < local.length; k++) {
-            const d = local[k];
-            if (d === a || d === b || d === c) continue;
-            const dx = q[0] - sas.x[d], dy = q[1] - sas.y[d], dz = q[2] - sas.z[d];
-            const R = sas.R[d] - 1e-4;
-            if (dx * dx + dy * dy + dz * dz < R * R) out.push(d);
-        }
-    };
-    // A projection buried by several atoms: its nearest unburied neighbour is where the circle
-    // (or point) leaves one of them, and not necessarily the first found - in a pocket two or
-    // three atoms often overlap there. So with `cavities` every one is followed, not just the
-    // first.
-    const sphereBuriers: number[] = [], circleBuriers: number[] = [], vertexBuriers: number[] = [];
     // The spheres and circles already tried for this point (circles as negative keys).
     const tried: number[] = [];
-    const tryVertex = (a: number, b: number, c: number) => {
-        if (!projectOnVertex(px, py, pz, a, b, c, sas, q)) return;
-        const d2 = (q[0] - px) ** 2 + (q[1] - py) ** 2 + (q[2] - pz) ** 2;
-        if (d2 >= best) return;
-        buriers(a, b, c, vertexBuriers);
-        if (vertexBuriers.length === 0) best = d2;
+    // The nearest exposed point of a circle: on its exposed arcs (exposedSas), ends included.
+    const tryCircle = (id: number) => {
+        if (tried.includes(-id - 1)) return;
+        tried.push(-id - 1);
+        const d2 = nearestOnArcs(px, py, pz, exposure, id, best, q);
+        if (d2 < best) best = d2;
     };
-    const tryCircle = (a: number, b: number) => {
-        const key = -(Math.min(a, b) * atoms.length + Math.max(a, b)) - 1;
-        if (tried.includes(key)) return;
-        tried.push(key);
-        if (!projectOnPrimitive(px, py, pz, a, b, sas, q)) return;
-        const d2 = (q[0] - px) ** 2 + (q[1] - py) ** 2 + (q[2] - pz) ** 2;
-        if (d2 >= best) return;
-        buriers(a, b, -1, circleBuriers);
-        if (circleBuriers.length === 0) { best = d2; return; }
-        for (const c of circleBuriers) {
-            tryVertex(a, b, c);
-            if (!cavities) break;
-        }
-    };
+    // The nearest exposed point of a sphere: the point's projection if nothing buries it, else on
+    // the boundary of the sphere's exposed patch - its circles' exposed arcs. Exact, so there is
+    // no following of burying atoms one at a time.
     const trySphere = (a: number) => {
         if (tried.includes(a)) return;
         tried.push(a);
-        if (!projectOnPrimitive(px, py, pz, a, -1, sas, q)) return;
-        const d2 = (q[0] - px) ** 2 + (q[1] - py) ** 2 + (q[2] - pz) ** 2;
-        if (d2 >= best) return;
-        buriers(a, -1, -1, sphereBuriers);
-        if (sphereBuriers.length === 0) { best = d2; return; }
-        for (const c of sphereBuriers) {
-            tryCircle(a, c);
-            if (!cavities) break;
+        const dx = px - sas.x[a], dy = py - sas.y[a], dz = pz - sas.z[a];
+        const distance = Math.hypot(dx, dy, dz);
+        const gap = Math.abs(distance - sas.R[a]);
+        if (gap * gap >= best) return;
+        if (distance > 1e-9) {
+            const scale = sas.R[a] / distance;
+            q[0] = sas.x[a] + dx * scale; q[1] = sas.y[a] + dy * scale; q[2] = sas.z[a] + dz * scale;
+            // Only atoms whose sphere meets a's can bury a point of it: a's neighbour list.
+            if (buriedBy(q, exposure.neighbourIds, exposure.neighbourStart[a], exposure.neighbourStart[a + 1], a, -1, sas) < 0) {
+                best = gap * gap;
+                return;
+            }
         }
+        for (let k = exposure.atomCircleStart[a]; k < exposure.atomCircleStart[a + 1]; k++) tryCircle(exposure.atomCircleIds[k]);
     };
     const candidates = new Int32Array(7);
     const neighbours = new Int32Array(7);
@@ -656,12 +722,10 @@ export function sesField(atoms: readonly SurfaceAtom[], probe: number, spacing: 
                 const approximate = Math.sqrt(best);
                 if (approximate > exactLow && approximate < exactHigh) {
                     tried.length = 0;
-                    atomBins.near(px, py, pz, sas.x, sas.y, sas.z, sas.R, approximate, local);
                     for (let k = 0; k < n; k++) {
                         const f = candidates[k];
-                        if (primA[f] < 0) continue;
-                        if (primB[f] >= 0) tryCircle(primA[f], primB[f]);
-                        else trySphere(primA[f]);
+                        if (primCircle[f] >= 0) tryCircle(primCircle[f]);
+                        else if (primA[f] >= 0) trySphere(primA[f]);
                     }
                 }
                 const value = Math.sqrt(best) - probe;
@@ -1360,8 +1424,6 @@ export interface SmoothOptions {
     sigma?: number;
     maxShift?: number;
     openRadius?: number;
-    /** The exact (and slow) handling of pits and pockets: see sesField's `cavities`. */
-    cavities?: boolean;
     /** Split the contour once (refineContour). */
     refine?: boolean;
 }
@@ -1395,12 +1457,11 @@ export function smoothFieldStage(m2tMesh: M2tSurfaceMesh, atoms: readonly Surfac
     const sigma = options.sigma ?? smoothSurfaceSetting.sigma;
     const maxShift = options.maxShift ?? smoothSurfaceSetting.maxShift;
     const openRadius = options.openRadius ?? smoothSurfaceSetting.openRadius;
-    const cavities = options.cavities ?? smoothSurfaceSetting.cavities;
     const m2tPositions = m2tMesh.vert_tri?.[0]?.[0];
     const m2tNormals = m2tMesh.norm_tri?.[0]?.[0];
     const m2tIndices = m2tMesh.idx_tri?.[0]?.[0];
     if (!m2tPositions || !m2tNormals || !m2tIndices || !m2tMesh.col_tri?.[0]?.[0] || m2tPositions.length === 0) return null;
-    const grid = sesField(atoms, probe, spacing, sigma, maxShift, openRadius, cavities);
+    const grid = sesField(atoms, probe, spacing, sigma, maxShift, openRadius);
     if (!grid) return null;
     const input = contourInput(grid);
     const { nx, ny, nz, origin, spacing: h, iso, timings } = grid;

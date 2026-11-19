@@ -1645,7 +1645,7 @@ export class MoleculeRepresentation {
         if (smoothInput) {
             const options = {
                 spacing: smoothSurfaceSetting.spacing, sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
-                openRadius: smoothSurfaceSetting.openRadius, cavities: smoothSurfaceSetting.cavities,
+                openRadius: smoothSurfaceSetting.openRadius,
                 refine: smoothSurfaceSetting.refine,
             };
             const smoothArgs = [...m2tArgs, packAtoms(smoothInput.atoms), smoothInput.probe, options];

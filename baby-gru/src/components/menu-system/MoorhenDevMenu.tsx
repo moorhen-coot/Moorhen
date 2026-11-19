@@ -210,7 +210,6 @@ export const MoorhenDevMenu = () => {
     const [smoothMaxShift, setSmoothMaxShift] = useState<number>(smoothSurfaceSetting.maxShift);
     const [smoothOpenRadius, setSmoothOpenRadius] = useState<number>(smoothSurfaceSetting.openRadius);
     const [smoothOnGpu, setSmoothOnGpu] = useState<boolean>(smoothSurfaceSetting.gpu);
-    const [smoothCavities, setSmoothCavities] = useState<boolean>(smoothSurfaceSetting.cavities);
     const [smoothRefine, setSmoothRefine] = useState<boolean>(smoothSurfaceSetting.refine);
     const [shadingStripes, setShadingStripes] = useState<boolean>(shadingDebug.stripes);
     // Rebuild the molecular surfaces on show, so a change to the smooth surface is seen at once.
@@ -626,16 +625,6 @@ export const MoorhenDevMenu = () => {
                 onChange={() => {
                     smoothSurfaceSetting.gpu = !smoothOnGpu;
                     setSmoothOnGpu(!smoothOnGpu);
-                    if (smoothSurfaceSetting.enabled) redrawSurfaces();
-                }}
-            />
-            <MoorhenToggle
-                type="switch"
-                checked={smoothCavities}
-                label="Smooth surface: smooth cavities (exact pits and pockets, about 1.7x slower; off by default until the field is on the GPU)"
-                onChange={() => {
-                    smoothSurfaceSetting.cavities = !smoothCavities;
-                    setSmoothCavities(!smoothCavities);
                     if (smoothSurfaceSetting.enabled) redrawSurfaces();
                 }}
             />

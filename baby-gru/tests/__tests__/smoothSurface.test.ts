@@ -287,12 +287,12 @@ describe("smoothSurface", () => {
             }
             return best;
         };
-        // With `cavities` (every burying atom followed) and without (the first only; probe
-        // positions too small for the grid are found either way). Without was 95% 0.047 A, max
-        // 0.21 A until a far sphere or circle point stopped ending the search for one before any
-        // nearer three-sphere point was tried (nearestSasPoint's `within`): now 0.014 A, 0.195 A.
-        for (const [cavities, worst95, worst] of [[true, 0.03, 0.3], [false, 0.03, 0.3]] as const) {
-            const mesh = contourField(sesField(atoms, P, 0.4, 0, Infinity, 0, cavities));
+        // The nearest exposed SAS point comes from the exposed arcs (exposedSas), exactly: 95%
+        // 0.012 A, worst 0.069 A at this grid. (Following burying atoms one at a time, the first
+        // only, was 95% 0.047 A, worst 0.21 A; all of them, the old `cavities` option, 0.012 and
+        // 0.072 at 1.7 times the cost.)
+        for (const [worst95, worst] of [[0.02, 0.1]] as const) {
+            const mesh = contourField(sesField(atoms, P, 0.4, 0, Infinity, 0));
             const errors: number[] = [];
             for (let v = 0; v < mesh.positions.length / 3 && errors.length < 400; v += 13) {
                 const x: V = [mesh.positions[3 * v], mesh.positions[3 * v + 1], mesh.positions[3 * v + 2]];
