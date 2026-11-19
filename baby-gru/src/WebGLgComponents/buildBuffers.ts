@@ -1,6 +1,6 @@
 import * as vec3 from 'gl-matrix/vec3';
 import { guid } from '../utils/utils';
-import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
+import { setHoverSize, setLabelBuffers, setRequestDrawScene, setTexturedShapes } from "../store/glRefSlice"
 import { DisplayBuffer } from './displayBuffer'
 import { TexturedShape } from './texturedShape'
 import { createWebGLBuffers } from './createWebGLBuffers'
@@ -118,8 +118,14 @@ export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebu
         })
 
         //Could, maybe should do same with displayBuffers ...
-        store.dispatch(setLabelBuffers([...labelBuffers,...theseLabelBuffers]))
-        store.dispatch(setTexturedShapes([...texturedShapes,...theseTexturedShapes]))
+        // A new label array rebuilds the whole label texture: only when labels were added.
+        // Otherwise just ask for the redraw the new buffers need.
+        if(theseLabelBuffers.length > 0)
+            store.dispatch(setLabelBuffers([...labelBuffers,...theseLabelBuffers]))
+        else
+            store.dispatch(setRequestDrawScene(true))
+        if(theseTexturedShapes.length > 0)
+            store.dispatch(setTexturedShapes([...texturedShapes,...theseTexturedShapes]))
 
         return theseBuffers;
 }

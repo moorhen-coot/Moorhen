@@ -12,7 +12,11 @@ const initialState: {
     quat: any[];
     cursorPosition: [number, number];
     shortCutHelp: string[];
-    requestDrawScene: { switch: boolean };
+    /**
+     * Bumped by setRequestDrawScene. A counter, not a toggle: two requests in the same tick would
+     * flip a switch back to the value React last rendered and the redraw would be lost.
+     */
+    requestDrawScene: { count: number };
     envUpdate: { switch: boolean };
     clearLabels: { switch: boolean };
     hoverSize: number;
@@ -28,7 +32,7 @@ const initialState: {
     draggableMolecule: null,
     envUpdate: { switch: false },
     clearLabels: { switch: false },
-    requestDrawScene: { switch: false },
+    requestDrawScene: { count: 0 },
     displayBuffers: [],
     texturedShapes: [],
     labelBuffers: [],
@@ -95,7 +99,7 @@ const glRefSlice = createSlice({
             state.clearLabels.switch = !state.clearLabels.switch;
         },
         setRequestDrawScene: (state, action: PayloadAction<boolean>) => {
-            state.requestDrawScene.switch = !state.requestDrawScene.switch;
+            state.requestDrawScene.count += 1;
         },
     },
 });

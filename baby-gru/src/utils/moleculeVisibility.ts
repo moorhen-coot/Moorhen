@@ -16,8 +16,7 @@ export const setMoleculeVisible = (molecule: MoorhenMolecule, visible: boolean, 
  * hiding a thousand ligands one dispatch at a time (each running every selector and, in development,
  * walking the whole store) took seconds.
  * @param requestDraw - Ask for the redraw (default). Pass false to ask for it once yourself after
- * several calls in the same tick: setRequestDrawScene flips a switch, so two requests before React
- * renders cancel out and nothing is redrawn.
+ * several calls, saving a dispatch per call.
  */
 export const setMoleculeListVisible = (molecules: MoorhenMolecule[], visible: boolean, requestDraw: boolean = true): void => {
     if (molecules.length === 0) return;

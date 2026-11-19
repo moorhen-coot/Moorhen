@@ -397,7 +397,7 @@ const DOUBLE_CLICK_MS = 350;
 const isolateLigand = (molecule: MoorhenMolecule, store: ReturnType<typeof useStore<RootState>>) => {
     const { moleculeList, moleculeRecords } = store.getState().molecules;
     batch(() => {
-        // One redraw request for both: two in the same tick would cancel out (setRequestDrawScene flips a switch)
+        // One redraw request for both
         setMoleculeListVisible(
             moleculeList.filter(other => other !== molecule && moleculeRecords[other.uniqueId]?.isLigandOnly),
             false,
