@@ -36,7 +36,7 @@ export const visibleHeight = (zoom: number): number => HEIGHT_PER_ZOOM * zoom;
  * Level 0 below the first, level 1 between them, level 2 above the last - so there is always one
  * more level than there are boundaries.
  */
-export const LEVEL_BOUNDARIES = [70, 200];
+export const LEVEL_BOUNDARIES = [200, 500];
 
 /**
  * How far past a boundary the view has to go before the grain actually changes.
