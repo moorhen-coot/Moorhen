@@ -21,10 +21,7 @@ import {
     METABALLS_GRID_SIZE, METABALLS_ISO_LEVEL, METABALLS_RADIUS, METABALLS_SPHERE_ARGS,
     type GpuMetaBalls, gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
 } from "../../WebGPUComponents/metaballs";
-import {
-    type M2tSurfaceMesh, type SmoothField, type SurfaceAtom, type SurfaceMesh, type TransferredAttributes,
-    assembleSmoothMesh, contourOnCpu, logSmoothing, packAtoms, smoothMeshFromContour, smoothSurfaceSetting,
-} from "../smoothSurface";
+import { type EdgeContour, type SmoothField, type SurfaceAtom, packAtoms, smoothSurfaceSetting } from "../smoothSurface";
 import { m2tAtomRadius } from "../m2tAtomRadii";
 
 /**
@@ -1770,36 +1767,31 @@ export class MoleculeRepresentation {
         const { mesh: unsmoothed, token, field } = fieldResponse.data.result.result;
         if (unsmoothed) return unsmoothed;
 
-        let mark = performance.now();
-        let mesh: SurfaceMesh | null = null;
-        let contourLabel = "WebGPU";
+        // Only marching cubes here, on the GPU. Everything after it - normals, the split, colours
+        // and owners - is the worker's, where the M2T mesh is, so the UI does not wait on it: the
+        // field goes back with the contour, handed over rather than copied. If the GPU fails, no
+        // contour, and the worker contours on the CPU itself.
+        const mark = performance.now();
+        let contour: EdgeContour | null = null;
         try {
-            const contour = await gpu.contourField(field.input, [field.grid.nx, field.grid.ny, field.grid.nz], field.grid.origin, field.grid.spacing);
-            mesh = smoothMeshFromContour(field, contour);
+            contour = await gpu.contourField(field.input, [field.grid.nx, field.grid.ny, field.grid.nz], field.grid.origin, field.grid.spacing);
         } catch (err) {
-            console.warn("GPU contour failed; contouring on the CPU.", err);
-            contourLabel = "CPU, after the GPU failed";
-            try {
-                mesh = smoothMeshFromContour(field, contourOnCpu(field.input, field.grid));
-            } catch (cpuErr) {
-                console.warn("Contouring the smooth surface failed.", cpuErr);
-            }
+            console.warn("GPU contour failed; contouring on the CPU in the worker.", err);
         }
-        if (mesh && mesh.indices.length === 0) mesh = null;
         const contourMs = performance.now() - mark;
-
-        // Always called, with null when there is no mesh, so the worker forgets the M2T mesh it
-        // kept - and hands it back, to draw as it is.
-        mark = performance.now();
+        const transfer = [...new Set([field.input, contour?.positions, contour?.indices, contour?.keys]
+            .filter((v): v is Float32Array | Uint32Array => !!v && v.buffer instanceof ArrayBuffer).map(v => v.buffer as ArrayBuffer))];
         const finishResponse = (await this.commandCentre.cootCommand(
-            { returnType: "smoothed_attributes", command: "shim_smooth_surface_finish", commandArgs: [token, mesh ? mesh.positions : null] },
+            {
+                returnType: "smoothed_mesh",
+                command: "shim_smooth_surface_finish",
+                commandArgs: [token, field, contour, contourMs, "WebGPU"],
+                transfer,
+            },
             false
-        )) as moorhen.WorkerResponse<{ mesh?: libcootApi.SimpleMeshJS; shell?: M2tSurfaceMesh; attributes?: TransferredAttributes; m2tVertices?: number }>;
+        )) as moorhen.WorkerResponse<{ mesh?: libcootApi.SimpleMeshJS }>;
         if (finishResponse.data.result.status !== "Completed") return null;
-        const finished = finishResponse.data.result.result;
-        if (!mesh || finished.mesh) return finished.mesh ?? null;
-        logSmoothing(field, mesh, finished.m2tVertices, contourMs, performance.now() - mark, contourLabel);
-        return assembleSmoothMesh(finished.shell, mesh, finished.attributes) as unknown as libcootApi.SimpleMeshJS;
+        return finishResponse.data.result.result.mesh ?? null;
     }
 
     /**

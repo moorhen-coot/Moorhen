@@ -642,7 +642,7 @@ export const MoorhenDevMenu = () => {
             <MoorhenToggle
                 type="switch"
                 checked={smoothRefine}
-                label="Smooth surface: split every triangle once, from the field (test: 4x the triangles, little gain so far; off by default)"
+                label="Smooth surface: split every triangle once, from the field (smoother shading, 4x the triangles; on by default)"
                 onChange={() => {
                     smoothSurfaceSetting.refine = !smoothRefine;
                     setSmoothRefine(!smoothRefine);

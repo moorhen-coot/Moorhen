@@ -1910,10 +1910,16 @@ type SmoothSurfaceBundle = {
     smoothFieldStage: (mesh: unknown, atoms: unknown[], probe: number, options: SmoothSurfaceOptions) => { input: Float32Array } | null;
     smoothAttributes: (mesh: unknown, positions: Float32Array) => Record<string, unknown>;
     m2tShell: <T>(mesh: T) => T;
+    contourOnCpu: (field: Float32Array, grid: unknown) => SmoothContour;
+    smoothMeshFromContour: (field: unknown, contour: SmoothContour) => { positions: Float32Array; indices: Uint32Array };
+    assembleSmoothMesh: <T>(m2tMesh: T, mesh: unknown, attributes: unknown) => T;
+    logSmoothing: (field: unknown, mesh: unknown, m2tVertices: number, contourMs: number, transferMs: number, contourLabel: string) => void;
     unpackAtoms: (packed: Float32Array) => unknown[];
     smoothedMeshTransferables: (mesh: unknown) => ArrayBuffer[];
 }
 type SmoothSurfaceOptions = Record<string, number | boolean>
+type SmoothContour = { positions: Float32Array; indices: Uint32Array; keys: Uint32Array }
+type SmoothSurfaceFieldJS = { input: Float32Array; grid: unknown }
 let smoothSurfaceBundle: SmoothSurfaceBundle | null = null
 const loadSmoothSurfaceBundle = (): SmoothSurfaceBundle => {
     if (!smoothSurfaceBundle) {
@@ -1941,11 +1947,13 @@ const smoothMolecularRepresentationMesh = (imol: number, selection: string, colo
 
 /**
  * The same in two halves, for marching cubes on the GPU, on the main thread, in between - the
- * field and the colours stay here, where the M2T mesh is. The first half makes the M2T mesh and
- * the field and keeps the mesh under a token: { token, field }, or { mesh } (the M2T mesh as it
- * is) if there is nothing to smooth. The second takes the smoothed positions and returns the
- * colours and owners for them with what the smoothed mesh keeps of the M2T one, and forgets the
- * token; with no positions (the main thread gave up), the M2T mesh as it is.
+ * colours stay here, where the M2T mesh is. The first half makes the M2T mesh and the field and
+ * keeps the mesh under a token: { token, field }, or { mesh } (the M2T mesh as it is) if there is
+ * nothing to smooth. The second takes the field back with the GPU's contour (both handed over,
+ * not copied) and does everything after marching cubes here, off the main thread: normals,
+ * winding, the split (refineContour, the costly part), colours and owners. With no contour (the
+ * GPU failed), marching cubes on the CPU here too. It returns { mesh }, the smoothed mesh, or the
+ * M2T mesh as it is if nothing could be smoothed, and forgets the token.
  */
 const smoothSurfaceMeshes = new Map<number, unknown>()
 let smoothSurfaceToken = 0
@@ -1961,17 +1969,29 @@ const smoothSurfaceField = (imol: number, selection: string, colourStyle: string
     smoothSurfaceMeshes.set(token, meshData)
     return { token, field }
 }
-const smoothSurfaceFinish = (token: number, positions: Float32Array | null) => {
+const smoothSurfaceFinish = (token: number, field: SmoothSurfaceFieldJS | null, contour: SmoothContour | null,
+                             contourMs: number, contourLabel: string) => {
     const bundle = loadSmoothSurfaceBundle()
     const meshData = smoothSurfaceMeshes.get(token) as { vert_tri: Float32Array[][] } | undefined
     smoothSurfaceMeshes.delete(token)
     if (!meshData) throw new Error(`No smooth surface waiting under token ${token}`)
-    if (!positions) return { mesh: meshData }
-    return {
-        attributes: bundle.smoothAttributes(meshData, positions),
-        shell: bundle.m2tShell(meshData),
-        m2tVertices: meshData.vert_tri[0][0].length / 3,
+    if (!field) return { mesh: meshData }
+    let mark = performance.now()
+    let mesh: { positions: Float32Array; indices: Uint32Array }
+    try {
+        if (!contour) contourLabel = "CPU in the worker, after the GPU failed"
+        mesh = bundle.smoothMeshFromContour(field, contour ?? bundle.contourOnCpu(field.input, field.grid))
+    } catch (err) {
+        console.warn("Contouring the smooth surface failed; drawing the M2T surface.", err)
+        return { mesh: meshData }
     }
+    if (mesh.indices.length === 0) return { mesh: meshData }
+    contourMs += performance.now() - mark
+    mark = performance.now()
+    const smoothed = bundle.assembleSmoothMesh(meshData, mesh, bundle.smoothAttributes(meshData, mesh.positions))
+    // contourMs: the GPU's marching cubes and, here, the normals and the split.
+    bundle.logSmoothing(field, mesh, meshData.vert_tri[0][0].length / 3, contourMs, performance.now() - mark, contourLabel)
+    return { mesh: smoothed }
 }
 
 const doCootCommand = (messageData: {
@@ -2075,7 +2095,7 @@ const doCootCommand = (messageData: {
                 cootResult = smoothSurfaceField(...commandArgs as [number, string, string, string, number, Float32Array, number, SmoothSurfaceOptions])
                 break
             case "shim_smooth_surface_finish":
-                cootResult = smoothSurfaceFinish(...commandArgs as [number, Float32Array | null])
+                cootResult = smoothSurfaceFinish(...commandArgs as [number, SmoothSurfaceFieldJS | null, SmoothContour | null, number, string])
                 break
             default:
                 console.log("Calling",command)
@@ -2611,9 +2631,8 @@ const dispatchMessage = function (e: MessageEvent) {
                 smoothed = smoothSurfaceBundle.smoothedMeshTransferables(reply)
             } else if (e.data.command === "shim_smooth_surface_field" && reply.field) {
                 smoothed = [reply.field.input.buffer]
-            } else if (e.data.command === "shim_smooth_surface_finish" && reply.attributes) {
-                smoothed = Object.values(reply.attributes as Record<string, unknown>)
-                    .filter((v): v is Float32Array | Uint32Array => ArrayBuffer.isView(v)).map(v => v.buffer as ArrayBuffer)
+            } else if (e.data.command === "shim_smooth_surface_finish" && reply.mesh) {
+                smoothed = smoothSurfaceBundle.smoothedMeshTransferables(reply.mesh)
             }
         }
         postMessage(result, grid instanceof Float32Array ? [grid.buffer] : smoothed)

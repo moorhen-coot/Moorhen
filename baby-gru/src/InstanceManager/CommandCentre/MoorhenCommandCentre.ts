@@ -28,6 +28,11 @@ export interface cootCommandKwargs {
     command?: string;
     commandArgs?: any[];
     changesMolecules?: number[];
+    /**
+     * Buffers to hand to the worker rather than copy (postMessage's transfer list). They are
+     * detached here once sent: only for arrays the caller has finished with.
+     */
+    transfer?: Transferable[];
     [key: string]: any;
 }
 
@@ -320,11 +325,12 @@ export class CommandCentre {
             if (this.onActiveMessagesChanged) {
                 this.onActiveMessagesChanged(this.activeMessages);
             }
+            const { transfer, ...message } = kwargs;
             this.cootWorker.postMessage({
                 messageId,
                 myTimeStamp: Date.now(),
-                ...kwargs,
-            });
+                ...message,
+            }, transfer ?? []);
         });
     }
 }

@@ -59,10 +59,10 @@ export const smoothSurfaceSetting = {
     /**
      * Pits and pockets made exactly: where a projection is buried by several atoms, every one is
      * followed rather than the first. Probe positions too small for the grid are always found
-     * (step 2 of sesField), which is most of the accuracy (tutorial 1's concave patches, against a
-     * brute-force SES: 95% within 0.047 A, 0.012 A with this) for a quarter to a half more time;
-     * this adds the rest at about 1.7 times the field's cost again. To be on by default once the
-     * field is made on the GPU.
+     * (step 2 of sesField), which is most of the accuracy (1df7's concave patches at a 0.4 A grid,
+     * against a brute-force SES: mean 0.0065 A, 95% within 0.014 A, worst 0.195 A; with this, 0.0047,
+     * 0.012, 0.069); this adds the rest at about 1.7 times the field's cost again. To be on by
+     * default once the field is made on the GPU.
      */
     cavities: false,
     /**
@@ -70,7 +70,7 @@ export const smoothSurfaceSetting = {
      * diffuse light's diamonds at a 0.5 A grid mostly gone, for four times the triangles rather
      * than eight times the field a 0.25 A grid costs.
      */
-    refine: false,
+    refine: true,
     /**
      * Marching cubes with the WebGPU MetaBalls kernels, when WebGPU is there; the field and the
      * colours stay in the Coot worker. Without WebGPU, all of it in the worker, on the CPU.
@@ -255,41 +255,112 @@ function buriedBy(q: number[], near: ArrayLike<number>, from: number, to: number
  */
 function nearestSasPoint(px: number, py: number, pz: number, near: readonly number[], atoms: SasAtoms, out: number[],
                          within = Infinity): boolean {
-    let best = Infinity;
+    // Nothing further than `within` is any use to a caller that gives one (it is thrown away), so
+    // the search starts there, just past it - for the three-sphere points as well as the spheres
+    // and circles: a sphere or circle point further than `within` no longer ends the search
+    // before a nearer three-sphere point is looked for.
+    const limit = within === Infinity ? Infinity : within * within * (1 + 1e-12);
+    let best = limit;
     const q = NEAREST_SCRATCH;
-    for (let i = 0; i < near.length; i++) {
-        for (let j = i; j < near.length; j++) {
-            // j === i: the sphere of near[i]; otherwise the circle of near[i] and near[j].
-            const a = near[i], b = j === i ? -1 : near[j];
+    // The atoms by how far p is from their sphere's surface. Every point of a sphere is at least
+    // that far from p, so a circle of two spheres is no nearer than the further of the two, and a
+    // point where three meet no nearer than the furthest: in this order, each loop below can stop
+    // at the first atom already further than the best found. Skips only what could not win, so
+    // the answer is the one the full search gives - at a cost that no longer grows with the cube
+    // of the atoms in the window (it did, and a coarse grid's wider window made seeding six times
+    // slower per point: 3j2w at 0.76 A).
+    const n = near.length;
+    if (NEAREST_ORDER.length < n) { NEAREST_ORDER = new Int32Array(2 * n); NEAREST_GAP = new Float64Array(2 * n); }
+    // order: places in `near`, not atoms, so that what is recorded below - the pair of atoms -
+    // is the one the search in `near`'s order recorded: step 3 follows only the first atom burying
+    // that pair's circle (without `cavities`), so which two of three it is changes the field.
+    const order = NEAREST_ORDER, gap = NEAREST_GAP;
+    for (let i = 0; i < n; i++) {
+        const a = near[i];
+        const g = Math.abs(Math.hypot(px - atoms.x[a], py - atoms.y[a], pz - atoms.z[a]) - atoms.R[a]);
+        // Insertion sort: a few dozen atoms.
+        let k = i;
+        while (k > 0 && gap[k - 1] > g) { gap[k] = gap[k - 1]; order[k] = order[k - 1]; k--; }
+        gap[k] = g; order[k] = i;
+    }
+    for (let i = 0; i < n; i++) {
+        if (gap[i] * gap[i] >= best) break;
+        for (let j = i; j < n; j++) {
+            if (gap[j] * gap[j] >= best) break;
+            // j === i: the sphere of near[order[i]]; otherwise the circle of it and near[order[j]],
+            // the earlier in `near` first.
+            const oi = order[i], oj = order[j];
+            const a = near[Math.min(oi, oj)], b = j === i ? -1 : near[Math.max(oi, oj)];
             if (!projectOnPrimitive(px, py, pz, a, b, atoms, q)) continue;
             const d2 = (q[0] - px) ** 2 + (q[1] - py) ** 2 + (q[2] - pz) ** 2;
-            if (d2 >= best || buriedBy(q, near, 0, near.length, a, b, atoms) >= 0) continue;
+            if (d2 >= best || buriedBy(q, near, 0, n, a, b, atoms) >= 0) continue;
             best = d2;
             out[0] = q[0]; out[1] = q[1]; out[2] = q[2]; out[3] = a; out[4] = b;
         }
     }
-    if (best < Infinity) return true;
-    // Every sphere and circle point buried: p is over (or in) a dimple, where the probe touches
+    if (best < limit) return true;
+    // Every sphere and circle point buried (or, with `within`, too far): p is over (or in) a dimple, where the probe touches
     // three atoms at once. The point where their spheres meet; recorded as the circle of two of
     // them, from which the refinement in step 3 finds the third again. Only atoms whose sphere's
-    // surface is within `within` of p can meet there within it.
-    const close = within === Infinity ? near : near.filter(a =>
-        Math.abs(Math.hypot(px - atoms.x[a], py - atoms.y[a], pz - atoms.z[a]) - atoms.R[a]) <= within);
-    for (let i = 0; i < close.length; i++) {
-        for (let j = i + 1; j < close.length; j++) {
-            for (let k = j + 1; k < close.length; k++) {
-                const a = close[i], b = close[j], c = close[k];
+    // surface is within `within` of p can meet there within it - in this order, a prefix.
+    let m = 0;
+    while (m < n && gap[m] <= within) m++;
+    // A point where three spheres meet is on each pair's circle, so no nearer than the furthest of
+    // the three circles: each pair's distance once (m^2), and every triple bounded by it. A pair
+    // whose spheres do not meet has no circle, and no point where it meets a third.
+    if (NEAREST_CIRCLE.length < m * m) NEAREST_CIRCLE = new Float64Array(2 * m * m);
+    const circle = NEAREST_CIRCLE;
+    for (let i = 0; i < m; i++) {
+        for (let j = i + 1; j < m; j++) {
+            circle[i * m + j] = circleDistance2(px, py, pz, near[order[i]], near[order[j]], atoms);
+        }
+    }
+    for (let i = 0; i < m; i++) {
+        if (gap[i] * gap[i] >= best) break;
+        for (let j = i + 1; j < m; j++) {
+            if (gap[j] * gap[j] >= best) break;
+            if (circle[i * m + j] >= best) continue;
+            for (let k = j + 1; k < m; k++) {
+                if (gap[k] * gap[k] >= best) break;
+                if (circle[i * m + k] >= best || circle[j * m + k] >= best) continue;
+                // In `near`'s order: a and b, the pair recorded, are the earlier two.
+                const o0 = order[i], o1 = order[j], o2 = order[k];
+                const first = Math.min(o0, o1, o2), last = Math.max(o0, o1, o2);
+                const a = near[first], b = near[o0 + o1 + o2 - first - last], c = near[last];
                 if (!projectOnVertex(px, py, pz, a, b, c, atoms, q)) continue;
                 const d2 = (q[0] - px) ** 2 + (q[1] - py) ** 2 + (q[2] - pz) ** 2;
-                if (d2 >= best || buriedBy(q, near, 0, near.length, a, b, atoms, c) >= 0) continue;
+                if (d2 >= best || buriedBy(q, near, 0, n, a, b, atoms, c) >= 0) continue;
                 best = d2;
                 out[0] = q[0]; out[1] = q[1]; out[2] = q[2]; out[3] = a; out[4] = b;
             }
         }
     }
-    return best < Infinity;
+    return best < limit;
+}
+
+/**
+ * The squared distance from p to the circle where a's and b's expanded spheres meet; Infinity if
+ * they do not meet (no circle), and 0 - no bound - where p is on its axis.
+ */
+function circleDistance2(px: number, py: number, pz: number, a: number, b: number, atoms: SasAtoms): number {
+    const { x, y, z, R } = atoms;
+    const ux0 = x[b] - x[a], uy0 = y[b] - y[a], uz0 = z[b] - z[a];
+    const d = Math.hypot(ux0, uy0, uz0);
+    if (d < 1e-6 || d >= R[a] + R[b]) return Infinity;
+    const t = (d * d + R[a] * R[a] - R[b] * R[b]) / (2 * d);
+    const r2 = R[a] * R[a] - t * t;
+    if (r2 <= 0) return Infinity;
+    const ux = ux0 / d, uy = uy0 / d, uz = uz0 / d;
+    const wx = px - x[a] - t * ux, wy = py - y[a] - t * uy, wz = pz - z[a] - t * uz;
+    const along = wx * ux + wy * uy + wz * uz;
+    const across = Math.sqrt(Math.max(0, wx * wx + wy * wy + wz * wz - along * along));
+    const off = across - Math.sqrt(r2);
+    return along * along + off * off;
 }
 const NEAREST_SCRATCH = [0, 0, 0];
+let NEAREST_ORDER = new Int32Array(256);
+let NEAREST_GAP = new Float64Array(256);
+let NEAREST_CIRCLE = new Float64Array(4096);
 
 /** Separable Gaussian blur in place, sigma in grid units. Edges clamp. */
 export function gaussianBlur3d(field: Float32Array, nx: number, ny: number, nz: number, sigma: number): void {
@@ -949,34 +1020,45 @@ export function fieldSampler(field: Float32Array, grid: GridShape) {
     const dims = [nx, ny, nz];
     const clampTo = (c: number, d: number) => Math.min(dims[d] - 1, Math.max(0, c));
     const valueAt = (x: number, y: number, z: number) => field[clampTo(z, 2) * plane + clampTo(y, 1) * nx + clampTo(x, 0)];
-    const slots = new Map<number, number>();
+    // Where each grid point's differences are kept (one more than their slot / 3; 0: not yet).
+    // As big as the field, but read 64 times a sample, which a Map made most of the cost.
+    const slots = new Int32Array(field.length);
     let derivatives = new Float32Array(3 * 4096);
     let used = 0;
+    const strides = [1, nx, plane];
     // The three fourth-order differences at grid point (x, y, z), in grid units: where they are.
     const derivativesAt = (x: number, y: number, z: number): number => {
         x = clampTo(x, 0); y = clampTo(y, 1); z = clampTo(z, 2);
         const index = z * plane + y * nx + x;
-        let slot = slots.get(index);
-        if (slot !== undefined) return slot;
+        const known = slots[index];
+        if (known !== 0) return 3 * (known - 1);
         if (3 * (used + 1) > derivatives.length) {
             const grown = new Float32Array(2 * derivatives.length);
             grown.set(derivatives);
             derivatives = grown;
         }
-        slot = 3 * used++;
+        const slot = 3 * used++;
         const c = [x, y, z];
         for (let e = 0; e < 3; e++) {
-            const at = (step: number) => {
-                const saved = c[e];
-                c[e] = clampTo(saved + step, e);
-                const v = field[c[2] * plane + c[1] * nx + c[0]];
-                c[e] = saved;
-                return v;
-            };
-            derivatives[slot + e] = (-at(2) + 8 * at(1) - 8 * at(-1) + at(-2)) / 12;
+            const s = strides[e];
+            if (c[e] >= 2 && c[e] < dims[e] - 2) {
+                derivatives[slot + e] = (-field[index + 2 * s] + 8 * field[index + s] - 8 * field[index - s] + field[index - 2 * s]) / 12;
+            } else {
+                // Held inside the grid, as edgeNormals' valueAt is.
+                const lo = -c[e], hi = dims[e] - 1 - c[e];
+                const at = (step: number) => field[index + s * Math.min(hi, Math.max(lo, step))];
+                derivatives[slot + e] = (-at(2) + 8 * at(1) - 8 * at(-1) + at(-2)) / 12;
+            }
         }
-        slots.set(index, slot);
+        slots[index] = used;
         return slot;
+    };
+    // The same, for a grid point known to be inside the grid.
+    const derivativesAtIndex = (index: number): number => {
+        const known = slots[index];
+        if (known !== 0) return 3 * (known - 1);
+        const z = Math.floor(index / plane), y = Math.floor((index - z * plane) / nx);
+        return derivativesAt(index - z * plane - y * nx, y, z);
     };
     const wx = new Float64Array(4), wy = new Float64Array(4), wz = new Float64Array(4);
     /** The value at (x, y, z), in model units, and into `gradient` its gradient, per Å. */
@@ -987,6 +1069,27 @@ export function fieldSampler(field: Float32Array, grid: GridShape) {
         catmullRomWeights(v - j, wy);
         catmullRomWeights(w - k, wz);
         let value = 0, gx = 0, gy = 0, gz = 0;
+        if (i >= 1 && j >= 1 && k >= 1 && i + 2 < nx && j + 2 < ny && k + 2 < nz) {
+            // Inside the grid, as nearly every sample is: no clamping.
+            const base = (k - 1) * plane + (j - 1) * nx + (i - 1);
+            for (let c = 0; c < 4; c++) {
+                for (let b = 0; b < 4; b++) {
+                    const wyz = wy[b] * wz[c];
+                    const row = base + c * plane + b * nx;
+                    for (let a = 0; a < 4; a++) {
+                        const weight = wx[a] * wyz;
+                        const index = row + a;
+                        value += weight * field[index];
+                        const s = derivativesAtIndex(index);
+                        gx += weight * derivatives[s];
+                        gy += weight * derivatives[s + 1];
+                        gz += weight * derivatives[s + 2];
+                    }
+                }
+            }
+            gradient[0] = gx / h; gradient[1] = gy / h; gradient[2] = gz / h;
+            return value;
+        }
         for (let c = 0; c < 4; c++) {
             for (let b = 0; b < 4; b++) {
                 const wyz = wy[b] * wz[c];
