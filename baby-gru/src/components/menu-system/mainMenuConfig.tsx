@@ -96,7 +96,7 @@ export const MainMenu: MainMenuMap = {
     // The ligand menu's items are at the top of the Ligands panel (and still in the "ligand" submenu)
     6: {
         type: "panel",
-        label: "Ligand",
+        label: "Ligands",
         ariaLabel: "Open Ligands Panel",
         icon: `ligand`,
         panel: "ligands",
