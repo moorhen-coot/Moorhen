@@ -99,6 +99,8 @@ message Representation {
      * ViewDataSession.eyeDistance.
      */
     optional float nonCustomOpacity = 15;
+    /** Surfaces: each chain's smooth surface from its own atoms. Absent in older sessions: false. */
+    bool surfaceChainsSeparate = 16;
 }
 
 message MoleculeSessionData {

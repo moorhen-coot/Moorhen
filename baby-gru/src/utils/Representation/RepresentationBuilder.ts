@@ -316,6 +316,8 @@ export interface CreateRepresentationParams {
     gaussianSurfaceSettings?: gaussianSurfSettings | null;
     nonCustomOpacity?: number | null;
     hbondedTo?: boolean;
+    /** Surfaces: build each chain's smooth surface from its own atoms (MoleculeRepresentation.surfaceChainsSeparate). */
+    surfaceChainsSeparate?: boolean;
     /**
      * Unique ID for the new representation (e.g. to restore one from MoleculeRepresentation.backup()).
      * Ignored in edit mode; a new ID is generated if omitted or already used on the molecule.
@@ -358,6 +360,7 @@ export interface RepresentationBackup {
     residueEnvironmentOptions: residueEnvironmentOptions | null;
     gaussianSurfaceSettings: gaussianSurfSettings | null;
     nonCustomOpacity: number | null;
+    surfaceChainsSeparate: boolean;
     uniqueId: string;
     isCustom: boolean;
     visible: boolean;
@@ -440,6 +443,7 @@ export function extractRepresentationParams(representation: MoleculeRepresentati
         residueEnvironmentOptions: representation.useDefaultResidueEnvironmentOptions ? null : copy(representation.residueEnvironmentOptions),
         gaussianSurfaceSettings: representation.useDefaultGaussianSurfaceSettings ? null : copy(representation.gaussianSurfaceSettings),
         nonCustomOpacity: representation.nonCustomOpacity,
+        surfaceChainsSeparate: representation.surfaceChainsSeparate,
         uniqueId: representation.uniqueId,
         isCustom: representation.isCustom,
         visible: representation.visible,
@@ -497,6 +501,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         residueEnvironmentOptions = existingParams?.residueEnvironmentOptions ?? undefined,
         nonCustomOpacity = existingParams?.nonCustomOpacity ?? undefined,
         hbondedTo = existingParams?.hbondedTo ?? false,
+        surfaceChainsSeparate = existingParams?.surfaceChainsSeparate ?? false,
         existingRepresentation,
     } = params;
     // ncsColourRule may come in serialised form (e.g. from a backup)
@@ -605,6 +610,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     representation.setM2tParams(m2tParams);
     representation.setResidueEnvOptions(residueEnvironmentOptions);
     representation.setNonCustomOpacity(nonCustomOpacity);
+    representation.surfaceChainsSeparate = surfaceChainsSeparate;
     representation.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
     representation.interfaceOption.visible = params.interfaceVisible ?? true;
     // Snapshot the params that would be lossy to reconstruct later, so edit mode

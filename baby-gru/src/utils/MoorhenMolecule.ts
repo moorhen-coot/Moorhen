@@ -1538,6 +1538,7 @@ export class MoorhenMolecule {
      * @param {moorhen.ColourRule[]} [colourRules=undefined] - A list of colour rules that will be applied to the new representation
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
      * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
+     * @param {boolean} [surfaceChainsSeparate=false] - Surfaces: build each chain's smooth surface from its own atoms.
      * @deprecated Use MoleculeRepresentation.create() instead.
      */
     async addRepresentation(
@@ -1554,7 +1555,8 @@ export class MoorhenMolecule {
         excludeNeighbours: boolean = false,
         hbondedToCid: string = "",
         hbondedTo: boolean = false,
-        neighboursDistance: number = 6.0
+        neighboursDistance: number = 6.0,
+        surfaceChainsSeparate: boolean = false
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
@@ -1574,6 +1576,7 @@ export class MoorhenMolecule {
         representation.hbondedToCid = hbondedToCid;
         representation.hbondedTo = hbondedTo;
         representation.neighboursDistance = neighboursDistance;
+        representation.surfaceChainsSeparate = surfaceChainsSeparate;
         representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
         representation.buildParams = cidBuildParams(representation);
 

@@ -1431,6 +1431,40 @@ export interface M2tSurfaceMesh {
     [key: string]: unknown;
 }
 
+/**
+ * Surfaces made from parts of the atoms (one per chain, for "surface each chain separately") as
+ * one: the arrays end to end, each part's triangles moved past the vertices before it, and its atom
+ * indices - `atom`, `other`, `near` - taken from the part's own numbering to the whole list's by
+ * `atomIndex` (part atom i is atom atomIndex[i] of the whole). -1 stays -1.
+ */
+export function mergeAtomSurfaces(parts: { surface: AtomSurface; atomIndex: ArrayLike<number> }[]): AtomSurface {
+    let vertices = 0, triangleCorners = 0;
+    for (const { surface } of parts) { vertices += surface.atom.length; triangleCorners += surface.indices.length; }
+    const merged: AtomSurface = {
+        positions: new Float32Array(3 * vertices), normals: new Float32Array(3 * vertices), indices: new Uint32Array(triangleCorners),
+        atom: new Int32Array(vertices), other: new Int32Array(vertices), weight: new Float32Array(vertices),
+        near: new Int32Array(COLOUR_ATOMS * vertices), nearGap: new Float32Array(COLOUR_ATOMS * vertices),
+    };
+    const remap = (from: Int32Array, to: Int32Array, at: number, atomIndex: ArrayLike<number>) => {
+        for (let i = 0; i < from.length; i++) to[at + i] = from[i] < 0 ? -1 : atomIndex[from[i]];
+    };
+    let v = 0, t = 0;
+    for (const { surface, atomIndex } of parts) {
+        const n = surface.atom.length;
+        merged.positions.set(surface.positions, 3 * v);
+        merged.normals.set(surface.normals, 3 * v);
+        for (let i = 0; i < surface.indices.length; i++) merged.indices[t + i] = surface.indices[i] + v;
+        remap(surface.atom, merged.atom, v, atomIndex);
+        remap(surface.other, merged.other, v, atomIndex);
+        merged.weight.set(surface.weight, v);
+        remap(surface.near, merged.near, COLOUR_ATOMS * v, atomIndex);
+        merged.nearGap.set(surface.nearGap, COLOUR_ATOMS * v);
+        v += n;
+        t += surface.indices.length;
+    }
+    return merged;
+}
+
 /** Options for smoothing an M2T surface; anything left out comes from smoothSurfaceSetting. */
 export interface SmoothOptions {
     spacing?: number;

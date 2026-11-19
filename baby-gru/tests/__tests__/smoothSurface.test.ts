@@ -3,7 +3,7 @@ import { join } from "path";
 import { m2tAtomRadius } from "../../src/utils/m2tAtomRadii";
 import { newOwnerNumbering, ownedMeshPickInfo } from "../../src/WebGLgComponents/ownedMeshPick";
 import {
-    atomSurfaceColours, atomSurfaceInfluences, atomSurfaceMesh, smoothVertexColours, vertexNeighbours, contourField, featureTransform3d, meshConventions, nearestVertices, residueCid, sesField,
+    atomSurfaceColours, atomSurfaceInfluences, atomSurfaceMesh, mergeAtomSurfaces, smoothVertexColours, vertexNeighbours, contourField, featureTransform3d, meshConventions, nearestVertices, residueCid, sesField,
     smoothM2tSurface, smoothSurfaceFromAtomsSync, transferM2tAttributes, vertexAtoms,
 } from "../../src/utils/smoothSurface";
 
@@ -435,6 +435,24 @@ describe("smoothSurface", () => {
         expect(Array.from(colours.slice(0, 4))).toEqual([1, 0, 0, 1]);
         const uniform = new Float32Array(20).fill(0.5);
         expect(Array.from(smoothVertexColours(uniform, neighbours, 3)).every(c => Math.abs(c - 0.5) < 1e-7)).toBe(true);
+    });
+
+    test("surfaces of separate chains join into one, atom indices into the whole list's", () => {
+        // Two one-triangle parts; part 2's atoms 0 and 1 are atoms 5 and 7 of the whole.
+        const part = (atom: number[], near: number[]) => ({
+            positions: new Float32Array(9), normals: new Float32Array(9), indices: Uint32Array.from([0, 1, 2]),
+            atom: Int32Array.from(atom), other: Int32Array.from([-1, 1, -1]), weight: Float32Array.from([1, 0.7, 1]),
+            near: Int32Array.from(near), nearGap: new Float32Array(12),
+        });
+        const merged = mergeAtomSurfaces([
+            { surface: part([0, 1, 0], [0, 1, -1, -1, 1, 0, -1, -1, 0, -1, -1, -1]), atomIndex: [2, 3] },
+            { surface: part([1, 0, 1], [1, -1, -1, -1, 0, 1, -1, -1, 1, 0, -1, -1]), atomIndex: [5, 7] },
+        ]);
+        expect(Array.from(merged.indices)).toEqual([0, 1, 2, 3, 4, 5]);
+        expect(Array.from(merged.atom)).toEqual([2, 3, 2, 7, 5, 7]);
+        expect(Array.from(merged.other)).toEqual([-1, 3, -1, -1, 7, -1]);
+        expect(Array.from(merged.near.slice(12, 16))).toEqual([7, -1, -1, -1]);
+        expect(merged.positions.length).toBe(18);
     });
 
     test("a surface from the atoms alone is closed, wound as M2T's, and every vertex has an atom", () => {

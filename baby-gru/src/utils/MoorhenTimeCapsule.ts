@@ -107,6 +107,8 @@ export type moleculeSessionData = {
         bondOptions: moorhen.cootBondOptions;
         m2tParams: m2tParameters;
         nonCustomOpacity: number;
+        /** Absent in sessions saved before it existed. */
+        surfaceChainsSeparate?: boolean;
         resEnvOptions: residueEnvironmentOptions;
         neighboursCid: string;
         restrictToNeighbours: boolean;
@@ -493,6 +495,7 @@ export class MoorhenTimeCapsule {
                             bondOptions: item.useDefaultBondOptions ? null : item.bondOptions,
                             m2tParams: item.useDefaultM2tParams ? null : item.m2tParams,
                             nonCustomOpacity: item.nonCustomOpacity,
+                            surfaceChainsSeparate: item.surfaceChainsSeparate,
                             resEnvOptions: item.useDefaultResidueEnvironmentOptions ? null : item.residueEnvironmentOptions,
                             neighboursCid: item.neighboursCid,
                             restrictToNeighbours: item.restrictToNeighbours,
@@ -1056,7 +1059,8 @@ export class MoorhenTimeCapsule {
                         item.excludeNeighbours,
                         item.hbondedToCid,
                         item.hbondedTo,
-                        item.neighboursDistance
+                        item.neighboursDistance,
+                        !!item.surfaceChainsSeparate
                     );
                     // Its identity, back as it was saved. A session written before the format
                     // carried this keeps the guid minted a moment ago, which is what has always
