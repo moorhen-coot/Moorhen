@@ -372,7 +372,7 @@ echo "Installing in ${INSTALL_DIR}"
 echo "Attempting to get emsdk zlib/png ports"
 echo
 echo "" > silly.c
-emcc silly.c  -pthread -sMEMORY64=1 -Wno-experimental
+emcc silly.c  -pthread --target=wasm64 -Wno-experimental
 emcc silly.c  -pthread
 rm -f silly.c
 rm -f a.out.js
@@ -384,7 +384,7 @@ if test x"${MEMORY64}" = x"1"; then
     echo "Building ** 64-bit ** (large memory) version of Moorhen"
     echo "#######################################################"
     echo
-    MOORHEN_CMAKE_FLAGS="-sMEMORY64=1 -pthread -fwasm-exceptions"
+    MOORHEN_CMAKE_FLAGS="--target=wasm64 -pthread -fwasm-exceptions"
 else
     echo "########################################"
     echo "Building ** 32-bit ** version of Moorhen"
@@ -700,7 +700,7 @@ if [ $BUILD_ZLIB = true ]; then
     getzlib
     mkdir -p ${BUILD_DIR}/zlib_build
     cd ${BUILD_DIR}/zlib_build
-    emcmake cmake -DZLIB_BUILD_STATIC=ON -DZLIB_BUILD_SHARED=OFF -DZLIB_BUILD_EXAMPLES=OFF -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/zlib-$zlib_release
+    emcmake cmake -DCMAKE_SYSTEM_NAME=Emscripten -DZLIB_BUILD_TESTING=OFF -DBUILD_TESTING=OFF -DZLIB_BUILD_STATIC=ON -DZLIB_BUILD_SHARED=OFF -DZLIB_BUILD_EXAMPLES=OFF -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions" -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/zlib-$zlib_release
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing zlib, giving up."
 fi
@@ -804,7 +804,7 @@ if [ $BUILD_RDKIT = true ]; then
     getrdkit
     mkdir -p ${BUILD_DIR}/rdkit_build
     cd ${BUILD_DIR}/rdkit_build
-    emcmake cmake -DRDK_BUILD_STATIC_LIBS_ONLY=ON -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DEIGEN3_INCLUDE_DIR=${INSTALL_DIR}/include/eigen3 -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release_stripped ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CHEMDRAW_SUPPORT=ON -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
+    emcmake cmake -DRDK_BUILD_STATIC_LIBS_ONLY=ON -DFREETYPE_LIBRARY=${INSTALL_DIR}/lib/libfreetype.a -DEIGEN3_INCLUDE_DIR=${INSTALL_DIR}/include/eigen3 -DFREETYPE_INCLUDE_DIRS=${INSTALL_DIR}/include/freetype2 -DZLIB_LIBRARY=${INSTALL_DIR}/lib/libz.a -DZLIB_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-$boost_release_stripped ${BOOST_CMAKE_STUFF} -DRDK_BUILD_XYZ2MOL_SUPPORT=ON -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CHEMDRAW_SUPPORT=ON -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_STACKTRACE=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_HAS_AUTO_PTR_ETC=0 -D_LIBCPP_KEEP_TRANSITIVE_INCLUDES_LLVM23" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/rdkit -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_INSTALL_COMIC_FONTS=OFF -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_LIBCPP_KEEP_TRANSITIVE_INCLUDES_LLVM23" -DCMAKE_MODULE_PATH=${INSTALL_DIR}/lib/cmake
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing RDKit, giving up."
     # Manually copy coordgen and maeparser headers
@@ -841,7 +841,7 @@ if [ $BUILD_IGRAPH = true ]; then
     mkdir -p ${BUILD_DIR}/igraph_build
     cd ${BUILD_DIR}/igraph_build
     if test x"${MEMORY64}" = x"1"; then
-#There is some hoop-jumping to make igraph compile with "-sMEMORY64=1 -pthread"
+#There is some hoop-jumping to make igraph compile with "--target=wasm64 -pthread"
         emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/checkout/igraph -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DIEEE754_DOUBLE_ENDIANNESS_MATCHES=ON -DF2C_EXTERNAL_ARITH_HEADER=${MOORHEN_SOURCE_DIR}/include/igraph_f2c_arith_64.h
         emmake make -j ${NUMPROCS} C_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-error=experimental" CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -Wno-error=experimental"
     else
@@ -1002,7 +1002,7 @@ if [ $BUILD_SLICENDICE = true ]; then
     getslicendice
     mkdir -p ${BUILD_DIR}/slicendice_cpp_build
     cd ${BUILD_DIR}/slicendice_cpp_build
-    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/slicendice_cpp  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/slicendice_cpp  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_LIBCPP_KEEP_TRANSITIVE_INCLUDES_LLVM23" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_LIBCPP_KEEP_TRANSITIVE_INCLUDES_LLVM23" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing SliceNDice, giving up."
 fi
@@ -1012,7 +1012,7 @@ if [ $BUILD_CONKIT = true ]; then
     getconkit
     mkdir -p ${BUILD_DIR}/conkit_build
     cd ${BUILD_DIR}/conkit_build
-    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/conkit  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS}" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${MOORHEN_SOURCE_DIR}/checkout/conkit/include -I${MOORHEN_SOURCE_DIR}/checkout/conkit/include/conkit_validate -I${MOORHEN_SOURCE_DIR}/checkout/conkit/external/map_align" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/conkit  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -D_LIBCPP_KEEP_TRANSITIVE_INCLUDES_LLVM23" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${MOORHEN_SOURCE_DIR}/checkout/conkit/include -I${MOORHEN_SOURCE_DIR}/checkout/conkit/include/conkit_validate -I${MOORHEN_SOURCE_DIR}/checkout/conkit/external/map_align -D_LIBCPP_KEEP_TRANSITIVE_INCLUDES_LLVM23" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing SliceNDice, giving up."
 fi
