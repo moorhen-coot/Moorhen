@@ -1664,7 +1664,9 @@ export class MoleculeRepresentation {
         // Made in the Coot worker, next to the M2T mesh it takes its colours and owners from: only
         // the atoms go in and only the smoothed mesh comes out, and the UI is never blocked. With
         // WebGPU, marching cubes on the GPU in between (smoothSurfaceWithGpuContour).
-        const smoothInput = smoothSurfaceSetting.enabled && M2T_SURFACE_REPRESENTATIONS.includes(m2tStyle) && !restrictSelection
+        // Moorhen's smooth surface unless the user prefers M2T's (Preferences, useSmoothSurface).
+        const useSmoothSurface = this.parentMolecule.store.getState().generalStates.useSmoothSurface;
+        const smoothInput = useSmoothSurface && M2T_SURFACE_REPRESENTATIONS.includes(m2tStyle) && !restrictSelection
             ? await this.smoothSurfaceInput(m2tStyle, cidSelection).catch(err => {
                 console.warn("Smooth surface: no atoms; drawing the M2T surface.", err);
                 return null;

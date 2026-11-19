@@ -37,7 +37,13 @@ import {
     setMaxBackupCount,
     setModificationCountBackupThreshold,
 } from "../../store/backupSettingsSlice";
-import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut, setUseGemmi } from "../../store/generalStatesSlice";
+import {
+    setDefaultExpandDisplayCards,
+    setDevMode,
+    setTransparentModalsOnMouseOut,
+    setUseGemmi,
+    setUseSmoothSurface,
+} from "../../store/generalStatesSlice";
 import { setElementsIndicesRestrict } from "../../store/glRefSlice";
 import { setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from "../../store/labelSettingsSlice";
 import {
@@ -296,6 +302,12 @@ export const PREFERENCES_MAP: { [key: number]: PreferenceEntry } = {
         valueSetter: setAnaglyphColours,
         selector: (state: RootState) => state.sceneSettings.anaglyphColours,
         defaultValue: sceneSettingsInitialState.anaglyphColours,
+    },
+    58: {
+        label: "useSmoothSurface",
+        valueSetter: setUseSmoothSurface,
+        selector: (state: RootState) => state.generalStates.useSmoothSurface,
+        defaultValue: true,
     },
 };
 

@@ -22,7 +22,6 @@ import { ResidueEnvironmentStyleSelectors } from "./components/ResidueEnvironmen
 import { ResidueSelectionRuleType, ResidueSelectionSection } from "./components/ResidueSelectionSection";
 import { StyleSelector } from "./components/StyleSelector";
 import { extractRepresentationParams, getNonCustomAlpha } from "../../../../utils/Representation/RepresentationBuilder";
-import { smoothSurfaceSetting } from "../../../../utils/smoothSurface";
 
 export const AddCustomRepresentationCard = memo(
     function AddCustomRepresentationCard(props: {
@@ -70,6 +69,7 @@ export const AddCustomRepresentationCard = memo(
         const [colourMode, setColourMode] = useState<string>(existingParams?.colourMode ?? "custom");
         const [nonCustomOpacity, setNonCustomOpacity] = useState<number>(existingParams?.nonCustomOpacity ?? 1.0);
         const [surfaceChainsSeparate, setSurfaceChainsSeparate] = useState<boolean>(existingParams?.surfaceChainsSeparate ?? false);
+        const useSmoothSurface = useSelector((state: RootState) => state.generalStates.useSmoothSurface);
         const [colour, setColour] = useState<string>(
             existingParams && !existingParams.useDefaultColours && existingParams.colour !== ""
                 ? existingParams.colour
@@ -307,7 +307,7 @@ export const AddCustomRepresentationCard = memo(
                         ruleType={ruleType}
                     />
                 </MoorhenStack>
-                {smoothSurfaceSetting.enabled && M2T_SURFACE_REPRESENTATIONS.includes(representationStyle) && (
+                {useSmoothSurface && M2T_SURFACE_REPRESENTATIONS.includes(representationStyle) && (
                     // The representation's own, whatever the general settings: one smooth surface
                     // per chain, each from its own atoms, interfaces included.
                     <MoorhenToggle

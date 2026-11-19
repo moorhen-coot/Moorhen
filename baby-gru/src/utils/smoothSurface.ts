@@ -31,9 +31,11 @@
  */
 import { MC_TRIANGLE_TABLE } from "../WebGPUComponents/metaballs/mcTable";
 
-/** The dev-menu switch and its parameters. Read when a MolecularSurface is (re)built. */
+/**
+ * The smooth surface's parameters (dev menu). Read when a surface is (re)built. Whether surfaces are
+ * smooth at all is a user preference in the store: generalStates.useSmoothSurface.
+ */
 export const smoothSurfaceSetting = {
-    enabled: true,
     /**
      * Grid spacing, Å. Raised automatically if the grid would be too large. The field is exact to
      * well under a voxel, so 0.5 looks as good as finer grids did with voxel-centre distances.

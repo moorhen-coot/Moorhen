@@ -4,7 +4,7 @@ import type { ModalKey } from "@/components/interface-base/ModalBase/ModalsConta
 import { setSceneSelectorOpen, setShownControl } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
-import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
+import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut, setUseSmoothSurface } from "../../store/generalStatesSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
 import {
@@ -767,6 +767,13 @@ export const subMenuMap: SubMenuMap = {
                 type: "preferenceSwitch",
                 action: setShortcutOnHoveredAtom,
                 selector: (state: RootState) => state.shortcutSettings.shortcutOnHoveredAtom,
+            },
+            {
+                id: "smooth-surface",
+                label: "Use Moorhen smooth surfaces",
+                type: "preferenceSwitch",
+                action: setUseSmoothSurface,
+                selector: (state: RootState) => state.generalStates.useSmoothSurface,
             },
             {
                 id: "dev-mode",

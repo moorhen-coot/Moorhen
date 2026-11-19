@@ -1,5 +1,6 @@
 import type { RootState } from "@/store/MoorhenReduxStore";
 import type { MoorhenInstance } from "./MoorhenInstance";
+import { M2T_SURFACE_REPRESENTATIONS } from "@/utils/enums";
 
 /**
  * A store value kept in sync with something outside the store (usually Coot): `apply` runs every time
@@ -22,6 +23,21 @@ const STORE_SYNCS: StoreSync<unknown>[] = [
         selector: state => state.mapContourSettings.defaultMapSamplingRate,
         apply: (instance, rate) =>
             instance.commandCentre?.cootCommand({ command: "set_map_sampling_rate", commandArgs: [rate], returnType: "status" }, false),
+    }),
+    sync({
+        // Every surface on screen drawn again, smooth or M2T as the preference now says; hidden
+        // ones are drawn that way when next shown.
+        name: "smooth surfaces",
+        selector: state => state.generalStates.useSmoothSurface,
+        apply: async instance => {
+            for (const molecule of instance.getMoleculeList()) {
+                for (const representation of molecule.representations) {
+                    if (representation.visible && M2T_SURFACE_REPRESENTATIONS.includes(representation.style)) {
+                        await representation.redraw();
+                    }
+                }
+            }
+        },
     }),
 ];
 

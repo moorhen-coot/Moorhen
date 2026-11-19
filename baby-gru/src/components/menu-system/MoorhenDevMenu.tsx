@@ -204,7 +204,7 @@ export const MoorhenDevMenu = () => {
     const [centreOnHighlight, setCentreOnHighlight] = useState<boolean>(meshCentringSetting.followHighlight);
     const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
     const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.wanted);
-    const [smoothSurface, setSmoothSurface] = useState<boolean>(smoothSurfaceSetting.enabled);
+    const smoothSurface = useSelector((state: RootState) => state.generalStates.useSmoothSurface);
     const [smoothSpacing, setSmoothSpacing] = useState<number>(smoothSurfaceSetting.spacing);
     const [smoothSigma, setSmoothSigma] = useState<number>(smoothSurfaceSetting.sigma);
     const [smoothMaxShift, setSmoothMaxShift] = useState<number>(smoothSurfaceSetting.maxShift);
@@ -621,23 +621,13 @@ export const MoorhenDevMenu = () => {
             />
             <MoorhenToggle
                 type="switch"
-                checked={smoothSurface}
-                label="Smooth surfaces: molecular, van der Waals, accessible (blurred distance field; test)"
-                onChange={() => {
-                    smoothSurfaceSetting.enabled = !smoothSurface;
-                    setSmoothSurface(!smoothSurface);
-                    redrawSurfaces();
-                }}
-            />
-            <MoorhenToggle
-                type="switch"
                 checked={noWebGPU === null && smoothOnGpu}
                 disabled={noWebGPU !== null}
                 label={`Smooth surface: marching cubes on the GPU (on by default; off, or no WebGPU: on the CPU in the Coot worker${noWebGPU ? "; no WebGPU here" : ""})`}
                 onChange={() => {
                     smoothSurfaceSetting.gpu = !smoothOnGpu;
                     setSmoothOnGpu(!smoothOnGpu);
-                    if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                    if (smoothSurface) redrawSurfaces();
                 }}
             />
             <MoorhenToggle
@@ -647,7 +637,7 @@ export const MoorhenDevMenu = () => {
                 onChange={() => {
                     smoothSurfaceSetting.refine = !smoothRefine;
                     setSmoothRefine(!smoothRefine);
-                    if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                    if (smoothSurface) redrawSurfaces();
                 }}
             />
             <MoorhenStack direction="row">
@@ -658,7 +648,7 @@ export const MoorhenDevMenu = () => {
                     setValue={val => {
                         smoothSurfaceSetting.colourBlend = val;
                         setSmoothColourBlend(val);
-                        if (smoothSurfaceSetting.enabled) recolourSurfaces();
+                        if (smoothSurface) recolourSurfaces();
                     }}
                 />
                 <MoorhenNumberInput
@@ -668,7 +658,7 @@ export const MoorhenDevMenu = () => {
                     setValue={val => {
                         smoothSurfaceSetting.colourSmoothing = Math.round(val);
                         setSmoothColourSmoothing(Math.round(val));
-                        if (smoothSurfaceSetting.enabled) recolourSurfaces();
+                        if (smoothSurface) recolourSurfaces();
                     }}
                 />
             </MoorhenStack>
@@ -680,7 +670,7 @@ export const MoorhenDevMenu = () => {
                     setValue={val => {
                         smoothSurfaceSetting.spacing = val;
                         setSmoothSpacing(val);
-                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                        if (smoothSurface) redrawSurfaces();
                     }}
                 />
                 <MoorhenNumberInput
@@ -690,7 +680,7 @@ export const MoorhenDevMenu = () => {
                     setValue={val => {
                         smoothSurfaceSetting.sigma = val;
                         setSmoothSigma(val);
-                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                        if (smoothSurface) redrawSurfaces();
                     }}
                 />
                 <MoorhenNumberInput
@@ -701,7 +691,7 @@ export const MoorhenDevMenu = () => {
                         // 0 in the box means no cap: the plain blur.
                         smoothSurfaceSetting.maxShift = val > 0 ? val : Infinity;
                         setSmoothMaxShift(val);
-                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                        if (smoothSurface) redrawSurfaces();
                     }}
                 />
                 <MoorhenNumberInput
@@ -711,7 +701,7 @@ export const MoorhenDevMenu = () => {
                     setValue={val => {
                         smoothSurfaceSetting.openRadius = val;
                         setSmoothOpenRadius(val);
-                        if (smoothSurfaceSetting.enabled) redrawSurfaces();
+                        if (smoothSurface) redrawSurfaces();
                     }}
                 />
             </MoorhenStack>
