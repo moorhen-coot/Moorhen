@@ -949,7 +949,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [zoom,quat,originState])
 
     return  <>
-                <figure style={{position: "absolute", top: 0, left: 0, width: `${width}px`, height: `${height}px`, margin: "0px"}}>
+                <figure
+                    style={{position: "absolute", top: 0, left: 0, width: `${width}px`, height: `${height}px`, margin: "0px", userSelect: "none", WebkitUserSelect: "none"}}
+                    // The canvases are a live view, never something to drag: without this a text selection
+                    // spanning the figure lets the browser drag the canvases away as a ghost image.
+                    onDragStart={(e) => e.preventDefault()}>
                 <MGWebGL
                     ref={glRef}
                     onAtomHovered={(enableAtomHovering && !isRotatingAtoms && !isDraggingAtoms && !isChangingRotamers) ? props.onAtomHovered : null}
@@ -972,7 +976,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     store={store}
                     dispatch={dispatch} />
                     {useWebGPU && webGPUAvailable && <MoorhenWebGPUMainView glRef={glRef as React.RefObject<MGWebGL>} />}
-                    <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>;
+                    <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>
                 </figure>
                 {showContextMenu &&
                 <MoorhenContextMenu
