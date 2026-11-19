@@ -2195,10 +2195,11 @@ inline emscripten::val smoothSurfaceFromAtoms(const emscripten::val &packedAtoms
     if (!option("threads").isUndefined()) options.threads = option("threads").as<int>();
     smooth_surface::surface_t s = smooth_surface::surface_from_atoms(atoms, residue_of, probe, options);
     if (s.indices.empty()) return emscripten::val::null();
-    // A typed array of the JS type `type` holding a copy of `data`.
+    // A typed array of the JS type `type` holding a copy of `data`. The length goes over as a double:
+    // a size_t is a BigInt in JS in the 64-bit build, which a typed array constructor refuses.
     auto copy = [](const char *type, const auto &data) {
         emscripten::val view{ emscripten::typed_memory_view(data.size(), data.data()) };
-        emscripten::val result = emscripten::val::global(type).new_(data.size());
+        emscripten::val result = emscripten::val::global(type).new_(double(data.size()));
         result.template call<void>("set", view);
         return result;
     };
