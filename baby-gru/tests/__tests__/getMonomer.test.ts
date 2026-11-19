@@ -3,6 +3,7 @@
  * looked up as Get Monomer does. Shared by the Get Monomer menu and by fitting a ligand by its code.
  */
 import { getMonomerMolecule } from "@/utils/monomers";
+import { FIT_CLUSTER_VOLUME_KEY, FIT_CORRELATION_KEY } from "@/utils/MoorhenMolecule";
 import { createCloudInstance, flush, jobUrl, loadCootModules, readTestData, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
 jest.setTimeout(120_000);
@@ -88,6 +89,11 @@ describe("getMonomerMolecule", () => {
         const poses = await protein.fitLigand(mapMolNo, template.molNo, false, false, false, 10);
         expect(poses.length).toBeGreaterThan(0);
         for (const pose of poses) expect(await atoms(pose.molNo)).toBeGreaterThan(0);
+        // Each pose carries its correlation with the map, best first (Coot lists them by density cluster)
+        const correlations = poses.map(pose => Number(pose.metadata[FIT_CORRELATION_KEY]));
+        for (const correlation of correlations) expect(Number.isFinite(correlation)).toBe(true);
+        expect(correlations).toEqual([...correlations].sort((a, b) => b - a));
+        for (const pose of poses) expect(pose.metadata[FIT_CLUSTER_VOLUME_KEY]).toMatch(/^\d+ Å³$/);
         await Promise.all(poses.map(pose => pose.delete()));
     });
 });

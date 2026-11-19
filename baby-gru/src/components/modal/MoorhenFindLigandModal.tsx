@@ -13,7 +13,7 @@ import { MoorhenStack } from "../interface-base";
 import { MoorhenDraggableModalBase } from "../interface-base/ModalBase/DraggableModalBase";
 import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer";
 import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
-import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
+import { FIT_CLUSTER_VOLUME_KEY, FIT_CORRELATION_KEY, type MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { drawLigandBonds } from "@/utils/Representation/defaultRepresentation";
 import { getMonomerMolecule } from "@/utils/monomers";
 import { useMoorhenInstance } from "@/InstanceManager";
@@ -72,9 +72,19 @@ const LigandHitCard = (props: {
         }
     }, []);
 
+    // Correlation with the map and the volume of the density blob, from fitLigand (none for "fit right here")
+    const correlation = props.ligandMolecule.metadata[FIT_CORRELATION_KEY];
+    const volume = props.ligandMolecule.metadata[FIT_CLUSTER_VOLUME_KEY];
+
     return (
         <MoorhenStack card direction="row" align="center" gap={"0.5rem"}>
             <span>{props.ligandMolecule.name}</span>
+            {correlation !== undefined && (
+                <span style={{ opacity: 0.7 }}>
+                    cc {correlation}<br />
+                    {volume !== undefined && ` ${volume}`}
+                </span>
+            )}
             <MoorhenButton
                 onClick={() => props.setLigandCardMolNoFocus(props.ligandMolecule.molNo)}
                 type="icon-only"

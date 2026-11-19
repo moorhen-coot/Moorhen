@@ -98,6 +98,11 @@ export type NEFRestraint = {
 const isMeshBuffer = (buffer: unknown): buffer is moorhen.DisplayObject =>
     typeof buffer === "object" && buffer !== null && "bufferTypes" in buffer;
 
+/** The metadata key of a fitted ligand pose's correlation with the map (higher is better) */
+export const FIT_CORRELATION_KEY = "Fit correlation";
+/** The metadata key of the volume of the density blob a ligand pose was fitted into */
+export const FIT_CLUSTER_VOLUME_KEY = "Fitted density volume";
+
 /**
  * Represents a molecule
  * @property {string} name - The name assigned to this molecule instance
@@ -811,11 +816,9 @@ export class MoorhenMolecule {
      */
     async transferLigandDicts(toMolecule: moorhen.Molecule, override: boolean = false) {
         await Promise.all(
-            Object.keys(this.ligandDicts).map(key => {
-                if (!override && Object.hasOwn(toMolecule.ligandDicts, key)) {
-                    return;
-                } else {
-                    toMolecule.addDict(this.ligandDicts[key]);
+            Object.keys(this.ligandDicts).map(async key => {
+                if (override || !Object.hasOwn(toMolecule.ligandDicts, key)) {
+                    await toMolecule.addDict(this.ligandDicts[key]);
                 }
             })
         );
@@ -918,6 +921,9 @@ export class MoorhenMolecule {
 
         if (copyResult.data.result.result !== -1) {
             newMolecule.molNo = copyResult.data.result.result;
+            // Coot keeps dictionaries per molecule, and the copy is a new one: it needs the ligand
+            // dictionaries before its refinement is set up, or a ligand is refined with no restraints
+            await this.transferLigandDicts(newMolecule);
             await this.commandCentre.cootCommand(
                 {
                     returnType: "status",
@@ -926,7 +932,6 @@ export class MoorhenMolecule {
                 },
                 false
             );
-            await this.transferLigandDicts(newMolecule);
             newMolecule.setAtomsDirty(true);
             if (redraw) {
                 const drawMissingLoops = this.store.getState().sceneSettings.drawMissingLoops;
@@ -2857,7 +2862,9 @@ export class MoorhenMolecule {
      * @param {boolean} [redraw=false] - Indicates if the fitted ligands should be drawn
      * @param {boolean} [useConformers=false] - Indicates if there is need to test multiple conformers
      * @param {number} [conformerCount=0] - Conformer count
-     * @returns {Promise<moorhen.Molecule[]>} - A list of fitted ligands
+     * @returns {Promise<moorhen.Molecule[]>} - A list of fitted ligands. When fitting anywhere, best correlation
+     * with the map first, each with its correlation and the volume of its density blob in `metadata`
+     * (FIT_CORRELATION_KEY, FIT_CLUSTER_VOLUME_KEY). Fitting right here gives no scores, in Coot's order.
      */
     async fitLigand(
         mapMolNo: number,
@@ -2891,11 +2898,25 @@ export class MoorhenMolecule {
             const ligandMolecule: moorhen.Molecule = this.store
                 .getState()
                 .molecules.moleculeList.find((molecule: moorhen.Molecule) => molecule.molNo === ligandMolNo);
+            // Coot lists the poses cluster by cluster, biggest blob of density first, and sorts by
+            // correlation only within a cluster: the best pose of the biggest blob need not be the
+            // best fit. Best correlation first across all of them, so that #1 is the best fit.
+            const fits = fitRightHere
+                ? (result.data.result.result as number[]).map(imol => ({ imol, info: null as libcootApi.fitLigandInfo | null }))
+                : [...(result.data.result.result as libcootApi.fitLigandInfo[])]
+                      .sort((a, b) => b.fitting_score - a.fitting_score)
+                      .map(info => ({ imol: info.imol, info }));
             newMolecules = await Promise.all(
-                result.data.result.result.map(async (fitLigandResult: number | libcootApi.fitLigandInfo, idx: number) => {
+                fits.map(async ({ imol, info }, idx: number) => {
                     const newMolecule = new MoorhenMolecule(this.moorhenInstance);
-                    newMolecule.molNo = fitRightHere ? (fitLigandResult as number) : (fitLigandResult as libcootApi.fitLigandInfo).imol;
+                    newMolecule.molNo = imol;
                     newMolecule.name = `${ligandMolecule?.name ? ligandMolecule.name : "Lig."} fit. #${idx + 1}`;
+                    if (info && info.fitting_score >= 0) {
+                        newMolecule.metadata[FIT_CORRELATION_KEY] = info.fitting_score.toFixed(3);
+                    }
+                    if (info && info.cluster_volume >= 0) {
+                        newMolecule.metadata[FIT_CLUSTER_VOLUME_KEY] = `${info.cluster_volume.toFixed(0)} Å³`;
+                    }
                     newMolecule.isDarkBackground = this.isDarkBackground;
                     newMolecule.defaultBondOptions = this.defaultBondOptions;
                     await ligandMolecule?.transferLigandDicts?.(newMolecule);

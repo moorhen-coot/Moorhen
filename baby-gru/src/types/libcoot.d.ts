@@ -612,8 +612,14 @@ export namespace libcootApi {
     };
     type fitLigandInfo = {
         imol: number;
+        /** Index of the density cluster (blob) the pose was fitted into; Coot orders clusters by their density score */
         cluster_idx: number;
+        /** Index of the pose within its cluster */
         ligand_idx: number;
+        /** Correlation of the pose with the map (higher is better); -1 when Coot did not score it */
+        fitting_score: number;
+        /** Volume of the density cluster, in cubic Angstroms */
+        cluster_volume: number;
     };
     type compoundInfo = {
         name: string;
