@@ -5,12 +5,13 @@
  * steps onto the surface with normals from the field, winding, and each vertex's atoms - the same
  * AtomSurface the C++'s smoothSurfaceFromAtoms returns, read back once at the end.
  */
-import { BufferUsage, ComputeKernel, GpuScan, MapMode, createBuffer } from "../gpu";
+import { BufferUsage, ComputeKernel, GpuScan, MapMode, createBuffer, readBuffer } from "../gpu";
 import type { GpuMetaBalls } from "../metaballs";
 import {
-    BLUR_WEIGHT_WGSL, BLUR_WGSL, CAP_WGSL, COLOUR_ATOMS, CONTOUR_INPUT_WGSL, EDGE_COUNT_WGSL, EDGE_FILL_WGSL, HEAL_WGSL, HISTOGRAM_WGSL,
-    LEVEL_BINS, LEVEL_WGSL, MIDPOINTS_WGSL, MIDPOINT_TOTAL_WGSL, ORIENT_WGSL, REFINE_WGSL, ROW_UNIQUE_WGSL, SMOOTH_WORKGROUP, SPLIT_WGSL,
-    VERTEX_ATOMS_WGSL, WEIGHT_INIT_WGSL, WEIGHT_SCALE_WGSL,
+    BLUR_WEIGHT_WGSL, BLUR_WGSL, CANDIDATE_TOTAL_WGSL, CAP_WGSL, COLOUR_ATOMS, CONTOUR_INPUT_WGSL, DISTANCE_WGSL, EDGE_COUNT_WGSL,
+    EDGE_FILL_WGSL, FEATURE_INIT_WGSL, FEATURE_PASS_WGSL, HEAL_WGSL, HISTOGRAM_WGSL, INTERIOR_WGSL, LEVEL_BINS, LEVEL_WGSL, MAX_LINE,
+    MIDPOINTS_WGSL, MIDPOINT_TOTAL_WGSL, OCCUPANCY_WGSL, OPENING_WGSL, ORIENT_WGSL, REFINE_WGSL, ROW_UNIQUE_WGSL, SEED_CANDIDATES_WGSL,
+    SEED_FIND_WGSL, SEED_VALID_WGSL, SMOOTH_WORKGROUP, SPLIT_WGSL, VERTEX_ATOMS_WGSL, WEIGHT_INIT_WGSL, WEIGHT_SCALE_WGSL,
 } from "./smoothSurfaceShaders";
 
 /** The grid the field is on, as the C++ hands it over. */
@@ -34,12 +35,38 @@ export interface SmoothUnblurredField extends SmoothFieldGrid {
     clamp: number;
 }
 
+/**
+ * The C++'s grid and exposed SAS (smoothSurfaceExposureFromAtoms; smooth-surface.hh exposure_t), the
+ * hand-off for stages 4 to 1.
+ */
+export interface SmoothExposure extends SmoothFieldGrid {
+    clamp: number;
+    sas: Float32Array;
+    exposed: Uint8Array;
+    neighbourStart: Int32Array;
+    neighbourIds: Int32Array;
+    circleStart: Int32Array;
+    circleIds: Int32Array;
+    atomCircleStart: Int32Array;
+    atomCircleIds: Int32Array;
+    other: Int32Array;
+    arcStart: Int32Array;
+    circles: Float32Array;
+    arcs: Float32Array;
+}
+
 /** The blur's options, as smoothSurfaceSetting has them. */
 export interface SmoothBlurOptions {
     sigma: number;
     maxShift: number;
     openUncapped: boolean;
     healBlur: number;
+}
+
+/** What the field needs beyond the blur's options: the probe and the opening's radius. */
+export interface SmoothFieldOptions extends SmoothBlurOptions {
+    probe: number;
+    openRadius: number;
 }
 
 /** The Gaussian's weights for `sigma` grid points, as gaussian_blur_3d makes them (normalised in double). */
@@ -86,9 +113,19 @@ const KERNELS = {
     histogram: HISTOGRAM_WGSL,
     level: LEVEL_WGSL,
     contourInput: CONTOUR_INPUT_WGSL,
+    occupancy: OCCUPANCY_WGSL,
+    seedCandidates: SEED_CANDIDATES_WGSL,
+    candidateTotal: CANDIDATE_TOTAL_WGSL,
+    seedFind: SEED_FIND_WGSL,
+    seedValid: SEED_VALID_WGSL,
+    featureInit: FEATURE_INIT_WGSL,
+    featurePass: FEATURE_PASS_WGSL,
+    distance: DISTANCE_WGSL,
+    opening: OPENING_WGSL,
+    interior: INTERIOR_WGSL,
 } as const;
 /** Kernels of one thread in all. */
-const SINGLE: readonly KernelName[] = ["midpointTotal", "level"];
+const SINGLE: readonly KernelName[] = ["midpointTotal", "level", "candidateTotal"];
 type KernelName = keyof typeof KERNELS;
 
 const { STORAGE, UNIFORM, COPY_SRC, COPY_DST, MAP_READ } = BufferUsage;
@@ -160,35 +197,70 @@ export class GpuSmoothSurface {
     }
 
     /**
-     * Stage 2 (smooth-surface.cc blur_field): from the unblurred field, the cuts' weight spread, the
-     * blur, the cap, the heal blur and the level that keeps the enclosed volume; returns the field
-     * ready to contour (the level less the field), a GPU buffer the caller destroys. Recorded and
-     * submitted, not waited for: what reads the buffer next runs after it.
+     * Stage 2 from the C++'s unblurred field (smoothSurfaceUnblurredFieldFromAtoms): uploaded, then
+     * blurField. Returns the field ready to contour, a GPU buffer the caller destroys.
      */
     contourInputFromUnblurred(unblurred: SmoothUnblurredField, options: SmoothBlurOptions): GPUBuffer {
-        const { nx, ny, nz, spacing } = unblurred;
-        const count = nx * ny * nz;
+        const count = unblurred.nx * unblurred.ny * unblurred.nz;
+        const exact = createBuffer(this.device, "smooth surface unblurred field", count * 4, STORAGE | COPY_SRC | COPY_DST, unblurred.field);
+        const interior = createBuffer(this.device, "smooth surface interior", 16, STORAGE | COPY_DST, new Uint32Array([unblurred.interior, 0, 0, 0]));
+        let weight: GPUBuffer | null = null;
+        if (unblurred.changed) {
+            const bytes = Math.ceil(count / 4) * 4;
+            const packed = new Uint8Array(bytes);
+            packed.set(unblurred.changed);
+            const changed = createBuffer(this.device, "smooth surface changed", bytes, STORAGE, packed);
+            weight = createBuffer(this.device, "smooth surface weight", count * 4, STORAGE | COPY_SRC | COPY_DST);
+            const P = this.blurParams(unblurred, unblurred.clamp, options, 0, 0, false);
+            const encoder = this.device.createCommandEncoder({ label: "smooth surface weight" });
+            this.kernels.get("weightInit").dispatch(encoder, { groups: [[P], [changed, weight]], items: count });
+            this.device.queue.submit([encoder.finish()]);
+            changed.destroy();
+            P.destroy();
+        }
+        return this.blurField(exact, weight, interior, unblurred, unblurred.clamp, options);
+    }
+
+    /** Stage 2's parameters (BlurParams). */
+    private blurParams(grid: SmoothFieldGrid, clamp: number, options: SmoothBlurOptions, axis: number, radius: number, lift: boolean): GPUBuffer {
+        const buffer = new ArrayBuffer(48);
+        const u = new Uint32Array(buffer), f = new Float32Array(buffer);
+        u.set([grid.nx, grid.ny, grid.nz, grid.nx * grid.ny * grid.nz], 0);
+        u.set([axis, radius, lift ? 1 : 0, 0], 4);
+        f.set([Number.isFinite(options.maxShift) ? options.maxShift : 0, clamp], 8);
+        return createBuffer(this.device, "smooth surface blur params", 48, UNIFORM | COPY_DST, new Uint8Array(buffer));
+    }
+
+    /**
+     * Stage 2 (smooth-surface.cc blur_field): from the opened, unblurred field `exact`, the opening's
+     * raw `weight` (0 or 255 per point; null if nothing wants it) and the points inside (`interior[0]`),
+     * the weight spread, the blur, the cap, the heal blur and the level that keeps the enclosed volume.
+     * Takes the three buffers (and destroys them); returns the field ready to contour (the level less
+     * the field), a GPU buffer the caller destroys. Recorded and submitted, not waited for.
+     */
+    blurField(exact: GPUBuffer, weight: GPUBuffer | null, interior: GPUBuffer, grid: SmoothFieldGrid, clamp: number,
+              options: SmoothBlurOptions): GPUBuffer {
+        const { spacing } = grid;
+        const count = grid.nx * grid.ny * grid.nz;
         const { sigma, maxShift, openUncapped, healBlur } = options;
         const fieldUsage = STORAGE | COPY_SRC | COPY_DST;
-        const owned: GPUBuffer[] = [];
+        const owned: GPUBuffer[] = [exact, interior, ...(weight ? [weight] : [])];
         const make = (label: string, bytes: number, usage: number, data?: ArrayBufferView) => {
             const b = createBuffer(this.device, `smooth surface ${label}`, bytes, usage, data);
             owned.push(b);
             return b;
         };
+        const lift = openUncapped && !!weight;
         const params = (axis: number, radius: number) => {
-            const buffer = new ArrayBuffer(48);
-            const u = new Uint32Array(buffer), f = new Float32Array(buffer);
-            u.set([nx, ny, nz, count], 0);
-            u.set([axis, radius, openUncapped && unblurred.changed ? 1 : 0, unblurred.interior], 4);
-            f.set([Number.isFinite(maxShift) ? maxShift : 0, unblurred.clamp], 8);
-            return make("blur params", 48, UNIFORM | COPY_DST, new Uint8Array(buffer));
+            const b = this.blurParams(grid, clamp, options, axis, radius, lift);
+            owned.push(b);
+            return b;
         };
         const P = params(0, 0);
         const encoder = this.device.createCommandEncoder({ label: "smooth surface blur" });
         const run = (name: KernelName, uniform: GPUBuffer, buffers: GPUBuffer[]) =>
             this.kernels.get(name).dispatch(encoder, { groups: [[uniform], buffers], items: count });
-        // Three separable passes of `kernel` from `source`, ending in `output`, through `scratch`.
+        // Three separable passes from `source`, ending in `output`, through `scratch`.
         const blur3 = (name: "blur" | "blurWeight", sigmaVoxels: number, source: GPUBuffer, scratch: GPUBuffer, output: GPUBuffer) => {
             const weights = gaussianKernel(sigmaVoxels);
             const kernel = make("blur kernel", weights.byteLength, STORAGE, weights);
@@ -198,17 +270,9 @@ export class GpuSmoothSurface {
             run(name, params(2, radius), [kernel, scratch, output]);
         };
 
-        const exact = make("unblurred field", count * 4, fieldUsage, unblurred.field);
         let spare = make("field a", count * 4, fieldUsage);
         let field = make("field b", count * 4, fieldUsage);
-        let weight: GPUBuffer | null = null;
-        if (unblurred.changed) {
-            const bytes = Math.ceil(count / 4) * 4;
-            const packed = new Uint8Array(bytes);
-            packed.set(unblurred.changed);
-            const changed = make("changed", bytes, STORAGE, packed);
-            weight = make("weight", count * 4, fieldUsage);
-            run("weightInit", P, [changed, weight]);
+        if (weight) {
             // Spread over about an A: three passes ending in `spare`, which becomes the weight.
             blur3("blurWeight", 1.0 / spacing, weight, field, spare);
             run("weightScale", P, [spare]);
@@ -229,7 +293,7 @@ export class GpuSmoothSurface {
         if (sigma > 0) {
             const histogram = make("histogram", LEVEL_BINS * 4, STORAGE, new Uint32Array(LEVEL_BINS));
             run("histogram", P, [field, histogram]);
-            this.kernels.get("level").dispatch(encoder, { groups: [[P], [histogram, level]], workgroups: 1 });
+            this.kernels.get("level").dispatch(encoder, { groups: [[P], [histogram, interior, level]], workgroups: 1 });
         }
         // The input, into `spare`: kept, handed to the caller.
         run("contourInput", P, [field, level, spare]);
@@ -237,6 +301,143 @@ export class GpuSmoothSurface {
         const input = spare;
         owned.filter(b => b !== input).forEach(b => b.destroy());
         return input;
+    }
+
+    /**
+     * Stages 4, 3, 2 and 1: the whole surface on the GPU from the C++'s grid and exposed SAS
+     * (smoothSurfaceExposureFromAtoms). Null if there is nothing to contour; throws if a grid line is
+     * longer than the feature transform takes (MAX_LINE), for the caller to have the C++ make it.
+     */
+    async surfaceFromExposure(exposure: SmoothExposure, options: SmoothFieldOptions, atoms: Float32Array, residueOf: Int32Array):
+        Promise<GpuAtomSurface | null> {
+        for (let room = 1; ; room *= 2) {
+            const made = this.unblurredFromExposure(exposure, options, room);
+            const input = this.blurField(made.field, made.weight, made.interior, exposure, exposure.clamp, options);
+            try {
+                const surface = await this.surfaceFromField(input, exposure, atoms, residueOf, options.probe);
+                // Were there more seed candidates than room for? Then again, with more.
+                const overflow = new Uint32Array(await readBuffer(this.device, made.overflow, 4))[0];
+                if (overflow === 0) return surface;
+                if (room >= 64) throw new Error("GPU smooth surface: seed candidates kept outgrowing their room");
+            } finally {
+                input.destroy();
+                made.overflow.destroy();
+            }
+        }
+    }
+
+    /**
+     * Stages 4 and 3 (smooth-surface.cc ses_field_unblurred): SAS occupancy, seeds, the feature
+     * transform, the distances and the opening, from the C++'s exposed SAS. Returns the opened field,
+     * the opening's raw weight (or null), the points inside and an overflow flag (more seed candidates
+     * than `room` times the estimate made room for: read after, and made again with more) - GPU buffers,
+     * the first three for blurField. With `keep`, the intermediates too, for tests.
+     */
+    unblurredFromExposure(exposure: SmoothExposure, options: SmoothFieldOptions, room = 1, keep = false): {
+        field: GPUBuffer; weight: GPUBuffer | null; interior: GPUBuffer; overflow: GPUBuffer;
+        kept?: { flags: GPUBuffer; feature: GPUBuffer; seeds: GPUBuffer; distance: GPUBuffer; candidates: GPUBuffer; seedCount: GPUBuffer };
+    } {
+        const { nx, ny, nz, spacing: h, clamp } = exposure;
+        if (Math.max(nx, ny, nz) > MAX_LINE) throw new Error(`GPU smooth surface: grid ${nx}x${ny}x${nz} has lines longer than ${MAX_LINE}`);
+        const count = nx * ny * nz;
+        const { probe, sigma, openRadius, openUncapped, healBlur } = options;
+        const atomCount = exposure.sas.length / 4;
+        let rMax = 0;
+        for (let a = 0; a < atomCount; a++) rMax = Math.max(rMax, exposure.sas[4 * a + 3]);
+        const window = 3 * h, diagonal = Math.sqrt(3) * h;
+        const binSize = rMax + Math.max(window, clamp + h, diagonal);
+        const bins = binAtoms(exposure.sas, binSize);
+        // The integer tables, end to end, and where each starts.
+        const tables: ArrayLike<number>[] = [Int32Array.from(exposure.exposed), exposure.neighbourStart, exposure.neighbourIds,
+            exposure.circleStart, exposure.circleIds, exposure.atomCircleStart, exposure.atomCircleIds, exposure.other, exposure.arcStart,
+            bins.start, bins.members];
+        const offsets: number[] = [];
+        let total = 0;
+        for (const t of tables) { offsets.push(total); total += t.length; }
+        const table = new Int32Array(Math.max(total, 1));
+        tables.forEach((t, k) => table.set(t, offsets[k]));
+        // The circles, then per arc its start and end directions (cos, sin, in double) and its length.
+        const arcCount = exposure.arcs.length / 2;
+        const floats = new Float32Array(Math.max(exposure.circles.length + 5 * arcCount, 1));
+        floats.set(exposure.circles, 0);
+        for (let m = 0; m < arcCount; m++) {
+            const from = exposure.arcs[2 * m], length = exposure.arcs[2 * m + 1];
+            floats.set([Math.cos(from), Math.sin(from), Math.cos(from + length), Math.sin(from + length), length],
+                exposure.circles.length + 5 * m);
+        }
+        const mark = openRadius > 0 && (openUncapped || healBlur > sigma);
+        // Seed candidates: the points next to the SAS, a few per cent of the grid.
+        const cap = Math.ceil((0.06 * count + 4096) * room);
+
+        const owned: GPUBuffer[] = [];
+        const make = (label: string, bytes: number, usage: number = STORAGE, data?: ArrayBufferView) => {
+            const b = createBuffer(this.device, `smooth surface ${label}`, bytes, usage, data);
+            owned.push(b);
+            return b;
+        };
+        const params = (axis: number, lines: number) => {
+            const buffer = new ArrayBuffer(176);
+            const f = new Float32Array(buffer), u = new Uint32Array(buffer);
+            f.set([exposure.origin[0], exposure.origin[1], exposure.origin[2], h], 0);
+            u.set([nx, ny, nz, count], 4);
+            f.set([probe, clamp, window, diagonal], 8);
+            f.set([probe - clamp - h, probe + clamp + h, -(3 * sigma + 2 * h), openRadius], 12);
+            f.set([(h * h) / 4, -(probe + clamp), binSize, mark ? 1 : 0], 16);
+            u.set([bins.dims[0], bins.dims[1], bins.dims[2], atomCount], 20);
+            f.set([bins.low[0], bins.low[1], bins.low[2], 0], 24);
+            u.set([axis, lines, cap, 0], 28);
+            u.set([offsets[0], offsets[1], offsets[2], offsets[3]], 32);
+            u.set([offsets[4], offsets[5], offsets[6], offsets[7]], 36);
+            u.set([offsets[8], offsets[9], offsets[10], exposure.circles.length], 40);
+            return make("field params", 176, UNIFORM | COPY_DST, new Uint8Array(buffer));
+        };
+        const P = params(0, 0);
+        const sas = make("sas", exposure.sas.byteLength, STORAGE, exposure.sas);
+        const tableBuffer = make("atom tables", table.byteLength, STORAGE, table);
+        const floatBuffer = make("atom floats", floats.byteLength, STORAGE, floats);
+        const grid = (label: string) => make(label, count * 4, STORAGE | COPY_SRC | COPY_DST);
+        const flags = grid("flags");
+        const candidates = grid("candidates");
+        const candidateAt = grid("candidate places");
+        const feature = grid("feature");
+        const scratch = grid("transform scratch");
+        const seed = make("seed candidates", cap * 24, STORAGE | COPY_SRC);
+        const valid = make("valid seeds", cap * 4);
+        const seedAt = make("seed numbers", cap * 4);
+        const seeds = make("seeds", cap * 20, STORAGE | COPY_SRC);
+        const counts = make("candidate count", 16, STORAGE | COPY_SRC, new Uint32Array(4));
+        const overflow = createBuffer(this.device, "smooth surface seed overflow", 16, STORAGE | COPY_SRC | COPY_DST, new Uint32Array(4));
+        const interior = createBuffer(this.device, "smooth surface interior", 16, STORAGE | COPY_SRC | COPY_DST, new Uint32Array(4));
+
+        const encoder = this.device.createCommandEncoder({ label: "smooth surface field" });
+        const run = (name: KernelName, uniform: GPUBuffer, buffers: GPUBuffer[], items: number) =>
+            this.kernels.get(name).dispatch(encoder, { groups: [[uniform], buffers], items });
+        run("occupancy", P, [sas, tableBuffer, floatBuffer, flags], count);
+        run("seedCandidates", P, [flags, candidates], count);
+        this.scan.encode(encoder, candidates, candidateAt, count);
+        this.kernels.get("candidateTotal").dispatch(encoder, { groups: [[P], [candidates, candidateAt, counts]], workgroups: 1 });
+        run("seedFind", P, [sas, tableBuffer, floatBuffer, flags, candidateAt, seed, overflow], count);
+        run("seedValid", P, [seed, counts, valid], cap);
+        this.scan.encode(encoder, valid, seedAt, cap);
+        run("featureInit", P, [candidates, candidateAt, seed, seedAt, feature, scratch, seeds], count);
+        run("featurePass", params(0, nz * ny), [feature, scratch], nz * ny);
+        run("featurePass", params(1, nz * nx), [feature, scratch], nz * nx);
+        run("featurePass", params(2, ny * nx), [feature, scratch], ny * nx);
+        // The distances into `candidates` (no longer wanted), the opened field into `scratch`, the
+        // opening's weight into `candidateAt`.
+        const distance = keep ? grid("distance") : candidates;
+        run("distance", P, [sas, tableBuffer, floatBuffer, flags, feature, seeds, distance], count);
+        const opened = scratch;
+        const weight = mark ? candidateAt : null;
+        run("opening", P, [distance, opened, weight ?? candidateAt], count);
+        run("interior", P, [opened, interior], count);
+        this.device.queue.submit([encoder.finish()]);
+        this.scan.releaseTransient();
+        const handed = new Set<GPUBuffer>([opened, ...(weight ? [weight] : [])]);
+        const kept = keep ? { flags, feature, seeds, distance, candidates, seedCount: seedAt } : undefined;
+        const keptSet = new Set<GPUBuffer>(kept ? Object.values(kept) : []);
+        owned.filter(b => !handed.has(b) && !keptSet.has(b)).forEach(b => b.destroy());
+        return { field: opened, weight, interior, overflow, kept };
     }
 
     /**

@@ -147,6 +147,7 @@ struct sas_atoms_t {
 
 class atom_bins_t {
 public:
+    atom_bins_t() = default;
     // centres `cx/cy/cz`, cells of `size`; `max_r` the largest radius near() will be asked about
     atom_bins_t(const std::vector<double> &cx, const std::vector<double> &cy, const std::vector<double> &cz,
                 double size, double max_r) : size(size), max_r(max_r) {
@@ -260,16 +261,33 @@ struct atom_circles_t {
     std::vector<double> arc_from, arc_length;
 };
 
+// A direction's place round a circle: a number in [0, 4) that grows with its angle in [0, 2 pi) (atan2,
+// made positive), without trigonometry - for sorting and comparing a circle's intervals.
+inline double pseudo_angle(double x, double y) {
+    if (y >= 0) return x >= 0 ? y / (x + y) : 1 + -x / (-x + y);
+    return x < 0 ? 2 + -y / (-x - y) : 3 + x / (x - y);
+}
+
+// A direction's angle in [0, 2 pi).
+inline double angle_of(double x, double y) {
+    double a = std::atan2(y, x);
+    return a < 0 ? a + two_pi : a;
+}
+
 // Atom a's circles; `circle_count` is shared (atomic) since both
 // atoms of a pair count it.
 void circles_of_atom(int a, const sas_atoms_t &sas, const std::vector<int32_t> &near, std::vector<std::atomic<int32_t>> &circle_count,
                      atom_circles_t &out, std::vector<double> &lo, std::vector<double> &hi, std::vector<int> &order, std::vector<double> &arcs) {
     const auto &x = sas.x, &y = sas.y, &z = sas.z, &R = sas.R;
     for (int32_t b : near) if (b != a) out.neighbours.push_back(b);
+    // Each interval's ends (x, y of each; x NaN for the circle's own 0 or 2 pi, the angle in y).
+    thread_local std::vector<double> ends;
+    const double nan = std::numeric_limits<double>::quiet_NaN();
     for (int32_t b : near) {
         if (b == a) continue;
         double ux0 = x[b] - x[a], uy0 = y[b] - y[a], uz0 = z[b] - z[a];
-        double d = std::hypot(ux0, uy0, uz0);
+        // Not std::hypot: it guards against overflows that cannot happen here, and is slow.
+        double d = std::sqrt(ux0 * ux0 + uy0 * uy0 + uz0 * uz0);
         if (d + R[a] <= R[b] && (d > 1e-9 || R[a] < R[b] || a > b)) out.contained = true;
         if (b < a || d < 1e-6 || d >= R[a] + R[b]) continue;
         double t = (d * d + R[a] * R[a] - R[b] * R[b]) / (2 * d);
@@ -285,10 +303,10 @@ void circles_of_atom(int a, const sas_atoms_t &sas, const std::vector<int32_t> &
         else pz = 1;
         double along = px * ux + py * uy + pz * uz;
         double ax1 = px - along * ux, ay1 = py - along * uy, az1 = pz - along * uz;
-        double l1 = std::hypot(ax1, ay1, az1);
+        double l1 = std::sqrt(ax1 * ax1 + ay1 * ay1 + az1 * az1);
         ax1 /= l1; ay1 /= l1; az1 /= l1;
         double ax2 = uy * az1 - uz * ay1, ay2 = uz * ax1 - ux * az1, az2 = ux * ay1 - uy * ax1;
-        lo.clear(); hi.clear();
+        lo.clear(); hi.clear(); ends.clear();
         bool whole = false;
         for (int32_t c : near) {
             if (c == a || c == b) continue;
@@ -297,29 +315,47 @@ void circles_of_atom(int a, const sas_atoms_t &sas, const std::vector<int32_t> &
             double B = 2 * rc * (wx * ax2 + wy * ay2 + wz * az2);
             double Rc = R[c] - 1e-4;
             double K = Rc * Rc - (wx * wx + wy * wy + wz * wz) - r2;
-            double M = std::hypot(A, B);
-            if (K <= -M) continue;
-            if (K > M) { whole = true; break; }
-            double half = M_PI - std::acos(K / M);
-            double mid = std::atan2(B, A) + M_PI;
-            if (mid >= two_pi) mid -= two_pi;
-            double from = mid - half, to = mid + half;
-            if (from < 0) { lo.push_back(from + two_pi); lo.push_back(0); hi.push_back(two_pi); hi.push_back(to); }
-            else if (to > two_pi) { lo.push_back(from); lo.push_back(0); hi.push_back(two_pi); hi.push_back(to - two_pi); }
-            else { lo.push_back(from); hi.push_back(to); }
+            // c misses the circle (K <= -M) or covers it whole (K > M), M = |(A, B)|: by squares.
+            double M2 = A * A + B * B;
+            if (K <= 0 && K * K >= M2) continue;
+            if (K > 0 && K * K > M2) { whole = true; break; }
+            // The part inside c: about the direction (-A, -B), its half-width's cosine -K / M. Its ends
+            // as unit vectors, placed by pseudo_angle; angles are worked out for the arcs kept only.
+            double M = std::sqrt(M2);
+            double cosine = -K / M, sine = std::sqrt(std::max(0.0, 1 - cosine * cosine));
+            double mx = -A / M, my = -B / M;
+            double fx = mx * cosine + my * sine, fy = my * cosine - mx * sine;
+            double tx = mx * cosine - my * sine, ty = my * cosine + mx * sine;
+            double from = pseudo_angle(fx, fy), to = pseudo_angle(tx, ty);
+            if (from <= to) { lo.push_back(from); hi.push_back(to); ends.insert(ends.end(), {fx, fy, tx, ty}); }
+            else {
+                lo.push_back(from); hi.push_back(4); ends.insert(ends.end(), {fx, fy, nan, two_pi});
+                lo.push_back(0); hi.push_back(to); ends.insert(ends.end(), {nan, 0.0, tx, ty});
+            }
         }
         if (whole) continue;
         order.resize(lo.size());
         for (size_t k = 0; k < lo.size(); k++) order[k] = int(k);
-        // Stable, as JS's sort is.
-        std::stable_sort(order.begin(), order.end(), [&](int p, int q) { return lo[p] < lo[q]; });
+        // Stable (ties in the order they came), without stable_sort's buffer for every circle.
+        std::sort(order.begin(), order.end(), [&](int p, int q) { return lo[p] < lo[q] || (lo[p] == lo[q] && p < q); });
         arcs.clear();
+        auto end_angle = [&](int k, int which) {
+            double ex = ends[4 * k + 2 * which], ey = ends[4 * k + 2 * which + 1];
+            return std::isnan(ex) ? ey : angle_of(ex, ey);
+        };
+        // How far round the intervals reach (pseudo_angle), and whose end that is (-1: the start, 0).
         double reached = 0;
+        int reached_by = -1;
+        auto reached_angle = [&]() { return reached_by < 0 ? 0.0 : end_angle(reached_by, 1); };
         for (int k : order) {
-            if (lo[k] > reached) { arcs.push_back(reached); arcs.push_back(lo[k] - reached); }
-            reached = std::max(reached, hi[k]);
+            if (lo[k] > reached) {
+                double from = reached_angle();
+                arcs.push_back(from);
+                arcs.push_back(end_angle(k, 0) - from);
+            }
+            if (hi[k] > reached) { reached = hi[k]; reached_by = k; }
         }
-        if (reached < two_pi) { arcs.push_back(reached); arcs.push_back(two_pi - reached); }
+        if (reached < 4) { double from = reached_angle(); arcs.push_back(from); arcs.push_back(two_pi - from); }
         if (arcs.empty()) continue;
         if (arcs.size() >= 4 && arcs[0] == 0 && arcs[arcs.size() - 2] + arcs[arcs.size() - 1] >= two_pi) {
             arcs[arcs.size() - 1] += arcs[1];
@@ -897,11 +933,23 @@ mesh_t finish_contour(const std::vector<float> &field, const grid_t &grid, conto
 // ---------------------------------------------------------------------------------------------
 // sesField
 
-grid_t ses_field_unblurred(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma, double max_shift,
-                           double open_radius, int threads, bool open_uncapped, double heal_blur) {
-    threads = resolve_threads(threads);
-    grid_t grid;
-    if (atoms.empty()) return grid;
+namespace {
+
+// What every step after it shares: the grid, the atoms' SAS spheres binned, and the exposed SAS.
+struct setup_t {
+    long nx = 0, ny = 0, nz = 0;
+    double origin[3] = {0, 0, 0};
+    double h = 0, r_max = 0, window = 0, clamp = 0, diagonal = 0;
+    sas_atoms_t sas;
+    atom_bins_t atom_bins;
+    exposed_sas_t exposure;
+    std::vector<int32_t> exposed_ids;
+    sas_atoms_t exposed_sas_atoms;
+    atom_bins_t exposed_bins;
+};
+
+setup_t make_setup(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma, double open_radius, int threads) {
+    setup_t st;
     double r_max = 0;
     double low[3] = {inf, inf, inf}, high[3] = {-inf, -inf, -inf};
     for (const auto &a : atoms) {
@@ -920,10 +968,58 @@ grid_t ses_field_unblurred(const std::vector<atom_t> &atoms, double probe, doubl
         if (nx * ny * nz <= max_grid_points) break;
         h *= 1.15;
     }
-    const double origin[3] = {low[0] - pad, low[1] - pad, low[2] - pad};
+    st.nx = nx; st.ny = ny; st.nz = nz;
+    st.origin[0] = low[0] - pad; st.origin[1] = low[1] - pad; st.origin[2] = low[2] - pad;
+    st.h = h; st.r_max = r_max;
+    double diagonal = std::sqrt(3.0) * h;
+    st.diagonal = diagonal;
+    double window = 3 * h;
+    double clamp = std::max(3 * sigma, open_radius > 0 ? open_radius + 2 * h : 0.0) + 2 * h;
+    sas_atoms_t sas;
+    for (const auto &a : atoms) { sas.x.push_back(a.x); sas.y.push_back(a.y); sas.z.push_back(a.z); sas.R.push_back(a.r + probe); }
+    atom_bins_t atom_bins(sas.x, sas.y, sas.z, r_max + probe + std::max(window, clamp + h), r_max + probe);
+    exposed_sas_t exposure = exposed_sas(sas, [&](int a, std::vector<int32_t> &out) {
+        atom_bins.near(sas.x[a], sas.y[a], sas.z[a], sas.x, sas.y, sas.z, sas.R, sas.R[a], out);
+    }, threads);
+    std::vector<int32_t> exposed_ids;
+    for (size_t a = 0; a < atoms.size(); a++) if (exposure.exposed[a]) exposed_ids.push_back(int32_t(a));
+    sas_atoms_t exposed_sas_atoms;
+    for (int32_t a : exposed_ids) {
+        exposed_sas_atoms.x.push_back(sas.x[a]); exposed_sas_atoms.y.push_back(sas.y[a]);
+        exposed_sas_atoms.z.push_back(sas.z[a]); exposed_sas_atoms.R.push_back(sas.R[a]);
+    }
+    atom_bins_t exposed_bins(exposed_sas_atoms.x, exposed_sas_atoms.y, exposed_sas_atoms.z, r_max + probe + diagonal, r_max + probe);
+    st.window = window; st.clamp = clamp;
+    st.sas = std::move(sas);
+    st.atom_bins = std::move(atom_bins);
+    st.exposure = std::move(exposure);
+    st.exposed_ids = std::move(exposed_ids);
+    st.exposed_sas_atoms = std::move(exposed_sas_atoms);
+    st.exposed_bins = std::move(exposed_bins);
+    return st;
+}
+
+} // namespace
+
+grid_t ses_field_unblurred(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma, double max_shift,
+                           double open_radius, int threads, bool open_uncapped, double heal_blur, intermediates_t *debug) {
+    threads = resolve_threads(threads);
+    grid_t grid;
+    if (atoms.empty()) return grid;
+    auto mark = clock_type::now();
+    setup_t setup = make_setup(atoms, probe, spacing, sigma, open_radius, threads);
+    const long nx = setup.nx, ny = setup.ny, nz = setup.nz;
+    const double h = setup.h;
+    const double *origin = setup.origin;
+    const double window = setup.window, clamp = setup.clamp;
+    const sas_atoms_t &sas = setup.sas;
+    const atom_bins_t &atom_bins = setup.atom_bins;
+    const exposed_sas_t &exposure = setup.exposure;
+    const std::vector<int32_t> &exposed_ids = setup.exposed_ids;
+    const sas_atoms_t &exposed_sas_atoms = setup.exposed_sas_atoms;
+    const atom_bins_t &exposed_bins = setup.exposed_bins;
     long plane = nx * ny;
     long count = plane * nz;
-    auto mark = clock_type::now();
 
     // 1. SAS occupancy, and the points deeper than a voxel diagonal inside some sphere.
     std::vector<uint8_t> exterior(count, 1), deep(count, 0);
@@ -953,23 +1049,6 @@ grid_t ses_field_unblurred(const std::vector<atom_t> &atoms, double probe, doubl
     }
     grid.timings.sas = ms_since(mark);
 
-    // 2. Seeds.
-    double window = 3 * h;
-    double clamp = std::max(3 * sigma, open_radius > 0 ? open_radius + 2 * h : 0.0) + 2 * h;
-    sas_atoms_t sas;
-    for (const auto &a : atoms) { sas.x.push_back(a.x); sas.y.push_back(a.y); sas.z.push_back(a.z); sas.R.push_back(a.r + probe); }
-    atom_bins_t atom_bins(sas.x, sas.y, sas.z, r_max + probe + std::max(window, clamp + h), r_max + probe);
-    exposed_sas_t exposure = exposed_sas(sas, [&](int a, std::vector<int32_t> &out) {
-        atom_bins.near(sas.x[a], sas.y[a], sas.z[a], sas.x, sas.y, sas.z, sas.R, sas.R[a], out);
-    }, threads);
-    std::vector<int32_t> exposed_ids;
-    for (size_t a = 0; a < atoms.size(); a++) if (exposure.exposed[a]) exposed_ids.push_back(int32_t(a));
-    sas_atoms_t exposed_sas_atoms;
-    for (int32_t a : exposed_ids) {
-        exposed_sas_atoms.x.push_back(sas.x[a]); exposed_sas_atoms.y.push_back(sas.y[a]);
-        exposed_sas_atoms.z.push_back(sas.z[a]); exposed_sas_atoms.R.push_back(sas.R[a]);
-    }
-    atom_bins_t exposed_bins(exposed_sas_atoms.x, exposed_sas_atoms.y, exposed_sas_atoms.z, r_max + probe + diagonal, r_max + probe);
     std::vector<int32_t> feature(count, -1);
     // Seeds plane by plane, each plane's in order, numbered after: as the one loop over the grid.
     struct seed_t { long i; found_t found; };
@@ -1009,6 +1088,7 @@ grid_t ses_field_unblurred(const std::vector<atom_t> &atoms, double probe, doubl
             }
         }
     });
+    if (debug) { debug->exterior = exterior; debug->deep = deep; }
     release(deep);
     std::vector<double> seed_points;
     std::vector<int32_t> seed_a, seed_circle;
@@ -1020,6 +1100,12 @@ grid_t ses_field_unblurred(const std::vector<atom_t> &atoms, double probe, doubl
             seed_circle.push_back(seed.found.circle);
         }
     }
+    if (debug) {
+        for (const auto &seeds_here : plane_seeds) for (const auto &seed : seeds_here) debug->seed_point.push_back(int32_t(seed.i));
+        debug->seeds.assign(seed_points.begin(), seed_points.end());
+        debug->seed_a = seed_a;
+        debug->seed_circle = seed_circle;
+    }
     plane_seeds.clear();
     plane_seeds.shrink_to_fit();
 
@@ -1028,6 +1114,7 @@ grid_t ses_field_unblurred(const std::vector<atom_t> &atoms, double probe, doubl
     grid.timings.seeds = ms_since(mark);
     feature_transform_3d(feature, field, int(nx), int(ny), int(nz), threads);
     grid.timings.transform = ms_since(mark);
+    if (debug) debug->feature = feature;
     double exact_low = probe - clamp - h, exact_high = probe + clamp + h;
     std::atomic<long> interior_count{0};
     parallel_for(threads, nz, [&](long begin, long end) {
@@ -1116,6 +1203,7 @@ grid_t ses_field_unblurred(const std::vector<atom_t> &atoms, double probe, doubl
         }
         interior_count += interior_here;
     });
+    if (debug) debug->distance = field;
     release(exterior); release(feature); release(seed_points); release(seed_a); release(seed_circle);
 
     // 3b. Opening: a ball of radius open_radius rolled inside, so necks thinner than twice that are
@@ -1240,6 +1328,42 @@ void blur_field(grid_t &grid, double sigma, double max_shift, bool open_uncapped
     release(weight);
     grid.iso = sigma > 0 ? level_enclosing(field, grid.interior, grid.clamp) : 0;
     grid.timings.blur = ms_since(mark);
+}
+
+exposure_t ses_exposure(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma, double open_radius, int threads) {
+    exposure_t out;
+    if (atoms.empty()) return out;
+    auto mark = clock_type::now();
+    setup_t st = make_setup(atoms, probe, spacing, sigma, open_radius, resolve_threads(threads));
+    out.nx = int(st.nx); out.ny = int(st.ny); out.nz = int(st.nz);
+    for (int k = 0; k < 3; k++) out.origin[k] = st.origin[k];
+    out.spacing = st.h;
+    out.clamp = st.clamp;
+    size_t n = st.sas.x.size();
+    out.sas.reserve(4 * n);
+    for (size_t a = 0; a < n; a++) {
+        out.sas.push_back(float(st.sas.x[a])); out.sas.push_back(float(st.sas.y[a]));
+        out.sas.push_back(float(st.sas.z[a])); out.sas.push_back(float(st.sas.R[a]));
+    }
+    const exposed_sas_t &e = st.exposure;
+    out.exposed = e.exposed;
+    out.neighbour_start = e.neighbour_start; out.neighbour_ids = e.neighbour_ids;
+    out.circle_start = e.circle_start; out.circle_ids = e.circle_ids;
+    out.atom_circle_start = e.atom_circle_start; out.atom_circle_ids = e.atom_circle_ids;
+    out.other = e.other; out.arc_start = e.arc_start;
+    size_t circles = e.radius.size();
+    out.circles.reserve(13 * circles);
+    for (size_t c = 0; c < circles; c++) {
+        for (int k = 0; k < 3; k++) out.circles.push_back(float(e.centre[3 * c + k]));
+        for (int k = 0; k < 3; k++) out.circles.push_back(float(e.axis[3 * c + k]));
+        for (int k = 0; k < 3; k++) out.circles.push_back(float(e.e1[3 * c + k]));
+        for (int k = 0; k < 3; k++) out.circles.push_back(float(e.e2[3 * c + k]));
+        out.circles.push_back(float(e.radius[c]));
+    }
+    out.arcs.reserve(2 * e.arc_from.size());
+    for (size_t m = 0; m < e.arc_from.size(); m++) { out.arcs.push_back(float(e.arc_from[m])); out.arcs.push_back(float(e.arc_length[m])); }
+    out.ms = ms_since(mark);
+    return out;
 }
 
 grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma, double max_shift, double open_radius,

@@ -5,6 +5,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import type { SmoothSurfaceReport } from "./cases/smoothSurface.case";
 import type { SmoothBlurReport } from "./cases/smoothSurfaceBlur.case";
+import type { SmoothFieldReport } from "./cases/smoothSurfaceField.case";
 import { resultOrSkip, runGpuCase } from "./helpers/gpuPage";
 
 /**
@@ -63,6 +64,28 @@ test("GPU smooth surface: blur, cap, heal and level match the C++ (first 40 atom
     // float32 sums on the GPU against the C++'s double.
     expect(r.maxInputErrorNearSurface).toBeLessThan(1e-4);
     expect(r.maxInputError).toBeLessThan(1e-3);
+    expect(r.gpuVertices).toBe(r.cppVertices);
+    expect(r.gpuTriangles).toBe(r.cppTriangles);
+    expect(r.unmatched1e2).toBe(0);
+});
+
+test("GPU smooth surface: occupancy, seeds, transform, distances and opening match the C++ (first 40 atoms of 1df7)", async ({ page }) => {
+    test.skip(!hasCompiler, "No C++ compiler to make the reference with");
+    test.setTimeout(180_000);
+    const r = resultOrSkip(await runGpuCase<SmoothFieldReport>(page, "smoothSurfaceField.case.ts", null, { "reference.bin": makeReference(40) }));
+    console.log(`GPU smooth surface field: ${JSON.stringify(r)}`);
+    expect(r.exteriorDiffers).toBe(0);
+    expect(r.deepDiffers).toBe(0);
+    expect(r.cppSeeds).toBeGreaterThan(1000);
+    expect(r.gpuSeeds).toBe(r.cppSeeds);
+    // float32 against the C++'s double; a point equally near two seeds may pick either.
+    expect(r.maxSeedError).toBeLessThan(1e-4);
+    expect(r.seedAtomDiffers).toBeLessThanOrEqual(2);
+    expect(r.featureDiffers).toBeLessThan(r.points / 10000);
+    expect(r.maxDistanceError).toBeLessThan(1e-3);
+    expect(r.maxOpenedErrorNearSurface).toBeLessThan(1e-4);
+    expect(r.weightDiffers).toBeLessThanOrEqual(2);
+    expect(Math.abs(r.gpuInterior - r.cppInterior)).toBeLessThanOrEqual(2);
     expect(r.gpuVertices).toBe(r.cppVertices);
     expect(r.gpuTriangles).toBe(r.cppTriangles);
     expect(r.unmatched1e2).toBe(0);

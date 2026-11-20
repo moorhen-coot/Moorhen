@@ -28,7 +28,9 @@ import {
 } from "../smoothSurface";
 import { influenceListsFromShares } from "../../WebGLgComponents/ownedMeshPick";
 import { surfaceAtomRadius } from "../m2tAtomRadii";
-import { type SmoothUnblurredField, gpuSmoothSurfaceIfFast } from "../../WebGPUComponents/smoothSurface";
+import {
+    GPU_SMOOTH_MAX_LINE, type SmoothExposure, type SmoothUnblurredField, gpuSmoothSurfaceIfFast,
+} from "../../WebGPUComponents/smoothSurface";
 import { surfaceChainGroups } from "../surfaceChainGroups";
 
 /**
@@ -1857,7 +1859,34 @@ export class MoleculeRepresentation {
         const gpu = smoothSurfaceSetting.gpu && options.refine !== false ? await gpuSmoothSurfaceIfFast(smoothSurfaceSetting.gpuOnSoftware) : null;
         if (gpu) {
             try {
-                const started = performance.now();
+                const blur = {
+                    sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
+                    openUncapped: smoothSurfaceSetting.openUncapped, healBlur: smoothSurfaceSetting.healBlur,
+                };
+                let started = performance.now();
+                // The C++ makes only the grid and the exposed SAS (per atom); the GPU all the rest.
+                const exposureResponse = (await this.commandCentre.cootCommand(
+                    { returnType: "smoothed_field", command: "shim_smooth_surface_exposure_from_atoms", commandArgs: [packed.slice(), probe, options] },
+                    false
+                )) as moorhen.WorkerResponse<{ exposure: (SmoothExposure & { ms: number }) | null }>;
+                if (exposureResponse.data.result.status !== "Completed") throw new Error("the worker made no exposed SAS");
+                const exposure = exposureResponse.data.result.result.exposure;
+                if (!exposure) return null;
+                const exposureMs = performance.now() - started;
+                if (Math.max(exposure.nx, exposure.ny, exposure.nz) <= GPU_SMOOTH_MAX_LINE) {
+                    const surface = await gpu.surfaceFromExposure(exposure, { ...blur, probe, openRadius: smoothSurfaceSetting.openRadius },
+                        packed, residueOf);
+                    if (surface) {
+                        console.debug(`Smooth surface: ${atoms.length} atoms, grid ${exposure.nx}x${exposure.ny}x${exposure.nz} at ` +
+                            `${exposure.spacing.toFixed(2)} Å; ${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles; ` +
+                            `exposed SAS (C++) ${exposureMs.toFixed(0)} ms (${exposure.ms.toFixed(0)} in the worker), ` +
+                            `field + blur + contour (WebGPU) ${surface.timings.contour.toFixed(0)} ms, finish (WebGPU) ${surface.timings.finish.toFixed(0)} ms`);
+                    }
+                    return surface;
+                }
+                // A grid line longer than the GPU's feature transform takes: the C++ makes the field up
+                // to the opening, the GPU the rest.
+                started = performance.now();
                 const response = (await this.commandCentre.cootCommand(
                     { returnType: "smoothed_field", command: "shim_smooth_surface_unblurred_field_from_atoms", commandArgs: [packed.slice(), probe, options] },
                     false
@@ -1866,10 +1895,7 @@ export class MoleculeRepresentation {
                 const field = response.data.result.result.field;
                 if (!field) return null;
                 const fieldMs = performance.now() - started;
-                const surface = await gpu.surfaceFromUnblurred(field, {
-                    sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
-                    openUncapped: smoothSurfaceSetting.openUncapped, healBlur: smoothSurfaceSetting.healBlur,
-                }, packed, residueOf, probe);
+                const surface = await gpu.surfaceFromUnblurred(field, blur, packed, residueOf, probe);
                 if (surface) {
                     const t = field.timings;
                     console.debug(`Smooth surface: ${atoms.length} atoms, grid ${field.nx}x${field.ny}x${field.nz} at ${field.spacing.toFixed(2)} Å; ` +

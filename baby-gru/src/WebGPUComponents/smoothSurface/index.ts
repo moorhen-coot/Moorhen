@@ -1,13 +1,15 @@
 /**
- * The smooth surface on the GPU: stages 2 and 1, from the C++'s unblurred field on (src/.roadmaps/webgpu.md).
+ * The smooth surface on the GPU, from the C++'s exposed SAS on (stages 4 to 1; src/.roadmaps/webgpu.md).
  */
 import { type GpuContext, getGpuContext } from "../gpu";
 import { sharedGpuMetaBalls } from "../metaballs";
 import { GpuSmoothSurface } from "./gpuSmoothSurface";
 
 export { GpuSmoothSurface, binAtoms, ownershipBand } from "./gpuSmoothSurface";
-export type { GpuAtomSurface, SmoothBlurOptions, SmoothFieldGrid, SmoothUnblurredField } from "./gpuSmoothSurface";
+export type { GpuAtomSurface, SmoothBlurOptions, SmoothExposure, SmoothFieldGrid, SmoothFieldOptions, SmoothUnblurredField } from "./gpuSmoothSurface";
 export { gaussianKernel } from "./gpuSmoothSurface";
+/** The longest grid line the GPU's feature transform takes: past it, the C++ makes the field to the opening. */
+export { MAX_LINE as GPU_SMOOTH_MAX_LINE } from "./smoothSurfaceShaders";
 
 let shared: Promise<GpuSmoothSurface | null> | null = null;
 

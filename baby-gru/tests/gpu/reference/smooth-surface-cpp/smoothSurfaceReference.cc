@@ -7,7 +7,11 @@
 // out.bin, little-endian: the input as read; i32 nx, ny, nz; f32 origin x, y, z, spacing; f32 field;
 // u32 vertices, indices; f32 positions, normals (3 per vertex); u32 indices; i32 atom, other; f32 weight;
 // i32 near, f32 near gap (4 per vertex); then stage 2's hand-off (ses_field_unblurred): f32 field
-// (unblurred, opened), u32 changed-mask length (0 if none) and its bytes, f64 interior, f64 clamp.
+// (unblurred, opened), u32 changed-mask length (0 if none) and its bytes, f64 interior, f64 clamp;
+// then stages 4-3's hand-off (ses_exposure) and the C++'s intermediates, each array as u32 length then
+// its items: exposure sas, exposed (u8), neighbour start, ids, circle start, ids, atom circle start,
+// ids, other, arc start (i32), circles, arcs (f32), f64 clamp; then exterior, deep (u8), seed point,
+// seed atom, seed circle (i32), seeds (f32 x 3), feature (i32), distance (f32).
 #include "smooth-surface.hh"
 
 #include <cstdio>
@@ -45,13 +49,25 @@ int main(int argc, char **argv) {
     put(s.positions.data(), 4 * s.positions.size()); put(s.normals.data(), 4 * s.normals.size()); put(s.indices.data(), 4 * s.indices.size());
     put(s.atom.data(), 4 * s.atom.size()); put(s.other.data(), 4 * s.other.size()); put(s.weight.data(), 4 * s.weight.size());
     put(s.near.data(), 4 * s.near.size()); put(s.near_gap.data(), 4 * s.near_gap.size());
+    smooth_surface::intermediates_t debug;
     smooth_surface::grid_t unblurred = smooth_surface::ses_field_unblurred(atoms, probe, o.spacing, o.sigma, o.max_shift, o.open_radius,
-                                                                           o.threads, o.open_uncapped, o.heal_blur);
+                                                                           o.threads, o.open_uncapped, o.heal_blur, &debug);
     put(unblurred.field.data(), 4 * unblurred.field.size());
     uint32_t changed = uint32_t(unblurred.changed.size());
     put(&changed, 4); put(unblurred.changed.data(), changed);
     double tail[2] = {double(unblurred.interior), unblurred.clamp};
     put(tail, 16);
+    auto array = [&](const auto &v) {
+        uint32_t length = uint32_t(v.size());
+        put(&length, 4);
+        put(v.data(), sizeof(v[0]) * v.size());
+    };
+    smooth_surface::exposure_t e = smooth_surface::ses_exposure(atoms, probe, o.spacing, o.sigma, o.open_radius, o.threads);
+    array(e.sas); array(e.exposed); array(e.neighbour_start); array(e.neighbour_ids); array(e.circle_start); array(e.circle_ids);
+    array(e.atom_circle_start); array(e.atom_circle_ids); array(e.other); array(e.arc_start); array(e.circles); array(e.arcs);
+    put(&e.clamp, 8);
+    array(debug.exterior); array(debug.deep); array(debug.seed_point); array(debug.seed_a); array(debug.seed_circle);
+    array(debug.seeds); array(debug.feature); array(debug.distance);
     std::fclose(out);
     std::fprintf(stderr, "%u atoms; grid %dx%dx%d; %u vertices, %u triangles\n", n, grid.nx, grid.ny, grid.nz, counts[0], counts[1] / 3);
     return 0;

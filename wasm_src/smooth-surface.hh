@@ -115,6 +115,37 @@ namespace smooth_surface {
         double clamp = 0;
     };
 
+    //! The grid and the exposed SAS, as the GPU takes them (baby-gru/src/WebGPUComponents/smoothSurface):
+    //! everything per atom, flat. The steps after it are all per grid point.
+    struct exposure_t {
+        int nx = 0, ny = 0, nz = 0;
+        double origin[3] = {0, 0, 0};
+        double spacing = 0;
+        //! how far either side of the surface the field is worked out, A
+        double clamp = 0;
+        //! the atoms' SAS spheres: x, y, z, r + probe per atom
+        std::vector<float> sas;
+        //! 1 for an atom with some SAS exposed
+        std::vector<uint8_t> exposed;
+        //! per atom: its neighbours (the atoms whose SAS spheres meet its), and the circles where they meet:
+        //! those it is the lower-numbered atom of (circle_*), and all of its (atom_circle_*)
+        std::vector<int32_t> neighbour_start, neighbour_ids, circle_start, circle_ids, atom_circle_start, atom_circle_ids;
+        //! per circle: the other atom; centre, axis, e1, e2 (3 each) and radius - 13 floats; its exposed arcs
+        std::vector<int32_t> other, arc_start;
+        std::vector<float> circles;
+        //! per arc: where it starts and its length, radians
+        std::vector<float> arcs;
+        double ms = 0;
+    };
+
+    //! What the C++ makes on the way, for the GPU's tests: occupancy, seeds (their grid points,
+    //! positions, atoms and circles), the feature transform and the field before the opening.
+    struct intermediates_t {
+        std::vector<uint8_t> exterior, deep;
+        std::vector<int32_t> seed_point, seed_a, seed_circle, feature;
+        std::vector<float> seeds, distance;
+    };
+
     //! How many of its nearest atoms a vertex keeps for its colour.
     constexpr int colour_atoms = 4;
 
@@ -143,7 +174,11 @@ namespace smooth_surface {
     //! blur_field needs; the GPU blurs it itself (baby-gru/src/WebGPUComponents/smoothSurface).
     grid_t ses_field_unblurred(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma,
                                double max_shift = std::numeric_limits<double>::infinity(), double open_radius = 0, int threads = 0,
-                               bool open_uncapped = false, double heal_blur = 0);
+                               bool open_uncapped = false, double heal_blur = 0, intermediates_t *debug = nullptr);
+
+    //! The grid and the exposed SAS only (steps 0-1 per atom), for the GPU to make the field from.
+    exposure_t ses_exposure(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma, double open_radius = 0,
+                            int threads = 0);
 
     //! Step 4 on a field from ses_field_unblurred: the cuts' weight spread, the blur, the cap, the heal
     //! blur, and the level that keeps the enclosed volume (grid.iso).
