@@ -30,7 +30,8 @@ import { influenceListsFromSharesSliced } from "../../WebGLgComponents/ownedMesh
 import { runSliced, yieldToBrowser } from "../timeSlicing";
 import { surfaceAtomRadius } from "../m2tAtomRadii";
 import {
-    GPU_SMOOTH_MAX_LINE, type SmoothUnblurredField, gpuSmoothSurfaceIfFast, smoothGrid,
+    GPU_SMOOTH_MAX_LINE, type SmoothUnblurredField, attachSurfaceColouring, gpuSmoothSurfaceIfFast, ownershipBand, releaseSurfaceField,
+    setSurfaceColours, smoothGrid,
 } from "../../WebGPUComponents/smoothSurface";
 import { surfaceChainGroups } from "../surfaceChainGroups";
 
@@ -801,6 +802,8 @@ export class MoleculeRepresentation {
             const gl = this.parentMolecule.store.getState().glRef.glCtx;
             this.buffers.forEach(buffer => {
                 if ("clearBuffers" in buffer) {
+                    // A smooth surface's field, kept on the GPU for per-pixel shading, goes with it.
+                    buffer.fieldShading?.forEach(field => releaseSurfaceField(field));
                     buffer.clearBuffers(gl);
                     newBuffers = newBuffers.filter(glBuffer => glBuffer !== buffer);
                 } else if ("labels" in buffer) {
@@ -1817,12 +1820,15 @@ export class MoleculeRepresentation {
             const parts: { surface: AtomSurface; atomIndex: number[] }[] = [];
             for (const chain of chains) {
                 const atomIndex = records.map((_, i) => i).filter(i => chainOf[i] === chain);
+                // Per-vertex normals: one surface from parts has no one field to shade it from.
                 const part = await this.atomSurfaceFor(atomIndex.map(i => atoms[i]), Int32Array.from(atomIndex, i => residueOf[i]), probe, options);
                 if (part) parts.push({ surface: part, atomIndex });
             }
             surface = parts.length > 0 ? mergeAtomSurfaces(parts) : null;
         } else {
-            surface = await this.atomSurfaceFor(atoms, residueOf, probe, options);
+            // Shaded per pixel from its field where WebGPU draws the view (smoothSurfaceSetting.fieldShading).
+            const fieldShading = smoothSurfaceSetting.fieldShading && !!this.parentMolecule.store.getState().sceneSettings.useWebGPU;
+            surface = await this.atomSurfaceFor(atoms, residueOf, probe, options, fieldShading);
         }
         if (!surface) return null;
         // Kept for recolour: only what colours and hover shares are made from.
@@ -1834,6 +1840,11 @@ export class MoleculeRepresentation {
         // no colour list to read).
         const colours = potential ? new Float32Array(4 * records.length).fill(1) : await this.smoothSurfaceAtomColours(records);
         // In slices: on a large structure this is hundreds of milliseconds, which in one go froze the view.
+        // Shaded from its field: coloured per pixel from the atoms too (smoothSurfaceSetting.pixelColours) -
+        // but not for electrostatics, whose colours are M2T's, per vertex.
+        if (surface.field && !potential && smoothSurfaceSetting.pixelColours) {
+            attachSurfaceColouring(surface.field, packAtoms(atoms), colours, ownershipBand(probe), smoothSurfaceSetting.colourBlend);
+        }
         const mesh = await runSliced(atomSurfaceMeshSliced(surface, residueOf, residues, colours, smoothSurfaceSetting.colourBlend,
             smoothSurfaceSetting.colourSmoothing));
         // Electrostatics: the colours of the nearest vertices of M2T's surface, which carries the potential.
@@ -1857,14 +1868,14 @@ export class MoleculeRepresentation {
      * Null if nothing could be made.
      */
     async atomSurfaceFor(atoms: SurfaceAtom[], residueOf: Int32Array, probe: number,
-                         options: Record<string, number | boolean>): Promise<AtomSurface | null> {
+                         options: Record<string, number | boolean>, fieldShading = false): Promise<AtomSurface | null> {
         const packed = packAtoms(atoms);
         const gpu = smoothSurfaceSetting.gpu && options.refine !== false ? await gpuSmoothSurfaceIfFast(smoothSurfaceSetting.gpuOnSoftware) : null;
         if (gpu) {
             try {
                 const blur = {
                     sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
-                    openUncapped: smoothSurfaceSetting.openUncapped, healBlur: smoothSurfaceSetting.healBlur,
+                    openUncapped: smoothSurfaceSetting.openUncapped, healBlur: smoothSurfaceSetting.healBlur, fieldShading,
                 };
                 // All of it on the GPU, from the atoms (stages 5 to 1) - unless the grid's lines are too long.
                 const grid = smoothGrid(packed, probe, smoothSurfaceSetting.spacing, smoothSurfaceSetting.sigma, smoothSurfaceSetting.openRadius);
@@ -1876,7 +1887,7 @@ export class MoleculeRepresentation {
                         console.debug(`Smooth surface: ${atoms.length} atoms, grid ${grid.nx}x${grid.ny}x${grid.nz} at ` +
                             `${grid.spacing.toFixed(2)} Å; ${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles; ` +
                             `exposed SAS (WebGPU) ${exposureMs.toFixed(0)} ms, field + blur + contour (WebGPU) ${surface.timings.contour.toFixed(0)} ms, ` +
-                            `finish (WebGPU) ${surface.timings.finish.toFixed(0)} ms`);
+                            `finish (WebGPU) ${surface.timings.finish.toFixed(0)} ms; ${surface.field ? "shaded per pixel (unsplit)" : "per-vertex normals (split)"}`);
                     }
                     return surface;
                 }
@@ -1940,7 +1951,14 @@ export class MoleculeRepresentation {
             state.neighbours ??= vertexNeighbours(state.indices, count);
             colours = await runSliced(smoothVertexColoursSliced(colours, state.neighbours, smoothSurfaceSetting.colourSmoothing));
         }
+        // The opacity lives in the vertex colours' alpha (setNonCustomOpacity): kept through a recolour.
+        if (this.nonCustomOpacity < 0.99) {
+            for (let i = 3; i < colours.length; i += 4) colours[i] = this.nonCustomOpacity;
+        }
         buffer.setVertexColours(colours);
+        // Coloured per pixel: the atoms' new colours and the blend width, a few thousand entries.
+        const field = buffer.fieldShading?.[0];
+        if (field?.colouring) setSurfaceColours(field, atomColours, smoothSurfaceSetting.colourBlend);
         // The hover's shares follow the blend width; owners and their codes stay what they were.
         const pickInfo = buffer.pick_info;
         if (pickInfo?.vertex_pick_points && pickInfo.owner_codes) {

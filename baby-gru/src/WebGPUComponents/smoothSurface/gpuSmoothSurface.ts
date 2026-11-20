@@ -8,6 +8,7 @@
 import { BufferUsage, ComputeKernel, GpuScan, MapMode, createBuffer, readBuffer } from "../gpu";
 import type { GpuMetaBalls } from "../metaballs";
 import { SLICE_MASK, runSliced, yieldToBrowser } from "../../utils/timeSlicing";
+import { type SurfaceField, makeSurfaceField } from "./surfaceField";
 import {
     BLUR_WEIGHT_WGSL, BLUR_WGSL, CANDIDATE_TOTAL_WGSL, CAP_WGSL, COLOUR_ATOMS, CONTOUR_INPUT_WGSL, DISTANCE_WGSL, EDGE_COUNT_WGSL,
     EDGE_FILL_WGSL, FEATURE_INIT_WGSL, FEATURE_PASS_WGSL, HEAL_WGSL, HISTOGRAM_WGSL, INTERIOR_WGSL, LEVEL_BINS, LEVEL_WGSL, MAX_LINE,
@@ -126,6 +127,11 @@ export interface SmoothBlurOptions {
 export interface SmoothFieldOptions extends SmoothBlurOptions {
     probe: number;
     openRadius: number;
+    /**
+     * Shaded per pixel from the field (surfaceField.ts): the field kept and handed over with the
+     * surface, and the contour not split - the split only hides the triangles from per-vertex normals.
+     */
+    fieldShading?: boolean;
 }
 
 /** The Gaussian's weights for `sigma` grid points, as gaussian_blur_3d makes them (normalised in double). */
@@ -151,6 +157,11 @@ export interface GpuAtomSurface {
     near: Int32Array;
     nearGap: Float32Array;
     timings: { contour: number; finish: number };
+    /**
+     * The field it was contoured from, kept on the GPU for per-pixel shading (surfaceField.ts), when
+     * asked for (fieldShading); the holder releases it (releaseSurfaceField).
+     */
+    field?: SurfaceField;
 }
 
 const KERNELS = {
@@ -258,13 +269,19 @@ export class GpuSmoothSurface {
      * found and the field made ready to contour on the GPU (contourInputFromUnblurred), then
      * surfaceFromField. The field stays on the GPU throughout. Null if there is nothing to contour.
      */
-    async surfaceFromUnblurred(unblurred: SmoothUnblurredField, options: SmoothBlurOptions, atoms: Float32Array, residueOf: Int32Array,
-                               probe: number): Promise<GpuAtomSurface | null> {
+    async surfaceFromUnblurred(unblurred: SmoothUnblurredField, options: SmoothBlurOptions & { fieldShading?: boolean },
+                               atoms: Float32Array, residueOf: Int32Array, probe: number): Promise<GpuAtomSurface | null> {
         const input = this.contourInputFromUnblurred(unblurred, options);
+        let kept = false;
         try {
-            return await this.surfaceFromField(input, unblurred, atoms, residueOf, probe);
+            const surface = await this.surfaceFromField(input, unblurred, atoms, residueOf, probe, !options.fieldShading);
+            if (surface && options.fieldShading) {
+                surface.field = makeSurfaceField(this.device, input, unblurred);
+                kept = true;
+            }
+            return surface;
         } finally {
-            input.destroy();
+            if (!kept) input.destroy();
         }
     }
 
@@ -421,7 +438,10 @@ export class GpuSmoothSurface {
             const validation = await this.device.popErrorScope();
             const memory = await this.device.popErrorScope();
             const error = validation ?? memory;
-            if (error) throw new Error(`GPU smooth surface: ${error.message}`);
+            if (error) {
+                result?.surface?.field?.buffer.destroy();
+                throw new Error(`GPU smooth surface: ${error.message}`);
+            }
         }
         return result;
     }
@@ -432,13 +452,20 @@ export class GpuSmoothSurface {
         for (let room = 1; ; room *= 2) {
             const made = this.fieldFromPacked(packed, options, room);
             const input = this.blurField(made.field, made.weight, made.interior, packed, packed.clamp, options);
+            let kept = false;
             try {
-                const surface = await this.surfaceFromField(input, packed, atoms, residueOf, options.probe);
+                const surface = await this.surfaceFromField(input, packed, atoms, residueOf, options.probe, !options.fieldShading);
                 const overflow = new Uint32Array(await readBuffer(this.device, made.overflow, 4))[0];
-                if (overflow === 0) return surface;
+                if (overflow === 0) {
+                    if (surface && options.fieldShading) {
+                        surface.field = makeSurfaceField(this.device, input, packed);
+                        kept = true;
+                    }
+                    return surface;
+                }
                 if (room >= 64) throw new Error("GPU smooth surface: seed candidates kept outgrowing their room");
             } finally {
-                input.destroy();
+                if (!kept) input.destroy();
                 made.overflow.destroy();
             }
         }
@@ -714,10 +741,12 @@ export class GpuSmoothSurface {
     /**
      * The surface of the field `input` (ready to contour: negative inside, the surface at 0, x fastest;
      * from the CPU, or a GPU buffer with STORAGE and COPY_SRC) on `grid`, with each vertex's atoms among
-     * `atoms` (x, y, z, r per atom) and `residueOf`. Null if there is nothing to contour.
+     * `atoms` (x, y, z, r per atom) and `residueOf`. Null if there is nothing to contour. `split`: each
+     * triangle split in four at its edges' midpoints (for per-vertex normals); without, the contour's
+     * vertices are still moved onto the surface and given the field's normals.
      */
     async surfaceFromField(input: Float32Array | GPUBuffer, grid: SmoothFieldGrid, atoms: Float32Array, residueOf: Int32Array,
-                           probe: number): Promise<GpuAtomSurface | null> {
+                           probe: number, split = true): Promise<GpuAtomSurface | null> {
         const { nx, ny, nz, spacing } = grid;
         const origin = [grid.origin[0], grid.origin[1], grid.origin[2]];
         let mark = performance.now();
@@ -728,8 +757,9 @@ export class GpuSmoothSurface {
         if (T === 0 || atoms.length === 0) return null;
         mark = performance.now();
 
-        // Room for every vertex: the contour's, and at most one midpoint per triangle edge.
-        const N = V + 3 * T;
+        // Room for every vertex: the contour's, and (split) at most one midpoint per triangle edge.
+        const N = split ? V + 3 * T : V;
+        const outTriangles = split ? 4 * T : T;
         const band = ownershipBand(probe);
         let rMax = 0;
         for (let i = 3; i < atoms.length; i += 4) rMax = Math.max(rMax, atoms[i]);
@@ -741,7 +771,7 @@ export class GpuSmoothSurface {
         const f = new Float32Array(params), u = new Uint32Array(params);
         f.set([origin[0], origin[1], origin[2], spacing], 0);
         u.set([nx, ny, nz, V], 4);
-        u.set([T, atoms.length / 4, span, 0], 8);
+        u.set([T, atoms.length / 4, span, outTriangles], 8);
         f.set([bins.low[0], bins.low[1], bins.low[2], binSize], 12);
         u.set([bins.dims[0], bins.dims[1], bins.dims[2], 0], 16);
         f.set([band, 0.5 * spacing, 1e-5 * spacing, rMax], 20);
@@ -760,7 +790,7 @@ export class GpuSmoothSurface {
             const positions = make("positions", N * 12, STORAGE | COPY_SRC | COPY_DST);
             this.device.queue.writeBuffer(positions, 0, contour.positions);
             const normals = make("normals", N * 12, STORAGE | COPY_SRC);
-            const indices = make("indices", T * 12, STORAGE, contour.indices);
+            const indices = make("indices", T * 12, STORAGE | COPY_SRC, contour.indices);
             const rowCount = make("row count", V * 4, STORAGE, new Uint32Array(V));
             const rowStart = make("row start", V * 4);
             const rowFill = make("row fill", V * 4, STORAGE, new Uint32Array(V));
@@ -768,7 +798,7 @@ export class GpuSmoothSurface {
             const uniqueCount = make("distinct edges", V * 4);
             const midStart = make("midpoint start", V * 4);
             const counts = make("counts", 16, STORAGE | COPY_SRC, new Uint32Array(4));
-            const split = make("split", T * 48, STORAGE | COPY_SRC);
+            const splitIndices = make("split", outTriangles * 12, STORAGE | COPY_SRC | COPY_DST);
             const atomBuffer = make("atoms", atoms.byteLength, STORAGE, atoms);
             const residues = make("residues", residueOf.byteLength, STORAGE, residueOf);
             const binStart = make("bin start", bins.start.byteLength, STORAGE, bins.start);
@@ -779,16 +809,21 @@ export class GpuSmoothSurface {
             const encoder = this.device.createCommandEncoder({ label: "smooth surface" });
             const run = (name: KernelName, buffers: GPUBuffer[], items: number) =>
                 this.kernels.get(name).dispatch(encoder, { groups: [[P], buffers], items });
-            run("edgeCount", [indices, rowCount], T);
-            this.scan.encode(encoder, rowCount, rowStart, V);
-            run("edgeFill", [indices, rowStart, rowFill, rowHi], T);
-            run("rowUnique", [rowStart, rowCount, rowHi, uniqueCount], V);
-            this.scan.encode(encoder, uniqueCount, midStart, V);
-            this.kernels.get("midpointTotal").dispatch(encoder, { groups: [[P], [uniqueCount, midStart, counts]], workgroups: 1 });
-            run("midpoints", [rowStart, rowCount, rowHi, midStart, positions], V);
-            run("split", [indices, rowStart, rowCount, rowHi, midStart, split], T);
+            if (split) {
+                run("edgeCount", [indices, rowCount], T);
+                this.scan.encode(encoder, rowCount, rowStart, V);
+                run("edgeFill", [indices, rowStart, rowFill, rowHi], T);
+                run("rowUnique", [rowStart, rowCount, rowHi, uniqueCount], V);
+                this.scan.encode(encoder, uniqueCount, midStart, V);
+                this.kernels.get("midpointTotal").dispatch(encoder, { groups: [[P], [uniqueCount, midStart, counts]], workgroups: 1 });
+                run("midpoints", [rowStart, rowCount, rowHi, midStart, positions], V);
+                run("split", [indices, rowStart, rowCount, rowHi, midStart, splitIndices], T);
+            } else {
+                // No midpoints (counts stays 0): the contour's own triangles, oriented below.
+                encoder.copyBufferToBuffer(indices, 0, splitIndices, 0, T * 12);
+            }
             run("refine", [field, counts, positions, normals], N);
-            run("orient", [positions, normals, split], 4 * T);
+            run("orient", [positions, normals, splitIndices], outTriangles);
             run("vertexAtoms", [positions, atomBuffer, residues, binStart, binMembers, counts, info, near], N);
 
             const staged = (source: GPUBuffer, bytes: number) => {
@@ -798,7 +833,7 @@ export class GpuSmoothSurface {
             };
             const read = {
                 counts: staged(counts, 16), positions: staged(positions, N * 12), normals: staged(normals, N * 12),
-                split: staged(split, T * 48), info: staged(info, N * 12), near: staged(near, N * 8 * COLOUR_ATOMS),
+                split: staged(splitIndices, outTriangles * 12), info: staged(info, N * 12), near: staged(near, N * 8 * COLOUR_ATOMS),
             };
             this.device.queue.submit([encoder.finish()]);
             await Promise.all(Object.values(read).map(b => b.mapAsync(MapMode.READ)));
@@ -813,7 +848,7 @@ export class GpuSmoothSurface {
             };
             const positionsOut = new Float32Array(await copy(read.positions, vertices * 12));
             const normalsOut = new Float32Array(await copy(read.normals, vertices * 12));
-            const indicesOut = new Uint32Array(await copy(read.split, T * 48));
+            const indicesOut = new Uint32Array(await copy(read.split, outTriangles * 12));
             const infoWords = new Uint32Array(await copy(read.info, vertices * 12));
             const nearWords = new Uint32Array(await copy(read.near, vertices * 8 * COLOUR_ATOMS));
             const infoInts = new Int32Array(infoWords.buffer), infoFloats = new Float32Array(infoWords.buffer);

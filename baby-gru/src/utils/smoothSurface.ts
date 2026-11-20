@@ -11,6 +11,7 @@
  */
 
 import { SLICE_MASK, type Sliced, runNow } from "./timeSlicing";
+import type { SurfaceField } from "../WebGPUComponents/smoothSurface/surfaceField";
 
 /**
  * The smooth surface's parameters (dev menu). Read when a surface is (re)built. Whether surfaces are
@@ -68,6 +69,21 @@ export const smoothSurfaceSetting = {
      * than the C++: for tests, which have only SwiftShader on Linux.
      */
     gpuOnSoftware: false,
+    /**
+     * Shade a GPU-made surface per pixel from its field (WebGPU view): each fragment's normal from the
+     * field's smooth gradient instead of the vertices' normals across the triangle, so the surface
+     * needs no split (four times fewer triangles) and shows no trace of its triangles in the light.
+     * The field stays on the GPU while the surface is shown (3j2w: ~70 MB). WebGL, and a surface of
+     * separately surfaced chains, keep per-vertex normals - unsplit, when this is on and the GPU made it.
+     */
+    fieldShading: true,
+    /**
+     * And colour it per pixel from its atoms (WebGPU view): each fragment's colour from the atoms
+     * nearest it, by colourBlend's weights, so colour boundaries follow the surface at screen
+     * resolution instead of stepping along the triangles. colourSmoothing does not apply (nothing to
+     * smooth); the vertex colours stay, for WebGL and anything else. Not for electrostatics.
+     */
+    pixelColours: true,
     /**
      * How softly the colours of a surface made from the atoms change from one atom's to the next,
      * Å (atomSurfaceColours): 0 is a hard edge, each vertex its nearest atom's, as M2T has it -
@@ -187,7 +203,10 @@ export interface VertexAtoms {
 }
 
 /** A surface made from the atoms alone (the C++ smoothSurfaceFromAtoms): the mesh, and each vertex's atoms. */
-export interface AtomSurface extends SurfaceMesh, VertexAtoms {}
+export interface AtomSurface extends SurfaceMesh, VertexAtoms {
+    /** The GPU's field, kept for per-pixel shading (smoothSurfaceSetting.fieldShading). */
+    field?: SurfaceField;
+}
 
 /**
  * Surfaces made from parts of the atoms (one per chain, for "surface each chain separately") as
@@ -416,6 +435,8 @@ export interface AtomSurfaceMeshJS {
     vertex_influence_owners: Uint32Array;
     vertex_influence_weights: Float32Array;
     owners: string[];
+    /** The field to shade it per pixel from, if kept (DisplayBuffer.fieldShading). */
+    field_shading?: [[SurfaceField]];
 }
 
 /**
@@ -458,6 +479,7 @@ export function* atomSurfaceMeshSliced(surface: AtomSurface, residueOf: ArrayLik
         vertex_influence_owners: influences.owners,
         vertex_influence_weights: influences.weights,
         owners: residues,
+        ...(surface.field ? { field_shading: [[surface.field]] as [[SurfaceField]] } : {}),
     };
 }
 

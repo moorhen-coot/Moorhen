@@ -54,6 +54,11 @@ test("GPU smooth surface: contour, split and vertex atoms match the C++ (first 4
     expect(r.nearDiffers).toBeLessThanOrEqual(4);
     expect(r.maxWeightError).toBeLessThan(1e-4);
     expect(r.maxGapError).toBeLessThan(1e-4);
+    // Without the split: the contour's own triangles, a quarter of the C++'s, its vertices among the C++'s, all facing out.
+    expect(r.unsplitTriangles * 4).toBe(r.cppTriangles);
+    expect(r.unsplitVertices).toBeLessThan(r.cppVertices / 2);
+    expect(r.unsplitUnmatched).toBe(0);
+    expect(r.unsplitMisoriented).toBe(0);
 });
 
 test("GPU smooth surface: blur, cap, heal and level match the C++ (first 40 atoms of 1df7)", async ({ page }) => {

@@ -6,6 +6,7 @@ import { moorhen } from '../types/moorhen';
 import { vec3Create  } from './mgMaths.js';
 import type { MeshIndex } from './rayMesh';
 import type { BufferMaterial } from './textureRegistry';
+import type { SurfaceField } from '../WebGPUComponents/smoothSurface/surfaceField';
 import { clampFade, isFaded } from './objectFade';
 import type { MGWebGLBuffer, PendingInfluence } from './glResources';
 
@@ -89,6 +90,13 @@ export class DisplayBuffer {
      * object. Sparse - most sub-buffers have no entry, and that means "vertex colours alone".
      */
     materials: (BufferMaterial | undefined)[];
+    /**
+     * A smooth surface's field, kept on the GPU, for the WebGPU renderer to shade the sub-buffer
+     * per pixel from (WebGPUComponents/smoothSurface/surfaceField.ts). Sparse, as materials; the
+     * vertex normals stay, for WebGL and anything else. Owned by the representation, which releases
+     * it with the buffer.
+     */
+    fieldShading: (SurfaceField | undefined)[];
     primitiveSizes: number[][];
     bufferTypes: string[];
     customColour: [number,number,number,number] | null;
@@ -290,6 +298,7 @@ export class DisplayBuffer {
         this.triangleNormals = [];
         this.triangleTextureCoords = [];
         this.materials = [];
+        this.fieldShading = [];
         this.primitiveSizes = [];
         this.bufferTypes = [];
         this.customColour = null;

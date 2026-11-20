@@ -8,6 +8,9 @@ import { GpuSmoothSurface } from "./gpuSmoothSurface";
 export { GpuSmoothSurface, binAtoms, ownershipBand, smoothGrid } from "./gpuSmoothSurface";
 export type { GpuAtomSurface, SmoothBlurOptions, SmoothExposure, SmoothFieldGrid, SmoothFieldOptions, SmoothUnblurredField } from "./gpuSmoothSurface";
 export { gaussianKernel } from "./gpuSmoothSurface";
+export {
+    ATOM_COLOUR_WGSL, FIELD_GRADIENT_WGSL, type SurfaceField, attachSurfaceColouring, releaseSurfaceField, setSurfaceColours, surfaceFieldUniform,
+} from "./surfaceField";
 /** The longest grid line the GPU's feature transform takes: past it, the C++ makes the field to the opening. */
 export { MAX_LINE as GPU_SMOOTH_MAX_LINE } from "./smoothSurfaceShaders";
 

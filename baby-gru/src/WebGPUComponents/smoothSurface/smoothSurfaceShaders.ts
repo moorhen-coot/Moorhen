@@ -29,7 +29,8 @@ struct Params {
     origin: vec4f,
     // Grid points (xyz); w: the contour's vertices.
     dims: vec4u,
-    // x: the contour's triangles; y: atoms; z: atom bins' search span (cells).
+    // x: the contour's triangles; y: atoms; z: atom bins' search span (cells); w: the triangles out
+    // (4x with the split, x without).
     counts: vec4u,
     // Atom bins: their lowest corner (xyz) and cell size (w).
     binLow: vec4f,
@@ -284,7 +285,7 @@ fn at(buffer: u32, v: u32) -> vec3f {
 @compute @workgroup_size(${SMOOTH_WORKGROUP})
 fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
     let t = itemIndex(lid, wid, nwg);
-    if (t >= 4u * P.counts.x) { return; }
+    if (t >= P.counts.w) { return; }
     let a = split[3u * t]; let b = split[3u * t + 1u]; let c = split[3u * t + 2u];
     let pa = at(0u, a);
     let face = cross(at(0u, b) - pa, at(0u, c) - pa);

@@ -33,6 +33,15 @@ export interface SmoothSurfaceReport {
     /** Of the others, those with a vertex that has a second C++ vertex within 2e-3 A (coincident marching-cubes vertices: matching by position can pick either). */
     otherWithTwins: number;
     gpuMs: number;
+    /**
+     * Without the split (per-pixel shading): its vertices, every one of which should be a C++ vertex
+     * (the C++ refines the contour's vertices as well as the midpoints); its triangles, a quarter of
+     * the C++'s; and those not facing the way their vertices' normals do.
+     */
+    unsplitVertices: number;
+    unsplitTriangles: number;
+    unsplitUnmatched: number;
+    unsplitMisoriented: number;
 }
 
 function readReference(buffer: ArrayBuffer) {
@@ -142,7 +151,32 @@ export default defineCase(async (device: GPUDevice): Promise<SmoothSurfaceReport
         else if ([a, b, c].some(hasTwin)) otherWithTwins++;
     }
 
+    // Without the split.
+    const unsplit = await gpuSurface.surfaceFromField(ref.field, ref.grid, ref.atoms, ref.residueOf, ref.probe, false);
+    if (!unsplit) throw new Error("GPU: no unsplit surface");
+    let unsplitUnmatched = 0, unsplitMisoriented = 0;
+    const nearestCpp = (x: number, y: number, z: number) => {
+        const cx = Math.floor(x / cell), cy = Math.floor(y / cell), cz = Math.floor(z / cell);
+        let bestD = Infinity;
+        for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (let k = -1; k <= 1; k++) {
+            for (const w of bins.get(`${cx + i},${cy + j},${cz + k}`) ?? []) {
+                bestD = Math.min(bestD, Math.hypot(cpp.positions[3 * w] - x, cpp.positions[3 * w + 1] - y, cpp.positions[3 * w + 2] - z));
+            }
+        }
+        return bestD;
+    };
+    const P = unsplit.positions, N = unsplit.normals;
+    for (let v = 0; v < P.length / 3; v++) if (nearestCpp(P[3 * v], P[3 * v + 1], P[3 * v + 2]) > 1e-3) unsplitUnmatched++;
+    for (let t = 0; t < unsplit.indices.length; t += 3) {
+        const [a, b, c] = [unsplit.indices[t], unsplit.indices[t + 1], unsplit.indices[t + 2]];
+        const e1 = [0, 1, 2].map(k => P[3 * b + k] - P[3 * a + k]), e2 = [0, 1, 2].map(k => P[3 * c + k] - P[3 * a + k]);
+        const face = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+        const n = [0, 1, 2].map(k => N[3 * a + k] + N[3 * b + k] + N[3 * c + k]);
+        if (face[0] * n[0] + face[1] * n[1] + face[2] * n[2] < 0) unsplitMisoriented++;
+    }
+
     return {
+        unsplitVertices: P.length / 3, unsplitTriangles: unsplit.indices.length / 3, unsplitUnmatched, unsplitMisoriented,
         atoms: ref.atoms.length / 4,
         cppVertices: cppCount, gpuVertices: gpuCount,
         cppTriangles: cpp.indices.length / 3, gpuTriangles: gpu.indices.length / 3,

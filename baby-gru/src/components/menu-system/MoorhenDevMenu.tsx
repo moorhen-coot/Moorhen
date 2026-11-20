@@ -211,6 +211,8 @@ export const MoorhenDevMenu = () => {
     const [smoothOpenRadius, setSmoothOpenRadius] = useState<number>(smoothSurfaceSetting.openRadius);
     const [smoothRefine, setSmoothRefine] = useState<boolean>(smoothSurfaceSetting.refine);
     const [smoothOnGpu, setSmoothOnGpu] = useState<boolean>(smoothSurfaceSetting.gpu);
+    const [smoothFieldShading, setSmoothFieldShading] = useState<boolean>(smoothSurfaceSetting.fieldShading);
+    const [smoothPixelColours, setSmoothPixelColours] = useState<boolean>(smoothSurfaceSetting.pixelColours);
     const [smoothOpenUncapped, setSmoothOpenUncapped] = useState<boolean>(smoothSurfaceSetting.openUncapped);
     const [smoothHealBlur, setSmoothHealBlur] = useState<number>(smoothSurfaceSetting.healBlur);
     const [smoothColourBlend, setSmoothColourBlend] = useState<number>(smoothSurfaceSetting.colourBlend);
@@ -629,9 +631,34 @@ export const MoorhenDevMenu = () => {
                     />
                     <MoorhenToggle
                         type="switch"
-                        checked={smoothRefine}
+                        checked={noWebGPU === null && smoothOnGpu && smoothFieldShading}
+                        disabled={noWebGPU !== null || !smoothOnGpu}
+                        label="Shade per pixel from the field"
+                        tooltip="Each pixel's normal from the field's smooth gradient, in the WebGPU view: no trace of the triangles in the light, and no split (4x fewer triangles). The field stays on the GPU while the surface is shown. On by default; needs the GPU finish."
+                        onChange={() => {
+                            smoothSurfaceSetting.fieldShading = !smoothFieldShading;
+                            setSmoothFieldShading(!smoothFieldShading);
+                            if (smoothSurface) redrawSurfaces();
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={noWebGPU === null && smoothOnGpu && smoothFieldShading && smoothPixelColours}
+                        disabled={noWebGPU !== null || !smoothOnGpu || !smoothFieldShading}
+                        label="Colour per pixel from the atoms"
+                        tooltip="Each pixel's colour from the atoms nearest it, by the colour blend's weights: colour boundaries follow the surface at screen resolution instead of stepping along the triangles. On by default; needs per-pixel shading. Not for electrostatics."
+                        onChange={() => {
+                            smoothSurfaceSetting.pixelColours = !smoothPixelColours;
+                            setSmoothPixelColours(!smoothPixelColours);
+                            if (smoothSurface) redrawSurfaces();
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={smoothRefine && !(noWebGPU === null && smoothOnGpu && smoothFieldShading)}
+                        disabled={noWebGPU === null && smoothOnGpu && smoothFieldShading}
                         label="Split every triangle"
-                        tooltip="Split every triangle once, positions and normals from the field: smoother shading for 4x the triangles. On by default."
+                        tooltip="Split every triangle once, positions and normals from the field: smoother shading for 4x the triangles. On by default. Off while surfaces are shaded per pixel, which need no split; still used where they are not (the WebGL view, chains surfaced separately, the C++ alone)."
                         onChange={() => {
                             smoothSurfaceSetting.refine = !smoothRefine;
                             setSmoothRefine(!smoothRefine);

@@ -38,6 +38,7 @@ import { PREVIEW_WGSL } from './previewShaders';
 import { TextLayer, textBatchesOf } from './textLayer';
 import { OverlayLines, overlayLineBatchesOf } from './overlayLines';
 import { TexturedShapeLayer } from './texturedShapes';
+import { FieldShading } from './fieldShading';
 import { SurfaceTextures } from './surfaceTextures';
 import { EffectMaps, EffectPasses, GBUFFER_DEPTH_FORMAT, GBUFFER_NORMAL_FORMAT, effectMargin, gbufferScale } from './effectPasses';
 import { DepthPeel, PEEL_COLOUR_FORMAT, PEEL_DEPTH_FORMAT, type PeelTargets, transparentLayers } from './depthPeel';
@@ -346,6 +347,9 @@ export class WebGPUPreviewRenderer {
     private readonly surfaceTextures: SurfaceTextures;
     /** Textured meshes: the frame, the draw, and the material at group 2. */
     private readonly texturedPipelineLayout: GPUPipelineLayout;
+    /** Smooth surfaces shaded per pixel from their field (fieldShading.ts): the field at group 2. */
+    private readonly fieldShading: FieldShading;
+    private readonly fieldPipelineLayout: GPUPipelineLayout;
     /** The smooth mesh hover overlay (MetaBalls, surfaces): drawn after the scene. */
     private readonly hoverOverlay: HoverOverlayLayer;
     /** What the hover lights in the frame being drawn (hoverHighlight.ts); set by drawFrame. */
@@ -465,6 +469,10 @@ export class WebGPUPreviewRenderer {
         this.surfaceTextures = new SurfaceTextures(device);
         this.texturedPipelineLayout = device.createPipelineLayout({
             bindGroupLayouts: [this.frameLayout, this.drawLayout, this.surfaceTextures.layout],
+        });
+        this.fieldShading = new FieldShading(device);
+        this.fieldPipelineLayout = device.createPipelineLayout({
+            bindGroupLayouts: [this.frameLayout, this.drawLayout, this.fieldShading.layout],
         });
         this.hoverOverlay = new HoverOverlayLayer(device, this.module, this.frameLayout, this.drawLayout,
             this.colourTargetState(true), DEPTH_FORMAT, SAMPLE_COUNT, maxBufferBytes);
@@ -862,6 +870,7 @@ export class WebGPUPreviewRenderer {
         this.device.queue.submit([encoder.finish()]);
         if (timing) this.frameTimer.collect();
         this.surfaceTextures.prune();
+        this.fieldShading.prune();
 
         return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers };
     }
@@ -1140,6 +1149,7 @@ export class WebGPUPreviewRenderer {
         });
         if (timing) this.frameTimer.collect();
         this.surfaceTextures.prune();
+        this.fieldShading.prune();
         return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers };
     }
 
@@ -1168,6 +1178,7 @@ export class WebGPUPreviewRenderer {
         this.overlayLines.destroy();
         this.texturedShapes.destroy();
         this.surfaceTextures.destroy();
+        this.fieldShading.destroy();
         this.hoverOverlay.destroy();
         this.effects.destroy();
         if (canvasOwners.get(this.context) === this) {
@@ -1344,8 +1355,11 @@ export class WebGPUPreviewRenderer {
         // Textured only if its material has a texture that is registered; otherwise drawn as if it
         // had no material, as drawCore does.
         const material = item.material && (mode === "main" || mode === "peel") ? this.surfaceTextures.bindGroupFor(item.material) : null;
+        // Shaded per pixel from its field, in every pass that shades (the shadow map only wants depth).
+        const field = !material && mode !== "shadow" && this.fieldShading.usable(item.fieldShading)
+            ? this.fieldShading.bindGroupFor(item.fieldShading, item.colourSource === "vertex") : null;
         const kind = pipelineKind(item.instanced, item.colourSource);
-        pass.setPipeline(this.pipeline(kind, item.transparent, !!material, mode));
+        pass.setPipeline(this.pipeline(kind, item.transparent, !!material, mode, !!field));
         const colourSlot = item.colourSource !== "uniform";
         if (item.colourSource === "instance") pass.setVertexBuffer(2, sub.instanceColour);
         let slot = colourSlot ? 3 : 2;
@@ -1357,6 +1371,7 @@ export class WebGPUPreviewRenderer {
         // The texture coordinates come after everything else (see pipeline()).
         const uvSlot = slot;
         if (material) pass.setBindGroup(2, material);
+        if (field) pass.setBindGroup(2, field);
         for (let copy = 0; copy < copies; copy++) {
             for (let c = 0; c < sub.chunks.length; c++) {
                 const chunk = sub.chunks[c];
@@ -1683,10 +1698,12 @@ export class WebGPUPreviewRenderer {
 
     /**
      * `textured`: with texture coordinates in the last vertex buffer slot and a material at group
-     * 2, through the *_textured entry points and fs_textured. `pass`: which pass it draws in.
+     * 2, through the *_textured entry points and fs_textured. `field`: a mesh (not instanced) shaded
+     * per pixel from its field at group 2, through the *_field entry points. `pass`: which pass it
+     * draws in.
      */
-    private pipeline(kind: PipelineKind, transparent: boolean, textured = false, pass: PassKind = "main"): GPURenderPipeline {
-        const key = `${kind}|${transparent}${textured ? "|textured" : ""}|${pass}`;
+    private pipeline(kind: PipelineKind, transparent: boolean, textured = false, pass: PassKind = "main", field = false): GPURenderPipeline {
+        const key = `${kind}|${transparent}${textured ? "|textured" : ""}${field ? "|field" : ""}|${pass}`;
         const cached = this.pipelines.get(key);
         if (cached) return cached;
 
@@ -1735,15 +1752,17 @@ export class WebGPUPreviewRenderer {
             buffers.push({ arrayStride: 8, stepMode: "vertex", attributes: [{ shaderLocation: 9, offset: 0, format: "float32x2" }] });
             entryPoint += "_textured";
         }
+        if (field) entryPoint += "_field";
 
         const pipeline = this.device.createRenderPipeline({
             label: `preview ${key}`,
-            layout: textured ? this.texturedPipelineLayout : this.pipelineLayout,
+            layout: textured ? this.texturedPipelineLayout : field ? this.fieldPipelineLayout : this.pipelineLayout,
             vertex: { module: this.module, entryPoint, buffers },
             // The shadow map needs only depth: no fragment stage at all.
             fragment: pass === "shadow" ? undefined : {
                 module: this.module,
-                entryPoint: pass === "gbuffer" ? "fs_gbuffer" : textured ? (pass === "peel" ? "fs_textured_peel" : "fs_textured")
+                entryPoint: field ? (pass === "gbuffer" ? "fs_field_gbuffer" : pass === "peel" ? "fs_field_peel" : "fs_field")
+                    : pass === "gbuffer" ? "fs_gbuffer" : textured ? (pass === "peel" ? "fs_textured_peel" : "fs_textured")
                     : pass === "peel" ? "fs_main_peel" : "fs_main",
                 targets: out.targets,
             },

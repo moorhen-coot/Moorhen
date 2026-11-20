@@ -475,6 +475,8 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
         // Materials are plain data referring to textures by id, so the clone shares the textures
         // rather than duplicating them - which is the point of the registry holding the pixels.
         theBuffer.materials = oldBuffer.materials ? oldBuffer.materials.slice() : []
+        // Shared, not copied: the field belongs to the original's representation.
+        theBuffer.fieldShading = oldBuffer.fieldShading ? oldBuffer.fieldShading.slice() : []
         theBuffer.primitiveSizes = oldBuffer.primitiveSizes ? oldBuffer.primitiveSizes.slice() : null
         theBuffer.bufferTypes = oldBuffer.bufferTypes ? oldBuffer.bufferTypes.slice() : null
         //theBuffer.customColour = oldBuffer.customColour.slice() as [number,number,number,number] | null

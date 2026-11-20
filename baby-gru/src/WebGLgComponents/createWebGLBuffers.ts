@@ -354,6 +354,17 @@ export const createWebGLBuffers = (jsondata: any, idat: number): DisplayBuffer =
         }
     }
 
+    // A smooth surface's field for per-pixel shading (WebGPU only), per sub-buffer and sparse as
+    // materials are.
+    if(jsondata.field_shading){
+        const rssentries = jsondata.field_shading[idat];
+        if(rssentries){
+            for (let i = 0; i < rssentries.length; i++) {
+                theBuffer.fieldShading[i] = rssentries[i];
+            }
+        }
+    }
+
     if(jsondata.pick_info){
         if(jsondata.pick_info.influence_weights && jsondata.pick_info.influence_point_indexes && jsondata.pick_info.influence_index_offsets && jsondata.pick_info.pick_points){
             // The influence data becomes three textures, made by realiseGLResources once there

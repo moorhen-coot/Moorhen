@@ -26,6 +26,8 @@
  * Frame must match the packing in previewScene.ts (frameUniforms, FRAME_FLOATS).
  */
 
+import { ATOM_COLOUR_WGSL, FIELD_GRADIENT_WGSL } from "./smoothSurface/surfaceField";
+
 /** The per-frame uniforms, at group 0, shared by every pipeline the renderer draws a frame with. */
 export const FRAME_WGSL = /* wgsl */ `
 struct Frame {
@@ -626,6 +628,96 @@ fn fs_textured_peel(in: TexturedOut, @builtin(front_facing) frontFacing: bool) -
     let colour = texturedColour(in, frontFacing);
     if (!peelKeep(in.position, in.position.z)) { discard; }
     return colour;
+}
+
+// Smooth surfaces shaded per pixel from their field (smoothSurface/surfaceField.ts): each fragment's
+// normal is the field's B-spline gradient where the fragment is, in the mesh's own frame, turned by
+// the copy's operator as finish() turns vertex normals. Everything else as fs_main. The vertex normal
+// stays the fallback, where the gradient vanishes (deep inside or far out, never on the surface).
+@group(2) @binding(16) var<uniform> fieldGrid: FieldGrid;
+@group(2) @binding(17) var<storage, read> fieldValues: array<f32>;
+${FIELD_GRADIENT_WGSL}
+// And coloured per pixel from its atoms, when they are attached (fieldGrid.binDims.w).
+@group(2) @binding(18) var<storage, read> colourAtoms: array<vec4f>;
+@group(2) @binding(19) var<storage, read> atomColours: array<vec4f>;
+@group(2) @binding(20) var<storage, read> colourBinStart: array<u32>;
+@group(2) @binding(21) var<storage, read> colourBinMembers: array<u32>;
+${ATOM_COLOUR_WGSL}
+
+struct FieldOut {
+    // Invariant, as VOut's: the hover overlay draws the mesh again with vs_hover_overlay.
+    @builtin(position) @invariant position: vec4f,
+    @location(0) colour: vec4f,
+    @location(1) normal: vec3f,
+    @location(2) eyeDistance: f32,
+    // Where the fragment is in the mesh's own frame - the field's.
+    @location(3) local: vec3f,
+    @location(5) shadowPos: vec4f,
+    @location(6) highlight: f32,
+};
+
+fn fielded(position: vec3f, normal: vec3f, colour: vec4f) -> FieldOut {
+    let v = finish(vec4f(position, 1.0), normal, colour);
+    var out: FieldOut;
+    out.position = v.position;
+    out.colour = v.colour;
+    out.normal = v.normal;
+    out.eyeDistance = v.eyeDistance;
+    out.local = position;
+    out.shadowPos = v.shadowPos;
+    out.highlight = v.highlight;
+    return out;
+}
+
+@vertex
+fn vs_mesh_vertex_colour_field(@location(0) position: vec3f, @location(1) normal: vec3f,
+                               @location(2) colour: vec4f) -> FieldOut {
+    return fielded(position, normal, colour);
+}
+
+@vertex
+fn vs_mesh_uniform_colour_field(@location(0) position: vec3f, @location(1) normal: vec3f) -> FieldOut {
+    return fielded(position, normal, draw.colour);
+}
+
+fn fieldNormal(in: FieldOut) -> vec3f {
+    let g = fieldGradient(in.local);
+    let len = length(g);
+    if (len < 1e-12) { return in.normal; }
+    return (draw.model * vec4f(g / len, 0.0)).xyz;
+}
+
+// The fragment's own colour from the atoms, where it has them - not for a grey symmetry copy, which
+// is coloured as a whole (finish). The alpha stays the vertex colour's: the representation's opacity
+// is written there (setNonCustomOpacity), never into the atoms' colours.
+fn fieldBase(in: FieldOut) -> vec4f {
+    if (draw.params.z > 0.5) { return in.colour; }
+    return vec4f(atomColourAt(in.local, in.colour).rgb, in.colour.a);
+}
+
+fn fieldColour(in: FieldOut, frontFacing: bool) -> vec4f {
+    let base = fieldBase(in);
+    let shadow = shadowAt(in.shadowPos);
+    let colour = select(base * backShade(shadow), lit(base, fieldNormal(in), occlusionAt(in.position), shadow), frontFacing);
+    return withHighlight(fogged(colour * edgeAt(in.position), base.a, in.eyeDistance), in.highlight);
+}
+
+@fragment
+fn fs_field(in: FieldOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+    return fieldColour(in, frontFacing);
+}
+
+@fragment
+fn fs_field_peel(in: FieldOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+    let colour = fieldColour(in, frontFacing);
+    if (!peelKeep(in.position, in.position.z)) { discard; }
+    return colour;
+}
+
+// The g-buffer with the same normals the picture is lit with, so ambient occlusion and edges agree.
+@fragment
+fn fs_field_gbuffer(in: FieldOut) -> @location(0) vec4f {
+    return vec4f(normalize((frame.view * vec4f(fieldNormal(in), 0.0)).xyz), 1.0);
 }
 
 // Thick lines, drawn from a mesh's own vertex buffers and a list of its edges as pairs of vertex
