@@ -2171,20 +2171,17 @@ inline emscripten::val getLineIndicesFromSimpleMesh(const coot::simple_mesh_t &m
 
 }
 
-/*
- * Moorhen's smooth surface (smooth-surface.hh) of atoms packed as a Float32Array (x, y, z, van der
- * Waals radius per atom), with an Int32Array residue index per atom, and an options object (spacing,
- * sigma, maxShift, openRadius, openUncapped, healBlur, refine; threads) - anything left out is the default. Returns the
- * surface (positions, normals, indices, atom, other, weight, near, nearGap, as typed arrays: the
- * AtomSurface of baby-gru/src/utils/smoothSurface.ts) plus the grid and timings for the log; null if
- * there is nothing to contour.
- */
-inline emscripten::val smoothSurfaceFromAtoms(const emscripten::val &packedAtoms, const emscripten::val &residueOfObject,
-                                              double probe, const emscripten::val &optionsObject) {
+// The smooth surface's atoms from a Float32Array packed x, y, z, van der Waals radius per atom.
+inline std::vector<smooth_surface::atom_t> smoothSurfaceAtoms(const emscripten::val &packedAtoms) {
     auto packed = emscripten::convertJSArrayToNumberVector<float>(packedAtoms);
-    auto residue_of = emscripten::convertJSArrayToNumberVector<int32_t>(residueOfObject);
     std::vector<smooth_surface::atom_t> atoms(packed.size() / 4);
     for (size_t i = 0; i < atoms.size(); i++) atoms[i] = {packed[4 * i], packed[4 * i + 1], packed[4 * i + 2], packed[4 * i + 3]};
+    return atoms;
+}
+
+// Its options from a JS object (spacing, sigma, maxShift, openRadius, openUncapped, healBlur, refine;
+// threads); anything left out is the default.
+inline smooth_surface::options_t smoothSurfaceOptions(const emscripten::val &optionsObject) {
     smooth_surface::options_t options;
     auto option = [&](const char *name) { return optionsObject.isUndefined() || optionsObject.isNull() ? emscripten::val::undefined() : optionsObject[name]; };
     if (!option("spacing").isUndefined()) options.spacing = option("spacing").as<double>();
@@ -2195,6 +2192,22 @@ inline emscripten::val smoothSurfaceFromAtoms(const emscripten::val &packedAtoms
     if (!option("openUncapped").isUndefined()) options.open_uncapped = option("openUncapped").as<bool>();
     if (!option("healBlur").isUndefined()) options.heal_blur = option("healBlur").as<double>();
     if (!option("threads").isUndefined()) options.threads = option("threads").as<int>();
+    return options;
+}
+
+/*
+ * Moorhen's smooth surface (smooth-surface.hh) of atoms packed as a Float32Array (x, y, z, van der
+ * Waals radius per atom), with an Int32Array residue index per atom, and an options object (spacing,
+ * sigma, maxShift, openRadius, openUncapped, healBlur, refine; threads) - anything left out is the default. Returns the
+ * surface (positions, normals, indices, atom, other, weight, near, nearGap, as typed arrays: the
+ * AtomSurface of baby-gru/src/utils/smoothSurface.ts) plus the grid and timings for the log; null if
+ * there is nothing to contour.
+ */
+inline emscripten::val smoothSurfaceFromAtoms(const emscripten::val &packedAtoms, const emscripten::val &residueOfObject,
+                                              double probe, const emscripten::val &optionsObject) {
+    auto residue_of = emscripten::convertJSArrayToNumberVector<int32_t>(residueOfObject);
+    std::vector<smooth_surface::atom_t> atoms = smoothSurfaceAtoms(packedAtoms);
+    smooth_surface::options_t options = smoothSurfaceOptions(optionsObject);
     smooth_surface::surface_t s = smooth_surface::surface_from_atoms(atoms, residue_of, probe, options);
     if (s.indices.empty()) return emscripten::val::null();
     // A typed array of the JS type `type` holding a copy of `data`. The length goes over as a double:
@@ -2221,6 +2234,37 @@ inline emscripten::val smoothSurfaceFromAtoms(const emscripten::val &packedAtoms
     timings.set("sas", s.timings.sas); timings.set("seeds", s.timings.seeds); timings.set("transform", s.timings.transform);
     timings.set("distance", s.timings.distance); timings.set("blur", s.timings.blur); timings.set("contour", s.timings.contour);
     timings.set("atoms", s.timings.atoms);
+    result.set("timings", timings);
+    return result;
+}
+
+/*
+ * The smooth surface's field only, for the rest to be made on the GPU (baby-gru/src/WebGPUComponents/
+ * smoothSurface): the same atoms and options as smoothSurfaceFromAtoms; returns { input, nx, ny, nz,
+ * origin, spacing, timings } - `input` the field ready to contour (a Float32Array, x fastest:
+ * negative inside, the surface at 0, iso - field as surface_from_atoms contours it) - or null if
+ * there are no atoms.
+ */
+inline emscripten::val smoothSurfaceFieldFromAtoms(const emscripten::val &packedAtoms, double probe, const emscripten::val &optionsObject) {
+    std::vector<smooth_surface::atom_t> atoms = smoothSurfaceAtoms(packedAtoms);
+    smooth_surface::options_t o = smoothSurfaceOptions(optionsObject);
+    smooth_surface::grid_t grid = smooth_surface::ses_field(atoms, probe, o.spacing, o.sigma, o.max_shift, o.open_radius, o.threads,
+                                                            o.open_uncapped, o.heal_blur);
+    if (grid.field.empty()) return emscripten::val::null();
+    for (auto &v : grid.field) v = float(grid.iso - v);
+    emscripten::val view{ emscripten::typed_memory_view(grid.field.size(), grid.field.data()) };
+    emscripten::val input = emscripten::val::global("Float32Array").new_(double(grid.field.size()));
+    input.call<void>("set", view);
+    auto result = emscripten::val::object();
+    result.set("input", input);
+    result.set("nx", grid.nx); result.set("ny", grid.ny); result.set("nz", grid.nz);
+    auto origin = emscripten::val::array();
+    for (int k = 0; k < 3; k++) origin.call<void>("push", grid.origin[k]);
+    result.set("origin", origin);
+    result.set("spacing", grid.spacing);
+    auto timings = emscripten::val::object();
+    timings.set("sas", grid.timings.sas); timings.set("seeds", grid.timings.seeds); timings.set("transform", grid.timings.transform);
+    timings.set("distance", grid.timings.distance); timings.set("blur", grid.timings.blur);
     result.set("timings", timings);
     return result;
 }

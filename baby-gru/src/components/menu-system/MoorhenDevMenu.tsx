@@ -210,6 +210,7 @@ export const MoorhenDevMenu = () => {
     const [smoothMaxShift, setSmoothMaxShift] = useState<number>(smoothSurfaceSetting.maxShift);
     const [smoothOpenRadius, setSmoothOpenRadius] = useState<number>(smoothSurfaceSetting.openRadius);
     const [smoothRefine, setSmoothRefine] = useState<boolean>(smoothSurfaceSetting.refine);
+    const [smoothOnGpu, setSmoothOnGpu] = useState<boolean>(smoothSurfaceSetting.gpu);
     const [smoothOpenUncapped, setSmoothOpenUncapped] = useState<boolean>(smoothSurfaceSetting.openUncapped);
     const [smoothHealBlur, setSmoothHealBlur] = useState<number>(smoothSurfaceSetting.healBlur);
     const [smoothColourBlend, setSmoothColourBlend] = useState<number>(smoothSurfaceSetting.colourBlend);
@@ -614,6 +615,18 @@ export const MoorhenDevMenu = () => {
             </MoorhenAccordion>
             <MoorhenAccordion title="Smooth surface">
                 <MoorhenStack>
+                    <MoorhenToggle
+                        type="switch"
+                        checked={noWebGPU === null && smoothOnGpu}
+                        disabled={noWebGPU !== null}
+                        label="Finish on the GPU"
+                        tooltip={`The C++ makes the field in the worker, the GPU the contour, split, normals and vertex atoms. Off, or no WebGPU: the C++ makes all of it.${noWebGPU ? ` No WebGPU here: ${noWebGPU}` : ""}`}
+                        onChange={() => {
+                            smoothSurfaceSetting.gpu = !smoothOnGpu;
+                            setSmoothOnGpu(!smoothOnGpu);
+                            if (smoothSurface) redrawSurfaces();
+                        }}
+                    />
                     <MoorhenToggle
                         type="switch"
                         checked={smoothRefine}

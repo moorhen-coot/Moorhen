@@ -1902,6 +1902,11 @@ const describeError = (err: any): string => {
 
 type SmoothSurfaceOptions = Record<string, number | boolean>
 type SmoothAtomSurface = { positions: Float32Array; normals: Float32Array; indices: Uint32Array; atom: Int32Array; other: Int32Array; weight: Float32Array; near: Int32Array; nearGap: Float32Array }
+/** What the C++ smoothSurfaceFieldFromAtoms returns: the field ready to contour, its grid, and timings. */
+type SmoothNativeField = {
+    input: Float32Array; nx: number; ny: number; nz: number; origin: number[]; spacing: number
+    timings: { sas: number; seeds: number; transform: number; distance: number; blur: number }
+}
 /** What the C++ smoothSurfaceFromAtoms (moorhen-wrappers-helpers.h) returns: the surface, its grid and timings. */
 type SmoothNativeSurface = SmoothAtomSurface & {
     grid: { nx: number; ny: number; nz: number; spacing: number }
@@ -1929,6 +1934,18 @@ const smoothSurfaceFromAtoms = (packedAtoms: Float32Array, residueOf: Int32Array
         `blur ${t.blur.toFixed(0)}), contour (C++) ${(t.contour + t.atoms).toFixed(0)} ms`)
     const { grid, timings, ...arrays } = surface
     return { surface: arrays as SmoothAtomSurface }
+}
+
+/**
+ * The smooth surface's field only (C++ smoothSurfaceFieldFromAtoms), for the rest of the surface to be
+ * made on the GPU on the main thread (src/WebGPUComponents/smoothSurface): { field } with the field
+ * ready to contour and its grid, or { field: null }.
+ */
+const smoothSurfaceFieldFromAtoms = (packedAtoms: Float32Array, probe: number, options: SmoothSurfaceOptions) => {
+    const native = (cootModule as unknown as { smoothSurfaceFieldFromAtoms?: (atoms: Float32Array, probe: number,
+        options: SmoothSurfaceOptions) => SmoothNativeField | null }).smoothSurfaceFieldFromAtoms
+    if (!native) throw new Error("This build of the Coot WASM has no smoothSurfaceFieldFromAtoms: rebuild it with the current wasm_src")
+    return { field: native(packedAtoms, probe, options) }
 }
 
 const doCootCommand = (messageData: {
@@ -2027,6 +2044,9 @@ const doCootCommand = (messageData: {
                 break
             case "shim_smooth_surface_from_atoms":
                 cootResult = smoothSurfaceFromAtoms(...commandArgs as [Float32Array, Int32Array, number, SmoothSurfaceOptions])
+                break
+            case "shim_smooth_surface_field_from_atoms":
+                cootResult = smoothSurfaceFieldFromAtoms(...commandArgs as [Float32Array, number, SmoothSurfaceOptions])
                 break
             default:
                 console.log("Calling",command)
@@ -2557,7 +2577,10 @@ const dispatchMessage = function (e: MessageEvent) {
         // A smooth surface's arrays were made for this reply: hand them over too.
         const surface = e.data.command === "shim_smooth_surface_from_atoms"
             ? (result as { result?: { result?: { surface?: SmoothAtomSurface | null } } }).result?.result?.surface : null
-        const smoothed = surface ? [...new Set(Object.values(surface).map(v => v.buffer as ArrayBuffer))] : []
+        const field = e.data.command === "shim_smooth_surface_field_from_atoms"
+            ? (result as { result?: { result?: { field?: SmoothNativeField | null } } }).result?.result?.field : null
+        const smoothed = surface ? [...new Set(Object.values(surface).map(v => v.buffer as ArrayBuffer))]
+            : field ? [field.input.buffer as ArrayBuffer] : []
         postMessage(result, grid instanceof Float32Array ? [grid.buffer] : smoothed)
     }
 }

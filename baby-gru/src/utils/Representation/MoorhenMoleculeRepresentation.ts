@@ -28,6 +28,7 @@ import {
 } from "../smoothSurface";
 import { influenceListsFromShares } from "../../WebGLgComponents/ownedMeshPick";
 import { surfaceAtomRadius } from "../m2tAtomRadii";
+import { type SmoothFieldGrid, sharedGpuSmoothSurface } from "../../WebGPUComponents/smoothSurface";
 import { surfaceChainGroups } from "../surfaceChainGroups";
 
 /**
@@ -726,7 +727,7 @@ export class MoleculeRepresentation {
      */
     async draw() {
         this.visible = true;
-        await this.applyColourRules();
+        if (!this.colourRulesOnDemand) await this.applyColourRules();
         const objects = await this.getBufferObjects();
         this.buildBuffers(objects);
         const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
@@ -757,7 +758,7 @@ export class MoleculeRepresentation {
      */
     async redraw() {
         this.visible = true;
-        await this.applyColourRules();
+        if (!this.colourRulesOnDemand) await this.applyColourRules();
         const objects = await this.getBufferObjects();
         this.deleteBuffers();
         this.buildBuffers(objects);
@@ -1645,8 +1646,6 @@ export class MoleculeRepresentation {
     ): Promise<PickableMesh[]> {
         const { m2tStyle, m2tSelection } = this.getM2tArgs(style, cidSelection, restrictSelection);
 
-        await this.applyM2tParams();
-
         let colorStyle: string = "";
 
         if (this.colourRules.length > 0 && this.colourRules[0].ruleType === "electrostatics") colorStyle = "ByOwnPotential";
@@ -1670,8 +1669,12 @@ export class MoleculeRepresentation {
             })
             : null;
 
-        // The M2T surface of `selection` as it is.
+        // The M2T mesh of `selection` as it is, with this representation's M2T parameters and (only now
+        // for a surface: colourRulesOnDemand) its colour rules - sent to Coot only when Coot makes the
+        // mesh, so a smooth surface made from the atoms sends neither.
         const m2tSurfaceMesh = async (selection: string): Promise<libcootApi.SimpleMeshJS> => {
+            await this.applyM2tParams();
+            if (this.colourRulesOnDemand) await this.applyColourRules();
             const response = (await this.commandCentre.cootCommand(
                 { returnType: "mesh", command: "get_molecular_representation_mesh",
                   commandArgs: [this.parentMolecule.molNo, selection, colorStyle, m2tStyle, ssUsageScheme] },
@@ -1843,13 +1846,41 @@ export class MoleculeRepresentation {
     }
 
     /**
-     * The surface of `atoms` from the worker (the C++), with each vertex's atoms numbered as in
-     * `atoms`. Null if nothing could be made.
+     * The surface of `atoms`, with each vertex's atoms numbered as in `atoms`. With WebGPU
+     * (smoothSurfaceSetting.gpu), the C++ makes the field in the worker and the GPU the rest
+     * (src/WebGPUComponents/smoothSurface); otherwise, or if the GPU fails, the C++ makes all of it.
+     * Null if nothing could be made.
      */
     async atomSurfaceFor(atoms: SurfaceAtom[], residueOf: Int32Array, probe: number,
                          options: Record<string, number | boolean>): Promise<AtomSurface | null> {
+        const packed = packAtoms(atoms);
+        const gpu = smoothSurfaceSetting.gpu && options.refine !== false ? await sharedGpuSmoothSurface() : null;
+        if (gpu) {
+            try {
+                const started = performance.now();
+                const response = (await this.commandCentre.cootCommand(
+                    { returnType: "smoothed_field", command: "shim_smooth_surface_field_from_atoms", commandArgs: [packed.slice(), probe, options] },
+                    false
+                )) as moorhen.WorkerResponse<{ field: (SmoothFieldGrid & { input: Float32Array; timings: Record<string, number> }) | null }>;
+                if (response.data.result.status !== "Completed") throw new Error("the worker made no field");
+                const field = response.data.result.result.field;
+                if (!field) return null;
+                const fieldMs = performance.now() - started;
+                const surface = await gpu.surfaceFromField(field.input, field, packed, residueOf, probe);
+                if (surface) {
+                    const t = field.timings;
+                    console.debug(`Smooth surface: ${atoms.length} atoms, grid ${field.nx}x${field.ny}x${field.nz} at ${field.spacing.toFixed(2)} Å; ` +
+                        `${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles; field (C++) ${fieldMs.toFixed(0)} ms ` +
+                        `(sas ${t.sas.toFixed(0)}, seeds ${t.seeds.toFixed(0)}, transform ${t.transform.toFixed(0)}, distance ${t.distance.toFixed(0)}, ` +
+                        `blur ${t.blur.toFixed(0)}), contour (WebGPU) ${surface.timings.contour.toFixed(0)} ms, finish (WebGPU) ${surface.timings.finish.toFixed(0)} ms`);
+                }
+                return surface;
+            } catch (err) {
+                console.warn("GPU smooth surface failed; the C++ makes it.", err);
+            }
+        }
         const response = (await this.commandCentre.cootCommand(
-            { returnType: "smoothed_surface", command: "shim_smooth_surface_from_atoms", commandArgs: [packAtoms(atoms), residueOf.slice(), probe, options] },
+            { returnType: "smoothed_surface", command: "shim_smooth_surface_from_atoms", commandArgs: [packed, residueOf.slice(), probe, options] },
             false
         )) as moorhen.WorkerResponse<{ surface: AtomSurface | null }>;
         return response.data.result.status === "Completed" ? response.data.result.result.surface : null;
@@ -2530,6 +2561,16 @@ export class MoleculeRepresentation {
         const objects = [{...gemmiAtomPairsToCylindersInfo(lines, 0.1, { unit_cell: [0.7, 0.4, 0.25, 1.0] }, false, 0, 99999, false),pick_info:{}}];
 
         return objects;
+    }
+
+    /**
+     * Whether Coot needs this representation's colour rules only if it makes the mesh: the surfaces,
+     * which are smooth surfaces coloured here from the atoms unless smooth surfaces are off, the
+     * colouring is electrostatics, or the smooth surface fails - and then the rules go to Coot just
+     * before it is asked (getM2TRepresentationBuffers), not with every draw.
+     */
+    get colourRulesOnDemand(): boolean {
+        return M2T_SURFACE_REPRESENTATIONS.includes(this.style);
     }
 
     /**

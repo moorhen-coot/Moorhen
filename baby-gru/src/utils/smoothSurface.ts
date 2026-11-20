@@ -49,11 +49,17 @@ export const smoothSurfaceSetting = {
      */
     healBlur: 0.6,
     /**
-     * Split every triangle once, with positions and normals from the field : the
+     * Split every triangle once, with positions and normals from the field: the
      * diffuse light's diamonds at a 0.5 A grid mostly gone, for four times the triangles rather
      * than eight times the field a 0.25 A grid costs.
      */
     refine: true,
+    /**
+     * With WebGPU, the surface finished on the GPU from the C++'s field (contour, split, normals, vertex
+     * atoms: src/WebGPUComponents/smoothSurface); the C++ makes all of it without WebGPU, when this is
+     * off, or if the GPU fails. Off by default until timed on real GPUs (stage 1, 2026-11-20).
+     */
+    gpu: false,
     /**
      * How softly the colours of a surface made from the atoms change from one atom's to the next,
      * Å (atomSurfaceColours): 0 is a hard edge, each vertex its nearest atom's, as M2T has it -

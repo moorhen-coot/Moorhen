@@ -43,9 +43,11 @@ function bundle(caseName: string): Promise<string> {
  * `page` with `args`, and return its outcome: `unavailable` says why there is no WebGPU here (the
  * test should skip), otherwise `result` and any uncaptured WebGPU errors.
  *
- * Console errors from the page are collected into `consoleErrors`.
+ * Console errors from the page are collected into `consoleErrors`. `files` are served too, under
+ * /generated/<name>: reference data a spec makes as it runs (rather than keeping it in tests/gpu/data).
  */
-export async function runGpuCase<T>(page: Page, caseName: string, args: unknown = null): Promise<CaseOutcome<T> & { consoleErrors: string[] }> {
+export async function runGpuCase<T>(page: Page, caseName: string, args: unknown = null, files: Record<string, Buffer> = {}):
+    Promise<CaseOutcome<T> & { consoleErrors: string[] }> {
     const script = await bundle(caseName);
     const consoleErrors: string[] = [];
     page.on("console", message => {
@@ -61,6 +63,9 @@ export async function runGpuCase<T>(page: Page, caseName: string, args: unknown 
         if (path.startsWith("/data/")) {
             const file = resolve(DATA, path.slice("/data/".length));
             if (file.startsWith(DATA)) return route.fulfill({ contentType: "application/octet-stream", body: readFileSync(file) });
+        }
+        if (path.startsWith("/generated/") && files[path.slice("/generated/".length)]) {
+            return route.fulfill({ contentType: "application/octet-stream", body: files[path.slice("/generated/".length)] });
         }
         return route.fulfill({ status: 404, body: "" });
     });
