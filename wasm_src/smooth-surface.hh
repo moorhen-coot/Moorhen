@@ -81,6 +81,12 @@ namespace smooth_surface {
         double max_shift = 0.3;
         //! radius of the ball rolled inside the surface to cut pinched necks, A; 0: off
         double open_radius = 0.5;
+        //! no cap on the blur's shift round where the opening cut a neck (faded out over about an A):
+        //! the dent a cut leaves is deeper than the cap lets the blur fill
+        bool open_uncapped = true;
+        //! the blur round where the opening cut, A: above sigma, blurred again there to this in all
+        //! (faded out over about an A), rounding the dent further; at most sigma: off
+        double heal_blur = 0.6;
         //! split every triangle once, positions and normals from the field
         bool refine = true;
         //! threads to use; 0: the hardware's, at most 8 (the WASM build's pthread pool is 32, Coot's
@@ -130,7 +136,8 @@ namespace smooth_surface {
 
     //! The blurred SES signed distance field of these atoms (empty field if there are none).
     grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma,
-                     double max_shift = std::numeric_limits<double>::infinity(), double open_radius = 0, int threads = 0);
+                     double max_shift = std::numeric_limits<double>::infinity(), double open_radius = 0, int threads = 0,
+                     bool open_uncapped = false, double heal_blur = 0);
 
     //! The whole of it: the surface of `atoms` (`residue_of`: a residue index per atom) with each
     //! vertex's atoms. An empty surface if there is nothing to contour.

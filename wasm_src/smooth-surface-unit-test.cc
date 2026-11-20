@@ -357,6 +357,16 @@ int main(int argc, char **argv) {
         for (size_t i = 0; i < before.field.size(); i++)
             if (std::abs(before.field[i]) < 0.5 && std::abs(after.field[i] - before.field[i]) > 1e-6) changed++;
         CHECK(changed == 0);
+        // Healing the cuts touches nothing where nothing was cut.
+        grid_t healed = ses_field(pair, 1.4, 0.3, 0, inf, 0.5, 0, true, 0.8);
+        long healed_changed = 0;
+        for (size_t i = 0; i < after.field.size(); i++) if (healed.field[i] != after.field[i]) healed_changed++;
+        CHECK(healed_changed == 0);
+        // And with it, as the app makes it (blurred, capped, healed), the pinched pair is still two lobes.
+        std::vector<int32_t> residue_of = {0, 1};
+        options_t o;
+        CHECK(o.open_uncapped && o.heal_blur > o.sigma);
+        CHECK(components(surface_from_atoms(pinched, residue_of, 1.4, o)) == 2);
     }
 
     current = "a vertex belongs to the atom it lies on, and in a groove is shared with the other residue";

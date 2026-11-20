@@ -1684,7 +1684,9 @@ export class MoleculeRepresentation {
             const potential = colorStyle === "ByOwnPotential" ? await m2tSurfaceMesh(m2tSelection) : null;
             const options = {
                 spacing: smoothSurfaceSetting.spacing, sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
-                openRadius: smoothSurfaceSetting.openRadius, refine: smoothSurfaceSetting.refine,
+                openRadius: smoothSurfaceSetting.openRadius, openUncapped: smoothSurfaceSetting.openUncapped,
+                healBlur: smoothSurfaceSetting.healBlur,
+                refine: smoothSurfaceSetting.refine,
             };
             // "Surface each chain separately" (this representation's): each chain's from its own atoms.
             m2tMesh = await this.smoothSurfaceFromAtoms(smoothInput, options, this.surfaceChainsSeparate, potential);

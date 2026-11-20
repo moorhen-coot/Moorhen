@@ -25,6 +25,7 @@
 #include <cmath>
 #include <system_error>
 #include <thread>
+#include <type_traits>
 
 namespace smooth_surface {
 
@@ -456,7 +457,8 @@ bool nearest_exposed_point(double px, double py, double pz, const std::vector<in
 }
 
 // gaussianBlur3d: separable, sigma in grid units, edges clamp.
-void gaussian_blur_3d(std::vector<float> &field, int nx, int ny, int nz, double sigma, int threads) {
+template <typename T>
+void gaussian_blur_3d(std::vector<T> &field, int nx, int ny, int nz, double sigma, int threads) {
     if (sigma <= 0) return;
     int radius = std::max(1, int(std::ceil(3 * sigma)));
     std::vector<double> kernel(2 * radius + 1);
@@ -480,7 +482,8 @@ void gaussian_blur_3d(std::vector<float> &field, int nx, int ny, int nz, double 
                         int j = std::min(len - 1, std::max(0, i + k));
                         sum += kernel[k + radius] * line[j];
                     }
-                    field[start + i * stride] = float(sum);
+                    if constexpr (std::is_same_v<T, float>) field[start + i * stride] = float(sum);
+                    else field[start + i * stride] = T(std::lround(std::min(255.0, std::max(0.0, sum))));
                 }
             }
         });
@@ -895,7 +898,7 @@ mesh_t finish_contour(const std::vector<float> &field, const grid_t &grid, conto
 // sesField
 
 grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma, double max_shift, double open_radius,
-                 int threads) {
+                 int threads, bool open_uncapped, double heal_blur) {
     threads = resolve_threads(threads);
     grid_t grid;
     if (atoms.empty()) return grid;
@@ -1115,60 +1118,76 @@ grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing,
     });
     release(exterior); release(feature); release(seed_points); release(seed_a); release(seed_circle);
 
-    // 3b. Opening.
+    // 3b. Opening: a ball of radius open_radius rolled inside, so necks thinner than twice that are
+    // cut. Each point's distance to where the ball's centre can be is found by climbing the field's
+    // gradient to the level open_radius. A neck cut where it met a lobe leaves the lobe the saddle's
+    // concave footprint: a dent, the scar. Round the cuts - `weight`, 1 at the points the opening
+    // changed and fading to 0 over about an A - the blur's cap is lifted (open_uncapped) and the field
+    // blurred more (heal_blur), below.
+    std::vector<uint8_t> weight;
     if (open_radius > 0) {
-        double t = open_radius;
-        std::vector<float> original = field;
-        auto sample = [&](double x, double y, double z) -> double {
-            double fx = std::min(nx - 1.001, std::max(0.0, (x - origin[0]) / h));
-            double fy = std::min(ny - 1.001, std::max(0.0, (y - origin[1]) / h));
-            double fz = std::min(nz - 1.001, std::max(0.0, (z - origin[2]) / h));
-            long i = long(std::floor(fx)), j = long(std::floor(fy)), k = long(std::floor(fz));
-            double u = fx - i, v = fy - j, w = fz - k;
-            long c = k * plane + j * nx + i;
-            double c00 = original[c] + u * (double(original[c + 1]) - original[c]);
-            double c10 = original[c + nx] + u * (double(original[c + nx + 1]) - original[c + nx]);
-            double c01 = original[c + plane] + u * (double(original[c + plane + 1]) - original[c + plane]);
-            double c11 = original[c + plane + nx] + u * (double(original[c + plane + nx + 1]) - original[c + plane + nx]);
-            double c0 = c00 + v * (c10 - c00), c1 = c01 + v * (c11 - c01);
-            return c0 + w * (c1 - c0);
-        };
+        bool want_weight = open_uncapped || heal_blur > sigma;
+        if (want_weight) weight.assign(count, 0);
         double reach = -(3 * sigma + 2 * h);
-        double floor_value = -(probe + clamp);
         double half = h / 2;
         double allowance = (h * h) / 4;
-        interior_count = 0;
-        parallel_for(threads, nz, [&](long begin, long end) {
-        long interior_here = 0;
-        for (long iz = begin; iz < end; iz++) {
-            for (long iy = 0; iy < ny; iy++) {
-                for (long ix = 0; ix < nx; ix++) {
-                    long i = iz * plane + iy * nx + ix;
-                    double f = original[i];
-                    if (f < t && f > reach) {
-                        double x = origin[0] + ix * h, y = origin[1] + iy * h, z = origin[2] + iz * h;
-                        double value = f, length = 0;
-                        for (int step = 0; step < 8 && value < t - 1e-3; step++) {
-                            double gx = sample(x + half, y, z) - sample(x - half, y, z);
-                            double gy = sample(x, y + half, z) - sample(x, y - half, z);
-                            double gz = sample(x, y, z + half) - sample(x, y, z - half);
-                            double g = std::hypot(gx, gy, gz);
-                            if (g < 1e-6) break;
-                            double move = t - value;
-                            x += move * gx / g; y += move * gy / g; z += move * gz / g;
-                            length += move;
-                            value = sample(x, y, z);
+        {
+            double t = open_radius;
+            double floor_value = -(probe + clamp);
+            std::vector<float> original = field;
+            auto sample = [&](double x, double y, double z) -> double {
+                double fx = std::min(nx - 1.001, std::max(0.0, (x - origin[0]) / h));
+                double fy = std::min(ny - 1.001, std::max(0.0, (y - origin[1]) / h));
+                double fz = std::min(nz - 1.001, std::max(0.0, (z - origin[2]) / h));
+                long i = long(std::floor(fx)), j = long(std::floor(fy)), k = long(std::floor(fz));
+                double u = fx - i, v = fy - j, w = fz - k;
+                long c = k * plane + j * nx + i;
+                double c00 = original[c] + u * (double(original[c + 1]) - original[c]);
+                double c10 = original[c + nx] + u * (double(original[c + nx + 1]) - original[c + nx]);
+                double c01 = original[c + plane] + u * (double(original[c + plane + 1]) - original[c + plane]);
+                double c11 = original[c + plane + nx] + u * (double(original[c + plane + nx + 1]) - original[c + plane + nx]);
+                double c0 = c00 + v * (c10 - c00), c1 = c01 + v * (c11 - c01);
+                return c0 + w * (c1 - c0);
+            };
+            parallel_for(threads, nz, [&](long begin, long end) {
+                for (long iz = begin; iz < end; iz++) {
+                    for (long iy = 0; iy < ny; iy++) {
+                        for (long ix = 0; ix < nx; ix++) {
+                            long i = iz * plane + iy * nx + ix;
+                            double f = original[i];
+                            if (!(f < t && f > reach)) continue;
+                            double x = origin[0] + ix * h, y = origin[1] + iy * h, z = origin[2] + iz * h;
+                            double value = f, length = 0;
+                            for (int step = 0; step < 8 && value < t - 1e-3; step++) {
+                                double gx = sample(x + half, y, z) - sample(x - half, y, z);
+                                double gy = sample(x, y + half, z) - sample(x, y - half, z);
+                                double gz = sample(x, y, z + half) - sample(x, y, z - half);
+                                double g = std::hypot(gx, gy, gz);
+                                if (g < 1e-6) break;
+                                double move = t - value;
+                                x += move * gx / g; y += move * gy / g; z += move * gz / g;
+                                length += move;
+                                value = sample(x, y, z);
+                            }
+                            double distance = length + std::max(0.0, t - value);
+                            double opened = t - distance + allowance;
+                            if (opened < f) {
+                                field[i] = float(std::max(opened, floor_value));
+                                if (want_weight) weight[i] = 255;
+                            }
                         }
-                        double distance = length + std::max(0.0, t - value);
-                        double opened = t - distance + allowance;
-                        if (opened < f) field[i] = float(std::max(opened, floor_value));
                     }
-                    if (field[i] > 0) interior_here++;
                 }
-            }
+            });
         }
-        interior_count += interior_here;
-        });
+        if (want_weight) {
+            // Spread over about an A, then full strength wherever the spread is a third or more.
+            gaussian_blur_3d(weight, int(nx), int(ny), int(nz), 1.0 / h, threads);
+            for (auto &w : weight) w = uint8_t(std::min(255, 3 * int(w)));
+        }
+        long interior = 0;
+        for (long i = 0; i < count; i++) if (field[i] > 0) interior++;
+        interior_count = interior;
     }
     grid.timings.distance = ms_since(mark);
 
@@ -1178,7 +1197,24 @@ grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing,
     if (capped) exact = field;
     gaussian_blur_3d(field, int(nx), int(ny), int(nz), sigma / h, threads);
     if (capped) {
-        for (long i = 0; i < count; i++) field[i] = float(exact[i] + max_shift * std::tanh((double(field[i]) - exact[i]) / max_shift));
+        bool lift = open_uncapped && !weight.empty();
+        for (long i = 0; i < count; i++) {
+            double capped_value = exact[i] + max_shift * std::tanh((double(field[i]) - exact[i]) / max_shift);
+            // open_uncapped: the plain blur round the cuts, faded in by the weight.
+            double share = lift ? weight[i] / 255.0 : 0;
+            field[i] = float(capped_value + share * (double(field[i]) - capped_value));
+        }
+        release(exact);
+    }
+    // heal_blur: round the cuts further - the field blurred again, to heal_blur in all, faded in by
+    // the weight. (Too wide makes dents of its own where the weight fades: 1.3 A did.)
+    if (heal_blur > sigma && !weight.empty()) {
+        std::vector<float> wider = field;
+        gaussian_blur_3d(wider, int(nx), int(ny), int(nz), std::sqrt(heal_blur * heal_blur - sigma * sigma) / h, threads);
+        for (long i = 0; i < count; i++) {
+            double share = weight[i] / 255.0;
+            if (share > 0) field[i] = float(field[i] + share * (double(wider[i]) - field[i]));
+        }
     }
     grid.iso = sigma > 0 ? level_enclosing(field, interior_count.load(), clamp) : 0;
     grid.timings.blur = ms_since(mark);
@@ -1256,7 +1292,8 @@ void vertex_atoms(surface_t &s, const std::vector<atom_t> &atoms, const std::vec
 surface_t surface_from_atoms(const std::vector<atom_t> &atoms, const std::vector<int32_t> &residue_of, double probe, const options_t &options) {
     surface_t surface;
     int threads = resolve_threads(options.threads);
-    grid_t grid = ses_field(atoms, probe, options.spacing, options.sigma, options.max_shift, options.open_radius, threads);
+    grid_t grid = ses_field(atoms, probe, options.spacing, options.sigma, options.max_shift, options.open_radius, threads,
+                            options.open_uncapped, options.heal_blur);
     surface.timings = grid.timings;
     if (grid.field.empty()) return surface;
     auto mark = clock_type::now();

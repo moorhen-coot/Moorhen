@@ -38,6 +38,17 @@ export const smoothSurfaceSetting = {
      */
     openRadius: 0.5,
     /**
+     * Where the opening cut a neck, it leaves the lobe the saddle's concave footprint: a dent, deeper
+     * than the cap lets the blur fill. Round the cuts (fading out over about an A), no cap on the blur.
+     */
+    openUncapped: true,
+    /**
+     * And round the cuts, the field blurred more, to this sigma in all, Å (at most `sigma`: off). 0.8
+     * about halves the deepest dents but changes the protein's overall shape a little; 1.3 makes
+     * dents of its own where it fades out. 0.6 by eye.
+     */
+    healBlur: 0.6,
+    /**
      * Split every triangle once, with positions and normals from the field : the
      * diffuse light's diamonds at a 0.5 A grid mostly gone, for four times the triangles rather
      * than eight times the field a 0.25 A grid costs.

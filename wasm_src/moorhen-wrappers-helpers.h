@@ -2174,7 +2174,7 @@ inline emscripten::val getLineIndicesFromSimpleMesh(const coot::simple_mesh_t &m
 /*
  * Moorhen's smooth surface (smooth-surface.hh) of atoms packed as a Float32Array (x, y, z, van der
  * Waals radius per atom), with an Int32Array residue index per atom, and an options object (spacing,
- * sigma, maxShift, openRadius, refine; threads) - anything left out is the default. Returns the
+ * sigma, maxShift, openRadius, openUncapped, healBlur, refine; threads) - anything left out is the default. Returns the
  * surface (positions, normals, indices, atom, other, weight, near, nearGap, as typed arrays: the
  * AtomSurface of baby-gru/src/utils/smoothSurface.ts) plus the grid and timings for the log; null if
  * there is nothing to contour.
@@ -2192,6 +2192,8 @@ inline emscripten::val smoothSurfaceFromAtoms(const emscripten::val &packedAtoms
     if (!option("maxShift").isUndefined()) options.max_shift = option("maxShift").as<double>();  // Infinity passes as infinity
     if (!option("openRadius").isUndefined()) options.open_radius = option("openRadius").as<double>();
     if (!option("refine").isUndefined()) options.refine = option("refine").as<bool>();
+    if (!option("openUncapped").isUndefined()) options.open_uncapped = option("openUncapped").as<bool>();
+    if (!option("healBlur").isUndefined()) options.heal_blur = option("healBlur").as<double>();
     if (!option("threads").isUndefined()) options.threads = option("threads").as<int>();
     smooth_surface::surface_t s = smooth_surface::surface_from_atoms(atoms, residue_of, probe, options);
     if (s.indices.empty()) return emscripten::val::null();
