@@ -550,7 +550,7 @@ describe('Testing molecules_container_js', () => {
     test('undo restores the right molecule when two molecules have been edited', () => {
         // Every molecule used to back up to coot-backup/placeholder-<n>, so the
         // second molecule's backup overwrote the first's, and undo() on the
-        // first molecule loaded the second (patches/coot-undo-backup-per-molecule.patch).
+        // first molecule loaded the second (fixed in coot by pemsley/coot#416).
         const imolA = molecules_container.read_pdb('./5a3h.pdb')
         const imolB = molecules_container.read_pdb('./tm-A.pdb')
         const nAtomsA = molecules_container.get_number_of_atoms(imolA)

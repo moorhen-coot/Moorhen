@@ -2223,9 +2223,9 @@ type LoadedCootModule = { returnedModule: libcootApi.CootModule; scriptName: str
 
 const createModuleFrom = async (scriptName: string, memory64: boolean): Promise<LoadedCootModule> => {
     // Fetch the Emscripten glue once and run it from a blob: URL. Emscripten starts each of the
-    // 32 pthread workers from mainScriptUrlOrBlob, so handing it that blob: URL means they start
+    // pthread workers from mainScriptUrlOrBlob, so handing it that blob: URL means they start
     // from memory, instead of each requesting moorhen64.js from the server again (which showed up
-    // in the Network panel as 32 more downloads competing with the WASM). The glue still finds
+    // in the Network panel as one more download for each worker, competing with the WASM). The glue still finds
     // moorhen64.wasm next to this worker, because it locates it from self.location, not from the
     // URL it was loaded from.
     const response = await fetch(`./${scriptName}`)
@@ -2323,7 +2323,11 @@ const dispatchMessage = function (e: MessageEvent) {
                     molecules_container.set_refinement_is_verbose(false)
                     molecules_container.set_map_sampling_rate(1.7)
                     molecules_container.set_map_is_contoured_with_thread_pool(true)
-                    molecules_container.set_max_number_of_threads(8)
+                    // The pthread worker pool was sized for this limit when the module started
+                    // (wasm_src/coot_env_web.js), so don't give coot a bigger one.
+                    const threadLimit = cootModule.moorhenThreadLimit ?? 8
+                    molecules_container.set_max_number_of_threads(threadLimit)
+                    console.log(`Coot thread limit ${threadLimit}, pthread pool of ${cootModule.moorhenPthreadPoolSize ?? "?"} workers`)
                     cootModule.FS.mkdir("COOT_BACKUP")
                     // Only report success once molecules_container actually exists.
                     postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
