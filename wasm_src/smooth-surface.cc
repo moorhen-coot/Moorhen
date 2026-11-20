@@ -897,8 +897,8 @@ mesh_t finish_contour(const std::vector<float> &field, const grid_t &grid, conto
 // ---------------------------------------------------------------------------------------------
 // sesField
 
-grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma, double max_shift, double open_radius,
-                 int threads, bool open_uncapped, double heal_blur) {
+grid_t ses_field_unblurred(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma, double max_shift,
+                           double open_radius, int threads, bool open_uncapped, double heal_blur) {
     threads = resolve_threads(threads);
     grid_t grid;
     if (atoms.empty()) return grid;
@@ -1180,16 +1180,37 @@ grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing,
                 }
             });
         }
-        if (want_weight) {
-            // Spread over about an A, then full strength wherever the spread is a third or more.
-            gaussian_blur_3d(weight, int(nx), int(ny), int(nz), 1.0 / h, threads);
-            for (auto &w : weight) w = uint8_t(std::min(255, 3 * int(w)));
-        }
         long interior = 0;
         for (long i = 0; i < count; i++) if (field[i] > 0) interior++;
         interior_count = interior;
     }
     grid.timings.distance = ms_since(mark);
+
+    grid.field = std::move(field);
+    grid.changed = std::move(weight);
+    grid.interior = interior_count.load();
+    grid.clamp = clamp;
+    grid.nx = int(nx); grid.ny = int(ny); grid.nz = int(nz);
+    grid.origin[0] = origin[0]; grid.origin[1] = origin[1]; grid.origin[2] = origin[2];
+    grid.spacing = h;
+    return grid;
+}
+
+void blur_field(grid_t &grid, double sigma, double max_shift, bool open_uncapped, double heal_blur, int threads) {
+    threads = resolve_threads(threads);
+    if (grid.field.empty()) return;
+    auto mark = clock_type::now();
+    long nx = grid.nx, ny = grid.ny, nz = grid.nz;
+    long count = nx * ny * nz;
+    double h = grid.spacing;
+    std::vector<float> &field = grid.field;
+    // The cuts' weight: the points the opening changed, spread over about an A, then full strength
+    // wherever the spread is a third or more.
+    std::vector<uint8_t> &weight = grid.changed;
+    if (!weight.empty()) {
+        gaussian_blur_3d(weight, int(nx), int(ny), int(nz), 1.0 / h, threads);
+        for (auto &w : weight) w = uint8_t(std::min(255, 3 * int(w)));
+    }
 
     // 4. Blur, the cap, and the level that keeps the enclosed volume.
     bool capped = sigma > 0 && std::isfinite(max_shift) && max_shift > 0;
@@ -1216,13 +1237,15 @@ grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing,
             if (share > 0) field[i] = float(field[i] + share * (double(wider[i]) - field[i]));
         }
     }
-    grid.iso = sigma > 0 ? level_enclosing(field, interior_count.load(), clamp) : 0;
+    release(weight);
+    grid.iso = sigma > 0 ? level_enclosing(field, grid.interior, grid.clamp) : 0;
     grid.timings.blur = ms_since(mark);
+}
 
-    grid.field = std::move(field);
-    grid.nx = int(nx); grid.ny = int(ny); grid.nz = int(nz);
-    grid.origin[0] = origin[0]; grid.origin[1] = origin[1]; grid.origin[2] = origin[2];
-    grid.spacing = h;
+grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma, double max_shift, double open_radius,
+                 int threads, bool open_uncapped, double heal_blur) {
+    grid_t grid = ses_field_unblurred(atoms, probe, spacing, sigma, max_shift, open_radius, threads, open_uncapped, heal_blur);
+    blur_field(grid, sigma, max_shift, open_uncapped, heal_blur, threads);
     return grid;
 }
 

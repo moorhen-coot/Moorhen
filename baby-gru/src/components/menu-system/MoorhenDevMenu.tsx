@@ -620,7 +620,7 @@ export const MoorhenDevMenu = () => {
                         checked={noWebGPU === null && smoothOnGpu}
                         disabled={noWebGPU !== null}
                         label="Finish on the GPU"
-                        tooltip={`The C++ makes the field in the worker, the GPU the contour, split, normals and vertex atoms. Off, or no WebGPU: the C++ makes all of it.${noWebGPU ? ` No WebGPU here: ${noWebGPU}` : ""}`}
+                        tooltip={`The C++ makes the field in the worker, the GPU the contour, split, normals and vertex atoms. On by default; off, no WebGPU, or a software adapter (SwiftShader): the C++ makes all of it.${noWebGPU ? ` No WebGPU here: ${noWebGPU}` : ""}`}
                         onChange={() => {
                             smoothSurfaceSetting.gpu = !smoothOnGpu;
                             setSmoothOnGpu(!smoothOnGpu);

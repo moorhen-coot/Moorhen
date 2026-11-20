@@ -2269,6 +2269,43 @@ inline emscripten::val smoothSurfaceFieldFromAtoms(const emscripten::val &packed
     return result;
 }
 
+/*
+ * The smooth surface's field up to the opening, unblurred, for the blur and everything after to be made
+ * on the GPU (baby-gru/src/WebGPUComponents/smoothSurface, stage 2): the same atoms and options as
+ * smoothSurfaceFromAtoms; returns { field, changed, interior, clamp, nx, ny, nz, origin, spacing,
+ * timings } - `field` a Float32Array (x fastest, positive inside), `changed` a Uint8Array (255 where the
+ * opening changed the field) or null when neither openUncapped nor healBlur wants it, `interior` the
+ * points inside (the volume the level keeps) - or null if there are no atoms.
+ */
+inline emscripten::val smoothSurfaceUnblurredFieldFromAtoms(const emscripten::val &packedAtoms, double probe, const emscripten::val &optionsObject) {
+    std::vector<smooth_surface::atom_t> atoms = smoothSurfaceAtoms(packedAtoms);
+    smooth_surface::options_t o = smoothSurfaceOptions(optionsObject);
+    smooth_surface::grid_t grid = smooth_surface::ses_field_unblurred(atoms, probe, o.spacing, o.sigma, o.max_shift, o.open_radius, o.threads,
+                                                                      o.open_uncapped, o.heal_blur);
+    if (grid.field.empty()) return emscripten::val::null();
+    auto copy = [](const char *type, const auto &data) {
+        emscripten::val view{ emscripten::typed_memory_view(data.size(), data.data()) };
+        emscripten::val result = emscripten::val::global(type).new_(double(data.size()));
+        result.template call<void>("set", view);
+        return result;
+    };
+    auto result = emscripten::val::object();
+    result.set("field", copy("Float32Array", grid.field));
+    result.set("changed", grid.changed.empty() ? emscripten::val::null() : copy("Uint8Array", grid.changed));
+    result.set("interior", double(grid.interior));
+    result.set("clamp", grid.clamp);
+    result.set("nx", grid.nx); result.set("ny", grid.ny); result.set("nz", grid.nz);
+    auto origin = emscripten::val::array();
+    for (int k = 0; k < 3; k++) origin.call<void>("push", grid.origin[k]);
+    result.set("origin", origin);
+    result.set("spacing", grid.spacing);
+    auto timings = emscripten::val::object();
+    timings.set("sas", grid.timings.sas); timings.set("seeds", grid.timings.seeds); timings.set("transform", grid.timings.transform);
+    timings.set("distance", grid.timings.distance);
+    result.set("timings", timings);
+    return result;
+}
+
 inline emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
 
     auto floatArray = emscripten::convertJSArrayToNumberVector<float>(floatArrayObject);

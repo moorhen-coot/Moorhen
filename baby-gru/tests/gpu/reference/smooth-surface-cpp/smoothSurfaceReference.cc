@@ -6,7 +6,8 @@
 // atoms.bin (makeAtoms.ts): u32 n; n x f32 (x, y, z, r); n x i32 residue; f32 probe.
 // out.bin, little-endian: the input as read; i32 nx, ny, nz; f32 origin x, y, z, spacing; f32 field;
 // u32 vertices, indices; f32 positions, normals (3 per vertex); u32 indices; i32 atom, other; f32 weight;
-// i32 near, f32 near gap (4 per vertex).
+// i32 near, f32 near gap (4 per vertex); then stage 2's hand-off (ses_field_unblurred): f32 field
+// (unblurred, opened), u32 changed-mask length (0 if none) and its bytes, f64 interior, f64 clamp.
 #include "smooth-surface.hh"
 
 #include <cstdio>
@@ -44,6 +45,13 @@ int main(int argc, char **argv) {
     put(s.positions.data(), 4 * s.positions.size()); put(s.normals.data(), 4 * s.normals.size()); put(s.indices.data(), 4 * s.indices.size());
     put(s.atom.data(), 4 * s.atom.size()); put(s.other.data(), 4 * s.other.size()); put(s.weight.data(), 4 * s.weight.size());
     put(s.near.data(), 4 * s.near.size()); put(s.near_gap.data(), 4 * s.near_gap.size());
+    smooth_surface::grid_t unblurred = smooth_surface::ses_field_unblurred(atoms, probe, o.spacing, o.sigma, o.max_shift, o.open_radius,
+                                                                           o.threads, o.open_uncapped, o.heal_blur);
+    put(unblurred.field.data(), 4 * unblurred.field.size());
+    uint32_t changed = uint32_t(unblurred.changed.size());
+    put(&changed, 4); put(unblurred.changed.data(), changed);
+    double tail[2] = {double(unblurred.interior), unblurred.clamp};
+    put(tail, 16);
     std::fclose(out);
     std::fprintf(stderr, "%u atoms; grid %dx%dx%d; %u vertices, %u triangles\n", n, grid.nx, grid.ny, grid.nz, counts[0], counts[1] / 3);
     return 0;

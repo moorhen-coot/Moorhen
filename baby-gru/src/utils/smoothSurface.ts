@@ -57,9 +57,15 @@ export const smoothSurfaceSetting = {
     /**
      * With WebGPU, the surface finished on the GPU from the C++'s field (contour, split, normals, vertex
      * atoms: src/WebGPUComponents/smoothSurface); the C++ makes all of it without WebGPU, when this is
-     * off, or if the GPU fails. Off by default until timed on real GPUs (stage 1, 2026-11-20).
+     * off, or if the GPU fails. On a real GPU it is about twice as fast (3j2w on an RX 9070: 455 ms
+     * against the C++'s 869 ms for contour and finish, 2026-11-20).
      */
-    gpu: false,
+    gpu: true,
+    /**
+     * Use the GPU even on a software adapter (SwiftShader, llvmpipe, WARP), where it is 3-4 times slower
+     * than the C++: for tests, which have only SwiftShader on Linux.
+     */
+    gpuOnSoftware: false,
     /**
      * How softly the colours of a surface made from the atoms change from one atom's to the next,
      * Å (atomSurfaceColours): 0 is a hard edge, each vertex its nearest atom's, as M2T has it -

@@ -336,12 +336,13 @@ export class GpuMetaBalls {
      * edge, ((z * ny + y) * nx + x) * 3 + axis. Rejects on a WebGPU error, so the caller can fall
      * back to the CPU.
      *
-     * Slab by slab like generate, each slab's planes uploaded from `field`; one slab in flight at
+     * Slab by slab like generate, each slab's planes uploaded from `field` - or copied from it, if it
+     * is a buffer already on the GPU (with COPY_SRC); one slab in flight at
      * a time, which is one wait for any molecule whose grid fits a slab (16M points by default).
      * Output room is a guess from the slab's size, and the whole contour is made again with more
      * if a slab outgrows it.
      */
-    async contourField(field: Float32Array, n: readonly [number, number, number], min: readonly [number, number, number],
+    async contourField(field: Float32Array | GPUBuffer, n: readonly [number, number, number], min: readonly [number, number, number],
                        cell: number, options: { maxSlabPoints?: number; room?: number } = {}):
         Promise<{ positions: Float32Array; indices: Uint32Array; keys: Uint32Array; slabs: number; retries: number }> {
         let room = options.room ?? 1;
@@ -353,7 +354,7 @@ export class GpuMetaBalls {
         }
     }
 
-    private async contourOnce(field: Float32Array, n: readonly [number, number, number], min: readonly [number, number, number],
+    private async contourOnce(field: Float32Array | GPUBuffer, n: readonly [number, number, number], min: readonly [number, number, number],
                               cell: number, room: number, maxSlabPoints?: number):
         Promise<{ mesh?: { positions: Float32Array; indices: Uint32Array; keys: Uint32Array; slabs: number }; overflow?: number }> {
         const [nx, ny, nz] = n;
@@ -412,7 +413,10 @@ export class GpuMetaBalls {
                 u.set([nx, ny, nz], 4);
                 u.set([zs, fieldPlanes, countPlanes, cellPlanes, ownedPlanes, capTriangles, capVertices, 0], 16);
                 this.device.queue.writeBuffer(params, 0, buf);
-                this.device.queue.writeBuffer(fieldBuffer, 0, field.buffer, field.byteOffset + zs * plane * 4, fieldPlanes * plane * 4);
+                // The field from the CPU, or copied from a buffer already on the GPU (needs COPY_SRC).
+                if (field instanceof Float32Array) {
+                    this.device.queue.writeBuffer(fieldBuffer, 0, field.buffer, field.byteOffset + zs * plane * 4, fieldPlanes * plane * 4);
+                }
 
                 const slabBuffers: GPUBuffer[] = [];
                 const slabBuffer = (label: string, bytes: number) => {
@@ -425,6 +429,7 @@ export class GpuMetaBalls {
                 const indices = slabBuffer("indices", capTriangles * 12);
 
                 const encoder = this.device.createCommandEncoder({ label: "contour slab" });
+                if (!(field instanceof Float32Array)) encoder.copyBufferToBuffer(field, zs * plane * 4, fieldBuffer, 0, fieldPlanes * plane * 4);
                 this.dispatch(encoder, "countVertices", params, [fieldBuffer, edgeMask, vertexCount], countPlanes * plane);
                 if (cellPlanes > 0) {
                     this.dispatch(encoder, "countTriangles", params, [fieldBuffer, this.table, triangleCount], cellPlanes * cellPlane);

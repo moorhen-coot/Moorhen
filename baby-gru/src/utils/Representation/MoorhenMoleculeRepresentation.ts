@@ -28,7 +28,7 @@ import {
 } from "../smoothSurface";
 import { influenceListsFromShares } from "../../WebGLgComponents/ownedMeshPick";
 import { surfaceAtomRadius } from "../m2tAtomRadii";
-import { type SmoothFieldGrid, sharedGpuSmoothSurface } from "../../WebGPUComponents/smoothSurface";
+import { type SmoothUnblurredField, gpuSmoothSurfaceIfFast } from "../../WebGPUComponents/smoothSurface";
 import { surfaceChainGroups } from "../surfaceChainGroups";
 
 /**
@@ -1854,25 +1854,28 @@ export class MoleculeRepresentation {
     async atomSurfaceFor(atoms: SurfaceAtom[], residueOf: Int32Array, probe: number,
                          options: Record<string, number | boolean>): Promise<AtomSurface | null> {
         const packed = packAtoms(atoms);
-        const gpu = smoothSurfaceSetting.gpu && options.refine !== false ? await sharedGpuSmoothSurface() : null;
+        const gpu = smoothSurfaceSetting.gpu && options.refine !== false ? await gpuSmoothSurfaceIfFast(smoothSurfaceSetting.gpuOnSoftware) : null;
         if (gpu) {
             try {
                 const started = performance.now();
                 const response = (await this.commandCentre.cootCommand(
-                    { returnType: "smoothed_field", command: "shim_smooth_surface_field_from_atoms", commandArgs: [packed.slice(), probe, options] },
+                    { returnType: "smoothed_field", command: "shim_smooth_surface_unblurred_field_from_atoms", commandArgs: [packed.slice(), probe, options] },
                     false
-                )) as moorhen.WorkerResponse<{ field: (SmoothFieldGrid & { input: Float32Array; timings: Record<string, number> }) | null }>;
+                )) as moorhen.WorkerResponse<{ field: (SmoothUnblurredField & { timings: Record<string, number> }) | null }>;
                 if (response.data.result.status !== "Completed") throw new Error("the worker made no field");
                 const field = response.data.result.result.field;
                 if (!field) return null;
                 const fieldMs = performance.now() - started;
-                const surface = await gpu.surfaceFromField(field.input, field, packed, residueOf, probe);
+                const surface = await gpu.surfaceFromUnblurred(field, {
+                    sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
+                    openUncapped: smoothSurfaceSetting.openUncapped, healBlur: smoothSurfaceSetting.healBlur,
+                }, packed, residueOf, probe);
                 if (surface) {
                     const t = field.timings;
                     console.debug(`Smooth surface: ${atoms.length} atoms, grid ${field.nx}x${field.ny}x${field.nz} at ${field.spacing.toFixed(2)} Å; ` +
-                        `${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles; field (C++) ${fieldMs.toFixed(0)} ms ` +
-                        `(sas ${t.sas.toFixed(0)}, seeds ${t.seeds.toFixed(0)}, transform ${t.transform.toFixed(0)}, distance ${t.distance.toFixed(0)}, ` +
-                        `blur ${t.blur.toFixed(0)}), contour (WebGPU) ${surface.timings.contour.toFixed(0)} ms, finish (WebGPU) ${surface.timings.finish.toFixed(0)} ms`);
+                        `${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles; field to the opening (C++) ${fieldMs.toFixed(0)} ms ` +
+                        `(sas ${t.sas.toFixed(0)}, seeds ${t.seeds.toFixed(0)}, transform ${t.transform.toFixed(0)}, distance ${t.distance.toFixed(0)}), ` +
+                        `blur + contour (WebGPU) ${surface.timings.contour.toFixed(0)} ms, finish (WebGPU) ${surface.timings.finish.toFixed(0)} ms`);
                 }
                 return surface;
             } catch (err) {

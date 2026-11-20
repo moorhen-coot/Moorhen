@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import type { SmoothSurfaceReport } from "./cases/smoothSurface.case";
+import type { SmoothBlurReport } from "./cases/smoothSurfaceBlur.case";
 import { resultOrSkip, runGpuCase } from "./helpers/gpuPage";
 
 /**
@@ -13,22 +14,25 @@ import { resultOrSkip, runGpuCase } from "./helpers/gpuPage";
  */
 const hasCompiler = spawnSync("c++", ["--version"]).status === 0;
 
-test("GPU smooth surface: contour, split and vertex atoms match the C++ (first 40 atoms of 1df7)", async ({ page }) => {
-    test.skip(!hasCompiler, "No C++ compiler to make the reference with");
-    test.setTimeout(180_000);
+/** The C++ reference for the first `atoms` atoms of 1df7 (see smoothSurfaceReference.cc), made natively. */
+function makeReference(atoms: number): Buffer {
     const work = mkdtempSync(join(tmpdir(), "smooth-surface-gpu-"));
     const root = join(__dirname, "../..");
     const wasmSrc = join(root, "../wasm_src");
     const reference = join(__dirname, "reference/smooth-surface-cpp");
     execFileSync("npx", ["esbuild", join(reference, "makeAtoms.ts"), "--bundle", "--platform=node", `--outfile=${join(work, "makeAtoms.js")}`],
         { cwd: root, stdio: "ignore" });
-    execFileSync("node", [join(work, "makeAtoms.js"), join(root, "tests/test_data/1df7.pdb"), "40", join(work, "atoms.bin")]);
+    execFileSync("node", [join(work, "makeAtoms.js"), join(root, "tests/test_data/1df7.pdb"), String(atoms), join(work, "atoms.bin")]);
     execFileSync("c++", ["-O2", "-std=c++17", "-pthread", `-I${wasmSrc}`, "-o", join(work, "reference"),
         join(reference, "smoothSurfaceReference.cc"), join(wasmSrc, "smooth-surface.cc")]);
     execFileSync(join(work, "reference"), [join(work, "atoms.bin"), join(work, "out.bin")], { stdio: "ignore" });
+    return readFileSync(join(work, "out.bin"));
+}
 
-    const r = resultOrSkip(await runGpuCase<SmoothSurfaceReport>(page, "smoothSurface.case.ts", null,
-        { "reference.bin": readFileSync(join(work, "out.bin")) }));
+test("GPU smooth surface: contour, split and vertex atoms match the C++ (first 40 atoms of 1df7)", async ({ page }) => {
+    test.skip(!hasCompiler, "No C++ compiler to make the reference with");
+    test.setTimeout(180_000);
+    const r = resultOrSkip(await runGpuCase<SmoothSurfaceReport>(page, "smoothSurface.case.ts", null, { "reference.bin": makeReference(40) }));
     console.log(`GPU smooth surface: ${JSON.stringify(r)}`);
     expect(r.atoms).toBe(40);
     expect(r.cppVertices).toBeGreaterThan(5000);
@@ -48,4 +52,18 @@ test("GPU smooth surface: contour, split and vertex atoms match the C++ (first 4
     expect(r.nearDiffers).toBeLessThanOrEqual(4);
     expect(r.maxWeightError).toBeLessThan(1e-4);
     expect(r.maxGapError).toBeLessThan(1e-4);
+});
+
+test("GPU smooth surface: blur, cap, heal and level match the C++ (first 40 atoms of 1df7)", async ({ page }) => {
+    test.skip(!hasCompiler, "No C++ compiler to make the reference with");
+    test.setTimeout(180_000);
+    const r = resultOrSkip(await runGpuCase<SmoothBlurReport>(page, "smoothSurfaceBlur.case.ts", null, { "reference.bin": makeReference(40) }));
+    console.log(`GPU smooth surface blur: ${JSON.stringify(r)}`);
+    expect(r.changed).toBeGreaterThan(0);
+    // float32 sums on the GPU against the C++'s double.
+    expect(r.maxInputErrorNearSurface).toBeLessThan(1e-4);
+    expect(r.maxInputError).toBeLessThan(1e-3);
+    expect(r.gpuVertices).toBe(r.cppVertices);
+    expect(r.gpuTriangles).toBe(r.cppTriangles);
+    expect(r.unmatched1e2).toBe(0);
 });

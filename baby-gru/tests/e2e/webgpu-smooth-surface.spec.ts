@@ -30,6 +30,7 @@ test("the GPU finishes the same surface the C++ makes", async ({ page }) => {
             return { vertices: rep.smoothColouring.vertex.atom.length, triangles: rep.smoothColouring.indices.length / 3, hasBuffer: !!buffer };
         };
         smoothSurfaceSetting.gpu = true;
+        smoothSurfaceSetting.gpuOnSoftware = true;
         await molecule.show("MolecularSurface");
         const representation = molecule.representations.find((r: any) => r.style === "MolecularSurface");
         const gpu = sizes(representation);

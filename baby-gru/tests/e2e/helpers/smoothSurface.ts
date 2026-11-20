@@ -24,6 +24,8 @@ export async function checkDefaultSmoothSurface(page: Page, gpu = false): Promis
         const molecule = instance.getMoleculeList()[0];
         const { smoothSurfaceSetting } = await import("/src/utils/smoothSurface.ts");
         smoothSurfaceSetting.gpu = gpu;
+        // The test browsers' WebGPU is SwiftShader, which the app would leave to the C++.
+        smoothSurfaceSetting.gpuOnSoftware = gpu;
         await molecule.show("MolecularSurface");
         const representation = molecule.representations.find((r: any) => r.style === "MolecularSurface");
         const hasAdapter = !!(await (navigator as any).gpu?.requestAdapter?.().catch(() => null));

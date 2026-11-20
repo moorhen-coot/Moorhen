@@ -108,6 +108,11 @@ namespace smooth_surface {
         //! the level to contour at: inside is above it
         double iso = 0;
         timings_t timings;
+        //! Between ses_field_unblurred and blur_field only: the points the opening changed (255; empty if
+        //! neither open_uncapped nor heal_blur wants them), the points inside, and the field's clamp.
+        std::vector<uint8_t> changed;
+        long interior = 0;
+        double clamp = 0;
     };
 
     //! How many of its nearest atoms a vertex keeps for its colour.
@@ -134,7 +139,19 @@ namespace smooth_surface {
         double spacing = 0;
     };
 
-    //! The blurred SES signed distance field of these atoms (empty field if there are none).
+    //! The SES signed distance field of these atoms, opened, not yet blurred (steps 1-3b), with what
+    //! blur_field needs; the GPU blurs it itself (baby-gru/src/WebGPUComponents/smoothSurface).
+    grid_t ses_field_unblurred(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma,
+                               double max_shift = std::numeric_limits<double>::infinity(), double open_radius = 0, int threads = 0,
+                               bool open_uncapped = false, double heal_blur = 0);
+
+    //! Step 4 on a field from ses_field_unblurred: the cuts' weight spread, the blur, the cap, the heal
+    //! blur, and the level that keeps the enclosed volume (grid.iso).
+    void blur_field(grid_t &grid, double sigma, double max_shift = std::numeric_limits<double>::infinity(),
+                    bool open_uncapped = false, double heal_blur = 0, int threads = 0);
+
+    //! The blurred SES signed distance field of these atoms (empty field if there are none):
+    //! ses_field_unblurred then blur_field.
     grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing, double sigma,
                      double max_shift = std::numeric_limits<double>::infinity(), double open_radius = 0, int threads = 0,
                      bool open_uncapped = false, double heal_blur = 0);

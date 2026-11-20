@@ -1902,6 +1902,12 @@ const describeError = (err: any): string => {
 
 type SmoothSurfaceOptions = Record<string, number | boolean>
 type SmoothAtomSurface = { positions: Float32Array; normals: Float32Array; indices: Uint32Array; atom: Int32Array; other: Int32Array; weight: Float32Array; near: Int32Array; nearGap: Float32Array }
+/** What the C++ smoothSurfaceUnblurredFieldFromAtoms returns: the opened field before the blur, and what the blur needs. */
+type SmoothNativeUnblurred = {
+    field: Float32Array; changed: Uint8Array | null; interior: number; clamp: number
+    nx: number; ny: number; nz: number; origin: number[]; spacing: number
+    timings: { sas: number; seeds: number; transform: number; distance: number }
+}
 /** What the C++ smoothSurfaceFieldFromAtoms returns: the field ready to contour, its grid, and timings. */
 type SmoothNativeField = {
     input: Float32Array; nx: number; ny: number; nz: number; origin: number[]; spacing: number
@@ -1945,6 +1951,17 @@ const smoothSurfaceFieldFromAtoms = (packedAtoms: Float32Array, probe: number, o
     const native = (cootModule as unknown as { smoothSurfaceFieldFromAtoms?: (atoms: Float32Array, probe: number,
         options: SmoothSurfaceOptions) => SmoothNativeField | null }).smoothSurfaceFieldFromAtoms
     if (!native) throw new Error("This build of the Coot WASM has no smoothSurfaceFieldFromAtoms: rebuild it with the current wasm_src")
+    return { field: native(packedAtoms, probe, options) }
+}
+
+/**
+ * The smooth surface's field up to the opening, unblurred (C++ smoothSurfaceUnblurredFieldFromAtoms),
+ * for the GPU to blur and finish on the main thread (stage 2): { field } or { field: null }.
+ */
+const smoothSurfaceUnblurredFieldFromAtoms = (packedAtoms: Float32Array, probe: number, options: SmoothSurfaceOptions) => {
+    const native = (cootModule as unknown as { smoothSurfaceUnblurredFieldFromAtoms?: (atoms: Float32Array, probe: number,
+        options: SmoothSurfaceOptions) => SmoothNativeUnblurred | null }).smoothSurfaceUnblurredFieldFromAtoms
+    if (!native) throw new Error("This build of the Coot WASM has no smoothSurfaceUnblurredFieldFromAtoms: rebuild it with the current wasm_src")
     return { field: native(packedAtoms, probe, options) }
 }
 
@@ -2047,6 +2064,9 @@ const doCootCommand = (messageData: {
                 break
             case "shim_smooth_surface_field_from_atoms":
                 cootResult = smoothSurfaceFieldFromAtoms(...commandArgs as [Float32Array, number, SmoothSurfaceOptions])
+                break
+            case "shim_smooth_surface_unblurred_field_from_atoms":
+                cootResult = smoothSurfaceUnblurredFieldFromAtoms(...commandArgs as [Float32Array, number, SmoothSurfaceOptions])
                 break
             default:
                 console.log("Calling",command)
@@ -2579,8 +2599,11 @@ const dispatchMessage = function (e: MessageEvent) {
             ? (result as { result?: { result?: { surface?: SmoothAtomSurface | null } } }).result?.result?.surface : null
         const field = e.data.command === "shim_smooth_surface_field_from_atoms"
             ? (result as { result?: { result?: { field?: SmoothNativeField | null } } }).result?.result?.field : null
+        const unblurred = e.data.command === "shim_smooth_surface_unblurred_field_from_atoms"
+            ? (result as { result?: { result?: { field?: SmoothNativeUnblurred | null } } }).result?.result?.field : null
         const smoothed = surface ? [...new Set(Object.values(surface).map(v => v.buffer as ArrayBuffer))]
-            : field ? [field.input.buffer as ArrayBuffer] : []
+            : field ? [field.input.buffer as ArrayBuffer]
+            : unblurred ? [unblurred.field.buffer as ArrayBuffer, ...(unblurred.changed ? [unblurred.changed.buffer as ArrayBuffer] : [])] : []
         postMessage(result, grid instanceof Float32Array ? [grid.buffer] : smoothed)
     }
 }

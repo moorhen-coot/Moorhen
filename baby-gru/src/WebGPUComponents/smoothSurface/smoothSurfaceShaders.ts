@@ -404,3 +404,208 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
     }
 }
 `;
+
+// -------------------------------------------------------------------------------------------------
+// Stage 2: from the C++'s opened, unblurred field (ses_field_unblurred) to the field to contour - the
+// cuts' weight spread, the blur, the cap, the heal blur, and the level that keeps the enclosed volume
+// (smooth-surface.cc blur_field, gaussian_blur_3d, level_enclosing).
+
+/** Bins of the field's histogram, for the level that keeps the volume (level_enclosing's 8192). */
+export const LEVEL_BINS = 8192;
+
+const BLUR_COMMON = /* wgsl */ `
+struct BlurParams {
+    // Grid points (xyz); w: all of them.
+    dims: vec4u,
+    // x: the axis blurred (0, 1, 2); y: the kernel's radius; z: 1 to lift the cap by the weight;
+    // w: the points inside (the volume the level keeps).
+    step: vec4u,
+    // x: the cap (max_shift); y: the field's clamp (the histogram's range).
+    values: vec4f,
+};
+@group(0) @binding(0) var<uniform> B: BlurParams;
+
+${itemIndexWgsl(SMOOTH_WORKGROUP)}
+// Point i's coordinate along the pass's axis, its stride, and the points along that axis.
+fn alongAxis(i: u32) -> vec3u {
+    let nx = B.dims.x; let ny = B.dims.y;
+    if (B.step.x == 0u) { return vec3u(i % nx, 1u, nx); }
+    if (B.step.x == 1u) { return vec3u((i / nx) % ny, nx, ny); }
+    return vec3u(i / (nx * ny), nx * ny, B.dims.z);
+}
+`;
+
+/** The opening's changed points (bytes, four to a word) as weights 0 or 255. */
+export const WEIGHT_INIT_WGSL = /* wgsl */ `${BLUR_COMMON}
+@group(1) @binding(0) var<storage, read> changed: array<u32>;
+@group(1) @binding(1) var<storage, read_write> weight: array<u32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let i = itemIndex(lid, wid, nwg);
+    if (i >= B.dims.w) { return; }
+    weight[i] = (changed[i >> 2u] >> (8u * (i & 3u))) & 255u;
+}
+`;
+
+/** One pass of the separable Gaussian along an axis, edges clamped (gaussian_blur_3d), float. */
+export const BLUR_WGSL = /* wgsl */ `${BLUR_COMMON}
+@group(1) @binding(0) var<storage, read> kernel: array<f32>;
+@group(1) @binding(1) var<storage, read> source: array<f32>;
+@group(1) @binding(2) var<storage, read_write> output: array<f32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let i = itemIndex(lid, wid, nwg);
+    if (i >= B.dims.w) { return; }
+    let a = alongAxis(i);
+    let start = i - a.x * a.y;
+    let radius = i32(B.step.y);
+    var sum = 0.0;
+    for (var k = -radius; k <= radius; k++) {
+        let j = u32(clamp(i32(a.x) + k, 0, i32(a.z) - 1));
+        sum += kernel[u32(k + radius)] * source[start + j * a.y];
+    }
+    output[i] = sum;
+}
+`;
+
+/** The same on the weights, rounded to 0-255 after each pass as the C++'s uint8 blur rounds them. */
+export const BLUR_WEIGHT_WGSL = /* wgsl */ `${BLUR_COMMON}
+@group(1) @binding(0) var<storage, read> kernel: array<f32>;
+@group(1) @binding(1) var<storage, read> source: array<u32>;
+@group(1) @binding(2) var<storage, read_write> output: array<u32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let i = itemIndex(lid, wid, nwg);
+    if (i >= B.dims.w) { return; }
+    let a = alongAxis(i);
+    let start = i - a.x * a.y;
+    let radius = i32(B.step.y);
+    var sum = 0.0;
+    for (var k = -radius; k <= radius; k++) {
+        let j = u32(clamp(i32(a.x) + k, 0, i32(a.z) - 1));
+        sum += kernel[u32(k + radius)] * f32(source[start + j * a.y]);
+    }
+    // lround: halves away from zero (WGSL's round() would round them to even).
+    output[i] = u32(clamp(floor(sum + 0.5), 0.0, 255.0));
+}
+`;
+
+/** Full strength wherever the spread weight is a third or more. */
+export const WEIGHT_SCALE_WGSL = /* wgsl */ `${BLUR_COMMON}
+@group(1) @binding(0) var<storage, read_write> weight: array<u32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let i = itemIndex(lid, wid, nwg);
+    if (i >= B.dims.w) { return; }
+    weight[i] = min(255u, 3u * weight[i]);
+}
+`;
+
+/** The cap on how far the blur moves the field (tanh), lifted round the cuts by the weight. */
+export const CAP_WGSL = /* wgsl */ `${BLUR_COMMON}
+@group(1) @binding(0) var<storage, read> exact: array<f32>;
+@group(1) @binding(1) var<storage, read> weight: array<u32>;
+@group(1) @binding(2) var<storage, read_write> field: array<f32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let i = itemIndex(lid, wid, nwg);
+    if (i >= B.dims.w) { return; }
+    let shift = B.values.x;
+    let capped = exact[i] + shift * tanh((field[i] - exact[i]) / shift);
+    let share = select(0.0, f32(weight[i]) / 255.0, B.step.z == 1u);
+    field[i] = capped + share * (field[i] - capped);
+}
+`;
+
+/** The heal blur's wider field faded in by the weight. */
+export const HEAL_WGSL = /* wgsl */ `${BLUR_COMMON}
+@group(1) @binding(0) var<storage, read> wider: array<f32>;
+@group(1) @binding(1) var<storage, read> weight: array<u32>;
+@group(1) @binding(2) var<storage, read_write> field: array<f32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let i = itemIndex(lid, wid, nwg);
+    if (i >= B.dims.w) { return; }
+    let share = f32(weight[i]) / 255.0;
+    if (share > 0.0) { field[i] = field[i] + share * (wider[i] - field[i]); }
+}
+`;
+
+/**
+ * The field's histogram over [-clamp, clamp] (level_enclosing). Values at or below -clamp (the bottom
+ * bin: everything well outside) are not counted - the level kernel takes them as the rest - and the
+ * top bin (well inside), as busy, is counted per workgroup first.
+ */
+export const HISTOGRAM_WGSL = /* wgsl */ `${BLUR_COMMON}
+@group(1) @binding(0) var<storage, read> field: array<f32>;
+@group(1) @binding(1) var<storage, read_write> histogram: array<atomic<u32>>;
+
+var<workgroup> top: atomic<u32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let i = itemIndex(lid, wid, nwg);
+    if (i < B.dims.w) {
+        let range = B.values.y;
+        let scale = f32(${LEVEL_BINS}) / (2.0 * range);
+        let b = i32(floor((field[i] + range) * scale));
+        if (b >= ${LEVEL_BINS - 1}) {
+            atomicAdd(&top, 1u);
+        } else if (b > 0) {
+            atomicAdd(&histogram[u32(b)], 1u);
+        }
+    }
+    workgroupBarrier();
+    if (lid.x == 0u) {
+        let n = atomicLoad(&top);
+        if (n > 0u) { atomicAdd(&histogram[${LEVEL_BINS - 1}u], n); }
+    }
+}
+`;
+
+/** The level above which the inside's share of the points lie, into level[0]. One thread. */
+export const LEVEL_WGSL = /* wgsl */ `${BLUR_COMMON}
+@group(1) @binding(0) var<storage, read> histogram: array<u32>;
+@group(1) @binding(1) var<storage, read_write> level: array<f32>;
+
+@compute @workgroup_size(1)
+fn main() {
+    let range = B.values.y;
+    let scale = f32(${LEVEL_BINS}) / (2.0 * range);
+    let wanted = B.step.w;
+    var counted = 0u;
+    for (var b = 1u; b < ${LEVEL_BINS}u; b++) { counted += histogram[b]; }
+    var above = 0u;
+    var result = -range;
+    for (var b = ${LEVEL_BINS - 1}; b >= 0; b--) {
+        let n = select(histogram[u32(b)], B.dims.w - counted, b == 0);
+        if (above + n >= wanted) {
+            let fraction = select(0.0, f32(wanted - above) / f32(n), n > 0u);
+            result = -range + (f32(b) + 1.0 - fraction) / scale;
+            break;
+        }
+        above += n;
+    }
+    level[0] = result;
+}
+`;
+
+/** The field ready to contour: the level less the field (negative inside, the surface at 0). */
+export const CONTOUR_INPUT_WGSL = /* wgsl */ `${BLUR_COMMON}
+@group(1) @binding(0) var<storage, read> field: array<f32>;
+@group(1) @binding(1) var<storage, read> level: array<f32>;
+@group(1) @binding(2) var<storage, read_write> input: array<f32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let i = itemIndex(lid, wid, nwg);
+    if (i >= B.dims.w) { return; }
+    input[i] = level[0] - field[i];
+}
+`;

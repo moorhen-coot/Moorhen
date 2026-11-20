@@ -8,8 +8,9 @@
 import { BufferUsage, ComputeKernel, GpuScan, MapMode, createBuffer } from "../gpu";
 import type { GpuMetaBalls } from "../metaballs";
 import {
-    COLOUR_ATOMS, EDGE_COUNT_WGSL, EDGE_FILL_WGSL, MIDPOINTS_WGSL, MIDPOINT_TOTAL_WGSL, ORIENT_WGSL, REFINE_WGSL, ROW_UNIQUE_WGSL,
-    SMOOTH_WORKGROUP, SPLIT_WGSL, VERTEX_ATOMS_WGSL,
+    BLUR_WEIGHT_WGSL, BLUR_WGSL, CAP_WGSL, COLOUR_ATOMS, CONTOUR_INPUT_WGSL, EDGE_COUNT_WGSL, EDGE_FILL_WGSL, HEAL_WGSL, HISTOGRAM_WGSL,
+    LEVEL_BINS, LEVEL_WGSL, MIDPOINTS_WGSL, MIDPOINT_TOTAL_WGSL, ORIENT_WGSL, REFINE_WGSL, ROW_UNIQUE_WGSL, SMOOTH_WORKGROUP, SPLIT_WGSL,
+    VERTEX_ATOMS_WGSL, WEIGHT_INIT_WGSL, WEIGHT_SCALE_WGSL,
 } from "./smoothSurfaceShaders";
 
 /** The grid the field is on, as the C++ hands it over. */
@@ -19,6 +20,38 @@ export interface SmoothFieldGrid {
     nz: number;
     origin: readonly [number, number, number] | number[];
     spacing: number;
+}
+
+/**
+ * The C++'s field up to the opening, unblurred (smoothSurfaceUnblurredFieldFromAtoms, stage 2's
+ * hand-off): positive inside; `changed` 255 where the opening changed it (null if nothing wants it);
+ * `interior` the points inside, `clamp` the field's range.
+ */
+export interface SmoothUnblurredField extends SmoothFieldGrid {
+    field: Float32Array;
+    changed: Uint8Array | null;
+    interior: number;
+    clamp: number;
+}
+
+/** The blur's options, as smoothSurfaceSetting has them. */
+export interface SmoothBlurOptions {
+    sigma: number;
+    maxShift: number;
+    openUncapped: boolean;
+    healBlur: number;
+}
+
+/** The Gaussian's weights for `sigma` grid points, as gaussian_blur_3d makes them (normalised in double). */
+export function gaussianKernel(sigma: number): Float32Array {
+    const radius = Math.max(1, Math.ceil(3 * sigma));
+    const weights = new Float64Array(2 * radius + 1);
+    let total = 0;
+    for (let i = -radius; i <= radius; i++) {
+        weights[i + radius] = Math.exp(-(i * i) / (2 * sigma * sigma));
+        total += weights[i + radius];
+    }
+    return Float32Array.from(weights, w => w / total);
 }
 
 /** What the C++'s smoothSurfaceFromAtoms returns (AtomSurface in src/utils/smoothSurface.ts), and GPU times. */
@@ -44,7 +77,18 @@ const KERNELS = {
     refine: REFINE_WGSL,
     orient: ORIENT_WGSL,
     vertexAtoms: VERTEX_ATOMS_WGSL,
+    weightInit: WEIGHT_INIT_WGSL,
+    blur: BLUR_WGSL,
+    blurWeight: BLUR_WEIGHT_WGSL,
+    weightScale: WEIGHT_SCALE_WGSL,
+    cap: CAP_WGSL,
+    heal: HEAL_WGSL,
+    histogram: HISTOGRAM_WGSL,
+    level: LEVEL_WGSL,
+    contourInput: CONTOUR_INPUT_WGSL,
 } as const;
+/** Kernels of one thread in all. */
+const SINGLE: readonly KernelName[] = ["midpointTotal", "level"];
 type KernelName = keyof typeof KERNELS;
 
 const { STORAGE, UNIFORM, COPY_SRC, COPY_DST, MAP_READ } = BufferUsage;
@@ -94,18 +138,113 @@ export class GpuSmoothSurface {
         const [scan, ...compiled] = await Promise.all([
             GpuScan.create(device),
             ...names.map(name => ComputeKernel.create(device, {
-                label: `smooth surface ${name}`, code: KERNELS[name], workgroupSize: name === "midpointTotal" ? 1 : SMOOTH_WORKGROUP,
+                label: `smooth surface ${name}`, code: KERNELS[name], workgroupSize: SINGLE.includes(name) ? 1 : SMOOTH_WORKGROUP,
             })),
         ]);
         return new GpuSmoothSurface(device, new Map(names.map((name, i) => [name, compiled[i]])), scan, marchingCubes);
     }
 
     /**
-     * The surface of the field `input` (ready to contour: negative inside, the surface at 0, x fastest)
-     * on `grid`, with each vertex's atoms among `atoms` (x, y, z, r per atom) and `residueOf`. Null if
-     * there is nothing to contour.
+     * Stage 2 then 1: the surface from the C++'s unblurred field - blurred, capped and healed, its level
+     * found and the field made ready to contour on the GPU (contourInputFromUnblurred), then
+     * surfaceFromField. The field stays on the GPU throughout. Null if there is nothing to contour.
      */
-    async surfaceFromField(input: Float32Array, grid: SmoothFieldGrid, atoms: Float32Array, residueOf: Int32Array,
+    async surfaceFromUnblurred(unblurred: SmoothUnblurredField, options: SmoothBlurOptions, atoms: Float32Array, residueOf: Int32Array,
+                               probe: number): Promise<GpuAtomSurface | null> {
+        const input = this.contourInputFromUnblurred(unblurred, options);
+        try {
+            return await this.surfaceFromField(input, unblurred, atoms, residueOf, probe);
+        } finally {
+            input.destroy();
+        }
+    }
+
+    /**
+     * Stage 2 (smooth-surface.cc blur_field): from the unblurred field, the cuts' weight spread, the
+     * blur, the cap, the heal blur and the level that keeps the enclosed volume; returns the field
+     * ready to contour (the level less the field), a GPU buffer the caller destroys. Recorded and
+     * submitted, not waited for: what reads the buffer next runs after it.
+     */
+    contourInputFromUnblurred(unblurred: SmoothUnblurredField, options: SmoothBlurOptions): GPUBuffer {
+        const { nx, ny, nz, spacing } = unblurred;
+        const count = nx * ny * nz;
+        const { sigma, maxShift, openUncapped, healBlur } = options;
+        const fieldUsage = STORAGE | COPY_SRC | COPY_DST;
+        const owned: GPUBuffer[] = [];
+        const make = (label: string, bytes: number, usage: number, data?: ArrayBufferView) => {
+            const b = createBuffer(this.device, `smooth surface ${label}`, bytes, usage, data);
+            owned.push(b);
+            return b;
+        };
+        const params = (axis: number, radius: number) => {
+            const buffer = new ArrayBuffer(48);
+            const u = new Uint32Array(buffer), f = new Float32Array(buffer);
+            u.set([nx, ny, nz, count], 0);
+            u.set([axis, radius, openUncapped && unblurred.changed ? 1 : 0, unblurred.interior], 4);
+            f.set([Number.isFinite(maxShift) ? maxShift : 0, unblurred.clamp], 8);
+            return make("blur params", 48, UNIFORM | COPY_DST, new Uint8Array(buffer));
+        };
+        const P = params(0, 0);
+        const encoder = this.device.createCommandEncoder({ label: "smooth surface blur" });
+        const run = (name: KernelName, uniform: GPUBuffer, buffers: GPUBuffer[]) =>
+            this.kernels.get(name).dispatch(encoder, { groups: [[uniform], buffers], items: count });
+        // Three separable passes of `kernel` from `source`, ending in `output`, through `scratch`.
+        const blur3 = (name: "blur" | "blurWeight", sigmaVoxels: number, source: GPUBuffer, scratch: GPUBuffer, output: GPUBuffer) => {
+            const weights = gaussianKernel(sigmaVoxels);
+            const kernel = make("blur kernel", weights.byteLength, STORAGE, weights);
+            const radius = (weights.length - 1) / 2;
+            run(name, params(0, radius), [kernel, source, output]);
+            run(name, params(1, radius), [kernel, output, scratch]);
+            run(name, params(2, radius), [kernel, scratch, output]);
+        };
+
+        const exact = make("unblurred field", count * 4, fieldUsage, unblurred.field);
+        let spare = make("field a", count * 4, fieldUsage);
+        let field = make("field b", count * 4, fieldUsage);
+        let weight: GPUBuffer | null = null;
+        if (unblurred.changed) {
+            const bytes = Math.ceil(count / 4) * 4;
+            const packed = new Uint8Array(bytes);
+            packed.set(unblurred.changed);
+            const changed = make("changed", bytes, STORAGE, packed);
+            weight = make("weight", count * 4, fieldUsage);
+            run("weightInit", P, [changed, weight]);
+            // Spread over about an A: three passes ending in `spare`, which becomes the weight.
+            blur3("blurWeight", 1.0 / spacing, weight, field, spare);
+            run("weightScale", P, [spare]);
+            [weight, spare] = [spare, weight];
+        }
+        // The blur, into `field`.
+        if (sigma > 0) blur3("blur", sigma / spacing, exact, spare, field);
+        else encoder.copyBufferToBuffer(exact, 0, field, 0, count * 4);
+        if (sigma > 0 && Number.isFinite(maxShift) && maxShift > 0) {
+            run("cap", P, [exact, weight ?? exact, field]);
+        }
+        if (healBlur > sigma && weight) {
+            // The wider field into `exact`, no longer wanted.
+            blur3("blur", Math.sqrt(healBlur * healBlur - sigma * sigma) / spacing, field, spare, exact);
+            run("heal", P, [exact, weight, field]);
+        }
+        const level = make("level", 16, STORAGE, new Float32Array(4));
+        if (sigma > 0) {
+            const histogram = make("histogram", LEVEL_BINS * 4, STORAGE, new Uint32Array(LEVEL_BINS));
+            run("histogram", P, [field, histogram]);
+            this.kernels.get("level").dispatch(encoder, { groups: [[P], [histogram, level]], workgroups: 1 });
+        }
+        // The input, into `spare`: kept, handed to the caller.
+        run("contourInput", P, [field, level, spare]);
+        this.device.queue.submit([encoder.finish()]);
+        const input = spare;
+        owned.filter(b => b !== input).forEach(b => b.destroy());
+        return input;
+    }
+
+    /**
+     * The surface of the field `input` (ready to contour: negative inside, the surface at 0, x fastest;
+     * from the CPU, or a GPU buffer with STORAGE and COPY_SRC) on `grid`, with each vertex's atoms among
+     * `atoms` (x, y, z, r per atom) and `residueOf`. Null if there is nothing to contour.
+     */
+    async surfaceFromField(input: Float32Array | GPUBuffer, grid: SmoothFieldGrid, atoms: Float32Array, residueOf: Int32Array,
                            probe: number): Promise<GpuAtomSurface | null> {
         const { nx, ny, nz, spacing } = grid;
         const origin = [grid.origin[0], grid.origin[1], grid.origin[2]];
@@ -145,7 +284,7 @@ export class GpuSmoothSurface {
         this.device.pushErrorScope("validation");
         try {
             const P = make("params", params.byteLength, UNIFORM | COPY_DST, new Uint8Array(params));
-            const field = make("field", input.byteLength, STORAGE, input);
+            const field = input instanceof Float32Array ? make("field", input.byteLength, STORAGE, input) : input;
             const positions = make("positions", N * 12, STORAGE | COPY_SRC | COPY_DST);
             this.device.queue.writeBuffer(positions, 0, contour.positions);
             const normals = make("normals", N * 12, STORAGE | COPY_SRC);
