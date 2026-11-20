@@ -12,3 +12,12 @@ test("GpuScan matches a plain prefix sum", async ({ page }) => {
         expect(report.gpuTotal, `n = ${report.n}`).toBe(report.cpuTotal);
     }
 });
+
+test("GpuScan: scans of growing size recorded on one encoder all come out right", async ({ page }) => {
+    // The scratch buffers grow between the scans; the ones already recorded must keep theirs.
+    const reports = resultOrSkip(await runGpuCase<ScanReport[]>(page, "scan.case.ts", { sizes: [40_000, 3_000_000, 50_000], oneEncoder: true }));
+    for (const report of reports) {
+        expect(report.firstDifference, `n = ${report.n}`).toBe(-1);
+        expect(report.gpuTotal, `n = ${report.n}`).toBe(report.cpuTotal);
+    }
+});

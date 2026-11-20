@@ -1965,17 +1965,6 @@ const smoothSurfaceUnblurredFieldFromAtoms = (packedAtoms: Float32Array, probe: 
     return { field: native(packedAtoms, probe, options) }
 }
 
-/**
- * The smooth surface's grid and exposed SAS only (C++ smoothSurfaceExposureFromAtoms), for the GPU to
- * make the field and the surface from on the main thread (stages 4 to 1): { exposure } or { exposure: null }.
- */
-const smoothSurfaceExposureFromAtoms = (packedAtoms: Float32Array, probe: number, options: SmoothSurfaceOptions) => {
-    const native = (cootModule as unknown as { smoothSurfaceExposureFromAtoms?: (atoms: Float32Array, probe: number,
-        options: SmoothSurfaceOptions) => Record<string, unknown> | null }).smoothSurfaceExposureFromAtoms
-    if (!native) throw new Error("This build of the Coot WASM has no smoothSurfaceExposureFromAtoms: rebuild it with the current wasm_src")
-    return { exposure: native(packedAtoms, probe, options) }
-}
-
 const doCootCommand = (messageData: {
     myTimeStamp: number;
     chainID?: string;
@@ -2075,9 +2064,6 @@ const doCootCommand = (messageData: {
                 break
             case "shim_smooth_surface_field_from_atoms":
                 cootResult = smoothSurfaceFieldFromAtoms(...commandArgs as [Float32Array, number, SmoothSurfaceOptions])
-                break
-            case "shim_smooth_surface_exposure_from_atoms":
-                cootResult = smoothSurfaceExposureFromAtoms(...commandArgs as [Float32Array, number, SmoothSurfaceOptions])
                 break
             case "shim_smooth_surface_unblurred_field_from_atoms":
                 cootResult = smoothSurfaceUnblurredFieldFromAtoms(...commandArgs as [Float32Array, number, SmoothSurfaceOptions])
@@ -2615,12 +2601,7 @@ const dispatchMessage = function (e: MessageEvent) {
             ? (result as { result?: { result?: { field?: SmoothNativeField | null } } }).result?.result?.field : null
         const unblurred = e.data.command === "shim_smooth_surface_unblurred_field_from_atoms"
             ? (result as { result?: { result?: { field?: SmoothNativeUnblurred | null } } }).result?.result?.field : null
-        const exposure = e.data.command === "shim_smooth_surface_exposure_from_atoms"
-            ? (result as { result?: { result?: { exposure?: Record<string, unknown> | null } } }).result?.result?.exposure : null
-        const exposureArrays = exposure ? [...new Set(Object.values(exposure).filter(v => ArrayBuffer.isView(v))
-            .map(v => (v as ArrayBufferView).buffer as ArrayBuffer))] : []
-        const smoothed = exposureArrays.length ? exposureArrays
-            : surface ? [...new Set(Object.values(surface).map(v => v.buffer as ArrayBuffer))]
+        const smoothed = surface ? [...new Set(Object.values(surface).map(v => v.buffer as ArrayBuffer))]
             : field ? [field.input.buffer as ArrayBuffer]
             : unblurred ? [unblurred.field.buffer as ArrayBuffer, ...(unblurred.changed ? [unblurred.changed.buffer as ArrayBuffer] : [])] : []
         postMessage(result, grid instanceof Float32Array ? [grid.buffer] : smoothed)

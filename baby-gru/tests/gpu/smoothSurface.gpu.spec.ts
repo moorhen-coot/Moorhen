@@ -6,6 +6,7 @@ import { join } from "path";
 import type { SmoothSurfaceReport } from "./cases/smoothSurface.case";
 import type { SmoothBlurReport } from "./cases/smoothSurfaceBlur.case";
 import type { SmoothFieldReport } from "./cases/smoothSurfaceField.case";
+import type { SmoothExposureReport } from "./cases/smoothSurfaceExposure.case";
 import { resultOrSkip, runGpuCase } from "./helpers/gpuPage";
 
 /**
@@ -86,6 +87,26 @@ test("GPU smooth surface: occupancy, seeds, transform, distances and opening mat
     expect(r.maxOpenedErrorNearSurface).toBeLessThan(1e-4);
     expect(r.weightDiffers).toBeLessThanOrEqual(2);
     expect(Math.abs(r.gpuInterior - r.cppInterior)).toBeLessThanOrEqual(2);
+    expect(r.gpuVertices).toBe(r.cppVertices);
+    expect(r.gpuTriangles).toBe(r.cppTriangles);
+    expect(r.unmatched1e2).toBe(0);
+});
+
+test("GPU smooth surface: grid, neighbours, circles and exposed arcs match the C++ (first 40 atoms of 1df7)", async ({ page }) => {
+    test.skip(!hasCompiler, "No C++ compiler to make the reference with");
+    test.setTimeout(180_000);
+    const r = resultOrSkip(await runGpuCase<SmoothExposureReport>(page, "smoothSurfaceExposure.case.ts", null, { "reference.bin": makeReference(40) }));
+    console.log(`GPU smooth surface exposure: ${JSON.stringify(r)}`);
+    expect(r.gridSame).toBe(true);
+    // Neighbours, circles, their numbering, exposed atoms: the C++'s exactly.
+    expect(r.tablesDiffer).toEqual([]);
+    expect(r.cppCircles).toBeGreaterThan(50);
+    expect(r.gpuCircles).toBe(r.cppCircles);
+    expect(r.gpuArcs).toBe(r.cppArcs);
+    // float32 against the C++'s double.
+    expect(r.maxCircleError).toBeLessThan(1e-4);
+    expect(r.maxArcEndError).toBeLessThan(1e-4);
+    expect(r.arcClassDiffers).toBe(0);
     expect(r.gpuVertices).toBe(r.cppVertices);
     expect(r.gpuTriangles).toBe(r.cppTriangles);
     expect(r.unmatched1e2).toBe(0);

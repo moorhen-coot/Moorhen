@@ -29,7 +29,7 @@ import {
 import { influenceListsFromShares } from "../../WebGLgComponents/ownedMeshPick";
 import { surfaceAtomRadius } from "../m2tAtomRadii";
 import {
-    GPU_SMOOTH_MAX_LINE, type SmoothExposure, type SmoothUnblurredField, gpuSmoothSurfaceIfFast,
+    GPU_SMOOTH_MAX_LINE, type SmoothUnblurredField, gpuSmoothSurfaceIfFast, smoothGrid,
 } from "../../WebGPUComponents/smoothSurface";
 import { surfaceChainGroups } from "../surfaceChainGroups";
 
@@ -731,7 +731,9 @@ export class MoleculeRepresentation {
         this.visible = true;
         if (!this.colourRulesOnDemand) await this.applyColourRules();
         const objects = await this.getBufferObjects();
+        const tB = performance.now(); // TIMING
         this.buildBuffers(objects);
+        console.debug(`TIMING buildBuffers ${(performance.now() - tB).toFixed(0)} ms`); // TIMING
         const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
         if (this.styleHasAtomBuffers) {
             // Narrowed, not the raw selection: see atomsThisStyleDraws. The unnarrowed list is
@@ -763,7 +765,9 @@ export class MoleculeRepresentation {
         if (!this.colourRulesOnDemand) await this.applyColourRules();
         const objects = await this.getBufferObjects();
         this.deleteBuffers();
+        const tB = performance.now(); // TIMING
         this.buildBuffers(objects);
+        console.debug(`TIMING buildBuffers ${(performance.now() - tB).toFixed(0)} ms`); // TIMING
         const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
         if (this.styleHasAtomBuffers) {
             // Narrowed, not the raw selection: see atomsThisStyleDraws. The unnarrowed list is
@@ -1724,9 +1728,13 @@ export class MoleculeRepresentation {
             ? reassignNucleotideOwners(m2tMesh.vert_tri?.[0]?.[0] ?? [], m2tMesh.vertex_owners, m2tMesh.owners,
                 await this.parentMolecule.gemmiAtomsForCid("/*/*/*/*"))
             : m2tMesh.vertex_owners
+        let tP = performance.now(); // TIMING
+        const influencesT = smoothInfluences(m2tMesh); // TIMING
+        console.debug(`TIMING smoothInfluences ${(performance.now() - tP).toFixed(0)} ms`); tP = performance.now(); // TIMING
         const meshPickInfo = ownedMeshPickInfo(
             m2tMesh.vert_tri?.[0]?.[0] ?? [], ribbonOwners as Uint32Array | number[] | undefined, m2tMesh.owners,
-            m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights, numbering, smoothInfluences(m2tMesh))
+            m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights, numbering, influencesT)
+        console.debug(`TIMING ownedMeshPickInfo ${(performance.now() - tP).toFixed(0)} ms`); // TIMING
         const ribbonBufferObjects = [{
             ...withoutOwnershipArrays(m2tMesh),
             pick_info: meshPickInfo ? { ...meshPickInfo, highlight_group: highlightGroup } : {},
@@ -1830,9 +1838,12 @@ export class MoleculeRepresentation {
         };
         // Electrostatics colours come from M2T's potential below: no atom colours needed (its rule has
         // no colour list to read).
+        let tT = performance.now(); // TIMING
         const colours = potential ? new Float32Array(4 * records.length).fill(1) : await this.smoothSurfaceAtomColours(records);
+        console.debug(`TIMING atom colours ${(performance.now() - tT).toFixed(0)} ms`); tT = performance.now(); // TIMING
         const mesh = atomSurfaceMesh(surface, residueOf, residues, colours, smoothSurfaceSetting.colourBlend,
             smoothSurfaceSetting.colourSmoothing);
+        console.debug(`TIMING atomSurfaceMesh ${(performance.now() - tT).toFixed(0)} ms`); // TIMING
         // Electrostatics: the colours of the nearest vertices of M2T's surface, which carries the potential.
         const m2tPositions = potential?.vert_tri?.[0]?.[0], m2tColours = potential?.col_tri?.[0]?.[0];
         if (m2tPositions?.length && m2tColours?.length) {
@@ -1863,27 +1874,21 @@ export class MoleculeRepresentation {
                     sigma: smoothSurfaceSetting.sigma, maxShift: smoothSurfaceSetting.maxShift,
                     openUncapped: smoothSurfaceSetting.openUncapped, healBlur: smoothSurfaceSetting.healBlur,
                 };
-                let started = performance.now();
-                // The C++ makes only the grid and the exposed SAS (per atom); the GPU all the rest.
-                const exposureResponse = (await this.commandCentre.cootCommand(
-                    { returnType: "smoothed_field", command: "shim_smooth_surface_exposure_from_atoms", commandArgs: [packed.slice(), probe, options] },
-                    false
-                )) as moorhen.WorkerResponse<{ exposure: (SmoothExposure & { ms: number }) | null }>;
-                if (exposureResponse.data.result.status !== "Completed") throw new Error("the worker made no exposed SAS");
-                const exposure = exposureResponse.data.result.result.exposure;
-                if (!exposure) return null;
-                const exposureMs = performance.now() - started;
-                if (Math.max(exposure.nx, exposure.ny, exposure.nz) <= GPU_SMOOTH_MAX_LINE) {
-                    const surface = await gpu.surfaceFromExposure(exposure, { ...blur, probe, openRadius: smoothSurfaceSetting.openRadius },
-                        packed, residueOf);
+                // All of it on the GPU, from the atoms (stages 5 to 1) - unless the grid's lines are too long.
+                const grid = smoothGrid(packed, probe, smoothSurfaceSetting.spacing, smoothSurfaceSetting.sigma, smoothSurfaceSetting.openRadius);
+                if (Math.max(grid.nx, grid.ny, grid.nz) <= GPU_SMOOTH_MAX_LINE) {
+                    const { surface, exposureMs } = await gpu.surfaceFromAtoms(packed, residueOf, {
+                        ...blur, probe, openRadius: smoothSurfaceSetting.openRadius, spacing: smoothSurfaceSetting.spacing,
+                    });
                     if (surface) {
-                        console.debug(`Smooth surface: ${atoms.length} atoms, grid ${exposure.nx}x${exposure.ny}x${exposure.nz} at ` +
-                            `${exposure.spacing.toFixed(2)} Å; ${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles; ` +
-                            `exposed SAS (C++) ${exposureMs.toFixed(0)} ms (${exposure.ms.toFixed(0)} in the worker), ` +
-                            `field + blur + contour (WebGPU) ${surface.timings.contour.toFixed(0)} ms, finish (WebGPU) ${surface.timings.finish.toFixed(0)} ms`);
+                        console.debug(`Smooth surface: ${atoms.length} atoms, grid ${grid.nx}x${grid.ny}x${grid.nz} at ` +
+                            `${grid.spacing.toFixed(2)} Å; ${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles; ` +
+                            `exposed SAS (WebGPU) ${exposureMs.toFixed(0)} ms, field + blur + contour (WebGPU) ${surface.timings.contour.toFixed(0)} ms, ` +
+                            `finish (WebGPU) ${surface.timings.finish.toFixed(0)} ms`);
                     }
                     return surface;
                 }
+                let started = performance.now();
                 // A grid line longer than the GPU's feature transform takes: the C++ makes the field up
                 // to the opening, the GPU the rest.
                 started = performance.now();

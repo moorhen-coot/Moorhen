@@ -2306,47 +2306,6 @@ inline emscripten::val smoothSurfaceUnblurredFieldFromAtoms(const emscripten::va
     return result;
 }
 
-/*
- * The smooth surface's grid and exposed SAS only (smooth_surface::ses_exposure), for the GPU to make the
- * whole field and surface from (baby-gru/src/WebGPUComponents/smoothSurface, stages 4 to 1): the same
- * atoms and options as smoothSurfaceFromAtoms; returns { nx, ny, nz, origin, spacing, clamp, sas,
- * exposed, neighbourStart, neighbourIds, circleStart, circleIds, atomCircleStart, atomCircleIds, other,
- * arcStart, circles, arcs, ms } as typed arrays (see exposure_t), or null if there are no atoms.
- */
-inline emscripten::val smoothSurfaceExposureFromAtoms(const emscripten::val &packedAtoms, double probe, const emscripten::val &optionsObject) {
-    std::vector<smooth_surface::atom_t> atoms = smoothSurfaceAtoms(packedAtoms);
-    smooth_surface::options_t o = smoothSurfaceOptions(optionsObject);
-    smooth_surface::exposure_t e = smooth_surface::ses_exposure(atoms, probe, o.spacing, o.sigma, o.open_radius, o.threads);
-    if (e.sas.empty()) return emscripten::val::null();
-    auto copy = [](const char *type, const auto &data) {
-        emscripten::val view{ emscripten::typed_memory_view(data.size(), data.data()) };
-        emscripten::val result = emscripten::val::global(type).new_(double(data.size()));
-        result.template call<void>("set", view);
-        return result;
-    };
-    auto result = emscripten::val::object();
-    result.set("nx", e.nx); result.set("ny", e.ny); result.set("nz", e.nz);
-    auto origin = emscripten::val::array();
-    for (int k = 0; k < 3; k++) origin.call<void>("push", e.origin[k]);
-    result.set("origin", origin);
-    result.set("spacing", e.spacing);
-    result.set("clamp", e.clamp);
-    result.set("sas", copy("Float32Array", e.sas));
-    result.set("exposed", copy("Uint8Array", e.exposed));
-    result.set("neighbourStart", copy("Int32Array", e.neighbour_start));
-    result.set("neighbourIds", copy("Int32Array", e.neighbour_ids));
-    result.set("circleStart", copy("Int32Array", e.circle_start));
-    result.set("circleIds", copy("Int32Array", e.circle_ids));
-    result.set("atomCircleStart", copy("Int32Array", e.atom_circle_start));
-    result.set("atomCircleIds", copy("Int32Array", e.atom_circle_ids));
-    result.set("other", copy("Int32Array", e.other));
-    result.set("arcStart", copy("Int32Array", e.arc_start));
-    result.set("circles", copy("Float32Array", e.circles));
-    result.set("arcs", copy("Float32Array", e.arcs));
-    result.set("ms", e.ms);
-    return result;
-}
-
 inline emscripten::val testFloat32Array(const emscripten::val &floatArrayObject){
 
     auto floatArray = emscripten::convertJSArrayToNumberVector<float>(floatArrayObject);

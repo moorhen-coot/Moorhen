@@ -1220,3 +1220,482 @@ fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: ve
     }
 }
 `;
+
+// -------------------------------------------------------------------------------------------------
+// Stage 5: the exposed SAS from the atoms (smooth-surface.cc exposed_sas, circles_of_atom): each atom's
+// neighbours, the circles where two SAS spheres meet, the parts of each circle no third sphere covers
+// (its exposed arcs), and which atoms have any SAS exposed. One thread per atom, then one per circle
+// job (pair of atoms that meet) - circles numbered as the C++ numbers them (atom by atom, each atom's in
+// its neighbours' order). A circle is worked out twice: once to count its arcs, and, once circles and
+// arcs are numbered (scans), again to write them in place - cheaper than holding every job's arcs.
+// Arcs are kept as their ends' directions, never as angles (WGSL's trigonometry is too rough): what
+// the distance kernels read. Room by estimate (`counts`, `caps`), overflow flagged for a redo.
+//
+// Buffers shared by several kernels:
+//   nbr        each atom's neighbour start (atoms + 1), then the neighbours - the packed table's layout;
+//   at         circle numbers per job (circle room... jobs), then arc numbers per job;
+//   floatsOut  13 per circle (centre, axis, e1, e2, radius), then from caps.x * 13 on, 5 per arc;
+//   intsOut    the other atom per circle, then from caps.x on, where its arcs start.
+
+/** Intervals a circle can hold (two per partly covering neighbour, at most). */
+export const MAX_INTERVALS = 192;
+/** Exposed arcs a circle can hold. */
+export const MAX_ARCS = 16;
+
+const EXPO_COMMON = /* wgsl */ `
+struct ExpoParams {
+    // x: atoms; y: room for neighbours; z: room for circle jobs.
+    counts: vec4u,
+    // x: room for circles; y: room for arcs.
+    caps: vec4u,
+    // Atom bins along each axis (xyz); w: the neighbour search's reach in cells.
+    bins: vec4u,
+    // Atom bins' lowest corner (xyz) and cell size (w).
+    binLow: vec4f,
+};
+@group(0) @binding(0) var<uniform> X: ExpoParams;
+
+${itemIndexWgsl(SMOOTH_WORKGROUP)}
+fn cellRange(p: vec3f) -> array<vec3i, 2> {
+    let c = vec3i(floor((p - X.binLow.xyz) / X.binLow.w));
+    let span = i32(X.bins.w);
+    return array<vec3i, 2>(max(vec3i(0), c - vec3i(span)), min(vec3i(X.bins.xyz) - vec3i(1), c + vec3i(span)));
+}
+fn cellIndex(i: i32, j: i32, k: i32) -> u32 { return (u32(k) * X.bins.y + u32(j)) * X.bins.x + u32(i); }
+`;
+
+/** Each atom's neighbours (SAS spheres that meet its) counted, and whether its sphere is inside another. */
+export const NEIGHBOUR_COUNT_WGSL = /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> sas: array<vec4f>;
+@group(1) @binding(1) var<storage, read> binStart: array<u32>;
+@group(1) @binding(2) var<storage, read> binMembers: array<u32>;
+@group(1) @binding(3) var<storage, read_write> count: array<u32>;
+@group(1) @binding(4) var<storage, read_write> contained: array<u32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let a = itemIndex(lid, wid, nwg);
+    if (a >= X.counts.x) { return; }
+    let A = sas[a];
+    let range = cellRange(A.xyz);
+    var n = 0u;
+    var inside = 0u;
+    for (var k = range[0].z; k <= range[1].z; k++) {
+        for (var j = range[0].y; j <= range[1].y; j++) {
+            for (var i = range[0].x; i <= range[1].x; i++) {
+                let cell = cellIndex(i, j, k);
+                for (var m = binStart[cell]; m < binStart[cell + 1u]; m++) {
+                    let b = binMembers[m];
+                    if (b == a) { continue; }
+                    let Bs = sas[b];
+                    let reach = Bs.w + A.w;
+                    let w = Bs.xyz - A.xyz;
+                    let d2 = dot(w, w);
+                    if (d2 >= reach * reach) { continue; }
+                    n++;
+                    let d = sqrt(d2);
+                    if (d + A.w <= Bs.w && (d > 1e-9 || A.w < Bs.w || a > b)) { inside = 1u; }
+                }
+            }
+        }
+    }
+    count[a] = n;
+    contained[a] = inside;
+}
+`;
+
+/** start[n] = start[n - 1] + count[n - 1] after an exclusive scan of the atoms' counts (n = atoms). One thread. */
+export const START_TOTAL_WGSL = /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> count: array<u32>;
+@group(1) @binding(1) var<storage, read_write> start: array<u32>;
+
+@compute @workgroup_size(1)
+fn main() {
+    let n = X.counts.x;
+    start[n] = select(0u, start[n - 1u] + count[n - 1u], n > 0u);
+}
+`;
+
+/** Each atom's neighbours written after the starts in nbr, in the order the bins give them (atom_bins_t). */
+export const NEIGHBOUR_FILL_WGSL = /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> sas: array<vec4f>;
+@group(1) @binding(1) var<storage, read> binStart: array<u32>;
+@group(1) @binding(2) var<storage, read> binMembers: array<u32>;
+@group(1) @binding(3) var<storage, read_write> nbr: array<u32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let a = itemIndex(lid, wid, nwg);
+    if (a >= X.counts.x) { return; }
+    let A = sas[a];
+    let range = cellRange(A.xyz);
+    let ids = X.counts.x + 1u;
+    var at = nbr[a];
+    let end = min(nbr[a + 1u], X.counts.y);
+    for (var k = range[0].z; k <= range[1].z; k++) {
+        for (var j = range[0].y; j <= range[1].y; j++) {
+            for (var i = range[0].x; i <= range[1].x; i++) {
+                let cell = cellIndex(i, j, k);
+                for (var m = binStart[cell]; m < binStart[cell + 1u]; m++) {
+                    let b = binMembers[m];
+                    if (b == a) { continue; }
+                    let Bs = sas[b];
+                    let reach = Bs.w + A.w;
+                    let w = Bs.xyz - A.xyz;
+                    if (dot(w, w) >= reach * reach) { continue; }
+                    if (at < end) { nbr[ids + at] = b; }
+                    at++;
+                }
+            }
+        }
+    }
+}
+`;
+
+/** Atom a's neighbours, from nbr. */
+const NEIGHBOURS = /* wgsl */ `
+fn neighbourBegin(a: u32) -> u32 { return nbr[a]; }
+fn neighbourEnd(a: u32) -> u32 { return min(nbr[a + 1u], X.counts.y); }
+fn neighbour(k: u32) -> u32 { return nbr[X.counts.x + 1u + k]; }
+// Whether atoms lo < hi meet in a circle (circles_of_atom's tests, from the lower one's side).
+fn meets(lo: u32, hi: u32) -> bool {
+    let A = sas[lo]; let Bs = sas[hi];
+    let u0 = Bs.xyz - A.xyz;
+    let d = sqrt(dot(u0, u0));
+    if (d < 1e-6 || d >= A.w + Bs.w) { return false; }
+    let t = (d * d + A.w * A.w - Bs.w * Bs.w) / (2.0 * d);
+    return A.w * A.w - t * t > 0.0;
+}
+`;
+
+/**
+ * Per atom: its circles counted (with every neighbour, either side: circle_count, which says whether it
+ * can be exposed), and the circles it is the lower-numbered atom of (the jobs).
+ */
+export const PAIR_COUNT_WGSL = /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> sas: array<vec4f>;
+@group(1) @binding(1) var<storage, read> nbr: array<u32>;
+@group(1) @binding(2) var<storage, read_write> jobCount: array<u32>;
+@group(1) @binding(3) var<storage, read_write> touch: array<u32>;
+${NEIGHBOURS}
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let a = itemIndex(lid, wid, nwg);
+    if (a >= X.counts.x) { return; }
+    var jobs = 0u; var touching = 0u;
+    for (var k = neighbourBegin(a); k < neighbourEnd(a); k++) {
+        let b = neighbour(k);
+        if (meets(min(a, b), max(a, b))) {
+            touching++;
+            if (b > a) { jobs++; }
+        }
+    }
+    jobCount[a] = jobs;
+    touch[a] = touching;
+}
+`;
+
+/** The jobs written: atom a and its other atom b, a's in its neighbours' order. */
+export const PAIR_FILL_WGSL = /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> sas: array<vec4f>;
+@group(1) @binding(1) var<storage, read> nbr: array<u32>;
+@group(1) @binding(2) var<storage, read> jobStart: array<u32>;
+@group(1) @binding(3) var<storage, read_write> jobs: array<vec2u>;
+${NEIGHBOURS}
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let a = itemIndex(lid, wid, nwg);
+    if (a >= X.counts.x) { return; }
+    var at = jobStart[a];
+    for (var k = neighbourBegin(a); k < neighbourEnd(a); k++) {
+        let b = neighbour(k);
+        if (b > a && meets(a, b)) {
+            if (at < X.counts.z) { jobs[at] = vec2u(a, b); }
+            at++;
+        }
+    }
+}
+`;
+
+/**
+ * One circle (job): where atoms a < b meet; the parts of it inside each other neighbour of a; the gaps
+ * between them - its exposed arcs (circles_of_atom). Intervals by their ends' directions, placed round
+ * the circle by pseudo-angle; sorted (stable, by insertion), swept. countArcs: the arcs counted (0 if
+ * none, or the circle is covered whole); emitArcs: the circle and its arcs written at their numbers.
+ */
+function circleKernel(emit: boolean): string {
+    return /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> sas: array<vec4f>;
+@group(1) @binding(1) var<storage, read> nbr: array<u32>;
+@group(1) @binding(2) var<storage, read> jobs: array<vec2u>;
+${emit ? `@group(1) @binding(3) var<storage, read> arcCount: array<u32>;
+@group(1) @binding(4) var<storage, read> at: array<u32>;
+@group(1) @binding(5) var<storage, read_write> floatsOut: array<f32>;
+@group(1) @binding(6) var<storage, read_write> intsOut: array<u32>;` : `@group(1) @binding(3) var<storage, read> jobStart: array<u32>;
+@group(1) @binding(4) var<storage, read_write> arcCount: array<u32>;
+@group(1) @binding(5) var<storage, read_write> status: array<atomic<u32>>;`}
+${NEIGHBOURS}
+var<private> lo: array<f32, ${MAX_INTERVALS}>;
+var<private> hi: array<f32, ${MAX_INTERVALS}>;
+var<private> ends: array<vec4f, ${MAX_INTERVALS}>;
+var<private> order: array<u32, ${MAX_INTERVALS}>;
+var<private> arcs: array<vec4f, ${MAX_ARCS}>;
+// Per arc: bit 0 it starts at the circle's 0, bit 1 it ends at its 2 pi.
+var<private> arcFlags: array<u32, ${MAX_ARCS}>;
+
+fn pseudoAngle(v: vec2f) -> f32 {
+    if (v.y >= 0.0) { return select(1.0 + -v.x / (-v.x + v.y), v.y / (v.x + v.y), v.x >= 0.0); }
+    return select(3.0 + v.x / (v.x - v.y), 2.0 + -v.y / (-v.x - v.y), v.x < 0.0);
+}
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let job = itemIndex(lid, wid, nwg);
+    if (job >= X.counts.z) { return; }
+${emit ? `    if (arcCount[job] == 0u) { return; }` : `    if (job >= jobStart[X.counts.x]) { arcCount[job] = 0u; return; }`}
+    let pair = jobs[job];
+    let a = pair.x; let b = pair.y;
+    let A = sas[a]; let Bs = sas[b];
+    let u0 = Bs.xyz - A.xyz;
+    let d = sqrt(dot(u0, u0));
+    let t = (d * d + A.w * A.w - Bs.w * Bs.w) / (2.0 * d);
+    let r2 = A.w * A.w - t * t;
+    let rc = sqrt(r2);
+    let u = u0 / d;
+    let c = A.xyz + t * u;
+    var p = vec3f(0.0, 0.0, 1.0);
+    if (abs(u.x) <= abs(u.y) && abs(u.x) <= abs(u.z)) { p = vec3f(1.0, 0.0, 0.0); }
+    else if (abs(u.y) <= abs(u.z)) { p = vec3f(0.0, 1.0, 0.0); }
+    var e1 = p - dot(p, u) * u;
+    e1 = e1 / sqrt(dot(e1, e1));
+    let e2 = cross(u, e1);
+
+    var n = 0u;
+    for (var k = neighbourBegin(a); k < neighbourEnd(a); k++) {
+        let other = neighbour(k);
+        if (other == b) { continue; }
+        let C = sas[other];
+        let w = c - C.xyz;
+        let Aw = 2.0 * rc * dot(w, e1);
+        let Bw = 2.0 * rc * dot(w, e2);
+        let Rc = C.w - 1e-4;
+        let K = Rc * Rc - dot(w, w) - r2;
+        let M2 = Aw * Aw + Bw * Bw;
+        if (K <= 0.0 && K * K >= M2) { continue; }
+        if (K > 0.0 && K * K > M2) {
+${emit ? `            return;` : `            arcCount[job] = 0u;
+            return;`}
+        }
+        let M = sqrt(M2);
+        let cosine = -K / M;
+        let sine = sqrt(max(0.0, 1.0 - cosine * cosine));
+        let m = vec2f(-Aw, -Bw) / M;
+        let startEnd = vec2f(m.x * cosine + m.y * sine, m.y * cosine - m.x * sine);
+        let finishEnd = vec2f(m.x * cosine - m.y * sine, m.y * cosine + m.x * sine);
+        let ps = pseudoAngle(startEnd); let pe = pseudoAngle(finishEnd);
+        if (n + 2u > ${MAX_INTERVALS}u) {
+${emit ? `            return;` : `            atomicMax(&status[0], 1u);
+            arcCount[job] = 0u;
+            return;`}
+        }
+        if (ps <= pe) {
+            lo[n] = ps; hi[n] = pe; ends[n] = vec4f(startEnd, finishEnd); n++;
+        } else {
+            lo[n] = ps; hi[n] = 4.0; ends[n] = vec4f(startEnd, 1.0, 0.0); n++;
+            lo[n] = 0.0; hi[n] = pe; ends[n] = vec4f(1.0, 0.0, finishEnd); n++;
+        }
+    }
+    for (var i = 0u; i < n; i++) { order[i] = i; }
+    for (var i = 1u; i < n; i++) {
+        let key = order[i];
+        var j = i;
+        while (j > 0u && lo[order[j - 1u]] > lo[key]) { order[j] = order[j - 1u]; j--; }
+        order[j] = key;
+    }
+    var count = 0u;
+    var reached = 0.0;
+    var reachedEnd = vec2f(1.0, 0.0);
+    var fromStart = true;
+    var spilled = false;
+    for (var i = 0u; i < n; i++) {
+        let k = order[i];
+        if (lo[k] > reached) {
+            if (count < ${MAX_ARCS}u) { arcs[count] = vec4f(reachedEnd, ends[k].xy); arcFlags[count] = select(0u, 1u, fromStart); }
+            else { spilled = true; }
+            count++;
+        }
+        if (hi[k] > reached) { reached = hi[k]; reachedEnd = ends[k].zw; fromStart = false; }
+    }
+    if (reached < 4.0) {
+        if (count < ${MAX_ARCS}u) { arcs[count] = vec4f(reachedEnd, 1.0, 0.0); arcFlags[count] = select(0u, 1u, fromStart) | 2u; }
+        else { spilled = true; }
+        count++;
+    }
+    if (spilled) {
+${emit ? `        return;` : `        atomicMax(&status[0], 1u);
+        arcCount[job] = 0u;
+        return;`}
+    }
+    // An arc through the circle's 0: its two pieces as one.
+    if (count >= 2u && (arcFlags[0] & 1u) != 0u && (arcFlags[count - 1u] & 2u) != 0u) {
+        arcs[count - 1u] = vec4f(arcs[count - 1u].xy, arcs[0].zw);
+        arcFlags[count - 1u] = arcFlags[count - 1u] & 1u;
+        for (var i = 1u; i < count; i++) { arcs[i - 1u] = arcs[i]; arcFlags[i - 1u] = arcFlags[i]; }
+        count--;
+    }
+${emit ? `    let circleNumber = at[job];
+    let arcNumber = at[X.counts.z + job];
+    if (circleNumber >= X.caps.x || arcNumber + count > X.caps.y) { return; }
+    let o = 13u * circleNumber;
+    floatsOut[o] = c.x; floatsOut[o + 1u] = c.y; floatsOut[o + 2u] = c.z;
+    floatsOut[o + 3u] = u.x; floatsOut[o + 4u] = u.y; floatsOut[o + 5u] = u.z;
+    floatsOut[o + 6u] = e1.x; floatsOut[o + 7u] = e1.y; floatsOut[o + 8u] = e1.z;
+    floatsOut[o + 9u] = e2.x; floatsOut[o + 10u] = e2.y; floatsOut[o + 11u] = e2.z;
+    floatsOut[o + 12u] = rc;
+    intsOut[circleNumber] = b;
+    intsOut[X.caps.x + circleNumber] = arcNumber;
+    for (var i = 0u; i < count; i++) {
+        let s = arcs[i].xy; let e = arcs[i].zw;
+        // The length, as the distance kernels test it: 2 pi for the whole circle; else at most pi or more.
+        var length = 1.0;
+        if (count == 1u && n == 0u) { length = ${(2 * Math.PI).toFixed(9)}; }
+        else if (!(s.x * e.y - s.y * e.x > 0.0 || (s.x * e.y - s.y * e.x == 0.0 && dot(s, e) > 0.0))) { length = 4.0; }
+        let q = 13u * X.caps.x + 5u * (arcNumber + i);
+        floatsOut[q] = s.x; floatsOut[q + 1u] = s.y; floatsOut[q + 2u] = e.x; floatsOut[q + 3u] = e.y; floatsOut[q + 4u] = length;
+    }` : `    arcCount[job] = count;`}
+}
+`;
+}
+export const CIRCLE_COUNT_WGSL = circleKernel(false);
+export const CIRCLE_EMIT_WGSL = circleKernel(true);
+
+/** Per job: 1 if its circle is kept (has an exposed arc), for the scan that numbers them. */
+export const CIRCLE_KEEP_WGSL = /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> arcCount: array<u32>;
+@group(1) @binding(1) var<storage, read_write> keep: array<u32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let job = itemIndex(lid, wid, nwg);
+    if (job >= X.counts.z) { return; }
+    keep[job] = select(0u, 1u, arcCount[job] > 0u);
+}
+`;
+
+/** For each kept circle: both its atoms exposed, and counted in each one's circles. */
+export const MARK_ATOMS_WGSL = /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> jobs: array<vec2u>;
+@group(1) @binding(1) var<storage, read> arcCount: array<u32>;
+@group(1) @binding(2) var<storage, read_write> exposed: array<u32>;
+@group(1) @binding(3) var<storage, read_write> atomCircleCount: array<atomic<u32>>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let job = itemIndex(lid, wid, nwg);
+    if (job >= X.counts.z || arcCount[job] == 0u) { return; }
+    let pair = jobs[job];
+    exposed[pair.x] = 1u;
+    exposed[pair.y] = 1u;
+    atomicAdd(&atomCircleCount[pair.x], 1u);
+    atomicAdd(&atomCircleCount[pair.y], 1u);
+}
+`;
+
+/**
+ * Per atom (and one past the last): where its own circles start - circle numbers are in atom order - and
+ * exposed too if it meets no other sphere and is inside none.
+ */
+export const ATOM_CIRCLES_WGSL = /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> touch: array<u32>;
+@group(1) @binding(1) var<storage, read> contained: array<u32>;
+@group(1) @binding(2) var<storage, read> jobStart: array<u32>;
+@group(1) @binding(3) var<storage, read> arcCount: array<u32>;
+@group(1) @binding(4) var<storage, read> at: array<u32>;
+@group(1) @binding(5) var<storage, read_write> exposed: array<u32>;
+@group(1) @binding(6) var<storage, read_write> circleStart: array<u32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let a = itemIndex(lid, wid, nwg);
+    if (a > X.counts.x) { return; }
+    let jobs = min(jobStart[X.counts.x], X.counts.z);
+    let first = jobStart[a];
+    var before = 0u;
+    if (jobs > 0u) {
+        if (first < jobs) { before = at[first]; }
+        else { before = at[jobs - 1u] + select(0u, 1u, arcCount[jobs - 1u] > 0u); }
+    }
+    circleStart[a] = before;
+    if (a < X.counts.x && touch[a] == 0u && contained[a] == 0u) { exposed[a] = 1u; }
+}
+`;
+
+/** Each kept circle's number into its two atoms' lists (in any order; sorted next). */
+export const ATOM_CIRCLE_FILL_WGSL = /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> jobs: array<vec2u>;
+@group(1) @binding(1) var<storage, read> arcCount: array<u32>;
+@group(1) @binding(2) var<storage, read> at: array<u32>;
+@group(1) @binding(3) var<storage, read> atomCircleStart: array<u32>;
+@group(1) @binding(4) var<storage, read_write> fill: array<atomic<u32>>;
+@group(1) @binding(5) var<storage, read_write> atomCircleIds: array<u32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let job = itemIndex(lid, wid, nwg);
+    if (job >= X.counts.z || arcCount[job] == 0u) { return; }
+    let pair = jobs[job];
+    let c = at[job];
+    atomCircleIds[atomCircleStart[pair.x] + atomicAdd(&fill[pair.x], 1u)] = c;
+    atomCircleIds[atomCircleStart[pair.y] + atomicAdd(&fill[pair.y], 1u)] = c;
+}
+`;
+
+/** Each atom's circle list sorted by circle number, as the C++ lists them. */
+export const ATOM_CIRCLE_SORT_WGSL = /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> atomCircleStart: array<u32>;
+@group(1) @binding(1) var<storage, read_write> atomCircleIds: array<u32>;
+
+@compute @workgroup_size(${SMOOTH_WORKGROUP})
+fn main(@builtin(local_invocation_id) lid: vec3u, @builtin(workgroup_id) wid: vec3u, @builtin(num_workgroups) nwg: vec3u) {
+    let a = itemIndex(lid, wid, nwg);
+    if (a >= X.counts.x) { return; }
+    let s = atomCircleStart[a]; let e = atomCircleStart[a + 1u];
+    for (var i = s + 1u; i < e; i++) {
+        let key = atomCircleIds[i];
+        var j = i;
+        while (j > s && atomCircleIds[j - 1u] > key) { atomCircleIds[j] = atomCircleIds[j - 1u]; j--; }
+        atomCircleIds[j] = key;
+    }
+}
+`;
+
+/**
+ * The totals, for the caller to size the tables by - neighbours, circle jobs, kept circles, arcs - into
+ * status[1..4]; status[0]: 1 if a circle had more intervals or arcs than room for, 2 if neighbours, jobs,
+ * circles or arcs outgrew theirs.
+ */
+export const EXPO_TOTALS_WGSL = /* wgsl */ `${EXPO_COMMON}
+@group(1) @binding(0) var<storage, read> nbr: array<u32>;
+@group(1) @binding(1) var<storage, read> jobStart: array<u32>;
+@group(1) @binding(2) var<storage, read> arcCount: array<u32>;
+@group(1) @binding(3) var<storage, read> at: array<u32>;
+@group(1) @binding(4) var<storage, read_write> status: array<atomic<u32>>;
+
+@compute @workgroup_size(1)
+fn main() {
+    let n = X.counts.x;
+    let neighbours = nbr[n];
+    let jobs = jobStart[n];
+    let last = min(jobs, X.counts.z);
+    var circles = 0u; var arcs = 0u;
+    if (last > 0u) {
+        circles = at[last - 1u] + select(0u, 1u, arcCount[last - 1u] > 0u);
+        arcs = at[X.counts.z + last - 1u] + arcCount[last - 1u];
+    }
+    if (neighbours > X.counts.y || jobs > X.counts.z || circles > X.caps.x || arcs > X.caps.y) { atomicMax(&status[0], 2u); }
+    atomicStore(&status[1], neighbours);
+    atomicStore(&status[2], jobs);
+    atomicStore(&status[3], circles);
+    atomicStore(&status[4], arcs);
+}
+`;
