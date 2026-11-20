@@ -1,0 +1,1461 @@
+diff --git CMakeLists.txt CMakeLists.txt
+index 6cfeb0812..f3afb6ac7 100644
+--- CMakeLists.txt
++++ CMakeLists.txt
+@@ -760,6 +760,9 @@ add_executable(test-molecules-container ${coot_src}/api/test-molecules-container
+                                         ${coot_src}/api/filo-tests.cc
+                                         ${coot_src}/api/lucrezia-tests.cc)
+ 
++# does libcootapi respect set_max_number_of_threads()?
++add_executable(test-thread-limits ${coot_src}/api/test-thread-limits.cc)
++
+ add_executable(test-docking ${coot_src}/docking/test-docking.cc)
+ 
+ add_executable(mmcif-tests ${coot_src}/api/mmcif-tests-main.cc ${coot_src}/api/mmcif-tests.cc)
+@@ -807,8 +810,12 @@ target_link_libraries(coot-res-tracer-libcootapi PUBLIC cootapi ${CLIPPER-CORE_L
+ 
+ target_include_directories(test-molecules-container PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ${coot_src}/ccp4mg-utils ${coot_src}/ccp4mg-utils/util ${coot_src}/ccp4mg-utils/pygl ${MMDB2_INCLUDE_DIR}/include ${SSM_INCLUDE_DIR} ${CLIPPER-CORE_INCLUDE_DIR} ${CLIPPER-MMDB_INCLUDE_DIR} ${CLIPPER-CCP4_INCLUDE_DIR} ${FFTW2_INCLUDE_DIRS} ${RDKit_INCLUDE_DIRS} ${PNG_INCLUDE_DIR})
+ 
++target_include_directories(test-thread-limits PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ${coot_src}/ccp4mg-utils ${coot_src}/ccp4mg-utils/util ${coot_src}/ccp4mg-utils/pygl ${MMDB2_INCLUDE_DIR}/include ${SSM_INCLUDE_DIR} ${CLIPPER-CORE_INCLUDE_DIR} ${CLIPPER-MMDB_INCLUDE_DIR} ${CLIPPER-CCP4_INCLUDE_DIR} ${FFTW2_INCLUDE_DIRS} ${RDKit_INCLUDE_DIRS} ${PNG_INCLUDE_DIR})
++
+ target_link_libraries(test-molecules-container PUBLIC cootapi ${SSM_LIBRARY} ${CLIPPER-MINIMOL_LIBRARY} ${CLIPPER-MMDB_LIBRARY} ${CLIPPER-CIF_LIBRARY} ${CLIPPER-CORE_LIBRARY} ${CLIPPER-CCP4_LIBRARY} ${CLIPPER-CONTRIB_LIBRARY} ${FFTW2_LIBRARY} ${RFFTW2_LIBRARY} ${MMDB2_LIBRARY} ${CCP4C_LIBRARY} ${ZLIB_LIBRARIES} ${GSL_LIBRARIES} ${RDKit_libs_for_libcootapi} ${PNG_LIBRARY} gemmi::gemmi_cpp ${libdwarf} ${libelf} Threads::Threads)
+ 
++target_link_libraries(test-thread-limits PUBLIC cootapi ${SSM_LIBRARY} ${CLIPPER-MINIMOL_LIBRARY} ${CLIPPER-MMDB_LIBRARY} ${CLIPPER-CIF_LIBRARY} ${CLIPPER-CORE_LIBRARY} ${CLIPPER-CCP4_LIBRARY} ${CLIPPER-CONTRIB_LIBRARY} ${FFTW2_LIBRARY} ${RFFTW2_LIBRARY} ${MMDB2_LIBRARY} ${CCP4C_LIBRARY} ${ZLIB_LIBRARIES} ${GSL_LIBRARIES} ${RDKit_libs_for_libcootapi} ${PNG_LIBRARY} gemmi::gemmi_cpp ${libdwarf} ${libelf} Threads::Threads ${CMAKE_DL_LIBS})
++
+ target_include_directories(test-docking PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ${coot_src}/ccp4mg-utils ${coot_src}/ccp4mg-utils/util ${coot_src}/ccp4mg-utils/pygl ${MMDB2_INCLUDE_DIR} ${CLIPPER-CORE_INCLUDE_DIR} ${CLIPPER-CCP4_INCLUDE_DIR} ${GSL_INCLUDE_DIRS})
+ 
+ target_link_libraries(test-docking PUBLIC cootapi ${CLIPPER-CORE_LIBRARY} ${CLIPPER-CCP4_LIBRARY} ${MMDB2_LIBRARY} ${GSL_LIBRARIES} glm::glm Threads::Threads)
+diff --git MoleculesToTriangles/CXXSurface/CXXSurfaceMaker-gemmi.cc MoleculesToTriangles/CXXSurface/CXXSurfaceMaker-gemmi.cc
+index 651ced480..00daa9fd5 100644
+--- MoleculesToTriangles/CXXSurface/CXXSurfaceMaker-gemmi.cc
++++ MoleculesToTriangles/CXXSurface/CXXSurfaceMaker-gemmi.cc
+@@ -163,11 +163,6 @@ int CXXSurfaceMaker::calculateFromAtoms(gemmi::Structure *structure, gemmi::Mode
+    childSurfaces.resize(oldSize + nSelAtoms);
+    CXXSurface *elementSurfacesArray = &(childSurfaces[oldSize]);
+ 
+-#if !defined __APPLE__ && !defined _OPENMP
+-   unsigned int n_threads = 2;
+-   ctpl::thread_pool the_thread_pool(n_threads);
+-#endif
+-
+ #if __APPLE__ && !defined _OPENMP
+    dispatch_apply(nSelAtoms, dispatch_get_global_queue(0, 0), ^(size_t atomNr) {
+       handleCentralAtom(atomNr, this, &vdwBallPntrs, elementSurfacesArray, radiusMultiplier,
+@@ -191,9 +186,6 @@ int CXXSurfaceMaker::calculateFromAtoms(gemmi::Structure *structure, gemmi::Mode
+    });
+ #else
+    }
+-#if !defined __APPLE__ && !defined _OPENMP
+-   the_thread_pool.stop(true);
+-#endif
+ #endif
+ 
+    vector<const CXXBall *> reentrantProbes;
+diff --git MoleculesToTriangles/CXXSurface/CXXSurfaceMaker.cpp MoleculesToTriangles/CXXSurface/CXXSurfaceMaker.cpp
+index 6ceda9d21..c8bc5d1b6 100644
+--- MoleculesToTriangles/CXXSurface/CXXSurfaceMaker.cpp
++++ MoleculesToTriangles/CXXSurface/CXXSurfaceMaker.cpp
+@@ -416,10 +416,11 @@ int CXXSurfaceMaker::calculateFromAtoms(mmdb::Manager *allAtomsManager_in, const
+     CXXSurface *elementSurfacesArray = &(childSurfaces[oldSize]);
+ 
+ #if !defined __APPLE__ && !defined _OPENMP
+-    // vector container stores threads
+-    unsigned int n_threads = 2; // get_number_of_threads_by_system_call();
++    // The thread pool is not used at the moment (see the loop below) so don't start
++    // any threads for it. If it is used again, the number of threads should come from
++    // the caller, so that the caller's limit on the number of threads is respected.
++    unsigned int n_threads = 0;
+     ctpl::thread_pool the_thread_pool(n_threads);
+-    std::cout << "n_threads" << n_threads << "\n";
+ #endif
+ 
+ #if __APPLE__ && !defined _OPENMP
+diff --git api/coot-molecule-refine.cc api/coot-molecule-refine.cc
+index 4a80310e1..2bd46992c 100644
+--- api/coot-molecule-refine.cc
++++ api/coot-molecule-refine.cc
+@@ -365,6 +365,7 @@ coot::molecule_t::minimize(const std::string &atom_selection_cid,
+                            bool do_rama_plot_restraints, float rama_plot_weight,
+                            bool do_torsion_restraints, float torsion_weight, bool refinement_is_quiet,
+                            coot::protein_geometry *geom_p,
++                           ctpl::thread_pool *thread_pool_p,
+                            bool do_numerical_gradients) {
+ 
+    // c.f. refine_direct()
+@@ -410,9 +411,12 @@ coot::molecule_t::minimize(const std::string &atom_selection_cid,
+       if (do_torsion_restraints) flags = TYPICAL_RESTRAINTS_WITH_TORSIONS;
+       pseudo_restraint_bond_type pseudos = NO_PSEUDO_BONDS;
+ 
+-      int n_threads = 4; // coot::get_max_number_of_threads();
+-      ctpl::thread_pool thread_pool(n_threads);
+-      restraints.thread_pool(&thread_pool, n_threads);
++      // Use the thread pool that we were given (c.f. refine_direct()), and
++      // not more of it than there is.
++      int n_threads = 4;
++      if (n_threads > thread_pool_p->size())
++         n_threads = thread_pool_p->size();
++      restraints.thread_pool(thread_pool_p, n_threads);
+ 
+       int imol = imol_no;
+       bool do_auto_helix_restraints = true;
+diff --git api/coot-molecule.cc api/coot-molecule.cc
+index 8ec0d9db6..3a273971f 100644
+--- api/coot-molecule.cc
++++ api/coot-molecule.cc
+@@ -2683,7 +2683,7 @@ coot::molecule_t::get_fixed_atoms() const {
+ 
+ int
+ coot::molecule_t::refine_direct(std::vector<mmdb::Residue *> rv, const std::string &alt_loc, const clipper::Xmap<float> &xmap,
+-                                unsigned int max_number_of_threads,
++                                ctpl::thread_pool *thread_pool_p,
+                                 float map_weight, int n_cycles, const coot::protein_geometry &geom,
+                                 bool do_rama_plot_restraints, float rama_plot_weight,
+                                 bool do_torsion_restraints, float torsion_weight,
+@@ -2731,9 +2731,11 @@ coot::molecule_t::refine_direct(std::vector<mmdb::Residue *> rv, const std::stri
+    if (do_torsion_restraints) flags = TYPICAL_RESTRAINTS_WITH_TORSIONS;
+    pseudo_restraint_bond_type pseudos = NO_PSEUDO_BONDS;
+ 
+-   int n_threads = max_number_of_threads;
+-   ctpl::thread_pool thread_pool(n_threads);
+-   restraints.thread_pool(&thread_pool, n_threads);
++   // Use the thread pool that we were given - making a new thread pool here
++   // means that every refinement starts (and stops) another set of threads
++   // while those of the molecules container's thread pool are doing nothing.
++   int n_threads = thread_pool_p->size();
++   restraints.thread_pool(thread_pool_p, n_threads);
+ 
+    int imol = imol_no;
+    bool do_auto_helix_restraints = true;
+@@ -4693,7 +4695,7 @@ coot::molecule_t::init_all_molecule_refinement(int imol_ref_mol, coot::protein_g
+    flags = coot::TYPICAL_RESTRAINTS;
+    coot::pseudo_restraint_bond_type pseudos = coot::NO_PSEUDO_BONDS;
+ 
+-   unsigned int n_threads = 8;
++   unsigned int n_threads = coot::get_max_number_of_threads();
+    last_restraints->thread_pool(thread_pool, n_threads);
+ 
+    // user-defined LIG diction ahve been assigned to imol_ref_mol, not this one (this one
+diff --git api/coot-molecule.hh api/coot-molecule.hh
+index c0b993b77..91fcd5ede 100644
+--- api/coot-molecule.hh
++++ api/coot-molecule.hh
+@@ -1359,8 +1359,10 @@ namespace coot {
+       std::vector<mmdb::Residue *> select_residues(const std::string &multi_cid, const std::string &mode) const;
+ 
+       //! real space refinement
++      //!
++      //! `thread_pool_p` is the thread pool to use (the thread pool of the molecules container)
+       int refine_direct(std::vector<mmdb::Residue *> rv, const std::string &alt_loc, const clipper::Xmap<float> &xmap,
+-                        unsigned int max_number_of_threads,
++                        ctpl::thread_pool *thread_pool_p,
+                         float map_weight, int n_cycles, const coot::protein_geometry &geom,
+                         bool do_rama_plot_restraints, float rama_plot_weight,
+                         bool do_torsion_restraints, float torsion_weight,
+@@ -1371,6 +1373,7 @@ namespace coot {
+                    bool do_rama_plot_restraints, float rama_plot_weight,
+                    bool do_torsion_restraints, float torsion_weight, bool refinement_is_quiet,
+                    coot::protein_geometry *geom_p,
++                   ctpl::thread_pool *thread_pool_p,
+                    bool do_numerical_gradients=false);
+ 
+       bool shiftfield_b_factor_refinement(const clipper::HKL_data<clipper::data32::F_sigF> &F_sigF,
+diff --git api/molecules-container-ligand-fitting.cc api/molecules-container-ligand-fitting.cc
+index 6d35fe6f1..2fad39e24 100644
+--- api/molecules-container-ligand-fitting.cc
++++ api/molecules-container-ligand-fitting.cc
+@@ -181,13 +181,9 @@ molecules_container_t::fit_ligand_right_here(int imol_protein, int imol_map, int
+             try {
+                coot::minimol::molecule mmol(molecules[imol_ligand].atom_sel.mol);
+                std::string res_name = get_first_residue_name(molecules[imol_ligand].atom_sel.mol);
+-#ifdef __EMSCRIPTEN__
+-               int n_threads = 3;
+-#else
+                int n_threads = coot::get_max_number_of_threads();
+                n_threads = n_threads - 2;
+                if (n_threads < 1) n_threads = 1;
+-#endif
+                // use the shared class thread pool (not a new local one)
+                if (n_threads > static_cast<int>(thread_pool.size()))
+                   n_threads = thread_pool.size();
+@@ -337,13 +333,9 @@ molecules_container_t::fit_ligand(int imol_protein, int imol_map, int imol_ligan
+ 
+                coot::minimol::molecule mmol(molecules[imol_ligand].atom_sel.mol);
+                std::string res_name = get_first_residue_name(molecules[imol_ligand].atom_sel.mol);
+-#ifdef __EMSCRIPTEN__
+-               int n_threads = 3;
+-#else
+                int n_threads = coot::get_max_number_of_threads();
+                n_threads = n_threads - 2;
+                if (n_threads < 1) n_threads = 1;
+-#endif
+                // use the shared class thread pool (not a new local one)
+                if (n_threads > static_cast<int>(thread_pool.size()))
+                   n_threads = thread_pool.size();
+diff --git api/molecules-container-modelling.cc api/molecules-container-modelling.cc
+index 5864d6f29..94f3f7f5e 100644
+--- api/molecules-container-modelling.cc
++++ api/molecules-container-modelling.cc
+@@ -507,7 +507,7 @@ molecules_container_t::minimize_energy(int imol, const std::string &atom_selecti
+       status = molecules[imol].minimize(atom_selection_cid, n_cycles,
+                                         do_rama_plot_restraints, rama_plot_weight,
+                                         do_torsion_restraints, torsion_weight,
+-                                        refinement_is_quiet, &geom, use_numerical_gradients);
++                                        refinement_is_quiet, &geom, &thread_pool, use_numerical_gradients);
+       std::string mode = "COLOUR-BY-CHAIN-AND-DICTIONARY";
+       bool draw_hydrogen_atoms_flag = true; // use data member as we do for draw_missing_residue_loops_flag?
+       unsigned int smoothness_factor = 1;
+@@ -555,7 +555,7 @@ molecules_container_t::minimize(int imol, const std::string &atom_selection_cid,
+       status = molecules[imol].minimize(atom_selection_cid, n_cycles,
+                                         do_rama_plot_restraints, rama_plot_weight,
+                                         do_torsion_restraints, torsion_weight,
+-                                        refinement_is_quiet, &geom, use_numerical_gradients);
++                                        refinement_is_quiet, &geom, &thread_pool, use_numerical_gradients);
+ 
+    } else {
+       std::cout << "WARNING:: " << __FUNCTION__ << "(): not a valid model molecule " << imol << std::endl;
+diff --git api/molecules-container-refine.cc api/molecules-container-refine.cc
+index 050bbdcdc..7500b41cc 100644
+--- api/molecules-container-refine.cc
++++ api/molecules-container-refine.cc
+@@ -362,14 +362,12 @@ molecules_container_t::refine_direct(int imol, std::vector<mmdb::Residue *> rv,
+                 << " and imol_refinement_map " << imol_refinement_map
+                 << std::endl;
+ 
+-   // this is not stored in molecules_container!
+-   unsigned int max_number_of_threads = thread_pool.size();
+ 
+    int status = 0;
+    if (is_valid_model_molecule(imol)) {
+       if (is_valid_map_molecule(imol_refinement_map)) {
+          const clipper::Xmap<float> &xmap = molecules[imol_refinement_map].xmap;
+-         status = molecules[imol].refine_direct(rv, alt_loc, xmap, max_number_of_threads,
++         status = molecules[imol].refine_direct(rv, alt_loc, xmap, &thread_pool,
+                                                 map_weight, n_cycles, geom,
+                                        use_rama_plot_restraints, rama_plot_restraints_weight,
+                                        use_torsion_restraints, torsion_restraints_weight,
+diff --git api/molecules-container.cc api/molecules-container.cc
+index 0de32d3fb..61af096b9 100644
+--- api/molecules-container.cc
++++ api/molecules-container.cc
+@@ -47,6 +47,7 @@
+ #include "coords/mmdb-extras.hh"
+ 
+ #include "mmdb2/mmdb_atom.h"
++#include "utils/coot-utils.hh" // for get_max_number_of_threads()
+ #include "utils/logging.hh"
+ extern logging logger;
+ 
+@@ -64,11 +65,22 @@ molecules_container_t::~molecules_container_t() {
+    standard_residues_asc.clear_up();
+ }
+ 
++// The number of threads for the thread pool of a new container: at most 8 and
++// not more than the limit that the user has (or the system has) set.
++static unsigned int
++initial_thread_pool_size() {
++
++   unsigned int n = coot::get_max_number_of_threads();
++   if (n > 8) n = 8;
++   if (n < 1) n = 1;
++   return n;
++}
++
+ //! the one and only constructor
+ // verbose is an optional arg, default true
+ molecules_container_t::molecules_container_t(bool verbose) :
+    ramachandrans_container(ramachandrans_container_t()),
+-   thread_pool(8) {
++   thread_pool(initial_thread_pool_size()) {
+    if (! verbose) geom.set_verbose(false);
+    init();
+ }
+@@ -3891,6 +3903,11 @@ molecules_container_t::molecule_to_mmCIF_string(int imol) const {
+ void
+ molecules_container_t::set_max_number_of_threads(unsigned int n_threads) {
+    coot::set_max_number_of_threads(n_threads);
++   // n_threads = 0 means "use the default". The thread pool must never have 0 threads:
++   // nothing that is pushed to such a pool is run, so a function that waits for the
++   // results would never return.
++   if (n_threads == 0)
++      n_threads = initial_thread_pool_size();
+    thread_pool.resize(n_threads);
+ }
+ 
+@@ -3916,12 +3933,15 @@ molecules_container_t::test_the_threading(int n_threads) {
+    };
+ 
+    int imol_map = read_mtz(reference_data("moorhen-tutorial-map-number-1.mtz"), "FWT", "PHWT", "W", false, false);
++   // this is a timing test, so put the limit back afterwards
++   unsigned int n_threads_previous = coot::get_max_number_of_threads();
+    coot::set_max_number_of_threads(n_threads);
+    float radius = 50;
+    auto tp_0 = std::chrono::high_resolution_clock::now();
+    coot::simple_mesh_t map_mesh = get_map_contours_mesh(imol_map, 55,10,10, radius, 0.12);
+    auto tp_1 = std::chrono::high_resolution_clock::now();
+    auto d10 = std::chrono::duration_cast<std::chrono::milliseconds>(tp_1 - tp_0).count();
++   coot::set_max_number_of_threads(n_threads_previous);
+    close_molecule(imol_map);
+    return d10;
+ }
+diff --git api/molecules-container.hh api/molecules-container.hh
+index 1a6687c9d..79b78e008 100644
+--- api/molecules-container.hh
++++ api/molecules-container.hh
+@@ -4243,7 +4243,9 @@ public:
+    //!
+    //! set the maximum number of threads for both the thread pool and the vector of threads
+    //!
+-   //! @param n_threads is the number of threads
++   //! @param n_threads is the number of threads. 0 means "use the default": the number
++   //!        of threads is then taken from the `COOT_N_THREADS` environment variable or,
++   //!        if that is not set, from the system.
+    void set_max_number_of_threads(unsigned int n_threads);
+ 
+    //! Testing function
+diff --git api/test-thread-limits.cc api/test-thread-limits.cc
+new file mode 100644
+index 000000000..7855ba150
+--- /dev/null
++++ api/test-thread-limits.cc
+@@ -0,0 +1,459 @@
++/*
++ * api/test-thread-limits.cc
++ *
++ * Does libcootapi respect set_max_number_of_threads()?
++ *
++ * This program counts every thread that the process creates (by interposing
++ * pthread_create()) and, for a set of API calls, reports
++ *
++ *   pool     threads alive before the call (the container's thread pool)
++ *   extra    most threads alive during the call, over and above "pool"
++ *   created  number of threads created by the call
++ *
++ * for several values of N = set_max_number_of_threads(N). A call passes if
++ * "extra" is not more than N: it did not start more threads than it was
++ * allowed to. The pool itself should have N threads.
++ *
++ * Some functions that the API does not use (yet) are tested in the same way,
++ * because they are in the libraries that the API is built from.
++ *
++ * The last test writes to the log from several threads at the same time, as
++ * the threads of partition_map_by_chain() do. If the logger is not thread-safe
++ * that test loses messages or crashes.
++ *
++ * This matters most for WebAssembly, where threads come from a fixed-size
++ * pool of workers, and asking for more threads than are in the pool hangs
++ * the program - but a thread limit that is not a limit is a bug anywhere.
++ *
++ * Usage:
++ *
++ *   MOORHEN_TEST_DATA_DIR=/path/to/test-data test-thread-limits [N ...]
++ *
++ * using the same data as test-molecules-container, of which these are needed:
++ * moorhen-tutorial-structure-number-1.pdb, moorhen-tutorial-map-number-1.mtz
++ * and LZA.cif.
++ *
++ * The exit status is the number of failed checks.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU Lesser General Public License as published
++ * by the Free Software Foundation; either version 3 of the License, or (at
++ * your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ */
++
++#include <atomic>
++#include <chrono>
++#include <cstdio>
++#include <cstdlib>
++#include <functional>
++#include <iomanip>
++#include <iostream>
++#include <string>
++#include <thread>
++#include <vector>
++
++#include <pthread.h>
++
++#include "utils/coot-utils.hh"
++#include "utils/logging.hh"
++#include "coot-utils/coot-map-utils.hh"
++#include "coot-utils/coot-map-heavy.hh"
++#include "ideal/model-bond-deltas.hh"
++#include "molecules-container.hh"
++
++extern logging logger;
++
++// ------------------------------------------------------------------------
++//                     count the threads of this process
++// ------------------------------------------------------------------------
++
++#if defined(__EMSCRIPTEN__)
++extern "C" int emscripten_builtin_pthread_create(pthread_t *, const pthread_attr_t *,
++                                                 void *(*)(void *), void *);
++#define HAVE_THREAD_CENSUS 1
++#elif defined(__linux__)
++#include <dlfcn.h>
++#define HAVE_THREAD_CENSUS 1
++#endif
++
++namespace thread_census {
++
++   std::atomic<int> n_alive(0);      // created and not yet finished
++   std::atomic<int> n_alive_peak(0);
++   std::atomic<int> n_created(0);
++
++   struct start_info_t {
++      void *(*start_routine)(void *);
++      void *arg;
++   };
++
++   // the destructor runs when the thread function returns and when the thread
++   // calls pthread_exit().
++   struct departure_t {
++      ~departure_t() { --n_alive; }
++   };
++
++   void *trampoline(void *p) {
++      start_info_t si = *static_cast<start_info_t *>(p);
++      delete static_cast<start_info_t *>(p);
++      departure_t departure;
++      return si.start_routine(si.arg);
++   }
++
++   // a thread is counted from the moment that it is asked for, so that the
++   // peak does not depend on how quickly the new thread starts running.
++   void arrival() {
++      ++n_created;
++      int n = ++n_alive;
++      int p = n_alive_peak.load();
++      while (n > p && ! n_alive_peak.compare_exchange_weak(p, n)) {}
++   }
++
++   // wait for the number of threads to stop changing (threads that were
++   // detached, e.g. when a thread pool is shrunk, finish in their own time).
++   int settle() {
++      int n = n_alive.load();
++      int n_same = 0;
++      for (int i=0; i<400 && n_same<10; i++) {
++         std::this_thread::sleep_for(std::chrono::milliseconds(5));
++         int n_now = n_alive.load();
++         if (n_now == n) n_same++; else n_same = 0;
++         n = n_now;
++      }
++      return n;
++   }
++}
++
++#ifdef HAVE_THREAD_CENSUS
++extern "C" int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
++                              void *(*start_routine)(void *), void *arg) {
++
++#if defined(__EMSCRIPTEN__)
++   auto real_pthread_create = emscripten_builtin_pthread_create;
++#else
++   typedef int (*pthread_create_t)(pthread_t *, const pthread_attr_t *, void *(*)(void *), void *);
++   static pthread_create_t real_pthread_create =
++      reinterpret_cast<pthread_create_t>(dlsym(RTLD_NEXT, "pthread_create"));
++#endif
++
++   thread_census::start_info_t *si = new thread_census::start_info_t{start_routine, arg};
++   thread_census::arrival();
++   int status = real_pthread_create(thread, attr, thread_census::trampoline, si);
++   if (status != 0) {
++      --thread_census::n_alive;
++      delete si;
++   }
++   return status;
++}
++#endif
++
++// ------------------------------------------------------------------------
++//                                 the tests
++// ------------------------------------------------------------------------
++
++std::string
++reference_data(const std::string &file) {
++   char *env = getenv("MOORHEN_TEST_DATA_DIR");
++   if (env)
++      return coot::util::append_dir_file(env, file);
++   return file;
++}
++
++class check_t {
++public:
++   unsigned int n_max;
++   std::string name;
++   int pool;
++   int extra;
++   int created;
++   bool pass;
++   std::string note;
++};
++
++std::vector<check_t> checks;
++
++void report(const check_t &c) {
++   std::cout << "THREADS:: N=" << std::setw(2) << c.n_max << " " << std::left << std::setw(46) << c.name << std::right
++             << " pool " << std::setw(2) << c.pool
++             << " extra " << std::setw(3) << c.extra
++             << " created " << std::setw(4) << c.created
++             << (c.pass ? "  pass" : "  FAIL");
++   if (! c.note.empty()) std::cout << "  (" << c.note << ")";
++   std::cout << std::endl;
++}
++
++// run f() and see how many threads it used.
++void probe(unsigned int n_max, const std::string &name, const std::function<std::string()> &f) {
++
++   check_t c;
++   c.n_max = n_max;
++   c.name  = name;
++   c.pool  = thread_census::settle();
++   thread_census::n_alive_peak = c.pool;
++   int n_created_start = thread_census::n_created;
++   c.note    = f();
++   c.extra   = thread_census::n_alive_peak - c.pool;
++   c.created = thread_census::n_created - n_created_start;
++   c.pass    = (c.extra <= static_cast<int>(n_max));
++   checks.push_back(c);
++   report(c);
++}
++
++// the thread pool of a new container should not be bigger than the limit that
++// has already been set.
++void test_constructor(unsigned int n_max) {
++
++   coot::set_max_number_of_threads(n_max);
++   int n_before = thread_census::settle();
++   {
++      molecules_container_t mc(false);
++      check_t c;
++      c.n_max   = n_max;
++      c.name    = "molecules_container_t constructor";
++      c.pool    = thread_census::settle() - n_before;
++      c.extra   = 0;
++      c.created = c.pool;
++      c.pass    = (c.pool <= static_cast<int>(n_max));
++      c.note    = "pool is the size of the new thread pool";
++      checks.push_back(c);
++      report(c);
++   }
++   thread_census::settle();
++}
++
++void test_api_calls(unsigned int n_max) {
++
++   molecules_container_t mc(false);
++   mc.set_show_timings(false);
++   mc.set_refinement_is_verbose(false);
++   mc.set_make_backups(false);
++   mc.set_max_number_of_threads(n_max);
++
++   // is the thread pool the size that we asked for?
++   {
++      check_t c;
++      c.n_max   = n_max;
++      c.name    = "set_max_number_of_threads()";
++      c.pool    = thread_census::settle();
++      c.extra   = 0;
++      c.created = 0;
++      c.pass    = (c.pool == static_cast<int>(n_max));
++      c.note    = "pool should be N";
++      checks.push_back(c);
++      report(c);
++   }
++
++   int imol     = mc.read_pdb(reference_data("moorhen-tutorial-structure-number-1.pdb"));
++   int imol_map = mc.read_mtz(reference_data("moorhen-tutorial-map-number-1.mtz"), "FWT", "PHWT", "W", false, false);
++   if (! mc.is_valid_model_molecule(imol) || ! mc.is_valid_map_molecule(imol_map)) {
++      std::cout << "ERROR:: failed to read the test data - is MOORHEN_TEST_DATA_DIR set?" << std::endl;
++      exit(99);
++   }
++   mc.set_imol_refinement_map(imol_map);
++   mc.fill_rotamer_probability_tables();
++
++   auto ok = [] () { return std::string(); };
++
++   // ------------------------------ maps
++
++   mc.set_map_is_contoured_with_thread_pool(false);
++   probe(n_max, "get_map_contours_mesh() (std::thread)",
++         [&] { mc.get_map_contours_mesh(imol_map, 55, 10, 10, 20, 0.4); return ok(); });
++   mc.set_map_is_contoured_with_thread_pool(true);
++   probe(n_max, "get_map_contours_mesh() (thread pool)",
++         [&] { mc.get_map_contours_mesh(imol_map, 55, 10, 10, 20, 0.4); return ok(); });
++
++   // ------------------------------ validation
++
++   probe(n_max, "density_correlation_analysis()",
++         [&] { mc.density_correlation_analysis(imol, imol_map); return ok(); });
++   probe(n_max, "mmrrcc()",
++         [&] { mc.mmrrcc(imol, "A", imol_map); return ok(); });
++   probe(n_max, "get_rotamer_dodecs_instanced()",
++         [&] { mc.get_rotamer_dodecs_instanced(imol); return ok(); });
++   probe(n_max, "all_molecule_contact_dots()",
++         [&] { mc.all_molecule_contact_dots(imol, 1); return ok(); });
++   probe(n_max, "get_molecular_representation_mesh() surface",
++         [&] { mc.get_molecular_representation_mesh(imol, "//A/10-40", "Chain", "MolecularSurface", 2); return ok(); });
++
++   // ------------------------------ refinement
++
++   probe(n_max, "refine_residues_using_atom_cid()",
++         [&] { mc.refine_residues_using_atom_cid(imol, "//A/100", "TRIPLE", 100); return ok(); });
++   probe(n_max, "refine_residue_range()",
++         [&] { mc.refine_residue_range(imol, "A", 30, 40, 100); return ok(); });
++   probe(n_max, "minimize_energy()",
++         [&] { mc.minimize_energy(imol, "//A/50-54", 50, false, 20.0, false, 0.0, true); return ok(); });
++
++   // ------------------------------ ligands
++
++   if (mc.import_cif_dictionary(reference_data("LZA.cif"), -999999) == 1) {
++      int imol_ligand = mc.get_monomer_and_position_at("LZA", -999999, 0, 0, 0);
++      probe(n_max, "get_ligand_validation_vs_dictionary()",
++            [&] { mc.get_ligand_validation_vs_dictionary(imol_ligand, "//", true); return ok(); });
++      probe(n_max, "fit_ligand_right_here() 9 conformers",
++            [&] {
++               std::vector<int> fits = mc.fit_ligand_right_here(imol, imol_map, imol_ligand,
++                                                                61.15, 45.47, 36.40, 1.0, true, 9, 2);
++               return fits.empty() ? std::string("no ligand was fitted - is this the right map?") : std::string();
++            });
++   } else {
++      std::cout << "WARNING:: failed to read LZA.cif - the ligand tests were not run" << std::endl;
++   }
++
++   // ------------------------------ a map for each chain
++   //
++   // Split chain A so that we have a model of several chains.
++
++   int imol_chains = mc.read_pdb(reference_data("moorhen-tutorial-structure-number-1.pdb"));
++   const std::string new_chain_ids = "CDEFGHIJK";
++   for (unsigned int i=0; i<new_chain_ids.size(); i++)
++      mc.change_chain_id(imol_chains, "A", std::string(1, new_chain_ids[i]), true, 30 * i, 30 * i + 29);
++   probe(n_max, "partition_map_by_chain() (11 chains)",
++         [&] {
++            std::vector<int> maps = mc.partition_map_by_chain(imol_map, imol_chains);
++            return std::to_string(maps.size()) + " maps";
++         });
++}
++
++// A limit of 0 means "use the default". It must not make a thread pool of 0 threads,
++// because nothing that is given to such a pool is ever run.
++void test_limit_of_zero() {
++
++   int n_before = thread_census::settle();
++   {
++      molecules_container_t mc(false);
++      mc.set_max_number_of_threads(0);
++      check_t c;
++      c.n_max   = 0;
++      c.name    = "set_max_number_of_threads(0)";
++      c.pool    = thread_census::settle() - n_before;
++      c.extra   = 0;
++      c.created = 0;
++      c.pass    = (c.pool >= 1);
++      c.note    = "pool must not be empty";
++      checks.push_back(c);
++      report(c);
++   }
++   thread_census::settle();
++}
++
++// Functions that the API does not use, called directly. There is no container
++// here, so there is no thread pool: "pool" should be 0.
++void test_library_calls(unsigned int n_max) {
++
++   coot::set_max_number_of_threads(n_max);
++
++   clipper::Xmap<float> xmap;
++   bool map_is_filled = coot::util::map_fill_from_mtz(&xmap, reference_data("moorhen-tutorial-map-number-1.mtz"),
++                                                      "FWT", "PHWT", "W", false);
++   mmdb::Manager *mol = new mmdb::Manager;
++   mmdb::ERROR_CODE err = mol->ReadCoorFile(reference_data("moorhen-tutorial-structure-number-1.pdb").c_str());
++   if (! map_is_filled || err != mmdb::Error_NoError) {
++      std::cout << "ERROR:: failed to read the test data - is MOORHEN_TEST_DATA_DIR set?" << std::endl;
++      exit(99);
++   }
++
++   auto ok = [] () { return std::string(); };
++
++   int sel_hnd = mol->NewSelection();
++   mol->SelectAtoms(sel_hnd, 0, "A", 30, "", 60, "", "*", "*", "*", "*");
++   probe(n_max, "util::make_nxmap_from_xmap()",
++         [&] { clipper::NXmap<float> nxmap = coot::util::make_nxmap_from_xmap(xmap, mol, sel_hnd, 3.0); return ok(); });
++   mol->DeleteSelection(sel_hnd);
++
++   probe(n_max, "util::soi_variance::proc()",
++         [&] {
++            coot::util::soi_variance sv(xmap);
++            sv.proc(0.5);
++            std::remove("soi.map"); // it writes this
++            return ok();
++         });
++
++   probe(n_max, "util::compare_structure_factors()",
++         [&] {
++            coot::util::compare_structure_factors(xmap, xmap);
++            std::remove("compare-sfs.table"); // it writes this
++            return ok();
++         });
++
++   coot::protein_geometry geom;
++   geom.set_verbose(false);
++   geom.init_standard();
++   probe(n_max, "model_bond_deltas::resolve()",
++         [&] {
++            coot::model_bond_deltas mbd(mol, coot::protein_geometry::IMOL_ENC_ANY, &geom);
++            mbd.resolve();
++            return ok();
++         });
++
++   delete mol;
++}
++
++// The logger is used from threads (for example those of partition_map_by_chain()),
++// so it has to cope with being called from several threads at the same time.
++// If it can't, then this either crashes or loses messages.
++bool test_logger_from_many_threads() {
++
++   const unsigned int n_threads = 8;
++   const unsigned int n_messages_per_thread = 5000;
++   std::size_t n_before = logger.get_log_history_from(0).size();
++   std::vector<std::thread> threads;
++   for (unsigned int i=0; i<n_threads; i++)
++      threads.push_back(std::thread([n_messages_per_thread] (unsigned int i_thread) {
++         for (unsigned int j=0; j<n_messages_per_thread; j++)
++            logger.log(log_t::DEBUG, "test-thread-limits message from thread", static_cast<int>(i_thread));
++      }, i));
++   for (auto &thread : threads) thread.join();
++   std::size_t n_after = logger.get_log_history_from(0).size();
++   std::size_t n_expected = n_before + n_threads * n_messages_per_thread;
++   bool pass = (n_after == n_expected);
++   std::cout << "THREADS:: logger.log() from " << n_threads << " threads at once: " << (n_after - n_before)
++             << " of " << (n_threads * n_messages_per_thread) << " messages were stored"
++             << (pass ? "  pass" : "  FAIL") << std::endl;
++   return pass;
++}
++
++int main(int argc, char **argv) {
++
++#ifndef HAVE_THREAD_CENSUS
++   std::cout << "test-thread-limits: threads can't be counted on this platform - nothing was tested" << std::endl;
++   return 0;
++#endif
++
++   std::vector<unsigned int> limits;
++   for (int i=1; i<argc; i++) {
++      int n = atoi(argv[i]);
++      if (n > 0) limits.push_back(n);
++   }
++   if (limits.empty())
++      limits = {1, 2, 4};
++
++   for (unsigned int n_max : limits) {
++      test_constructor(n_max);
++      test_api_calls(n_max);
++      thread_census::settle();
++      test_library_calls(n_max);
++      thread_census::settle();
++   }
++   test_limit_of_zero();
++
++   unsigned int n_fail = 0;
++   std::cout << "\n------------------------- test-thread-limits summary -------------------------\n";
++   for (const auto &c : checks) {
++      report(c);
++      if (! c.pass) n_fail++;
++   }
++   std::cout << "THREADS:: " << checks.size() << " checks, " << n_fail << " failed" << std::endl;
++
++   // this is the last test because, if the logger is not thread-safe, it can crash.
++   if (! test_logger_from_many_threads())
++      n_fail++;
++
++   return n_fail;
++}
+diff --git coot-utils/contacts-by-bricks.cc coot-utils/contacts-by-bricks.cc
+index 50e2a6881..2089b1518 100644
+--- coot-utils/contacts-by-bricks.cc
++++ coot-utils/contacts-by-bricks.cc
+@@ -268,17 +268,28 @@ coot::contacts_by_bricks::find_the_contacts_between_bricks_multi_thread(std::vec
+    int brick_index_max = range[0] * range[1] * range[2];
+    float dist_max_sqrd = dist_nbc_max * dist_nbc_max;
+ 
+-   std::vector<std::thread> threads;
+-
+-   for (std::size_t ii=0; ii<thread_index_sets.size(); ii++) {
+-      const std::vector<unsigned int> &index_set = thread_index_sets[ii];
+-      threads.push_back(std::thread(find_the_contacts_between_bricks_multi_thread_workpackage,
+-                                          vec_p, std::cref(index_set), std::cref(atoms_in_bricks),
+-                                    std::cref(fixed_flags), range, atoms, brick_index_max, dist_nbc_max,
+-                                    only_between_different_residues_flag));
++   if (thread_index_sets.size() == 1) {
++
++      // There is no point in starting one thread to do all of the work while this
++      // thread waits for it - and that would be one thread more than a limit of 1 allows.
++      find_the_contacts_between_bricks_multi_thread_workpackage(vec_p, thread_index_sets[0], atoms_in_bricks,
++                                                                fixed_flags, range, atoms, brick_index_max,
++                                                                dist_nbc_max, only_between_different_residues_flag);
++
++   } else {
++
++      std::vector<std::thread> threads;
++
++      for (std::size_t ii=0; ii<thread_index_sets.size(); ii++) {
++         const std::vector<unsigned int> &index_set = thread_index_sets[ii];
++         threads.push_back(std::thread(find_the_contacts_between_bricks_multi_thread_workpackage,
++                                       vec_p, std::cref(index_set), std::cref(atoms_in_bricks),
++                                       std::cref(fixed_flags), range, atoms, brick_index_max, dist_nbc_max,
++                                       only_between_different_residues_flag));
++      }
++      for (std::size_t ii=0; ii<thread_index_sets.size(); ii++)
++         threads[ii].join();
+    }
+-   for (std::size_t ii=0; ii<thread_index_sets.size(); ii++)
+-      threads[ii].join();
+ 
+    if (false) {
+       auto tp_1 = std::chrono::high_resolution_clock::now();
+diff --git coot-utils/coot-map-heavy.cc coot-utils/coot-map-heavy.cc
+index 218cda492..22103c31d 100644
+--- coot-utils/coot-map-heavy.cc
++++ coot-utils/coot-map-heavy.cc
+@@ -688,15 +688,24 @@ coot::util::make_nxmap_from_xmap(const clipper::Xmap<float> &xmap, mmdb::Manager
+    clipper::Xmap<float>::Map_reference_coord ix(xmap);
+    clipper::Coord_grid offset =
+       xmap.coord_map(nxmap.coord_orth(clipper::Coord_map(0.0,0.0,0.0))).coord_grid();
+-   int n_threads = 4; // the number of layers
+-   std::vector<std::pair<NRI, NRI> > map_ref_start_stops(n_threads);
+    int nu = nxmap.grid().nu();
+    int nv = nxmap.grid().nv();
+    int nw = nxmap.grid().nw();
++   // The map is copied in layers (of u), one thread for each layer.
++   int n_threads = coot::get_max_number_of_threads();
++   if (n_threads < 1) n_threads = 1;
++   if (n_threads > nu) n_threads = nu;
++   if (n_threads < 1) n_threads = 1; // nu was 0
+    int nu_step = nu/n_threads;
+    // round that up if not exact
+    if ((nu_step * n_threads) < nu)
+       nu_step++;
++   // Now that the step has been rounded up we may need fewer layers. A layer must not
++   // start beyond the end of the grid.
++   if (nu_step > 0)
++      n_threads = (nu + nu_step - 1)/nu_step;
++   if (n_threads < 1) n_threads = 1;
++   std::vector<std::pair<NRI, NRI> > map_ref_start_stops(n_threads);
+    if (debug) {
+       std::cout << "nxmap size() " << nxmap.grid().size() << std::endl;
+       std::cout << "nxmap grid() " << nxmap.grid().format() << std::endl;
+diff --git coot-utils/coot-map-utils.cc coot-utils/coot-map-utils.cc
+index 2a7cb8f5a..f3b995d69 100644
+--- coot-utils/coot-map-utils.cc
++++ coot-utils/coot-map-utils.cc
+@@ -4184,7 +4184,8 @@ coot::util::soi_variance::make_variance_map() const {
+       for (ix = xmap.first(); !ix.last(); ix.next())
+          ++n_grids;
+ 
+-      unsigned int n_threads = 4;
++      unsigned int n_threads = coot::get_max_number_of_threads();
++      if (n_threads < 1) n_threads = 1;
+       std::vector<std::vector<clipper::Xmap_base::Map_reference_index> > grid_indices(n_threads);
+       int r_reserve_size = std::lround(static_cast<float>(n_grids)/static_cast<float>(n_threads)) + 2;
+       for (std::size_t n=0; n<n_threads; n++)
+@@ -4569,10 +4570,15 @@ coot::util::compare_structure_factors(const clipper::Xmap<float> &xmap_1, const
+                       };
+ 
+    std::cout << "# starting FFTs" << std::endl;
+-   std::thread thread_1(fft_to_fphi, std::cref(xmap_1), std::ref(fphis_1));
+-   std::thread thread_2(fft_to_fphi, std::cref(xmap_2), std::ref(fphis_2));
+-   thread_1.join();
+-   thread_2.join();
++   if (coot::get_max_number_of_threads() >= 2) {
++      std::thread thread_1(fft_to_fphi, std::cref(xmap_1), std::ref(fphis_1));
++      std::thread thread_2(fft_to_fphi, std::cref(xmap_2), std::ref(fphis_2));
++      thread_1.join();
++      thread_2.join();
++   } else {
++      fft_to_fphi(xmap_1, fphis_1);
++      fft_to_fphi(xmap_2, fphis_2);
++   }
+ 
+    std::cout << "# FFTs done" << std::endl;
+ 
+@@ -4782,7 +4788,8 @@ coot::util::zero_dose_extrapolation(const std::vector<std::pair<clipper::Xmap<fl
+ #endif
+ 
+ #if 1 // multi-threaded
+-   unsigned int n_threads = 8;
++   unsigned int n_threads = coot::get_max_number_of_threads();
++   if (n_threads < 1) n_threads = 1;
+    std::vector<std::thread> threads;
+    std::vector<std::pair<unsigned int, unsigned int> > ranges = atom_index_ranges(n_maps, n_threads);
+    for (unsigned int irange=0; irange<ranges.size(); irange++)
+@@ -5161,12 +5168,13 @@ coot::util::partition_map_by_chain(const clipper::Xmap<float> &xmap, mmdb::Manag
+          distance_map[ix] = starting_distance_map;
+    }
+ 
++   // This is run in a thread for each chain. So that the threads don't write to the
++   // same data, each of them only changes the distance for its own chain_id and
++   // none of them write to the state string.
+    auto manhattan_check = +[] (const std::string &chain_id,
+                                const std::vector<clipper::Coord_grid> &reference_points,
+-                               clipper::Xmap<std::map<std::string, int> > *distance_map_p,
+-                               std::string *info_string_p) {
++                               clipper::Xmap<std::map<std::string, int> > *distance_map_p) {
+ 
+-      if (info_string_p) *info_string_p = "Distance check for " + chain_id;
+       clipper::Xmap_base::Map_reference_index ix;
+       for (ix = distance_map_p->first(); !ix.last(); ix.next()) {
+          std::map<std::string, int>::const_iterator it;
+@@ -5188,21 +5196,26 @@ coot::util::partition_map_by_chain(const clipper::Xmap<float> &xmap, mmdb::Manag
+       logger.log(log_t::INFO, "manhattan map check done", chain_id);
+    };
+ 
+-   std::vector<std::thread> threads;
+-   for (const auto &chain_id : chain_ids) {
+-      // this block can be multi-threaded, I think
+-      const std::vector<clipper::Coord_grid> &reference_points = rp[chain_id];
+-      // modify distance map
+-      // manhattan_check(chain_id, reference_points, &distance_map);
+-      threads.push_back(std::thread(manhattan_check, chain_id, reference_points, &distance_map,
+-                                    state_string_p));
++   // One thread for each chain, but not more than the maximum number of threads at
++   // any one time (there can be many chains).
++   unsigned int n_threads_max = coot::get_max_number_of_threads();
++   if (n_threads_max < 1) n_threads_max = 1;
++   for (std::size_t i_start=0; i_start<chain_ids.size(); i_start+=n_threads_max) {
++      std::size_t i_end = i_start + n_threads_max;
++      if (i_end > chain_ids.size()) i_end = chain_ids.size();
++      std::vector<std::thread> threads;
++      for (std::size_t i=i_start; i<i_end; i++) {
++         const std::string &chain_id = chain_ids[i];
++         if (state_string_p) *state_string_p = "Distance check for " + chain_id;
++         // modify distance map
++         threads.push_back(std::thread(manhattan_check, chain_id, std::cref(rp[chain_id]), &distance_map));
++      }
++      if (state_string_p) *state_string_p = "Joining threads...";
++      // std::cout << "INFO:: joining threads" << std::endl;
++      logger.log(log_t::INFO, "joining threads");
++      for (auto &thread : threads) thread.join();
+    }
+ 
+-   if (state_string_p) *state_string_p = "Joining threads...";
+-   // std::cout << "INFO:: joining threads" << std::endl;
+-   logger.log(log_t::INFO, "joining threads");
+-   for (auto &thread : threads) thread.join();
+-
+    // now extract each of the maps for each chain
+    // std::cout << "INFO:: now constructing the map for each chain" << std::endl;
+    logger.log(log_t::INFO, "now constructing the map for each chain");
+diff --git coot-utils/edcalc.cc coot-utils/edcalc.cc
+index c45511cba..bfdc2bb93 100644
+--- coot-utils/edcalc.cc
++++ coot-utils/edcalc.cc
+@@ -182,9 +182,6 @@ coot::calc_atom_map_edcalc(mmdb::Manager *mol,
+ 
+    // Threading setup
+    unsigned int n_threads = coot::get_max_number_of_threads();
+-#ifdef __EMSCRIPTEN__
+-   n_threads = 3;
+-#endif
+ 
+    if (n_threads == 0) n_threads = 4;
+ 
+diff --git docking/rigid-body-dock.cc docking/rigid-body-dock.cc
+index 6a927a4fb..13b4afac0 100644
+--- docking/rigid-body-dock.cc
++++ docking/rigid-body-dock.cc
+@@ -30,6 +30,7 @@
+ 
+ #include "rigid-body-dock.hh"
+ #include "utils/split-indices.hh"
++#include "utils/coot-utils.hh"
+ 
+ using namespace coot::haddock;
+ 
+@@ -612,7 +613,8 @@ rigid_body_docker_t::dock() {
+ 
+    unsigned int n_threads = params_.n_threads;
+    if (n_threads == 0) {
+-      n_threads = std::thread::hardware_concurrency();
++      // auto-detect, within the limit that the user may have set
++      n_threads = coot::get_max_number_of_threads();
+       if (n_threads == 0) n_threads = 4;
+    }
+    if (n_threads > static_cast<unsigned int>(params_.n_trials))
+diff --git docking/semiflex-refine.cc docking/semiflex-refine.cc
+index 1c8ceebf9..8084ffb86 100644
+--- docking/semiflex-refine.cc
++++ docking/semiflex-refine.cc
+@@ -33,6 +33,7 @@
+ #include "semiflex-refine.hh"
+ #include "coot-utils/coot-coord-utils.hh"
+ #include "utils/split-indices.hh"
++#include "utils/coot-utils.hh"
+ 
+ using namespace coot::haddock;
+ 
+@@ -984,7 +985,8 @@ semiflex_refiner_t::refine(const std::vector<docking_result_t> &rigid_results) {
+ 
+    unsigned int n_threads = sf_params_.n_threads;
+    if (n_threads == 0) {
+-      n_threads = std::thread::hardware_concurrency();
++      // auto-detect, within the limit that the user may have set
++      n_threads = coot::get_max_number_of_threads();
+       if (n_threads == 0) n_threads = 4;
+    }
+    unsigned int n_input = static_cast<unsigned int>(rigid_results.size());
+diff --git ideal/model-bond-deltas.cc ideal/model-bond-deltas.cc
+index 5f47f825d..50140ce7d 100644
+--- ideal/model-bond-deltas.cc
++++ ideal/model-bond-deltas.cc
+@@ -98,7 +98,9 @@ coot::model_bond_deltas::resolve() {
+ 
+ 	 restraints_container_t restraints(residues, *geom_p, mol, &dummy_xmap);
+ 
+-	 int n_threads = 2;
++	 // make_restraints() starts up to (the maximum number of threads - 1) threads of
++	 // its own, so this pool can have only one thread if we are to stay within the limit.
++	 int n_threads = 1;
+ 	 ctpl::thread_pool thread_pool(n_threads);
+ 	 restraints.thread_pool(&thread_pool, n_threads);
+ 
+diff --git ligand/libres-tracer.cc ligand/libres-tracer.cc
+index d033ec628..c5105a706 100644
+--- ligand/libres-tracer.cc
++++ ligand/libres-tracer.cc
+@@ -1461,7 +1461,8 @@ make_fragments(std::vector<std::pair<unsigned int, coot::scored_node_t> > &score
+ 
+                            std::size_t loop_begin_tree_size = trees.size();
+                            std::size_t scored_pairs_front_offset = 0;
+-                           unsigned int n_threads = 16;
++                           unsigned int n_threads = coot::get_max_number_of_threads();
++                           if (n_threads < 1) n_threads = 1;
+ 
+                            do {
+ 
+@@ -3386,7 +3387,11 @@ void res_tracer_proc(const clipper::Xmap<float> &xmap, float xmap_rmsd, const co
+                                             if (model_p) {
+                                                unsigned int n_chains = model_p->GetNumberOfChains();
+                                                std::vector<std::vector<unsigned int> > chain_indices;
+-                                               coot::split_indices(&chain_indices, n_chains, 40);
++                                               // one thread for each set of chains
++                                               unsigned int n_chain_sets = coot::get_max_number_of_threads();
++                                               if (n_chain_sets > 40) n_chain_sets = 40;
++                                               if (n_chain_sets < 1) n_chain_sets = 1;
++                                               coot::split_indices(&chain_indices, n_chains, n_chain_sets);
+ 
+                                                std::vector<std::thread> threads;
+                                                for (unsigned int i=0; i<chain_indices.size(); i++) {
+diff --git ligand/ligand.cc ligand/ligand.cc
+index cf7d15d59..849efdda7 100644
+--- ligand/ligand.cc
++++ ligand/ligand.cc
+@@ -2048,13 +2048,20 @@ coot::ligand::fit_ligands_to_cluster(int iclust) {
+ 
+    std::vector<std::pair<minimol::molecule, ligand_score_card> > big_vector_of_results;
+ 
+-   // we split them into batches of 4 - that's fast enough for a nice speed up, but won't
++   // we split them into batches - that's fast enough for a nice speed up, but won't
+    // create a massive (20Gb) memory load. I don't know how to find out where the memory
+    // is allocated.
+    //
++   // Each ligand of a batch is fitted in its own thread, so a batch must not
++   // be bigger than the number of threads that we are allowed to use.
++   //
+    std::vector<std::vector<unsigned int> > indices;
+    unsigned int n_per_batch = 10;
+-   unsigned int n_batches = n_ligands / n_per_batch + 1;
++   unsigned int n_threads_max = coot::get_max_number_of_threads();
++   if (n_threads_max < 1) n_threads_max = 1;
++   if (n_per_batch > n_threads_max) n_per_batch = n_threads_max;
++   unsigned int n_batches = (n_ligands + n_per_batch - 1) / n_per_batch; // round up
++   if (n_batches < 1) n_batches = 1;
+    coot::split_indices(&indices, n_ligands, n_batches);
+ 
+    for (unsigned int ii=0; ii<indices.size(); ii++) {
+diff --git ligand/multi-peptide.cc ligand/multi-peptide.cc
+index 62e2c1d97..34df25ddb 100644
+--- ligand/multi-peptide.cc
++++ ligand/multi-peptide.cc
+@@ -503,7 +503,8 @@ coot::multi_build_terminal_residue_addition::store_manager(stored_fragment_conta
+    bool all_done = false;
+ 
+    unsigned int unlocked = 0;
+-   std::vector<std::thread> threads;
++   unsigned int n_threads_max = coot::get_max_number_of_threads();
++   if (n_threads_max < 1) n_threads_max = 1;
+ 
+    while (! all_done) {
+ 
+@@ -533,7 +534,11 @@ coot::multi_build_terminal_residue_addition::store_manager(stored_fragment_conta
+ 	 if (n_done == fragment_store.stored_fragments.size())
+ 	    all_done = true;
+ 
++      // Start a thread for each fragment that needs its side chains to be tried - but
++      // no more threads than we are allowed.
++      std::vector<std::thread> threads;
+       for (std::size_t i=0; i<fragment_store.stored_fragments.size(); i++) {
++	 if (threads.size() == n_threads_max) break;
+ 	 if (fragment_store.stored_fragments[i].sidechains_tried == false) {
+ 	    if (fragment_store.stored_fragments[i].with_sidechains == false) {
+ 
+@@ -548,11 +553,17 @@ coot::multi_build_terminal_residue_addition::store_manager(stored_fragment_conta
+       }
+ 
+       locked = 0;
+-      std::this_thread::sleep_for(std::chrono::milliseconds(800)); // wait before checking the store again
++
++      if (threads.empty()) {
++	 std::this_thread::sleep_for(std::chrono::milliseconds(800)); // wait before checking the store again
++      } else {
++	 // Wait for these threads before looking at the store again. A fragment is marked
++	 // as tried only when its thread has finished, so, without this, the next pass
++	 // would start another thread for a fragment that is still being worked on.
++	 for (std::size_t i_thread=0; i_thread<threads.size(); i_thread++)
++	    threads[i_thread].join();
++      }
+    }
+-   unsigned int n_threads = threads.size();
+-   for (unsigned int i_thread=0; i_thread<n_threads; i_thread++)
+-      threads.at(i_thread).join();
+ 
+ #endif // HAVE_CXX_THREAD
+ 
+diff --git utils/coot-utils.hh utils/coot-utils.hh
+index ee46db61b..77fec6788 100644
+--- utils/coot-utils.hh
++++ utils/coot-utils.hh
+@@ -57,11 +57,11 @@ namespace coot {
+ 
+    // use env var COOT_N_THREADS (or fallback) to get the number of threads
+    unsigned int get_max_number_of_threads();
+-   // sets this:
+-   static unsigned int coot_n_threads = 0;
+    // using this:
+    long get_number_of_threads_by_system_call();
+ 
++   // Set the maximum number of threads. 0 means "not set": the next call to
++   // get_max_number_of_threads() works it out again (from COOT_N_THREADS or the system).
+    void set_max_number_of_threads(unsigned int n_threads);
+ 
+    //! if you can try to get the directoy dir in this directory.
+diff --git utils/logging.cc utils/logging.cc
+index 712e4d0fa..988f018ef 100644
+--- utils/logging.cc
++++ utils/logging.cc
+@@ -28,8 +28,14 @@
+ 
+ #include <iostream>
+ #include <filesystem>
++#include <mutex>
+ #include "logging.hh"
+ 
++// Log messages can come from several threads at the same time, so writing to
++// (and reading from) the history needs a lock. It is recursive because the
++// update notifier function is called with the lock held and may read the history.
++static std::recursive_mutex history_mutex;
++
+ #if defined(_MSC_VER)
+ #define EPOCHFILETIME (116444736000000000i64)
+ int
+@@ -141,6 +147,7 @@ logging::log(const std::string &s) {
+    if (success == 0) // was successful
+       l.t = current_time.tv_sec;
+ 
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    notify();
+ 
+@@ -156,6 +163,7 @@ logging::log(log_t type, const std::string &s) {
+    int success = gettimeofday(&current_time, NULL);
+    if (success == 0) // was successful
+       l.t = current_time.tv_sec;
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -174,6 +182,7 @@ logging::log(log_t type, const std::string &s1, const std::string &s2) {
+    l.add_to_message(s1);
+    l.add_to_message(" ");
+    l.add_to_message(s2);
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -187,6 +196,7 @@ logging::log(log_t type_in, const function_name_t &fn, const std::string &s1) {
+    int success = gettimeofday(&current_time, NULL);
+    if (success == 0) // was successful
+       l.t = current_time.tv_sec;
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -203,6 +213,7 @@ logging::log(log_t type_in, const function_name_t &fn, const std::string &s1, co
+    l.add_to_message(s1);
+    l.add_to_message(" ");
+    l.add_to_message(s2);
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -222,6 +233,7 @@ logging::log(log_t type_in, const function_name_t &fn,
+    l.add_to_message(s2);
+    l.add_to_message(" ");
+    l.add_to_message(s3);
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -238,6 +250,7 @@ logging::log(log_t type_in, const function_name_t &fn, const std::string &s1, in
+    l.add_to_message(s1);
+    l.add_to_message(" ");
+    l.add_to_message(std::to_string(i));
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -255,6 +268,7 @@ logging::log(log_t type_in, const function_name_t &fn, const std::string &s1, in
+    l.add_to_message(" ");
+    l.add_to_message(std::to_string(i));
+    l.add_to_message(std::to_string(j));
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -274,6 +288,7 @@ logging::log(log_t type_in, const function_name_t &fn, const std::string &s1, in
+    l.add_to_message(std::to_string(i));
+    l.add_to_message(" ");
+    l.add_to_message(s2);
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -292,6 +307,7 @@ logging::log(log_t type_in, const function_name_t &fn, const std::vector<ltw> &v
+       l.add_to_message(item.to_string());
+       l.add_to_message(" ");
+    }
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -313,6 +329,7 @@ logging::log(log_t type_in, const std::string &s1, bool v1, const std::string &s
+    l.message += b;
+    l.message += " ";
+    l.message += s2;
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -332,6 +349,7 @@ logging::log(log_t type_in, const std::string &s1, std::size_t s, const std::str
+    l.message += std::to_string(s);
+    l.message += " ";
+    l.message += s2;
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -351,6 +369,7 @@ logging::log(log_t type_in, const std::string &s1, int i, const std::string &s2)
+    l.message += std::to_string(i);
+    l.message += " ";
+    l.message += s2;
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -370,6 +389,7 @@ logging::log(log_t type_in, const std::string &s1, unsigned int i, const std::st
+    l.message += std::to_string(i);
+    l.message += " ";
+    l.message += s2;
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -389,6 +409,7 @@ logging::log(log_t type_in, const std::string &s1, double d, const std::string &
+    l.message += std::to_string(d);
+    l.message += " ";
+    l.message += s2;
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -412,6 +433,7 @@ void logging::log(log_t type_in, const std::string &s1, const std::string &s2, c
+    l.message += s4;
+    l.message += " ";
+    l.message += std::to_string(f2);
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -435,6 +457,7 @@ void logging::log(log_t type_in, const std::string &s1, const float &f1, const s
+    l.message += s4;
+    l.message += " ";
+    l.message += std::to_string(f2);
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+ }
+@@ -450,6 +473,7 @@ logging::log(log_t type_in, const std::string &s1, const int &i) {
+    l.message = s1;
+    l.message += " ";
+    l.message += std::to_string(i);
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -473,6 +497,7 @@ logging::log(log_t type_in, const std::string &s1, bool v1, const std::string &s
+    l.message += s2;
+    l.message += " ";
+    l.message += s3;
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -490,6 +515,7 @@ logging::log(log_t type_in, const std::string &s1, const double &d1) {
+    l.add_to_message(s1);
+    l.add_to_message(" ");
+    l.add_to_message(std::to_string(d1));
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -506,6 +532,7 @@ logging::log(log_t type_in, const std::string &s1, const float &f1) {
+    l.add_to_message(s1);
+    l.add_to_message(" ");
+    l.add_to_message(std::to_string(f1));
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -523,6 +550,7 @@ void logging::log(log_t type_in, const std::string &s1, const float &f1, const f
+    l.add_to_message(std::to_string(f1));
+    l.add_to_message(" ");
+    l.add_to_message(std::to_string(f2));
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -539,6 +567,7 @@ void logging::log(log_t type_in, ltw l1, ltw l2) {
+    l.message += l1.to_string();
+    l.message += " ";
+    l.message += l2.to_string();
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -558,6 +587,7 @@ logging::log(log_t type_in, ltw l1, ltw l2, ltw l3) {
+    l.message += l2.to_string();
+    l.message += " ";
+    l.message += l3.to_string();
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -579,6 +609,7 @@ logging::log(log_t type_in, const ltw &l1, const ltw &l2, const ltw &l3, const l
+    l.message += l3.to_string();
+    l.message += " ";
+    l.message += l4.to_string();
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -603,6 +634,7 @@ logging::log(log_t type_in, ltw l1, ltw l2, ltw l3, ltw l4, ltw l5) {
+    l.message += l4.to_string();
+    l.message += " ";
+    l.message += l5.to_string();
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -628,6 +660,7 @@ logging::log(log_t type_in, ltw l1, ltw l2, ltw l3, ltw l4, ltw l5, ltw l6) {
+    l.message += l5.to_string();
+    l.message += " ";
+    l.message += l6.to_string();
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -666,6 +699,7 @@ logging::log(log_t type_in,
+    l.message += l9.to_string();
+    l.message += " ";
+    l.message += l10.to_string();
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -688,6 +722,7 @@ logging::log(log_t type_in, const std::string &s1, const double &d1, const std::
+    l.add_to_message(" ");
+    l.add_to_message(std::to_string(d2));
+    l.add_to_message(" ");
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -710,6 +745,7 @@ logging::log(log_t type_in, const function_name_t &fn, const std::string &s1, bo
+    l.add_to_message(" ");
+    l.add_to_message(std::to_string(f));
+    l.add_to_message(" ");
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -730,6 +766,7 @@ logging::log(log_t type_in, const std::vector<ltw> &ls) {
+       l.message += item.to_string();
+       l.message += " ";
+    }
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    history.push_back(l);
+    output_to_terminal_maybe();
+    notify();
+@@ -743,6 +780,7 @@ logging::output_to_terminal_maybe() {
+ void
+ logging::show() const {
+ 
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    for (std::size_t i=0; i<history.size(); i++) {
+       const log_item &h = history[i];
+       // maybe use localtime()
+@@ -805,6 +843,7 @@ logging::log_item::get_date_string() const {
+ void
+ logging::show_last() const {
+ 
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    if (! history.empty()) {
+       const log_item &h = history.back();
+ 
+@@ -825,6 +864,7 @@ std::vector<logging::log_item>
+ logging::get_log_history_from(unsigned int idx_start) const {
+ 
+    std::vector<log_item> v;
++   std::lock_guard<std::recursive_mutex> history_lock(history_mutex);
+    if (idx_start < history.size()) {
+       for (unsigned int i=idx_start; i<history.size(); i++) {
+ 	 v.push_back(history[i]);
+diff --git utils/threads.cc utils/threads.cc
+index 7659a2e4f..21146ae56 100644
+--- utils/threads.cc
++++ utils/threads.cc
+@@ -24,6 +24,7 @@
+ #include <stdexcept>
+ #include <iostream>
+ #include <algorithm>
++#include <atomic>
+ #include "coot-utils.hh"
+ 
+ #ifdef  _WIN32
+@@ -46,7 +47,9 @@ SYSTEM_INFO sysinfo;
+ 
+ }
+ 
+-// unsigned int coot::coot_n_threads = 0; // static
++// The maximum number of threads: 0 means that it has not been set yet.
++// This is used from several threads (e.g. the threads of a thread pool ask for it).
++static std::atomic<unsigned int> coot_n_threads(0);
+ 
+ unsigned int coot::get_max_number_of_threads() {
+ 

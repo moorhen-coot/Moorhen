@@ -364,7 +364,16 @@ getgsl() {
 
 # Patches to the pinned coot commit, for fixes not yet upstream. Paths in
 # git -C are relative to coot-1.0, hence ../../patches.
-coot_patches="coot-undo-backup-per-molecule.patch"
+#
+#   coot-thread-limits.patch              https://github.com/pemsley/coot/pull/439
+#   coot-fit-ligand-map-reference.patch   https://github.com/pemsley/coot/pull/438
+#
+# Each patch is the diff of the pull request named beside it. When one is merged
+# upstream and the pinned commit in VERSIONS has moved past the merge, take that
+# patch out of this list and delete the file: a patch whose changes are already
+# upstream is reported as "already applied", but unapplycootpatches would then
+# reverse those upstream changes whenever another patch has left the tree modified.
+coot_patches="coot-thread-limits.patch coot-fit-ligand-map-reference.patch"
 
 applycootpatches() {
     for p in $coot_patches; do
