@@ -6,6 +6,7 @@ import { ScreenRecorder } from '../../utils/MoorhenScreenRecorder';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { buildBuffers, appendOtherData, } from '../../WebGLgComponents/buildBuffers'
 import { getVectorsBuffers } from '../../WebGLgComponents/vectorsDraw'
+import { getAnnotationLabels } from '../../WebGLgComponents/annotationsDraw'
 import { getThreeDObjectsBuffers } from '../../WebGLgComponents/threeDObjectsDraw'
 import { getGizmoBuffers } from '../../WebGLgComponents/gizmoDraw'
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
@@ -20,6 +21,7 @@ import { setQuat, setOrigin, setZoom,
          autoClipFogByZoom,  } from "../../store"
 import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
 import { Moorhen2DOverlay } from './Moorhen2DOverlay';
+import { Overlay2DHandles } from './Overlay2DHandles';
 import { RootState } from '../../store/MoorhenReduxStore';
 import { DrawHoverAtom } from './HoverAtom';
 import { isSilent, viewDifference } from "../../WebGLgComponents/viewEcho";
@@ -157,6 +159,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const elementsIndicesRestrict = useSelector((state: moorhen.State) => state.glRef.elementsIndicesRestrict)
 
     const vectorsList = useSelector((state: moorhen.State) => state.vectors.vectorsList)
+    const annotationsList = useSelector((state: moorhen.State) => state.annotations.annotationsList)
     const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
     // No selector for displayBuffers: the rebuilds read it from the store at dispatch time
     // instead, so subscribing here would only re-render this component on every publish - which
@@ -733,6 +736,31 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [clipCap, glRef])
 
+    // Annotations go into atlases of their own, not through labelBuffers: they are drawn in two
+    // passes (in the scene, and on top), whichever atomLabelDepthMode says for the other labels.
+    // Molecules are a dependency because an annotation can sit on atoms, and the background
+    // because an annotation without a colour of its own takes one that stands out from it.
+    useEffect(() => {
+        if (glRef === null || typeof glRef === 'function' || !glRef.current) return
+        let superseded = false
+        const rebuildAnnotations = async () => {
+            const gl = glRef.current
+            if (!gl?.annotationsInSceneTextCanvasTexture || !gl.annotationsOnTopTextCanvasTexture) return
+            const { inScene, onTop } = await getAnnotationLabels(store, gl.annotationsOnTopTextCanvasTexture.canvasBig.width)
+            if (superseded) return
+            const fill = (atlas: typeof gl.annotationsOnTopTextCanvasTexture, labels: typeof inScene) => {
+                atlas.clearBigTexture()
+                labels.forEach(lab => atlas.addBigTextureTextImage(lab.label, lab.uuid))
+                atlas.recreateBigTextureBuffers()
+            }
+            fill(gl.annotationsInSceneTextCanvasTexture, inScene)
+            fill(gl.annotationsOnTopTextCanvasTexture, onTop)
+            gl.drawScene()
+        }
+        rebuildAnnotations()
+        return () => { superseded = true }
+    }, [annotationsList, molecules, backgroundColor, glRef, store])
+
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
             glRef.current.labelsTextCanvasTexture.clearBigTexture()
@@ -972,7 +1000,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     store={store}
                     dispatch={dispatch} />
                     {useWebGPU && webGPUAvailable && <MoorhenWebGPUMainView glRef={glRef as React.RefObject<MGWebGL>} />}
-                    <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>;
+                    <Moorhen2DOverlay urlPrefix={props.urlPrefix} drawQuat={drawQuat}/>
+                    <Overlay2DHandles />
                 </figure>
                 {showContextMenu &&
                 <MoorhenContextMenu

@@ -261,6 +261,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         rttFramebuffer: webGL.MGWebGLFrameBuffer;
         doPerspectiveProjection: boolean;
         labelsTextCanvasTexture: TextCanvasTexture;
+        annotationsInSceneTextCanvasTexture: TextCanvasTexture;
+        annotationsOnTopTextCanvasTexture: TextCanvasTexture;
         texturedShapes: any[];
         circleTex: WebGLTexture;
         clipChangedEvent: Event;
@@ -1863,8 +1865,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         return this.WEBGL2;
     }
 
-    drawDistancesAndLabels() {
-        drawDistancesAndLabels(this)
+    drawDistancesAndLabels(pass: "inScene" | "onTop") {
+        drawDistancesAndLabels(this, pass)
     }
 
     drawCircles(up, right) {

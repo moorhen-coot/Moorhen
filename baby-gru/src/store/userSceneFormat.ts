@@ -4,6 +4,7 @@ import type { SceneSettingsSnapshot } from "./sceneSettingsSlice";
 import type { ThreeDObject } from "./threeDObjectsSlice";
 import type { UserScene } from "./userScenesSlice";
 import type { MoorhenVector } from "./vectorsSlice";
+import type { MoorhenAnnotation } from "./annotationsSlice";
 
 /** Version of the scene data format saved in session files ({@link UserSceneState}) */
 export const USER_SCENE_FORMAT_VERSION = 1;
@@ -27,6 +28,8 @@ export type SceneSections = {
     vectors?: MoorhenVector[];
     /** The 3D shapes the scene shows. Absent (older scene): the shown ones are kept */
     threeDObjects?: ThreeDObject[];
+    /** The 3D text annotations the scene shows. Absent (older scene): the shown ones are kept */
+    annotations?: MoorhenAnnotation[];
     /** Sections this version does not know (read from a newer file): saved back unchanged */
     [section: string]: unknown;
 };

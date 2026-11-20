@@ -59,6 +59,9 @@ export {
     removeTextOverlay,
     removeSvgPathOverlay,
     removeFracPathOverlay,
+    addShapeOverlay,
+    removeShapeOverlay,
+    updateOverlay,
 }  from "./overlaysSlice";
 export {
     setAnimateRefine,
@@ -129,6 +132,7 @@ export {
 }  from "./threeDObjectsSlice";
 export {
     setSelectedThreeDObject,
+    setSelected2DObject,
     setMovingMapSlice,
     setActiveMap,
     setViewOnly,
@@ -303,6 +307,7 @@ export {
     setSavedSceneSetting,
     saveSceneSettings,
 }  from "./userScenesSlice";
+export { addAnnotation, addAnnotations, updateAnnotation, removeAnnotationById, removeAnnotationsByTag, emptyAnnotations }  from "./annotationsSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";
