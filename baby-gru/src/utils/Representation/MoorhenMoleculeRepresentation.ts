@@ -1817,7 +1817,9 @@ export class MoleculeRepresentation {
             records, residueOf, indices: surface.indices,
             vertex: { atom: surface.atom, other: new Int32Array(0), weight: new Float32Array(0), near: surface.near, nearGap: surface.nearGap },
         };
-        const colours = await this.smoothSurfaceAtomColours(records);
+        // Electrostatics colours come from M2T's potential below: no atom colours needed (its rule has
+        // no colour list to read).
+        const colours = potential ? new Float32Array(4 * records.length).fill(1) : await this.smoothSurfaceAtomColours(records);
         const mesh = atomSurfaceMesh(surface, residueOf, residues, colours, smoothSurfaceSetting.colourBlend,
             smoothSurfaceSetting.colourSmoothing);
         // Electrostatics: the colours of the nearest vertices of M2T's surface, which carries the potential.
@@ -1892,7 +1894,7 @@ export class MoleculeRepresentation {
         records.forEach((record, i) => index.set(record.serial, i));
         for (const rule of this.colourRules ?? []) {
             const pairs = rule.isMultiColourRule
-                ? rule.multiColourData.split("|").filter(Boolean).map(entry => entry.split("^"))
+                ? (rule.multiColourData ?? "").split("|").filter(Boolean).map(entry => entry.split("^"))
                 : [[rule.cid, rule.color]];
             for (const [cid, hex] of pairs) {
                 if (!cid || !hex) continue;
