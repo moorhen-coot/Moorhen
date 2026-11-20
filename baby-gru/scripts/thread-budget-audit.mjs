@@ -75,7 +75,7 @@ function instrument(src) {
     hook(/getNewWorker\(\)\s*\{/, "globalThis.__thr&&globalThis.__thr.acq();", "getNewWorker()");
     hook(/returnWorkerToPool\s*(:\s*\(?worker\)?\s*=>\s*\{|\(worker\)\s*\{)/, "globalThis.__thr&&globalThis.__thr.rel();", "returnWorkerToPool()");
     hook(/terminateAllThreads\s*(:\s*\(\)\s*=>\s*\{|\(\)\s*\{)/, "globalThis.__thr&&globalThis.__thr.runtimeExit();", "terminateAllThreads()");
-    return src.replace(/pthreadPoolSize\s*=\s*\d+/, "pthreadPoolSize=8");
+    return src.replace(/pthreadPoolSize\s*=\s*[^;]+/, "pthreadPoolSize=8");
 }
 const work = mkdtempSync(path.join(os.tmpdir(), "moorhen-thread-audit-"));
 process.on("exit", () => rmSync(work, { recursive: true, force: true }));

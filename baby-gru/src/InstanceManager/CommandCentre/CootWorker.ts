@@ -2323,7 +2323,9 @@ const dispatchMessage = function (e: MessageEvent) {
                     molecules_container.set_refinement_is_verbose(false)
                     molecules_container.set_map_sampling_rate(1.7)
                     molecules_container.set_map_is_contoured_with_thread_pool(true)
-                    molecules_container.set_max_number_of_threads(8)
+                    // The pthread worker pool was sized for this limit when the module started
+                    // (wasm_src/coot_env_web.js), so don't give coot a bigger one.
+                    molecules_container.set_max_number_of_threads(cootModule.moorhenThreadLimit ?? 8)
                     cootModule.FS.mkdir("COOT_BACKUP")
                     // Only report success once molecules_container actually exists.
                     postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
