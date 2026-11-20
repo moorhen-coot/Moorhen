@@ -232,6 +232,10 @@ export class MoleculeRepresentation {
      * electrostatics, not M2T). Set when the representation is created or edited.
      */
     surfaceChainsSeparate: boolean = false;
+    /** Surfaces: leave out the ligands covalently bound to the polymer (MoorhenMolecule.ligandBonding). */
+    surfaceExcludeBondedLigands: boolean = false;
+    /** Surfaces: leave out the ligands not covalently bound to it. On by default: bound ligands only. */
+    surfaceExcludeFreeLigands: boolean = true;
     /**
      * What a smooth surface made from the atoms keeps to be coloured again without being rebuilt
      * (recolour): its atoms, each vertex's nearest atoms, and its triangles. Null for anything else.
@@ -1913,7 +1917,8 @@ export class MoleculeRepresentation {
     /**
      * The atoms a smooth surface is made from, and their radii: everything in the selection - protein,
      * nucleic acids, glycans, ligands, modified residues - but water and monatomic ions (a residue of a
-     * single atom other than hydrogen), hydrogens included. (M2T itself surfaces only the standard
+     * single atom other than hydrogen), hydrogens included; and ligands bound to the polymer, or the
+     * others, left out if this representation says so (surfaceExcludeBondedLigands / FreeLigands). (M2T itself surfaces only the standard
      * amino acids when there are any.) Radii are M2T's united-atom radii where its table has the atom,
      * else by element (surfaceAtomRadius).
      */
@@ -1925,7 +1930,18 @@ export class MoleculeRepresentation {
         const residueKey = (atom: moorhen.AtomInfo) => `${atom.chain_id}/${atom.res_no}/${atom.res_name}`;
         const heavyAtoms = new Map<string, number>();
         for (const atom of all) if (!isHydrogen(atom)) heavyAtoms.set(residueKey(atom), (heavyAtoms.get(residueKey(atom)) ?? 0) + 1);
-        const chosen = all.filter(atom => !WATER_RESIDUES.has(atom.res_name.trim()) && (heavyAtoms.get(residueKey(atom)) ?? 0) > 1);
+        let chosen = all.filter(atom => !WATER_RESIDUES.has(atom.res_name.trim()) && (heavyAtoms.get(residueKey(atom)) ?? 0) > 1);
+        // This representation's ligand options: bound ligands and the rest left out if asked
+        // (MoorhenMolecule.ligandBonding). Polymer residues, modified ones included, always stay.
+        if (this.surfaceExcludeBondedLigands || this.surfaceExcludeFreeLigands) {
+            if (!this.parentMolecule.ligandBonding) await this.parentMolecule.updateLigands();
+            const covalent = new Map((this.parentMolecule.ligandBonding ?? []).map(ligand => [ligand.cid, ligand.covalent]));
+            chosen = chosen.filter(atom => {
+                const bound = covalent.get(`/${atom.mol_name}/${atom.chain_id}/${atom.res_no}(${atom.res_name})`);
+                if (bound === undefined) return true;
+                return bound ? !this.surfaceExcludeBondedLigands : !this.surfaceExcludeFreeLigands;
+            });
+        }
         return {
             atoms: chosen.map(atom => ({ x: atom.x, y: atom.y, z: atom.z, r: surfaceAtomRadius(atom.name, atom.res_name, atom.element) })),
             records: chosen,

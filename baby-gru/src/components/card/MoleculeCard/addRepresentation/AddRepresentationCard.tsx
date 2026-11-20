@@ -69,6 +69,8 @@ export const AddCustomRepresentationCard = memo(
         const [colourMode, setColourMode] = useState<string>(existingParams?.colourMode ?? "custom");
         const [nonCustomOpacity, setNonCustomOpacity] = useState<number>(existingParams?.nonCustomOpacity ?? 1.0);
         const [surfaceChainsSeparate, setSurfaceChainsSeparate] = useState<boolean>(existingParams?.surfaceChainsSeparate ?? false);
+        const [surfaceBondedLigands, setSurfaceBondedLigands] = useState<boolean>(!(existingParams?.surfaceExcludeBondedLigands ?? false));
+        const [surfaceFreeLigands, setSurfaceFreeLigands] = useState<boolean>(!(existingParams?.surfaceExcludeFreeLigands ?? true));
         const useSmoothSurface = useSelector((state: RootState) => state.generalStates.useSmoothSurface);
         const [colour, setColour] = useState<string>(
             existingParams && !existingParams.useDefaultColours && existingParams.colour !== ""
@@ -177,6 +179,8 @@ export const AddCustomRepresentationCard = memo(
                         nonCustomOpacity: nonCustomAlpha,
                         hbondedTo,
                         surfaceChainsSeparate,
+                        surfaceExcludeBondedLigands: !surfaceBondedLigands,
+                        surfaceExcludeFreeLigands: !surfaceFreeLigands,
                     });
 
                     if (!representation) {
@@ -222,6 +226,8 @@ export const AddCustomRepresentationCard = memo(
                         nonCustomOpacity: nonCustomAlpha,
                         hbondedTo,
                         surfaceChainsSeparate,
+                        surfaceExcludeBondedLigands: !surfaceBondedLigands,
+                        surfaceExcludeFreeLigands: !surfaceFreeLigands,
                     });}
 
                     else {
@@ -310,12 +316,28 @@ export const AddCustomRepresentationCard = memo(
                 {useSmoothSurface && M2T_SURFACE_REPRESENTATIONS.includes(representationStyle) && (
                     // The representation's own, whatever the general settings: one smooth surface
                     // per chain, each from its own atoms, interfaces included.
-                    <MoorhenToggle
-                        type="switch"
-                        label="Surface each chain separately"
-                        checked={surfaceChainsSeparate}
-                        onChange={() => setSurfaceChainsSeparate(prev => !prev)}
-                    />
+                    <>
+                        <MoorhenToggle
+                            type="switch"
+                            label="Surface each chain separately"
+                            checked={surfaceChainsSeparate}
+                            onChange={() => setSurfaceChainsSeparate(prev => !prev)}
+                        />
+                        <MoorhenToggle
+                            type="switch"
+                            label="Include bonded ligands"
+                            tooltip="Ligands covalently bound to the polymer, directly or through other ligands: glycans on their Asn, covalent inhibitors."
+                            checked={surfaceBondedLigands}
+                            onChange={() => setSurfaceBondedLigands(prev => !prev)}
+                        />
+                        <MoorhenToggle
+                            type="switch"
+                            label="Include other ligands"
+                            tooltip="Ligands not covalently bound to the polymer: cofactors, inhibitors, additives. Water and single ions are never surfaced."
+                            checked={surfaceFreeLigands}
+                            onChange={() => setSurfaceFreeLigands(prev => !prev)}
+                        />
+                    </>
                 )}
                 {(["CBs", "CAs", "ligands", "CRs", "residue_environment"].includes(representationStyle) ||
                     M2T_SURFACE_REPRESENTATIONS.includes(representationStyle)) && (

@@ -96,6 +96,7 @@ export interface GemmiModule {
     //Some things that are currently (25/6/2026) used by CootModule on window.
     get_atom_info_for_selection(_0: Structure, _1: string, _2: string):  emscriptem.vector<AtomInfo>;
     get_ligand_info_for_structure(_0: Structure):  emscriptem.vector<LigandInfo>;
+    get_ligand_bonding_for_structure(_0: Structure):  emscriptem.vector<import("../utils/MoorhenMolecule").LigandBonding>;
     get_sequence_info(_0: Structure, _1: string):  emscriptem.vector<SequenceEntry>;
     get_chem_shift_info(nef_input:string): string;
 

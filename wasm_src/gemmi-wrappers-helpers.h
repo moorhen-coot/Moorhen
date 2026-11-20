@@ -46,6 +46,7 @@
 #include <gemmi/cifdoc.hpp>
 #include <gemmi/smcif.hpp>
 #include "json/json.h"
+#include "ligand-bonding.hh"
 
 using namespace emscripten;
 
@@ -583,6 +584,12 @@ inline std::vector<LigandInfo> get_ligand_info_for_structure(const gemmi::Struct
             }
         }
     return ligand_info_vec;
+}
+
+// Every ligand (not polymer, not water) and whether it is covalently bound to the polymer, directly or
+// through other ligands (ligand-bonding.hh).
+inline std::vector<ligand_bonding::ligand_t> get_ligand_bonding_for_structure(const gemmi::Structure &Structure) {
+    return ligand_bonding::ligand_bonding(Structure);
 }
 
 inline std::vector<std::string> parse_multi_cids(const gemmi::Structure &Structure, const std::string &cids) {

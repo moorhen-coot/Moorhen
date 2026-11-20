@@ -109,6 +109,9 @@ export type moleculeSessionData = {
         nonCustomOpacity: number;
         /** Absent in sessions saved before it existed. */
         surfaceChainsSeparate?: boolean;
+        /** Surfaces: leave out bonded / other ligands. Absent in older sessions: everything surfaced. */
+        surfaceExcludeBondedLigands?: boolean;
+        surfaceExcludeFreeLigands?: boolean;
         resEnvOptions: residueEnvironmentOptions;
         neighboursCid: string;
         restrictToNeighbours: boolean;
@@ -496,6 +499,8 @@ export class MoorhenTimeCapsule {
                             m2tParams: item.useDefaultM2tParams ? null : item.m2tParams,
                             nonCustomOpacity: item.nonCustomOpacity,
                             surfaceChainsSeparate: item.surfaceChainsSeparate,
+                            surfaceExcludeBondedLigands: item.surfaceExcludeBondedLigands,
+                            surfaceExcludeFreeLigands: item.surfaceExcludeFreeLigands,
                             resEnvOptions: item.useDefaultResidueEnvironmentOptions ? null : item.residueEnvironmentOptions,
                             neighboursCid: item.neighboursCid,
                             restrictToNeighbours: item.restrictToNeighbours,
@@ -1060,7 +1065,11 @@ export class MoorhenTimeCapsule {
                         item.hbondedToCid,
                         item.hbondedTo,
                         item.neighboursDistance,
-                        !!item.surfaceChainsSeparate
+                        {
+                            chainsSeparate: !!item.surfaceChainsSeparate,
+                            excludeBondedLigands: !!item.surfaceExcludeBondedLigands,
+                            excludeFreeLigands: !!item.surfaceExcludeFreeLigands,
+                        }
                     );
                     // Its identity, back as it was saved. A session written before the format
                     // carried this keeps the guid minted a moment ago, which is what has always

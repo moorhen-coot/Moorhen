@@ -1328,6 +1328,8 @@ export class MoorhenInstance extends StoreExtension {
              * (neighbourhood) rendering.
              * @param params.nonCustomOpacity - Opacity used with non-custom colour modes.
              * @param params.surfaceChainsSeparate - Surfaces: build each chain's smooth surface from its own atoms.
+             * @param params.surfaceExcludeBondedLigands - Surfaces: leave out the ligands covalently bound to the polymer.
+             * @param params.surfaceExcludeFreeLigands - Surfaces: leave out the other ligands (default true).
              * @param params.hbondedTo - Only represent atoms hydrogen-bonded to the
              * `neighboursCid` selection.
              * @returns The unique ID of the updated representation, or null if the style was

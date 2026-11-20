@@ -26,6 +26,16 @@ export namespace libcootApi {
             modelName: string;
             cid: string;
         }>;
+        // Written out, not imported from MoorhenMolecule (LigandBonding): an import would pull the app into the worker's build.
+        get_ligand_bonding_for_structure(gemmiStructure: gemmi.Structure): emscriptem.vector<{
+            cid: string;
+            resName: string;
+            chainName: string;
+            resNum: string;
+            modelName: string;
+            covalent: boolean;
+            anchor: string;
+        }>;
         guess_coord_data_format(coordDataString: string): number;
         get_structure_bfactors(gemmiStructure: gemmi.Structure): emscriptem.vector<{ cid: string; bFactor: number; normalised_bFactor }>;
         get_sequence_info(gemmiStructure: gemmi.Structure, molName: string): emscriptem.vector<SequenceEntry>;
