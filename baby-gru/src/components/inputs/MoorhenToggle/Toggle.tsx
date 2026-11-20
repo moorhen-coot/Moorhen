@@ -1,9 +1,10 @@
-import { JSX, SetStateAction, Dispatch } from "react";
+import { Dispatch, JSX, SetStateAction, useRef } from "react";
+import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
 import "./moorhen-toggle.css";
 
 type MoorhenToggleProps = {
     checked?: boolean;
-    toggle?:  Dispatch<SetStateAction<boolean>>
+    toggle?: Dispatch<SetStateAction<boolean>>;
     onChange?: ((e: React.ChangeEvent<HTMLInputElement>) => void) | (() => void);
     label: string | JSX.Element;
     className?: string;
@@ -14,6 +15,9 @@ type MoorhenToggleProps = {
     name?: string;
     inline?: boolean;
     disabled?: boolean;
+    /** Shown on hover or focus: the place for a long explanation, keeping the label short. */
+    tooltip?: string | JSX.Element;
+    tooltipPlacement?: "top" | "bottom" | "left" | "right";
 };
 
 export const MoorhenToggle = (props: MoorhenToggleProps) => {
@@ -24,8 +28,10 @@ export const MoorhenToggle = (props: MoorhenToggleProps) => {
     // still gets a toggle that actually flips. Passing `checked={false}` with no
     // state update would make React revert every click.
     const isControlled = checked !== undefined;
-    return (
+    const labelRef = useRef<HTMLLabelElement>(null);
+    const element = (
         <label
+            ref={labelRef}
             className={`moorhen__toggle-container ${props.className ? props.className : ""} ${props.disabled ? "disabled" : ""}`}
             style={{ ...props.style }}
             htmlFor={id}
@@ -36,7 +42,7 @@ export const MoorhenToggle = (props: MoorhenToggleProps) => {
                     className="moorhen__toggle-input"
                     type="checkbox"
                     {...(isControlled ? { checked } : { defaultChecked: false })}
-                    onChange={(e) => {
+                    onChange={e => {
                         if (onChange) {
                             onChange(e);
                         }
@@ -61,4 +67,8 @@ export const MoorhenToggle = (props: MoorhenToggleProps) => {
             <span className="moorhen__toggle-label-text">{props.label}</span>
         </label>
     );
+    if (props.tooltip) {
+        return <MoorhenTooltip tooltip={props.tooltip} placement={props.tooltipPlacement ?? "top"} link={element} linkRef={labelRef} />;
+    }
+    return element;
 };
