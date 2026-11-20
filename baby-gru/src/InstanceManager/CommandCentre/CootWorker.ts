@@ -1900,170 +1900,35 @@ const describeError = (err: any): string => {
     return String(err)
 }
 
-/**
- * The smooth surface code (src/utils/smoothSurface.ts), bundled by esbuild into SmoothSurface.js
- * next to this file (npm run build-smooth-surface-worker), as the global MoorhenSmoothSurface.
- * Loaded the first time a smooth surface is asked for.
- */
-type SmoothSurfaceBundle = {
-    smoothM2tSurfaceSync: <T>(mesh: T, atoms: unknown[], probe: number, options: SmoothSurfaceOptions) => T;
-    smoothFieldStage: (mesh: unknown, atoms: unknown[], probe: number, options: SmoothSurfaceOptions) => { input: Float32Array } | null;
-    atomSurfaceFromContour: (field: unknown, contour: SmoothContour, atoms: unknown[], residueOf: Int32Array, probe: number) => SmoothAtomSurface;
-    smoothSurfaceFromAtomsSync: (atoms: unknown[], residueOf: Int32Array, probe: number, options: SmoothSurfaceOptions) => SmoothAtomSurface | null;
-    atomSurfaceTransferables: (surface: SmoothAtomSurface) => ArrayBuffer[];
-    smoothAttributes: (mesh: unknown, positions: Float32Array) => Record<string, unknown>;
-    m2tShell: <T>(mesh: T) => T;
-    contourOnCpu: (field: Float32Array, grid: unknown) => SmoothContour;
-    smoothMeshFromContour: (field: unknown, contour: SmoothContour) => { positions: Float32Array; indices: Uint32Array };
-    assembleSmoothMesh: <T>(m2tMesh: T, mesh: unknown, attributes: unknown) => T;
-    logSmoothing: (field: unknown, mesh: unknown, m2tVertices: number, contourMs: number, transferMs: number, contourLabel: string) => void;
-    unpackAtoms: (packed: Float32Array) => unknown[];
-    smoothedMeshTransferables: (mesh: unknown) => ArrayBuffer[];
-}
 type SmoothSurfaceOptions = Record<string, number | boolean>
-type SmoothContour = { positions: Float32Array; indices: Uint32Array; keys: Uint32Array }
+type SmoothAtomSurface = { positions: Float32Array; normals: Float32Array; indices: Uint32Array; atom: Int32Array; other: Int32Array; weight: Float32Array; near: Int32Array; nearGap: Float32Array }
 /** What the C++ smoothSurfaceFromAtoms (moorhen-wrappers-helpers.h) returns: the surface, its grid and timings. */
 type SmoothNativeSurface = SmoothAtomSurface & {
     grid: { nx: number; ny: number; nz: number; spacing: number }
     timings: { sas: number; seeds: number; transform: number; distance: number; blur: number; contour: number; atoms: number }
 }
-type SmoothAtomSurface = { positions: Float32Array; normals: Float32Array; indices: Uint32Array; atom: Int32Array; other: Int32Array; weight: Float32Array; near: Int32Array; nearGap: Float32Array }
-/** What a field from the atoms alone keeps here under its token until the contour comes back. */
-type SmoothAtomsWaiting = { fromAtoms: true; atoms: unknown[]; residueOf: Int32Array; probe: number }
-type SmoothSurfaceFieldJS = { input: Float32Array; grid: unknown }
-let smoothSurfaceBundle: SmoothSurfaceBundle | null = null
-const loadSmoothSurfaceBundle = (): SmoothSurfaceBundle => {
-    if (!smoothSurfaceBundle) {
-        // @ts-ignore
-        importScripts('./SmoothSurface.js')
-        smoothSurfaceBundle = (self as unknown as { MoorhenSmoothSurface: SmoothSurfaceBundle }).MoorhenSmoothSurface
-    }
-    return smoothSurfaceBundle
-}
 
 /**
- * An M2T surface, smoothed here rather than on the main thread: the M2T mesh is made and
- * smoothed in this worker, so only the atoms (x, y, z, r) come in and only the smoothed mesh goes
- * out. Same arguments as get_molecular_representation_mesh, then the atoms, the probe radius the
- * field uses (0 for the van der Waals and accessible surfaces) and the smoothing options.
- */
-const smoothMolecularRepresentationMesh = (imol: number, selection: string, colourStyle: string, style: string, ssUsageScheme: number,
-                                          packedAtoms: Float32Array, probe: number, options: SmoothSurfaceOptions) => {
-    const bundle = loadSmoothSurfaceBundle()
-    const m2tMesh = molecules_container.get_molecular_representation_mesh(imol, selection, colourStyle, style, ssUsageScheme)
-    const meshData = simpleMeshToMeshData(m2tMesh)
-    try { m2tMesh.delete() } catch (err) { /* pass */ }
-    return bundle.smoothM2tSurfaceSync(meshData, bundle.unpackAtoms(packedAtoms), probe, options)
-}
-
-/**
- * The same in two halves, for marching cubes on the GPU, on the main thread, in between - the
- * colours stay here, where the M2T mesh is. The first half makes the M2T mesh and the field and
- * keeps the mesh under a token: { token, field }, or { mesh } (the M2T mesh as it is) if there is
- * nothing to smooth. The second takes the field back with the GPU's contour (both handed over,
- * not copied) and does everything after marching cubes here, off the main thread: normals,
- * winding, the split (refineContour, the costly part), colours and owners. With no contour (the
- * GPU failed), marching cubes on the CPU here too. It returns { mesh }, the smoothed mesh, or the
- * M2T mesh as it is if nothing could be smoothed, and forgets the token.
- */
-const smoothSurfaceMeshes = new Map<number, unknown>()
-let smoothSurfaceToken = 0
-const smoothSurfaceField = (imol: number, selection: string, colourStyle: string, style: string, ssUsageScheme: number,
-                            packedAtoms: Float32Array, probe: number, options: SmoothSurfaceOptions) => {
-    const bundle = loadSmoothSurfaceBundle()
-    const m2tMesh = molecules_container.get_molecular_representation_mesh(imol, selection, colourStyle, style, ssUsageScheme)
-    const meshData = simpleMeshToMeshData(m2tMesh)
-    try { m2tMesh.delete() } catch (err) { /* pass */ }
-    const field = bundle.smoothFieldStage(meshData, bundle.unpackAtoms(packedAtoms), probe, options)
-    if (!field) return { mesh: meshData }
-    const token = ++smoothSurfaceToken
-    smoothSurfaceMeshes.set(token, meshData)
-    return { token, field }
-}
-/**
- * A smooth surface from the atoms alone - no M2T mesh - for colouring afterwards on the main thread
- * (colours and residue owners come from each vertex's atoms). The one-call version, CPU marching
- * cubes here: { surface } or { surface: null }. `residueOf`: each atom's residue, as an index.
+ * Moorhen's smooth surface of atoms packed x, y, z, r (wasm_src/smooth-surface.cc, threaded): the mesh
+ * and each vertex's atoms, for colouring afterwards on the main thread (colours and residue owners
+ * come from each vertex's atoms). `residueOf`: each atom's residue, as an index. { surface }, or
+ * { surface: null } if there is nothing to contour.
  */
 const smoothSurfaceFromAtoms = (packedAtoms: Float32Array, residueOf: Int32Array, probe: number, options: SmoothSurfaceOptions) => {
-    // The C++ port (wasm_src/smooth-surface.cc, threaded) when this module has it: the same surface
-    // as the TS bundle's, several times faster. Older WASM builds have only the TS.
     const native = (cootModule as unknown as { smoothSurfaceFromAtoms?: (atoms: Float32Array, residueOf: Int32Array, probe: number,
         options: SmoothSurfaceOptions) => SmoothNativeSurface | null }).smoothSurfaceFromAtoms
-    if (native && options.cpp !== false) {
-        const surface = native(packedAtoms, residueOf, probe, options)
-        if (surface) {
-            const t = surface.timings
-            const field = t.sas + t.seeds + t.transform + t.distance + t.blur
-            console.debug(`Smooth surface: ${packedAtoms.length / 4} atoms, grid ${surface.grid.nx}x${surface.grid.ny}x${surface.grid.nz} ` +
-                `at ${surface.grid.spacing.toFixed(2)} Å, σ ${options.sigma} Å, max shift ${options.maxShift} Å; ` +
-                `${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles (no M2T mesh); field ${field.toFixed(0)} ms ` +
-                `(sas ${t.sas.toFixed(0)}, seeds ${t.seeds.toFixed(0)}, transform ${t.transform.toFixed(0)}, distance ${t.distance.toFixed(0)}, ` +
-                `blur ${t.blur.toFixed(0)}), contour (C++) ${(t.contour + t.atoms).toFixed(0)} ms, transfer 0 ms`)
-            const { grid, timings, ...arrays } = surface
-            return { surface: arrays }
-        }
-        return { surface: null }
-    }
-    const bundle = loadSmoothSurfaceBundle()
-    return { surface: bundle.smoothSurfaceFromAtomsSync(bundle.unpackAtoms(packedAtoms), residueOf, probe, options) }
-}
-/** The same in two halves around marching cubes on the GPU, as smoothSurfaceField / Finish. */
-const smoothSurfaceFieldFromAtoms = (packedAtoms: Float32Array, residueOf: Int32Array, probe: number, options: SmoothSurfaceOptions) => {
-    // With the C++ port, the whole surface here at once: faster than the field to the GPU and back.
-    // The main thread takes a reply with no field as the finished surface (smoothOnGpu).
-    if ((cootModule as unknown as { smoothSurfaceFromAtoms?: unknown }).smoothSurfaceFromAtoms && options.cpp !== false) {
-        return smoothSurfaceFromAtoms(packedAtoms, residueOf, probe, options)
-    }
-    const bundle = loadSmoothSurfaceBundle()
-    const atoms = bundle.unpackAtoms(packedAtoms)
-    const field = bundle.smoothFieldStage(null, atoms, probe, options)
-    if (!field) return { surface: null }
-    const token = ++smoothSurfaceToken
-    smoothSurfaceMeshes.set(token, { fromAtoms: true, atoms, residueOf, probe } as SmoothAtomsWaiting)
-    return { token, field }
-}
-
-const smoothSurfaceFinish = (token: number, field: SmoothSurfaceFieldJS | null, contour: SmoothContour | null,
-                             contourMs: number, contourLabel: string) => {
-    const bundle = loadSmoothSurfaceBundle()
-    const waiting = smoothSurfaceMeshes.get(token) as ({ vert_tri: Float32Array[][] } | SmoothAtomsWaiting) | undefined
-    smoothSurfaceMeshes.delete(token)
-    if (!waiting) throw new Error(`No smooth surface waiting under token ${token}`)
-    if ("fromAtoms" in waiting) {
-        // From the atoms alone: the surface and its vertex atoms, or null to say there is none.
-        if (!field) return { surface: null }
-        const mark = performance.now()
-        try {
-            if (!contour) contourLabel = "CPU in the worker, after the GPU failed"
-            const surface = bundle.atomSurfaceFromContour(field, contour ?? bundle.contourOnCpu(field.input, field.grid),
-                                                          waiting.atoms, waiting.residueOf, waiting.probe)
-            if (surface.indices.length === 0) return { surface: null }
-            bundle.logSmoothing(field, surface, 0, contourMs + performance.now() - mark, 0, contourLabel)
-            return { surface }
-        } catch (err) {
-            console.warn("Contouring the smooth surface failed.", err)
-            return { surface: null }
-        }
-    }
-    const meshData = waiting
-    if (!field) return { mesh: meshData }
-    let mark = performance.now()
-    let mesh: { positions: Float32Array; indices: Uint32Array }
-    try {
-        if (!contour) contourLabel = "CPU in the worker, after the GPU failed"
-        mesh = bundle.smoothMeshFromContour(field, contour ?? bundle.contourOnCpu(field.input, field.grid))
-    } catch (err) {
-        console.warn("Contouring the smooth surface failed; drawing the M2T surface.", err)
-        return { mesh: meshData }
-    }
-    if (mesh.indices.length === 0) return { mesh: meshData }
-    contourMs += performance.now() - mark
-    mark = performance.now()
-    const smoothed = bundle.assembleSmoothMesh(meshData, mesh, bundle.smoothAttributes(meshData, mesh.positions))
-    // contourMs: the GPU's marching cubes and, here, the normals and the split.
-    bundle.logSmoothing(field, mesh, meshData.vert_tri[0][0].length / 3, contourMs, performance.now() - mark, contourLabel)
-    return { mesh: smoothed }
+    if (!native) throw new Error("This build of the Coot WASM has no smoothSurfaceFromAtoms: rebuild it with the current wasm_src")
+    const surface = native(packedAtoms, residueOf, probe, options)
+    if (!surface) return { surface: null }
+    const t = surface.timings
+    const field = t.sas + t.seeds + t.transform + t.distance + t.blur
+    console.debug(`Smooth surface: ${packedAtoms.length / 4} atoms, grid ${surface.grid.nx}x${surface.grid.ny}x${surface.grid.nz} ` +
+        `at ${surface.grid.spacing.toFixed(2)} Å, σ ${options.sigma} Å, max shift ${options.maxShift} Å; ` +
+        `${surface.positions.length / 3} vertices, ${surface.indices.length / 3} triangles; field ${field.toFixed(0)} ms ` +
+        `(sas ${t.sas.toFixed(0)}, seeds ${t.seeds.toFixed(0)}, transform ${t.transform.toFixed(0)}, distance ${t.distance.toFixed(0)}, ` +
+        `blur ${t.blur.toFixed(0)}), contour (C++) ${(t.contour + t.atoms).toFixed(0)} ms`)
+    const { grid, timings, ...arrays } = surface
+    return { surface: arrays as SmoothAtomSurface }
 }
 
 const doCootCommand = (messageData: {
@@ -2160,20 +2025,8 @@ const doCootCommand = (messageData: {
             case "shim_get_map_unit_cell_grid":
                 cootResult = getMapUnitCellGrid(...commandArgs as [number])
                 break
-            case "shim_smooth_molecular_representation_mesh":
-                cootResult = smoothMolecularRepresentationMesh(...commandArgs as [number, string, string, string, number, Float32Array, number, SmoothSurfaceOptions])
-                break
-            case "shim_smooth_surface_field":
-                cootResult = smoothSurfaceField(...commandArgs as [number, string, string, string, number, Float32Array, number, SmoothSurfaceOptions])
-                break
             case "shim_smooth_surface_from_atoms":
                 cootResult = smoothSurfaceFromAtoms(...commandArgs as [Float32Array, Int32Array, number, SmoothSurfaceOptions])
-                break
-            case "shim_smooth_surface_field_from_atoms":
-                cootResult = smoothSurfaceFieldFromAtoms(...commandArgs as [Float32Array, Int32Array, number, SmoothSurfaceOptions])
-                break
-            case "shim_smooth_surface_finish":
-                cootResult = smoothSurfaceFinish(...commandArgs as [number, SmoothSurfaceFieldJS | null, SmoothContour | null, number, string])
                 break
             default:
                 console.log("Calling",command)
@@ -2701,21 +2554,10 @@ const dispatchMessage = function (e: MessageEvent) {
         // A unit-cell map grid can be hundreds of MB: hand its buffer over rather than copy it.
         const grid = e.data.command === "shim_get_map_unit_cell_grid"
             ? (result as { result?: { result?: { data?: unknown } } }).result?.result?.data : null
-        // A smoothed surface's arrays were made for this reply: hand them over too.
-        const reply = (result as { result?: { result?: any } }).result?.result
-        let smoothed: ArrayBuffer[] = []
-        if (smoothSurfaceBundle && reply) {
-            if (e.data.command === "shim_smooth_molecular_representation_mesh") {
-                smoothed = smoothSurfaceBundle.smoothedMeshTransferables(reply)
-            } else if ((e.data.command === "shim_smooth_surface_field" || e.data.command === "shim_smooth_surface_field_from_atoms") && reply.field) {
-                smoothed = [reply.field.input.buffer]
-            } else if (reply.surface) {
-                // shim_smooth_surface_from_atoms, or shim_smooth_surface_finish for a surface from the atoms
-                smoothed = smoothSurfaceBundle.atomSurfaceTransferables(reply.surface)
-            } else if (e.data.command === "shim_smooth_surface_finish" && reply.mesh) {
-                smoothed = smoothSurfaceBundle.smoothedMeshTransferables(reply.mesh)
-            }
-        }
+        // A smooth surface's arrays were made for this reply: hand them over too.
+        const surface = e.data.command === "shim_smooth_surface_from_atoms"
+            ? (result as { result?: { result?: { surface?: SmoothAtomSurface | null } } }).result?.result?.surface : null
+        const smoothed = surface ? [...new Set(Object.values(surface).map(v => v.buffer as ArrayBuffer))] : []
         postMessage(result, grid instanceof Float32Array ? [grid.buffer] : smoothed)
     }
 }

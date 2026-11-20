@@ -4,7 +4,8 @@ import { startAndGetInstance } from "./helpers";
 /**
  * "Surface each chain separately" (MoleculeRepresentation.surfaceChainsSeparate): each chain's smooth
  * surface from its own atoms, merged into one mesh - so the interfaces between chains are surfaced too, and the mesh
- * still has residue owners for every chain and can be recoloured in place. 5fjj: chains A-D.
+ * still has residue owners for every chain and can be recoloured in place. 5fjj: chains A-D, its glycans in
+ * chains of their own (E-Z, a-i) surfaced with the protein chain they sit on (surfaceChainGroups).
  */
 test("each chain is surfaced on its own, interfaces included", async ({ page }) => {
     // Five surfaces of 5fjj on the CPU (no WebGPU adapter here): the complex, then four chains.
@@ -35,6 +36,8 @@ test("each chain is surfaced on its own, interfaces included", async ({ page }) 
     expect(result.hasBuffer).toBe(true);
     // The interfaces, now surfaced on both sides: more surface than the complex as one.
     expect(result.separate).toBeGreaterThan(result.joined);
-    expect(result.chainsOwning).toEqual(["A", "B", "C", "D"]);
+    expect(result.chainsOwning).toEqual(expect.arrayContaining(["A", "B", "C", "D"]));
+    // The glycans are surfaced too (not water or ions): more chains than the four.
+    expect(result.chainsOwning.length).toBeGreaterThan(4);
     expect(result.recoloured).toBe(true);
 });

@@ -209,8 +209,6 @@ export const MoorhenDevMenu = () => {
     const [smoothSigma, setSmoothSigma] = useState<number>(smoothSurfaceSetting.sigma);
     const [smoothMaxShift, setSmoothMaxShift] = useState<number>(smoothSurfaceSetting.maxShift);
     const [smoothOpenRadius, setSmoothOpenRadius] = useState<number>(smoothSurfaceSetting.openRadius);
-    const [smoothOnGpu, setSmoothOnGpu] = useState<boolean>(smoothSurfaceSetting.gpu);
-    const [smoothCpp, setSmoothCpp] = useState<boolean>(smoothSurfaceSetting.cpp);
     const [smoothRefine, setSmoothRefine] = useState<boolean>(smoothSurfaceSetting.refine);
     const [smoothColourBlend, setSmoothColourBlend] = useState<number>(smoothSurfaceSetting.colourBlend);
     const [smoothColourSmoothing, setSmoothColourSmoothing] = useState<number>(smoothSurfaceSetting.colourSmoothing);
@@ -618,27 +616,6 @@ export const MoorhenDevMenu = () => {
                     setGpuMapContours(wanted);
                     // Move the maps to the GPU now, or give them back to Coot.
                     applyGpuMapContours(store.getState().maps as unknown as MoorhenMap[], store.getState().mapContourSettings.visibleMaps);
-                }}
-            />
-            <MoorhenToggle
-                type="switch"
-                checked={noWebGPU === null && smoothOnGpu}
-                disabled={noWebGPU !== null}
-                label={`Smooth surface: marching cubes on the GPU (on by default; off, or no WebGPU: on the CPU in the Coot worker${noWebGPU ? "; no WebGPU here" : ""})`}
-                onChange={() => {
-                    smoothSurfaceSetting.gpu = !smoothOnGpu;
-                    setSmoothOnGpu(!smoothOnGpu);
-                    if (smoothSurface) redrawSurfaces();
-                }}
-            />
-            <MoorhenToggle
-                type="switch"
-                checked={smoothCpp}
-                label="Smooth surface: the C++ port in the Coot worker, when the WASM has it (on by default; off: the TS, the reference)"
-                onChange={() => {
-                    smoothSurfaceSetting.cpp = !smoothCpp;
-                    setSmoothCpp(!smoothCpp);
-                    if (smoothSurface) redrawSurfaces();
                 }}
             />
             <MoorhenToggle

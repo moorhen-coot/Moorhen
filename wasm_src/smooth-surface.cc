@@ -14,8 +14,8 @@
    GNU Lesser General Public License for more details.
  */
 
-// A port of baby-gru/src/utils/smoothSurface.ts: see smooth-surface.hh. Each function names the TS
-// one it follows; the reasons for each step are in the TS comments, not repeated here.
+// Moorhen's smooth surface: what each step does and why is in smooth-surface.hh. The functions keep
+// the names of the TypeScript they were ported from (featureTransform3d, exposedSas, sesField, ...).
 
 #include "smooth-surface.hh"
 
@@ -108,7 +108,7 @@ void edt1d_feature(const double *f, double *d, int32_t *src, int n, int32_t *v, 
     }
 }
 
-// `scratch` is float, as the TS's (the field's own Float32Array): the squared distances round to it.
+// `scratch` is float (the field's own storage): the squared distances round to it.
 void feature_transform_3d(std::vector<int32_t> &feature, std::vector<float> &scratch, int nx, int ny, int nz, int threads) {
     for (size_t i = 0; i < feature.size(); i++) scratch[i] = feature[i] >= 0 ? 0.0f : float(edt_inf);
     int n = std::max({nx, ny, nz});
@@ -259,7 +259,7 @@ struct atom_circles_t {
     std::vector<double> arc_from, arc_length;
 };
 
-// Atom a's circles, as the TS's loop body does them; `circle_count` is shared (atomic) since both
+// Atom a's circles; `circle_count` is shared (atomic) since both
 // atoms of a pair count it.
 void circles_of_atom(int a, const sas_atoms_t &sas, const std::vector<int32_t> &near, std::vector<std::atomic<int32_t>> &circle_count,
                      atom_circles_t &out, std::vector<double> &lo, std::vector<double> &hi, std::vector<int> &order, std::vector<double> &arcs) {
@@ -335,7 +335,7 @@ void circles_of_atom(int a, const sas_atoms_t &sas, const std::vector<int32_t> &
     }
 }
 
-// exposedSas, each atom's circles in parallel and then joined in atom order: circle ids as the TS's.
+// exposedSas, each atom's circles in parallel and then joined in atom order: circle ids as if serial.
 template <typename Neighbours>
 exposed_sas_t exposed_sas(const sas_atoms_t &sas, Neighbours neighbours, int threads) {
     int n = int(sas.x.size());
@@ -646,12 +646,11 @@ void catmull_rom_weights(double t, double *w) {
     w[3] = 0.5 * (-t2 + t3);
 }
 
-// fieldSampler: Catmull-Rom tricubic of the field, and of its fourth-order differences (as float,
-// as the TS keeps them) for the gradient. The TS works the differences out the first time a grid
-// point is read and keeps them; here they are worked out first (prepare), for every grid point within
+// fieldSampler: Catmull-Rom tricubic of the field, and of its fourth-order differences (kept as float)
+// for the gradient. The differences are worked out first (prepare), for every grid point within
 // `band` of the surface, all in parallel, so that sampling only reads and can be done from many
-// threads. A point outside the band is worked out on the spot, rounded the same way: the values are
-// the TS's either way.
+// threads. A point outside the band is worked out on the spot, rounded the same way: the same values
+// either way.
 class field_sampler_t {
 public:
     field_sampler_t(const std::vector<float> &field, const grid_t &grid)
@@ -1261,7 +1260,7 @@ surface_t surface_from_atoms(const std::vector<atom_t> &atoms, const std::vector
     surface.timings = grid.timings;
     if (grid.field.empty()) return surface;
     auto mark = clock_type::now();
-    // contourInput: negative inside, the surface at 0 (float, as the TS's Float32Array.map) - in
+    // contourInput: negative inside, the surface at 0 (float) - in
     // place, as nothing needs the field as it was.
     std::vector<float> &input = grid.field;
     for (size_t i = 0; i < input.size(); i++) input[i] = float(grid.iso - input[i]);

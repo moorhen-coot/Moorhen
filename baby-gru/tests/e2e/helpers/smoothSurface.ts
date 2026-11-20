@@ -2,17 +2,16 @@ import { expect, type Page } from "@playwright/test";
 import { startAndGetInstance } from "./index";
 
 /**
- * A molecular surface drawn the ordinary way is smoothed by default (smoothSurfaceSetting), with
- * marching cubes on the GPU where the browser has a WebGPU adapter and on the CPU in the Coot
- * worker where it has not - and without falling back to the plain M2T surface. Told apart by the
- * one "Smooth surface: ..." line the smoothing logs, which names where it contoured.
+ * A molecular surface drawn the ordinary way is a smooth surface by default, made by the C++ in the
+ * Coot worker (wasm_src/smooth-surface.cc) - and without falling back to the plain M2T surface. Told
+ * apart by the one "Smooth surface: ..." line the worker logs.
  */
-export async function checkDefaultSmoothSurface(page: Page): Promise<{ hasAdapter: boolean }> {
+export async function checkDefaultSmoothSurface(page: Page): Promise<void> {
     const smoothLines: string[] = [];
     const warnings: string[] = [];
     page.on("console", message => {
         if (message.text().startsWith("Smooth surface:")) smoothLines.push(message.text());
-        if (message.type() === "warning" && /smooth surface|GPU contour/i.test(message.text())) warnings.push(message.text());
+        if (message.type() === "warning" && /smooth surface/i.test(message.text())) warnings.push(message.text());
     });
 
     const moorhen = await startAndGetInstance(page);
@@ -22,17 +21,14 @@ export async function checkDefaultSmoothSurface(page: Page): Promise<{ hasAdapte
         const host = document.getElementById(targetId) as any;
         const instance = await host.getMoorhenInstance();
         const molecule = instance.getMoleculeList()[0];
-        const hasAdapter = !!(await (navigator as any).gpu?.requestAdapter?.().catch(() => null));
         await molecule.show("MolecularSurface");
         const representation = molecule.representations.find((r: any) => r.style === "MolecularSurface");
-        return { hasAdapter, buffers: representation?.buffers?.length ?? 0 };
+        return { buffers: representation?.buffers?.length ?? 0 };
     }, moorhen.elementId);
 
     console.log(`default smooth surface: ${JSON.stringify(report)}; ${smoothLines.join(" | ")}`);
     expect(warnings, "no fallback to the plain M2T surface").toEqual([]);
     expect(report.buffers).toBeGreaterThan(0);
     expect(smoothLines.length).toBe(1);
-    // The C++ port (smooth-surface.cc) when the WASM build has it, else WebGPU or the CPU in the worker.
-    expect(smoothLines[0]).toMatch(report.hasAdapter ? /contour \((WebGPU|C\+\+)\)/ : /contour \((CPU|C\+\+)\)/);
-    return { hasAdapter: report.hasAdapter };
+    expect(smoothLines[0]).toMatch(/contour \(C\+\+\)/);
 }

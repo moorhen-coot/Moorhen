@@ -58,3 +58,19 @@ export const M2T_UNITED_ATOM_RADII: Record<string, Record<string, number>> = {
 /** coot::m2t::get_atom_radius: residue-specific, then the "*" entries, then 1.8. Exact names. */
 export const m2tAtomRadius = (atomName: string, residueName: string): number =>
     M2T_UNITED_ATOM_RADII[residueName.trim()]?.[atomName.trim()] ?? M2T_UNITED_ATOM_RADII["*"]?.[atomName.trim()] ?? 1.8;
+
+/**
+ * M2T's wildcard radius for an element (its "C*", "N*", "O*", "S*", "P*" entries), and hydrogen's
+ * plain radius ("H", 1.2 A): for atoms M2T's table does not name - nucleic acids, glycans, ligands,
+ * modified residues - which get_atom_radius would give 1.8 A whatever they are (too big for a
+ * hydrogen, too small for a phosphorus).
+ */
+const ELEMENT_RADII: Record<string, number> = { H: 1.2, D: 1.2, C: 2.0, N: 1.99, O: 1.8, S: 2.12, P: 2.14 };
+
+/**
+ * The smooth surface's radius for an atom: M2T's own (m2tAtomRadius) where its table names the atom,
+ * else by element (ELEMENT_RADII), else 1.8 A as M2T.
+ */
+export const surfaceAtomRadius = (atomName: string, residueName: string, element: string): number =>
+    M2T_UNITED_ATOM_RADII[residueName.trim()]?.[atomName.trim()] ?? M2T_UNITED_ATOM_RADII["*"]?.[atomName.trim()]
+        ?? ELEMENT_RADII[element.trim().toUpperCase()] ?? 1.8;

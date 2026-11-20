@@ -2173,11 +2173,11 @@ inline emscripten::val getLineIndicesFromSimpleMesh(const coot::simple_mesh_t &m
 
 /*
  * Moorhen's smooth surface (smooth-surface.hh) of atoms packed as a Float32Array (x, y, z, van der
- * Waals radius per atom), with an Int32Array residue index per atom, and the options object the TS
- * takes (spacing, sigma, maxShift, openRadius, refine; threads) - anything left out is the default.
- * Returns what the TS's smoothSurfaceFromAtomsSync does (positions, normals, indices, atom, other,
- * weight, near, nearGap, as typed arrays) plus the grid and timings for the log; null if there is
- * nothing to contour.
+ * Waals radius per atom), with an Int32Array residue index per atom, and an options object (spacing,
+ * sigma, maxShift, openRadius, refine; threads) - anything left out is the default. Returns the
+ * surface (positions, normals, indices, atom, other, weight, near, nearGap, as typed arrays: the
+ * AtomSurface of baby-gru/src/utils/smoothSurface.ts) plus the grid and timings for the log; null if
+ * there is nothing to contour.
  */
 inline emscripten::val smoothSurfaceFromAtoms(const emscripten::val &packedAtoms, const emscripten::val &residueOfObject,
                                               double probe, const emscripten::val &optionsObject) {
