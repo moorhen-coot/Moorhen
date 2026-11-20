@@ -65,6 +65,8 @@ const moleculesSlice = createSlice({
                 (action.payload.style === "CAs" ||
                     action.payload.style === "CBs" ||
                     action.payload.style === "CRs" ||
+                    action.payload.style === "Worm" ||
+                    action.payload.style === "Tubes" ||
                     action.payload.style === "MolecularSurface" ||
                     action.payload.style === "VdWSurface" ||
                     action.payload.style === "AccessibleSurface" ||
@@ -97,6 +99,8 @@ const moleculesSlice = createSlice({
                 action.payload.style === "CAs" ||
                 action.payload.style === "CBs" ||
                 action.payload.style === "CRs" ||
+                action.payload.style === "Worm" ||
+                action.payload.style === "Tubes" ||
                 action.payload.style === "MolecularSurface" ||
                 action.payload.style === "VdWSurface" ||
                 action.payload.style === "AccessibleSurface" ||
