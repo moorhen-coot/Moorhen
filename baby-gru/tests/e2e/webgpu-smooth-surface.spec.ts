@@ -201,3 +201,62 @@ test("coloured per pixel: the atoms are attached, drawn close to the vertex colo
     expect(result.halfDifference).toBeLessThan(1);
     expect(result.halfRecoloured).toBeLessThan(1);
 });
+
+test("the surface benchmark times every way of shading, then puts everything back", async ({ page }) => {
+    test.setTimeout(480_000);
+    // Small: SwiftShader shades the close-up's every pixel in software.
+    await page.setViewportSize({ width: 640, height: 400 });
+    const moorhen = await startAndGetInstance(page);
+    await moorhen.loadFiles([{ url: "https://files.rcsb.org/download/1hck.pdb", filename: "1hck.pdb" }]);
+    const result = await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as any;
+        const instance = await host.getMoorhenInstance();
+        const { smoothSurfaceSetting } = await import("/src/utils/smoothSurface.ts");
+        const { runSurfaceBenchmark, formatSurfaceBenchmark } = await import("/src/utils/surfaceBenchmark.ts");
+        // SwiftShader: the GPU finish must be allowed on a software adapter for the per-pixel modes.
+        smoothSurfaceSetting.gpuOnSoftware = true;
+        const molecule = instance.getMoleculeList()[0];
+        const state = () => instance.store.getState();
+        const before = {
+            settings: { gpu: smoothSurfaceSetting.gpu, fieldShading: smoothSurfaceSetting.fieldShading, pixelColours: smoothSurfaceSetting.pixelColours },
+            zoom: state().sceneSettings.zoom, origin: [...state().sceneSettings.origin], quat: [...state().glRef.quat], clip: state().sceneSettings.doClip,
+            surfacesShown: molecule.representations.filter((r: any) => r.style === "MolecularSurface" && r.visible).length,
+        };
+        const progress: string[] = [];
+        const running = runSurfaceBenchmark(instance, { frames: 2, idleFrames: 1, onProgress: (text: string) => progress.push(text) });
+        // One run at a time.
+        let second = "";
+        try { await runSurfaceBenchmark(instance); } catch (err) { second = String(err); }
+        const facts = await running;
+        return {
+            text: formatSurfaceBenchmark(facts),
+            cases: facts.cases.map((c: any) => ({ mode: c.mode, view: c.view, opacity: c.opacity, applied: c.applied, triangles: c.triangles, peel: c.peelLayers, timed: c.timing.count, idle: c.timing.idleMs })),
+            surfaceAdded: facts.surfaceAdded, surfaces: facts.surfaces, progress: progress.length, second,
+            before,
+            after: {
+                settings: { gpu: smoothSurfaceSetting.gpu, fieldShading: smoothSurfaceSetting.fieldShading, pixelColours: smoothSurfaceSetting.pixelColours },
+                zoom: state().sceneSettings.zoom, origin: [...state().sceneSettings.origin], quat: [...state().glRef.quat], clip: state().sceneSettings.doClip,
+                surfacesShown: molecule.representations.filter((r: any) => r.style === "MolecularSurface" && r.visible).length,
+            },
+        };
+    }, moorhen.elementId);
+    console.log(result.text);
+    expect(result.cases).toHaveLength(12);
+    expect(result.surfaceAdded).toBe(true);
+    expect(result.surfaces).toBe(1);
+    expect(result.progress).toBeGreaterThan(12);
+    expect(result.second).toContain("already running");
+    for (const c of result.cases) {
+        expect(c.timed).toBeGreaterThan(0);
+        expect(c.idle).toBeGreaterThan(0);
+        expect(c.applied.pixelNormals).toBe(c.mode !== "per vertex");
+        expect(c.applied.pixelColour).toBe(c.mode === "pixel normals+colour");
+        // Half transparent is depth peeled; opaque is not.
+        if (c.opacity < 1) expect(c.peel).toBeGreaterThan(0);
+        else expect(c.peel).toBe(0);
+    }
+    // Per pixel: the surface unsplit, a quarter of the split one's triangles.
+    const tris = (mode: string) => result.cases.find((c: any) => c.mode === mode && c.view === "whole" && c.opacity === 1)!.triangles;
+    expect(tris("per vertex")).toBe(4 * tris("pixel normals"));
+    expect(result.after).toEqual(result.before);
+});

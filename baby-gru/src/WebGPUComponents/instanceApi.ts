@@ -103,6 +103,85 @@ export interface WebGPUApiHost {
     getVideoRecorderRef(): { readonly current: { glRef: { readonly current: unknown } } | null };
 }
 
+export interface TimeFramesOptions {
+    /** Frames drawn one an animation frame (default 60). */
+    frames?: number;
+    /** Frames each drawn and waited for until the GPU is idle (default 20). */
+    idleFrames?: number;
+    /** Stop either loop once it has run this long, ms (default: no limit); at least one frame is timed. */
+    maxMs?: number;
+}
+
+/** What timeFrames() measured. */
+export interface FrameTiming {
+    /** Frames timed one an animation frame. */
+    count: number;
+    /** Between animation frames while drawing: the frame rate the user sees (the display's rate at best). */
+    medianMs: number;
+    worstMs: number;
+    /** The draw call itself, on the CPU. */
+    cpuMs: number;
+    /** The GPU's time per frame, where it can be timed (WebGPU with timestamp queries); else null. */
+    gpuMs: number | null;
+    /** Frames that took more than half as long again as the median: stalls. */
+    slow: number;
+    /** Frames timed from the draw until the GPU was done with it, and their median; null if none or not WebGPU. */
+    idleCount: number;
+    idleMs: number | null;
+}
+
+async function timeFrames(
+    view: { drawScene(): void },
+    external: WebGPUMainViewRenderer | null,
+    options: TimeFramesOptions,
+): Promise<FrameTiming> {
+    const nextFrame = () => new Promise<number>(resolve => requestAnimationFrame(resolve));
+    const wanted = Math.max(1, Math.round(options.frames ?? 60));
+    const wantedIdle = external ? Math.max(0, Math.round(options.idleFrames ?? 20)) : 0;
+    const maxMs = options.maxMs ?? Infinity;
+    // A few untimed: anything left over from before (uploads, pipelines made the first time).
+    for (let i = 0; i < 5; i++) {
+        view.drawScene();
+        await external?.gpuIdle();
+        await nextFrame();
+    }
+    external?.takeGpuTime();
+    const intervals: number[] = [];
+    const cpu: number[] = [];
+    let last = await nextFrame();
+    const began = performance.now();
+    for (let i = 0; i < wanted && (i === 0 || performance.now() - began < maxMs); i++) {
+        const started = performance.now();
+        view.drawScene();
+        cpu.push(performance.now() - started);
+        const now = await nextFrame();
+        intervals.push(now - last);
+        last = now;
+    }
+    // The GPU timings are read back a frame or two behind.
+    await nextFrame();
+    await nextFrame();
+    const gpu = external?.takeGpuTime() ?? null;
+    const idle: number[] = [];
+    const idleBegan = performance.now();
+    for (let i = 0; i < wantedIdle && (i === 0 || performance.now() - idleBegan < maxMs); i++) {
+        const started = performance.now();
+        view.drawScene();
+        await external!.gpuIdle();
+        idle.push(performance.now() - started);
+    }
+    return {
+        count: intervals.length,
+        medianMs: median(intervals),
+        worstMs: Math.max(...intervals),
+        cpuMs: median(cpu),
+        gpuMs: gpu && gpu.count > 0 ? gpu.meanMs : null,
+        slow: slowFrames(intervals),
+        idleCount: idle.length,
+        idleMs: idle.length ? median(idle) : null,
+    };
+}
+
 function webGLView(host: WebGPUApiHost): WebGLView {
     const view = host.getVideoRecorderRef()?.current?.glRef?.current as WebGLView | null | undefined;
     if (!view?.canvas) throw new Error("The main view is not ready yet.");
@@ -150,6 +229,12 @@ export interface WebGPUApi {
      * none), each timed until its new contours are drawn. The origin is put back after.
      */
     report(options?: { frames?: number; mapWalk?: number }): Promise<string>;
+    /**
+     * Times frames of the scene as it is, as a moving view draws them: one an animation frame (the
+     * frame rate the user sees, at most the display's), then each drawn and waited for until the
+     * GPU is done (how long a frame takes, whatever the display's rate). Draws untimed frames first.
+     */
+    timeFrames(options?: TimeFramesOptions): Promise<FrameTiming>;
     /** What report() says, as it gathered it. */
     reportFacts(options?: { frames?: number; mapWalk?: number }): Promise<RendererReportFacts>;
     /** Ask for the main view to be drawn with WebGPU, or not (the preference, so it is remembered). */
@@ -274,39 +359,11 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 build = undefined;
             }
 
-            // Frames of the scene as it is, one an animation frame, as a moving view draws them,
-            // after a few untimed (anything left over from before the report starts).
             const wanted = Math.max(0, Math.round(options.frames ?? 60));
             let frames: RendererReportFacts["frames"] = null;
             if (wanted > 0) {
-                for (let i = 0; i < 5; i++) {
-                    view.drawScene();
-                    await nextFrame();
-                }
-                external?.takeGpuTime();
-                const intervals: number[] = [];
-                const cpu: number[] = [];
-                let last = await nextFrame();
-                for (let i = 0; i < wanted; i++) {
-                    const started = performance.now();
-                    view.drawScene();
-                    cpu.push(performance.now() - started);
-                    const now = await nextFrame();
-                    intervals.push(now - last);
-                    last = now;
-                }
-                // The GPU timings are read back a frame or two behind.
-                await nextFrame();
-                await nextFrame();
-                const gpu = external?.takeGpuTime() ?? null;
-                frames = {
-                    count: wanted,
-                    medianMs: median(intervals),
-                    worstMs: Math.max(...intervals),
-                    cpuMs: median(cpu),
-                    gpuMs: gpu && gpu.count > 0 ? gpu.meanMs : null,
-                    slow: slowFrames(intervals),
-                };
+                const { count, medianMs, worstMs, cpuMs, gpuMs, slow } = await timeFrames(view, external, { frames: wanted, idleFrames: 0 });
+                frames = { count, medianMs, worstMs, cpuMs, gpuMs, slow };
             }
 
             type WalkMap = { molNo: number; displayObjects?: { Coot?: DisplayBuffer[] } };
@@ -421,6 +478,12 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 mapCounts,
                 mapWalk,
             };
+        },
+
+        async timeFrames(options: TimeFramesOptions = {}): Promise<FrameTiming> {
+            const view = webGLView(host) as WebGLView & { externalRenderer?: WebGPUMainViewRenderer | null };
+            const external = view.externalRenderer?.name === "WebGPU" ? view.externalRenderer : null;
+            return await timeFrames(view, external, options);
         },
 
         async simulateDeviceLoss(): Promise<boolean> {

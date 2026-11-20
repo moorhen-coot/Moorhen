@@ -42,6 +42,7 @@ import { readGzippedTextFile } from "../../utils/utils";
 import { newVector } from "../../utils/vectorFactories";
 import { MoorhenLinearProgress } from "../icons";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { formatSurfaceBenchmark, runSurfaceBenchmark } from "../../utils/surfaceBenchmark";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenAccordion, MoorhenMenuItem, MoorhenStack } from "../interface-base";
 
@@ -617,6 +618,48 @@ export const MoorhenDevMenu = () => {
             </MoorhenAccordion>
             <MoorhenAccordion title="Smooth surface">
                 <MoorhenStack>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            void (async () => {
+                                document.body.click();
+                                moorhenInstance.snackbar.enqueueSnackbar({
+                                    message: "Surface benchmark: about a minute, more on a slow machine. Leave the view alone until it says it is done.",
+                                    variant: "info",
+                                });
+                                try {
+                                    // surfaceBenchmark.ts: every way of shading the surfaces, timed, then all put back.
+                                    const facts = await runSurfaceBenchmark(moorhenInstance, {
+                                        onProgress: text => console.info(`Surface benchmark: ${text}`),
+                                    });
+                                    const text = formatSurfaceBenchmark(facts);
+                                    console.info(text);
+                                    let copied = false;
+                                    try {
+                                        await navigator.clipboard.writeText(text);
+                                        copied = true;
+                                    } catch {
+                                        // The click is too long ago for the clipboard: a file instead.
+                                        const link = document.createElement("a");
+                                        link.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+                                        link.download = "moorhen-surface-benchmark.txt";
+                                        link.click();
+                                        setTimeout(() => URL.revokeObjectURL(link.href), 10_000);
+                                    }
+                                    moorhenInstance.snackbar.enqueueSnackbar({
+                                        message: `Surface benchmark done: ${copied ? "copied to the clipboard" : "saved as moorhen-surface-benchmark.txt"} (also in the console). Please paste it back.`,
+                                        variant: "success",
+                                    });
+                                } catch (err) {
+                                    moorhenInstance.snackbar.enqueueSnackbar({
+                                        message: `Surface benchmark not run: ${err instanceof Error ? err.message : String(err)}`,
+                                        variant: "warning",
+                                    });
+                                }
+                            })();
+                        }}
+                    >
+                        Surface benchmark (report copied to the clipboard)
+                    </MoorhenMenuItem>
                     <MoorhenToggle
                         type="switch"
                         checked={noWebGPU === null && smoothOnGpu}
