@@ -25,7 +25,6 @@
 #include <cmath>
 #include <system_error>
 #include <thread>
-#include <unordered_map>
 
 namespace smooth_surface {
 
@@ -53,6 +52,10 @@ int resolve_threads(int requested) {
 // work(begin, end) over [0, n), split in contiguous ranges, one per thread; each range is done as it
 // would be alone, so the result is the same whatever the thread count. A thread that cannot be
 // started (the WASM pthread pool full) leaves its range to this one.
+// Free a vector's memory now (clear() keeps it).
+template <typename T>
+void release(std::vector<T> &v) { std::vector<T>().swap(v); }
+
 template <typename F>
 void parallel_for(int threads, long n, F &&work) {
     if (n <= 0) return;
@@ -531,12 +534,17 @@ contour_t contour_on_cpu(const std::vector<float> &field, const grid_t &grid) {
     int nx = grid.nx, ny = grid.ny, nz = grid.nz;
     double h = grid.spacing;
     long plane = long(nx) * ny;
-    std::vector<int32_t> edge_vertex(3 * plane * nz, -1);
+    // The vertex made on each grid edge so far, for the two planes of points the current layer of
+    // cubes touches (edges keyed by the point they start from): a cube's edges start on its own plane
+    // or the next, so a plane's entries are dropped once the cubes have moved past it. Two planes
+    // rather than the whole grid (3 int32 per point); the vertices come out in the same order.
+    std::vector<int32_t> edge_vertex(2 * 3 * plane, -1);
     contour_t out;
     auto vertex_on = [&](int px, int py, int pz, int axis) -> uint32_t {
         long p = pz * plane + long(py) * nx + px;
         long key = 3 * p + axis;
-        if (edge_vertex[key] >= 0) return uint32_t(edge_vertex[key]);
+        int32_t &cached = edge_vertex[3 * ((pz & 1) * plane + long(py) * nx + px) + axis];
+        if (cached >= 0) return uint32_t(cached);
         double a = field[p];
         double b = field[p + (axis == 0 ? 1 : axis == 1 ? nx : plane)];
         double t = a / (a - b);
@@ -544,10 +552,12 @@ contour_t contour_on_cpu(const std::vector<float> &field, const grid_t &grid) {
         out.positions.push_back(float(grid.origin[1] + (py + (axis == 1 ? t : 0)) * h));
         out.positions.push_back(float(grid.origin[2] + (pz + (axis == 2 ? t : 0)) * h));
         out.keys.push_back(uint32_t(key));
-        edge_vertex[key] = int32_t(out.keys.size() - 1);
+        cached = int32_t(out.keys.size() - 1);
         return uint32_t(out.keys.size() - 1);
     };
     for (int cz = 0; cz < nz - 1; cz++) {
+        // Plane cz + 1 takes the slot plane cz - 1 had.
+        if (cz > 0) std::fill(edge_vertex.begin() + 3 * ((cz + 1) & 1) * plane, edge_vertex.begin() + 3 * (((cz + 1) & 1) + 1) * plane, -1);
         for (int cy = 0; cy < ny - 1; cy++) {
             for (int cx = 0; cx < nx - 1; cx++) {
                 int config = 0;
@@ -650,28 +660,30 @@ public:
         dims[0] = nx; dims[1] = ny; dims[2] = nz;
         strides[0] = 1; strides[1] = nx; strides[2] = plane;
     }
-    // The differences of every grid point whose value is within `band` of 0 (the surface).
+    // The differences of every grid point whose value is within `band` of 0 (the surface), in grid
+    // order. Which points have them is a bit per point, with the count before each 64-point word, so
+    // a point's place among them is that count and the bits before it in its word.
     void prepare(double band, int threads) {
-        slots.assign(field.size(), 0);
-        std::vector<long> plane_count(nz, 0);
-        parallel_for(threads, nz, [&](long begin, long end) {
-            for (long k = begin; k < end; k++) {
-                long counted = 0;
-                for (long i = k * plane; i < (k + 1) * plane; i++) if (std::abs(field[i]) < band) counted++;
-                plane_count[k] = counted;
+        long count = long(field.size());
+        long words = (count + 63) / 64;
+        in_band.assign(words, 0);
+        before.assign(words + 1, 0);
+        parallel_for(threads, words, [&](long begin, long end) {
+            for (long w = begin; w < end; w++) {
+                uint64_t bits = 0;
+                for (long i = 64 * w; i < std::min(count, 64 * w + 64); i++) if (std::abs(field[i]) < band) bits |= uint64_t(1) << (i - 64 * w);
+                in_band[w] = bits;
             }
         });
-        std::vector<long> plane_first(nz + 1, 0);
-        for (int k = 0; k < nz; k++) plane_first[k + 1] = plane_first[k] + plane_count[k];
-        derivatives.assign(3 * plane_first[nz], 0.0f);
-        parallel_for(threads, nz, [&](long begin, long end) {
-            for (long k = begin; k < end; k++) {
-                long next = plane_first[k];
-                for (long i = k * plane; i < (k + 1) * plane; i++) {
-                    if (!(std::abs(field[i]) < band)) continue;
+        for (long w = 0; w < words; w++) before[w + 1] = before[w] + uint32_t(__builtin_popcountll(in_band[w]));
+        derivatives.assign(3 * size_t(before[words]), 0.0f);
+        parallel_for(threads, words, [&](long begin, long end) {
+            for (long w = begin; w < end; w++) {
+                uint32_t next = before[w];
+                for (uint64_t bits = in_band[w]; bits; bits &= bits - 1) {
+                    long i = 64 * w + __builtin_ctzll(bits);
                     int z = int(i / plane), y = int((i - z * plane) / nx), x = int(i - z * plane - long(y) * nx);
-                    compute(i, x, y, z, &derivatives[3 * next]);
-                    slots[i] = int32_t(next + 1);
+                    compute(i, x, y, z, &derivatives[3 * size_t(next)]);
                     next++;
                 }
             }
@@ -739,10 +751,15 @@ private:
     }
     // The prepared differences, or worked out into `local`.
     const double *derivatives_at(long index, int x, int y, int z, double *local) const {
-        int32_t slot = slots.empty() ? 0 : slots[index];
         float d[3];
-        if (slot != 0) { const float *p = &derivatives[3L * (slot - 1)]; d[0] = p[0]; d[1] = p[1]; d[2] = p[2]; }
-        else compute(index, x, y, z, d);
+        uint64_t bits = in_band.empty() ? 0 : in_band[index >> 6];
+        uint64_t bit = uint64_t(1) << (index & 63);
+        if (bits & bit) {
+            const float *p = &derivatives[3 * size_t(before[index >> 6] + uint32_t(__builtin_popcountll(bits & (bit - 1))))];
+            d[0] = p[0]; d[1] = p[1]; d[2] = p[2];
+        } else {
+            compute(index, x, y, z, d);
+        }
         local[0] = d[0]; local[1] = d[1]; local[2] = d[2];
         return local;
     }
@@ -753,38 +770,52 @@ private:
     double origin[3];
     int dims[3];
     long strides[3];
-    std::vector<int32_t> slots;
+    std::vector<uint64_t> in_band;
+    std::vector<uint32_t> before;
     std::vector<float> derivatives;
 };
 
-mesh_t refine_contour(const std::vector<float> &field, const grid_t &grid, const std::vector<float> &positions,
-                      const std::vector<uint32_t> &indices, int threads) {
-    uint64_t vertex_count = positions.size() / 3;
-    std::unordered_map<uint64_t, uint32_t> midpoints;
-    midpoints.reserve(indices.size());
-    std::vector<double> extra;
+// Takes (and frees) the contour's positions and its triangles, so that they are gone before the
+// sampler is made.
+mesh_t refine_contour(const std::vector<float> &field, const grid_t &grid, std::vector<float> &&positions,
+                      std::vector<uint32_t> &&indices, int threads) {
+    uint32_t vertex_count = uint32_t(positions.size() / 3);
+    // Each edge's midpoint, kept with the edge's lower vertex: per vertex, a row of (other end,
+    // midpoint) as long as the edges it is the lower end of, counted first (twice over for an edge
+    // two triangles share - a row is never more than half full in a closed mesh, but it is small).
+    std::vector<uint32_t> row_start(size_t(vertex_count) + 1, 0);
+    for (size_t t = 0; t + 2 < indices.size(); t += 3) {
+        for (int e = 0; e < 3; e++) {
+            uint32_t a = indices[t + e], b = indices[t + (e + 1) % 3];
+            row_start[size_t(std::min(a, b)) + 1]++;
+        }
+    }
+    for (size_t v = 0; v < vertex_count; v++) row_start[v + 1] += row_start[v];
+    std::vector<uint32_t> row_end(row_start.begin(), row_start.end() - 1);
+    std::vector<uint32_t> other_end(row_start[vertex_count]), midpoint_of(row_start[vertex_count]);
+    mesh_t mesh;
+    // A closed mesh has 3/2 edges per triangle: room for that many midpoints.
+    mesh.positions.reserve(positions.size() + 3 * (indices.size() / 2 + 1));
+    mesh.positions.assign(positions.begin(), positions.end());
     auto midpoint = [&](uint32_t a, uint32_t b) -> uint32_t {
-        uint64_t key = a < b ? uint64_t(a) * vertex_count + b : uint64_t(b) * vertex_count + a;
-        auto it = midpoints.find(key);
-        if (it != midpoints.end()) return it->second;
-        uint32_t m = uint32_t(vertex_count + extra.size() / 3);
-        extra.push_back(0.5 * (double(positions[3 * a]) + positions[3 * b]));
-        extra.push_back(0.5 * (double(positions[3 * a + 1]) + positions[3 * b + 1]));
-        extra.push_back(0.5 * (double(positions[3 * a + 2]) + positions[3 * b + 2]));
-        midpoints.emplace(key, m);
+        uint32_t lo = std::min(a, b), hi = std::max(a, b);
+        for (uint32_t k = row_start[lo]; k < row_end[lo]; k++) if (other_end[k] == hi) return midpoint_of[k];
+        uint32_t m = uint32_t(mesh.positions.size() / 3);
+        mesh.positions.push_back(float(0.5 * (double(positions[3 * a]) + positions[3 * b])));
+        mesh.positions.push_back(float(0.5 * (double(positions[3 * a + 1]) + positions[3 * b + 1])));
+        mesh.positions.push_back(float(0.5 * (double(positions[3 * a + 2]) + positions[3 * b + 2])));
+        other_end[row_end[lo]] = hi;
+        midpoint_of[row_end[lo]++] = m;
         return m;
     };
-    mesh_t mesh;
     mesh.indices.reserve(4 * indices.size());
     for (size_t t = 0; t + 2 < indices.size(); t += 3) {
         uint32_t a = indices[t], b = indices[t + 1], c = indices[t + 2];
         uint32_t ab = midpoint(a, b), bc = midpoint(b, c), ca = midpoint(c, a);
         mesh.indices.insert(mesh.indices.end(), {a, ab, ca, ab, b, bc, ca, bc, c, ab, bc, ca});
     }
-    midpoints.clear();
-    mesh.positions.resize(positions.size() + extra.size());
-    std::copy(positions.begin(), positions.end(), mesh.positions.begin());
-    for (size_t i = 0; i < extra.size(); i++) mesh.positions[positions.size() + i] = float(extra[i]);
+    release(row_start); release(row_end); release(other_end); release(midpoint_of);
+    release(positions); release(indices);
     mesh.normals.resize(mesh.positions.size());
     field_sampler_t sampler(field, grid);
     // Vertices move at most four half-voxel steps, and the cubic reaches two points further: six
@@ -836,7 +867,8 @@ void orient_triangles(mesh_t &mesh, bool ccw) {
     }
 }
 
-mesh_t finish_contour(const std::vector<float> &field, const grid_t &grid, const contour_t &contour, bool refine, int threads) {
+// Takes (and frees) the contour.
+mesh_t finish_contour(const std::vector<float> &field, const grid_t &grid, contour_t &&contour, bool refine, int threads) {
     std::vector<uint32_t> indices;
     indices.reserve(contour.indices.size());
     for (size_t t = 0; t + 2 < contour.indices.size(); t += 3) {
@@ -844,9 +876,11 @@ mesh_t finish_contour(const std::vector<float> &field, const grid_t &grid, const
         if (a == b || b == c || a == c) continue;
         indices.insert(indices.end(), {a, b, c});
     }
+    release(contour.indices);
     mesh_t mesh;
     if (refine) {
-        mesh = refine_contour(field, grid, contour.positions, indices, threads);
+        release(contour.keys);
+        mesh = refine_contour(field, grid, std::move(contour.positions), std::move(indices), threads);
     } else {
         mesh.positions = contour.positions;
         mesh.normals = edge_normals(field, grid, contour.keys);
@@ -973,6 +1007,7 @@ grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing,
             }
         }
     });
+    release(deep);
     std::vector<double> seed_points;
     std::vector<int32_t> seed_a, seed_circle;
     for (const auto &seeds_here : plane_seeds) {
@@ -1079,6 +1114,7 @@ grid_t ses_field(const std::vector<atom_t> &atoms, double probe, double spacing,
         }
         interior_count += interior_here;
     });
+    release(exterior); release(feature); release(seed_points); release(seed_a); release(seed_circle);
 
     // 3b. Opening.
     if (open_radius > 0) {
@@ -1225,11 +1261,12 @@ surface_t surface_from_atoms(const std::vector<atom_t> &atoms, const std::vector
     surface.timings = grid.timings;
     if (grid.field.empty()) return surface;
     auto mark = clock_type::now();
-    // contourInput: negative inside, the surface at 0 (float, as the TS's Float32Array.map).
-    std::vector<float> input(grid.field.size());
-    for (size_t i = 0; i < input.size(); i++) input[i] = float(grid.iso - grid.field[i]);
-    contour_t contour = contour_on_cpu(input, grid);
-    mesh_t mesh = finish_contour(input, grid, contour, options.refine, threads);
+    // contourInput: negative inside, the surface at 0 (float, as the TS's Float32Array.map) - in
+    // place, as nothing needs the field as it was.
+    std::vector<float> &input = grid.field;
+    for (size_t i = 0; i < input.size(); i++) input[i] = float(grid.iso - input[i]);
+    mesh_t mesh = finish_contour(input, grid, contour_on_cpu(input, grid), options.refine, threads);
+    release(grid.field);
     surface.timings.contour = ms_since(mark);
     if (mesh.indices.empty()) return surface;
     surface.positions = std::move(mesh.positions);
