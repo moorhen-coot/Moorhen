@@ -10,6 +10,8 @@
  * Roadmap: src/.roadmaps/smooth-surface.md.
  */
 
+import { SLICE_MASK, type Sliced, runNow } from "./timeSlicing";
+
 /**
  * The smooth surface's parameters (dev menu). Read when a surface is (re)built. Whether surfaces are
  * smooth at all is a user preference in the store: generalStates.useSmoothSurface.
@@ -247,23 +249,67 @@ export function blendWeights(vertex: VertexAtoms, v: number, width: number, out:
 }
 
 /**
+ * blendWeights for every vertex at once, inline: `visit(v, base, w0, w1, w2, w3)` with the weights of
+ * its COLOUR_ATOMS nearest atoms (0 past the last; not called for a vertex with no atom). The same
+ * arithmetic as blendWeights, in the same order, so the same numbers - without a call and a fill per
+ * vertex, which on a surface of millions of vertices is most of the time.
+ */
+function* forEachBlend(vertex: VertexAtoms, width: number,
+                       visit: (v: number, base: number, w0: number, w1: number, w2: number, w3: number) => void): Sliced<void> {
+    const n = vertex.atom.length;
+    const near = vertex.near, gap = vertex.nearGap;
+    const reach = 2 * width;
+    for (let v = 0; v < n; v++) {
+        if ((v & SLICE_MASK) === SLICE_MASK) yield;
+        const base = COLOUR_ATOMS * v;
+        if (near[base] < 0) continue;
+        if (width <= 0) { visit(v, base, 1, 0, 0, 0); continue; }
+        const g0 = gap[base];
+        let w0 = 0, w1 = 0, w2 = 0, w3 = 0;
+        let t = 1 - (g0 - g0) / reach;
+        w0 = t > 0 ? t * t : 0;
+        let total = w0;
+        if (near[base + 1] >= 0) {
+            t = 1 - (gap[base + 1] - g0) / reach; w1 = t > 0 ? t * t : 0; total += w1;
+            if (near[base + 2] >= 0) {
+                t = 1 - (gap[base + 2] - g0) / reach; w2 = t > 0 ? t * t : 0; total += w2;
+                if (near[base + 3] >= 0) { t = 1 - (gap[base + 3] - g0) / reach; w3 = t > 0 ? t * t : 0; total += w3; }
+            }
+        }
+        visit(v, base, w0 / total, w1 / total, w2 / total, w3 / total);
+    }
+}
+
+/**
  * A surface's vertex colours from its atoms' (RGBA, 4 per atom), mixed by blendWeights. Cheap - what
  * a colour-rule or width change redoes, with no surface to rebuild. White where a vertex has no atom.
  */
 export function atomSurfaceColours(vertex: VertexAtoms, atomColours: ArrayLike<number>, width: number): Float32Array {
-    const n = vertex.atom.length;
-    const colours = new Float32Array(4 * n);
-    const w = new Float64Array(COLOUR_ATOMS);
-    for (let v = 0; v < n; v++) {
-        const base = COLOUR_ATOMS * v;
-        if (vertex.near[base] < 0) { colours.fill(1, 4 * v, 4 * v + 4); continue; }
-        blendWeights(vertex, v, width, w);
+    return runNow(atomSurfaceColoursSliced(vertex, atomColours, width));
+}
+
+/** atomSurfaceColours in slices (timeSlicing.ts). */
+export function* atomSurfaceColoursSliced(vertex: VertexAtoms, atomColours: ArrayLike<number>, width: number): Sliced<Float32Array> {
+    const colours = new Float32Array(4 * vertex.atom.length).fill(1);
+    const near = vertex.near;
+    yield* forEachBlend(vertex, width, (v, base, w0, w1, w2, w3) => {
+        // An atom past the first with no weight adds nothing: as blendWeights' callers, stop there.
+        const a0 = 4 * near[base];
+        const a1 = w1 > 0 ? 4 * near[base + 1] : -1;
+        const a2 = a1 >= 0 && w2 > 0 ? 4 * near[base + 2] : -1;
+        const a3 = a2 >= 0 && w3 > 0 ? 4 * near[base + 3] : -1;
         for (let c = 0; c < 4; c++) {
-            let sum = 0;
-            for (let k = 0; k < COLOUR_ATOMS && w[k] > 0; k++) sum += w[k] * atomColours[4 * vertex.near[base + k] + c];
+            let sum = w0 > 0 ? w0 * atomColours[a0 + c] : 0;
+            if (a1 >= 0) {
+                sum += w1 * atomColours[a1 + c];
+                if (a2 >= 0) {
+                    sum += w2 * atomColours[a2 + c];
+                    if (a3 >= 0) sum += w3 * atomColours[a3 + c];
+                }
+            }
             colours[4 * v + c] = sum;
         }
-    }
+    });
     return colours;
 }
 
@@ -274,68 +320,85 @@ export function atomSurfaceColours(vertex: VertexAtoms, atomColours: ArrayLike<n
  * across a boundary exactly as the colour does.
  */
 export function atomSurfaceInfluences(vertex: VertexAtoms, residueOf: ArrayLike<number>, width: number): { owners: Uint32Array; weights: Float32Array } {
+    return runNow(atomSurfaceInfluencesSliced(vertex, residueOf, width));
+}
+
+/** atomSurfaceInfluences in slices (timeSlicing.ts). */
+export function* atomSurfaceInfluencesSliced(vertex: VertexAtoms, residueOf: ArrayLike<number>, width: number):
+    Sliced<{ owners: Uint32Array; weights: Float32Array }> {
     const n = vertex.atom.length;
     const owners = new Uint32Array(COLOUR_ATOMS * n).fill(0xFFFFFFFF);
     const weights = new Float32Array(COLOUR_ATOMS * n);
+    const near = vertex.near;
     const w = new Float64Array(COLOUR_ATOMS);
-    for (let v = 0; v < n; v++) {
-        const base = COLOUR_ATOMS * v;
-        blendWeights(vertex, v, width, w);
+    yield* forEachBlend(vertex, width, (_v, base, w0, w1, w2, w3) => {
+        w[0] = w0; w[1] = w1; w[2] = w2; w[3] = w3;
         let kept = 0;
         for (let k = 0; k < COLOUR_ATOMS && w[k] > 0; k++) {
-            const residue = residueOf[vertex.near[base + k]];
+            const residue = residueOf[near[base + k]];
             let slot = 0;
             while (slot < kept && owners[base + slot] !== residue) slot++;
             if (slot === kept) { owners[base + slot] = residue; kept++; }
             weights[base + slot] += w[k];
         }
-    }
+    });
     return { owners, weights };
 }
 
 /**
- * Each vertex's neighbours along the mesh's edges (CSR), for smoothVertexColours: from every
- * triangle each corner lists the other two, so on a closed mesh every neighbour is listed twice,
- * evenly.
+ * What smoothVertexColours needs of the mesh: its triangles, and how many neighbours each vertex
+ * lists - from every triangle each corner lists the other two, so on a closed mesh every neighbour is
+ * listed twice, evenly. Kept with the surface for a recolour.
  */
-export function vertexNeighbours(indices: ArrayLike<number>, vertexCount: number): { start: Int32Array; ids: Int32Array } {
-    const start = new Int32Array(vertexCount + 1);
-    for (let i = 0; i < indices.length; i++) start[indices[i] + 1] += 2;
-    for (let v = 0; v < vertexCount; v++) start[v + 1] += start[v];
-    const fill = start.slice(0, vertexCount);
-    const ids = new Int32Array(start[vertexCount]);
-    for (let t = 0; t + 2 < indices.length; t += 3) {
-        const a = indices[t], b = indices[t + 1], c = indices[t + 2];
-        ids[fill[a]++] = b; ids[fill[a]++] = c;
-        ids[fill[b]++] = c; ids[fill[b]++] = a;
-        ids[fill[c]++] = a; ids[fill[c]++] = b;
-    }
-    return { start, ids };
+export function vertexNeighbours(indices: ArrayLike<number>, vertexCount: number): { indices: ArrayLike<number>; count: Int32Array } {
+    const count = new Int32Array(vertexCount);
+    for (let i = 0; i < indices.length; i++) count[indices[i]] += 2;
+    return { indices, count };
 }
 
 /**
  * Colours (RGBA per vertex) averaged with their neighbours' `passes` times, each vertex with itself
  * and its neighbours: a little diffusion along the surface, which takes out triangle-sized speckle
  * where colours meet and leaves a uniform area as it was. A new array; `colours` is not changed.
+ * Each vertex sums itself and then its neighbours triangle by triangle, as a table of neighbours
+ * listed in triangle order would, but with no table (on a large surface, tens of millions of entries).
  */
-export function smoothVertexColours(colours: Float32Array, neighbours: { start: Int32Array; ids: Int32Array }, passes: number): Float32Array {
+export function smoothVertexColours(colours: Float32Array, neighbours: { indices: ArrayLike<number>; count: Int32Array }, passes: number): Float32Array {
+    return runNow(smoothVertexColoursSliced(colours, neighbours, passes));
+}
+
+/** smoothVertexColours in slices (timeSlicing.ts). */
+export function* smoothVertexColoursSliced(colours: Float32Array, neighbours: { indices: ArrayLike<number>; count: Int32Array },
+                                           passes: number): Sliced<Float32Array> {
+    if (passes <= 0) return colours.slice();
+    const { indices, count } = neighbours;
+    const n = count.length;
+    const sum = new Float64Array(4 * n);
     let from: Float32Array = colours, to: Float32Array = new Float32Array(colours.length);
-    const n = neighbours.start.length - 1;
     for (let pass = 0; pass < passes; pass++) {
-        for (let v = 0; v < n; v++) {
-            let r = from[4 * v], g = from[4 * v + 1], b = from[4 * v + 2], a = from[4 * v + 3];
-            const s0 = neighbours.start[v], s1 = neighbours.start[v + 1];
-            for (let k = s0; k < s1; k++) {
-                const u = neighbours.ids[k];
-                r += from[4 * u]; g += from[4 * u + 1]; b += from[4 * u + 2]; a += from[4 * u + 3];
+        for (let i = 0; i < 4 * n; i++) {
+            if ((i & SLICE_MASK) === SLICE_MASK) yield;
+            sum[i] = from[i];
+        }
+        for (let t = 0; t + 2 < indices.length; t += 3) {
+            if ((t & SLICE_MASK) === 0) yield;
+            const a = 4 * indices[t], b = 4 * indices[t + 1], c = 4 * indices[t + 2];
+            for (let k = 0; k < 4; k++) {
+                const fa = from[a + k], fb = from[b + k], fc = from[c + k];
+                sum[a + k] += fb; sum[a + k] += fc;
+                sum[b + k] += fc; sum[b + k] += fa;
+                sum[c + k] += fa; sum[c + k] += fb;
             }
-            const scale = 1 / (1 + s1 - s0);
-            to[4 * v] = r * scale; to[4 * v + 1] = g * scale; to[4 * v + 2] = b * scale; to[4 * v + 3] = a * scale;
+        }
+        for (let v = 0; v < n; v++) {
+            if ((v & SLICE_MASK) === SLICE_MASK) yield;
+            const scale = 1 / (1 + count[v]);
+            for (let k = 0; k < 4; k++) to[4 * v + k] = sum[4 * v + k] * scale;
         }
         if (from === colours) { from = to; to = new Float32Array(colours.length); }
         else { const swap = from; from = to; to = swap; }
     }
-    return passes > 0 ? from : colours.slice();
+    return from;
 }
 
 /** A surface made from the atoms as Coot hands a mesh over (libcootApi.SimpleMeshJS's shape). */
@@ -363,24 +426,32 @@ export interface AtomSurfaceMeshJS {
  */
 export function atomSurfaceMesh(surface: AtomSurface, residueOf: ArrayLike<number>, residues: string[],
                                 atomColours: ArrayLike<number>, colourBlend: number, colourSmoothing = 0): AtomSurfaceMeshJS {
+    return runNow(atomSurfaceMeshSliced(surface, residueOf, residues, atomColours, colourBlend, colourSmoothing));
+}
+
+/** atomSurfaceMesh in slices (timeSlicing.ts): what a large surface is finished with without freezing the view. */
+export function* atomSurfaceMeshSliced(surface: AtomSurface, residueOf: ArrayLike<number>, residues: string[],
+                                       atomColours: ArrayLike<number>, colourBlend: number, colourSmoothing = 0): Sliced<AtomSurfaceMeshJS> {
     const n = surface.atom.length;
     const owners = new Uint32Array(n), others = new Uint32Array(n).fill(0xFFFFFFFF), weights = new Float32Array(n).fill(1);
     for (let v = 0; v < n; v++) {
+        if ((v & SLICE_MASK) === SLICE_MASK) yield;
         const a = surface.atom[v], b = surface.other[v];
         owners[v] = a >= 0 ? residueOf[a] : 0xFFFFFFFF;
         if (b >= 0) { others[v] = residueOf[b]; weights[v] = surface.weight[v]; }
     }
-    const influences = atomSurfaceInfluences(surface, residueOf, colourBlend);
+    const influences = yield* atomSurfaceInfluencesSliced(surface, residueOf, colourBlend);
+    const colours = yield* atomSurfaceColoursSliced(surface, atomColours, colourBlend);
+    const smoothed = colourSmoothing > 0
+        ? yield* smoothVertexColoursSliced(colours, vertexNeighbours(surface.indices, n), colourSmoothing)
+        : colours;
     return {
         status: 1,
         prim_types: [["TRIANGLES"]],
         idx_tri: [[surface.indices]],
         vert_tri: [[surface.positions]],
         norm_tri: [[surface.normals]],
-        col_tri: [[colourSmoothing > 0
-            ? smoothVertexColours(atomSurfaceColours(surface, atomColours, colourBlend),
-                vertexNeighbours(surface.indices, surface.atom.length), colourSmoothing)
-            : atomSurfaceColours(surface, atomColours, colourBlend)]],
+        col_tri: [[smoothed]],
         vertex_owners: owners,
         vertex_owners_other: others,
         vertex_owner_weights: weights,

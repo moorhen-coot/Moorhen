@@ -15,18 +15,19 @@ import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInS
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
 import { wholeMeshPickInfo } from "../../WebGLgComponents/wholeMeshPick";
-import { type OwnerNumbering, newOwnerNumbering, ownedMeshPickInfo } from "../../WebGLgComponents/ownedMeshPick";
+import { type OwnerNumbering, newOwnerNumbering, ownedMeshPickInfo, ownedMeshPickInfoSliced } from "../../WebGLgComponents/ownedMeshPick";
 import { reassignNucleotideOwners } from "../../WebGLgComponents/nucleotideOwners";
 import {
     METABALLS_GRID_SIZE, METABALLS_ISO_LEVEL, METABALLS_RADIUS, METABALLS_SPHERE_ARGS,
     gpuMetaBallsSetting, metaballsInputFromSpheres, metaballsMeshData, sharedGpuMetaBalls,
 } from "../../WebGPUComponents/metaballs";
 import {
-    type AtomSurface, type SurfaceAtom, type VertexAtoms, COLOUR_ATOMS, atomSurfaceColours,
-    atomSurfaceInfluences, atomSurfaceMesh, mergeAtomSurfaces, nearestVertices, packAtoms, residueCid, smoothSurfaceSetting,
-    smoothVertexColours, vertexNeighbours,
+    type AtomSurface, type SurfaceAtom, type VertexAtoms, COLOUR_ATOMS, atomSurfaceColoursSliced,
+    atomSurfaceInfluencesSliced, atomSurfaceMeshSliced, mergeAtomSurfaces, nearestVertices, packAtoms, residueCid, smoothSurfaceSetting,
+    smoothVertexColoursSliced, vertexNeighbours,
 } from "../smoothSurface";
-import { influenceListsFromShares } from "../../WebGLgComponents/ownedMeshPick";
+import { influenceListsFromSharesSliced } from "../../WebGLgComponents/ownedMeshPick";
+import { runSliced, yieldToBrowser } from "../timeSlicing";
 import { surfaceAtomRadius } from "../m2tAtomRadii";
 import {
     GPU_SMOOTH_MAX_LINE, type SmoothUnblurredField, gpuSmoothSurfaceIfFast, smoothGrid,
@@ -248,7 +249,7 @@ export class MoleculeRepresentation {
         residueOf: Int32Array;
         vertex: VertexAtoms;
         indices: Uint32Array;
-        neighbours?: { start: Int32Array; ids: Int32Array };
+        neighbours?: { indices: ArrayLike<number>; count: Int32Array };
     } | null = null;
 
     constructor(style: RepresentationStyles, cid: string, commandCentre: CommandCentre) {
@@ -731,9 +732,7 @@ export class MoleculeRepresentation {
         this.visible = true;
         if (!this.colourRulesOnDemand) await this.applyColourRules();
         const objects = await this.getBufferObjects();
-        const tB = performance.now(); // TIMING
         this.buildBuffers(objects);
-        console.debug(`TIMING buildBuffers ${(performance.now() - tB).toFixed(0)} ms`); // TIMING
         const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
         if (this.styleHasAtomBuffers) {
             // Narrowed, not the raw selection: see atomsThisStyleDraws. The unnarrowed list is
@@ -765,9 +764,7 @@ export class MoleculeRepresentation {
         if (!this.colourRulesOnDemand) await this.applyColourRules();
         const objects = await this.getBufferObjects();
         this.deleteBuffers();
-        const tB = performance.now(); // TIMING
         this.buildBuffers(objects);
-        console.debug(`TIMING buildBuffers ${(performance.now() - tB).toFixed(0)} ms`); // TIMING
         const atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.styleIsCombinedRepresentation ? "/*/*/*/*" : this.cid, true);
         if (this.styleHasAtomBuffers) {
             // Narrowed, not the raw selection: see atomsThisStyleDraws. The unnarrowed list is
@@ -1728,13 +1725,10 @@ export class MoleculeRepresentation {
             ? reassignNucleotideOwners(m2tMesh.vert_tri?.[0]?.[0] ?? [], m2tMesh.vertex_owners, m2tMesh.owners,
                 await this.parentMolecule.gemmiAtomsForCid("/*/*/*/*"))
             : m2tMesh.vertex_owners
-        let tP = performance.now(); // TIMING
-        const influencesT = smoothInfluences(m2tMesh); // TIMING
-        console.debug(`TIMING smoothInfluences ${(performance.now() - tP).toFixed(0)} ms`); tP = performance.now(); // TIMING
-        const meshPickInfo = ownedMeshPickInfo(
+        const influences = smoothInfluences(m2tMesh);
+        const meshPickInfo = await runSliced(ownedMeshPickInfoSliced(
             m2tMesh.vert_tri?.[0]?.[0] ?? [], ribbonOwners as Uint32Array | number[] | undefined, m2tMesh.owners,
-            m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights, numbering, influencesT)
-        console.debug(`TIMING ownedMeshPickInfo ${(performance.now() - tP).toFixed(0)} ms`); // TIMING
+            m2tMesh.vertex_owners_other, m2tMesh.vertex_owner_weights, numbering, influences))
         const ribbonBufferObjects = [{
             ...withoutOwnershipArrays(m2tMesh),
             pick_info: meshPickInfo ? { ...meshPickInfo, highlight_group: highlightGroup } : {},
@@ -1838,12 +1832,10 @@ export class MoleculeRepresentation {
         };
         // Electrostatics colours come from M2T's potential below: no atom colours needed (its rule has
         // no colour list to read).
-        let tT = performance.now(); // TIMING
         const colours = potential ? new Float32Array(4 * records.length).fill(1) : await this.smoothSurfaceAtomColours(records);
-        console.debug(`TIMING atom colours ${(performance.now() - tT).toFixed(0)} ms`); tT = performance.now(); // TIMING
-        const mesh = atomSurfaceMesh(surface, residueOf, residues, colours, smoothSurfaceSetting.colourBlend,
-            smoothSurfaceSetting.colourSmoothing);
-        console.debug(`TIMING atomSurfaceMesh ${(performance.now() - tT).toFixed(0)} ms`); // TIMING
+        // In slices: on a large structure this is hundreds of milliseconds, which in one go froze the view.
+        const mesh = await runSliced(atomSurfaceMeshSliced(surface, residueOf, residues, colours, smoothSurfaceSetting.colourBlend,
+            smoothSurfaceSetting.colourSmoothing));
         // Electrostatics: the colours of the nearest vertices of M2T's surface, which carries the potential.
         const m2tPositions = potential?.vert_tri?.[0]?.[0], m2tColours = potential?.col_tri?.[0]?.[0];
         if (m2tPositions?.length && m2tColours?.length) {
@@ -1942,17 +1934,18 @@ export class MoleculeRepresentation {
         const buffer = this.buffers.find(b => b.triangleColours?.[0]?.length === 4 * count);
         if (!buffer) return false;
         const atomColours = await this.smoothSurfaceAtomColours(state.records);
-        let colours = atomSurfaceColours(state.vertex, atomColours, smoothSurfaceSetting.colourBlend);
+        // In slices (timeSlicing.ts), as when the surface was made: a large surface recolours without freezing the view.
+        let colours = await runSliced(atomSurfaceColoursSliced(state.vertex, atomColours, smoothSurfaceSetting.colourBlend));
         if (smoothSurfaceSetting.colourSmoothing > 0) {
             state.neighbours ??= vertexNeighbours(state.indices, count);
-            colours = smoothVertexColours(colours, state.neighbours, smoothSurfaceSetting.colourSmoothing);
+            colours = await runSliced(smoothVertexColoursSliced(colours, state.neighbours, smoothSurfaceSetting.colourSmoothing));
         }
         buffer.setVertexColours(colours);
         // The hover's shares follow the blend width; owners and their codes stay what they were.
         const pickInfo = buffer.pick_info;
         if (pickInfo?.vertex_pick_points && pickInfo.owner_codes) {
-            const shares = atomSurfaceInfluences(state.vertex, state.residueOf, smoothSurfaceSetting.colourBlend);
-            const lists = influenceListsFromShares(pickInfo.vertex_pick_points, { stride: COLOUR_ATOMS, ...shares }, pickInfo.owner_codes);
+            const shares = await runSliced(atomSurfaceInfluencesSliced(state.vertex, state.residueOf, smoothSurfaceSetting.colourBlend));
+            const lists = await runSliced(influenceListsFromSharesSliced(pickInfo.vertex_pick_points, { stride: COLOUR_ATOMS, ...shares }, pickInfo.owner_codes));
             buffer.setInfluence({ weights: lists.weights, point_indexes: lists.point_indexes, index_offsets: lists.index_offsets });
         }
         this.parentMolecule.store.dispatch(setRequestDrawScene(true));
@@ -1963,14 +1956,22 @@ export class MoleculeRepresentation {
         const colours = new Float32Array(4 * records.length).fill(1);
         const index = new Map<number, number>();
         records.forEach((record, i) => index.set(record.serial, i));
+        // Each selection's atoms come over from gemmi as objects - a few milliseconds a chain on a large
+        // structure - so the browser gets a turn between them (timeSlicing.ts).
+        let slice = performance.now();
         for (const rule of this.colourRules ?? []) {
             const pairs = rule.isMultiColourRule
                 ? (rule.multiColourData ?? "").split("|").filter(Boolean).map(entry => entry.split("^"))
                 : [[rule.cid, rule.color]];
             for (const [cid, hex] of pairs) {
                 if (!cid || !hex) continue;
+                if (performance.now() - slice > 10) {
+                    await yieldToBrowser();
+                    slice = performance.now();
+                }
                 const [r, g, b, a] = ColourRule.parseHexToRgba(hex);
-                for (const atom of await this.parentMolecule.gemmiAtomsForCid(cid)) {
+                const found = await this.parentMolecule.gemmiAtomsForCid(cid);
+                for (const atom of found) {
                     const i = index.get(atom.serial);
                     if (i !== undefined) colours.set([r / 255, g / 255, b / 255, a], 4 * i);
                 }

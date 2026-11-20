@@ -1,8 +1,9 @@
-import { newOwnerNumbering, ownedMeshPickInfo } from "../../src/WebGLgComponents/ownedMeshPick";
+import { newOwnerNumbering, ownedMeshPickInfo, ownedMeshPickInfoSliced } from "../../src/WebGLgComponents/ownedMeshPick";
 import {
-    atomSurfaceColours, atomSurfaceInfluences, atomSurfaceMesh, mergeAtomSurfaces, nearestVertices, residueCid, smoothVertexColours,
-    vertexNeighbours,
+    COLOUR_ATOMS, atomSurfaceColours, atomSurfaceInfluences, atomSurfaceMesh, atomSurfaceMeshSliced, blendWeights, mergeAtomSurfaces,
+    nearestVertices, residueCid, smoothVertexColours, vertexNeighbours,
 } from "../../src/utils/smoothSurface";
+import { runSliced } from "../../src/utils/timeSlicing";
 
 /**
  * What the main thread does with a smooth surface: owner names, colours from atom colours, the hover's
@@ -85,6 +86,92 @@ describe("smoothSurface", () => {
         expect(Array.from(colours.slice(0, 4))).toEqual([1, 0, 0, 1]);
         const uniform = new Float32Array(20).fill(0.5);
         expect(Array.from(smoothVertexColours(uniform, neighbours, 3)).every(c => Math.abs(c - 0.5) < 1e-7)).toBe(true);
+    });
+
+    test("in slices, a large surface comes out exactly as the plain per-vertex arithmetic makes it", async () => {
+        // A strip of 100k vertices (past one slice, SLICE_ITEMS), with 0 to 4 near atoms a vertex, a
+        // degenerate triangle in every hundred, and some vertices with another residue's atom.
+        const n = 100_000, atoms = 997;
+        let seed = 1;
+        const random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+        const near = new Int32Array(COLOUR_ATOMS * n).fill(-1), nearGap = new Float32Array(COLOUR_ATOMS * n);
+        const atom = new Int32Array(n), other = new Int32Array(n).fill(-1), weight = new Float32Array(n).fill(1);
+        for (let v = 0; v < n; v++) {
+            const count = v % 5;
+            atom[v] = count > 0 ? Math.floor(random() * atoms) : -1;
+            for (let k = 0; k < count; k++) {
+                near[COLOUR_ATOMS * v + k] = k === 0 ? atom[v] : Math.floor(random() * atoms);
+                nearGap[COLOUR_ATOMS * v + k] = k * random();
+            }
+            if (count > 1 && v % 3 === 0) { other[v] = near[COLOUR_ATOMS * v + 1]; weight[v] = 0.6; }
+        }
+        const triangles: number[] = [];
+        for (let v = 0; v + 2 < n; v++) triangles.push(v, v + 1, v % 100 === 0 ? v + 1 : v + 2);
+        const indices = Uint32Array.from(triangles);
+        const positions = Float32Array.from({ length: 3 * n }, () => random() * 50);
+        const surface = { positions, normals: new Float32Array(3 * n), indices, atom, other, weight, near, nearGap };
+        const residueOf = Int32Array.from({ length: atoms }, (_, i) => Math.floor(i / 9));
+        const residues = Array.from({ length: Math.ceil(atoms / 9) }, (_, r) => `/1/${"ABC"[r % 3]}/${r}(ALA)`);
+        const atomColours = Float32Array.from({ length: 4 * atoms }, () => random());
+
+        // The reference: blendWeights a vertex at a time, and smoothing through a table of neighbours.
+        const width = 0.4, w = new Float64Array(COLOUR_ATOMS);
+        const expected = new Float32Array(4 * n).fill(1);
+        for (let v = 0; v < n; v++) {
+            if (near[COLOUR_ATOMS * v] < 0) continue;
+            blendWeights(surface, v, width, w);
+            for (let c = 0; c < 4; c++) {
+                let sum = 0;
+                for (let k = 0; k < COLOUR_ATOMS && w[k] > 0; k++) sum += w[k] * atomColours[4 * near[COLOUR_ATOMS * v + k] + c];
+                expected[4 * v + c] = sum;
+            }
+        }
+        const lists: number[][] = Array.from({ length: n }, () => []);
+        for (let t = 0; t < indices.length; t += 3) {
+            const [a, b, c] = [indices[t], indices[t + 1], indices[t + 2]];
+            lists[a].push(b, c); lists[b].push(c, a); lists[c].push(a, b);
+        }
+        let from = expected;
+        for (let pass = 0; pass < 2; pass++) {
+            const to = new Float32Array(4 * n);
+            for (let v = 0; v < n; v++) {
+                for (let c = 0; c < 4; c++) {
+                    let sum = from[4 * v + c];
+                    for (const u of lists[v]) sum += from[4 * u + c];
+                    to[4 * v + c] = sum * (1 / (1 + lists[v].length));
+                }
+            }
+            from = to;
+        }
+
+        const mesh = await runSliced(atomSurfaceMeshSliced(surface, residueOf, residues, atomColours, width, 2), 0);
+        expect(Buffer.from(mesh.col_tri[0][0].buffer).equals(Buffer.from(from.buffer))).toBe(true);
+        const plain = atomSurfaceMesh(surface, residueOf, residues, atomColours, width, 2);
+        expect(Buffer.from(mesh.vertex_influence_weights.buffer).equals(Buffer.from(plain.vertex_influence_weights.buffer))).toBe(true);
+        const shares = atomSurfaceInfluences(surface, residueOf, width);
+        expect(Array.from(mesh.vertex_influence_owners)).toEqual(Array.from(shares.owners));
+
+        const influences = { stride: COLOUR_ATOMS, owners: mesh.vertex_influence_owners, weights: mesh.vertex_influence_weights };
+        const sliced = await runSliced(ownedMeshPickInfoSliced(positions, mesh.vertex_owners, mesh.owners, mesh.vertex_owners_other,
+            mesh.vertex_owner_weights, newOwnerNumbering(), influences), 0);
+        const once = ownedMeshPickInfo(positions, mesh.vertex_owners, mesh.owners, mesh.vertex_owners_other,
+            mesh.vertex_owner_weights, newOwnerNumbering(), influences);
+        expect(sliced).toEqual(once);
+        // The lists themselves, a vertex at a time.
+        let listed = 0;
+        for (let v = 0; v < n; v++) {
+            if (once!.vertex_pick_points[v] !== 0xFFFFFFFF) {
+                for (let k = 0; k < COLOUR_ATOMS; k++) {
+                    const o = influences.owners[COLOUR_ATOMS * v + k], share = influences.weights[COLOUR_ATOMS * v + k];
+                    if (o >= once!.owner_codes.length || share <= 0) continue;
+                    expect(once!.influence_point_indexes[listed]).toBe(once!.owner_codes[o]);
+                    expect(once!.influence_weights[listed]).toBe(share);
+                    listed++;
+                }
+            }
+            expect(once!.influence_index_offsets[v]).toBe(listed);
+        }
+        expect(once!.influence_point_indexes.length).toBe(listed);
     });
 
     test("surfaces of separate chains join into one, atom indices into the whole list's", () => {

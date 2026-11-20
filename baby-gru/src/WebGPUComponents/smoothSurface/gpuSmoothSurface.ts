@@ -7,6 +7,7 @@
  */
 import { BufferUsage, ComputeKernel, GpuScan, MapMode, createBuffer, readBuffer } from "../gpu";
 import type { GpuMetaBalls } from "../metaballs";
+import { SLICE_MASK, runSliced, yieldToBrowser } from "../../utils/timeSlicing";
 import {
     BLUR_WEIGHT_WGSL, BLUR_WGSL, CANDIDATE_TOTAL_WGSL, CAP_WGSL, COLOUR_ATOMS, CONTOUR_INPUT_WGSL, DISTANCE_WGSL, EDGE_COUNT_WGSL,
     EDGE_FILL_WGSL, FEATURE_INIT_WGSL, FEATURE_PASS_WGSL, HEAL_WGSL, HISTOGRAM_WGSL, INTERIOR_WGSL, LEVEL_BINS, LEVEL_WGSL, MAX_LINE,
@@ -801,27 +802,36 @@ export class GpuSmoothSurface {
             };
             this.device.queue.submit([encoder.finish()]);
             await Promise.all(Object.values(read).map(b => b.mapAsync(MapMode.READ)));
-            const tUnpack = performance.now(); // TIMING
             const vertices = V + new Uint32Array(read.counts.getMappedRange())[0];
-            const positionsOut = new Float32Array(read.positions.getMappedRange().slice(0, vertices * 12));
-            const normalsOut = new Float32Array(read.normals.getMappedRange().slice(0, vertices * 12));
-            const indicesOut = new Uint32Array(read.split.getMappedRange().slice(0, T * 48));
-            const infoWords = new Uint32Array(read.info.getMappedRange().slice(0, vertices * 12));
-            const nearWords = new Uint32Array(read.near.getMappedRange().slice(0, vertices * 8 * COLOUR_ATOMS));
+            // Copied out of the mapped ranges one at a time, and taken apart in slices
+            // (timeSlicing.ts), the view getting its turns between: on a large surface this is
+            // hundreds of megabytes.
+            const copy = async (buffer: GPUBuffer, bytes: number) => {
+                const out = buffer.getMappedRange().slice(0, bytes);
+                await yieldToBrowser();
+                return out;
+            };
+            const positionsOut = new Float32Array(await copy(read.positions, vertices * 12));
+            const normalsOut = new Float32Array(await copy(read.normals, vertices * 12));
+            const indicesOut = new Uint32Array(await copy(read.split, T * 48));
+            const infoWords = new Uint32Array(await copy(read.info, vertices * 12));
+            const nearWords = new Uint32Array(await copy(read.near, vertices * 8 * COLOUR_ATOMS));
             const infoInts = new Int32Array(infoWords.buffer), infoFloats = new Float32Array(infoWords.buffer);
             const nearInts = new Int32Array(nearWords.buffer), nearFloats = new Float32Array(nearWords.buffer);
             const atom = new Int32Array(vertices), other = new Int32Array(vertices), weight = new Float32Array(vertices);
             const nearOut = new Int32Array(COLOUR_ATOMS * vertices), nearGap = new Float32Array(COLOUR_ATOMS * vertices);
-            for (let v = 0; v < vertices; v++) {
-                atom[v] = infoInts[3 * v];
-                other[v] = infoInts[3 * v + 1];
-                weight[v] = infoFloats[3 * v + 2];
-                for (let k = 0; k < COLOUR_ATOMS; k++) {
-                    nearOut[COLOUR_ATOMS * v + k] = nearInts[2 * COLOUR_ATOMS * v + k];
-                    nearGap[COLOUR_ATOMS * v + k] = nearFloats[2 * COLOUR_ATOMS * v + COLOUR_ATOMS + k];
+            await runSliced((function* () {
+                for (let v = 0; v < vertices; v++) {
+                    if ((v & SLICE_MASK) === SLICE_MASK) yield;
+                    atom[v] = infoInts[3 * v];
+                    other[v] = infoInts[3 * v + 1];
+                    weight[v] = infoFloats[3 * v + 2];
+                    for (let k = 0; k < COLOUR_ATOMS; k++) {
+                        nearOut[COLOUR_ATOMS * v + k] = nearInts[2 * COLOUR_ATOMS * v + k];
+                        nearGap[COLOUR_ATOMS * v + k] = nearFloats[2 * COLOUR_ATOMS * v + COLOUR_ATOMS + k];
+                    }
                 }
-            }
-            console.debug(`TIMING unpack ${(performance.now() - tUnpack).toFixed(0)} ms`); // TIMING
+            })());
             return {
                 positions: positionsOut, normals: normalsOut, indices: indicesOut, atom, other, weight, near: nearOut, nearGap,
                 timings: { contour: contourMs, finish: performance.now() - mark },

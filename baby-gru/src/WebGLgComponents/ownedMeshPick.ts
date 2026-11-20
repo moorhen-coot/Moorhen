@@ -34,6 +34,7 @@
 import type { Bounds } from "./rayMesh";
 import { MOORHEN_MESH_RESIDUE_TAG_KIND } from "../utils/enums";
 import { encodeOwner } from "../utils/pickLevel";
+import { SLICE_MASK, type Sliced, runNow } from "../utils/timeSlicing";
 
 /**
  * How residues are numbered into owner codes: chains in the order first seen, residues within a
@@ -135,32 +136,45 @@ export type OwnedMeshPickInfo = {
  * blend width changes, with the owner codes the buffer already has. `shared`: how many vertices
  * list more than one owner.
  */
+type InfluenceLists = { index_offsets: Uint32Array<ArrayBuffer>; point_indexes: Uint32Array<ArrayBuffer>; weights: Float32Array<ArrayBuffer>; shared: number };
+
 export const influenceListsFromShares = (
     vertexPickPoints: ArrayLike<number>,
     influences: { stride: number; owners: Uint32Array; weights: Float32Array },
     ownerCodes: ArrayLike<number>
-): { index_offsets: Uint32Array<ArrayBuffer>; point_indexes: Uint32Array<ArrayBuffer>; weights: Float32Array<ArrayBuffer>; shared: number } => {
+): InfluenceLists => runNow(influenceListsFromSharesSliced(vertexPickPoints, influences, ownerCodes));
+
+/** influenceListsFromShares in slices (timeSlicing.ts). */
+export function* influenceListsFromSharesSliced(
+    vertexPickPoints: ArrayLike<number>,
+    influences: { stride: number; owners: Uint32Array; weights: Float32Array },
+    ownerCodes: ArrayLike<number>
+): Sliced<InfluenceLists> {
     const count = vertexPickPoints.length;
     const index_offsets = new Uint32Array(count);
-    const points: number[] = [];
-    const shares: number[] = [];
+    // At most `stride` per vertex: filled in place, then cut to length.
+    const points = new Uint32Array(influences.stride * count);
+    const shares = new Float32Array(influences.stride * count);
+    let listedTotal = 0;
     let shared = 0;
     for (let v = 0; v < count; v++) {
+        if ((v & SLICE_MASK) === SLICE_MASK) yield;
         if (vertexPickPoints[v] !== NO_OWNER) {
             let listed = 0;
             for (let k = 0; k < influences.stride; k++) {
                 const o = influences.owners[influences.stride * v + k];
                 const share = influences.weights[influences.stride * v + k];
                 if (o >= ownerCodes.length || share <= 0) continue;
-                points.push(ownerCodes[o]); shares.push(share);
+                points[listedTotal] = ownerCodes[o]; shares[listedTotal] = share;
+                listedTotal++;
                 listed++;
             }
             if (listed > 1) shared++;
         }
-        index_offsets[v] = points.length;
+        index_offsets[v] = listedTotal;
     }
-    return { index_offsets, point_indexes: new Uint32Array(points), weights: new Float32Array(shares), shared };
-};
+    return { index_offsets, point_indexes: points.slice(0, listedTotal), weights: shares.slice(0, listedTotal), shared };
+}
 
 export const ownedMeshPickInfo = (
     vertices: number[] | Float32Array,
@@ -170,7 +184,19 @@ export const ownedMeshPickInfo = (
     vertexOwnerWeights?: Float32Array | number[],
     numbering: OwnerNumbering = newOwnerNumbering(),
     influences?: { stride: number; owners: Uint32Array; weights: Float32Array }
-): OwnedMeshPickInfo | null => {
+): OwnedMeshPickInfo | null =>
+    runNow(ownedMeshPickInfoSliced(vertices, vertexOwners, owners, vertexOwnersOther, vertexOwnerWeights, numbering, influences));
+
+/** ownedMeshPickInfo in slices (timeSlicing.ts): for a mesh of millions of vertices. */
+export function* ownedMeshPickInfoSliced(
+    vertices: number[] | Float32Array,
+    vertexOwners: Uint32Array | number[] | undefined,
+    owners: string[] | undefined,
+    vertexOwnersOther?: Uint32Array | number[],
+    vertexOwnerWeights?: Float32Array | number[],
+    numbering: OwnerNumbering = newOwnerNumbering(),
+    influences?: { stride: number; owners: Uint32Array; weights: Float32Array }
+): Sliced<OwnedMeshPickInfo | null> {
     const count = Math.floor(vertices.length / 3);
     if (count === 0) return null;
     if (!vertexOwners || !owners || owners.length === 0) return null;
@@ -227,6 +253,7 @@ export const ownedMeshPickInfo = (
 
     let running = 0;
     for (let v = 0; v < count; v++) {
+        if ((v & SLICE_MASK) === SLICE_MASK) yield;
         for (let c = 0; c < 3; c++) {
             const value = vertices[3 * v + c];
             meshTotal[c] += value;
@@ -304,7 +331,7 @@ export const ownedMeshPickInfo = (
     let influence_weights = new Float32Array(weights);
     let influence_index_offsets_out = influence_index_offsets;
     if (hasInfluences) {
-        const lists = influenceListsFromShares(vertex_pick_points, influences, owner_codes);
+        const lists = yield* influenceListsFromSharesSliced(vertex_pick_points, influences, owner_codes);
         influence_index_offsets_out = lists.index_offsets;
         influence_point_indexes = lists.point_indexes;
         influence_weights = lists.weights;
@@ -328,4 +355,4 @@ export const ownedMeshPickInfo = (
         pick_exact: true,
         shared_vertices,
     };
-};
+}

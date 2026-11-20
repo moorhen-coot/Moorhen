@@ -30,6 +30,7 @@ import {
     restrictCidToAltConf,
 } from "./utils";
 import { ZOOM_DIVISOR, moleculeDiameter } from "./moleculeExtent";
+import { yieldToBrowser } from "./timeSlicing";
 import { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
 import { MoleculeToSeqViewerSequences } from "@/components/sequence-viewer/utils";
 import { MoorhenInstance } from "@/InstanceManager/index";
@@ -2300,7 +2301,15 @@ export class MoorhenMolecule {
             omitExcludedCids ? this.excludedSelections.join("||") : ""
         );
         const atomInfoVecSize = atomInfoVec.size();
+        // Each atom comes over as an object, a few microseconds each: on a large structure, about a
+        // tenth of a second - so the browser gets a turn every 10 ms (timeSlicing.ts). The vector
+        // is a copy, independent of the structure, so it stays valid across the turns.
+        let slice = performance.now();
         for (let i = 0; i < atomInfoVecSize; i++) {
+            if ((i & 1023) === 1023 && performance.now() - slice > 10) {
+                await yieldToBrowser();
+                slice = performance.now();
+            }
             const atomInfo = atomInfoVec.get(i);
             result.push(atomInfo);
         }
