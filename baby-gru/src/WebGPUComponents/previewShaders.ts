@@ -740,11 +740,20 @@ fn fs_field(in: FieldOut, @builtin(front_facing) frontFacing: bool) -> @location
     return fieldColour(in, frontFacing);
 }
 
+// Unlike fs_main_peel, the peel test first: nothing in fieldColour takes derivatives (its shadow
+// plane is the field normal's, its lookups are explicit-level), so a fragment that is not in this
+// layer - most of them, in every layer - is thrown away before its normal and colour are worked out,
+// not after.
 @fragment
 fn fs_field_peel(in: FieldOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
-    let colour = fieldColour(in, frontFacing);
     if (!peelKeep(in.position, in.position.z)) { discard; }
-    return colour;
+    return fieldColour(in, frontFacing);
+}
+
+// The depth pre-pass (previewRenderer.ts, Prepass): depth alone, its colour writes masked off.
+@fragment
+fn fs_depth_only() -> @location(0) vec4f {
+    return vec4f(0.0);
 }
 
 // The g-buffer with the same normals the picture is lit with, so ambient occlusion and edges agree.

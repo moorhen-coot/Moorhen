@@ -1843,7 +1843,7 @@ export class MoleculeRepresentation {
         // Shaded from its field: coloured per pixel from the atoms too (smoothSurfaceSetting.pixelColours) -
         // but not for electrostatics, whose colours are M2T's, per vertex.
         if (surface.field && !potential && smoothSurfaceSetting.pixelColours) {
-            attachSurfaceColouring(surface.field, packAtoms(atoms), colours, ownershipBand(probe), smoothSurfaceSetting.colourBlend);
+            void attachSurfaceColouring(surface.field, packAtoms(atoms), colours, ownershipBand(probe), smoothSurfaceSetting.colourBlend);
         }
         const mesh = await runSliced(atomSurfaceMeshSliced(surface, residueOf, residues, colours, smoothSurfaceSetting.colourBlend,
             smoothSurfaceSetting.colourSmoothing));
@@ -1958,7 +1958,7 @@ export class MoleculeRepresentation {
         buffer.setVertexColours(colours);
         // Coloured per pixel: the atoms' new colours and the blend width, a few thousand entries.
         const field = buffer.fieldShading?.[0];
-        if (field?.colouring) setSurfaceColours(field, atomColours, smoothSurfaceSetting.colourBlend);
+        if (field?.colouring) void setSurfaceColours(field, atomColours, smoothSurfaceSetting.colourBlend);
         // The hover's shares follow the blend width; owners and their codes stay what they were.
         const pickInfo = buffer.pick_info;
         if (pickInfo?.vertex_pick_points && pickInfo.owner_codes) {

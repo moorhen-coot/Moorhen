@@ -4,6 +4,9 @@
  * renderer uses (attachSurfaceColouring, surfaceFieldUniform), against every atom visited on the CPU in
  * double: the nearest sphere's gap g0 among the atoms within their band, then every atom within
  * g0 + 2 x width weighted (1 - (g - g0) / (2 x width))², normalised; the fallback with none in band.
+ * RGB compared (the GPU's alpha is the colour's reach, colourReach). Twice: every atom its own random
+ * colour, and a few colours grouped by cluster with some atoms odd ones out - where most points take
+ * the shortcut past the blend, which must give what the blend gives.
  */
 import { BufferUsage, ComputeKernel, createBuffer, readBuffer } from "../../../src/WebGPUComponents/gpu";
 import {
@@ -16,7 +19,7 @@ export interface AtomColourReport {
     /** Points with no atom in band (the fallback colour), on the CPU; and where the GPU disagrees. */
     fallbacks: number;
     fallbackDiffers: number;
-    /** Largest |GPU - CPU| over the channels, per width. */
+    /** Largest |GPU - CPU| over RGB, per colouring and width ("random 0.4", "grouped 1"). */
     maxError: Record<string, number>;
 }
 
@@ -49,15 +52,15 @@ function cpuColour(atoms: Float32Array, colours: Float32Array, p: number[], widt
         const g = gap(a);
         if (g < BAND && g < g0) { g0 = g; nearest = a; }
     }
-    if (nearest < 0) return [-1, -1, -1, -1];
-    if (width <= 0) return Array.from(colours.subarray(4 * nearest, 4 * nearest + 4));
+    if (nearest < 0) return [-1, -1, -1];
+    if (width <= 0) return Array.from(colours.subarray(4 * nearest, 4 * nearest + 3));
     const R = 2 * width;
-    const sum = [0, 0, 0, 0];
+    const sum = [0, 0, 0];
     let total = 0;
     for (let a = 0; a < n; a++) {
         const t = 1 - (gap(a) - g0) / R;
         if (t <= 0) continue;
-        for (let c = 0; c < 4; c++) sum[c] += t * t * colours[4 * a + c];
+        for (let c = 0; c < 3; c++) sum[c] += t * t * colours[4 * a + c];
         total += t * t;
     }
     return sum.map(v => v / total);
@@ -69,11 +72,14 @@ export default defineCase(async (device: GPUDevice): Promise<AtomColourReport> =
     const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     // 600 atoms in a few clusters, radii 1.2 to 2.1, random colours.
     const n = 600;
-    const atoms = new Float32Array(4 * n), colours = new Float32Array(4 * n);
+    const atoms = new Float32Array(4 * n), random_ = new Float32Array(4 * n), grouped = new Float32Array(4 * n);
+    const palette = [[1, 0, 0], [0, 0.5, 1], [0.2, 0.9, 0.3]];
     for (let a = 0; a < n; a++) {
         const cluster = a % 5;
         atoms.set([cluster * 9 + random() * 8, (cluster % 2) * 6 + random() * 8, random() * 8, 1.2 + random() * 0.9], 4 * a);
-        colours.set([random(), random(), random(), 0.5 + 0.5 * random()], 4 * a);
+        random_.set([random(), random(), random(), 0.5 + 0.5 * random()], 4 * a);
+        const odd = random() < 0.05;
+        grouped.set([...palette[odd ? Math.floor(random() * 3) : cluster % 3], 1], 4 * a);
     }
     // Points on and just off the spheres (gap -0.3 to 2.5: some beyond every band), and a few far away.
     const points: number[][] = [];
@@ -95,8 +101,9 @@ export default defineCase(async (device: GPUDevice): Promise<AtomColourReport> =
 
     const maxError: Record<string, number> = {};
     let fallbacks = 0, fallbackDiffers = 0;
-    for (const width of [0, 0.4, 1.0]) {
-        attachSurfaceColouring(field, atoms, colours, BAND, width);
+    for (const [scheme, colours] of [["random", random_], ["grouped", grouped]] as const) for (const width of [0, 0.4, 1.0]) {
+        // Awaited: the shortcut past the blend is written after the colours (writeColours).
+        await attachSurfaceColouring(field, atoms, colours, BAND, width);
         const c = field.colouring!;
         const uniform = createBuffer(device, "grid", 80, BufferUsage.UNIFORM, new Uint8Array(surfaceFieldUniform(field, true)));
         const encoder = device.createCommandEncoder();
@@ -108,13 +115,13 @@ export default defineCase(async (device: GPUDevice): Promise<AtomColourReport> =
         points.forEach((p, i) => {
             const cpu = cpuColour(atoms, colours, p, width);
             if (cpu[0] < 0) {
-                if (width === 0.4) fallbacks++;
-                if (gpu[4 * i] !== -1 && width === 0.4) fallbackDiffers++;
+                if (width === 0.4 && scheme === "random") fallbacks++;
+                if (gpu[4 * i] !== -1 && width === 0.4 && scheme === "random") fallbackDiffers++;
                 return;
             }
-            for (let k = 0; k < 4; k++) worst = Math.max(worst, Math.abs(gpu[4 * i + k] - cpu[k]));
+            for (let k = 0; k < 3; k++) worst = Math.max(worst, Math.abs(gpu[4 * i + k] - cpu[k]));
         });
-        maxError[String(width)] = worst;
+        maxError[`${scheme} ${width}`] = worst;
     }
     [stand, at, out].forEach(b => b.destroy());
     return { points: points.length, fallbacks, fallbackDiffers, maxError };
