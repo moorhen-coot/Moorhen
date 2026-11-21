@@ -104,8 +104,11 @@ fn ambientLight() -> vec4f {
 // worth of that slope on top of the bias, since each texel holds one depth for all its area and a
 // soft map's texels are big.
 fn shadowLookup(p: vec4f, slope: vec2f) -> f32 {
+    return shadowLookupBiased(p, slope, frame.shadowParams.z);
+}
+
+fn shadowLookupBiased(p: vec4f, slope: vec2f, bias: f32) -> f32 {
     let texel = frame.shadowParams.xy;
-    let bias = frame.shadowParams.z;
     let depth = p.z - bias - min(dot(abs(slope), texel), 2.0 * bias);
     let radius = frame.shadowParams.w;
     if (radius <= 0.0) {
@@ -154,11 +157,15 @@ fn shadowAt(p: vec4f) -> f32 {
 // its 3 x 3 part maps directions). Exact, where screen derivatives of a curved surface would vary
 // with how pixels pair in their quads - which differs between a snapshot's tiles and the whole.
 fn shadowAtNormal(p: vec4f, n: vec3f) -> f32 {
+    return shadowAtNormalBiased(p, n, frame.shadowParams.z);
+}
+
+fn shadowAtNormalBiased(p: vec4f, n: vec3f, bias: f32) -> f32 {
     if (frame.effects.z < 0.5) { return 1.0; }
     let a = normalize(cross(n, select(vec3f(1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0), abs(n.x) > 0.9)));
     let b = cross(n, a);
     let m = mat3x3f(frame.shadowMatrix[0].xyz, frame.shadowMatrix[1].xyz, frame.shadowMatrix[2].xyz);
-    return shadowLookup(p, planeSlope(m * a, m * b));
+    return shadowLookupBiased(p, planeSlope(m * a, m * b), bias);
 }
 
 // WebGL's use of it: the light dimmed by up to a half and the highlight taken away, both
@@ -695,10 +702,36 @@ fn fieldBase(in: FieldOut) -> vec4f {
     return vec4f(atomColourAt(in.local, in.colour).rgb, in.colour.a);
 }
 
+// The shadow with the field's normal rather than the triangle's, both where it is looked up and the
+// plane its bias follows: the lookup a texel and a half out along the normal from this fragment, as
+// finish() does from the vertices; the receiver plane the smooth surface's tangent plane, as
+// shadowAtNormal gives a sphere its own. From the triangle (shadowAt), each facet's slope to the
+// light set its own bias, and at a grazing angle neighbouring facets' slopes differ enough that
+// whole triangles fell in and out of shadow.
+//
+// And a bias in Å, not the scene's: that is a share of the light's whole depth range (shadowMap.ts),
+// about an Å on a large structure and up to three with the slope's share, sized to hide facets
+// shadowing themselves - so a shadow began that far from what cast it, a lit line along its edge.
+// Followed along the smooth tangent plane, the surface needs only what its triangles stray from the
+// smooth surface by, a few hundredths of an Å. The scene's bias stays the most.
+const FIELD_SHADOW_BIAS = 0.1;
+
+fn fieldShadow(in: FieldOut, n: vec3f) -> f32 {
+    if (frame.effects.z < 0.5) { return 1.0; }
+    let world = draw.model * vec4f(in.local, 1.0);
+    let perUnit = length(vec3f(frame.shadowMatrix[0].x, frame.shadowMatrix[1].x, frame.shadowMatrix[2].x));
+    let along = select(vec3f(0.0), n * (1.5 * frame.shadowParams.x / perUnit), perUnit > 0.0);
+    // Map depth per Å: the shadow matrix's depth row (an orthographic light).
+    let depthPerUnit = length(vec3f(frame.shadowMatrix[0].z, frame.shadowMatrix[1].z, frame.shadowMatrix[2].z));
+    let bias = min(frame.shadowParams.z, FIELD_SHADOW_BIAS * depthPerUnit);
+    return shadowAtNormalBiased(frame.shadowMatrix * (world + vec4f(along, 0.0)), n, bias);
+}
+
 fn fieldColour(in: FieldOut, frontFacing: bool) -> vec4f {
     let base = fieldBase(in);
-    let shadow = shadowAt(in.shadowPos);
-    let colour = select(base * backShade(shadow), lit(base, fieldNormal(in), occlusionAt(in.position), shadow), frontFacing);
+    let n = normalize(fieldNormal(in));
+    let shadow = fieldShadow(in, n);
+    let colour = select(base * backShade(shadow), lit(base, n, occlusionAt(in.position), shadow), frontFacing);
     return withHighlight(fogged(colour * edgeAt(in.position), base.a, in.eyeDistance), in.highlight);
 }
 

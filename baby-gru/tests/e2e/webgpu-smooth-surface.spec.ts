@@ -260,3 +260,84 @@ test("the surface benchmark times every way of shading, then puts everything bac
     expect(tris("per vertex")).toBe(4 * tris("pixel normals"));
     expect(result.after).toEqual(result.before);
 });
+
+test("shadows on a surface shaded per pixel follow the field: no triangles in and out of shadow at a grazing light", async ({ page }) => {
+    test.setTimeout(300_000);
+    await page.setViewportSize({ width: 800, height: 600 });
+    const moorhen = await startAndGetInstance(page);
+    await moorhen.loadFiles([{ url: "https://files.rcsb.org/download/1hck.pdb", filename: "1hck.pdb" }]);
+    const result = await page.evaluate(async targetId => {
+        const host = document.getElementById(targetId) as any;
+        const instance = await host.getMoorhenInstance();
+        const { smoothSurfaceSetting } = await import("/src/utils/smoothSurface.ts");
+        smoothSurfaceSetting.gpu = true;
+        smoothSurfaceSetting.gpuOnSoftware = true;
+        smoothSurfaceSetting.fieldShading = true;
+        const store = await import("/src/store/index.ts");
+        const molecule = instance.getMoleculeList()[0];
+        molecule.representations.forEach((r: any) => r.hide?.());
+        await molecule.show("MolecularSurface");
+        await molecule.centreOn("/*/*/*/*", false, true);
+        instance.store.dispatch(store.setZoom(instance.store.getState().sceneSettings.zoom * 0.7));
+        instance.store.dispatch(store.setDoClip(false));
+        const size = { width: 900, height: 900 };
+        const shot = async () => { await new Promise(r => setTimeout(r, 500)); return await instance.webGPU.snapshot(size); };
+        const lightAt = async (light: [number, number, number, number]) => {
+            instance.store.dispatch(store.setLightPosition(light));
+            instance.store.dispatch(store.setDoShadow(false));
+            const off = await shot();
+            instance.store.dispatch(store.setDoShadow(true));
+            return { off, on: await shot() };
+        };
+        // From the side, then obliquely - where the old shadows fell in triangles.
+        await lightAt([100, 0, 15, 1]);
+        const { off, on } = await lightAt([100, 40, 40, 1]);
+        // How much the shadow darkens each pixel of the surface, and how often it jumps sharply
+        // between neighbours: shadow edges, and - before - every triangle at a grazing angle.
+        const bg = [off.data[0], off.data[1], off.data[2]];
+        const darkening = new Float32Array(off.width * off.height), covered = new Uint8Array(off.width * off.height);
+        for (let k = 0; k < darkening.length; k++) {
+            const i = 4 * k;
+            darkening[k] = [0, 1, 2].reduce((s, c) => s + off.data[i + c] - on.data[i + c], 0) / 3;
+            covered[k] = [0, 1, 2].some(c => Math.abs(off.data[i + c] - bg[c]) > 20) ? 1 : 0;
+        }
+        let surface = 0, shadowed = 0;
+        const state = new Int8Array(darkening.length).fill(-1);
+        for (let k = 0; k < darkening.length; k++) {
+            if (!covered[k]) continue;
+            surface++;
+            state[k] = darkening[k] > 8 ? 1 : 0;
+            if (state[k]) shadowed++;
+        }
+        // Small islands, of shadow in light or light in shadow: what a triangle falling the wrong
+        // way makes. A real shadow is one large region, its edge a line.
+        let islands = 0;
+        const seen = new Uint8Array(state.length);
+        const stack: number[] = [];
+        for (let k = 0; k < state.length; k++) {
+            if (state[k] < 0 || seen[k]) continue;
+            let area = 0, touchesEdge = false;
+            stack.push(k);
+            seen[k] = 1;
+            while (stack.length) {
+                const j = stack.pop()!;
+                area++;
+                const x = j % off.width, y = (j / off.width) | 0;
+                for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+                    if (nx < 0 || ny < 0 || nx >= off.width || ny >= off.height) { touchesEdge = true; continue; }
+                    const n = ny * off.width + nx;
+                    if (state[n] < 0) { touchesEdge = true; continue; }
+                    if (!seen[n] && state[n] === state[j]) { seen[n] = 1; stack.push(n); }
+                }
+            }
+            if (!touchesEdge && area >= 4 && area <= 400) islands++;
+        }
+        return { islands, shadowedFraction: shadowed / surface };
+    }, moorhen.elementId);
+    console.log(`Grazing shadows: ${JSON.stringify(result)}`);
+    // Without the facets' speckle: 36 small islands from the triangles' planes, 15 from the field's.
+    expect(result.islands).toBeLessThan(25);
+    // And reaching what casts them: with the scene's bias (an Å or more) a lit line ran along each
+    // shadow's edge, 31% of the surface in shadow; 42% with the field's small one.
+    expect(result.shadowedFraction).toBeGreaterThan(0.37);
+});
