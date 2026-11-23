@@ -6,7 +6,7 @@ import { MoleculeRepresentation, RepresentationStyles } from "@/utils/Representa
 import { addCustomRepresentation } from "../../../../store/moleculesSlice";
 import { moorhen } from "../../../../types/moorhen";
 import { ColourRule } from "../../../../utils/MoorhenColourRule";
-import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../../../../utils/enums";
+import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, M2T_SURFACE_REPRESENTATIONS } from "../../../../utils/enums";
 import { MoorhenButton, MoorhenSlider, MoorhenToggle } from "../../../inputs";
 import { MoorhenStack } from "../../../interface-base";
 import {
@@ -33,8 +33,14 @@ export const AddCustomRepresentationCard = memo(
         onApply?: () => void;
     }) {
         const store = useStore<RootState>();
-        const existingParams = props.representation ? extractRepresentationParams(props.representation) : undefined;
-        const ncsColourRuleRef = useRef<null | ColourRule>(existingParams?.ncsColourRule ?? null);
+        // Only used for initial values, so snapshot once rather than on every render
+        const [existingParams] = useState(() => (props.representation ? extractRepresentationParams(props.representation) : undefined));
+        const [initialNcsColourRule] = useState(() =>
+            existingParams?.ncsColourRule
+                ? ColourRule.initFromDataObject(existingParams.ncsColourRule, props.molecule.commandCentre, props.molecule)
+                : null
+        );
+        const ncsColourRuleRef = useRef<null | ColourRule>(initialNcsColourRule);
 
         const [ruleType, setRuleType] = useState<ResidueSelectionRuleType>(
             existingParams?.ruleType ?? "molecule"
@@ -297,7 +303,8 @@ export const AddCustomRepresentationCard = memo(
                         ruleType={ruleType}
                     />
                 </MoorhenStack>
-                {["CBs", "CAs", "ligands", "CRs", "MolecularSurface", "residue_environment"].includes(representationStyle) && (
+                {(["CBs", "CAs", "ligands", "CRs", "residue_environment"].includes(representationStyle) ||
+                    M2T_SURFACE_REPRESENTATIONS.includes(representationStyle)) && (
                     <MoorhenToggle
                         type="switch"
                         label="Apply general representation settings"
@@ -305,8 +312,8 @@ export const AddCustomRepresentationCard = memo(
                         onChange={handleDefaultRepresentationSettingsChange}
                     />
                 )}
-                {!useDefaultRepresentationSettings && representationStyle === "MolecularSurface" && (
-                    <MolSurfSettingsPanel representation={representationRef.current} />
+                {!useDefaultRepresentationSettings && M2T_SURFACE_REPRESENTATIONS.includes(representationStyle) && (
+                    <MolSurfSettingsPanel representation={representationRef.current} surfaceStyle={representationStyle} />
                 )}
                 {!useDefaultRepresentationSettings && representationStyle === "CRs" && (
                     <RibbonSettingsPanel representation={representationRef.current} />

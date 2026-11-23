@@ -3,11 +3,8 @@
 
 .moorhen__search-bar-closed,
 .moorhen__search-bar-open {
-    position: absolute;
     direction: ltr;
     pointer-events: auto;
-    top: 1rem;
-    left: 8rem;
     z-index: var(--z-window-base);
     border-radius: 2rem;
     background: var(--moorhen-background);
@@ -75,4 +72,9 @@
     max-height: 42rem;
     box-shadow: 5px 5px 5px 2px var(--moorhen-inactive-shadow);
     animation: popInFade 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.moorhen__search-bar-shortcut-item{
+    margin: 0.2rem;
+    
 }

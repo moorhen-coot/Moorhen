@@ -7,7 +7,7 @@ var triangle_shadow_fragment_shader_source = `#version 300 es\n
     in mediump mat4 mvInvMatrix;
     in mediump mat4 mvMatrix;
 
-    in lowp vec4 ShadowCoord;
+    in highp vec4 ShadowCoord;
 
     in float FogFragCoord;
     uniform vec4 fogColour;

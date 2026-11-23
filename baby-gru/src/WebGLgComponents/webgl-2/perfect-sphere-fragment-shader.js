@@ -1,13 +1,24 @@
+import {anaglyph_colour_snippet} from './anaglyph-colour-snippet.js';
+
 var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
     precision mediump float;
 
+    // GLSL ES 3.00 gives a fragment shader no default precision for sampler2DShadow - unlike
+    // sampler2D - so leaving it out is a compile error, not a warning: "No precision specified".
+    // highp because the comparison is against a 24-bit depth texture over a range now fitted to
+    // the scene, where mediump's ~16 bits would quantise the very differences being tested.
+    precision highp sampler2DShadow;
+
     vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
 
     in lowp vec4 vColor;
+
+    // A fade applied to the whole buffer; see DisplayBuffer.alphaMultiplier and objectFade.
+    uniform float alphaMultiplier;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
-    in lowp vec2 vTexture;
+    in highp vec2 vTexture;
     in mediump mat4 mvMatrix;
 
     uniform float fog_end;
@@ -24,6 +35,8 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     uniform int nClipPlanes;
     uniform vec4 fogColour;
 
+${anaglyph_colour_snippet}
+
     uniform vec4 light_positions;
     uniform vec4 light_colours_ambient;
     uniform vec4 light_colours_specular;
@@ -33,8 +46,8 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     in mediump mat4 projMatrix;
     in float size_v;
 
-    in lowp vec4 ShadowCoord;
-    uniform sampler2D ShadowMap;
+    in highp vec4 ShadowCoord;
+    uniform sampler2DShadow ShadowMap;
     uniform sampler2D SSAOMap;
     uniform sampler2D edgeDetectMap;
     uniform float xPixelOffset;
@@ -46,29 +59,78 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     uniform bool doEdgeDetect;
     uniform bool doPerspective;
     uniform int shadowQuality;
+    /** Radius of the soft shadow filter, in texels of the part of the map in use. 0 is a hard edge. */
+    uniform float shadowSoftness;
     uniform float ssaoMultiviewWidthHeightRatio;
 
     uniform bool clipCap;
 
     uniform int peelNumber;
-    uniform sampler2D depthPeelSamplers;
+    uniform highp sampler2D depthPeelSamplers;
 
+    uniform bool haveOpaqueDepth;
+    uniform highp sampler2D opaqueDepthSampler;
     uniform float zoom;
 
     out vec4 fragColor;
 
+    // How this surface's depth in the shadow map changes per unit of shadow-map uv, worked out once
+    // per fragment at the top of main. See lookup.
+    highp vec2 shadowDepthSlope;
+
+    // The receiver plane: solve the screen-space derivatives of ShadowCoord for dz/du and dz/dv.
+    // Done before any discard, because derivatives stop being meaningful once neighbouring fragments in
+    // the 2x2 quad have taken a different path. Zero where the surface is edge-on to the light
+    // and the system has no useful solution.
+    highp vec2 receiverPlaneDepthSlope() {
+      highp vec3 dx = dFdx(ShadowCoord.xyz);
+      highp vec3 dy = dFdy(ShadowCoord.xyz);
+      highp mat2 uvPerPixel = mat2(dx.x, dy.x, dx.y, dy.y);
+      if(abs(determinant(uvPerPixel)) < 1e-14) return vec2(0.0);
+      return inverse(uvPerPixel) * vec2(dx.z, dy.z);
+    }
+
     float lookup(vec2 offSet){
-      vec2 resolution;
-      resolution.x = xSSAOScaling/zoom/10.;
-      resolution.y = ySSAOScaling/zoom/10.;
-      float shad = 1.0;
-      float bias = 0.005;
-      if(texture(ShadowMap, ShadowCoord.xy+offSet*resolution ).x < ShadowCoord.z-bias)
-          shad = texture(ShadowMap, ShadowCoord.xy+offSet*resolution ).x - (ShadowCoord.z-bias);
-      return shad;
+      // Offsets in shadow-map texels. xPixelOffset and yPixelOffset are 1/width and 1/height of
+      // the shadow texture, already set from rttFramebufferDepth - this used to offset by
+      // xSSAOScaling/zoom instead, a scale borrowed from SSAO with no relation to the shadow
+      // map's resolution, so the kernel's footprint changed as you zoomed and bore no fixed
+      // relationship to a texel.
+      // highp: at mediump a shadow-map coordinate has about 11 bits, too few to address the
+      // texels of a 4096 map - the comparison lands on the wrong texel and the result speckles.
+      highp vec2 duv = offSet * vec2(xPixelOffset, yPixelOffset);
+      highp vec2 uv = ShadowCoord.xy + duv;
+      // One fetch does the comparison and blends the four texels around it: the unit returns the
+      // fraction of that 2x2 the fragment is in front of. 1.0 is fully lit, as before.
+      //
+      // The bias is in normalised depth, so what it means in angstrom depends on the light's
+      // near-to-far range. That range used to be a fixed 0.1 to 1000 whatever the scene, making
+      // this about 5 A - wider than an alpha helix, which is why shadows sat away from their
+      // casters. Now that the range is fitted to the scene it comes to well under one.
+      //
+      // Each tap compares against the depth the surface itself has at that tap, not at the
+      // fragment. A soft kernel reaches several texels out, and on a surface sloped to the light
+      // the flat bias above is soon smaller than the change in the surface's own depth over that
+      // distance, so the surface shadows itself in speckles - worse the softer the shadow.
+      // Following the plane removes that for any radius. Capped at twice the bias so that
+      // near edge-on surfaces, where the slope runs away, cannot push the comparison far enough
+      // behind a real occluder to let light through it.
+      highp float alongSurface = clamp(dot(shadowDepthSlope, duv), -0.01, 0.01);
+      //
+      // And a texel's worth of that slope on top of the flat bias. Each texel holds one depth
+      // for the whole of its area, so a sloped surface sits up to a texel's slope in front of or
+      // behind it. Negligible at full resolution, but a soft shadow renders a coarser map and the
+      // speckles would come straight back.
+      highp float withinTexel = min(dot(abs(shadowDepthSlope), vec2(xPixelOffset, yPixelOffset)), 0.01);
+      return texture(ShadowMap, vec3(uv, ShadowCoord.z + alongSurface - 0.005 - withinTexel));
     }
 
     void main(void) {
+      // Only with shadows: two derivatives and a 2x2 inverse that nothing else uses, in the
+      // fragment shader every surface goes through. doShadows is a uniform, so the branch is the
+      // same across the 2x2 quad and the derivatives inside it stay valid.
+      shadowDepthSlope = vec2(0.0);
+      if(doShadows) shadowDepthSlope = receiverPlaneDepthSlope();
 
       float silly_scale = 0.7071067811865475;
       float x = 2.0*(vTexture.x-.5);
@@ -87,10 +149,22 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       pos.z += silly_scale*z*size_v;
       pos = projMatrix * pos;
       gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
+      // gl_FragDepth, not gl_FragCoord.z. This is an impostor: gl_FragCoord.z is the depth of the
+      // flat quad it is drawn on, at the sphere's centre, while the sphere's real surface is the
+      // gl_FragDepth just computed. Testing the quad put every transparent sphere's front half
+      // behind any opaque sphere it enclosed - a hover ball around an atom was cut away wherever
+      // the atom was, leaving a ring. The peel test below already used gl_FragDepth.
+      if(haveOpaqueDepth) {
+          vec2 opaque_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
+          if(gl_FragDepth > texture(opaqueDepthSampler,opaque_coord).r) {
+              discard;
+          }
+      }
+
 
       if(peelNumber>0) {
-          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
-          float max_depth;
+          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling);
+          highp float max_depth;
           max_depth = texture(depthPeelSamplers,tex_coord).r;
           if(gl_FragDepth <= max_depth || abs(gl_FragDepth - max_depth)<1e-6 ) {
               discard;
@@ -117,15 +191,33 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
       float shad = 1.0;
       if(doShadows){
-          if(shadowQuality==0){
+          if(shadowSoftness <= 0.0){
               shad = lookup(vec2(0.0,0.0));
           } else {
+              // A grid of taps no more than a texel apart, each of which already blends the 2x2
+              // texels around it, so the sum is a continuous ramp - a gradient, not grain. A
+              // spacing of exactly the texel pitch or less keeps the taps from beating against
+              // the texel grid, which at 1.5 texels left a ripple three texels long. Tent-weighted
+              // so the penumbra falls off softly at both ends rather than as a straight ramp.
+              //
+              // shadowSoftness arrives in texels and is held to a few of them by sizing the map
+              // to it (softShadowRegion), so the grid stays small at any zoom: at most 9x9 on
+              // screen and 16x16 for screenshots.
+              int n = clamp(int(ceil(2.0*shadowSoftness)) + 1, 2, 16);
+              float spacing = 2.0*shadowSoftness/float(n-1);
+              float reach = shadowSoftness + spacing;
+              float total = 0.0;
               shad = 0.0;
-              float x,y;
-              for (y = -3.5 ; y <=3.5 ; y+=1.0)
-                  for (x = -3.5 ; x <=3.5 ; x+=1.0)
-                      shad += lookup(vec2(x,y));
-              shad /= 64.0 ;
+              for (int j = 0; j < n; j++) {
+                  for (int i = 0; i < n; i++) {
+                      vec2 p = vec2(float(i), float(j)) * spacing - shadowSoftness;
+                      vec2 tent = 1.0 - abs(p) / reach;
+                      float w = tent.x * tent.y;
+                      shad += w * lookup(p);
+                      total += w;
+                  }
+              }
+              shad /= total;
           }
       }
 
@@ -174,13 +266,11 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor*Idiff);
       color *= occ;
 
-      if(shad<0.5) {
-          shad += .5;
-          shad = min(shad,1.0);
-          color *= shad;
-      } else {
-          color += Ispec;
-      }
+      // In shadow, the light dimmed by up to a half and the highlight taken away, both continuous
+      // in the shadow, as triangle-fragment-shader.js. (A sphere needs no terminator treatment:
+      // its normal and its depth in the map are both exact.)
+      color *= min(shad + 0.5, 1.0);
+      color += Ispec * smoothstep(0.3, 0.7, shad);
       if(doEdgeDetect){
 
           vec2 resolution;
@@ -198,19 +288,29 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
           color *= edge;
       }
       color.a = vColor.a;
-      fragColor = mix(color, fogColour, fogFactor );
+      fragColor = mix(anaglyphColour(color), fogColour, fogFactor );
       //fragColor = vec4(occ,occ,occ, vColor.a);
 
       //if(doSSAO) fragColor = texture(SSAOMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) );
 
       if(clipCap){
         if(clipd<0.0){
-            fragColor = mix(vColor, fogColour, fogFactor );
+            fragColor = mix(anaglyphColour(vColor), fogColour, fogFactor );
         }
-        if(clipd_back<0.0||((1.0-z)*silly_scale*size_v>clipd_back&&clipd<0.0)){
+        // Discard only where the whole chord through the sphere is in front of the plane. The
+        // cap is then the plane's whole cut through the sphere, meeting the lit surface exactly
+        // where the front surface crosses the plane (clipd = 0). This used to discard also where
+        // (1-z)*r > clipd_back while capped, which cut a ring out of the cap's edge whenever the
+        // centre was less than r/3 behind the plane. (A sphere whose centre is in front of the
+        // plane is not drawn at all: its square sits at the centre's depth, nearer than the
+        // projection's near plane, which is this plane.)
+        if(clipd_back<0.0){
             discard;
         }
       }
+
+      // Last, and after the clip cap's own assignment, so a capped sphere fades with the rest.
+      fragColor.a *= alphaMultiplier;
     }
 `;
 

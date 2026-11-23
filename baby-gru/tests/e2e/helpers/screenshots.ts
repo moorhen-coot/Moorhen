@@ -12,22 +12,47 @@ type ScreenshotComparisonPolicy = {
     maxDiffPixelRatio?: number;
 };
 
+/** Perceptual distance (YIQ, 0 to 1) below which two pixels count as the same colour. */
+const DEFAULT_THRESHOLD = 0.2;
+
+/** How much of the image may differ by more than that before the comparison fails. */
+const DEFAULT_MAX_DIFF_PIXEL_RATIO = 0.01;
+
+/**
+ * How closely a screenshot has to match its baseline.
+ *
+ * This used to be exact - threshold 0, maxDiffPixels 0 - with a relaxed policy available behind an
+ * environment variable "for headed runs", on the reasoning that headless would be deterministic.
+ * It is not. Every one of these screenshots contains a WebGL canvas, and the GPU does not promise
+ * the same pixel twice: silhouette antialiasing moves by a level or two between runs of the same
+ * build on the same machine.
+ *
+ * Measured on two such runs: a full-window capture differed in 892 of 921,600 pixels with a maximum
+ * delta of 22/255, and only two pixels above 16. A 300x300 canvas crop differed in 2,346 of 90,000,
+ * of which 16 exceeded 64. The same test passed on three workers and failed on the fourth. That is
+ * dithering, not a regression, and a suite that fails on it teaches people to ignore it - which is
+ * how four genuinely stale baselines went unremarked for six weeks.
+ *
+ * The thresholds below discard that wobble and leave both comfortably inside the budget. The cost
+ * is real and worth stating: a change touching under 1% of a small crop will no longer fail. Those
+ * changes were already below the noise floor and could not be caught by this means anyway. What
+ * screenshots can still catch is what they are good at - geometry moving, a pass not running, a
+ * shader painting surfaces instead of edges - all of which run to tens of percent.
+ *
+ * The environment variables remain, so a run can be tightened or loosened without an edit.
+ */
 export function getScreenshotComparisonPolicy(): ScreenshotComparisonPolicy {
-    // Headed runs can have tiny compositor/AA variance; keep CI/headless fully strict.
-    if (process.env.MOORHEN_E2E_HEADED_SCREENSHOT_TOLERANCE === "1") {
-        const ratioFromEnv = Number(process.env.MOORHEN_E2E_HEADED_MAX_DIFF_PIXEL_RATIO ?? "0.01");
-        const thresholdFromEnv = Number(process.env.MOORHEN_E2E_HEADED_THRESHOLD ?? "0.2");
-        return {
-            label: "headed-relaxed",
-            threshold: Number.isFinite(thresholdFromEnv) ? thresholdFromEnv : 0.2,
-            maxDiffPixelRatio: Number.isFinite(ratioFromEnv) ? ratioFromEnv : 0.01,
-        };
+    const ratioFromEnv = Number(process.env.MOORHEN_E2E_HEADED_MAX_DIFF_PIXEL_RATIO ?? DEFAULT_MAX_DIFF_PIXEL_RATIO);
+    const thresholdFromEnv = Number(process.env.MOORHEN_E2E_HEADED_THRESHOLD ?? DEFAULT_THRESHOLD);
+
+    if (process.env.MOORHEN_E2E_STRICT_SCREENSHOTS === "1") {
+        return { label: "strict", threshold: 0, maxDiffPixels: 0 };
     }
 
     return {
-        label: "strict",
-        threshold: 0,
-        maxDiffPixels: 0,
+        label: "gpu-tolerant",
+        threshold: Number.isFinite(thresholdFromEnv) ? thresholdFromEnv : DEFAULT_THRESHOLD,
+        maxDiffPixelRatio: Number.isFinite(ratioFromEnv) ? ratioFromEnv : DEFAULT_MAX_DIFF_PIXEL_RATIO,
     };
 }
 

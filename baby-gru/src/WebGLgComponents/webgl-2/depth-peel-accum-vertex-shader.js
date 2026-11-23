@@ -4,7 +4,7 @@ var depth_peel_accum_vertex_shader_source = `#version 300 es\n
 
     uniform mat4 uPMatrix;
 
-    out lowp vec2 vTexture;
+    out highp vec2 vTexture;
 
     void main(void) {
 

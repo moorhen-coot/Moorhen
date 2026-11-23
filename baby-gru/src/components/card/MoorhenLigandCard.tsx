@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
 import { moorhen } from "../../types/moorhen";
 import { LigandInfo } from "../../utils/MoorhenMolecule";
+import { doDownload } from "../../utils/utils";
 import { MoorhenButton, MoorhenPopoverButton, MoorhenToggle } from "../inputs";
 import {  MoorhenStack } from "../interface-base";
 import { MoorhenCopyToClipBoard } from "../misc/MoorhenCopyToClipBoard";
@@ -189,20 +190,7 @@ export const MoorhenLigandCard = (props: {
                     </MoorhenButton>
                     {ligand.svg && (
                         <MoorhenButton
-                            onClick={() => {
-                                let link: any = document.getElementById("download_ligand_svg_link");
-                                if (!link) {
-                                    link = document.createElement("a");
-                                    link.id = "download_ligand_svg_link";
-                                    document.body.appendChild(link);
-                                }
-                                const file = new Blob([ligand.svg], {
-                                    type: "image/svg+xml",
-                                });
-                                link.href = URL.createObjectURL(file);
-                                link.download = ligand.resName + "_ligand.svg";
-                                link.click();
-                            }}
+                            onClick={() => doDownload([ligand.svg], ligand.resName + "_ligand.svg")}
                             icon="MatSymFileDownload"
                         >
                             Download image (svg)
@@ -254,20 +242,7 @@ export const MoorhenLigandCard = (props: {
                     >
                         <div className="moorhen__flev-container">{parse(ligand.flev_svg)}</div>
                         <MoorhenButton
-                            onClick={() => {
-                                let link: any = document.getElementById("download_flev_svg_link");
-                                if (!link) {
-                                    link = document.createElement("a");
-                                    link.id = "download_flev_svg_link";
-                                    document.body.appendChild(link);
-                                }
-                                const file = new Blob([ligand.flev_svg], {
-                                    type: "image/svg+xml",
-                                });
-                                link.href = URL.createObjectURL(file);
-                                link.download = ligand.resName + "_flev.svg";
-                                link.click();
-                            }}
+                            onClick={() => doDownload([ligand.flev_svg], ligand.resName + "_flev.svg")}
                             icon="MatSymFileDownload"
                         >
                             Download image (svg)

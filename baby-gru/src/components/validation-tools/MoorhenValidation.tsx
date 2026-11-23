@@ -214,7 +214,13 @@ export const MoorhenValidation = (props: { chartId: string }) => {
     };
 
     const getChart = useCallback(
-        (selectedModel: number, selectedMap: number, selectedChain: string, plotData: libcootApi.ValidationInformationJS[][]) => {
+        (
+            selectedModel: number,
+            selectedMap: number,
+            selectedChain: string,
+            plotData: libcootApi.ValidationInformationJS[][],
+            containerBody: HTMLDivElement | null
+        ) => {
             const handleClick = (evt: ChartEvent) => {
                 if (chartRef.current === null) {
                     return;
@@ -282,8 +288,7 @@ export const MoorhenValidation = (props: { chartId: string }) => {
             const tooltipFontSize = 12;
             const axisLabelsFontSize = convertViewtoPx(70, height) / 60;
 
-            const containerBody = document.getElementById(`${props.chartId}-container-body`);
-            containerBody.style.width = labels.length * barWidth + "px";
+            if (containerBody) containerBody.style.width = labels.length * barWidth + "px";
 
             const scales = {
                 x: {

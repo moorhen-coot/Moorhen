@@ -1,5 +1,6 @@
 #include "moorhen-wrappers-helpers.h"
 
+coot::simple_mesh_t DrawCremerPopleSphere(const std::string  &file_content, bool add_radial_conformations);
 gemmi::Structure cloneGemmiStructureWithTrimmedAtomNames(const gemmi::Structure &st){
 
     gemmi::Structure newStructure = st;
@@ -19,7 +20,25 @@ gemmi::Structure cloneGemmiStructureWithTrimmedAtomNames(const gemmi::Structure 
 
 
 EMSCRIPTEN_BINDINGS(moorhen_types) {
-        // PRIVATEER
+
+    value_object<PickableMesh>("PickableMesh")
+      .field("mesh", &PickableMesh::mesh)
+      .field("point_triangles", &PickableMesh::point_triangles)
+      .field("pick_points", &PickableMesh::pick_points)
+      .field("influence_index_offsets", &PickableMesh::influence_index_offsets)
+      .field("influence_point_indexes", &PickableMesh::influence_point_indexes)
+      .field("influence_weights", &PickableMesh::influence_weights)
+    ;
+
+    value_object<std::pair<unsigned,float>>("pair_position_value")
+    .field("point_index", &std::pair<unsigned,float>::first)
+    .field("weight", &std::pair<unsigned,float>::second)
+    ;
+    register_vector<std::vector<unsigned>>("vector_uint");
+    register_vector<std::vector<std::vector<unsigned>>>("vector_vector_uint");
+    register_vector<std::array<float,3>>("vector_array_float_3");
+
+    // PRIVATEER
     value_object<TorsionEntry>("TorsionEntry")
       .field("sugar_1", &TorsionEntry::sugar_1)
       .field("sugar_2", &TorsionEntry::sugar_2)
@@ -49,8 +68,18 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
       .field("torsions", &TableEntry::torsions)
     ;
 
+    value_object<CremerPopleParameters>("CremerPopleParameters") 
+    .field("q", &CremerPopleParameters::q)
+    .field("phi", &CremerPopleParameters::phi)
+    .field("theta", &CremerPopleParameters::theta)
+    .field("chain_id", &CremerPopleParameters::chain_id)
+    .field("residue_id", &CremerPopleParameters::residue_id);
+
     function("validate", &validate);
+    function("calculate_cremer_pople_parameters", &calculate_cremer_pople_parameters);
+    function("DrawCremerPopleSphere", &DrawCremerPopleSphere);
     register_vector<TableEntry>("Table");
+    register_vector<CremerPopleParameters>("CremerPopleParameterList");
     // END PRIVATEER
 
     //Sean Wang's XPID
@@ -61,21 +90,25 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
 
     function("unpackCootDataFile",&unpackCootDataFile);
     function("testFloat32Array", &testFloat32Array);
-    function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);
-    function("getReversedNormalsFromSimpleMesh2", &getReversedNormalsFromSimpleMesh2);
-    function("getReversedNormalsFromSimpleMesh3", &getReversedNormalsFromSimpleMesh3);
-    function("getNormalsFromSimpleMesh2", &getNormalsFromSimpleMesh2);
-    function("getColoursFromSimpleMesh2", &getColoursFromSimpleMesh2);
+    // These take the bound vector rather than the whole mesh: a simple_mesh_t is a
+    // value_object and crosses by copy, a registered vector is a class and crosses by
+    // reference. See the comment above them in moorhen-wrappers-helpers.h.
+    function("getPositionsFromVertices", &getPositionsFromVertices);
+    function("getNormalsFromVertices", &getNormalsFromVertices);
+    function("getReversedNormalsFromVertices", &getReversedNormalsFromVertices);
+    function("getColoursFromVertices", &getColoursFromVertices);
+    function("getTriangleIndicesFromTriangles", &getTriangleIndicesFromTriangles);
+    function("getPermutedTriangleIndicesFromTriangles", &getPermutedTriangleIndicesFromTriangles);
+    function("getLineIndicesFromTriangles", &getLineIndicesFromTriangles);
     function("getPositionsFromSimpleMesh", &getPositionsFromSimpleMesh);
     function("getReversedNormalsFromSimpleMesh", &getReversedNormalsFromSimpleMesh);
     function("getNormalsFromSimpleMesh", &getNormalsFromSimpleMesh);
     function("getColoursFromSimpleMesh", &getColoursFromSimpleMesh);
+    function("getFloat32ArrayFromVector", &getFloat32ArrayFromVector);
+    function("getUint32ArrayFromVector", &getUint32ArrayFromVector);
     function("getLineIndicesFromSimpleMesh", &getLineIndicesFromSimpleMesh);
     function("getPermutedTriangleIndicesFromSimpleMesh", &getPermutedTriangleIndicesFromSimpleMesh);
     function("getTriangleIndicesFromSimpleMesh", &getTriangleIndicesFromSimpleMesh);
-    function("getLineIndicesFromSimpleMesh2", &getLineIndicesFromSimpleMesh2);
-    function("getPermutedTriangleIndicesFromSimpleMesh2", &getPermutedTriangleIndicesFromSimpleMesh2);
-    function("getTriangleIndicesFromSimpleMesh2", &getTriangleIndicesFromSimpleMesh2);
     function("getTextureArray", &getTextureArray);
     class_<clipper::Coord_orth>("Coord_orth")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
@@ -518,6 +551,14 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     .field("triangles",&coot::simple_mesh_t::triangles)
     .field("status",&coot::simple_mesh_t::status)
     .field("name",&coot::simple_mesh_t::name)
+    // Which residue each vertex belongs to, and the residues themselves as CIDs. Empty for
+    // every mesh that does not know - which is all of them but the molecular surface so far.
+    // A vertex in the groove between two atoms belongs to both, hence the second owner and
+    // the weight that splits it.
+    .field("vertex_owner",&coot::simple_mesh_t::vertex_owner)
+    .field("vertex_owner_other",&coot::simple_mesh_t::vertex_owner_other)
+    .field("vertex_owner_weight",&coot::simple_mesh_t::vertex_owner_weight)
+    .field("owners",&coot::simple_mesh_t::owners)
     ;
 
     class_<coot::util::density_correlation_stats_info_t>("density_correlation_stats_info_t")
@@ -670,6 +711,13 @@ EMSCRIPTEN_BINDINGS(moorhen_types) {
     register_vector<float>("VectorFloat");
     register_vector<double>("VectorDouble");
     register_vector<int>("VectorInt");
+    // No register_vector<unsigned int> here, though simple_mesh_t::vertex_owner needs one:
+    // Lhasa already registers that type, as "MoleculeIdVector" (lhasa/embind.cpp). embind keys
+    // its registry by C++ type rather than by the name given, so a second registration is a
+    // duplicate however it is named, and the module throws at startup - which shows up as a
+    // link failure, because the generator runs the module to emit the TypeScript. The name is
+    // an odd fit for a list of vertex owners, but only C++ ever says it: JavaScript sees a
+    // handle and calls size/get, or hands it to getUint32ArrayFromVector.
     register_vector<char>("VectorChar");
     register_vector<coot::validation_information_t>("VectorValidationInformation");
     register_vector<std::pair<coot::residue_validation_information_t, coot::residue_validation_information_t> >("VectorResidueValidationInformationPair");

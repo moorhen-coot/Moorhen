@@ -131,6 +131,7 @@ export const MoorhenFillMissingAtoms = (props) => {
                 const button = (
                     <MoorhenButton
                         style={{ width: "100%" }}
+                        ariaLabel="Fill all"
                         onClick={() => handleFillAll(selectedMolecule, residueList)}
                         key="fill-all-button"
                     >

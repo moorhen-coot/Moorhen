@@ -82,5 +82,4 @@ export type SceneSettingsSnapshot = {
     backgroundColor: [number, number, number, number];
     drawAxes: boolean;
     doPerspectiveProjection: boolean;
-    doOutline: boolean;
 };

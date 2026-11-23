@@ -8,6 +8,7 @@ const initialState: {
     isTimeCapsuleBusy: boolean;
     isGlobalInstanceReady: boolean;
     isMainMenuOpen: boolean;
+    isSceneSelectorOpen: boolean;
     isSearchBarActive: boolean;
     areShortcutsBlocked: boolean;
     shownSidePanel: SidePanelIDs | null;
@@ -22,6 +23,7 @@ const initialState: {
     isTimeCapsuleBusy: false,
     isGlobalInstanceReady: false,
     isMainMenuOpen: true,
+    isSceneSelectorOpen: false,
     isSearchBarActive: false,
     areShortcutsBlocked: false,
     shownSidePanel: null,
@@ -49,6 +51,11 @@ const globalUISlice = createSlice({
         setMainMenuOpen: (state, action: PayloadAction<boolean>) => {
             state.isMainMenuOpen = action.payload;
         },
+        /* Open or close the scene selector. Opening it closes the main menu, which it sits next to */
+        setSceneSelectorOpen: (state, action: PayloadAction<boolean>) => {
+            state.isSceneSelectorOpen = action.payload;
+            if (action.payload) state.isMainMenuOpen = false;
+        },
         setSearchBarActive: (state, action: PayloadAction<boolean>) => {
             state.isSearchBarActive = action.payload;
         },
@@ -59,7 +66,7 @@ const globalUISlice = createSlice({
         },
         // API
         /* Display the side panel corresponding to the provided ID, or hide the side panel if the payload is null. 
-        @value SidePanelIDs | null */
+        @param value SidePanelIDs | null */
         setShownSidePanel: (state, action: PayloadAction<SidePanelIDs | null>) => {
             state.shownSidePanel = action.payload;
         },
@@ -116,6 +123,7 @@ export const {
     setGlobalInstanceReady,
     setSearchBarActive,
     setMainMenuOpen,
+    setSceneSelectorOpen,
     setShortCutsBlocked,
     setShownSidePanel,
     setSidePanelWidth,

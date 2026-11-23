@@ -11,23 +11,54 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
     uniform mat4 uMVINVMatrix;
     uniform mat4 uPMatrix;
     uniform mat4 TextureMatrix;
+    // How far, in model units, the point a vertex is looked up at in the shadow map is moved out
+    // along its normal (drawCore.ts, shadowNormalOffset): a texel and a half of the map. Without
+    // it, at a grazing angle the flat triangles of a curved surface shadow their neighbours one
+    // facet in, one facet out - a checkerboard along the shadow terminator, worst on coarse
+    // meshes. Shadows cast from further away than that move by no more.
+    uniform highp float shadowNormalOffset;
 
     uniform vec3 outlineSize;
 
     out lowp vec4 vColor;
     out lowp vec3 vNormal;
-    out lowp vec2 vTexture;
+    out highp vec2 vTexture;
+    // Where the vertex is, in the frame vNormal is in: the fragment shader's normal map works out
+    // its tangent frame from how this changes across the screen.
+    out highp vec3 vModelPos;
     out mediump mat4 mvInvMatrix;
-    out lowp vec4 ShadowCoord;
+    out highp vec4 ShadowCoord;
 
     out lowp vec4 eyePos;
+
+    out float vHighlight;
+
+    // Which instance of this buffer is highlighted, or -1 for none. Instanced geometry shares one
+    // mesh between all of its instances, so gl_VertexID cannot distinguish them and the highlight
+    // has to key on gl_InstanceID instead - unlike the smooth mesh path, which has a genuine
+    // per-vertex weight field to sample.
+    uniform int uHoveredInstance;
+
+    // The finer-grained alternative: light a contiguous range of vertex ids rather than a whole
+    // instance, for a mesh divided into separately hoverable sections. Sections own their own
+    // boundary vertices, so no triangle spans two of them and the edge is hard rather than a
+    // ramp - vHighlight being a varying, a shared vertex would interpolate across the join.
+    //
+    // Only meaningful for a mesh with one instance, since a vertex id cannot say which instance
+    // it belongs to. -1 disables, as it does for uHoveredInstance.
+    uniform int uHighlightFrom;
+    uniform int uHighlightTo;
+
+    const float HIGHLIGHT_BOOST = 1.0;
 
     void main(void) {
 
       vec4 theVert = vec4(instancePosition,1.0)+instanceOrientation*vec4((outlineSize+instanceSize)*aVertexPosition,1.0);
       theVert.a = 1.0;
 
-      ShadowCoord = TextureMatrix * theVert;
+      highp vec3 shadowNormal = (instanceOrientation*vec4(aVertexNormal,0.0)).xyz;
+      highp float normalLength = length(shadowNormal);
+      ShadowCoord = TextureMatrix * (theVert + vec4(normalLength > 0.0 ? shadowNormal / normalLength * shadowNormalOffset : vec3(0.0), 0.0));
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
       vColor = aVertexColour;
@@ -36,6 +67,17 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
       mvInvMatrix = uMVINVMatrix;
 
       vTexture = aVertexTexture;
+      vModelPos = theVert.xyz;
+
+      // Only the hovered instance changes: above 1, so the fragment shader brightens it.
+      //
+      // Deliberately nothing happens to its siblings. Fading them back would mirror the smooth
+      // mesh highlight, but which instances share a buffer is an invisible implementation detail
+      // - every sphere in the scene shares one mesh, while a sphere and a cube do not - so fading
+      // siblings makes hovering one shape visibly disturb an arbitrary subset of the others.
+      bool wholeInstanceLit = uHoveredInstance >= 0 && gl_InstanceID == uHoveredInstance;
+      bool sectionLit = uHighlightFrom >= 0 && gl_VertexID >= uHighlightFrom && gl_VertexID < uHighlightTo;
+      vHighlight = (wholeInstanceLit || sectionLit) ? 1.0 + HIGHLIGHT_BOOST : 1.0;
     }
 `;
 

@@ -278,6 +278,7 @@ export const readMTZHeader = async (file: File | ArrayBuffer | Uint8Array): Prom
                 parsed.records.valm = Number.isFinite(valm) ? valm : undefined;
                 break;
             }
+            case "COLUMN":
             case "COL": {
                 const colMatch = payload.match(
                     /^(\S+)\s+(\S)(?:\s+([+-]?(?:\d+\.?\d*|\d*\.\d+)(?:[Ee][+-]?\d+)?)\s+([+-]?(?:\d+\.?\d*|\d*\.\d+)(?:[Ee][+-]?\d+)?)\s+(\d+))?$/

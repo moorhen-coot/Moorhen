@@ -7,16 +7,39 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 
 uniform float zoom;
-uniform float depthBufferSize;
 
 uniform float depthThreshold;
 uniform float normalThreshold;
 uniform float scaleDepth;
 uniform float scaleNormal;
-uniform float depthFactor;
+
+/** The slab, so clip-space depth can be turned back into a distance in angstroms. */
+uniform float clipNear;
+uniform float clipFar;
+uniform bool perspectiveProjection;
 
 in mediump mat4 pMatrix;
 in vec2 out_TexCoord0;
+
+/**
+ * How far in front of the eye a g-buffer sample is, in angstroms.
+ *
+ * The g-buffer holds clip-space position, which is what made the depth threshold so hard to
+ * set: a clip-space gradient depends on the slab, the zoom and the projection all at once, and
+ * the three constants that used to follow it here were an attempt to divide those back out.
+ * Working in eye distance instead gives the threshold a meaning that holds still - a jump of so
+ * many angstroms is a jump of so many angstroms whatever the view is doing.
+ *
+ * Under perspective the clip w component is already the eye distance, which is what a
+ * projection matrix's third row is for. Under orthographic w is 1 and clip z is the normalised
+ * depth, mapping linearly onto the slab.
+ */
+float eyeDistance(vec4 clipPos) {
+    if (perspectiveProjection) {
+        return clipPos.w;
+    }
+    return 0.5 * (clipFar + clipNear + clipPos.z * (clipFar - clipNear));
+}
 
 void main() {
 
@@ -33,15 +56,15 @@ void main() {
     Sy[1].xyz = vec3(  0,  0,  0);
     Sy[2].xyz = vec3(  1,  2,  1);
 
-    float tl  = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(texelSize.x,   texelSize.y)).z;
-    float br  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(texelSize.x,   texelSize.y)).z;
-    float tr  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2( texelSize.x, -texelSize.y)).z;
-    float bl  = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(-texelSize.x,  texelSize.y)).z;
-    float t   = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(0 , texelSize.y)).z;
-    float b   = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(0 , texelSize.y)).z;
-    float l   = texture(gPosition, out_TexCoord0 - scaleDepth*vec2(texelSize.x , 0)).z;
-    float r   = texture(gPosition, out_TexCoord0 + scaleDepth*vec2(texelSize.x , 0)).z;
-    float pix = texture(gPosition, out_TexCoord0).z;
+    float tl  = eyeDistance(texture(gPosition, out_TexCoord0 - scaleDepth*vec2(texelSize.x,   texelSize.y)));
+    float br  = eyeDistance(texture(gPosition, out_TexCoord0 + scaleDepth*vec2(texelSize.x,   texelSize.y)));
+    float tr  = eyeDistance(texture(gPosition, out_TexCoord0 + scaleDepth*vec2( texelSize.x, -texelSize.y)));
+    float bl  = eyeDistance(texture(gPosition, out_TexCoord0 + scaleDepth*vec2(-texelSize.x,  texelSize.y)));
+    float t   = eyeDistance(texture(gPosition, out_TexCoord0 - scaleDepth*vec2(0 , texelSize.y)));
+    float b   = eyeDistance(texture(gPosition, out_TexCoord0 + scaleDepth*vec2(0 , texelSize.y)));
+    float l   = eyeDistance(texture(gPosition, out_TexCoord0 - scaleDepth*vec2(texelSize.x , 0)));
+    float r   = eyeDistance(texture(gPosition, out_TexCoord0 + scaleDepth*vec2(texelSize.x , 0)));
+    float pix = eyeDistance(texture(gPosition, out_TexCoord0));
 
     float Gx = Sx[0][0] * tl + Sx[0][1] *   t + Sx[0][2] * tr +
                Sx[1][0] *  l + Sx[1][1] * pix + Sx[1][2] *  r +
@@ -50,7 +73,16 @@ void main() {
                Sy[1][0] *  l + Sy[1][1] * pix + Sy[1][2] *  r +
                Sy[2][0] * bl + Sy[2][1] *   b + Sy[2][2] * br;
 
-    float diff = depthFactor*sqrt(Gx*Gx + Gy*Gy) * 10.0 * depthBufferSize/60.0;
+    // In angstroms, so depthThreshold is a distance. The depthFactor, the bare 10.0 and the
+    // depthBufferSize/60.0 that used to be here were all trying to normalise a clip-space
+    // gradient back to something comparable; with the taps already in eye distance there is
+    // nothing left to normalise.
+    //
+    // Divided by four because that is what a Sobel kernel returns for a step: the three taps on
+    // each side carry weights 1, 2, 1, so a jump of d angstroms across the centre comes out as
+    // 4d. Dividing it back out makes depthThreshold the size of the jump itself, so "1.5" on
+    // the slider means an edge wherever the depth steps by about one and a half angstroms.
+    float diff = sqrt(Gx*Gx + Gy*Gy) * 0.25;
 
     diff = diff > depthThreshold ? 1.0 : 0.0;
     diff = 1.0 - diff;
@@ -73,7 +105,11 @@ void main() {
                  Sy[1][0] *  dot(npix,nl) + Sy[1][1] +                  Sy[1][2] *  dot(npix,nr) +
                  Sy[2][0] * dot(npix,nbl) + Sy[2][1] *   dot(npix,nb) + Sy[2][2] * dot(npix,nbr);
 
-    float ndiff = depthFactor*sqrt(Gx_n*Gx_n + Gy_n*Gy_n);
+    // Not scaled by depthFactor. Normals are unit vectors, so the dot products above are
+    // already dimensionless and this gradient means the same thing whatever the projection -
+    // whereas depthFactor is 1/80 under perspective and 1 under orthographic, which made the
+    // normal threshold mean something eighty times different between the two for no reason.
+    float ndiff = sqrt(Gx_n*Gx_n + Gy_n*Gy_n);
 
     ndiff = ndiff > normalThreshold ? 1.0 : 0.0;
     ndiff = 1.0 - ndiff;

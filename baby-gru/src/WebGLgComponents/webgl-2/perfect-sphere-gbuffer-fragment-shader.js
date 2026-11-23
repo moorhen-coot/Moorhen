@@ -3,7 +3,7 @@ var perfect_sphere_gbuffer_fragment_shader_source = `#version 300 es\n
 
     in lowp vec4 eyePos;
     in lowp vec4 v;
-    in lowp vec2 vTexture;
+    in highp vec2 vTexture;
     in mediump mat4 projMatrix;
     in float size_v;
 

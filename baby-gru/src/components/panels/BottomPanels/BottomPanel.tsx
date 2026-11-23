@@ -14,7 +14,7 @@ export const BottomPanelContainer = () => {
     const [activePanels] = useState<BottomPanelIDs[]>(["sequences-viewer", "validation"]);
     const [containerHeight, setContainerHeight] = useState<number | null>(null);
     const contentRef = useRef<HTMLDivElement | null>(null);
-    const width = window.innerWidth - (sidePanelIsOpen ? sidePanelWidth : 0);
+    const width = `calc(100% - ${sidePanelIsOpen ? sidePanelWidth : 0}px)`;
     const shownPanel = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel);
 
     const dispatch = useDispatch();

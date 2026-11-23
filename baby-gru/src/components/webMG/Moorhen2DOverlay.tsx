@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { DamageRegion, chromeDamageRegions, regionsToClear } from "../../utils/chromeDamageRegions";
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import * as quat4 from 'gl-matrix/quat';
 import * as vec3 from 'gl-matrix/vec3';
@@ -643,6 +644,7 @@ export const drawOn2DContext = (canvas2D_ctx: CanvasRenderingContext2D, width: n
     }
 }
 
+
 export const Moorhen2DOverlay = ((props) => {
 
     const store = useStore<RootState>()
@@ -661,6 +663,21 @@ export const Moorhen2DOverlay = ((props) => {
     const callbacks = useSelector((state: moorhen.State) => state.overlays.callBacks)
 
     const helpText = useSelector((state: moorhen.State) => state.glRef.shortCutHelp)
+
+    /** Which layers had something on them last frame, so an emptied one is cleared exactly once. */
+    const layersDrawnRef = useRef<boolean[]>([true,true,true,true,true])
+
+    /** Last frame's drawing inputs, so a frame that only rotated the view can be skipped. */
+    const drawSignatureRef = useRef<unknown[] | null>(null)
+
+    /**
+     * Last frame's chrome boxes, so a partial clear also wipes where the chrome *used* to be.
+     *
+     * Clearing only where chrome is about to be drawn is not enough: switch the axes off and their
+     * box leaves the list, nothing clears it, and drawOn2DContext does not draw over it either, so
+     * the gizmo stays on screen until something forces a full clear.
+     */
+    const chromeRegionsRef = useRef<DamageRegion[] | null>(null)
 
     const canvas2DRef0 = useRef<HTMLCanvasElement>(null)
     const canvas2DRef1 = useRef<HTMLCanvasElement>(null)
@@ -755,19 +772,134 @@ export const Moorhen2DOverlay = ((props) => {
         const refs = [canvas2DRef0,canvas2DRef1,canvas2DRef2,canvas2DRef3,canvas2DRef4]
         const contexts = getContexts()
 
+        // Size only when the size actually changed.
+        //
+        // Assigning to canvas.width or canvas.height resets the canvas even when the value is the
+        // one already there, so this avoided five pointless resets a frame. Measured on Firefox it
+        // bought nothing, which says the reset is lazy rather than an eager reallocation - the cost
+        // of an untouched frame turned out to be the clearRect below, not this. Kept because it is
+        // still work that need not happen, but do not expect it to show up in a timing.
+        //
+        // Truncated, not rounded: canvas.width is an unsigned long, so assigning a fraction
+        // truncates towards zero. Rounding here would read back as a different number on any
+        // fractional device pixel ratio, the guard would never match, and the reallocation would
+        // quietly continue every frame while looking fixed.
+        const pixelWidth = Math.trunc(width * ratio)
+        const pixelHeight = Math.trunc(height * ratio)
+
+        // Whether layer i will draw anything at all.
+        //
+        // Clearing a full-screen 2D canvas is a solid rect fill, and Firefox does it on the CPU -
+        // a profile of an empty spinning scene put neon::rect_memset32, under skcpu::Draw::drawRect,
+        // at the top of everything that was not idle. Five of these run every frame, and in the
+        // common case four of them have nothing on them: layers 0 to 3 carry only overlays, and
+        // layer 4 carries the scale bar, crosshairs and axes.
+        //
+        // helpText and the callbacks are not filtered by zIndex, so either makes every layer live.
+        const state = store.getState()
+        const sceneSettings = state.sceneSettings
+        const chromeOnTop = sceneSettings.drawScaleBar || sceneSettings.drawCrosshairs || sceneSettings.drawAxes
+
+        // Whether anything other than the view rotation changed since the last call.
+        //
+        // This effect fires on every frame, because drawScene pushes a new drawQuat each time. But
+        // the rotation is used by exactly one thing in drawOn2DContext - the axes, which are gated
+        // to layer 4 - so on a spin with the axes off there is nothing for any layer to redraw.
+        //
+        // That matters more than it sounds. These canvases are software surfaces in Firefox, as the
+        // earlier skcpu::Draw frames showed, so every redraw has to be copied and format-converted
+        // up to the compositor: _platform_memmove and gfx Swizzle were the largest remaining cost
+        // in the profile after the empty layers were dealt with.
+        //
+        // The slices are compared by reference rather than the twenty individual values
+        // drawOn2DContext reads out of them. Coarser, so an unrelated change to sceneSettings
+        // causes a redundant redraw - but it cannot go stale, which the enumerated version would
+        // the first time someone read one more value in there.
+        const signature = [state.sceneSettings, state.overlays, state.molecules,
+                           width, height, ratio, helpText, images]
+        const previous = drawSignatureRef.current
+        const onlyRotationChanged = previous !== null
+            && previous.length === signature.length
+            && previous.every((value, i) => value === signature[i])
+        drawSignatureRef.current = signature
+
+        // Callbacks get no quat, but nothing stops one reading the rotation out of the store, so
+        // they are treated as rotation-sensitive rather than assumed not to be.
+        const usesRotation = (i: number) => (i === 4 && sceneSettings.drawAxes) || callbacks.length > 0
+        // Overlays are unbounded - they can be anywhere - so a layer carrying one always needs a
+        // full clear. The chrome is the only thing whose extent is known.
+        const hasOverlayContent = (i: number) => {
+            if(helpText.length > 0 || callbacks.length > 0) return true
+            const onLayer = (z?: number) => (!z && i === 0) || z === i
+            if(textOverlays.some(t => onLayer(t.zIndex))) return true
+            if(svgPathOverlays.some(t => onLayer(t.zIndex))) return true
+            if(fracPathOverlays.some(t => onLayer(t.zIndex))) return true
+            return images.some(img => onLayer(img.zIndex))
+        }
+        const layerHasContent = (i: number) => hasOverlayContent(i) || (i === 4 && chromeOnTop)
+
+        const simpleLayout = !sceneSettings.doSideBySideStereo && !sceneSettings.doCrossEyedStereo
+            && !sceneSettings.doThreeWayView && !sceneSettings.doMultiView
+        const chromeRegions = chromeDamageRegions(width, height, 1.0, {
+            drawAxes: sceneSettings.drawAxes,
+            drawScaleBar: sceneSettings.drawScaleBar,
+            drawCrosshairs: sceneSettings.drawCrosshairs,
+            simpleLayout,
+        })
+
+        /**
+         * Layer 4 carrying only chrome in a simple layout: clear where it draws, not everywhere.
+         *
+         * Both this frame's boxes and last frame's have to be known, since the clear has to cover
+         * where the chrome was as well as where it is going. A layout change either way - into or
+         * out of stereo or multi-view - falls back to a full clear for one frame.
+         */
+        const clearRegions = regionsToClear(chromeRegionsRef.current, chromeRegions)
+        const damageOnly = (i: number) => i === 4 && clearRegions !== null && !hasOverlayContent(4)
+
         contexts.forEach((ctx,i) => {
-            if(refs[i]&&refs[i].current){
-                refs[i].current.width = width * ratio
-                refs[i].current.height = height * ratio
-                refs[i].current.style.width = `${width}px`
-                refs[i].current.style.height = `${height}px`
+            const canvas = refs[i] ? refs[i].current : null
+            if(canvas){
+                if(canvas.width !== pixelWidth) canvas.width = pixelWidth
+                if(canvas.height !== pixelHeight) canvas.height = pixelHeight
+                const cssWidth = `${width}px`
+                const cssHeight = `${height}px`
+                if(canvas.style.width !== cssWidth) canvas.style.width = cssWidth
+                if(canvas.style.height !== cssHeight) canvas.style.height = cssHeight
             }
+
+            // A layer that has just become empty still needs one last clear to remove what it was
+            // showing; after that it is left alone until something arrives on it again.
+            const hasContent = layerHasContent(i)
+            if(!hasContent && !layersDrawnRef.current[i]) return
+            if(onlyRotationChanged && !usesRotation(i)) return
+            layersDrawnRef.current[i] = hasContent
+
             if(ctx){
                 ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-                ctx.clearRect(0,0,width,height)
+
+                // Resizing the canvas used to reset every context property as a side effect, and
+                // the drawing below has always been free to rely on starting from the defaults.
+                // Now that the canvas is only resized when its size changed, put them back
+                // explicitly so nothing carries over from the previous frame.
+                ctx.fillStyle = "#000000"
+                ctx.strokeStyle = "#000000"
+                ctx.lineWidth = 1
+                ctx.globalAlpha = 1
+                ctx.font = "10px sans-serif"
+                ctx.textAlign = "start"
+                ctx.textBaseline = "alphabetic"
+
+                if(damageOnly(i)){
+                    for(const region of clearRegions) ctx.clearRect(region.x, region.y, region.w, region.h)
+                } else {
+                    ctx.clearRect(0,0,width,height)
+                }
                 drawOn2DContext(ctx, width, height, 1.0, helpText, images, props.drawQuat, i, store)
             }
         })
+
+        chromeRegionsRef.current = chromeRegions
     }
 
     useEffect(() => {

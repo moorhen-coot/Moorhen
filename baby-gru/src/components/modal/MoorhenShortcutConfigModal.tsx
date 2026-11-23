@@ -25,7 +25,6 @@ export const MoorhenShortcutConfigModal = (props: ModalComponentProps) => {
 
     const restoreDefaults = () => {
         const defaultValues = Preferences.defaultPreferencesValues;
-        console.log(defaultValues.shortCuts);
         setStagedShortCuts(defaultValues.shortCuts);
     };
 
@@ -130,7 +129,7 @@ export const MoorhenShortcutConfigModal = (props: ModalComponentProps) => {
         </OverlayModal>
     );
     const modalFooter = (
-        <>
+        <MoorhenStack direction="line" >
             <MoorhenButton variant="secondary" onClick={restoreDefaults}>
                 Restore Defaults
             </MoorhenButton>
@@ -140,7 +139,7 @@ export const MoorhenShortcutConfigModal = (props: ModalComponentProps) => {
             <MoorhenButton variant="danger" onClick={cancelChanges}>
                 Cancel
             </MoorhenButton>{" "}
-        </>
+        </MoorhenStack>
     );
 
     return (

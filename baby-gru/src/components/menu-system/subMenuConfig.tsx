@@ -1,14 +1,13 @@
 import { ActionCreatorWithOptionalPayload, PayloadAction } from "@reduxjs/toolkit";
 import React from "react";
 import type { ModalKey } from "@/components/interface-base/ModalBase/ModalsContainer";
-import { setShownControl } from "@/store";
+import { setSceneSelectorOpen, setShownControl } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMakeBackups } from "../../store/backupSettingsSlice";
 import { setDefaultExpandDisplayCards, setDevMode, setTransparentModalsOnMouseOut } from "../../store/generalStatesSlice";
 import { setEnableAtomHovering, setHoveredAtom } from "../../store/hoveringStatesSlice";
 import { setAtomLabelDepthMode } from "../../store/labelSettingsSlice";
 import {
-    setDoPerspectiveProjection,
     setDoSpin,
     setDrawAxes,
     setDrawCrosshairs,
@@ -116,7 +115,6 @@ export const subMenuMap: SubMenuMap = {
     file: {
         label: "Files",
         items: [
-            { id: "slotTest", label: "slot test", type: "HTMLslot", slotName: "test-slot" },
             {
                 id: "auto-load",
                 label: "Auto load files",
@@ -164,6 +162,26 @@ export const subMenuMap: SubMenuMap = {
                 label: "Screenshot",
                 action: setShownControl({ name: "screenshot" }),
             },
+            {
+                // "Record the screen" rather than "Record a video", because a movie is a video
+                // too: the two entries used to be told apart only by which synonym they chose,
+                // and they sat six items apart with the import block between them. This one
+                // captures what you do as you do it; the next builds a movie you did not perform.
+                id: "record-video",
+                label: "Record the screen...",
+                type: "dispatch",
+                action: setShownControl({ name: "videoRecorder" }),
+                // "video" is no longer in the label, so the search bar needs it back: someone
+                // looking for this will type the word they used to see.
+                keywords: ["video", "record", "screen", "capture", "webm"],
+            },
+            {
+                id: "movie",
+                label: "Movie editor...",
+                type: "showPanel",
+                panel: "movie",
+                keywords: ["movie", "video", "animation", "keyframe", "camera", "mp4", "export"],
+            },
 
             // {
             //     id: "auto-open-mtz",
@@ -198,12 +216,6 @@ export const subMenuMap: SubMenuMap = {
                 label: "Load tutorial data...",
                 type: "popover",
                 content: MenuItems.LoadTutorialData,
-            },
-            {
-                id: "record-video",
-                label: "Record a video",
-                type: "dispatch",
-                action: setShownControl({ name: "videoRecorder" }),
             },
             {
                 id: "export",
@@ -531,6 +543,12 @@ export const subMenuMap: SubMenuMap = {
                 type: "showModal",
                 modal: "json-validation",
             },
+            {
+                id: "fourier-shell-correlation",
+                label: "Fourier shell correlation...",
+                type: "showModal",
+                modal: "fourier-shell-correlation",
+            },
         ],
     },
     "map-tools": {
@@ -590,10 +608,10 @@ export const subMenuMap: SubMenuMap = {
             {
                 id: "scene-preset",
                 label: "Scene preset...",
-                type: "popover",
-                keywords: ["scene", "preset"],
-                description: "Apply scene preset",
-                content: MenuItems.ScenePreset,
+                type: "dispatch",
+                keywords: ["scene", "preset", "snapshot", "model building"],
+                description: "Open the scene selector: switch, create or save scenes and snapshots",
+                action: setSceneSelectorOpen(true),
             },
             {
                 id: "scene-settings",
@@ -628,6 +646,12 @@ export const subMenuMap: SubMenuMap = {
                 label: "2D objects...",
                 type: "showPanel",
                 panel: "overlay2DObjects",
+            },
+            {
+                id: "3DObjects",
+                label: "3D objects...",
+                type: "showPanel",
+                panel: "3DObjects",
             },
         ],
     },
@@ -816,11 +840,11 @@ export const subMenuMap: SubMenuMap = {
         items: [
             {
                 id: "wiki",
-                label: "Go to Moorhen wiki...",
+                label: "Go to Moorhen documentation...",
                 type: "item",
                 keywords: ["wiki", "documentation", "help"],
-                description: "Open Moorhen wiki documentation",
-                onClick: () => window.open("https://moorhen-coot.github.io/wiki/"),
+                description: "Open Moorhen documentation",
+                onClick: () => window.open("https://moorhen.hosted.york.ac.uk/docs"),
             },
             {
                 id: "show-controls",
@@ -912,13 +936,6 @@ export const subMenuMap: SubMenuMap = {
                 action: setDrawEnvBOcc,
                 label: "Show env. temp factors and occ.",
                 description: "Display on screen B factors and occupancies values",
-            },
-            {
-                id: "perspective-projection",
-                type: "preferenceSwitch",
-                selector: (state: RootState) => state.sceneSettings.doPerspectiveProjection,
-                action: setDoPerspectiveProjection,
-                label: "Perspective projection",
             },
             {
                 id: "spin-view",

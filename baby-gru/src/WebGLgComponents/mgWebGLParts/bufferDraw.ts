@@ -79,20 +79,8 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
                         }
                     }
                 }
-                if(self.stencilPass){
-                    self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                    if(bright_y<0.5)
-                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
-                    else
-                        self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
-                }
             }
             if (self.WEBGL2) {
-                if(self.doAnaglyphStereo) {
-                    self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                    self.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
-                    self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...self.currentAnaglyphColor)
-                }
                 self.gl.drawElementsInstanced(vertexType, drawBuffer.numItems, self.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
             } else {
                 self.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, self.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
@@ -132,6 +120,36 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
             self.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+1);
             self.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+2);
             self.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+3);
+
+            // Put the per-instance divisors back on every attribute location this draw claimed.
+            //
+            // A divisor belongs to the attribute *location*, not to the program or to the buffer,
+            // and it is global state that the disableVertexAttribArray calls above do not clear.
+            // Leave one set and the next program to enable an attribute at that location reads it
+            // once per instance rather than once per vertex - and instanceOrientation is bound
+            // explicitly to location 6, so this draw claims 6..9, squarely among the locations the
+            // plain triangle shader uses. In a non-instanced draw that feeds every vertex from
+            // element 0, so a mesh drawn after an instanced buffer collapses and disappears.
+            //
+            // The colour attribute below was already being restored; these were not. The
+            // PERFECT_SPHERES path in drawCore restores its own for the same reason.
+            const restoreDivisor = (attribute: number) => {
+                if (attribute === undefined || attribute < 0) return
+                if (self.WEBGL2) {
+                    self.gl.vertexAttribDivisor(attribute, 0);
+                } else {
+                    self.instanced_ext.vertexAttribDivisorANGLE(attribute, 0);
+                }
+            }
+            restoreDivisor(theShader.vertexInstanceOriginAttribute);
+            restoreDivisor(theShader.vertexInstanceSizeAttribute);
+            // Guard the base before offsetting, or a base of -1 would reset location 0.
+            if (theShader.vertexInstanceOrientationAttribute >= 0) {
+                for (let column = 0; column < 4; column++) {
+                    restoreDivisor(theShader.vertexInstanceOrientationAttribute + column);
+                }
+            }
+
             if(theShader.vertexColourAttribute>-1){
                 if (self.WEBGL2) {
                     self.gl.vertexAttribDivisor(theShader.vertexColourAttribute, 0);
@@ -142,11 +160,6 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
         } else {
             const theShader = theShaderIn as webGL.MGWebGLShader;
             if (self.WEBGL2) {
-                if(self.doAnaglyphStereo) {
-                    self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                    self.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
-                    self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...self.currentAnaglyphColor)
-                }
                 drawMaxElementsUInt(self, vertexType, drawBuffer.numItems);
             } else {
                 self.gl.drawElements(vertexType, drawBuffer.numItems, self.gl.UNSIGNED_INT, 0);
@@ -165,11 +178,6 @@ export function drawBuffer(self: MGWebGL, theBuffer:any,theShaderIn:webGL.MGWebG
 
                     self.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
                     if (self.WEBGL2) {
-                        if(self.doAnaglyphStereo) {
-                            self.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
-                            self.gl.vertexAttribDivisor(theShader.vertexColourAttribute,0);
-                            self.gl.vertexAttrib4f(theShader.vertexColourAttribute, ...self.currentAnaglyphColor)
-                        }
                         drawMaxElementsUInt(self, vertexType, drawBuffer.numItems);
                     } else {
                         self.gl.drawElements(vertexType, drawBuffer.numItems, self.gl.UNSIGNED_INT, 0);

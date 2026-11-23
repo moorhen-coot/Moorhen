@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { MoorhenIcon, MoorhenSpinner } from "../../icons";
@@ -5,8 +6,32 @@ import { MoorhenStack } from "../../interface-base";
 import { UpdatingMapsSnackBar } from "./UpdatingMaps";
 import "./activity-indicator.css";
 
+/** How long the app must stay busy before the spinner shows, ms. */
+const BUSY_SPINNER_DELAY = 300;
+
+/**
+ * `value`, but true only once it has stayed true for `delay` ms; false at once.
+ *
+ * The busy flag is set whenever any command is in flight in the Coot worker, and map recontours
+ * send one on every camera move. Shown directly, the spinner flashed in and out of the hover box
+ * the whole time the view moved. Delayed, quick commands never show it; long jobs still do.
+ */
+const useDelayedTrue = (value: boolean, delay: number): boolean => {
+    const [delayed, setDelayed] = useState(false);
+    useEffect(() => {
+        if (!value) return;
+        const timer = setTimeout(() => setDelayed(true), delay);
+        // When value goes false (or the delay changes): forget it was ever shown.
+        return () => {
+            clearTimeout(timer);
+            setDelayed(false);
+        };
+    }, [value, delay]);
+    return value && delayed;
+};
+
 export const ActivityIndicator = () => {
-    const busy = useSelector((state: RootState) => state.globalUI.busy);
+    const busy = useDelayedTrue(useSelector((state: RootState) => state.globalUI.busy), BUSY_SPINNER_DELAY);
     const hoveredAtom = useSelector((state: RootState) => state.hoveringStates.hoveredAtom);
     const showHoverInfo = useSelector((state: RootState) => state.generalStates.showHoverInfo);
     const timeCapsuleBusy = useSelector((state: RootState) => state.globalUI.isTimeCapsuleBusy);    
@@ -14,30 +39,53 @@ export const ActivityIndicator = () => {
     const chemShifts = useSelector((state: RootState) => state.molecules[0]?.chemShifts);
     const NMRMode = (hoveredAtom.molecule?.chemShifts?.length ?? 0) > 0;
     const updatingMapsIsEnabled = useSelector((state: RootState) => state.moleculeMapUpdate.updatingMapsIsEnabled);
+    // A hover does not always name an atom. One that came from a molecular surface names the
+    // residue behind the triangle under the pointer and stops there, so the CID is
+    // "/1/A/23(ALA)" with no fifth field - and a residue with no name at all, from a CID
+    // written elsewhere in the app, leaves nothing in the brackets to read.
+    // A hover does not always name an atom. One that came from a molecular surface names the
+    // residue behind the triangle under the pointer and stops there - "/1/A/23(ALA)", with no
+    // fifth field - and its residue may carry an insertion code, "/1/A/52(ALA).B".
+    //
+    // The name is read out of the brackets rather than by counting characters in from each
+    // end. That was exact for a three-letter code and nothing else: an insertion code after
+    // the bracket turned ALA into "ALAla).", and a two-letter nucleotide came out as "a".
     const cidAsArray = hoveredAtom.cid?.split("/") || [];
-    const residueName = cidAsArray[3]?.split(`(`)[1].slice(0, -3) + cidAsArray[3]?.split(`(`)[1].slice(1, -1).toLowerCase();
-    const residueNumber = cidAsArray[3]?.split(`(`)[0];
-    const reformatedCid = `${cidAsArray[2]} - ${residueName} ${residueNumber} - ${cidAsArray[4]}`;
+    const residueField = cidAsArray[3] ?? "";
+    const residueCode = residueField.match(/\(([^)]*)\)/)?.[1] ?? "";
+    const residueName = residueCode ? residueCode[0] + residueCode.slice(1).toLowerCase() : "";
+    const insertionCode = residueField.split(").")[1] ?? "";
+    const residueNumber = residueField.split("(")[0] + insertionCode;
+    const atomName = cidAsArray[4];
+    const reformatedCid = [cidAsArray[2], `${residueName} ${residueNumber}`.trim(), atomName]
+        .filter(Boolean)
+        .join(" - ");
     const bFactorNOccupancy = hoveredAtom.atomInfo
         ? `B-Fact: ${hoveredAtom.atomInfo.tempFactor.toFixed(1)} Occ: ${hoveredAtom.atomInfo.occupancy.toFixed(2)}`
         : "";
 
     const glWidth = useSelector((state: RootState) => state.sceneSettings.GlViewportWidth);
-        const chemShiftAtom = hoveredAtom.atomInfo
-        ? `Chemical shift: ${hoveredAtom.molecule?.chemShifts.filter(cs => 
-            (cs.atom === hoveredAtom.atomInfo.name &&
-             cs.chain === hoveredAtom.atomInfo.chain_id &&
-             (cs.seq+"") === (hoveredAtom.atomInfo.res_no+"") &&
-             cs.resname === hoveredAtom.atomInfo.res_name)
-                        )[0]?.chemshift?? "N/A"
-                    
-                } Ambiguous? ${hoveredAtom.molecule?.chemShifts.filter(cs => 
-            (cs.atom === hoveredAtom.atomInfo.name &&
-             cs.chain === hoveredAtom.atomInfo.chain_id &&
-             (cs.seq+"") === (hoveredAtom.atomInfo.res_no+"") &&
-             cs.resname === hoveredAtom.atomInfo.res_name)
-                        )[0]?.ambiguityFlag?? "N/A"}`
-        : "";    
+    const atomChemShift = hoveredAtom.atomInfo
+        ? hoveredAtom.molecule?.chemShifts?.find(
+              cs =>
+                  cs.atom === hoveredAtom.atomInfo.name &&
+                  cs.chain === hoveredAtom.atomInfo.chain_id &&
+                  `${cs.seq}` === `${hoveredAtom.atomInfo.res_no}` &&
+                  cs.resname === hoveredAtom.atomInfo.res_name
+          )
+        : undefined;
+    const chemShiftAtom = atomChemShift
+        ? `δ: ${Number(atomChemShift.chemshift).toFixed(2)} ppm · amb: ${atomChemShift.ambiguityFlag ? "yes" : "no"}`
+        : "δ: N/A";
+
+    const lineStyle: React.CSSProperties = {
+        display: "block",
+        minWidth: 0,
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+    };
+    const infoLine = NMRMode ? chemShiftAtom : bFactorNOccupancy;
     const busyIndicator = busy ? (
         <>
             <MoorhenSpinner size="3rem" />
@@ -58,20 +106,13 @@ export const ActivityIndicator = () => {
                     {busyIndicator}
                     {showHoverInfo && hoveredAtom.cid && (
                         <MoorhenStack style={{ minWidth: "0" }}>
-                            <span>{reformatedCid}</span>
-                            
-                            <span style={{ fontSize: "0.8em" }}>{NMRMode? chemShiftAtom: bFactorNOccupancy}</span>
-                            <span
-                                style={{
-                                    fontSize: "0.8em",
-                                    textOverflow: "ellipsis",
-                                    display: "block",
-                                    minWidth: 0,
-                                    whiteSpace: "nowrap",
-                                    overflow: "hidden",
-                                    border: "none",
-                                }}
-                            >
+                            <span style={lineStyle} title={reformatedCid}>
+                                {reformatedCid}
+                            </span>
+                            <span style={{ ...lineStyle, fontSize: "0.8em" }} title={infoLine}>
+                                {infoLine}
+                            </span>
+                            <span style={{ ...lineStyle, fontSize: "0.8em" }} title={hoveredAtom.molecule.name}>
                                 {hoveredAtom.molecule.name}
                             </span>
                         </MoorhenStack>

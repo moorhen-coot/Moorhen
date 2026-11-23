@@ -49,6 +49,10 @@ test.describe("Moorhen Web Component scene settings", () => {
 
         await testSceneSetting("setDoEdgeDetect", true);
         await testSceneSetting("setDoPerspectiveProjection", true);
+        // Depth blur at radius 8 rather than the default 3: at 3 the blur is too mild to clear the
+        // screenshot tolerance, so a blur that stopped blurring (as in October 2026, when only
+        // geometry spread onto the background and never the background into it) still passed.
+        await moorhen.callInstanceMethod("sceneSettings.setDepthBlurRadius", 8);
         await testSceneSetting("setUseOffScreenBuffers", true);
         await testSceneSetting("setAmbient", [0.0, 1.0, 0.0, 1.0]);
         await testSceneSetting("setDiffuse", [0.0, 1.0, 0.0, 1.0]);

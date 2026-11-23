@@ -9,6 +9,7 @@
 #include <thread>
 #include <unordered_map>
 #include <cmath>
+#include <climits>
 
 #define MC_IMPLEM_ENABLE
 #include "MC.h"
@@ -71,7 +72,6 @@ inline CellKey get_cell(float x, float y, float z, float cell_size) {
     };
 }
 
-
 void smooth_mesh(
     const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points,
     const Grid &grid,
@@ -86,7 +86,13 @@ void smooth_mesh(
     std::vector<std::pair<unsigned,float>> idx_frac_pair_vec;
     idx_frac_pair_vec.reserve(64);
 
+    std::vector<std::pair<unsigned,float>> influences;
+    influences.reserve(16);
+
     for (int ii = ip0; ii < ip1; ii++) {
+
+        float best_val = -1.0f;
+        unsigned best_ip = UINT_MAX;
 
         const auto &v = mesh->vertices[ii];
 
@@ -104,6 +110,7 @@ void smooth_mesh(
         float f_dz = 0.0f;
 
         idx_frac_pair_vec.clear();
+        influences.clear();
 
         CellKey base = get_cell(x, y, z, cell_size);
 
@@ -151,6 +158,11 @@ void smooth_mesh(
 
                         f += val;
 
+                        if(val > best_val){
+                            best_val = val;
+                            best_ip = ip;
+                        }
+
                         // gradient (reuse partial sums)
                         float yz = yy + zz;
                         float xz = xx + zz;
@@ -185,6 +197,13 @@ void smooth_mesh(
             theColor[1] += w * c[1];
             theColor[2] += w * c[2];
             theColor[3] += w * c[3];
+
+            //std::cout << "Contrib. from " << p.first << " " << w << ", for " << ii << std::endl;
+            if(w>0.005){//this is nonsense. We need to just pick top N and then normalize.
+                //if(ii<20)
+                    //std::cout << "Sig. contrib. from " << p.first << " " << w << ", for " << ii << std::endl;
+                influences.emplace_back(p.first, w);
+            }
         }
 
         if (totFrac > 1e-4f) {
@@ -196,21 +215,40 @@ void smooth_mesh(
         MC::mcVec3f new_norm({f_dx - f, f_dy - f, f_dz - f});
         new_norm = MC::mc_internalNormalize(new_norm);
 
+        //std::cout << "Influences for " << ii << " " << influences.size() << std::endl;
+        mesh->influences[ii] = influences;
         mesh->normals[ii] = new_norm;
         mesh->colors[ii] = theColor;
+        mesh->vertex_owner[ii] = best_ip;
+
+        if(best_ip == UINT_MAX)
+        {
+            std::cerr << "No owner found for vertex "
+                << ii
+                << std::endl;
+        }
     }
 }
 
+// Adds every point's contribution to the grid planes iz0 <= iz < iz1.
+//
+// Threads are given disjoint ranges of planes, not of points. Splitting by point, as this used to,
+// had several threads adding into the same voxels at once - neighbouring atoms overlap by up to
+// the 5 A cutoff - with nothing to stop one += overwriting another, so the field (and the mesh)
+// changed with the thread count and from run to run. By plane, no voxel has more than one writer,
+// and each voxel still sums its points in index order, so the result is the same as one thread
+// to the last bit.
 void fill_field(
     const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points,
-    int ip0, int ip1,
+    int iz0, int iz1,
     std::vector<MC::MC_FLOAT> &field,
     float cutoff,
     int ncell_x, int ncell_y, int ncell_z,
     float min_x, float min_y, float min_z,
     float cell_x, float cell_y, float cell_z)
 {
-    for (int ip = ip0; ip < ip1; ip++) {
+    const int np = static_cast<int>(points.size());
+    for (int ip = 0; ip < np; ip++) {
 
         float x0 = points[ip].first[0];
         float y0 = points[ip].first[1];
@@ -228,6 +266,11 @@ void fill_field(
 
         int iz_min = std::max(0, (int)((z0 - cutoff - min_z) / cell_z));
         int iz_max = std::min(ncell_z - 1, (int)((z0 + cutoff - min_z) / cell_z));
+
+        // This thread's planes only.
+        iz_min = std::max(iz_min, iz0);
+        iz_max = std::min(iz_max, iz1 - 1);
+        if (iz_min > iz_max) continue;
 
         for (int iz = iz_min; iz <= iz_max; iz++) {
             float z = min_z + iz * cell_z;
@@ -258,38 +301,6 @@ void fill_field(
 
                     int idx = idx_z + idx_y + ix;
                     field[idx] += rr * inv;
-                }
-            }
-        }
-    }
-}
-
-void fill_field_old(const std::vector<std::pair<std::array<float,4>,std::array<float,4>>> &points, int ip0, int ip1, std::vector<MC::MC_FLOAT> &field, float cutoff, int ncell_x, int ncell_y, int ncell_z, float min_x, float min_y, float min_z, float max_x, float max_y, float max_z, float cell_x, float cell_y, float cell_z){
-    for(unsigned ip=ip0;ip<ip1;ip++){
-        float x0 = points[ip].first[0];
-        float y0 = points[ip].first[1];
-        float z0 = points[ip].first[2];
-        float r0 = points[ip].first[3];
-        float rr = r0 * r0;
-        for(unsigned iz=0;iz<ncell_z;iz++){
-            float z = min_z + iz * cell_z;
-            if(fabs(z-z0)>cutoff) continue;
-            int idx_z = iz*ncell_x*ncell_y;
-            float zz = (z - z0)*(z - z0);
-            for(unsigned iy=0;iy<ncell_y;iy++){
-                float y = min_y + iy * cell_y;
-                if(fabs(y-y0)>cutoff) continue;
-                int idx_y = iy*ncell_x;
-                float yy = (y - y0)*(y - y0);
-                for(unsigned ix=0;ix<ncell_x;ix++){
-                    float x = min_x + ix * cell_x;
-                    if(fabs(x-x0)>cutoff) continue;
-                    float xx = (x - x0)*(x - x0);
-                    int newIdx = idx_z + idx_y + ix;
-                    //Potential cutoff and obscure fudge factor.
-                    float d2 = (xx + yy + zz);
-                    d2 = smoothstep(0.0f,12.0f,d2) * 30.0;
-                    field[newIdx] += rr / d2;
                 }
             }
         }
@@ -360,18 +371,18 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
 
     float cutoff = 5.0f;
 
-    if(np>20&&n_threads>1){
+    if(np>20&&n_threads>1&&ncell_z>=n_threads){
         std::vector<std::thread> fill_threads;
         for(int i=0;i<n_threads;i++){
-            int start =     i * np / n_threads;
-            int end   = (i+1) * np / n_threads;
+            int start =     i * ncell_z / n_threads;
+            int end   = (i+1) * ncell_z / n_threads;
             fill_threads.push_back(std::thread(fill_field, std::cref(points), start, end, std::ref(field), cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, cell_x, cell_y, cell_z));
         }
         for(int i=0;i<n_threads;i++){
             fill_threads[i].join();
         }
     } else {
-        fill_field(points, 0, np, field, cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, cell_x, cell_y, cell_z);
+        fill_field(points, 0, ncell_z, field, cutoff, ncell_x, ncell_y, ncell_z, min_x, min_y, min_z, cell_x, cell_y, cell_z);
     }
 
     auto t_field = std::chrono::high_resolution_clock::now();
@@ -407,12 +418,15 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
     int np_smooth = mesh.vertices.size();
     std::array<float,4> theColor{0.5,0.5,0.5,1.0};
     mesh.colors.resize(np_smooth,theColor);
+    mesh.vertex_owner.resize(mesh.vertices.size());
+    mesh.influences.resize(mesh.vertices.size());
     if(np_smooth>20&&n_threads>1){
         std::vector<std::thread> smooth_threads;
         for(int i=0;i<n_threads;i++){
             int start =     i * np_smooth / n_threads;
             int end   = (i+1) * np_smooth / n_threads;
-            smooth_threads.push_back(std::thread(smooth_mesh, std::cref(points), grid, cell_size, start, end, cutoff, &mesh));
+            // std::cref: passed bare, std::thread copied the whole hash grid into every thread.
+            smooth_threads.push_back(std::thread(smooth_mesh, std::cref(points), std::cref(grid), cell_size, start, end, cutoff, &mesh));
         }
         for(int i=0;i<n_threads;i++){
             smooth_threads[i].join();
@@ -423,19 +437,52 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
 
     auto t_smooth = std::chrono::high_resolution_clock::now();
 
-    auto t_total = std::chrono::duration_cast<std::chrono::microseconds>(t_smooth - t_start).count();
+    mesh.point_triangles.resize(points.size());
+
+    for(unsigned tri = 0; tri < mesh.indices.size(); tri += 3) {
+        unsigned i0 = mesh.indices[tri];
+        unsigned i1 = mesh.indices[tri + 1];
+        unsigned i2 = mesh.indices[tri + 2];
+
+        unsigned p0 = mesh.vertex_owner[i0];
+        unsigned p1 = mesh.vertex_owner[i1];
+        unsigned p2 = mesh.vertex_owner[i2];
+
+        unsigned owner;
+
+        if(p0 == p1 || p0 == p2)
+            owner = p0;
+        else if(p1 == p2)
+            owner = p1;
+        else
+            owner = p0;
+
+        mesh.point_triangles[owner].push_back(tri / 3);
+    }
+
+    /*
+    for(auto& pt : mesh.point_triangles){
+        std::cout << pt.size() << std::endl;
+    }
+    */
+
+    auto t_associate = std::chrono::high_resolution_clock::now();
+
+    auto t_total = std::chrono::duration_cast<std::chrono::microseconds>(t_associate - t_start).count();
     auto t1 = std::chrono::duration_cast<std::chrono::microseconds>(t_min_max-t_start).count();
     auto t2 = std::chrono::duration_cast<std::chrono::microseconds>(t_field_fill-t_min_max).count();
     auto t3 = std::chrono::duration_cast<std::chrono::microseconds>(t_field-t_field_fill).count();
     auto t4 = std::chrono::duration_cast<std::chrono::microseconds>(t_march-t_field).count();
     auto t5 = std::chrono::duration_cast<std::chrono::microseconds>(t_mesh-t_march).count();
     auto t6 = std::chrono::duration_cast<std::chrono::microseconds>(t_smooth-t_mesh).count();
-    auto p1 = 100.* t1 / t_total; 
+    auto t7 = std::chrono::duration_cast<std::chrono::microseconds>(t_associate-t_smooth).count();
+    auto p1 = 100.* t1 / t_total;
     auto p2 = 100.* t2 / t_total;
     auto p3 = 100.* t3 / t_total;
     auto p4 = 100.* t4 / t_total;
     auto p5 = 100.* t5 / t_total;
     auto p6 = 100.* t6 / t_total;
+    auto p7 = 100.* t7 / t_total;
 
     std::cout << std::fixed;
     std::cout << std::setprecision(2);
@@ -446,6 +493,7 @@ moorhenMesh GenerateMeshFromPoints(const std::vector<std::pair<std::array<float,
     std::cout << "Time to get surface "      << t4 << " (" << p4 << "%)" << std::endl;
     std::cout << "Time to rebase mesh "      << t5 << " (" << p5 << "%)" << std::endl;
     std::cout << "Time to smooth mesh "      << t6 << " (" << p6 << "%)" << std::endl;
+    std::cout << "Time to associate triangles "      << t7 << " (" << p7 << "%)" << std::endl;
     std::cout << "Total time "               << t_total << std::endl;
 
     return mesh;

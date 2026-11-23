@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Loading data and the MoorhenInstance API - Moorhen Developer Guide</title>
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/theme-toggle.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+    <img src="../../assets/MoorhenLogo.png" alt="Moorhen logo">
+    <h1>Loading data and the MoorhenInstance API</h1>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">Dark mode</button>
+</header>
+<nav class="site-nav">
+    <ul>
+        <li><a href="../../index.html">Docs Home</a></li>
+        <li><a href="index.html">Developer Guide</a></li>
+        <li><a href="../user/index.html">User Guide</a></li>
+        <li><a href="../../api/index.html">API Reference</a></li>
+    </ul>
+</nav>
+
+<article class="guide-article">
+    <h2>Working with the MoorhenInstance</h2>
+
+    <p>
+        Once the <code>&lt;moorhen-web-component&gt;</code> element is ready, <code>getMoorhenInstance()</code> gives
+        you a <a href="../../api/classes/moorhen.MoorhenInstance.html">MoorhenInstance</a>. That object is the whole
+        programmatic API: loading data, moving the camera, managing representations, reading the store. This guide is
+        shared by the plain-page and React flows, because the API is identical in both.
+    </p>
+
+    <p class="note-technical">
+        <strong>Prerequisite:</strong> the examples assume you already hold a <code>moorhenInstance</code> variable.
+        See <a href="webcomponent-setup.html">Setting up the WebComponent</a> for a plain page, or
+        <a href="webcomponent-react.html">Using the WebComponent in React</a> for React. In a plain page these calls run
+        directly; in React you keep them in effects or event handlers (see the React guide), but the API calls are the
+        same.
+    </p>
+
+    <section>
+        <h2>The core API groups</h2>
+
+        <p>
+            Most of the API is grouped behind getters that each return an object of related methods. The API Reference
+            documents every one of them:
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Group</th>
+                    <th>What it does</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><a href="../../api/classes/moorhen.MoorhenInstance.html#files"><code>files</code></a></td>
+                    <td>
+                        Load structures and maps from URLs, <code>File</code>/<code>FileList</code> objects, PDB/CIF
+                        strings or SMILES. Returns a <code>LoadFilesResult</code> per file.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="../../api/classes/moorhen.MoorhenInstance.html#getmoleculelist"><code>getMoleculeList()</code></a>,
+                        <a href="../../api/classes/moorhen.MoorhenInstance.html#getmaplist"><code>getMapList()</code></a>
+                    </td>
+                    <td>
+                        Inspect what is loaded. Use <code>getMolecule(uid)</code> / <code>getMap(uid)</code> for a single
+                        object.
+                    </td>
+                </tr>
+                <tr>
+                    <td><a href="../../api/classes/moorhen.MoorhenInstance.html#representation"><code>representation</code></a></td>
+                    <td>
+                        Create, edit, delete and style representations (ribbons, bonds, surfaces&hellip;). See also
+                        <a href="../../api/classes/moorhen.MoleculeRepresentation.html">MoleculeRepresentation</a>.
+                    </td>
+                </tr>
+                <tr>
+                    <td><a href="../../api/classes/moorhen.MoorhenInstance.html#scenesettings"><code>sceneSettings</code></a></td>
+                    <td>Scene-wide settings: background colour, ambient light, axes, perspective, zoom, origin, etc.</td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="../../api/classes/moorhen.MoorhenInstance.html#centeronresidue"><code>centerOnResidue()</code></a>,
+                        <a href="../../api/classes/moorhen.MoorhenInstance.html#centeronatom"><code>centerOnAtom()</code></a>,
+                        <a href="../../api/classes/moorhen.MoorhenInstance.html#centeroncoordinate"><code>centerOnCoordinate()</code></a>
+                    </td>
+                    <td>Move the camera to a residue, an atom or a coordinate.</td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="../../api/classes/moorhen.MoorhenInstance.html#newatomhoveredcallback"><code>newAtomHoveredCallback()</code></a>,
+                        <a href="../../api/classes/moorhen.MoorhenInstance.html#newmoleculechangedcallback"><code>newMoleculeChangedCallback()</code></a>,
+                        <a href="../../api/classes/moorhen.MoorhenInstance.html#subscribetostore"><code>subscribeToStore()</code></a>
+                    </td>
+                    <td>
+                        React to events: atom hover, molecule changes and store updates. See
+                        <a href="webcomponent-events.html">Callbacks and subscriptions</a>.
+                    </td>
+                </tr>
+                <tr>
+                    <td><a href="../../api/classes/moorhen.MoorhenInstance.html#session"><code>session</code></a></td>
+                    <td>Restore a previously saved session.</td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="../../api/classes/moorhen.MoorhenInstance.html#execwhenready"><code>execWhenReady()</code></a>,
+                        <a href="../../api/classes/moorhen.MoorhenInstance.html#isready"><code>isReady()</code></a>
+                    </td>
+                    <td>Run code once Coot is initialised, or check readiness.</td>
+                </tr>
+                <tr>
+                    <td><a href="../../api/classes/moorhen.MoorhenInstance.html#menusystem"><code>menuSystem</code></a></td>
+                    <td>
+                        Add your own main-menu entries and submenus. See
+                        <a href="webcomponent-menu.html">Adding custom menus</a>.
+                    </td>
+                </tr>
+                <tr>
+                    <td><a href="../../api/classes/moorhen.MoorhenInstance.html">Other groups</a></td>
+                    <td>
+                        <code>generalOptions</code>, <code>globalUI</code>, <code>mapContourSettings</code>,
+                        <code>mouseSettings</code>, <code>refinementSettings</code>, <code>backupSettings</code>,
+                        <code>modals</code>, &hellip; all documented on the
+                        <a href="../../api/classes/moorhen.MoorhenInstance.html">MoorhenInstance</a> page.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>Loading structures and maps</h2>
+
+        <p>
+            Molecules and maps are loaded through <code>moorhenInstance.files.loadFiles()</code>. It accepts one or
+            more URLs (or <code>File</code>s, strings, <code>URL</code>s&hellip;) and resolves to a
+            <a href="../../api/types/WebComponent_entry.LoadFilesResult.html"><code>LoadFilesResult</code></a>:
+            one entry per successfully loaded file, telling you what was loaded and how to refer to it.
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>type LoadFilesResult = {
+    type: "molecule" | "map";
+    uniqueID: string;   // use this to refer to the molecule/map later
+    molNo: number;
+    fileName: string;
+}[];   // one entry per file</code></pre>
+
+        <p>
+            The example below fetches the structure and the two maps of the PDB entry <code>7AVK</code> straight from
+            PDBe, then keeps the molecule&rsquo;s <code>uniqueID</code>:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>const PDBe_FILES = "https://www.ebi.ac.uk/pdbe/entry-files";
+
+const results = await moorhenInstance.files.loadFiles([
+    `${PDBe_FILES}/7avk.cif`,           // coordinates
+    `${PDBe_FILES}/7avk.ccp4`,          // 2Fo-Fc map
+    `${PDBe_FILES}/7avk_diff.ccp4`,     // difference map
+]);
+
+const moleculeUid = results.find((item) =&gt; item.type === "molecule")?.uniqueID;</code></pre>
+
+        <p>
+            Keep the molecule&rsquo;s <code>uniqueID</code> around: it is the stable handle you pass to most other API
+            calls (centring, representations, validation, &hellip;). You can also ask the instance for the loaded
+            molecules at any time with <code>moorhenInstance.getMoleculeList()</code> (or
+            <code>getMolecule(uniqueID)</code>).
+        </p>
+    </section>
+
+    <section>
+        <h2>Creating a representation</h2>
+
+        <p>
+            Representations are created through <code>moorhenInstance.representation</code>, using a molecule&rsquo;s
+            unique ID:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>const moleculeUid = moorhenInstance.getMoleculeList()[0].uniqueId;
+
+const repUid = await moorhenInstance.representation.create(moleculeUid, {
+    representationStyle: "CAs",
+    colourMode: "b-factor",
+});
+
+// Later: change it, then remove it.
+await moorhenInstance.representation.edit(repUid, { colourMode: "secondary-structure" });
+await moorhenInstance.representation.delete(repUid);</code></pre>
+
+        <p class="note-technical">
+            <strong>API tip:</strong> the full parameter list (styles, colour modes, bond options, residue-environment
+            options&hellip;) is in the
+            <a href="../../api/classes/moorhen.MoorhenInstance.html#representation">representation</a> section of the API
+            page, and the object itself is
+            <a href="../../api/classes/moorhen.MoleculeRepresentation.html">MoleculeRepresentation</a>.
+        </p>
+    </section>
+
+    <section>
+        <h2>Controlling the view</h2>
+
+        <p>
+            Once a structure is loaded you can drive the camera. To centre on a specific residue, use
+            <code>centerOnResidue(chain, residueNumber, moleculeUniqueId)</code>:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>moorhenInstance.centerOnResidue("A", 1231, moleculeUid);</code></pre>
+
+        <p>
+            Scene-wide settings live under <code>moorhenInstance.sceneSettings</code>. These include background
+            colour, ambient light, axes and perspective. For example, to set a light blue background (RGB values from
+            0 to 1, alpha 255):
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>moorhenInstance.sceneSettings.setBackgroundColor([0.85, 0.9, 1.0, 255]);</code></pre>
+
+        <h3 id="page-theme">Matching your page theme</h3>
+
+        <p>
+            A nice touch is to let the viewport follow the light/dark theme of your page. Keep the theme state
+            wherever it already lives, pick a background colour per theme, and push it into Moorhen once at
+            startup and again on every change:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>type Theme = "light" | "dark";
+
+// RGB from 0 to 1, alpha from 0 to 255.
+const BACKGROUNDS: Record&lt;Theme, [number, number, number, number]&gt; = {
+    light: [1, 1, 1, 255],
+    dark: [27 / 255, 30 / 255, 34 / 255, 255], // #1b1e22
+};
+
+function applyTheme(theme: Theme) {
+    moorhenInstance.sceneSettings.setBackgroundColor(BACKGROUNDS[theme]);
+}
+
+// Once for the theme that is already active, then for every later change.
+// These two helpers are your own theme code.
+applyTheme(currentTheme);
+onThemeChange(applyTheme);</code></pre>
+
+        <p class="note">
+            <strong>Runnable examples:</strong> the plain TypeScript project
+            <a href="https://github.com/cdegut/MoorhenWebComponent" target="_blank"
+                rel="noopener noreferrer">MoorhenWebComponent</a> wires its theme toggle to
+            <code>setBackgroundColor()</code> exactly like this, and the React project
+            <a href="https://github.com/cdegut/MoorhenWebComponentReact" target="_blank"
+                rel="noopener noreferrer">MoorhenWebComponentReact</a> does the same from a
+            <code>useEffect</code>.
+        </p>
+
+        <p class="note-technical">
+            <strong>API tip:</strong> <code>centerOnResidue</code>, <code>centerOnAtom</code> and
+            <code>centerOnCoordinate</code> are methods of
+            <a href="../../api/classes/moorhen.MoorhenInstance.html">MoorhenInstance</a>, while the generated
+            <code>sceneSettings</code> setters (a large family including <code>setBackgroundColor</code>,
+            <code>setAmbient</code>, <code>setZoom</code> &hellip;) are described on the
+            <a href="../../api/classes/moorhen.MoorhenInstance.html#scenesettings">same API page</a>.
+        </p>
+    </section>
+
+    <section>
+        <h2>Where to go next</h2>
+
+        <p>
+            To extend the menu bar, continue with
+            <a href="webcomponent-menu.html">Adding custom menus</a>. To react to changes, see
+            <a href="webcomponent-events.html">Callbacks and subscriptions</a>.
+        </p>
+
+        <p>
+            <a class="button" href="webcomponent-react.html">Prev: Using the WebComponent in React</a>
+            <a class="button" href="webcomponent-menu.html">Next: Adding custom menus</a>
+            <a class="button" href="index.html">Back to Developer Guide</a>
+        </p>
+    </section>
+</article>
+</body>
+</html>

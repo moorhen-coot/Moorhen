@@ -9,7 +9,7 @@ export const MoorhenMmrrccModal = (props: ModalComponentProps) => {
             modalId={modalKeys.MMRRCC}
             enforceMaxBodyDimensions={false}
             overflowY="hidden"
-            overflowX="auto"
+            overflowX="hidden"
             headerTitle="MMRRCC Plot"
             footer={null}
             body={<MoorhenMMRRCCPlot />}

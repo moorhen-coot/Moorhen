@@ -5,6 +5,7 @@
     align-items: center;
     gap: 8px;
     margin: 0.5rem;
+    cursor: pointer;
 }
 
 .moorhen__toggle-container.disabled {
@@ -20,6 +21,18 @@
     min-width: 34px;
     height: 18px;
     min-height: 18px;
+}
+
+.moorhen__toggle-switch--radio {
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    min-height: 20px;
+}
+
+.moorhen__toggle-switch--checkbox {
+    width: 18px;
+    min-width: 18px;
 }
 
 .moorhen__toggle-switch input {
@@ -76,6 +89,45 @@
 
 .moorhen__toggle-input:checked + .moorhen__toggle-radio:before {
     background-color: var(--moorhen-focus);
+}
+
+.moorhen__toggle-checkbox {
+    position: absolute;
+    cursor: pointer;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    top: 0;
+    left: 0;
+    background-color: var(--moorhen-background);
+    border: 1px solid var(--moorhen-border);
+    transition: 0.2s;
+    border-radius: 4px;
+}
+
+.moorhen__toggle-checkbox:before {
+    position: absolute;
+    content: "";
+    box-sizing: border-box;
+    width: 5px;
+    height: 10px;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    opacity: 0;
+    transition: 0.2s;
+}
+
+.moorhen__toggle-input:checked + .moorhen__toggle-checkbox {
+    background-color: var(--moorhen-focus);
+    border-color: var(--moorhen-focus);
+    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-focus-shadow);
+}
+
+.moorhen__toggle-input:checked + .moorhen__toggle-checkbox:before {
+    opacity: 1;
 }
 
 .moorhen__toggle-slider:before {

@@ -1,0 +1,9 @@
+[
+  { "type": "ligand", "url": "nitrobenzene.cif", "codes": [] },
+  { "type": "pdb", "url": "5a3h-nitrobenzene.pdb", "name": "molecule" },
+  { "type": "mtz", "url": "5a3h_sigmaa.mtz", "maps": [
+      { "name": "map", "columns": { "F": "FWT", "PHI": "PHWT", "Fobs": "FP", "SigFobs": "SIGFP", "FreeR": "FREE" },
+        "isDifference": false, "calcStructFact": true, "active": true },
+      { "name": "diff-map", "columns": { "F": "DELFWT", "PHI": "PHDELWT" }, "isDifference": true, "calcStructFact": false }
+  ]}
+]

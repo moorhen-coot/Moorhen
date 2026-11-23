@@ -1,6 +1,7 @@
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat4 from 'gl-matrix/mat4';
 import { linesToThickLines } from '../buildBuffers';
+import { FPS_METER_LIFT, fpsMeterSegments, lineMeasureSegments } from './overlayGeometry';
 import { getDeviceScale } from '../webGLUtils';
 import { getOffsetRect } from '../mgWebGL';
 import type { MGWebGL } from '../mgWebGL';
@@ -112,10 +113,7 @@ export function drawLineMeasures(self: MGWebGL, invMat) {
     if(self.measurePointsArray.length<1) return;
 
     self.gl.depthFunc(self.gl.ALWAYS);
-    //Begin copy/paste from crosshairs
-    const axesOffset = vec3.create();
-    vec3.set(axesOffset, 0, 0, 0);
-    const xyzOff = self.origin.map((coord, iCoord) => -coord + self.zoom * axesOffset[iCoord])
+    // The segments: overlayGeometry, shared with the WebGPU renderer.
 
     self.gl.useProgram(self.shaderProgramThickLines);
     self.setMatrixUniforms(self.shaderProgramThickLines);
@@ -152,62 +150,10 @@ export function drawLineMeasures(self: MGWebGL, invMat) {
         self.axesTextTexCoordBuffer = self.gl.createBuffer();
         self.axesTextIndexesBuffer = self.gl.createBuffer();
     }
-    const renderArrays = {
-        axesVertices: [],
-        axesColours: [],
-        axesIdx: []
-    }
-    const addSegment = (renderArrays, point1, point2, colour1, colour2) => {
-        renderArrays.axesIdx.push(renderArrays.axesVertices.length)
-        renderArrays.axesVertices = renderArrays.axesVertices.concat(point1)
-        renderArrays.axesIdx.push(renderArrays.axesVertices.length)
-        renderArrays.axesVertices = renderArrays.axesVertices.concat(point2)
-        renderArrays.axesColours = renderArrays.axesColours.concat([...colour1, ...colour2])
-    }
-
-    let hairColour = [0., 0., 0., 1.];
-    const y = self.background_colour[0] * 0.299 + self.background_colour[1] * 0.587 + self.background_colour[2] * 0.114;
-    if (y < 0.5) {
-        hairColour = [1., 1., 1., 1.];
-    }
-
-    const lineStart = vec3.create();
-    const lineEnd = vec3.create();
-
-    let lastPoint = null;
-
-    const addLine = (x1,y1,x2,y2) => {
-        vec3.set(lineStart, x1 * self.zoom * ratio, y1 * self.zoom, 0.0);
-        vec3.transformMat4(lineStart, lineStart, invMat);
-        vec3.set(lineEnd,   x2 * self.zoom * ratio, y2 * self.zoom, 0.0);
-        vec3.transformMat4(lineEnd, lineEnd, invMat);
-        addSegment(renderArrays,
-            xyzOff.map((coord, iCoord) => coord + lineStart[iCoord]),
-            xyzOff.map((coord, iCoord) => coord + lineEnd[iCoord]),
-            hairColour, hairColour
-        )
-    }
-
-    self.measurePointsArray.forEach(point => {
-
-        const x2 =  point.x;
-        const y2 = -point.y;
-
-        addLine(x2-.3/ratio,  y2-.3, x2+.3/ratio, y2-.3);
-        addLine(x2-.3/ratio,  y2+.3, x2+.3/ratio, y2+.3);
-        addLine(x2-.25/ratio, y2-.3, x2-.25/ratio, y2+.3);
-        addLine(x2+.25/ratio, y2-.3, x2+.25/ratio, y2+.3);
-
-        if(lastPoint){
-            const x1 =  lastPoint.x;
-            const y1 = -lastPoint.y;
-            addLine(x1,y1,x2,y2);
-        }
-        lastPoint = point;
-    })
+    const segments = lineMeasureSegments(self.measurePointsArray, self.origin, self.zoom, ratio, invMat, self.background_colour);
 
     const size = 1.5;
-    const thickLines = linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+    const thickLines = linesToThickLines(segments.vertices, segments.colours, size);
     const axesNormals = thickLines["normals"];
     const axesVertices_new = thickLines["vertices"];
     const axesColours_new = thickLines["colours"];
@@ -540,43 +486,8 @@ export function drawFPSMeter(self: MGWebGL) {
 
     self.gl.uniform3fv(self.shaderProgramThickLines.screenZ, screenZ);
 
-    const hitchometerColours = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
-    const hitchometerVertices = [
-        -22.9, -11.4, 0.0,
-        -12.7, -11.4, 0.0,
-        -22.9, -21.6, 0.0,
-        -12.7, -21.6, 0.0,
-        -22.9, -11.4, 0.0,
-        -22.9, -21.6, 0.0,
-        -12.7, -11.4, 0.0,
-        -12.7, -21.6, 0.0,
-
-    ];
-
-    for(let i=0; i<self.mspfArray.length;i++){
-        let mspf = self.mspfArray[i];
-        if(mspf>200.0) mspf = 200.0;
-
-        const l = mspf / 200.0 * 10.0;
-        const x = -22.8 + i/20.;
-        const y1 = -21.5;
-        const y2 = -21.5 + l;
-        const z = 0.0;
-        hitchometerVertices.push(x,y1,z,x,y2,z);
-        if(mspf<17){
-            hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
-            hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
-        } else if(mspf<24) {
-            hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
-            hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
-        } else if(mspf<50) {
-            hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
-            hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
-        } else {
-            hitchometerColours.push(0.8, 0.2, 0.2, 1.0);
-            hitchometerColours.push(0.8, 0.2, 0.2, 1.0);
-        }
-    }
+    // The box and bars: overlayGeometry, shared with the WebGPU renderer.
+    const { vertices: hitchometerVertices, colours: hitchometerColours } = fpsMeterSegments(self.mspfArray);
 
     const thickLines = linesToThickLines(hitchometerVertices, hitchometerColours, size);
     const hitchometerNormals = thickLines["normals"];
@@ -617,7 +528,12 @@ export function drawFPSMeter(self: MGWebGL) {
     self.gl.depthFunc(self.gl.LESS)
 }
 
-export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=1.0) {
+/**
+ * The 2D overlays' text - legends, the FPS text, the measuring distances - into its glyph atlas
+ * (measureText2DCanvasTexture), placed for this view: drawTextOverlays' work short of drawing. A
+ * frame drawn by another renderer (externalRenderer) needs this and draws the atlas itself.
+ */
+export function gatherTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=1.0) {
 
     const ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight * ratioMult
 
@@ -627,7 +543,16 @@ export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=
         textColour = "white";
     }
 
-    self.measureText2DCanvasTexture.clearBigTexture()
+    // Gathered here and emitted at the end, rather than written into the atlas as they are found.
+    //
+    // This runs every frame, and it used to begin by wiping the glyph atlas - which threw away the
+    // rasterisation cache and re-uploaded a 768x2048 canvas, 6 MB, twice a frame, whether or not a
+    // character had changed. On an empty scene with nothing loaded that was most of the frame.
+    //
+    // Collecting first is what makes the difference: the set of strings has to be known before the
+    // atlas is touched, because that is what decides whether it needs rebuilding at all. The
+    // positions below still change every frame - they follow the view - and are still recomputed.
+    const items: { font: string, text: string, x: number, y: number, z: number }[] = [];
 
     const drawString = (s, xpos, ypos, zpos, font, threeD) => {
         if(font) self.textCtx.font = font;
@@ -636,12 +561,7 @@ export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=
         vec3.transformMat4(axesOffset, axesOffset, invMat);
 
         const xyzOff = self.origin.map((coord, iCoord) => -coord + self.zoom * axesOffset[iCoord]);
-        const base_x = xyzOff[0];
-        const base_y = xyzOff[1];
-        const base_z = xyzOff[2];
-
-        self.measureText2DCanvasTexture.addBigTextureTextImage({font:font,text:s,x:base_x,y:base_y,z:base_z})
-
+        items.push({font:font, text:s, x:xyzOff[0], y:xyzOff[1], z:xyzOff[2]})
     }
 
     self.textLegends.forEach(label => {
@@ -654,7 +574,15 @@ export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=
     if(window.devicePixelRatio){
         fontMult *= window.devicePixelRatio
     }
-    if(self.showFPS) drawString(self.fpsText, -23.5*ratio, -23.5, 0.0, (fontMult * 20 * font_scale).toFixed(0)+"px helvetica", false);
+    if(self.showFPS){
+        const font = (fontMult * 20 * font_scale).toFixed(0)+"px helvetica";
+        drawString(self.fpsText, -23.5*ratio, -23.5 + FPS_METER_LIFT, 0.0, font, false);
+        // On its own line rather than appended. The glyph atlas packs each string into a column
+        // of its 1024-pixel width, so one long line runs off the edge and its texture coordinates
+        // pass 1.0 - which CLAMP_TO_EDGE then smears into a row of stripes.
+        if(self.renderStatsText)
+            drawString(self.renderStatsText, -23.5*ratio, -23.5 + FPS_METER_LIFT - 2.0, 0.0, font, false);
+    }
 
     let lastPoint = null;
     let lastLastPoint = null;
@@ -698,7 +626,18 @@ export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=
         })
     })
 
-    self.measureText2DCanvasTexture.recreateBigTextureBuffers();
+    // The colour is left to contentKeyFor, which reads it from the store exactly as
+    // addBigTextureTextImage does below. Passing the local textColour instead would key on one
+    // colour while rasterising with another, and a background change would then not redraw.
+    const atlas = self.measureText2DCanvasTexture;
+    const rebuilt = atlas.beginFrame(atlas.contentKeyFor(items));
+    items.forEach(item => atlas.addBigTextureTextImage(item));
+    atlas.recreateBigTextureBuffers(rebuilt);
+}
+
+export function drawTextOverlays(self: MGWebGL, invMat,ratioMult=1.0,font_scale=1.0) {
+
+    gatherTextOverlays(self, invMat, ratioMult, font_scale);
 
     self.gl.useProgram(self.shaderProgramTextInstanced);
     self.setMatrixUniforms(self.shaderProgramTextInstanced);

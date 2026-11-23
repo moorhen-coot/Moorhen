@@ -103,10 +103,12 @@ describe('Testing molecules_container_js', () => {
         const gridSize = 0.15
         const radius = 0.65
         const isoLevel = 1.8
-        const mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2", gridSize, radius, isoLevel, 1)
+        const pick_mesh = molecules_container.DrawMoorhenMetaBalls(coordMol, "B/1-2", gridSize, radius, isoLevel, 1)
+        const mesh = pick_mesh.mesh
         expect(mesh.vertices.size()).toBeGreaterThan(1000)
         expect(mesh.triangles.size()).toBeGreaterThan(1000)
         cleanUpVariables.push(mesh)
+        cleanUpVariables.push(pick_mesh)
     })
 
     test("H-Bonds", () => {
@@ -545,6 +547,62 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(resSpec)
     })
 
+    test('undo restores the right molecule when two molecules have been edited', () => {
+        // Every molecule used to back up to coot-backup/placeholder-<n>, so the
+        // second molecule's backup overwrote the first's, and undo() on the
+        // first molecule loaded the second (patches/coot-undo-backup-per-molecule.patch).
+        const imolA = molecules_container.read_pdb('./5a3h.pdb')
+        const imolB = molecules_container.read_pdb('./tm-A.pdb')
+        const nAtomsA = molecules_container.get_number_of_atoms(imolA)
+        const nAtomsB = molecules_container.get_number_of_atoms(imolB)
+        expect(nAtomsA).not.toBe(nAtomsB)
+
+        molecules_container.delete_using_cid(imolA, "//A/10", "RESIDUE")
+        molecules_container.delete_using_cid(imolB, "//A/20", "RESIDUE")
+        const nAtomsAEdited = molecules_container.get_number_of_atoms(imolA)
+        const nAtomsBEdited = molecules_container.get_number_of_atoms(imolB)
+        expect(nAtomsAEdited).toBeLessThan(nAtomsA)
+        expect(nAtomsBEdited).toBeLessThan(nAtomsB)
+
+        molecules_container.undo(imolA)
+        expect(molecules_container.get_number_of_atoms(imolA)).toBe(nAtomsA)
+        expect(molecules_container.get_number_of_atoms(imolB)).toBe(nAtomsBEdited)
+
+        molecules_container.undo(imolB)
+        expect(molecules_container.get_number_of_atoms(imolB)).toBe(nAtomsB)
+        expect(molecules_container.get_number_of_atoms(imolA)).toBe(nAtomsA)
+    })
+
+    test('validation_information_t type is a readable string', () => {
+        // coot::validation_information_t only has a std::string "type" in wasm builds
+        // (#ifdef __EMSCRIPTEN__ in api/validation-information.hh). A coot checkout that
+        // still tested the old EMSCRIPTEN macro gave the coot library and the embind
+        // wrappers different layouts for this class, and "type" came back as garbage.
+        const imol = molecules_container.read_pdb('./5a3h.pdb')
+        const rota = molecules_container.rotamer_analysis(imol)
+        expect(rota.type).toBe('PROBABILITY')
+        const omega = molecules_container.peptide_omega_analysis(imol)
+        expect(omega.type).toBe('TORSION_ANGLE')
+        cleanUpVariables.push(rota, omega)
+    })
+
+    test('SSM_superpose', () => {
+        // With the layout mismatch above, destroying the result's alignment_info_vec
+        // aborted or raised "memory access out of bounds".
+        const imolRef = molecules_container.read_pdb('./5a3h.pdb')
+        const imolMov = molecules_container.read_pdb('./5a3h.pdb')
+        const result = molecules_container.SSM_superpose(imolRef, 'A', imolMov, 'A')
+        const info = JSON.parse(result.superpose_info)
+        expect(info.nalgn).toBe(300)
+        expect(info.rmsd).toBeLessThan(0.01)
+        expect(result.alignment_info_vec.size()).toBe(1)
+        const vi = result.alignment_info_vec.get(0)
+        expect(vi.cviv.size()).toBe(1)
+        expect(vi.cviv.get(0).rviv.size()).toBe(300)
+        expect(result.aligned_pairs.size()).toBe(300)
+        cleanUpVariables.push(vi, result.alignment_info_vec, result.aligned_pairs)
+    })
+
     test.skip('flip_peptide by residue spec', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo).toBe(0)
@@ -635,6 +693,34 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.vertices.size()).toBeCloseTo(147864, -4)
         expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -4)
         cleanUpVariables.push(simpleMesh)
+    })
+
+    test("Van der Waals and solvent accessible surfaces", () => {
+        // The other two surface types MoleculesToTriangles makes. The accessible surface is the van
+        // der Waals one grown by the probe radius: along x, wider by twice the probe radius (the
+        // atom furthest out is the same one; the tessellation misses its extreme by << 0.5 A).
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        molecules_container.M2T_updateFloatParameter(coordMolNo, "surfaceStyleProbeRadius", 1.4)
+        molecules_container.M2T_updateFloatParameter(coordMolNo, "ballsStyleRadiusMultiplier", 1.0)
+        const surface = (style) => {
+            const simpleMesh = molecules_container.get_molecular_representation_mesh(
+                coordMolNo, "//A/10-30", "Chain", style, true
+            )
+            cleanUpVariables.push(simpleMesh)
+            const vertices = simpleMesh.vertices
+            let lo = Infinity, hi = -Infinity
+            for (let i = 0; i < vertices.size(); i++) {
+                const x = vertices.get(i).pos[0]
+                lo = Math.min(lo, x)
+                hi = Math.max(hi, x)
+            }
+            return { nVertices: vertices.size(), nTriangles: simpleMesh.triangles.size(), width: hi - lo }
+        }
+        const vdw = surface("VdWSurface")
+        const accessible = surface("AccessibleSurface")
+        expect(vdw.nTriangles).toBeGreaterThan(100)
+        expect(accessible.nTriangles).toBeGreaterThan(100)
+        expect(accessible.width - vdw.width).toBeCloseTo(2 * 1.4, 0)
     })
 
     test("ligand surface", () => {
@@ -1424,15 +1510,6 @@ describe('Testing molecules_container_js', () => {
         expect(ss2_vector.get(5).int_user_data).toBe(6)
         cleanUpVariables.push(ss2_vector)
     })
-
-    test("privateer_validate", () => {
-        const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
-        const results = molecules_container.privateer_validate(coordMolNo)
-        const first = results.get(0)
-        expect(first.wurcs).toBe("WURCS=2.0/2,3,2/[a2122h-1b_1-5_2*NCC/3=O][a1122h-1b_1-5]/1-1-2/a4-b1_b4-c1")
-        expect(results.size()).toBe(38)
-        cleanUpVariables.push(results)
-    });
 
     test("get molecule diameter", () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')

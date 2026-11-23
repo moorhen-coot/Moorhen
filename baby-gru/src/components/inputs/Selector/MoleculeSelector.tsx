@@ -17,14 +17,14 @@ type MoorhenMoleculeSelectType = {
     useUniqueId?: boolean;
 };
 
-type MoorhenMoleculeSelectMolNoType = MoorhenMoleculeSelectType & {
+export type MoorhenMoleculeSelectMolNoType = MoorhenMoleculeSelectType & {
     useUniqueId?: false;
     selectedMolecule?: number;
     setSelectedMolecule?: React.Dispatch<React.SetStateAction<number | undefined>>;
     onSelect?: (arg0: number) => void;
 };
 
-type MoorhenMoleculeSelectUIDType = MoorhenMoleculeSelectType & {
+export type MoorhenMoleculeSelectUIDType = MoorhenMoleculeSelectType & {
     useUniqueId: true;
     selectedMolecule?: string;
     setSelectedMolecule?: React.Dispatch<React.SetStateAction<string | undefined>>;

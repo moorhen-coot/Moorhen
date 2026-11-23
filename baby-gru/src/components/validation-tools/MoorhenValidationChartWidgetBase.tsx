@@ -16,7 +16,8 @@ Chart.register(annotationPlugin);
 type ValidationChartProps = {
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
     fetchData: (arg0: number, arg1: number, arg2: string) => Promise<any>;
-    getChart: (arg0: number, arg1: number, arg2: string, arg3: any) => any;
+    /** The last argument is the chart's container element, for charts that size it to their data */
+    getChart: (arg0: number, arg1: number, arg2: string, arg3: any, containerBody: HTMLDivElement | null) => any;
     extraControlForm?: React.JSX.Element;
     extraControlFormValue?: any;
     enableChainSelect?: boolean;
@@ -37,6 +38,9 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
     const chainSelectRef = useRef<null | HTMLSelectElement>(null);
     const mapSelectRef = useRef<null | HTMLSelectElement>(null);
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null);
+    // A ref, not document.getElementById: inside the web component the canvas is in a shadow root
+    const canvasRef = useRef<null | HTMLCanvasElement>(null);
+    const containerBodyRef = useRef<null | HTMLDivElement>(null);
 
     const [plotData, setPlotData] = useState(null);
 
@@ -110,9 +114,17 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
             return;
         }
 
-        const canvas = document.getElementById(`${props.chartId}-canvas`) as HTMLCanvasElement;
-        const ctx = canvas.getContext("2d");
-        const chartData = props.getChart(selectedModel, selectedMap, enableChainSelect ? chainSelectRef.current.value : null, plotData);
+        const ctx = canvasRef.current?.getContext("2d");
+        if (!ctx) {
+            return;
+        }
+        const chartData = props.getChart(
+            selectedModel,
+            selectedMap,
+            enableChainSelect ? chainSelectRef.current.value : null,
+            plotData,
+            containerBodyRef.current
+        );
         if (!chartData) {
             return;
         }
@@ -157,8 +169,9 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
                             style={{ height: "100%", minHeight: convertViewtoPx(45, height) }}
                             className="containerBody"
                             id={`${props.chartId}-container-body`}
+                            ref={containerBodyRef}
                         >
-                            <canvas id={`${props.chartId}-canvas`}></canvas>
+                            <canvas id={`${props.chartId}-canvas`} ref={canvasRef}></canvas>
                         </div>
                     </div>
                 </div>

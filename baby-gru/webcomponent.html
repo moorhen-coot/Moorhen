@@ -34,6 +34,7 @@
             const moorhenTest = document.getElementById("moorhen-test");
             const instance = await moorhenTest.getMoorhenInstance();
             instance.sceneSettings.resetSceneSettings();
+            instance.execWhenReady(() => instance.snackbar.enqueueSnackbar({ message: "Web Component test page!", variant: "warning" }));;
         </script>
         <moorhen-web-component id="moorhen-test"></moorhen-web-component>
     </main>

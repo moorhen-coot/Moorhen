@@ -75,26 +75,61 @@ export function makeBlurBuffers(self: MGWebGL, blurSize) {
 
 }
 
+/** How many points the occlusion hemisphere is sampled at. Matches `samples[32]` in the shader. */
+const SSAO_KERNEL_SIZE = 32;
+
+/**
+ * The shortest sample, as a fraction of the occlusion radius.
+ *
+ * Samples much closer in than this say nothing: at a tenth of a 2 angstrom radius they are asking
+ * whether something occludes at 0.2 angstroms, which is below the scale of any feature a surface
+ * has, and below the depth buffer's own precision.
+ */
+const SSAO_MIN_SAMPLE = 0.15;
+
+/**
+ * How the sample lengths are distributed between SSAO_MIN_SAMPLE and the full radius.
+ *
+ * An exponent above 1 biases the kernel towards the fragment, so close contact is sampled more
+ * densely than the far edge of the hemisphere - which is what you want, because contact shading is
+ * the part the eye reads as shape. 1.5 keeps that bias while leaving the median at about 0.45 of
+ * the radius.
+ */
+const SSAO_SAMPLE_BIAS = 1.5;
+
+/**
+ * How long the i'th occlusion sample is, as a fraction of the radius the user set.
+ *
+ * Stratified over the kernel, so the 32 samples cover the radius range evenly instead of clustering
+ * wherever the random numbers happen to fall. The half-step keeps the first sample off zero.
+ *
+ * One length scaling, not two. This used to scale by Math.random() as well as by the stratified
+ * term, which compounded: the median sample ended up at 0.12 of the radius and 43% of the kernel
+ * sat within 0.1 of it. The slider then could not mean what it said - at the 2.0 angstrom default
+ * the typical probe reached 0.24 angstroms, so on anything larger than a small ligand the
+ * hemisphere never left the surface it started on, and the whole pass did almost nothing.
+ *
+ * Pure and exported so the distribution can be asserted on directly; it is the part that was wrong,
+ * and it is invisible in any screenshot.
+ */
+export function ssaoSampleLength(i: number, kernelSize: number = SSAO_KERNEL_SIZE): number {
+    const t = (i + 0.5) / kernelSize;
+    return SSAO_MIN_SAMPLE + (1.0 - SSAO_MIN_SAMPLE) * Math.pow(t, SSAO_SAMPLE_BIAS);
+}
+
 export function initializeSSAOBuffers(self: MGWebGL) {
     self.ssaoKernel = [];
-    for (let i = 0; i < 32; ++i) {
+    for (let i = 0; i < SSAO_KERNEL_SIZE; ++i) {
 
         const sample = vec3Create([Math.random() * 2.0 - 1.0, Math.random() * 2.0 - 1.0, Math.random()]);
 
         NormalizeVec3(sample);
-        vec3.scale(sample,sample,Math.random());
-        let scale = i / 32.0;
-
-        // scale samples s.t. they're more aligned to center of kernel
-        scale = self.lerp(0.1, 1.0, scale * scale);
-        vec3.scale(sample,sample,scale);
+        vec3.scale(sample,sample,ssaoSampleLength(i));
         self.ssaoKernel.push(sample[0]);
         self.ssaoKernel.push(sample[1]);
         self.ssaoKernel.push(sample[2]);
         self.ssaoKernel.push(1.0);
     }
-    //console.log(self.ssaoKernel);
-    //console.log(self.ssaoKernel.length);
 
     const ssaoNoise = [];
     for (let i = 0; i < 16; i++) {

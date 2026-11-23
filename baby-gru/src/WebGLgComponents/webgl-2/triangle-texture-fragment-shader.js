@@ -1,12 +1,16 @@
+import {anaglyph_colour_snippet} from './anaglyph-colour-snippet.js';
+
 var triangle_texture_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    in lowp vec2 vTexture;
+    in highp vec2 vTexture;
     in lowp vec4 eyePos;
 
     uniform sampler2D valueMap;
     uniform sampler2D colorMap;
 
     uniform vec4 fogColour;
+
+${anaglyph_colour_snippet}
 
     uniform float fog_end;
     uniform float fog_start;
@@ -40,7 +44,7 @@ var triangle_texture_fragment_shader_source = `#version 300 es\n
       vec4 color = texture(colorMap,vec2(edge, 0.5) );
       //vec4 color = vec4(edge,edge,edge,1.0);
 
-      fragColor = mix(color, fogColour, fogFactor );
+      fragColor = mix(anaglyphColour(color), fogColour, fogFactor );
     }
 `;
 

@@ -12,7 +12,7 @@ import { PanelErrorBoundary } from "../PanelErrorBoundary";
 import "./draggable-modal-base.css";
 
 
-type MoorhenDraggableModalBaseProps = {
+export type MoorhenDraggableModalBaseProps = {
     headerTitle: string | React.JSX.Element;
     body: React.JSX.Element | React.JSX.Element[];
     modalId: ModalKey;
@@ -26,6 +26,12 @@ type MoorhenDraggableModalBaseProps = {
     top?: number;
     left?: number;
     rememberSize?: boolean;
+    /**
+     * Grow the modal to fit its content when the content grows after opening (content loaded later,
+     * a slot filled from the page…), up to the maximum size. Stops once the user resizes or docks
+     * the modal, and does not apply to a size restored from a previous session.
+     */
+    fitContent?: boolean;
     additionalHeaderButtons?: React.JSX.Element[];
     footer?: React.JSX.Element;
     additionalChildren?: React.JSX.Element;
@@ -152,7 +158,6 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
             });
             setPosition({ x: glWidth - width - 550 > 0 ? 550 : glWidth - width  , y: top });
             sizeRef.current = { width, height };
-            props.onResize?.(null, "bottomRight", bodyRef.current, { width: 0, height: 0 }, { width, height });
             props.onResizeStop?.(null, "bottomRight", bodyRef.current, { width: 0, height: 0 });
             aspectRatioRef.current = width / height;
             console.log(`Measured body size: ${rect.width}x${rect.height}`);
@@ -192,6 +197,60 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
     onResizeRef.current = props.onResize;
     const onResizeStopRef = useRef(props.onResizeStop);
     onResizeStopRef.current = props.onResizeStop;
+
+    // The measurement-phase onResize above fires while the body is still the
+    // hidden off-screen copy, before the real modal (with its real content
+    // refs/canvases) has mounted. Re-fire onResize once the real modal has
+    // committed so content that sizes itself off the real DOM fits immediately,
+    // without requiring the user to nudge the resize handle first.
+    useLayoutEffect(() => {
+        if (!measured) {
+            return;
+        }
+        const { width, height } = sizeRef.current;
+        onResizeRef.current?.(
+            null,
+            "bottomRight",
+            modalRef.current,
+            { width: 0, height: 0 },
+            { width: width - marginWidth, height: height - totalNonBodyHeight }
+        );
+    }, [measured]);
+
+    // ── Fit to content ─────────────────────────────────────────────────
+    // The size above is measured once. With `fitContent`, content that arrives or grows later (a
+    // slot filled by the page, content loaded on first open) grows the modal, until the user takes
+    // over the size (resize, dock) or a saved size was restored.
+    const userSizedRef = useRef(Boolean(savedSize.width && savedSize.height));
+    const visibleBodyRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!props.fitContent || !measured || !contentRef.current) return;
+        const fit = () => {
+            const body = visibleBodyRef.current;
+            const modal = modalRef.current;
+            if (!body || !modal || userSizedRef.current) return;
+            // Grow by what does not fit: exact whatever the header and footer measure. From the size
+            // drawn, not the size asked for: CSS minimums can make the modal larger than `size`.
+            const overflow = {
+                width: Math.max(0, body.scrollWidth - body.clientWidth),
+                height: Math.max(0, body.scrollHeight - body.clientHeight),
+            };
+            if (overflow.width === 0 && overflow.height === 0) return;
+            const drawn = modal.getBoundingClientRect();
+            const wanted = {
+                width: Math.min(maxWidth, Math.max(sizeRef.current.width, drawn.width + overflow.width)),
+                height: Math.min(maxHeight, Math.max(sizeRef.current.height, drawn.height + overflow.height)),
+            };
+            if (wanted.width === sizeRef.current.width && wanted.height === sizeRef.current.height) return;
+            sizeRef.current = wanted;
+            setSize(wanted);
+        };
+        const observer = new ResizeObserver(fit);
+        observer.observe(contentRef.current);
+        fit();
+        return () => observer.disconnect();
+    }, [props.fitContent, measured, maxWidth, maxHeight]);
 
     const dispatch = useDispatch();
     const focusHierarchy = useSelector((state: RootState) => state.modals.focusHierarchy);
@@ -331,6 +390,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
 
     /** onMouseDown handler for the resize grip. Starts resize tracking. */
     const handleResizeStart = (evt: React.MouseEvent<HTMLElement, MouseEvent>): void => {
+        userSizedRef.current = true;
         pauseAtomHovering();
         evt.preventDefault();
         evt.stopPropagation();
@@ -397,6 +457,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
         if (!allowDocking) {
             return;
         }
+        userSizedRef.current = true;
         if (!docked) {
             unDockRef.current = { position: position, size: sizeRef.current };
             const aspect = sizeRef.current.width / sizeRef.current.height;
@@ -551,6 +612,7 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                 </div>
                 <div
                     className="moorhen__modal-body"
+                    ref={visibleBodyRef}
                     // style={{
                     //     maxHeight: maxHeight - totalNonBodyHeight, // Account for header/footer height
                     //     maxWidth: maxWidth,
@@ -562,7 +624,14 @@ export const MoorhenDraggableModalBase = (props: MoorhenDraggableModalBaseProps)
                         overflowX: props.overflowX ?? "auto",
                     }}
                 ><PanelErrorBoundary panelName={props.modalId}>
-                    {props.body}
+                    {props.fitContent ? (
+                        // Watched for size changes; it takes the content's height, the body does not
+                        <div ref={contentRef} style={{ flex: "0 0 auto" }}>
+                            {props.body}
+                        </div>
+                    ) : (
+                        props.body
+                    )}
                     {additionalChildren}{" "}
                 </PanelErrorBoundary>
                 </div>

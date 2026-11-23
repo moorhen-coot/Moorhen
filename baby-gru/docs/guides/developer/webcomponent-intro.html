@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Moorhen WebComponent - Moorhen Developer Guide</title>
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/theme-toggle.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+    <img src="../../assets/MoorhenLogo.png" alt="Moorhen logo">
+    <h1>The Moorhen WebComponent</h1>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">Dark mode</button>
+</header>
+<nav class="site-nav">
+    <ul>
+        <li><a href="../../index.html">Docs Home</a></li>
+        <li><a href="index.html">Developer Guide</a></li>
+        <li><a href="../user/index.html">User Guide</a></li>
+        <li><a href="../../api/index.html">API Reference</a></li>
+    </ul>
+</nav>
+
+<article class="guide-article">
+    <h2>Moorhen as an embeddable Web Component</h2>
+
+    <p>
+        Moorhen is a web browser molecular graphics program. The <code>moorhen</code> npm package also ships it as a
+        standards-based <strong>Web Component</strong>: a custom element, <code>&lt;moorhen-web-component&gt;</code>,
+        that you can drop into any web page and then control from your own JavaScript. The whole Moorhen user
+        interface is bundled inside the element: the OpenGL/WebGL viewport, the menu bar, panels and tools. Embedding
+        it is therefore very close to embedding a plain <code>&lt;iframe&gt;</code>-like widget, except that you get a
+        rich, typed API to drive it.
+    </p>
+
+    <p class="note-technical">
+        <strong>Technical note:</strong> the element is <em>framework-agnostic</em>. It is built on React internally,
+        but your host page does not need React at all. This makes it the recommended way to embed Moorhen in a
+        "standard" web page or application. Because the element renders into a shadow root, CSS from your page does not
+        leak into Moorhen (and vice-versa).
+    </p>
+
+    <section>
+        <h2>Before you start: serve the Moorhen assets</h2>
+
+        <p>
+            At runtime the element loads its stylesheet and the WebAssembly binaries from a <code>MoorhenAssets</code>
+            folder. You must copy that folder from the installed package into the static files of your project, and
+            redo the copy after every Moorhen update. See
+            <a href="webcomponent-setup.html">Setting up the WebComponent</a> for the exact steps.
+        </p>
+    </section>
+
+    <section>
+        <h2>Before you start: cross-origin isolation</h2>
+
+        <p>
+            Moorhen's Coot/CCP4 code is compiled with WebAssembly <em>threads</em> and needs
+            <code>SharedArrayBuffer</code>, which browsers only expose to <strong>cross-origin isolated</strong> pages.
+            Your server must therefore send these two response headers:
+        </p>
+
+        <pre class="code-block" data-lang="http"><code>Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp</code></pre>
+
+        <p>
+            This has a CORS consequence too: with <code>require-corp</code>, every cross-origin resource must opt in
+            with CORS or a <code>Cross-Origin-Resource-Policy</code> header, so keeping <code>MoorhenAssets</code> on
+            your own origin is simplest. If <code>window.crossOriginIsolated</code> is not <code>true</code>, Moorhen
+            cannot start.
+        </p>
+
+        <p>
+            See <a href="webcomponent-setup.html#cross-origin-isolation">Setting up the WebComponent</a> for Vite and
+            nginx examples.
+        </p>
+    </section>
+
+    <section>
+        <h2>The architecture of the moorhen package</h2>
+
+        <p>
+            The public API of the package is split across several sub-path exports. There is no bare
+            <code>import ... from "moorhen"</code> entry point. Always import from a sub-path:
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Module</th>
+                    <th>What it gives you</th>
+                    <th>Use it when&hellip;</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>moorhen/web-component</code></td>
+                    <td>
+                        The custom element (<code>MoorhenWebComponent</code>) and its registrar
+                        (<code>registerMoorhenWebComponent</code>), plus the types you need as an integrator
+                        (<code>MoorhenWebComponentAttributes</code>, <code>MoorhenInstance</code>,
+                        <code>RootState</code>, menu &amp; load-result types).
+                    </td>
+                    <td>
+                        Embedding Moorhen in any page or application, no matter the framework (this is the
+                        recommended, easiest path for standard use).
+                    </td>
+                </tr>
+                <tr>
+                    <td><code>moorhen/web-component/utils</code></td>
+                    <td>
+                        Two React hooks that wrap a mounted element:
+                        <code>useWebComponentInstanceRef</code> and <code>useMoorhenSelector</code>.
+                    </td>
+                    <td>
+                        You embed the element inside a <strong>React</strong> application and want the instance and
+                        store state as React primitives.
+                    </td>
+                </tr>
+                <tr>
+                    <td><code>moorhen/react-lib</code></td>
+                    <td>
+                        Moorhen's own React components and hooks (<code>MoorhenProvider</code>,
+                        <code>MoorhenContainer</code>, <code>MoorhenApp</code>, &hellip;). The two WebComponent hooks
+                        appear in its type exports only for type-generation. They are not a supported way to
+                        drive an element from here. Import them from <code>moorhen/web-component/utils</code> instead.
+                    </td>
+                    <td>
+                        You want to embed &amp; compose Moorhen's UI <em>directly</em> inside a React application
+                        (rather than using the ready-made element). More advanced; for most standard uses the web
+                        component is simpler.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>
+            See the <a href="../../api/index.html">API Reference</a> for the full, generated documentation of each
+            surface. The guides that follow show these imports in context.
+        </p>
+    </section>
+
+    <section>
+        <h2>How the WebComponent works</h2>
+
+        <p>
+            Using the component is a two-step process: <strong>register</strong> the custom element, then wait for it
+            to become <strong>ready</strong> before driving it.
+        </p>
+
+        <ol>
+            <li>
+                Call <code>registerMoorhenWebComponent()</code> once to define the
+                <code>&lt;moorhen-web-component&gt;</code> element.
+            </li>
+            <li>
+                Put the element in your page with a unique <code>id</code>, then wait for readiness. You can watch the
+                boolean <code>ready</code> property, listen for the <code>moorhenReady</code> event on
+                <code>window</code>, or simply <code>await element.getMoorhenInstance()</code>.
+            </li>
+        </ol>
+
+        <p>
+            Once ready, everything is exposed on the <a href="../../api/classes/moorhen.MoorhenInstance.html">MoorhenInstance</a>
+            returned by <code>getMoorhenInstance()</code>: loading molecules and maps, representations, the camera and
+            the store. The DOM element itself only knows its size and attributes.
+        </p>
+
+        <p class="note-technical">
+            <strong>Under the hood:</strong> when connected, the element opens a shadow root, loads
+            <code>&lt;url-prefix&gt;/moorhen.css</code>, renders the Moorhen UI inside it, and links the live
+            <code>MoorhenInstance</code> back to the element via its <code>webComponent</code> property.
+        </p>
+    </section>
+
+    <section>
+        <h2>Where to go next</h2>
+
+        <p>
+            Continue with a working, step-by-step example in a plain TypeScript page
+            (<a href="webcomponent-setup.html">Setting up the WebComponent</a>), or jump straight to the
+            <a href="webcomponent-react.html">React integration guide</a>. The rest of the series covers the
+            <a href="webcomponent-instance-api.html">MoorhenInstance API</a>,
+            <a href="webcomponent-menu.html">custom menus</a>,
+            <a href="webcomponent-slots.html">custom HTML slots</a> and
+            <a href="webcomponent-events.html">callbacks and subscriptions</a>.
+        </p>
+
+        <p>
+            <a class="button" href="webcomponent-setup.html">Next: Setting up the WebComponent</a>
+            <a class="button" href="index.html">Back to Developer Guide</a>
+        </p>
+    </section>
+</article>
+</body>
+</html>

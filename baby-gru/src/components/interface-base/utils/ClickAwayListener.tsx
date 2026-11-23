@@ -1,6 +1,7 @@
 import { useStore } from "react-redux";
 import React, { useEffect, useRef } from "react";
 import { RootState } from "@/store";
+import { getDeepActiveElement, getEventOrigin } from "@/utils/shadowDom";
 
 const isSelectRelated = (node: Node | null): boolean =>
     node instanceof HTMLSelectElement ||
@@ -15,6 +16,15 @@ export const MoorhenClickAwayListener = (props: {
     const syntheticEventRef = useRef(false);
     const store = useStore<RootState>();
 
+    // The document listener is registered once, on mount, so it would otherwise call
+    // the onClickAway from the first render for the component's whole lifetime.
+    // Consumers that guard on state (MoorhenContextMenu: "don't close while my popover
+    // is open") must be judged against current state, so read the callback via a ref.
+    const onClickAwayRef = useRef(props.onClickAway);
+    useEffect(() => {
+        onClickAwayRef.current = props.onClickAway;
+    });
+
     const handleClickAway = (event: MouseEvent) => {
         const insideReactTree = syntheticEventRef.current; // This flag is set to true when a click event originates from within the React tree because handleSyntheticEvent is normally executed before the event listener
         syntheticEventRef.current = false;
@@ -27,7 +37,8 @@ export const MoorhenClickAwayListener = (props: {
             return;
         }
 
-        const target = event.target as Node | null;
+        // The real target and focused element, also inside the web component's shadow root
+        const target = getEventOrigin(event) as Node | null;
         const path = typeof event.composedPath === "function" ? event.composedPath() : [];
         const insideDOMTree = path.length > 0 ? path.includes(node) : !!(target && node.contains(target));
 
@@ -40,7 +51,7 @@ export const MoorhenClickAwayListener = (props: {
         // control that belongs to this popup. While a <select> is focused (its dropdown is
         // open) - or when the click itself targets a select/option - don't treat it as an
         // away click. This removes the need for <select> to globally pause this listener.
-        const activeElement = document.activeElement;
+        const activeElement = getDeepActiveElement();
         const isSelectInteraction = isSelectRelated(activeElement) || isSelectRelated(target);
 
         if (isSelectInteraction && !isProgrammatic) {
@@ -48,7 +59,7 @@ export const MoorhenClickAwayListener = (props: {
         }
 
         if (store.getState().globalUI.clickAwayListenerPauseCount === 0) {
-            props.onClickAway(event);
+            onClickAwayRef.current(event);
         }
     };
 

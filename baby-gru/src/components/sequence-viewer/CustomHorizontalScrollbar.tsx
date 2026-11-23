@@ -1,4 +1,4 @@
-import React, { ReactNode, memo, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, memo, useCallback, useEffect, useRef, useState } from 'react';
 import './CustomHorizontalScrollbar.css';
 
 interface CustomHorizontalScrollbarProps {
@@ -9,10 +9,12 @@ interface CustomHorizontalScrollbarProps {
     forceRedrawScrollBarKey?: string | number;
 }
 
+const MIN_THUMB_WIDTH = 40;
+
 export const CustomHorizontalScrollbar = memo((props: CustomHorizontalScrollbarProps) => {
     const { children, style, className, onDraggingChange, forceRedrawScrollBarKey } = props;
     const scrollRef = useRef<HTMLDivElement>(null);
-    const [thumbWidth, setThumbWidth] = useState(40);
+    const [thumbWidth, setThumbWidth] = useState(MIN_THUMB_WIDTH);
     const [thumbLeft, setThumbLeft] = useState(0);
     const [dragState, setDragState] = useState({
         isDragging: false,
@@ -20,28 +22,61 @@ export const CustomHorizontalScrollbar = memo((props: CustomHorizontalScrollbarP
         initialThumbLeft: 0,
     });
 
-    // Update thumb size and position on scroll or resize
-    useEffect(() => {
-        const updateThumb = () => {
-            const el = scrollRef.current;
-            if (!el) return;
-            const visible = el.clientWidth;
-            const total = el.scrollWidth;
-            const width = Math.max((visible / total) * visible, 40); // min width 40px
-            setThumbWidth(width);
-            setThumbLeft((el.scrollLeft / (total - visible)) * (visible - width) || 0);
-        };
-        updateThumb();
+    // Recompute the thumb from the scroll container's current geometry.
+    // A container that is hidden (display: none, or an ancestor still at zero
+    // width mid-transition) reports 0 for both clientWidth and scrollWidth;
+    // measuring it would give NaN and leave the thumb unusable, so keep the
+    // last good values and wait for the ResizeObserver to fire once it is laid out.
+    const updateThumb = useCallback(() => {
         const el = scrollRef.current;
-        if (el) {
-            el.addEventListener('scroll', updateThumb);
-            window.addEventListener('resize', updateThumb);
+        if (!el) return;
+        const visible = el.clientWidth;
+        const total = el.scrollWidth;
+        if (visible <= 0 || total <= 0) return;
+        if (total <= visible) {
+            setThumbWidth(visible);
+            setThumbLeft(0);
+            return;
+        }
+        const width = Math.max((visible / total) * visible, MIN_THUMB_WIDTH);
+        setThumbWidth(width);
+        setThumbLeft((el.scrollLeft / (total - visible)) * (visible - width));
+    }, []);
+
+    // Keep the thumb in sync with scrolling, window resizes, and any change in
+    // the size of the container or its content (panel transitions, side panel
+    // opening, host layout changes, column width changes).
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        updateThumb();
+        el.addEventListener('scroll', updateThumb);
+        window.addEventListener('resize', updateThumb);
+        let observer: ResizeObserver | null = null;
+        if (typeof ResizeObserver !== 'undefined') {
+            observer = new ResizeObserver(updateThumb);
+            observer.observe(el);
+            Array.from(el.children).forEach(child => observer.observe(child));
         }
         return () => {
-            if (el) el.removeEventListener('scroll', updateThumb);
+            el.removeEventListener('scroll', updateThumb);
             window.removeEventListener('resize', updateThumb);
+            observer?.disconnect();
         };
-    }, [forceRedrawScrollBarKey]);
+    }, [updateThumb, forceRedrawScrollBarKey]);
+
+    const scrollToThumbLeft = (newThumbLeft: number) => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const visible = el.clientWidth;
+        const total = el.scrollWidth;
+        const maxScroll = total - visible;
+        const maxThumb = visible - thumbWidth;
+        if (maxScroll <= 0 || maxThumb <= 0) return; // nothing to scroll
+        const clamped = Math.max(0, Math.min(newThumbLeft, maxThumb));
+        setThumbLeft(clamped);
+        el.scrollLeft = (clamped / maxThumb) * maxScroll;
+    };
 
     // When starting drag:
     const onThumbMouseDown = (e: React.MouseEvent) => {
@@ -57,16 +92,7 @@ export const CustomHorizontalScrollbar = memo((props: CustomHorizontalScrollbarP
     useEffect(() => {
         if (!dragState.isDragging) return;
         const onMouseMove = (e: MouseEvent) => {
-            const el = scrollRef.current;
-            if (!el) return;
-            const visible = el.clientWidth;
-            const total = el.scrollWidth;
-            const maxScroll = total - visible;
-            const maxThumb = visible - thumbWidth;
-            let newThumbLeft = dragState.initialThumbLeft + (e.clientX - dragState.dragStartX);
-            newThumbLeft = Math.max(0, Math.min(newThumbLeft, maxThumb));
-            setThumbLeft(newThumbLeft);
-            el.scrollLeft = (newThumbLeft / maxThumb) * maxScroll;
+            scrollToThumbLeft(dragState.initialThumbLeft + (e.clientX - dragState.dragStartX));
         };
         // When ending drag (in onMouseUp):
         const onMouseUp = () => {
@@ -79,22 +105,15 @@ export const CustomHorizontalScrollbar = memo((props: CustomHorizontalScrollbarP
             window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dragState.isDragging, dragState.dragStartX, dragState.initialThumbLeft, thumbWidth]);
 
     const onTrackClick = (e: React.MouseEvent) => {
         if (dragState.isDragging) return; // Ignore clicks while dragging
-        const el = scrollRef.current;
-        if (!el) return;
         const track = e.currentTarget as HTMLDivElement;
         const rect = track.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
-        const visible = el.clientWidth;
-        const total = el.scrollWidth;
-        const maxScroll = total - visible;
-        const maxThumb = visible - thumbWidth;
-        let newThumbLeft = clickX - thumbWidth / 2;
-        newThumbLeft = Math.max(0, Math.min(newThumbLeft, maxThumb));
-        el.scrollLeft = (newThumbLeft / maxThumb) * maxScroll;
+        scrollToThumbLeft(clickX - thumbWidth / 2);
     };
 
     return (

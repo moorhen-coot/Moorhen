@@ -15,7 +15,6 @@ export const SetOccupancy = () => {
     const cidFormRef = useRef<null | HTMLInputElement>(null);
     const ruleSelectRef = useRef<null | HTMLSelectElement>(null);
     const ligandSelectRef = useRef<null | HTMLSelectElement>(null);
-    const occupancyValueRef = useRef<null | number>(1.0);
 
     const dispatch = useDispatch();
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);

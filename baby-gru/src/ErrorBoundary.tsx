@@ -6,7 +6,7 @@ import { MoorhenMolecule } from "./utils/MoorhenMolecule";
 import { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule";
 import { doDownload } from "./utils/utils";
 
-type ErrorBoundaryPropsType = {
+export type ErrorBoundaryPropsType = {
     urlPrefix: string;
     children: React.JSX.Element;
 };

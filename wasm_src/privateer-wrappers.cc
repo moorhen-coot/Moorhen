@@ -1,0 +1,183 @@
+#include "privateer-wrappers.h"
+#include "coot-utils/simple-mesh.hh"
+#include "cremer-pople-sphere/scene.hh"
+
+std::vector<TableEntry> validate(const std::string &file, const std::string &name)
+{
+
+  char *c_data = (char *)file.c_str();
+  size_t size = file.length();
+
+  if (size == 0) {
+    return {};
+  }
+
+  ::gemmi::Structure structure = ::gemmi::read_structure_from_char_array(c_data, size, name);
+  clipper::GEMMIfile gemmi_file;
+  // clipper::GemmiStructure *gemmi_structure = &gemmi_file;
+  gemmi_file.set_gemmi_structure(structure);
+//   std::cout << "[Privateer] Structure successfully imported" << std::endl;
+
+  // CHECK FOR AN PROVIDED MTZ
+  std::string filename = "/input.mtz";
+  std::ifstream infile(filename);
+  if (infile.good()) {
+    // clipper::CCP4MTZfile mtzin;
+    // mtzin.open_read( filename );
+    // clipper::HKL_info myhkl();
+    // mtzin.import_hkl_info( myhkl );
+    // clipper::HKL_data<clipper::data32::F_phi> fphidata( myhkl );
+    // mtzin.import_hkl_data( fphidata, "/*/*/[FWT,PHWT]" );
+//     std::cout << "Found the input mtz, ready to use..." << std::endl;
+  } else {
+//     std::cout << "[Privateer] No MTZ supplied, continuing..." << std::endl;
+  }
+
+  clipper::MiniMol mol;
+  gemmi_file.import_minimol(mol);
+
+//   std::cout << "[Privateer] Molecule generated" << std::endl;
+
+  privateer::json::GlobalTorsionZScore torsions_zscore_database = privateer::json::read_json_file_for_torsions_zscore_database("/data/privateer_data/privateer_torsions_z_score_database.json");
+
+  const clipper::MAtomNonBond &manb = clipper::MAtomNonBond(mol, 1.0); // was 1.0
+
+//   clipper::MGlycology mgl = clipper::MGlycology(mol, false, ""); <- use this constructor if you do not want to use torsions DB
+    clipper::MGlycology mgl = clipper::MGlycology(mol, manb, torsions_zscore_database, false);
+
+  std::vector<clipper::MGlycan> list_of_glycans = mgl.get_list_of_glycans();
+
+  std::vector<TableEntry> table_list  = {};
+
+  if (list_of_glycans.size() > 0)
+  {
+    clipper::String current_chain = "";
+
+    for (int i = 0; i < list_of_glycans.size(); i++)
+    {
+      clipper::String wurcs_string;
+      if (current_chain != list_of_glycans[i].get_chain())
+      {
+        current_chain = list_of_glycans[i].get_chain();
+      }
+      wurcs_string = list_of_glycans[i].generate_wurcs();
+
+      privateer::glycanbuilderplot::GlycanErrorCount* err = new privateer::glycanbuilderplot::GlycanErrorCount;
+
+      privateer::glycanbuilderplot::Plot plot(true, true, list_of_glycans[i].get_root_by_name());
+      plot.plot_glycan(list_of_glycans[i], err);
+
+      std::ostringstream os;
+      os << list_of_glycans[i].get_root_for_filename() << ".svg";
+
+      TableEntry table_entry;
+      table_entry.svg = plot.write_to_string();
+
+      // GlycanData glycan_data = query_glycomics_database(list_of_glycans[i], wurcs_string, importedDatabase);
+
+      // table_entry.glyconnect_id = glycan_data.glyconnect_id;
+      // table_entry.glytoucan_id = glycan_data.glytoucan_id;
+      table_entry.wurcs = wurcs_string;
+      table_entry.chain = current_chain;
+      table_entry.id = list_of_glycans[i].get_root_by_name();
+
+      table_entry.torsion_err = err->torsion_err;
+      table_entry.conformation_err = err->conformation_err;
+      table_entry.anomer_err = err->anomer_err;
+      table_entry.puckering_err = err->puckering_err;
+      table_entry.chirality_err = err->chirality_err;
+
+
+      std::vector<clipper::MGlycan::MGlycanTorsionSummary> torsion_list = list_of_glycans[i].return_torsion_summary_within_glycan();
+       for(int i = 0; i < torsion_list.size(); i++) {
+        for(int j = 0; j < torsion_list[i].combined_torsions.size(); j++)
+        {
+            std::pair<std::pair<std::string, std::string>, std::vector<std::pair<float,float>>> torsion = torsion_list[i].combined_torsions[j];
+            for (int k = 0; k < torsion.second.size(); k++) {
+              TorsionEntry te;
+              te.sugar_1 = torsion_list[i].first_residue_name;
+              te.sugar_2 = torsion_list[i].second_residue_name;
+              te.atom_number_1 = torsion.first.first;
+              te.atom_number_2 = torsion.first.second;
+              te.phi = torsion.second[k].first;
+              te.psi = torsion.second[k].second;
+              table_entry.torsions.emplace_back(te);
+            }
+        }
+       }
+
+      // table_entry.description = list_of_glycans[i].get_description();
+      table_list.emplace_back(table_entry);
+      delete err;
+      // svg_list.emplace_back(plot.write_to_string());
+    }
+
+    return table_list;
+  }
+//   std::cout << "[Privateer] No Glycans Found" << std::endl;
+  return {};
+}
+
+
+std::vector<CremerPopleParameters> calculate_cremer_pople_parameters(const std::string& file, const std::string& name) {
+
+  char *c_data = (char *)file.c_str();
+  size_t size = file.length();
+
+  if (size == 0) {
+    return {};
+  }
+
+  ::gemmi::Structure structure = ::gemmi::read_structure_from_char_array(c_data, size, name);
+  clipper::GEMMIfile gemmi_file;
+  gemmi_file.set_gemmi_structure(structure);
+  clipper::MiniMol mol;
+  gemmi_file.import_minimol(mol);
+
+  const clipper::MAtomNonBond &manb = clipper::MAtomNonBond(mol, 1.0); // was 1.0
+
+  clipper::MGlycology mgl = clipper::MGlycology(mol, false, ""); // <- use this constructor if you do not want to use torsions DB
+
+  std::vector<clipper::MGlycan> list_of_glycans = mgl.get_list_of_glycans();
+
+  if (list_of_glycans.empty()) return {};
+
+  std::vector<CremerPopleParameters> cremer_pople_dataset  = {};
+
+  for (auto& glycan: list_of_glycans) {
+
+    const std::vector<clipper::MSugar> sugars = glycan.get_sugars();
+    for (auto& sugar: sugars) {
+      std::vector<clipper::ftype> cremer_pople_params = sugar.cremer_pople_params();
+      CremerPopleParameters parameters = {
+       cremer_pople_params[0] , cremer_pople_params[1] * M_PI / 180, cremer_pople_params[2] * M_PI / 180, glycan.get_root_sugar_chainID(), std::to_string(sugar.get_seqnum())
+      };
+
+      cremer_pople_dataset.emplace_back(parameters);
+    }
+
+  }
+  return cremer_pople_dataset;
+
+}
+
+coot::simple_mesh_t DrawCremerPopleSphere(const std::string  &file_content, bool add_radial_conformations) {
+
+    std::vector<CremerPopleParameters> results;
+    try {
+        results =  calculate_cremer_pople_parameters(file_content, std::string("thing.cif"));
+    } catch (...) {
+        std::cerr << "Failed to calculate_cremer_pople_parameters for:" << std::endl;
+        std::cerr << file_content << std::endl;
+    }
+
+    std::vector<CremerPopleData> data = {};
+    data.reserve(results.size());
+    for (int i = 0; i < results.size(); i++) {
+        data.emplace_back(results[i].q, results[i].phi, results[i].theta);
+    }
+
+    auto x = create_cremer_pople_sphere(data, add_radial_conformations);
+
+    return x;
+}

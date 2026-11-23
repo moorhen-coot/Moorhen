@@ -24,8 +24,9 @@ This suite targets the standalone web component page in `webcomponent.html`.
 
 ## Optimization
 
-- Playwright now starts the server with `start:webcomponent:e2e`, which runs a lightweight prep phase.
-- Worker and protobuf generation are skipped when generated files already exist.
+- Playwright starts the server with `start:webcomponent:e2e`, on port 5199 (override with `MOORHEN_E2E_PORT`), so it never collides with a dev server on vite's default 5173. `--strictPort` makes it fail rather than drift to another port.
+- The prep phase re-transpiles the worker and runs `build-webcomponent-dev` (about 40 s), because the web component page serves its assets from `dist/public`: without it, tests would run against whatever wasm and worker were last built there. Protobuf generation is skipped when the generated file already exists.
+- If you rebuild the wasm or change the worker, restart the e2e server so `dist/public` is refreshed.
 - For fastest local iteration, prewarm once in terminal A:
    - `npm run start:webcomponent:e2e`
 - Then run tests in terminal B (Playwright will reuse the existing server):
@@ -37,6 +38,7 @@ This suite targets the standalone web component page in `webcomponent.html`.
 - Smoke tests in `webcomponent-smoke.spec.ts` cover ready state, search interaction, and WebGL pipeline health.
 - File-loading workflow tests in `load-files.spec.ts` cover molecule+map loading via `moorhenInstance.files.loadFiles` and post-load WebGL drawability checks.
 - The first app load can take longer due to WASM and worker initialization.
+- `webgpu-*.spec.ts` (the WebGPU main view, and WebGL against WebGPU) run only in the `chromium-webgpu` and `firefox-webgpu` projects, whose browsers start with WebGPU on (`tests/webgpuBrowsers.ts`); the `chromium` and `firefox` projects, and their strict baselines, skip them. Run them alone with `npm run test:e2e -- webgpu-`. `webgpu-parity.spec.ts` attaches both renderers' pictures and their difference to the HTML report.
 
 ## Strict Pixel Baseline Mode (Default)
 

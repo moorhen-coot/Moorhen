@@ -1,19 +1,33 @@
 import * as vec3 from 'gl-matrix/vec3';
 import { guid } from '../utils/utils';
-import { setHoverSize, setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
+import { setLabelBuffers, setTexturedShapes } from "../store/glRefSlice"
 import { DisplayBuffer } from './displayBuffer'
 import { TexturedShape } from './texturedShape'
 import { createWebGLBuffers } from './createWebGLBuffers'
-import {  RootState } from '../store/MoorhenReduxStore';
+import { GL_SLOT_ARRAYS, MGWebGLBuffer, pendingGLBuffer, realiseGLResources } from './glResources'
+import { RootState } from '../store/MoorhenReduxStore';
 import { Store } from '@reduxjs/toolkit';
+import { webGLUploadsDeferred } from './webGLUploads';
+import { hoverBallSizes } from './hoverBallSizes';
 
+export const createOtherDataOtherContext = (jsondata: any, gl: any) : any => {
+        const theseBuffers = [];
+
+        for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
+            const theBuffer = createWebGLBuffers(jsondata,idat)
+            theseBuffers.push(theBuffer);
+        }
+        return theseBuffers;
+    
+}
 export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebuild?: boolean, name?: string) : any => {
 
         const theseBuffers = [];
         const theseTexturedShapes = [];
         const theseLabelBuffers = [];
+        // May be null. Display buffers are built without one (their GL objects are made by
+        // buildBuffers when there is a context); only textured shapes still need it here.
         const gl = store.getState().glRef.glCtx
-        if(!gl) return theseBuffers
         const labelBuffers = store.getState().glRef.labelBuffers
         const texturedShapes = store.getState().glRef.texturedShapes
         const GLLabelsFontFamily = store.getState().labelSettings.GLLabelsFontFamily
@@ -24,7 +38,9 @@ export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebu
         const glTextFont = ""+GLLabelsFontSize*deviceScale+"px "+GLLabelsFontFamily;
 
         if(jsondata.image_data){
-            if(jsondata.width && jsondata.height && jsondata.x_size && jsondata.y_size){
+            if(!gl){
+                console.warn("appendOtherData: image data needs a WebGL context; skipped");
+            } else if(jsondata.width && jsondata.height && jsondata.x_size && jsondata.y_size){
                 const uuid =  guid();
                 const texturedShape = new TexturedShape(jsondata,gl,uuid);
                 theseTexturedShapes.push(texturedShape)
@@ -60,35 +76,15 @@ export const appendOtherData = (jsondata: any, store: Store<RootState>, skipRebu
                 }
             }
 
-            const theBuffer = createWebGLBuffers(jsondata,idat, gl)
+            const theBuffer = createWebGLBuffers(jsondata,idat)
             theseBuffers.push(theBuffer);
 
-            const displayBuffers = store.getState().glRef.displayBuffers
             if(jsondata.isHoverBuffer){
                 theBuffer.isHoverBuffer = jsondata.isHoverBuffer;
-                let maxSize = 0.27;
-                for (let idx = 0; idx < displayBuffers.length; idx++) {
-                    if (Object.prototype.hasOwnProperty.call(displayBuffers[idx],"atoms") && displayBuffers[idx].atoms.length > 0) {
-                        for(let ibuf2=0;ibuf2<displayBuffers[idx].bufferTypes.length;ibuf2++){
-                            if(displayBuffers[idx].bufferTypes[ibuf2]==="PERFECT_SPHERES"){
-                                if(displayBuffers[idx].triangleInstanceSizes[ibuf2][0]>0.27&&!displayBuffers[idx].isHoverBuffer&&displayBuffers[idx].visible){
-                                    let nhits = 0
-                                    theseBuffers[0].atoms.forEach(bufatom => {
-                                        displayBuffers[idx].atoms.forEach(atom => {
-                                            if(Math.abs(bufatom.x-atom.x)<1e-4&&Math.abs(bufatom.y-atom.y)<1e-4&&Math.abs(bufatom.z-atom.z)<1e-4){
-                                                nhits++;
-                                            }
-                                        })
-                                    })
-                                    if(theseBuffers[0].atoms.length===nhits){
-                                        maxSize = Math.max(displayBuffers[idx].triangleInstanceSizes[ibuf2][0],maxSize);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                // Each golden ball as big as the sphere drawn at its atom (hoverBallSizes.ts).
+                if(theBuffer.triangleInstanceOrigins[0] && theBuffer.triangleInstanceSizes[0]){
+                    theBuffer.triangleInstanceSizes[0] = hoverBallSizes(theBuffer.triangleInstanceOrigins[0], store.getState().glRef.displayBuffers);
                 }
-                store.dispatch(setHoverSize(maxSize))
             }
         }
 
@@ -114,7 +110,7 @@ const linesToThickLinesWithIndicesAndNormals = (axesVertices, axesNormals, axesC
         return linesToThickLinesWithIndices(axesVertices, axesColours, axesIndices, size, axesNormals, doColour, isWebGL2)
     }
 
-const linesToThickLinesWithIndices = (axesVertices: number[], axesColours: number[], axesIndices: number[], size: number, axesNormals_old? : number[], doColour=false, isWebGL2=true) => {
+const linesToThickLinesWithIndices = (axesVertices: ArrayLike<number>, axesColours: ArrayLike<number>, axesIndices: ArrayLike<number>, size: number, axesNormals_old? : ArrayLike<number>, doColour=false, isWebGL2=true) => {
 
         //FIXME - This could all be pushed upstairs into the C++ -> JS mesh conversions
         const print_timing = false;
@@ -451,11 +447,6 @@ export const linesToThickLines = (axesVertices, axesColours, size) => {
 
     }
 
-interface MGWebGLBuffer {
-    itemSize: number;
-    numItems: number;
-}
-
 export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingContext) : DisplayBuffer[] => {
     const newBuffers: DisplayBuffer[] = []
 
@@ -480,6 +471,10 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
         theBuffer.triangleInstanceSizes = oldBuffer.symmetryMatrices ? oldBuffer.triangleInstanceSizes.slice() : null
         theBuffer.triangleColours = oldBuffer.triangleColours ? oldBuffer.triangleColours.slice() : null
         theBuffer.triangleNormals = oldBuffer.triangleNormals ? oldBuffer.triangleNormals.slice() : null
+        theBuffer.triangleTextureCoords = oldBuffer.triangleTextureCoords ? oldBuffer.triangleTextureCoords.slice() : []
+        // Materials are plain data referring to textures by id, so the clone shares the textures
+        // rather than duplicating them - which is the point of the registry holding the pixels.
+        theBuffer.materials = oldBuffer.materials ? oldBuffer.materials.slice() : []
         theBuffer.primitiveSizes = oldBuffer.primitiveSizes ? oldBuffer.primitiveSizes.slice() : null
         theBuffer.bufferTypes = oldBuffer.bufferTypes ? oldBuffer.bufferTypes.slice() : null
         //theBuffer.customColour = oldBuffer.customColour.slice() as [number,number,number,number] | null
@@ -491,53 +486,12 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
         theBuffer.textNormals = oldBuffer.textNormals ? oldBuffer.textNormals.slice() : null
         theBuffer.textColours = oldBuffer.textColours ? oldBuffer.textColours.slice() : null
         theBuffer.isHoverBuffer = oldBuffer.isHoverBuffer
+        theBuffer.statsLabel = oldBuffer.statsLabel
         theBuffer.multiViewGroup = oldBuffer.multiViewGroup
         theBuffer.clickTol = oldBuffer.clickTol
-        theBuffer.doStencil = oldBuffer.doStencil
 
-        for(const buf of oldBuffer.triangleVertexRealNormalBuffer){
-            theBuffer.triangleVertexRealNormalBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleVertexRealNormalBuffer[theBuffer.triangleVertexRealNormalBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleVertexNormalBuffer){
-            theBuffer.triangleVertexNormalBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleVertexNormalBuffer[theBuffer.triangleVertexNormalBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleVertexPositionBuffer){
-            theBuffer.triangleVertexPositionBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleVertexPositionBuffer[theBuffer.triangleVertexPositionBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleVertexIndexBuffer){
-            theBuffer.triangleVertexIndexBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleVertexIndexBuffer[theBuffer.triangleVertexIndexBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleVertexTextureBuffer){
-            theBuffer.triangleVertexTextureBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleVertexTextureBuffer[theBuffer.triangleVertexTextureBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleInstanceOriginBuffer){
-            theBuffer.triangleInstanceOriginBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleInstanceOriginBuffer[theBuffer.triangleInstanceOriginBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleInstanceOrientationBuffer){
-            theBuffer.triangleInstanceOrientationBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleInstanceOrientationBuffer[theBuffer.triangleInstanceOrientationBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleInstanceSizeBuffer){
-            theBuffer.triangleInstanceSizeBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleInstanceSizeBuffer[theBuffer.triangleInstanceSizeBuffer.length-1].numItems = buf.numItems
-        }
-
-        for(const buf of oldBuffer.triangleColourBuffer){
-            theBuffer.triangleColourBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-            theBuffer.triangleColourBuffer[theBuffer.triangleColourBuffer.length-1].numItems = buf.numItems
+        for (const name of GL_SLOT_ARRAYS) {
+            for (const buf of oldBuffer[name]) theBuffer[name].push(pendingGLBuffer(buf.numItems));
         }
 
         if(oldBuffer.textNormalBuffer){
@@ -603,6 +557,7 @@ export const cloneBuffers = (displayBuffers:DisplayBuffer[], gl:WebGLRenderingCo
 }
 
 export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootState>, gl_in: WebGLRenderingContext = null) : void => {
+        if (!gl_in && webGLUploadsDeferred(store)) return
         const print_timing = false
 
         const mapLineWidth = store.getState().mapContourSettings.mapLineWidth
@@ -613,6 +568,10 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootSt
             gl = gl_in
         else
             gl = store.getState().glRef.glCtx
+
+        // Without a context there is nothing to upload to. The buffers stay dirty, so whichever
+        // WebGL context comes along later builds them then.
+        if(!gl) return
 
         const tbb1 = performance.now()
 
@@ -626,6 +585,9 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootSt
             if (!displayBuffers[idx].isDirty) {
                 continue;
             }
+            // Every slot, not only the ones this pass uploads: the draw code binds some (the
+            // vertex buffers of PERFECT_SPHERES, say) that nothing here fills.
+            realiseGLResources(gl, displayBuffers[idx]);
             for (let j = 0; j < displayBuffers[idx].triangleVertexIndexBuffer.length; j++) {
                 displayBuffers[idx].isDirty = false;
                 if (displayBuffers[idx].bufferTypes[j] === "PERFECT_SPHERES" || displayBuffers[idx].bufferTypes[j] === "IMAGES" || displayBuffers[idx].bufferTypes[j] === "TEXT") {
@@ -813,6 +775,28 @@ export const buildBuffers = (displayBuffers:DisplayBuffer[], store: Store<RootSt
                     gl.bindBuffer(gl.ARRAY_BUFFER, displayBuffers[idx].triangleVertexPositionBuffer[j]);
                     gl.bufferData(gl.ARRAY_BUFFER, triangleVertices, gl.STATIC_DRAW);
                     displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
+
+                    // Texture coordinates, when this sub-buffer has them. Uploaded only if there
+                    // is one pair per vertex: a shorter array would be read past the end by the
+                    // attribute pointer, and a longer one means the data does not describe this
+                    // geometry. Either way, leaving the buffer empty draws it untextured, which
+                    // is the same as any other mesh.
+                    const texCoords = displayBuffers[idx].triangleTextureCoords?.[j]
+                    const textureBuffer = displayBuffers[idx].triangleVertexTextureBuffer[j]
+                    if (texCoords && textureBuffer && texCoords.length === (triangleVertices.length / 3) * 2) {
+                        const asFloats = ArrayBuffer.isView(texCoords)
+                            ? texCoords as unknown as Float32Array
+                            : new Float32Array(texCoords)
+                        gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
+                        gl.bufferData(gl.ARRAY_BUFFER, asFloats, gl.STATIC_DRAW);
+                        textureBuffer.itemSize = 2;
+                        textureBuffer.numItems = asFloats.length / 2;
+                    } else if (textureBuffer && texCoords && texCoords.length > 0) {
+                        console.warn(`texture coordinates for sub-buffer ${j} describe ` +
+                                     `${texCoords.length / 2} vertices, not ${triangleVertices.length / 3}`)
+                        textureBuffer.itemSize = 0;
+                        textureBuffer.numItems = 0;
+                    }
                     if(doColour){
                         gl.bindBuffer(gl.ARRAY_BUFFER, displayBuffers[idx].triangleColourBuffer[j]);
                         gl.bufferData(gl.ARRAY_BUFFER, triangleColours, gl.STATIC_DRAW);

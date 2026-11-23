@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Using the WebComponent in React - Moorhen Developer Guide</title>
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/theme-toggle.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+    <img src="../../assets/MoorhenLogo.png" alt="Moorhen logo">
+    <h1>Using the WebComponent in React</h1>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">Dark mode</button>
+</header>
+<nav class="site-nav">
+    <ul>
+        <li><a href="../../index.html">Docs Home</a></li>
+        <li><a href="index.html">Developer Guide</a></li>
+        <li><a href="../user/index.html">User Guide</a></li>
+        <li><a href="../../api/index.html">API Reference</a></li>
+    </ul>
+</nav>
+
+<article class="guide-article">
+    <h2>Embedding Moorhen in a React application</h2>
+
+    <p>
+        The <code>&lt;moorhen-web-component&gt;</code> element is framework-agnostic, and
+        <code>moorhen/web-component/react</code> gives it a React face: a <code>&lt;Moorhen&gt;</code> component with
+        ordinary props, and hooks to reach its <code>MoorhenInstance</code> and follow its state. Moorhen runs on its own
+        React inside the element, so your app&rsquo;s React version does not need to match Moorhen&rsquo;s.
+    </p>
+
+    <p class="note-technical">
+        <strong>Which integration path?</strong> The WebComponent is the <em>preferred and easiest</em> option for the
+        standard use case: embedding the whole Moorhen UI in your page, including inside React apps.
+        The alternative, <code>moorhen/react-lib</code> (Moorhen&rsquo;s own React components such as
+        <code>MoorhenProvider</code> / <code>MoorhenContainer</code>), lets you compose the UI directly in React and is
+        discussed at the end of this guide.
+    </p>
+
+    <section>
+        <h2>1. Prerequisites</h2>
+
+        <p>
+            Do the setup from <a href="webcomponent-setup.html">Setting up the WebComponent</a> first. In short, your
+            React app must:
+        </p>
+
+        <ul>
+            <li>install <code>moorhen</code> and copy <code>MoorhenAssets</code> into its static folder
+                (<code>public/</code> in a Vite app);</li>
+            <li>serve the page cross-origin isolated, with the <code>Cross-Origin-Opener-Policy</code> and
+                <code>Cross-Origin-Embedder-Policy</code> headers, or Moorhen&rsquo;s WebAssembly threads cannot
+                start.</li>
+        </ul>
+
+        <p>
+            The setup guide has the exact commands, the header values, and ready-made Vite, nginx and Python server
+            configurations.
+        </p>
+    </section>
+
+    <section>
+        <h2>2. The &lt;Moorhen&gt; component</h2>
+
+        <p>
+            Register the web component once, then render <code>&lt;Moorhen&gt;</code>:
+        </p>
+
+        <pre class="code-block" data-lang="tsx"><code>import { registerMoorhenWebComponent } from "moorhen/web-component";
+import { Moorhen } from "moorhen/web-component/react";
+
+registerMoorhenWebComponent();
+
+function App() {
+    return &lt;Moorhen id="my-moorhen" width={1000} height={800} /&gt;;
+}</code></pre>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Prop</th>
+                    <th>What it does</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>width</code>, <code>height</code></td>
+                    <td>A fixed size, following your state. Leave them out and Moorhen fills its container, usually what
+                        you want in a responsive layout (see <a href="webcomponent-setup.html#sizing">Sizing the
+                            element</a>).</td>
+                </tr>
+                <tr>
+                    <td><code>urlPrefix</code>, <code>viewOnly</code>, <code>disableFileUploads</code></td>
+                    <td>As the element&rsquo;s attributes, and can change at any time.</td>
+                </tr>
+                <tr>
+                    <td><code>monomerLibraryPath</code>, <code>allowScripting</code>, <code>backupStorage</code></td>
+                    <td>Start-up settings: read when Moorhen starts.</td>
+                </tr>
+                <tr>
+                    <td><code>onReady</code></td>
+                    <td>Called once Moorhen is ready, with its <code>MoorhenInstance</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>id</code>, <code>className</code>, <code>style</code>, <code>ref</code></td>
+                    <td>As for any element; a <code>ref</code> is the <code>&lt;moorhen-web-component&gt;</code>
+                        element.</td>
+                </tr>
+                <tr>
+                    <td>children</td>
+                    <td>Placed inside the element: plugins and content for Moorhen&rsquo;s slots (see
+                        <a href="webcomponent-plugins.html">Writing a plugin</a>).</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>3. Getting the instance and reading the store</h2>
+
+        <p>
+            <code>onReady</code> hands you the <code>MoorhenInstance</code>; keep it in state. To show part of
+            Moorhen&rsquo;s state, <code>useMoorhenSelector</code> returns it and re-renders your component when it
+            changes, the React equivalent of <code>instance.subscribeToStore(...)</code>:
+        </p>
+
+        <pre class="code-block" data-lang="tsx"><code>import { useState } from "react";
+import type { MoorhenInstance } from "moorhen/web-component";
+import { Moorhen, useMoorhenSelector } from "moorhen/web-component/react";
+
+function MyMoorhen() {
+    const [instance, setInstance] = useState&lt;MoorhenInstance | null&gt;(null);
+    const molecules = useMoorhenSelector("my-moorhen", state =&gt; state.molecules.moleculeList);
+
+    return (
+        &lt;div&gt;
+            &lt;p&gt;Ready: {instance ? "yes" : "no"}, molecules loaded: {molecules?.length}&lt;/p&gt;
+            &lt;Moorhen id="my-moorhen" onReady={setInstance} /&gt;
+        &lt;/div&gt;
+    );
+}</code></pre>
+
+        <p>
+            <code>useMoorhenInstance("my-moorhen")</code> gives the instance anywhere else in your app. Both hooks take
+            the element&rsquo;s <code>id</code>, or a ref to an element inside it (see
+            <a href="webcomponent-plugins.html">Writing a plugin</a>).
+        </p>
+    </section>
+
+    <section>
+        <h2>4. Controlling Moorhen from React state</h2>
+
+        <p>
+            The size follows your state through the props. For everything else, call the instance, in an effect when it
+            follows your state:
+        </p>
+
+        <pre class="code-block" data-lang="tsx"><code>function MyMoorhen() {
+    const [instance, setInstance] = useState&lt;MoorhenInstance | null&gt;(null);
+    const [width, setWidth] = useState(1000);
+    const [background, setBackground] = useState&lt;[number, number, number]&gt;([0.85, 0.9, 1.0]);
+
+    useEffect(() =&gt; {
+        instance?.sceneSettings.setBackgroundColor([...background, 1]);
+    }, [instance, background]);
+
+    return (
+        &lt;div&gt;
+            &lt;label&gt;Width &lt;input type="number" value={width} onChange={e =&gt; setWidth(Number(e.target.value))} /&gt;&lt;/label&gt;
+            &lt;button onClick={() =&gt; instance?.files.loadFiles("/my-structure.pdb")}&gt;Load&lt;/button&gt;
+            &lt;Moorhen id="my-moorhen" width={width} height={800} onReady={setInstance} /&gt;
+        &lt;/div&gt;
+    );
+}</code></pre>
+
+        <p>
+            Everything from the <a href="../../api/classes/moorhen.MoorhenInstance.html">MoorhenInstance</a> API page is
+            available on the instance. The same pattern works for your app&rsquo;s theme: hold the light/dark choice in
+            React state and let an effect push the matching background colour into Moorhen. See
+            <a href="webcomponent-instance-api.html#page-theme">Matching your page theme</a>.
+        </p>
+
+        <p class="note-technical">
+            <strong>Full API:</strong> loading data, representations, scene settings and the other instance groups are
+            identical to the plain-page case. See
+            <a href="webcomponent-instance-api.html">Loading data and the MoorhenInstance API</a>.
+        </p>
+    </section>
+
+    <section>
+        <h2>5. The element itself</h2>
+
+        <p>
+            <code>&lt;Moorhen&gt;</code> renders <code>&lt;moorhen-web-component&gt;</code>, which you can also use in
+            JSX directly. TypeScript then needs the tag declared once, mapped to the exported
+            <code>MoorhenWebComponentAttributes</code> type:
+        </p>
+
+        <pre class="code-block" data-lang="typescript"><code>import { MoorhenWebComponentAttributes } from "moorhen/web-component";
+
+declare module "react" {
+    namespace JSX {
+        interface IntrinsicElements {
+            "moorhen-web-component": MoorhenWebComponentAttributes;
+        }
+    }
+}</code></pre>
+
+        <p>
+            Its attributes are dashed (<code>url-prefix</code>, <code>view-only</code>&hellip;), booleans are given as
+            <code>"true"</code> / <code>"false"</code>, and the instance comes from
+            <code>useMoorhenInstance("my-moorhen")</code>. The older hooks of <code>moorhen/web-component/utils</code>
+            (<code>useWebComponentInstanceRef</code>, <code>useMoorhenSelector</code>) still work.
+        </p>
+
+        <p class="note-technical">
+            <strong>Note:</strong> these hooks drive a mounted <code>&lt;moorhen-web-component&gt;</code> element, so
+            import them from <code>moorhen/web-component/react</code> (or <code>/utils</code>). Although they also appear
+            among <code>moorhen/react-lib</code>&rsquo;s type exports (for type-generation purposes), importing them from
+            <code>react-lib</code> is not supported: the <code>moorhen/react-lib</code> embedding path
+            (MoorhenProvider/MoorhenContainer) does not mount a <code>&lt;moorhen-web-component&gt;</code> element for
+            them to find.
+        </p>
+    </section>
+
+    <section>
+        <h2>The moorhen/react-lib alternative</h2>
+
+        <p>
+            The ready-made element does not fit every need. For example, you may want to embed individual Moorhen
+            panels or remix its UI. In that case you can build against <code>moorhen/react-lib</code>, which exposes
+            Moorhen&rsquo;s own React components (<code>MoorhenProvider</code>, <code>MoorhenContainer</code>,
+            <code>MoorhenApp</code>, &hellip;). That path requires React as a peer dependency and a deeper
+            understanding of Moorhen&rsquo;s internals, so we recommend it only for advanced, UI-heavy integrations.
+        </p>
+
+        <p>
+            For standard use, stick with the WebComponent pattern shown in this guide (or in the plain-page
+            <a href="webcomponent-setup.html">setup guide</a>). It is the simplest and most robust option for putting
+            Moorhen on your page and driving it with your own code.
+        </p>
+
+        <p>
+            A complete, runnable React example is in the example project
+            <a href="https://github.com/cdegut/MoorhenWebComponentReact" target="_blank"
+                rel="noopener noreferrer">MoorhenWebComponentReact</a>.
+        </p>
+
+        <p>
+            <a class="button" href="webcomponent-setup.html">Prev: Setting up the WebComponent</a>
+            <a class="button" href="webcomponent-instance-api.html">Next: Loading data and the MoorhenInstance API</a>
+            <a class="button" href="index.html">Back to Developer Guide</a>
+        </p>
+    </section>
+</article>
+</body>
+</html>

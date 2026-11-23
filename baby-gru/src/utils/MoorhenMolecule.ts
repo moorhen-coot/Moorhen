@@ -15,17 +15,21 @@ import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule, ColourRuleType } from "./MoorhenColourRule";
 import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
+import { cidBuildParams } from "./Representation/RepresentationBuilder";
 import {
     centreOnGemmiAtoms,
     doDownload,
     formatLigandSVG,
     getCentreAtom,
+    getCidAltConf,
     getRandomMoleculeColour,
     guid,
     parseAtomInfoLabel,
     readGemmiCifDocument,
     readGemmiStructure,
+    restrictCidToAltConf,
 } from "./utils";
+import { ZOOM_DIVISOR, moleculeDiameter } from "./moleculeExtent";
 import { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
 import { MoleculeToSeqViewerSequences } from "@/components/sequence-viewer/utils";
 import { MoorhenInstance } from "@/InstanceManager/index";
@@ -80,6 +84,15 @@ export type NEFRestraint = {
     ambiguityFlag: boolean;
     restraintID: number;
 }
+
+/**
+ * Whether a representation's buffer is a mesh, rather than one of the plain records appendOtherData
+ * also returns for text labels and textured images ({labels, uuid}, {texturedShapes, uuid}).
+ * Those records are published to the store with the meshes, and the store freezes plain objects,
+ * so setting a property on one throws ("Cannot add property ..., object is not extensible").
+ */
+const isMeshBuffer = (buffer: unknown): buffer is moorhen.DisplayObject =>
+    typeof buffer === "object" && buffer !== null && "bufferTypes" in buffer;
 
 /**
  * Represents a molecule
@@ -162,6 +175,7 @@ export class MoorhenMolecule {
     isLigand: boolean;
     coordsFormat: moorhen.coorFormats;
     cachedPrivateerValidation: privateer.ResultsEntry[];
+    cachedPrivateerCremerPopleParameters: privateer.CremerPopleParameters[];
     cachedGemmiAtoms: moorhen.AtomInfo[];
     cachedLigandSVGs: { [key: string]: string };
     moleculeDiameter: number;
@@ -333,8 +347,8 @@ export class MoorhenMolecule {
             this.symmetryOn = false;
         } else {
             this.representations.forEach(representation => {
-                representation.buffers.forEach(buffer => {
-                    buffer.changeColourWithSymmetry = true;
+                representation.buffers?.forEach(buffer => {
+                    if (isMeshBuffer(buffer)) buffer.changeColourWithSymmetry = true;
                 });
             });
         }
@@ -349,8 +363,8 @@ export class MoorhenMolecule {
         if (this.symmetryOn) {
             this.biomolOn = false;
             this.representations.forEach(representation => {
-                representation.buffers.forEach(buffer => {
-                    buffer.changeColourWithSymmetry = true;
+                representation.buffers?.forEach(buffer => {
+                    if (isMeshBuffer(buffer)) buffer.changeColourWithSymmetry = true;
                 });
             });
         }
@@ -503,8 +517,8 @@ export class MoorhenMolecule {
         }
         this.representations.forEach(representation => representation.drawSymmetry());
         this.representations.forEach(representation => {
-            representation.buffers.forEach(buffer => {
-                buffer.changeColourWithSymmetry = false;
+            representation.buffers?.forEach(buffer => {
+                if (isMeshBuffer(buffer)) buffer.changeColourWithSymmetry = false;
             });
         });
         if (this.adaptativeBondsEnabled) {
@@ -981,7 +995,8 @@ export class MoorhenMolecule {
         try {
             const coordData = await source.text();
             let is_small = false;
-            if (source.name.endsWith(".mmcif") || source.name.endsWith(".cif") || source.name.endsWith(".pdbx"))
+            const lowerName = source.name.toLowerCase();
+            if (lowerName.endsWith(".mmcif") || lowerName.endsWith(".cif") || lowerName.endsWith(".pdbx"))
                 is_small = window.gemmiModule.is_small_structure(coordData as string);
             if (is_small) {
                 const small_to_cif_response = (await this.commandCentre.cootCommand(
@@ -1006,7 +1021,7 @@ export class MoorhenMolecule {
                 );
                 return await this.loadToCootFromString(coordContent, source.name);
             }
-            if (source.name.endsWith(".mol")) {
+            if (lowerName.endsWith(".mol")) {
                 const response = (await this.commandCentre.cootCommand(
                     {
                         command: "mol_text_to_pdb",
@@ -1071,16 +1086,12 @@ export class MoorhenMolecule {
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
     async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<moorhen.Molecule> {
-        const pdbRegex = /.pdb$/;
-        const entRegex = /.ent$/;
-        const cifRegex = /.cif$/;
-        const mmcifRegex = /.mmcif$/;
-
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete();
         }
 
-        this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
+        // One pattern, so ".mmcif" is not first stripped as ".cif" (which left "name.m")
+        this.name = name.replace(/\.(pdb|ent|mmcif|cif)$/i, "");
 
         try {
             const state = this.store.getState();
@@ -1110,7 +1121,6 @@ export class MoorhenMolecule {
                 this.loadMissingMonomers(),
                 this.checkHasGlycans(),
                 this.fetchDefaultColourRules(),
-                this.getMoleculeDiameter(),
             ]);
             return this;
         } catch (err) {
@@ -1297,11 +1307,10 @@ export class MoorhenMolecule {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete();
         }
-        const [_hasGlycans, coordString, _diameter] = await Promise.all([
-            this.checkHasGlycans(),
-            this.getAtoms(),
-            this.getMoleculeDiameter(),
-        ]);
+        // The diameter used to be fetched here too, on every atom update. It fed only the initial
+        // zoom, which now measures the atoms directly, so this is one fewer round trip to the
+        // worker after every modification.
+        const [_hasGlycans, coordString] = await Promise.all([this.checkHasGlycans(), this.getAtoms()]);
         try {
             this.updateGemmiStructure(coordString);
         } catch (err) {
@@ -1315,13 +1324,23 @@ export class MoorhenMolecule {
      * Draw the molecule with a particular style. If the molecule atoms are marked as "dirty" then fetch new atoms.
      * @param {string} style - The style that will be drawn
      */
+    private findDefaultRepresentation(style: moorhen.RepresentationStyles): moorhen.MoleculeRepresentation | undefined {
+        // Identify this molecule's own representation by style and the isCustom flag,
+        // not by cid. Callers used to compare against a hardcoded whole-molecule cid
+        // literal, but the representation builder derives the cid it actually stores
+        // from the style and its options -- a whole-molecule CBs representation is
+        // stored with a different cid again when waters are excluded. The literal
+        // therefore never matched, so every redraw built an additional representation
+        // and left the previous one's buffers in the scene.
+        return this.representations.find(item => item.style === style && !item.isCustom);
+    }
+
     async fetchIfDirtyAndDraw(style: moorhen.RepresentationStyles): Promise<void> {
         if (this.atomsDirty) {
             await this.updateAtoms();
         }
 
-        const cid = "/*/*/*/*:*";
-        const representation = this.representations.find(item => item.style === style && item.cid === cid);
+        const representation = this.findDefaultRepresentation(style);
         if (representation) {
             await this.redrawRepresentation(representation.uniqueId);
         } else {
@@ -1430,17 +1449,27 @@ export class MoorhenMolecule {
             return;
         }
 
+        // The centre first, because the extent is measured from it and these can be a few million
+        // atoms. centreOnGemmiAtoms returns the negated mean, which is what the origin wants.
+        const selectionCentre = centreOnGemmiAtoms(selectionAtoms);
+
         let zoomLevel: number;
         if (selectionCid === "/*/*/*/*" || selectionCid === "//") {
-            if (this.moleculeDiameter === null) {
-                this.moleculeDiameter = await this.getMoleculeDiameter();
-            }
-            zoomLevel = this.moleculeDiameter / 40;
+            // Measured from the atoms rather than asked of coot. get_molecule_diameter samples a
+            // thousand random pairs from a global stream that nothing seeds, so its answer depended
+            // on what else had drawn random numbers first - and since zoom sets clipStart, the front
+            // clip plane moved with it between one load and the next. See utils/moleculeExtent.
+            this.moleculeDiameter = moleculeDiameter(selectionAtoms, [
+                -selectionCentre[0],
+                -selectionCentre[1],
+                -selectionCentre[2],
+            ]);
+            // A single atom has no extent. Falling back to the same zoom a residue selection uses
+            // beats dividing zero by the divisor; coot returned -1 here, which was worse.
+            zoomLevel = this.moleculeDiameter > 0 ? this.moleculeDiameter / ZOOM_DIVISOR : 0.4;
         } else {
             zoomLevel = 0.4;
         }
-
-        const selectionCentre = centreOnGemmiAtoms(selectionAtoms);
         if (doSetZoom) {
             this.store.dispatch(setOrigin(selectionCentre));
             this.store.dispatch(setZoom(zoomLevel));
@@ -1453,15 +1482,21 @@ export class MoorhenMolecule {
      * Draw molecule from a given mesh
      * @param {string} style - Indicate the style to be drawn
      * @param {any[]} meshObjects - The mesh obects that will be drawn
-     * @param {string} [cid] - The new buffer CID selection
+     * @param {string} [cid] - The new buffer CID selection; if omitted, the molecule's own representation of this style is reused
      */
     async drawWithStyleFromMesh(
         style: moorhen.RepresentationStyles,
         meshObjects: any[],
-        cid: string = "/*/*/*/*",
+        cid?: string,
         fetchAtomBuffers: boolean = false
     ): Promise<void> {
-        let representation = this.representations.find(item => item.style === style && item.cid === cid);
+        // Without an explicit cid, draw into the same representation fetchIfDirtyAndDraw() uses.
+        // Matching on a literal cid here created a second representation, so drag/refine frames
+        // and the final redraw updated different ones and the stale one was left as a ghost.
+        let representation = cid
+            ? this.representations.find(item => item.style === style && item.cid === cid)
+            : this.findDefaultRepresentation(style);
+        cid = representation?.cid ?? cid ?? "/*/*/*/*";
         if (!representation) {
             representation = new MoleculeRepresentation(style, cid, this.commandCentre);
             representation.setParentMolecule(this);
@@ -1540,6 +1575,7 @@ export class MoorhenMolecule {
         representation.hbondedTo = hbondedTo;
         representation.neighboursDistance = neighboursDistance;
         representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
+        representation.buildParams = cidBuildParams(representation);
 
         await representation.draw();
         this.representations.push(representation);
@@ -1568,8 +1604,9 @@ export class MoorhenMolecule {
         try {
             if (style === "ligands") {
                 representation = this.representations.find(item => item.style === style);
+            } else if (!cid) {
+                representation = this.findDefaultRepresentation(style);
             } else {
-                if (!cid) cid = "/*/*/*/*:*";
                 representation = this.representations.find(item => item.style === style && item.cid === cid);
             }
             if (representation) {
@@ -1599,8 +1636,9 @@ export class MoorhenMolecule {
         try {
             if (style === "ligands") {
                 representation = this.representations.find(item => item.style === style);
+            } else if (!cid) {
+                representation = this.findDefaultRepresentation(style);
             } else {
-                if (!cid) cid = "/*/*/*/*:*";
                 representation = this.representations.find(item => item.style === style && item.cid === cid);
             }
             if (representation) {
@@ -2239,7 +2277,6 @@ export class MoorhenMolecule {
             "transformation",
             "contact_dots",
             "chemical_features",
-            "VdWSurface",
         ]
     ): boolean {
         const state = this.store.getState();
@@ -2405,22 +2442,174 @@ export class MoorhenMolecule {
     }
 
     /**
+     * Check whether a residue is partial, i.e. has atoms missing compared to its dictionary.
+     * Atoms missing in only some of a residue's alt confs do not count.
+     * @param {string} chainId - The chain ID of the residue
+     * @param {number} resNo - The residue number
+     * @param {string} [insCode=""] - The insertion code of the residue
+     * @returns {Promise<boolean>} True if the residue has missing atoms
+     */
+    async residueHasMissingAtoms(chainId: string, resNo: number, insCode: string = ""): Promise<boolean> {
+        const response = (await this.commandCentre.cootCommand(
+            {
+                returnType: "residue_specs",
+                command: "residues_with_missing_atoms",
+                commandArgs: [this.molNo],
+            },
+            false
+        )) as moorhen.WorkerResponse<libcootApi.ResidueSpecJS[]>;
+        return (response.data.result.result ?? []).some(
+            residue => residue.chainId === chainId && residue.resNum === resNo && (residue.insCode ?? "") === (insCode ?? "")
+        );
+    }
+
+    /**
+     * Auto-fit the rotamer of a residue into a map
+     *
+     * With an alt conf only that conformation is fitted. libcoot's auto_fit_rotamer copies the fitted
+     * coordinates onto every conformation of the residue, so the fit is done on a fragment holding only
+     * that alt conf (and the atoms without one) and merged back.
+     * @param {string} chainId - The chain ID of the residue
+     * @param {number} resNo - The residue number
+     * @param {string} insCode - The insertion code of the residue
+     * @param {string} altConf - The alt conf to fit, or "" for a residue without alt confs
+     * @param {moorhen.Map} map - The map to fit into
+     * @returns {Promise<number>} 1 if the rotamer was fitted, 0 otherwise
+     */
+    async autoFitRotamer(chainId: string, resNo: number, insCode: string, altConf: string, map: moorhen.Map): Promise<number> {
+        if (!altConf) {
+            const result = (await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "auto_fit_rotamer",
+                    commandArgs: [this.molNo, chainId, resNo, insCode, "", map.molNo],
+                    changesMolecules: [this.molNo],
+                },
+                true
+            )) as moorhen.WorkerResponse<number>;
+            this.setAtomsDirty(true);
+            return result.data.result.result;
+        }
+
+        // The flanking residues give the fit its backrub neighbours
+        const residue = `${resNo - 1}-${resNo + 1}`;
+        const fragmentCid = restrictCidToAltConf(`//${chainId}/${residue}`, altConf);
+        const copyResult = (await this.commandCentre.cootCommand(
+            {
+                returnType: "status",
+                command: "copy_fragment_using_cid",
+                commandArgs: [this.molNo, fragmentCid],
+            },
+            false
+        )) as moorhen.WorkerResponse<number>;
+        const fragmentMolNo = copyResult.data.result.result;
+        if (fragmentMolNo === -1) {
+            return 0;
+        }
+
+        try {
+            const fitResult = (await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "auto_fit_rotamer",
+                    commandArgs: [fragmentMolNo, chainId, resNo, insCode, altConf, map.molNo],
+                },
+                false
+            )) as moorhen.WorkerResponse<number>;
+            if (fitResult.data.result.result !== 1) {
+                return 0;
+            }
+            await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "replace_fragment",
+                    commandArgs: [this.molNo, fragmentMolNo, fragmentCid],
+                    changesMolecules: [this.molNo],
+                },
+                true
+            );
+            this.setAtomsDirty(true);
+            return 1;
+        } finally {
+            await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "close_molecule",
+                    commandArgs: [fragmentMolNo],
+                },
+                false
+            );
+        }
+    }
+
+    /**
+     * Get the residue CIDs that libcoot's refinement `mode` would select around `cid`
+     * (mirrors coot::molecule_t::select_residues). Only used for alt-conf refinement, where
+     * libcoot cannot be asked to do the selection itself.
+     * @param {string} cid - The (multi-)CID of the central residue(s)
+     * @param {string} mode - Refinement mode (SINGLE, LITERAL, TRIPLE, QUINTUPLE, HEPTUPLE, SPHERE, BIG_SPHERE, CHAIN, ALL)
+     * @returns {Promise<string[]>} Residue CIDs
+     */
+    private async getResidueCidsForRefinementMode(cid: string, mode: string): Promise<string[]> {
+        const sequenceWindow = { TRIPLE: 1, QUINTUPLE: 2, HEPTUPLE: 3 }[mode];
+        const sphereRadius = { SPHERE: 4.2, BIG_SPHERE: 8.0 }[mode];
+        const parts = cid.split("||");
+        if (sphereRadius) {
+            return this.getNeighborResiduesCids(cid, sphereRadius);
+        } else if (mode === "ALL") {
+            return ["//*/*"];
+        } else if (mode === "CHAIN") {
+            return parts.map(part => `//${part.split("/")[2] || "*"}/*`);
+        } else if (sequenceWindow) {
+            return parts.map(part => {
+                const [, model = "", chain = "", residue = ""] = part.split("/");
+                const resNo = /^-?\d+$/.test(residue) ? parseInt(residue) : null;
+                return resNo === null ? part : `/${model}/${chain}/${resNo - sequenceWindow}-${resNo + sequenceWindow}`;
+            });
+        }
+        return parts;
+    }
+
+    /**
      * Refine a set of residues
+     *
+     * If the CID ends in `:X` (e.g. `//A/42/*:B`) only alternate conformation X and the atoms without
+     * an alt conf are refined, the other conformations stay fixed. libcoot's in-place refinement
+     * ignores alt confs, so that case goes through a refinement fragment restricted to the alt conf.
      * @param {string} cid - The CID selection with the atoms that should be refined
      * @param {string} mode - Refinement mode (SINGLE, TRIPLE ...etc.)
      * @param {number} [ncyc=4000] - Number of refinement cycles
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
     async refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number = 4000, redraw: boolean = true): Promise<void> {
-        await this.commandCentre.cootCommand(
-            {
-                command: "refine_residues_using_atom_cid",
-                returnType: "status",
-                commandArgs: [this.molNo, cid, mode, ncyc],
-                changesMolecules: [this.molNo],
-            },
-            true
-        );
+        const altConf = getCidAltConf(cid);
+        const refinementMap = this.store.getState().generalStates.activeMap as unknown as moorhen.Map | null;
+        if (altConf && refinementMap) {
+            const residueCids = await this.getResidueCidsForRefinementMode(cid, mode);
+            const fragmentCid = residueCids.map(residueCid => restrictCidToAltConf(residueCid, altConf)).join("||");
+            const fragment = await this.copyFragmentForRefinement([fragmentCid], refinementMap, false);
+            if (fragment.molNo !== null) {
+                await this.commandCentre.cootCommand(
+                    {
+                        returnType: "status_instanced_mesh_pair",
+                        command: "refine",
+                        commandArgs: [fragment.molNo, ncyc],
+                    },
+                    false
+                );
+                await this.mergeFragmentFromRefinement(fragmentCid, fragment, true, false);
+            }
+        } else {
+            await this.commandCentre.cootCommand(
+                {
+                    command: "refine_residues_using_atom_cid",
+                    returnType: "status",
+                    commandArgs: [this.molNo, cid, mode, ncyc],
+                    changesMolecules: [this.molNo],
+                },
+                true
+            );
+        }
 
         this.setAtomsDirty(true);
         if (redraw) {
@@ -2477,6 +2666,11 @@ export class MoorhenMolecule {
             cidList = [cid];
         } else {
             cidList = await this.getNeighborResiduesCids(cid, dist);
+        }
+        // A CID ending in `:X` refines only alt conf X (plus the atoms with no alt conf)
+        const altConf = getCidAltConf(cid);
+        if (altConf) {
+            cidList = cidList.map(residueCid => restrictCidToAltConf(residueCid, altConf));
         }
 
         const newMolecule = await this.copyFragmentForRefinement(cidList, activeMap, redraw, redrawFragmentFirst);
@@ -2552,7 +2746,10 @@ export class MoorhenMolecule {
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
     async SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string, redraw: boolean = true): Promise<void> {
-        this.commandCentre.cootCommand(
+        // This was previously fire-and-forget: a failure in coot was neither awaited
+        // nor inspected, so the caller carried on redrawing a molecule that had not
+        // moved and had no way to report the failure.
+        const response = await this.commandCentre.cootCommand(
             {
                 command: "SSM_superpose",
                 returnType: "superpose_results",
@@ -2561,6 +2758,10 @@ export class MoorhenMolecule {
             },
             true
         );
+
+        if (response?.data?.result?.status === "Exception") {
+            return Promise.reject(new Error(response.data.consoleMessage ?? "SSM superposition failed"));
+        }
 
         this.setAtomsDirty(true);
         if (redraw) {
@@ -2767,11 +2968,11 @@ export class MoorhenMolecule {
         return residueMap;
     }
     /**
-     * Calculate RMSD
-     * @returns {object[]} An array of objects indicating the residue CID and RMSD
+     * Calculate RMSF
+     * @returns {object[]} An array of objects indicating the residue CID and RMSF
      */
-    getRMSDs() {
-        const result: { cid: string; RMSD: number }[] = [];
+    getRMSFs() {
+        const result: { cid: string; RMSF: number }[] = [];
         const residueMap = this.getResidueCAPositions()
         const averagePositions = [];
         for (const [cid, residue] of residueMap.entries()) {
@@ -2794,7 +2995,7 @@ export class MoorhenMolecule {
                 z: avgZ
             });
         }
-        const rmsdValues = [];
+        const rmsfValues = [];
         for (const [cid, residue] of residueMap.entries()) {
 
             const n = residue.positions.length;
@@ -2819,14 +3020,14 @@ export class MoorhenMolecule {
                 sumSq += dx*dx + dy*dy + dz*dz;
             });
 
-            const RMSD = Math.sqrt(sumSq / n);
+            const RMSF = Math.sqrt(sumSq / n);
 
-            rmsdValues.push({
+            rmsfValues.push({
                 cid,
-                RMSD
+                RMSF
             });
         }
-        return rmsdValues;
+        return rmsfValues;
         }
 
     /**
@@ -2981,10 +3182,12 @@ export class MoorhenMolecule {
             return this.cachedPrivateerValidation;
         }
 
+        const input_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(this.gemmiStructure)
         const result = (await this.commandCentre.cootCommand(
             {
                 command: "privateer_validate",
-                commandArgs: [this.molNo],
+                message: "privateer_validate",
+                commandArgs: [input_cif_string],
                 returnType: "privateer_results",
             },
             false
@@ -2996,6 +3199,35 @@ export class MoorhenMolecule {
 
         return result.data.result.result;
     }
+
+    /**
+     * Get results of privateer validation for this molecule instance
+     * @param {boolean} useCache - Whether to use the cached results or not
+     * @returns {Promise<privateer.CremerPopleParameters[]>} A list of results from privateer validation
+     */
+    async getPrivateerCremerPopleParameters(useCache: boolean = false): Promise<privateer.CremerPopleParameters[]> {
+        if (useCache && this.cachedPrivateerCremerPopleParameters && !this.atomsDirty) {
+            return this.cachedPrivateerCremerPopleParameters;
+        }
+
+        const input_cif_string = window.gemmiModule.get_mmcif_string_from_gemmi_struct(this.gemmiStructure)
+        const result = (await this.commandCentre.cootCommand(
+            {
+                command: "privateer_calculate_cremer_pople_parameters",
+                message: "privateer_calculate_cremer_pople_parameters",
+                commandArgs: [input_cif_string],
+                returnType: "privateer_cremer_pople_parameters",
+            },
+            false
+        )) as moorhen.WorkerResponse<privateer.CremerPopleParameters[]>;
+
+        if (useCache) {
+            this.cachedPrivateerCremerPopleParameters = result.data.result.result;
+        }
+
+        return result.data.result.result;
+    }
+
 
     /**
      * Get SVG descriptions for the ligand environment

@@ -7,6 +7,8 @@ import { RootState } from "@/store";
 //import * as mat4 from 'gl-matrix/mat4';
 //import * as mat3 from 'gl-matrix/mat3';
 import { moorhen } from "./moorhen";
+import type { CameraController, CameraTarget, MoveResult, Transition } from "../WebGLgComponents/cameraController";
+import type { ExternalRenderer } from "../WebGLgComponents/externalRenderer";
 
 export namespace webGL {
     interface MGWebGLRenderingContext extends WebGLRenderingContext {
@@ -53,6 +55,8 @@ export namespace webGL {
         colorPeelSamplers: WebGLUniformLocation;
         xSSAOScaling: WebGLUniformLocation;
         ySSAOScaling: WebGLUniformLocation;
+        resolvedLayer: WebGLUniformLocation;
+        filterEdges: WebGLUniformLocation;
     }
 
     interface MGWebGLTextureQuadShader extends WebGLProgram {
@@ -119,9 +123,14 @@ export namespace webGL {
         xPixelOffset: WebGLUniformLocation;
         yPixelOffset: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         pixelZoom: WebGLUniformLocation;
         specularPower: WebGLUniformLocation;
+        /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
+        alphaMultiplier: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         shinyBack: WebGLUniformLocation;
     }
 
@@ -147,6 +156,8 @@ export namespace webGL {
         pixelZoom: WebGLUniformLocation;
         vertexTextureAttribute: GLint;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         xSSAOScaling: WebGLUniformLocation;
         ySSAOScaling: WebGLUniformLocation;
         peelNumber: WebGLUniformLocation;
@@ -164,6 +175,8 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         blurredTexture: WebGLUniformLocation;
         depthTexture: WebGLUniformLocation;
+    depthTexture2: WebGLUniformLocation;
+    haveDepth2: WebGLUniformLocation;
         focussedTexture: WebGLUniformLocation;
         blurDepth: WebGLUniformLocation;
     }
@@ -173,6 +186,8 @@ export namespace webGL {
         offset: WebGLUniformLocation;
         scaleMatrix: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
     }
 
     interface ShaderPerfectSpheres extends MGWebGLShader {
@@ -181,6 +196,8 @@ export namespace webGL {
         sizeAttribute: GLint;
         invSymMatrixUniform: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         xPixelOffset: WebGLUniformLocation;
         yPixelOffset: WebGLUniformLocation;
         xSSAOScaling: WebGLUniformLocation;
@@ -190,6 +207,7 @@ export namespace webGL {
         edgeDetectMap: WebGLUniformLocation;
         outlineSize: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         doShadows: WebGLUniformLocation;
         doSSAO: WebGLUniformLocation;
         doEdgeDetect: WebGLUniformLocation;
@@ -197,6 +215,8 @@ export namespace webGL {
         doPerspective: WebGLUniformLocation;
         clipCap: WebGLUniformLocation;
         specularPower: WebGLUniformLocation;
+        /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
+        alphaMultiplier: WebGLUniformLocation;
         scaleMatrix: WebGLUniformLocation;
         ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
         zoom: WebGLUniformLocation;
@@ -204,6 +224,8 @@ export namespace webGL {
 
     interface ShaderTriangles extends MGWebGLShader {
         specularPower: WebGLUniformLocation;
+        /** Per-buffer fade; null on a WebGL1 context, whose shaders have no such uniform. */
+        alphaMultiplier: WebGLUniformLocation;
         shinyBack: WebGLUniformLocation;
         backColour: WebGLUniformLocation;
         defaultColour: WebGLUniformLocation;
@@ -211,6 +233,7 @@ export namespace webGL {
         SSAOMap: WebGLUniformLocation;
         edgeDetectMap: WebGLUniformLocation;
         shadowQuality: WebGLUniformLocation;
+        shadowSoftness: WebGLUniformLocation;
         doShadows: WebGLUniformLocation;
         doSSAO: WebGLUniformLocation;
         doEdgeDetect: WebGLUniformLocation;
@@ -222,9 +245,20 @@ export namespace webGL {
         occludeDiffuse: WebGLUniformLocation;
         doPerspective: WebGLUniformLocation;
         textureMatrixUniform: WebGLUniformLocation;
+        /** The triangle shaders' normal offset for shadow-map lookups (drawCore.ts shadowNormalOffset); absent elsewhere. */
+        shadowNormalOffset?: WebGLUniformLocation | null;
         screenZ: WebGLUniformLocation;
         ssaoMultiviewWidthHeightRatio: WebGLUniformLocation;
         zoom: WebGLUniformLocation;
+        //Fancy picking ...
+        uPointTex: WebGLUniformLocation;
+        uWeightTex: WebGLUniformLocation;
+        uOffsetTex: WebGLUniformLocation;
+        uPointTexWidth: WebGLUniformLocation;
+        uWeightTexWidth: WebGLUniformLocation;
+        uOffsetTexWidth: WebGLUniformLocation;
+        uHoveredPoint: WebGLUniformLocation;
+        uHoverMask: WebGLUniformLocation;
     }
 
     interface ShaderGBuffersTriangles extends MGWebGLShader {}
@@ -235,6 +269,8 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         inputTexture: WebGLUniformLocation;
         depthTexture: WebGLUniformLocation;
+    depthTexture2: WebGLUniformLocation;
+    haveDepth2: WebGLUniformLocation;
         blurSize: WebGLUniformLocation;
         blurDepth: WebGLUniformLocation;
         blurCoeffs: WebGLUniformLocation | null;
@@ -253,11 +289,11 @@ export namespace webGL {
         gNormalTexture: WebGLUniformLocation;
         texNoiseTexture: WebGLUniformLocation;
         zoom: WebGLUniformLocation | null;
-        depthBufferSize: WebGLUniformLocation | null;
         samples: WebGLUniformLocation | null;
         radius: WebGLUniformLocation | null;
         bias: WebGLUniformLocation | null;
-        depthFactor: WebGLUniformLocation | null;
+        sceneProjection: WebGLUniformLocation | null;
+        sceneProjectionInverse: WebGLUniformLocation | null;
         tileScale_x: WebGLUniformLocation | null;
         tileScale_y: WebGLUniformLocation | null;
         tileScaleBase_x: WebGLUniformLocation | null;
@@ -268,14 +304,15 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         gPositionTexture: WebGLUniformLocation;
         gNormalTexture: WebGLUniformLocation;
-        depthBufferSize: WebGLUniformLocation | null;
         depthThreshold: WebGLUniformLocation | null;
         normalThreshold: WebGLUniformLocation | null;
         scaleDepth: WebGLUniformLocation | null;
         scaleNormal: WebGLUniformLocation | null;
         xPixelOffset: WebGLUniformLocation | null;
         yPixelOffset: WebGLUniformLocation | null;
-        depthFactor: WebGLUniformLocation | null;
+        clipNear: WebGLUniformLocation | null;
+        clipFar: WebGLUniformLocation | null;
+        perspectiveProjection: WebGLUniformLocation | null;
         zoom: WebGLUniformLocation | null;
     }
 
@@ -283,6 +320,8 @@ export namespace webGL {
         vertexTextureAttribute: GLint;
         inputTexture: WebGLUniformLocation;
         depthTexture: WebGLUniformLocation;
+    depthTexture2: WebGLUniformLocation;
+    haveDepth2: WebGLUniformLocation;
         blurSize: WebGLUniformLocation;
         blurDepth: WebGLUniformLocation;
         blurCoeffs: WebGLUniformLocation | null;
@@ -323,20 +362,11 @@ export namespace webGL {
         vertexInstanceOrientationAttribute: GLint;
     }
 
-    interface ShaderOutLine extends MGWebGLShader {
-        outlineSize: WebGLUniformLocation;
-        cursorPos: WebGLUniformLocation;
-        textureMatrixUniform: WebGLUniformLocation;
-    }
-
-    interface ShaderOverlay extends MGWebGLShader {
-        vertexTextureAttribute: GLint;
-        inputTexture: WebGLUniformLocation;
-    }
-
     interface MGWebGLPropsInterface {
         reContourMapOnlyOnMouseUp: boolean | null;
         onAtomHovered: (identifier: { buffer: { id: string }; atom: moorhen.AtomInfo }) => void;
+        // A hover on a labelled piece of a mesh. The label is opaque to the renderer.
+        onSectionHovered?: (identifier: { buffer: { id: string }; kind: string; tag: string }) => void;
         onKeyPress: (event: KeyboardEvent) => boolean | Promise<boolean>;
         onZoomChanged: (newZoom: number) => void;
         onOriginChanged: (newOrigin: [number, number, number]) => void;
@@ -362,8 +392,72 @@ export namespace webGL {
         //These 2 are used in MoorhenScreenRecorder
         getCanvasRef(): React.RefObject<HTMLCanvasElement>;
         getPixelData(doTransparentBackground?: boolean): Uint8Array;
+        /** Another renderer drawing the view (the WebGPU main view); screenshots ask it. */
+        externalRenderer: ExternalRenderer | null;
         //These 2 are used in MoorhenVercelBuild
         origin: [number, number, number];
         background_colour: [number, number, number, number];
+        //These are used in moviePlayer, which steps the view a frame at a time and can
+        //render off-screen at a size that does not depend on the window
+        drawScene(): void;
+        myQuat: quat4;
+        zoom: number;
+        /**
+         * True while a centring move is in flight. Informational only.
+         *
+         * @deprecated Read `cameraController.moving`, which covers a movie as well as a move, or
+         * `cameraController.driver` to ask who is moving the camera. Setting this no longer does
+         * anything: it used to make moveCameraTo decline, which was a flag standing in for
+         * ownership, and ownership is now something the camera can be asked about directly.
+         */
+        animating: boolean;
+        /**
+         * The camera. Owns where the view is; see WebGLgComponents/cameraController.
+         */
+        /**
+         * Whether objects can be faded in and out. False on a WebGL1 context, where the
+         * shaders have no fade uniform and an object stays solid however it is animated.
+         */
+        supportsObjectFading: boolean;
+        cameraController: CameraController;
+        /**
+         * The redux store this renderer was given.
+         *
+         * Already how the renderer reads the scene and echoes the view back; declared here so that
+         * code handed a renderer can read the scene the same way, rather than being passed the
+         * store a second time alongside it.
+         */
+        store: Store<RootState>;
+        /**
+         * Put the camera somewhere, over whatever time the caller asks for. A transition of
+         * `{ kind: "instant" }` moves it with no animation at all, which is what an export wants.
+         */
+        moveCameraTo(target: CameraTarget, transition: Transition): Promise<MoveResult>;
+        /**
+         * Turn the view by a relative rotation. A turn arriving during a move accumulates and is
+         * applied when the move lands, so a nudge of the mouse cannot stop the camera arriving.
+         */
+        turnCameraBy(delta: [number, number, number, number]): void;
+        /**
+         * The time, in seconds, the camera is advanced to on the next draw; null means wall clock.
+         * An export sets it to i/fps before each frame so that no frame is dropped and the output
+         * runs at its authored speed however long rendering took.
+         */
+        cameraTime: number | null;
+        set_clip_range(clipStart: number, clipEnd: number, update?: boolean): void;
+        set_fog_range(fogStart: number, fogEnd: number, update?: boolean): void;
+        setDrawingBufferSize(width: number, height: number): void;
+        // The camera, slab and lighting, which the WebGPU renderer reads too (PreviewCameraSource).
+        fogClipOffset: number;
+        gl_clipPlane0: ArrayLike<number>;
+        gl_clipPlane1: ArrayLike<number>;
+        gl_fog_start: number | null;
+        gl_fog_end: number;
+        doPerspectiveProjection: boolean;
+        light_positions: ArrayLike<number>;
+        light_colours_ambient: ArrayLike<number>;
+        light_colours_diffuse: ArrayLike<number>;
+        light_colours_specular: ArrayLike<number>;
+        specularPower: number;
     }
 }

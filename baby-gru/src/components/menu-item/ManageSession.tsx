@@ -41,7 +41,6 @@ export const ManageSession = () => {
     const getSession = async () => {
         const sessionData = await timeCapsule.current.fetchSession(true);
         const _sessionName = sessionName !== "" ? sessionName : "moorhen_session";
-        //console.log(JSON.stringify(sessionData, null, 4))
         const sessionMessage = moorhensession.Session.fromObject(sessionData);
         const sessionBytes = moorhensession.Session.encode(sessionMessage).finish();
         doDownload([sessionBytes] as BlobPart[], `${_sessionName}.pb`);
@@ -81,7 +80,11 @@ export const ManageSession = () => {
                     moorhenInstance,
                 );
             }
-            if (status === -1) {
+            if (status === MoorhenTimeCapsule.NEWER_VERSION_STATUS) {
+                dispatch(enqueueSnackbar({ message: MoorhenTimeCapsule.NEWER_VERSION_MESSAGE, variant: "warning" }));
+            } else if (status === MoorhenTimeCapsule.MOVIE_PLAYING_STATUS) {
+                dispatch(enqueueSnackbar({ message: MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE, variant: "warning" }));
+            } else if (status === -1) {
                 dispatch(enqueueSnackbar({ message: "Failed to read backup (deprecated format)", variant: "warning" }));
             }
         } catch (err) {

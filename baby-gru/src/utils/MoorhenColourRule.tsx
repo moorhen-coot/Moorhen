@@ -12,7 +12,7 @@ const propertyTypes: ColourRulePropertyType[] = [
     "jones-rainbow",
     "mol-symm",
     "property",
-    "RMSD",
+    "RMSF",
     "secondary-structure"
 ];
 export type ColourRulePropertyType =
@@ -24,7 +24,7 @@ export type ColourRulePropertyType =
     | "jones-rainbow"
     | "mol-symm"
     | "property"
-    | "RMSD"
+    | "RMSF"
     | "secondary-structure";
 
 export type ColourRuleType = ColourRuleSelectionType | ColourRulePropertyType;
@@ -317,3 +317,6 @@ export class ColourRule {
         }
     }
 }
+
+/** A colour rule as plain data (see ColourRule.objectify), e.g. to save it in a scene or a session */
+export type ColourRuleData = ReturnType<ColourRule["objectify"]>;

@@ -20,6 +20,9 @@ const initialState: {
     activeMap: MoorhenMap;
     theme: string;
     residueSelection: ResidueSelection;
+    selectedThreeDObjectId: string | null;
+    /** Which map's 2D slice is showing manipulation handles, or none (by its molNo). */
+    movingMapSlice: number | null;
     isShowingTomograms: boolean;
     isAnimatingTrajectory: boolean;
     isChangingRotamers: boolean;
@@ -48,6 +51,8 @@ const initialState: {
     theme: "flatly",
 
     showHoverInfo: true,
+    selectedThreeDObjectId: null,
+    movingMapSlice: null,
     residueSelection: {
         molecule: null,
         first: null,
@@ -151,6 +156,25 @@ const generalStatesSlice = createSlice({
                 label: null,
             };
         },
+        /**
+         * Which 3D object is showing manipulation handles, or none.
+         *
+         * Here rather than in the objects themselves: it is a property of what the interface is
+         * doing, not of the object, and has no business being saved into a session.
+         */
+        setSelectedThreeDObject: (state, action: PayloadAction<string | null>) => {
+            state.selectedThreeDObjectId = action.payload;
+            // One thing has handles at a time.
+            if (action.payload !== null) state.movingMapSlice = null;
+        },
+        /**
+         * Which map's 2D slice is showing manipulation handles, or none: as setSelectedThreeDObject
+         * for a 3D object, and the two take turns.
+         */
+        setMovingMapSlice: (state, action: PayloadAction<number | null>) => {
+            state.movingMapSlice = action.payload;
+            if (action.payload !== null) state.selectedThreeDObjectId = null;
+        },
         setResidueSelection: (state, action: PayloadAction<ResidueSelection>) => {
             state.residueSelection = action.payload as unknown as typeof state.residueSelection; 
         },
@@ -190,6 +214,8 @@ const generalStatesSlice = createSlice({
 });
 
 export const {
+    setSelectedThreeDObject,
+    setMovingMapSlice,
     setActiveMap,
     setViewOnly,
     setTheme,

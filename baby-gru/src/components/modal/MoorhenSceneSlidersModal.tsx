@@ -1,19 +1,41 @@
-import * as vec3 from 'gl-matrix/vec3';
 import * as mat4 from 'gl-matrix/mat4';
 import { useEffect, useRef, useCallback, useState, useMemo } from "react"
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { moorhen } from "../../types/moorhen";
-import { DisplayBuffer } from '../../WebGLgComponents/displayBuffer'
-import { cloneBuffers, buildBuffers } from '../../WebGLgComponents/buildBuffers'
+import { useMoorhenInstance } from "../../InstanceManager";
+import { SideOnWebGLView } from '../../WebGLgComponents/sideOnView'
+import type { ExternalRenderer } from '../../WebGLgComponents/externalRenderer'
+import { sideOnCamera } from '../../WebGPUComponents/sideOnCamera'
+import type { PreviewCameraSource } from '../../WebGPUComponents/previewScene'
 import { quatToMat4 } from '../../WebGLgComponents/quatToMat4.js';
 import {RootState } from '../../store/MoorhenReduxStore';
 import { MoorhenStack } from "../interface-base";
 import { MoorhenToggle, MoorhenSlider } from "../inputs";
-import { getShader, initSideOnShaders, initSideOnShadersInstanced, initSideOnSphereShaders } from '../../WebGLgComponents/mgWebGLShaders'
+import { Bounds, Sphere, boundsAround, mapSpan, reachFrom, sceneSpan, sphereOfPoints } from "../../utils/sceneExtent";
+import {
+    GRAB_TOLERANCE_PX,
+    Handle,
+    HandleId,
+    PlotWindow,
+    constrainOffset,
+    handleAtPixel,
+    offsetOfPixel,
+    partnerOf,
+    pixelOfHandle,
+    maxSideViewZoom,
+    plotHalfRange,
+    sideViewAutoWindow,
+    sideViewZoomCentre,
+} from "../../utils/sceneSliderGeometry";
+import { centreOfObject, extentOfObject } from "../../store/threeDObjectsSlice";
 import {
     setDepthBlurDepth,
     setDepthBlurRadius,
-    setResetClippingFogging,
+    setDepthPeelLayers,
+    setAutoFog,
+    setAutoClip,
+    setDoFog,
+    setDoClip,
     setUseOffScreenBuffers,
 } from "../../store/sceneSettingsSlice";
 import {
@@ -22,11 +44,6 @@ import {
     setClipStart,
     setClipEnd,
 } from "../../store";
-import { triangle_side_on_view_instanced_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-instanced-vertex-shader.js';
-import { triangle_side_on_view_vertex_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-vertex-shader.js';
-import { triangle_side_on_view_fragment_shader_source } from '../../WebGLgComponents/webgl-2/triangle-side-on-view-fragment-shader.js';
-import { twod_side_on_view_vertex_shader_source } from '../../WebGLgComponents/webgl-2/twodshapes-side-on-view-vertex-shader.js';
-import { perfect_sphere_side_on_view_fragment_shader_source } from '../../WebGLgComponents/webgl-2/perfect-sphere-side-on-view-fragment-shader.js';
 
 const getOffsetRect = (elem: HTMLCanvasElement) => {
     const box = elem.getBoundingClientRect()
@@ -43,59 +60,13 @@ const getOffsetRect = (elem: HTMLCanvasElement) => {
     return { top: Math.round(top), left: Math.round(left) }
 }
 
-enum GrabHandle
-{
- NONE,
- CLIP_START,
- CLIP_END,
- FOG_START,
- FOG_END,
- BLUR_DEPTH,
-}
-
-interface MGWebGLBuffer {
-    itemSize: number;
-    numItems: number;
-}
-
-interface SideOnProgramSphere extends WebGLProgram {
-    vertexPositionAttribute: GLint;
-    vertexNormalAttribute: GLint;
-    vertexColourAttribute: GLint;
-    vertexTextureAttribute: GLint;
-    offsetAttribute: GLint;
-    sizeAttribute: GLint;
-    pMatrixUniform: WebGLUniformLocation;
-    mvMatrixUniform: WebGLUniformLocation;
-    mvInvMatrixUniform: WebGLUniformLocation;
-}
-
-interface SideOnProgram extends WebGLProgram {
-    pMatrixUniform: WebGLUniformLocation;
-    mvMatrixUniform: WebGLUniformLocation;
-    screenZ: WebGLUniformLocation;
-    vertexPositionAttribute: GLint;
-    vertexNormalAttribute: GLint;
-    vertexColourAttribute: GLint;
-}
-
-interface SideOnProgramInstanced extends WebGLProgram {
-    pMatrixUniform: WebGLUniformLocation;
-    mvMatrixUniform: WebGLUniformLocation;
-    screenZ: WebGLUniformLocation;
-    vertexInstanceOriginAttribute: GLint;
-    vertexInstanceSizeAttribute: GLint;
-    vertexPositionAttribute: GLint;
-    vertexNormalAttribute: GLint;
-    vertexColourAttribute: GLint;
-    vertexInstanceOrientationAttribute: GLint;
-}
-
 export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "vertical", width?: number }) => {
 
     const store = useStore<RootState>()
     const dispatch = useDispatch();
-    const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging);
+    const moorhenInstance = useMoorhenInstance();
+    const autoFog = useSelector((state: RootState) => state.sceneSettings.autoFog);
+    const autoClip = useSelector((state: RootState) => state.sceneSettings.autoClip);
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers);
 
     const gl_fog_start = useSelector((state: moorhen.State) => state.sceneSettings.fogStart);
@@ -103,16 +74,11 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const clipStart = useSelector((state: moorhen.State) => state.sceneSettings.clipStart);
     const clipEnd = useSelector((state: moorhen.State) => state.sceneSettings.clipEnd);
     const blurSize = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurRadius);
+    const depthPeelLayers = useSelector((state: moorhen.State) => state.sceneSettings.depthPeelLayers);
 
-    const [useFog, setUseFog] = useState<boolean>(true);
-    const [useClip, setUseClip] = useState<boolean>(true);
-    const [backupFogNear, setBackupFogNear] = useState<number>(500.0);
-    const [backupFogFar, setBackupFogFar] = useState<number>(500.0);
-    const [backupClipNear, setBackupClipNear] = useState<number>(500.0);
-    const [backupClipFar, setBackupClipFar] = useState<number>(500.0);
-
-    const fogOffNear = 998.0
-    const fogOffFar = 999.0
+    // Scene settings, saved with the scene: turning them off keeps the planes, the renderer just ignores them
+    const useFog = useSelector((state: moorhen.State) => state.sceneSettings.doFog);
+    const useClip = useSelector((state: moorhen.State) => state.sceneSettings.doClip);
 
     const blurLabel = <>
              <span style={{display: "inline-block", width:"100px"}}>Depth blur</span>
@@ -129,26 +95,70 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
              <span style={{color: "yellow", backgroundColor:"#aaaaaa"}}><b>&#x2E3B;</b></span>
          </>
 
-    const plotWidth = props.width ? props.width : 500
-    const plotHeight = plotWidth *0.6
+    /**
+     * The width the figure has to fill, measured: the canvases are drawn at a pixel size, so they
+     * cannot simply stretch to their container, and no width worked out from the panel's could
+     * account for every padding, border and scrollbar between the two. props.width only stands in
+     * until the first measurement.
+     */
+    const [measuredWidth, setMeasuredWidth] = useState<number | null>(null)
+    const resizeObserverRef = useRef<ResizeObserver | null>(null)
+    const attachFigureContainer = useCallback((element: HTMLDivElement | null) => {
+        resizeObserverRef.current?.disconnect()
+        resizeObserverRef.current = null
+        if (!element) return
+        // Whole pixels, rounded down: a canvas a fraction wider than its container overflows it
+        const measure = (width: number) => { if (width > 0) setMeasuredWidth(Math.floor(width)) }
+        measure(element.clientWidth)
+        resizeObserverRef.current = new ResizeObserver(entries => measure(entries[0].contentRect.width))
+        resizeObserverRef.current.observe(element)
+    }, [])
+
+    const plotWidth = measuredWidth ?? props.width ?? 500
+    const plotHeight = Math.round(plotWidth * 0.6)
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const canvasRefWebGL = useRef<HTMLCanvasElement>(null)
+    /**
+     * The scene is drawn on one of two canvases under the handles: this one while WebGPU draws the
+     * main view - by the main view's renderer, from what it already holds on the GPU, its maps
+     * contoured on the GPU included (ExternalRenderer.drawSecondView) - and canvasRefWebGL, with
+     * this widget's own WebGL context and copies of the buffers (SideOnWebGLView), otherwise. A
+     * canvas takes one kind of context for good, hence two.
+     */
+    const canvasRefWebGPU = useRef<HTMLCanvasElement>(null)
+    /**
+     * The same canvas, held in state so that its arrival triggers a render.
+     *
+     * The ref is kept because the drawing code reaches for it from callbacks, where a ref is the
+     * right tool. What a ref cannot do is tell anything that it has been filled in: the first
+     * draw waits for this.
+     */
+    const [glCanvas, setGlCanvas] = useState<HTMLCanvasElement | null>(null)
+    const attachGlCanvas = useCallback((element: HTMLCanvasElement | null) => {
+        canvasRefWebGL.current = element
+        setGlCanvas(element)
+    }, [])
 
-    const spanScaling = 0.75
+    // Half the plot's width, as a share of the scene's diagonal. Half a diagonal would just fit a
+    // scene centred on the view centre; a little more leaves room when it is not.
+    const spanScaling = 0.6
 
+    // For the scene span below: everything drawn counts towards it, not only the molecules.
+    const maps = useSelector((state: moorhen.State) => state.maps);
+    const threeDObjects = useSelector((state: moorhen.State) => state.threeDObjects.objects);
     const fogClipOffset = useSelector((state: moorhen.State) => state.sceneSettings.fogClipOffset);
     const depthBlurDepth = useSelector((state: moorhen.State) => state.sceneSettings.depthBlurDepth);
     const quat = useSelector((state: moorhen.State) => state.glRef.quat)
+    const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
 
-    const programRef = useRef<null | SideOnProgram>(null);
-    const programInstancedRef = useRef<null | SideOnProgramInstanced>(null);
-    const sphereProgramRef = useRef<null | SideOnProgramSphere>(null);
+    /** The WebGL side-on view, made when WebGL first draws it and let go when the widget is hidden. */
+    const sideOnViewRef = useRef<SideOnWebGLView | null>(null);
 
-    const imageBuffersRef = useRef<null | DisplayBuffer>(null);
-
-    const displayBuffers = store.getState().glRef.displayBuffers
+    const displayBuffers = useSelector((state: moorhen.State) => state.glRef.displayBuffers)
     const storeMolecules = store.getState().molecules.moleculeList
-    const originState =  store.getState().sceneSettings.origin
+    // Selected, so that moving the origin, or a map's contour settings, draws the view again.
+    const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin)
+    const mapContourSettings = useSelector((state: moorhen.State) => state.mapContourSettings)
 
     const [clickX, setClickX] = useState<number>(-1)
     const [clickY, setClickY] = useState<number>(-1)
@@ -158,81 +168,198 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const [releaseY, setReleaseY] = useState<number>(-1)
     const [mouseHeldDown, setMouseHeldDown] = useState<boolean>(false)
 
-    const [grabbed, setGrabbed] = useState<GrabHandle>(GrabHandle.NONE)
+    const [grabbed, setGrabbed] = useState<HandleId | null>(null)
 
-    let myBuffers:DisplayBuffer[]
-    myBuffers = useMemo(() => {
-
-        if(!canvasRefWebGL)
-            return []
-
-        if(!canvasRefWebGL.current)
-            return []
-
-        const canvasWebGL = canvasRefWebGL.current
-        const gl = canvasWebGL.getContext("webgl2")
-
-        const clonedBuffers = cloneBuffers(displayBuffers,gl)
-        buildBuffers(clonedBuffers,store,gl)
-        return clonedBuffers
-
-    }, [displayBuffers,storeMolecules])
-
-    const atomSpan = useMemo(() => {
-        let min_x =  1e5;
-        let max_x = -1e5;
-        let min_y =  1e5;
-        let max_y = -1e5;
-        let min_z =  1e5;
-        let max_z = -1e5;
+    /**
+     * The size of the whole scene, for the reset clip distances, and for the widget's scale when
+     * viewReach has nothing to measure.
+     *
+     * Everything on screen counts, not only atoms. This used to measure the molecules alone and
+     * fall back to 9999 when there were none, so a scene holding a mesh, a primitive or a map
+     * got a widget spanning ten thousand angstroms and initial clip distances to match.
+     *
+     * Maps contribute their unit cell rather than their contour radius - see sceneExtent - so
+     * that changing how much of a map is drawn does not move the scale underfoot.
+     */
+    const { atomSpan, atomSphere } = useMemo(() => {
+        // Accumulated in place rather than collected into an array: a large structure has
+        // hundreds of thousands of atoms and this runs whenever the buffers change.
         let haveAtoms = false;
+        const min: [number, number, number] = [Infinity, Infinity, Infinity];
+        const max: [number, number, number] = [-Infinity, -Infinity, -Infinity];
+        const visibleAtoms = displayBuffers.filter(buffer => buffer.visible && buffer.atoms)
 
-        displayBuffers.forEach(buffer => {
-            if (buffer.visible) {
-                if(buffer.atoms&&buffer.atoms.length>1)
-                    haveAtoms = true
-                buffer.atoms.forEach(atom => {
-                    if(atom.x>max_x) max_x = atom.x;
-                    if(atom.x<min_x) min_x = atom.x;
-                    if(atom.y>max_y) max_y = atom.y;
-                    if(atom.y<min_y) min_y = atom.y;
-                    if(atom.z>max_z) max_z = atom.z;
-                    if(atom.z<min_z) min_z = atom.z;
-                })
-            }
+        visibleAtoms.forEach(buffer => {
+            buffer.atoms.forEach(atom => {
+                const p = [atom.x, atom.y, atom.z];
+                if (!p.every(Number.isFinite)) return;
+                haveAtoms = true;
+                for (let i = 0; i < 3; i++) {
+                    if (p[i] < min[i]) min[i] = p[i];
+                    if (p[i] > max[i]) max[i] = p[i];
+                }
+            })
+        })
+        const atomBounds: Bounds | null = haveAtoms ? { min, max } : null
+
+        // Atom coordinates and 3D object centres share a coordinate space, so they go in together
+        // and a scene with two things far apart gets a span covering both.
+        const positioned: (Bounds | null)[] = [atomBounds];
+        threeDObjects.forEach(obj => {
+            positioned.push(boundsAround(centreOfObject(obj), extentOfObject(obj)));
         })
 
-        let atom_span = 9999.0
-        if(haveAtoms){
-            atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
+        // The ball the atoms are in, for the side-on view's framing (viewReach below).
+        function* atomPositions(): Generator<[number, number, number]> {
+            for (const buffer of visibleAtoms) for (const atom of buffer.atoms) yield [atom.x, atom.y, atom.z]
         }
-        return atom_span
-    }, [displayBuffers])
 
-    const drawGL = async (width,height) => {
+        return {
+            atomSpan: sceneSpan({ positioned, sizes: maps.map(mapSpan) }),
+            atomSphere: sphereOfPoints(atomPositions(), atomBounds),
+        }
+    }, [displayBuffers, threeDObjects, maps])
 
-        if(!canvasRefWebGL)
-            return
+    /**
+     * How far what is drawn reaches from the view centre, in angstroms, or 0 when nothing is: what
+     * the side-on view is framed on.
+     *
+     * Not atomSpan, which this used to be (times spanScaling). That is the diagonal of everything's
+     * box, a map's whole cell included, and pays no attention to where the view centre is: an EM
+     * map, contoured in a small ball inside a box hundreds of angstroms across, was a speck, a
+     * centred molecule had half again the room it needed, and one the view had moved away from
+     * could be off the edge. Here a molecule is the ball its atoms are in, a 3D object its extent,
+     * and a visible map the ball it is contoured in: its radius about where it is drawn, the view
+     * centre, or the point it is locked to.
+     */
+    const viewReach = useMemo(() => {
+        // The scene origin is the negated view centre, as are a map's locked draw origin.
+        const centre = originState.map(c => -c)
+        const spheres: (Sphere | null)[] = [atomSphere]
+        threeDObjects.forEach(obj => {
+            spheres.push({ centre: centreOfObject(obj) as [number, number, number], radius: extentOfObject(obj) })
+        })
+        maps.forEach(map => {
+            if (!mapContourSettings.visibleMaps.includes(map.molNo)) return
+            const radius = mapContourSettings.mapRadii.find(r => r.molNo === map.molNo)?.radius
+            if (!Number.isFinite(radius)) return
+            const drawOrigin = map.isOriginLocked ? (map.drawOrigin ?? map.mapCentre) : null
+            spheres.push({ centre: (drawOrigin ? drawOrigin.map(c => -c) : centre) as [number, number, number], radius })
+        })
+        return reachFrom(centre, spheres)
+    }, [atomSphere, threeDObjects, maps, mapContourSettings, originState])
 
-        if(!canvasRefWebGL.current)
-            return
+    /**
+     * Each handle as a signed distance from the view centre, which is the one convention the
+     * geometry helpers work in. Clip and fog store their near edge as a positive distance towards
+     * the viewer, so those are negated.
+     */
+    const handles: Handle[] = useMemo(() => [
+        { id: "clipStart", offset: -clipStart, visible: useClip },
+        { id: "clipEnd", offset: clipEnd, visible: useClip },
+        { id: "fogStart", offset: -(fogClipOffset - gl_fog_start), visible: useFog },
+        { id: "fogEnd", offset: gl_fog_end - fogClipOffset, visible: useFog },
+        { id: "blurDepth", offset: depthBlurDepth, visible: useOffScreenBuffers },
+    ], [clipStart, clipEnd, gl_fog_start, gl_fog_end, fogClipOffset, depthBlurDepth, useClip, useFog, useOffScreenBuffers])
 
-        if(!programInstancedRef.current)
-            return
+    /**
+     * Half the plot's extent, in angstroms.
+     *
+     * The scene's reach is the floor, not the answer: the range also stretches to contain every
+     * visible handle. Handles used to be clamped to the edge when their value fell outside the
+     * scene, and because the clamped pixel was then used to hit-test and to guard the drag, two
+     * handles off the same end became one unreachable pixel. Fitting the range instead means
+     * nothing is ever off the plot, so neither failure has anywhere to happen.
+     */
+    const plotRange = useMemo(
+        () => plotHalfRange(viewReach > 0 ? viewReach : atomSpan * spanScaling, handles),
+        [viewReach, atomSpan, handles])
 
-        const canvasWebGL = canvasRefWebGL.current
-        const gl = canvasWebGL.getContext("webgl2")
+    /**
+     * The side view's zoom, for placing the planes precisely: 1 shows the whole of plotRange, more
+     * magnifies about zoomFocus, the middle of the slab the main view shows when the zoom was set
+     * (sideViewZoomCentre). That depth stays where it is on the plot as the zoom changes. The focus
+     * is kept, not followed: dragging a plane moves the slab's middle, and the plot would slide
+     * under the pointer. Not part of the scene, only of how this widget looks at it.
+     */
+    const [sideZoomSet, setSideZoom] = useState<number>(1)
+    const [zoomFocus, setZoomFocus] = useState<number>(0)
+    // Down to about 10 angstroms across. Capped here as well as on the slider: the plot's range
+    // shrinks when the scene does, and the zoom set for the larger one could then go further.
+    const maxSideZoom = maxSideViewZoom(plotRange)
+    /** Auto: framed on the slab Auto clip and Auto fog give the main view's zoom (sideViewAutoWindow); the slider is then unused. */
+    const [autoSideZoom, setAutoSideZoom] = useState<boolean>(false)
+    /**
+     * The window kept while a handle is dragged. Dragging a plane changes what auto zoom frames, and
+     * can change the whole plot's range, so the plot would otherwise move under the pointer.
+     */
+    const [heldWindow, setHeldWindow] = useState<PlotWindow | null>(null)
 
-        gl.enable(gl.DEPTH_TEST);
-        gl.clearColor(0.5,0.5,0.5,1.0);
-        gl.viewport(0, 0, width, height);
-        const screenZ = vec3.create();
-        vec3.set(screenZ,0,0,1)
+    const mainZoom = useSelector((state: moorhen.State) => state.sceneSettings.zoom)
+    const autoWindow = useMemo(() => sideViewAutoWindow(mainZoom), [mainZoom])
+    const sideZoom = autoSideZoom
+        ? Math.min(Math.max(plotRange / autoWindow.halfRange, 1), maxSideZoom)
+        : Math.min(sideZoomSet, maxSideZoom)
+    const liveWindow: PlotWindow = autoSideZoom
+        ? autoWindow
+        : { centre: zoomFocus * (1 - 1 / sideZoom), halfRange: plotRange / sideZoom }
+    const viewHalfRange = (heldWindow ?? liveWindow).halfRange
+    const viewCentre = (heldWindow ?? liveWindow).centre
+
+    const changeSideZoom = (zoom: number) => {
+        if (sideZoom === 1) setZoomFocus(sideViewZoomCentre(handles))
+        setSideZoom(zoom)
+    }
+
+    /** Where each handle is drawn, by id. Zoomed in, some may be off the plot. */
+    const handlePixels = useMemo(() => {
+        const pixels = {} as Record<HandleId, number>
+        handles.forEach(h => { pixels[h.id] = pixelOfHandle(h, viewHalfRange, plotWidth, viewCentre) })
+        return pixels
+    }, [handles, viewHalfRange, viewCentre, plotWidth])
+
+    /** The offset a handle must not cross, or null when it has no partner. */
+    const partnerOffset = (id: HandleId): number | null => {
+        const partner = partnerOf(id)
+        if (!partner) return null
+        return handles.find(h => h.id === partner)?.offset ?? null
+    }
+
+    /** The main view's renderer, if another than WebGL draws it (the WebGPU main view). */
+    const externalRenderer = (): { view: PreviewCameraSource; external: ExternalRenderer } | null => {
+        const view = moorhenInstance.getVideoRecorderRef()?.current?.glRef?.current as unknown as
+            (PreviewCameraSource & { externalRenderer?: ExternalRenderer | null }) | null
+        return view?.externalRenderer ? { view, external: view.externalRenderer } : null
+    }
+
+    /** The scene from the side, under the handles: by WebGPU when it draws the main view, else by WebGL. */
+    const draw3D = (width: number, height: number) => {
+        const glCanvasNow = canvasRefWebGL.current
+        const gpuCanvas = canvasRefWebGPU.current
+        if (!glCanvasNow || !gpuCanvas) return
+
+        const main = externalRenderer()
+        const byWebGPU = !!main?.external.drawSecondView?.(gpuCanvas, sideOnCamera(main.view, viewHalfRange, width, height, viewCentre))
+        gpuCanvas.style.visibility = byWebGPU ? "visible" : "hidden"
+        glCanvasNow.style.visibility = byWebGPU ? "hidden" : "visible"
+        if (byWebGPU) return
+        main?.external.releaseSecondView?.(gpuCanvas)
+
+        if (!sideOnViewRef.current) {
+            const gl = glCanvasNow.getContext("webgl2")
+            if (!gl) return
+            sideOnViewRef.current = new SideOnWebGLView(gl)
+        }
+
         const pMatrix = mat4.create();
-        mat4.ortho(pMatrix, -atomSpan * spanScaling, atomSpan * spanScaling, -atomSpan * spanScaling * height/width, atomSpan * spanScaling * height/width, 0.1, 1000.0);
+        // The plot's range, not the scene span: the 2D overlay is drawn to the same range, and the
+        // handles would no longer line up with the molecule behind them if these two disagreed.
+        // Zoomed in, the depth across is moved to the view's centre; up and down stays centred.
+        mat4.ortho(pMatrix, viewCentre - viewHalfRange, viewCentre + viewHalfRange,
+            -viewHalfRange * height/width, viewHalfRange * height/width, 0.1, 1000.0);
 
-        const theMatrix = quatToMat4(quat);
-
+        // The main view's turn, then a quarter turn about the vertical: its line of sight runs
+        // across this view, the eye on the left (sideOnCamera's SIDE_ON_TURN, for WebGPU).
         const mvMatrix = mat4.create();
         mat4.set(mvMatrix,
             0.0, 0.0, 1.0, 0.0,
@@ -240,234 +367,10 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
            -1.0, 0.0, 0.0, 0.0,
             0.0, 0.0, -100.0, 1.0,
         )
-        mat4.multiply(mvMatrix, mvMatrix, theMatrix);
+        mat4.multiply(mvMatrix, mvMatrix, quatToMat4(quat));
+        mat4.translate(mvMatrix, mvMatrix, originState)
 
-        mat4.translate(mvMatrix,mvMatrix,originState)
-
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-// useProgram is not a React hook.
-// eslint-disable-next-line
-        gl.useProgram(programInstancedRef.current)
-
-        gl.uniform3fv(programInstancedRef.current.screenZ, screenZ);
-        gl.uniformMatrix4fv(programInstancedRef.current.pMatrixUniform, false, pMatrix);
-        gl.uniformMatrix4fv(programInstancedRef.current.mvMatrixUniform, false, mvMatrix);
-
-        for(let i = 0; i<16; i++)
-            gl.disableVertexAttribArray(i);
-        gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOriginAttribute);
-        gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceSizeAttribute);
-        gl.enableVertexAttribArray(programInstancedRef.current.vertexColourAttribute);
-        gl.enableVertexAttribArray(programInstancedRef.current.vertexPositionAttribute);
-        gl.enableVertexAttribArray(programInstancedRef.current.vertexNormalAttribute);
-
-        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceSizeAttribute, 1);
-        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOriginAttribute, 1);
-        gl.vertexAttribDivisor(programInstancedRef.current.vertexColourAttribute,1);
-
-        for (const buffer of myBuffers) {
-            if(buffer.visible)
-            if(buffer.triangleInstanceOriginBuffer&&buffer.triangleInstanceOriginBuffer.length>0){
-                for (let j = 0; j < buffer.triangleInstanceOriginBuffer.length; j++) {
-                    if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="TRIANGLES"&&buffer.triangleInstanceOriginBuffer[j].numItems>0){
-                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleInstanceOriginBuffer[j]);
-                        gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceOriginAttribute, buffer.triangleInstanceOriginBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleInstanceSizeBuffer[j]);
-                        gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceSizeAttribute, buffer.triangleInstanceSizeBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleColourBuffer[j]);
-                        gl.vertexAttribPointer(programInstancedRef.current.vertexColourAttribute, buffer.triangleColourBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[j]);
-                        gl.vertexAttribPointer(programInstancedRef.current.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[j]);
-                        gl.vertexAttribPointer(programInstancedRef.current.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[j]);
-                        if(buffer.triangleInstanceOrientationBuffer[j]&&buffer.triangleInstanceOrientations.length>0&&buffer.triangleInstanceOrientations[j].length>0){
-                            gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute);
-                            gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+1);
-                            gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+2);
-                            gl.enableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+3);
-                            gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleInstanceOrientationBuffer[j]);
-                            gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceOrientationAttribute, 4, gl.FLOAT, false, 64, 0);
-                            gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceOrientationAttribute+1, 4, gl.FLOAT, false, 64, 16);
-                            gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceOrientationAttribute+2, 4, gl.FLOAT, false, 64, 32);
-                            gl.vertexAttribPointer(programInstancedRef.current.vertexInstanceOrientationAttribute+3, 4, gl.FLOAT, false, 64, 48);
-                            gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOrientationAttribute, 1);
-                            gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOrientationAttribute+1, 1);
-                            gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOrientationAttribute+2, 1);
-                            gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOrientationAttribute+3, 1);
-                            gl.drawElementsInstanced(gl.TRIANGLES, buffer.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0, buffer.triangleInstanceOriginBuffer[j].numItems);
-                        } else {
-                            console.log("Oh, no orientations! Need to do something else.")
-                            gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute);
-                            gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+1);
-                            gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+2);
-                            gl.disableVertexAttribArray(programInstancedRef.current.vertexInstanceOrientationAttribute+3);
-                        }
-                        /*
-                        console.log("Drawing",buffer.triangleVertexIndexBuffer[j].numItems,"triangles")
-                        console.log("Buffer",buffer)
-                        gl.drawElementsInstanced(gl.TRIANGLES, buffer.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0, buffer.triangleInstanceOriginBuffer[j].numItems);
-                        */
-                    }
-                }
-            }
-        }
-        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceSizeAttribute, 0);
-        gl.vertexAttribDivisor(programInstancedRef.current.vertexInstanceOriginAttribute, 0);
-        gl.vertexAttribDivisor(programInstancedRef.current.vertexColourAttribute,0);
-// useProgram is not a React hook.
-// eslint-disable-next-line
-        gl.useProgram(programRef.current);
-
-        gl.uniform3fv(programRef.current.screenZ, screenZ);
-        gl.uniformMatrix4fv(programRef.current.pMatrixUniform, false, pMatrix);
-        gl.uniformMatrix4fv(programRef.current.mvMatrixUniform, false, mvMatrix);
-
-        for(let i = 0; i<16; i++)
-            gl.disableVertexAttribArray(i);
-        gl.enableVertexAttribArray(programRef.current.vertexColourAttribute);
-        gl.enableVertexAttribArray(programRef.current.vertexPositionAttribute);
-        gl.enableVertexAttribArray(programRef.current.vertexNormalAttribute);
-
-        for (const buffer of myBuffers) {
-            if(buffer.visible)
-            if(!buffer.triangleInstanceOriginBuffer||buffer.triangleInstanceOriginBuffer.length===0){
-                for (let j = 0; j < buffer.triangleVertexPositionBuffer.length; j++) {
-                    if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="TRIANGLES"&&buffer.triangleVertexPositionBuffer[j].numItems>0){
-                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleColourBuffer[j]);
-                        gl.vertexAttribPointer(programRef.current.vertexColourAttribute, buffer.triangleColourBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[j]);
-                        gl.vertexAttribPointer(programRef.current.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[j]);
-                        gl.vertexAttribPointer(programRef.current.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[j]);
-                        gl.drawElements(gl.TRIANGLES, buffer.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0);
-                    }
-                }
-            }
-        }
-// useProgram is not a React hook.
-// eslint-disable-next-line
-        gl.useProgram(sphereProgramRef.current)
-        gl.uniformMatrix4fv(sphereProgramRef.current.pMatrixUniform, false, pMatrix);
-        gl.uniformMatrix4fv(sphereProgramRef.current.mvMatrixUniform, false, mvMatrix);
-        const invmat = mat4.create();
-        const invmatin = mat4.create();
-        mat4.set(invmatin,
-                mvMatrix[0], mvMatrix[1], mvMatrix[2], 0.0,
-                mvMatrix[4], mvMatrix[5], mvMatrix[6], 0.0,
-                mvMatrix[8], mvMatrix[9], mvMatrix[10], 0.0,
-                0.0, 0.0, 0.0, 1.0);
-        mat4.invert(invmat, invmatin);
-        gl.uniformMatrix4fv(sphereProgramRef.current.mvInvMatrixUniform, false, invmat);
-
-        for(let i = 0; i<16; i++)
-            gl.disableVertexAttribArray(i);
-
-        gl.enableVertexAttribArray(sphereProgramRef.current.vertexPositionAttribute);
-        gl.enableVertexAttribArray(sphereProgramRef.current.vertexNormalAttribute);
-        gl.enableVertexAttribArray(sphereProgramRef.current.vertexTextureAttribute);
-
-        gl.enableVertexAttribArray(sphereProgramRef.current.vertexColourAttribute);
-        gl.enableVertexAttribArray(sphereProgramRef.current.offsetAttribute);
-        gl.enableVertexAttribArray(sphereProgramRef.current.sizeAttribute);
-
-        gl.vertexAttribDivisor(sphereProgramRef.current.sizeAttribute, 1);
-        gl.vertexAttribDivisor(sphereProgramRef.current.offsetAttribute, 1);
-        gl.vertexAttribDivisor(sphereProgramRef.current.vertexColourAttribute,1);
-
-        for (const buffer of myBuffers) {
-            if(buffer.visible)
-            if(buffer.triangleInstanceOriginBuffer&&buffer.triangleInstanceOriginBuffer.length>0){
-                for (let j = 0; j < buffer.triangleInstanceOriginBuffer.length; j++) {
-                    if(buffer.bufferTypes[j]&&buffer.bufferTypes[j]==="PERFECT_SPHERES"&&buffer.triangleInstanceOriginBuffer[j].numItems>0){
-                        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffersRef.current.triangleVertexNormalBuffer[j]);
-                        gl.vertexAttribPointer(sphereProgramRef.current.vertexNormalAttribute, imageBuffersRef.current.triangleVertexNormalBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffersRef.current.triangleVertexPositionBuffer[j]);
-                        gl.vertexAttribPointer(sphereProgramRef.current.vertexPositionAttribute, imageBuffersRef.current.triangleVertexPositionBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffersRef.current.triangleVertexTextureBuffer[j]);
-                        gl.vertexAttribPointer(sphereProgramRef.current.vertexTextureAttribute, imageBuffersRef.current.triangleVertexTextureBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleInstanceOriginBuffer[j]);
-                        gl.vertexAttribPointer(sphereProgramRef.current.offsetAttribute, buffer.triangleInstanceOriginBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleInstanceSizeBuffer[j]);
-                        gl.vertexAttribPointer(sphereProgramRef.current.sizeAttribute, buffer.triangleInstanceSizeBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.triangleColourBuffer[j]);
-                        gl.vertexAttribPointer(sphereProgramRef.current.vertexColourAttribute, buffer.triangleColourBuffer[j].itemSize, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, imageBuffersRef.current.triangleVertexIndexBuffer[j]);
-                        gl.drawElementsInstanced(gl.TRIANGLE_FAN, imageBuffersRef.current.triangleVertexIndexBuffer[j].numItems, gl.UNSIGNED_INT, 0, buffer.triangleInstanceOriginBuffer[j].numItems);
-                    }
-                }
-            }
-        }
-        gl.vertexAttribDivisor(sphereProgramRef.current.sizeAttribute, 0);
-        gl.vertexAttribDivisor(sphereProgramRef.current.offsetAttribute, 0);
-        gl.vertexAttribDivisor(sphereProgramRef.current.vertexColourAttribute,0);
-    }
-
-    const buildDiskBuffers = ():DisplayBuffer => {
-
-        if(!canvasRefWebGL)
-            return
-
-        if(!canvasRefWebGL.current)
-            return
-
-        if(!programInstancedRef.current)
-            return
-
-        const canvasWebGL = canvasRefWebGL.current
-        const gl = canvasWebGL.getContext("webgl2")
-
-        const diskIndices = [];
-        const diskNormals = [];
-        const imageVertices = [];
-        const accuStep = 90;
-        let diskIdx = 0;
-        imageVertices.push(0.0);
-        imageVertices.push(0.0);
-        imageVertices.push(0.0);
-        diskNormals.push(0.0);
-        diskNormals.push(0.0);
-        diskNormals.push(-1.0);
-        diskIndices.push(diskIdx++);
-        for(let theta = 45; theta <= 405; theta += accuStep) {
-            const theta1 = Math.PI * (theta) / 180.0;
-            const x1 = Math.cos(theta1);
-            const y1 = Math.sin(theta1);
-            imageVertices.push(x1);
-            imageVertices.push(-y1);
-            imageVertices.push(0.0);
-            diskNormals.push(0.0);
-            diskNormals.push(0.0);
-            diskNormals.push(-1.0);
-            diskIndices.push(diskIdx++);
-        }
-        const imageBuffer = new DisplayBuffer();
-        imageBuffer.triangleVertexNormalBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-        imageBuffer.triangleVertexIndexBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-        imageBuffer.triangleVertexTextureBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-        imageBuffer.triangleVertexPositionBuffer.push(gl.createBuffer() as MGWebGLBuffer);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, imageBuffer.triangleVertexIndexBuffer[0]);
-        imageBuffer.triangleVertexIndexBuffer[0].itemSize = 1;
-        imageBuffer.triangleVertexIndexBuffer[0].numItems = diskIndices.length;
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(diskIndices), gl.STATIC_DRAW);
-        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffer.triangleVertexNormalBuffer[0]);
-        imageBuffer.triangleVertexNormalBuffer[0].itemSize = 3;
-        imageBuffer.triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(diskNormals), gl.STATIC_DRAW);
-        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffer.triangleVertexPositionBuffer[0]);
-        imageBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
-        imageBuffer.triangleVertexPositionBuffer[0].numItems = imageVertices.length / 3;
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(imageVertices), gl.DYNAMIC_DRAW);
-
-        const imageTextures = [0.5, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
-        gl.bindBuffer(gl.ARRAY_BUFFER, imageBuffer.triangleVertexTextureBuffer[0]);
-        imageBuffer.triangleVertexTextureBuffer[0].itemSize = 2;
-        imageBuffer.triangleVertexTextureBuffer[0].numItems = imageTextures.length / 2;
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(imageTextures), gl.STATIC_DRAW);
-
-        return imageBuffer
+        sideOnViewRef.current.draw(displayBuffers ?? [], pMatrix, mvMatrix, width, height, [0.5, 0.5, 0.5, 1.0])
     }
 
     const plotTheData = async () => {
@@ -481,34 +384,44 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         const canvas = canvasRef.current
         const ctx = canvas.getContext("2d")
 
-        const scale = atomSpan * spanScaling
-
         const fogStart = fogClipOffset - gl_fog_start
         const fogEnd = gl_fog_end - fogClipOffset
-        const clipStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - clipStart / scale * plotWidth * .5,1))
-        const clipEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + clipEnd / scale * plotWidth * .5,1))
-        const fogStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - fogStart / scale * plotWidth * .5,1))
-        const fogEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + fogEnd / scale * plotWidth * .5,1))
-        const depthBlurDepthPos = depthBlurDepth * plotWidth
+
+        // No clamping here any more. The range was fitted to these, so they are already on the plot.
+        const clipStartPos = handlePixels.clipStart
+        const clipEndPos = handlePixels.clipEnd
+        const fogStartPos = handlePixels.fogStart
+        const fogEndPos = handlePixels.fogEnd
+        const depthBlurDepthPos = handlePixels.blurDepth
 
         ctx.save()
 
         ctx.clearRect(0,0,canvas.width,canvas.height)
         ctx.fillStyle = "#77777700"
         ctx.fillRect(0,0,canvas.width,canvas.height)
-        ctx.fillStyle = "#00222244"
-        ctx.fillRect(0,0,clipStartPos,canvas.height)
-        ctx.fillRect(clipEndPos,0,canvas.width-clipStartPos,canvas.height)
+        // Only when clipping is actually on. These two fills sat outside the useFog/useClip tests
+        // that gate the handle lines, so switching Clip off left the clipped-out region still
+        // shaded - the plot went on showing a slab that was no longer being applied.
+        if(useClip){
+            ctx.fillStyle = "#00222244"
+            ctx.fillRect(0,0,clipStartPos,canvas.height)
+            // canvas.width - clipEndPos. It read canvas.width - clipStartPos, so the shaded band
+            // started in the right place but ran on past the edge by the width of the near side.
+            ctx.fillRect(clipEndPos,0,canvas.width-clipEndPos,canvas.height)
+        }
 
+        if(useFog){
+            const fogGradient = ctx.createLinearGradient(fogStartPos, 0, fogEndPos, 0)
+            fogGradient.addColorStop(0, "#ffffff00");
+            fogGradient.addColorStop(1, "#ffffffff");
 
-        const fogGradient = ctx.createLinearGradient(fogStartPos, 0, fogEndPos, 0)
-        fogGradient.addColorStop(0, "#ffffff00");
-        fogGradient.addColorStop(1, "#ffffffff");
-
-        ctx.fillStyle = fogGradient
-        const fogDrawStart = Math.max(fogStartPos,clipStartPos)
-        const fogDrawWidth = Math.min(fogEndPos,clipEndPos)-fogDrawStart
-        ctx.fillRect(fogDrawStart,0,fogDrawWidth,canvas.height)
+            ctx.fillStyle = fogGradient
+            // Fog is only visible where the slab is, so the band stops at the clip planes - but
+            // only when those planes are in force.
+            const fogDrawStart = useClip ? Math.max(fogStartPos,clipStartPos) : fogStartPos
+            const fogDrawEnd = useClip ? Math.min(fogEndPos,clipEndPos) : fogEndPos
+            ctx.fillRect(fogDrawStart,0,fogDrawEnd-fogDrawStart,canvas.height)
+        }
 
         let hovering = false
         let drawText = ""
@@ -516,7 +429,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         canvas.style.cursor = "auto"
 
         if(useFog){
-            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_START)&&Math.abs(moveX-fogStartPos)<5&&!hovering){
+            if((grabbed===null||grabbed==="fogStart")&&Math.abs(moveX-fogStartPos)<5&&!hovering){
                 ctx.strokeStyle = "white"
                 ctx.lineWidth = 4
                 hovering = true
@@ -530,7 +443,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
             ctx.lineTo(fogStartPos,canvas.height)
             ctx.stroke()
 
-            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.FOG_END)&&Math.abs(moveX-fogEndPos)<5&&!hovering){
+            if((grabbed===null||grabbed==="fogEnd")&&Math.abs(moveX-fogEndPos)<5&&!hovering){
                 ctx.strokeStyle = "white"
                 ctx.lineWidth = 4
                 hovering = true
@@ -546,11 +459,11 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         }
 
         if(useOffScreenBuffers){
-            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.BLUR_DEPTH)&&Math.abs(moveX-depthBlurDepthPos)<5&&!hovering){
+            if((grabbed===null||grabbed==="blurDepth")&&Math.abs(moveX-depthBlurDepthPos)<5&&!hovering){
                 ctx.strokeStyle = "white"
                 ctx.lineWidth = 4
                 hovering = true
-                drawText = "Blur depth "+depthBlurDepth.toFixed(2)
+                drawText = "Blur from " + depthBlurDepth.toFixed(1)
             } else {
                 ctx.strokeStyle = "lightblue"
                 ctx.lineWidth = 3
@@ -563,7 +476,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         }
 
         if(useClip){
-            if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_START)&&Math.abs(moveX-clipStartPos)<5&&!hovering){
+            if((grabbed===null||grabbed==="clipStart")&&Math.abs(moveX-clipStartPos)<5&&!hovering){
                 ctx.strokeStyle = "white"
                     ctx.lineWidth = 4
                     hovering = true
@@ -577,7 +490,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                 ctx.lineTo(clipStartPos,canvas.height)
                 ctx.stroke()
 
-                if((grabbed===GrabHandle.NONE||grabbed===GrabHandle.CLIP_END)&&Math.abs(moveX-clipEndPos)<5&&!hovering){
+                if((grabbed===null||grabbed==="clipEnd")&&Math.abs(moveX-clipEndPos)<5&&!hovering){
                     ctx.strokeStyle = "white"
                         ctx.lineWidth = 4
                         hovering = true
@@ -633,7 +546,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
 
         if(hovering) canvas.style.cursor = "ew-resize"
         ctx.restore()
-        drawGL(canvas.width,canvas.height)
+        draw3D(canvas.width,canvas.height)
 
     }
 
@@ -658,42 +571,24 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
         return [x,y]
     }
 
-    const handleMouseDown = (evt) => {
+    const handleMouseDown = useCallback((evt) => {
 
         if(!canvasRef||!canvasRef.current) return
 
         const [x,y] = getXY(evt)
 
         setMouseHeldDown(true)
-
-        const scale = atomSpan * spanScaling
-
-        const fogStart = fogClipOffset - gl_fog_start
-        const fogEnd = gl_fog_end - fogClipOffset
-        const clipStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - clipStart / scale * plotWidth * .5,1))
-        const clipEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + clipEnd / scale * plotWidth * .5,1))
-        const fogStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - fogStart / scale * plotWidth * .5,1))
-        const fogEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + fogEnd / scale * plotWidth * .5,1))
-        const depthBlurDepthPos = depthBlurDepth * plotWidth
-
-        if(Math.abs(x-clipStartPos)<5){
-            setGrabbed(GrabHandle.CLIP_START)
-        } else if(Math.abs(x-clipEndPos)<5){
-            setGrabbed(GrabHandle.CLIP_END)
-        } else if(Math.abs(x-fogStartPos)<5){
-            setGrabbed(GrabHandle.FOG_START)
-        } else if(Math.abs(x-fogEndPos)<5){
-            setGrabbed(GrabHandle.FOG_END)
-        } else if(Math.abs(x-depthBlurDepthPos)<5 && useOffScreenBuffers){
-            setGrabbed(GrabHandle.BLUR_DEPTH)
-        } else {
-            setGrabbed(GrabHandle.NONE)
-        }
+        // Nearest visible handle, rather than the first one in a fixed order that happened to be
+        // within five pixels. Hidden handles are skipped too: fog that has been switched off used
+        // to sit at whatever edge its 998/999 clamped to and swallow clicks meant for clip.
+        const picked = handleAtPixel(x, handles, viewHalfRange, plotWidth, GRAB_TOLERANCE_PX, viewCentre)
+        setGrabbed(picked)
+        if (picked) setHeldWindow({ centre: viewCentre, halfRange: viewHalfRange })
 
         setClickX(x)
         setClickY(y)
 
-    }
+    },[handles, viewHalfRange, viewCentre, plotWidth])
 
     const handleMouseMove = useCallback((evt) => {
 
@@ -701,152 +596,150 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
 
         const [x,y] = getXY(evt)
 
-        const scale = atomSpan * spanScaling
+        // Without this a release outside the canvas never reaches handleMouseUp, and the handle
+        // then follows the pointer around with no button held down.
+        if(grabbed && mouseHeldDown){
 
-        const fogStart = fogClipOffset - gl_fog_start
-        const fogEnd = gl_fog_end - fogClipOffset
-        const clipStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - clipStart / scale * plotWidth * .5,1))
-        const clipEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + clipEnd / scale * plotWidth * .5,1))
-        const fogStartPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 - fogStart / scale * plotWidth * .5,1))
-        const fogEndPos = Math.min(plotWidth-2,Math.max(plotWidth * .5 + fogEnd / scale * plotWidth * .5,1))
+            if(grabbed === "blurDepth"){
+                // A distance, like every other handle. No partner to stay clear of: the focal
+                // plane may sit anywhere, including outside the slab, where it simply means
+                // everything visible is on one side of it.
+                dispatch(setDepthBlurDepth(offsetOfPixel(x, viewHalfRange, plotWidth, viewCentre)))
+            } else {
+                // Clamp the value, do not gate the dispatch. The old code only dispatched when the
+                // pointer was past the partner's drawn pixel, so a partner pinned at the edge of
+                // the plot made that test impossible to satisfy and the handle silently froze.
+                const partner = partnerOffset(grabbed)
+                const wanted = offsetOfPixel(x, viewHalfRange, plotWidth, viewCentre)
+                const offset = partner === null
+                    ? wanted
+                    : constrainOffset(grabbed, wanted, partner, viewHalfRange, plotWidth)
 
-        if(grabbed===GrabHandle.CLIP_START){
-            const newValue = (plotWidth * 0.5 - x) * scale / plotWidth / 0.5
-            if(x<clipEndPos) dispatch(setClipStart(newValue))
-        } else if(grabbed===GrabHandle.CLIP_END){
-            const newValue = (x - plotWidth * 0.5) * scale / plotWidth / 0.5
-            if(x>clipStartPos) dispatch(setClipEnd(newValue))
-        } else if(grabbed===GrabHandle.FOG_START){
-            const newValue = (plotWidth * 0.5 -x) * scale / plotWidth / 0.5
-            if(x<fogEndPos) dispatch(setFogStart(fogClipOffset - newValue))
-        } else if(grabbed===GrabHandle.FOG_END){
-            const newValue = (x - plotWidth * 0.5) * scale / plotWidth / 0.5
-            if(x>fogStartPos) dispatch(setFogEnd(newValue + fogClipOffset))
-        } else if(grabbed===GrabHandle.BLUR_DEPTH){
-            if(useOffScreenBuffers){
-                const newValue = x / plotWidth
-                dispatch(setDepthBlurDepth(newValue))
+                switch(grabbed){
+                    case "clipStart": dispatch(setClipStart(-offset)); break
+                    case "clipEnd":   dispatch(setClipEnd(offset)); break
+                    case "fogStart":  dispatch(setFogStart(fogClipOffset + offset)); break
+                    case "fogEnd":    dispatch(setFogEnd(fogClipOffset + offset)); break
+                }
             }
         }
 
         setMoveX(x)
         setMoveY(y)
 
-    },[mouseHeldDown,clickX,clickY,releaseX,releaseY])
+    },[grabbed, mouseHeldDown, handles, viewHalfRange, viewCentre, plotWidth, fogClipOffset, dispatch])
 
-    const handleMouseUp = useCallback(async(evt) => {
+    const releaseGrab = useCallback((evt) => {
 
         setMouseHeldDown(false)
+        setGrabbed(null)
+        setHeldWindow(null)
 
         if(!canvasRef||!canvasRef.current) return
 
         const [x,y] = getXY(evt)
         setReleaseX(x)
         setReleaseY(y)
-        setGrabbed(GrabHandle.NONE)
 
-    },[clickX,clickY,releaseX,releaseY])
+    },[])
 
     useEffect(() => {
 
-        canvasRef.current.addEventListener("mousemove", handleMouseMove , false)
-        canvasRef.current.addEventListener("mousedown", handleMouseDown , false)
-        canvasRef.current.addEventListener("mouseup", handleMouseUp , false)
+        const canvas = canvasRef.current
+        if(!canvas) return
+
+        canvas.addEventListener("mousemove", handleMouseMove , false)
+        canvas.addEventListener("mousedown", handleMouseDown , false)
+        canvas.addEventListener("mouseup", releaseGrab , false)
+        canvas.addEventListener("mouseleave", releaseGrab , false)
 
         return () => {
-            if (canvasRef.current !== null) {
-                canvasRef.current.removeEventListener("mousemove", handleMouseMove)
-                canvasRef.current.removeEventListener("mousedown", handleMouseDown)
-                canvasRef.current.removeEventListener("mouseup", handleMouseUp)
-            }
+            canvas.removeEventListener("mousemove", handleMouseMove)
+            canvas.removeEventListener("mousedown", handleMouseDown)
+            canvas.removeEventListener("mouseup", releaseGrab)
+            canvas.removeEventListener("mouseleave", releaseGrab)
         }
 
-    }, [canvasRef, handleMouseMove,handleMouseUp,handleMouseDown])
+    }, [handleMouseMove, releaseGrab, handleMouseDown])
 
-    useEffect(() => {
-
-        if(!canvasRefWebGL) return
-        if(!canvasRefWebGL.current) return
-
-        const canvasWebGL = canvasRefWebGL.current
-        const gl = canvasWebGL.getContext("webgl2")
-        const vertexShaderInstanced = getShader(gl, triangle_side_on_view_instanced_vertex_shader_source, "vertex");
-        const fragmentShader = getShader(gl, triangle_side_on_view_fragment_shader_source, "fragment");
-        programInstancedRef.current = initSideOnShadersInstanced(vertexShaderInstanced,fragmentShader,gl)
-        const vertexShader = getShader(gl, triangle_side_on_view_vertex_shader_source, "vertex");
-        programRef.current = initSideOnShaders(vertexShader,fragmentShader,gl)
-        const sphereVertexShader = getShader(gl, twod_side_on_view_vertex_shader_source, "vertex");
-        const sphereFragmentShader = getShader(gl, perfect_sphere_side_on_view_fragment_shader_source, "fragment");
-        sphereProgramRef.current = initSideOnSphereShaders(sphereVertexShader,sphereFragmentShader,gl)
-
-        const clonedBuffers = cloneBuffers(displayBuffers,gl)
-        buildBuffers(clonedBuffers,store,gl)
-        myBuffers = clonedBuffers
-        imageBuffersRef.current = buildDiskBuffers()
-
+    // Hidden (the side panel closed or another tab shown) or gone: the copies of the buffers and
+    // the second view go too, and are made again when the widget next draws.
+    useEffect(() => () => {
+        sideOnViewRef.current?.destroy()
+        sideOnViewRef.current = null
+        if (canvasRefWebGPU.current) externalRenderer()?.external.releaseSecondView?.(canvasRefWebGPU.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    // glCanvas is in here so that the first draw happens once the canvas exists and the shader
+    // programs have been created: without it this ran only before there was anything to draw
+    // into, and the next draw waited on an unrelated change.
     useEffect(() => {
         plotTheData()
-    }, [fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers])
+    // plotWidth too: resizing a canvas clears it
+    }, [glCanvas,plotWidth,atomSpan,plotRange,viewHalfRange,viewCentre,handles,grabbed,fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers,originState,mapContourSettings])
 
 
     return (
         <>
-        <MoorhenStack direction={props.stackDirection} card={true}>
-            <span style={{ height: "2rem", margin: "0.2rem" }}>Clip, fog and depth blur</span>
+        <MoorhenStack direction={props.stackDirection} card={true} title="Clip, fog and depth blur">
             <MoorhenStack gap={1} direction="vertical">
-                <div>
+                {/* Measured for the figure's width: minWidth 0 so that the figure, before the
+                    first measurement, cannot widen what it is measured against */}
+                <div ref={attachFigureContainer} style={{ width: "100%", minWidth: 0 }}>
                 <figure style={{position: "relative", top: 0, left: 0, width: `${plotWidth}px`, height: `${plotHeight}px`, margin: "0px"}}>
-                <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRefWebGL}></canvas>
+                <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={attachGlCanvas}></canvas>
+                <canvas style={{position: "absolute", top: 0, left: 0, visibility: "hidden"}} height={plotHeight} width={plotWidth} ref={canvasRefWebGPU}></canvas>
                 <canvas style={{position: "absolute", top: 0, left: 0}} height={plotHeight} width={plotWidth} ref={canvasRef}></canvas>
                 </figure>
                 </div>
+                <MoorhenStack gap={1} direction="horizontal" align="center">
+                    <MoorhenSlider
+                        minVal={1.0}
+                        maxVal={maxSideZoom}
+                        isDisabled={autoSideZoom || maxSideZoom <= 1}
+                        scale="log"
+                        sliderTitle="Side view zoom"
+                        value={sideZoom}
+                        setValue={changeSideZoom}
+                        decimalPlaces={1}
+                        style={{ flexGrow: 1 }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={autoSideZoom}
+                        onChange={() => setAutoSideZoom(!autoSideZoom)}
+                        label="Auto"
+                    />
+                </MoorhenStack>
             </MoorhenStack>
             <MoorhenStack gap={2} direction="vertical">
-                <MoorhenToggle
-                    type="switch"
-                    checked={resetClippingFogging}
-                    onChange={() => {
-                        dispatch(setResetClippingFogging(!resetClippingFogging));
-                    }}
-                    label="Reset clip and fog on zoom"
-                />
+                {/* Each on / off, and whether it follows the zoom (only meaningful when on) */}
                 <MoorhenToggle
                     type="switch"
                     checked={useFog}
-                    disabled={resetClippingFogging}
-                    onChange={(e) => {
-                        if(useFog){
-                            setBackupFogNear(gl_fog_start)
-                            setBackupFogFar(gl_fog_end)
-                            dispatch(setFogStart(fogOffNear));
-                            dispatch(setFogEnd(fogOffFar));
-                        } else {
-                            dispatch(setFogStart(backupFogNear));
-                            dispatch(setFogEnd(backupFogFar));
-                        }
-                        setUseFog(e.target.checked)
-                    }}
+                    onChange={() => dispatch(setDoFog(!useFog))}
                     label={fogLabel}
                 />
                 <MoorhenToggle
                     type="switch"
+                    checked={autoFog}
+                    disabled={!useFog}
+                    onChange={() => dispatch(setAutoFog(!autoFog))}
+                    label="Auto fog (follows the zoom)"
+                />
+                <MoorhenToggle
+                    type="switch"
                     checked={useClip}
-                    disabled={resetClippingFogging}
-                    onChange={(e) => {
-                        if(useClip){
-                            setBackupClipNear(clipStart)
-                            setBackupClipFar(clipEnd)
-                            dispatch(setClipStart(1.5*atomSpan));
-                            dispatch(setClipEnd(1.5*atomSpan));
-                        } else {
-                            dispatch(setClipStart(backupClipNear));
-                            dispatch(setClipEnd(backupClipFar));
-                        }
-                        setUseClip(e.target.checked)
-                    }}
+                    onChange={() => dispatch(setDoClip(!useClip))}
                     label={clipLabel}
+                />
+                <MoorhenToggle
+                    type="switch"
+                    checked={autoClip}
+                    disabled={!useClip}
+                    onChange={() => dispatch(setAutoClip(!autoClip))}
+                    label="Auto clip (follows the zoom)"
                 />
                 <MoorhenToggle
                     type="switch"
@@ -864,6 +757,17 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
                     value={blurSize}
                     setValue={newValue => {
                         dispatch(setDepthBlurRadius(newValue))
+                    }}
+                    stepButtons={1}
+                    decimalPlaces={0}
+                />
+                <MoorhenSlider
+                    minVal={1.0}
+                    maxVal={8.0}
+                    sliderTitle="Transparency layers"
+                    value={depthPeelLayers}
+                    setValue={newValue => {
+                        dispatch(setDepthPeelLayers(newValue))
                     }}
                     stepButtons={1}
                     decimalPlaces={0}

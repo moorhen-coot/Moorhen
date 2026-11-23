@@ -6,7 +6,7 @@ var triangle_texture_vertex_shader_source = `#version 300 es\n
     uniform mat4 uMVINVMatrix;
     uniform mat4 uPMatrix;
 
-    out lowp vec2 vTexture;
+    out highp vec2 vTexture;
     out lowp vec4 eyePos;
 
     void main(void) {

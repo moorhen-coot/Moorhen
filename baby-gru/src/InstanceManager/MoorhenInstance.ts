@@ -4,11 +4,38 @@ import React from "react";
 import { MoorhenWebComponent } from "@/WebComponent/MoorhenWebComponent";
 import { Preferences } from "./Preferences/MoorhenPreferences";
 import type { MoorhenMenuSystem } from "@/components/menu-system/MenuSystem";
+import { MoorhenUiExtensions } from "./UiExtensions";
 import { addCustomRepresentation, removeCustomRepresentation, setOrigin } from "@/store";
 import { setCootInitialized, toggleCootCommandExit, toggleCootCommandStart } from "@/store/generalStatesSlice";
 import { setBusy, setGlobalInstanceReady } from "@/store/globalUISlice";
+import {
+    addObject,
+    emptyObjects,
+    removeObjectById,
+    removeObjectsByTag,
+    updateObject,
+    ThreeDObject
+} from "@/store/threeDObjectsSlice";
+import {
+    addVector,
+    emptyVectors,
+    removeVectorById,
+    removeVectorsByTag,
+    MoorhenVector
+} from "@/store/vectorsSlice";
+import { matchesTags, Tags } from "@/utils/tags";
+import { newVector } from "@/utils/vectorFactories";
+import {
+    newObjectOfType,
+    OBJECT_TYPES,
+    AllowedObjectKeys,
+    ThreeDObjectCreateParams
+} from "@/utils/threeDObjectFactories";
+import { v4 as uuidv4 } from "uuid";
 import { MoorhenMap, MoorhenMolecule } from "@/utils";
 import { autoOpenFiles } from "@/utils/FileLoading";
+import { loadMtzMaps } from "@/utils/MtzLoading";
+import type { MtzMapRequest } from "@/utils/MtzLoading";
 import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { runPictureWizard } from "@/utils/Representation/PictureWizard";
 import type { PictureWizardType } from "@/utils/Representation/PictureWizard";
@@ -21,10 +48,23 @@ import { moorhen } from "../types/moorhen";
 import { CommandCentre } from "./CommandCentre";
 import { CootCommandWrapper } from "./CommandCentre/CootCommandWrapper";
 import { StoreExtension } from "./StoreExtension";
+import { startStoreSyncs } from "./StoreSync";
+import { MoorhenUserSceneManager } from "./UserSceneManager";
+import { type DefaultRepresentationStyle, setDefaultRepresentationStyle } from "../store/sceneSettingsSlice";
 import { initPreferencePersistence } from "./Preferences/PreferencePersistence";
+import { makeWebGPUApi } from "@/WebGPUComponents/instanceApi";
+import type { WebGPUApi } from "@/WebGPUComponents/instanceApi";
 import type { AppDispatch, MoorhenReduxStoreType } from "@/store/MoorhenReduxStore";
 
 
+/**
+ * Result of a file-loading operation: one entry per successfully loaded file,
+ * describing the kind of object created and how to refer to it afterwards.
+ * @property {string} type - "molecule" when a model was loaded, "map" when a map was loaded
+ * @property {string} uniqueID - Unique ID of the created {@link MoorhenMolecule} or {@link MoorhenMap}
+ * @property {number} molNo - Molecule/map number used by the Coot worker
+ * @property {string} fileName - Name of the source file that was loaded
+ */
 export type LoadFilesResult = {
     type: "molecule" | "map";
     uniqueID: string;
@@ -32,16 +72,38 @@ export type LoadFilesResult = {
     fileName: string;
 }[];
 
-type moleculeChangeAction = "new" | "add" | "delete" | "modify" | "refine";
+/**
+ * User preferences as exchanged with a host application: what Moorhen keeps in its preference storage,
+ * i.e. only the preferences that differ from their default, each as `{ version, value }`.
+ */
+export type StoredPreferences = {
+    format: "moorhen-1.0";
+    entries: { [label: string]: { version: number; value: unknown } };
+};
 
+export type moleculeChangeAction = "new" | "add" | "delete" | "modify" | "refine";
+
+/**
+ * MoorhenInstance is the key public API entry point for the whole application.
+ * It ties together the Redux store, the {@link CommandCentre} (which wraps the Coot
+ * worker), the session {@link MoorhenTimeCapsule}, the user {@link Preferences},
+ * the container ref that hosts the WebGL component and all high-level actions such
+ * as loading files, restoring sessions and managing representations.
+ *
+ * High-level operations are grouped behind getters that each return an object of
+ * related methods:
+ * - `files` - loading molecules and maps (from files, URLs, strings or SMILES)
+ * - `session` - restoring data from a saved session
+ * - `representation` - creating, editing, deleting and styling representations
+ *
+ * The instance is constructed and initialised (via the `@private` constructor and
+ * `startInstance`) by the application shell. Code that holds a reference to the
+ * instance - for example through the `useMoorhenInstance` hook - should use
+ * `execWhenReady` to run anything that depends on Coot being initialised.
+ *
+ * @extends StoreExtension
+ */
 export class MoorhenInstance extends StoreExtension {
-    private _defaultStyle:
-        | "CAs"
-        | "CBs"
-        | "CRs"
-        | "ribbons-and-ligands"
-        | "ribbons-and-side-chains"
-        | "site-and-ribbons" = "ribbons-and-ligands";
     private _filesLoadedCallbacks: { [callbackUID: string]: { callback: (filesLoaded: LoadFilesResult, origin: string) => void } } = {};
     private _commandCentre: CommandCentre;
     private commandCentreRef: React.RefObject<CommandCentre | null>;
@@ -51,16 +113,36 @@ export class MoorhenInstance extends StoreExtension {
     private videoRecorderRef: React.RefObject<ScreenRecorder | null>;
     private aceDRGInstance: moorhen.AceDRGInstance | null = null;
     private containerRef: React.RefObject<HTMLDivElement> = null;
-    private preferences: Preferences;
+    private _preferences: Preferences;
+    private _preferencesRestore: (() => Promise<void>) | null = null;
+    private _preferencesChangeCallbacks = new Set<(stored: StoredPreferences) => void>();
     private moleculesRef: React.RefObject<MoorhenMolecule[] | null>;
     private mapsRef: React.RefObject<MoorhenMap[] | null>;
     private _cootCommand: CootCommandWrapper;
     private _menuSystem: MoorhenMenuSystem;
+    private _uiExtensions = new MoorhenUiExtensions();
     private ready: boolean = false;
     private _webComponent: MoorhenWebComponent | null = null;
     private readyCallbacks: Array<() => void | Promise<void>> = [];
     private preferencesUnsubscribe: (() => void) | null = null;
+    private storeSyncsUnsubscribe: (() => void) | null = null;
+    private _userScene: MoorhenUserSceneManager;
 
+    /**
+     * Create a new Moorhen instance.
+     *
+     * **Internal use only.** The application shell constructs and wires up the
+     * instance; consumers should obtain an already-initialised instance from the
+     * application rather than constructing one (and calling `startInstance`) themselves.
+     *
+     * @private
+     * @param containerRef - Ref to the HTML container that hosts the WebGL component.
+     * @param menuSystem - Optional menu system that drives the application UI.
+     * @param externalCommandCentre - Optional {@link CommandCentre} to use instead of
+     * creating one internally during `startInstance`.
+     * @param externalTimeCapsuleRef - Optional ref that is populated with the
+     * {@link MoorhenTimeCapsule} once it is created, so the caller can access it externally.
+     */
     constructor(
         containerRef: React.RefObject<HTMLDivElement>,
         menuSystem?: MoorhenMenuSystem,
@@ -76,11 +158,17 @@ export class MoorhenInstance extends StoreExtension {
         if (externalCommandCentre) {
             this.setCommandCentre(externalCommandCentre);
         }
-        this.preferences = new Preferences();
+        this._preferences = new Preferences();
         this._menuSystem = menuSystem || null;
         this.containerRef = containerRef;
+        this._userScene = new MoorhenUserSceneManager(this);
     }
 
+    /**
+     * Paths used to locate the Coot worker assets and the monomer library.
+     * `urlPrefix` prefixes asset URLs; `monomerLibraryPath` points at the directory
+     * holding the monomer (ligand) restraints. Populated via `setPaths`.
+     */
     public paths: {
         urlPrefix: string;
         monomerLibraryPath: string;
@@ -89,7 +177,23 @@ export class MoorhenInstance extends StoreExtension {
         monomerLibraryPath: "",
     };
 
-    /** Method to execute a callback when the instance is ready, or immediately if it already is. This is useful to avoid having to check for readiness in every method that needs to interact with the coot command or other instance attributes that might not be available immediately on instance creation. */
+    /**
+     * Execute a callback once the instance is fully initialised (i.e. after
+     * `startInstance` has completed), or immediately if it is already ready.
+     *
+     * This avoids having to check `isReady()` in every method that needs to
+     * interact with the Coot command or other attributes that might not be
+     * available as soon as the instance is created.
+     *
+     * @param callback - Function to run once the instance is ready. It may be
+     * synchronous or return a promise; its resolved value is forwarded to the caller.
+     * @returns A promise that resolves with the return value of `callback`.
+     * @example
+     * instance.execWhenReady(() => {
+     *     // Coot is initialised and safe to call here.
+     *     console.log("Moorhen instance ready");
+     * });
+     */
     public execWhenReady<T>(callback: () => T | Promise<T>): Promise<T> {
         if (this.ready) {
             return Promise.resolve(callback());
@@ -103,59 +207,121 @@ export class MoorhenInstance extends StoreExtension {
         }
     }
 
+    /**
+     * Attach a {@link CommandCentre} to this instance and (re)build the wrapper
+     * used to send commands to the Coot worker.
+     *
+     * **Internal use only.** Called by the application wiring during startup.
+     * @private
+     * @param commandCentre - The command centre to attach.
+     */
     public setCommandCentre(commandCentre: CommandCentre): void {
         this._commandCentre = commandCentre;
         this.commandCentreRef.current = commandCentre;
         this._cootCommand = new CootCommandWrapper(this.commandCentre.cootCommand.bind(this.commandCentre));
     }
+    /**
+     * The low-level wrapper used to send commands to the Coot worker.
+     */
     public get cootCommand(): CootCommandWrapper {
         return this._cootCommand;
     }
 
+    /**
+     * The {@link CommandCentre} attached to this instance.
+     */
     public get commandCentre(): CommandCentre {
         return this._commandCentre;
     }
 
+    /**
+     * Get the React ref holding the {@link CommandCentre}, for callers that need
+     * the raw ref object rather than the centre itself.
+     *
+     * @returns The command centre React ref.
+     */
     public getCommandCentreRef(): React.RefObject<CommandCentre> {
         return this.commandCentreRef;
     }
 
+    /**
+     * Attach a {@link MoorhenTimeCapsule} to this instance.
+     *
+     * **Internal use only.** Called by the application wiring during startup.
+     * @private
+     * @param timeCapsule - The time capsule to attach.
+     */
     public setTimeCapsule(timeCapsule: MoorhenTimeCapsule): void {
         this.timeCapsule = timeCapsule;
         this.timeCapsuleRef.current = timeCapsule;
     }
 
+    /**
+     * The session {@link MoorhenTimeCapsule} attached to this instance.
+     *
+     */
     public getTimeCapsule(): MoorhenTimeCapsule {
         return this.timeCapsule;
     }
 
+    /**
+     * Get the React ref holding the session {@link MoorhenTimeCapsule}.
+     *
+     * @returns The time capsule React ref.
+     */
     public getTimeCapsuleRef(): React.RefObject<MoorhenTimeCapsule> {
         return this.timeCapsuleRef;
     }
 
+    /**
+     * Attach a screen recorder to this instance (used to capture the GL canvas).
+     *
+     * **Internal use only.** Called by the application wiring during startup.
+     * @private
+     * @param videoRecorder - The screen recorder to attach.
+     */
     public setVideoRecorder(videoRecorder: ScreenRecorder): void {
         this.videoRecorder = videoRecorder;
         this.videoRecorderRef.current = videoRecorder;
     }
 
+    /**
+     * The screen recorder attached to this instance.
+     *
+     */
     public getVideoRecorder(): ScreenRecorder {
         return this.videoRecorder;
     }
 
+    /**
+     * Get the React ref holding the screen recorder.
+     *
+     * @returns The screen recorder React ref.
+     */
     public getVideoRecorderRef(): React.RefObject<ScreenRecorder> {
         return this.videoRecorderRef;
     }
 
+    /**
+     * The user {@link Preferences} object for this instance.
+     */
     public getPreferences(): Preferences {
-        return this.preferences;
+        return this._preferences;
     }
 
     /**
-     * Initialise preference persistence (restore from local storage + subscribe to the store).
-     * This replaces the old React-based MoorhenPreferencesContainer, so preferences load and
-     * persist independently of UI mounting. The implementation lives in a small module
-     * (PreferencePersistence) to keep this class lean; here we only bind it to the store.
-     * @returns an unsubscribe function (stop subscribing to the store).
+     * Initialise preference persistence (restore from local storage + subscribe
+     * to the store).
+     *
+     * **Internal use only.** Called by the application wiring during startup.
+     *
+     * @private
+     * @param store - The Redux store that drives this instance.
+     * @param dispatch - Redux dispatch function used to apply preference changes.
+     * @param onUserPreferencesChange - Optional callback invoked whenever a user
+     * preference changes; receives the preference key and its new value.
+     * @returns An unsubscribe function; call it to stop subscribing to the store
+     * (e.g. during cleanup).
      */
     public initPreferences(
         store: MoorhenReduxStoreType,
@@ -165,36 +331,96 @@ export class MoorhenInstance extends StoreExtension {
         if (this.preferencesUnsubscribe) {
             this.preferencesUnsubscribe();
         }
-        this.preferencesUnsubscribe = initPreferencePersistence({
+        // Needed by userScene before startInstance runs
+        this.store = store;
+        this.dispatch = dispatch;
+        const persistence = initPreferencePersistence({
             store,
             dispatch,
-            localStorageInstance: this.preferences,
+            localStorageInstance: this._preferences,
             onUserPreferencesChange,
+            // Once per store change: saving a scene changes many preferences at once
+            onPreferencesStored: () => {
+                if (this._preferencesChangeCallbacks.size > 0) {
+                    this.preferences.export().then(stored => this._preferencesChangeCallbacks.forEach(callback => callback(stored)));
+                }
+            },
+            // The built-in scenes start from their saved settings, at start-up and after an import
+            onRestored: () => this.userScene.applySavedScenes(),
         });
+        this._preferencesRestore = persistence.restore;
+        this.preferencesUnsubscribe = persistence;
         return this.preferencesUnsubscribe;
     }
 
+    /**
+     * Set the paths used to locate the Coot worker assets and the monomer library.
+     *
+     * **Internal use only.** Called by the application wiring during startup.
+     * @private
+     * @param urlPrefix - Prefix prepended to asset URLs.
+     * @param monomerLibrary - Path to the directory of monomer (ligand) restraints.
+     */
     public setPaths(urlPrefix: string, monomerLibrary: string): void {
         this.paths.urlPrefix = urlPrefix;
         this.paths.monomerLibraryPath = monomerLibrary;
     }
 
+    /**
+     * Attach the AceDRG instance used to generate ligand restraints.
+     *
+     * **Internal use only.** Called by the application wiring during startup.
+     * @private
+     * @param aceDRGInstance - The AceDRG instance to attach.
+     */
     public setAceDRGInstance(aceDRGInstance: moorhen.AceDRGInstance): void {
         this.aceDRGInstance = aceDRGInstance;
     }
 
+    /**
+     * The AceDRG instance used to generate ligand restraints.
+     *
+     * **Internal use only.**
+     * @private
+     * @returns The AceDRG instance, or null if none has been attached.
+     */
     public getAceDRGInstance(): moorhen.AceDRGInstance | null {
         return this.aceDRGInstance;
     }
 
+    /**
+     * Get the React ref of the HTML container that hosts the WebGL component.
+     *
+     * **Internal use only.**
+     * @private
+     * @returns The container ref.
+     */
     public getContainerRef() {
         return this.containerRef;
     }
 
+    /**
+     * The menu system driving the application UI.
+     *
+     * Use it to add your own main-menu entries and submenus. See
+     * {@link MoorhenMenuSystem} for the methods and the menu configuration types.
+     */
     public get menuSystem(): MoorhenMenuSystem | null {
         return this._menuSystem;
     }
 
+    /**
+     * Modals and side panels added by the host or by plugins, either as React components or
+     * as `<slot>`s filled from the web component's light DOM. See {@link MoorhenUiExtensions}.
+     */
+    public get uiExtensions(): MoorhenUiExtensions {
+        return this._uiExtensions;
+    }
+
+    /**
+     * Whether the instance has completed `startInstance` initialisation.
+     * @returns True once the instance is ready to interact with Coot.
+     */
     public isReady(): boolean {
         return this.ready;
     }
@@ -202,6 +428,12 @@ export class MoorhenInstance extends StoreExtension {
     //========================================
     // Files loading and saving methods
 
+    /**
+     * File-loading API for this instance.
+     *
+     * All methods return a {@link LoadFilesResult}: one entry per successfully
+     * loaded file. Loaded objects are automatically added to the store and drawn.
+     */
     public get files() {
         const moorhenInstance = this;
         const store = this.store;
@@ -214,6 +446,37 @@ export class MoorhenInstance extends StoreExtension {
         const filesLoadedCallbacks = this._filesLoadedCallbacks;
 
         return {
+            /**
+             * Load one or more structure/map files into Moorhen.
+             *
+             * Files can be supplied in several forms:
+             * - a `File`, `File[]` or `FileList` (e.g. from an `<input type="file">`)
+             * - a `string`/`string[]` or `URL`/`URL[]` pointing at a file to fetch
+             *   (`http(s)://`, `blob:`, `file://` or, in a Node context, a local path)
+             * - an object `{ url, filename }` (or an array of them) to fetch a URL and
+             *   give the downloaded file a specific name
+             *
+             * The kind of object created is detected from the file name extension:
+             * - `.pdb`, `.ent`, `.cif`, `.mmcif` are read as structures (a `.cif` that
+             *   is not a structure is attempted as a ligand dictionary)
+             * - `.mtz` reflection data are read into one or more maps
+             * - `.mrc`, `.map`, `.ccp4` (optionally `.gz`) are read as maps; names
+             *   containing `_fofc.mrc`/`_diff.ccp4` are treated as difference maps and
+             *   `_locres.mrc` as local-resolution maps
+             * - `.cube`, `.cub` are Gaussian Cubes, converted in memory and read as maps;
+             *   a cube holding several orbitals becomes one map per orbital
+             *
+             * @param files - The file(s), URL(s) or file-like object(s) to load. A
+             * single value and an array of the same value type are both accepted.
+             * @param origin - Optional label describing where the load came from; it is
+             * forwarded to subscribers registered via `newFilesLoadedCallback`.
+             * @returns A promise resolving to a {@link LoadFilesResult}.
+             * @example
+             * await instance.files.loadFiles([
+             *   "https://example.com/model.pdb",
+             *   { url: "https://example.com/emd.map", filename: "my-map.map" }
+             * ]);
+             */
             async loadFiles(
                 files:
                     | File[]
@@ -228,7 +491,7 @@ export class MoorhenInstance extends StoreExtension {
                 origin?: string
             ): Promise<LoadFilesResult> {
                 let filesArray: File[] = [];
-                const getFileFromURL = async (url: string | URL, filename?: string): Promise<File> => {
+                const getFileFromURL = async (url: string | URL, filename?: string): Promise<File | null> => {
                     const urlString = url instanceof URL ? url.toString() : url;
 
                     // Handle Node.js file system paths or it bugs in testing
@@ -252,8 +515,15 @@ export class MoorhenInstance extends StoreExtension {
                         }
                     }
                     const response = await fetch(urlString);
-                    const blob = await response.blob();
                     const finalFilename = filename || urlString.split("/").pop() || "downloaded_file";
+                    // Skip a failed download rather than passing an empty file to Coot
+                    if (!response.ok) {
+                        const message = `Could not fetch ${finalFilename} (${response.status} ${response.statusText})`;
+                        console.warn(`${message} from ${urlString}`);
+                        moorhenInstance.snackbar.enqueueSnackbar({ message, variant: "warning" });
+                        return null;
+                    }
+                    const blob = await response.blob();
                     return new File([blob], finalFilename, { type: blob.type });
                 };
                 const defaultBondSmoothness = store.getState().sceneSettings.defaultBondSmoothness;
@@ -288,6 +558,7 @@ export class MoorhenInstance extends StoreExtension {
                     }
                 }
 
+                filesArray = filesArray.filter(Boolean);
                 console.log("Files to load: ", filesArray);
 
                 const createdObjects = await execWhenReady(() =>
@@ -300,23 +571,79 @@ export class MoorhenInstance extends StoreExtension {
                 return createdObjects as LoadFilesResult;
             },
 
+            /**
+             * Load one or more maps from a single MTZ file, with explicitly chosen columns and display options.
+             *
+             * The file is fetched once for all maps, and every requested column is checked against its
+             * header before anything is sent to Coot. A missing `F` or `PHI` column rejects the call with a
+             * message listing the available columns; a missing `Fobs`/`SigFobs`/`FreeR` column only gives a
+             * warning, and the map is loaded without reflection data.
+             *
+             * Active map: the first map requested with `active: true` becomes active; otherwise the first
+             * map does, unless a map is already active.
+             *
+             * @param source - A URL or a `File`.
+             * @param maps - The maps to read. If omitted, the maps are detected automatically, exactly as when
+             * the file is passed to `loadFiles`.
+             * @param origin - Optional label forwarded to subscribers registered via `newFilesLoadedCallback`.
+             * @returns A promise resolving to a {@link LoadFilesResult}, one entry per map in request order.
+             * @example
+             * await instance.files.loadMtz("job/output.mtz", [
+             *   { name: "map", columns: { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP", FreeR: "FreeR_flag" }, active: true },
+             *   { name: "diff-map", columns: { F: "DELFWT", PHI: "PHDELWT" }, isDifference: true },
+             * ]);
+             */
+            async loadMtz(source: string | URL | File, maps?: MtzMapRequest[], origin?: string): Promise<LoadFilesResult> {
+                const createdObjects = await loadMtzMaps(moorhenInstance, source, maps);
+                for (const callbacks of Object.values(filesLoadedCallbacks)) {
+                    callbacks.callback(createdObjects, origin ?? "unknown");
+                }
+                return createdObjects;
+            },
+
+            /**
+             * Generate a ligand from a SMILES string (via Coot/AceDRG) and load the
+             * resulting restraints dictionary as a new molecule.
+             * @param smiles - The SMILES string describing the ligand.
+             * @param ligname - Name to give the generated ligand/molecule (defaults to "LIG").
+             * @returns A promise resolving to a {@link LoadFilesResult}.
+             */
             async ligandFromSmiles(smiles: string, ligname: string): Promise<LoadFilesResult> {
                 const pdbString = await cootCommand.get_pdb_from_smiles(smiles, ligname ?? "LIG", 10, 100);
                 return this.loadCifString(pdbString, ligname);
             },
 
+            /**
+             * Load a model from a raw PDB-format string.
+             * @param pdbString - The PDB file contents.
+             * @param name - Base name used for the resulting file/molecule.
+             * @returns A promise resolving to a {@link LoadFilesResult}.
+             */
             loadPDBString(pdbString: string, name: string): Promise<LoadFilesResult> {
                 const blob = new Blob([pdbString], { type: "text/plain" });
                 const file = new File([blob], name + ".pdb", { type: "text/plain" });
                 return this.loadFiles(file);
             },
 
+            /**
+             * Load a model (or ligand dictionary) from a raw mmCIF-format string.
+             * @param cifString - The mmCIF file contents.
+             * @param name - Base name used for the resulting file/molecule.
+             * @returns A promise resolving to a {@link LoadFilesResult}.
+             */
             async loadCifString(cifString: string, name: string): Promise<LoadFilesResult> {
                 const blob = new Blob([cifString], { type: "text/plain" });
                 const file = new File([blob], name + ".cif", { type: "text/plain" });
                 return this.loadFiles(file);
             },
 
+            /**
+             * Register a callback that is invoked whenever files are loaded through
+             * `loadFiles` (or helpers built on top of it).
+             * @param callback - Function called with the {@link LoadFilesResult} of the
+             * load and the `origin` label that was passed to `loadFiles`.
+             * @returns A function that unregisters the callback.
+             */
             newFilesLoadedCallback(callback: (filesLoaded: LoadFilesResult, origin: string) => void): () => void {
                 const callbackUID = guid();
                 filesLoadedCallbacks[callbackUID] = { callback: callback };
@@ -327,10 +654,70 @@ export class MoorhenInstance extends StoreExtension {
         };
     }
 
+    /**
+     * Preferences API for host applications that store the user preferences themselves.
+     */
+    public get preferences() {
+        const moorhenInstance = this;
+        const storage = this._preferences.localStorageInstance;
+        return {
+            /**
+             * Replace the stored preferences with `stored` and apply them, at any time. Anything that is not
+             * a {@link StoredPreferences} object is ignored. Does not fire `onChange`.
+             */
+            async import(stored: unknown): Promise<void> {
+                const preferences = stored as StoredPreferences;
+                if (preferences?.format !== "moorhen-1.0" || typeof preferences.entries !== "object" || !preferences.entries) {
+                    return;
+                }
+                await storage.clear();
+                await Promise.all(Object.entries(preferences.entries).map(([label, entry]) => storage.setItem(label, entry)));
+                await moorhenInstance._preferencesRestore?.();
+            },
+
+            /** The stored preferences, in the format accepted by `import` */
+            async export(): Promise<StoredPreferences> {
+                const entries: StoredPreferences["entries"] = {};
+                await storage.iterate((entry: { version: number; value: unknown }, label: string) => {
+                    entries[label] = entry;
+                });
+                return { format: "moorhen-1.0", entries };
+            },
+
+            /**
+             * Call `callback` with the exported preferences after every stored change, including a preference
+             * set back to its default.
+             * @returns A function that unregisters the callback.
+             */
+            onChange(callback: (stored: StoredPreferences) => void): () => void {
+                moorhenInstance._preferencesChangeCallbacks.add(callback);
+                return () => moorhenInstance._preferencesChangeCallbacks.delete(callback);
+            },
+        };
+    }
+
+    /**
+     * Session-restore API for this instance.
+     */
     public get session() {
         const moorhenInstance = this;
 
         return {
+            /**
+             * Restore a previously saved Moorhen session into this instance.
+             *
+             * The `backupSession` object is produced by the time capsule and can contain
+             * molecule data (coordinates, representations, colour rules, ligand
+             * dictionaries), map data (optionally including additional/reflection data),
+             * the view state (origin, lighting, zoom...), the active map index and any
+             * vector/2D-overlay annotations.
+             *
+             * @param sessionData - The session data to restore.
+             * @param fetchExternalUrl - Optional callback that returns the URL of a file
+             * by its unique ID; used to fetch external data that was not embedded in the
+             * session blob.
+             * @returns A promise resolving to the number of molecules that were restored.
+             */
             loadSessionData(sessionData: backupSession, fetchExternalUrl?: (uniqueId: string) => Promise<string>): Promise<number> {
                 const result = MoorhenTimeCapsule.loadSessionData(sessionData, moorhenInstance, fetchExternalUrl);
                 return result;
@@ -338,41 +725,423 @@ export class MoorhenInstance extends StoreExtension {
         };
     }
 
+    /**
+     * The WebGPU renderer: who draws the main view, and WebGPU for tests and the console.
+     *
+     * `mainView()` says whether WebGPU or WebGL draws the main view and why, and `setMainView()`
+     * asks for one (the preference). `report()` gives one line on how this machine draws Moorhen,
+     * for a tester to paste back. `snapshot()` draws what the main view shows with WebGPU,
+     * offscreen, with the main view's camera (anything it cannot draw is listed in `skipped`), and
+     * `webGLSnapshot()` reads the WebGL view's own pixels to compare with. See instanceApi.ts.
+     * @example
+     * if (instance.webGPU.available()) {
+     *     const gpu = await instance.webGPU.snapshot();
+     *     const gl = instance.webGPU.webGLSnapshot();
+     * }
+     */
+    public get webGPU(): WebGPUApi {
+        return makeWebGPUApi(this);
+    }
+
     //========================================
     // General basics methods
 
-    /* Return the MoorhenMolecule Object corresponding to the given unique ID */
+    /**
+     * Get the {@link MoorhenMolecule} whose unique ID matches `uid`.
+     * @param uid - The unique ID of the molecule to look up.
+     * @returns The matching molecule, or undefined if no loaded molecule has that ID.
+     */
     public getMolecule(uid: string): MoorhenMolecule {
         const state = this.store.getState();
         return state.molecules.moleculeList.filter(molecule => molecule.uniqueId === uid)[0];
     }
 
+    /**
+     * Get all currently loaded molecules.
+     * @returns The list of loaded {@link MoorhenMolecule}s.
+     */
     public getMoleculeList(): MoorhenMolecule[] {
         const state = this.store.getState();
         return state.molecules.moleculeList;
     }
 
+    /**
+     * Get all currently loaded maps.
+     * @returns The list of loaded {@link MoorhenMap}s.
+     */
     public getMapList(): MoorhenMap[] {
         const state = this.store.getState();
         return state.maps;
     }
 
+    /**
+     * Scene presets API for this instance: switch between, create, rename and delete
+     * named sets of representations (see {@link MoorhenUserSceneManager}).
+     * @example
+     * await instance.userScene.select("Model Building");
+     */
+    public get userScene(): MoorhenUserSceneManager {
+        return this._userScene;
+    }
+
+    /**
+     * 3D object API for this instance.
+     *
+     * Lets you get, create, edit and delete the geometric shapes - spheres, cylinders,
+     * arcs, paths, polyhedra and the rest - drawn in the 3D view alongside the molecules.
+     * Each object's `uniqueId` is its handle, as a representation's is.
+     *
+     * Unlike a representation, an object is plain data rather than an instance of a class:
+     * it goes into the store, and the viewer draws whatever it finds there. So there is no
+     * separate step to draw or redraw one, and no async work - these methods return as soon
+     * as the store has been updated.
+     *
+     * @example
+     * const uid = instance.object.create({ type: "sphere", origin: [10, 0, 0], radius: 5 });
+     * instance.object.edit(uid, { colour: "#00ff00ff", wireframe: true });
+     * instance.object.delete(uid);
+     */
+    public get object() {
+        const moorhenInstance = this;
+        return {
+            /**
+             * The shape names that {@link create} accepts.
+             * @example
+             * console.log(instance.object.types); // ["sphere", "cylinder", "cone", ...]
+             */
+            get types(): ThreeDObject["type"][] {
+                return OBJECT_TYPES;
+            },
+
+            /**
+             * Get a 3D object by its unique ID.
+             * @param uniqueId - The unique identifier of the object.
+             * @returns The matching object, or null if there is no such object.
+             * @example
+             * const sphere = instance.object.get(uid);
+             */
+            get(uniqueId: string): ThreeDObject | null {
+                const state = moorhenInstance.store.getState();
+                return state.threeDObjects.objects.find(obj => obj.uniqueId === uniqueId) ?? null;
+            },
+
+            /**
+             * Get the 3D objects currently in the scene, in the order they were added.
+             *
+             * @param tags - Optional filter. An object must carry all the pairs given to be
+             * included, so `{ source: "myApp" }` returns everything that application drew and
+             * adding another pair narrows it further. Omit it for everything.
+             * @returns The matching objects. Treat the list as read-only: change an object
+             * through {@link edit} rather than by mutating what comes back, or the viewer will
+             * not hear about it.
+             * @example
+             * instance.object.list().forEach(obj => console.log(obj.type, obj.uniqueId));
+             * instance.object.list({ source: "myApp" }).length;
+             */
+            list(tags?: Tags): ThreeDObject[] {
+                const all = moorhenInstance.store.getState().threeDObjects.objects;
+                return tags ? all.filter(obj => matchesTags(obj, tags)) : all;
+            },
+
+            /**
+             * Create a 3D object and draw it.
+             *
+             * `type` is the only required field. Everything else falls back to that shape's
+             * default, so `{ type: "sphere" }` is a complete request and gives a unit sphere
+             * at the origin. Because the object types form a discriminated union, naming the
+             * type narrows the rest of the fields: a "sphere" takes `radius`, a "cylinder"
+             * takes `end` and `radius`, a "torus" takes `major_radius` and `minor_radius`.
+             *
+             * Any `uniqueId` in `params` is ignored - the new object always gets a fresh one,
+             * so two calls with the same parameters give two objects rather than one.
+             *
+             * @param params - The shape to make, plus any fields to override its defaults.
+             * @param params.type - One of {@link types}.
+             * @returns The unique ID of the new object, which is its handle for
+             * {@link get}, {@link edit} and {@link delete}. Null if `type` is not a
+             * known shape.
+             * @example
+             * const uid = instance.object.create({
+             *     type: "cylinder",
+             *     origin: [0, 0, 0],
+             *     end: [0, 20, 0],
+             *     radius: 2,
+             *     colour: "#3366ffff"
+             * });
+             */
+            create<P extends ThreeDObjectCreateParams>(
+                params: P & { [Key in Exclude<keyof P, AllowedObjectKeys<P>>]: never }
+            ): string | null {
+                if (!params || !(OBJECT_TYPES as readonly string[]).includes(params.type)) {
+                    console.warn(
+                        `3D object type "${params?.type}" is not one of ${OBJECT_TYPES.join(", ")}.`
+                    );
+                    return null;
+                }
+                // The default first, then the caller's fields over the top, then a fresh id
+                // last so that a uniqueId passed in cannot displace it.
+                const object = {
+                    ...newObjectOfType(params.type),
+                    ...params,
+                    uniqueId: uuidv4()
+                } as ThreeDObject;
+                moorhenInstance.dispatch(addObject(object));
+                return object.uniqueId;
+            },
+
+            /**
+             * Edit an existing 3D object in place.
+             *
+             * A partial update: fields left out keep their current value. The object's
+             * `type` and `uniqueId` cannot be changed - to turn a sphere into a cube,
+             * delete it and create the cube, which also makes it clear in a session that
+             * two different objects were involved.
+             *
+             * @param uniqueId - Unique ID of the object to edit.
+             * @param params - The fields to change.
+             * @returns True if the object was found and updated, otherwise false.
+             * @example
+             * instance.object.edit(uid, { radius: 8, colour: "#ff0000ff" });
+             */
+            edit(uniqueId: string, params: Partial<Omit<ThreeDObject, "type" | "uniqueId">>): boolean {
+                const existing = this.get(uniqueId);
+                if (!existing) {
+                    return false;
+                }
+                // Locked means locked, `locked` itself included. One rule rather than two, and
+                // nothing is lost by it: an owner that wants a locked object changed deletes it
+                // and creates the replacement, which is what a redraw does anyway.
+                if (existing.locked) {
+                    return false;
+                }
+                // updateObject replaces the stored object wholesale, so the merge happens
+                // here; without it, an edit of one field would drop every other.
+                const { type: _ignoredType, uniqueId: _ignoredId, ...changes } = params as Record<string, unknown>;
+                moorhenInstance.dispatch(updateObject({ ...existing, ...changes } as ThreeDObject));
+                return true;
+            },
+
+            /**
+             * Delete a 3D object, removing it from the scene.
+             * @param uniqueId - Unique ID of the object to delete.
+             * @returns True if the object was found and deleted, otherwise false.
+             * @example
+             * const deleted = instance.object.delete(uid);
+             */
+            delete(uniqueId: string): boolean {
+                if (!this.get(uniqueId)) {
+                    return false;
+                }
+                moorhenInstance.dispatch(removeObjectById(uniqueId));
+                return true;
+            },
+
+            /**
+             * Delete 3D objects in bulk. Molecules and maps are untouched.
+             *
+             * This is how whatever created a group of objects disposes of them: tag them on the
+             * way in, and clear by that tag rather than having to remember their ids. A custom
+             * representation that redraws itself wants exactly this.
+             *
+             * @param tags - Optional filter, with the same meaning as in {@link list}. Omit it
+             * to clear everything. An empty object - `{}` - clears nothing rather than
+             * everything, so a tag object that came out empty by accident cannot wipe the
+             * scene; pass no argument to mean all of them.
+             * @returns The number of objects removed.
+             * @example
+             * instance.object.clear({ source: "myApp" });   // just that application's
+             * instance.object.clear();                      // all of them
+             */
+            clear(tags?: Tags): number {
+                if (tags === undefined) {
+                    const count = this.list().length;
+                    moorhenInstance.dispatch(emptyObjects());
+                    return count;
+                }
+                // An empty query is the one place the two conventions pull apart. As a filter,
+                // {} matches everything, which is the identity you want from an optional
+                // argument; as a destructive query it must match nothing. Removal is guarded in
+                // the reducer, so without this the count returned would claim objects had gone
+                // that had not.
+                if (Object.keys(tags).length === 0) {
+                    return 0;
+                }
+                const count = this.list(tags).length;
+                moorhenInstance.dispatch(removeObjectsByTag(tags));
+                return count;
+            }
+        };
+    }
+
+    /**
+     * Vector API for this instance.
+     *
+     * Vectors are the arrows, dashed lines and distance labels drawn between atoms or points -
+     * XH-pi interactions, NOE restraints, and anything an application wants to point at
+     * something with.
+     *
+     * This extends rather than replaces what the generated store API already offered. Everything
+     * from there is still here, so `addVector(wholeVector)` and the rest keep working; the
+     * additions are the shape the 3D object API uses - `type`-free defaults, a returned handle,
+     * tag filtering - so that the two read alike.
+     *
+     * Overriding the getter rather than adding a second namespace is deliberate. The generated
+     * methods are grouped by slice name, which gives `instance.vectors`; a curated
+     * `instance.vector` beside it would be one keystroke apart and do something different.
+     *
+     * @example
+     * const uid = instance.vectors.create({ xTo: 10, yTo: 5, tags: { source: "myApp" } });
+     * instance.vectors.edit(uid, { labelText: "3.4 A", labelMode: "middle" });
+     * instance.vectors.clear({ source: "myApp" });
+     */
+    public get vectors() {
+        const moorhenInstance = this;
+        // The generated per-reducer methods, kept as the low-level route.
+        const generated = super.vectors;
+        return {
+            ...generated,
+
+            /**
+             * Get a vector by its unique ID.
+             * @param uniqueId - The unique identifier of the vector.
+             * @returns The matching vector, or null if there is no such vector.
+             */
+            get(uniqueId: string): MoorhenVector | null {
+                const state = moorhenInstance.store.getState();
+                return state.vectors.vectorsList.find(v => v.uniqueId === uniqueId) ?? null;
+            },
+
+            /**
+             * Get the vectors currently in the scene, in the order they were added.
+             * @param tags - Optional filter; a vector must carry all the pairs given.
+             * @returns The matching vectors, to be treated as read-only.
+             */
+            list(tags?: Tags): MoorhenVector[] {
+                const all = moorhenInstance.store.getState().vectors.vectorsList;
+                return tags ? all.filter(v => matchesTags(v, tags)) : all;
+            },
+
+            /**
+             * Create a vector and draw it.
+             *
+             * Every field is optional: what is left out takes its default, so
+             * `create({ xTo: 10 })` is a complete request. Any `uniqueId` passed is ignored and
+             * a fresh one minted, so two identical calls give two vectors rather than one.
+             *
+             * A field that does not exist on a vector is a compile error, whether it is written
+             * at the call site or arrives in a variable.
+             *
+             * @param params - Fields to set, in place of their defaults.
+             * @returns The unique ID of the new vector, which is its handle for {@link get},
+             * {@link edit} and {@link delete}.
+             */
+            create<P extends Partial<Omit<MoorhenVector, "uniqueId">>>(
+                params: P & { [K in Exclude<keyof P, keyof MoorhenVector>]: never } = {} as never
+            ): string {
+                const vector = { ...newVector(params as Partial<MoorhenVector>), uniqueId: uuidv4() };
+                moorhenInstance.dispatch(addVector(vector));
+                return vector.uniqueId;
+            },
+
+            /**
+             * Edit an existing vector in place.
+             *
+             * A partial update: fields left out keep their current value. `uniqueId` cannot be
+             * changed.
+             *
+             * @param uniqueId - Unique ID of the vector to edit.
+             * @param params - The fields to change.
+             * @returns True if the vector was found and updated, otherwise false.
+             */
+            edit(uniqueId: string, params: Partial<Omit<MoorhenVector, "uniqueId">>): boolean {
+                const existing = this.get(uniqueId);
+                if (!existing) {
+                    return false;
+                }
+                // As for objects: a locked vector is not edited, `locked` included.
+                if (existing.locked) {
+                    return false;
+                }
+                const { uniqueId: _ignored, ...changes } = params as Record<string, unknown>;
+                // There is no update reducer for vectors, so this is a remove and re-add. The
+                // vector keeps its id, so handles held elsewhere stay valid; it does move to the
+                // end of the list, which affects nothing but draw order between vectors.
+                moorhenInstance.dispatch(removeVectorById(uniqueId));
+                moorhenInstance.dispatch(addVector({ ...existing, ...changes } as MoorhenVector));
+                return true;
+            },
+
+            /**
+             * Delete a vector.
+             * @param uniqueId - Unique ID of the vector to delete.
+             * @returns True if the vector was found and deleted, otherwise false.
+             */
+            delete(uniqueId: string): boolean {
+                if (!this.get(uniqueId)) {
+                    return false;
+                }
+                moorhenInstance.dispatch(removeVectorById(uniqueId));
+                return true;
+            },
+
+            /**
+             * Delete vectors in bulk.
+             * @param tags - Optional filter, as in {@link list}. Omit it to clear everything;
+             * `{}` clears nothing rather than everything.
+             * @returns The number of vectors removed.
+             */
+            clear(tags?: Tags): number {
+                if (tags === undefined) {
+                    const count = this.list().length;
+                    moorhenInstance.dispatch(emptyVectors());
+                    return count;
+                }
+                // See the note on object.clear: {} matches everything as a filter and nothing as
+                // a destructive query, so the count has to follow the removal, not the filter.
+                if (Object.keys(tags).length === 0) {
+                    return 0;
+                }
+                const count = this.list(tags).length;
+                moorhenInstance.dispatch(removeVectorsByTag(tags));
+                return count;
+            }
+        };
+    }
+
+    /**
+     * Representation API for this instance.
+     *
+     * Lets you get, create, edit, delete and style the molecular representations
+     * (cartoons, spheres, surfaces...) shown in the 3D view, plus configure the
+     * default style applied to newly loaded molecules.
+     */
     public get representation() {
         const moorhenInstance = this;
         return {
-            set defaultStyle(
-                style: "CAs" | "CBs" | "CRs" | "ribbons-and-ligands" | "ribbons-and-side-chains" | "site-and-ribbons"
-            ) {
-                moorhenInstance._defaultStyle = style;
+            /**
+             * Set the default representation style of the scene shown: how it draws molecules
+             * when they are loaded (or loaded while it was not shown). A scene setting
+             * (`defaultRepresentationStyle`), so each scene has its own and the built-in ones save
+             * it. Accepts plain styles ("CAs", "CBs", "CRs") or picture-wizard style names
+             * ("ribbons-and-ligands", "ribbons-and-side-chains", "site-and-ribbons").
+             * @param style - The default style to apply.
+             */
+            set defaultStyle(style: DefaultRepresentationStyle) {
+                moorhenInstance.dispatch(setDefaultRepresentationStyle(style));
             },
-            get defaultStyle() {
-                return moorhenInstance._defaultStyle;
+            /**
+             * The default representation style of the scene shown, applied to newly loaded molecules.
+             */
+            get defaultStyle(): DefaultRepresentationStyle {
+                return moorhenInstance.store.getState().sceneSettings.defaultRepresentationStyle;
             },
             
             /**
              * Get a representation by its unique ID, searching across all molecules.
-             * @param uniqueID - The unique identifier of the representation
-             * @returns The matching representation, or undefined if not found
+             * @param uniqueID - The unique identifier of the representation.
+             * @returns The matching representation, or undefined if not found.
+             * @example
+             * const rep = instance.representation.get("representation-abc");
              */
             get(uniqueID: string): MoleculeRepresentation | null {
                 let representation: MoleculeRepresentation | null = null;
@@ -385,14 +1154,72 @@ export class MoorhenInstance extends StoreExtension {
                 return representation;
             },
             /**
-             * Create a new representation on the given molecule via the public API.
-             * @param moleculeUid - Unique ID of the target molecule
-             * @param params - Creation options. `representationStyle` is restricted to the
-             * public styles (see PublicRepresentationStyles); internal-only styles
-             * (hover, validation/analysis tools, etc.) are rejected.
-             * @param hideFromInterface - If true, the representation is created but not
-             * added to the interface (molecule card list).
-             * @returns The unique ID of the new representation, or null on failure.
+             * Create a new representation on the given molecule via the public API and
+             * (optionally) add it to the interface.
+             *
+             * `params.representationStyle` must be a public style; internal-only styles
+             * (hover highlights, validation/analysis tools, etc.) are rejected with a
+             * warning and a `null` return.
+             *
+             * @param moleculeUid - Unique ID of the molecule the representation is added to.
+             * @param params - Creation options. `representationStyle` is the only required
+             * field and must be a public style. All other fields are optional and are
+             * described below.
+             * @param params.representationStyle - The visual style of the representation.
+             * Public styles are: VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds,
+             * CRs, MolecularSurface, DishyBases, VdWSurface, AccessibleSurface, Calpha, unitCell,
+             * ligand_environment, contact_dots, restraints, MetaBalls, StickBases,
+             * residue_environment, NEFRestraints and RMSD. Internal-only styles (hover,
+             * environment, residueSelection, transformation, rama, rotamer,
+             * chemical_features, ligand_validation, glycoBlocks, adaptativeBonds) are
+             * rejected.
+             * @param params.ruleType - How the represented selection is built: "ligands",
+             * "cid", "molecule", "chain", "residue-range" or "neighbourhood". When omitted
+             * it is inferred from `cid`/`sequenceResidueRange`/`chainName` (default "molecule").
+             * @param params.chainName - Chain identifier (e.g. "A") used by the "chain" and
+             * "residue-range" selection types.
+             * @param params.sequenceResidueRange - A `[start, end]` residue-number range used
+             * by the "residue-range" selection type (e.g. `[12, 45]`).
+             * @param params.cid - A full selection CID (e.g. "//A/12-20/*:*") used directly by
+             * the "cid" selection type.
+             * @param params.notHOH - Exclude water molecules from the selection (default false).
+             * @param params.notH - Exclude hydrogen atoms from the selection (default false).
+             * @param params.sideChainOnly - Only represent side-chain atoms (default false).
+             * @param params.restrictToNeighbours - Only represent atoms lying within
+             * `neighboursDistance` of the (optional) `neighboursCid` selection (default false).
+             * @param params.excludeNeighbours - Invert `restrictToNeighbours` so the
+             * neighbourhood is excluded instead of restricted to (default false).
+             * @param params.neighboursCid - Additional CID defining the centre of the
+             * neighbourhood selection.
+             * @param params.neighboursDistance - Radius (in Angstrom) around the neighbourhood
+             * selection (default 6.0).
+             * @param params.useDefaultColours - Use the molecule's default colour scheme
+             * (default true when no explicit `colour` is given).
+             * @param params.colourMode - Colour mode: "custom" for a single colour, or a
+             * multi-colour mode such as "b-factor", "secondary-structure" or "mol-symm".
+             * @param params.colour - Hex colour (e.g. "#FF8800") used when `colourMode` is
+             * "custom". Providing a colour disables `useDefaultColours`.
+             * @param params.applyColourToNonCarbonAtoms - Whether the colour also applies to
+             * non-carbon atoms (default false).
+             * @param params.ncsColourRule - Colour rule used by the "mol-symm" colour mode.
+             * @param params.isCustom - Mark the representation as custom (user-created);
+             * internal representations set this to false.
+             * @param params.bondOptions - Overrides for bond rendering (thickness, colour...).
+             * @param params.m2tParams - Overrides for mesh-to-triangle rendering.
+             * @param params.residueEnvironmentOptions - Options for residue-environment
+             * (neighbourhood) rendering.
+             * @param params.nonCustomOpacity - Opacity applied when a non-custom (multi-colour)
+             * mode is in use.
+             * @param params.hbondedTo - Only represent atoms hydrogen-bonded to the
+             * `neighboursCid` selection (default false).
+             * @param hideFromInterface - If true the representation is created and drawn but
+             * not added to the interface (molecule card) list.
+             * @returns The unique ID of the new representation, or null if creation failed.
+             * @example
+             * const repUid = await instance.representation.create(molecule.uniqueId, {
+             *     representationStyle: "CAs",
+             *     colourMode: "b-factor"
+             * });
              */
             async create(
                 moleculeUid: string,
@@ -419,10 +1246,27 @@ export class MoorhenInstance extends StoreExtension {
                 }
             },
 
+            getList(moleculeUid: string): MoleculeRepresentation[] {
+                const molecule = moorhenInstance.getMolecule(moleculeUid);
+                if (!molecule) {
+                    return [];
+                }
+                const representations = moorhenInstance.store.getState().molecules.customRepresentations.filter(
+                    (rep: MoleculeRepresentation) => rep.parentMolecule.uniqueId === molecule.uniqueId)
+                return representations;
+        
+            },
+
             /**
              * Delete an existing representation via the public API.
-             * @param representationUid - Unique ID of the representation to delete
-             * @returns true if the representation was found and deleted, otherwise false
+             *
+             * The representation is removed from its parent molecule and from the
+             * interface (molecule card) list, and redrawn away.
+             *
+             * @param representationUid - Unique ID of the representation to delete.
+             * @returns True if the representation was found and deleted, otherwise false.
+             * @example
+             * const deleted = await instance.representation.delete(repUid);
              */
             async delete(representationUid: string): Promise<boolean> {
                 const representation: MoleculeRepresentation | null = this.get(representationUid);
@@ -437,12 +1281,58 @@ export class MoorhenInstance extends StoreExtension {
 
             /**
              * Edit an existing representation in place via the public API.
-             * @param representationUid - Unique ID of the representation to edit
-             * @param params - Update options. `representationStyle` is restricted to the
-             * public styles (see PublicRepresentationStyles); internal-only styles
-             * (hover, validation/analysis tools, etc.) are rejected.
-             * @returns null if the style is internal-only or the representation is not found,
-             * otherwise the representation is updated in place (no return value).
+             *
+             * The representation is looked up by its unique ID and updated in place
+             * (no new representation is created). `representationStyle` is the only
+             * required field; any other field that is omitted keeps the representation's
+             * current value, so partial updates are supported. Internal-only styles
+             * (hover, validation/analysis tools, etc.) are rejected with a warning.
+             *
+             * @param representationUid - Unique ID of the representation to edit.
+             * @param params - The fields to change. `representationStyle` is required; all
+             * other fields are optional and keep the representation's existing value when omitted.
+             * @param params.representationStyle - The new visual style. Must be one of the
+             * public styles (VdwSpheres, ligands, CAs, CBs, CDs, gaussian, allHBonds, CRs,
+             * MolecularSurface, DishyBases, VdWSurface, AccessibleSurface, Calpha, unitCell, ligand_environment,
+             * contact_dots, restraints, MetaBalls, StickBases, residue_environment,
+             * NEFRestraints, RMSD). Internal-only styles (hover, environment,
+             * residueSelection, transformation, rama, rotamer, chemical_features,
+             * ligand_validation, glycoBlocks, adaptativeBonds) are rejected.
+             * @param params.ruleType - How the represented selection is built: "ligands",
+             * "cid", "molecule", "chain", "residue-range" or "neighbourhood".
+             * @param params.chainName - Chain identifier used by the "chain"/"residue-range"
+             * selection types.
+             * @param params.sequenceResidueRange - A `[start, end]` residue-number range used
+             * by the "residue-range" selection type.
+             * @param params.cid - A full selection CID used directly by the "cid" selection type.
+             * @param params.notHOH - Exclude water molecules from the selection.
+             * @param params.notH - Exclude hydrogen atoms from the selection.
+             * @param params.sideChainOnly - Only represent side-chain atoms.
+             * @param params.restrictToNeighbours - Only represent atoms within
+             * `neighboursDistance` of the `neighboursCid` selection.
+             * @param params.excludeNeighbours - Invert `restrictToNeighbours` to exclude the
+             * neighbourhood instead of restricting to it.
+             * @param params.neighboursCid - Additional CID defining the neighbourhood centre.
+             * @param params.neighboursDistance - Radius (in Angstrom) of the neighbourhood.
+             * @param params.useDefaultColours - Use the molecule's default colour scheme.
+             * @param params.colourMode - Colour mode: "custom" or a multi-colour mode
+             * (e.g. "b-factor", "secondary-structure", "mol-symm").
+             * @param params.colour - Hex colour (e.g. "#FF8800") used when `colourMode` is "custom".
+             * @param params.applyColourToNonCarbonAtoms - Whether the colour also applies to
+             * non-carbon atoms.
+             * @param params.ncsColourRule - Colour rule used by the "mol-symm" colour mode.
+             * @param params.isCustom - Whether the representation is marked as custom.
+             * @param params.bondOptions - Overrides for bond rendering (thickness, colour...).
+             * @param params.m2tParams - Overrides for mesh-to-triangle rendering.
+             * @param params.residueEnvironmentOptions - Options for residue-environment
+             * (neighbourhood) rendering.
+             * @param params.nonCustomOpacity - Opacity used with non-custom colour modes.
+             * @param params.hbondedTo - Only represent atoms hydrogen-bonded to the
+             * `neighboursCid` selection.
+             * @returns The unique ID of the updated representation, or null if the style was
+             * rejected or the representation was not found.
+             * @example
+             * await instance.representation.edit(repUid, { colourMode: "secondary-structure" });
              */
             async edit(
                 representationUid: string,
@@ -464,17 +1354,23 @@ export class MoorhenInstance extends StoreExtension {
 
             /**
              * Run the picture wizard on the given molecule via the public API.
-             * Optionally deletes the molecule's existing representations first,
-             * then creates the set of representations implied by the wizard type.
-             * @param molecule - The target molecule uniqueId, or a MoorhenMolecule object
-             * (passing the object avoids a store lookup, which is needed when the
-             * molecule has not yet been added to the store)
-             * @param wizardType - The wizard type to run: "site-and-ribbons" (binding site and ribbons),
-             * "ribbons-and-ligands" (ribbons and ligands), "ribbons-and-side-chains" (ribbons and side chains),
-             * "catrace" (CA trace and ligands), or "bonds" (bonds)
-             * @param deleteExisting - If true, delete existing representations before creating new ones
-             * (defaults to true)
-             * @returns The unique IDs of the created representations (already added to the interface)
+             *
+             * Optionally deletes the molecule's existing representations first, then
+             * creates the set of representations implied by the wizard type. The created
+             * representations are added to the interface.
+             *
+             * @param molecule - The target molecule unique ID, or a {@link MoorhenMolecule}
+             * object. Passing the object avoids a store lookup, which is needed when the
+             * molecule has not yet been added to the store.
+             * @param wizardType - The wizard type to run: "site-and-ribbons" (binding site
+             * and ribbons), "ribbons-and-ligands" (ribbons and ligands),
+             * "ribbons-and-side-chains" (ribbons and side chains), "catrace" (CA trace and
+             * ligands), or "bonds" (bonds).
+             * @param deleteExisting - If true, delete existing representations before creating
+             * new ones (defaults to true).
+             * @returns The unique IDs of the created representations.
+             * @example
+             * const createdUids = await instance.representation.wizard("mol-1", "ribbons-and-ligands");
              */
             async wizard(
                 molecule: string | MoorhenMolecule,
@@ -496,18 +1392,42 @@ export class MoorhenInstance extends StoreExtension {
         };
     }
 
-    /** Return the MoorhenMap Object corresponding to the given unique ID */
+    /**
+     * Get the {@link MoorhenMap} whose unique ID matches `uid`.
+     * @param uid - The unique ID of the map to look up.
+     * @returns The matching map, or undefined if no loaded map has that ID.
+     */
     public getMap(uid: string): MoorhenMap {
         const state = this.store.getState();
         return state.maps.filter(map => map.uniqueId === uid)[0];
     }
 
-    /* Center the view on the given x,y,z coordinates */
+    /**
+     * Center the view on the given world-space coordinate.
+     *
+     * The scene's `origin` holds the negative of the point being looked at - translating the
+     * world by it is what brings that point to the middle of the screen - so a coordinate to
+     * centre on has to be negated on the way in. Without that this centred on minus the point
+     * it was given, which is to say on the wrong side of the origin by twice the distance.
+     *
+     * @param x - X coordinate to centre on.
+     * @param y - Y coordinate to centre on.
+     * @param z - Z coordinate to centre on.
+     */
     public centerOnCoordinate(x: number, y: number, z: number): void {
-        this.dispatch(setOrigin([x, y, z]));
+        this.dispatch(setOrigin([-x, -y, -z]));
     }
 
-    /* Center the view on the given residue, if no moleculeUID is provided, use the first molecule (works if only one molecule is loaded) */
+    /**
+     * Center the view on a given residue.
+     *
+     * If no `moleculeUID` is given the first loaded molecule is used (only
+     * meaningful when a single molecule is loaded).
+     *
+     * @param chain - Chain identifier of the residue (e.g. "A").
+     * @param residueNumber - Number of the residue to centre on.
+     * @param moleculeUID - Optional unique ID of the molecule containing the residue.
+     */
     public centerOnResidue(chain: string, residueNumber: number, moleculeUID?: string): void {
         const state = this.store.getState();
         let molecule: MoorhenMolecule;
@@ -519,7 +1439,17 @@ export class MoorhenInstance extends StoreExtension {
         molecule.centreOn(`/*/${chain}/${residueNumber}/*:*`);
     }
 
-    /* Center the view on the given atom, if no moleculeUID is provided, use the first molecule (works if only one molecule is loaded) */
+    /**
+     * Center the view on a given atom.
+     *
+     * If no `moleculeUID` is given the first loaded molecule is used (only
+     * meaningful when a single molecule is loaded).
+     *
+     * @param chain - Chain identifier of the atom (e.g. "A").
+     * @param residueNumber - Number of the residue containing the atom.
+     * @param atomName - Name of the atom (e.g. "CA").
+     * @param moleculeUID - Optional unique ID of the molecule containing the atom.
+     */
     public centerOnAtom(chain: string, residueNumber: number, atomName: string, moleculeUID?: string): void {
         const state = this.store.getState();
         let molecule: MoorhenMolecule;
@@ -535,13 +1465,17 @@ export class MoorhenInstance extends StoreExtension {
     // methods with callbacks
 
     /**
-     * Executes a callback when a new atom is hovered.
+     * Register a callback that fires whenever a new atom is hovered in the 3D view.
      *
-     * The callback receives the hovered atom molecule unique id, residue number, and atom name.
-     * Returns a function to unsubscribe from the hovered atom changes.
-     * Example:
-     * instance.newAtomHoveredCallback((moleculeID, residueNumber, atomName) => {
-     *     console.log(`New hovered atom: ${atomName} in residue ${residueNumber} of molecule ${moleculeID}`);
+     * The callback only fires once the hovered-atom store state carries a real atom
+     * (i.e. a molecule and atom info are available).
+     *
+     * @param callback - Function invoked with the unique ID of the hovered atom's
+     * molecule, the residue number and the atom name.
+     * @returns A function that unsubscribes the callback.
+     * @example
+     * const unsubscribe = instance.newAtomHoveredCallback((moleculeID, residueNumber, atomName) => {
+     *     console.log(`Hovered atom: ${atomName} in residue ${residueNumber} of molecule ${moleculeID}`);
      * });
      */
     public newAtomHoveredCallback(callback: (moleculeID: string, residueNumber: string, atomName: string) => void): () => void {
@@ -564,11 +1498,21 @@ export class MoorhenInstance extends StoreExtension {
     private _moleculeChangedCallbacks: { [callbackUID: string]: { applyTo: string; callback: (moleculeUID: string, action?: moleculeChangeAction, cid?: string) => void } } = {};
 
     /**
-     * Registers a callback that fires whenever a molecule changes.
+     * Register a callback that fires whenever a molecule changes (new, added,
+     * deleted, modified or refined).
      *
-     * If `moleculeUID` is provided, the callback only runs for that molecule.
-     * Otherwise, it runs for any molecule change.
-     * Returns a function that unsubscribes the callback.
+     * If `moleculeUID` is provided the callback only runs for that molecule;
+     * otherwise it runs for any molecule change.
+     *
+     * @param callback - Function invoked with the unique ID of the changed molecule,
+     * the change `action` ("new", "add", "delete", "modify" or "refine") and, when
+     * relevant, the CID of the modified region.
+     * @param moleculeUID - Optional unique ID restricting the callback to a single molecule.
+     * @returns A function that unsubscribes the callback.
+     * @example
+     * const unsubscribe = instance.newMoleculeChangedCallback((uid, action, cid) => {
+     *     console.log(`Molecule ${uid} changed (${action})`);
+     * });
      */
     public newMoleculeChangedCallback(callback: (moleculeUID: string, action?: moleculeChangeAction, cid?: string) => void, moleculeUID?: string): () => void {
         const callbackUID = guid();
@@ -580,11 +1524,16 @@ export class MoorhenInstance extends StoreExtension {
     }
 
     /**
-     * Notifies all registered molecule-change callbacks.
+     * Notify all registered molecule-change callbacks that a molecule changed.
      *
-     * `UIDorMolNo` can be either a molecule unique ID or a molecule number.
-     * When a number is provided, it is resolved to the current molecule unique ID
-     * before invoking matching callbacks.
+     * `UIDorMolNo` can be either a molecule unique ID or a molecule number. When a
+     * number is provided it is resolved to the current molecule unique ID before
+     * invoking the matching callbacks.
+     *
+     * @param UIDorMolNo - The unique ID (string) or molecule number (number) of the
+     * molecule that changed.
+     * @param action - Optional change action ("new", "add", "delete", "modify", "refine").
+     * @param cid - Optional CID of the region that changed.
      */
     public triggerMoleculeChanged(UIDorMolNo: string | number, action?: moleculeChangeAction, cid?: string): void {
         const state = this.store.getState();
@@ -601,40 +1550,88 @@ export class MoorhenInstance extends StoreExtension {
 
     //========================================
     // Methods to set attributes on the web component from the instance, which will trigger re-render of the react tree when they change
+    /**
+     * Set the width of the web component hosting the application. Accepts a CSS
+     * size string, a number of pixels or null. Forwarded to the attached web
+     * component, triggering a re-render of the React tree.
+     *
+     * @param value - The new width.
+     */
     set width(value: number | string | null) {
         if (this._webComponent) {
             this._webComponent.width = value;
         }
     }
 
+    /**
+     * Set the height of the web component hosting the application. Accepts a CSS
+     * size string, a number of pixels or null. Forwarded to the attached web
+     * component, triggering a re-render of the React tree.
+     *
+     * @param value - The new height.
+     */
     set height(value: number | string | null) {
         if (this._webComponent) {
             this._webComponent.height = value;
         }
     }
 
+    /**
+     * Set the URL prefix used to locate Moorhen assets. Forwarded to the attached
+     * web component.
+     *
+     * @param value - The new URL prefix.
+     */
     set urlPrefix(value: string) {
         if (this._webComponent) {
             this._webComponent.urlPrefix = value;
         }
     }
 
+    /**
+     * Enable/disable the file-upload controls of the web component. Forwarded to
+     * the attached web component.
+     * @param value - True to disable file uploads.
+     */
     set disableFileUploads(value: boolean) {
         if (this._webComponent) {
             this._webComponent.disableFileUploads = value;
         }
     }
 
+    /**
+     * Put the web component into read-only (view-only) mode. Forwarded to the
+     * attached web component.
+     *
+     * @param value - True to enable view-only mode.
+     */
     set viewOnly(value: boolean) {
         if (this._webComponent) {
             this._webComponent.viewOnly = value;
         }
     }
 
+    /**
+     * Attach the web component that hosts the application UI.
+     *
+     * **Internal use only.** Set by the application wiring when the component mounts.
+     * @private
+     * @param webComponent - The web component to attach.
+     */
     set webComponent(webComponent: MoorhenWebComponent) {
         this._webComponent = webComponent;
     }
 
+    /**
+     * Create (or reuse) a local storage instance used to persist data such as
+     * time-capsule backups and preferences.
+     *
+     * **Internal use only.** Low-level helper used to back the time capsule.
+     * @private
+     * @param name - Name of the storage instance; also used as the store name.
+     * @param empty - If true, clear any existing data in the instance first.
+     * @returns A localforage instance ready for read/write access.
+     */
     static createLocalStorageInstance = (name: string, empty: boolean = false): LocalForage => {
         const instance = localforage.createInstance({
             driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
@@ -647,6 +1644,34 @@ export class MoorhenInstance extends StoreExtension {
         return instance;
     };
 
+    /**
+     * Initialise the instance and mark it ready.
+     *
+     * **Internal use only.** The application shell calls this once after constructing
+     * the instance; consumers of a running instance should not call it.
+     *
+     * Wires up the Redux store/dispatch and the molecule/map refs, then initialises
+     * the session {@link MoorhenTimeCapsule} (backed by a local-storage instance that
+     * can be overridden via `timeCapsuleConfig`) and the {@link CommandCentre} if one
+     * was not already provided. Finally it flags the instance as ready and flushes
+     * all callbacks that were registered with `execWhenReady`.
+     *
+     * @private
+     * @param dispatch - Redux dispatch function used to update the store.
+     * @param moleculesRef - React ref that will hold the list of loaded molecules.
+     * @param mapsRef - React ref that will hold the list of loaded maps.
+     * @param store - The Redux store driving the instance.
+     * @param externalCommandCentreRef - Optional ref that is populated with the created
+     * {@link CommandCentre}, so the caller can access it externally.
+     * @param externalTimeCapsuleRef - Optional ref that is populated with the created
+     * {@link MoorhenTimeCapsule}.
+     * @param timeCapsuleConfig - Optional configuration for the session time capsule.
+     * @param timeCapsuleConfig.providedBackupStorageInstance - A localforage instance to
+     * use for backups; if omitted a default "Moorhen-TimeCapsule" instance is created.
+     * @param timeCapsuleConfig.maxBackupCount - Maximum number of backups to keep.
+     * @param timeCapsuleConfig.modificationCountBackupThreshold - Number of molecule
+     * modifications that trigger a new backup.
+     */
     public async startInstance(
         dispatch: Dispatch<UnknownAction>,
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
@@ -678,6 +1703,7 @@ export class MoorhenInstance extends StoreExtension {
         if (timeCapsuleConfig?.modificationCountBackupThreshold) {
             newTimeCapsule.modificationCountBackupThreshold = timeCapsuleConfig?.modificationCountBackupThreshold;
         }
+        newTimeCapsule.getSceneData = () => JSON.stringify(this.userScene.exportState());
         await newTimeCapsule.init();
         this.setTimeCapsule(newTimeCapsule);
         if (externalTimeCapsuleRef) {
@@ -710,17 +1736,29 @@ export class MoorhenInstance extends StoreExtension {
         }
 
         this.cootCommand.set_max_number_of_simple_mesh_vertices(10000000);
+        this.storeSyncsUnsubscribe?.();
+        this.storeSyncsUnsubscribe = startStoreSyncs(this);
         this.dispatch(setGlobalInstanceReady(true));
         this.ready = true;
         await Promise.all(this.readyCallbacks.map(callback => callback()));
         this.readyCallbacks = [];
     }
 
+    /**
+     * Tear the instance down: unsubscribe from preferences and close the command
+     * centre, clearing the attached time capsule and video recorder.
+     *
+     * **Internal use only.** Called by the application shell when the instance is no
+     * longer needed (e.g. on unmount).
+     * @private
+     */
     public cleanup(): void {
         if (this.preferencesUnsubscribe) {
             this.preferencesUnsubscribe();
             this.preferencesUnsubscribe = null;
         }
+        this.storeSyncsUnsubscribe?.();
+        this.storeSyncsUnsubscribe = null;
         if (this._commandCentre) {
             this.commandCentre.close();
             this._commandCentre = undefined;

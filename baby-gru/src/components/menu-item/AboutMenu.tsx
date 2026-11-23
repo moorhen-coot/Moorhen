@@ -1,11 +1,29 @@
 import { useEffect, useState } from "react";
-import { useCommandCentre } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance } from "../../InstanceManager";
+import { webGPUAdapterSummary, webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
 import { moorhen } from "../../types/moorhen";
 import { version } from "../../version";
 
 export const About = () => {
     const [is64Bit, setIs64Bit] = useState<boolean>(false);
+    const [adapter, setAdapter] = useState<string | null>(null);
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
+
+    // Who draws the main view as the menu opens, and why WebGL if it does.
+    const mainView = moorhenInstance.webGPU.mainView();
+    const renderer = mainView.drawing
+        ? `Drawing in WebGPU${adapter ? ` (${adapter})` : ""}`
+        : `Drawing in WebGL (${
+              !mainView.requested ? "WebGPU is off in the preferences"
+              : webGPUUnavailableReason() !== null ? "this browser does not offer WebGPU"
+              : mainView.active ? mainView.webGLReason
+              : "WebGPU could not start"
+          })`;
+
+    useEffect(() => {
+        if (mainView.drawing) webGPUAdapterSummary().then(summary => setAdapter(summary.adapter));
+    }, []);
 
     useEffect(() => {
         const getIs64bit = async () => {
@@ -43,6 +61,7 @@ export const About = () => {
             <p>
                 This is Moorhen v{version} ({is64Bit ? "64" : "32"}-bit)
             </p>
+            <p>{renderer}</p>
             <p>
                 <a href={`https://github.com/moorhen-coot/Moorhen`}>Source code</a>
             </p>

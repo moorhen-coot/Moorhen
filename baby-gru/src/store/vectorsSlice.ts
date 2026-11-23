@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { matchesTags, Tags } from "../utils/tags";
 
 export type VectorsCoordMode = "atoms" | "points" | "atompoint";
 export type VectorsLabelMode = "none" | "start" | "end" | "middle";
@@ -25,6 +26,29 @@ export interface MoorhenVector {
     vectorColour: { r: number; g: number; b: number };
     textColour: { r: number; g: number; b: number };
     radius?: number;
+    /**
+     * Who made this vector, and how it should group. See utils/tags.
+     *
+     * Replaces both customTags below and the older habit of writing a tag into uniqueId.
+     */
+    tags?: Tags;
+    /**
+     * Whether this may be changed in place.
+     *
+     * Set by whatever owns it - a custom representation, say - to mean "this geometry follows
+     * from something else, so editing it here would only put the two out of step". The API's
+     * `edit` does nothing to a locked item, including to this field, and the drag handles are
+     * not offered for one.
+     *
+     * Deleting is deliberately still allowed. An owner that redraws recreates what it owns, so a
+     * deletion is self-correcting rather than something to defend against, and refusing it would
+     * leave the owner unable to clear its own on redraw.
+     */
+    locked?: boolean;
+    /**
+     * @deprecated Superseded by `tags`. Kept so a session saved earlier round-trips unchanged;
+     * nothing reads it.
+     */
     customTags?: string[]
     dashSpacing?: number;
     arrowHeadLength?: number;
@@ -55,8 +79,39 @@ const vectorsSlice = createSlice({
             state.vectorsList = state.vectorsList.filter(item => !ids.includes(item.uniqueId));
         },
         // API
+        /**
+         * @deprecated Matches a substring of uniqueId, from when a tag was written into the
+         * identifier. Use removeVectorsByTag. Kept because it is public and takes an arbitrary
+         * string, so identifiers in the wild carry tags that cannot be migrated.
+         */
         removeVectorsMatchingIDString: (state, action: PayloadAction<string>) => {
             state.vectorsList = state.vectorsList.filter(item => !item.uniqueId.includes(action.payload));
+        },
+        // API
+        /**
+         * Remove every vector carrying all of the given tags. One pair removes a whole group,
+         * several narrow it: { source: "xpid" } takes every XPID vector, and adding
+         * { molecule: uid } restricts it to one molecule's. An empty query removes nothing, so
+         * that a tag object which came out empty by accident cannot clear the scene; use
+         * emptyVectors to mean all of them.
+         */
+        removeVectorsByTag: (state, action: PayloadAction<Tags>) => {
+            const query = action.payload;
+            if (!query || Object.keys(query).length === 0) {
+                return;
+            }
+            state.vectorsList = state.vectorsList.filter(item => !matchesTags(item, query));
+        },
+        // API
+        /** Remove one vector by its uniqueId, without needing the vector itself. */
+        removeVectorById: (state, action: PayloadAction<string>) => {
+            state.vectorsList = state.vectorsList.filter(item => item.uniqueId !== action.payload);
+        },
+        // API
+        /** Remove several vectors by their uniqueIds, without needing the vectors themselves. */
+        removeVectorsByIds: (state, action: PayloadAction<string[]>) => {
+            const ids = new Set(action.payload);
+            state.vectorsList = state.vectorsList.filter(item => !ids.has(item.uniqueId));
         },
         // API
         removeVector: (state, action: PayloadAction<MoorhenVector>) => {
@@ -69,6 +124,16 @@ const vectorsSlice = createSlice({
     },
 });
 
-export const { addVector, removeVector, emptyVectors, addVectors, removeVectors, removeVectorsMatchingIDString } = vectorsSlice.actions;
+export const {
+    addVector,
+    removeVector,
+    emptyVectors,
+    addVectors,
+    removeVectors,
+    removeVectorsMatchingIDString,
+    removeVectorsByTag,
+    removeVectorById,
+    removeVectorsByIds
+} = vectorsSlice.actions;
 
 export default vectorsSlice.reducer;

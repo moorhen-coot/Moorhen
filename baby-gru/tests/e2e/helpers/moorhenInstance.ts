@@ -68,7 +68,6 @@ export async function getSceneSettingsSnapshot(page: Page, elementId = "moorhen-
             backgroundColor: (sceneSettings?.backgroundColor as [number, number, number, number]) ?? [1, 1, 1, 1],
             drawAxes: Boolean(sceneSettings?.drawAxes),
             doPerspectiveProjection: Boolean(sceneSettings?.doPerspectiveProjection),
-            doOutline: Boolean(sceneSettings?.doOutline),
         };
     }, elementId);
 }

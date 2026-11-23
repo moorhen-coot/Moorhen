@@ -1,4 +1,4 @@
-import Fasta from "biojs-io-fasta";
+import { parseFasta } from "../../utils/fasta";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { createRef, useCallback, useEffect, useMemo, useRef } from "react";
 import { RootState } from "@/store";
@@ -587,7 +587,7 @@ export const MoorhenMrParseModal = () => {
         const modelFiles: string[] = [];
         if (fastaContents) {
             try {
-                const seqs = Fasta.parse(fastaContents);
+                const seqs = parseFasta(fastaContents);
                 dispatch(setTargetSequence(seqs[0].seq));
             } catch (e) {
                 console.log("Failed to extract sequence from input.fasta");

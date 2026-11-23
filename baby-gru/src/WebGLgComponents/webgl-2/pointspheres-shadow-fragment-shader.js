@@ -26,7 +26,7 @@ var pointspheres_shadow_fragment_shader_source = `#version 300 es\n
     uniform vec4 light_colours_specular;
     uniform vec4 light_colours_diffuse;
 
-    in lowp vec4 ShadowCoord;
+    in highp vec4 ShadowCoord;
     uniform sampler2D ShadowMap;
     uniform float xPixelOffset;
     uniform float yPixelOffset;

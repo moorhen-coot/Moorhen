@@ -1,0 +1,200 @@
+/**
+ * How big the scene is, for the controls that have to span it.
+ *
+ * The side-on clip/fog/blur widget draws a scale across the whole scene, and the initial clip
+ * and fog distances are derived from the same number. Both took it from the bounding box of the
+ * atoms, which has two problems: a scene with no molecule in it - meshes, primitives, a map on
+ * its own - contributed nothing and fell back to a span of 9999, making the widget useless and
+ * the initial clip values absurd; and even with a molecule present, anything else in the scene
+ * was ignored however large it was.
+ *
+ * What a map contributes is the interesting case. A contoured map is drawn within a radius of
+ * the view centre, and that radius is a display setting the user changes often. Letting it set
+ * the span would make the widget's scale move underfoot every time the radius changed, so the
+ * contour radius is deliberately not an input here. A map contributes its unit cell instead:
+ * known from the file header, independent of how much of it is currently drawn, and for an EM
+ * P1 map the cell is simply the box the map occupies. For a crystallographic map it is a
+ * defensible stand-in for an extent that is formally unbounded - the map repeats forever, so
+ * there is no true size to find, and a cell is at least predictable.
+ *
+ * Positions and sizes are kept apart on purpose. Atom coordinates and 3D object centres are in
+ * the same space and can be combined into one bounding box, so two molecules far apart give a
+ * span covering both. A map's cell centre is stored negated, in a convention this module has no
+ * business guessing at, so maps contribute a size only. The result is the larger of the two,
+ * which can overstate the span when a large map sits beside a small molecule, and never
+ * understates it - the safer direction for a control whose job is to reach everything.
+ */
+
+/** The span used when nothing in the scene has a determinable size. Roughly a small protein. */
+export const EMPTY_SCENE_SPAN = 50.0;
+
+export interface Bounds {
+    min: [number, number, number];
+    max: [number, number, number];
+}
+
+/** A bounding box over points, or null when there are none. */
+export const boundsOfPoints = (points: Iterable<[number, number, number]>): Bounds | null => {
+    let found = false;
+    const min: [number, number, number] = [Infinity, Infinity, Infinity];
+    const max: [number, number, number] = [-Infinity, -Infinity, -Infinity];
+    for (const p of points) {
+        if (!Number.isFinite(p[0]) || !Number.isFinite(p[1]) || !Number.isFinite(p[2])) continue;
+        found = true;
+        for (let i = 0; i < 3; i++) {
+            if (p[i] < min[i]) min[i] = p[i];
+            if (p[i] > max[i]) max[i] = p[i];
+        }
+    }
+    return found ? { min, max } : null;
+};
+
+/** The box a thing of the given radius about a centre occupies. */
+export const boundsAround = (centre: readonly number[], radius: number): Bounds => {
+    const r = Math.max(0, radius);
+    return {
+        min: [centre[0] - r, centre[1] - r, centre[2] - r],
+        max: [centre[0] + r, centre[1] + r, centre[2] + r],
+    };
+};
+
+/** The smallest box containing all of them, or null when the list is empty. */
+export const unionBounds = (all: (Bounds | null)[]): Bounds | null => {
+    let result: Bounds | null = null;
+    for (const b of all) {
+        if (!b) continue;
+        if (!result) {
+            result = { min: [...b.min], max: [...b.max] };
+            continue;
+        }
+        for (let i = 0; i < 3; i++) {
+            if (b.min[i] < result.min[i]) result.min[i] = b.min[i];
+            if (b.max[i] > result.max[i]) result.max[i] = b.max[i];
+        }
+    }
+    return result;
+};
+
+/** The diagonal of a box, which is the span the old code computed from the atom bounds. */
+export const spanOfBounds = (b: Bounds | null): number => {
+    if (!b) return 0;
+    return Math.hypot(b.max[0] - b.min[0], b.max[1] - b.min[1], b.max[2] - b.min[2]);
+};
+
+/**
+ * The diagonal of a unit cell, which is what a map contributes.
+ *
+ * Takes the cell edge lengths only. Treating the cell as a box overstates a strongly
+ * non-orthogonal cell slightly, which is the harmless direction, and avoids making this depend
+ * on the angle convention.
+ */
+export const spanOfCell = (cell: { a?: number, b?: number, c?: number } | null | undefined): number => {
+    if (!cell) return 0;
+    const a = Number.isFinite(cell.a) ? cell.a : 0;
+    const b = Number.isFinite(cell.b) ? cell.b : 0;
+    const c = Number.isFinite(cell.c) ? cell.c : 0;
+    return Math.hypot(a, b, c);
+};
+
+/**
+ * What a map contributes to the scene span: its cell, and nothing else.
+ *
+ * Written as a function taking the whole map rather than as a bare call to spanOfCell, so that
+ * the rule "the contour radius is not an input" is something a test can hold the code to. The
+ * radius is on the object this receives and is deliberately never read.
+ *
+ * THE CELL LIVES UNDER headerInfo, AND ONLY THERE
+ *
+ * This read `map.cell` for its whole life, and `MoorhenMap` declared a `cell` field that nothing
+ * ever assigned - so every map contributed zero, always. A scene holding only maps fell back to
+ * EMPTY_SCENE_SPAN, fifty angstroms, with two visible consequences: the side-on clip/fog widget
+ * scaled itself to a fifty angstrom scene whatever was loaded, and "Clip off", which sets the
+ * planes to 1.5 times this span, clipped a 550 angstrom EM map to a 150 angstrom slab. Turning
+ * the map radius up changed nothing, because the radius is deliberately not an input - the one
+ * input there was happened to be undefined.
+ *
+ * ("Clip off" no longer depends on this span: since it became the doClip scene setting, the
+ * renderer draws with planes far beyond anything loaded, see MGWebGL.applySlabToRenderer.)
+ *
+ * The real cell is `headerInfo.cell`, filled by MoorhenMap.initialise from the MTZ or MRC header,
+ * and already trusted elsewhere - cellCentre is derived from it one line later.
+ *
+ * Still zero when it is absent, which is a real case rather than a defensive one: initialise
+ * populates headerInfo only for the "mtz" and "mapFile" origins, and one loader catches a header
+ * failure and skips initialise altogether. Such a map contributes nothing and the scene falls
+ * back as before.
+ */
+export const mapSpan = (map: {
+    headerInfo?: { cell?: { a?: number, b?: number, c?: number } | null } | null,
+    suggestedRadius?: number | null,
+    mapRadius?: number | null,
+} | null | undefined): number => spanOfCell(map?.headerInfo?.cell);
+
+export interface SceneExtentInput {
+    /** Atom positions and 3D object boxes, all in one coordinate space. */
+    positioned?: (Bounds | null)[];
+    /** Standalone sizes, for things whose position is not safely comparable. Map cells. */
+    sizes?: number[];
+}
+
+/**
+ * The span of the whole scene.
+ *
+ * Never returns zero or less: a single atom, or a scene holding only degenerate geometry, would
+ * otherwise give a widget with no range at all and initial clip distances of nothing, which is
+ * the same class of unusable as the 9999 this replaces.
+ */
+export const sceneSpan = ({ positioned = [], sizes = [] }: SceneExtentInput): number => {
+    const fromPositions = spanOfBounds(unionBounds(positioned));
+    const largestSize = sizes.reduce((best, s) => (Number.isFinite(s) && s > best ? s : best), 0);
+    const span = Math.max(fromPositions, largestSize);
+    return span > 0 ? span : EMPTY_SCENE_SPAN;
+};
+
+/**
+ * A ball containing something: what the side-on view's framing measures, see reachFrom.
+ */
+export interface Sphere {
+    centre: [number, number, number];
+    radius: number;
+}
+
+/**
+ * A ball about the box's centre containing every point: the box's middle, and the farthest point
+ * from it. Not the smallest ball, but within a few percent of it for anything molecule-shaped,
+ * and unlike the box's own half diagonal it does not overstate a round thing by sqrt(3).
+ */
+export const sphereOfPoints = (points: Iterable<[number, number, number]>, bounds: Bounds | null): Sphere | null => {
+    if (!bounds) return null;
+    const centre: [number, number, number] = [0, 1, 2].map(i => (bounds.min[i] + bounds.max[i]) / 2) as [number, number, number];
+    let r2 = 0;
+    for (const p of points) {
+        if (!Number.isFinite(p[0]) || !Number.isFinite(p[1]) || !Number.isFinite(p[2])) continue;
+        const d2 = (p[0] - centre[0]) ** 2 + (p[1] - centre[1]) ** 2 + (p[2] - centre[2]) ** 2;
+        if (d2 > r2) r2 = d2;
+    }
+    return { centre, radius: Math.sqrt(r2) };
+};
+
+/**
+ * How far from `centre` (the view centre, as a point, not the negated scene origin) anything in
+ * these balls reaches: the half width the side-on view needs to show all of them, or 0 when there
+ * are none.
+ *
+ * Measured from the view centre because that is what the side-on view is centred on: a molecule
+ * the view has moved away from needs a wider view than its own size, and one centred in it a
+ * narrower one. A distance, so it is the same however the view is turned, and the view does not
+ * breathe while the main view rotates.
+ *
+ * Unlike sceneSpan, a map here is the ball it is contoured in (its radius about its draw centre),
+ * not its cell: what is drawn, which for an EM map is a small part of a large box.
+ */
+export const reachFrom = (centre: readonly number[], spheres: (Sphere | null)[]): number => {
+    let reach = 0;
+    for (const s of spheres) {
+        if (!s || !Number.isFinite(s.radius)) continue;
+        const d = Math.hypot(s.centre[0] - centre[0], s.centre[1] - centre[1], s.centre[2] - centre[2]);
+        if (Number.isFinite(d)) reach = Math.max(reach, d + Math.max(0, s.radius));
+    }
+    return reach;
+};

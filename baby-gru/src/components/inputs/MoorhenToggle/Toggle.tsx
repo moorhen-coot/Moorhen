@@ -18,24 +18,30 @@ type MoorhenToggleProps = {
 
 export const MoorhenToggle = (props: MoorhenToggleProps) => {
     const type = props.type ? props.type : "switch";
-    const { id, checked = false, onChange = () => {}, toggle = null, ref, name, disabled } = props;
+    const { id, checked, onChange = () => {}, toggle = null, ref, name, disabled } = props;
+    // Controlled when the caller passes `checked`; otherwise uncontrolled so a
+    // caller that only reads the input through `ref` (e.g. `ref.current.checked`)
+    // still gets a toggle that actually flips. Passing `checked={false}` with no
+    // state update would make React revert every click.
+    const isControlled = checked !== undefined;
     return (
-        <div
+        <label
             className={`moorhen__toggle-container ${props.className ? props.className : ""} ${props.disabled ? "disabled" : ""}`}
             style={{ ...props.style }}
+            htmlFor={id}
         >
-            <label className={`moorhen__toggle-switch`} htmlFor={id}>
+            <span className={`moorhen__toggle-switch moorhen__toggle-switch--${type}`}>
                 <input
                     id={id}
                     className="moorhen__toggle-input"
                     type="checkbox"
-                    checked={checked}
+                    {...(isControlled ? { checked } : { defaultChecked: false })}
                     onChange={(e) => {
                         if (onChange) {
                             onChange(e);
                         }
                         if (toggle) {
-                            toggle(!checked);
+                            toggle(e.target.checked);
                         }
                     }}
                     ref={ref}
@@ -51,8 +57,8 @@ export const MoorhenToggle = (props: MoorhenToggleProps) => {
                               : "moorhen__toggle-checkbox"
                     }
                 ></span>
-            </label>
+            </span>
             <span className="moorhen__toggle-label-text">{props.label}</span>
-        </div>
+        </label>
     );
 };

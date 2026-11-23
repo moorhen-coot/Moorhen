@@ -22,6 +22,8 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
     const [histogramBusy, setHistogramBusy] = useState<boolean>(false);
     const [showHistogram, setShowHistogram] = useState<boolean>(false);
     const chartRef = useRef<Chart | null>(null);
+    // A ref, not document.getElementById: inside the web component the canvas is in a shadow root
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [zoomFactor, setZoomFactor] = useState<number>(1);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
@@ -165,11 +167,11 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
             setHistogramBusy(true);
 
             const histogram = await props.map.getHistogram(200, zoomFactor);
-            const canvas = document.getElementById(`${props.map.molNo}-histogram`) as HTMLCanvasElement;
-            const ctx = canvas.getContext("2d");
+            const ctx = canvasRef.current?.getContext("2d");
             const chartData = parseHistogramData(histogram);
 
-            if (!chartData) {
+            if (!chartData || !ctx) {
+                setHistogramBusy(false);
                 return;
             }
 
@@ -192,7 +194,7 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
         <MoorhenAccordion title="Histogram" onChange={isExpanded => setShowHistogram(isExpanded)}>
             <MoorhenStack style={{ display: "flex", marginTop: "0.5rem" }} gap={1} direction="horizontal">
                 <div style={{ width: "95%", aspectRatio: "2/1" }}>
-                    <canvas id={`${props.map.molNo}-histogram`}></canvas>
+                    <canvas id={`${props.map.molNo}-histogram`} ref={canvasRef}></canvas>
                 </div>
                 <MoorhenStack
                     style={{

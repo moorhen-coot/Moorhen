@@ -57,6 +57,132 @@ const ensureCootModuleDirectory = (dirPath: string) => {
     })
 }
 
+const TAR_BLOCK = 512
+
+const isGzip = (data: Uint8Array) => data.length > 2 && data[0] === 0x1F && data[1] === 0x8B
+
+/** Read a NUL-terminated ASCII field from a tar header. */
+const tarString = (block: Uint8Array, start: number, length: number) => {
+    let end = start
+    while (end < start + length && block[end] !== 0) end++
+    return new TextDecoder().decode(block.subarray(start, end))
+}
+
+/** Read an octal number field from a tar header. */
+const tarOctal = (block: Uint8Array, start: number, length: number) => {
+    const text = tarString(block, start, length).trim()
+    return text ? parseInt(text, 8) : 0
+}
+
+/**
+ * Unpack a .tar or .tar.gz archive of Coot data into the in-memory filesystem, relative to its
+ * current directory, as unpackCootDataFile does. Done here rather than in the WASM because that
+ * path inflates into a temporary file, then copies each member out 512 bytes at a time (each
+ * write growing the file) and logs a line per entry, and it leaves the inflated .tar behind in
+ * memory. Here gzip is undone by the browser's native DecompressionStream and each file is
+ * written with one call.
+ *
+ * Handles ustar names (with prefix), GNU long names ('L') and pax 'path' records ('x'), which
+ * covers the archives CMake writes. Skips macOS AppleDouble "._" entries, which the Mac builds
+ * add to the archives.
+ */
+const unpackTarArchive = async (archive: Uint8Array): Promise<number> => {
+    let tar = archive
+    if (isGzip(archive)) {
+        const stream = new Blob([archive as unknown as BlobPart]).stream().pipeThrough(new DecompressionStream("gzip"))
+        tar = new Uint8Array(await new Response(stream).arrayBuffer())
+    }
+
+    const madeDirectories = new Set<string>()
+    const makeDirectory = (dir: string) => {
+        if (dir && !madeDirectories.has(dir)) {
+            ensureCootModuleDirectory(dir)
+            madeDirectories.add(dir)
+        }
+    }
+
+    let fileCount = 0
+    let longName: string | null = null
+    let offset = 0
+    while (offset + TAR_BLOCK <= tar.length) {
+        const header = tar.subarray(offset, offset + TAR_BLOCK)
+        if (header.every(byte => byte === 0)) break
+        const size = tarOctal(header, 124, 12)
+        const type = String.fromCharCode(header[156] || 0x30)
+        const dataStart = offset + TAR_BLOCK
+        offset = dataStart + Math.ceil(size / TAR_BLOCK) * TAR_BLOCK
+
+        if (type === "L") {
+            longName = tarString(tar, dataStart, size)
+            continue
+        }
+        if (type === "x") {
+            const pax = new TextDecoder().decode(tar.subarray(dataStart, dataStart + size))
+            const match = pax.match(/^\d+ path=(.*)$/m)
+            if (match) longName = match[1]
+            continue
+        }
+
+        let name = longName ?? tarString(header, 0, 100)
+        if (longName === null) {
+            // A ustar header can split a long path into prefix and name.
+            const prefix = tarString(header, 257, 5) === "ustar" ? tarString(header, 345, 155) : ""
+            if (prefix) name = `${prefix}/${name}`
+        }
+        longName = null
+        name = name.replace(/^\.\//, "").replace(/\/+$/, "")
+        const baseName = name.split("/").pop() ?? ""
+        if (!name || name === "." || baseName.startsWith("._")) continue
+
+        if (type === "5") {
+            makeDirectory(name)
+        } else if (type === "0" || type === "\0" || type === "7") {
+            const slash = name.lastIndexOf("/")
+            const parent = slash >= 0 ? name.slice(0, slash) : "."
+            makeDirectory(slash >= 0 ? parent : "")
+            try {
+                cootModule.FS_unlink(name)
+            } catch (_err) {
+                // Not there yet, which is the usual case.
+            }
+            // canOwn is false, so MEMFS copies just this file's bytes out of the archive.
+            cootModule.FS_createDataFile(parent, baseName, tar.subarray(dataStart, dataStart + size), true, true, false)
+            fileCount++
+        }
+        // Links, devices and FIFOs are skipped, as unpackCootDataFile skips them.
+    }
+    return fileCount
+}
+
+/**
+ * Unpack a Coot data archive, using the JavaScript unpacker where the browser has
+ * DecompressionStream (all current browsers) and unpackCootDataFile in the WASM otherwise.
+ */
+const unpackCootData = async (archive: Uint8Array): Promise<void> => {
+    if (typeof DecompressionStream !== "undefined") {
+        await unpackTarArchive(archive)
+        return
+    }
+    let tarFileName = guid() + "data.tar"
+    let doUnzip = false
+    let unzipName = ""
+    if (isGzip(archive)) {
+        doUnzip = true
+        unzipName = "data_tmp/" + tarFileName
+        tarFileName += ".gz"
+    }
+    cootModule.FS_createDataFile("data_tmp", tarFileName, archive, true, true)
+    cootModule.unpackCootDataFile("data_tmp/" + tarFileName, doUnzip, unzipName, "")
+    cootModule.FS_unlink("data_tmp/" + tarFileName)
+    if (doUnzip) {
+        try {
+            cootModule.FS_unlink(unzipName)
+        } catch (_err) {
+            // Already gone.
+        }
+    }
+}
+
 const cacheXhpiMonomerDictionary = (compId: string, dictionary: string) => {
     const upperCompId = compId.trim().toUpperCase()
     if (!upperCompId || !dictionary) return
@@ -347,9 +473,52 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
     }
 }
 
+const vectorVectorPairUintFloatToJSArray = (vectorVector)  => {
+    const vectorVectorSize = vectorVector.size()
+    console.log(vectorVectorSize)
+    const theArray = []
+    for(let ivv=0; ivv<vectorVectorSize; ivv++){
+        const theVector = vectorVector.get(ivv)
+        const vectorSize = theVector.size()
+        const thisArray = []
+        for(let iv=0; iv<vectorSize; iv++){
+            thisArray.push(theVector.get(iv))
+        }
+        theVector.delete()
+        theArray.push(thisArray)
+    }
+    console.log(theArray)
+}
+
+const vectorArray3ToJSArray = (vectorArray): number[][] => {
+    const vectorVectorSize = vectorArray.size()
+    const retVal: number[][] = []
+    for(let ivv=0; ivv<vectorVectorSize; ivv++){
+        const theArray = vectorArray.get(ivv)
+        retVal.push(theArray)
+    }
+    return retVal
+}
+
+const vectorVectorToJSArray = (vectorVector): number[][] => {
+    const vectorVectorSize = vectorVector.size()
+    const retVal: number[][] = []
+    for(let ivv=0; ivv<vectorVectorSize; ivv++){
+        const vector = vectorVector.get(ivv)
+        const vectorSize = vector.size()
+        const thisArray: number[] = []
+        for(let iv=0; iv<vectorSize; iv++){
+            thisArray.push(vector.get(iv))
+        }
+        retVal.push(thisArray)
+        vector.delete()
+    }
+    return retVal
+}
+
 const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false, keepNorm: boolean = false): libcootApi.SimpleMeshJS => {
 
-    const print_timing = false
+    const print_timing = true
     const ts = performance.now()
 
     const vertices = simpleMesh.vertices;
@@ -363,20 +532,66 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     let totNorm_C = new Float32Array(verticesSize * 3)
     let totCol_C = new Float32Array(verticesSize * 4)
 
-    cootModule.getPositionsFromSimpleMesh2(simpleMesh, totPos_C)
-    cootModule.getColoursFromSimpleMesh2(simpleMesh, totCol_C)
+    // The vectors, not the mesh. Passing simpleMesh reconstructed the whole thing on every
+    // one of these calls - a value_object crosses by copy - so four calls copied a 400 MB
+    // mesh four times before reading a vertex. These handles are the ones deleted below, so
+    // nothing extra is held.
+    cootModule.getPositionsFromVertices(vertices, totPos_C)
+    cootModule.getColoursFromVertices(vertices, totCol_C)
 
     if (perm) {
+        // keepNorm leaves the normals alone while the winding is reversed. It used to call a
+        // separate getReversedNormalsFromSimpleMesh3, which despite its name negated nothing
+        // and was identical to the unreversed version.
         if (keepNorm) {
-            cootModule.getReversedNormalsFromSimpleMesh3(simpleMesh, totNorm_C)
+            cootModule.getNormalsFromVertices(vertices, totNorm_C)
         } else {
-            cootModule.getReversedNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
+            cootModule.getReversedNormalsFromVertices(vertices, totNorm_C)
         }
-        cootModule.getPermutedTriangleIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
+        cootModule.getPermutedTriangleIndicesFromTriangles(triangles, totIdxs_C)
     } else {
-        cootModule.getNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
-        cootModule.getTriangleIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
+        cootModule.getNormalsFromVertices(vertices, totNorm_C)
+        cootModule.getTriangleIndicesFromTriangles(triangles, totIdxs_C)
     }
+
+    // Which residue each vertex belongs to, for a mesh that knows.
+    //
+    // Coot records the generating atom against every vertex of a molecular surface as it
+    // builds it - see simple_mesh_t::vertex_owner. Only the surface fills these in so far, so
+    // every other mesh arrives with them empty and is unaffected.
+    //
+    // Note the permuted case: getPermutedTriangleIndicesFromTriangles reorders the corners
+    // within each triangle, not the vertices themselves, so the owner of vertex i is still the
+    // owner of vertex i and this needs no equivalent.
+    let vertexOwners: Uint32Array | null = null
+    let vertexOwnersOther: Uint32Array | null = null
+    let vertexOwnerWeights: Float32Array | null = null
+    let owners: string[] | null = null
+    const vertexOwnerVec = simpleMesh.vertex_owner
+    const vertexOwnerOtherVec = simpleMesh.vertex_owner_other
+    const vertexOwnerWeightVec = simpleMesh.vertex_owner_weight
+    const ownerVec = simpleMesh.owners
+    if (vertexOwnerVec && ownerVec && vertexOwnerVec.size() === verticesSize && ownerVec.size() > 0) {
+        vertexOwners = new Uint32Array(verticesSize)
+        cootModule.getUint32ArrayFromVector(vertexOwnerVec, vertexOwners)
+        const ownersSize = ownerVec.size()
+        owners = new Array(ownersSize)
+        for (let i = 0; i < ownersSize; i++) owners[i] = ownerVec.get(i)
+        // The second owner of a saddle. Kept together with the first: a mesh either has both
+        // or neither, so half of it arriving would be a bug rather than a case to handle.
+        if (vertexOwnerOtherVec && vertexOwnerWeightVec
+            && vertexOwnerOtherVec.size() === verticesSize
+            && vertexOwnerWeightVec.size() === verticesSize) {
+            vertexOwnersOther = new Uint32Array(verticesSize)
+            cootModule.getUint32ArrayFromVector(vertexOwnerOtherVec, vertexOwnersOther)
+            vertexOwnerWeights = new Float32Array(verticesSize)
+            cootModule.getFloat32ArrayFromVector(vertexOwnerWeightVec, vertexOwnerWeights)
+        }
+    }
+    vertexOwnerVec?.delete()
+    vertexOwnerOtherVec?.delete()
+    vertexOwnerWeightVec?.delete()
+    ownerVec?.delete()
 
     const tm = performance.now()
     if (print_timing) console.log("DEBUG: SIMPLE MESH TO MESH DATA C++", tm - ts)
@@ -394,12 +609,42 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     vertices.delete();
     triangles.delete();
 
+    // Report the size of the WebAssembly heap alongside a mesh that failed to build.
+    //
+    // This is the one number that says which problem we have. The heap can only grow, never
+    // shrink, and a failed allocation can mean either of two quite different things: the heap
+    // is at its 8 GB ceiling and there is genuinely no more (exhaustion), or the heap is far
+    // short of the ceiling and the request failed for want of one contiguous block of the size
+    // asked for (fragmentation). The fixes are unrelated - use less in total, versus ask in
+    // smaller pieces - so guessing between them is expensive.
+    //
+    // Printed on failure only, so it costs nothing in normal use.
+    if (simpleMesh.status === 0) {
+        // In a try, because reading HEAPU8 is not a plain property access: when it is absent
+        // from EXPORTED_RUNTIME_METHODS the module installs a getter that calls abort(), which
+        // raises a RuntimeError the optional-chaining operator never gets to see. A diagnostic
+        // that can take the worker down is worse than no diagnostic.
+        let heap = "not exported"
+        try {
+            const heapBytes = (cootModule as any).HEAPU8?.length
+            if (typeof heapBytes === "number") heap = (heapBytes / (1024 * 1024)).toFixed(0) + " MB"
+        } catch (e) { /* leave it as "not exported" */ }
+        console.log("DEBUG: mesh failed to build; WASM heap is", heap,
+                    "and the mesh reached", verticesSize, "vertices and", trianglesSize, "triangles")
+    }
+
     return {
+        // Carried through so a caller can tell a mesh that failed to build from one that is
+        // legitimately empty. Coot sets it to 0 only when it caught an exception.
+        status: simpleMesh.status,
         prim_types: [["TRIANGLES"]],
         idx_tri: [[totIdxs]],
         vert_tri: [[totPos]],
         norm_tri: [[totNorm]],
-        col_tri: [[totCol]]
+        col_tri: [[totCol]],
+        ...(vertexOwners ? { vertex_owners: vertexOwners, owners } : {}),
+        ...(vertexOwnersOther ? { vertex_owners_other: vertexOwnersOther,
+                                  vertex_owner_weights: vertexOwnerWeights } : {})
     };
 }
 
@@ -519,6 +764,30 @@ const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo: libcootApi.MapMo
     return returnResult;
 }
 
+/**
+ * A map over one whole unit cell, every symmetry copy filled in, for contouring on the GPU. The
+ * values are sent back by transfer (see the 'coot_command' reply), not copied.
+ */
+const getMapUnitCellGrid = (imol: number) => {
+    // Added to Moorhen's wrappers (moorhen-wrappers-helpers.h) for WebGPU map contours.
+    const container = molecules_container as unknown as {
+        get_map_unit_cell_grid_info(imol: number): emscriptem.vector<number>;
+        get_map_unit_cell_grid(imol: number, out: Float32Array): void;
+    };
+    if (typeof container.get_map_unit_cell_grid_info !== "function") {
+        throw new Error("This build of the Coot WASM has no get_map_unit_cell_grid: rebuild it with the current wasm_src");
+    }
+    const infoVec = container.get_map_unit_cell_grid_info(imol);
+    const info: number[] = [];
+    for (let i = 0; i < infoVec.size(); i++) info.push(infoVec.get(i));
+    infoVec.delete();
+    if (info.length < 13) throw new Error(`Molecule ${imol} is not a map`);
+    const [nu, nv, nw] = info;
+    const data = new Float32Array(nu * nv * nw);
+    container.get_map_unit_cell_grid(imol, data);
+    return { nu, nv, nw, orth: info.slice(3, 12), isEM: info[12] !== 0, data };
+}
+
 const textureAsFloatsToJSTextureAsFloats = (data: libcootApi.textureAsFloats): libcootApi.textureAsFloatsJS => {
 
     const imageDataVecSize = data.width * data.height
@@ -575,6 +844,37 @@ const stringArrayToJSArray = (stringArray: emscriptem.vector<string>) => {
     return returnResult;
 }
 
+const fscResultToJSArray = (numberPairsVector: emscriptem.vector<libcootApi.PairType<number, number>>) : {x:number,y:number}[] => {
+    const res = []
+    const arrSize = numberPairsVector.size()
+    for(let i = 0; i < arrSize; i++) {
+        const resPair = numberPairsVector.get(i)
+        const first = resPair.first
+        const second = resPair.second
+        res.push({x:first,y:second})
+    }
+    numberPairsVector.delete()
+    return res
+}
+
+
+/**
+ * Read an exported mesh file back out of the module filesystem, and unlink it.
+ *
+ * The same three lines stood at the end of all four exporters. One copy, because a detail that
+ * has to be right in four places eventually is not - which is how a field added to MoorhenVector
+ * reached none of its three constructors.
+ *
+ * Nothing is corrected here. Moorhen's glTF exports are inside-out by the glTF convention, but
+ * the fix is applied on the main thread, where it can be a module: this worker is loaded as a
+ * classic script, so anything it imports would be emitted as a runtime `import` and fail.
+ */
+const readExportedMeshFile = (fileName: string): ArrayBufferLike => {
+    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
+    cootModule.FS_unlink(fileName)
+    return fileContents.buffer
+}
+
 const export_map_as_mesh_file = (imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileType: string) => {
     let fn
     let suffix
@@ -589,9 +889,7 @@ const export_map_as_mesh_file = (imol: number, x: number, y: number, z: number, 
     }
     const fileName = `${guid()}.${suffix}`
     molecules_container[fn](imol, x, y, z, radius, contourLevel, fileName)
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 }
 
 const export_metaballs_as_mesh_file = (imol: number, cid: string, gridSize: number, radius: number, isoLevel: number, fileType: string) => {
@@ -614,9 +912,7 @@ const export_metaballs_as_mesh_file = (imol: number, cid: string, gridSize: numb
     }
 
     molecules_container[fn](imol, cid, gridSize, radius, isoLevel, fileName)
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 
 }
 
@@ -639,14 +935,22 @@ const export_molecular_representation_as_mesh_file = (imol: number, cid: string,
     }
 
     molecules_container[fn](imol, cid, colourScheme, style, ssUsageScheme, fileName)
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 }
 
 const export_molecule_as_mesh_file = (
+    // showAnisoAsEmpty sits between showOrtep and drawHydrogens because that is the order
+    // getBondArgs produces, which in turn follows coot's get_bonds_mesh_instanced. It was
+    // missing here, so every argument after it arrived one place early: fileType fell off the
+    // end and this function received drawMissingLoops in its place, matched none of "gltf",
+    // "obj" or "3mf", and returned null. The caller only does `if (gltfData) doDownload(...)`,
+    // so that was a silent nothing - no file, no error.
+    //
+    // The three flags are taken and not passed on: export_model_molecule_as_gltf has no use for
+    // them. They are in the signature so that the arguments line up.
     imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number,
-    atomRadius: number, showAniso: boolean, showOrtep: boolean,  drawHydrogens: boolean, bondSmoothness: number, drawMissingResidues: boolean, fileType: string
+    atomRadius: number, showAniso: boolean, showOrtep: boolean, showAnisoAsEmpty: boolean,
+    drawHydrogens: boolean, bondSmoothness: number, drawMissingResidues: boolean, fileType: string
 ) => {
     let fn
     let fileName
@@ -676,9 +980,7 @@ const export_molecule_as_mesh_file = (
         drawMissingResidues,
         fileName
     )
-    const fileContents = cootModule.FS.readFile(fileName, { encoding: 'binary' }) as Uint8Array
-    cootModule.FS_unlink(fileName)
-    return fileContents.buffer
+    return readExportedMeshFile(fileName)
 }
 
 const symmetryToJSData = (symmetryDataPair: libcootApi.PairType<libcootApi.SymmetryData, emscriptem.vector<number[][]>>) => {
@@ -1077,10 +1379,10 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
     let totPos_C = new Float32Array(verticesSize * 3)
     let totNorm_C = new Float32Array(verticesSize * 3)
     let totCol_C = new Float32Array(verticesSize * 4)
-    cootModule.getLineIndicesFromSimpleMesh2(simpleMesh, totIdxs_C)
-    cootModule.getPositionsFromSimpleMesh2(simpleMesh, totPos_C)
-    cootModule.getNormalsFromSimpleMesh2(simpleMesh, totNorm_C)
-    cootModule.getColoursFromSimpleMesh2(simpleMesh, totCol_C)
+    cootModule.getLineIndicesFromTriangles(triangles, totIdxs_C)
+    cootModule.getPositionsFromVertices(vertices, totPos_C)
+    cootModule.getNormalsFromVertices(vertices, totNorm_C)
+    cootModule.getColoursFromVertices(vertices, totCol_C)
 
     const tm = performance.now()
     if (print_timing) console.log("DEBUG: SIMPLE MESH TO LINE MESH DATA C++", tm - ts)
@@ -1097,11 +1399,18 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
 
     vertices.delete();
     triangles.delete();
+    // simple_mesh_t now carries two more vectors, and every field of a value_object arrives as
+    // a handle that has to be freed whether or not this function looks at it. A line mesh
+    // never has owners, but the empty vectors are still allocated.
+    simpleMesh.vertex_owner?.delete();
+    simpleMesh.vertex_owner_other?.delete();
+    simpleMesh.vertex_owner_weight?.delete();
+    simpleMesh.owners?.delete();
 
     if (normalLighting)
-        return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+        return { status: simpleMesh.status, prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
     else
-        return { prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+        return { status: simpleMesh.status, prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
 
 }
 
@@ -1176,13 +1485,213 @@ const associate_data_mtz_file_with_map = (iMol: number, mtzData: { data: ArrayBu
     return mtzFilename
 }
 
+
+/** A buffer or image file that a .gltf refers to by relative URI. */
+type GltfSidecar = { name: string; data: Uint8Array }
+
+/**
+ * Read a glTF or glb file and return it as mesh data.
+ *
+ * Each import gets its own directory, and everything goes into it under the name the file
+ * actually has. Both halves of that matter. A .gltf keeps its buffers and images in separate
+ * files and refers to them by relative URI, so "scene.bin" has to exist under that exact name
+ * for tinygltf to find it - which rules out the guid this used to rename the file to. And the
+ * directory is what makes the real names safe to use: two imports of the same scene, or a scene
+ * whose buffer is called something as ordinary as "data.bin", cannot collide.
+ *
+ * (The C++ side has to co-operate, and until recently did not: it read the bytes itself and
+ * handed them to tinygltf's memory loaders with an empty base directory, so no external file
+ * could be resolved however the path was arranged. It now uses LoadASCIIFromFile and
+ * LoadBinaryFromFile, which derive the base directory from the path.)
+ *
+ * The extension is normalised rather than preserved verbatim: tinygltf picks the binary or the
+ * JSON parser by looking at it, the comparison is case-sensitive, and a .GLB read as text fails
+ * with a confusing complaint about invalid JSON.
+ */
+/**
+ * Put a glTF and its sidecars in the module's filesystem, run something over it, and tidy up.
+ *
+ * Each import gets its own directory, with everything in it under the name the file actually has.
+ * Both halves matter. A .gltf keeps its buffers and images in separate files and refers to them by
+ * relative URI, so "scene.bin" has to exist under that exact name for tinygltf to find it. And the
+ * directory is what makes the real names safe to use: two imports of the same scene, or a scene
+ * whose buffer is called something as ordinary as "data.bin", cannot collide.
+ *
+ * Shared by the merged and the grouped readers, which differ only in what they call once the
+ * files are in place.
+ */
+const withGltfInFilesystem = <T>(
+    fileData: ArrayBufferLike,
+    name: string,
+    sidecars: GltfSidecar[],
+    read: (path: string) => T
+): T => {
+    const directory = `gltf_${guid()}`
+    const files: string[] = []
+    const directories = new Set<string>([directory])
+    ensureCootModuleDirectory(directory)
+
+    /** Writes one file at a URI relative to the import directory, and returns its path. */
+    const write = (relative: string, data: Uint8Array): string | null => {
+        // "." and ".." are dropped rather than followed: a URI is not allowed to climb out of
+        // the directory it was loaded from, and a file that tries is not one to accommodate.
+        const parts = relative.split("/").filter(part => part.length > 0 && part !== "." && part !== "..")
+        const fileName = parts.pop()
+        if (!fileName) return null
+        const parent = [directory, ...parts].join("/")
+        if (parts.length > 0) {
+            ensureCootModuleDirectory(parent)
+            parts.reduce((path, part) => {
+                const next = `${path}/${part}`
+                directories.add(next)
+                return next
+            }, directory)
+        }
+        cootModule.FS_createDataFile(parent, fileName, data, true, true)
+        const path = `${parent}/${fileName}`
+        files.push(path)
+        return path
+    }
+
+    try {
+        // Sidecars first, so that they are in place before anything tries to read them.
+        for (const sidecar of sidecars) write(sidecar.name, sidecar.data)
+
+        const stem = (name.split("/").pop() || "model").replace(/\.(gltf|glb)$/i, "")
+        // The extension is normalised rather than preserved verbatim: tinygltf picks the binary or
+        // the JSON parser by looking at it, the comparison is case-sensitive, and a .GLB read as
+        // text fails with a confusing complaint about invalid JSON.
+        const extension = name.toLowerCase().endsWith(".glb") ? ".glb" : ".gltf"
+        // Always a usable path: the stem falls back to "model" and the extension is one of two
+        // literals, so there is a filename here whatever the file was called.
+        const path = write(`${stem}${extension}`, new Uint8Array(fileData))
+
+        return read(`./${path}`)
+    } finally {
+        // Best effort, and deepest first. A directory left behind would leak for the lifetime of
+        // the worker, but a throw in here would replace a real error - or a real result - with a
+        // complaint about tidying up.
+        for (const path of files) {
+            try { cootModule.FS_unlink(path) } catch (_err) { /* already gone */ }
+        }
+        for (const path of [...directories].sort((a, b) => b.length - a.length)) {
+            try { cootModule.FS.rmdir(path) } catch (_err) { /* not empty, or already gone */ }
+        }
+    }
+}
+
+/** One material's worth of an import, as flat arrays the main thread can put straight into a part. */
+type GltfGroupJS = {
+    vertices: Float32Array;
+    normals: Float32Array;
+    colours: Float32Array;
+    indices: Uint32Array;
+    /** Empty when this material's geometry carried no coordinates. */
+    texCoords: Float32Array;
+    /** The glTF material index, or -1. The main thread maps it to a texture. */
+    material: number;
+};
+
+/**
+ * Read a glTF as one mesh per material.
+ *
+ * Beside load_gltf rather than replacing it: everything that only wants geometry can go on using
+ * that, and if this path misbehaves there is something to fall back to.
+ *
+ * The material is passed through as the bare glTF index. What it means - which image, decoded how
+ * - is settled on the main thread, which has a browser to decode PNGs with and would otherwise be
+ * handed sixteen megabytes of pixels across the worker boundary for every texture.
+ */
+const load_gltf_groups = (
+    fileData: ArrayBufferLike,
+    name: string,
+    sidecars: GltfSidecar[] = []
+): { status: number; name: string; groups: GltfGroupJS[] } => {
+    return withGltfInFilesystem(fileData, name, sidecars, path => {
+        const groups = cootModule.LoadGltfGroupsFromFile(path)
+        try {
+            const out: GltfGroupJS[] = []
+            let status = 1
+            let meshName = ""
+
+            for (let i = 0; i < groups.size(); i++) {
+                const group = groups.get(i)
+                const mesh = group.mesh
+                // A failure arrives as a single group whose mesh says so, exactly as the merged
+                // call reports it - so there is one place to look whichever was used.
+                if (mesh.status === 0) {
+                    status = 0
+                    meshName = mesh.name
+                    mesh.vertices.delete()
+                    mesh.triangles.delete()
+                    group.texCoords.delete()
+                    break
+                }
+
+                const vertexCount = mesh.vertices.size()
+                const triangleCount = mesh.triangles.size()
+                const vertices = new Float32Array(vertexCount * 3)
+                const normals = new Float32Array(vertexCount * 3)
+                const colours = new Float32Array(vertexCount * 4)
+                const indices = new Uint32Array(triangleCount * 3)
+                // The vectors, not the mesh. A simple_mesh_t is a value_object and crosses by
+                // copy, so handing the whole mesh back makes embind rebuild it - every vertex -
+                // on the way in; a registered vector crosses by reference and costs nothing.
+                cootModule.getPositionsFromVertices(mesh.vertices, vertices)
+                cootModule.getNormalsFromVertices(mesh.vertices, normals)
+                cootModule.getColoursFromVertices(mesh.vertices, colours)
+                cootModule.getTriangleIndicesFromTriangles(mesh.triangles, indices)
+
+                // One memcpy rather than a call per element: a bound vector's `get` is a call
+                // across the boundary, and a large mesh has millions of these.
+                const texCoordCount = group.texCoords.size()
+                const texCoords = new Float32Array(texCoordCount)
+                if (texCoordCount > 0) cootModule.getFloatsFromVector(group.texCoords, texCoords)
+
+                // These are C++ objects behind handles, not collected with the JS wrapper. The
+                // mesh accessors above do not take ownership, so both are released here.
+                mesh.vertices.delete()
+                mesh.triangles.delete()
+                group.texCoords.delete()
+
+                out.push({ vertices, normals, colours, indices, texCoords, material: group.material })
+            }
+
+            return { status, name: meshName, groups: status === 0 ? [] : out }
+        } finally {
+            groups.delete()
+        }
+    })
+}
+
+const load_gltf = (
+    fileData: ArrayBufferLike,
+    name: string,
+    sidecars: GltfSidecar[] = []
+// The return type is spelt out, and deliberately requires status and name. simpleMeshToMeshData
+// returns the five buffer arrays and nothing else, so returning its result directly - which this
+// used to do, under a comment claiming it "carries status through" - silently dropped both. The
+// importer's reason then died here, one hop short of the person who needed it, and every failure
+// arrived as "contained no triangles". Requiring them makes that a compile error next time.
+): libcootApi.SimpleMeshJS & { status: number; name: string } => {
+    return withGltfInFilesystem(fileData, name, sidecars, path => {
+        const simpleMesh = cootModule.LoadGltFromFile(path)
+        // Read before the conversion, which deletes the two vectors. These two are plain
+        // value_object fields rather than embind handles, so they survive that - but taking them
+        // first keeps the dependency obvious.
+        const status = simpleMesh.status
+        const meshName = simpleMesh.name
+        return { ...simpleMeshToMeshData(simpleMesh), status, name: meshName }
+    })
+}
+
 const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolean) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mapData)
     let fileExtension = ''
-    if (name.endsWith('.map.gz')) {
+    if (name.toLowerCase().endsWith('.map.gz')) {
         fileExtension = 'map.gz'
-    } else if (name.endsWith('.mrc.gz')) {
+    } else if (name.toLowerCase().endsWith('.mrc.gz')) {
         fileExtension = 'mrc.gz'
     }
     cootModule.FS_createDataFile(".", `${theGuid}${fileExtension}`, asUint8Array, true, true);
@@ -1214,6 +1723,23 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgba: [
 
     indexedResiduesVec.delete()
     colourMap.delete()
+}
+
+/**
+ * Bloboids (DrawBloboids, wasm_src/bloboids.hh): an ellipsoid per chain of `cid`, coloured by the
+ * representation's colour rules, each a CID and an RGBA colour, as getUserDefinedColours gives them.
+ */
+const drawBloboids = (imol: number, cid: string, colours: { cid: string; rgba: [number, number, number, number] }[]) => {
+    const cids = new cootModule.VectorString()
+    const rgba = new cootModule.VectorFloat()
+    colours.forEach(colour => {
+        cids.push_back(colour.cid)
+        colour.rgba.forEach(c => rgba.push_back(c))
+    })
+    const mesh = molecules_container.DrawBloboids(imol, cid, cids, rgba)
+    cids.delete()
+    rgba.delete()
+    return mesh
 }
 
 const privateerValidationToJSArray = (results: emscriptem.vector<privateer.ResultsEntry>): privateer.ResultsEntry[] => {
@@ -1252,6 +1778,26 @@ const privateerValidationToJSArray = (results: emscriptem.vector<privateer.Resul
             conformation_err: entry.conformation_err,
             puckering_err: entry.puckering_err,
             chirality_err: entry.chirality_err
+        }
+
+        data.push(entryJS);
+    }
+
+    results.delete();
+    return data;
+}
+
+const privateerCremerPopleParametersToJSArray = (results: emscriptem.vector<privateer.CremerPopleParameters>): privateer.CremerPopleParameters[] => {
+    const data: privateer.CremerPopleParameters[] = [];
+    const resultSize = results.size();
+    for (let i = 0; i < resultSize; i++) {
+        const entry = results.get(i);
+        const entryJS: privateer.CremerPopleParameters = {
+            q: entry.q,
+            phi: entry.phi, 
+            theta: entry.theta,
+            chain_id: entry.chain_id,
+            residue_id: entry.residue_id
         }
 
         data.push(entryJS);
@@ -1320,6 +1866,40 @@ const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerI
     }
 }
 
+const doPrivateerValidate = (messageData: {
+    myTimeStamp: number;
+    chainID?: string;
+    messageId?: string;
+    message: string;
+    returnType: string;
+    command: string;
+    commandArgs: any[];
+}) => {
+    const fileDataString = messageData.commandArgs[0]
+    const retCode = cootModule.validate(fileDataString,"thing.cif")
+    const returnResult = privateerValidationToJSArray(retCode)
+    return {
+            messageId: messageData.messageId,
+            myTimeStamp: messageData.myTimeStamp,
+            messageTag: "result",
+            result: {result: returnResult},
+    }
+}
+
+// Turn a caught error into readable text. A C++ exception thrown in libcoot reaches JS
+// as a WebAssembly.Exception, which stringifies to "[object WebAssembly.Exception]";
+// with this build's ASSERTIONS, Emscripten puts [type, what()] in its message instead.
+const describeError = (err: any): string => {
+    const message = err?.message
+    if (Array.isArray(message)) {
+        return message.filter(Boolean).join(': ')
+    }
+    if (typeof message === 'string' && message.length > 0) {
+        return err?.name ? `${err.name}: ${message}` : message
+    }
+    return String(err)
+}
+
 const doCootCommand = (messageData: {
     myTimeStamp: number;
     chainID?: string;
@@ -1363,6 +1943,12 @@ const doCootCommand = (messageData: {
             case 'shim_auto_read_mtz':
                 cootResult = auto_read_mtz(...commandArgs as [ArrayBuffer])
                 break
+            case 'shim_load_gltf':
+                cootResult = load_gltf(...commandArgs as [ArrayBuffer, string, GltfSidecar[]])
+                break
+            case 'shim_load_gltf_groups':
+                cootResult = load_gltf_groups(...commandArgs as [ArrayBuffer, string, GltfSidecar[]])
+                break
             case 'shim_read_ccp4_map':
                 cootResult = read_ccp4_map(...commandArgs as [ArrayBuffer, string, boolean])
                 break
@@ -1375,11 +1961,14 @@ const doCootCommand = (messageData: {
             case 'shim_set_bond_colours':
                 cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgba: [number, number, number, number] }[], boolean])
                 break
+            case 'shim_draw_bloboids':
+                cootResult = drawBloboids(...commandArgs as [number, string, { cid: string; rgba: [number, number, number, number] }[]])
+                break
             case 'shim_export_map_as_mesh_file':
                 cootResult = export_map_as_mesh_file(...commandArgs as [number, number, number, number, number, number, string])
                 break
             case 'shim_export_molecule_as_mesh_file':
-                cootResult = export_molecule_as_mesh_file(...commandArgs as [number, string, string, boolean, number, number, boolean, boolean, boolean, number, boolean, string])
+                cootResult = export_molecule_as_mesh_file(...commandArgs as [number, string, string, boolean, number, number, boolean, boolean, boolean, boolean, number, boolean, string])
                 break
             case 'shim_export_molecular_representation_as_mesh_file':
                 cootResult = export_molecular_representation_as_mesh_file(...commandArgs as [number, string, string, string, number, string])
@@ -1401,6 +1990,9 @@ const doCootCommand = (messageData: {
                 break
             case "shim_export_metaballs_as_mesh_file":
                 cootResult =  export_metaballs_as_mesh_file(...commandArgs as [number, string, number, number, number, string])
+                break
+            case "shim_get_map_unit_cell_grid":
+                cootResult = getMapUnitCellGrid(...commandArgs as [number])
                 break
             default:
                 console.log("Calling",command)
@@ -1446,6 +2038,9 @@ const doCootCommand = (messageData: {
             case 'mmrrcc_stats':
                 returnResult = mmrrccStatsToJSArray(cootResult)
                 break;
+            case 'fsc_result':
+                returnResult = fscResultToJSArray(cootResult)
+                break;
             case 'colour_rules':
                 returnResult = colourRulesToJSArray(cootResult)
                 break;
@@ -1457,6 +2052,28 @@ const doCootCommand = (messageData: {
                 break;
             case 'mesh_perm3':
                 returnResult = simpleMeshToMeshData(cootResult, true, true)
+                break;
+            case 'PickableMeshPerm':
+                const mesh = cootResult.mesh
+                const influence_index_offsets = cootResult.influence_index_offsets
+                const influence_point_indexes = cootResult.influence_point_indexes
+                const influence_weights = cootResult.influence_weights
+
+                let influence_weights_C = new Float32Array(influence_weights.size())
+                let influence_index_offsets_C = new Uint32Array(influence_index_offsets.size())
+                let influence_point_indexes_C = new Uint32Array(influence_point_indexes.size())
+                cootModule.getFloat32ArrayFromVector(influence_weights, influence_weights_C)
+                cootModule.getUint32ArrayFromVector(influence_point_indexes, influence_point_indexes_C)
+                cootModule.getUint32ArrayFromVector(influence_index_offsets, influence_index_offsets_C) // Size of vertices
+
+                influence_index_offsets.delete()
+                influence_point_indexes.delete()
+                influence_weights.delete()
+
+                const pick_points = cootResult.pick_points
+                const pick_points_js = vectorArray3ToJSArray(pick_points)
+
+                returnResult = {mesh:simpleMeshToMeshData(mesh, true),pick_info:{influence_weights:influence_weights_C,influence_index_offsets:influence_index_offsets_C,influence_point_indexes:influence_point_indexes_C,pick_points:pick_points_js}}
                 break;
             case 'mesh_perm':
                 returnResult = simpleMeshToMeshData(cootResult, true)
@@ -1537,6 +2154,9 @@ const doCootCommand = (messageData: {
             case 'privateer_results':
                 returnResult = privateerValidationToJSArray(cootResult)
                 break
+            case 'privateer_cremer_pople_parameters':
+                returnResult = privateerCremerPopleParametersToJSArray(cootResult)
+                break
             case 'status':
             default:
                 returnResult = cootResult
@@ -1560,87 +2180,158 @@ const doCootCommand = (messageData: {
         console.log(err)
         return {
             messageId, myTimeStamp, message,
-            consoleMessage: `EXCEPTION RAISED IN ${command}, ${err}`,
+            consoleMessage: `EXCEPTION RAISED IN ${command}, ${describeError(err)}`,
             result: { status: 'Exception' }
         }
     }
 }
 
-onmessage = function (e) {
-
-    if (e.data.message === 'CootInitialize') {
-        let mod
-        let scriptName
-        let memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
-        if (memory64) {
-            try {
-                // @ts-ignore
-                importScripts('./moorhen64.js')
-                mod = createCoot64Module
-                scriptName = "moorhen64.js"
-                console.log("Successfully loaded 64-bit libcoot in worker thread")
-            } catch (e: any) {
-                if(e.name === 'NetworkError'){
-                   console.log('There was a NetworkError loading 64-bit WebAssembly module.')
-                   console.log('A retry *should* be attempted, errors below may not be real.');
-                }
-                console.error(e)
-                console.log("Failed to load 64-bit libcoot in worker thread. Falling back to 32-bit.")
-                memory64 = false
-                // @ts-ignore
-                importScripts('./moorhen.js')
-                mod = createCootModule
-                scriptName = "moorhen.js"
-                console.log("Successfully loaded 32-bit libcoot in worker thread")
-            }
-        } else {
-            // @ts-ignore
-            importScripts('./moorhen.js')
-            mod = createCootModule
-            scriptName = "moorhen.js"
-            console.log("Successfully loaded 32-bit libcoot in worker thread")
-        }
-        mod({
-            onRuntimeInitialized: () => { },
-            mainScriptUrlOrBlob: scriptName,
-            print: print,
-            printErr: printErr,
+// Reply to a message with an Exception status, so the caller's promise is settled
+// instead of left pending for ever (which keeps the app's busy spinner on).
+const postExceptionReply = (data: { messageId?: string; myTimeStamp?: number; message?: string; command?: string }, err: unknown) => {
+    try {
+        postMessage({
+            messageId: data.messageId,
+            myTimeStamp: data.myTimeStamp,
+            message: data.message,
+            consoleMessage: `EXCEPTION RAISED IN ${data.command ?? data.message}, ${describeError(err)}`,
+            result: { status: 'Exception' },
         })
-            .then((returnedModule) => {
-                postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
+    } catch (postErr) {
+        console.error(postErr)
+    }
+}
 
+// Every message posted to the worker must get exactly one reply. Branches post their
+// reply as their last statement, so anything they throw -- a wasm trap, a dead module
+// after an abort, or a result that cannot be structured-cloned -- means no reply was
+// sent, and we send an Exception reply instead.
+onmessage = function (e) {
+    try {
+        dispatchMessage(e)
+    } catch (err) {
+        console.error(err)
+        postExceptionReply(e.data, err)
+    }
+}
+
+// The libcoot module, loaded once. Started by CootLoadModule, or by CootInitialize for a host
+// that sends only that.
+let cootModulePromise: Promise<{ returnedModule: libcootApi.CootModule; scriptName: string; memory64: boolean }> | null = null
+
+type LoadedCootModule = { returnedModule: libcootApi.CootModule; scriptName: string; memory64: boolean }
+
+const createModuleFrom = async (scriptName: string, memory64: boolean): Promise<LoadedCootModule> => {
+    // Fetch the Emscripten glue once and run it from a blob: URL. Emscripten starts each of the
+    // 32 pthread workers from mainScriptUrlOrBlob, so handing it that blob: URL means they start
+    // from memory, instead of each requesting moorhen64.js from the server again (which showed up
+    // in the Network panel as 32 more downloads competing with the WASM). The glue still finds
+    // moorhen64.wasm next to this worker, because it locates it from self.location, not from the
+    // URL it was loaded from.
+    const response = await fetch(`./${scriptName}`)
+    if (!response.ok) {
+        throw new Error(`Could not fetch ${scriptName}: ${response.status} ${response.statusText}`)
+    }
+    let glueUrl = URL.createObjectURL(new Blob([await response.text()], { type: "text/javascript" }))
+    try {
+        // @ts-ignore
+        importScripts(glueUrl);
+    } catch (err) {
+        // A host page whose Content Security Policy forbids blob: scripts: load the glue by its
+        // URL, as before, and let the thread workers fetch it too.
+        console.warn(`Could not run ${scriptName} from a blob: URL; loading it from the server instead`, err)
+        glueUrl = `./${scriptName}`
+        // @ts-ignore
+        importScripts(glueUrl);
+    }
+    // @ts-ignore
+    const mod = memory64 ? createCoot64Module : createCootModule
+    console.log(`Successfully loaded ${memory64 ? "64" : "32"}-bit libcoot in worker thread`)
+    // glueUrl is never revoked: the pthread workers are created from it, and the pool can grow
+    // later on.
+    const returnedModule: libcootApi.CootModule = await mod({
+        onRuntimeInitialized: () => { },
+        mainScriptUrlOrBlob: glueUrl,
+        print: print,
+        printErr: printErr,
+    })
+    return { returnedModule, scriptName, memory64 }
+}
+
+const loadCootModule = () => {
+    if (cootModulePromise) {
+        return cootModulePromise
+    }
+    let loading: Promise<LoadedCootModule>
+    const memory64 = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 5, 3, 1, 4, 1]))
+    if (memory64) {
+        // A browser can accept 64-bit memory yet still fail to run the 64-bit build: Safari
+        // Technology Preview validates memory64, but Emscripten's glue rejects any Safari older
+        // than the 64-bit build's MIN_SAFARI_VERSION. So fall back to the 32-bit build if the
+        // 64-bit one fails at any stage: fetching its script or starting the module.
+        loading = createModuleFrom("moorhen64.js", true).catch((err: any) => {
+            console.error(err)
+            console.log("Failed to start 64-bit libcoot in worker thread. Falling back to 32-bit.")
+            return createModuleFrom("moorhen.js", false)
+        })
+    } else {
+        loading = createModuleFrom("moorhen.js", false)
+    }
+    // Mark the promise handled here: CootInitialize may not attach its handler until data.tar.gz
+    // has arrived, and a rejection before then would otherwise be logged as unhandled.
+    loading.catch(() => { })
+    cootModulePromise = loading
+    return loading
+}
+
+const dispatchMessage = function (e: MessageEvent) {
+
+    if (e.data.message === 'CootLoadModule') {
+        // Sent by the command centre as soon as the worker exists, so libcoot downloads and
+        // compiles while the main thread is still fetching data.tar.gz. CootInitialize then
+        // waits for the same load. Reply now; a failure to load is reported by CootInitialize.
+        loadCootModule()
+        postMessage({ consoleMessage: 'Started loading libcoot', message: e.data.message, messageId: e.data.messageId })
+    }
+
+    else if (e.data.message === 'CootInitialize') {
+        loadCootModule()
+            .then(({ returnedModule, scriptName, memory64 }) => {
                 console.log("Loaded",scriptName,". Is 64-bit:",memory64)
 
                 cootModule = returnedModule;
 
-                const fileData = e.data.data.cootData
-                let doUnzip = false
-                let unzipName = ""
-
-
-                let tarFileName = "data.tar"
-                if(fileData[0]==0x1F && fileData[1]==0x8B){
-                    doUnzip = true
-                    tarFileName = "data.tar.gz"
-                    unzipName = "data_tmp/data.tar"
+                // Start-up timing, logged to the console and recorded as User Timing measures so
+                // they also appear in a DevTools Performance trace.
+                const recordStep = (label: string, start: number) => {
+                    const end = performance.now()
+                    performance.measure(`Coot start-up: ${label}`, { start, end })
+                    console.log(`Coot start-up: ${label} took ${(end - start).toFixed(1)} ms`)
                 }
 
                 cootModule.FS.mkdir("data_tmp")
-                cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
-                const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
-                cootModule.FS_unlink("data_tmp/"+tarFileName)
+                const unpackStart = performance.now()
+                return unpackCootData(e.data.data.cootData).then(() => {
+                    recordStep("unpack data.tar.gz", unpackStart)
 
-                molecules_container = new cootModule.molecules_container_js(false)
-                molecules_container.set_use_gemmi(false)
-                molecules_container.set_show_timings(false)
-                molecules_container.set_refinement_is_verbose(false)
-                molecules_container.set_map_sampling_rate(1.7)
-                molecules_container.set_map_is_contoured_with_thread_pool(true)
-                molecules_container.set_max_number_of_threads(8)
-                cootModule.FS.mkdir("COOT_BACKUP")
+                    const containerStart = performance.now()
+                    molecules_container = new cootModule.molecules_container_js(false)
+                    recordStep("new molecules_container", containerStart)
+
+                    molecules_container.set_use_gemmi(false)
+                    molecules_container.set_show_timings(false)
+                    molecules_container.set_refinement_is_verbose(false)
+                    molecules_container.set_map_sampling_rate(1.7)
+                    molecules_container.set_map_is_contoured_with_thread_pool(true)
+                    molecules_container.set_max_number_of_threads(8)
+                    cootModule.FS.mkdir("COOT_BACKUP")
+                    // Only report success once molecules_container actually exists.
+                    postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
+                })
             })
-            .catch((e) => {
-                console.log(e)
+            .catch((err) => {
+                console.error(err)
+                postExceptionReply(e.data, err)
             })
     }
 
@@ -1655,28 +2346,22 @@ onmessage = function (e) {
         })
     }
     else if (e.data.message === 'loadExtraData') {
-        const fileData = e.data.data.cootData
-
-        let doUnzip = false
-        let unzipName = ""
-
-        let tarFileName = guid()+"data.tar"
-        if(fileData[0]==0x1F && fileData[1]==0x8B){
-            doUnzip = true
-            unzipName = "data_tmp/"+tarFileName
-            tarFileName += ".gz"
-        }
-
-        cootModule.FS_createDataFile("data_tmp", tarFileName, fileData, true, true);
-        const retVal = cootModule.unpackCootDataFile("data_tmp/"+tarFileName,doUnzip, unzipName,"")
-        cootModule.FS_unlink("data_tmp/"+tarFileName)
-        postMessage({
-            messageId: e.data.messageId,
-            myTimeStamp: e.data.myTimeStamp,
-            consoleMessage: `Extracted data file`,
-            message: e.data.message,
-            result: { }
-        })
+        const unpackStart = performance.now()
+        unpackCootData(e.data.data.cootData)
+            .then(() => {
+                console.log(`Unpacked extra Coot data in ${(performance.now() - unpackStart).toFixed(1)} ms`)
+                postMessage({
+                    messageId: e.data.messageId,
+                    myTimeStamp: e.data.myTimeStamp,
+                    consoleMessage: `Extracted data file`,
+                    message: e.data.message,
+                    result: { }
+                })
+            })
+            .catch((err) => {
+                console.error(err)
+                postExceptionReply(e.data, err)
+            })
     }
 
     else if (e.data.message === 'close') {
@@ -1804,10 +2489,37 @@ onmessage = function (e) {
             messageTag: "result",
             result: jsonContents,
         })
+    } else if (e.data.message === 'DrawCremerPopleSphere') {
+        const fileDataString = e.data.commandArgs[0]
+        const showRadialConformations = e.data.commandArgs[1]
+        const retCode = cootModule.DrawCremerPopleSphere(fileDataString,showRadialConformations)
+        const returnResult = simpleMeshToMeshData(retCode)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: {result: returnResult},
+        })
+    } else if (e.data.message === 'privateer_calculate_cremer_pople_parameters') {
+        const fileDataString = e.data.commandArgs[0]
+        const retCode = cootModule.calculate_cremer_pople_parameters(fileDataString,"thing.cif")
+        const returnResult = privateerCremerPopleParametersToJSArray(retCode)
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: {result: returnResult},
+        })
+    } else if (e.data.message === 'privateer_validate') {
+        const returnResult = doPrivateerValidate(e.data)
+        postMessage(returnResult)
     }
 
     if (e.data.message === 'coot_command') {
         const result = doCootCommand(e.data)
-        postMessage(result)
+        // A unit-cell map grid can be hundreds of MB: hand its buffer over rather than copy it.
+        const grid = e.data.command === "shim_get_map_unit_cell_grid"
+            ? (result as { result?: { result?: { data?: unknown } } }).result?.result?.data : null
+        postMessage(result, grid instanceof Float32Array ? [grid.buffer] : [])
     }
 }

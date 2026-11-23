@@ -1,12 +1,15 @@
 import { AnyAction, Dispatch, Store } from "@reduxjs/toolkit";
 import { batch } from "react-redux";
 import { moorhensession } from "../protobuf/MoorhenSession";
+import { cameraFromSession, sessionFromCamera } from "./sessionCamera";
+import { slabFromCamera } from "../WebGLgComponents/slab";
 import { setActiveMap } from "../store/generalStatesSlice";
 import {
     setAmbient,
     setClipEnd,
     setClipStart,
     setDiffuse,
+    setFogClipOffset,
     setFogEnd,
     setFogStart,
     setLightPosition,
@@ -19,6 +22,9 @@ import {
     setMapColours,
     setMapRadius,
     setMapStyle,
+    setMapSlice,
+    setMapSliceNodalLines,
+    setMapSliceContourSpacing,
     setNegativeMapColours,
     setPositiveMapColours, addMap, emptyMaps, enableUpdatingMaps,
     setConnectedMoleculeMolNo,
@@ -31,6 +37,7 @@ import {
     addTextOverlay,
     emptyOverlays, setBackgroundColor,
     setDepthBlurDepth,
+    setPerspectiveEyeDistance,
     setDepthBlurRadius,
     setDoEdgeDetect,
     setDoPerspectiveProjection,
@@ -45,6 +52,7 @@ import {
     setUseOffScreenBuffers,
     MoorhenReduxStoreType,
 } from "../store";
+import { newMovie } from "../store/movieSlice";
 
 import type {
     Overlay2DFracPath,
@@ -54,14 +62,19 @@ import type {
     Overlay2DTextFrac,
 } from "../store/overlaysSlice";
 import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
+import { ThreeDObject, addObject, emptyObjects } from "../store/threeDObjectsSlice";
+import { withMigratedTags } from "./tags";
 import { moorhen } from "../types/moorhen";
 import { ColourRule } from "./MoorhenColourRule";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
 import { guid } from "./utils";
+import { representationIdForRestore } from "./sessionRepresentation";
 import { MoorhenInstance } from "@/InstanceManager";
+import { USER_SCENE_FORMAT_VERSION, type UserSceneState } from "@/store/userSceneFormat";
 import { Root } from "protobufjs";
+import type { MapStyle } from "../store/mapContourSettingsSlice";
 
 export interface backupKey {
     name?: string;
@@ -80,6 +93,13 @@ export type moleculeSessionData = {
     coordString: string;
     coordFormat: moorhen.coorFormats;
     representations: {
+        /**
+         * The representation's identity, so that it survives a reload.
+         *
+         * Absent in sessions written before the field existed; those keep the guid minted on
+         * restore, which is what has always happened.
+         */
+        uniqueId: string;
         cid: string;
         style: moorhen.RepresentationStyles;
         isCustom: boolean;
@@ -122,8 +142,15 @@ export type mapDataSession = {
         negativeDiffColour: { r: number; g: number; b: number };
         a: number;
     };
-    style: "solid" | "lit-lines" | "lines";
+    style: MapStyle;
     isDifference: boolean;
+    /** Made from a Gaussian Cube. Optional: sessions written before cubes were readable lack it. */
+    isCube?: boolean;
+    /**
+     * Where its 2D slice was, whether or not drawn as one now (mapSlice.ts). Absent for a map that
+     * never had one, and in sessions written before slices.
+     */
+    slice?: { origin: number[]; orientation: number[]; nodalLines?: boolean; contourSpacing?: string } | null;
     selectedColumns: moorhen.selectedMtzColumns;
     hasReflectionData: boolean;
     associatedReflectionFileName: string;
@@ -143,6 +170,16 @@ export type viewDataSession = {
     doDrawClickedAtomLines: boolean;
     clipStart: number;
     clipEnd: number;
+    /**
+     * Distance from the eye to the view centre, the renderer's old `fogClipOffset`.
+     *
+     * Optional because sessions written before this field exists do not have it. `fogStart` and
+     * `fogEnd` are measured from the eye, so without it they could only be read back against an
+     * assumed 250 - which was right until the perspective eye-distance control made it movable.
+     * See LEGACY_EYE_DISTANCE: 250 is not a guess for an older file, it is the only value for
+     * which that file's fog numbers ever meant what they said.
+     */
+    eyeDistance?: number;
     quat4: any[];
     shadows: boolean;
     ssao: { enabled: boolean; radius: number; bias: number };
@@ -167,6 +204,12 @@ export type backupSession = {
     dataIsEmbedded: boolean;
     vectorData?: MoorhenVector[];
     overlay2dData?: Overlay2DSessionData;
+    threeDObjectData?: ThreeDObject[];
+    /**
+     * The scenes and snapshots (JSON of a UserSceneState). The fields above describe the scene shown
+     * when the session was saved; sessions saved without it load into the "General" scene.
+     */
+    sceneData?: string;
 };
 
 export type Overlay2DSessionData = {
@@ -175,6 +218,10 @@ export type Overlay2DSessionData = {
     textFracPath2D: Overlay2DTextFrac[];
     latexFracPath2D: Overlay2DLatexSrcFrac[];
     imageFracPath2D: Overlay2DImageSrcFrac[];
+};
+
+export type Moorhen3DObjectSessionData = {
+    objects: ThreeDObject[];
 };
 
 /**
@@ -205,6 +252,22 @@ export class MoorhenTimeCapsule {
     storageInstance: LocalForage;
     store: MoorhenReduxStoreType;
     onIsBusyChange: (arg0: boolean) => void;
+    /** Provides the scenes to save in sessions (set by MoorhenInstance) */
+    getSceneData: (() => string) | null = null;
+
+    /** Status returned by the session loaders for a session saved by a more recent version of Moorhen */
+    static readonly NEWER_VERSION_STATUS = -2;
+    static readonly NEWER_VERSION_MESSAGE = "This session file is for a more recent version of Moorhen, open it at moorhen.org";
+    /** A session cannot be loaded while a movie plays or is exported: loading replaces what it shows */
+    static readonly MOVIE_PLAYING_STATUS = -3;
+    static readonly MOVIE_PLAYING_MESSAGE = "A movie is playing: stop it before loading a session";
+
+    /**
+     * Session versions older than the current one that can still be loaded. Add the outgoing
+     * version here when bumping `this.version`, and drop any version whose format can no longer
+     * be read.
+     */
+    static readonly supportedLegacyVersions: string[] = ["v21", "v22", "v23"];
 
     constructor(
         moleculesRef: React.RefObject<moorhen.Molecule[]>,
@@ -220,7 +283,7 @@ export class MoorhenTimeCapsule {
         this.modificationCount = 0;
         this.modificationCountBackupThreshold = 5;
         this.maxBackupCount = 10;
-        this.version = "v23";
+        this.version = "v24";
         this.disableBackups = false;
         this.storageInstance = null;
         this.onIsBusyChange = null;
@@ -422,6 +485,7 @@ export class MoorhenTimeCapsule {
                     .filter(item => item.visible)
                     .map(item => {
                         return {
+                            uniqueId: item.uniqueId,
                             cid: item.cid,
                             style: item.style,
                             isCustom: item.isCustom,
@@ -468,6 +532,16 @@ export class MoorhenTimeCapsule {
                 },
                 style: state.mapContourSettings.mapStyles.find(item => item.molNo === map.molNo)?.style,
                 isDifference: map.isDifference,
+                isCube: map.isCube,
+                slice: (() => {
+                    const slice = state.mapContourSettings.mapSlices.find(item => item.molNo === map.molNo);
+                    return slice ? {
+                        origin: [...slice.origin],
+                        orientation: [...slice.orientation],
+                        nodalLines: state.mapContourSettings.mapSliceNodalLines.includes(map.molNo),
+                        contourSpacing: state.mapContourSettings.mapSliceContourSpacings.find(item => item.molNo === map.molNo)?.spacing,
+                    } : null;
+                })(),
                 selectedColumns: map.selectedColumns,
                 hasReflectionData: map.hasReflectionData,
                 associatedReflectionFileName: map.associatedReflectionFileName,
@@ -481,13 +555,21 @@ export class MoorhenTimeCapsule {
         const specularPower = this.store.getState().sceneSettings.specularPower;
         const zoom = this.store.getState().sceneSettings.zoom;
         const quat = this.store.getState().glRef.quat;
-        const fogClipOffset = this.store.getState().sceneSettings.fogClipOffset;
-        const fogStart = this.store.getState().sceneSettings.fogStart;
-        const fogEnd = this.store.getState().sceneSettings.fogEnd;
-        //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
-        //Now we multiply by -1 at save and restore for compatibility with old status files.
-        const clipStart = this.store.getState().sceneSettings.clipStart * -1;
-        const clipEnd = this.store.getState().sceneSettings.clipEnd;
+        // The camera's conventions, translated to the session's by sessionCamera.ts - which is also
+        // what reads them back. The session stores fog as absolute distances from the eye while
+        // clip is relative to the view centre and negated; keeping both directions of that in one
+        // tested module is the point. `eyeDistance` is new, and is the field whose absence meant
+        // fog was saved against an eye whose position was not.
+        const { fogStart, fogEnd, clipStart, clipEnd, eyeDistance } = sessionFromCamera({
+            quat: [quat[0], quat[1], quat[2], quat[3]],
+            origin: this.store.getState().sceneSettings.origin,
+            zoom,
+            eyeDistance: this.store.getState().sceneSettings.fogClipOffset,
+            clipFront: this.store.getState().sceneSettings.clipStart,
+            clipBack: this.store.getState().sceneSettings.clipEnd,
+            fogFront: this.store.getState().sceneSettings.fogClipOffset - this.store.getState().sceneSettings.fogStart,
+            fogBack: this.store.getState().sceneSettings.fogEnd - this.store.getState().sceneSettings.fogClipOffset,
+        });
 
         const doShadow = this.store.getState().sceneSettings.doShadow;
         const doSSAO = this.store.getState().sceneSettings.doSSAO;
@@ -518,6 +600,7 @@ export class MoorhenTimeCapsule {
             doDrawClickedAtomLines: false, // This is unused as far as I can tell
             clipStart: clipStart,
             clipEnd: clipEnd,
+            eyeDistance: eyeDistance,
             quat4: [quat[0], quat[1], quat[2], quat[3]],
             doPerspectiveProjection: doPerspectiveProjection,
             edgeDetection: {
@@ -541,6 +624,7 @@ export class MoorhenTimeCapsule {
         };
 
         const vectorData: MoorhenVector[] = this.store.getState().vectors.vectorsList;
+        const threeDObjectData: ThreeDObject[] = this.store.getState().threeDObjects.objects;
 
         const overlay2dData: Overlay2DSessionData = {
             fracPath2D: this.store.getState().overlays.fracPathOverlayList,
@@ -560,7 +644,10 @@ export class MoorhenTimeCapsule {
             dataIsEmbedded: embedData,
             overlay2dData: overlay2dData,
             vectorData: vectorData,
+            threeDObjectData: threeDObjectData,
         };
+        const sceneData = this.getSceneData?.();
+        if (sceneData) session.sceneData = sceneData;
 
         return session;
     }
@@ -623,13 +710,14 @@ export class MoorhenTimeCapsule {
         const allKeyStrings = await this.storageInstance.keys();
         const allKeys: backupKey[] = allKeyStrings.map((keyString: string) => JSON.parse(keyString));
         const backupKeys = allKeys.filter((key: backupKey) => ["automatic", "manual"].includes(key.type));
-        const [usedNames] = [...backupKeys.map((key: backupKey) => [...key.mtzNames, ...key.mapNames])];
+        // Data files used by any backup, not only the first one
+        const usedNames = new Set(backupKeys.flatMap((key: backupKey) => [...(key.mtzNames ?? []), ...(key.mapNames ?? [])]));
 
         await Promise.all(
             allKeys
                 .filter((key: backupKey) => ["mtzData", "mapData"].includes(key.type))
                 .map((key: backupKey) => {
-                    if (typeof usedNames === "undefined" || !usedNames.includes(key.name)) {
+                    if (!usedNames.has(key.name)) {
                         return this.removeBackup(JSON.stringify(key));
                     }
                     return Promise.resolve();
@@ -677,7 +765,8 @@ export class MoorhenTimeCapsule {
         try {
             const sortedKeys = await this.getSortedKeys();
             if (sortedKeys && sortedKeys.length > 0) {
-                const lastBackupKey = sortedKeys[sortedKeys.length - 1];
+                // getSortedKeys lists the newest backup first
+                const lastBackupKey = sortedKeys[0];
                 const backup = await this.retrieveBackup(JSON.stringify(lastBackupKey));
                 return backup;
             }
@@ -772,6 +861,67 @@ export class MoorhenTimeCapsule {
     ): Promise<number> {
 
         const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
+        const store = moorhenInstance.store;
+
+        if (!sessionData) {
+            return -1;
+        }
+        // Versions are "v<number>": refuse sessions from a more recent Moorhen with a clear message
+        const versionNumber = (version: unknown) => parseInt(String(version).replace(/^v/, ""));
+        if (versionNumber(sessionData.version) > versionNumber(timeCapsuleRef.current.version)) {
+            console.warn(MoorhenTimeCapsule.NEWER_VERSION_MESSAGE);
+            return MoorhenTimeCapsule.NEWER_VERSION_STATUS;
+        }
+        let sceneState: UserSceneState | null = null;
+        if (sessionData.sceneData) {
+            try {
+                sceneState = JSON.parse(sessionData.sceneData);
+            } catch (error) {
+                console.warn("Ignoring unreadable scene data in session", error);
+            }
+            if (sceneState?.formatVersion > USER_SCENE_FORMAT_VERSION) {
+                console.warn(MoorhenTimeCapsule.NEWER_VERSION_MESSAGE);
+                return MoorhenTimeCapsule.NEWER_VERSION_STATUS;
+            }
+        }
+        if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
+            if (!MoorhenTimeCapsule.supportedLegacyVersions.includes(sessionData.version)) {
+                console.warn(`Outdated session backup version (${sessionData.version}), wont load...`);
+                return -1;
+            }
+        }
+        // Loading deletes every molecule: no scene switch may run meanwhile (a running one finishes first)
+        return moorhenInstance.userScene.whileLocked(async () => {
+            // Checked once no switch runs: Play waits for the scenes too (see the movie panel)
+            if (store.getState().movie.isPlaying) {
+                console.warn(MoorhenTimeCapsule.MOVIE_PLAYING_MESSAGE);
+                return MoorhenTimeCapsule.MOVIE_PLAYING_STATUS;
+            }
+            timeCapsuleRef.current.setBusy(true);
+            // A session replaces everything, the movie included: its scene and the objects it
+            // fades are about to go (a movie file sets its own movie after loading its session)
+            store.dispatch(newMovie());
+            try {
+                await MoorhenTimeCapsule.restoreSessionData(sessionData, sceneState, moorhenInstance, fetchExternalUrl);
+            } catch (error) {
+                // Molecules may already be deleted: drop the old scenes, which refer to them
+                moorhenInstance.userScene.resetForLegacySession();
+                throw error;
+            } finally {
+                timeCapsuleRef.current.setBusy(false);
+            }
+            return 0;
+        });
+    }
+
+    /** The session restore proper, once loadSessionData has checked the session can be loaded */
+    private static async restoreSessionData(
+        sessionData: backupSession,
+        sceneState: UserSceneState | null,
+        moorhenInstance: MoorhenInstance,
+        fetchExternalUrl?: (uniqueId: string) => Promise<string>
+    ): Promise<void> {
+        const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         const molecules = moorhenInstance.getMoleculeList();
         const maps = moorhenInstance.getMapList();
         const commandCentre = moorhenInstance.getCommandCentreRef();
@@ -779,18 +929,10 @@ export class MoorhenTimeCapsule {
         const dispatch = moorhenInstance.dispatch;
         const monomerLibraryPath = moorhenInstance.paths.monomerLibraryPath;
 
-        if (!sessionData) {
-            return -1;
-        } else if (!Object.hasOwn(sessionData, "version") || timeCapsuleRef.current.version !== sessionData.version) {
-            if (
-                (timeCapsuleRef.current.version === "v23" && sessionData.version !== "v22" && sessionData.version !== "v21") ||
-                timeCapsuleRef.current.version !== "v23"
-            ) {
-                console.warn("Outdated session backup version, wont load...");
-                return -1;
-            }
-        }
-        timeCapsuleRef.current.setBusy(true);
+        // Ids handed out to restored representations, so that a file carrying a duplicate - one
+        // stitched together from two sessions, say - cannot make two representations answer to
+        // the same name. See representationIdForRestore.
+        const representationIdsTaken = new Set<string>();
 
         // Delete current scene
         molecules.forEach(molecule => {
@@ -916,6 +1058,14 @@ export class MoorhenTimeCapsule {
                         item.hbondedTo,
                         item.neighboursDistance
                     );
+                    // Its identity, back as it was saved. A session written before the format
+                    // carried this keeps the guid minted a moment ago, which is what has always
+                    // happened.
+                    representation.uniqueId = representationIdForRestore(
+                        item.uniqueId, representationIdsTaken, representation.uniqueId,
+                    );
+                    representationIdsTaken.add(representation.uniqueId);
+
                     if (item.isCustom) {
                         dispatch(addCustomRepresentation(representation));
                     }
@@ -962,6 +1112,9 @@ export class MoorhenTimeCapsule {
             map.showOnLoad = storedMapData.showOnLoad;
             map.suggestedRadius = storedMapData.radius;
             map.suggestedContourLevel = storedMapData.contourLevel;
+            // Absent in sessions written before cubes were readable, which is why it is coerced
+            // rather than assigned: those maps are not orbitals and should get the full map card.
+            map.isCube = Boolean(storedMapData.isCube);
             batch(() => {
                 dispatch(
                     setMapColours({
@@ -999,6 +1152,22 @@ export class MoorhenTimeCapsule {
                         alpha: storedMapData.rgba.a,
                     })
                 );
+                // Before the style, so that a map saved as a slice is drawn where it was rather than
+                // through the centre of the view.
+                if (storedMapData.slice?.origin?.length === 3 && storedMapData.slice.orientation?.length === 16) {
+                    dispatch(
+                        setMapSlice({
+                            molNo: map.molNo,
+                            origin: storedMapData.slice.origin as [number, number, number],
+                            orientation: storedMapData.slice.orientation,
+                        })
+                    );
+                    dispatch(setMapSliceNodalLines({ molNo: map.molNo, show: Boolean(storedMapData.slice.nodalLines) }));
+                    const spacing = storedMapData.slice.contourSpacing;
+                    if (spacing === "linear" || spacing === "geometric") {
+                        dispatch(setMapSliceContourSpacing({ molNo: map.molNo, spacing }));
+                    }
+                }
                 dispatch(
                     setMapStyle({
                         molNo: map.molNo,
@@ -1014,10 +1183,27 @@ export class MoorhenTimeCapsule {
             dispatch(setActiveMap(newMaps[sessionData.activeMapIndex]));
         }
 
+        // A session saved before tags were a field has them written into the uniqueId instead,
+        // so they are recovered on the way in. One-way, by design: nothing writes a tag into an
+        // identifier any more, and a session written now is not expected to group correctly in
+        // an older Moorhen. Anything already tagged is left alone.
+        //
+        // The XPID form needs the molecule ids to be separable from the rest of the identifier,
+        // which is why they are collected first.
+        const knownMoleculeIds = (sessionData.moleculeData ?? []).map(m => m.uniqueId).filter(Boolean);
+
+        // Load 3D objects
+        dispatch(emptyObjects());
+        if (sessionData.threeDObjectData) {
+            withMigratedTags(sessionData.threeDObjectData, knownMoleculeIds).forEach(d => {
+                dispatch(addObject(d));
+            });
+        }
+
         // Load vectors
         dispatch(emptyVectors());
         if (sessionData.vectorData) {
-            sessionData.vectorData.forEach(d => {
+            withMigratedTags(sessionData.vectorData, knownMoleculeIds).forEach(d => {
                 dispatch(addVector(d));
             });
         }
@@ -1070,12 +1256,32 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setLightPosition, sessionData.viewData.lightPosition);
         guardedDispatch(setSpecularPower, sessionData.viewData.specularPower);
         guardedDispatch(setZoom, sessionData.viewData.zoom);
-        guardedDispatch(setFogStart, sessionData.viewData.fogStart);
-        guardedDispatch(setFogEnd, sessionData.viewData.fogEnd);
-        //For some reasons, old status files were saving this multiplied by -1 and magic jsut happened elsewhere.
-        //Now we multiply by -1 at save and restore for compatibility with old status files.
-        guardedDispatch(setClipStart, sessionData.viewData.clipStart * -1);
-        guardedDispatch(setClipEnd, sessionData.viewData.clipEnd);
+
+        // The camera as the file describes it: fog turned from absolute distances into offsets from
+        // the view centre, the clip negation undone, and an eye distance that an older file does
+        // not carry and so is assumed to be the historical 250. The store still holds the old
+        // shapes - absolute fog, positive clip - so they are turned straight back; the value of
+        // going through here is that one tested module owns both directions of the conversion.
+        //
+        // The eye is dispatched before the fog. MoorhenWebMG reconciles them in that order for the
+        // same reason: fog read against the wrong eye lands in the wrong place.
+        //
+        // A file missing any of these fields must still restore the rest, as it did when each one
+        // went through guardedDispatch on its own. Origin and quat are only placeholders here - they
+        // are restored separately - and a fog or clip computed from a missing field comes out NaN,
+        // which is turned back into "absent" so guardedDispatch skips it.
+        const restoredCamera = cameraFromSession({
+            ...sessionData.viewData,
+            origin: sessionData.viewData.origin ?? [0, 0, 0],
+            quat4: sessionData.viewData.quat4 ?? [0, 0, 0, 1],
+        });
+        const restoredSlab = slabFromCamera(restoredCamera);
+        const finiteOrAbsent = (value: number) => (Number.isFinite(value) ? value : undefined);
+        guardedDispatch(setFogClipOffset, restoredCamera.eyeDistance);
+        guardedDispatch(setFogStart, finiteOrAbsent(restoredSlab.fogStart));
+        guardedDispatch(setFogEnd, finiteOrAbsent(restoredSlab.fogEnd));
+        guardedDispatch(setClipStart, finiteOrAbsent(restoredCamera.clipFront));
+        guardedDispatch(setClipEnd, finiteOrAbsent(restoredCamera.clipBack));
         guardedDispatch(setQuat, sessionData.viewData.quat4);
         guardedDispatch(setBackgroundColor, sessionData.viewData.backgroundColor);
         guardedDispatch(setEdgeDetectDepthScale, sessionData.viewData.edgeDetection.depthScale);
@@ -1092,6 +1298,11 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setDepthBlurRadius, sessionData.viewData.blur.radius);
         guardedDispatch(setUseOffScreenBuffers, sessionData.viewData.blur.enabled);
         guardedDispatch(setDoPerspectiveProjection, sessionData.viewData.doPerspectiveProjection ?? false);
+        // The eye distance is restored with the rest of the camera further up, through
+        // cameraFromSession, which also applies the "a session without one means 250" rule. The
+        // dispatch that used to be here said it ran before the fog was restored, and after this
+        // merge it would have run after - so it goes rather than being left to mean the opposite
+        // of what it says.
 
 
         // Set connected maps and molecules if any
@@ -1122,6 +1333,9 @@ export class MoorhenTimeCapsule {
                 },
                 false
             );
+            // The 2Fo-Fc and Fo-Fc maps were made again in place, perhaps after they were first
+            // fetched for the GPU contours.
+            newMaps.filter(map => map.molNo === twoFoFcMap || map.molNo === foFcMap).forEach(map => map.markDataChanged());
 
             batch(() => {
                 dispatch(setFoFcMapMolNo(foFcMap));
@@ -1132,8 +1346,12 @@ export class MoorhenTimeCapsule {
             });
         }
 
-        timeCapsuleRef.current.setBusy(false);
-        return 0;
+        // What the session restored above is the selected scene; restore the others around it
+        if (sceneState) {
+            moorhenInstance.userScene.importState(sceneState);
+        } else {
+            moorhenInstance.userScene.resetForLegacySession();
+        }
     }
 
     /**
@@ -1147,7 +1365,8 @@ export class MoorhenTimeCapsule {
      * @param {React.RefObject<webGL.MGWebGL>} glRef - React reference to the webGL renderer
      * @param {Store} store - The Redux store
      * @param {Dispatch<AnyAction>} dispatch - Dispatch method for the MoorhenReduxStore
-     * @returns {number} Returns -1 if there was an error loading the session otherwise 0
+     * @returns {number} Returns 0 on success, -1 if there was an error loading the session, or
+     * NEWER_VERSION_STATUS if the session is from a more recent Moorhen
      */
     static async loadSessionFromArrayBuffer(
         sessionArrayBuffer: ArrayBuffer,
@@ -1155,14 +1374,13 @@ export class MoorhenTimeCapsule {
     ): Promise<number> {
         const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
-        const bytes = new Uint8Array(sessionArrayBuffer);
-        const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
-        const status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
-            sessionMessage,
-            moorhenInstance
-        );
-        timeCapsuleRef.current.setBusy(false);
-        return status;
+        try {
+            const bytes = new Uint8Array(sessionArrayBuffer);
+            const sessionMessage = moorhensession.Session.decode(bytes, undefined, undefined);
+            return await MoorhenTimeCapsule.loadSessionFromProtoMessage(sessionMessage, moorhenInstance);
+        } finally {
+            timeCapsuleRef.current.setBusy(false);
+        }
     }
 
     /**
@@ -1184,14 +1402,12 @@ export class MoorhenTimeCapsule {
     ): Promise<number> {
         const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
-        const sessionData = moorhensession.Session.toObject(sessionProtoMessage) as backupSession;
-        const status = await MoorhenTimeCapsule.loadSessionData(
-            sessionData,
-            moorhenInstance
-
-        );
-        timeCapsuleRef.current.setBusy(false);
-        return status;
+        try {
+            const sessionData = moorhensession.Session.toObject(sessionProtoMessage) as backupSession;
+            return await MoorhenTimeCapsule.loadSessionData(sessionData, moorhenInstance);
+        } finally {
+            timeCapsuleRef.current.setBusy(false);
+        }
     }
 
     /**
@@ -1213,12 +1429,11 @@ export class MoorhenTimeCapsule {
     ): Promise<number> {
         const timeCapsuleRef = moorhenInstance.getTimeCapsuleRef();
         timeCapsuleRef.current.setBusy(true);
-        const sessionData: backupSession = JSON.parse(sessionDataString);
-        const status = await MoorhenTimeCapsule.loadSessionData(
-            sessionData,
-            moorhenInstance
-        );
-        timeCapsuleRef.current.setBusy(false);
-        return status;
+        try {
+            const sessionData: backupSession = JSON.parse(sessionDataString);
+            return await MoorhenTimeCapsule.loadSessionData(sessionData, moorhenInstance);
+        } finally {
+            timeCapsuleRef.current.setBusy(false);
+        }
     }
 }
