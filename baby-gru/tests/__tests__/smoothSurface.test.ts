@@ -1,7 +1,7 @@
 import { newOwnerNumbering, ownedMeshPickInfo, ownedMeshPickInfoSliced } from "../../src/WebGLgComponents/ownedMeshPick";
 import {
     COLOUR_ATOMS, atomSurfaceColours, atomSurfaceInfluences, atomSurfaceMesh, atomSurfaceMeshSliced, blendWeights, mergeAtomSurfaces,
-    nearestVertices, residueCid, smoothVertexColours, vertexNeighbours,
+    nearestVertices, residueCid, smoothVertexColours, vertexNeighbours, smoothSurfaceSetting, splitSurface,
 } from "../../src/utils/smoothSurface";
 import { runSliced } from "../../src/utils/timeSlicing";
 
@@ -196,5 +196,22 @@ describe("smoothSurface", () => {
         const source = new Float32Array([0, 0, 0, 10, 0, 0, 0, 7, 0]);
         const queries = new Float32Array([1, 0, 0, 9, 1, 0, 0, 5, 0, 30, 30, 30]);
         expect(Array.from(nearestVertices(queries, source))).toEqual([0, 1, 2, 1]);
+    });
+});
+
+describe("splitSurface", () => {
+    it("on auto, splits only a surface shaded per vertex; set, every surface the same", () => {
+        const saved = smoothSurfaceSetting.refine;
+        try {
+            smoothSurfaceSetting.refine = "auto";
+            expect(splitSurface(false)).toBe(true);
+            expect(splitSurface(true)).toBe(false);
+            smoothSurfaceSetting.refine = true;
+            expect([splitSurface(false), splitSurface(true)]).toEqual([true, true]);
+            smoothSurfaceSetting.refine = false;
+            expect([splitSurface(false), splitSurface(true)]).toEqual([false, false]);
+        } finally {
+            smoothSurfaceSetting.refine = saved;
+        }
     });
 });

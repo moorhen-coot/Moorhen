@@ -210,7 +210,7 @@ export const MoorhenDevMenu = () => {
     const [smoothSigma, setSmoothSigma] = useState<number>(smoothSurfaceSetting.sigma);
     const [smoothMaxShift, setSmoothMaxShift] = useState<number>(smoothSurfaceSetting.maxShift);
     const [smoothOpenRadius, setSmoothOpenRadius] = useState<number>(smoothSurfaceSetting.openRadius);
-    const [smoothRefine, setSmoothRefine] = useState<boolean>(smoothSurfaceSetting.refine);
+    const [smoothRefine, setSmoothRefine] = useState<boolean | "auto">(smoothSurfaceSetting.refine);
     const [smoothOnGpu, setSmoothOnGpu] = useState<boolean>(smoothSurfaceSetting.gpu);
     const [smoothFieldShading, setSmoothFieldShading] = useState<boolean>(smoothSurfaceSetting.fieldShading);
     const [smoothPixelColours, setSmoothPixelColours] = useState<boolean>(smoothSurfaceSetting.pixelColours);
@@ -677,11 +677,13 @@ export const MoorhenDevMenu = () => {
                         checked={noWebGPU === null && smoothOnGpu && smoothFieldShading}
                         disabled={noWebGPU !== null || !smoothOnGpu}
                         label="Shade per pixel from the field"
-                        tooltip="Each pixel's normal from the field's smooth gradient, in the WebGPU view: no trace of the triangles in the light, and no split (4x fewer triangles). The field stays on the GPU while the surface is shown. On by default; needs the GPU finish."
+                        tooltip="Each pixel's normal from the field's smooth gradient, in the WebGPU view: no trace of the triangles in the light. The field stays on the GPU while the surface is shown, so this switches at once - unless the split is on auto, which splits only surfaces shaded per vertex: then they are made again. Screenshots are shaded per pixel whatever this says. On by default; needs the GPU finish."
                         onChange={() => {
                             smoothSurfaceSetting.fieldShading = !smoothFieldShading;
                             setSmoothFieldShading(!smoothFieldShading);
-                            if (smoothSurface) redrawSurfaces();
+                            // On auto, whether surfaces are split follows this: made again. Otherwise only how they are drawn changes.
+                            if (smoothSurface && smoothRefine === "auto") redrawSurfaces();
+                            else dispatch(setRequestDrawScene(true));
                         }}
                     />
                     <MoorhenToggle
@@ -689,22 +691,23 @@ export const MoorhenDevMenu = () => {
                         checked={noWebGPU === null && smoothOnGpu && smoothFieldShading && smoothPixelColours}
                         disabled={noWebGPU !== null || !smoothOnGpu || !smoothFieldShading}
                         label="Colour per pixel from the atoms"
-                        tooltip="Each pixel's colour from the atoms nearest it, by the colour blend's weights: colour boundaries follow the surface at screen resolution instead of stepping along the triangles. On by default; needs per-pixel shading. Not for electrostatics."
+                        tooltip="Each pixel's colour from the atoms nearest it, by the colour blend's weights: colour boundaries follow the surface at screen resolution instead of stepping along the triangles. Switches at once; screenshots are coloured per pixel whatever this says. On by default; needs per-pixel shading. Not for electrostatics."
                         onChange={() => {
                             smoothSurfaceSetting.pixelColours = !smoothPixelColours;
                             setSmoothPixelColours(!smoothPixelColours);
-                            if (smoothSurface) redrawSurfaces();
+                            // Drawn so or not each frame: nothing to make again.
+                            dispatch(setRequestDrawScene(true));
                         }}
                     />
                     <MoorhenToggle
                         type="switch"
-                        checked={smoothRefine && !(noWebGPU === null && smoothOnGpu && smoothFieldShading)}
-                        disabled={noWebGPU === null && smoothOnGpu && smoothFieldShading}
-                        label="Split every triangle"
-                        tooltip="Split every triangle once, positions and normals from the field: smoother shading for 4x the triangles. On by default. Off while surfaces are shaded per pixel, which need no split; still used where they are not (the WebGL view, chains surfaced separately, the C++ alone)."
+                        checked={smoothRefine === "auto" ? !(noWebGPU === null && smoothOnGpu && smoothFieldShading) : smoothRefine}
+                        label={smoothRefine === "auto" ? "Split every triangle (auto)" : "Split every triangle"}
+                        tooltip="Split every triangle once, positions and normals from the field: smoother shading and colour edges, and a finer outline, for 4x the triangles. On auto (the default) only surfaces shaded per vertex are split - the WebGL view, chains surfaced separately, the C++ alone - as per-pixel shading hides the triangles in the light without. Switching it sets it on or off for every surface, shaded per pixel or not."
                         onChange={() => {
-                            smoothSurfaceSetting.refine = !smoothRefine;
-                            setSmoothRefine(!smoothRefine);
+                            const now = smoothRefine === "auto" ? !(noWebGPU === null && smoothOnGpu && smoothFieldShading) : smoothRefine;
+                            smoothSurfaceSetting.refine = !now;
+                            setSmoothRefine(!now);
                             if (smoothSurface) redrawSurfaces();
                         }}
                     />

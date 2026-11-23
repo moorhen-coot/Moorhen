@@ -92,9 +92,11 @@ test("shaded per pixel: the field is kept, the surface unsplit, and WebGPU draws
     console.log(`Per-pixel shading: ${JSON.stringify(result)}`);
     expect(result.hasField).toBe(true);
     expect(result.plannedWithField).toBe(true);
-    // Redrawn with per-vertex normals: split, and the old field let go.
+    // Redrawn with per-vertex normals: split (refine on auto), and the old field let go - the new
+    // surface keeps its own, as every surface made in the WebGPU view does, so that switching
+    // per-pixel shading back costs a frame.
     expect(result.splitTriangles).toBe(4 * result.shadedTriangles);
-    expect(result.splitHasField).toBe(false);
+    expect(result.splitHasField).toBe(true);
     expect(result.released).toBe(true);
     // The same surface, lit the same way to within shading detail: wrong normals (flipped, in the wrong
     // frame) would change most of the picture.
@@ -187,7 +189,8 @@ test("coloured per pixel: the atoms are attached, drawn close to the vertex colo
     }, moorhen.elementId);
     console.log(`Per-pixel colour: ${JSON.stringify(result)}`);
     expect(result.attached).toBe(true);
-    expect(result.noColouring).toBe(true);
+    // The atoms stay attached with pixelColours off: the setting is read each frame.
+    expect(result.noColouring).toBe(false);
     expect(result.coveredFraction).toBeGreaterThan(0.1);
     // Striped: close to the vertex colours (the same weights; only the boundaries are drawn finer), not identical.
     expect(result.stripedDifference).toBeGreaterThan(0.2);

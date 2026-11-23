@@ -198,6 +198,8 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
                 const state = store.getState();
                 const shot = await renderer.snapshot(state.glRef.displayBuffers ?? [], view, maps?.frame(state, view.cameraController.state.origin) ?? [], width, height, {
                     softShadows: true, transparentBackground: !!options.transparentBackground,
+                    // Smooth surfaces at their best, per pixel, whatever the view's settings.
+                    bestSurfaces: true,
                 });
                 return shot.data;
             },

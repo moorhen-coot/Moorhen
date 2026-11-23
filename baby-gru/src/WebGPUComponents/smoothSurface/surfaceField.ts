@@ -196,11 +196,30 @@ async function writeColours(field: SurfaceField, colouring: SurfaceColouring, co
 }
 
 /**
+ * Each colouring's atoms' residues (index into the surface's owner table), for the hover's share per
+ * pixel (atomOwnerCodes). Not on SurfaceColouring, which the store's types walk.
+ */
+const colouringResidues = new WeakMap<SurfaceColouring, Int32Array>();
+
+/**
+ * Each of a surface's atoms' owner code (u32 per atom), for the hover's share per pixel (ATOM_SHARE_WGSL):
+ * `ownerCodes` (pick_info.owner_codes: the code of each entry of the surface's owner table) of the
+ * atom's residue. Null if the residues were not attached with the colouring (attachSurfaceColouring).
+ */
+export function atomOwnerCodes(colouring: SurfaceColouring, ownerCodes: ArrayLike<number>): Uint32Array | null {
+    const residueOf = colouringResidues.get(colouring);
+    if (!residueOf) return null;
+    return Uint32Array.from(residueOf, r => (r >= 0 && r < ownerCodes.length ? ownerCodes[r] : 0xFFFFFFFF));
+}
+
+/**
  * Colour `field`'s surface per pixel from `atoms` (x, y, z, r per atom, as it was made from) and their
  * `colours` (RGBA per atom). Replaces any colouring it had. Drawn from now; resolves when the shortcut
- * past the blend is in place too (writeColours), which nobody needs to wait for but a test.
+ * past the blend is in place too (writeColours), which nobody needs to wait for but a test. `residueOf`
+ * (each atom's index in the surface's owner table), if given, lets the hover light it per pixel too.
  */
-export async function attachSurfaceColouring(field: SurfaceField, atoms: Float32Array, colours: Float32Array, band: number, width: number): Promise<void> {
+export async function attachSurfaceColouring(field: SurfaceField, atoms: Float32Array, colours: Float32Array, band: number, width: number,
+                                             residueOf?: Int32Array): Promise<void> {
     const device = devices.get(field);
     if (!device || field.released) return;
     destroyColouring(field.colouring);
@@ -225,6 +244,7 @@ export async function attachSurfaceColouring(field: SurfaceField, atoms: Float32
         binLow: bins.low, binDims: bins.dims, binSize, band, width, rMax,
     };
     reachInputs.set(colouring, { atoms: atoms.slice(), bins: binAtoms(atoms, REACH_BIN), generation: 0 });
+    if (residueOf && residueOf.length === atoms.length / 4) colouringResidues.set(colouring, residueOf.slice());
     field.colouring = colouring;
     await writeColours(field, colouring, colours);
 }
@@ -409,5 +429,67 @@ fn atomColourAt(p: vec3f, fallback: vec4f) -> vec4f {
         }
     }
     return vec4f(sum / total, 1.0);
+}
+`;
+
+/**
+ * How much of a fragment belongs to the hovered residue, in WGSL: `atomShareAt(p, point, mask)`, 0 to
+ * 1, by the same weights as its colour (ATOM_COLOUR_WGSL: the nearest sphere's gap g0, then every atom
+ * whose gap is within R = 2 x width of it, weighted (1 - (g - g0) / R)²) - the weights of the atoms whose
+ * owner code matches `point` under `mask`, of all of them. So the hover's edge is the colour's, at
+ * screen resolution, as atomSurfaceInfluences makes it at the vertices. -1 where the surface's atoms are
+ * not bound (fieldGrid.binDims.w) or none is within its band: the caller keeps the vertices' share.
+ * Reads `fieldGrid`, `colourAtoms`, `colourBinStart`, `colourBinMembers` (ATOM_COLOUR_WGSL's, which it
+ * follows) and `atomOwnerCodes` (u32 per atom: atomOwnerCodes()), declared by whoever includes it.
+ */
+export const ATOM_SHARE_WGSL = /* wgsl */ `
+fn atomShareAt(p: vec3f, point: u32, mask: u32) -> f32 {
+    if (fieldGrid.binDims.w == 0u) { return -1.0; }
+    let band = fieldGrid.colour.x;
+    let width = fieldGrid.colour.y;
+    let rMax = fieldGrid.colour.z;
+    let wanted = point & mask;
+    var box = colourCells(p, rMax + band);
+    if (any(box[0] > box[1])) { return -1.0; }
+    var g0 = 3.4e38;
+    var nearest = -1;
+    for (var k = box[0].z; k <= box[1].z; k++) {
+        for (var j = box[0].y; j <= box[1].y; j++) {
+            let row = (u32(k) * fieldGrid.binDims.y + u32(j)) * fieldGrid.binDims.x;
+            for (var m = colourBinStart[row + u32(box[0].x)]; m < colourBinStart[row + u32(box[1].x) + 1u]; m++) {
+                let a = colourBinMembers[m];
+                let atom = colourAtoms[a];
+                let d = p - atom.xyz;
+                let reach = atom.w + band;
+                if (dot(d, d) >= reach * reach) { continue; }
+                let g = length(d) - atom.w;
+                if (g < g0) { g0 = g; nearest = i32(a); }
+            }
+        }
+    }
+    if (nearest < 0) { return -1.0; }
+    if (width <= 0.0) { return select(0.0, 1.0, (atomOwnerCodes[nearest] & mask) == wanted); }
+    let R = 2.0 * width;
+    box = colourCells(p, rMax + g0 + R);
+    var lit = 0.0;
+    var total = 0.0;
+    for (var k = box[0].z; k <= box[1].z; k++) {
+        for (var j = box[0].y; j <= box[1].y; j++) {
+            let row = (u32(k) * fieldGrid.binDims.y + u32(j)) * fieldGrid.binDims.x;
+            for (var m = colourBinStart[row + u32(box[0].x)]; m < colourBinStart[row + u32(box[1].x) + 1u]; m++) {
+                let a = colourBinMembers[m];
+                let atom = colourAtoms[a];
+                let d = p - atom.xyz;
+                let reach = atom.w + g0 + R;
+                if (dot(d, d) >= reach * reach) { continue; }
+                let t = 1.0 - (length(d) - atom.w - g0) / R;
+                if (t <= 0.0) { continue; }
+                let w = t * t;
+                total += w;
+                if ((atomOwnerCodes[a] & mask) == wanted) { lit += w; }
+            }
+        }
+    }
+    return lit / total;
 }
 `;

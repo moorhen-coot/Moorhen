@@ -31,11 +31,11 @@ const frames = async (n: number) => {
 /** The close-up's zoom, of the whole molecule's: the surface over the whole canvas. */
 const CLOSE_UP = 0.4;
 
-/** The settings each mode is drawn with. */
-const MODE_SETTINGS: Record<SurfaceMode, { fieldShading: boolean; pixelColours: boolean }> = {
-    "per vertex": { fieldShading: false, pixelColours: false },
-    "pixel normals": { fieldShading: true, pixelColours: false },
-    "pixel normals+colour": { fieldShading: true, pixelColours: true },
+/** The settings each mode is drawn with: per vertex on the split surface, per pixel on the whole one. */
+const MODE_SETTINGS: Record<SurfaceMode, { fieldShading: boolean; pixelColours: boolean; refine: boolean }> = {
+    "per vertex": { fieldShading: false, pixelColours: false, refine: true },
+    "pixel normals": { fieldShading: true, pixelColours: false, refine: false },
+    "pixel normals+colour": { fieldShading: true, pixelColours: true, refine: false },
 };
 
 export interface SurfaceBenchmarkOptions {
@@ -81,7 +81,10 @@ async function run(instance: MoorhenInstance, options: SurfaceBenchmarkOptions):
     const state = store.getState();
     const saved = {
         smooth: state.generalStates.useSmoothSurface,
-        settings: { gpu: smoothSurfaceSetting.gpu, fieldShading: smoothSurfaceSetting.fieldShading, pixelColours: smoothSurfaceSetting.pixelColours },
+        settings: {
+            gpu: smoothSurfaceSetting.gpu, fieldShading: smoothSurfaceSetting.fieldShading, pixelColours: smoothSurfaceSetting.pixelColours,
+            refine: smoothSurfaceSetting.refine,
+        },
         origin: [...state.sceneSettings.origin] as [number, number, number],
         zoom: state.sceneSettings.zoom,
         quat: [...state.glRef.quat],
@@ -121,9 +124,11 @@ async function run(instance: MoorhenInstance, options: SurfaceBenchmarkOptions):
             Object.assign(smoothSurfaceSetting, MODE_SETTINGS[mode]);
             await redrawAll();
             const buffers = surfaces().flatMap(r => r.buffers ?? []);
+            // A surface keeps its field however it is drawn: what is drawn is the settings' say.
+            const pixelNormals = smoothSurfaceSetting.fieldShading && buffers.some(b => !!b.fieldShading?.[0]);
             const applied = {
-                pixelNormals: buffers.some(b => !!b.fieldShading?.[0]),
-                pixelColour: buffers.some(b => !!b.fieldShading?.[0]?.colouring),
+                pixelNormals,
+                pixelColour: pixelNormals && smoothSurfaceSetting.pixelColours && buffers.some(b => !!b.fieldShading?.[0]?.colouring),
             };
             for (const opacity of [1, 0.5]) {
                 surfaces().forEach(r => r.setNonCustomOpacity(opacity));

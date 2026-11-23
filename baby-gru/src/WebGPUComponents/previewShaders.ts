@@ -26,7 +26,7 @@
  * Frame must match the packing in previewScene.ts (frameUniforms, FRAME_FLOATS).
  */
 
-import { ATOM_COLOUR_WGSL, FIELD_GRADIENT_WGSL } from "./smoothSurface/surfaceField";
+import { ATOM_COLOUR_WGSL, ATOM_SHARE_WGSL, FIELD_GRADIENT_WGSL } from "./smoothSurface/surfaceField";
 
 /** The per-frame uniforms, at group 0, shared by every pipeline the renderer draws a frame with. */
 export const FRAME_WGSL = /* wgsl */ `
@@ -433,12 +433,14 @@ fn fs_main_peel(in: VOut, @builtin(front_facing) frontFacing: bool) -> @location
 // when its owner code equals the hovered one under the mask: all ones for one point; a surface
 // masks off the residue half to light a chain, or everything to light the molecule. A vertex in
 // the groove between two residues of one chain belongs to both, so the matches are summed, not the
-// first taken. whole: every vertex fully (a cavity, which has no lists).
+// first taken. whole: every vertex fully (a cavity, which has no lists). pixelShare: a surface shaded
+// per pixel from its field, whose atoms and their owner codes are bound too (fs_hover_overlay_field),
+// lit by each pixel's own share rather than its vertices' blended.
 struct Hover {
     point: u32,
     mask: u32,
     whole: u32,
-    unused: u32,
+    pixelShare: u32,
 };
 
 @group(2) @binding(12) var<uniform> hover: Hover;
@@ -728,11 +730,15 @@ fn fieldShadow(in: FieldOut, n: vec3f) -> f32 {
 }
 
 fn fieldColour(in: FieldOut, frontFacing: bool) -> vec4f {
-    let base = fieldBase(in);
+    return withHighlight(fieldColourOf(in, fieldBase(in), frontFacing), in.highlight);
+}
+
+// A surface shaded per pixel, in colour base: its own (fieldColour), or the hover's orange.
+fn fieldColourOf(in: FieldOut, base: vec4f, frontFacing: bool) -> vec4f {
     let n = normalize(fieldNormal(in));
     let shadow = fieldShadow(in, n);
     let colour = select(base * backShade(shadow), lit(base, n, occlusionAt(in.position), shadow), frontFacing);
-    return withHighlight(fogged(colour * edgeAt(in.position), base.a, in.eyeDistance), in.highlight);
+    return fogged(colour * edgeAt(in.position), base.a, in.eyeDistance);
 }
 
 @fragment
@@ -748,6 +754,36 @@ fn fs_field(in: FieldOut, @builtin(front_facing) frontFacing: bool) -> @location
 fn fs_field_peel(in: FieldOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
     if (!peelKeep(in.position, in.position.z)) { discard; }
     return fieldColour(in, frontFacing);
+}
+
+// The hover overlay (vs_hover_overlay) on a surface shaded per pixel from its field: lit as the surface
+// under it is, by the field's normal at each pixel rather than the vertices' across the triangle - so
+// the orange shows no triangles the surface does not. And, where the surface is coloured per pixel from
+// its atoms, each pixel as opaque as the hovered residue's own share of it (atomShareAt, by the colour
+// blend's weights, so the hover's edge is the colour's), not the vertices' shares blended across the
+// triangle - which stepped along the triangles. The vertices' shares still decide where that is needed:
+// none at any corner, nothing lit; all of all three, all of it.
+@group(2) @binding(22) var<storage, read> atomOwnerCodes: array<u32>;
+${ATOM_SHARE_WGSL}
+
+@vertex
+fn vs_hover_overlay_field(@location(0) position: vec3f, @location(1) normal: vec3f,
+                          @builtin(vertex_index) vertex: u32) -> FieldOut {
+    var out = fielded(position, normal, vec4f(0.9, 0.5, 0.0, 1.0));
+    out.highlight = hoverWeight(u32(i32(vertex) + draw.highlight.w));
+    return out;
+}
+
+@fragment
+fn fs_hover_overlay_field(in: FieldOut, @builtin(front_facing) frontFacing: bool) -> @location(0) vec4f {
+    var h = in.highlight;
+    if (h <= 0.0) { discard; }
+    if (hover.pixelShare != 0u && hover.whole == 0u && h < 0.999) {
+        let share = atomShareAt(in.local, hover.point, hover.mask);
+        if (share >= 0.0) { h = share; }
+        if (h <= 0.0) { discard; }
+    }
+    return withHighlight(fieldColourOf(in, in.colour, frontFacing), min(h, 1.0));
 }
 
 // The depth pre-pass (previewRenderer.ts, Prepass): depth alone, its colour writes masked off.

@@ -129,9 +129,12 @@ export interface SmoothFieldOptions extends SmoothBlurOptions {
     openRadius: number;
     /**
      * Shaded per pixel from the field (surfaceField.ts): the field kept and handed over with the
-     * surface, and the contour not split - the split only hides the triangles from per-vertex normals.
+     * surface, and (unless `split` says otherwise) the contour not split - the split mostly hides the
+     * triangles from per-vertex normals.
      */
     fieldShading?: boolean;
+    /** Split every triangle in four (surfaceFromField); by default, only if not shaded per pixel. */
+    split?: boolean;
 }
 
 /** The Gaussian's weights for `sigma` grid points, as gaussian_blur_3d makes them (normalised in double). */
@@ -269,12 +272,12 @@ export class GpuSmoothSurface {
      * found and the field made ready to contour on the GPU (contourInputFromUnblurred), then
      * surfaceFromField. The field stays on the GPU throughout. Null if there is nothing to contour.
      */
-    async surfaceFromUnblurred(unblurred: SmoothUnblurredField, options: SmoothBlurOptions & { fieldShading?: boolean },
+    async surfaceFromUnblurred(unblurred: SmoothUnblurredField, options: SmoothBlurOptions & { fieldShading?: boolean; split?: boolean },
                                atoms: Float32Array, residueOf: Int32Array, probe: number): Promise<GpuAtomSurface | null> {
         const input = this.contourInputFromUnblurred(unblurred, options);
         let kept = false;
         try {
-            const surface = await this.surfaceFromField(input, unblurred, atoms, residueOf, probe, !options.fieldShading);
+            const surface = await this.surfaceFromField(input, unblurred, atoms, residueOf, probe, options.split ?? !options.fieldShading);
             if (surface && options.fieldShading) {
                 surface.field = makeSurfaceField(this.device, input, unblurred);
                 kept = true;
@@ -454,7 +457,7 @@ export class GpuSmoothSurface {
             const input = this.blurField(made.field, made.weight, made.interior, packed, packed.clamp, options);
             let kept = false;
             try {
-                const surface = await this.surfaceFromField(input, packed, atoms, residueOf, options.probe, !options.fieldShading);
+                const surface = await this.surfaceFromField(input, packed, atoms, residueOf, options.probe, options.split ?? !options.fieldShading);
                 const overflow = new Uint32Array(await readBuffer(this.device, made.overflow, 4))[0];
                 if (overflow === 0) {
                     if (surface && options.fieldShading) {

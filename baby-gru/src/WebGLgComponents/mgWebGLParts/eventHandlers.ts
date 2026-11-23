@@ -560,6 +560,14 @@ export function doMouseMove(self: MGWebGL, event) {
         self.doHover(event, self);
         return;
     }
+    // A drag picks nothing, so whatever was lit when it began would stay lit for all of it - lit where
+    // the pointer no longer is - and a lit smooth mesh (a surface) is drawn again over itself every
+    // frame, which slows the whole drag. Dropped until the button is released, when doMouseUp hovers
+    // again. A hover still waiting on its debounce would bring it back mid-drag: cancelled too.
+    if (self.state.hoveridx > -1 || self.state.hoverIndices?.length) {
+        clearTimeout(self.hoverDebounceTimeout);
+        self.setState({ hoveridx: -1, hover_point: -1, hoverIndices: [] });
+    }
     self.dx = (event.pageX - self.init_x) * self.props.mouseSensitivityFactor;
     self.dy = (event.pageY - self.init_y) * self.props.mouseSensitivityFactor;
     self.init_x = event.pageX;

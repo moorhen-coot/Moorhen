@@ -54,9 +54,12 @@ export const smoothSurfaceSetting = {
     /**
      * Split every triangle once, with positions and normals from the field: the
      * diffuse light's diamonds at a 0.5 A grid mostly gone, for four times the triangles rather
-     * than eight times the field a 0.25 A grid costs.
+     * than eight times the field a 0.25 A grid costs. "auto": only a surface shaded per vertex - one
+     * shaded per pixel from its field shows no triangles in its light without (splitSurface). true or
+     * false: every surface, however it is shaded - the split's finer outline and vertex colours and the
+     * per-pixel light are separate improvements, and can be had together.
      */
-    refine: true,
+    refine: "auto" as boolean | "auto",
     /**
      * With WebGPU, the surface finished on the GPU from the C++'s field (contour, split, normals, vertex
      * atoms: src/WebGPUComponents/smoothSurface); the C++ makes all of it without WebGPU, when this is
@@ -73,15 +76,17 @@ export const smoothSurfaceSetting = {
      * Shade a GPU-made surface per pixel from its field (WebGPU view): each fragment's normal from the
      * field's smooth gradient instead of the vertices' normals across the triangle, so the surface
      * needs no split (four times fewer triangles) and shows no trace of its triangles in the light.
-     * The field stays on the GPU while the surface is shown (3j2w: ~70 MB). WebGL, and a surface of
-     * separately surfaced chains, keep per-vertex normals - unsplit, when this is on and the GPU made it.
+     * The field stays on the GPU while the surface is shown (3j2w: ~70 MB) - whether this is on or not,
+     * so switching it costs a frame, and screenshots are shaded per pixel regardless. WebGL, and a
+     * surface of separately surfaced chains, keep per-vertex normals.
      */
     fieldShading: true,
     /**
      * And colour it per pixel from its atoms (WebGPU view): each fragment's colour from the atoms
      * nearest it, by colourBlend's weights, so colour boundaries follow the surface at screen
      * resolution instead of stepping along the triangles. colourSmoothing does not apply (nothing to
-     * smooth); the vertex colours stay, for WebGL and anything else. Not for electrostatics.
+     * smooth); the vertex colours stay, for WebGL and anything else. Not for electrostatics. Read at
+     * draw time, as fieldShading is; screenshots colour per pixel regardless.
      */
     pixelColours: true,
     /**
@@ -98,6 +103,15 @@ export const smoothSurfaceSetting = {
      */
     colourSmoothing: 2,
 };
+
+/**
+ * Whether a surface is split (smoothSurfaceSetting.refine), given whether it will be shaded per pixel
+ * from its field: "auto" splits it only if not.
+ */
+export function splitSurface(perPixel: boolean): boolean {
+    const refine = smoothSurfaceSetting.refine;
+    return refine === "auto" ? !perPixel : refine;
+}
 
 export interface SurfaceAtom {
     x: number;
