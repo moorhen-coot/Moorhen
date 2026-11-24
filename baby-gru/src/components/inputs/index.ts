@@ -2,6 +2,7 @@ export { MoorhenButton } from "./MoorhenButton/MoorhenButton";
 export { MoorhenCidInputForm } from "./Cid/MoorhenCidInputForm";
 export { MoorhenColourPicker } from "./MoorhenColourPicker/MoorhenColourPicker";
 export { MoorhenGradientPicker } from "./MoorhenGradientPicker/MoorhenGradientPicker";
+export { MoorhenGradientPickerButton } from "./MoorhenGradientPicker/MoorhenGradientPickerButton";
 export { MoorhenNumberInput } from "./MoorhenNumberInput/NumberInput";
 export { MoorhenSlider } from "./MoorhenSlider/MoorhenSlider";
 export { MoorhenPopoverButton } from "../interface-base/Popovers/PopoverButton";

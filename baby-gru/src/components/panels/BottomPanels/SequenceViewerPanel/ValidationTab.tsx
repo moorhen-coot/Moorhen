@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
-import { MoorhenMapSelect, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenSelect } from "@/components/inputs";
+import { MoorhenGradientPickerButton, MoorhenMapSelect, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenSelect } from "@/components/inputs";
+import { type GradientColourTable, gradientPresets } from "@/components/inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenInfoCard, MoorhenStack } from "@/components/interface-base";
 import { RootState, setShownBottomPanel, setValidationOption } from "@/store";
 import { BaseSequenceViewerTab } from "./BaseSequenceViewerTab";
@@ -44,6 +45,10 @@ export const ValidationTab = () => {
 
     const handleColumnWidthChange = (val: number) => {
         dispatch(setValidationOption({ ...validationOption, columnWidth: val }));
+    }
+
+    const handleColourTableChange = (colourTable: GradientColourTable) => {
+        dispatch(setValidationOption({ ...validationOption, colourTable }));
     }
 
     const handleNumberOfLinesChange = (val: number) => {
@@ -108,6 +113,15 @@ export const ValidationTab = () => {
                 value={validationOption.columnWidth}
                 setValue={handleColumnWidthChange}
                 width="4rem"
+            />
+            <MoorhenGradientPickerButton
+                label="Colours"
+                colourTable={validationOption.colourTable ?? (gradientPresets["Pool Party"] as GradientColourTable)}
+                setColourTable={handleColourTableChange}
+                menu="validation-tab"
+                defaultPreset="Pool Party"
+                showValues={false}
+                popoverPlacement="right"
             />
         </MoorhenStack>
 

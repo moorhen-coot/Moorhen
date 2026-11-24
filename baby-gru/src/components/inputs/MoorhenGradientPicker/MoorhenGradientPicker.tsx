@@ -3,12 +3,14 @@ import { MoorhenButton, MoorhenColourPicker, MoorhenSelect } from "..";
 import { MoorhenNumberInput } from "../";
 import { usePersistentState } from "../../../store/menusSlice";
 import { MoorhenStack } from "../../interface-base/Stack/Stack";
-import { gradientPresets } from "./gradientPresets";
+import { colourTableToCssGradient, gradientPresets } from "./gradientPresets";
 
-type MoorhenGradientPickerType = {
+export type MoorhenGradientPickerType = {
     colourTable: [number, [number, number, number]][];
     setColourTable: (colourTable: [number, [number, number, number]][]) => void;
     menu: string;
+    /** The preset shown as selected until the user picks another one */
+    defaultPreset?: string;
     showValues?: boolean;
     modifyValues?: boolean;
     minValue?: number;
@@ -22,6 +24,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
         colourTable,
         setColourTable,
         menu,
+        defaultPreset = "red-white-blue",
         showValues = true,
         modifyValues = false,
         minValue = 0,
@@ -31,8 +34,8 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
     } = props;
 
     const [internalColourTable, setInternalColourTable] = useState<[number, [number, number, number]][]>(colourTable);
-    const [selectedPreset, setSelectedPreset] = usePersistentState(menu, "gradientPresets", "red-white-blue", true);
-    const nOfPoints = colourTable.length;
+    const [selectedPreset, setSelectedPreset] = usePersistentState(menu, "gradientPresets", defaultPreset, true);
+    const nOfPoints = internalColourTable.length;
 
     const updateExternalColourTable = () => {
         if (internalColourTable !== colourTable) {
@@ -49,6 +52,8 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
             newColourTable.push(newColour);
         }
         setInternalColourTable(newColourTable);
+        setColourTable(newColourTable);
+        setSelectedPreset("Custom");
     };
 
     const handlePreset = (newVal: string | null) => {
@@ -105,13 +110,7 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
 
     const colorStops = Array.from({ length: internalColourTable.length }).map((_, i) => colorStop(i));
 
-    const getColourGradientImage = () => {
-        const gradient = `linear-gradient(to right, ${internalColourTable
-            .map(colour => `rgb(${colour[1][0]},${colour[1][1]},${colour[1][2]}) ${Math.round(colour[0] * 100)}%`)
-            .join(", ")})`;
-        return gradient;
-    };
-    const colourGradientImage = getColourGradientImage();
+    const colourGradientImage = colourTableToCssGradient(internalColourTable);
 
     return (
         <MoorhenStack direction="column" style={{ margin: "0.5rem" }}>
