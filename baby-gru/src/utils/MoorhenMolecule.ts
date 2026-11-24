@@ -994,33 +994,10 @@ export class MoorhenMolecule {
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
             const coordData = await source.text();
-            let is_small = false;
             const lowerName = source.name.toLowerCase();
-            if (lowerName.endsWith(".mmcif") || lowerName.endsWith(".cif") || lowerName.endsWith(".pdbx"))
-                is_small = window.gemmiModule.is_small_structure(coordData as string);
-            if (is_small) {
-                const small_to_cif_response = (await this.commandCentre.cootCommand(
-                    {
-                        command: "SmallMoleculeCifToMMCif",
-                        commandArgs: [coordData],
-                        returnType: "str_str_pair",
-                    },
-                    true
-                )) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>;
-                const coordContent = small_to_cif_response.data.result.result.first;
-                const dictContent = small_to_cif_response.data.result.result.second;
-                //FIXME - I think I want specific molecule, but there is a circular dependency between mol and dicts
-                const anyMolNo = -999999;
-                await this.commandCentre.cootCommand(
-                    {
-                        returnType: "status",
-                        command: "read_dictionary_string",
-                        commandArgs: [dictContent, anyMolNo],
-                    },
-                    false
-                );
-                return await this.loadToCootFromString(coordContent, source.name);
-            }
+            // A small-molecule CIF needs no handling here: loadToCootFromString recognises one
+            // whichever way it arrives, so a file opened from the menu, a dropped file, a URL and
+            // a string all load the same way.
             if (lowerName.endsWith(".mol")) {
                 const response = (await this.commandCentre.cootCommand(
                     {
@@ -1085,9 +1062,66 @@ export class MoorhenMolecule {
      * @param {string} name - The new molecule name
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
+    /**
+     * Whether a coordinate string is a small-molecule (coreCIF) file rather than mmCIF or PDB.
+     *
+     * Such a file - from the COD or the CSD, say - gives its atoms as fractional coordinates in
+     * _atom_site_fract_x, a tag no mmCIF or PDB file has, so that cheap test comes first and
+     * gemmi's full parse is only run on files that pass it. Without it, every protein loaded
+     * would be parsed twice.
+     */
+    static isSmallMoleculeCif(coordData: ArrayBuffer | string): boolean {
+        if (typeof coordData !== "string" || !/_atom_site[._]fract_x/i.test(coordData)) {
+            return false;
+        }
+        try {
+            return window.gemmiModule.is_small_structure(coordData);
+        } catch (err) {
+            console.warn(err);
+            return false;
+        }
+    }
+
+    /**
+     * Turn a small-molecule CIF into an mmCIF that Coot and gemmi can read, and give Coot the
+     * restraint dictionary that comes with it.
+     *
+     * The structure becomes one residue in chain A, named after the CIF's data block. Coot alone
+     * cannot read the original: it fails, and the loader then tries the file as a monomer
+     * dictionary, which fails with a gemmi binding error instead of a useful message.
+     * @returns {Promise<string>} The mmCIF text
+     */
+    private async smallMoleculeCifToMMCif(coordData: string): Promise<string> {
+        const response = (await this.commandCentre.cootCommand(
+            {
+                command: "SmallMoleculeCifToMMCif",
+                commandArgs: [coordData],
+                returnType: "str_str_pair",
+            },
+            true
+        )) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>;
+        const coordContent = response.data.result.result.first;
+        const dictContent = response.data.result.result.second;
+        //FIXME - I think I want specific molecule, but there is a circular dependency between mol and dicts
+        const anyMolNo = -999999;
+        await this.commandCentre.cootCommand(
+            {
+                returnType: "status",
+                command: "read_dictionary_string",
+                commandArgs: [dictContent, anyMolNo],
+            },
+            false
+        );
+        return coordContent;
+    }
+
     async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<moorhen.Molecule> {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete();
+        }
+
+        if (MoorhenMolecule.isSmallMoleculeCif(coordData)) {
+            coordData = await this.smallMoleculeCifToMMCif(coordData as string);
         }
 
         // One pattern, so ".mmcif" is not first stripped as ".cif" (which left "name.m")
