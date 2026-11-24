@@ -99,6 +99,9 @@ message Representation {
      * ViewDataSession.eyeDistance.
      */
     optional float nonCustomOpacity = 15;
+    // The molecule neighboursCid is in (uniqueId), if not this one: a pocket around a docked ligand.
+    // Empty for every representation before it existed, which means this molecule.
+    string neighboursMoleculeUid = 16;
 }
 
 message MoleculeSessionData {

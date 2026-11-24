@@ -1571,7 +1571,8 @@ export class MoorhenMolecule {
         excludeNeighbours: boolean = false,
         hbondedToCid: string = "",
         hbondedTo: boolean = false,
-        neighboursDistance: number = 6.0
+        neighboursDistance: number = 6.0,
+        neighboursMoleculeUid: string = ""
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
@@ -1591,6 +1592,7 @@ export class MoorhenMolecule {
         representation.hbondedToCid = hbondedToCid;
         representation.hbondedTo = hbondedTo;
         representation.neighboursDistance = neighboursDistance;
+        representation.neighboursMoleculeUid = neighboursMoleculeUid;
         representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
         representation.buildParams = cidBuildParams(representation);
 

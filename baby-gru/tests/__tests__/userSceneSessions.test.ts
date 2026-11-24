@@ -507,6 +507,8 @@ describe("a session with a molecule without default colour rules", () => {
     test("loads, the molecule with no rules", async () => {
         const session = JSON.parse(await saveSession());
         delete session.moleculeData[0].defaultColourRules;
+        // As LTR_model2.pb: no scenes (they would bring the rules back from the shown scene)
+        delete session.sceneData;
         expect(await loadSession(JSON.stringify(session))).toBe(0);
         const [molecule] = cloud.instance.getMoleculeList();
         expect(molecule.defaultColourRules).toEqual([]);

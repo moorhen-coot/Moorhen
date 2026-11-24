@@ -4,7 +4,7 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { MoorhenIcon, MoorhenSpinner } from "@/components/icons";
 import { useMoleculeChanged } from "@/hooks";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
-import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenToggle } from "@/components/inputs";
+import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenSlider, MoorhenToggle } from "@/components/inputs";
 import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
 import { MoorhenAccordion, MoorhenStack, MoorhenTooltip } from "@/components/interface-base";
 import { type RootState, addCustomRepresentation, enqueueSnackbar, removeCustomRepresentation, removeMolecule, removeVectorsByTag, setHoveredAtom } from "@/store";
@@ -18,7 +18,9 @@ import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_SOURCE } from "@/utils/tags";
 import { setMoleculeListVisible, setMoleculeVisible } from "@/utils/moleculeVisibility";
 import { hexToRGB, rgbToHex } from "@/utils/utils";
 import { LigandContactsSection } from "./LigandContacts";
+import { LigandPocketSection } from "./LigandPocket";
 import { selectCustomRepresentations } from "../MoleculeCard/moleculeCardSelectors";
+import { BondQualityRadios } from "../MoleculeCard/BondQualityRadios";
 import "./ligand-list-card.css";
 
 const HOVERED_ROW_CLASS = "moorhen__ligand-list-row-hovered";
@@ -105,6 +107,10 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
     const visibleMolecules = useSelector((state: RootState) => state.molecules.visibleMolecules);
     const visible = new Set(visibleMolecules);
 
+    const hasLigands = useSelector((state: RootState) =>
+        state.molecules.moleculeList.some(molecule => (state.molecules.moleculeRecords[molecule.uniqueId]?.ligands.length ?? 0) > 0)
+    );
+
     // A–Z by default; load order kept as the other choice, since it may carry the caller's ranking
     const [order, setOrder] = useState<"name" | "load">("name");
     const entryName = ({ molecule, ligand }: LigandEntry) =>
@@ -181,7 +187,11 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
                 <MoorhenSpinner />
             </div>
         );
-    } else if (grouped) {
+    } 
+    else if (!hasLigands) {
+        content = <span>No ligands loaded<br/>&nbsp;</span>;
+    }
+    else if (grouped) {
         // Only sites: each holds every ligand at that position, whichever molecule it is in
         content =
             sites === null ? (
@@ -249,7 +259,7 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
 
     return (
         <MoorhenAccordion
-            title={grouped && sites ? `Ligands (${entries.length}, ${sites.length} sites)` : `Ligands (${entries.length})`}
+            title={grouped && sites ? `Ligands list (${entries.length}, ${sites.length} sites)` : `Ligands list (${entries.length})`}
             type="card"
             defaultOpen={true}
             extraControls={[
@@ -389,6 +399,9 @@ const LigandListRow = memo(function LigandListRow(props: {
             >
                 <LigandRepresentations molecule={molecule} cid={ligand?.cid} />
                 <div className="moorhen__ligand-list-section">
+                    <LigandPocketSection molecule={molecule} ligand={ligand} />
+                </div>
+                <div className="moorhen__ligand-list-section">
                     <LigandContactsSection molecule={molecule} ligand={ligand} />
                 </div>
             </MoorhenAccordion>
@@ -463,6 +476,20 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string 
     const shownStyle = ligandRepresentations[0]?.style ?? null;
     const [busy, setBusy] = useState<boolean>(false);
 
+    // Bond width and ball size of the bonds style: chosen here (kept across style changes, so going
+    // back to bonds keeps them), else what the bonds already have; null for the molecule's defaults
+    const [bondOptions, setBondOptions] = useState<BondOptions | null>(() => {
+        const bonds = ligandRepresentations.find(representation => representation.style === "CBs");
+        return bonds && !bonds.useDefaultBondOptions ? { ...bonds.bondOptions } : null;
+    });
+    /** New bond width / ball size; null for the molecule's defaults (followed if they change) */
+    const applyBondOptions = (options: BondOptions | null) => {
+        setBondOptions(options);
+        for (const representation of ligandRepresentations) {
+            if (representation.style === "CBs") representation.edit({ representationStyle: "CBs", bondOptions: options });
+        }
+    };
+
     // Hydrogens are left out through the representation's atom selection ([!H] in its cid), which
     // Coot applies to bonds and MetaBalls but not to surfaces. Kept across style changes.
     const [hideHydrogens, setHideHydrogens] = useState<boolean>(() =>
@@ -514,6 +541,7 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string 
                 visible: store.getState().molecules.visibleMolecules.includes(molecule.molNo),
                 notH: hideHydrogens,
                 ...colourOptions(currentColour),
+                ...(style === "CBs" && bondOptions ? { bondOptions } : {}),
             });
             if (!representation) return;
             batch(() => {
@@ -559,6 +587,19 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string 
                     }}
                 />
             ))}
+            <MoorhenPopoverButton
+                icon="MatSymSettings"
+                tooltip={shownStyle === "CBs" ? "Bond width and ball size" : "Bond width and ball size (bonds style only)"}
+                disabled={busy || shownStyle !== "CBs"}
+                popoverPlacement="left"
+            >
+                <LigandBondSettings
+                    initial={bondOptions ?? { ...molecule.defaultBondOptions }}
+                    defaults={molecule.defaultBondOptions}
+                    onChange={applyBondOptions}
+                    name={`ligand-bond-quality-${molecule.uniqueId}-${cid ?? ""}`}
+                />
+            </MoorhenPopoverButton>
             <MoorhenStack direction="row" gap={"0.5rem"} style={{ alignItems: "center" }}>
             <MoorhenColourPicker
                 colour={hexToRGB(currentColour ?? defaultCarbonColour(molecule))}
@@ -577,6 +618,87 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string 
                 onChange={toggleHydrogens}
             />
 
+        </MoorhenStack>
+    );
+};
+
+type BondOptions = MoleculeRepresentation["bondOptions"];
+
+/** Wait this long after the last slider move before redrawing the ligand (ms) */
+const BOND_SETTINGS_DELAY = 250;
+
+/**
+ * Bond width, ball size (atom radius as a multiple of the bond width) and draw quality of a ligand's bonds, the
+ * sliders and ranges of the molecule card's bond settings. The ligand is redrawn once a slider has
+ * stopped moving, not at every step of a drag. Default goes back to the molecule's own settings
+ * (onChange(null)), which the bonds then follow.
+ */
+const LigandBondSettings = (props: {
+    initial: BondOptions;
+    defaults: BondOptions;
+    onChange: (options: BondOptions | null) => void;
+    /** For the quality radio group: unique on the page */
+    name: string;
+}) => {
+    const { initial, defaults, onChange, name } = props;
+    const [width, setWidth] = useState<number>(initial.width);
+    const [ratio, setRatio] = useState<number>(initial.atomRadiusBondRatio);
+    const [smoothness, setSmoothness] = useState<number>(initial.smoothness);
+    const applied = useRef({ width: initial.width, ratio: initial.atomRadiusBondRatio, smoothness: initial.smoothness });
+
+    // Sliders wait for the drag to stop; a quality click is one change and goes at once
+    useEffect(() => {
+        const { current } = applied;
+        if (width === current.width && ratio === current.ratio && smoothness === current.smoothness) return;
+        const delay = width === current.width && ratio === current.ratio ? 0 : BOND_SETTINGS_DELAY;
+        const timer = setTimeout(() => {
+            applied.current = { width, ratio, smoothness };
+            onChange({ ...initial, width, atomRadiusBondRatio: ratio, smoothness });
+        }, delay);
+        return () => clearTimeout(timer);
+        // Only the chosen values: `initial` and `onChange` are new on every render of the card
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [width, ratio, smoothness]);
+
+    const resetToDefaults = () => {
+        // Marked applied first, so the effect does not write them as custom values
+        applied.current = { width: defaults.width, ratio: defaults.atomRadiusBondRatio, smoothness: defaults.smoothness };
+        setWidth(defaults.width);
+        setRatio(defaults.atomRadiusBondRatio);
+        setSmoothness(defaults.smoothness);
+        onChange(null);
+    };
+    const isDefault =
+        width === defaults.width && ratio === defaults.atomRadiusBondRatio && smoothness === defaults.smoothness;
+
+    return (
+        <MoorhenStack gap="0.5rem" style={{ minWidth: "16rem" }}>
+            <MoorhenSlider
+                sliderTitle="Bond width"
+                value={width}
+                setValue={setWidth}
+                showLabels={false}
+                stepButtons={0.05}
+                minVal={0.05}
+                maxVal={0.5}
+                scale="linear"
+                decimalPlaces={2}
+            />
+            <MoorhenSlider
+                sliderTitle="Ball size"
+                value={ratio}
+                setValue={setRatio}
+                showLabels={false}
+                stepButtons={0.1}
+                minVal={1.0}
+                maxVal={3.5}
+                scale="linear"
+                decimalPlaces={2}
+            />
+            <BondQualityRadios value={smoothness} onChange={setSmoothness} name={name} />
+            <MoorhenButton onClick={resetToDefaults} disabled={isDefault} style={{ alignSelf: "flex-end" }}>
+                Default
+            </MoorhenButton>
         </MoorhenStack>
     );
 };

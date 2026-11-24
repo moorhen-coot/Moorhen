@@ -117,6 +117,8 @@ export type moleculeSessionData = {
         hbondedToCid: string;
         hbondedTo: boolean;
         neighboursDistance: number;
+        /** The molecule neighboursCid is in, if not this one (a pocket around a docked ligand); absent in older sessions */
+        neighboursMoleculeUid?: string;
     }[];
     defaultBondOptions: moorhen.cootBondOptions;
     defaultM2tParams: m2tParameters;
@@ -491,6 +493,8 @@ export class MoorhenTimeCapsule {
                 coordFormat: molecule.coordsFormat,
                 coordString: moleculeDataPromises[index],
                 uniqueId: molecule.uniqueId,
+                // The shown ones: the session's scenes keep every representation, hidden ones included,
+                // and loading shows the selected scene (UserSceneManager.importState)
                 representations: molecule.representations
                     .filter(item => item.visible)
                     .map(item => {
@@ -510,6 +514,7 @@ export class MoorhenTimeCapsule {
                             hbondedToCid: item.hbondedToCid,
                             hbondedTo: item.hbondedTo,
                             neighboursDistance: item.neighboursDistance,
+                            neighboursMoleculeUid: item.neighboursMoleculeUid,
                         };
                     }),
                 defaultColourRules: molecule.defaultColourRules.map(item => item.objectify()),
@@ -1091,7 +1096,8 @@ export class MoorhenTimeCapsule {
                         item.excludeNeighbours,
                         item.hbondedToCid,
                         item.hbondedTo,
-                        item.neighboursDistance
+                        item.neighboursDistance,
+                        item.neighboursMoleculeUid ?? ""
                     );
                     // Its identity, back as it was saved. A session written before the format
                     // carried this keeps the guid minted a moment ago, which is what has always
@@ -1381,9 +1387,10 @@ export class MoorhenTimeCapsule {
             });
         }
 
-        // What the session restored above is the selected scene; restore the others around it
+        // The scenes, the selected one shown as it was recorded (its representations, hidden ones
+        // included, over what was restored above)
         if (sceneState) {
-            moorhenInstance.userScene.importState(sceneState);
+            await moorhenInstance.userScene.importState(sceneState);
         } else {
             moorhenInstance.userScene.resetForLegacySession();
         }

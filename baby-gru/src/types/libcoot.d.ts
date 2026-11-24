@@ -64,6 +64,8 @@ export namespace libcootApi {
         get_chem_shift_info(nef_input:string): string;
 
         cidToNeighboursCid: (arg0: gemmi.Structure, arg1: string, arg2: string, arg3: number, arg4: boolean) => string;
+        /** The residues of the first selection near those of the second, in another structure */
+        cidToNeighboursCidAcross: (st: gemmi.Structure, cid: string, stNeighbours: gemmi.Structure, cidNeighbours: string, distance: number, exclude: boolean) => string;
         // Gemmi free functions
         read_structure_file(filePath: string, format: number): gemmi.Structure;
         read_mtz_file(filePath: string): gemmi.Mtz;

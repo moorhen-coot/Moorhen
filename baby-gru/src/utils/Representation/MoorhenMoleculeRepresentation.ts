@@ -8,7 +8,7 @@ import { libcootApi } from "../../types/libcoot";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
-import { createRepresentation, extractRepresentationParams, withCidModel } from "./RepresentationBuilder";
+import { createRepresentation, extractRepresentationParams, neighbourResidues, withCidModel } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams, RepresentationBackup } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
@@ -167,6 +167,8 @@ export class MoleculeRepresentation {
     style: RepresentationStyles;
     cid: string;
     neighboursCid: string;
+    /** The molecule neighboursCid is in (uniqueId), if not this one: a pocket around a docked ligand */
+    neighboursMoleculeUid: string;
     restrictToNeighbours: boolean;
     neighboursDistance: number;
     hbondedToCid: string;
@@ -270,6 +272,7 @@ export class MoleculeRepresentation {
         this.residueSelectionColor = [0.25, 1.0, 0.25, 0.35];
         this.interfaceOption = { visible: undefined, selectionType: "cid" };
         this.neighboursCid = "";
+        this.neighboursMoleculeUid = "";
         this.restrictToNeighbours = false;
         this.neighboursDistance = 6.0;
         this.hbondedToCid = "";
@@ -935,12 +938,13 @@ export class MoleculeRepresentation {
         if (this.restrictToNeighbours) {
             //Now we might not want to use the new method, maybe we should use the old one.
             if (["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "AccessibleSurface", "Calpha"].includes(_style)) {
-                restrictedCid = window.gemmiModule.cidToNeighboursCid(
-                    this.parentMolecule.gemmiStructure,
+                restrictedCid = neighbourResidues(
+                    this.parentMolecule,
                     _cid,
                     this.neighboursCid,
                     this.neighboursDistance,
-                    this.excludeNeighbours
+                    this.excludeNeighbours,
+                    this.neighboursMoleculeUid
                 );
             } else {
                 if (restrictedCid.length > 0) _cid = restrictedCid;

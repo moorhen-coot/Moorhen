@@ -5,6 +5,7 @@ import type { MoleculeRecord } from "@/store/moleculesSlice";
 import { setHoveredAtom } from "@/store/hoveringStatesSlice";
 import { enqueueSnackbar } from "@/store/snackbarSlice";
 import { removeVectorsByTag } from "@/store/vectorsSlice";
+import { setRequestDrawScene } from "@/store/glRefSlice";
 import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_PARTNER, TAG_SOURCE, matchesTags } from "@/utils/tags";
 import type { MoorhenInstance } from "./MoorhenInstance";
 
@@ -110,6 +111,37 @@ const selectRecordsAndList = createSelector(
     (records, moleculeList) => ({ records, moleculeList })
 );
 
+/**
+ * Show each ligand pocket (a neighbourhood representation of a model around a ligand that is another
+ * molecule, neighboursMoleculeUid) only while both the ligand's molecule and the model are shown, so
+ * hiding a ligand hides its pocket and showing it brings the pocket back. A pocket switched off in the
+ * interface (interfaceOption.visible false) stays off. One redraw request for all of them.
+ */
+const showPocketsOfShownLigands = (instance: MoorhenInstance) => {
+    const { molecules } = instance.store.getState();
+    const visible = new Set(molecules.visibleMolecules);
+    const shownUids = new Set(
+        instance
+            .getMoleculeList()
+            .filter(molecule => visible.has(molecule.molNo))
+            .map(molecule => molecule.uniqueId)
+    );
+    let changed = false;
+    for (const molecule of instance.getMoleculeList()) {
+        for (const representation of molecule.representations) {
+            const ligandUid = representation.neighboursMoleculeUid;
+            // Pockets around another molecule only: one around a ligand of the model follows the model
+            if (!representation.restrictToNeighbours || !ligandUid || ligandUid === molecule.uniqueId) continue;
+            const show = shownUids.has(ligandUid) && shownUids.has(molecule.uniqueId) && representation.interfaceOption?.visible !== false;
+            if (show === representation.visible) continue;
+            if (show) representation.show(false);
+            else representation.hide(false);
+            changed = true;
+        }
+    }
+    if (changed) instance.store.dispatch(setRequestDrawScene(true));
+};
+
 /** Helper so each entry's value type is inferred from its selector */
 const sync = <T>(entry: StoreSync<T>): StoreSync<T> => entry;
 
@@ -124,6 +156,11 @@ const STORE_SYNCS: StoreSync<unknown>[] = [
     // However a molecule stops being shown (eye button, scene, delete, script): contacts are drawn
     // between two shown molecules, so one that is not, ligand or partner, takes its contact vectors
     // with it
+    sync({
+        name: "a ligand's pocket is shown with the ligand",
+        selector: state => state.molecules.visibleMolecules,
+        apply: instance => showPocketsOfShownLigands(instance),
+    }),
     sync({
         name: "hidden or deleted molecules lose their ligand contact vectors",
         selector: state => state.molecules.visibleMolecules,
