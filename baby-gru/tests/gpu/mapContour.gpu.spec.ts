@@ -9,6 +9,9 @@ const CASES: Record<string, ContourCase> = {
     "a negative level": { em: false, centre: [12, 15, 18], radius: 9, level: -0.3, room: 0.2 },
     "a tiny first room (grows, made again)": { em: false, centre: [10, 18, 20], radius: 14, level: 0.0, room: 0.001 },
     "EM: clipped to the map's box": { em: true, centre: [-3, 34, 2], radius: 10, level: 0.2, room: 0.2 },
+    // The box is cut to the map, a cell past each face (140^3 points would be 62 x 74 x 86): the
+    // triangles must be the same as from the whole box, which the CPU reference contours.
+    "EM: a radius larger than the map": { em: true, centre: [12, 15, 18], radius: 35, level: 0.2, room: 0.2 },
     // 167^3 points: more than 65535 workgroups for the per-point kernel, so the dispatch is folded.
     "a big box (folded dispatch)": { em: false, centre: [12, 15, 18], radius: 41.5, level: 0.2, room: 0.2 },
 };

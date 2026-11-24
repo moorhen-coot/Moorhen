@@ -59,6 +59,12 @@ export function cellLengths(orth: number[]): [number, number, number] {
  * about `centre`: in fractional coordinates, the centre plus and minus radius / (a, b, c), each
  * end rounded to the grid as clipper's Coord_frac::coord_grid does, inclusive. Triangles are then
  * kept only if their midpoint is within the sphere. Null if there is nothing to contour.
+ *
+ * For an EM map the box stops one cell past each face of the map. Triangles are kept there only
+ * if their midpoint is inside the map (keepMidpoint in mapContourShaders.ts), so the cells beyond
+ * add nothing; and with a radius larger than the map they can be most of the box - a box too big
+ * for the GPU's buffers. The one cell kept on each side keeps a triangle whose midpoint rounds onto
+ * a face, so the triangles are the same as for the whole box.
  */
 export function contourBox(grid: MapUnitCellGrid, centre: ArrayLike<number>, radius: number): ContourBox | null {
     if (!(radius > 0)) return null;
@@ -67,7 +73,56 @@ export function contourBox(grid: MapUnitCellGrid, centre: ArrayLike<number>, rad
     const n = [grid.nu, grid.nv, grid.nw];
     const min = [0, 1, 2].map(a => rint(n[a] * (frac[a] - radius / lengths[a]))) as [number, number, number];
     const max = [0, 1, 2].map(a => rint(n[a] * (frac[a] + radius / lengths[a]))) as [number, number, number];
+    if (grid.isEM) {
+        for (let a = 0; a < 3; a++) {
+            min[a] = Math.max(min[a], -1);
+            max[a] = Math.min(max[a], n[a] + 1);
+        }
+    }
     const size = [0, 1, 2].map(a => max[a] - min[a] + 1) as [number, number, number];
     if (size.some(s => s < 2)) return null;
     return { min, size };
+}
+
+/**
+ * How many items of `bytesEach` to make room for: `needed` with `slack` to spare (so that a
+ * slightly larger next request fits without making the buffer again), but no more than a buffer
+ * of `limitBytes` holds. Null if even `needed` would not fit: the GPU cannot do it in one buffer.
+ */
+export function roomFor(needed: number, bytesEach: number, limitBytes: number, slack = 1): number | null {
+    const most = Math.floor(limitBytes / bytesEach);
+    if (needed > most) return null;
+    return Math.min(Math.ceil(needed * slack), most);
+}
+
+/** Bytes as a person would say them: a decimal place below 10 MB, so 1.45 MB is not "1 MB". */
+export function formatBytes(bytes: number): string {
+    if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(1)} GB`;
+    return bytes >= 1e7 ? `${Math.round(bytes / 1e6)} MB` : `${+(bytes / 1e6).toFixed(1)} MB`;
+}
+
+/**
+ * Bytes of work buffers a contour needs per box point: the field, edge mask and vertex offset per
+ * point, the keep and line masks per cell (about as many). The per-run sums are an eighth of that.
+ */
+export const WORK_BYTES_PER_BOX_POINT = 20;
+
+/**
+ * The largest radius, up to `radius`, whose box about `centre` has no more than `maxPoints` grid
+ * points: `radius` itself if its box is small enough. The box only grows with the radius, so a
+ * bisection finds it.
+ */
+export function largestRadiusWithin(grid: MapUnitCellGrid, centre: ArrayLike<number>, radius: number, maxPoints: number): number {
+    const points = (r: number) => {
+        const box = contourBox(grid, centre, r);
+        return box ? box.size[0] * box.size[1] * box.size[2] : 0;
+    };
+    if (points(radius) <= maxPoints) return radius;
+    let lo = 0, hi = radius;
+    for (let i = 0; i < 50 && hi - lo > 1e-3; i++) {
+        const mid = (lo + hi) / 2;
+        if (points(mid) <= maxPoints) lo = mid;
+        else hi = mid;
+    }
+    return lo;
 }

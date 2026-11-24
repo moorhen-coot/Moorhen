@@ -3,7 +3,7 @@
  * to be Coot's (CIsoSurface::GenerateTriangles_from_Xmap) for the two contours to agree.
  */
 import { describe, expect, it } from "@jest/globals";
-import { cellLengths, contourBox, inverse3, rint } from "../../src/WebGPUComponents/mapContour/mapContourBox";
+import { cellLengths, contourBox, formatBytes, inverse3, largestRadiusWithin, rint, roomFor } from "../../src/WebGPUComponents/mapContour/mapContourBox";
 import type { MapUnitCellGrid } from "../../src/WebGPUComponents/mapContour/mapContourBox";
 
 /** clipper's orthogonalising matrix for a cell: a along x, b in the xy plane. */
@@ -56,5 +56,63 @@ describe("contourBox", () => {
 
     it("has nothing to contour for no radius", () => {
         expect(contourBox(gridFor([10, 10, 10], orthFor(10, 10, 10, 90, 90, 90)), [0, 0, 0], 0)).toBeNull();
+    });
+
+    it("stops an EM map's box a cell past each face of the map", () => {
+        const em = { ...gridFor([100, 120, 140], orthFor(50, 60, 70, 90, 90, 90)), isEM: true };
+        // A radius far larger than the map: the box would be thousands of points a side.
+        expect(contourBox(em, [25, 30, 35], 1000)).toEqual({ min: [-1, -1, -1], size: [103, 123, 143] });
+        // Inside the map, unchanged.
+        expect(contourBox(em, [10, 20, 30], 5)).toEqual({ min: [10, 30, 50], size: [21, 21, 21] });
+        // Across one face: cut there only.
+        expect(contourBox(em, [1, 30, 35], 5)).toEqual({ min: [-1, 50, 60], size: [14, 21, 21] });
+        // Wholly outside the map: nothing to contour.
+        expect(contourBox(em, [200, 30, 35], 5)).toBeNull();
+        // A crystallographic map's box is not cut: it wraps round the cell.
+        expect(contourBox(gridFor([100, 120, 140], orthFor(50, 60, 70, 90, 90, 90)), [25, 30, 35], 1000).size[0]).toBe(4001);
+    });
+});
+
+describe("roomFor", () => {
+    it("makes room with slack, but never more than a buffer holds, and refuses what cannot fit", () => {
+        expect(roomFor(100, 4, 1000, 1.25)).toBe(125);
+        expect(roomFor(240, 4, 1000, 1.25)).toBe(250);
+        expect(roomFor(250, 4, 1000, 1.25)).toBe(250);
+        expect(roomFor(251, 4, 1000, 1.25)).toBeNull();
+        // The bug's box: 1.05G points, with slack a 5.27 GB field buffer, over a 4 GB limit. Without
+        // the slack it fits; a little more and it does not.
+        expect(roomFor(1_054_977_832, 4, 4294967292, 1.25)).toBe(1_073_741_823);
+        expect(roomFor(1_100_000_000, 4, 4294967292, 1.25)).toBeNull();
+    });
+});
+
+describe("largestRadiusWithin", () => {
+    const grid = gridFor([100, 120, 140], orthFor(50, 60, 70, 90, 90, 90));
+    const points = (r: number) => {
+        const box = contourBox(grid, [10, 20, 30], r);
+        return box ? box.size[0] * box.size[1] * box.size[2] : 0;
+    };
+
+    it("keeps a radius whose box fits", () => {
+        expect(largestRadiusWithin(grid, [10, 20, 30], 5, 21 ** 3)).toBe(5);
+    });
+
+    it("finds the largest radius whose box fits, and no larger", () => {
+        const r = largestRadiusWithin(grid, [10, 20, 30], 100, 1e6);
+        expect(r).toBeLessThan(100);
+        expect(points(r)).toBeLessThanOrEqual(1e6);
+        expect(points(r + 0.01)).toBeGreaterThan(1e6);
+    });
+
+    it("gives an EM map at a huge radius the whole map when the map fits", () => {
+        const em = { ...grid, isEM: true };
+        expect(largestRadiusWithin(em, [25, 30, 35], 1000, 103 * 123 * 143)).toBe(1000);
+    });
+});
+
+describe("formatBytes", () => {
+    it("keeps a decimal place for small sizes, so a limit and what passes it never read the same", () => {
+        expect([1_451_520, 1_000_000, 5_000_000, 35_000_000, 5_274_889_160].map(formatBytes))
+            .toEqual(["1.5 MB", "1 MB", "5 MB", "35 MB", "5.3 GB"]);
     });
 });
