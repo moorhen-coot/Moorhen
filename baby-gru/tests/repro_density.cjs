@@ -5,7 +5,7 @@ const fs = require('fs')
 const path = require('path')
 const { ungzip } = require('node-gzip')
 
-const createCootModule = require('../public/MoorhenAssets/wasm/moorhen64')
+const { createCootModule } = require('./wasmModules.cjs')
 
 const TEST_DATA = path.join(__dirname, 'test_data')
 

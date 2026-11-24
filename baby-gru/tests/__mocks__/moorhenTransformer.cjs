@@ -21,7 +21,7 @@ module.exports = {
 
         return crypto
             .createHash('sha256')
-            .update('moorhen-transform-v1')
+            .update('moorhen-transform-v2')
             .update(sourceText)
             .update(sourcePath)
             .update(configValue)
@@ -30,7 +30,8 @@ module.exports = {
     },
 
     process(sourceText, sourcePath) {
-        if (!sourcePath.endsWith('/public/MoorhenAssets/wasm/moorhen64.js') && !sourcePath.endsWith('/public/MoorhenAssets/wasm/moorhen64')) {
+        // Both the 32-bit (moorhen.js) and the 64-bit (moorhen64.js) builds.
+        if (!/\/public\/MoorhenAssets\/wasm\/moorhen(?:64)?(?:\.js)?$/.test(sourcePath)) {
             return { code: sourceText };
         }
 

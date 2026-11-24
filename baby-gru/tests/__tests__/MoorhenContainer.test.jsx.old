@@ -54,8 +54,8 @@ let mockMonomerLibraryPath = null
 describe('Testing MoorhenContainer', () => {
 
     beforeAll(async () => {
-        const createCootModule = require('../../public/MoorhenAssets/wasm/moorhen64')
-        const createGemmiModule = require('../../public/MoorhenAssets/wasm/gemmi64')
+        const { createCootModule } = require('../wasmModules.cjs')
+        const { createGemmiModule } = require('../wasmModules.cjs')
 
         const mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
 
