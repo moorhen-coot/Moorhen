@@ -45,6 +45,7 @@ import { DepthBlur, depthBlurMargin } from './depthBlur';
 import { AnaglyphCombine, anaglyphUniforms } from './anaglyphCombine';
 import { type HoverHighlight, type HoverOverlay, NO_HIGHLIGHT, NO_HOVER, type SubBufferHighlight, hoverHighlight } from './hoverHighlight';
 import { HoverOverlayLayer } from './hoverOverlay';
+import { capBits, impostorOverlap, twoPasses } from './impostors';
 import {
     ColourSource, FRAME_FLOATS, MeshChunk, PreviewCameraSource, PreviewDraw, PreviewPlan, PreviewView, effectSettings, frameUniforms, hoverSphereRadius, interactiveGlow, interactiveModel, planMeshChunks, planPreview, previewViews, symmetryCopyGrey, viewShows,
 } from './previewScene';
@@ -71,6 +72,11 @@ function pixelsPerAngstrom(frame: Float32Array, camera: PreviewCameraSource, wid
 }
 
 const SAMPLE_COUNT = 4;
+/**
+ * The two-pass impostors' per-sample instance ids (drawImpostorsFirst): 32 bits as two 16-bit halves,
+ * since r32uint cannot be multisampled.
+ */
+const IMPOSTOR_ID_FORMAT: GPUTextureFormat = "rg16uint";
 /** Floats in a Draw uniform block (previewShaders.ts): colour, params, copyColour, model, ambient, output, highlight. */
 const DRAW_FLOATS = 40;
 /** Bytes between one copy's Draw block and the next: the uniform offset alignment WebGPU guarantees. */
@@ -186,6 +192,13 @@ export interface PreviewFrameReport {
     shapes: number;
     /** Transparent layers peeled (depthPeel.ts); 0 when the frame blended its transparency unsorted. */
     peelLayers: number;
+    /**
+     * The passes the spheres and cylinders drawn per pixel took in the picture: 2, their depth then
+     * their shading (drawImpostorsFirst); 1, both at once; 0, none drawn.
+     */
+    impostorPasses: number;
+    /** How deep they overlap (impostors.ts: impostorOverlap), which "auto" decides the passes by; 0 with none. */
+    impostorOverlap: number;
 }
 
 /** One drawable piece of a sub-buffer: the whole of it, unless it is too big for one GPU buffer. */
@@ -245,7 +258,9 @@ interface SubBufferResources {
  * Which pass a pipeline draws in: the picture, the effects' g-buffer, the light's shadow map, or a
  * layer of transparent geometry peeled (depthPeel.ts).
  */
-type PassKind = "main" | "gbuffer" | "shadow" | "peel";
+// "impostorDepth" and "impostorShade": the two passes of spheres and cylinders drawn per pixel
+// (drawImpostorsFirst), for impostor draws only.
+type PassKind = "main" | "gbuffer" | "shadow" | "peel" | "impostorDepth" | "impostorShade";
 
 type PipelineKind = "mesh-vertex" | "mesh-uniform" | "instanced-vertex" | "instanced-instance" | "instanced-uniform" | "spheres";
 
@@ -310,6 +325,10 @@ export class WebGPUPreviewRenderer {
     private readonly frameLayout: GPUBindGroupLayout;
     private readonly drawLayout: GPUBindGroupLayout;
     private readonly pipelineLayout: GPUPipelineLayout;
+    /** The two-pass impostors' ids, read by their shading (group 2), and its target. */
+    private readonly impostorIdLayout: GPUBindGroupLayout;
+    private readonly impostorShadeLayout: GPUPipelineLayout;
+    private impostorIds: { texture: GPUTexture; view: GPUTextureView; bindGroup: GPUBindGroup } | null = null;
     /** Thick lines: the mesh's buffers as storage, at group 2. */
     private readonly lineLayout: GPUBindGroupLayout;
     private readonly linePipelineLayout: GPUPipelineLayout;
@@ -410,6 +429,11 @@ export class WebGPUPreviewRenderer {
             entries: [{ binding: 0, visibility: ShaderStage.VERTEX | ShaderStage.FRAGMENT, buffer: { type: "uniform" } }],
         });
         this.pipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [this.frameLayout, this.drawLayout] });
+        this.impostorIdLayout = device.createBindGroupLayout({
+            label: "impostor ids",
+            entries: [{ binding: 16, visibility: ShaderStage.FRAGMENT, texture: { sampleType: "uint", multisampled: true } }],
+        });
+        this.impostorShadeLayout = device.createPipelineLayout({ bindGroupLayouts: [this.frameLayout, this.drawLayout, this.impostorIdLayout] });
         this.lineLayout = device.createBindGroupLayout({
             label: "preview thick lines",
             entries: [0, 1, 2].map(binding => ({ binding, visibility: ShaderStage.VERTEX, buffer: { type: "read-only-storage" as const } })),
@@ -651,6 +675,8 @@ export class WebGPUPreviewRenderer {
 
         const uniforms = frameUniforms(camera, target.width, target.height, this.frameData);
         const whole = uniforms.slice();
+        // How deep the impostors overlap: whether they take two passes (drawImpostorsFirst).
+        const overlap = plan.impostors > 0 ? impostorOverlap(plan.draws, whole.subarray(0, 16), whole.subarray(16, 32), target.width, target.height) : 0;
         // The projection is the frame's first 16 floats (Frame in previewShaders.ts).
         if (target.tile) narrowToTile(uniforms, target.tile, target.width, target.height);
 
@@ -745,17 +771,24 @@ export class WebGPUPreviewRenderer {
         const peelLayers = transparentLayers(camera, anyTransparent);
         let pass: GPURenderPassEncoder | null = null;
         let peel: PeelTargets | null = null;
+        let impostorPasses = plan.impostors > 0 ? 1 : 0;
         if (peelLayers > 0) {
             peel = this.depthPeel.ensure(target.colour.width, target.colour.height, peelLayers);
-            // The opaque scene, multisampled, its depth kept to peel and composite against.
+            // The opaque scene, multisampled, its depth kept to peel and composite against: the
+            // impostors first, if in two passes, and the rest over them.
+            const impostorsFirst = this.drawImpostorsFirst(encoder, plan.draws, camera, {
+                colour: target.colour, clearColour, loadOp: "clear", depthView: peel.opaqueDepthView, frameGroup, startTiming, overlap,
+            });
+            if (impostorsFirst) impostorPasses = 2;
+            const opaqueLoad: GPULoadOp = impostorsFirst ? "load" : "clear";
             const opaque = encoder.beginRenderPass({
                 label: "opaque",
                 timestampWrites: startTiming(),
-                colorAttachments: [{ view: target.colour.createView(), clearValue: clearColour, loadOp: "clear", storeOp: "store" }],
-                depthStencilAttachment: { view: peel.opaqueDepthView, depthClearValue: 1.0, depthLoadOp: "clear", depthStoreOp: "store" },
+                colorAttachments: [{ view: target.colour.createView(), clearValue: clearColour, loadOp: opaqueLoad, storeOp: "store" }],
+                depthStencilAttachment: { view: peel.opaqueDepthView, depthClearValue: 1.0, depthLoadOp: opaqueLoad, depthStoreOp: "store" },
             });
             opaque.setBindGroup(0, frameGroup);
-            for (const item of plan.draws) if (!item.transparent) this.drawOne(opaque, item, camera);
+            for (const item of plan.draws) if (!item.transparent && !(impostorsFirst && item.impostor)) this.drawOne(opaque, item, camera);
             for (const item of gpuDraws) if (!item.transparent) this.drawGpu(opaque, item, camera.zoom);
             // Textured shapes after the meshes, as GLrender draws them after drawTriangles; they are
             // opaque, so they hide what is behind them.
@@ -794,6 +827,12 @@ export class WebGPUPreviewRenderer {
             }
             shapes = shapeCount;
         } else {
+            // The impostors first, if in two passes; the rest over them.
+            const impostorsFirst = this.drawImpostorsFirst(encoder, plan.draws, camera, {
+                colour: target.colour, clearColour, loadOp: "clear", depthView: target.depth.createView(), frameGroup, startTiming, overlap,
+            });
+            if (impostorsFirst) impostorPasses = 2;
+            const sceneLoad: GPULoadOp = impostorsFirst ? "load" : "clear";
             // With depth blur, resolved into the sharp picture, its depth kept for the blur; without,
             // the overlays follow in this pass and it resolves into the image.
             const scene = encoder.beginRenderPass({
@@ -803,13 +842,13 @@ export class WebGPUPreviewRenderer {
                     view: target.colour.createView(),
                     resolveTarget: blur?.sharpView ?? target.resolve,
                     clearValue: clearColour,
-                    loadOp: "clear",
+                    loadOp: sceneLoad,
                     storeOp: "discard",
                 }],
                 depthStencilAttachment: {
                     view: target.depth.createView(),
                     depthClearValue: 1.0,
-                    depthLoadOp: "clear",
+                    depthLoadOp: sceneLoad,
                     depthStoreOp: blur ? "store" : "discard",
                 },
             });
@@ -818,7 +857,7 @@ export class WebGPUPreviewRenderer {
             // Opaque first, then transparent over it, as the WebGL renderer orders them.
             for (const transparent of [false, true]) {
                 for (const item of plan.draws) {
-                    if (item.transparent !== transparent) continue;
+                    if (item.transparent !== transparent || (impostorsFirst && item.impostor)) continue;
                     this.drawOne(scene, item, camera);
                 }
                 for (const item of gpuDraws) {
@@ -863,7 +902,7 @@ export class WebGPUPreviewRenderer {
         if (timing) this.frameTimer.collect();
         this.surfaceTextures.prune();
 
-        return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers };
+        return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers, impostorPasses, impostorOverlap: overlap };
     }
 
     /**
@@ -952,6 +991,8 @@ export class WebGPUPreviewRenderer {
         let first = true;
         let shapes = 0;
         let labels = 0;
+        let impostorPasses = plan.impostors > 0 ? 1 : 0;
+        let impostorOverlapMax = 0;
         // The views drawn in this target, for their labels and the first's overlays at the end.
         const drawn: { uniforms: Float32Array; rect: SnapshotTile; view: PreviewView; part: SnapshotTile; camera: PreviewCameraSource }[] = [];
         for (const view of views) {
@@ -968,6 +1009,8 @@ export class WebGPUPreviewRenderer {
 
             const uniforms = frameUniforms(viewCamera, view.width, view.height);
             const whole = uniforms.slice();
+            const overlap = plan.impostors > 0 ? impostorOverlap(items, whole.subarray(0, 16), whole.subarray(16, 32), view.width, view.height) : 0;
+            impostorOverlapMax = Math.max(impostorOverlapMax, overlap);
             narrowToTile(uniforms, part, view.width, view.height);
             const encoder = this.device.createCommandEncoder({ label: "preview view" });
 
@@ -1016,16 +1059,24 @@ export class WebGPUPreviewRenderer {
             const loadOp: GPULoadOp = first ? "clear" : "load";
             const inView = (pass: GPURenderPassEncoder) => pass.setViewport(rect.x, rect.y, rect.width, rect.height, 0, 1);
 
+            // The impostors first, if in two passes; the rest over them.
+            const impostorsFirst = this.drawImpostorsFirst(encoder, items, viewCamera, {
+                colour: target.colour, clearColour, loadOp, depthView: peel ? peel.opaqueDepthView : depthView,
+                frameGroup, viewport: rect, startTiming, overlap,
+            });
+            if (impostorsFirst) impostorPasses = 2;
+            const sceneLoad: GPULoadOp = impostorsFirst ? "load" : loadOp;
+            const rest = impostorsFirst ? items.filter(item => !item.impostor) : items;
             if (peel) {
                 const opaque = encoder.beginRenderPass({
                     label: "opaque (view)",
                     timestampWrites: startTiming(),
-                    colorAttachments: [{ view: target.colour.createView(), clearValue: clearColour, loadOp, storeOp: "store" }],
-                    depthStencilAttachment: { view: peel.opaqueDepthView, depthClearValue: 1.0, depthLoadOp: loadOp, depthStoreOp: "store" },
+                    colorAttachments: [{ view: target.colour.createView(), clearValue: clearColour, loadOp: sceneLoad, storeOp: "store" }],
+                    depthStencilAttachment: { view: peel.opaqueDepthView, depthClearValue: 1.0, depthLoadOp: sceneLoad, depthStoreOp: "store" },
                 });
                 inView(opaque);
                 opaque.setBindGroup(0, frameGroup);
-                for (const item of items) if (!item.transparent) this.drawOne(opaque, item, viewCamera);
+                for (const item of rest) if (!item.transparent) this.drawOne(opaque, item, viewCamera);
                 for (const item of gpuDraws) if (!item.transparent) this.drawGpu(opaque, item, camera.zoom);
                 shapes = this.texturedShapes.draw(opaque, shapesSource);
                 if (labelsInScene.length) labels += this.textLayer.draw(opaque, labelsInScene, camera.zoom, view.height, allText);
@@ -1062,13 +1113,13 @@ export class WebGPUPreviewRenderer {
                 const scene = encoder.beginRenderPass({
                     label: "scene (view)",
                     timestampWrites: startTiming(),
-                    colorAttachments: [{ view: target.colour.createView(), clearValue: clearColour, loadOp, storeOp: "store" }],
-                    depthStencilAttachment: { view: depthView, depthClearValue: 1.0, depthLoadOp: loadOp, depthStoreOp: "store" },
+                    colorAttachments: [{ view: target.colour.createView(), clearValue: clearColour, loadOp: sceneLoad, storeOp: "store" }],
+                    depthStencilAttachment: { view: depthView, depthClearValue: 1.0, depthLoadOp: sceneLoad, depthStoreOp: "store" },
                 });
                 inView(scene);
                 scene.setBindGroup(0, frameGroup);
                 for (const transparent of [false, true]) {
-                    for (const item of items) if (item.transparent === transparent) this.drawOne(scene, item, viewCamera);
+                    for (const item of rest) if (item.transparent === transparent) this.drawOne(scene, item, viewCamera);
                     for (const item of gpuDraws) if (item.transparent === transparent) this.drawGpu(scene, item, camera.zoom);
                 }
                 shapes = this.texturedShapes.draw(scene, shapesSource);
@@ -1140,7 +1191,7 @@ export class WebGPUPreviewRenderer {
         });
         if (timing) this.frameTimer.collect();
         this.surfaceTextures.prune();
-        return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers };
+        return { plan, uploads, cpuMs: performance.now() - started, labels, overlaySegments, shapes, peelLayers, impostorPasses, impostorOverlap: impostorOverlapMax };
     }
 
     /** Release every GPU resource it made (not the shared device). It cannot be used afterwards. */
@@ -1157,6 +1208,7 @@ export class WebGPUPreviewRenderer {
         this.shadowMapTexture?.destroy();
         this.noShadowMap.destroy();
         this.noOpaqueDepth.destroy();
+        this.impostorIds?.texture.destroy();
         this.noPreviousLayer.destroy();
         this.depthPeel.destroy();
         this.depthBlur.destroy();
@@ -1176,6 +1228,81 @@ export class WebGPUPreviewRenderer {
         }
         // The device is shared (../gpu), so it stays.
         this.device.removeEventListener("uncapturederror", this.errorListener);
+    }
+
+    /**
+     * Spheres and cylinders drawn per pixel (impostors.ts), in two passes ahead of the pass that draws
+     * everything else, when there are any among `items` and the setting asks for two passes at
+     * `overlap` (impostors.ts: twoPasses, impostorOverlap).
+     *
+     * In one pass each box's fragments find their surface, light it and write its depth (fs_impostor):
+     * writing frag_depth, the GPU cannot throw out a hidden fragment before its shader runs, nor (on
+     * Apple's GPUs) sort out what is hidden before shading at all - so where big spheres overlap, every
+     * layer is lit. Here instead:
+     * - their depth alone into `depthView`, and each sample's instance id into a multisampled id
+     *   target (fs_impostor_depth: the ray, no lighting, so cheap);
+     * - then their shading (fs_impostor_shade): the boxes at their own depth, writing none, so that
+     *   whatever is behind the nearest surface fails the depth test before its shader runs; each
+     *   fragment keeps only the samples whose id is its own. So each pixel is lit about once.
+     *
+     * The colour is cleared (or loaded, `loadOp`) here, and the depth; the pass after loads both and
+     * draws the rest, without the impostors. Returns whether it drew them.
+     */
+    private drawImpostorsFirst(encoder: GPUCommandEncoder, items: readonly PreviewDraw[], camera: PreviewCameraSource,
+                               target: {
+                                   colour: GPUTexture; clearColour: GPUColor; loadOp: GPULoadOp; depthView: GPUTextureView;
+                                   frameGroup: GPUBindGroup; viewport?: SnapshotTile; overlap: number;
+                                   startTiming?: () => GPURenderPassTimestampWrites | undefined;
+                               }): boolean {
+        if (!twoPasses(target.overlap)) return false;
+        const impostors = items.filter(item => item.impostor && !item.transparent);
+        if (impostors.length === 0) return false;
+        const ids = this.ensureImpostorIds(target.colour.width, target.colour.height);
+        const inView = (pass: GPURenderPassEncoder) => {
+            const v = target.viewport;
+            if (v) pass.setViewport(v.x, v.y, v.width, v.height, 0, 1);
+        };
+
+        const depthPass = encoder.beginRenderPass({
+            label: "impostor depth",
+            // The ids cleared whole each time: a view's are read only by its own shading pass.
+            colorAttachments: [{ view: ids.view, clearValue: { r: 0, g: 0, b: 0, a: 0 }, loadOp: "clear", storeOp: "store" }],
+            depthStencilAttachment: { view: target.depthView, depthClearValue: 1.0, depthLoadOp: target.loadOp, depthStoreOp: "store" },
+            timestampWrites: target.startTiming?.(),
+        });
+        inView(depthPass);
+        depthPass.setBindGroup(0, target.frameGroup);
+        for (const item of impostors) this.drawOne(depthPass, item, camera, "impostorDepth");
+        depthPass.end();
+
+        const shade = encoder.beginRenderPass({
+            label: "impostor shading",
+            colorAttachments: [{ view: target.colour.createView(), clearValue: target.clearColour, loadOp: target.loadOp, storeOp: "store" }],
+            depthStencilAttachment: { view: target.depthView, depthReadOnly: true },
+        });
+        inView(shade);
+        shade.setBindGroup(0, target.frameGroup);
+        shade.setBindGroup(2, ids.bindGroup);
+        for (const item of impostors) this.drawOne(shade, item, camera, "impostorShade");
+        shade.end();
+        return true;
+    }
+
+    /** The two-pass impostors' multisampled id target, at the frame's size, and its bind group to read it. */
+    private ensureImpostorIds(width: number, height: number): { view: GPUTextureView; bindGroup: GPUBindGroup } {
+        const held = this.impostorIds;
+        if (held && held.texture.width === width && held.texture.height === height) return held;
+        held?.texture.destroy();
+        const texture = this.device.createTexture({
+            label: "impostor ids", size: [width, height], format: IMPOSTOR_ID_FORMAT, sampleCount: SAMPLE_COUNT,
+            usage: TextureUsage.RENDER_ATTACHMENT | TextureUsage.TEXTURE_BINDING,
+        });
+        const view = texture.createView();
+        const bindGroup = this.device.createBindGroup({
+            label: "impostor ids", layout: this.impostorIdLayout, entries: [{ binding: 16, resource: view }],
+        });
+        this.impostorIds = { texture, view, bindGroup };
+        return this.impostorIds;
     }
 
     /**
@@ -1292,6 +1419,10 @@ export class WebGPUPreviewRenderer {
             drawBlock(custom, alpha, halfWidth, null, model, data, at(0), segmentColours, glow, !item.transparent, highlight, firstVertex);
             item.copies.forEach((model, n) => drawBlock(custom, alpha, halfWidth, grey, model, data, at(n + 1), segmentColours, null,
                 !item.transparent, highlight, firstVertex));
+            // Drawn per pixel: each copy's first instance id, in output.y (impostorId in previewShaders.ts).
+            if (item.impostor) {
+                for (let n = 0; n < copies; n++) data[at(n) + 33] = (item.impostorFirstId ?? 0) + n * item.instanceCount;
+            }
         });
         this.device.queue.writeBuffer(sub.drawUniforms, 0, data);
     }
@@ -1322,10 +1453,30 @@ export class WebGPUPreviewRenderer {
             return;
         }
 
-        // A hover highlight's spheres all take the hover size (drawCore), through the half-width slot.
+        // A hover highlight's spheres all take the hover size (drawCore), through the half-width slot;
+        // a cylinder drawn per pixel, which of its ends are capped.
         const hoverRadius = item.primitive === "spheres" && item.buffer.isHoverBuffer ? hoverSphereRadius(camera) ?? 0 : 0;
-        this.writeDrawBlocks(sub, item, camera, hoverRadius);
+        this.writeDrawBlocks(sub, item, camera, item.impostor ? capBits(item.impostor) : hoverRadius);
         const copies = 1 + item.copies.length;
+
+        if (item.impostor && sub.instanceOrigin && sub.instanceSize && sub.instanceOrientation) {
+            // Spheres and cylinders per pixel (impostors.ts): a box of 36 vertices an instance, from the
+            // instance buffers alone.
+            const colour = item.colourSource === "instance" ? "instance" : "uniform";
+            pass.setPipeline(this.impostorPipeline(item.impostor.kind, colour, mode));
+            let slot = 0;
+            if (colour === "instance") pass.setVertexBuffer(slot++, sub.instanceColour);
+            pass.setVertexBuffer(slot++, sub.instanceOrigin);
+            pass.setVertexBuffer(slot++, sub.instanceSize);
+            pass.setVertexBuffer(slot++, sub.instanceOrientation);
+            // The shadow map takes them flat, a quad each (vs_impostor_shadow_*): six vertices.
+            const vertices = mode === "shadow" ? 6 : 36;
+            for (let copy = 0; copy < copies; copy++) {
+                pass.setBindGroup(1, sub.bindGroups[copy]);
+                pass.draw(vertices, item.instanceCount);
+            }
+            return;
+        }
 
         if (item.primitive === "spheres") {
             pass.setPipeline(this.pipeline("spheres", item.transparent, false, mode));
@@ -1749,6 +1900,60 @@ export class WebGPUPreviewRenderer {
             },
             // The WebGL view draws with face culling off, back faces flat-shaded.
             primitive: { topology: "triangle-list", cullMode: "none", frontFace: "ccw" },
+            depthStencil: out.depthStencil,
+            multisample: out.multisample,
+        });
+        this.pipelines.set(key, pipeline);
+        return pipeline;
+    }
+
+    /**
+     * Spheres or cylinders drawn per pixel (impostors.ts): a box an instance, front faces only, from
+     * the instance buffers (the colour first, if per instance); the fragment works out the surface and
+     * its depth. Opaque only: in the picture, the g-buffer or the shadow map.
+     */
+    private impostorPipeline(kind: "sphere" | "cylinder", colour: "instance" | "uniform", pass: PassKind): GPURenderPipeline {
+        const key = `impostor-${kind}|${colour}|${pass}`;
+        const cached = this.pipelines.get(key);
+        if (cached) return cached;
+        const vec3 = (location: number): GPUVertexBufferLayout =>
+            ({ arrayStride: 12, stepMode: "instance", attributes: [{ shaderLocation: location, offset: 0, format: "float32x3" }] });
+        const buffers: GPUVertexBufferLayout[] = [];
+        if (colour === "instance") {
+            buffers.push({ arrayStride: 16, stepMode: "instance", attributes: [{ shaderLocation: 2, offset: 0, format: "float32x4" }] });
+        }
+        buffers.push(vec3(3), vec3(4), {
+            arrayStride: 64, stepMode: "instance",
+            attributes: [0, 1, 2, 3].map(i => ({ shaderLocation: 5 + i, offset: 16 * i, format: "float32x4" as GPUVertexFormat })),
+        });
+        const out = this.outputs(false, pass === "impostorDepth" || pass === "impostorShade" ? "main" : pass);
+        if (pass === "impostorDepth") {
+            // Their depth, and each sample's instance id.
+            out.targets = [{ format: IMPOSTOR_ID_FORMAT }];
+        } else if (pass === "impostorShade") {
+            // Against the depth pass's depth, the box's own depth, writing none. The box is a little
+            // bigger than its shape, so in front of it; pulled towards the viewer too, so that where
+            // depth is coarse (far, in perspective) its face still lands in front.
+            out.depthStencil = {
+                ...out.depthStencil, depthWriteEnabled: false, depthCompare: "less-equal", depthBias: -32, depthBiasSlopeScale: -1,
+            };
+        }
+        const fragmentEntry = {
+            main: "fs_impostor", gbuffer: "fs_impostor_gbuffer", shadow: "fs_impostor_shadow_flat", peel: "fs_impostor",
+            impostorDepth: "fs_impostor_depth", impostorShade: "fs_impostor_shade",
+        }[pass];
+        // In the shadow map, flat quads with their own depth (vs_impostor_shadow_*), not boxes: the colour
+        // buffer, if any, is bound but not read.
+        const shadow = pass === "shadow";
+        const pipeline = this.device.createRenderPipeline({
+            label: `preview ${key}`,
+            layout: pass === "impostorShade" ? this.impostorShadeLayout : this.pipelineLayout,
+            vertex: { module: this.module, entryPoint: shadow ? `vs_impostor_shadow_${kind}` : `vs_impostor_${kind}_${colour}`, buffers },
+            fragment: {
+                module: this.module, targets: out.targets,
+                entryPoint: fragmentEntry,
+            },
+            primitive: { topology: "triangle-list", cullMode: shadow ? "none" : "back", frontFace: "ccw" },
             depthStencil: out.depthStencil,
             multisample: out.multisample,
         });

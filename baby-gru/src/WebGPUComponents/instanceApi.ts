@@ -19,6 +19,7 @@ import { describeSkipped, effectSettings, planPreview } from "./previewScene";
 import { setUseWebGPU } from "../store/sceneSettingsSlice";
 import type { WebGPUMainViewRenderer } from "../components/webMG/MoorhenWebGPUMainView";
 import { gpuMapContourSetting, mapStyleOf } from "./mapContour/setting";
+import { type ImpostorPasses, TWO_PASS_OVERLAP, impostorSetting } from "./impostors";
 import { formatRendererReport, median, slowFrames, type RendererReportFacts } from "./rendererReport";
 import { version as moorhenVersion } from "../version";
 
@@ -152,6 +153,13 @@ export interface WebGPUApi {
     report(options?: { frames?: number; mapWalk?: number }): Promise<string>;
     /** What report() says, as it gathered it. */
     reportFacts(options?: { frames?: number; mapWalk?: number }): Promise<RendererReportFacts>;
+    /**
+     * The scene as it is, timed with Coot's instanced spheres and cylinders drawn as meshes and then
+     * per pixel (impostors.ts), `frames` frames each (60 by default), the setting put back after: one
+     * line each, the GPU's time a frame (the honest number: the frame interval stops at the display's
+     * refresh) and what was drawn. Needs WebGPU drawing the main view.
+     */
+    compareImpostors(options?: { frames?: number }): Promise<string>;
     /** Ask for the main view to be drawn with WebGPU, or not (the preference, so it is remembered). */
     setMainView(useWebGPU: boolean): void;
     /**
@@ -252,6 +260,40 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
 
         setMainView(useWebGPU: boolean): void {
             host.store.dispatch(setUseWebGPU(useWebGPU));
+        },
+
+        async compareImpostors(options: { frames?: number } = {}): Promise<string> {
+            const was = { ...impostorSetting };
+            const lines: string[] = [];
+            const ways: { name: string; enabled: boolean; passes: ImpostorPasses }[] = [
+                { name: "meshes               ", enabled: false, passes: "auto" },
+                { name: "per pixel, one pass  ", enabled: true, passes: "one" },
+                { name: "per pixel, two passes", enabled: true, passes: "two" },
+            ];
+            const view = webGLView(host) as WebGLView & { externalRenderer?: WebGPUMainViewRenderer | null };
+            let overlap: number | null = null;
+            try {
+                // Twice round, so that a warming GPU favours none.
+                for (const way of [...ways, ...ways]) {
+                    impostorSetting.enabled = way.enabled;
+                    impostorSetting.passes = way.passes;
+                    const plan = planPreview(host.store.getState().glRef.displayBuffers ?? []);
+                    const facts = await this.reportFacts({ frames: options.frames ?? 60, mapWalk: 0 });
+                    const f = facts.frames;
+                    if (way.enabled) overlap = view.externalRenderer?.lastFrame?.impostorOverlap ?? overlap;
+                    lines.push(`${way.name}: GPU ${f?.gpuMs != null ? f.gpuMs.toFixed(2) : "?"} ms a frame, `
+                        + `interval ${f ? f.medianMs.toFixed(1) : "?"} ms, CPU ${f ? f.cpuMs.toFixed(2) : "?"} ms; `
+                        + `${plan.triangles.toLocaleString()} triangles, ${plan.impostors.toLocaleString()} drawn per pixel`);
+                }
+            } finally {
+                Object.assign(impostorSetting, was);
+                webGLView(host).drawScene();
+            }
+            if (overlap !== null) {
+                lines.push(`overlap ${overlap.toFixed(2)}: "auto" takes ${overlap >= TWO_PASS_OVERLAP ? "two passes" : "one pass"} `
+                    + `(two from ${TWO_PASS_OVERLAP})`);
+            }
+            return lines.join("\n");
         },
 
         async report(options: { frames?: number; mapWalk?: number } = {}): Promise<string> {

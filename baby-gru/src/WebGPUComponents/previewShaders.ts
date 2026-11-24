@@ -891,6 +891,553 @@ fn fs_sphere_gbuffer(in: SphereOut) -> SphereGBuffer {
     out.normal = vec4f(x, y, z, 1.0);
     return out;
 }
+
+// Spheres and cylinders drawn per pixel (impostors.ts): an instanced mesh of unit spheres or unit
+// cylinders, drawn instead as a box round each instance - its front faces only, so each pixel once -
+// whose every pixel casts the view's ray at the exact sphere or cylinder and is given that surface's
+// depth, normal and light. Everything is worked out in eye space, where the ray is simple: from the
+// box's point straight back (orthographic) or out from the eye (perspective).
+//
+// The box is never clipped by the near and far planes (its depth is clamped into range; the depth
+// written is the surface's): the surface decides. As a mesh: a surface in front of the near plane is
+// cut away, and what is behind it shows - the inside of the far wall, flat, as a mesh's back faces
+// show; a surface beyond the far plane is not drawn. So a cut sphere or cylinder looks as its mesh
+// does, but smooth.
+struct ImpostorOut {
+    @builtin(position) position: vec4f,
+    @location(0) colour: vec4f,
+    // The box's point, in eye space.
+    @location(1) eye: vec3f,
+    // A sphere's centre, or a cylinder's start (z = 0 of the template), in eye space.
+    @location(2) @interpolate(flat) start: vec3f,
+    // A cylinder's axis (unit, eye space) and length; w = 0 for a sphere.
+    @location(3) @interpolate(flat) axis: vec4f,
+    // x the radius; y the hover highlight (instanceHighlight's 1 or 2).
+    @location(4) @interpolate(flat) shape: vec4f,
+    // Which instance of which draw (and copy) this is, from 1, unique in the frame: what the two-pass
+    // depth pass marks each sample with, for the shading to tell its own (drawImpostorsFirst).
+    @location(5) @interpolate(flat) id: u32,
+};
+
+// The box: -1..1 in x and y, -1..1 in z (a sphere's) or 0..1 along a cylinder's axis; twelve
+// triangles, wound counter-clockwise seen from outside.
+const IMPOSTOR_BOX = array<vec3f, 36>(
+    vec3f(1.0, -1.0, -1.0), vec3f(1.0, 1.0, -1.0), vec3f(1.0, 1.0, 1.0),
+    vec3f(1.0, -1.0, -1.0), vec3f(1.0, 1.0, 1.0), vec3f(1.0, -1.0, 1.0),
+    vec3f(-1.0, -1.0, 1.0), vec3f(-1.0, 1.0, 1.0), vec3f(-1.0, 1.0, -1.0),
+    vec3f(-1.0, -1.0, 1.0), vec3f(-1.0, 1.0, -1.0), vec3f(-1.0, -1.0, -1.0),
+    vec3f(-1.0, 1.0, -1.0), vec3f(-1.0, 1.0, 1.0), vec3f(1.0, 1.0, 1.0),
+    vec3f(-1.0, 1.0, -1.0), vec3f(1.0, 1.0, 1.0), vec3f(1.0, 1.0, -1.0),
+    vec3f(1.0, -1.0, -1.0), vec3f(1.0, -1.0, 1.0), vec3f(-1.0, -1.0, 1.0),
+    vec3f(1.0, -1.0, -1.0), vec3f(-1.0, -1.0, 1.0), vec3f(-1.0, -1.0, -1.0),
+    vec3f(-1.0, -1.0, 1.0), vec3f(1.0, -1.0, 1.0), vec3f(1.0, 1.0, 1.0),
+    vec3f(-1.0, -1.0, 1.0), vec3f(1.0, 1.0, 1.0), vec3f(-1.0, 1.0, 1.0),
+    vec3f(-1.0, 1.0, -1.0), vec3f(1.0, 1.0, -1.0), vec3f(1.0, -1.0, -1.0),
+    vec3f(-1.0, 1.0, -1.0), vec3f(1.0, -1.0, -1.0), vec3f(-1.0, -1.0, -1.0));
+
+fn isPerspective() -> bool {
+    return abs(frame.projection[2].w) > 0.5;
+}
+
+fn impostorEye(p: vec3f) -> vec3f {
+    let e = frame.view * (draw.model * vec4f(p, 1.0));
+    return e.xyz / e.w;
+}
+
+// Whether all of an instance lies in front of the near plane, beyond the far plane, or behind the eye:
+// nothing of it can show. Its box is never clipped by those planes (impostorBox), so without this every
+// atom along the line of sight - through the whole molecule, not just the slab - would be rasterised
+// and every one of its pixels thrown away, at full price (a fragment that writes its own depth is
+// never rejected early). nearZ and farZ: its nearest and farthest eye z (the eye looks down -z).
+fn impostorOutside(at: vec2f, nearZ: f32, farZ: f32) -> bool {
+    if (isPerspective() && farZ >= 0.0) { return true; }
+    let far = frame.projection * vec4f(at, farZ, 1.0);
+    if (far.z < 0.0) { return true; }
+    if (isPerspective() && nearZ >= 0.0) { return false; }
+    let near = frame.projection * vec4f(at, nearZ, 1.0);
+    return near.z > near.w;
+}
+
+const IMPOSTOR_BOX_MARGIN = 0.05;
+
+fn impostorBox(vertex: u32, start: vec3f, axis: vec3f, len: f32, radius: f32, colour: vec4f, highlight: f32) -> ImpostorOut {
+    var out: ImpostorOut;
+    let other = start + len * axis;
+    let nearZ = max(start.z, other.z) + radius;
+    let farZ = min(start.z, other.z) - radius;
+    if (impostorOutside(start.xy, nearZ, farZ)) {
+        // Every vertex at one point outside the clip volume: nothing rasterised.
+        out.position = vec4f(2.0, 2.0, 2.0, 1.0);
+        return out;
+    }
+    let corner = IMPOSTOR_BOX[vertex];
+    // A little bigger than the shape all round, so that no face of it touches the surface: drawn in two
+    // passes, the box's own depth must be in front of the surface it holds (fs_impostor_shade's depth
+    // test), and a face touching it - a sphere's nearest point, a cylinder's nearest line, a cap seen
+    // end on - would be level with it, and lose half the time.
+    let margin = IMPOSTOR_BOX_MARGIN * radius;
+    let boxRadius = radius + margin;
+    var eye: vec3f;
+    if (len > 0.0) {
+        // Square across the axis, one side facing the viewer, so the box is no wider than the cylinder.
+        let towards = select(vec3f(0.0, 0.0, 1.0), -normalize(start + 0.5 * len * axis), isPerspective());
+        var u = cross(axis, towards);
+        if (length(u) < 1e-4) {
+            u = cross(axis, select(vec3f(1.0, 0.0, 0.0), vec3f(0.0, 1.0, 0.0), abs(axis.x) > 0.9));
+        }
+        u = normalize(u);
+        let v = cross(axis, u);
+        eye = start + boxRadius * (corner.x * u + corner.y * v) + (0.5 * (corner.z + 1.0) * (len + 2.0 * margin) - margin) * axis;
+    } else {
+        eye = start + boxRadius * corner;
+    }
+    var clip = frame.projection * vec4f(eye, 1.0);
+    // A box the front plane cuts lies flat on it, all at depth 0: clamping only its corners in front of
+    // the plane would tilt its faces back, behind the inside it shows, and the two-pass depth test would
+    // lose that.
+    let nearest = frame.projection * vec4f(0.0, 0.0, nearZ + margin, 1.0);
+    let cut = nearest.w <= 0.0 || nearest.z < 0.0;
+    if (clip.w > 0.0) { clip.z = select(clamp(clip.z, 0.0, clip.w), 0.0, cut); }
+    out.position = clip;
+    out.colour = select(colour, draw.copyColour, draw.params.z > 0.5);
+    out.eye = eye;
+    out.start = start;
+    out.axis = vec4f(axis, len);
+    out.shape = vec4f(radius, highlight, 0.0, 0.0);
+    return out;
+}
+
+// In the shadow map, flat: a sphere as a disc facing the light at its centre's depth, a cylinder as the
+// rectangle it shows the light, along its axis - as WebGL's shadow pass draws perfect spheres. Drawn
+// with the triangles' own depth (no frag_depth), so the map's depth test rejects hidden texels before
+// they are shaded: the map takes the whole molecule, layer behind layer, where the exact surfaces cost
+// a full fragment each. Each casts the shadow its silhouette casts; it only shadows itself where it
+// faces away from the light, where the light is gone anyway.
+fn impostorShadowQuad(vertex: u32, start: vec3f, axis: vec3f, len: f32, radius: f32) -> ImpostorOut {
+    var out: ImpostorOut;
+    let other = start + len * axis;
+    if (vertex >= 6u || impostorOutside(start.xy, max(start.z, other.z) + radius, min(start.z, other.z) - radius)) {
+        out.position = vec4f(2.0, 2.0, 2.0, 1.0);
+        return out;
+    }
+    let corner = SPHERE_CORNERS[vertex];
+    var eye: vec3f;
+    let across = length(axis.xy) * len;
+    if (len > 0.0 && across > 1e-3 * radius) {
+        let p = normalize(axis.xy);
+        let q = vec3f(-p.y, p.x, 0.0);
+        eye = start + (0.5 * (corner.x + 1.0) * len) * axis + (corner.y * radius) * q;
+        out.axis = vec4f(axis, len);
+    } else {
+        // A sphere, or a cylinder end on to the light: a disc.
+        eye = 0.5 * (start + other) + radius * vec3f(corner, 0.0);
+        out.axis = vec4f(0.0);
+        out.start = 0.5 * (start + other);
+    }
+    out.position = frame.projection * vec4f(eye, 1.0);
+    out.eye = eye;
+    if (out.axis.w > 0.0) { out.start = start; }
+    out.shape = vec4f(radius, 1.0, 0.0, 0.0);
+    return out;
+}
+
+@vertex
+fn vs_impostor_shadow_sphere(@builtin(vertex_index) vertex: u32, @location(3) origin: vec3f, @location(4) size: vec3f,
+                             @location(5) o0: vec4f, @location(6) o1: vec4f, @location(7) o2: vec4f, @location(8) o3: vec4f) -> ImpostorOut {
+    let centre = impostorEye(instanceWorld(vec3f(0.0), origin, size, o0, o1, o2, o3).xyz);
+    return impostorShadowQuad(vertex, centre, vec3f(0.0), 0.0, size.x * length(o0.xyz));
+}
+
+@vertex
+fn vs_impostor_shadow_cylinder(@builtin(vertex_index) vertex: u32, @location(3) origin: vec3f, @location(4) size: vec3f,
+                               @location(5) o0: vec4f, @location(6) o1: vec4f, @location(7) o2: vec4f, @location(8) o3: vec4f) -> ImpostorOut {
+    let end = select(1.0, -1.0, (u32(draw.params.y + 0.5) & 4u) != 0u);
+    let a = impostorEye(instanceWorld(vec3f(0.0), origin, size, o0, o1, o2, o3).xyz);
+    let b = impostorEye(instanceWorld(vec3f(0.0, 0.0, end), origin, size, o0, o1, o2, o3).xyz);
+    let len = length(b - a);
+    let axis = select(vec3f(0.0, 0.0, 1.0), (b - a) / len, len > 0.0);
+    return impostorShadowQuad(vertex, a, axis, len, size.x * length(o0.xyz));
+}
+
+// The flat shadow casters' fragment: a disc cut from its square; a rectangle as it is. No depth of its
+// own, so hidden texels are rejected before this runs.
+@fragment
+fn fs_impostor_shadow_flat(in: ImpostorOut) {
+    if (in.axis.w == 0.0) {
+        let d = in.eye.xy - in.start.xy;
+        if (dot(d, d) > in.shape.x * in.shape.x) { discard; }
+    }
+}
+
+fn impostorHighlight(instance: u32) -> f32 {
+    return select(1.0, 2.0, draw.highlight.x >= 0 && i32(instance) == draw.highlight.x);
+}
+
+// A unit sphere instance: its centre and radius, as instanceWorld places the template.
+// The draw's (and copy's) first id is draw.output.y (PreviewDraw.impostorFirstId, per copy).
+fn impostorId(instance: u32) -> u32 {
+    return u32(draw.output.y + 0.5) + instance + 1u;
+}
+
+fn sphereImpostor(vertex: u32, instance: u32, origin: vec3f, size: vec3f, o0: vec4f, o1: vec4f, o2: vec4f, o3: vec4f, colour: vec4f) -> ImpostorOut {
+    let centre = instanceWorld(vec3f(0.0), origin, size, o0, o1, o2, o3).xyz;
+    var out = impostorBox(vertex, impostorEye(centre), vec3f(0.0), 0.0, size.x * length(o0.xyz), colour, impostorHighlight(instance));
+    out.id = impostorId(instance);
+    return out;
+}
+
+// A unit cylinder instance: from where the template's z = 0 lands to where its other end does - z = 1,
+// or z = -1 for a template made running the other way (bit 4 of draw.params.y: capBits).
+fn cylinderImpostor(vertex: u32, instance: u32, origin: vec3f, size: vec3f, o0: vec4f, o1: vec4f, o2: vec4f, o3: vec4f, colour: vec4f) -> ImpostorOut {
+    let end = select(1.0, -1.0, (u32(draw.params.y + 0.5) & 4u) != 0u);
+    let a = impostorEye(instanceWorld(vec3f(0.0), origin, size, o0, o1, o2, o3).xyz);
+    let b = impostorEye(instanceWorld(vec3f(0.0, 0.0, end), origin, size, o0, o1, o2, o3).xyz);
+    let len = length(b - a);
+    let axis = select(vec3f(0.0, 0.0, 1.0), (b - a) / len, len > 0.0);
+    var out = impostorBox(vertex, a, axis, max(len, 1e-6), size.x * length(o0.xyz), colour, impostorHighlight(instance));
+    out.id = impostorId(instance);
+    return out;
+}
+
+@vertex
+fn vs_impostor_sphere_instance(@builtin(vertex_index) vertex: u32, @builtin(instance_index) instance: u32,
+                               @location(2) colour: vec4f, @location(3) origin: vec3f, @location(4) size: vec3f,
+                               @location(5) o0: vec4f, @location(6) o1: vec4f, @location(7) o2: vec4f, @location(8) o3: vec4f) -> ImpostorOut {
+    return sphereImpostor(vertex, instance, origin, size, o0, o1, o2, o3, colour);
+}
+
+@vertex
+fn vs_impostor_sphere_uniform(@builtin(vertex_index) vertex: u32, @builtin(instance_index) instance: u32,
+                              @location(3) origin: vec3f, @location(4) size: vec3f,
+                              @location(5) o0: vec4f, @location(6) o1: vec4f, @location(7) o2: vec4f, @location(8) o3: vec4f) -> ImpostorOut {
+    return sphereImpostor(vertex, instance, origin, size, o0, o1, o2, o3, draw.colour);
+}
+
+@vertex
+fn vs_impostor_cylinder_instance(@builtin(vertex_index) vertex: u32, @builtin(instance_index) instance: u32,
+                                 @location(2) colour: vec4f, @location(3) origin: vec3f, @location(4) size: vec3f,
+                                 @location(5) o0: vec4f, @location(6) o1: vec4f, @location(7) o2: vec4f, @location(8) o3: vec4f) -> ImpostorOut {
+    return cylinderImpostor(vertex, instance, origin, size, o0, o1, o2, o3, colour);
+}
+
+@vertex
+fn vs_impostor_cylinder_uniform(@builtin(vertex_index) vertex: u32, @builtin(instance_index) instance: u32,
+                                @location(3) origin: vec3f, @location(4) size: vec3f,
+                                @location(5) o0: vec4f, @location(6) o1: vec4f, @location(7) o2: vec4f, @location(8) o3: vec4f) -> ImpostorOut {
+    return cylinderImpostor(vertex, instance, origin, size, o0, o1, o2, o3, draw.colour);
+}
+
+// The surfaces a ray meets: where it enters (front) and where it leaves (back), as distances along
+// it and outward normals (eye space); either may be missing - a cylinder open at the end the ray
+// enters by has no front there, and one open at both ends may show nothing at all.
+struct ImpostorSurfaces {
+    front: f32,
+    frontNormal: vec3f,
+    hasFront: bool,
+    back: f32,
+    backNormal: vec3f,
+    hasBack: bool,
+};
+
+const NO_SURFACES = ImpostorSurfaces(0.0, vec3f(0.0), false, 0.0, vec3f(0.0), false);
+
+fn sphereSurfaces(o: vec3f, d: vec3f, c: vec3f, r: f32) -> ImpostorSurfaces {
+    let oc = o - c;
+    let b = dot(oc, d);
+    let disc = b * b - (dot(oc, oc) - r * r);
+    if (disc < 0.0) { return NO_SURFACES; }
+    let s = sqrt(disc);
+    let t0 = -b - s;
+    let t1 = -b + s;
+    return ImpostorSurfaces(t0, (oc + t0 * d) / r, true, t1, (oc + t1 * d) / r, true);
+}
+
+// A cylinder from b along unit axis a for len, radius r; caps: 1 a flat cap at b, 2 at the other end.
+// The solid is where the ray is both within r of the axis and between the end planes.
+fn cylinderSurfaces(o: vec3f, d: vec3f, b: vec3f, a: vec3f, len: f32, r: f32, caps: u32) -> ImpostorSurfaces {
+    let w = o - b;
+    let da = dot(d, a);
+    let wa = dot(w, a);
+    let dp = d - da * a;
+    let wp = w - wa * a;
+    let A = dot(dp, dp);
+    let B = dot(dp, wp);
+    let C = dot(wp, wp) - r * r;
+    var c0 = -1e30;
+    var c1 = 1e30;
+    if (A > 1e-12) {
+        let disc = B * B - A * C;
+        if (disc < 0.0) { return NO_SURFACES; }
+        let s = sqrt(disc);
+        c0 = (-B - s) / A;
+        c1 = (-B + s) / A;
+    } else if (C > 0.0) {
+        return NO_SURFACES;
+    }
+    var s0 = -1e30;
+    var s1 = 1e30;
+    // Which end the ray enters the slab by: 1 the start, 2 the other.
+    var entersBy = 0u;
+    var leavesBy = 0u;
+    if (abs(da) > 1e-12) {
+        let tStart = -wa / da;
+        let tEnd = (len - wa) / da;
+        s0 = min(tStart, tEnd);
+        s1 = max(tStart, tEnd);
+        entersBy = select(2u, 1u, da > 0.0);
+        leavesBy = select(1u, 2u, da > 0.0);
+    } else if (wa < 0.0 || wa > len) {
+        return NO_SURFACES;
+    }
+    let entry = max(c0, s0);
+    let exit = min(c1, s1);
+    if (entry >= exit) { return NO_SURFACES; }
+    var out = NO_SURFACES;
+    if (c0 >= s0) {
+        out.front = c0;
+        out.frontNormal = normalize(wp + c0 * dp);
+        out.hasFront = true;
+    } else if ((caps & entersBy) != 0u) {
+        out.front = s0;
+        out.frontNormal = select(a, -a, entersBy == 1u);
+        out.hasFront = true;
+    }
+    if (c1 <= s1) {
+        out.back = c1;
+        out.backNormal = normalize(wp + c1 * dp);
+        out.hasBack = true;
+    } else if ((caps & leavesBy) != 0u) {
+        out.back = s1;
+        out.backNormal = select(a, -a, leavesBy == 1u);
+        out.hasBack = true;
+    }
+    return out;
+}
+
+// The surface a pixel shows: the front, unless it is in front of the near plane; then the back (a
+// mesh's back face, seen through the cut); nothing beyond the far plane.
+struct ImpostorHit {
+    eye: vec3f,
+    normal: vec3f,
+    depth: f32,
+    front: bool,
+    found: bool,
+};
+
+fn impostorDepth(p: vec3f) -> f32 {
+    let clip = frame.projection * vec4f(p, 1.0);
+    return clip.z / clip.w;
+}
+
+fn impostorRay(eye: vec3f) -> vec3f {
+    return select(vec3f(0.0, 0.0, -1.0), normalize(eye), isPerspective());
+}
+
+// The surface the ray through the box's point o shows, if any (found).
+fn impostorHitFrom(o: vec3f, in: ImpostorOut) -> ImpostorHit {
+    let d = impostorRay(o);
+    var surfaces: ImpostorSurfaces;
+    if (in.axis.w > 0.0) {
+        surfaces = cylinderSurfaces(o, d, in.start, in.axis.xyz, in.axis.w, in.shape.x, u32(draw.params.y + 0.5) & 3u);
+    } else {
+        surfaces = sphereSurfaces(o, d, in.start, in.shape.x);
+    }
+    var hit: ImpostorHit;
+    hit.depth = -1.0;
+    if (surfaces.hasFront) {
+        hit.eye = o + surfaces.front * d;
+        hit.normal = surfaces.frontNormal;
+        hit.depth = impostorDepth(hit.eye);
+        hit.front = true;
+    }
+    if (hit.depth < 0.0 && surfaces.hasBack) {
+        hit.eye = o + surfaces.back * d;
+        hit.normal = surfaces.backNormal;
+        hit.depth = impostorDepth(hit.eye);
+        hit.front = false;
+    }
+    hit.found = hit.depth >= 0.0 && hit.depth <= 1.0;
+    return hit;
+}
+
+fn impostorHit(in: ImpostorOut) -> ImpostorHit {
+    let hit = impostorHitFrom(in.eye, in);
+    if (!hit.found) { discard; }
+    return hit;
+}
+
+// The standard positions of a pixel's four samples (WebGPU's, for 4x multisampling), from its centre,
+// in pixels: x right, y down.
+const IMPOSTOR_SAMPLES = array<vec2f, 4>(
+    vec2f(-0.125, -0.375), vec2f(0.375, -0.125), vec2f(-0.375, 0.125), vec2f(0.125, 0.375));
+
+// Whether the pixel's centre ray passes within a couple of pixels (px, in eye units at the surface) of
+// the outline - the sphere's rim or a cylinder's sides or ends - where the samples may differ.
+fn impostorNearEdge(in: ImpostorOut, hit: ImpostorHit, px: f32) -> bool {
+    let d = impostorRay(in.eye);
+    let r = in.shape.x;
+    let w = in.eye - in.start;
+    if (in.axis.w > 0.0) {
+        let a = in.axis.xyz;
+        let s = dot(hit.eye - in.start, a);
+        if (s < 2.0 * px || s > in.axis.w - 2.0 * px) { return true; }
+        let n = cross(d, a);
+        let nn = length(n);
+        let off = select(length(w - dot(w, a) * a), abs(dot(w, n)) / nn, nn > 1e-6);
+        return r - off < 2.0 * px;
+    }
+    let q = length(w - dot(w, d) * d);
+    return r - q < 2.0 * px;
+}
+
+// From eye space back to where the lighting is worked out (model space, the copy placed): the view
+// is rigid, so its inverse is its rotation transposed.
+fn eyeToWorld(p: vec3f) -> vec3f {
+    let r = mat3x3f(frame.view[0].xyz, frame.view[1].xyz, frame.view[2].xyz);
+    return transpose(r) * (p - frame.view[3].xyz);
+}
+
+fn eyeDirToWorld(n: vec3f) -> vec3f {
+    let r = mat3x3f(frame.view[0].xyz, frame.view[1].xyz, frame.view[2].xyz);
+    return transpose(r) * n;
+}
+
+// The outline antialiased as a mesh's is: near it, each of the pixel's four samples casts its own ray
+// and is covered only if that ray meets the surface (mask, for sample_mask), so the multisampled
+// picture blends the edge as it blends a triangle's. The pixel is shaded once, where its centre's ray
+// lands, or else the first covered sample's; away from the outline, one ray does for all four. A mask
+// of 0: nothing here (the caller discards). across and down: dpdx and dpdy of in.eye, which the entry
+// point takes in uniform control flow.
+struct ImpostorCoverage {
+    hit: ImpostorHit,
+    mask: u32,
+};
+
+fn impostorCoverage(in: ImpostorOut, across: vec3f, down: vec3f) -> ImpostorCoverage {
+    var hit = impostorHitFrom(in.eye, in);
+    var mask = 0xFu;
+    // A pixel, in eye units where the surface is: on the box's face, scaled out to the surface's depth
+    // in perspective.
+    let scale = select(1.0, abs(hit.eye.z) / max(abs(in.eye.z), 1e-6), isPerspective() && hit.found);
+    let px = max(length(across), length(down)) * scale;
+    if (!hit.found || impostorNearEdge(in, hit, px)) {
+        mask = 0u;
+        for (var i = 0u; i < 4u; i++) {
+            let o = in.eye + IMPOSTOR_SAMPLES[i].x * across + IMPOSTOR_SAMPLES[i].y * down;
+            let sampled = impostorHitFrom(o, in);
+            if (!sampled.found) { continue; }
+            mask |= 1u << i;
+            if (!hit.found) { hit = sampled; }
+        }
+    }
+    return ImpostorCoverage(hit, mask);
+}
+
+// Lit as meshColour lights a mesh: a front face by lit(), a back face flat; shadowed at the surface
+// point a texel and a half out along the normal (finish()), with the exact tangent plane
+// (shadowAtNormal), as perfect spheres are.
+fn impostorColour(in: ImpostorOut, hit: ImpostorHit) -> vec4f {
+    let world = eyeToWorld(hit.eye);
+    let n = eyeDirToWorld(hit.normal);
+    let perUnit = length(vec3f(frame.shadowMatrix[0].x, frame.shadowMatrix[1].x, frame.shadowMatrix[2].x));
+    let along = select(vec3f(0.0), n * (1.5 * frame.shadowParams.x / perUnit), perUnit > 0.0);
+    let shadow = shadowAtNormal(frame.shadowMatrix * vec4f(world + along, 1.0), n);
+    let base = in.colour;
+    let colour = select(base * backShade(shadow), lit(base, n, occlusionAt(in.position), shadow), hit.front);
+    return withHighlight(fogged(colour * edgeAt(in.position), base.a, abs(hit.eye.z)), in.shape.y);
+}
+
+struct ImpostorFragment {
+    @location(0) colour: vec4f,
+    @builtin(frag_depth) depth: f32,
+    @builtin(sample_mask) mask: u32,
+};
+
+// In one pass: found, lit and given its depth. Writing frag_depth, every box's every fragment is
+// shaded, hidden or not: the GPU cannot reject any before the shader runs.
+@fragment
+fn fs_impostor(in: ImpostorOut) -> ImpostorFragment {
+    // Taken first, in uniform control flow: how the box's point moves a pixel across and down.
+    let across = dpdx(in.eye);
+    let down = dpdy(in.eye);
+    let covered = impostorCoverage(in, across, down);
+    if (covered.mask == 0u) { discard; }
+    var out: ImpostorFragment;
+    out.colour = impostorColour(in, covered.hit);
+    out.depth = covered.hit.depth;
+    out.mask = covered.mask;
+    return out;
+}
+
+// In two passes (previewRenderer's drawImpostorsFirst). First their depth alone - the ray and no
+// lighting, so cheap even where they overlap deep - and, with it, whose each sample is: the nearest
+// surface's id.
+// The id in two 16-bit halves (an rg16uint target: r32uint cannot be multisampled).
+struct ImpostorDepthFragment {
+    @location(0) id: vec2u,
+    @builtin(frag_depth) depth: f32,
+    @builtin(sample_mask) mask: u32,
+};
+
+@fragment
+fn fs_impostor_depth(in: ImpostorOut) -> ImpostorDepthFragment {
+    let across = dpdx(in.eye);
+    let down = dpdy(in.eye);
+    let covered = impostorCoverage(in, across, down);
+    if (covered.mask == 0u) { discard; }
+    var out: ImpostorDepthFragment;
+    out.id = vec2u(in.id & 0xFFFFu, in.id >> 16u);
+    out.depth = covered.hit.depth;
+    out.mask = covered.mask;
+    return out;
+}
+
+@group(2) @binding(16) var impostorIds: texture_multisampled_2d<u32>;
+
+struct ImpostorShadedFragment {
+    @location(0) colour: vec4f,
+    @builtin(sample_mask) mask: u32,
+};
+
+// Then the shading: the box drawn at its own depth (pulled a little towards the viewer), writing none,
+// so the depth test throws out, before the shader, every fragment behind the nearest surface; and the
+// shader keeps the samples the depth pass marked as this instance's. By id, not by comparing depths:
+// where a bond runs into an atom the two surfaces' depths are too close to tell apart reliably (a
+// tolerance big enough for a far, coarse depth let the bond show through the atom).
+@fragment
+fn fs_impostor_shade(in: ImpostorOut) -> ImpostorShadedFragment {
+    let across = dpdx(in.eye);
+    let down = dpdy(in.eye);
+    let covered = impostorCoverage(in, across, down);
+    let p = vec2i(in.position.xy);
+    var mask = 0u;
+    let mine = vec2u(in.id & 0xFFFFu, in.id >> 16u);
+    for (var i = 0u; i < 4u; i++) {
+        if (all(textureLoad(impostorIds, p, i32(i)).xy == mine)) { mask |= 1u << i; }
+    }
+    mask &= covered.mask;
+    if (mask == 0u) { discard; }
+    var out: ImpostorShadedFragment;
+    out.colour = impostorColour(in, covered.hit);
+    out.mask = mask;
+    return out;
+}
+
+struct ImpostorGBuffer {
+    @location(0) normal: vec4f,
+    @builtin(frag_depth) depth: f32,
+};
+
+// In the g-buffer: the surface's eye-space normal, facing as the mesh's would (a back face's away).
+@fragment
+fn fs_impostor_gbuffer(in: ImpostorOut) -> ImpostorGBuffer {
+    let hit = impostorHit(in);
+    var out: ImpostorGBuffer;
+    out.normal = vec4f(hit.normal, 1.0);
+    out.depth = hit.depth;
+    return out;
+}
+
 `;
 
 /**

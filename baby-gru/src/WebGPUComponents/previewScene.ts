@@ -20,6 +20,7 @@ import { type BufferMaterial, materialTextureIds } from '../WebGLgComponents/tex
 import type { TextSource } from './textLayer';
 import type { OverlayLinesSource } from './overlayLines';
 import type { TexturedShapeSource } from './texturedShapes';
+import { type ImpostorShape, impostorSetting, impostorShape } from './impostors';
 import { SHADOW_MAP_TEXELS, type ShadowMapQuality } from '../WebGLgComponents/shadowMapQuality';
 import { type DepthBlurSettings, depthBlurKernel } from './depthBlur';
 
@@ -334,6 +335,18 @@ export interface PreviewDraw {
      * renderer's to find out; one that is not is drawn as if it were absent, as in WebGL.
      */
     material: BufferMaterial | null;
+    /**
+     * An instanced mesh of unit spheres or unit cylinders drawn per pixel instead (impostors.ts),
+     * with impostorSetting on: a box per instance, vertexCount and indexCount still the template's.
+     * Absent or null: drawn as its triangles.
+     */
+    impostor?: ImpostorShape | null;
+    /**
+     * For an impostor draw: the id before its first instance's, its copies' following on (copy n
+     * from impostorFirstId + n x instanceCount), so that every instance drawn per pixel in the frame
+     * has an id of its own (the two-pass shading's: drawImpostorsFirst).
+     */
+    impostorFirstId?: number;
 }
 
 export interface PreviewPlan {
@@ -344,6 +357,8 @@ export interface PreviewPlan {
     triangles: number;
     /** Perfect spheres that will be drawn. */
     spheres: number;
+    /** Instanced spheres and cylinders that will be drawn per pixel (impostors.ts), copies included. */
+    impostors: number;
     /** Line segments that will be drawn. */
     segments: number;
     /** Which sub-buffers `skipped` counts, for finding out what they are. */
@@ -382,6 +397,7 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
     const skips: Skips = { counts: {}, list: [] };
     let triangles = 0;
     let spheres = 0;
+    let impostors = 0;
     let segments = 0;
 
     for (const buffer of displayBuffers) {
@@ -451,17 +467,29 @@ export function planPreview(displayBuffers: readonly DisplayBuffer[]): PreviewPl
             }
 
 
+            const transparent = !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1);
+            const material = materialOf(buffer, j, vertexCount);
+            // Per pixel, where it qualifies: opaque, untextured, one colour per instance (or one for all).
+            const impostor = impostorSetting.enabled && instanced && !transparent && !material && colourSource !== "vertex"
+                && lengthOf(buffer.triangleInstanceSizes?.[j]) >= 3 * instanceCount
+                && lengthOf(buffer.triangleInstanceOrientations?.[j]) >= 16 * instanceCount
+                ? impostorShape(buffer.triangleVertices[j], buffer.triangleNormals[j]) : null;
             draws.push({
                 buffer, index: j, primitive: "triangles", instanced, colourSource,
-                transparent: !!buffer.transparent || isFaded(buffer.alphaMultiplier ?? 1),
+                transparent,
                 vertexCount, indexCount, instanceCount,
                 ...copiesOf(buffer), moving, glow: moving,
-                material: materialOf(buffer, j, vertexCount),
+                material,
+                impostor,
+                impostorFirstId: impostor ? impostors : undefined,
             });
-            triangles += (indexCount / 3) * instanceCount * (1 + draws[draws.length - 1].copies.length);
+            const drawn = instanceCount * (1 + draws[draws.length - 1].copies.length);
+            // A box's twelve triangles each.
+            triangles += (impostor ? 12 : indexCount / 3) * drawn;
+            if (impostor) impostors += drawn;
         }
     }
-    return { draws, skipped: skips.counts, triangles, spheres, segments, skippedSubBuffers: skips.list };
+    return { draws, skipped: skips.counts, triangles, spheres, impostors, segments, skippedSubBuffers: skips.list };
 }
 
 /**

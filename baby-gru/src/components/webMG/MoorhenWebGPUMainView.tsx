@@ -33,6 +33,8 @@ export interface WebGPUMainViewRenderer extends ExternalRenderer {
      */
     readonly lastFrame: {
         meshes: number; triangles: number; spheres: number; segments: number; mapTriangles: number; mapLines: number; peelLayers: number;
+        /** Spheres and cylinders drawn per pixel: in how many passes, and how deep they overlap (impostors.ts). */
+        impostorPasses: number; impostorOverlap: number;
     } | null;
     /** The GPU time of the frames drawn since the last call (and of the FPS meter's), or null if not timed. */
     takeGpuTime(): { meanMs: number; maxMs: number; count: number } | null;
@@ -207,6 +209,7 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
                 return {
                     meshes: plan.draws.length, triangles: plan.triangles, spheres: plan.spheres, segments: plan.segments,
                     mapTriangles: maps?.triangles ?? 0, mapLines: maps?.lines ?? 0, peelLayers: lastReport.peelLayers,
+                    impostorPasses: lastReport.impostorPasses, impostorOverlap: lastReport.impostorOverlap,
                 };
             },
             takeGpuTime() {
@@ -280,6 +283,9 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
                     "WebGPU",
                     `${formatCount(lastReport.plan.triangles)} tris`,
                     ...(lastReport.peelLayers ? [`${lastReport.peelLayers} layers peeled`] : []),
+                    ...(lastReport.impostorPasses
+                        ? [`per pixel: ${lastReport.impostorPasses === 2 ? "two passes" : "one pass"}, overlap ${lastReport.impostorOverlap.toFixed(1)}`]
+                        : []),
                     ...(gpu && gpu.count > 0 ? [`gpu ${gpu.meanMs.toFixed(2)} ms`] : []),
                 ];
                 return parts.join(" | ");

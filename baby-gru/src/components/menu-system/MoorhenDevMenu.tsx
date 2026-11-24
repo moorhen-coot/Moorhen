@@ -2,7 +2,7 @@ import { useDispatch, useSelector, useStore } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { useEffect, useState } from "react";
 import { setOrigin } from "@/store";
-import { RootState, setShownBottomPanel } from "@/store";
+import { RootState, setRequestDrawScene, setShownBottomPanel } from "@/store";
 import { useMoorhenInstance, usePaths } from "../../InstanceManager";
 import {
     instrumentGl,
@@ -31,13 +31,14 @@ import { moorhen } from "../../types/moorhen";
 import { modalKeys } from "../../utils/enums";
 import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
 import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
+import { type ImpostorPasses, impostorSetting } from "../../WebGPUComponents/impostors";
 import { meshCentringSetting } from "../../WebGLgComponents/meshCentre";
 import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
 import { readGzippedTextFile } from "../../utils/utils";
 import { newVector } from "../../utils/vectorFactories";
 import { MoorhenLinearProgress } from "../icons";
-import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
+import { MoorhenFileInput, MoorhenNumberInput, MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
 import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
 
@@ -200,6 +201,9 @@ export const MoorhenDevMenu = () => {
     const [centreOnHighlight, setCentreOnHighlight] = useState<boolean>(meshCentringSetting.followHighlight);
     const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
     const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.wanted);
+    const [impostors, setImpostors] = useState<boolean>(impostorSetting.enabled);
+    const [impostorPasses, setImpostorPasses] = useState<ImpostorPasses>(impostorSetting.passes);
+    const [impostorTiming, setImpostorTiming] = useState<string>("");
     // Why there is no WebGPU here, or null: no navigator.gpu at once, no adapter once asked. Then
     // every WebGPU switch shows off and cannot be changed, whatever it is set to.
     const [noWebGPU, setNoWebGPU] = useState<string | null>(webGPUUnavailableReason());
@@ -587,6 +591,50 @@ export const MoorhenDevMenu = () => {
                     applyGpuMapContours(store.getState().maps as unknown as MoorhenMap[], store.getState().mapContourSettings.visibleMaps);
                 }}
             />
+            <MoorhenToggle
+                type="switch"
+                checked={noWebGPU === null && impostors}
+                disabled={noWebGPU !== null}
+                // Coot's instanced spheres and cylinders as a box each, whose pixels cast rays at the exact
+                // sphere or cylinder (impostors.ts). Timed against the meshes by webGPU.compareImpostors().
+                label={`WebGPU: draw bonds-mode atoms and bonds per pixel, not as meshes (experimental${noWebGPU ? "; no WebGPU here" : ""})`}
+                onChange={() => {
+                    impostorSetting.enabled = !impostors;
+                    setImpostors(!impostors);
+                    dispatch(setRequestDrawScene(true));
+                }}
+            />
+            <MoorhenSelect
+                // One pass: each fragment lit and given its depth at once. Two: their depth, then their
+                // shading against it, so what is hidden is not lit (previewRenderer's drawImpostorsFirst).
+                // Auto: two where they overlap deeply (impostors.ts: impostorOverlap); the FPS line says which.
+                label="... drawn in"
+                value={impostorPasses}
+                disabled={noWebGPU !== null || !impostors}
+                style={{ margin: "0.25rem 0.5rem" }}
+                onChange={evt => {
+                    const passes = evt.target.value as ImpostorPasses;
+                    impostorSetting.passes = passes;
+                    setImpostorPasses(passes);
+                    dispatch(setRequestDrawScene(true));
+                }}
+            >
+                <option value="auto">one pass or two, as deep as they overlap</option>
+                <option value="one">one pass</option>
+                <option value="two">two passes: depth, then shading</option>
+            </MoorhenSelect>
+            <MoorhenMenuItem
+                onClick={() => {
+                    if (noWebGPU !== null || impostorTiming === "Timing...") return;
+                    setImpostorTiming("Timing...");
+                    moorhenInstance.webGPU.compareImpostors()
+                        .then(text => { console.log(text); setImpostorTiming(text); })
+                        .catch(err => setImpostorTiming(`Failed: ${err}`));
+                }}
+            >
+                Time this view: bonds-mode atoms and bonds as meshes, per pixel in one pass, in two
+            </MoorhenMenuItem>
+            {impostorTiming && <pre style={{ fontSize: "0.75rem", whiteSpace: "pre-wrap", margin: "0.25rem 0.5rem" }}>{impostorTiming}</pre>}
             <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
             <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>
