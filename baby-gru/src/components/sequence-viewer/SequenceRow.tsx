@@ -1,5 +1,6 @@
 import React, { memo, useRef } from "react";
 import { MoorhenStack, MoorhenTooltip } from "../interface-base";
+import type { GradientColourTable, GradientPreset } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import { Residue, SeqElement } from "./MoorhenSeqViewTypes";
 import { ResidueBox } from "./ResidueBox";
 import { ValidationTracks } from "./ValidationTracks";
@@ -16,6 +17,7 @@ export const SequenceRow = memo(
         handleResidueMouseUp?: (evt: React.MouseEvent<HTMLDivElement>) => void;
         showValidationData?: boolean;
         validationTracks?: string[];
+        validationGradient?: GradientPreset | GradientColourTable;
     }) => {
         const {
             sequence,
@@ -28,6 +30,7 @@ export const SequenceRow = memo(
             handleResidueMouseUp,
             showValidationData = true,
             validationTracks = undefined,
+            validationGradient,
         } = props;
         const refList: React.RefObject<HTMLDivElement>[] = sequence.residues?.map(() => useRef<HTMLDivElement>(null)) ?? [];
 
@@ -72,6 +75,7 @@ export const SequenceRow = memo(
                             columnWidth={columnWidth}
                             handleResidueMouseUp={handleResidueMouseUp}
                             validationTracks={validationTracks}
+                            gradient={validationGradient}
                             popoverRef={refList[j]}
                         />
                     )}

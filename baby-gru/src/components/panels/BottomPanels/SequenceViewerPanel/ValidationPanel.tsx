@@ -15,6 +15,7 @@ import { useMoleculeChanged } from "@/hooks";
 import { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { libcootApi } from "@/types/libcoot";
 import { WorkerResponse } from "@/InstanceManager/CommandCentre";
+import type { GradientColourTable } from "@/components/inputs/MoorhenGradientPicker/gradientPresets";
 
 export type ValidationOption = {
     selectedMolecule: string
@@ -22,6 +23,8 @@ export type ValidationOption = {
     availableData: string[]
     shownData: string[]
     columnWidth: number
+    /** The colour gradient of the tracks, from good to poor; the "Pool Party" preset when not set */
+    colourTable?: GradientColourTable
 };
 
 
@@ -160,6 +163,7 @@ export const ValidationPanel = () => {
             showValidationData={true}
             nameColumnWidth={4}
             validationTracks={validationOption.shownData ?? []}
+            validationGradient={validationOption.colourTable}
             columnWidth={validationOption.columnWidth}
         /></OverlayModal>
         </div>

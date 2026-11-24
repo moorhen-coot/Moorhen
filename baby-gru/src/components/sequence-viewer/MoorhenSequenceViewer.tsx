@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { useStateWithRef } from "../../hooks/useStateWithRef";
 import { clickedResidueType } from "../card/MoleculeCard/MoleculeCard";
 import { MoorhenButton } from "../inputs";
+import type { GradientColourTable, GradientPreset } from "../inputs/MoorhenGradientPicker/gradientPresets";
 import { CustomHorizontalScrollbar } from "./CustomHorizontalScrollbar";
 import type { HoveredResidue, HoveredResidueSubscription, ResiduesSelection, SeqElement } from "./MoorhenSeqViewTypes";
 import "./MoorhenSequenceViewer.css";
@@ -31,6 +32,8 @@ type MoorhenSequenceViewerPropsType = {
     style?: React.CSSProperties;
     showValidationData?: boolean;
     validationTracks?: string[];
+    /** The colour gradient of the validation tracks, as a preset name or as colour stops (0 is the good end) */
+    validationGradient?: GradientPreset | GradientColourTable;
 };
 
 export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType) => {
@@ -43,6 +46,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         className,
         onHoverResidue,
         showValidationData = false,
+        validationGradient,
     } = props;
     const inputArray = useMemo(() => (Array.isArray(props.sequences) ? props.sequences : [props.sequences]), [props.sequences]);
     const noSequence: boolean = inputArray.length === 0;
@@ -485,6 +489,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
                     handleResidueMouseUp={handleResidueMouseUp}
                     showValidationData={showValidationData}
                     validationTracks={validationTracks}
+                    validationGradient={validationGradient}
                 />
             );
         });
@@ -500,6 +505,7 @@ export const MoorhenSequenceViewer = memo((props: MoorhenSequenceViewerPropsType
         handleResidueMouseDown,
         handleResidueMouseUp,
         validationTracks,
+        validationGradient,
     ]);
 
     const leftButtonsBar =

@@ -64,8 +64,17 @@ export const gradientPresets = {
 
 export type GradientPreset = keyof typeof gradientPresets;
 
+/** The colour stops of a gradient: [position from 0 to 1, [r, g, b]] */
+export type GradientColourTable = [number, [number, number, number]][];
+
+/** The CSS `linear-gradient(...)` image of a colour table, running from left to right */
+export const colourTableToCssGradient = (colourTable: GradientColourTable): string =>
+    `linear-gradient(to right, ${colourTable
+        .map(([position, [r, g, b]]) => `rgb(${r},${g},${b}) ${Math.round(position * 100)}%`)
+        .join(", ")})`;
+
 export const getColorFromGradient = (
-    gradient: GradientPreset | [number, [number, number, number]][],
+    gradient: GradientPreset | GradientColourTable,
     value: number,
     reverse?: boolean,
     cssString?: boolean
