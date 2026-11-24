@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Tutorial 2 - Cryo-EM: Fitting the Nanobody - Moorhen User Guide</title>
+    <link rel="stylesheet" href="../../assets/site.css">
+    <script src="../../assets/theme-toggle.js" defer></script>
+</head>
+
+<body>
+    <header class="site-header">
+        <img src="../../assets/MoorhenLogo.png" alt="Moorhen logo">
+        <h1>Tutorial 2 - Cryo-EM: Fitting the Nanobody</h1>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light mode">Dark mode</button>
+    </header>
+    <nav class="site-nav">
+        <ul>
+            <li><a href="../../index.html">Docs Home</a></li>
+            <li><a href="index.html">User Guide</a></li>
+            <li><a href="../developer/index.html">Developer Guide</a></li>
+            <li><a href="../../api/index.html">API Reference</a></li>
+        </ul>
+    </nav>
+
+    <article class="guide-article">
+        <p>
+            In this tutorial we will use Moorhen, the web version of Coot, to fit a nanobody into the cryo-EM map
+            EMD-32143. We will take the nanobody from a known structure (molecular extraction), then refine and
+            validate it with the tools available in Moorhen.
+        </p>
+
+        <img class="image-column" style="width: 55%; margin: 0 auto;" src="../../assets/tutorial2/complex-overview.png"
+            alt="The EMD-32143 reconstruction coloured by component: parathyroid hormone, parathyroid hormone binding protein, adenylate cyclase stimulating G alpha protein, gamma-I, WD40 domain and nanobody Nb35" />
+
+        <section>
+            <h2>Getting Started: Load the Map and Model</h2>
+
+            <p>To familiarise yourself with the basic navigation in Moorhen, see
+                <a href="getting-started.html">Getting Started</a>.
+            </p>
+
+            <ul>
+                <li>Open a web browser (Google Chrome is recommended) and go to
+                    <a href="https://moorhen.org"><strong>moorhen.org</strong></a>
+                </li>
+                <li><strong>File</strong> → <strong>Open Files</strong> → 32143-partial-model.pdb →
+                    <strong>Open</strong>
+                </li>
+                <li><strong>File</strong> → <strong>Open Files</strong> → emd_32143.map → <strong>Open</strong></li>
+            </ul>
+
+            <p class="note"><strong>In case you don’t have the data, download it here:</strong><br />
+                <a
+                    href="https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/files/32143-partial-model.pdb">https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/files/32143-partial-model.pdb</a><br />
+                <a
+                    href="https://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-32143/map/emd_32143.map.gz">https://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-32143/map/emd_32143.map.gz</a>
+            </p>
+
+            <h3>Blur and Resample the Map</h3>
+            <p>Let’s draw the map as mesh and resample it:</p>
+
+            <ul>
+                <li><strong>Maps</strong> → <strong>Draw Settings</strong> → Draw as mesh</li>
+                <li>To change the contour level → <strong>CTRL scroll button</strong></li>
+                <li><strong>Map Tools</strong> → <strong>Sharpen/Blur map</strong></li>
+                <li>“B-factor to apply” should be 40.0</li>
+                <li>Turn on <strong>use resample</strong> and use the resample factor 1.4 → <strong>OK</strong></li>
+            </ul>
+
+            <p><em>A new map is generated: <strong>Map 1 blurred by 40</strong></em></p>
+
+            <p class="note"><strong>Note:</strong> If you can’t see the map, just click on the <strong>center on
+                    map</strong> icon, which is on the right side of the eye icon.</p>
+
+            <ul>
+                <li><strong>Maps</strong> → <strong>Map 1 blurred by 40</strong> → Draw settings → Draw as
+                    <strong>lit lines</strong>
+                </li>
+            </ul>
+
+            <p>You will see that this new map is easier to interpret.</p>
+
+            <ul>
+                <li>Delete the first map: <strong>Maps</strong> → click on the “Gear” icon of the panel for the first
+                    map and <strong>Delete Map</strong>.</li>
+                <li>Undisplay the new map: click on the “Eye” icon.</li>
+            </ul>
+
+            <h3>Mask the Map</h3>
+            <p>We are now only interested in the parts of the map for which we don’t currently have a model. So now
+                mask the map using the (partial) model (the parts of the model that we have already fitted):</p>
+
+            <ul>
+                <li><strong>Map Tools</strong> → <strong>Map masking…</strong> leave everything by default →
+                    <strong>OK</strong>
+                </li>
+            </ul>
+
+            <p><em>Now a new “masked map” is generated.</em></p>
+
+            <ul>
+                <li>Open the <strong>Maps</strong> window, go to the “masked map” and draw as mesh (or lit lines)</li>
+            </ul>
+
+            <p>You should now see a map with three unmodelled parts:</p>
+
+            <ul>
+                <li>the hormone</li>
+                <li>a WD40 domain</li>
+                <li>a nanobody domain</li>
+            </ul>
+
+            <img class="image-column" src="../../assets/tutorial2/masked-map.png"
+                alt="The masked map, with the unmodelled parathyroid hormone, nanobody Nb35 and WD40 domain density labelled" />
+        </section>
+
+        <section>
+            <h2>Find the Nanobody</h2>
+            <p>We have done a BLAST search for the sequence of our nanobody and know that the structure was published
+                already in a different complex - it’s the “E” chain in the entry <strong>6GDG</strong>. Let’s fetch
+                that structure, extract the “E” chain and then fit it to our reconstruction.</p>
+
+            <p>Fetch the reference structure:</p>
+
+            <ul>
+                <li><strong>File</strong> → <strong>Fetch from Online Services</strong> → 6gdg</li>
+            </ul>
+
+            <p>Now make the fragment we need from that:</p>
+
+            <ul>
+                <li><strong>Edit</strong> → <strong>Copy Fragment using CID</strong></li>
+                <li>Change “From molecule” to 6gdg</li>
+                <li><strong>Selection to Copy</strong> → <code>//E</code></li>
+                <li><strong>OK</strong></li>
+            </ul>
+
+            <p>So now we have the “E” chain floating around in space…</p>
+
+            <p>Delete the 6gdg model - we don’t need it anymore:</p>
+
+            <ul>
+                <li><strong>Models</strong> → click on the “Gear” icon of the 6gdg molecule and <strong>Delete
+                        molecule</strong></li>
+            </ul>
+
+            <p>Change the representation of the 6gdg fragment:</p>
+
+            <ul>
+                <li><strong>Models</strong> → click on the pencil and change the style from Bonds to
+                    <strong>C-Alpha</strong> and <strong>Apply</strong>
+                </li>
+            </ul>
+
+            <p>Let’s find the centre of the nanobody domain:</p>
+
+            <ul>
+                <li><strong>Maps</strong> → click on the “center on map” icon (close to the eye icon) of the masked
+                    map</li>
+                <li><strong>View</strong> → Other scene settings → show crosshair</li>
+            </ul>
+
+            <p class="note"><strong>Note:</strong> If you are using a white background, change it to black in
+                <strong>View</strong> → scene settings.
+            </p>
+
+            <p>Centre the view on the nanobody domain by “eyeballing” it and using middle-mouse click and drag. Rotate
+                the view to check that you have found the approximate middle from various directions.</p>
+
+            <ul>
+                <li>If you zoom in and out, use the clipping front and back key bindings: 1 and 2, 3 and 4</li>
+            </ul>
+
+            <img class="image-column" src="../../assets/tutorial2/nanobody-centre.png"
+                alt="The view centred on the nanobody density, with the crosshair at the middle of the domain" />
+
+            <p>Once you have found the centre of the nanobody:</p>
+
+            <ul>
+                <li><strong>Edit</strong> → <strong>Move Molecule Here</strong></li>
+                <li>Select the molecule 6gdg fragment → <strong>OK</strong></li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Jiggle-Fitting</h2>
+            <p>Now to do the actual fitting:</p>
+
+            <ul>
+                <li><strong>Calculate</strong> → <strong>Jiggle Fit with Fourier Filtering</strong></li>
+                <li>Choose molecule 6gdg fragment</li>
+                <li>Change the map to Map masked</li>
+                <li>Add an “<strong>Atom selection</strong>” as <code>//E</code></li>
+                <li>Change the number of trials to ~1000</li>
+            </ul>
+
+            <p><em>Moorhen will think for a few seconds and then fit the nanobody into the density.</em></p>
+        </section>
+
+        <section>
+            <h2>Refinement</h2>
+            <p>Now set up the local distance restraints:</p>
+
+            <ul>
+                <li><strong>Calculate</strong> → <strong>Generate Self Restraints</strong></li>
+                <li>Selection is “Molecule”</li>
+                <li>Molecule is 6gdg fragment</li>
+                <li>Max Dist → change to 5.1</li>
+            </ul>
+
+            <p><em>Moorhen generates extra restraints (shown in grey lines).</em></p>
+
+            <p>Undisplay the extra restraints:</p>
+
+            <ul>
+                <li><strong>Models</strong> → 6gdg fragment → Tools → unclick the “Restraints” representation.</li>
+            </ul>
+
+            <p>Set the map weight:</p>
+
+            <ul>
+                <li><strong>Maps</strong> → “Gear” icon of the masked map → <strong>set map weight</strong></li>
+                <li>~3000 (it should be the default) → you can change it to 1800 → <strong>Set</strong></li>
+            </ul>
+
+            <p>To refine this domain/chain, we need to tell Moorhen which map to use for the refinement:</p>
+
+            <ul>
+                <li><strong>Maps</strong> → click on the “○ Inactive” button of the masked map</li>
+            </ul>
+
+            <p>Now define which atoms we want to refine (in this case, all of the nanobody):</p>
+
+            <ul>
+                <li><strong>Edit</strong> → <strong>Create a selection</strong></li>
+                <li>Molecule is 6gdg fragment</li>
+                <li>Atom Selection → <code>//</code> (i.e. “all atoms”)</li>
+                <li><strong>OK</strong></li>
+            </ul>
+
+            <p><em>You will see that the nanobody is now highlighted with green bonds and atoms. A dialog will appear
+                    at the middle top.</em></p>
+
+            <img class="image-column" style="width: 45%;" src="../../assets/tutorial2/selection-toolbar.png"
+                alt="The selection dialog, with the Refine icon at the top left" />
+
+            <ul>
+                <li>Click on the “Refine” icon (top left)</li>
+            </ul>
+
+            <p><em>Moorhen refines the nanobody</em></p>
+
+            <ul>
+                <li>Accept the modification</li>
+            </ul>
+
+            <p>Now you will have green and purple lines for the restraints. Go back to <strong>Models</strong> and in
+                <strong>Tools</strong> undisplay the restraints.
+            </p>
+
+            <ul>
+                <li>Change the model representation from C-Alpha back to Bonds: <strong>Models</strong> → click on the
+                    pencil, change the style to <strong>Bonds</strong> and <strong>Apply</strong></li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Validation</h2>
+
+            <h3>Sequence Validation Plot</h3>
+            <p>Moorhen provides an array of validation data for every residue in the model.</p>
+
+            <ul>
+                <li>Click the <strong>Validation</strong> tab next to the <strong>Sequence</strong> tab.</li>
+                <li>Click on the gear icon → <strong>Select molecule</strong>: 6gdg fragment</li>
+                <li><strong>Map</strong> → Map masked</li>
+                <li>Wait</li>
+            </ul>
+
+            <p>After a quick loading, you will see a series of coloured bars for each residue in the model (if it is
+                stuck on “please wait”, close the window and open it again).</p>
+            <img class="image-column" src="../../assets/tutorial2/validation-default.png"
+                alt="Sequence validation plot with the Default preset: overall RMSZ and density correlation per residue" />
+            <p class="note-technical"><strong>Technical note:</strong> Each row of the plot is a different validation
+                score plotted per residue. The first line is an overall geometry-quality indicator; the second line is
+                the density correlation for the residue, i.e. how well the model matches the map at that position. The
+                scores are coloured so that problem residues stand out, and hovering a bar shows the underlying
+                numbers.</p>
+            <p>Hovering a residue bar chart will show a tool tip with extended data for the residue.</p>
+
+            <ul>
+                <li>Click on a residue bar chart to centre the view on that residue.</li>
+                <li>Click the <strong>i</strong> for more information about the validation data.</li>
+            </ul>
+
+            <p>Let's change the default data:</p>
+
+            <ul>
+                <li>Click the gear icon to open the settings dialog.</li>
+                <li>Change the preset from "Default" to "RotaRama".</li>
+            </ul>
+            <img class="image-column" src="../../assets/tutorial2/validation-rotarama.png"
+                alt="Sequence validation plot with the RotaRama preset: rotamer and Ramachandran Z-scores per residue" />
+            <p>The top line now shows the rotamer probability, and the bottom line shows the Ramachandran
+                probability.</p>
+
+            <ul>
+                <li>Click on one of the orange bars for Q3 in Rama</li>
+                <li>Right-click on the residue and a grid of functions will appear.</li>
+                <li>Click on Flip Peptide (the second icon from the left): the peptide is flipped and the plot is
+                    updated.</li>
+                <li><strong>To refine</strong>, click on the “target” icon</li>
+            </ul>
+
+            <h3>Validation Menu</h3>
+            <p>Let’s have a look at some outliers from a standard Ramachandran plot:</p>
+
+            <ul>
+                <li><strong>Validation</strong> → <strong>Ramachandran Plot</strong> → select 6gdg fragment</li>
+                <li>Click on the outlier (red spot) in the plot. Moorhen will put the residue at the centre of the
+                    screen</li>
+                <li>Right-click on the residue and a grid of functions will appear.</li>
+                <li>Click on Flip Peptide (the second icon from the left): the peptide is flipped and the Ramachandran
+                    plot is updated (the red spot disappears)</li>
+                <li><strong>To refine</strong>, click on the “target” icon</li>
+            </ul>
+            <img class="image-column" src="../../assets/tutorial2/rama-flip-peptide.png"
+                alt="Ramachandran plot with an outlier selected, and the grid of modelling functions next to the residue" />
+
+            <p>We can also enable Rama balls and/or Rota dodecahedron to have a look at the Ramachandran and rotamer
+                probabilities of the entire model.</p>
+
+            <ul>
+                <li>Click on <strong>Models</strong>, or on the model tab if it is active</li>
+                <li>Open the <strong>Tools</strong> panel and activate the <strong>Ramachandran Balls</strong> or
+                    <strong>Rotamer dodecahedron</strong> slider
+                </li>
+            </ul>
+
+            <p><em>Moorhen displays Ramachandran/rotamer markers that use colour to represent the percentile scores for
+                    that residue.</em></p>
+            <img class="image-column" src="../../assets/tutorial2/rama-balls.png"
+                alt="Ramachandran balls displayed on the nanobody, with the Tools panel of the 6gdg fragment open" />
+
+            <p>Now, let’s have a look at model-to-map agreement metrics:</p>
+
+            <p>The Q score for each residue is available from the Validation tab, by hovering the residue bars.</p>
+
+            <ul>
+                <li><strong>Validation</strong> → <strong>MMRRCC plot</strong></li>
+            </ul>
+
+            <p class="note-technical"><strong>Technical note:</strong> The MMRRCC (Multi-Masked Residue Range
+                Correlation Coefficient) plot provides another way of examining local model-to-map agreement. Rather
+                than evaluating individual atoms or residues in isolation, MMRRCC calculates correlation between the
+                atomic model and the experimental density over a series of overlapping residue ranges. The MMRRCC plot
+                displays the correlation as a function of residue position along a chain, making it possible to
+                identify stretches of the model that correlate well or poorly with the experimental map. Black line:
+                all-atom correlation per residue. Blue line: side-chain correlation. Values below the red line indicate
+                poorly modelled regions.</p>
+            <img class="image-column" src="../../assets/tutorial2/mmrrcc-plot.png"
+                alt="MMRRCC plot for chain E of the 6gdg fragment against the masked map" />
+        </section>
+
+        <section>
+            <h2>Merge</h2>
+            <p>After refinement we should merge the nanobody into the main molecule.</p>
+
+            <ul>
+                <li><strong>Edit</strong> → <strong>Merge Molecules</strong></li>
+                <li>“From molecule” is 6gdg fragment</li>
+                <li>“Into molecule” is 32143-partial-model</li>
+                <li><strong>OK</strong></li>
+            </ul>
+
+            <p>Now save the combined model:</p>
+
+            <ul>
+                <li><strong>Models</strong> → click on the “Download” icon of the 32143-partial-model</li>
+                <li>You can also save a session file, where the data are embedded and which is easy to share:
+                    <strong>File</strong> → <strong>Save session file</strong>
+                </li>
+            </ul>
+
+            <p class="note"><strong>Compare and contrast:</strong> the original model is 7vvl. Fetch the model and
+                inspect the chain E.</p>
+        </section>
+    </article>
+</body>
+
+</html>
