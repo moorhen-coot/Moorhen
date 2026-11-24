@@ -3,14 +3,19 @@
 
 // Keep the runtime alive for the life of the module.
 //
-// This module has no main(), and in a pthreads build with EXIT_RUNTIME=0 emscripten decides
-// whether the runtime may exit by runtimeKeepaliveCounter alone - which only main() (through
-// emscripten_exit_with_live_runtime) would raise. So it stays at 0, and the first callback the
-// glue runs on the main thread - such as a pthread proxying its stdout there - ends in
+// This module has no main(). In a pthreads build that is linked without noExitRuntime in
+// INCOMING_MODULE_JS_API, emscripten decides whether the runtime may exit by
+// runtimeKeepaliveCounter alone - which only main() (through emscripten_exit_with_live_runtime)
+// would raise. So it stays at 0, and the first callback the glue runs on the main thread - such
+// as a pthread proxying its stdout there, or the clean-up of a pthread that has exited - ends in
 // maybeExit() -> exit(): every pthread in the pool is terminated and the runtime is marked
 // aborted. Direct calls still work afterwards, but the next one to start a thread finds no
 // worker left ("Tried to spawn a new thread, but the thread pool is exhausted") and hangs.
-// Static initializers run once, on the main thread, before any pthread is started.
+//
+// CMakeLists.txt passes noExitRuntime, which is enough on its own. This push does not depend on
+// the link flags, so it still holds if that list is edited again. Static initializers run once,
+// on the main thread, before any pthread is started.
+// Checked by baby-gru/tests/__tests__/runtimeKeepalive.test.js.
 static const bool moorhen_runtime_kept_alive = (emscripten_runtime_keepalive_push(), true);
 
 EMSCRIPTEN_BINDINGS(moorhen_container) {

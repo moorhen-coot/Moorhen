@@ -648,10 +648,15 @@ add_executable(moorhen untar.c moorhen-wrappers.cc moorhen-types-wrappers.cc sel
 # coot-utils/gltf-export.cc, so defining it again for this file produces a second copy of every
 # one of them and wasm-ld reports a few hundred duplicate symbols. This file needs the
 # declarations only, which is what including tiny_gltf.h without the define gives.
+
+# Keep noExitRuntime in every INCOMING_MODULE_JS_API list below. Emscripten's default list has
+# it, and the lists here replace that default (emscripten 6.0.2 took mainScriptUrlOrBlob out of
+# it). Without noExitRuntime a pthreads build lets the runtime exit as soon as the main thread
+# has run one callback, which terminates every pthread in the pool: see moorhen-wrappers.cc.
 if(${MEMORY64} MATCHES "1")
 target_compile_definitions(moorhen PUBLIC _MOORHEN_MEMORY64_)
 if(${EMCC_VERSION} VERSION_GREATER 6.0.1)
-target_link_options(moorhen PRIVATE -sINCOMING_MODULE_JS_API=mainScriptUrlOrBlob,preRun,onRuntimeInitialized,print,printErr -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js -sMIN_SAFARI_VERSION=260000)
+target_link_options(moorhen PRIVATE -sINCOMING_MODULE_JS_API=mainScriptUrlOrBlob,preRun,onRuntimeInitialized,print,printErr,noExitRuntime -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js -sMIN_SAFARI_VERSION=260000)
 else()
 target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=256MB -sMAXIMUM_MEMORY=8192MB --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCoot64Module -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js -sMIN_SAFARI_VERSION=260000)
 endif()
@@ -664,7 +669,7 @@ if(${EMCC_VERSION} VERSION_LESS 5.0.8)
 target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 else()
 if(${EMCC_VERSION} VERSION_GREATER 6.0.1)
-target_link_options(moorhen PRIVATE -sINCOMING_MODULE_JS_API=mainScriptUrlOrBlob,preRun,onRuntimeInitialized,print,printErr -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
+target_link_options(moorhen PRIVATE -sINCOMING_MODULE_JS_API=mainScriptUrlOrBlob,preRun,onRuntimeInitialized,print,printErr,noExitRuntime -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
 else()
 target_link_options(moorhen PRIVATE -sASSERTIONS=1 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js --emit-tsd moorhen.d.ts)
 endif()
