@@ -6,7 +6,7 @@ import * as vec3 from "gl-matrix/vec3";
 import "pako";
 import { quatToMat4 } from "../WebGLgComponents/quatToMat4.js";
 import { isDarkBackground } from "../WebGLgComponents/webGLUtils";
-import { setOrigin, setQuat, setRequestDrawScene, setZoom } from "../store";
+import { enqueueSnackbar, setOrigin, setQuat, setRequestDrawScene, setZoom } from "../store";
 import { hideMolecule } from "../store/moleculesSlice";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
@@ -550,6 +550,23 @@ export class MoorhenMolecule {
      */
     setBackgroundColour(backgroundColour: [number, number, number, number]) {
         this.isDarkBackground = isDarkBackground(...backgroundColour);
+    }
+
+    /**
+     * Tell the user that gemmi could not read this molecule's coordinates.
+     *
+     * Coot may still have read them, so the molecule draws, but everything Moorhen takes from the
+     * gemmi copy - sequences, ligands, hovered-atom details, selections by CID - will be missing
+     * or stale. That is worth a toast rather than only a line in the console.
+     */
+    private warnGemmiParseFailure(err: unknown): void {
+        console.warn("Issue parsing coordinates into Gemmi structure", err);
+        this.store.dispatch(
+            enqueueSnackbar({
+                message: `Could not fully read ${this.name}: sequences, ligands and atom details may be missing`,
+                variant: "warning",
+            })
+        );
     }
 
     /**
@@ -1138,7 +1155,15 @@ export class MoorhenMolecule {
                 },
                 true
             );
-            this.updateGemmiStructure(coordData as string);
+            // Awaited so that a string gemmi cannot read is reported here rather than as an
+            // unhandled rejection. It does not stop the load: Coot may still read what gemmi
+            // cannot, and whether it did is what the caller checks, through molNo.
+            let gemmiParseError: unknown = null;
+            try {
+                await this.updateGemmiStructure(coordData as string);
+            } catch (err) {
+                gemmiParseError = err;
+            }
             this.atomsDirty = false;
             const response = (await this.commandCentre.cootCommand(
                 {
@@ -1156,6 +1181,13 @@ export class MoorhenMolecule {
                 this.checkHasGlycans(),
                 this.fetchDefaultColourRules(),
             ]);
+            // Only when Coot found atoms. A file that is not coordinates at all - a reflection
+            // CIF, a restraint dictionary - fails in gemmi too, but the loader already says so:
+            // "Failed to read molecule" when Coot gives up (molNo -1), or "no atoms found" when it
+            // returns an empty molecule, which it does when Moorhen's "use gemmi" setting is off.
+            if (gemmiParseError !== null && this.molNo !== -1 && this.atomCount > 0) {
+                this.warnGemmiParseFailure(gemmiParseError);
+            }
             return this;
         } catch (err) {
             console.log("Error in loadToCootFromString", err);
@@ -1346,10 +1378,21 @@ export class MoorhenMolecule {
         // worker after every modification.
         const [_hasGlycans, coordString] = await Promise.all([this.checkHasGlycans(), this.getAtoms()]);
         try {
-            this.updateGemmiStructure(coordString);
+            // Awaited: updateGemmiStructure is async, so without it an error from gemmi escaped
+            // this catch as an unhandled rejection instead of the warning and toast below.
+            await this.updateGemmiStructure(coordString);
         } catch (err) {
-            console.log(err);
-            console.warn("Issue parsing coordinates into Gemmi structure", coordString);
+            // The text Coot handed back is the useful thing to see when this happens.
+            console.warn("Coordinates gemmi could not parse:", coordString);
+            // A molecule whose atoms have all been deleted fails here too: Coot's gemmi-based
+            // mmCIF writer gives an empty molecule a file gemmi will not read back. That is not
+            // news to the user, so the toast is only for a molecule that still has atoms. The
+            // count is fetched only on this path, so a normal update costs nothing extra.
+            if ((await this.getNumberOfAtoms()) > 0) {
+                this.warnGemmiParseFailure(err);
+            } else {
+                console.warn("Issue parsing coordinates into Gemmi structure (molecule has no atoms)", err);
+            }
         }
         this.atomsDirty = false;
     }
