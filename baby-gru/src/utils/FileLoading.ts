@@ -415,7 +415,11 @@ const readCifDictionary = async (
             },
             true
         );
-        if (result.data.result.status === "Completed") {
+        // "Completed" says only that the command ran. Coot answers -1 when it could not make the
+        // monomer - a CIF that is not really a dictionary, or one with no coordinates to place -
+        // and a molecule built on -1 has no atoms to fetch: drawing it failed with a gemmi
+        // binding error when its coordinates came back as nothing.
+        if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
             newMonomer.molNo = result.data.result.result;
             newMonomer.name = moleculeNameFromFileName(file.name);
             newMonomer.setBackgroundColour(backgroundColor);
@@ -433,7 +437,8 @@ const readCifDictionary = async (
             );
         }
     }
-    return newMonomers;
+    // None made is a failure, as no dictionary is: the caller tells the user only on null.
+    return newMonomers.length > 0 ? newMonomers : null;
 };
 
 /**

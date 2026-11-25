@@ -590,7 +590,8 @@ export class MoorhenInstance extends StoreExtension {
              * In the Models panel, these ligands are listed by name with the other ligand-only molecules,
              * instead of a full card per molecule.
              *
-             * @param sources - PDB or mmCIF files, one ligand each: `File`s, URLs, or `{ url, filename }`.
+             * @param sources - PDB, mmCIF or small-molecule CIF (COD, CSD) files, one ligand each: `File`s,
+             * URLs, or `{ url, filename }`.
              * A source may come with `metadata` (`{ url, filename, metadata }` or `{ file, metadata }`):
              * facts about that ligand as strings by name, such as a docking score. They are set on the
              * molecule (`MoorhenMolecule.metadata`), shown on its ligand card and saved in sessions.

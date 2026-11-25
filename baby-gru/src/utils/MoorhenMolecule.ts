@@ -6,7 +6,7 @@ import * as vec3 from "gl-matrix/vec3";
 import "pako";
 import { quatToMat4 } from "../WebGLgComponents/quatToMat4.js";
 import { isDarkBackground } from "../WebGLgComponents/webGLUtils";
-import { setOrigin, setQuat, setRequestDrawScene, setZoom } from "../store";
+import { enqueueSnackbar, setOrigin, setQuat, setRequestDrawScene, setZoom } from "../store";
 import { type MoleculeRecord, hideMolecule, removeMoleculeRecord } from "../store/moleculesSlice";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
@@ -570,6 +570,23 @@ export class MoorhenMolecule {
     }
 
     /**
+     * Tell the user that gemmi could not read this molecule's coordinates.
+     *
+     * Coot may still have read them, so the molecule draws, but everything Moorhen takes from the
+     * gemmi copy - sequences, ligands, hovered-atom details, selections by CID - will be missing
+     * or stale. That is worth a toast rather than only a line in the console.
+     */
+    private warnGemmiParseFailure(err: unknown): void {
+        console.warn("Issue parsing coordinates into Gemmi structure", err);
+        this.store.dispatch(
+            enqueueSnackbar({
+                message: `Could not fully read ${this.name}: sequences, ligands and atom details may be missing`,
+                variant: "warning",
+            })
+        );
+    }
+
+    /**
      * Update the cached gemmi structure for this molecule
      */
     async updateGemmiStructure(coordString: string): Promise<void> {
@@ -1051,25 +1068,10 @@ export class MoorhenMolecule {
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
             const coordData = await source.text();
-            let is_small = false;
             const lowerName = source.name.toLowerCase();
-            if (lowerName.endsWith(".mmcif") || lowerName.endsWith(".cif") || lowerName.endsWith(".pdbx"))
-                is_small = window.gemmiModule.is_small_structure(coordData as string);
-            if (is_small) {
-                const small_to_cif_response = (await this.commandCentre.cootCommand(
-                    {
-                        command: "SmallMoleculeCifToMMCif",
-                        commandArgs: [coordData],
-                        returnType: "str_str_pair",
-                    },
-                    true
-                )) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>;
-                const coordContent = small_to_cif_response.data.result.result.first;
-                const dictContent = small_to_cif_response.data.result.result.second;
-                //FIXME - I think I want specific molecule, but there is a circular dependency between mol and dicts
-                await readDictionary(this, dictContent, null, source.name);
-                return await this.loadToCootFromString(coordContent, source.name);
-            }
+            // A small-molecule CIF needs no handling here: loadToCootFromString recognises one
+            // whichever way it arrives, so a file opened from the menu, a dropped file, a URL and
+            // a string all load the same way.
             if (lowerName.endsWith(".mol")) {
                 const response = (await this.commandCentre.cootCommand(
                     {
@@ -1121,13 +1123,63 @@ export class MoorhenMolecule {
     }
 
     /**
-     * Load a new molecule from a string
+     * Whether a coordinate string is a small-molecule (coreCIF) file rather than mmCIF or PDB.
+     *
+     * Such a file - from the COD or the CSD, say - gives its atoms as fractional coordinates in
+     * _atom_site_fract_x, a tag no mmCIF or PDB file has, so that cheap test comes first and
+     * gemmi's full parse is only run on files that pass it. Without it, every protein loaded
+     * would be parsed twice.
+     */
+    static isSmallMoleculeCif(coordData: ArrayBuffer | string): boolean {
+        if (typeof coordData !== "string" || !/_atom_site[._]fract_x/i.test(coordData)) {
+            return false;
+        }
+        try {
+            return window.gemmiModule.is_small_structure(coordData);
+        } catch (err) {
+            console.warn(err);
+            return false;
+        }
+    }
+
+    /**
+     * Turn a small-molecule CIF into an mmCIF that Coot and gemmi can read, and give Coot the
+     * restraint dictionary that comes with it.
+     *
+     * The structure becomes one residue in chain A, named after the CIF's data block. Coot alone
+     * cannot read the original: it fails, and the loader then tries the file as a monomer
+     * dictionary, which fails with a gemmi binding error instead of a useful message.
+     * @returns {Promise<string>} The mmCIF text
+     */
+    private async smallMoleculeCifToMMCif(coordData: string, name: string): Promise<string> {
+        const response = (await this.commandCentre.cootCommand(
+            {
+                command: "SmallMoleculeCifToMMCif",
+                commandArgs: [coordData],
+                returnType: "str_str_pair",
+            },
+            true
+        )) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>;
+        const coordContent = response.data.result.result.first;
+        const dictContent = response.data.result.result.second;
+        //FIXME - I think I want specific molecule, but there is a circular dependency between mol and dicts
+        // Read for every molecule, through readDictionary: recorded in the instance's list, so sessions save it
+        await readDictionary(this, dictContent, null, name);
+        return coordContent;
+    }
+
+    /**
+     * Load a new molecule from a string: PDB, mmCIF, or a small-molecule CIF (made into mmCIF first)
      * @param {string} coordData - The molecule data
      * @param {string} name - The new molecule name
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
     async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<moorhen.Molecule> {
         this.freeGemmiStructure();
+
+        if (MoorhenMolecule.isSmallMoleculeCif(coordData)) {
+            coordData = await this.smallMoleculeCifToMMCif(coordData as string, name);
+        }
 
         this.name = moleculeNameFromFileName(name);
 
@@ -1142,12 +1194,16 @@ export class MoorhenMolecule {
                 },
                 true
             );
+            // Awaited so that a string gemmi cannot read is reported here rather than as an
+            // unhandled rejection. It does not stop the load: Coot may still read what gemmi
+            // cannot, and whether it did is what the caller checks, through molNo. Not a structure
+            // at all, e.g. a ligand dictionary (from a .cif file or from SMILES): Coot's read below
+            // says so too, and the caller then tries it as a dictionary.
+            let gemmiParseError: unknown = null;
             try {
                 await this.updateGemmiStructure(coordData as string);
-            } catch {
-                // Not a structure gemmi can read, e.g. a ligand dictionary (from a .cif file or from
-                // SMILES): Coot's read below says so too, and the caller then tries it as a dictionary.
-                // Unawaited, this used to surface as an unhandled rejection.
+            } catch (err) {
+                gemmiParseError = err;
             }
             this.atomsDirty = false;
             const response = (await this.commandCentre.cootCommand(
@@ -1171,6 +1227,13 @@ export class MoorhenMolecule {
                 this.checkHasGlycans(),
                 this.fetchDefaultColourRules(),
             ]);
+            // Only when Coot found atoms. A file that is not coordinates at all - a reflection
+            // CIF, a restraint dictionary - fails in gemmi too, but the loader already says so:
+            // "Failed to read molecule" when Coot gives up (molNo -1), or "no atoms found" when it
+            // returns an empty molecule, which it does when Moorhen's "use gemmi" setting is off.
+            if (gemmiParseError !== null && this.molNo !== -1 && this.atomCount > 0) {
+                this.warnGemmiParseFailure(gemmiParseError);
+            }
             return this;
         } catch (err) {
             console.log("Error in loadToCootFromString", err);
@@ -1329,10 +1392,21 @@ export class MoorhenMolecule {
         // worker after every modification.
         const [_hasGlycans, coordString] = await Promise.all([this.checkHasGlycans(), this.getAtoms()]);
         try {
-            this.updateGemmiStructure(coordString);
+            // Awaited: updateGemmiStructure is async, so without it an error from gemmi escaped
+            // this catch as an unhandled rejection instead of the warning and toast below.
+            await this.updateGemmiStructure(coordString);
         } catch (err) {
-            console.log(err);
-            console.warn("Issue parsing coordinates into Gemmi structure", coordString);
+            // The text Coot handed back is the useful thing to see when this happens.
+            console.warn("Coordinates gemmi could not parse:", coordString);
+            // A molecule whose atoms have all been deleted fails here too: Coot's gemmi-based
+            // mmCIF writer gives an empty molecule a file gemmi will not read back. That is not
+            // news to the user, so the toast is only for a molecule that still has atoms. The
+            // count is fetched only on this path, so a normal update costs nothing extra.
+            if ((await this.getNumberOfAtoms()) > 0) {
+                this.warnGemmiParseFailure(err);
+            } else {
+                console.warn("Issue parsing coordinates into Gemmi structure (molecule has no atoms)", err);
+            }
         }
         this.atomsDirty = false;
     }

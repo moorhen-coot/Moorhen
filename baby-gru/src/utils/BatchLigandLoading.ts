@@ -71,6 +71,8 @@ type ChunkItem = {
     text: string;
     molecule: MoorhenMolecule;
     missingCompIds: string[];
+    /** The dictionary Coot derived from the file itself (a small-molecule CIF), read for this molecule only */
+    ownDictionary?: string;
     representation?: MoleculeRepresentation;
 };
 
@@ -245,10 +247,29 @@ export const batchLoadLigands = async (
         chunk: { index: number; fileName: string; text: string }[],
         created: MoorhenMolecule[]
     ): Promise<ChunkItem[]> => {
+        // Small-molecule CIFs (COD, CSD: fractional coordinates) are made into mmCIF first, as
+        // loadToCootFromString does: one worker message for those of the chunk. Each comes back with the
+        // dictionary Coot derives from it, read below for its molecule only: the residue is named after
+        // the file's data block, and two files of a batch may well share a name ("I", "global").
+        const smallMolecules = chunk.filter(({ text }) => MoorhenMolecule.isSmallMoleculeCif(text));
+        const converted = new Map<number, { text: string; dictionary: string }>();
+        if (smallMolecules.length > 0) {
+            const results = await runList(
+                smallMolecules.map(({ text }) => ({ returnType: "str_str_pair", command: "SmallMoleculeCifToMMCif", commandArgs: [text] }))
+            );
+            smallMolecules.forEach(({ index, fileName }, i) => {
+                const pair = results[i]?.result?.result as { first?: string; second?: string } | undefined;
+                if (commandFailed(results[i]) || !pair?.first) fail(index, fileName, "could not be read as a small-molecule CIF");
+                else converted.set(index, { text: pair.first, dictionary: pair.second ?? "" });
+            });
+        }
+
         // Parse on the main thread first: the molecule needs this gemmi structure anyway (ligand
         // info, sequences, atoms for picking), as loadToCootFromString does.
         let items: ChunkItem[] = [];
-        for (const { index, fileName, text } of chunk) {
+        for (const { index, fileName, text: sourceText } of chunk) {
+            if (failedIndices.has(index)) continue;
+            const text = converted.get(index)?.text ?? sourceText;
             const molecule = new MoorhenMolecule(instance);
             created.push(molecule);
             molecule.setBackgroundColour(backgroundColor);
@@ -264,7 +285,7 @@ export const batchLoadLigands = async (
                 await discard([molecule]);
                 continue;
             }
-            items.push({ index, fileName, text, molecule, missingCompIds: [] });
+            items.push({ index, fileName, text, molecule, missingCompIds: [], ownDictionary: converted.get(index)?.dictionary || undefined });
         }
 
         // A: read the coordinates into Coot
@@ -286,6 +307,20 @@ export const batchLoadLigands = async (
             return true;
         });
         await discard(unread);
+
+        // The dictionaries the small-molecule CIFs came with, each for its own molecule, before Coot is
+        // asked what is missing (B) and before anything is drawn. Recorded now and not with the chunk's
+        // others: one of these molecules discarded below then takes its record with it.
+        const withOwnDictionary = items.filter(item => item.ownDictionary);
+        if (withOwnDictionary.length > 0) {
+            await Promise.all(
+                withOwnDictionary.map(async item => {
+                    await readDictionaryIntoCoot(instance, item.ownDictionary, item.molecule, item.fileName);
+                    item.molecule.cacheLigandDict(item.ownDictionary);
+                })
+            );
+            flushDictionaryRecords(store);
+        }
 
         // B: atom count, glycans, missing dictionaries, default colour rules
         const infoResults = await runList(
@@ -336,8 +371,10 @@ export const batchLoadLigands = async (
         );
         items.forEach((item, i) => {
             const found = new Set<string>();
+            // What its own dictionary defines is its own: not the batch's dictionary of the same name
+            const own = new Set(item.ownDictionary ? dictionaryCompIds(item.ownDictionary) : []);
             for (const compId of compIdsOf[i]) {
-                const text = texts.get(compId);
+                const text = own.has(compId) ? undefined : texts.get(compId);
                 if (text) {
                     item.molecule.cacheLigandDict(text);
                     found.add(compId);
