@@ -4,13 +4,14 @@ import { MoorhenSceneSettings } from "../../modal/MoorhenSceneSettingsModal";
 import { MoorhenVectors } from "../../modal/MoorhenVectorsModal";
 import { Moorhen2DCanvasObjects } from "../../modal/Moorhen2DCanvasObjectsModal";
 import { Moorhen3DObjects } from "../../modal/Moorhen3DObjectsModal";
+import { MoorhenAnnotations } from "../../modal/MoorhenAnnotationsModal";
 import { LigandsPanel } from "./LigandsPanel";
 import { MapsPanel } from "./MapsPanel";
 import { ModelsPanel } from "./ModelsPanel";
 import { MoviePanel } from "./MoviePanel/MoviePanel";
 import { SidePanelContainer } from "./utils/SidePanelContainer";
 
-export type SidePanelIDs = "models" | "maps" | "ligands" | "sceneSettings" | "vectors" | "overlay2DObjects"| "3DObjects" | "movie" | (string & {});
+export type SidePanelIDs = "models" | "maps" | "ligands" | "sceneSettings" | "vectors" | "overlay2DObjects"| "3DObjects" | "annotations" | "movie" | (string & {});
 export type MoorhenPanel = { icon: MoorhenSVG; label: string; panelContent: React.JSX.Element };
 export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
     maps: { icon: "menuMaps", label: "Maps", panelContent: <MapsPanel /> },
@@ -35,11 +36,20 @@ export const PanelsList: Partial<Record<SidePanelIDs, MoorhenPanel>> = {
         )
     },
     "3DObjects": {
-        icon: "menu2DObjects",
+        icon: "menu3DObjects",
         label: "3D Objects",
         panelContent: (
             <SidePanelContainer title="3D objects">
                 <Moorhen3DObjects/>
+            </SidePanelContainer>
+        )
+    },
+    annotations: {
+        icon: "annotations",
+        label: "Annotations",
+        panelContent: (
+            <SidePanelContainer title="Annotations">
+                <MoorhenAnnotations/>
             </SidePanelContainer>
         )
     },

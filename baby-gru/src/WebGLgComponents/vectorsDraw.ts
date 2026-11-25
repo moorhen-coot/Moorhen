@@ -1,5 +1,5 @@
 import { gemmiAtomPairsToCylindersInfo,  guid} from '../utils/utils'
-import { getMathJaxSVG }  from '../utils/mathJaxUtils'
+import { contrastingTextColour, rasteriseTextStyle } from '../utils/textStyle'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 
@@ -45,6 +45,50 @@ const get2LetterElementPaddedCid = (cid): string  => {
     return newCid
 }
 
+/**
+ * The centre of the atoms a selection picks out of a molecule, or null if it picks out none.
+ *
+ * Names given without the PDB column padding (" CA " written "CA") are retried with one-letter
+ * and two-letter element padding, as a selection typed by hand or saved from elsewhere often is.
+ */
+export const selectionCentroid = (molecule: { gemmiStructure: unknown }, cid: string): [number, number, number] | null => {
+    if (!molecule || !cid) return null
+    let atoms = null
+    let nAtoms = 0
+    try {
+        atoms = window.gemmiModule.get_atom_info_for_selection(molecule.gemmiStructure, cid, "" )
+        nAtoms = atoms.size()
+        if(nAtoms===0 && cid.length!==4){
+            //Try 4-char padding/unpadding
+            atoms.delete()
+            atoms = window.gemmiModule.get_atom_info_for_selection(molecule.gemmiStructure, get1LetterElementPaddedCid(cid), "" )
+            nAtoms = atoms.size()
+            if(nAtoms===0){
+                atoms.delete()
+                atoms = window.gemmiModule.get_atom_info_for_selection(molecule.gemmiStructure, get2LetterElementPaddedCid(cid), "" )
+                nAtoms = atoms.size()
+            }
+        }
+    } catch(e) {
+        console.log(e)
+    }
+    let centre: [number, number, number] | null = null
+    if(nAtoms>0){
+        let totX = 0
+        let totY = 0
+        let totZ = 0
+        for(let i=0;i<nAtoms;i++){
+            const at = atoms.get(i)
+            totX += at.x
+            totY += at.y
+            totZ += at.z
+        }
+        centre = [totX/nAtoms, totY/nAtoms, totZ/nAtoms]
+    }
+    if(atoms) atoms.delete()
+    return centre
+}
+
 export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  => {
 
     const vectorsList = store.getState().vectors.vectorsList
@@ -82,90 +126,18 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
             }
             if(vec.molFromUniqueId!==undefined&&vec.cidFrom.length>0){
                 const fromMol = molecules.find(mol => mol.uniqueId === vec.molFromUniqueId)
-                if(fromMol){
-                    let fromAtoms
-                    let nFromAtoms = 0
-                    try {
-                        fromAtoms = window.gemmiModule.get_atom_info_for_selection(fromMol.gemmiStructure, vec.cidFrom, "" )
-                        nFromAtoms = fromAtoms.size()
-                        if(nFromAtoms===0 && vec.cidFrom.length!==4){
-                            //Try 4-char padding/unpadding
-                            fromAtoms.delete()
-                            const newCid = get1LetterElementPaddedCid(vec.cidFrom)
-                            fromAtoms = window.gemmiModule.get_atom_info_for_selection(fromMol.gemmiStructure, newCid, "" )
-                            nFromAtoms = fromAtoms.size()
-                            if(nFromAtoms===0){
-                                const newCid2 = get2LetterElementPaddedCid(vec.cidFrom)
-                                fromAtoms = window.gemmiModule.get_atom_info_for_selection(fromMol.gemmiStructure, newCid2, "" )
-                                nFromAtoms = fromAtoms.size()
-                            }
-                        }
-                    } catch(e) {
-                        console.log(e)
-                    }
-                    if(nFromAtoms>0){
-                        let totXFrom = 0
-                        let totYFrom = 0
-                        let totZFrom = 0
-                        for(let iFrom=0;iFrom<nFromAtoms;iFrom++){
-                            const at = fromAtoms.get(iFrom)
-                            totXFrom += at.x
-                            totYFrom += at.y
-                            totZFrom += at.z
-                        }
-                        totXFrom /= nFromAtoms
-                        totYFrom /= nFromAtoms
-                        totZFrom /= nFromAtoms
-                        xFromOrig = totXFrom
-                        yFromOrig = totYFrom
-                        zFromOrig = totZFrom
-                    }
-                    fromAtoms.delete()
+                const centre = fromMol ? selectionCentroid(fromMol, vec.cidFrom) : null
+                if(centre){
+                    [xFromOrig, yFromOrig, zFromOrig] = centre
                 }
             }
         }
         if(vec.coordsMode==="atoms"){
             if(vec.molToUniqueId!==undefined&&vec.cidTo.length>0){
                 const toMol = molecules.find(mol => mol.uniqueId === vec.molToUniqueId)
-                if(toMol){
-                    let toAtoms
-                    let nToAtoms = 0
-                    try {
-                        toAtoms = window.gemmiModule.get_atom_info_for_selection(toMol.gemmiStructure, vec.cidTo, "" )
-                        nToAtoms = toAtoms.size()
-                        if(nToAtoms===0 && vec.cidTo.length!==4){
-                            //Try 4-char padding/unpadding
-                            toAtoms.delete()
-                            const newCid = get1LetterElementPaddedCid(vec.cidTo)
-                            toAtoms = window.gemmiModule.get_atom_info_for_selection(toMol.gemmiStructure, newCid, "" )
-                            nToAtoms = toAtoms.size()
-                            if(nToAtoms===0){
-                                const newCid2 = get2LetterElementPaddedCid(vec.cidTo)
-                                toAtoms = window.gemmiModule.get_atom_info_for_selection(toMol.gemmiStructure, newCid2, "" )
-                                nToAtoms = toAtoms.size()
-                            }
-                        }
-                    } catch(e) {
-                        console.log(e)
-                    }
-                    if(nToAtoms>0){
-                        let totXTo = 0
-                        let totYTo = 0
-                        let totZTo = 0
-                        for(let iTo=0;iTo<nToAtoms;iTo++){
-                            const at = toAtoms.get(iTo)
-                            totXTo += at.x
-                            totYTo += at.y
-                            totZTo += at.z
-                        }
-                        totXTo /= nToAtoms
-                        totYTo /= nToAtoms
-                        totZTo /= nToAtoms
-                        xToOrig = totXTo
-                        yToOrig = totYTo
-                        zToOrig = totZTo
-                    }
-                    toAtoms.delete()
+                const centre = toMol ? selectionCentroid(toMol, vec.cidTo) : null
+                if(centre){
+                    [xToOrig, yToOrig, zToOrig] = centre
                 }
             }
         }
@@ -176,7 +148,6 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
             let xTo = xToOrig
             let yTo = yToOrig
             let zTo = zToOrig
-            let labelScale = 2.0
             let fnSize = vec.labelFontSize ?? 24
             const lsq = (xToOrig - xFromOrig) * (xToOrig - xFromOrig)
                       + (yToOrig - yFromOrig) * (yToOrig - yFromOrig)
@@ -196,37 +167,33 @@ export const getVectorsBuffers = async (store: Store<RootState>): Promise<any>  
             }
             if(window.devicePixelRatio){
                 fnSize *= window.devicePixelRatio
-                labelScale *= window.devicePixelRatio
             }
             const fnSizePx = fnSize + "px"
 
-            if(vec.labelText.startsWith("$")&&vec.labelText.endsWith("$")){
-                const mjdata = await getMathJaxSVG(vec.labelText.substring(1,vec.labelText.length-1))
-
-                const svg = mjdata.svg
-                const img = new window.Image()
-                const blob = new Blob([svg], {type: 'image/svg+xml'})
-                const blobUrl = URL.createObjectURL(blob)
-                img.src = blobUrl
-                img.crossOrigin = "Anonymous"
-                await img.decode()
-
-                const saveCanvas = new OffscreenCanvas(img.width*labelScale, img.height*labelScale)
-                const ctx = saveCanvas.getContext("2d")
-                ctx.drawImage(img,0,0,img.width,img.height,0,0,img.width*labelScale,img.height*labelScale)
-                const myImageData = ctx.getImageData(0, 0, img.width*labelScale,img.height*labelScale)
+            const latexLabel = vec.labelIsLatex && vec.labelMode !== "none"
+                ? await rasteriseTextStyle(
+                    { text: vec.labelText, latex: true, fontFamily: "serif", fontPixelSize: vec.labelFontSize ?? 24 },
+                    window.devicePixelRatio || 1,
+                    contrastingTextColour(store.getState().sceneSettings.backgroundColor)
+                )
+                : null
+            if(latexLabel){
+                const myImageData = latexLabel.imgData
+                // The atlas caches pixels by text and font, so the typeset form needs a key of its
+                // own: otherwise a plain label "x" and a LaTeX label "x" would share a texture.
+                const latexKey = "\u0001latex\u0001" + vec.labelText
 
                 if(vec.labelMode==="start"){
-                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xFrom,y:yFrom,z:zFrom,...labelScreenOffset},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:latexKey,x:xFrom,y:yFrom,z:zFrom,...labelScreenOffset},uuid:guid()})
                 }
                 if(vec.labelMode==="end"){
-                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xTo,y:yTo,z:zTo,...labelScreenOffset},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:latexKey,x:xTo,y:yTo,z:zTo,...labelScreenOffset},uuid:guid()})
                 }
                 if(vec.labelMode==="middle"){
                     const xLabel = xFrom + 0.5 * (xToOrig - xFromOrig)
                     const yLabel = yFrom + 0.5 * (yToOrig - yFromOrig)
                     const zLabel = zFrom + 0.5 * (zToOrig - zFromOrig)
-                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:vec.labelText,x:xLabel,y:yLabel,z:zLabel,...labelScreenOffset},uuid:guid()})
+                    newLabelBuffers.push({label:{imgData:myImageData, font:fnSizePx+" Arial",text:latexKey,x:xLabel,y:yLabel,z:zLabel,...labelScreenOffset},uuid:guid()})
                 }
             } else {
                 if(vec.labelMode==="start"){

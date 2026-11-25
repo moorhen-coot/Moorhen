@@ -55,7 +55,25 @@ export interface MoorhenVector {
     arrowHeadRadiusScale?: number;
     labelFontSize?: number;
     labelScreenOffsetDistance?: number;
+    /** Typeset labelText as LaTeX. labelFontSize is then the em size. */
+    labelIsLatex?: boolean;
 }
+
+/**
+ * A vector as saved before labels had a LaTeX switch, brought up to date.
+ *
+ * LaTeX used to be inferred from a label written as `$...$`. That now means the switch on and the
+ * dollars dropped. A vector that already says either way is returned unchanged, so this is safe
+ * to apply to anything loaded.
+ */
+export const migrateVectorLatexLabel = <T extends Pick<MoorhenVector, "labelText"> & { labelIsLatex?: boolean }>(vector: T): T => {
+    if (vector.labelIsLatex !== undefined) return vector;
+    const text = vector.labelText;
+    if (typeof text === "string" && text.length >= 2 && text.startsWith("$") && text.endsWith("$")) {
+        return { ...vector, labelText: text.substring(1, text.length - 1), labelIsLatex: true };
+    }
+    return vector;
+};
 
 const initialState: { vectorsList: MoorhenVector[] } = {
     vectorsList: [],
@@ -66,12 +84,14 @@ const vectorsSlice = createSlice({
     initialState: initialState,
     reducers: {
         // API
+        // Vectors that do not say whether their label is LaTeX are read the old way ($...$), so a
+        // caller or scene from before the switch keeps its typeset labels.
         addVectors: (state, action: PayloadAction<MoorhenVector[]>) => {
-            state.vectorsList.push(...action.payload);
+            state.vectorsList.push(...action.payload.map(migrateVectorLatexLabel));
         },
         // API
         addVector: (state, action: PayloadAction<MoorhenVector>) => {
-            state.vectorsList.push(action.payload);
+            state.vectorsList.push(migrateVectorLatexLabel(action.payload));
         },
         // API
         removeVectors: (state, action: PayloadAction<MoorhenVector[]>) => {
