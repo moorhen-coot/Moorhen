@@ -3,6 +3,7 @@ import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
 import type { MoorhenMolecule } from "../MoorhenMolecule";
 import { getMultiColourRuleArgs } from "../utils";
 import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./MoorhenMoleculeRepresentation";
+import type { wormOptions } from "./wormRadii";
 
 /** The supported ways a representation selection can be built. */
 export type RepresentationRuleType = "ligands" | "cid" | "molecule" | "chain" | "residue-range" | "neighbourhood";
@@ -360,6 +361,14 @@ export interface CreateRepresentationParams {
     m2tParams?: m2tParameters | null;
     residueEnvironmentOptions?: residueEnvironmentOptions | null;
     gaussianSurfaceSettings?: gaussianSurfSettings | null;
+    /**
+     * A "Worm"'s own options (any not given keep their defaults; null: the general ones). Where its
+     * radii come from: each residue's B-factor (the default), one radius, or a radius per residue in
+     * angstroms, e.g.
+     * `{ radiusSource: "custom", residueRadii: [{ chainId: "A", resNo: 34, radius: 2.5 }] }`
+     * (`radiusAniso: [x, y, z]` in place of `radius` for different radii along x, y and z).
+     */
+    wormOptions?: Partial<wormOptions> | null;
     nonCustomOpacity?: number | null;
     hbondedTo?: boolean;
     /**
@@ -405,6 +414,8 @@ export interface RepresentationBackup {
     m2tParams: m2tParameters | null;
     residueEnvironmentOptions: residueEnvironmentOptions | null;
     gaussianSurfaceSettings: gaussianSurfSettings | null;
+    /** A "Worm"'s own; null for a worm with the general ones, and for other styles */
+    wormOptions: wormOptions | null;
     nonCustomOpacity: number | null;
     uniqueId: string;
     isCustom: boolean;
@@ -488,6 +499,7 @@ export function extractRepresentationParams(representation: MoleculeRepresentati
         m2tParams: representation.useDefaultM2tParams ? null : copy(representation.m2tParams),
         residueEnvironmentOptions: representation.useDefaultResidueEnvironmentOptions ? null : copy(representation.residueEnvironmentOptions),
         gaussianSurfaceSettings: representation.useDefaultGaussianSurfaceSettings ? null : copy(representation.gaussianSurfaceSettings),
+        wormOptions: representation.style === "Worm" && !representation.useDefaultWormOptions ? copy(representation.wormOptions) : null,
         nonCustomOpacity: representation.nonCustomOpacity,
         uniqueId: representation.uniqueId,
         isCustom: representation.isCustom,
@@ -545,6 +557,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         bondOptions = existingParams?.bondOptions ?? undefined,
         m2tParams = existingParams?.m2tParams ?? undefined,
         residueEnvironmentOptions = existingParams?.residueEnvironmentOptions ?? undefined,
+        wormOptions = existingParams?.wormOptions ?? undefined,
         nonCustomOpacity = existingParams?.nonCustomOpacity ?? undefined,
         hbondedTo = existingParams?.hbondedTo ?? false,
         existingRepresentation,
@@ -656,6 +669,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     representation.setBondOptions(bondOptions);
     representation.setM2tParams(m2tParams);
     representation.setResidueEnvOptions(residueEnvironmentOptions);
+    representation.setWormOptions(wormOptions);
     representation.setNonCustomOpacity(nonCustomOpacity);
     representation.interfaceOption.selectionType = ruleType !== "neighbourhood" ? ruleType : "molecule";
     representation.interfaceOption.visible = params.interfaceVisible ?? true;
