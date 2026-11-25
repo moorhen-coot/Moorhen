@@ -13,10 +13,11 @@ import { MoorhenInfoCard, MoorhenStack } from "../../interface-base";
 import { MoorhenColourRuleCard } from "./ColourRuleCard";
 
 type colourRuleChange = {
-    action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty";
+    action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty" | "UpdateColor" | "UpdateCid";
     item?: ColourRule;
     items?: ColourRule[];
     color?: string;
+    cid?: string;
 };
 
 const itemReducer = (oldList: ColourRule[], change: colourRuleChange) => {
@@ -54,6 +55,17 @@ const itemReducer = (oldList: ColourRule[], change: colourRuleChange) => {
         const newRule = Object.create(Object.getPrototypeOf(oldRule));
         Object.assign(newRule, oldRule);
         newRule.color = change.color;
+        const newList = [...oldList];
+        newList[itemIndex] = newRule;
+        return newList;
+    } else if (change.action === "UpdateCid") {
+        // A copy with the new selection, so the list changes and the rules are applied again.
+        const itemIndex = oldList.findIndex(item => item.uniqueId === change.item.uniqueId);
+        if (itemIndex === -1) return oldList;
+        const oldRule = oldList[itemIndex];
+        const newRule = Object.create(Object.getPrototypeOf(oldRule));
+        Object.assign(newRule, oldRule);
+        newRule.setCid(change.cid);
         const newList = [...oldList];
         newList[itemIndex] = newRule;
         return newList;

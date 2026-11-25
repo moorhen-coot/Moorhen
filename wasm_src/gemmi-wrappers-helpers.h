@@ -205,7 +205,10 @@ inline std::vector<std::string> split_string(const std::string &string_in,
 }
 
 
-inline std::string cidToNeighboursCid(gemmi::Structure &st, const std::string &cid, const std::string &cidNeighbours, float d, bool excl){
+// The residues of cid in st with an atom within d of an atom of cidNeighbours in stNeighbours (or, with
+// excl, those without): "A/12||A/45". stNeighbours may be another structure: the residues of a protein
+// near a ligand that is a molecule of its own (a docked pose).
+inline std::string cidToNeighboursCidAcross(gemmi::Structure &st, const std::string &cid, gemmi::Structure &stNeighbours, const std::string &cidNeighbours, float d, bool excl){
 
     auto splitNeighboursCid = split_string(cidNeighbours, "||");
     auto splitCid = split_string(cid, "||");
@@ -222,7 +225,7 @@ inline std::string cidToNeighboursCid(gemmi::Structure &st, const std::string &c
 
     for(const auto &_neighboursCid : splitNeighboursCid){
         gemmi::Selection sel2(_neighboursCid);
-        for(auto m: sel2.models(st)){
+        for(auto m: sel2.models(stNeighbours)){
             for(auto c: sel2.chains(m)){
                 for(auto r: sel2.residues(c)){
                     for(auto a: sel2.atoms(r)){
@@ -262,6 +265,11 @@ inline std::string cidToNeighboursCid(gemmi::Structure &st, const std::string &c
 
     return "";
 
+}
+
+// The same, the neighbours in the same structure
+inline std::string cidToNeighboursCid(gemmi::Structure &st, const std::string &cid, const std::string &cidNeighbours, float d, bool excl){
+    return cidToNeighboursCidAcross(st, cid, st, cidNeighbours, d, excl);
 }
 
 inline std::vector<CompoundInfo> parse_mon_lib_list_cif(const std::string &data) {

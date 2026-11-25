@@ -168,7 +168,7 @@ export class CloudTestCommandCentre {
         return this.commands.slice(mark).map(entry => entry.command);
     }
 
-    async cootCommand(kwargs: any, doJournal: boolean = true) {
+    private async runCommand(kwargs: any, doJournal: boolean) {
         this.commands.push({ command: kwargs.command, commandArgs: kwargs.commandArgs, doJournal });
         // The worker code holds a single module-level container: point it at ours, so two live instances
         // (e.g. a fresh instance restoring a backup) don't run each other's commands
@@ -178,13 +178,18 @@ export class CloudTestCommandCentre {
         if (doJournal) {
             await this.history.addEntry(kwargs);
         }
-        return { data };
+        return data;
     }
 
-    async cootCommandList(commandList: any[], doJournal: boolean = true) {
-        const results = [];
-        for (const kwargs of commandList) results.push(await this.cootCommand(kwargs, doJournal));
-        return results[results.length - 1];
+    async cootCommand(kwargs: any, doJournal: boolean = true) {
+        return { data: await this.runCommand(kwargs, doJournal) };
+    }
+
+    /** As the worker's coot_command_list: one message, one result per command in `data.resultList` */
+    async cootCommandList(commandList: any[], doJournal: boolean = true, _asOneJob: boolean = false) {
+        const resultList = [];
+        for (const kwargs of commandList) resultList.push(await this.runCommand(kwargs, doJournal));
+        return { data: { resultList } };
     }
 
     /** The worker's non-command messages used by maps and the time capsule */

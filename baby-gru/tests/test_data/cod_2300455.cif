@@ -1,0 +1,229 @@
+#------------------------------------------------------------------------------
+#$Date: 2025-08-19 20:55:00 +0200 (Tue 19 de Aug de 2025) $
+#$Revision: 301808 $
+#$URL: svn://www.crystallography.net/cod/cif/2/30/04/2300455.cif $
+#------------------------------------------------------------------------------
+#
+# This file is available in the Crystallography Open Database (COD),
+# http://www.crystallography.net/. The original data for this entry
+# were provided by IUCr Journals, http://journals.iucr.org/.
+#
+# The file may be used within the scientific community so long as
+# proper attribution is given to the journal article from which the
+# data were obtained.
+#
+data_2300455
+loop_
+_publ_author_name
+'Schreyer, Martin'
+'Guo, Liangfeng'
+'Thirunahari, Satyanarayana'
+'Gao, Feng'
+'Garland, Marc'
+_publ_section_title
+;
+ Simultaneous determination of several crystal structures from powder
+ mixtures: the combination of powder X-ray diffraction, band-target
+ entropy minimization and Rietveld methods
+;
+_journal_coeditor_code           to5064
+_journal_issue                   2
+_journal_name_full               'Journal of Applied Crystallography'
+_journal_page_first              659
+_journal_page_last               667
+_journal_paper_doi               10.1107/S1600576714003379
+_journal_volume                  47
+_journal_year                    2014
+_chemical_compound_source        Sigma
+_chemical_formula_analytical     'C8 H9 N O2'
+_chemical_formula_iupac          'C8 H9 N O2'
+_chemical_formula_moiety         'C8 H9 N O2'
+_chemical_formula_structural     'C8 H9 N O2'
+_chemical_formula_sum            'C8 H9 N O2'
+_chemical_formula_weight         151.17
+_chemical_name_common            Paracetamol
+_chemical_name_systematic        N-(4-hydroxyphenyl)ethanamide
+_space_group_crystal_system      monoclinic
+_space_group_IT_number           14
+_space_group_name_Hall           '-P 2ybc'
+_space_group_name_H-M_alt        'P 1 21/n 1'
+_symmetry_space_group_name_Hall  '-P 2yn'
+_symmetry_space_group_name_H-M   'P 1 21/n 1'
+_cell_angle_alpha                90
+_cell_angle_beta                 82.587855(24)
+_cell_angle_gamma                90
+_cell_formula_units_Z            4
+_cell_length_a                   11.71439(47)
+_cell_length_b                   9.38544(22)
+_cell_length_c                   7.101660(36)
+_cell_measurement_temperature    298
+_cell_volume                     774.27(4)
+_computing_cell_refinement       'Topas v4.2 (Bruker AXS GmbH, 2009)'
+_computing_data_collection       unknown
+_computing_data_reduction        'Topas v4.2 (Bruker AXS GmbH, 2009)'
+_computing_molecular_graphics    'Diamond 3.1f'
+_computing_publication_material  CSD
+_computing_structure_refinement  'Topas v4.2 (Bruker AXS GmbH, 2009)'
+_computing_structure_solution    'Topas v4.2 (Bruker AXS GmbH, 2009)'
+_diffrn_ambient_temperature      298
+_diffrn_detector                 Vantec
+_diffrn_detector_type            'gas filled PSD'
+_diffrn_measurement_device_type  'Bruker D8'
+_diffrn_radiation_monochromator  none
+_diffrn_radiation_type           'Cu K\a'
+_diffrn_radiation_wavelength     1.54180
+_diffrn_source                   'sealed X-ray tube'
+_diffrn_source_target            Cu
+_exptl_absorpt_coefficient_mu    0.778
+_exptl_crystal_density_diffrn    1.297
+_exptl_crystal_F_000             320
+_pd_char_colour                  colourless
+_pd_meas_2theta_range_inc        0.0167
+_pd_meas_2theta_range_max        130
+_pd_meas_2theta_range_min        7.5
+_pd_meas_number_of_points        7333
+_pd_meas_scan_method             step
+_pd_proc_2theta_range_inc        0.0167
+_pd_proc_2theta_range_max        130
+_pd_proc_2theta_range_min        7.5
+_pd_proc_ls_background_function  'Chebychev of order 3'
+_pd_proc_ls_pref_orient_corr     'Spherical Harmonics Order 2'
+_pd_proc_ls_profile_function     'fundamental parameter'
+_pd_proc_ls_prof_R_factor        0.141
+_pd_proc_ls_prof_wR_expected     0.011
+_pd_proc_ls_prof_wR_factor       0.188
+_refine_ls_goodness_of_fit_all   17.2
+_refine_ls_hydrogen_treatment    noref
+_refine_ls_matrix_type           fullcycle
+_refine_ls_number_constraints    5
+_refine_ls_number_parameters     25
+_refine_ls_number_restraints     0
+_refine_ls_R_I_factor            0.080
+_refine_ls_shift/su_max          .01
+_refine_ls_structure_factor_coef Inet
+_refine_ls_weighting_details     1/[Y~i~+\s(Y~i~)]
+_refine_ls_weighting_scheme      sigma
+_cod_data_source_file            to5064sup1.cif
+_cod_data_source_block           paracetamol
+_cod_original_cell_volume        774.2655(93)
+_cod_database_code               2300455
+loop_
+_symmetry_equiv_pos_site_id
+_symmetry_equiv_pos_as_xyz
+1 x,y,z
+2 -x+1/2,y+1/2,-z+1/2
+3 -x,-y,-z
+4 x+1/2,-y+1/2,z+1/2
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_symmetry_multiplicity
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_occupancy
+_atom_site_U_iso_or_equiv
+C1 C 4 0.07012(43) -0.14232(12) 0.56914(45) 1 0.0409(5)
+C2 C 4 0.00093(50) -0.141255(64) 0.74817(30) 1 0.0409(5)
+C3 C 4 0.04081(26) -0.23309(25) 0.42333(54) 1 0.0409(5)
+C4 C 4 -0.09711(40) -0.23059(14) 0.78128(25) 1 0.0409(5)
+C5 C 4 -0.05720(16) -0.32247(32) 0.45633(49) 1 0.0409(5)
+C6 C 4 -0.12617(24) -0.32126(27) 0.63520(35) 1 0.0409(5)
+C7 C 4 0.22272(37) 0.00356(26) 0.67761(50) 1 0.0409(5)
+C8 C 4 0.33254(40) 0.08763(26) 0.63018(61) 1 0.0409(5)
+N1 N 4 0.16827(49) -0.053863(14) 0.53368(49) 1 0.0409(5)
+O1 O 4 -0.22024(17) -0.40702(37) 0.66695(31) 1 0.0409(5)
+O2 O 4 0.18236(31) -0.01363(51) 0.84162(54) 1 0.0409(5)
+H1 H 4 0.02351(62) -0.070251(60) 0.86296(26) 1 0.0409(5)
+H2 H 4 0.09483(18) -0.23419(29) 0.28274(61) 1 0.0409(5)
+H3 H 4 -0.15121(48) -0.229570(99) 0.92181(18) 1 0.0409(5)
+H4 H 4 -0.079943(39) -0.39356(45) 0.34174(53) 1 0.0409(5)
+H5 H 4 -0.240986(61) -0.47178(49) 0.56260(34) 1 0.0409(5)
+H6 H 4 0.20257(63) -0.02949(26) 0.39281(50) 1 0.0409(5)
+H7 H 4 0.40757(41) 0.01471(30) 0.62529(30) 1 0.0409(5)
+H8 H 4 0.33269(47) 0.139703(39) 0.48965(77) 1 0.0409(5)
+H9 H 4 0.33812(32) 0.17018(44) 0.74076(82) 1 0.0409(5)
+loop_
+_atom_type_symbol
+_atom_type_scat_source
+C 'D. Waasmaier & A. Kirfel. Acta Cryst. (1995). A51, 416-413'
+H 'D. Waasmaier & A. Kirfel. Acta Cryst. (1995). A51, 416-413'
+N 'D. Waasmaier & A. Kirfel. Acta Cryst. (1995). A51, 416-413'
+O 'D. Waasmaier & A. Kirfel. Acta Cryst. (1995). A51, 416-413'
+loop_
+_geom_angle_atom_site_label_1
+_geom_angle_atom_site_label_2
+_geom_angle_atom_site_label_3
+_geom_angle
+C2 C1 C3 119.7(3)
+C2 C1 N1 120.9(3)
+C3 C1 N1 119.4(3)
+C1 C2 C4 120.2(2)
+C1 C2 H1 120.0(5)
+C4 C2 H1 119.9(4)
+C1 C3 C5 120.2(3)
+C1 C3 H2 119.9(3)
+C5 C3 H2 119.9(3)
+C2 C4 C6 120.0(2)
+C2 C4 H3 120.0(3)
+C6 C4 H3 120.0(4)
+C3 C5 C6 120.0(3)
+C3 C5 H4 120.0(3)
+C6 C5 H4 120.0(3)
+C4 C6 C5 119.9(3)
+C4 C6 O1 120.0(2)
+C5 C6 O1 120.1(2)
+C8 C7 N1 120.0(3)
+C8 C7 O2 120.0(4)
+N1 C7 O2 120.0(4)
+C7 C8 H7 109.5(3)
+C7 C8 H8 109.5(5)
+C7 C8 H9 109.5(4)
+H7 C8 H8 109.4(4)
+H7 C8 H9 109.4(5)
+H8 C8 H9 109.5(4)
+C1 N1 C7 122.7(3)
+C1 N1 H6 119.9(5)
+C7 N1 H6 117.5(5)
+C6 O1 H5 120.1(2)
+loop_
+_geom_bond_atom_site_label_1
+_geom_bond_atom_site_label_2
+_geom_bond_distance
+C1 C2 1.417(5)
+C1 C3 1.417(4)
+C1 N1 1.414(6)
+C2 C4 1.416(6)
+C2 H1 1.111(4)
+C3 C5 1.417(4)
+C3 H2 1.111(5)
+C4 C6 1.417(3)
+C4 H3 1.111(4)
+C5 C6 1.415(4)
+C5 H4 1.111(5)
+C6 O1 1.359(4)
+C7 C8 1.509(6)
+C7 N1 1.382(6)
+C7 O2 1.210(5)
+C8 H7 1.111(6)
+C8 H8 1.111(7)
+C8 H9 1.112(6)
+N1 H6 1.054(5)
+O1 H5 1.012(4)
+loop_
+_geom_hbond_atom_site_label_D
+_geom_hbond_atom_site_label_H
+_geom_hbond_atom_site_label_A
+_geom_hbond_site_symmetry_A
+_geom_hbond_distance_DH
+_geom_hbond_distance_HA
+_geom_hbond_distance_DA
+_geom_hbond_angle_DHA
+C2 H1 O2 . 1.111(4) 1.923(8) 2.600(6) 115.3(5)
+O1 H5 O2 4_444 1.012(4) 1.911(4) 2.806(5) 145.8(4)
+N1 H6 O1 4_544 1.054(5) 1.836(5) 2.784(4) 147.5(3)
+loop_
+_cod_related_entry_id
+_cod_related_entry_database
+_cod_related_entry_code
+1 PubChem 1983

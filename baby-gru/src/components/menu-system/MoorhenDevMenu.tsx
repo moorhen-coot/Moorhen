@@ -35,6 +35,7 @@ import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "..
 import { moorhen } from "../../types/moorhen";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
 import type { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { devLoadLibraryLigands, devLogLigandContacts } from "../../utils/devLigands";
 import { M2T_SURFACE_REPRESENTATIONS, modalKeys } from "../../utils/enums";
 import { smoothSurfaceSetting } from "../../utils/smoothSurface";
 import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
@@ -506,6 +507,32 @@ export const MoorhenDevMenu = () => {
             {/* <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem> */}
             <MoorhenAccordion title="Test data" defaultOpen>
                 <MoorhenStack>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            document.body.click();
+                            devLoadLibraryLigands(moorhenInstance).then(({ loaded, failed }) =>
+                                moorhenInstance.snackbar.enqueueSnackbar({
+                                    message: `Loaded ${loaded.length} library ligands${failed.length ? `, ${failed.length} failed` : ""}`,
+                                    variant: failed.length ? "warning" : "success",
+                                })
+                            );
+                        }}
+                    >
+                        Load 10 library ligands (batch, 3 sites)
+                    </MoorhenMenuItem>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            document.body.click();
+                            devLogLigandContacts(moorhenInstance, true).then(logged =>
+                                moorhenInstance.snackbar.enqueueSnackbar({
+                                    message: `Logged contacts for ${logged} ligand / molecule pairs to the console`,
+                                    variant: "info",
+                                })
+                            );
+                        }}
+                    >
+                        Log ligand contacts (console)
+                    </MoorhenMenuItem>
                     <MoorhenToggle
                         type="switch"
                         checked={overlaysOn}
@@ -522,6 +549,9 @@ export const MoorhenDevMenu = () => {
                         }}
                         label="Load a bunch of vectors"
                     />
+                    <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
+                    <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
+                    <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>
                     <MoorhenMenuItem
                         onClick={() => {
                             dispatch(showModal({ key: modalKeys.CHECK_LIST_TEST }));
@@ -530,9 +560,6 @@ export const MoorhenDevMenu = () => {
                     >
                         Check lists (test)
                     </MoorhenMenuItem>
-                    <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
-                    <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
-                    <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>
                 </MoorhenStack>
             </MoorhenAccordion>
             <MoorhenAccordion title="WebGPU">
@@ -854,12 +881,24 @@ export const MoorhenDevMenu = () => {
                     </MoorhenMenuItem>
                 </MoorhenStack>
             </MoorhenAccordion>
-            <MoorhenAccordion title="View">
+            <MoorhenAccordion title="Files">
+                <MoorhenStack>
+                    <MoorhenToggle
+                        type="switch"
+                        checked={useGemmi}
+                        onChange={() => {
+                            dispatch(setUseGemmi(!useGemmi));
+                        }}
+                        label="Read/write coordinates with gemmi"
+                    />
+                </MoorhenStack>
+            </MoorhenAccordion>
+            <MoorhenAccordion title="View origin">
                 <MoorhenStack>
                     <MoorhenToggle
                         type="switch"
                         checked={centreOnHighlight}
-                        label="Centre on what is lit"
+                        label="Centre on what a surface or ribbon lights"
                         tooltip="Zoomed out, centring on a surface or ribbon goes to the chain or molecule it lights. Off: the residue clicked."
                         onChange={() => {
                             meshCentringSetting.followHighlight = !centreOnHighlight;
@@ -890,18 +929,6 @@ export const MoorhenDevMenu = () => {
                             />
                         </MoorhenStack>
                     </MoorhenStack>
-                </MoorhenStack>
-            </MoorhenAccordion>
-            <MoorhenAccordion title="Files">
-                <MoorhenStack>
-                    <MoorhenToggle
-                        type="switch"
-                        checked={useGemmi}
-                        onChange={() => {
-                            dispatch(setUseGemmi(!useGemmi));
-                        }}
-                        label="Read/write coordinates with gemmi"
-                    />
                 </MoorhenStack>
             </MoorhenAccordion>
         </MoorhenStack>

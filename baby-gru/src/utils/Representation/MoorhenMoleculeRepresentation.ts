@@ -2,15 +2,16 @@ import { batch } from "react-redux";
 import { correctExportedGltf } from "../gltfWinding";
 import { appendOtherData, buildBuffers } from "../../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../../store/glRefSlice";
-import { enqueueSnackbar  } from '@/store';
+import { enqueueSnackbar } from "../../store/snackbarSlice";
 import { gemmi } from "../../types/gemmi";
 import { libcootApi } from "../../types/libcoot";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
-import { createRepresentation, extractRepresentationParams, withCidModel } from "./RepresentationBuilder";
+import { createRepresentation, extractRepresentationParams, neighbourResidues, withCidModel } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams, RepresentationBackup } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS, M2T_SURFACE_REPRESENTATIONS } from "../enums";
+import { defaultWormOptions, wormM2tIntParameters, wormOptions, wormResidueProperties, wormResidueRadii } from "./wormRadii";
 import { centreOnGemmiAtoms, cidToSpec, copyStructureSelection, countResiduesInSelection, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToRGB } from "../utils";
 import { ResidueSelectionRuleType } from "@/components/card/MoleculeCard/addRepresentation/components/ResidueSelectionSection";
 import { CommandCentre } from "@/InstanceManager/CommandCentre";
@@ -66,6 +67,8 @@ export type RepresentationStyles =
     | "rama"
     | "rotamer"
     | "CRs"
+    | "Worm"
+    | "Tubes"
     | "MolecularSurface"
     | "DishyBases"
     | "VdWSurface"
@@ -191,6 +194,8 @@ export class MoleculeRepresentation {
     style: RepresentationStyles;
     cid: string;
     neighboursCid: string;
+    /** The molecule neighboursCid is in (uniqueId), if not this one: a pocket around a docked ligand */
+    neighboursMoleculeUid: string;
     restrictToNeighbours: boolean;
     neighboursDistance: number;
     hbondedToCid: string;
@@ -217,6 +222,10 @@ export class MoleculeRepresentation {
     useDefaultGaussianSurfaceSettings: boolean;
     bondOptions: moorhen.cootBondOptions;
     m2tParams: m2tParameters;
+    /** A "Worm"'s own options: where its radii come from, how finely it is drawn (see wormRadii.ts). */
+    wormOptions: wormOptions;
+    /** Whether a "Worm" is drawn with the general (default) worm options rather than its own. */
+    useDefaultWormOptions: boolean;
     nonCustomOpacity: number;
     residueEnvironmentOptions: residueEnvironmentOptions;
     ligandsCid: string;
@@ -300,6 +309,8 @@ export class MoleculeRepresentation {
             dishStyleAngularSampling: 32,
             ssUsageScheme: 2,
         };
+        this.wormOptions = defaultWormOptions();
+        this.useDefaultWormOptions = true;
         this.residueEnvironmentOptions = {
             maxDist: 3.5,
             adaptiveDist: 8.0,
@@ -316,6 +327,7 @@ export class MoleculeRepresentation {
         this.residueSelectionColor = [0.25, 1.0, 0.25, 0.35];
         this.interfaceOption = { visible: undefined, selectionType: "cid" };
         this.neighboursCid = "";
+        this.neighboursMoleculeUid = "";
         this.restrictToNeighbours = false;
         this.neighboursDistance = 6.0;
         this.hbondedToCid = "";
@@ -353,6 +365,25 @@ export class MoleculeRepresentation {
         } else {
             this.useDefaultM2tParams = true;
         }
+    }
+
+    /**
+     * Give a "Worm" its own options (any not given keep their defaults), e.g.
+     * `{ radiusSource: "custom", residueRadii: [{ chainId: "A", resNo: 34, radius: 2.5 }] }`, in
+     * angstroms; or, with none, draw it with the general ones. Takes effect on the next draw.
+     */
+    setWormOptions(options: Partial<wormOptions> | null | undefined) {
+        if (options) {
+            this.useDefaultWormOptions = false;
+            this.wormOptions = { ...defaultWormOptions(), ...options };
+        } else {
+            this.useDefaultWormOptions = true;
+        }
+    }
+
+    /** The worm options a "Worm" is drawn with: its own, or the general ones. */
+    get drawnWormOptions(): wormOptions {
+        return this.useDefaultWormOptions ? defaultWormOptions() : this.wormOptions;
     }
 
     /** Show one model of a multi-model molecule (0: all of them). The model is kept in the CID */
@@ -503,6 +534,7 @@ export class MoleculeRepresentation {
             "NEFRestraints"
         ].includes(style);
         this.styleHasColourRules = ![
+            "Tubes",
             "allHBonds",
             "rama",
             "rotamer",
@@ -814,14 +846,22 @@ export class MoleculeRepresentation {
         }
         batch(() => {
             this.parentMolecule.store.dispatch(setDisplayBuffers(newBuffers));
-            this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
+            // filter() returns a new array even when nothing was removed, and a new label array
+            // rebuilds the whole label texture.
+            if (newLabelBuffers.length !== labelBuffers.length) {
+                this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
+            } else {
+                this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+            }
         });
     }
 
     /**
      * Make the representation visible
+     * @param requestDraw - Ask for the scene to be redrawn (default). Pass false when showing many at
+     * once and ask once at the end: each request is a store dispatch.
      */
-    async show() {
+    async show(requestDraw: boolean = true) {
         const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers;
         const newLabelBuffers = [];
         try {
@@ -843,13 +883,20 @@ export class MoleculeRepresentation {
         } catch (err) {
             console.log(err);
         }
-        this.parentMolecule.store.dispatch(setLabelBuffers([...labelBuffers, ...newLabelBuffers]));
+        // A new label array rebuilds the label texture and redraws; visibility alone only needs a redraw.
+        if (newLabelBuffers.length > 0) {
+            this.parentMolecule.store.dispatch(setLabelBuffers([...labelBuffers, ...newLabelBuffers]));
+        } else if (requestDraw) {
+            this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+        }
     }
 
     /**
      * Make the representation not visible
+     * @param requestDraw - Ask for the scene to be redrawn (default). Pass false when hiding many at
+     * once and ask once at the end: each request is a store dispatch.
      */
-    hide() {
+    hide(requestDraw: boolean = true) {
         const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers;
         let newLabelBuffers = labelBuffers;
         try {
@@ -865,7 +912,11 @@ export class MoleculeRepresentation {
         } catch (err) {
             console.log(err);
         }
-        this.parentMolecule.store.dispatch(setLabelBuffers([...newLabelBuffers]));
+        if (newLabelBuffers.length !== labelBuffers.length) {
+            this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
+        } else if (requestDraw) {
+            this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+        }
     }
 
     /**
@@ -963,13 +1014,14 @@ export class MoleculeRepresentation {
 
         if (this.restrictToNeighbours) {
             //Now we might not want to use the new method, maybe we should use the old one.
-            if (["CRs", "MolecularSurface", "DishyBases", "VdWSurface", "AccessibleSurface", "Calpha"].includes(_style)) {
-                restrictedCid = window.gemmiModule.cidToNeighboursCid(
-                    this.parentMolecule.gemmiStructure,
+            if (["CRs", "Worm", "MolecularSurface", "DishyBases", "VdWSurface", "AccessibleSurface", "Calpha"].includes(_style)) {
+                restrictedCid = neighbourResidues(
+                    this.parentMolecule,
                     _cid,
                     this.neighboursCid,
                     this.neighboursDistance,
-                    this.excludeNeighbours
+                    this.excludeNeighbours,
+                    this.neighboursMoleculeUid
                 );
             } else {
                 if (restrictedCid.length > 0) _cid = restrictedCid;
@@ -1007,6 +1059,8 @@ export class MoleculeRepresentation {
                 objects = await this.getGlycoBlockBuffers(_cid);
                 break;
             case "CRs":
+            case "Worm":
+            case "Tubes":
             case "MolecularSurface":
             case "DishyBases":
             case "VdWSurface":
@@ -1075,20 +1129,8 @@ export class MoleculeRepresentation {
             );
         }
 
-        if(_style!=="hover"){
-            const unknownMonomersStatus = await this.commandCentre.cootCommand(
-                {
-                    returnType: "string_array",
-                    command: "get_residue_names_with_no_dictionary",
-                    commandArgs: [this.parentMolecule.molNo ],
-                },
-                false
-            );
-            const unknownMonomers = unknownMonomersStatus.data.result.result
-            if(unknownMonomers.length>0){
-                this.parentMolecule.store.dispatch(enqueueSnackbar({ message: `Show monomers (${unknownMonomers.join(",")}) have no dictionary description. Some atoms/bonds may be drawn oddly.`, variant: "warning" }));
-            }
-        }
+        // Monomers with no dictionary are warned about from the molecule's record (StoreSync), once per
+        // change, not by asking Coot after every draw of every representation
 
         return objects;
     }
@@ -1456,9 +1498,18 @@ export class MoleculeRepresentation {
 
         switch (style) {
             case "CRs":
+            case "Worm":
                 m2tStyle = "Ribbon";
                 m2tSelection = "//";
                 break;
+            case "Tubes":
+                // Coot's bendy helices pick their residues with a plain MMDB selection, not M2T's
+                // {a & b} compound ones, so the CID as it is (one of them: MMDB has no "||"), with
+                // no residue-type filter, exclusions or neighbourhood.
+                return {
+                    m2tStyle: "Tubes",
+                    m2tSelection: cidSelection && !cidSelection.includes("||") ? cidSelection : "//",
+                };
             case "MolecularSurface":
                 m2tStyle = "MolecularSurface";
                 m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,MSE,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)";
@@ -1520,6 +1571,33 @@ export class MoleculeRepresentation {
             m2tStyle,
             m2tSelection,
         };
+    }
+
+    /**
+     * The secondary structure usage flag of this representation's M2T calls: 1 (DONT_USE, so all
+     * coil) for a worm, otherwise the M2T parameters' (0 header, 2 calculated).
+     */
+    getM2tSsUsageScheme(): number {
+        if (this.style === "Worm") return 1;
+        return this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams.ssUsageScheme : this.m2tParams.ssUsageScheme;
+    }
+
+    /**
+     * The residue properties a "Worm" is drawn with, as the JSON Coot's set_residue_properties
+     * takes (each residue's radius as a multiple of the coil thickness); null for other styles.
+     */
+    getWormResidueProperties(): string | null {
+        if (this.style !== "Worm") return null;
+        const params = this.useDefaultM2tParams ? this.parentMolecule.defaultM2tParams : this.m2tParams;
+        const options = this.drawnWormOptions;
+        const needsBFactors = options.radiusSource !== "custom" || !options.residueRadii?.length;
+        const radii = wormResidueRadii(options, needsBFactors ? this.parentMolecule.getResidueBFactors() : []);
+        return wormResidueProperties(radii, params.ribbonStyleCoilThickness);
+    }
+
+    /** The M2T integer parameters a "Worm" is drawn with in place of the M2T parameters'; null for other styles. */
+    getWormM2tIntParameters(): Record<string, number> | null {
+        return this.style === "Worm" ? wormM2tIntParameters(this.drawnWormOptions) : null;
     }
 
     /**
@@ -1656,12 +1734,7 @@ export class MoleculeRepresentation {
 
         if (this.colourRules.length > 0 && this.colourRules[0].ruleType === "electrostatics") colorStyle = "ByOwnPotential";
 
-        let ssUsageScheme;
-        if (this.useDefaultM2tParams) {
-            ssUsageScheme = this.parentMolecule.defaultM2tParams.ssUsageScheme;
-        } else {
-            ssUsageScheme = this.m2tParams.ssUsageScheme;
-        }
+        const ssUsageScheme = this.getM2tSsUsageScheme();
 
 
         // Moorhen's smooth surface unless the user prefers M2T's (Preferences, useSmoothSurface): made
@@ -1681,9 +1754,18 @@ export class MoleculeRepresentation {
         const m2tSurfaceMesh = async (selection: string): Promise<libcootApi.SimpleMeshJS> => {
             await this.applyM2tParams();
             if (this.colourRulesOnDemand) await this.applyColourRules();
+            // The residues' secondary structure as ssUsageScheme says, and a worm's radii, are the
+            // molecule's: set and put back around the mesh in one worker command (see
+            // withM2tMoleculeState in CootWorker).
             const response = (await this.commandCentre.cootCommand(
-                { returnType: "mesh", command: "get_molecular_representation_mesh",
-                  commandArgs: [this.parentMolecule.molNo, selection, colorStyle, m2tStyle, ssUsageScheme] },
+                {
+                    returnType: "mesh",
+                    command: "shim_get_molecular_representation_mesh",
+                    commandArgs: [
+                        this.parentMolecule.molNo, selection, colorStyle, m2tStyle, ssUsageScheme,
+                        this.getWormResidueProperties(), this.getWormM2tIntParameters(),
+                    ],
+                },
                 false
             )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
             return response.data.result.result as libcootApi.SimpleMeshJS;
@@ -1719,7 +1801,8 @@ export class MoleculeRepresentation {
         // A nucleic acid ribbon comes as two meshes (below), which light together when either
         // is hovered (highlightGroup.ts): numbered from one table, so their owner codes agree,
         // and in one highlight group.
-        const withBases = m2tStyle === "Ribbon" && this.parentMolecule.hasDNA;
+        // A worm is a trace: no bases.
+        const withBases = m2tStyle === "Ribbon" && this.style !== "Worm" && this.parentMolecule.hasDNA;
         const numbering = newOwnerNumbering();
         const highlightGroup = withBases ? `ribbon-and-bases-${guid()}` : null;
         // Coot gives a nucleotide the stretch of ribbon centred on its C3', which hands each
@@ -2500,7 +2583,7 @@ export class MoleculeRepresentation {
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
         try {
             const objects = [{ ...response.data.result.result, pick_info: {} }];
-            if (objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+            if (objects.length > 0 && this.parentMolecule.gemmiStructure && !this.parentMolecule.gemmiStructure.isDeleted()) {
                 const flippedNormalsObjects = objects.map(object => {
                     const flippedNormalsObject = { ...object };
                     flippedNormalsObject.idx_tri = object.idx_tri.map(element => element.map(subElement => subElement.reverse()));
@@ -2546,7 +2629,7 @@ export class MoleculeRepresentation {
         if (this.cavities) {
             const _objects = this.cavities.mesh;
             const cavityIndex = this.cavities.index ?? 1;
-            if (_objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+            if (_objects.length > 0 && this.parentMolecule.gemmiStructure && !this.parentMolecule.gemmiStructure.isDeleted()) {
 
                 let objects = [];
                 if (cavityIndex === 0) {
@@ -2699,12 +2782,7 @@ export class MoleculeRepresentation {
             gltfData = result.data.result.result;
         } else if (this.styleIsM2tRepresentation || this.styleIsCombinedRepresentation) {
             const { m2tStyle, m2tSelection } = this.getM2tArgs(this.style, this.cid);
-            let ssUsageScheme;
-            if (this.useDefaultM2tParams) {
-                ssUsageScheme = this.parentMolecule.defaultM2tParams.ssUsageScheme;
-            } else {
-                ssUsageScheme = this.m2tParams.ssUsageScheme;
-            }
+            const ssUsageScheme = this.getM2tSsUsageScheme();
             const result = (await this.commandCentre.cootCommand(
                 {
                     returnType: "string",
@@ -2757,17 +2835,15 @@ export class MoleculeRepresentation {
             gltfData = result.data.result.result;
         } else if (!(this.style === "MetaBalls") && (this.styleIsM2tRepresentation || this.styleIsCombinedRepresentation)) {
             const { m2tStyle, m2tSelection } = this.getM2tArgs(this.style, this.cid);
-            let ssUsageScheme;
-            if (this.useDefaultM2tParams) {
-                ssUsageScheme = this.parentMolecule.defaultM2tParams.ssUsageScheme;
-            } else {
-                ssUsageScheme = this.m2tParams.ssUsageScheme;
-            }
+            const ssUsageScheme = this.getM2tSsUsageScheme();
             const result = (await this.commandCentre.cootCommand(
                 {
                     returnType: "string",
                     command: "shim_export_molecular_representation_as_mesh_file",
-                    commandArgs: [this.parentMolecule.molNo, m2tSelection, "", m2tStyle, ssUsageScheme, fileType],
+                    commandArgs: [
+                        this.parentMolecule.molNo, m2tSelection, "", m2tStyle, ssUsageScheme, fileType,
+                        this.getWormResidueProperties(), this.getWormM2tIntParameters(),
+                    ],
                 },
                 false
             )) as moorhen.WorkerResponse<ArrayBuffer>;

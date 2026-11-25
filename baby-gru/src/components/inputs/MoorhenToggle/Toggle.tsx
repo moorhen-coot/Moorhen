@@ -1,4 +1,5 @@
 import { Dispatch, JSX, SetStateAction, useRef } from "react";
+import { MoorhenIcon } from "../../icons";
 import { MoorhenTooltip } from "../../interface-base/Popovers/Tooltip";
 import "./moorhen-toggle.css";
 
@@ -17,6 +18,8 @@ type MoorhenToggleProps = {
     disabled?: boolean;
     /** Shown on hover or focus: the place for a long explanation, keeping the label short. */
     tooltip?: string | JSX.Element;
+    /** Shown after the tooltip, with a warning icon, while the toggle is disabled: why it is. */
+    disabledTooltip?: string | JSX.Element | false;
     tooltipPlacement?: "top" | "bottom" | "left" | "right";
 };
 
@@ -67,8 +70,24 @@ export const MoorhenToggle = (props: MoorhenToggleProps) => {
             <span className="moorhen__toggle-label-text">{props.label}</span>
         </label>
     );
-    if (props.tooltip) {
-        return <MoorhenTooltip tooltip={props.tooltip} placement={props.tooltipPlacement ?? "top"} link={element} linkRef={labelRef} />;
+    // As MoorhenButton does
+    let tooltip = props.tooltip;
+    if (disabled && props.disabledTooltip) {
+        tooltip = (
+            <>
+                {tooltip}
+                {tooltip && <br />}
+                &nbsp;
+                <MoorhenIcon
+                    moorhenSVG="MatSymWarning"
+                    style={{ color: "var(--moorhen-warning)", width: "18px", height: "18px", transform: "translateY(3px)" }}
+                />{" "}
+                {props.disabledTooltip}
+            </>
+        );
+    }
+    if (tooltip) {
+        return <MoorhenTooltip tooltip={tooltip} placement={props.tooltipPlacement ?? "top"} link={element} linkRef={labelRef} />;
     }
     return element;
 };

@@ -14,6 +14,7 @@ import {
     MolSurfSettingsPanel,
     ResidueEnvironmentSettingsPanel,
     RibbonSettingsPanel,
+    WormSettingsPanel,
 } from "../MoleculeRepresentationSettingsCard";
 import { ColourSettingsSection } from "./components/ColourSettingsSection";
 import { FilterToggles } from "./components/FilterToggles";
@@ -55,7 +56,9 @@ export const AddCustomRepresentationCard = memo(
 
         const [useDefaultRepresentationSettings, setUseDefaultRepresentationSettings] = useState<boolean>(() => {
             if (props.representation) {
-                if (M2T_REPRESENTATIONS.includes(props.representation.style)) {
+                if (props.representation.style === "Worm") {
+                    return props.representation.useDefaultWormOptions;
+                } else if (M2T_REPRESENTATIONS.includes(props.representation.style)) {
                     return props.representation.useDefaultM2tParams;
                 } else if (COOT_BOND_REPRESENTATIONS.includes(props.representation.style)) {
                     return props.representation.useDefaultBondOptions;
@@ -116,7 +119,10 @@ export const AddCustomRepresentationCard = memo(
         const handleDefaultRepresentationSettingsChange = () => {
             setUseDefaultRepresentationSettings(!useDefaultRepresentationSettings);
 
-            if (M2T_REPRESENTATIONS.includes(representationStyle)) {
+            if (representationStyle === "Worm") {
+                // A worm's settings are its worm options (the M2T ones it uses are among them)
+                representationRef.current.useDefaultWormOptions = !useDefaultRepresentationSettings;
+            } else if (M2T_REPRESENTATIONS.includes(representationStyle)) {
                 representationRef.current.useDefaultM2tParams = !useDefaultRepresentationSettings;
             } else if (COOT_BOND_REPRESENTATIONS.includes(representationStyle)) {
                 representationRef.current.useDefaultBondOptions = !useDefaultRepresentationSettings;
@@ -176,6 +182,10 @@ export const AddCustomRepresentationCard = memo(
                         residueEnvironmentOptions: representationRef.current.useDefaultResidueEnvironmentOptions
                             ? null
                             : { ...representationRef.current.residueEnvironmentOptions },
+                        wormOptions:
+                            representationStyle === "Worm" && !useDefaultRepresentationSettings
+                                ? { ...representationRef.current.wormOptions }
+                                : null,
                         nonCustomOpacity: nonCustomAlpha,
                         hbondedTo,
                         surfaceChainsSeparate,
@@ -223,6 +233,10 @@ export const AddCustomRepresentationCard = memo(
                         residueEnvironmentOptions: representationRef.current.useDefaultResidueEnvironmentOptions
                             ? null
                             : { ...representationRef.current.residueEnvironmentOptions },
+                        wormOptions:
+                            representationStyle === "Worm" && !useDefaultRepresentationSettings
+                                ? { ...representationRef.current.wormOptions }
+                                : null,
                         nonCustomOpacity: nonCustomAlpha,
                         hbondedTo,
                         surfaceChainsSeparate,
@@ -339,7 +353,7 @@ export const AddCustomRepresentationCard = memo(
                         />
                     </>
                 )}
-                {(["CBs", "CAs", "ligands", "CRs", "residue_environment"].includes(representationStyle) ||
+                {(["CBs", "CAs", "ligands", "CRs", "Worm", "residue_environment"].includes(representationStyle) ||
                     M2T_SURFACE_REPRESENTATIONS.includes(representationStyle)) && (
                     <MoorhenToggle
                         type="switch"
@@ -353,6 +367,9 @@ export const AddCustomRepresentationCard = memo(
                 )}
                 {!useDefaultRepresentationSettings && representationStyle === "CRs" && (
                     <RibbonSettingsPanel representation={representationRef.current} />
+                )}
+                {!useDefaultRepresentationSettings && representationStyle === "Worm" && (
+                    <WormSettingsPanel representation={representationRef.current} />
                 )}
                 {!useDefaultRepresentationSettings &&
                     representationStyle !== "MetaBalls" &&

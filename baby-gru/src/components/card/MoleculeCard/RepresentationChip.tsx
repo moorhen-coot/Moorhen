@@ -14,6 +14,7 @@ import "./representation.css";
 import { parseCid } from "@/utils/utils";
 import { useCommandCentre } from "../../../InstanceManager";
 import { useMoleculeChanged } from "@/hooks";
+import { selectIsMoleculeVisible } from "./moleculeCardSelectors";
 
 export const CustomRepresentationChip = (props: {
     addColourRulesAnchorDivRef: React.RefObject<HTMLDivElement>;
@@ -34,7 +35,7 @@ export const CustomRepresentationChip = (props: {
     const models = molecule.numberOfModels;
     const dispatch = useDispatch();
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
-    const isMoleculeVisible = useSelector((state: RootState) => state.molecules.visibleMolecules.some(molNo => molNo === molecule.molNo));
+    const isMoleculeVisible = useSelector((state: RootState) => selectIsMoleculeVisible(state, molecule.molNo));
     const chipStyle = getChipStyle(representation.colourRules, representationIsVisible && isMoleculeVisible, isDark);
     if (!isMoleculeVisible) chipStyle["opacity"] = "0.3";
 
