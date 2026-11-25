@@ -166,9 +166,12 @@ describe("the fade uniform's wiring", () => {
         // programs inherit from the same fragment shader and which is just as fatal unset.
         expect(drawCore).toMatch(
             /function setTriangleFragmentUniforms[\s\S]{0,400}uniform1i\([^)]*\.ShadowMap[\s\S]{0,200}uniform1f\([^)]*\.alphaMultiplier/);
+        // The arguments after bufferFade are whatever else the helper has grown to carry - the
+        // point being guarded is that all three paths go through it, not how many uniforms it
+        // happens to write this month.
         for (const program of ["theShader", "program", "shaderProgramThickLinesNormal"]) {
             expect(drawCore).toMatch(
-                new RegExp(`setTriangleFragmentUniforms\\(self, ${program}, bufferFade\\)`));
+                new RegExp(`setTriangleFragmentUniforms\\(self, ${program}, bufferFade[,)]`));
         }
     });
 

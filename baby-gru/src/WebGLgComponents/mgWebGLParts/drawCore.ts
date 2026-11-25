@@ -10,6 +10,7 @@ import { vec3Create, NormalizeVec3, vec3Cross } from '../mgMaths.js';
 import type { MGWebGL } from '../mgWebGL';
 import { advanceCamera } from './cameraAnimations';
 import { isInvisible, shouldCastShadow } from '../objectFade';
+import { grazingDensitySetting } from '../grazingDensity';
 import { beginDepthOnlyPass } from '../shadowPass';
 import { levelForHeight, visibleHeight, ownerMaskForLevel } from '../../utils/pickLevel';
 import { highlightSiblings } from '../highlightGroup';
@@ -163,12 +164,25 @@ const METALLIC_ROUGHNESS_TEXTURE_UNIT = 11;
  *
  * @param program must already be the current program; these are uniform writes.
  */
-function setTriangleFragmentUniforms(self: MGWebGL, program: any, alphaMultiplier: number): void {
+function setTriangleFragmentUniforms(
+    self: MGWebGL, program: any, alphaMultiplier: number,
+    grazingDensity = 0.0, grazingAnchor = 1.0,
+): void {
     if (program.ShadowMap != null) {
         self.gl.uniform1i(program.ShadowMap, SHADOW_TEXTURE_UNIT);
     }
     if (program.alphaMultiplier != null) {
         self.gl.uniform1f(program.alphaMultiplier, alphaMultiplier);
+    }
+    // Alongside the fade and for the same reason: every program built from the triangle fragment
+    // shader declares it, so every one of them has to be told. Defaulted here as well as in the
+    // shader, so a caller that has no opinion writes the identity rather than leaving whatever the
+    // last draw set.
+    if (program.grazingDensity != null) {
+        self.gl.uniform1f(program.grazingDensity, grazingDensity);
+    }
+    if (program.grazingAnchor != null) {
+        self.gl.uniform1f(program.grazingAnchor, grazingAnchor);
     }
     // Their own units whether or not anything is bound there, so that an unassigned sampler
     // never lands on unit 0 alongside whatever that holds. The flags that say whether to sample
@@ -602,6 +616,10 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
             // Faded at all: it stops casting a shadow. An object that has half vanished while its
             // shadow stays solid on the floor is the most obvious way to make a fade look wrong.
             const bufferFade = displayBuffers[idx].alphaMultiplier ?? 1.0;
+            // The buffer's own setting, or - while there is nothing in the interface to set it -
+            // whatever the dev menu is asking for. The per-buffer value wins, so wiring a
+            // representation up to it later takes this global out of the picture for that buffer.
+            const bufferGrazing = displayBuffers[idx].grazingDensity || grazingDensitySetting.strength;
             if (isInvisible(bufferFade)) {
                 continue;
             }
@@ -707,7 +725,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 }
 
                 self.gl.useProgram(theShader);
-                setTriangleFragmentUniforms(self, theShader, bufferFade);
+                setTriangleFragmentUniforms(self, theShader, bufferFade, bufferGrazing, grazingDensitySetting.anchor);
 
                 self.gl.uniform1ui(theShader.uHoveredPoint, 0xFFFFFFFF);
                 // Always set alongside the hovered point, never left to default: an unset
@@ -995,7 +1013,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 0.0, 0.0, 0.0, 1.0,
                 );
                 self.gl.useProgram(program);
-                setTriangleFragmentUniforms(self, program, bufferFade);
+                setTriangleFragmentUniforms(self, program, bufferFade, bufferGrazing, grazingDensitySetting.anchor);
                 self.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                 self.setMatrixUniforms(program);
                 self.gl.disableVertexAttribArray(program.vertexColourAttribute);
@@ -1204,7 +1222,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
             // Lit lines are drawn with the triangle fragment shader, so they need everything a
             // triangle needs. This line has now had to be restored twice; see the helper.
-            setTriangleFragmentUniforms(self, shaderProgramThickLinesNormal, bufferFade);
+            setTriangleFragmentUniforms(self, shaderProgramThickLinesNormal, bufferFade, bufferGrazing, grazingDensitySetting.anchor);
 
             self.gl.uniform1i(shaderProgramThickLinesNormal.shinyBack, true);
             self.setLightUniforms(shaderProgramThickLinesNormal);
