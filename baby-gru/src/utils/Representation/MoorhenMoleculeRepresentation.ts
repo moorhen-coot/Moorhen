@@ -2,13 +2,13 @@ import { batch } from "react-redux";
 import { correctExportedGltf } from "../gltfWinding";
 import { appendOtherData, buildBuffers } from "../../WebGLgComponents/buildBuffers";
 import { setDisplayBuffers, setLabelBuffers, setRequestDrawScene } from "../../store/glRefSlice";
-import { enqueueSnackbar  } from '@/store';
+import { enqueueSnackbar } from "../../store/snackbarSlice";
 import { gemmi } from "../../types/gemmi";
 import { libcootApi } from "../../types/libcoot";
 import { webGL } from "../../types/mgWebGL";
 import { moorhen } from "../../types/moorhen";
 import { ColourRule, ColourRuleType } from "../MoorhenColourRule";
-import { createRepresentation, extractRepresentationParams, withCidModel } from "./RepresentationBuilder";
+import { createRepresentation, extractRepresentationParams, neighbourResidues, withCidModel } from "./RepresentationBuilder";
 import type { BuildRepresentationParams, CreateRepresentationParams, RepresentationBackup } from "./RepresentationBuilder";
 import { COOT_BOND_REPRESENTATIONS, M2T_REPRESENTATIONS } from "../enums";
 import { defaultWormOptions, wormM2tIntParameters, wormOptions, wormResidueProperties, wormResidueRadii } from "./wormRadii";
@@ -170,6 +170,8 @@ export class MoleculeRepresentation {
     style: RepresentationStyles;
     cid: string;
     neighboursCid: string;
+    /** The molecule neighboursCid is in (uniqueId), if not this one: a pocket around a docked ligand */
+    neighboursMoleculeUid: string;
     restrictToNeighbours: boolean;
     neighboursDistance: number;
     hbondedToCid: string;
@@ -279,6 +281,7 @@ export class MoleculeRepresentation {
         this.residueSelectionColor = [0.25, 1.0, 0.25, 0.35];
         this.interfaceOption = { visible: undefined, selectionType: "cid" };
         this.neighboursCid = "";
+        this.neighboursMoleculeUid = "";
         this.restrictToNeighbours = false;
         this.neighboursDistance = 6.0;
         this.hbondedToCid = "";
@@ -795,14 +798,22 @@ export class MoleculeRepresentation {
         }
         batch(() => {
             this.parentMolecule.store.dispatch(setDisplayBuffers(newBuffers));
-            this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
+            // filter() returns a new array even when nothing was removed, and a new label array
+            // rebuilds the whole label texture.
+            if (newLabelBuffers.length !== labelBuffers.length) {
+                this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
+            } else {
+                this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+            }
         });
     }
 
     /**
      * Make the representation visible
+     * @param requestDraw - Ask for the scene to be redrawn (default). Pass false when showing many at
+     * once and ask once at the end: each request is a store dispatch.
      */
-    async show() {
+    async show(requestDraw: boolean = true) {
         const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers;
         const newLabelBuffers = [];
         try {
@@ -824,13 +835,20 @@ export class MoleculeRepresentation {
         } catch (err) {
             console.log(err);
         }
-        this.parentMolecule.store.dispatch(setLabelBuffers([...labelBuffers, ...newLabelBuffers]));
+        // A new label array rebuilds the label texture and redraws; visibility alone only needs a redraw.
+        if (newLabelBuffers.length > 0) {
+            this.parentMolecule.store.dispatch(setLabelBuffers([...labelBuffers, ...newLabelBuffers]));
+        } else if (requestDraw) {
+            this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+        }
     }
 
     /**
      * Make the representation not visible
+     * @param requestDraw - Ask for the scene to be redrawn (default). Pass false when hiding many at
+     * once and ask once at the end: each request is a store dispatch.
      */
-    hide() {
+    hide(requestDraw: boolean = true) {
         const labelBuffers = this.parentMolecule.store.getState().glRef.labelBuffers;
         let newLabelBuffers = labelBuffers;
         try {
@@ -846,7 +864,11 @@ export class MoleculeRepresentation {
         } catch (err) {
             console.log(err);
         }
-        this.parentMolecule.store.dispatch(setLabelBuffers([...newLabelBuffers]));
+        if (newLabelBuffers.length !== labelBuffers.length) {
+            this.parentMolecule.store.dispatch(setLabelBuffers(newLabelBuffers));
+        } else if (requestDraw) {
+            this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+        }
     }
 
     /**
@@ -945,12 +967,13 @@ export class MoleculeRepresentation {
         if (this.restrictToNeighbours) {
             //Now we might not want to use the new method, maybe we should use the old one.
             if (["CRs", "Worm", "MolecularSurface", "DishyBases", "VdWSurface", "AccessibleSurface", "Calpha"].includes(_style)) {
-                restrictedCid = window.gemmiModule.cidToNeighboursCid(
-                    this.parentMolecule.gemmiStructure,
+                restrictedCid = neighbourResidues(
+                    this.parentMolecule,
                     _cid,
                     this.neighboursCid,
                     this.neighboursDistance,
-                    this.excludeNeighbours
+                    this.excludeNeighbours,
+                    this.neighboursMoleculeUid
                 );
             } else {
                 if (restrictedCid.length > 0) _cid = restrictedCid;
@@ -1058,20 +1081,8 @@ export class MoleculeRepresentation {
             );
         }
 
-        if(_style!=="hover"){
-            const unknownMonomersStatus = await this.commandCentre.cootCommand(
-                {
-                    returnType: "string_array",
-                    command: "get_residue_names_with_no_dictionary",
-                    commandArgs: [this.parentMolecule.molNo ],
-                },
-                false
-            );
-            const unknownMonomers = unknownMonomersStatus.data.result.result
-            if(unknownMonomers.length>0){
-                this.parentMolecule.store.dispatch(enqueueSnackbar({ message: `Show monomers (${unknownMonomers.join(",")}) have no dictionary description. Some atoms/bonds may be drawn oddly.`, variant: "warning" }));
-            }
-        }
+        // Monomers with no dictionary are warned about from the molecule's record (StoreSync), once per
+        // change, not by asking Coot after every draw of every representation
 
         return objects;
     }
@@ -2221,7 +2232,7 @@ export class MoleculeRepresentation {
         )) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
         try {
             const objects = [{ ...response.data.result.result, pick_info: {} }];
-            if (objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+            if (objects.length > 0 && this.parentMolecule.gemmiStructure && !this.parentMolecule.gemmiStructure.isDeleted()) {
                 const flippedNormalsObjects = objects.map(object => {
                     const flippedNormalsObject = { ...object };
                     flippedNormalsObject.idx_tri = object.idx_tri.map(element => element.map(subElement => subElement.reverse()));
@@ -2267,7 +2278,7 @@ export class MoleculeRepresentation {
         if (this.cavities) {
             const _objects = this.cavities.mesh;
             const cavityIndex = this.cavities.index ?? 1;
-            if (_objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
+            if (_objects.length > 0 && this.parentMolecule.gemmiStructure && !this.parentMolecule.gemmiStructure.isDeleted()) {
 
                 let objects = [];
                 if (cavityIndex === 0) {

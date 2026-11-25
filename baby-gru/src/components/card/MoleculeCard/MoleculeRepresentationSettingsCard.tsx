@@ -6,6 +6,7 @@ import { moorhen } from "../../../types/moorhen";
 import { MoorhenSelect, MoorhenSlider, MoorhenToggle } from "../../inputs";
 import { MoorhenStack } from "../../interface-base";
 import type { WormRadiusSource, wormOptions } from "../../../utils/Representation/wormRadii";
+import { BondQualityRadios } from "./BondQualityRadios";
 import { M2T_SURFACE_REPRESENTATIONS } from "../../../utils/enums";
 
 type MoleculeSettingPanelProps =
@@ -101,21 +102,10 @@ export const BondSettingsPanel = (props: MoleculeSettingPanelProps) => {
             <MoorhenToggle type="switch" checked={showAniso} onChange={() => setShowAniso(prev => !prev)} label="Show Thermal ellipsoids" />
             <MoorhenToggle type="switch" checked={showOrtep} onChange={() => setShowOrtep(prev => !prev)} label="Ortep style" />
             {/* <MoorhenToggle type="switch" checked={showHs} onChange={() => setShowHs(prev => !prev)} label="Show Hs" /> */}
-            <span>Bond Smoothness</span>
-            <MoorhenSlider
-                aria-label="Smoothness"
+            <BondQualityRadios
                 value={bondSmoothness}
-                setValue={setBondSmoothness}
-                sliderTitle="Bond Smoothness"
-                showTitleValue={false}
-                minVal={1}
-                maxVal={3}
-                step={1}
-                labels={[
-                    { value: 1, label: "Coarse", tick: true },
-                    { value: 2, label: "Nice", tick: true },
-                    { value: 3, label: "Smooth", tick: true },
-                ]}
+                onChange={setBondSmoothness}
+                name={`bond-quality-${molecule?.uniqueId ?? representation.uniqueId}`}
             />
         </MoorhenStack>
     );

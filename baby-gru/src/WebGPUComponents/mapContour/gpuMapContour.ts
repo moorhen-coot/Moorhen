@@ -6,10 +6,21 @@
  * The output buffers are sized by guess. The totals are read back in the background, and if the
  * guess was too small (the draw then shows only part of the surface for a frame), the buffers
  * grow and the contour is made again.
+ *
+ * A contour can be too big for the GPU: a large radius, or a large EM map. Then it is made at the
+ * largest radius that fits, and says so (`limitedRadius`, `limitReason`): a box no bigger than
+ * the device allows in one buffer, nor than a budget (`mapContourLimits`). What is asked for is
+ * made inside error scopes, so running out of memory is caught too, and the radius is brought down
+ * until it fits. Nothing reaches the device's uncaptured errors, which would end WebGPU for the
+ * whole view. Only if nothing fits at all does the isosurface give up (`tooBig`), and Coot
+ * contours the maps.
  */
-import { BufferUsage, ComputeKernel, GpuScan, MapMode, createBuffer } from "../gpu";
+import { BufferUsage, ComputeKernel, GpuScan, MapMode, createBuffer, withErrorScope } from "../gpu";
 import { MC_TRIANGLE_TABLE } from "../metaballs/mcTable";
-import { ContourBox, MapUnitCellGrid, contourBox, inverse3 } from "./mapContourBox";
+import { formatCount } from "../rendererReport";
+import {
+    ContourBox, MapUnitCellGrid, WORK_BYTES_PER_BOX_POINT, contourBox, emRangeOf, formatBytes, inverse3, largestRadiusWithin, roomFor,
+} from "./mapContourBox";
 import {
     COUNT_LINES_WGSL, COUNT_TRIANGLES_WGSL, COUNT_VERTICES_WGSL, EMIT_LINES_WGSL, EMIT_TRIANGLES_WGSL, EMIT_VERTICES_WGSL, MAP_WORKGROUP,
     SAMPLE_WGSL, TOTALS_WGSL, chunksOf,
@@ -61,6 +72,33 @@ export class MapContourKernels {
     }
 }
 
+/**
+ * How big a contour may be. `bindingBytes`: the largest buffer, in place of the device's (for
+ * tests). `budgetBytes`: the most one contour's work buffers may take - beyond it a contour is
+ * slow to make (about 5 ns a box point on an M1) and memory goes on one map; 1 GB is a box of
+ * about 50M points, 370 a side.
+ */
+export const mapContourLimits: { bindingBytes: number | null; budgetBytes: number } = { bindingBytes: null, budgetBytes: 1e9 };
+
+/** The most box points a contour may have: its per-point arrays in one buffer each, within the budget. */
+export function maxBoxPoints(device: GPUDevice): number {
+    return Math.min(Math.floor(largestBuffer(device) / 4), Math.floor(mapContourLimits.budgetBytes / WORK_BYTES_PER_BOX_POINT));
+}
+
+/** The contour's parameters (Params in mapContourShaders.ts): 14 vectors of 16 bytes. */
+const PARAMS_BYTES = 224;
+
+/** Below this the GPU is not worth asking: Coot contours the maps instead. */
+const SMALLEST_RADIUS = 2;
+
+/**
+ * The largest buffer a contour may ask for: every one of them is bound as storage somewhere, so
+ * the smaller of the device's largest buffer and largest storage binding.
+ */
+export function largestBuffer(device: GPUDevice): number {
+    return mapContourLimits.bindingBytes ?? Math.min(device.limits.maxBufferSize, device.limits.maxStorageBufferBindingSize);
+}
+
 /** A map's unit-cell grid, uploaded once. */
 export class GpuMapGrid {
     readonly buffer: GPUBuffer;
@@ -68,6 +106,25 @@ export class GpuMapGrid {
     constructor(readonly kernels: MapContourKernels, readonly grid: MapUnitCellGrid) {
         this.buffer = createBuffer(kernels.device, "map grid", grid.data.byteLength, STORAGE, grid.data);
         this.frac = inverse3(grid.orth);
+    }
+
+    /**
+     * Upload `grid`, or reject saying why the GPU cannot hold it: bigger than its largest buffer,
+     * or out of memory. Nothing reaches the device's uncaptured errors.
+     */
+    static async create(kernels: MapContourKernels, grid: MapUnitCellGrid): Promise<GpuMapGrid> {
+        const limit = largestBuffer(kernels.device);
+        if (grid.data.byteLength > limit) {
+            throw new Error(`its grid (${grid.nu}×${grid.nv}×${grid.nw}, ${formatBytes(grid.data.byteLength)}) is larger than ` +
+                `this GPU's largest buffer (${formatBytes(limit)})`);
+        }
+        let made: GpuMapGrid | null = null;
+        const error = await withErrorScope(kernels.device, () => { made = new GpuMapGrid(kernels, grid); });
+        if (error) {
+            (made as GpuMapGrid | null)?.destroy();
+            throw new Error(`the GPU could not hold its grid (${formatBytes(grid.data.byteLength)}): ${error.message}`);
+        }
+        return made as GpuMapGrid;
     }
     destroy(): void {
         this.buffer.destroy();
@@ -129,6 +186,8 @@ export class GpuIsosurface {
     private work: { points: number; cells: number; buffers: WorkBuffers } | null = null;
     private output: { vertices: number; triangles: number; lines: number; buffers: GpuContourBuffers } | null = null;
     private last = "";
+    /** Counts requests, so that an error found after the next request has begun is not blamed on it. */
+    private requestNo = 0;
     private reading = false;
     private destroyed = false;
     /**
@@ -140,11 +199,26 @@ export class GpuIsosurface {
     /** Triangles (kept, so drawn) and the lines of their edges, as last read back (the report). */
     lastTriangles = 0;
     lastLines = 0;
+    /**
+     * The radius last contoured, if smaller than asked for, and why: the box at the radius asked
+     * for was too big for the GPU's buffers, the budget, or its memory.
+     */
+    limitedRadius: number | null = null;
+    limitReason: string | null = null;
+    /**
+     * Why not even a small radius could be contoured here, or null. Nothing is drawn while it is
+     * set; the map layer then gives the maps to Coot.
+     */
+    tooBig: string | null = null;
+    /** The largest radius the GPU's memory has taken, after it refused a larger one. */
+    private radiusCap = Infinity;
+    /** The radius of the contour last asked of the GPU. */
+    private contouredRadius = 0;
 
     /** `onRemade`: the room was too small; the next update will make the contour again. */
     constructor(private readonly kernels: MapContourKernels, private readonly mapGrid: GpuMapGrid, private readonly onRemade: () => void) {
         this.device = kernels.device;
-        this.params = this.device.createBuffer({ label: "map contour params", size: 192, usage: UNIFORM | COPY_DST });
+        this.params = this.device.createBuffer({ label: "map contour params", size: PARAMS_BYTES, usage: UNIFORM | COPY_DST });
         this.counts = this.device.createBuffer({ label: "map contour counts", size: 16, usage: STORAGE | COPY_SRC });
         this.countsRead = this.device.createBuffer({ label: "map contour counts read", size: 16, usage: MAP_READ | COPY_DST });
         this.drawArgs = this.device.createBuffer({ label: "map contour draw args", size: 64, usage: STORAGE | INDIRECT | COPY_SRC | COPY_DST });
@@ -158,11 +232,35 @@ export class GpuIsosurface {
 
     /** Make the contour for `request`, unless it is what was made last. Returns whether it did. */
     update(request: ContourRequest): boolean {
-        if (this.destroyed) return false;
-        const key = `${request.centre.join(",")}|${request.radius}|${request.level}`;
+        if (this.destroyed || this.tooBig) return false;
+        const key = `${request.centre.join(",")}|${request.radius}|${request.level}|${this.radiusCap}`;
         if (key === this.last) return false;
         this.last = key;
-        const box = contourBox(this.mapGrid.grid, request.centre, request.radius);
+        const requestNo = ++this.requestNo;
+
+        // The largest radius, up to the one asked for, whose box fits.
+        const grid = this.mapGrid.grid;
+        const maxPoints = maxBoxPoints(this.device);
+        const capped = Math.min(request.radius, this.radiusCap);
+        const radius = largestRadiusWithin(grid, request.centre, capped, maxPoints);
+        if (radius < request.radius) {
+            this.limitedRadius = radius;
+            if (radius < capped) {
+                const full = contourBox(grid, request.centre, capped);
+                const points = full ? full.size[0] * full.size[1] * full.size[2] : 0;
+                this.limitReason = `at ${+capped.toFixed(1)} Å its box would be ${full?.size.join("×")} grid points ` +
+                    `(${formatBytes(points * WORK_BYTES_PER_BOX_POINT)} to contour), more than ${formatBytes(maxPoints * WORK_BYTES_PER_BOX_POINT)} allowed`;
+            }
+        } else {
+            this.limitedRadius = null;
+            this.limitReason = null;
+        }
+        if (radius < Math.min(SMALLEST_RADIUS, request.radius)) {
+            this.refuse(this.limitReason ?? "the GPU could not hold even a small contour");
+            return true;
+        }
+        this.contouredRadius = radius;
+        const box = contourBox(grid, request.centre, radius);
         this.lastBox = box;
         if (!box) {
             this.device.queue.writeBuffer(this.drawArgs, 0, new Uint32Array(16));
@@ -170,8 +268,45 @@ export class GpuIsosurface {
         }
         const points = box.size[0] * box.size[1] * box.size[2];
         const cells = (box.size[0] - 1) * (box.size[1] - 1) * (box.size[2] - 1);
-        const work = this.workBuffers(points, cells);
-        const out = this.outputBuffers(points);
+        let refused = false;
+        withErrorScope(this.device, () => {
+            const work = this.workBuffers(points, cells);
+            const out = work ? this.outputBuffers(points) : null;
+            if (!work || !out) {
+                refused = true;
+                return;
+            }
+            this.contour(box, { ...request, radius }, points, cells, work, out);
+        }).then(error => {
+            if (error && requestNo === this.requestNo) this.shrink(radius, error.message);
+        }, err => { if (requestNo === this.requestNo) this.shrink(radius, String(err)); });
+        if (refused) this.shrink(radius, `a box of ${box.size.join("×")} grid points is more than this GPU's largest buffer holds`);
+        return true;
+    }
+
+    /**
+     * The GPU could not make the contour at `radius` (out of memory, or more triangles than a
+     * buffer holds): free what was made for it, and try again at a radius with about half the box.
+     */
+    private shrink(radius: number, why: string): void {
+        if (this.destroyed || this.tooBig) return;
+        this.destroyWork();
+        this.destroyOutput();
+        this.device.queue.writeBuffer(this.drawArgs, 0, new Uint32Array(16));
+        const next = radius * 0.8;
+        if (next < SMALLEST_RADIUS) {
+            this.refuse(why);
+            return;
+        }
+        this.radiusCap = Math.min(this.radiusCap, next);
+        this.limitReason = `at ${+radius.toFixed(1)} Å ${why}`;
+        this.last = "";
+        this.onRemade();
+    }
+
+    /** Encode and submit the passes that make the contour; inside update's error scopes. */
+    private contour(box: ContourBox, request: ContourRequest, points: number, cells: number, work: WorkBuffers,
+                    out: { vertices: number; triangles: number; lines: number; buffers: GpuContourBuffers }): void {
         this.writeParams(box, request, out.vertices, out.triangles, out.lines);
 
         const {
@@ -208,7 +343,16 @@ export class GpuIsosurface {
         k.scan.releaseTransient();
         this.made++;
         if (check) this.checkRoom(out.vertices, out.triangles, out.lines);
-        return true;
+    }
+
+    /** Not even a small contour can be made here: free everything, draw nothing, and say why. */
+    private refuse(why: string): void {
+        if (this.destroyed || this.tooBig) return;
+        this.tooBig = why;
+        this.destroyWork();
+        this.destroyOutput();
+        this.device.queue.writeBuffer(this.drawArgs, 0, new Uint32Array(16));
+        this.onRemade();
     }
 
     destroy(): void {
@@ -234,9 +378,18 @@ export class GpuIsosurface {
                 this.countsRead.destroy();
                 return;
             }
+            if (this.tooBig) return;
             if (vertices > vertexRoom || triangles > triangleRoom || lines > lineRoom) {
-                this.grow(vertices, triangles, lines);
-                this.last = "";
+                const key = this.last, requestNo = this.requestNo;
+                const radius = this.contouredRadius;
+                withErrorScope(this.device, () => this.grow(vertices, triangles, lines)).then(error => {
+                    if (error && requestNo === this.requestNo) {
+                        this.shrink(radius, `the GPU could not hold ${formatCount(triangles)} triangles: ${error.message}`);
+                    }
+                }, err => { if (requestNo === this.requestNo) this.shrink(radius, String(err)); });
+                if (this.tooBig || this.last !== key) return;
+                // Made again on the next update: unless the request has changed meanwhile.
+                if (this.last === key) this.last = "";
                 this.onRemade();
             }
         }).catch(() => {
@@ -244,10 +397,13 @@ export class GpuIsosurface {
         });
     }
 
-    private workBuffers(points: number, cells: number): WorkBuffers {
+    /** The work buffers for a box of `points` and `cells`, or null if they would be too big. */
+    private workBuffers(points: number, cells: number): WorkBuffers | null {
         if (!this.work || this.work.points < points || this.work.cells < cells) {
             this.destroyWork();
-            const p = Math.ceil(points * 1.25), c = Math.ceil(cells * 1.25);
+            const limit = largestBuffer(this.device);
+            const p = roomFor(points, 4, limit, 1.25), c = roomFor(cells, 4, limit, 1.25);
+            if (p === null || c === null) return null;
             const storage = (label: string, n: number) =>
                 this.device.createBuffer({ label: `map contour ${label}`, size: Math.max(16, n * 4), usage: STORAGE });
             this.work = {
@@ -276,17 +432,29 @@ export class GpuIsosurface {
      */
     private outputBuffers(points: number): { vertices: number; triangles: number; lines: number; buffers: GpuContourBuffers } {
         if (!this.output) {
-            const vertices = Math.max(GpuIsosurface.vertexRoomPerPoint < 0.1 ? 16 : 16384, Math.ceil(points * GpuIsosurface.vertexRoomPerPoint));
-            this.makeOutput(vertices, 2 * vertices, 3 * vertices);
+            // No bigger than a buffer can be: if the surface needs more, checkRoom finds out.
+            const limit = largestBuffer(this.device);
+            const vertices = Math.min(Math.floor(limit / 12),
+                Math.max(GpuIsosurface.vertexRoomPerPoint < 0.1 ? 16 : 16384, Math.ceil(points * GpuIsosurface.vertexRoomPerPoint)));
+            this.makeOutput(vertices, Math.min(2 * vertices, Math.floor(limit / 12)), Math.min(3 * vertices, Math.floor(limit / 8)));
         }
         return this.output;
     }
 
+    /** Room for at least this much, with half again to spare where a buffer can hold it; a smaller radius if it cannot. */
     private grow(vertices: number, triangles: number, lines: number): void {
         const current = this.output;
+        const limit = largestBuffer(this.device);
+        const more = (needed: number, bytesEach: number, now: number | undefined) =>
+            roomFor(Math.max(needed, now ?? 0), bytesEach, limit, needed > (now ?? 0) ? 1.5 : 1);
+        const v = more(vertices, 12, current?.vertices), t = more(triangles, 12, current?.triangles), l = more(lines, 8, current?.lines);
+        if (v === null || t === null || l === null) {
+            this.shrink(this.contouredRadius, `its contour has ${formatCount(vertices)} vertices, ${formatCount(triangles)} triangles and ` +
+                `${formatCount(lines)} lines, more than this GPU's largest buffer (${formatBytes(limit)}) holds`);
+            return;
+        }
         this.destroyOutput();
-        const more = (needed: number, now: number | undefined) => Math.max(Math.ceil(needed * 1.5), now ?? 0);
-        this.makeOutput(more(vertices, current?.vertices), more(triangles, current?.triangles), more(lines, current?.lines));
+        this.makeOutput(v, t, l);
     }
 
     private makeOutput(vertices: number, triangles: number, lines: number): void {
@@ -313,7 +481,7 @@ export class GpuIsosurface {
 
     private writeParams(box: ContourBox, request: ContourRequest, vertexRoom: number, triangleRoom: number, lineRoom: number): void {
         const { grid } = this.mapGrid;
-        const buf = new ArrayBuffer(192);
+        const buf = new ArrayBuffer(PARAMS_BYTES);
         const i = new Int32Array(buf), u = new Uint32Array(buf), f = new Float32Array(buf);
         i.set(box.min, 0);
         u.set([...box.size, grid.isEM ? 1 : 0], 4);
@@ -324,6 +492,9 @@ export class GpuIsosurface {
         f.set([...request.centre, request.radius * request.radius], 36);
         f.set([request.level, request.level < 0 ? -1 : 1, 0, 0], 40);
         u.set([vertexRoom, triangleRoom, lineRoom, 0], 44);
+        const em = emRangeOf(grid), n = [grid.nu, grid.nv, grid.nw];
+        f.set([0, 1, 2].map(a => em.min[a] / n[a]), 48);
+        f.set([0, 1, 2].map(a => em.max[a] / n[a]), 52);
         this.device.queue.writeBuffer(this.params, 0, buf);
     }
 }

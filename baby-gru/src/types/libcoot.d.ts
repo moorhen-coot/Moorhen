@@ -64,6 +64,8 @@ export namespace libcootApi {
         get_chem_shift_info(nef_input:string): string;
 
         cidToNeighboursCid: (arg0: gemmi.Structure, arg1: string, arg2: string, arg3: number, arg4: boolean) => string;
+        /** The residues of the first selection near those of the second, in another structure */
+        cidToNeighboursCidAcross: (st: gemmi.Structure, cid: string, stNeighbours: gemmi.Structure, cidNeighbours: string, distance: number, exclude: boolean) => string;
         // Gemmi free functions
         read_structure_file(filePath: string, format: number): gemmi.Structure;
         read_mtz_file(filePath: string): gemmi.Mtz;
@@ -612,8 +614,14 @@ export namespace libcootApi {
     };
     type fitLigandInfo = {
         imol: number;
+        /** Index of the density cluster (blob) the pose was fitted into; Coot orders clusters by their density score */
         cluster_idx: number;
+        /** Index of the pose within its cluster */
         ligand_idx: number;
+        /** Correlation of the pose with the map (higher is better); -1 when Coot did not score it */
+        fitting_score: number;
+        /** Volume of the density cluster, in cubic Angstroms */
+        cluster_volume: number;
     };
     type compoundInfo = {
         name: string;

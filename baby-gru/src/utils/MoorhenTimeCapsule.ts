@@ -62,6 +62,9 @@ import type {
     Overlay2DTextFrac,
 } from "../store/overlaysSlice";
 import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
+import { type LoadedDictionary, emptyDictionaries } from "../store/dictionariesSlice";
+import { isReadForEveryMolecule, readDictionary } from "./dictionaries";
+import { whileRestoringSession } from "../InstanceManager/StoreSync";
 import { ThreeDObject, addObject, emptyObjects } from "../store/threeDObjectsSlice";
 import { withMigratedTags } from "./tags";
 import { moorhen } from "../types/moorhen";
@@ -117,6 +120,8 @@ export type moleculeSessionData = {
         hbondedToCid: string;
         hbondedTo: boolean;
         neighboursDistance: number;
+        /** The molecule neighboursCid is in, if not this one (a pocket around a docked ligand); absent in older sessions */
+        neighboursMoleculeUid?: string;
     }[];
     defaultBondOptions: moorhen.cootBondOptions;
     defaultM2tParams: m2tParameters;
@@ -128,6 +133,8 @@ export type moleculeSessionData = {
     biomolOn: boolean;
     symmetryRadius: number;
     uniqueId: string;
+    /** MoorhenMolecule.metadata; absent in sessions written before it existed */
+    metadata?: Record<string, string>;
 };
 
 export type mapDataSession = {
@@ -213,6 +220,11 @@ export type backupSession = {
      * when the session was saved; sessions saved without it load into the "General" scene.
      */
     sceneData?: string;
+    /**
+     * Every ligand dictionary read into Coot (store `dictionaries`), including those whose molecule has
+     * since been deleted. Older sessions only have each molecule's own copy (moleculeData[].ligandDicts).
+     */
+    dictionaries?: LoadedDictionary[];
 };
 
 export type Overlay2DSessionData = {
@@ -484,6 +496,8 @@ export class MoorhenTimeCapsule {
                 coordFormat: molecule.coordsFormat,
                 coordString: moleculeDataPromises[index],
                 uniqueId: molecule.uniqueId,
+                // The shown ones: the session's scenes keep every representation, hidden ones included,
+                // and loading shows the selected scene (UserSceneManager.importState)
                 representations: molecule.representations
                     .filter(item => item.visible)
                     .map(item => {
@@ -504,6 +518,7 @@ export class MoorhenTimeCapsule {
                             hbondedToCid: item.hbondedToCid,
                             hbondedTo: item.hbondedTo,
                             neighboursDistance: item.neighboursDistance,
+                            neighboursMoleculeUid: item.neighboursMoleculeUid,
                         };
                     }),
                 defaultColourRules: molecule.defaultColourRules.map(item => item.objectify()),
@@ -515,6 +530,7 @@ export class MoorhenTimeCapsule {
                 symmetryOn: molecule.symmetryOn,
                 biomolOn: molecule.biomolOn,
                 symmetryRadius: molecule.symmetryRadius,
+                metadata: { ...molecule.metadata },
             };
         });
 
@@ -649,6 +665,7 @@ export class MoorhenTimeCapsule {
             overlay2dData: overlay2dData,
             vectorData: vectorData,
             threeDObjectData: threeDObjectData,
+            dictionaries: Object.values(this.store.getState().dictionaries?.loaded ?? {}),
         };
         const sceneData = this.getSceneData?.();
         if (sceneData) session.sceneData = sceneData;
@@ -906,7 +923,9 @@ export class MoorhenTimeCapsule {
             // fades are about to go (a movie file sets its own movie after loading its session)
             store.dispatch(newMovie());
             try {
-                await MoorhenTimeCapsule.restoreSessionData(sessionData, sceneState, moorhenInstance, fetchExternalUrl);
+                await whileRestoringSession(moorhenInstance, () =>
+                    MoorhenTimeCapsule.restoreSessionData(sessionData, sceneState, moorhenInstance, fetchExternalUrl)
+                );
             } catch (error) {
                 // Molecules may already be deleted: drop the old scenes, which refer to them
                 moorhenInstance.userScene.resetForLegacySession();
@@ -950,12 +969,26 @@ export class MoorhenTimeCapsule {
         batch(() => {
             dispatch(emptyMolecules());
             dispatch(emptyMaps());
+            dispatch(emptyDictionaries());
         });
+
+        // Dictionaries for every molecule, before any molecule is loaded: they draw with them, and
+        // a ligand keeps its dictionary even if the molecule it came with was deleted before saving.
+        // (In a session file a dictionary for every molecule has an empty moleculeUid.)
+        const sessionDictionaries = (sessionData.dictionaries ?? []).map(dictionary => ({
+            ...dictionary,
+            moleculeUid: dictionary.moleculeUid || null,
+        }));
+        for (const dictionary of sessionDictionaries.filter(item => item.moleculeUid === null)) {
+            await readDictionary(moorhenInstance, dictionary.content, null, dictionary.source || undefined);
+        }
 
         // Load molecules stored in session from coords string
         const newMoleculePromises =
             sessionData.moleculeData?.map(async storedMoleculeData => {
                 const newMolecule = new MoorhenMolecule(moorhenInstance);
+                // Set before it is loaded, as the other fields of the molecule
+                newMolecule.metadata = { ...(storedMoleculeData.metadata ?? {}) };
                 if (sessionData.dataIsEmbedded || sessionData.dataIsEmbedded === undefined) {
                     newMolecule.uniqueId = storedMoleculeData.uniqueId;
                     return newMolecule.loadToCootFromString(storedMoleculeData.coordString, storedMoleculeData.name);
@@ -1016,16 +1049,29 @@ export class MoorhenTimeCapsule {
         const newMolecules = loadPromises.filter(item => item.type === "molecule") as moorhen.Molecule[];
         const newMaps = loadPromises.filter(item => item.type === "map") as moorhen.Map[];
 
+        // Dictionaries read for one molecule, once it is loaded (its uniqueId is kept, its molNo is new)
+        for (const dictionary of sessionDictionaries.filter(item => item.moleculeUid !== null)) {
+            const molecule = newMolecules.find(item => item.uniqueId === dictionary.moleculeUid);
+            if (molecule) await readDictionary(moorhenInstance, dictionary.content, molecule, dictionary.source || undefined);
+        }
+
         // Draw the molecules with the styles stored in session (needs to be done sequentially due to colour rules)
         for (let i = 0; i < newMolecules.length; i++) {
             const molecule = newMolecules[i];
             const storedMoleculeData = sessionData.moleculeData[i];
             if (storedMoleculeData.ligandDicts) {
                 await Promise.all(
-                    Object.keys(storedMoleculeData.ligandDicts).map(compId => molecule.addDict(storedMoleculeData.ligandDicts[compId]))
+                    Object.keys(storedMoleculeData.ligandDicts).map(compId => {
+                        const content = storedMoleculeData.ligandDicts[compId];
+                        // Read above for every molecule, as it is: only its cached copy (a thousand poses
+                        // of one ligand would else each read it again, and record a copy of their own)
+                        if (isReadForEveryMolecule(store, content)) return molecule.cacheLigandDict(content);
+                        return molecule.addDict(content);
+                    })
                 );
             }
-            molecule.defaultColourRules = storedMoleculeData.defaultColourRules.map(item => {
+            // An empty list is not written to a session file (protobuf), so it can be absent
+            molecule.defaultColourRules = (storedMoleculeData.defaultColourRules ?? []).map(item => {
                 const colourRule = ColourRule.initFromDataObject(item, moorhenInstance.commandCentre, molecule);
                 return colourRule;
             });
@@ -1061,6 +1107,7 @@ export class MoorhenTimeCapsule {
                         item.hbondedToCid,
                         item.hbondedTo,
                         item.neighboursDistance,
+                        item.neighboursMoleculeUid ?? "",
                         item.wormOptions ?? undefined
                     );
                     // Its identity, back as it was saved. A session written before the format
@@ -1351,9 +1398,10 @@ export class MoorhenTimeCapsule {
             });
         }
 
-        // What the session restored above is the selected scene; restore the others around it
+        // The scenes, the selected one shown as it was recorded (its representations, hidden ones
+        // included, over what was restored above)
         if (sceneState) {
-            moorhenInstance.userScene.importState(sceneState);
+            await moorhenInstance.userScene.importState(sceneState);
         } else {
             moorhenInstance.userScene.resetForLegacySession();
         }

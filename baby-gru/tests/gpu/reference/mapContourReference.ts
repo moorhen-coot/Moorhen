@@ -4,7 +4,7 @@
  * precision so it can be trusted by reading it.
  */
 import { MC_TRIANGLE_TABLE } from "../../../src/WebGPUComponents/metaballs/mcTable";
-import { contourBox, inverse3 } from "../../../src/WebGPUComponents/mapContour/mapContourBox";
+import { contourBox, emRangeOf, inverse3 } from "../../../src/WebGPUComponents/mapContour/mapContourBox";
 import type { MapUnitCellGrid } from "../../../src/WebGPUComponents/mapContour/mapContourBox";
 
 /** clipper's orthogonalising matrix for a monoclinic cell (beta in radians), by rows. */
@@ -47,7 +47,9 @@ const nibble = (config: number, i: number) =>
 /** The midpoints (orthogonal, A) of the triangles Coot's contour of `grid` would keep. */
 export function cpuContourMidpoints(grid: MapUnitCellGrid, centre: number[], radius: number, level: number): number[][] {
     const n = [grid.nu, grid.nv, grid.nw];
-    const box = contourBox(grid, centre, radius);
+    // The whole box, not cut to an EM map's data as the GPU's is: the keep rule below does that,
+    // so the cut is checked rather than copied.
+    const box = contourBox({ ...grid, isEM: false }, centre, radius);
     if (!box) return [];
     const [bx, by, bz] = box.size;
     const wrap = (i: number, m: number) => ((i % m) + m) % m;
@@ -77,11 +79,12 @@ export function cpuContourMidpoints(grid: MapUnitCellGrid, centre: number[], rad
             });
             const middle = [0, 1, 2].map(i => (corners[0][i] + corners[1][i] + corners[2][i]) / 3);
             const d = middle.map((m, i) => m - centre[i]);
-            // Coot's rules: the midpoint within the sphere, and for an EM map inside the box.
+            // Coot's rules: the midpoint within the sphere, and for an EM map inside its data.
             if (d[0] * d[0] + d[1] * d[1] + d[2] * d[2] > radius * radius) continue;
             if (grid.isEM) {
                 const fr = [0, 1, 2].map(i => frac[3 * i] * middle[0] + frac[3 * i + 1] * middle[1] + frac[3 * i + 2] * middle[2]);
-                if (fr.some(v => v < 0 || v > 1)) continue;
+                const em = emRangeOf(grid), n = [grid.nu, grid.nv, grid.nw];
+                if (fr.some((v, a) => v < em.min[a] / n[a] || v > em.max[a] / n[a])) continue;
             }
             out.push(middle);
         }

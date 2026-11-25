@@ -6,16 +6,21 @@ import { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { getCentreAtom } from "@/utils/utils";
 
 export const MoleculesOriginListener = () => {
-    const molecules = useSelector((state: RootState) => state.molecules.moleculeList);
     const _origin = useSelector((state: RootState) => state.sceneSettings.origin);
     const originRef = useRef(_origin);
     const lastOriginRef = useRef(_origin);
+    // The origin at the previous tick: acted on only once it has not moved for a whole tick, i.e.
+    // once a drag or an animated centring has stopped, not every 500 ms during it
+    const previousTickOriginRef = useRef(_origin);
     const moorhenInstance = useMoorhenInstance();
 
     originRef.current = _origin;
 
     const store = useStore<RootState>();
     const drawOriginRepresentations = async () => {
+        // Read at each tick: the interval is set up once, so a value captured at mount (usually no
+        // molecules) would be used forever
+        const molecules = store.getState().molecules.moleculeList;
         if (molecules.length === 0) {
             return;
         }
@@ -23,6 +28,19 @@ export const MoleculesOriginListener = () => {
             return;
         }
         if (lastOriginRef.current === originRef.current) {
+            return;
+        }
+        if (previousTickOriginRef.current !== originRef.current) {
+            previousTickOriginRef.current = originRef.current;
+            return;
+        }
+        // Nothing drawn around the origin: no need to ask Coot for the atom there
+        const followsOrigin = (molecule: MoorhenMolecule) =>
+            molecule.environmentRepresentation?.visible ||
+            molecule.adaptativeBondsEnabled ||
+            molecule.symmetryOn ||
+            molecule.NEFRestraintRepresentation?.visible;
+        if (!molecules.some(followsOrigin)) {
             return;
         }
         lastOriginRef.current = originRef.current;
@@ -43,15 +61,14 @@ export const MoleculesOriginListener = () => {
         });
     };
 
-    (useEffect(() => {
+    useEffect(() => {
         const intervalId = setInterval(async () => {
             drawOriginRepresentations();
         }, 500);
         return () => {
             clearInterval(intervalId);
         };
-    }),
-        []);
+    }, []);
 
     return null;
 };

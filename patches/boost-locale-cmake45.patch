@@ -1,0 +1,20 @@
+Boost.Locale fails to configure with CMake >= 4.5: include/boost/locale.hpp is
+not under include/boost/locale, so source_group(TREE ...) rejects it ("is not a
+prefix of file") and the whole Boost configure stops. It is already grouped on
+its own on the next line, so leave it out of the TREE group.
+
+Fixed upstream in boostorg/locale 1d070743d, not yet in a Boost release
+(1.92.0 and 1.93.0.beta1 lack it). Drop this patch once boost_release has it.
+
+--- boost/libs/locale/CMakeLists.txt
++++ boost/libs/locale/CMakeLists.txt
+@@ -232,6 +232,9 @@
+ list(FILTER sources_src INCLUDE REGEX "^src/")
+ set(sources_inc ${sources})
+ list(FILTER sources_inc EXCLUDE REGEX "^src/")
++# locale.hpp is not under include/boost/locale, which CMake >= 4.5 rejects in the TREE group
++# below; it is grouped on its own after that.
++list(FILTER sources_inc EXCLUDE REGEX "include/boost/locale\\.hpp$")
+ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src" PREFIX "sources" FILES ${sources_src})
+ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/include/boost/locale" PREFIX "headers" FILES ${sources_inc})
+ source_group("headers" FILES "include/boost/locale.hpp")

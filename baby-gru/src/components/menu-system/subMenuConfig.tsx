@@ -149,12 +149,12 @@ export const subMenuMap: SubMenuMap = {
                 type: "showModal",
                 modal: "query-seq",
             },
-            {
-                id: "associate-reflections-to-map",
-                label: "Associate reflections to map...",
+                        {
+                id: "import-fsigf",
+                label: "Connect Molecule and Maps...",
                 type: "popover",
-                specialType: "upload",
-                content: MenuItems.AssociateReflectionsToMap,
+                content: MenuItems.ConnectMoleculeToMaps,
+                keywords: ["refinement", "refine", "maps", "associate", "connect"],
             },
             {
                 type: "dispatch",
@@ -191,26 +191,16 @@ export const subMenuMap: SubMenuMap = {
             //     content: MenuItems.AutoOpenMtz,
             // },
             {
-                id: "import-map-coefficients",
-                label: "Import map coefficients...",
-                type: "popover",
+                id: "import-submenu",
+                label: "Import...",
+                type: "subMenu",
+                keywords: ["import", "load", "map", "dictionary"],
+                description: "Import maps, map coefficients, dictionaries, MrBump and MrParse results",
+                menu: "import",
+                // Its items are all uploads: hidden with them, rather than left as an empty submenu
                 specialType: "upload",
-                content: MenuItems.ImportMapCoefficients,
             },
-            {
-                id: "import-map",
-                label: "Import map...",
-                type: "popover",
-                specialType: "upload",
-                content: MenuItems.ImportMap,
-            },
-            {
-                id: "import-fsigf",
-                label: "Connect Molecule and Maps...",
-                type: "popover",
-                content: MenuItems.ConnectMoleculeToMaps,
-                keywords: ["refinement", "refine", "maps", "associate", "connect"],
-            },
+
             {
                 id: "load-tutorial-data",
                 label: "Load tutorial data...",
@@ -224,22 +214,14 @@ export const subMenuMap: SubMenuMap = {
                 content: MenuItems.ExportMenuItem,
                 keywords: ["gltf", "obj", "3mf", "export"],
             },
+                        {
+                id: "associate-reflections-to-map",
+                label: "Associate reflections to map...",
+                type: "popover",
+                specialType: "upload",
+                content: MenuItems.AssociateReflectionsToMap,
+            },
 
-            {
-                id: "load-mrbump",
-                label: "MrBump results...",
-                type: "showModal",
-                modal: "mrbump",
-                devOnly: true,
-                specialType: "upload",
-            },
-            {
-                id: "load-mrparse",
-                label: "MrParse results...",
-                type: "showModal",
-                modal: "mrparse",
-                specialType: "upload",
-            },
             { type: "separator" },
             {
                 id: "delete-everything",
@@ -323,6 +305,14 @@ export const subMenuMap: SubMenuMap = {
                 keywords: ["fit", "fourrier", "jiggle"],
                 description: "",
                 content: MenuItems.RandomJiggleBlur,
+            },
+            {
+                id: "minimize-energy",
+                label: "Minimize energy...",
+                type: "popover",
+                keywords: ["minimize", "energy"],
+                description: "Minimize ligand energy",
+                content: MenuItems.MinimizeEnergy,
             },
             {
                 id: "slice-n-dice",
@@ -658,6 +648,12 @@ export const subMenuMap: SubMenuMap = {
     ligand: {
         label: "Ligand",
         items: [
+                        {
+                id: "find-ligand",
+                label: "Fit ligand...",
+                type: "showModal",
+                modal: "fit-ligand",
+            },
             {
                 id: "get-monomer",
                 label: "Get monomer...",
@@ -667,37 +663,12 @@ export const subMenuMap: SubMenuMap = {
                 content: MenuItems.GetMonomer,
             },
             {
-                id: "import-dictionary",
-                label: "Import dictionary...",
-                type: "popover",
-                keywords: ["dictionary", "import"],
-                description: "Import ligand dictionary",
-                content: MenuItems.ImportDictionary,
-                specialType: "upload",
-            },
-            {
                 id: "smiles-to-ligand",
-                label: "New Ligand from SMILE...",
+                label: "New Ligand from SMILES...",
                 type: "popover",
                 keywords: ["SMILES", "ligand"],
                 description: "Convert SMILES to ligand",
                 content: MenuItems.SMILESToLigand,
-            },
-            {
-                id: "centre-on-ligand",
-                label: "Centre on ligand...",
-                type: "popover",
-                keywords: ["centre", "ligand", "center"],
-                description: "Centre view on ligand",
-                content: MenuItems.CentreOnLigand,
-            },
-            {
-                id: "minimize-energy",
-                label: "Minimize energy...",
-                type: "popover",
-                keywords: ["minimize", "energy"],
-                description: "Minimize ligand energy",
-                content: MenuItems.MinimizeEnergy,
             },
             {
                 id: "match-ligands",
@@ -715,12 +686,7 @@ export const subMenuMap: SubMenuMap = {
                 description: "Open ligand builder",
                 content: MenuItems.OpenLhasa,
             },
-            {
-                id: "find-ligand",
-                label: "Find ligand...",
-                type: "showModal",
-                modal: "fit-ligand",
-            },
+
         ],
     },
     preferences: {
@@ -875,6 +841,50 @@ export const subMenuMap: SubMenuMap = {
                 keywords: ["references", "citations"],
                 description: "Moorhen references",
                 content: MenuItems.References,
+            },
+        ],
+    },
+    // The File menu's imports, under its Import... item
+    import: {
+        label: "Import",
+        items: [
+            {
+                id: "import-map-coefficients",
+                label: "Import map coefficients...",
+                type: "popover",
+                specialType: "upload",
+                content: MenuItems.ImportMapCoefficients,
+            },
+            {
+                id: "import-map",
+                label: "Import map...",
+                type: "popover",
+                specialType: "upload",
+                content: MenuItems.ImportMap,
+            },
+            {
+                id: "import-dictionary",
+                label: "Import dictionary...",
+                type: "popover",
+                keywords: ["dictionary", "import"],
+                description: "Import ligand dictionary",
+                content: MenuItems.ImportDictionary,
+                specialType: "upload",
+            },
+            {
+                id: "load-mrbump",
+                label: "MrBump results...",
+                type: "showModal",
+                modal: "mrbump",
+                devOnly: true,
+                specialType: "upload",
+            },
+            {
+                id: "load-mrparse",
+                label: "MrParse results...",
+                type: "showModal",
+                modal: "mrparse",
+                specialType: "upload",
             },
         ],
     },

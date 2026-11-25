@@ -7,14 +7,24 @@
  * unit-cell grid is fetched from the Coot worker and kept on the GPU while the layer lasts, and
  * fetched again when the map's dataRevision goes up (MoorhenMap.markDataChanged); the old
  * grid is drawn until the new one is in.
+ *
+ * A map too big to contour here at its radius (a large radius, a large EM map: see GpuIsosurface)
+ * is contoured at the largest radius that fits, and the console says so once. Coot is no help
+ * there: at the same radius it is slower still, by minutes for a large EM map.
  */
 import type { RootState } from "../../store/MoorhenReduxStore";
 import type { MoorhenMap } from "../../utils/MoorhenMap";
 import type { PreviewGpuDraw } from "../previewRenderer";
 import { formatCount } from "../rendererReport";
 import { GpuIsosurface, GpuMapGrid, MapContourKernels } from "./gpuMapContour";
-import type { MapUnitCellGrid } from "./mapContourBox";
+import { emRangeFromMrcHeader } from "./mapContourBox";
+import type { MapUnitCellGrid, MrcGridHeader } from "./mapContourBox";
 import { gpuMapContourSetting, mapStyleOf, onMapDataChanged } from "./setting";
+
+/** The radius MoorhenMapManager contours a map at. */
+function radiusOf(map: MoorhenMap, settings: RootState["mapContourSettings"]): number {
+    return settings.mapRadii.find(item => item.molNo === map.molNo)?.radius || map.suggestedRadius || 15;
+}
 
 interface MapEntry {
     grid: GpuMapGrid | null;
@@ -29,6 +39,8 @@ interface MapEntry {
 
 export class GpuMapLayer {
     private readonly maps = new Map<MoorhenMap, MapEntry>();
+    /** What was last said about a map contoured at less than its radius, so it is said once. */
+    private readonly limitsSaid = new Map<MoorhenMap, string>();
     private destroyed = false;
     private readonly stopListening: () => void;
     /** What is being contoured, or what went wrong, on one line (for the GPU tests and debugging). */
@@ -53,19 +65,20 @@ export class GpuMapLayer {
      *     per frame with the camera already to hand, so it can simply be told.
      */
     frame(state: RootState, liveOrigin?: readonly [number, number, number]): PreviewGpuDraw[] {
+        const maps = state.maps as unknown as MoorhenMap[];
+        const settings = state.mapContourSettings;
         if (!gpuMapContourSetting.enabled) {
             this.clear();
             this.status = "";
             return [];
         }
-        const maps = state.maps as unknown as MoorhenMap[];
         for (const [map, entry] of this.maps) {
             if (!maps.includes(map)) {
                 this.release(entry);
                 this.maps.delete(map);
+                this.limitsSaid.delete(map);
             }
         }
-        const settings = state.mapContourSettings;
         const origin = liveOrigin ?? state.sceneSettings.origin;
         const draws: PreviewGpuDraw[] = [];
         const notes: string[] = [];
@@ -89,7 +102,7 @@ export class GpuMapLayer {
             }
 
             // As MoorhenMapManager decides them.
-            const radius = settings.mapRadii.find(item => item.molNo === map.molNo)?.radius || map.suggestedRadius || 15;
+            const radius = radiusOf(map, settings);
             const level = settings.contourLevels.find(item => item.molNo === map.molNo)?.contourLevel || map.suggestedContourLevel || 0.003;
             const style = mapStyleOf(settings, map.molNo);
             const { mapAlpha, mapColour, positiveMapColour, negativeMapColour } = map.getMapContourParams();
@@ -107,6 +120,13 @@ export class GpuMapLayer {
                     entry.surfaces.set(key, surface);
                 }
                 surface.update({ centre, radius, level: sign * level });
+                if (surface.tooBig) {
+                    // Not even a small contour fits: Coot contours the maps (MoorhenWebGPUMainView).
+                    entry.failed = `too big for this GPU: ${surface.tooBig}`;
+                    console.warn(`GPU map contours: map ${map.molNo} is too big for this GPU: ${surface.tooBig}. Coot contours the maps from now on.`);
+                    continue;
+                }
+                this.sayLimit(map, radius, surface);
                 const buffers = surface.buffers;
                 if (!buffers) continue;
                 const solid = style === "solid";
@@ -130,12 +150,26 @@ export class GpuMapLayer {
             const triangles = [...entry.surfaces.values()].reduce((sum, s) => sum + s.lastTriangles, 0);
             const lines = [...entry.surfaces.values()].reduce((sum, s) => sum + s.lastLines, 0);
             const { nu, nv, nw } = entry.grid.grid;
-            notes.push(`map ${map.molNo}: r ${radius} Å, cell grid ${nu}×${nv}×${nw}` + (box ? `, box ${box.size.join("×")}` : "")
+            const limited = entry.surfaces.get(`${map.molNo}:1`)?.limitedRadius;
+            notes.push(`map ${map.molNo}: r ${limited != null ? `${+limited.toFixed(1)} Å (of ${radius} Å: too big for the GPU)` : `${radius} Å`}, cell grid ${nu}×${nv}×${nw}` + (box ? `, box ${box.size.join("×")}` : "")
                 + `, ${formatCount(triangles)} triangles, ${formatCount(lines)} lines, contoured ${made}×`
                 + (entry.fetches > 1 ? `, fetched ${entry.fetches}×` : "") + (entry.loading ? ", fetching again…" : ""));
         }
         this.status = notes.length > 0 ? `GPU maps: ${notes.join("; ")}` : "GPU maps: none visible";
         return draws;
+    }
+
+    /** Say once, in the console, that `map` is contoured at less than its radius, and why. */
+    private sayLimit(map: MoorhenMap, radius: number, surface: GpuIsosurface): void {
+        if (surface.limitedRadius == null) {
+            this.limitsSaid.delete(map);
+            return;
+        }
+        const said = `${radius}|${surface.limitedRadius.toFixed(1)}`;
+        if (this.limitsSaid.get(map) === said) return;
+        this.limitsSaid.set(map, said);
+        console.warn(`GPU map contours: map ${map.molNo} is contoured to a radius of ${+surface.limitedRadius.toFixed(1)} Å, ` +
+            `not ${radius} Å: ${surface.limitReason ?? "too big for this GPU"}.`);
     }
 
     /** Contours made so far, all maps together: for timing how soon a move is contoured (report). */
@@ -160,8 +194,9 @@ export class GpuMapLayer {
     }
 
     /**
-     * Whether some map could not be contoured here at all (its unit cell could not be fetched):
-     * then Coot contours the maps instead (MoorhenWebGPUMainView).
+     * Whether some map could not be contoured here at all (its unit cell could not be fetched or
+     * put on the GPU, or not even a small contour fits): then Coot contours the maps instead
+     * (MoorhenWebGPUMainView).
      */
     get failed(): boolean {
         for (const entry of this.maps.values()) if (entry.failed) return true;
@@ -208,15 +243,30 @@ export class GpuMapLayer {
                 this.fetchFailed(map, entry, "the Coot worker could not export its grid (is the WASM rebuilt with get_map_unit_cell_grid?)");
             } else {
                 const grid = result.result;
-                // The surfaces were made from the old grid (whose size may differ): start again.
-                entry.surfaces.forEach(surface => surface.destroy());
-                entry.surfaces.clear();
-                entry.grid?.destroy();
-                entry.grid = new GpuMapGrid(this.kernels, grid);
-                entry.fetches++;
-                console.debug(`GPU map contours: map ${map.molNo} unit cell ${grid.nu}×${grid.nv}×${grid.nw} ` +
-                    `(${(grid.data.byteLength / 1e6).toFixed(0)} MB) in ${(performance.now() - started).toFixed(0)} ms` +
-                    (entry.fetches > 1 ? ` (fetch ${entry.fetches}: the map changed)` : ""));
+                // Where an EM map's data starts, which the grid (periodic) does not say: from the
+                // map file's header. Maps made in Coot have none, and get the whole cell.
+                const header = map.fileHeader as Partial<MrcGridHeader> | null;
+                if (grid.isEM && header?.axisMapping && header.start && header.sampling && header.dimensions) {
+                    grid.emRange = emRangeFromMrcHeader(header as MrcGridHeader, grid) ?? undefined;
+                }
+                // Too big for the GPU, or out of its memory: rejects, and Coot contours the maps.
+                return GpuMapGrid.create(this.kernels, grid).then(made => {
+                    if (this.destroyed || this.maps.get(map) !== entry) {
+                        made.destroy();
+                        return;
+                    }
+                    // The surfaces were made from the old grid (whose size may differ): start again.
+                    entry.surfaces.forEach(surface => surface.destroy());
+                    entry.surfaces.clear();
+                    entry.grid?.destroy();
+                    entry.grid = made;
+                    entry.fetches++;
+                    console.debug(`GPU map contours: map ${map.molNo} unit cell ${grid.nu}×${grid.nv}×${grid.nw} ` +
+                        (grid.emRange ? `(EM data from ${grid.emRange.min.join(",")} to ${grid.emRange.max.join(",")}) ` : "") +
+                        `(${(grid.data.byteLength / 1e6).toFixed(0)} MB) in ${(performance.now() - started).toFixed(0)} ms` +
+                        (entry.fetches > 1 ? ` (fetch ${entry.fetches}: the map changed)` : ""));
+                    this.requestDraw();
+                });
             }
             this.requestDraw();
         }).catch(err => {

@@ -15,6 +15,7 @@ export const LongJobSnackNotification = () => {
 
     const isAnimatingTrajectory = useSelector((state: RootState) => state.generalStates.isAnimatingTrajectory);
     const isShowingTomograms = useSelector((state: RootState) => state.generalStates.isShowingTomograms);
+    const jobProgress = useSelector((state: RootState) => state.generalStates.jobProgress);
     const commandCentreRef = useCommandCentre();
     const [isLongJob, setIsLongJob] = useState(false);
 
@@ -26,12 +27,13 @@ export const LongJobSnackNotification = () => {
                 commandCentreRef.current.activeMessages.some(item => messages.includes(item?.messageId)) &&
                 !isLongJob &&
                 !isAnimatingTrajectory &&
-                !isShowingTomograms
+                !isShowingTomograms &&
+                !jobProgress
             ) {
                 setIsLongJob(true);
             }
         },
-        [isLongJob]
+        [isLongJob, jobProgress]
     );
 
     const checkWorkerBusy = useCallback(async () => {
@@ -40,11 +42,12 @@ export const LongJobSnackNotification = () => {
             if (commandCentreRef.current?.activeMessages.length === 0) {
                 break;
             }
-            if (i === 29 && !isLongJob && !isAnimatingTrajectory && !isShowingTomograms) {
+            if (i === 29 && !isLongJob && !isAnimatingTrajectory && !isShowingTomograms && !jobProgress) {
                 setIsLongJob(true);
             }
         }
-    }, [isAnimatingTrajectory, isShowingTomograms]);
+        // A task reporting its progress shows that instead (and its commands do not start this one)
+    }, [isAnimatingTrajectory, isShowingTomograms, jobProgress]);
 
     const debouncedClearBusy = useCallback(() => {
         if (commandCentreRef.current?.activeMessages.length === 0 && isLongJob) {
@@ -77,6 +80,33 @@ export const LongJobSnackNotification = () => {
             };
         }
     }, [newCommandExit]);
+
+    // Command exits are not reported while a task shows its progress: check again once it is done
+    useEffect(() => {
+        if (!jobProgress) {
+            const timeoutId = setTimeout(debouncedClearBusy, 500);
+            return () => {
+                clearTimeout(timeoutId);
+            };
+        }
+    }, [jobProgress]);
+
+    // A task that reports its progress is shown at once, with how far it has got
+    if (jobProgress) {
+        // Within 0-100 whatever a caller reports (setJobProgress is in the API)
+        const percent = jobProgress.total > 0 ? Math.min(100, Math.max(0, (100 * jobProgress.done) / jobProgress.total)) : 0;
+        return (
+            <div className="moorhen__long-job-notification" style={{ left: glWidth / 2, top: glHeight }}>
+                <MoorhenStack direction="vertical">
+                    <span>{jobProgress.label}</span>
+                    <span>
+                        {jobProgress.done} / {jobProgress.total}
+                    </span>
+                    <MoorhenLinearProgress value={percent} />
+                </MoorhenStack>
+            </div>
+        );
+    }
 
     return (
         isLongJob && (
