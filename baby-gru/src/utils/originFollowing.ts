@@ -12,8 +12,8 @@
  *     residue nearest the centre, so they follow whichever that is;
  *   - symmetry mates are generated for the cell images near the centre.
  *
- * In the running application these are driven by two React listeners watching the store's copy of
- * the origin - MapOriginListener per map, MoleculesOriginListener on a 500ms poll. That works for
+ * In the running application these are driven by the store's copy of the origin - the map display
+ * driver (MapDisplayDriver) for maps, MoleculesOriginListener on a 500ms poll for molecules. That works for
  * a user dragging the view, where nobody minds the work landing a frame or two later and there is
  * no question of "which frame" it landed on.
  *
@@ -34,7 +34,6 @@
 
 import { getCentreAtom } from "./utils";
 import type { MoorhenMolecule } from "./MoorhenMolecule";
-import type { MoorhenMap } from "./MoorhenMap";
 import type { CommandCentre } from "../InstanceManager/CommandCentre";
 import type { MoorhenReduxStoreType } from "../store";
 
@@ -44,30 +43,27 @@ export type SceneOrigin = readonly [number, number, number];
 /** Only what this module touches, so a test needs neither a renderer nor an instance. */
 export interface OriginFollowingScene {
     molecules: MoorhenMolecule[];
-    maps: MoorhenMap[];
-    /** Which maps are drawn at all. A hidden map is not contoured. */
-    visibleMapNumbers: number[];
+    /**
+     * Contours the maps that follow the view about an origin, resolving once drawn: the instance's map display
+     * driver (`MapDisplayDriver.contourMapsAt`), which knows which representations are shown, locked or drawn on
+     * the GPU. Null when there is no driver to ask (no maps are then drawn).
+     */
+    contourMaps: ((origin: SceneOrigin) => Promise<void>) | null;
     commandCentre: CommandCentre;
     store: MoorhenReduxStoreType;
 }
 
 /**
- * Contour every visible map about `origin`.
+ * Contour every visible map that follows the view about `origin`.
  *
- * The level, radius and style still come from the store, because those are settings rather than
- * consequences of where the camera is; only the centre is passed in. An origin-locked map ignores
- * the centre entirely, which doCootContour already knows.
+ * The level, radius and style still come from the maps' display records, because those are
+ * settings rather than consequences of where the camera is; only the centre is passed in. A map
+ * locked to its own centre ignores the centre entirely.
  */
 export const contourMapsAtOrigin = async (
     scene: OriginFollowingScene, origin: SceneOrigin,
 ): Promise<void> => {
-    const centre = [-origin[0], -origin[1], -origin[2]] as [number, number, number];
-    await Promise.all(scene.maps
-        .filter(map => scene.visibleMapNumbers.includes(map.molNo))
-        .map(map => {
-            const { mapRadius, contourLevel, mapStyle } = map.getMapContourParams();
-            return map.doCootContour(centre[0], centre[1], centre[2], mapRadius, contourLevel, mapStyle);
-        }));
+    await scene.contourMaps?.(origin);
 };
 
 /**

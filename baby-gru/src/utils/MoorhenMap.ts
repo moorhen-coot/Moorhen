@@ -884,7 +884,7 @@ export class MoorhenMap {
             this.store.dispatch(setMapSlice(slice));
         }
         const { contourLevel, mapAlpha, mapColour, positiveMapColour, negativeMapColour } = this.getMapContourParams();
-        const halfSize = sliceHalfSize(state.mapContourSettings, this.molNo, this.suggestedRadius);
+        const halfSize = sliceHalfSize(this.getMapContourParams().mapRadius, this.suggestedRadius);
         const nodalLines = this.isDifference && state.mapContourSettings.mapSliceNodalLines.includes(this.molNo);
         const spacing = state.mapContourSettings.mapSliceContourSpacings.find(item => item.molNo === this.molNo)?.spacing
             ?? DEFAULT_SLICE_CONTOUR_SPACING;

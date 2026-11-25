@@ -1,4 +1,5 @@
 import { useSelector } from "react-redux";
+import { useMapDisplay } from "../../../hooks/useMapDisplay";
 import { moorhen } from "../../../types/moorhen";
 import { MapScrollWheelListener } from "./MapScrollWheelListener";
 
@@ -12,11 +13,9 @@ import { MapScrollWheelListener } from "./MapScrollWheelListener";
 export const MoorhenMapsHeadManager = () => {
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const map = useSelector((state: moorhen.State) => state.maps.find(item => item.molNo === activeMap?.molNo) ?? null);
-    const mapIsVisible = useSelector((state: moorhen.State) => (map ? state.mapContourSettings.visibleMaps.includes(map.molNo) : false));
-    const mapContourLevel = useSelector((state: moorhen.State) => {
-        const level = map ? state.mapContourSettings.contourLevels.find(item => item.molNo === map.molNo)?.contourLevel : undefined;
-        return level ?? map?.suggestedContourLevel ?? 0.003;
-    });
+    const display = useMapDisplay(map);
+    const mapIsVisible = display?.visible ?? false;
+    const mapContourLevel = display?.record ? display.contourLevel : map?.suggestedContourLevel ?? 0.003;
 
     if (!map) {
         return null;

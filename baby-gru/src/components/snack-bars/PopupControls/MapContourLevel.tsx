@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef } from "react";
 import { RootState, setShownControl } from "@/store";
+import { selectPrimaryMapRepresentation } from "@/store/mapRepresentationsSlice";
 
 export const MapContourLevel = () => {
     const currentContourLevelRef = useRef<number | null>(null);
@@ -10,9 +11,10 @@ export const MapContourLevel = () => {
     const shownControl = useSelector((state: RootState) => state.globalUI.shownControl);
     const mapMolNo = shownControl?.name === "mapContourLvl" ? shownControl.payload?.molNo : undefined;
     const mapPrecision = (shownControl?.name === "mapContourLvl" ? shownControl.payload?.mapPrecision : undefined) || 1;
-    const contourLevel = useSelector(
-        (state: RootState) => state.mapContourSettings.contourLevels.find(item => item.molNo === mapMolNo)?.contourLevel
-    );
+    const contourLevel = useSelector((state: RootState) => {
+        const map = state.maps.find(item => item.molNo === mapMolNo);
+        return map ? selectPrimaryMapRepresentation(state, map.uniqueId)?.contourLevel : undefined;
+    });
     const dispatch = useDispatch();
 
     const selectedMap = maps.find(map => map.molNo === mapMolNo);

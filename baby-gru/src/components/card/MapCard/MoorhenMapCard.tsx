@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useMemo, useState } from "react";
 import { useFastContourMode } from "../../../hooks/useFastContourMode";
+import { useMapDisplay } from "../../../hooks/useMapDisplay";
 import { setActiveMap } from "../../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
 import { hideMap, showMap } from "../../../store/mapContourSettingsSlice";
@@ -33,47 +34,15 @@ type MoorhenMapCardPropsInterface = {
 export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const { initialContour = 0.8, initialRadius = 13 } = props;
 
-    const mapRadius = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.mapRadii.find(item => item.molNo === props.map.molNo);
-        if (map) {
-            return map.radius;
-        } else {
-            return initialRadius;
-        }
-    });
-
-    const mapContourLevel = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.contourLevels.find(item => item.molNo === props.map.molNo);
-        if (map) {
-            return map.contourLevel;
-        } else {
-            return initialContour;
-        }
-    });
-    const mapStyle = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.mapStyles.find(item => item.molNo === props.map.molNo);
-        if (map) {
-            return map.style;
-        } else {
-            return state.mapContourSettings.defaultMapSurface
-                ? "solid"
-                : state.mapContourSettings.defaultMapLitLines
-                  ? "lit-lines"
-                  : "lines";
-        }
-    });
-
-    const mapOpacity = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.mapAlpha.find(item => item.molNo === props.map.molNo);
-        if (map) {
-            return map.alpha;
-        } else {
-            return 1.0;
-        }
-    });
+    // From the map's display record (map-display.md): the radius of the draw mode and the opacity of the style in use
+    const display = useMapDisplay(props.map);
+    const mapRadius = display.record ? display.radius : initialRadius;
+    const mapContourLevel = display.record ? display.contourLevel : initialContour;
+    const mapStyle = display.style;
+    const mapOpacity = display.alpha;
 
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
-    const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo));
+    const mapIsVisible = display.visible;
     const dispatch = useDispatch();
 
     const [lastCall, setLastCall] = useState<number>(0);

@@ -4,3 +4,4 @@ export { usePersistentState } from "@/store/menusSlice";
 export { useMoorhenInstance } from "../InstanceManager/useMoorhenInstance";
 export { useControlLock } from "./useControlsLock";
 export { useMoleculeChanged } from "./useMoleculeChange";
+export { useMapDisplay, mapDisplayOf } from "./useMapDisplay";

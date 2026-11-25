@@ -106,6 +106,16 @@ export class MapDisplayDriver {
     }
 
     /**
+     * Contour every map representation that follows the view around `origin` (a scene origin: the negated view
+     * centre) instead of the store's, and resolve once all are drawn. For a movie export, which drives the camera
+     * itself and captures each frame only once the scene has caught up (originFollowing.ts).
+     */
+    contourMapsAt(origin: readonly number[]): Promise<void> {
+        const centre = [-origin[0], -origin[1], -origin[2]] as [number, number, number];
+        return Promise.all([...this.representations.values()].map(representation => representation.contourAround(centre))).then(() => undefined);
+    }
+
+    /**
      * Draw a map's representations with a smaller radius around the view, even when its origin is locked, while the
      * user changes its contour level quickly (useFastContourMode); null to go back to the records. Not a setting:
      * nothing is written to the store. Ignored by GPU contours, which are fast enough at any radius.

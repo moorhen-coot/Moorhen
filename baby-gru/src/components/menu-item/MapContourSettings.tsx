@@ -18,7 +18,6 @@ export const MapContourSettings = () => {
     const maps = useSelector((state: moorhen.State) => state.maps);
     const defaultMapSamplingRate = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSamplingRate);
     const mapLineWidth = useSelector((state: moorhen.State) => state.mapContourSettings.mapLineWidth);
-    const visibleMaps = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps);
     const defaultMapLitLines = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapLitLines);
     const defaultMapSurface = useSelector((state: moorhen.State) => state.mapContourSettings.defaultMapSurface);
     const reContourMapOnlyOnMouseUp = useSelector((state: moorhen.State) => state.mapContourSettings.reContourMapOnlyOnMouseUp);
@@ -58,7 +57,7 @@ export const MapContourSettings = () => {
                                     },
                                     true
                                 )) as moorhen.WorkerResponse<number>;
-                                if (visibleMaps.includes(map.molNo)) {
+                                if (map.primaryRepresentation?.visible) {
                                     return map.redrawWithNewData();
                                 } else {
                                     // Contoured when shown; the GPU contours fetch it then.

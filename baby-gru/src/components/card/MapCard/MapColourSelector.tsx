@@ -1,5 +1,5 @@
-import { useDispatch, useSelector } from "react-redux";
-import { useMemo } from "react";
+import { useDispatch } from "react-redux";
+import { useMapDisplay } from "../../../hooks/useMapDisplay";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
 import { setMapColours, setNegativeMapColours, setPositiveMapColours } from "../../../store/mapContourSettingsSlice";
 import { moorhen } from "../../../types/moorhen";
@@ -13,56 +13,12 @@ interface MoorhenMapColorSelector {
 export const MapColourSelector = (props: MoorhenMapColorSelector) => {
     const dispatch = useDispatch();
 
-    const mapColourString = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.mapColours.find(item => item.molNo === props.map.molNo);
-        return map ? JSON.stringify(map.rgb) : "";
-    });
-
-    const negativeMapColourString = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.negativeMapColours.find(item => item.molNo === props.map.molNo);
-        return map ? JSON.stringify(map.rgb) : "";
-    });
-
-    const positiveMapColourString = useSelector((state: moorhen.State) => {
-        const map = state.mapContourSettings.positiveMapColours.find(item => item.molNo === props.map.molNo);
-        return map ? JSON.stringify(map.rgb) : "";
-    });
-
-    const mapColour: { r: number; g: number; b: number } = useMemo(() => {
-        if (mapColourString) {
-            return JSON.parse(mapColourString);
-        } else {
-            return {
-                r: props.map.defaultMapColour.r * 255,
-                g: props.map.defaultMapColour.g * 255,
-                b: props.map.defaultMapColour.b * 255,
-            };
-        }
-    }, [mapColourString]);
-
-    const negativeMapColour: { r: number; g: number; b: number } = useMemo(() => {
-        if (negativeMapColourString) {
-            return JSON.parse(negativeMapColourString);
-        } else {
-            return {
-                r: props.map.defaultNegativeMapColour.r * 255,
-                g: props.map.defaultNegativeMapColour.g * 255,
-                b: props.map.defaultNegativeMapColour.b * 255,
-            };
-        }
-    }, [negativeMapColourString]);
-
-    const positiveMapColour: { r: number; g: number; b: number } = useMemo(() => {
-        if (positiveMapColourString) {
-            return JSON.parse(positiveMapColourString);
-        } else {
-            return {
-                r: props.map.defaultPositiveMapColour.r * 255,
-                g: props.map.defaultPositiveMapColour.g * 255,
-                b: props.map.defaultPositiveMapColour.b * 255,
-            };
-        }
-    }, [positiveMapColourString]);
+    // The map's display record has colours 0-1 (map default where none is set); the picker and the old lists 0-255
+    const display = useMapDisplay(props.map);
+    const to255 = (colour: { r: number; g: number; b: number }) => ({ r: colour.r * 255, g: colour.g * 255, b: colour.b * 255 });
+    const mapColour = to255(display.colour);
+    const negativeMapColour = to255(display.negativeColour);
+    const positiveMapColour = to255(display.positiveColour);
 
     if (mapColour === null) {
         return null;

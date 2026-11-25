@@ -79,6 +79,8 @@ import { MoorhenInstance } from "@/InstanceManager";
 import { USER_SCENE_FORMAT_VERSION, type UserSceneState } from "@/store/userSceneFormat";
 import { Root } from "protobufjs";
 import type { MapStyle } from "../store/mapContourSettingsSlice";
+import { selectPrimaryMapRepresentation } from "../store/mapRepresentationsSlice";
+import { currentAlpha, currentRadius } from "./Representation/mapRepresentationData";
 
 export interface backupKey {
     name?: string;
@@ -535,22 +537,28 @@ export class MoorhenTimeCapsule {
         });
 
         const mapData: mapDataSession[] = this.mapsRef.current.map((map, index) => {
+            // The map's display record (map-display.md), in the format sessions have always had: one radius (the draw
+            // mode's in use), one alpha (the style's in use), colours 0-255 and only where set. The whole record is
+            // saved in Phase 5.
+            const record = selectPrimaryMapRepresentation(state, map.uniqueId);
+            const to255 = (colour: { r: number; g: number; b: number } | null) =>
+                colour ? { r: Math.round(colour.r * 255), g: Math.round(colour.g * 255), b: Math.round(colour.b * 255) } : undefined;
             return {
                 name: map.name,
                 molNo: map.molNo,
                 uniqueId: map.uniqueId,
                 mapData: mapDataPromises[index],
                 reflectionData: reflectionDataPromises[index],
-                showOnLoad: state.mapContourSettings.visibleMaps.includes(map.molNo),
-                contourLevel: state.mapContourSettings.contourLevels.find(item => item.molNo === map.molNo)?.contourLevel,
-                radius: state.mapContourSettings.mapRadii.find(item => item.molNo === map.molNo)?.radius,
+                showOnLoad: record?.visible ?? false,
+                contourLevel: record?.contourLevel,
+                radius: record ? currentRadius(record) : undefined,
                 rgba: {
-                    a: state.mapContourSettings.mapAlpha.find(item => item.molNo === map.molNo)?.alpha,
-                    mapColour: state.mapContourSettings.mapColours.find(item => item.molNo === map.molNo)?.rgb,
-                    positiveDiffColour: state.mapContourSettings.positiveMapColours.find(item => item.molNo === map.molNo)?.rgb,
-                    negativeDiffColour: state.mapContourSettings.negativeMapColours.find(item => item.molNo === map.molNo)?.rgb,
+                    a: record ? currentAlpha(record) : undefined,
+                    mapColour: to255(record?.colour ?? null),
+                    positiveDiffColour: to255(record?.positiveColour ?? null),
+                    negativeDiffColour: to255(record?.negativeColour ?? null),
                 },
-                style: state.mapContourSettings.mapStyles.find(item => item.molNo === map.molNo)?.style,
+                style: record?.style,
                 isDifference: map.isDifference,
                 isCube: map.isCube,
                 slice: (() => {

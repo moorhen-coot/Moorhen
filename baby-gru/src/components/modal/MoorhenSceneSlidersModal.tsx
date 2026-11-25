@@ -28,6 +28,7 @@ import {
     sideViewZoomCentre,
 } from "../../utils/sceneSliderGeometry";
 import { centreOfObject, extentOfObject } from "../../store/threeDObjectsSlice";
+import { currentRadius } from "../../utils/Representation/mapRepresentationData";
 import {
     setDepthBlurDepth,
     setDepthBlurRadius,
@@ -158,7 +159,8 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     const storeMolecules = store.getState().molecules.moleculeList
     // Selected, so that moving the origin, or a map's contour settings, draws the view again.
     const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin)
-    const mapContourSettings = useSelector((state: moorhen.State) => state.mapContourSettings)
+    // The maps' display records (map-display.md): which are shown, and how big
+    const mapRepresentations = useSelector((state: moorhen.State) => state.mapRepresentations.representations)
 
     const [clickX, setClickX] = useState<number>(-1)
     const [clickY, setClickY] = useState<number>(-1)
@@ -240,14 +242,15 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
             spheres.push({ centre: centreOfObject(obj) as [number, number, number], radius: extentOfObject(obj) })
         })
         maps.forEach(map => {
-            if (!mapContourSettings.visibleMaps.includes(map.molNo)) return
-            const radius = mapContourSettings.mapRadii.find(r => r.molNo === map.molNo)?.radius
+            const record = map.primaryRepresentation
+            if (!record?.visible || record.style === 'slice') return
+            const radius = currentRadius(record)
             if (!Number.isFinite(radius)) return
             const drawOrigin = map.isOriginLocked ? (map.drawOrigin ?? map.mapCentre) : null
             spheres.push({ centre: (drawOrigin ? drawOrigin.map(c => -c) : centre) as [number, number, number], radius })
         })
         return reachFrom(centre, spheres)
-    }, [atomSphere, threeDObjects, maps, mapContourSettings, originState])
+    }, [atomSphere, threeDObjects, maps, mapRepresentations, originState])
 
     /**
      * Each handle as a signed distance from the view centre, which is the one convention the
@@ -677,7 +680,7 @@ export const MoorhenSlidersSettings = (props: { stackDirection: "horizontal" | "
     useEffect(() => {
         plotTheData()
     // plotWidth too: resizing a canvas clears it
-    }, [glCanvas,plotWidth,atomSpan,plotRange,viewHalfRange,viewCentre,handles,grabbed,fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers,originState,mapContourSettings])
+    }, [glCanvas,plotWidth,atomSpan,plotRange,viewHalfRange,viewCentre,handles,grabbed,fogClipOffset,gl_fog_start,gl_fog_end,clipStart,clipEnd,depthBlurDepth,canvasRef.current,moveX,moveY,quat,storeMolecules,displayBuffers,originState,mapRepresentations])
 
 
     return (

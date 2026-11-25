@@ -12,24 +12,17 @@ import {
 } from "../../src/utils/originFollowing";
 import type { OriginFollowingScene } from "../../src/utils/originFollowing";
 
-/** A map that records what it was asked to contour, and when it finished. */
-const mapStub = (molNo: number, overrides: Record<string, unknown> = {}) => {
-    const contoured: { centre: number[]; radius: number; level: number }[] = [];
+/** A map display driver that records the origins it was asked to contour the maps at, and when it finished. */
+const mapDisplayStub = () => {
+    const origins: number[][] = [];
     let settle: (() => void) | null = null;
     return {
-        molNo,
-        contoured,
+        origins,
         finish: () => { settle?.(); settle = null; },
-        get pending() { return settle !== null; },
-        getMapContourParams: () => ({
-            mapRadius: 15, contourLevel: 0.8, mapStyle: "lines",
-            mapAlpha: 1, mapColour: {}, positiveMapColour: {}, negativeMapColour: {},
-        }),
-        doCootContour: (x: number, y: number, z: number, radius: number, level: number) => {
-            contoured.push({ centre: [x, y, z], radius, level });
+        contourMapsAt: (origin: readonly number[]) => {
+            origins.push([...origin]);
             return new Promise<void>(resolve => { settle = resolve as () => void; });
         },
-        ...overrides,
     };
 };
 
@@ -54,60 +47,43 @@ const moleculeStub = (flags: {
 };
 
 const sceneOf = (
-    maps: ReturnType<typeof mapStub>[],
+    mapDisplay: ReturnType<typeof mapDisplayStub> | null,
     molecules: ReturnType<typeof moleculeStub>[],
-    visibleMapNumbers = maps.map(map => map.molNo),
 ): OriginFollowingScene => ({
-    maps: maps as never,
     molecules: molecules as never,
-    visibleMapNumbers,
+    contourMaps: mapDisplay ? origin => mapDisplay.contourMapsAt(origin) : null,
     commandCentre: {
         cootCommand: async () => ({ data: { result: { result: { first: 0, second: "/1/A/42" } } } }),
     } as never,
     store: { getState: () => ({ sceneSettings: { origin: [0, 0, 0] } }) } as never,
 });
 
+// Which maps are contoured, with what level and radius, and which are left alone (hidden, locked, on the GPU) is
+// the map display driver's (MapDisplayDriver.contourMapsAt, MapRepresentation.contourAround); here only that it is
+// asked at the right origin and waited for.
 describe("contouring the maps", () => {
     it("contours about the origin it is given, not the store's", () => {
         // The point of the whole module. During an export the store is deliberately behind.
-        const map = mapStub(0);
-        const scene = sceneOf([map], []);
-        contourMapsAtOrigin(scene, [-10, -20, -30]);
-        expect(map.contoured).toHaveLength(1);
-        // Negated on the way in, as the store's convention requires.
-        expect(map.contoured[0].centre).toEqual([10, 20, 30]);
+        const mapDisplay = mapDisplayStub();
+        contourMapsAtOrigin(sceneOf(mapDisplay, []), [-10, -20, -30]);
+        expect(mapDisplay.origins).toEqual([[-10, -20, -30]]);
     });
 
-    it("takes the level, radius and style from the settings, which are not the camera's business", () => {
-        const map = mapStub(0);
-        contourMapsAtOrigin(sceneOf([map], []), [0, 0, 0]);
-        expect(map.contoured[0].radius).toBe(15);
-        expect(map.contoured[0].level).toBe(0.8);
+    it("has nothing to contour without a map display", async () => {
+        await expect(contourMapsAtOrigin(sceneOf(null, []), [0, 0, 0])).resolves.toBeUndefined();
     });
 
-    it("leaves a hidden map alone", () => {
-        const shown = mapStub(0);
-        const hidden = mapStub(1);
-        contourMapsAtOrigin(sceneOf([shown, hidden], [], [0]), [0, 0, 0]);
-        expect(shown.contoured).toHaveLength(1);
-        expect(hidden.contoured).toHaveLength(0);
-    });
-
-    it("does not resolve until every map has finished", async () => {
+    it("does not resolve until the maps are drawn", async () => {
         // The property an exported frame depends on: started is not good enough, because the frame
         // is captured the instant this returns.
-        const first = mapStub(0);
-        const second = mapStub(1);
+        const mapDisplay = mapDisplayStub();
         let done = false;
-        const settled = contourMapsAtOrigin(sceneOf([first, second], []), [0, 0, 0])
+        const settled = contourMapsAtOrigin(sceneOf(mapDisplay, []), [0, 0, 0])
             .then(() => { done = true; });
 
         await Promise.resolve();
         expect(done).toBe(false);
-        first.finish();
-        await Promise.resolve();
-        expect(done).toBe(false);
-        second.finish();
+        mapDisplay.finish();
         await settled;
         expect(done).toBe(true);
     });
@@ -116,7 +92,7 @@ describe("contouring the maps", () => {
 describe("the representations drawn about the centre", () => {
     it("redraws only what is actually switched on", async () => {
         const molecule = moleculeStub({ environment: true, nef: true });
-        await redrawOriginRepresentations(sceneOf([], [molecule]), [0, 0, 0]);
+        await redrawOriginRepresentations(sceneOf(null, [molecule]), [0, 0, 0]);
         expect(molecule.calls).toContain("environment:/1/A/42");
         expect(molecule.calls).toContain("nef:/1/A/42");
         expect(molecule.calls).not.toContain("adaptative:/1/A/42");
@@ -126,7 +102,7 @@ describe("the representations drawn about the centre", () => {
     it("asks coot nothing at all when nothing follows the centre", async () => {
         // The common case by far, and the one an export pays for on every single frame.
         const molecule = moleculeStub();
-        const scene = sceneOf([], [molecule]);
+        const scene = sceneOf(null, [molecule]);
         const asked = jest.fn();
         (scene.commandCentre as unknown as { cootCommand: unknown }).cootCommand = asked;
         await redrawOriginRepresentations(scene, [0, 0, 0]);
@@ -138,7 +114,7 @@ describe("the representations drawn about the centre", () => {
         // Symmetry is about the cell, not about a residue. Tying it to the centre atom would make
         // a view of empty solvent drop the symmetry mates.
         const molecule = moleculeStub({ symmetry: true, environment: true });
-        const scene = sceneOf([], [molecule]);
+        const scene = sceneOf(null, [molecule]);
         (scene.commandCentre as unknown as { cootCommand: unknown }).cootCommand =
             async () => ({ data: { result: { result: { first: -1, second: "" } } } });
         await redrawOriginRepresentations(scene, [0, 0, 0]);
@@ -148,17 +124,17 @@ describe("the representations drawn about the centre", () => {
 
 describe("the whole scene together", () => {
     it("waits for both the maps and the representations", async () => {
-        const map = mapStub(0);
+        const mapDisplay = mapDisplayStub();
         const molecule = moleculeStub({ environment: true });
         let done = false;
-        const settled = followOrigin(sceneOf([map], [molecule]), [0, 0, 0])
+        const settled = followOrigin(sceneOf(mapDisplay, [molecule]), [0, 0, 0])
             .then(() => { done = true; });
 
         // The molecule work resolves on its own; the map is still outstanding.
         await Promise.resolve();
         await Promise.resolve();
         expect(done).toBe(false);
-        map.finish();
+        mapDisplay.finish();
         await settled;
         expect(done).toBe(true);
         expect(molecule.calls).toContain("environment:/1/A/42");

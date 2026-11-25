@@ -17,9 +17,10 @@
  * visibility toggle, somewhere to put the view, a level, and the draw settings.
  */
 
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useMemo, useState } from "react";
 import { useFastContourMode } from "../../../hooks/useFastContourMode";
+import { useMapDisplay } from "../../../hooks/useMapDisplay";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
 import { hideMap, setContourLevel, showMap } from "../../../store/mapContourSettingsSlice";
 import { moorhen } from "../../../types/moorhen";
@@ -42,33 +43,13 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
     const { initialContour = 0.02 } = props;
     const dispatch = useDispatch();
 
-    const mapContourLevel = useSelector((state: moorhen.State) => {
-        const entry = state.mapContourSettings.contourLevels.find(item => item.molNo === props.map.molNo);
-        return entry ? entry.contourLevel : initialContour;
-    });
-
-    const mapRadius = useSelector((state: moorhen.State) => {
-        const entry = state.mapContourSettings.mapRadii.find(item => item.molNo === props.map.molNo);
-        return entry ? entry.radius : (props.map.suggestedRadius ?? 15);
-    });
-
-    const mapStyle = useSelector((state: moorhen.State) => {
-        const entry = state.mapContourSettings.mapStyles.find(item => item.molNo === props.map.molNo);
-        if (entry) return entry.style;
-        return state.mapContourSettings.defaultMapSurface
-            ? "solid"
-            : state.mapContourSettings.defaultMapLitLines
-              ? "lit-lines"
-              : "lines";
-    });
-
-    const mapOpacity = useSelector((state: moorhen.State) => {
-        const entry = state.mapContourSettings.mapAlpha.find(item => item.molNo === props.map.molNo);
-        return entry ? entry.alpha : 1.0;
-    });
-
-    const mapIsVisible = useSelector((state: moorhen.State) =>
-        state.mapContourSettings.visibleMaps.includes(props.map.molNo));
+    // From the map's display record (map-display.md): the radius of the draw mode and the opacity of the style in use
+    const display = useMapDisplay(props.map);
+    const mapContourLevel = display.record ? display.contourLevel : initialContour;
+    const mapRadius = display.radius;
+    const mapStyle = display.style;
+    const mapOpacity = display.alpha;
+    const mapIsVisible = display.visible;
 
     const [lastCall, setLastCall] = useState<number>(0);
 

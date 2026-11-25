@@ -142,6 +142,23 @@ export class MapRepresentation {
         return this.requestContour();
     }
 
+    /**
+     * Contour around `centre` (world coordinates) rather than the view in the store, and resolve once drawn: for a
+     * movie export, where the store's view is deliberately behind the camera. Does nothing for what does not follow
+     * the view (hidden, locked, a slice) or is not Coot's to draw (GPU contours).
+     */
+    contourAround(centre: Vec3): Promise<void> {
+        const data = this.data;
+        if (!data?.visible || data.style === "slice" || !drawnByCoot(data) || (data.originLock && this.fastRadius === null)) {
+            return Promise.resolve();
+        }
+        return this.contour({ ...this.contourKey(data), centre: [...centre] as Vec3 }, this.appearanceKey(data)).catch(err => {
+            if (!(err instanceof CommandSquashedError)) {
+                console.error(`Map representation ${this.id}: contour failed`, err);
+            }
+        });
+    }
+
     /** Draw with a smaller radius during interaction, null to go back to the record's radius */
     setFastRadius(radius: number | null): void {
         this.fastRadius = radius;

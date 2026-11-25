@@ -3,6 +3,7 @@ import { useCallback, useRef } from "react";
 import { enqueueSnackbar, setShownControl } from "@/store";
 import { useDocumentEventListener } from "../../../hooks/useDocumentEventListener";
 import { useFastContourMode } from "../../../hooks/useFastContourMode";
+import { useMapDisplay } from "../../../hooks/useMapDisplay";
 import { RootState } from "../../../store/MoorhenReduxStore";
 import { moorhen } from "../../../types/moorhen";
 
@@ -10,10 +11,8 @@ export const MapScrollWheelListener = (props: { mapContourLevel: number; mapIsVi
     const mapContourLevelRef = useRef<number>(1);
     mapContourLevelRef.current = props.mapContourLevel;
 
-    const mapRadius = useSelector((state: RootState) => {
-        const mapRadiusItem = state.mapContourSettings.mapRadii.find(item => item.molNo === props.map.molNo);
-        return mapRadiusItem?.radius || props.map.suggestedRadius || 25;
-    });
+    // The radius of the draw mode in use, from the map's display record
+    const mapRadius = useMapDisplay(props.map).radius;
 
     const zoomLevel = useSelector((state: RootState) => state.sceneSettings.zoom);
     const contourWheelSensitivityFactor = useSelector((state: RootState) => state.mouseSettings.contourWheelSensitivityFactor);

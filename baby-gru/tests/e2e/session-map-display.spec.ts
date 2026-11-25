@@ -59,7 +59,7 @@ const getMapDisplays = (page: Page): Promise<MapDisplaySummary[]> =>
                     uniqueId: map.uniqueId,
                     name: map.name,
                     isDifference: map.isDifference,
-                    visible: state.mapContourSettings.visibleMaps.includes(map.molNo),
+                    visible: map.primaryRepresentation?.visible ?? false,
                     contourLevel: params.contourLevel,
                     radius: params.mapRadius,
                     style: params.mapStyle,
@@ -172,7 +172,8 @@ const getAlphaPerStyle = (page: Page, uniqueId: string): Promise<Record<string, 
         { uniqueId, styles: ["solid", "lines", "lit-lines"] }
     );
 
-const MODE_RADII = { local: 30, full: 150 };
+// Neither is a default radius (EM_LOCAL_RADIUS, the suggested radius), so that only a saved value can match
+const MODE_RADII = { local: 37, full: 150 };
 
 /** Set a radius for each draw mode of an EM map, the way the map card does: switch local / full map, then set its radius */
 const setRadiusPerDrawMode = (page: Page, uniqueId: string) =>

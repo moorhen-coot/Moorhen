@@ -39,15 +39,14 @@ export function sliceAxes(orientation: number[]): { u: number[]; v: number[]; no
 }
 
 /**
- * Half the slice's width: the map's radius, as the map is contoured in 3D (MoorhenMapManager), so
- * an orbital's slice is as wide as its contours are drawn.
+ * Half the slice's width: the map's radius (its display record's, for the draw mode in use), as
+ * the map is contoured in 3D, so an orbital's slice is as wide as its contours are drawn.
  */
 export function sliceHalfSize(
-    settings: { mapRadii: readonly { molNo: number; radius: number }[] },
-    molNo: number,
+    radius: number | null | undefined,
     suggestedRadius: number | null | undefined,
 ): number {
-    return settings.mapRadii.find(item => item.molNo === molNo)?.radius || suggestedRadius || 15;
+    return radius || suggestedRadius || 15;
 }
 
 /** Each contour `SLICE_CONTOUR_RATIO` times the one outside it, and at most this many each side of zero. */

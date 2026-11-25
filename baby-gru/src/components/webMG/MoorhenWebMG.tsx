@@ -287,9 +287,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const movingMapSlice = useSelector((state: moorhen.State) => state.generalStates.movingMapSlice)
     const movingSlice = useSelector((state: moorhen.State) =>
         state.mapContourSettings.mapSlices.find(item => item.molNo === state.generalStates.movingMapSlice))
-    const mapStyles = useSelector((state: moorhen.State) => state.mapContourSettings.mapStyles)
-    const visibleMaps = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps)
-    const mapRadii = useSelector((state: moorhen.State) => state.mapContourSettings.mapRadii)
+    // Shown or not, how (slice) and how big: the maps' display records (map-display.md)
+    const mapRepresentations = useSelector((state: moorhen.State) => state.mapRepresentations.representations)
     useEffect(() => {
         if (glRef === null || typeof glRef === 'function') return
         let superseded = false
@@ -308,7 +307,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
         rebuildGizmo()
         return () => { superseded = true }
-    }, [selectedThreeDObjectId, threeDObjects, movingMapSlice, movingSlice, mapStyles, visibleMaps, mapRadii, zoom, backgroundColor, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
+    }, [selectedThreeDObjectId, threeDObjects, movingMapSlice, movingSlice, mapRepresentations, zoom, backgroundColor, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
 
     const commandCentre = useCommandCentre()
 

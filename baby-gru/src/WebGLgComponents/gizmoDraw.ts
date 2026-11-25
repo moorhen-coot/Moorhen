@@ -7,6 +7,7 @@ import { MOORHEN_GIZMO_TAG_KIND } from '../utils/enums'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
 import { selectPrimaryMapRepresentation } from '../store/mapRepresentationsSlice'
+import { currentRadius } from '../utils/Representation/mapRepresentationData'
 import { MapSlicePlacement, sliceHalfSize } from '../utils/mapSlice/mapSlice'
 
 /**
@@ -211,7 +212,7 @@ export const handleTargetOf = (state: RootState): HandleTarget | null => {
             molNo,
             slice: { origin: slice.origin, orientation: slice.orientation },
             centre: [...slice.origin] as [number, number, number],
-            extent: sliceHalfSize(settings, molNo, map?.suggestedRadius),
+            extent: sliceHalfSize(currentRadius(record), map?.suggestedRadius),
             turnable: true,
         }
     }
