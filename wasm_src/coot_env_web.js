@@ -18,15 +18,18 @@ Module.preRun.push(function() {ENV.SYMINFO="data/ccp4_lib/data/syminfo.lib"});
 //   4       margin, for calls that the thread audit (baby-gru/scripts/thread-budget-audit.mjs)
 //           does not cover
 //
-// The limit is the number of cores, but not more than 8. Whoever creates the module can choose
-// another one by passing moorhenThreadLimit in the module options. After the module is created
+// The limit is the number of cores, but not less than 4 and not more than 8. The floor is there
+// because some browsers report fewer cores than the machine has (Firefox with fingerprinting
+// resistance reports 2), and a machine that runs Moorhen has at least 4 cores in practice.
+// Whoever creates the module can choose another limit, lower ones included, by passing
+// moorhenThreadLimit in the module options. After the module is created
 // Module.moorhenThreadLimit is the number to give to set_max_number_of_threads(): a bigger one
 // can use up the pool.
 (function() {
     var limit = Number(Module["moorhenThreadLimit"]);
     if (!(limit >= 1)) {
         var cores = Number(globalThis.navigator && globalThis.navigator.hardwareConcurrency) || 4;
-        limit = Math.min(cores, 8);
+        limit = Math.min(Math.max(cores, 4), 8);
     }
     limit = Math.max(1, Math.floor(limit));
     Module["moorhenThreadLimit"] = limit;

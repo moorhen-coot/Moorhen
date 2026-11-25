@@ -622,7 +622,7 @@ export namespace libcootApi {
     type CootModule = {
         /**
          * The number of threads that coot may use: the number to give to
-         * `set_max_number_of_threads()`. It is the number of cores, at most 8, unless
+         * `set_max_number_of_threads()`. It is the number of cores, at least 4 and at most 8, unless
          * `moorhenThreadLimit` was passed in the module options. Set in `wasm_src/coot_env_web.js`.
          */
         moorhenThreadLimit?: number;

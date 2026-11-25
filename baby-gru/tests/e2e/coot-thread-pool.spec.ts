@@ -30,7 +30,8 @@ const coresToTest = [2, 4, 8, 16];
 const builds = ["64", "32"] as const;
 type Build = (typeof builds)[number];
 
-const expectedLimit = (cores: number) => Math.min(cores, 8);
+// 2 cores tests the floor of 4 (browsers that report fewer cores than the machine has).
+const expectedLimit = (cores: number) => Math.min(Math.max(cores, 4), 8);
 const expectedPool = (cores: number) => 2 * expectedLimit(cores) + 4;
 
 const probeMarker = "[coot-thread-pool-probe]";
@@ -270,7 +271,7 @@ test.describe("Coot thread limit and pthread worker pool", () => {
         const workersAtStart = probe.workersCreated();
         expect(workersAtStart).toBe(expectedPool(2));
 
-        // 16 threads for coot's thread pool alone, when there are 8 workers.
+        // 16 threads for coot's thread pool alone, when there are 12 workers.
         await coot(page, "set_max_number_of_threads", [16]);
         await settle(page);
 

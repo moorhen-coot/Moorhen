@@ -15,10 +15,10 @@ const quiet = { print: () => { }, printErr: () => { } }
 
 describe("Testing the thread limit of the coot module", () => {
 
-    test("Test the default limit is the number of cores, at most 8", async () => {
+    test("Test the default limit is the number of cores, at least 4 and at most 8", async () => {
         const cootModule = await createCootModule({ ...quiet })
         const cores = globalThis.navigator?.hardwareConcurrency || 4
-        expect(cootModule.moorhenThreadLimit).toBe(Math.min(cores, 8))
+        expect(cootModule.moorhenThreadLimit).toBe(Math.min(Math.max(cores, 4), 8))
         expect(cootModule.moorhenPthreadPoolSize).toBe(2 * cootModule.moorhenThreadLimit + 4)
     })
 
@@ -30,7 +30,7 @@ describe("Testing the thread limit of the coot module", () => {
 
     test("Test a limit that makes no sense is replaced by the default", async () => {
         const cootModule = await createCootModule({ ...quiet, moorhenThreadLimit: 0 })
-        expect(cootModule.moorhenThreadLimit).toBeGreaterThanOrEqual(1)
+        expect(cootModule.moorhenThreadLimit).toBeGreaterThanOrEqual(4)
         expect(cootModule.moorhenThreadLimit).toBeLessThanOrEqual(8)
         expect(cootModule.moorhenPthreadPoolSize).toBe(2 * cootModule.moorhenThreadLimit + 4)
     })
