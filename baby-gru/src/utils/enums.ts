@@ -26,6 +26,7 @@ export const modalKeys = Object.freeze({
     MRPARSE: "mrparse",
     COLOR_MAP_BY_MAP : "colour-map-by-map",
     VECTORS : "vectors",
+    ANNOTATIONS : "annotations",
     OVERLAYS2D : "overlays-2d",
     CHECK_LIST_TEST: "check-list-test",
     PAEPLOT : "pae-plot",

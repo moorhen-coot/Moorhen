@@ -23,6 +23,15 @@ import {
     removeVectorsByTag,
     MoorhenVector
 } from "@/store/vectorsSlice";
+import {
+    addAnnotation,
+    emptyAnnotations,
+    newAnnotation,
+    removeAnnotationById,
+    removeAnnotationsByTag,
+    updateAnnotation,
+    MoorhenAnnotation
+} from "@/store/annotationsSlice";
 import { matchesTags, Tags } from "@/utils/tags";
 import { newVector } from "@/utils/vectorFactories";
 import {
@@ -1159,6 +1168,115 @@ export class MoorhenInstance extends StoreExtension {
                 }
                 const count = this.list(tags).length;
                 moorhenInstance.dispatch(removeVectorsByTag(tags));
+                return count;
+            }
+        };
+    }
+
+    /**
+     * Annotation API for this instance.
+     *
+     * Annotations are text labels placed in the 3D scene, at a point or on atoms, as CCP4MG's
+     * annotations are. The text stays the same size on screen (fontPixelSize, in CSS pixels)
+     * at any zoom. Set `latex: true` to typeset it with MathJax, and `alwaysOnTop: true` to
+     * draw it over everything rather than hidden behind what is in front of it.
+     *
+     * Laid out as the 3D object and vector APIs are: create returns a handle, edit is partial,
+     * and list and clear take a tag filter.
+     *
+     * @example
+     * const uid = instance.annotations.create({ text: "Active site", positionMode: "atom", molUniqueId: mol.uniqueId, cid: "//A/57/OG" });
+     * instance.annotations.edit(uid, { colour: "#ff0000ff", fontPixelSize: 32 });
+     * instance.annotations.create({ text: "\\Delta G", latex: true, x: 10, y: 5, z: 0, tags: { source: "myApp" } });
+     * instance.annotations.clear({ source: "myApp" });
+     */
+    public get annotations() {
+        const moorhenInstance = this;
+        return {
+            /**
+             * Get an annotation by its unique ID.
+             * @param uniqueId - The unique identifier of the annotation.
+             * @returns The matching annotation, or null if there is none.
+             */
+            get(uniqueId: string): MoorhenAnnotation | null {
+                const state = moorhenInstance.store.getState();
+                return state.annotations.annotationsList.find(a => a.uniqueId === uniqueId) ?? null;
+            },
+
+            /**
+             * Get the annotations currently in the scene, in the order they were added.
+             * @param tags - Optional filter; an annotation must carry all the pairs given.
+             * @returns The matching annotations, to be treated as read-only.
+             */
+            list(tags?: Tags): MoorhenAnnotation[] {
+                const all = moorhenInstance.store.getState().annotations.annotationsList;
+                return tags ? all.filter(a => matchesTags(a, tags)) : all;
+            },
+
+            /**
+             * Create an annotation and draw it.
+             *
+             * Every field is optional: what is left out takes its default. Any `uniqueId` passed
+             * is ignored and a fresh one minted.
+             *
+             * @param params - Fields to set, in place of their defaults.
+             * @returns The unique ID of the new annotation, its handle for get, edit and delete.
+             */
+            create<P extends Partial<Omit<MoorhenAnnotation, "uniqueId">>>(
+                params: P & { [K in Exclude<keyof P, keyof MoorhenAnnotation>]: never } = {} as never
+            ): string {
+                const annotation = { ...newAnnotation(params as Partial<MoorhenAnnotation>), uniqueId: uuidv4() };
+                moorhenInstance.dispatch(addAnnotation(annotation));
+                return annotation.uniqueId;
+            },
+
+            /**
+             * Edit an existing annotation in place. Fields left out keep their current value;
+             * `uniqueId` cannot be changed, and a locked annotation is not edited at all.
+             *
+             * @param uniqueId - Unique ID of the annotation to edit.
+             * @param params - The fields to change.
+             * @returns True if the annotation was found and updated, otherwise false.
+             */
+            edit(uniqueId: string, params: Partial<Omit<MoorhenAnnotation, "uniqueId">>): boolean {
+                const existing = this.get(uniqueId);
+                if (!existing || existing.locked) {
+                    return false;
+                }
+                moorhenInstance.dispatch(updateAnnotation({ uniqueId, changes: params }));
+                return true;
+            },
+
+            /**
+             * Delete an annotation.
+             * @param uniqueId - Unique ID of the annotation to delete.
+             * @returns True if the annotation was found and deleted, otherwise false.
+             */
+            delete(uniqueId: string): boolean {
+                if (!this.get(uniqueId)) {
+                    return false;
+                }
+                moorhenInstance.dispatch(removeAnnotationById(uniqueId));
+                return true;
+            },
+
+            /**
+             * Delete annotations in bulk.
+             * @param tags - Optional filter, as in list. Omit it to clear everything; `{}` clears
+             * nothing rather than everything.
+             * @returns The number of annotations removed.
+             */
+            clear(tags?: Tags): number {
+                if (tags === undefined) {
+                    const count = this.list().length;
+                    moorhenInstance.dispatch(emptyAnnotations());
+                    return count;
+                }
+                if (Object.keys(tags).length === 0) {
+                    return 0;
+                }
+                const count = this.list(tags).length;
+                moorhenInstance.dispatch(removeAnnotationsByTag(tags));
                 return count;
             }
         };

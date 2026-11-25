@@ -75,7 +75,8 @@ export const MoorhenVectors = () => {
         vectorColour = undefined,
         textColour = undefined,
         radius = undefined,
-    }) => {
+        labelIsLatex = undefined,
+    }: Partial<MoorhenVector>) => {
         setVector(prevVector => {
             const newVector: MoorhenVector = {
                 coordsMode: coordsMode !== undefined ? coordsMode : prevVector.coordsMode,
@@ -97,6 +98,7 @@ export const MoorhenVectors = () => {
                 vectorColour: vectorColour !== undefined ? vectorColour : prevVector.vectorColour,
                 textColour: textColour !== undefined ? textColour : prevVector.textColour,
                 radius: radius !== undefined ? radius : prevVector.radius,
+                labelIsLatex: labelIsLatex !== undefined ? labelIsLatex : prevVector.labelIsLatex,
             };
             return newVector;
         });
@@ -414,6 +416,16 @@ export const MoorhenVectors = () => {
                             updateVector({ labelText: evt.target.value });
                         }}
                     />
+                )}
+                {theVector.labelMode !== "none" && (
+                    <>
+                        <span>LaTeX</span>
+                        <MoorhenToggle
+                            label=""
+                            checked={!!theVector.labelIsLatex}
+                            onChange={evt => updateVector({ labelIsLatex: evt.target.checked })}
+                        />
+                    </>
                 )}
                 <MoorhenNumberInput
                     value={theVector.radius}

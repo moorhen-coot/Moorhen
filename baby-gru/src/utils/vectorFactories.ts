@@ -38,6 +38,9 @@ export const newVector = (overrides: Partial<MoorhenVector> = {}): MoorhenVector
     vectorColour: { r: 0, g: 0, b: 0 },
     textColour: { r: 0, g: 0, b: 0 },
     radius: 0.07,
+    // Stated, so that a label which happens to be written $...$ is not taken for an old LaTeX one
+    // when a session is loaded (see migrateVectorLatexLabel).
+    labelIsLatex: false,
     // Present rather than optional-and-absent, so a caller may push to it without checking.
     // This is the field whose absence was the bug.
     customTags: [],
