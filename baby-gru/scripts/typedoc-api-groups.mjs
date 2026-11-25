@@ -7,15 +7,19 @@
  * no anchor (only members of exported types get one), so files.batchLoadLigands came before
  * files.loadFiles and neither could be linked to. With this plugin they are:
  * - listed in source order, the order they are written in (the main call first);
- * - given an anchor each, "<group>-<member>" in lower case: MoorhenInstance.html#files-loadfiles
+ * - given an anchor each, "<group>-<member>" in lower case: MoorhenInstance.html#files-loadfiles,
+ *   with the permalink icon the other members have (shown on hover, to copy the link from).
  */
-import { Converter, KindRouter, ReflectionKind } from "typedoc";
+import { Converter, KindRouter, ReflectionKind, Renderer } from "typedoc";
 
 /** The object literal a getter returns: an API group's members are its children */
 const isApiGroup = reflection => reflection.kindOf(ReflectionKind.TypeLiteral) && !!reflection.parent?.kindOf(ReflectionKind.GetSignature);
 
 const sourceLine = reflection => reflection.sources?.[0]?.line ?? 0;
 const bySource = (a, b) => sourceLine(a) - sourceLine(b);
+
+/** The anchors given to the members of API groups, by the page (its reflection) they are on */
+const memberAnchors = new Map();
 
 /** The default router ("kind"), with anchors for the members of API groups */
 class ApiGroupRouter extends KindRouter {
@@ -30,6 +34,8 @@ class ApiGroupRouter extends KindRouter {
                 const anchor = this.getSlugger(pageTarget).slug(`${group}-${member.name}`);
                 this.fullUrls.set(member, `${this.fullUrls.get(pageTarget)}#${anchor}`);
                 this.anchors.set(member, anchor);
+                if (!memberAnchors.has(pageTarget)) memberAnchors.set(pageTarget, new Set());
+                memberAnchors.get(pageTarget).add(anchor);
             }
             return;
         }
@@ -52,4 +58,17 @@ export function load(app) {
         },
         -200
     );
+    // The theme gives a member of an object type its id, but no permalink icon: added to those of the
+    // API groups, as the page's other icons are written (their path to the icon sheet depends on the page)
+    app.renderer.on(Renderer.EVENT_END_PAGE, page => {
+        const anchors = memberAnchors.get(page.model);
+        if (!anchors || !page.contents) return;
+        const icon = /<a href="#[^"]*" aria-label="([^"]*)" class="tsd-anchor-icon">(<svg.*?<\/svg>)<\/a>/s.exec(page.contents);
+        if (!icon) return;
+        page.contents = page.contents.replace(/<h5 id="([^"]+)">(.*?)<\/h5>/gs, (heading, id, content) =>
+            anchors.has(id)
+                ? `<h5 class="tsd-anchor-link" id="${id}">${content}<a href="#${id}" aria-label="${icon[1]}" class="tsd-anchor-icon">${icon[2]}</a></h5>`
+                : heading
+        );
+    });
 }

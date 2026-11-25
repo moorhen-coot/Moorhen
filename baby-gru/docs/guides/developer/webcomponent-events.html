@@ -31,7 +31,7 @@
         or use one of the ready-made callbacks
         (<a href="../../api/classes/moorhen.MoorhenInstance.html#newatomhoveredcallback"><code>newAtomHoveredCallback()</code></a>,
         <a href="../../api/classes/moorhen.MoorhenInstance.html#newmoleculechangedcallback"><code>newMoleculeChangedCallback()</code></a>,
-        <code>files.newFilesLoadedCallback()</code>).
+        <a href="../../api/classes/moorhen.MoorhenInstance.html#files-newfilesloadedcallback"><code>files.newFilesLoadedCallback()</code></a>).
     </p>
 
     <p class="note-technical">
@@ -164,8 +164,8 @@ stopChanges();</code></pre>
 
         <p>
             The files group has its own callback,
-            <code>moorhenInstance.files.newFilesLoadedCallback(callback)</code>. It runs once per
-            <code>loadFiles()</code> call, with the array of results for the files that loaded:
+            <a href="../../api/classes/moorhen.MoorhenInstance.html#files-newfilesloadedcallback"><code>moorhenInstance.files.newFilesLoadedCallback(callback)</code></a>. It runs once per
+            <a href="../../api/classes/moorhen.MoorhenInstance.html#files-loadfiles"><code>loadFiles()</code></a> call, with the array of results for the files that loaded:
         </p>
 
         <pre class="code-block" data-lang="typescript"><code>const stopFiles = moorhenInstance.files.newFilesLoadedCallback((files, origin) =&gt; {
@@ -251,7 +251,7 @@ stopFiles();</code></pre>
                 <a href="../../api/classes/moorhen.MoorhenInstance.html#triggermoleculechanged"><code>triggerMoleculeChanged()</code></a>.
             </li>
             <li>
-                <a href="../../api/classes/moorhen.MoorhenInstance.html#files"><code>files.newFilesLoadedCallback()</code></a>
+                <a href="../../api/classes/moorhen.MoorhenInstance.html#files-newfilesloadedcallback"><code>files.newFilesLoadedCallback()</code></a>
                 &mdash; file-loading notifications.
             </li>
             <li>
