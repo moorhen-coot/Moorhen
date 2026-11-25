@@ -17,7 +17,8 @@ import type { MoorhenMap } from "../../utils/MoorhenMap";
 import type { PreviewGpuDraw } from "../previewRenderer";
 import { formatCount } from "../rendererReport";
 import { GpuIsosurface, GpuMapGrid, MapContourKernels } from "./gpuMapContour";
-import type { MapUnitCellGrid } from "./mapContourBox";
+import { emRangeFromMrcHeader } from "./mapContourBox";
+import type { MapUnitCellGrid, MrcGridHeader } from "./mapContourBox";
 import { gpuMapContourSetting, mapStyleOf, onMapDataChanged } from "./setting";
 
 /** The radius MoorhenMapManager contours a map at. */
@@ -242,6 +243,12 @@ export class GpuMapLayer {
                 this.fetchFailed(map, entry, "the Coot worker could not export its grid (is the WASM rebuilt with get_map_unit_cell_grid?)");
             } else {
                 const grid = result.result;
+                // Where an EM map's data starts, which the grid (periodic) does not say: from the
+                // map file's header. Maps made in Coot have none, and get the whole cell.
+                const header = map.fileHeader as Partial<MrcGridHeader> | null;
+                if (grid.isEM && header?.axisMapping && header.start && header.sampling && header.dimensions) {
+                    grid.emRange = emRangeFromMrcHeader(header as MrcGridHeader, grid) ?? undefined;
+                }
                 // Too big for the GPU, or out of its memory: rejects, and Coot contours the maps.
                 return GpuMapGrid.create(this.kernels, grid).then(made => {
                     if (this.destroyed || this.maps.get(map) !== entry) {
@@ -255,6 +262,7 @@ export class GpuMapLayer {
                     entry.grid = made;
                     entry.fetches++;
                     console.debug(`GPU map contours: map ${map.molNo} unit cell ${grid.nu}×${grid.nv}×${grid.nw} ` +
+                        (grid.emRange ? `(EM data from ${grid.emRange.min.join(",")} to ${grid.emRange.max.join(",")}) ` : "") +
                         `(${(grid.data.byteLength / 1e6).toFixed(0)} MB) in ${(performance.now() - started).toFixed(0)} ms` +
                         (entry.fetches > 1 ? ` (fetch ${entry.fetches}: the map changed)` : ""));
                     this.requestDraw();

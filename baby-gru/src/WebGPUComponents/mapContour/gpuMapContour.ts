@@ -19,7 +19,7 @@ import { BufferUsage, ComputeKernel, GpuScan, MapMode, createBuffer, withErrorSc
 import { MC_TRIANGLE_TABLE } from "../metaballs/mcTable";
 import { formatCount } from "../rendererReport";
 import {
-    ContourBox, MapUnitCellGrid, WORK_BYTES_PER_BOX_POINT, contourBox, formatBytes, inverse3, largestRadiusWithin, roomFor,
+    ContourBox, MapUnitCellGrid, WORK_BYTES_PER_BOX_POINT, contourBox, emRangeOf, formatBytes, inverse3, largestRadiusWithin, roomFor,
 } from "./mapContourBox";
 import {
     COUNT_LINES_WGSL, COUNT_TRIANGLES_WGSL, COUNT_VERTICES_WGSL, EMIT_LINES_WGSL, EMIT_TRIANGLES_WGSL, EMIT_VERTICES_WGSL, MAP_WORKGROUP,
@@ -84,6 +84,9 @@ export const mapContourLimits: { bindingBytes: number | null; budgetBytes: numbe
 export function maxBoxPoints(device: GPUDevice): number {
     return Math.min(Math.floor(largestBuffer(device) / 4), Math.floor(mapContourLimits.budgetBytes / WORK_BYTES_PER_BOX_POINT));
 }
+
+/** The contour's parameters (Params in mapContourShaders.ts): 14 vectors of 16 bytes. */
+const PARAMS_BYTES = 224;
 
 /** Below this the GPU is not worth asking: Coot contours the maps instead. */
 const SMALLEST_RADIUS = 2;
@@ -215,7 +218,7 @@ export class GpuIsosurface {
     /** `onRemade`: the room was too small; the next update will make the contour again. */
     constructor(private readonly kernels: MapContourKernels, private readonly mapGrid: GpuMapGrid, private readonly onRemade: () => void) {
         this.device = kernels.device;
-        this.params = this.device.createBuffer({ label: "map contour params", size: 192, usage: UNIFORM | COPY_DST });
+        this.params = this.device.createBuffer({ label: "map contour params", size: PARAMS_BYTES, usage: UNIFORM | COPY_DST });
         this.counts = this.device.createBuffer({ label: "map contour counts", size: 16, usage: STORAGE | COPY_SRC });
         this.countsRead = this.device.createBuffer({ label: "map contour counts read", size: 16, usage: MAP_READ | COPY_DST });
         this.drawArgs = this.device.createBuffer({ label: "map contour draw args", size: 64, usage: STORAGE | INDIRECT | COPY_SRC | COPY_DST });
@@ -478,7 +481,7 @@ export class GpuIsosurface {
 
     private writeParams(box: ContourBox, request: ContourRequest, vertexRoom: number, triangleRoom: number, lineRoom: number): void {
         const { grid } = this.mapGrid;
-        const buf = new ArrayBuffer(192);
+        const buf = new ArrayBuffer(PARAMS_BYTES);
         const i = new Int32Array(buf), u = new Uint32Array(buf), f = new Float32Array(buf);
         i.set(box.min, 0);
         u.set([...box.size, grid.isEM ? 1 : 0], 4);
@@ -489,6 +492,9 @@ export class GpuIsosurface {
         f.set([...request.centre, request.radius * request.radius], 36);
         f.set([request.level, request.level < 0 ? -1 : 1, 0, 0], 40);
         u.set([vertexRoom, triangleRoom, lineRoom, 0], 44);
+        const em = emRangeOf(grid), n = [grid.nu, grid.nv, grid.nw];
+        f.set([0, 1, 2].map(a => em.min[a] / n[a]), 48);
+        f.set([0, 1, 2].map(a => em.max[a] / n[a]), 52);
         this.device.queue.writeBuffer(this.params, 0, buf);
     }
 }

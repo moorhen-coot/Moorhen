@@ -11,8 +11,16 @@ export interface MapUnitCellGrid {
     nw: number;
     /** Fractional to orthogonal coordinates, row by row: clipper's Cell::matrix_orth(). */
     orth: number[];
-    /** EM maps are not periodic: Coot keeps only what lies inside the box (the cell). */
+    /** EM maps are not periodic: only what lies inside the map's data is kept. */
     isEM: boolean;
+    /**
+     * For an EM map, the grid points its data covers, from `min` to `max` inclusive of the point
+     * past the end (as the cell is 0 to nu): from the map file's header (`emRangeFromMrcHeader`).
+     * The grid itself is periodic, so the data is there wherever the header starts it; without
+     * this the cell from 0 is taken, which cuts a map whose start is not 0 in two and swaps the
+     * halves (EMD-1001: 30 sections from -15). Absent, the whole cell.
+     */
+    emRange?: { min: [number, number, number]; max: [number, number, number] };
     /** Value at grid point (u, v, w): data[(w * nv + v) * nu + u]. */
     data: Float32Array;
 }
@@ -60,8 +68,9 @@ export function cellLengths(orth: number[]): [number, number, number] {
  * end rounded to the grid as clipper's Coord_frac::coord_grid does, inclusive. Triangles are then
  * kept only if their midpoint is within the sphere. Null if there is nothing to contour.
  *
- * For an EM map the box stops one cell past each face of the map. Triangles are kept there only
- * if their midpoint is inside the map (keepMidpoint in mapContourShaders.ts), so the cells beyond
+ * For an EM map the box stops one cell past each face of the map's data (`emRange`, else the
+ * cell). Triangles are kept there only if their midpoint is inside it (keepMidpoint in
+ * mapContourShaders.ts), so the cells beyond
  * add nothing; and with a radius larger than the map they can be most of the box - a box too big
  * for the GPU's buffers. The one cell kept on each side keeps a triangle whose midpoint rounds onto
  * a face, so the triangles are the same as for the whole box.
@@ -74,9 +83,10 @@ export function contourBox(grid: MapUnitCellGrid, centre: ArrayLike<number>, rad
     const min = [0, 1, 2].map(a => rint(n[a] * (frac[a] - radius / lengths[a]))) as [number, number, number];
     const max = [0, 1, 2].map(a => rint(n[a] * (frac[a] + radius / lengths[a]))) as [number, number, number];
     if (grid.isEM) {
+        const { min: from, max: to } = emRangeOf(grid);
         for (let a = 0; a < 3; a++) {
-            min[a] = Math.max(min[a], -1);
-            max[a] = Math.min(max[a], n[a] + 1);
+            min[a] = Math.max(min[a], from[a] - 1);
+            max[a] = Math.min(max[a], to[a] + 1);
         }
     }
     const size = [0, 1, 2].map(a => max[a] - min[a] + 1) as [number, number, number];
@@ -125,4 +135,39 @@ export function largestRadiusWithin(grid: MapUnitCellGrid, centre: ArrayLike<num
         else hi = mid;
     }
     return lo;
+}
+
+/** The grid points an EM map's data covers: its `emRange`, or the whole cell. */
+export function emRangeOf(grid: MapUnitCellGrid): { min: [number, number, number]; max: [number, number, number] } {
+    return grid.emRange ?? { min: [0, 0, 0], max: [grid.nu, grid.nv, grid.nw] };
+}
+
+/** What emRangeFromMrcHeader reads of a CCP4/MRC header (utils/mapHeaders.ts, MRCHeaderJson). */
+export interface MrcGridHeader {
+    dimensions: { nx: number; ny: number; nz: number };
+    start: { nxstart: number; nystart: number; nzstart: number };
+    sampling: { mx: number; my: number; mz: number };
+    axisMapping: { mapc: number; mapr: number; maps: number };
+}
+
+/**
+ * The grid points an EM map's data covers, in the grid's own axes (a, b, c: clipper's u, v, w),
+ * from its CCP4/MRC header: columns, rows and sections start at NCSTART, NRSTART, NSSTART and run
+ * for NC, NR, NS points, along the axes MAPC, MAPR, MAPS. Null if the header does not describe
+ * this grid (its sampling differs, or its axes are not a permutation), when the whole cell is used.
+ */
+export function emRangeFromMrcHeader(header: MrcGridHeader, grid: MapUnitCellGrid): MapUnitCellGrid["emRange"] | null {
+    const axes = [header.axisMapping.mapc, header.axisMapping.mapr, header.axisMapping.maps];
+    if ([...axes].sort().join() !== "1,2,3") return null;
+    const sampling = [header.sampling.mx, header.sampling.my, header.sampling.mz];
+    if (sampling[0] !== grid.nu || sampling[1] !== grid.nv || sampling[2] !== grid.nw) return null;
+    const starts = [header.start.nxstart, header.start.nystart, header.start.nzstart];
+    const counts = [header.dimensions.nx, header.dimensions.ny, header.dimensions.nz];
+    if (counts.some(n => !(n > 0)) || starts.some(s => !Number.isInteger(s))) return null;
+    const min: [number, number, number] = [0, 0, 0], max: [number, number, number] = [0, 0, 0];
+    axes.forEach((axis, i) => {
+        min[axis - 1] = starts[i];
+        max[axis - 1] = starts[i] + counts[i];
+    });
+    return { min, max };
 }

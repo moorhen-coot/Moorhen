@@ -12,6 +12,10 @@ const CASES: Record<string, ContourCase> = {
     // The box is cut to the map, a cell past each face (140^3 points would be 62 x 74 x 86): the
     // triangles must be the same as from the whole box, which the CPU reference contours.
     "EM: a radius larger than the map": { em: true, centre: [12, 15, 18], radius: 35, level: 0.2, room: 0.2 },
+    // Data from section -21 of 84, as a map file can start it (EMD-1001: -15 of 30): one piece
+    // across the cell's origin, not cut there with the halves swapped.
+    "EM: data starting below the cell's origin": { em: true, centre: [12, 15, 0], radius: 12, level: 0.2, room: 0.2, emStart: -21 },
+    "EM: a radius larger than the map, data starting below the origin": { em: true, centre: [12, 15, 18], radius: 35, level: 0.2, room: 0.2, emStart: -21 },
     // 167^3 points: more than 65535 workgroups for the per-point kernel, so the dispatch is folded.
     "a big box (folded dispatch)": { em: false, centre: [12, 15, 18], radius: 41.5, level: 0.2, room: 0.2 },
 };

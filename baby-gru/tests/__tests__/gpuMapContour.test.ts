@@ -3,7 +3,7 @@
  * to be Coot's (CIsoSurface::GenerateTriangles_from_Xmap) for the two contours to agree.
  */
 import { describe, expect, it } from "@jest/globals";
-import { cellLengths, contourBox, formatBytes, inverse3, largestRadiusWithin, rint, roomFor } from "../../src/WebGPUComponents/mapContour/mapContourBox";
+import { cellLengths, contourBox, emRangeFromMrcHeader, formatBytes, inverse3, largestRadiusWithin, rint, roomFor } from "../../src/WebGPUComponents/mapContour/mapContourBox";
 import type { MapUnitCellGrid } from "../../src/WebGPUComponents/mapContour/mapContourBox";
 
 /** clipper's orthogonalising matrix for a cell: a along x, b in the xy plane. */
@@ -114,5 +114,43 @@ describe("formatBytes", () => {
     it("keeps a decimal place for small sizes, so a limit and what passes it never read the same", () => {
         expect([1_451_520, 1_000_000, 5_000_000, 35_000_000, 5_274_889_160].map(formatBytes))
             .toEqual(["1.5 MB", "1 MB", "5 MB", "35 MB", "5.3 GB"]);
+    });
+});
+
+describe("an EM map's data range", () => {
+    const grid = { ...gridFor([600, 600, 30], orthFor(9280, 9280, 464, 90, 90, 90)), isEM: true };
+    // EMD-1001's header: 600 x 600 x 30, sections from -15.
+    const header = {
+        dimensions: { nx: 600, ny: 600, nz: 30 },
+        start: { nxstart: 0, nystart: 0, nzstart: -15 },
+        sampling: { mx: 600, my: 600, mz: 30 },
+        axisMapping: { mapc: 1, mapr: 2, maps: 3 },
+    };
+
+    it("comes from the header's starts and counts", () => {
+        expect(emRangeFromMrcHeader(header, grid)).toEqual({ min: [0, 0, -15], max: [600, 600, 15] });
+    });
+
+    it("follows the header's axes: columns, rows and sections along MAPC, MAPR, MAPS", () => {
+        const g = { ...gridFor([40, 50, 60], orthFor(40, 50, 60, 90, 90, 90)), isEM: true };
+        const permuted = {
+            dimensions: { nx: 60, ny: 40, nz: 50 }, start: { nxstart: -30, nystart: 1, nzstart: 2 },
+            sampling: { mx: 40, my: 50, mz: 60 }, axisMapping: { mapc: 3, mapr: 1, maps: 2 },
+        };
+        expect(emRangeFromMrcHeader(permuted, g)).toEqual({ min: [1, 2, -30], max: [41, 52, 30] });
+    });
+
+    it("is not taken from a header that does not describe the grid", () => {
+        expect(emRangeFromMrcHeader({ ...header, sampling: { mx: 600, my: 600, mz: 60 } }, grid)).toBeNull();
+        expect(emRangeFromMrcHeader({ ...header, axisMapping: { mapc: 1, mapr: 1, maps: 3 } }, grid)).toBeNull();
+    });
+
+    it("places the box on the data, not on the cell from 0", () => {
+        const withRange = { ...grid, emRange: { min: [0, 0, -15] as [number, number, number], max: [600, 600, 15] as [number, number, number] } };
+        // A radius past the whole map: sections -16 to 16 (a cell past each face of the data), not -1 to 31.
+        const box = contourBox(withRange, [4640, 4640, 0], 10000);
+        expect(box.min).toEqual([-1, -1, -16]);
+        expect(box.size).toEqual([603, 603, 33]);
+        expect(contourBox(grid, [4640, 4640, 0], 10000).min[2]).toBe(-1);
     });
 });
