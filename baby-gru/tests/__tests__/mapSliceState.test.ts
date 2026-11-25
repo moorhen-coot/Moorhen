@@ -5,13 +5,15 @@
  */
 import { describe, expect, it } from "@jest/globals";
 import { createMoorhenStore } from "../../src/store/MoorhenReduxStore";
-import { setMapRadius, setMapSlice, setMapSliceContourSpacing, setMapSliceNodalLines, setMapStyle, showMap } from "../../src/store/mapContourSettingsSlice";
+import { setMapRadius, setMapSlice, setMapSliceContourSpacing, setMapSliceNodalLines } from "../../src/store/mapContourSettingsSlice";
+import { addMap } from "../../src/store/mapsSlice";
+import { addMapRepresentation, setMapRepresentation } from "../../src/store/mapRepresentationsSlice";
 import { setMovingMapSlice, setSelectedThreeDObject } from "../../src/store/generalStatesSlice";
 import { handleTargetOf } from "../../src/WebGLgComponents/gizmoDraw";
 import { IDENTITY_ORIENTATION } from "../../src/utils/mapSlice/mapSlice";
 import type { MoorhenMap } from "../../src/utils/MoorhenMap";
 
-const map = { molNo: 3 } as unknown as MoorhenMap;
+const map = { molNo: 3, uniqueId: "map-3" } as unknown as MoorhenMap;
 
 describe("a map slice's state", () => {
     it("keeps each map's slice, replacing it when moved", () => {
@@ -62,12 +64,18 @@ describe("a map slice's state", () => {
         store.dispatch(setMapSlice({ molNo: 3, origin: [1, 2, 3], orientation: IDENTITY_ORIENTATION }));
         store.dispatch(setMapRadius({ molNo: 3, radius: 6 }));
         store.dispatch(setMovingMapSlice(3));
+        // Shown or not, and how, is the map's display record (map-display.md)
+        store.dispatch(addMap(map));
+        store.dispatch(addMapRepresentation({
+            id: "rep-3", mapUid: "map-3", visible: false, contourLevel: 1, radius: { local: 6, full: 6 }, style: "lines",
+            alpha: { lines: 1, "lit-lines": 1, solid: 1, slice: 1 }, colour: null, positiveColour: null, negativeColour: null,
+            colourByMap: null, originLock: null,
+        }));
         // Not shown, then not as a slice: no handles.
         expect(handleTargetOf(store.getState())).toBeNull();
-        store.dispatch(showMap(map));
-        store.dispatch(setMapStyle({ molNo: 3, style: "lines" }));
+        store.dispatch(setMapRepresentation({ id: "rep-3", changes: { visible: true } }));
         expect(handleTargetOf(store.getState())).toBeNull();
-        store.dispatch(setMapStyle({ molNo: 3, style: "slice" }));
+        store.dispatch(setMapRepresentation({ id: "rep-3", changes: { style: "slice" } }));
         expect(handleTargetOf(store.getState())).toMatchObject({ kind: "mapSlice", molNo: 3, centre: [1, 2, 3], extent: 6, turnable: true });
     });
 });

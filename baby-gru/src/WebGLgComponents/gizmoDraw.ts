@@ -6,7 +6,7 @@ import { ThreeDObject, centreOfObject, extentOfObject, hasOrientation } from '..
 import { MOORHEN_GIZMO_TAG_KIND } from '../utils/enums'
 import { RootState } from '@/store'
 import { Store } from '@reduxjs/toolkit'
-import { mapStyleOf } from '../WebGPUComponents/mapContour/setting'
+import { selectPrimaryMapRepresentation } from '../store/mapRepresentationsSlice'
 import { MapSlicePlacement, sliceHalfSize } from '../utils/mapSlice/mapSlice'
 
 /**
@@ -200,11 +200,12 @@ export const handleTargetOf = (state: RootState): HandleTarget | null => {
     if (molNo !== null && molNo !== undefined) {
         const settings = state.mapContourSettings
         const slice = settings.mapSlices.find(item => item.molNo === molNo)
+        const map = state.maps.find(item => item.molNo === molNo)
+        const record = map ? selectPrimaryMapRepresentation(state, map.uniqueId) : undefined
         // A slice offers handles only while it is on the screen.
-        if (!slice || !settings.visibleMaps.includes(molNo) || mapStyleOf(settings, molNo) !== 'slice') {
+        if (!slice || !record?.visible || record.style !== 'slice') {
             return null
         }
-        const map = state.maps.find(item => item.molNo === molNo)
         return {
             kind: 'mapSlice',
             molNo,

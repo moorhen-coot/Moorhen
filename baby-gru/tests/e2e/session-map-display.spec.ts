@@ -276,10 +276,8 @@ test.describe("Map display in session files", () => {
     });
 
     test("map-display.pb: each style keeps its own opacity when switching style", async ({ page }) => {
-        // Known gap: one alpha per map in the store; the opacity per style (lines / lit-lines / solid) only lives
-        // in MapSettingsAccordion's React state, so it is lost outside the map card. Planned for the map display
-        // record (.roadmaps/map-display.md); drop test.fail() then.
-        test.fail();
+        // Was a gap: one alpha per map in the store. Fixed 2026-11-25 (map-display.md Phase 4a): the map's display
+        // record keeps one opacity per style, and getMapContourParams reads it
         test.setTimeout(180_000);
         const stored = await loadSession(page, MAP_DISPLAY_SESSION);
         const mapUid = stored.find(map => map.name === "map-1 ").uniqueId;
@@ -301,10 +299,8 @@ test.describe("Map display in session files", () => {
     });
 
     test("map-display.pb: an EM map keeps a radius per draw mode when switching local / full map", async ({ page }) => {
-        // Known gap: one radius per map in the store; the radius per draw mode only lives in MapSettingsAccordion's
-        // refs (lockedRadius / unLockedRadius). Planned for the map representation record (.roadmaps/map-display.md,
-        // decision 4); drop test.fail() then.
-        test.fail();
+        // Was a gap: one radius per map in the store. Fixed 2026-11-25 (map-display.md Phase 4a): the record keeps
+        // one radius per draw mode (decision 4)
         test.setTimeout(180_000);
         const stored = await loadSession(page, MAP_DISPLAY_SESSION);
         const emMapUid = stored.find(map => map.name === "low-res-emd-32143").uniqueId;

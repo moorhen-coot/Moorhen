@@ -1,10 +1,13 @@
 /**
  * TRANSITION ONLY (.roadmaps/map-display.md, Phase 1 → 4): maps are drawn from map representation records, but the
- * UI and the public API still change map display through the old `mapContourSettings` lists (keyed by `molNo`) and
- * fields of `MoorhenMap` (`isOriginLocked`, `drawOrigin`, `otherMapForColouring`). This file translates them into
- * each map's first representation. Delete it once the components write the records (Phase 4).
+ * UI and the public API still change map display through the old `mapContourSettings` lists (keyed by `molNo`).
+ * This file gives a new map its first record from them, then turns each later change of a list entry into a change
+ * of that one field of the map's primary representation (`legacyListChanges`). The map fields (`isOriginLocked`,
+ * `drawOrigin`, `otherMapForColouring`) write the record themselves (MoorhenMap accessors).
+ * Delete it once the components write the records (Phase 4b/c).
  */
 import type { Dispatch, UnknownAction } from "@reduxjs/toolkit";
+import type { MapRepresentationChanges } from "../store/mapRepresentationsSlice";
 import { setContourLevel, setMapFastRadius, setMapRadius, setMapStyle, showMap } from "../store/mapContourSettingsSlice";
 import type { RootState } from "../store/MoorhenReduxStore";
 import type { MoorhenMap } from "../utils/MoorhenMap";
@@ -146,4 +149,60 @@ export const legacyRepresentationData = (
 export const legacyFastRadius = (map: MoorhenMap, settings: ContourSettings): number | null => {
     const radius = byMolNo(settings.mapFastRadii, map.molNo)?.radius;
     return radius && radius > 0 ? radius : null;
+};
+
+/**
+ * What changed in the old lists for one map, as a change of its primary representation: only the fields whose list
+ * entry changed (entries are compared by identity, so setting the same value again still counts). Values the lists
+ * cannot hold apart stay as they are: the opacity of the other styles, the radius of the other draw mode.
+ * @returns null if nothing changed for this map
+ */
+export const legacyListChanges = (
+    map: MoorhenMap,
+    previous: ContourSettings,
+    settings: ContourSettings,
+    current: MapRepresentationData
+): MapRepresentationChanges | null => {
+    const molNo = map.molNo;
+    const changes: MapRepresentationChanges = {};
+    const entryChanged = <T extends { molNo: number }>(list: (s: ContourSettings) => T[]): T | undefined | false => {
+        const before = byMolNo(list(previous), molNo);
+        const now = byMolNo(list(settings), molNo);
+        return before === now ? false : now;
+    };
+
+    const visible = settings.visibleMaps.includes(molNo);
+    if (visible !== previous.visibleMaps.includes(molNo)) {
+        changes.visible = visible;
+    }
+    const level = entryChanged(s => s.contourLevels);
+    if (level) {
+        changes.contourLevel = level.contourLevel;
+    }
+    const style = entryChanged(s => s.mapStyles);
+    if (style) {
+        changes.style = style.style;
+    }
+    const alpha = entryChanged(s => s.mapAlpha);
+    if (alpha) {
+        // The opacity of the style in use, after the style change above. 0 means the default (proto3 unset float)
+        changes.alpha = { [changes.style ?? current.style]: alpha.alpha || 1 };
+    }
+    const radius = entryChanged(s => s.mapRadii);
+    if (radius && radius.radius) {
+        changes.radius = { [drawModeOf(current)]: radius.radius };
+    }
+    const colour = entryChanged(s => s.mapColours);
+    if (colour !== false) {
+        changes.colour = toUnitColour(colour?.rgb);
+    }
+    const positiveColour = entryChanged(s => s.positiveMapColours);
+    if (positiveColour !== false) {
+        changes.positiveColour = toUnitColour(positiveColour?.rgb);
+    }
+    const negativeColour = entryChanged(s => s.negativeMapColours);
+    if (negativeColour !== false) {
+        changes.negativeColour = toUnitColour(negativeColour?.rgb);
+    }
+    return Object.keys(changes).length > 0 ? changes : null;
 };

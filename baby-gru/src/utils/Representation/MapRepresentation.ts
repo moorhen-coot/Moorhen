@@ -9,6 +9,10 @@
  * The map display driver (MapDisplayDriver) creates / disposes instances as records appear / disappear,
  * and calls `update()` when a record changes and `onViewMoved()` when the view origin moves.
  *
+ * With GPU contours on (WebGPU main view, `gpuMapContourSetting.enabled`) the GPU map layer contours and draws the
+ * representations instead, except those coloured by another map, which it cannot do: Coot still contours those, and
+ * the WebGPU view draws their buffers with the other display buffers.
+ *
  * The "slice" style is not a Coot contour: the map draws it (`MoorhenMap.drawMapSlice`, from the slice placement and
  * spacing still kept in `mapContourSettings`), so one representation per map can show it for now.
  */
@@ -53,6 +57,9 @@ const sameAppearance = (a: AppearanceKey | null, b: AppearanceKey): boolean =>
 
 const MESH_TYPES: Record<Exclude<MapStyle, "slice">, MapContourMeshType> = { lines: "lines_mesh", "lit-lines": "lit_lines_mesh", solid: "mesh_perm" };
 
+/** Coot contours a representation unless the GPU does; the GPU cannot colour by another map */
+const drawnByCoot = (data: MapRepresentationData): boolean => !gpuMapContourSetting.enabled || data.colourByMap !== null;
+
 type ContourBuffer = { buffer: DisplayBuffer; sign: "single" | "positive" | "negative" };
 
 export class MapRepresentation {
@@ -75,6 +82,11 @@ export class MapRepresentation {
         this.instance = instance;
     }
 
+    /** The GL buffers this representation drew (Coot contours; a slice's are the map's) */
+    get displayBuffers(): DisplayBuffer[] {
+        return this.buffers.map(({ buffer }) => buffer);
+    }
+
     /** The record, read from the store each time: the class never keeps a copy of settings */
     get data(): MapRepresentationData | undefined {
         return selectMapRepresentation(this.instance.store.getState(), this.id);
@@ -95,7 +107,7 @@ export class MapRepresentation {
             return;
         }
         this.hideSlice();
-        if (gpuMapContourSetting.enabled) {
+        if (!drawnByCoot(data)) {
             this.hideContour();
             return;
         }
@@ -111,7 +123,8 @@ export class MapRepresentation {
     /** Called by the driver when the view origin moves */
     onViewMoved(): void {
         const data = this.data;
-        if (data?.visible && !data.originLock && data.style !== "slice") {
+        // A locked map stays where it is, unless drawn small around the view for a quick level change
+        if (data?.visible && (!data.originLock || this.fastRadius !== null) && data.style !== "slice") {
             void this.requestContour();
         }
     }
@@ -167,8 +180,9 @@ export class MapRepresentation {
     }
 
     private contourKey(data: MapRepresentationData): ContourKey {
-        // The scene origin is the negated view centre
-        const centre = data.originLock?.centre ?? (this.instance.store.getState().sceneSettings.origin.map(coord => -coord) as Vec3);
+        // The scene origin is the negated view centre. A fast radius is drawn around the view, even when locked
+        const lockedCentre = this.fastRadius === null ? data.originLock?.centre : undefined;
+        const centre = lockedCentre ?? (this.instance.store.getState().sceneSettings.origin.map(coord => -coord) as Vec3);
         let colourByMap: ContourKey["colourByMap"] = null;
         if (data.colourByMap) {
             const otherMap = this.instance.getMapList().find(map => map.uniqueId === data.colourByMap.mapUid);
@@ -201,7 +215,7 @@ export class MapRepresentation {
     private requestContour(): Promise<void> {
         const data = this.data;
         // On the GPU, the WebGPU main view contours and draws the map itself (mapContour/setting.ts)
-        if (!data?.visible || data.style === "slice" || gpuMapContourSetting.enabled) {
+        if (!data?.visible || data.style === "slice" || !drawnByCoot(data)) {
             this.update();
             return Promise.resolve();
         }
@@ -231,7 +245,8 @@ export class MapRepresentation {
               )
             : await worker.get_map_contours_mesh(this.map.molNo, key.centre, key.radius, key.level, meshType, options);
         // Hidden, removed or moved to the GPU while the contour was running
-        if (this.disposed || !this.data?.visible || this.data.style === "slice" || gpuMapContourSetting.enabled) {
+        const now = this.data;
+        if (this.disposed || !now?.visible || now.style === "slice" || !drawnByCoot(now)) {
             return;
         }
         this.buildContourBuffers(mesh, appearance, key.colourByMap !== null);

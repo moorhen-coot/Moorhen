@@ -4,6 +4,8 @@ import { correctExportedGltf } from "./gltfWinding";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
 import { hideMap, setDisplayBuffers, setMapSlice, setOrigin, setZoom } from "../store";
+import { selectPrimaryMapRepresentation, setMapRepresentation } from "../store/mapRepresentationsSlice";
+import { type MapRepresentationData, type Vec3, currentAlpha, currentRadius } from "./Representation/mapRepresentationData";
 import type { MapStyle } from "../store/mapContourSettingsSlice";
 import type { MapUnitCellGrid } from "../WebGPUComponents/mapContour/mapContourBox";
 import { makeMapGridSampler, type MapGridSampler } from "./mapSlice/mapGridSampler";
@@ -79,8 +81,10 @@ export class MoorhenMap {
     molNo: number;
     store: Store;
     commandCentre: CommandCentre | null;
-    isOriginLocked: boolean;
-    drawOrigin: [number, number, number];
+    /** Before the map has a display record (map-display.md): the origin lock, draw origin and colouring map */
+    private ownOriginLocked = false;
+    private ownDrawOrigin: [number, number, number] | null = null;
+    private ownOtherMapForColouring: { molNo: number; min: number; max: number } | null = null;
     mapCentre: [number, number, number];
     suggestedContourLevel: number;
     suggestedRadius: number;
@@ -107,7 +111,6 @@ export class MoorhenMap {
     mapMean: number;
     suggestedMapWeight: number;
     mapWeight: number;
-    otherMapForColouring: { molNo: number; min: number; max: number };
     diffMapColourBuffers: { positiveDiffColour: number[]; negativeDiffColour: number[] };
     defaultMapColour: { r: number; g: number; b: number };
     defaultPositiveMapColour: { r: number; g: number; b: number };
@@ -154,10 +157,7 @@ export class MoorhenMap {
         this.suggestedContourLevel = null;
         this.suggestedRadius = null;
         this.mapCentre = null;
-        this.isOriginLocked = false;
-        this.drawOrigin = null;
         this.cellCentre = null;
-        this.otherMapForColouring = null;
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] };
         this.defaultMapColour = _DEFAULT_MAP_COLOUR;
         this.defaultPositiveMapColour = _DEFAULT_POSITIVE_MAP_COLOUR;
@@ -658,8 +658,86 @@ export class MoorhenMap {
     }
 
     /**
-     * Get map contour parameters from the redux store
-     * @returns {object} A description of map contour parameters as described in the redux store
+     * The map's primary display record (map-display.md): what it is drawn from. Undefined until the map display
+     * driver has given the map its records (once the map is in the store).
+     */
+    get primaryRepresentation(): MapRepresentationData | undefined {
+        const state = this.store?.getState?.();
+        return state?.mapRepresentations ? selectPrimaryMapRepresentation(state, this.uniqueId) : undefined;
+    }
+
+    private changePrimaryRepresentation(record: MapRepresentationData, changes: Parameters<typeof setMapRepresentation>[0]["changes"]): void {
+        this.store.dispatch(setMapRepresentation({ id: record.id, changes }));
+    }
+
+    /** Whether the map is drawn around a fixed centre ("Draw full map", EM maps) rather than following the view */
+    get isOriginLocked(): boolean {
+        const record = this.primaryRepresentation;
+        return record ? record.originLock !== null : this.ownOriginLocked;
+    }
+
+    set isOriginLocked(locked: boolean) {
+        this.ownOriginLocked = locked;
+        const record = this.primaryRepresentation;
+        if (!record || locked === (record.originLock !== null)) {
+            return;
+        }
+        if (locked && !this.ownDrawOrigin) {
+            this.ownDrawOrigin = [...this.store.getState().sceneSettings.origin] as [number, number, number];
+        }
+        this.changePrimaryRepresentation(record, { originLock: locked ? { centre: this.ownDrawOrigin.map(coord => -coord) as Vec3 } : null });
+    }
+
+    /** Where a locked map is drawn around, as a scene origin (negated world coordinates); kept while unlocked */
+    get drawOrigin(): [number, number, number] | null {
+        const centre = this.primaryRepresentation?.originLock?.centre;
+        return centre ? (centre.map(coord => -coord) as [number, number, number]) : this.ownDrawOrigin;
+    }
+
+    set drawOrigin(origin: [number, number, number] | null) {
+        this.ownDrawOrigin = origin ? ([...origin] as [number, number, number]) : null;
+        const record = this.primaryRepresentation;
+        if (origin && record?.originLock) {
+            const centre = origin.map(coord => -coord) as Vec3;
+            if (centre.some((coord, i) => coord !== record.originLock.centre[i])) {
+                this.changePrimaryRepresentation(record, { originLock: { centre } });
+            }
+        }
+    }
+
+    /** The map whose values colour this one's contour, or null */
+    get otherMapForColouring(): { molNo: number; min: number; max: number } | null {
+        const record = this.primaryRepresentation;
+        if (!record) {
+            return this.ownOtherMapForColouring;
+        }
+        if (!record.colourByMap) {
+            return null;
+        }
+        const otherMap = (this.store.getState().maps as MoorhenMap[]).find(map => map.uniqueId === record.colourByMap.mapUid);
+        return otherMap ? { molNo: otherMap.molNo, min: record.colourByMap.min, max: record.colourByMap.max } : null;
+    }
+
+    set otherMapForColouring(other: { molNo: number; min: number; max: number } | null) {
+        this.ownOtherMapForColouring = other ? { ...other } : null;
+        const record = this.primaryRepresentation;
+        if (!record) {
+            return;
+        }
+        let colourByMap: MapRepresentationData["colourByMap"] = null;
+        if (other) {
+            const otherMap = (this.store.getState().maps as MoorhenMap[]).find(map => map.molNo === other.molNo);
+            colourByMap = otherMap ? { mapUid: otherMap.uniqueId, min: other.min, max: other.max } : null;
+        }
+        if (JSON.stringify(colourByMap) !== JSON.stringify(record.colourByMap)) {
+            this.changePrimaryRepresentation(record, { colourByMap });
+        }
+    }
+
+    /**
+     * Get map contour parameters: from the map's primary display record (colours 0-1, the opacity of the style in
+     * use, the radius of the draw mode in use)
+     * @returns {object} A description of map contour parameters
      */
     getMapContourParams(): {
         mapRadius: number;
@@ -670,6 +748,19 @@ export class MoorhenMap {
         positiveMapColour: { r: number; g: number; b: number };
         negativeMapColour: { r: number; g: number; b: number };
     } {
+        const record = this.primaryRepresentation;
+        if (record) {
+            return {
+                mapRadius: currentRadius(record),
+                contourLevel: record.contourLevel,
+                mapAlpha: currentAlpha(record),
+                mapStyle: record.style,
+                mapColour: record.colour ?? this.defaultMapColour,
+                positiveMapColour: record.positiveColour ?? this.defaultPositiveMapColour,
+                negativeMapColour: record.negativeColour ?? this.defaultNegativeMapColour,
+            };
+        }
+        // Not in the store yet
         const state = this.store.getState();
         const radius = state.mapContourSettings.mapRadii.find(item => item.molNo === this.molNo)?.radius;
         const level = state.mapContourSettings.contourLevels.find(item => item.molNo === this.molNo)?.contourLevel;
@@ -806,8 +897,9 @@ export class MoorhenMap {
         const sampler = await this.getSliceSampler();
         if (call !== this.sliceDrawCount || !sampler) return;
         // Asked to stop being a slice, or hidden, while the grid was on its way.
-        const now = this.store.getState().mapContourSettings;
-        if (!now.visibleMaps.includes(this.molNo) || this.getMapContourParams().mapStyle !== "slice") return;
+        const record = this.primaryRepresentation;
+        const visible = record ? record.visible : this.store.getState().mapContourSettings.visibleMaps.includes(this.molNo);
+        if (!visible || this.getMapContourParams().mapStyle !== "slice") return;
 
         // Up to the largest value in the slice, or the map: known only once the grid is here.
         const levels = spacing === "linear"
@@ -1105,7 +1197,6 @@ export class MoorhenMap {
         } else {
             this.otherMapForColouring = { molNo, min, max };
         }
-        this.moorhenInstance?.mapDisplay?.syncMapFields();
     }
 
     /**
@@ -1121,7 +1212,6 @@ export class MoorhenMap {
             );
             return;
         }
-        this.moorhenInstance?.mapDisplay?.syncMapFields();
     }
 
     /**
@@ -1136,7 +1226,6 @@ export class MoorhenMap {
             return;
         }
         this.otherMapForColouring = null;
-        this.moorhenInstance?.mapDisplay?.syncMapFields();
     }
 
     /**
@@ -1144,7 +1233,7 @@ export class MoorhenMap {
      * automatically (see MapDisplayDriver): kept for callers that still call it after dispatching.
      */
     async fetchMapAlphaAndRedraw(): Promise<void> {
-        this.moorhenInstance?.mapDisplay?.syncMapFields();
+        return;
     }
 
     /**
@@ -1536,8 +1625,7 @@ export class MoorhenMap {
     async centreOnMap(): Promise<void> {
         if (this.isOriginLocked) {
             this.store.dispatch(setOrigin(this.drawOrigin ?? this.mapCentre ?? this.cellCentre));
-            const currentRadius = this.store.getState().mapContourSettings.mapRadii.find(map => map.molNo === this.molNo)?.radius ?? this.suggestedRadius ?? 20 /22
-            this.store.dispatch(setZoom(currentRadius /22))
+            this.store.dispatch(setZoom(this.getMapContourParams().mapRadius / 22));
             return;
         }
         if (this.mapCentre === null) {
@@ -1694,14 +1782,9 @@ export class MoorhenMap {
     }
 
 
+    /** Lock (draw the whole map around a fixed centre: the last one, else the view) or unlock the map's origin */
     toggleOriginLock(val: boolean = !this.isOriginLocked): void {
         this.isOriginLocked = val;
-        // Coot sets drawOrigin on its first locked contour, but GPU contours never contour through
-        // Coot, so fix it here. Same convention: the view origin as stored in the scene.
-        if (val && this.drawOrigin === null) {
-            this.drawOrigin = [...this.store.getState().sceneSettings.origin] as [number, number, number];
-        }
-        this.moorhenInstance?.mapDisplay?.syncMapFields();
     }
 
 }

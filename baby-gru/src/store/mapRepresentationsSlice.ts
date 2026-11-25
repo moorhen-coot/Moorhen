@@ -11,7 +11,8 @@ import {
  * Plain data only (serialisable): the GL buffers and drawing live in `MapRepresentation` instances outside the
  * store. See .roadmaps/map-display.md.
  *
- * Not used yet: maps are still displayed from `mapContourSettings` (Phase 1 of the roadmap).
+ * The records are what is drawn. Until the UI writes them (Phase 4b), the old `mapContourSettings` lists are
+ * translated into the map's primary representation (InstanceManager/legacyMapDisplay.ts).
  */
 export type MapRepresentationsState = {
     representations: Record<string, MapRepresentationData>;
@@ -80,6 +81,19 @@ type StateWithMapRepresentations = { mapRepresentations: MapRepresentationsState
 
 export const selectMapRepresentation = (state: StateWithMapRepresentations, id: string): MapRepresentationData | undefined =>
     state.mapRepresentations.representations[id];
+
+/**
+ * A map's primary representation: its first record. What the old `molNo` API, the map fields (`isOriginLocked`...)
+ * and `MoorhenMap.getMapContourParams` act on.
+ */
+export const selectPrimaryMapRepresentation = (state: StateWithMapRepresentations, mapUid: string): MapRepresentationData | undefined => {
+    for (const representation of Object.values(state.mapRepresentations.representations)) {
+        if (representation.mapUid === mapUid) {
+            return representation;
+        }
+    }
+    return undefined;
+};
 
 /** A map's representations, in the order they were added */
 export const selectMapRepresentationsOfMap = createSelector(

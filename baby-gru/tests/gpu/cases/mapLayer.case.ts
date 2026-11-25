@@ -47,9 +47,8 @@ export default defineCase(async (device: GPUDevice): Promise<LayerStep[]> => {
     let reply: { status: string; result?: MapUnitCellGrid } = { status: "Completed", result: blobs(48, 1) };
     let fetches = 0;
     const map = {
-        molNo: 1, dataRevision: 0, isDifference: false, isOriginLocked: false, drawOrigin: null,
-        suggestedRadius: 10, suggestedContourLevel: 0.5,
-        getMapContourParams: () => ({ mapAlpha: 1, mapColour: { r: 0.3, g: 0.5, b: 1 }, positiveMapColour: null, negativeMapColour: null }),
+        molNo: 1, uniqueId: "map-1", dataRevision: 0, isDifference: false,
+        defaultMapColour: { r: 0.3, g: 0.5, b: 1 },
         commandCentre: {
             cootCommand: async () => {
                 fetches++;
@@ -62,9 +61,16 @@ export default defineCase(async (device: GPUDevice): Promise<LayerStep[]> => {
     const changeMap = () => { map.dataRevision++; notifyMapDataChanged(); };
     const state = {
         maps: [map],
-        mapContourSettings: {
-            visibleMaps: [1], mapRadii: [], contourLevels: [], mapStyles: [],
-            defaultMapLitLines: false, defaultMapSurface: false, mapLineWidth: 1,
+        mapContourSettings: { mapLineWidth: 1 },
+        // What the layer draws from (map-display.md): the map's display record
+        mapRepresentations: {
+            representations: {
+                "rep-1": {
+                    id: "rep-1", mapUid: "map-1", visible: true, contourLevel: 0.5, radius: { local: 10, full: 10 }, style: "lines",
+                    alpha: { lines: 1, "lit-lines": 1, solid: 1, slice: 1 }, colour: null, positiveColour: null, negativeColour: null,
+                    colourByMap: null, originLock: null,
+                },
+            },
         },
         sceneSettings: { origin: [-12, -12, -12] },
     } as never;
