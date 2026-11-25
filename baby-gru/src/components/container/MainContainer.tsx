@@ -89,7 +89,9 @@ interface ContainerOptionalProps {
     allowScripting?: boolean;
     backupStorageInstance?: moorhen.LocalStorageInstance;
     aceDRGInstance?: moorhen.AceDRGInstance | null;
+    /** @deprecated No effect: the Fit ligand modal always offers to save a pose as a new molecule. */
     allowAddNewFittedLigand?: boolean;
+    /** @deprecated No effect: the Fit ligand modal no longer merges a pose into the model. */
     allowMergeFittedLigand?: boolean;
     webComponentMode?: boolean;
     size?: [number, number];

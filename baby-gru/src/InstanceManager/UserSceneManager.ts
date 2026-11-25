@@ -22,6 +22,7 @@ import {
     setUserSceneState,
     setZoom,
 } from "../store";
+import { setMoleculesVisible } from "../store/moleculesSlice";
 import type { RootState } from "../store";
 import {
     type SceneSettingsSnapshot,
@@ -294,14 +295,17 @@ export class MoorhenUserSceneManager {
     }
 
     /**
-     * Replace all the scenes and snapshots with the ones from a session file. The session loader has
-     * already put the selected scene's molecules and representations on screen, so only its scene
-     * settings are applied here; malformed entries are dropped.
+     * Replace all the scenes and snapshots with the ones from a session file, and show the selected
+     * one as it was recorded. The session loader has already put the molecules and their shown
+     * representations on screen; showing the scene keeps those (identical ones are reused), adds the
+     * hidden ones (the session's own list has shown ones only) and applies its settings. A selected
+     * snapshot is not shown again, only its settings applied: changes made while it was shown are
+     * in the session, not in the snapshot. Malformed entries are dropped.
      *
      * **Internal use only.** Called by the session loader.
      * @private
      */
-    public importState(state: UserSceneState): void {
+    public async importState(state: UserSceneState): Promise<void> {
         // Built-in scenes are always available, in their usual place if the file lost them, and
         // start from their saved settings if the file has none
         const fromFile = readSceneList(state.scenes, id => !isSnapshot(id));
@@ -319,7 +323,12 @@ export class MoorhenUserSceneManager {
         // Built-in scenes the file had no content for start from their saved settings
         this.notShownYet = new Set(BUILT_IN_SCENE_IDS.filter(sceneId => sceneId !== selectedScene && !withContent.has(sceneId)));
         const content = this.contentOf(selectedScene);
-        if (content) this.applySceneSettings(content);
+        if (!content) return;
+        // A scene recorded with its representations is shown whole; an older one only has settings.
+        // Not a snapshot: saving does not record it again (it is immutable), so what was on screen
+        // when the session was saved is what the loader restored, not what the snapshot holds
+        if (content.sections.representations && !isSnapshot(selectedScene)) await this.showScene(selectedScene, content);
+        else this.applySceneSettings(content);
     }
 
     /**
@@ -730,8 +739,33 @@ export class MoorhenUserSceneManager {
                 await drawDefaultRepresentation(this.instance, molecule.uniqueId, style);
             }
         }
+        this.syncMoleculeVisibility();
         this.reportMissingMolecules(sceneId, content);
         this.instance.dispatch(sceneShown());
+    }
+
+    /**
+     * Mark each molecule shown or hidden (molecules.visibleMolecules, which the eye buttons show) by
+     * whether the scene left any of its representations shown: the scene sets the representations,
+     * not that list.
+     */
+    private syncMoleculeVisibility() {
+        const visible = new Set(this.instance.store.getState().molecules.visibleMolecules);
+        const toShow: number[] = [];
+        const toHide: number[] = [];
+        for (const molecule of this.instance.getMoleculeList()) {
+            // Its environment and NEF restraints count too (what its eye button hides with it), and
+            // its adaptive bonds, which are no representation of the scene's (as molecule.isVisible())
+            const shown =
+                molecule.representations.some(representation => representation.visible) ||
+                molecule.adaptativeBondsEnabled ||
+                !!molecule.environmentRepresentation?.visible ||
+                !!molecule.NEFRestraintRepresentation?.visible;
+            if (shown !== visible.has(molecule.molNo)) (shown ? toShow : toHide).push(molecule.molNo);
+        }
+        // At most two dispatches, however many molecules (a thousand ligands): each runs every selector
+        if (toShow.length > 0) this.instance.dispatch(setMoleculesVisible({ molNos: toShow, visible: true }));
+        if (toHide.length > 0) this.instance.dispatch(setMoleculesVisible({ molNos: toHide, visible: false }));
     }
 
     /**

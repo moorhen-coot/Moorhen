@@ -60,6 +60,25 @@ message SelectedMtzColumns {
   optional bool calcStructFact = 8;
 }
 
+/** One residue's worm radius (A): isotropic, or along x, y and z. See utils/Representation/wormRadii.ts */
+message WormResidueRadius {
+    string chainId = 1;
+    int32 resNo = 2;
+    string insCode = 3;
+    float radius = 4;
+    repeated float radiusAniso = 5;
+}
+
+/** Where a "Worm" representation's radii come from. See utils/Representation/wormRadii.ts */
+message WormOptions {
+    string radiusSource = 1;
+    float bFactorScale = 2;
+    float uniformRadius = 3;
+    repeated WormResidueRadius residueRadii = 4;
+    int32 axialSampling = 5;
+    int32 angularSampling = 6;
+}
+
 message Representation {
     string cid = 1;
     string style = 2;
@@ -99,6 +118,11 @@ message Representation {
      * ViewDataSession.eyeDistance.
      */
     optional float nonCustomOpacity = 15;
+    // The molecule neighboursCid is in (uniqueId), if not this one: a pocket around a docked ligand.
+    // Empty for every representation before it existed, which means this molecule.
+    string neighboursMoleculeUid = 16;
+    /** A "Worm"'s; absent for other styles. */
+    WormOptions wormOptions = 17;
 }
 
 message MoleculeSessionData {
@@ -116,6 +140,8 @@ message MoleculeSessionData {
   float symmetryRadius = 12;
   residueEnvironmentOptions defaultResEnvOptions = 13;
   string uniqueId = 14;
+  // MoorhenMolecule.metadata: facts as strings by name (e.g. a docking score)
+  map<string, string> metadata = 15;
 }
 
 message MapDataSession {
@@ -440,6 +466,15 @@ message Blur {
   float radius = 3;
 }
 
+// A ligand dictionary read into Coot (one data_comp_ block), see store/dictionariesSlice.ts
+message LigandDictionary {
+  string compId = 1;
+  string content = 2;
+  // The uniqueId of the molecule it was read for; empty for every molecule
+  string moleculeUid = 3;
+  string source = 4;
+}
+
 message Session {
   string version = 1;
   bool includesAdditionalMapData = 2;
@@ -453,5 +488,7 @@ message Session {
   repeated Moorhen3DObject threeDObjectData = 10;
   // Scenes and snapshots, as JSON (see UserSceneState): kept out of the schema so they can evolve freely
   optional string sceneData = 11;
-  repeated MoorhenAnnotation annotationData = 12;
+  // Every dictionary read into Coot, including those whose molecule has since been deleted
+  repeated LigandDictionary dictionaries = 12;
+  repeated MoorhenAnnotation annotationData = 13;
 }

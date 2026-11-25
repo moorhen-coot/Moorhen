@@ -323,6 +323,18 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
          */
         releaseContextHandle: ReturnType<typeof setTimeout> | null;
         /**
+         * The outstanding requestAnimationFrame of requestDrawScene, or null when no draw is queued.
+         */
+        drawRequestHandle: number | null = null;
+        /**
+         * The timeout of a throttled requestDrawScene waiting for its turn, or null.
+         */
+        drawThrottleHandle: ReturnType<typeof setTimeout> | null = null;
+        /**
+         * When requestDrawScene last drew (performance.now()), for the throttle.
+         */
+        lastRequestedDraw: number = 0;
+        /**
          * The time, in seconds, the camera is advanced to on the next draw. Null means wall clock.
          *
          * A movie export sets it to i/fps before asking for each frame, so every frame is kept and
@@ -1022,6 +1034,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         // The camera pump holds a requestAnimationFrame that calls drawScene. Left running, it
         // would draw into a torn-down GL context on the next frame.
         stopPumpingCamera(this)
+        if (this.drawRequestHandle !== null) cancelAnimationFrame(this.drawRequestHandle)
+        this.drawRequestHandle = null
+        if (this.drawThrottleHandle !== null) clearTimeout(this.drawThrottleHandle)
+        this.drawThrottleHandle = null
         this.unsubscribeCamera?.()
         this.unsubscribeCamera = null
         // Removes the touch recognisers and cancels a pending long-press timer, which would
@@ -1831,6 +1847,41 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     drawScene() : void {
         drawScene(this)
     }
+
+    /**
+     * Draw the scene on the next animation frame, once however many times it is asked for before then.
+     *
+     * For redraws triggered by store changes (new buffers, labels, visibility): loading many
+     * molecules changes the store once per molecule, and drawing every molecule on each change
+     * made loading N molecules cost N full draws. Use drawScene when the frame must be drawn now
+     * (a screenshot, a movie frame).
+     */
+    requestDrawScene() : void {
+        if (this.drawRequestHandle !== null || this.drawThrottleHandle !== null) return
+        const draw = () => {
+            this.drawRequestHandle = requestAnimationFrame(() => {
+                this.drawRequestHandle = null
+                this.lastRequestedDraw = performance.now()
+                this.drawScene()
+            })
+        }
+        // While a task asks for it (glRef.drawsThrottled), at most one draw per THROTTLED_DRAW_MS:
+        // a batch of ligands asks after every one, and each draw costs more as the scene grows.
+        // Moving the camera draws directly, so the view still responds.
+        const wait = this.store?.getState().glRef.drawsThrottled > 0
+            ? this.lastRequestedDraw + MGWebGL.THROTTLED_DRAW_MS - performance.now()
+            : 0
+        if (wait > 0) {
+            this.drawThrottleHandle = setTimeout(() => {
+                this.drawThrottleHandle = null
+                draw()
+            }, wait)
+        } else {
+            draw()
+        }
+    }
+
+    static readonly THROTTLED_DRAW_MS = 100
 
     bindFramebufferDrawBuffers() {
         bindFramebufferDrawBuffers(this)

@@ -1,12 +1,13 @@
 import { HexAlphaColorPicker, HexColorInput } from "react-colorful";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch } from "react-redux";
 import { MoorhenIcon } from "@/components/icons";
 import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
 import { hexToRGBA, rgbaToHex } from "@/utils/utils";
+import { setShortCutsBlocked } from "../../../store/globalUISlice";
 import { moorhen } from "../../../types/moorhen";
 import type { ColourRule } from "../../../utils/MoorhenColourRule";
 import { MoorhenButton, MoorhenColourPicker, MoorhenPopoverButton, MoorhenSelect } from "../../inputs";
-import { MoorhenStack } from "../../interface-base";
 
 export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: () => void; style?: { [key: string]: string } }) => {
     const newNcsHexValueRef = useRef<string>("");
@@ -14,7 +15,6 @@ export const NcsColourSwatch = (props: { rule: ColourRule; applyColourChange: ()
 
     const [hex, setHex] = useState<string>("#ffffff");
     const [ncsCopyValue, setNcsCopyValue] = useState<string>("");
-
 
     const { rule, applyColourChange } = props;
 
@@ -117,6 +117,31 @@ export const MoorhenColourRuleCard = (props: {
         const [r, g, b, a] = hexToRGBA(rule.color);
         return [r, g, b, a / 255];
     });
+    // The selection as it is being typed; applied on Enter or when the box loses focus.
+    const [cidText, setCidText] = useState<string>(rule.cid);
+    const [editCid, setEditCid] = useState<boolean>(false);
+
+    const dispatch = useDispatch();
+    // Set by Escape, so the blur that follows drops the text instead of applying it.
+    const cancelEdit = useRef<boolean>(false);
+    // The box, focused as soon as the pencil opens it.
+    const cidInput = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        if (editCid) cidInput.current?.focus();
+    }, [editCid]);
+
+    // Leave the box: apply what was typed (an empty box puts the CID back), or with Escape,
+    // drop it. Keyboard shortcuts are blocked only while the box has focus, as MoorhenTextInput does.
+    const finishEditing = (apply: boolean) => {
+        dispatch(setShortCutsBlocked(false));
+        setEditCid(false);
+        const cid = cidText.trim();
+        if (!apply || !cid || cid === rule.cid) {
+            setCidText(rule.cid);
+            return;
+        }
+        setRuleList({ action: "UpdateCid", item: rule, cid });
+    };
 
     const redrawIfDirty = () => {
         if (isDirty.current) {
@@ -140,14 +165,59 @@ export const MoorhenColourRuleCard = (props: {
 
     return (
         <>
-            <MoorhenStack align="center" inputGrid>
-                <label>
-                    <b>{`#${index + 1}. `}</b>
-                    <span>{`. ${rule.label}`}</span>
-                </label>
-                <div style={{ display: "flex", justifyContent: "right", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%" }}>
+                {/* The rule: its number and selection, given what width the controls leave. */}
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: "1 1 auto", minWidth: 0 }}>
+                    <b style={{ flex: "none" }}>{`#${index + 1}`}</b>
+                    {rule.isMultiColourRule ? (
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rule.label}</span>
+                    ) : editCid ? (
+                        <input
+                            type="text"
+                            className="moorhen__input moorhen__input-text-box"
+                            style={{ flex: "1 1 auto", minWidth: 0, width: "100%" }}
+                            value={cidText}
+                            placeholder="CID, e.g. //A/10-20"
+                            ref={cidInput}
+                            onFocus={() => dispatch(setShortCutsBlocked(true))}
+                            onChange={event => setCidText(event.target.value)}
+                            onBlur={() => {
+                                finishEditing(!cancelEdit.current);
+                                cancelEdit.current = false;
+                            }}
+                            onKeyDown={event => {
+                                if (event.key === "Enter") event.currentTarget.blur();
+                                if (event.key === "Escape") {
+                                    cancelEdit.current = true;
+                                    event.currentTarget.blur();
+                                }
+                            }}
+                        />
+                    ) : (
+                        <span title={rule.cid} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {rule.cid}
+                        </span>
+                    )}
+                </div>
+                {/* The controls, at their own width. */}
+                <div style={{ display: "flex", alignItems: "center", flex: "none" }}>
+                    {!rule.isMultiColourRule && (
+                        <MoorhenButton
+                            icon="MatSymEdit"
+                            size="medium"
+                            type="icon-only"
+                            onClick={() => setEditCid(true)}
+                            tooltip="Edit the CID"
+                            style={{ marginRight: "0.2rem" }}
+                        />
+                    )}
                     {!rule.isMultiColourRule ? (
-                        <MoorhenColourPicker colour={colour} useAlpha setColour={handleColourChangeDefault} style={{ marginRight: "0.2rem" }} />
+                        <MoorhenColourPicker
+                            colour={colour}
+                            useAlpha
+                            setColour={handleColourChangeDefault}
+                            style={{ marginRight: "0.2rem" }}
+                        />
                     ) : rule.propertyType === "secondary-structure" ? (
                         <MoorhenIcon moorhenSVG="SecondaryStructure" size="medium" />
                     ) : rule.propertyType === "jones-rainbow" ? (
@@ -275,8 +345,7 @@ export const MoorhenColourRuleCard = (props: {
                         }}
                         tooltip="Move Up"
                         icon="MatSymArrowUpward"
-                    >
-                    </MoorhenButton>
+                    ></MoorhenButton>
                     <MoorhenButton
                         size="sm"
                         style={{ margin: "0.1rem" }}
@@ -285,8 +354,7 @@ export const MoorhenColourRuleCard = (props: {
                         }}
                         tooltip="Move Down"
                         icon="MatSymArrowDownward"
-                    >
-                    </MoorhenButton>
+                    ></MoorhenButton>
                     <MoorhenButton
                         size="sm"
                         style={{ margin: "0.1rem" }}
@@ -295,10 +363,9 @@ export const MoorhenColourRuleCard = (props: {
                         }}
                         tooltip="Delete rule"
                         icon="MatSymDelete"
-                    >
-                    </MoorhenButton>
+                    ></MoorhenButton>
                 </div>
-            </MoorhenStack>
+            </div>
         </>
     );
 };
