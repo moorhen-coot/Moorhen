@@ -16,6 +16,7 @@ import menusReducer from "./menusSlice";
 import modalsReducer from "./modalsSlice";
 import moleculeMapUpdateReducer from "./moleculeMapUpdateSlice";
 import moleculesReducer from "./moleculesSlice";
+import dictionariesReducer from "./dictionariesSlice";
 import mouseSettingsReducer from "./mouseSettings";
 import mrParseSliceReducer from "./mrParseSlice";
 import overlaysSliceReducer from "./overlaysSlice";
@@ -32,6 +33,7 @@ import movieReducer from "./movieSlice";
 
 export const reducers = {
     molecules: moleculesReducer,
+    dictionaries: dictionariesReducer,
     maps: mapsReducer,
     mouseSettings: mouseSettingsReducer,
     backupSettings: backupSettingsReducer,

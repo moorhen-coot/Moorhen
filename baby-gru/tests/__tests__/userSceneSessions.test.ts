@@ -11,6 +11,7 @@ import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRe
 import { cidModel, withCidModel } from "@/utils/Representation/RepresentationBuilder";
 import { readSceneList } from "@/store/userSceneFormat";
 import { MoorhenTimeCapsule } from "@/utils/MoorhenTimeCapsule";
+import { setMoleculeVisible } from "@/utils/moleculeVisibility";
 import type { Keyframe } from "@/utils/cameraPath";
 import * as quat4 from "gl-matrix/quat";
 import { createCloudInstance, flush, jobUrl, loadCootModules, readTestData, type CloudInstance } from "./cloudHost/cloudHostHarness";
@@ -51,8 +52,8 @@ const keyframe: Keyframe = {
 describe("loading a session", () => {
     test("restores its scenes and snapshots, and changes no saved preference", async () => {
         const { userScene } = cloud.instance;
-        // Unsaved Overview settings, a custom scene, a snapshot, and Model Building shown
-        cloud.store.dispatch(setDoSSAO(!builtInSceneDefaults("Overview").doSSAO));
+        // Unsaved General settings, a custom scene, a snapshot, and Model Building shown
+        cloud.store.dispatch(setDoSSAO(!builtInSceneDefaults("General").doSSAO));
         const customId = await userScene.create("Figure");
         userScene.takeSnapshot("Close-up");
         await userScene.select("Model Building");
@@ -65,19 +66,39 @@ describe("loading a session", () => {
         userScene.resetForLegacySession();
         expect(await loadSession(session)).toBe(0);
 
-        expect(sceneNames()).toEqual(["Overview", "Model Building", "Figure"]);
+        expect(sceneNames()).toEqual(["General", "Model Building", "Figure"]);
         expect(state().userScenes.snapshots.map(snapshot => snapshot.name)).toEqual(["Close-up"]);
         expect(userScene.selected).toBe("Model Building");
         expect(await userScene.select(customId)).toBe(true);
-        // The session's Overview keeps its unsaved settings, the preferences their saved ones
-        await userScene.select("Overview");
-        expect(state().sceneSettings.doSSAO).toBe(!builtInSceneDefaults("Overview").doSSAO);
+        // The session's General keeps its unsaved settings, the preferences their saved ones
+        await userScene.select("General");
+        expect(state().sceneSettings.doSSAO).toBe(!builtInSceneDefaults("General").doSSAO);
         await flush(100);
         expect(state().userScenes.savedSceneSettings).toEqual(savedBefore);
         expect(await storedKeys()).toEqual(storedBefore);
     });
 
-    test("without scenes (older Moorhen) makes it the Overview scene, keeping settings it does not carry", async () => {
+    test("saved while a snapshot was shown comes back as it was saved, not as the snapshot", async () => {
+        const { userScene, representation } = cloud.instance;
+        const [molecule] = cloud.instance.getMoleculeList();
+        const snapshotId = userScene.takeSnapshot("Before");
+        await userScene.select(snapshotId);
+        const snapshotStyles = representationStyles();
+        // Changed while the snapshot is shown: the snapshot does not record it (immutable), the session does
+        await representation.create(molecule.uniqueId, { representationStyle: "MolecularSurface" });
+        const stylesAtSave = representationStyles();
+        expect(stylesAtSave).not.toEqual(snapshotStyles);
+        const session = await saveSession();
+
+        expect(await loadSession(session)).toBe(0);
+        expect(userScene.selected).toBe(snapshotId);
+        expect(representationStyles()).toEqual(stylesAtSave);
+        // The snapshot itself is as it was taken
+        await userScene.select(snapshotId);
+        expect(representationStyles()).toEqual(snapshotStyles);
+    });
+
+    test("without scenes (older Moorhen) makes it the General scene, keeping settings it does not carry", async () => {
         const { userScene } = cloud.instance;
         const session = JSON.parse(await saveSession());
         delete session.sceneData;
@@ -88,11 +109,12 @@ describe("loading a session", () => {
         const crosshairs = state().sceneSettings.drawCrosshairs;
 
         expect(await loadSession(JSON.stringify(session))).toBe(0);
-        expect(sceneNames()).toEqual(["Overview", "Model Building"]);
+        expect(sceneNames()).toEqual(["General", "Model Building"]);
         expect(state().userScenes.snapshots).toEqual([]);
-        expect(userScene.selected).toBe("Overview");
+        expect(userScene.selected).toBe("General");
         expect(state().sceneSettings.drawCrosshairs).toBe(crosshairs);
-        expect(cloud.instance.representation.defaultStyle).toBe("ribbons-and-ligands");
+        // Older sessions do not carry the default style: it is kept, like the other settings they lack
+        expect(cloud.instance.representation.defaultStyle).toBe("CBs");
     });
 
     test("from a more recent Moorhen is refused, leaving everything as it was", async () => {
@@ -107,7 +129,7 @@ describe("loading a session", () => {
         for (const newer of [newerScenes, newerSession]) {
             expect(await loadSession(JSON.stringify(newer))).toBe(MoorhenTimeCapsule.NEWER_VERSION_STATUS);
             expect(state().molecules.moleculeList).toBe(moleculesBefore);
-            expect(sceneNames()).toEqual(["Overview", "Model Building", "Figure"]);
+            expect(sceneNames()).toEqual(["General", "Model Building", "Figure"]);
             expect(userScene.selected).toBe("custom-1");
         }
     });
@@ -129,9 +151,43 @@ describe("loading a session", () => {
 
         expect(await loadSession(session)).toBe(MoorhenTimeCapsule.MOVIE_PLAYING_STATUS);
         expect(state().molecules.moleculeList).toBe(moleculesBefore);
-        expect(sceneNames()).toEqual(["Overview", "Model Building", "Figure"]);
+        expect(sceneNames()).toEqual(["General", "Model Building", "Figure"]);
         expect(state().movie.document.path.keyframes).toHaveLength(1);
         expect(cloud.instance.getTimeCapsuleRef().current.busy).toBe(false);
+    });
+});
+
+describe("molecule visibility across scenes", () => {
+    test("follows what each scene shows of the molecule (its eye button)", async () => {
+        const { userScene } = cloud.instance;
+        const [molecule] = cloud.instance.getMoleculeList();
+        const shown = () => state().molecules.visibleMolecules.includes(molecule.molNo);
+        expect(shown()).toBe(true);
+        // Created as a copy of the current scene, and shown
+        const hidden = await userScene.create("Hidden");
+        setMoleculeVisible(molecule, false);
+        expect(shown()).toBe(false);
+        await userScene.select("General");
+        expect(molecule.representations.some(representation => representation.visible)).toBe(true);
+        expect(shown()).toBe(true);
+        await userScene.select(hidden);
+        expect(molecule.representations.some(representation => representation.visible)).toBe(false);
+        expect(shown()).toBe(false);
+    });
+});
+
+describe("molecule visibility across scenes, adaptive bonds", () => {
+    test("a molecule drawn only with adaptive bonds stays shown", async () => {
+        const { userScene } = cloud.instance;
+        const [molecule] = cloud.instance.getMoleculeList();
+        const shown = () => state().molecules.visibleMolecules.includes(molecule.molNo);
+        // Nothing of it shown but its adaptive bonds (drawn around the view's centre, not a scene's representation)
+        molecule.representations.forEach(representation => representation.hide());
+        molecule.adaptativeBondsEnabled = true;
+        const snapshotId = userScene.takeSnapshot("Adaptive");
+        await userScene.select(snapshotId);
+        expect(molecule.representations.some(representation => representation.visible)).toBe(false);
+        expect(shown()).toBe(true);
     });
 });
 
@@ -143,8 +199,8 @@ describe("copying a scene with its representations", () => {
         await userScene.select("Model Building");
         expect(representationStyles()).not.toEqual(defaultStyles);
 
-        await userScene.select("Overview");
-        expect(await userScene.copyFrom("Model Building", "Overview", true)).toBe(true);
+        await userScene.select("General");
+        expect(await userScene.copyFrom("Model Building", "General", true)).toBe(true);
         await userScene.select("Model Building");
         expect(representationStyles()).toEqual(defaultStyles);
     });
@@ -158,7 +214,7 @@ describe("switching between scenes that draw the same representations", () => {
         const snapshotId = userScene.takeSnapshot("Same look");
         const snapshotIds = shownRepresentations().map(rep => rep.uniqueId);
         // Rebuilt from scratch: the same representations, with new ids
-        expect(await userScene.reset("Overview", "default", true)).toBe(true);
+        expect(await userScene.reset("General", "default", true)).toBe(true);
         const rebuilt = shownRepresentations();
         expect(rebuilt.map(rep => rep.uniqueId)).not.toEqual(snapshotIds);
         expect(rebuilt.map(rep => rep.style).sort()).toEqual(representationStyles());
@@ -215,7 +271,7 @@ describe("default colour rules of a molecule", () => {
         const redRules = rulesOf();
         expect(redRules).not.toBe(defaultRules);
 
-        await userScene.select("Overview");
+        await userScene.select("General");
         expect(rulesOf()).toBe(defaultRules);
         await userScene.select("Model Building");
         expect(rulesOf()).toBe(redRules);
@@ -251,7 +307,7 @@ describe("default colour rules of a molecule", () => {
         await userScene.select("Model Building");
         colourRed();
         const redRules = rulesOf();
-        await userScene.select("Overview");
+        await userScene.select("General");
         const session = await saveSession();
 
         userScene.resetForLegacySession();
@@ -265,12 +321,12 @@ describe("default colour rules of a molecule", () => {
         const { userScene } = cloud.instance;
         colourRed();
         const redRules = rulesOf();
-        expect(await userScene.reset("Overview", "default", true)).toBe(true);
+        expect(await userScene.reset("General", "default", true)).toBe(true);
         expect(rulesOf()).toBe(redRules);
         // Also for a scene that is not shown: its colours come back with it
         await userScene.select("Model Building");
-        expect(await userScene.reset("Overview", "default", true)).toBe(true);
-        await userScene.select("Overview");
+        expect(await userScene.reset("General", "default", true)).toBe(true);
+        await userScene.select("General");
         expect(rulesOf()).toBe(redRules);
     });
 });
@@ -296,9 +352,9 @@ describe("the model shown by a representation of a multi-model molecule", () => 
         representation.getList(molecule.uniqueId).find(rep => rep.uniqueId === uid).setShownMultimodel(2);
         expect(cidModel(shownModel())).toBe(2);
 
-        // Model Building shows other representations: back in Overview, this one is rebuilt
+        // Model Building shows other representations: back in General, this one is rebuilt
         await userScene.select("Model Building");
-        await userScene.select("Overview");
+        await userScene.select("General");
         expect(cidModel(shownModel())).toBe(2);
     });
 });
@@ -380,8 +436,8 @@ describe("a kept representation", () => {
         await userScene.select(snapshotId);
         await userScene.select(snapshotId);
         expect(revision()).toBe(before + 2);
-        await userScene.select("Overview");
-        await userScene.reset("Overview", "default", true);
+        await userScene.select("General");
+        await userScene.reset("General", "default", true);
         expect(revision()).toBe(before + 4);
     });
 });
@@ -430,7 +486,7 @@ describe("vectors and 3D shapes", () => {
         vectors.delete(arrow);
         const cube = object.create({ type: "cube", origin: [5, 5, 5] });
 
-        await userScene.select("Overview");
+        await userScene.select("General");
         expect(vectorIds()).toEqual([arrow]);
         expect(objectIds()).toEqual([sphere]);
         await userScene.select("Model Building");
@@ -468,7 +524,7 @@ describe("vectors and 3D shapes", () => {
         await userScene.select("Model Building");
         const arrow = vectors.create({ xTo: 10 });
         const sphere = object.create({ type: "sphere", origin: [0, 0, 0], radius: 2 });
-        await userScene.select("Overview");
+        await userScene.select("General");
         const session = await saveSession();
 
         userScene.resetForLegacySession();
@@ -480,11 +536,26 @@ describe("vectors and 3D shapes", () => {
     });
 });
 
+describe("a session with a molecule without default colour rules", () => {
+    // A session file (protobuf) does not write an empty list, so the field comes back absent. Loading
+    // used to stop at that molecule (a docked ligand, LTR_model2.pb), leaving no molecule loaded.
+    test("loads, the molecule with no rules", async () => {
+        const session = JSON.parse(await saveSession());
+        delete session.moleculeData[0].defaultColourRules;
+        // As LTR_model2.pb: no scenes (they would bring the rules back from the shown scene)
+        delete session.sceneData;
+        expect(await loadSession(JSON.stringify(session))).toBe(0);
+        const [molecule] = cloud.instance.getMoleculeList();
+        expect(molecule.defaultColourRules).toEqual([]);
+        expect(representationStyles().length).toBeGreaterThan(0);
+    });
+});
+
 describe("a session saved by Moorhen 1.0.1, before scenes", () => {
     // tests/test_data/session/1.0.1-no-maps.pb, as 1.0.1 wrote it but without its two maps
     const SESSION_MOLECULE_UID = "d2216c9c-ef0d-48f7-9b71-e38b92349348";
 
-    test("becomes the Overview scene, replacing the scenes there were", async () => {
+    test("becomes the General scene, replacing the scenes there were", async () => {
         const { userScene } = cloud.instance;
         await userScene.create("Figure");
         userScene.takeSnapshot();
@@ -494,14 +565,15 @@ describe("a session saved by Moorhen 1.0.1, before scenes", () => {
         const buffer = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength) as ArrayBuffer;
         expect(await MoorhenTimeCapsule.loadSessionFromArrayBuffer(buffer, cloud.instance)).toBe(0);
 
-        expect(sceneNames()).toEqual(["Overview", "Model Building"]);
+        expect(sceneNames()).toEqual(["General", "Model Building"]);
         expect(state().userScenes.snapshots).toEqual([]);
-        expect(userScene.selected).toBe("Overview");
-        expect(cloud.instance.representation.defaultStyle).toBe("ribbons-and-ligands");
+        expect(userScene.selected).toBe("General");
+        // Older sessions do not carry the default style: it is kept, like the other settings they lack
+        expect(cloud.instance.representation.defaultStyle).toBe("CBs");
         expect(cloud.instance.getMoleculeList().map(molecule => molecule.uniqueId)).toEqual([SESSION_MOLECULE_UID]);
         expect(representationStyles()).toEqual(["CBs", "CRs"]);
         expect(state().vectors.vectorsList).toHaveLength(2);
-        // The session's own view, not the Overview preset
+        // The session's own view, not the General preset
         expect(state().sceneSettings.zoom).toBeCloseTo(0.2661, 3);
     });
 });

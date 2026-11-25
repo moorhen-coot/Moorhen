@@ -102,12 +102,33 @@ export const spanOfCell = (cell: { a?: number, b?: number, c?: number } | null |
  * Written as a function taking the whole map rather than as a bare call to spanOfCell, so that
  * the rule "the contour radius is not an input" is something a test can hold the code to. The
  * radius is on the object this receives and is deliberately never read.
+ *
+ * THE CELL LIVES UNDER headerInfo, AND ONLY THERE
+ *
+ * This read `map.cell` for its whole life, and `MoorhenMap` declared a `cell` field that nothing
+ * ever assigned - so every map contributed zero, always. A scene holding only maps fell back to
+ * EMPTY_SCENE_SPAN, fifty angstroms, with two visible consequences: the side-on clip/fog widget
+ * scaled itself to a fifty angstrom scene whatever was loaded, and "Clip off", which sets the
+ * planes to 1.5 times this span, clipped a 550 angstrom EM map to a 150 angstrom slab. Turning
+ * the map radius up changed nothing, because the radius is deliberately not an input - the one
+ * input there was happened to be undefined.
+ *
+ * ("Clip off" no longer depends on this span: since it became the doClip scene setting, the
+ * renderer draws with planes far beyond anything loaded, see MGWebGL.applySlabToRenderer.)
+ *
+ * The real cell is `headerInfo.cell`, filled by MoorhenMap.initialise from the MTZ or MRC header,
+ * and already trusted elsewhere - cellCentre is derived from it one line later.
+ *
+ * Still zero when it is absent, which is a real case rather than a defensive one: initialise
+ * populates headerInfo only for the "mtz" and "mapFile" origins, and one loader catches a header
+ * failure and skips initialise altogether. Such a map contributes nothing and the scene falls
+ * back as before.
  */
 export const mapSpan = (map: {
-    cell?: { a?: number, b?: number, c?: number } | null,
+    headerInfo?: { cell?: { a?: number, b?: number, c?: number } | null } | null,
     suggestedRadius?: number | null,
     mapRadius?: number | null,
-} | null | undefined): number => spanOfCell(map?.cell);
+} | null | undefined): number => spanOfCell(map?.headerInfo?.cell);
 
 export interface SceneExtentInput {
     /** Atom positions and 3D object boxes, all in one coordinate space. */
@@ -128,4 +149,52 @@ export const sceneSpan = ({ positioned = [], sizes = [] }: SceneExtentInput): nu
     const largestSize = sizes.reduce((best, s) => (Number.isFinite(s) && s > best ? s : best), 0);
     const span = Math.max(fromPositions, largestSize);
     return span > 0 ? span : EMPTY_SCENE_SPAN;
+};
+
+/**
+ * A ball containing something: what the side-on view's framing measures, see reachFrom.
+ */
+export interface Sphere {
+    centre: [number, number, number];
+    radius: number;
+}
+
+/**
+ * A ball about the box's centre containing every point: the box's middle, and the farthest point
+ * from it. Not the smallest ball, but within a few percent of it for anything molecule-shaped,
+ * and unlike the box's own half diagonal it does not overstate a round thing by sqrt(3).
+ */
+export const sphereOfPoints = (points: Iterable<[number, number, number]>, bounds: Bounds | null): Sphere | null => {
+    if (!bounds) return null;
+    const centre: [number, number, number] = [0, 1, 2].map(i => (bounds.min[i] + bounds.max[i]) / 2) as [number, number, number];
+    let r2 = 0;
+    for (const p of points) {
+        if (!Number.isFinite(p[0]) || !Number.isFinite(p[1]) || !Number.isFinite(p[2])) continue;
+        const d2 = (p[0] - centre[0]) ** 2 + (p[1] - centre[1]) ** 2 + (p[2] - centre[2]) ** 2;
+        if (d2 > r2) r2 = d2;
+    }
+    return { centre, radius: Math.sqrt(r2) };
+};
+
+/**
+ * How far from `centre` (the view centre, as a point, not the negated scene origin) anything in
+ * these balls reaches: the half width the side-on view needs to show all of them, or 0 when there
+ * are none.
+ *
+ * Measured from the view centre because that is what the side-on view is centred on: a molecule
+ * the view has moved away from needs a wider view than its own size, and one centred in it a
+ * narrower one. A distance, so it is the same however the view is turned, and the view does not
+ * breathe while the main view rotates.
+ *
+ * Unlike sceneSpan, a map here is the ball it is contoured in (its radius about its draw centre),
+ * not its cell: what is drawn, which for an EM map is a small part of a large box.
+ */
+export const reachFrom = (centre: readonly number[], spheres: (Sphere | null)[]): number => {
+    let reach = 0;
+    for (const s of spheres) {
+        if (!s || !Number.isFinite(s.radius)) continue;
+        const d = Math.hypot(s.centre[0] - centre[0], s.centre[1] - centre[1], s.centre[2] - centre[2]);
+        if (Number.isFinite(d)) reach = Math.max(reach, d + Math.max(0, s.radius));
+    }
+    return reach;
 };

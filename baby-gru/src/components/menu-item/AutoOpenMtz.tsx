@@ -26,7 +26,11 @@ export const AutoOpenMtz = () => {
                 dispatch(enqueueSnackbar({ message: "Error reading mtz file", variant: "error" }));
             } else {
                 dispatch(addMapList(newMaps));
-                dispatch(setActiveMap(newMaps[0]));
+                // Difference maps are never made active by default
+                const firstNonDiffMap = newMaps.find(map => !map.isDifference);
+                if (firstNonDiffMap) {
+                    dispatch(setActiveMap(firstNonDiffMap));
+                }
                 document.body.click();
             }
         } catch (err) {

@@ -3,7 +3,11 @@ import { gpuMapContourSetting, notifyMapDataChanged } from "../WebGPUComponents/
 import { correctExportedGltf } from "./gltfWinding";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
-import { hideMap, setDisplayBuffers, setOrigin, setZoom } from "../store";
+import { hideMap, setDisplayBuffers, setMapSlice, setOrigin, setZoom } from "../store";
+import type { MapStyle } from "../store/mapContourSettingsSlice";
+import type { MapUnitCellGrid } from "../WebGPUComponents/mapContour/mapContourBox";
+import { makeMapGridSampler, type MapGridSampler } from "./mapSlice/mapGridSampler";
+import { DEFAULT_SLICE_CONTOUR_SPACING, SLICE_NODAL_MIN_FRACTION, contourMapSlice, newMapSlice, sliceHalfSize, sliceLevels, sliceLinearLevels, sliceLinesObject, sliceRange } from "./mapSlice/mapSlice";
 import { libcootApi } from "../types/libcoot";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
@@ -86,6 +90,15 @@ export class MoorhenMap {
     displayObjects: any;
     cellCentre: [number, number, number];
     isDifference: boolean;
+    /**
+     * True when this map was made from a Gaussian Cube rather than read from a map file.
+     *
+     * Kept as a flag of its own rather than as a third `dataOrigin`: the data really did arrive
+     * through the map-file path and `getSimpleHeaderInfo` only knows the two origins, so inventing
+     * a third would leave `headerInfo` null and take the cell with it. This only tells the UI to
+     * offer the cut-down orbital card instead of the full map card.
+     */
+    isCube: boolean;
     hasReflectionData: boolean;
     selectedColumns: moorhen.selectedMtzColumns;
     associatedReflectionFileName: string;
@@ -108,6 +121,12 @@ export class MoorhenMap {
      * that keeps its own copy of the map: the GPU contours fetch the unit cell again.
      */
     dataRevision: number;
+    /** The map sampled for its 2D slice (mapSlice.ts), and the dataRevision it was fetched at. */
+    private sliceSampler: { revision: number; sampler: Promise<MapGridSampler | null> } | null = null;
+    /** What the slice was last contoured from, so that the same slice is not contoured twice. */
+    private sliceDrawnKey: string | null = null;
+    /** Counts drawMapSlice calls: one still waiting for the map's grid gives way to a later one. */
+    private sliceDrawCount = 0;
 
     constructor(moorhenInstance: MoorhenInstance) {
         this.type = "map";
@@ -120,8 +139,10 @@ export class MoorhenMap {
         this.levelRange = null;
         this.webMGContour = false;
         this.showOnLoad = true;
-        this.displayObjects = { Coot: [] };
+        // Coot: the 3D contours. Slice: the 2D contour slice (drawMapSlice).
+        this.displayObjects = { Coot: [], Slice: [] };
         this.isDifference = false;
+        this.isCube = false;
         this.hasReflectionData = false;
         this.selectedColumns = null;
         this.associatedReflectionFileName = null;
@@ -644,7 +665,7 @@ export class MoorhenMap {
         mapRadius: number;
         contourLevel: number;
         mapAlpha: number;
-        mapStyle: "lines" | "solid" | "lit-lines";
+        mapStyle: MapStyle;
         mapColour: { r: number; g: number; b: number };
         positiveMapColour: { r: number; g: number; b: number };
         negativeMapColour: { r: number; g: number; b: number };
@@ -727,6 +748,93 @@ export class MoorhenMap {
      */
     hideMapContour(): void {
         this.store.dispatch(hideMap(this));
+    }
+
+    /** The map sampled anywhere, for its 2D slice: from its whole unit cell, fetched once per dataRevision. */
+    private getSliceSampler(): Promise<MapGridSampler | null> {
+        if (!this.sliceSampler || this.sliceSampler.revision !== this.dataRevision) {
+            const sampler = this.commandCentre
+                .cootCommand({ returnType: "unit_cell_grid", command: "shim_get_map_unit_cell_grid", commandArgs: [this.molNo] }, false)
+                .then(response => {
+                    const result = response.data.result as { status: string; result?: MapUnitCellGrid };
+                    if (result.status !== "Completed" || !result.result) {
+                        console.warn(`Map ${this.molNo}: the Coot worker could not export its grid for a 2D slice`);
+                        return null;
+                    }
+                    return makeMapGridSampler(result.result);
+                })
+                .catch(err => {
+                    console.warn(err);
+                    return null;
+                });
+            this.sliceSampler = { revision: this.dataRevision, sampler };
+        }
+        return this.sliceSampler.sampler;
+    }
+
+    /**
+     * Draw the map as a 2D slice: contour lines across a square in a plane (mapSlice.ts), as
+     * placed in the store (mapSlices). The first time, there is no slice yet: one is made through
+     * the centre of the view, facing down z, and kept there for next time.
+     *
+     * The square is twice the map's radius across. Contoured at the map's level - the outermost
+     * contour - and in equal steps from there up to the slice's largest value, or doubling up to
+     * the map's (the slice's contour spacing, mapSlice.ts), positive and negative for a
+     * difference map in its two colours (as an orbital's lobes are in 3D), otherwise positive only
+     * in the map's colour. A difference map can also show its nodal lines (zero), in grey.
+     */
+    async drawMapSlice(): Promise<void> {
+        const call = ++this.sliceDrawCount;
+        const state = this.store.getState();
+        let slice = state.mapContourSettings.mapSlices.find(item => item.molNo === this.molNo);
+        if (!slice) {
+            const origin = state.sceneSettings.origin.map(coord => -coord) as [number, number, number];
+            slice = { molNo: this.molNo, ...newMapSlice(origin) };
+            this.store.dispatch(setMapSlice(slice));
+        }
+        const { contourLevel, mapAlpha, mapColour, positiveMapColour, negativeMapColour } = this.getMapContourParams();
+        const halfSize = sliceHalfSize(state.mapContourSettings, this.molNo, this.suggestedRadius);
+        const nodalLines = this.isDifference && state.mapContourSettings.mapSliceNodalLines.includes(this.molNo);
+        const spacing = state.mapContourSettings.mapSliceContourSpacings.find(item => item.molNo === this.molNo)?.spacing
+            ?? DEFAULT_SLICE_CONTOUR_SPACING;
+        const colours = this.isDifference
+            ? { positive: positiveMapColour, negative: negativeMapColour }
+            : { positive: mapColour, negative: mapColour };
+        const key = JSON.stringify([this.dataRevision, slice.origin, slice.orientation, halfSize, contourLevel, spacing, nodalLines, colours, mapAlpha]);
+        if (key === this.sliceDrawnKey && this.displayObjects["Slice"].length > 0) return;
+
+        const sampler = await this.getSliceSampler();
+        if (call !== this.sliceDrawCount || !sampler) return;
+        // Asked to stop being a slice, or hidden, while the grid was on its way.
+        const now = this.store.getState().mapContourSettings;
+        if (!now.visibleMaps.includes(this.molNo) || this.getMapContourParams().mapStyle !== "slice") return;
+
+        // Up to the largest value in the slice, or the map: known only once the grid is here.
+        const levels = spacing === "linear"
+            ? sliceLinearLevels(contourLevel, this.isDifference, sliceRange(sampler, slice, halfSize))
+            : sliceLevels(contourLevel, this.isDifference, sampler.maxAbs);
+        if (nodalLines && levels.length > 0) levels.push(0);
+        const nodalMinMagnitude = nodalLines ? SLICE_NODAL_MIN_FRACTION * Math.abs(contourLevel) : undefined;
+        const contours = contourMapSlice(sampler, slice, halfSize, levels, nodalMinMagnitude);
+        const buffers = appendOtherData(sliceLinesObject(slice, halfSize, levels, contours, colours, mapAlpha), this.store, true);
+        buffers.forEach(buffer => {
+            if (mapAlpha < 0.99) buffer.transparent = true;
+            buffer.statsLabel = "map slice";
+        });
+        buildBuffers(buffers, this.store);
+        const oldBuffers = this.clearBuffersOfStyle("Slice", this.store.getState().glRef.displayBuffers);
+        this.displayObjects["Slice"] = buffers;
+        this.sliceDrawnKey = key;
+        this.store.dispatch(setDisplayBuffers([...oldBuffers, ...buffers]));
+    }
+
+    /** Take the 2D slice off the screen (it stays where it is in the store, for next time). */
+    hideMapSlice(): void {
+        this.sliceDrawCount++;
+        this.sliceDrawnKey = null;
+        if (this.displayObjects["Slice"].length === 0) return;
+        const oldBuffers = this.clearBuffersOfStyle("Slice", this.store.getState().glRef.displayBuffers);
+        this.store.dispatch(setDisplayBuffers([...oldBuffers]));
     }
 
     /**
@@ -912,8 +1020,16 @@ export class MoorhenMap {
         z: number,
         radius: number,
         contourLevel: number,
-        style: "solid" | "lines" | "lit-lines"
+        style: MapStyle
     ): Promise<void> {
+        // Drawn as a 2D slice now (drawMapSlice), whatever this was asked for when it was queued.
+        if (style === "slice" || this.getMapContourParams().mapStyle === "slice") {
+            // Not hideMapContour: that hides the map.
+            if (this.displayObjects["Coot"].length > 0) {
+                this.store.dispatch(setDisplayBuffers(this.clearBuffersOfStyle("Coot", this.store.getState().glRef.displayBuffers)));
+            }
+            return;
+        }
         if (gpuMapContourSetting.enabled) {
             // Contoured on the GPU and drawn by the WebGPU main view instead (mapContour/setting.ts):
             // nothing to ask Coot for, and nothing for the WebGL view. Not hideMapContour: that hides the map.
@@ -1103,6 +1219,7 @@ export class MoorhenMap {
     private static readonly COPYABLE_KEYS = [
         "fileHeader",
         "isDifference",
+        "isCube",
         "type",
         "dataOrigin",
         "showOnLoad",

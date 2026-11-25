@@ -336,7 +336,7 @@ getzlib() {
     else
         cdcheckout
         echo "Downloading zlib-$zlib_release"
-        curl -fL https://www.zlib.net/zlib-$zlib_release.tar.gz -o zlib-$zlib_release.tar.gz &&\
+        curl -fL https://github.com/madler/zlib/releases/download/v${zlib_release}/zlib-$zlib_release.tar.gz -o zlib-$zlib_release.tar.gz &&\
         echo &&\
         echo "Unpacking zlib-$zlib_release" &&\
         tar xf zlib-$zlib_release.tar.gz || fail "Failed to download and unpack zlib"
@@ -364,7 +364,23 @@ getgsl() {
 
 # Patches to the pinned coot commit, for fixes not yet upstream. Paths in
 # git -C are relative to coot-1.0, hence ../../patches.
-coot_patches="coot-undo-backup-per-molecule.patch"
+#
+#   coot-thread-limits.patch              https://github.com/pemsley/coot/pull/439
+#   coot-fit-ligand-map-reference.patch   https://github.com/pemsley/coot/pull/438
+#
+# Each patch is the diff of the pull request named beside it, less the files that
+# the pull request adds (#439 adds a test program, api/test-thread-limits.cc). A
+# patch here must not add a file: CI restores a cached copy of the coot sources
+# over a checkout that may already be patched, which puts back the files that a
+# patch changed but leaves the files that it added, and the patch then fails to
+# apply with "already exists in working directory".
+#
+# When a pull request is merged upstream and the pinned commit in VERSIONS has
+# moved past the merge, take its patch out of this list and delete the file: a
+# patch whose changes are already upstream is reported as "already applied", but
+# unapplycootpatches would then reverse those upstream changes whenever another
+# patch has left the tree modified.
+coot_patches="coot-thread-limits.patch coot-fit-ligand-map-reference.patch"
 
 applycootpatches() {
     for p in $coot_patches; do
@@ -390,6 +406,18 @@ unapplycootpatches() {
     done
 }
 
+# True when the work tree in $1 is at the pinned commit $2. This compares HEAD
+# (what is actually checked out and built) rather than the "main" branch: the
+# pinned commit is checked out detached, so local main can sit at any commit,
+# including the pinned one while HEAD is somewhere else. Comparing main let a
+# stale checkout through with "Using existing ..." after VERSIONS was bumped.
+# Full hashes are compared, so the pin may be abbreviated to any length. If the
+# pinned commit has not been fetched yet, this is false and the caller fetches.
+at_pinned_commit() {
+    _pinned=$(git -C "$1" rev-parse --verify --quiet "$2^{commit}") || return 1
+    [ "x$(git -C "$1" rev-parse HEAD)" = "x$_pinned" ]
+}
+
 getcoot() {
     cdcheckout
     if [ -r coot-1.0 ]; then
@@ -400,10 +428,10 @@ getcoot() {
         else
             echo "Existing coot-1.0 is pointing to the target repository (${coot_fork}). Proceeding to check commit..."
         fi
-        if [ "x$(git -C coot-1.0 rev-parse --short=10 main)" = "x$coot_commit" ];then
+        if at_pinned_commit coot-1.0 "$coot_commit"; then
             echo "Using existing coot-1.0"
         else
-            echo "Checking-out existent coot-1.0 to a different version ($(git -C coot-1.0 rev-parse --short=10 main) -> $coot_commit)"
+            echo "Checking-out existent coot-1.0 to a different version ($(git -C coot-1.0 rev-parse --short=10 HEAD) -> $coot_commit)"
             unapplycootpatches
             git -C coot-1.0 fetch &&\
             git -C coot-1.0 checkout $coot_commit &&\
@@ -422,10 +450,10 @@ getcoot() {
 getlhasa() {
     cdcheckout
     if [ -r LhasaReact ]; then
-        if [ "x$(git -C LhasaReact rev-parse --short=10 main)" = "x$lhasa_commit" ];then
+        if at_pinned_commit LhasaReact "$lhasa_commit"; then
             echo "Using existing LhasaReact"
         else
-            echo "Checking-out existent LhasaReact to a different version ($(git -C LhasaReact rev-parse --short=10 main) -> $lhasa_commit)"
+            echo "Checking-out existent LhasaReact to a different version ($(git -C LhasaReact rev-parse --short=10 HEAD) -> $lhasa_commit)"
             git -C LhasaReact fetch &&\
             git -C LhasaReact checkout $lhasa_commit &&\
             echo Using checked-out LhasaReact || fail "Failed to checkout LhasaReact"
@@ -522,11 +550,26 @@ getprivateer() {
         curl -fL https://github.com/glycojones/privateer/archive/refs/tags/moorhen-build-0.3.5.tar.gz -o privateer-wasm.tar.gz &&\
         tar xf privateer-wasm.tar.gz &&\
         mv privateer-moorhen-build-0.3.5 privateer-wasm &&\
-        echo "Getting updated simdjson.h" &&\
-        curl -fL https://raw.githubusercontent.com/simdjson/simdjson/master/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h &&\
+        echo "Getting simdjson.h ($simdjson_release)" &&\
+        curl -fL https://raw.githubusercontent.com/simdjson/simdjson/$simdjson_release/singleheader/simdjson.h -o privateer-wasm/src/privateer/cpp/third-party/simdjson/simdjson.h &&\
         patch -p0 < ../patches/privateer-gemmi070.patch || fail "Failed to download, unpack and patch privateer"
     fi
     echo
+}
+
+# Patches to the pinned Boost release, for fixes not yet in a release. Paths
+# are relative to checkout, hence ../patches.
+boost_patches="boost-locale-cmake45.patch"
+
+applyboostpatches() {
+    for p in $boost_patches; do
+        if patch -d boost-$boost_release -p1 -R -f -s --dry-run < ../patches/$p >/dev/null 2>&1; then
+            echo "boost patch $p already applied"
+        else
+            patch -d boost-$boost_release -p1 -N -s < ../patches/$p &&\
+            echo "Applied boost patch $p" || fail "Failed to apply boost patch $p"
+        fi
+    done
 }
 
 getboost() {
@@ -538,6 +581,7 @@ getboost() {
         curl -fL https://github.com/boostorg/boost/releases/download/boost-$boost_release/boost-$boost_release-cmake.tar.gz -o boost_$boost_release.tar.gz &&\
         tar xf boost_$boost_release.tar.gz || fail "Failed to download and unpack boost"
     fi
+    applyboostpatches
     echo
 }
 

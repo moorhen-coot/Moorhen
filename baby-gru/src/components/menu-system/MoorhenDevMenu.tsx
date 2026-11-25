@@ -12,9 +12,10 @@ import {
     uninstrumentGl,
 } from "../../WebGLgComponents/mgWebGLParts/renderStats";
 import { checkerboardTexture, registerTexture } from "../../WebGLgComponents/textureRegistry";
-import { setUseGemmi } from "../../store/generalStatesSlice";
-import { setPeelOpaqueSeparately, setUseWebGPU } from "../../store/sceneSettingsSlice";
 import { webGPUAdapterSummary, webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
+import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
+import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
+import { setUseGemmi } from "../../store/generalStatesSlice";
 import { showModal } from "../../store/modalsSlice";
 import {
     addCallback,
@@ -25,19 +26,20 @@ import {
     addTextOverlay,
     emptyOverlays,
 } from "../../store/overlaysSlice";
+import { setPeelOpaqueSeparately, setUseWebGPU } from "../../store/sceneSettingsSlice";
 import { centreOfObject } from "../../store/threeDObjectsSlice";
 import { MoorhenVector, addVectors, removeVectors, removeVectorsByTag } from "../../store/vectorsSlice";
 import { moorhen } from "../../types/moorhen";
+import { devLoadLibraryLigands, devLogLigandContacts } from "../../utils/devLigands";
 import { modalKeys } from "../../utils/enums";
 import { SOURCE_DEV_TEST, TAG_SOURCE } from "../../utils/tags";
-import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
-import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
+import { meshCentringSetting } from "../../WebGLgComponents/meshCentre";
 import { readGzippedTextFile } from "../../utils/utils";
 import { newVector } from "../../utils/vectorFactories";
 import { MoorhenLinearProgress } from "../icons";
 import { MoorhenFileInput, MoorhenNumberInput, MoorhenSlider, MoorhenToggle } from "../inputs";
 import { MoorhenButton } from "../inputs/MoorhenButton/MoorhenButton";
-import { MoorhenMenuItem, MoorhenStack } from "../interface-base";
+import { MoorhenAccordion, MoorhenMenuItem, MoorhenStack } from "../interface-base";
 
 /**
  * A flat square carrying the test checkerboard, for checking the texture path by eye.
@@ -195,6 +197,7 @@ export const MoorhenDevMenu = () => {
     const [countingDraws, setCountingDraws] = useState<boolean>(renderStats.enabled);
     const [syncingGpu, setSyncingGpu] = useState<boolean>(renderStats.syncGpu);
     const [gpuMetaBalls, setGpuMetaBalls] = useState<boolean>(gpuMetaBallsSetting.enabled);
+    const [centreOnHighlight, setCentreOnHighlight] = useState<boolean>(meshCentringSetting.followHighlight);
     const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
     const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.wanted);
     // Why there is no WebGPU here, or null: no navigator.gpu at once, no adapter once asked. Then
@@ -202,8 +205,12 @@ export const MoorhenDevMenu = () => {
     const [noWebGPU, setNoWebGPU] = useState<string | null>(webGPUUnavailableReason());
     useEffect(() => {
         let live = true;
-        webGPUAdapterSummary().then(({ reason }) => { if (live) setNoWebGPU(reason); });
-        return () => { live = false; };
+        webGPUAdapterSummary().then(({ reason }) => {
+            if (live) setNoWebGPU(reason);
+        });
+        return () => {
+            live = false;
+        };
     }, []);
     const glCtx = useSelector((state: RootState) => state.glRef.glCtx);
     const peelOpaqueSeparately = useSelector((state: moorhen.State) => state.sceneSettings.peelOpaqueSeparately);
@@ -460,186 +467,241 @@ export const MoorhenDevMenu = () => {
     return (
         <MoorhenStack>
             {/* <MoorhenMenuItem onClick={tomogramTest}>Tomogram...</MoorhenMenuItem> */}
-            Origin: x: {origin[0].toFixed(1)} y: {origin[1].toFixed(1)} z: {origin[2].toFixed(1)}
-            <MoorhenStack card>
-                set Origin
-                <MoorhenStack direction="row" gap={2}>
-                    <MoorhenNumberInput
-                        value={origin[0]}
-                        setValue={val => {
-                            dispatch(setOrigin([val, origin[1], origin[2]]));
+            <MoorhenAccordion title="Test data" defaultOpen>
+                <MoorhenStack>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            document.body.click();
+                            devLoadLibraryLigands(moorhenInstance).then(({ loaded, failed }) =>
+                                moorhenInstance.snackbar.enqueueSnackbar({
+                                    message: `Loaded ${loaded.length} library ligands${failed.length ? `, ${failed.length} failed` : ""}`,
+                                    variant: failed.length ? "warning" : "success",
+                                })
+                            );
                         }}
+                    >
+                        Load 10 library ligands (batch, 3 sites)
+                    </MoorhenMenuItem>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            document.body.click();
+                            devLogLigandContacts(moorhenInstance, true).then(logged =>
+                                moorhenInstance.snackbar.enqueueSnackbar({
+                                    message: `Logged contacts for ${logged} ligand / molecule pairs to the console`,
+                                    variant: "info",
+                                })
+                            );
+                        }}
+                    >
+                        Log ligand contacts (console)
+                    </MoorhenMenuItem>
+                    <MoorhenToggle
+                        type="switch"
+                        checked={overlaysOn}
+                        onChange={evt => {
+                            loadExampleOverlays(evt);
+                        }}
+                        label="Load example 2D overlays"
                     />
-                    <MoorhenNumberInput
-                        value={origin[1]}
-                        setValue={val => {
-                            dispatch(setOrigin([origin[0], val, origin[2]]));
+                    <MoorhenToggle
+                        type="switch"
+                        checked={vectorsOn}
+                        onChange={evt => {
+                            loadVectorsBunch(evt);
                         }}
+                        label="Load a bunch of vectors"
                     />
-                    <MoorhenNumberInput
-                        value={origin[2]}
-                        setValue={val => {
-                            dispatch(setOrigin([origin[0], origin[1], val]));
+                    <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
+                    <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
+                    <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            dispatch(showModal({ key: modalKeys.CHECK_LIST_TEST }));
+                            document.body.click();
                         }}
-                    />{" "}
+                    >
+                        Check lists (test)
+                    </MoorhenMenuItem>
                 </MoorhenStack>
-            </MoorhenStack>
-            {/* This exist in View now
-            <MoorhenMenuItem
-                onClick={() => {
-                    dispatch(showModal({ key: modalKeys.VECTORS }));
-                    document.body.click();
-                }}
-            >
-                Vectors
-            </MoorhenMenuItem> 
-            <MoorhenMenuItem
-                onClick={() => {
-                    dispatch(showModal({ key: modalKeys.OVERLAYS2D }));
-                    document.body.click();
-                }}
-            >
-                2D Overlays
-            </MoorhenMenuItem> */}
-            <MoorhenMenuItem
-                onClick={() => { void (async () => {
-                    document.body.click();
-                    // How this machine draws: one line, to paste into a report (rendererReport.ts).
-                    const line = await moorhenInstance.webGPU.report();
-                    console.info(`Moorhen renderer report: ${line}`);
-                    let copied = false;
-                    try {
-                        await navigator.clipboard.writeText(line);
-                        copied = true;
-                    } catch {
-                        // Clipboard refused (no permission, or the click is too long ago): the
-                        // line is in the console and the message below.
-                    }
-                    moorhenInstance.snackbar.enqueueSnackbar({
-                        message: `${copied ? "Copied to the clipboard" : "Renderer report (also in the console)"}: ${line}`,
-                        variant: "info",
-                    });
-                })(); }}
-            >
-                Renderer report (a few seconds; copied to the clipboard)
-            </MoorhenMenuItem>
-            <MoorhenMenuItem
-                onClick={() => {
-                    dispatch(showModal({ key: modalKeys.WORKER_QUEUE }));
-                    document.body.click();
-                }}
-            >
-                Worker command queue
-            </MoorhenMenuItem>
-            <MoorhenToggle
-                type="switch"
-                checked={noWebGPU === null && useWebGPU}
-                disabled={noWebGPU !== null}
-                label={noWebGPU === null
-                    ? "Draw the main view with WebGPU (on by default; WebGL still draws the shadow map debug view and recordings started under WebGL)"
-                    : `Draw the main view with WebGPU (${noWebGPU})`}
-                onChange={() => {
-                    dispatch(setUseWebGPU(!useWebGPU));
-                }}
-            />
-            <MoorhenToggle
-                type="switch"
-                checked={noWebGPU === null && gpuMetaBalls}
-                disabled={noWebGPU !== null}
-                label={`MetaBalls on the GPU (test; applies to MetaBalls made from now on${noWebGPU ? "; no WebGPU here" : ""})`}
-                onChange={() => {
-                    gpuMetaBallsSetting.enabled = !gpuMetaBalls;
-                    setGpuMetaBalls(!gpuMetaBalls);
-                }}
-            />
-            <MoorhenToggle
-                type="switch"
-                checked={noWebGPU === null && splitField}
-                disabled={noWebGPU !== null}
-                label={`GPU MetaBalls: split field (off = the plain sum, one thread per grid point${noWebGPU ? "; no WebGPU here" : ""})`}
-                onChange={() => {
-                    gpuMetaBallsSetting.splitField = !splitField;
-                    setSplitField(!splitField);
-                }}
-            />
-            <MoorhenToggle
-                type="switch"
-                checked={noWebGPU === null && gpuMapContours}
-                disabled={noWebGPU !== null}
-                label={`Contour maps on the GPU while WebGPU draws the main view (on by default; off: Coot contours them${noWebGPU ? "; no WebGPU here" : ""})`}
-                onChange={() => {
-                    const wanted = !gpuMapContours;
-                    gpuMapContourSetting.wanted = wanted;
-                    setGpuMapContours(wanted);
-                    // Move the maps to the GPU now, or give them back to Coot.
-                    applyGpuMapContours();
-                }}
-            />
-            <MoorhenMenuItem onClick={addTexturedQuad}>Textured quad (test)</MoorhenMenuItem>
-            <MoorhenMenuItem onClick={addTexturedPlanes}>Textured planes, instanced (test)</MoorhenMenuItem>
-            <MoorhenMenuItem onClick={addTwoPartMesh}>Two-part textured mesh (test)</MoorhenMenuItem>
-            <MoorhenToggle
-                type="switch"
-                checked={countingDraws}
-                label="Count draws and GL state (needs the FPS meter on)"
-                onChange={() => {
-                    if (!glCtx) return;
-                    if (countingDraws) uninstrumentGl(glCtx);
-                    else instrumentGl(glCtx);
-                    setCountingDraws(!countingDraws);
-                }}
-            />
-            <MoorhenToggle
-                type="switch"
-                checked={syncingGpu}
-                label="Wait for the GPU each frame (slow; diagnostic only)"
-                onChange={() => {
-                    renderStats.syncGpu = !syncingGpu;
-                    setSyncingGpu(!syncingGpu);
-                }}
-            />
-            <MoorhenToggle
-                type="switch"
-                checked={peelOpaqueSeparately}
-                label="Draw opaque geometry once when depth peeling"
-                onChange={() => {
-                    dispatch(setPeelOpaqueSeparately(!peelOpaqueSeparately));
-                }}
-            />
-            <MoorhenMenuItem
-                onClick={() => {
-                    const buffers = store.getState().glRef.displayBuffers ?? [];
-                    console.log("Triangles by representation\n" + triangleBreakdownText(buffers, measuredTrianglesPerFrame()));
-                }}
-            >
-                Log triangles by representation
-            </MoorhenMenuItem>
-            <hr></hr>
-            <MoorhenToggle
-                type="switch"
-                checked={useGemmi}
-                onChange={() => {
-                    dispatch(setUseGemmi(!useGemmi));
-                }}
-                label="Use gemmi for reading/writing coord files"
-            />
-            <hr></hr>
-            <MoorhenToggle
-                type="switch"
-                checked={overlaysOn}
-                onChange={evt => {
-                    loadExampleOverlays(evt);
-                }}
-                label="Load example 2D overlays"
-            />
-            <MoorhenToggle
-                type="switch"
-                checked={vectorsOn}
-                onChange={evt => {
-                    loadVectorsBunch(evt);
-                }}
-                label="Load a bunch of vectors"
-            />
+            </MoorhenAccordion>
+            <MoorhenAccordion title="WebGPU">
+                <MoorhenStack>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            void (async () => {
+                                document.body.click();
+                                // How this machine draws: one line, to paste into a report (rendererReport.ts).
+                                const line = await moorhenInstance.webGPU.report();
+                                console.info(`Moorhen renderer report: ${line}`);
+                                let copied = false;
+                                try {
+                                    await navigator.clipboard.writeText(line);
+                                    copied = true;
+                                } catch {
+                                    // Clipboard refused (no permission, or the click is too long ago): the
+                                    // line is in the console and the message below.
+                                }
+                                moorhenInstance.snackbar.enqueueSnackbar({
+                                    message: `${copied ? "Copied to the clipboard" : "Renderer report (also in the console)"}: ${line}`,
+                                    variant: "info",
+                                });
+                            })();
+                        }}
+                    >
+                        Renderer report (a few seconds; copied to the clipboard)
+                    </MoorhenMenuItem>
+                    <MoorhenToggle
+                        type="switch"
+                        checked={noWebGPU === null && useWebGPU}
+                        disabled={noWebGPU !== null}
+                        label="WebGPU main view"
+                        tooltip={
+                            noWebGPU === null
+                                ? "Draw the main view with WebGPU. On by default; WebGL still draws the shadow map debug view and recordings started under WebGL."
+                                : `No WebGPU here: ${noWebGPU}`
+                        }
+                        onChange={() => {
+                            dispatch(setUseWebGPU(!useWebGPU));
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={noWebGPU === null && gpuMetaBalls}
+                        disabled={noWebGPU !== null}
+                        label="GPU MetaBalls"
+                        tooltip={`MetaBalls computed on the GPU (test). Applies to MetaBalls made from now on.${noWebGPU ? " No WebGPU here." : ""}`}
+                        onChange={() => {
+                            gpuMetaBallsSetting.enabled = !gpuMetaBalls;
+                            setGpuMetaBalls(!gpuMetaBalls);
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={noWebGPU === null && splitField}
+                        disabled={noWebGPU !== null}
+                        label="GPU MetaBalls: split field"
+                        tooltip={`Off: the plain sum, one thread per grid point.${noWebGPU ? " No WebGPU here." : ""}`}
+                        onChange={() => {
+                            gpuMetaBallsSetting.splitField = !splitField;
+                            setSplitField(!splitField);
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={noWebGPU === null && gpuMapContours}
+                        disabled={noWebGPU !== null}
+                        label="GPU map contours"
+                        tooltip={`Contour maps on the GPU while WebGPU draws the main view. On by default; off: Coot contours them.${noWebGPU ? " No WebGPU here." : ""}`}
+                        onChange={() => {
+                            const wanted = !gpuMapContours;
+                            gpuMapContourSetting.wanted = wanted;
+                            setGpuMapContours(wanted);
+                            // Move the maps to the GPU now, or give them back to Coot.
+                            applyGpuMapContours();
+                        }}
+                    />
+                </MoorhenStack>
+            </MoorhenAccordion>
+            <MoorhenAccordion title="Draw diagnostics">
+                <MoorhenStack>
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            dispatch(showModal({ key: modalKeys.WORKER_QUEUE }));
+                            document.body.click();
+                        }}
+                    >
+                        Worker command queue
+                    </MoorhenMenuItem>
+                    <MoorhenToggle
+                        type="switch"
+                        checked={countingDraws}
+                        label="Count draws and GL state"
+                        tooltip="Needs the FPS meter on. Adds a wrapper to every GL call, so it changes the frame time it reports."
+                        onChange={() => {
+                            if (!glCtx) return;
+                            if (countingDraws) uninstrumentGl(glCtx);
+                            else instrumentGl(glCtx);
+                            setCountingDraws(!countingDraws);
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={syncingGpu}
+                        label="Wait for the GPU each frame"
+                        tooltip="Slow; diagnostic only."
+                        onChange={() => {
+                            renderStats.syncGpu = !syncingGpu;
+                            setSyncingGpu(!syncingGpu);
+                        }}
+                    />
+                    <MoorhenToggle
+                        type="switch"
+                        checked={peelOpaqueSeparately}
+                        label="Draw opaque geometry once when depth peeling"
+                        onChange={() => {
+                            dispatch(setPeelOpaqueSeparately(!peelOpaqueSeparately));
+                        }}
+                    />
+                    <MoorhenMenuItem
+                        onClick={() => {
+                            const buffers = store.getState().glRef.displayBuffers ?? [];
+                            console.log("Triangles by representation\n" + triangleBreakdownText(buffers, measuredTrianglesPerFrame()));
+                        }}
+                    >
+                        Log triangles by representation
+                    </MoorhenMenuItem>
+                </MoorhenStack>
+            </MoorhenAccordion>
+            <MoorhenAccordion title="Files">
+                <MoorhenStack>
+                    <MoorhenToggle
+                        type="switch"
+                        checked={useGemmi}
+                        onChange={() => {
+                            dispatch(setUseGemmi(!useGemmi));
+                        }}
+                        label="Read/write coordinates with gemmi"
+                    />
+                </MoorhenStack>
+            </MoorhenAccordion>
+            <MoorhenAccordion title="View origin">
+                <MoorhenStack>
+                    <MoorhenToggle
+                        type="switch"
+                        checked={centreOnHighlight}
+                        label="Centre on what a surface or ribbon lights"
+                        tooltip="Zoomed out, centring on a surface or ribbon goes to the chain or molecule it lights. Off: the residue clicked."
+                        onChange={() => {
+                            meshCentringSetting.followHighlight = !centreOnHighlight;
+                            setCentreOnHighlight(!centreOnHighlight);
+                        }}
+                    />
+                    Origin: x: {origin[0].toFixed(1)} y: {origin[1].toFixed(1)} z: {origin[2].toFixed(1)}
+                    <MoorhenStack card>
+                        set Origin
+                        <MoorhenStack direction="row" gap={2}>
+                            <MoorhenNumberInput
+                                value={origin[0]}
+                                setValue={val => {
+                                    dispatch(setOrigin([val, origin[1], origin[2]]));
+                                }}
+                            />
+                            <MoorhenNumberInput
+                                value={origin[1]}
+                                setValue={val => {
+                                    dispatch(setOrigin([origin[0], val, origin[2]]));
+                                }}
+                            />
+                            <MoorhenNumberInput
+                                value={origin[2]}
+                                setValue={val => {
+                                    dispatch(setOrigin([origin[0], origin[1], val]));
+                                }}
+                            />{" "}
+                        </MoorhenStack>
+                    </MoorhenStack>
+                </MoorhenStack>
+            </MoorhenAccordion>
         </MoorhenStack>
     );
 };

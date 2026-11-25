@@ -4,11 +4,14 @@
     "entryPoints": [
         "src/moorhen.ts",
         "src/WebComponent/entry.ts",
-        "src/WebComponent/utils/entry.ts"
+        "src/WebComponent/utils/entry.ts",
+        "src/WebComponent/react/entry.ts"
     ],
     "entryPointStrategy": "resolve",
     "tsconfig": "./tsconfig.json",
     "out": "docs/api",
+    "plugin": ["./scripts/typedoc-api-groups.mjs"],
+    "router": "moorhen-api-groups",
     "readme": "none",
     "includeVersion": true,
     "excludePrivate": true,

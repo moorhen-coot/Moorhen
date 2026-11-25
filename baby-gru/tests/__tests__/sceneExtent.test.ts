@@ -18,6 +18,8 @@ import {
     spanOfBounds,
     spanOfCell,
     unionBounds,
+    reachFrom,
+    sphereOfPoints,
 } from "../../src/utils/sceneExtent";
 
 /** A small protein's worth of atoms, give or take. */
@@ -123,9 +125,9 @@ describe("sceneSpan", () => {
     it("does not change when a map's contour radius changes", () => {
         // The requirement that shaped the whole design. Asserted through mapSpan, which is given
         // the radius and must ignore it - comparing two identical calls would prove nothing.
-        const cell = { a: 80, b: 90, c: 100 };
-        const tight = { cell, suggestedRadius: 13, mapRadius: 13 };
-        const wide = { cell, suggestedRadius: 300, mapRadius: 300 };
+        const headerInfo = { cell: { a: 80, b: 90, c: 100 } };
+        const tight = { headerInfo, suggestedRadius: 13, mapRadius: 13 };
+        const wide = { headerInfo, suggestedRadius: 300, mapRadius: 300 };
         expect(mapSpan(tight)).toBe(mapSpan(wide));
         expect(sceneSpan({ sizes: [mapSpan(tight)] })).toBe(sceneSpan({ sizes: [mapSpan(wide)] }));
     });
@@ -133,14 +135,40 @@ describe("sceneSpan", () => {
     it("gives an EM map and a crystallographic map of the same cell the same span", () => {
         // Both contribute their cell. For an EM P1 map the cell is the box the map occupies; for
         // a crystallographic one it stands in for an extent that is formally unbounded.
-        expect(mapSpan({ cell: { a: 100, b: 100, c: 100 } }))
-            .toBe(mapSpan({ cell: { a: 100, b: 100, c: 100 }, suggestedRadius: 20 }));
+        expect(mapSpan({ headerInfo: { cell: { a: 100, b: 100, c: 100 } } }))
+            .toBe(mapSpan({ headerInfo: { cell: { a: 100, b: 100, c: 100 } }, suggestedRadius: 20 }));
     });
 
     it("contributes nothing for a map whose header has not arrived", () => {
+        // A real case, not a defensive one: MoorhenMap.initialise fills headerInfo only for the
+        // "mtz" and "mapFile" origins, and one loader catches a header failure and skips
+        // initialise altogether. Such a map has headerInfo null for its whole life.
         expect(mapSpan(null)).toBe(0);
         expect(mapSpan({ suggestedRadius: 50 })).toBe(0);
+        expect(mapSpan({ headerInfo: null, suggestedRadius: 50 })).toBe(0);
         expect(sceneSpan({ sizes: [mapSpan(undefined)] })).toBe(EMPTY_SCENE_SPAN);
+    });
+
+    it("reads the cell from headerInfo, which is the only place a map keeps it", () => {
+        // The bug this pins. mapSpan read `map.cell`, and MoorhenMap has no such property - only
+        // `headerInfo.cell`, filled by initialise from the MTZ or MRC header. So every map
+        // contributed zero and a map-only scene fell back to EMPTY_SCENE_SPAN: the side-on widget
+        // scaled itself to fifty angstroms whatever was loaded, and "Clip off" - which sets the
+        // planes to 1.5x the scene span - cut a 550 angstrom EM map down to a 150 angstrom slab.
+        //
+        // Shaped like the real object rather than like the parameter list, because the old tests
+        // passed { cell } directly and so agreed with the function while both disagreed with
+        // every map that has ever existed.
+        const emMap = {
+            headerInfo: { spacegroup: "P 1", cell: { a: 560, b: 560, c: 560 }, resolution: 3.2 },
+            suggestedRadius: 279,
+            mapRadius: 15,
+        };
+        expect(mapSpan(emMap)).toBeCloseTo(Math.hypot(560, 560, 560), 6);
+        expect(mapSpan(emMap)).toBeGreaterThan(547);
+        // And what the symptom actually depended on: a scene of nothing but this map.
+        expect(sceneSpan({ positioned: [null], sizes: [mapSpan(emMap)] }))
+            .toBeGreaterThan(EMPTY_SCENE_SPAN);
     });
 
     it("takes the larger of a positioned box and a standalone size", () => {
@@ -184,5 +212,38 @@ describe("sceneSpan", () => {
             expect(Number.isFinite(span)).toBe(true);
             expect(span).toBeGreaterThan(0);
         }
+    });
+});
+
+describe("sphereOfPoints", () => {
+    it("is centred on the box and reaches the farthest point, not the box corner", () => {
+        // Points on a sphere of radius 10: the box's half diagonal would say 17.3.
+        const ball: [number, number, number][] = [[10, 0, 0], [-10, 0, 0], [0, 10, 0], [0, -10, 0], [0, 0, 10], [0, 0, -10]];
+        const s = sphereOfPoints(ball, boundsOfPoints(ball));
+        expect(s.centre).toEqual([0, 0, 0]);
+        expect(s.radius).toBeCloseTo(10, 6);
+    });
+
+    it("is null without bounds", () => {
+        expect(sphereOfPoints([], null)).toBeNull();
+    });
+});
+
+describe("reachFrom", () => {
+    it("is the radius for a ball about the centre", () => {
+        expect(reachFrom([0, 0, 0], [{ centre: [0, 0, 0], radius: 15 }])).toBeCloseTo(15, 6);
+    });
+
+    it("adds the distance to a ball the view has moved away from", () => {
+        expect(reachFrom([0, 0, 0], [{ centre: [30, 40, 0], radius: 5 }])).toBeCloseTo(55, 6);
+    });
+
+    it("takes the farthest of several, and skips nulls", () => {
+        expect(reachFrom([0, 0, 0], [null, { centre: [0, 0, 0], radius: 3 }, { centre: [10, 0, 0], radius: 2 }])).toBeCloseTo(12, 6);
+    });
+
+    it("is 0 with nothing to measure", () => {
+        expect(reachFrom([0, 0, 0], [])).toBe(0);
+        expect(reachFrom([0, 0, 0], [{ centre: [NaN, 0, 0], radius: 1 }])).toBe(0);
     });
 });

@@ -36,3 +36,15 @@ export type SeqElement = {
     residues: Residue[];
     validationTracks?: {categorie: string, name: string }[];
 };
+
+export type HoveredResidue = {
+    molNo: number;
+    chain: string;
+    resNum: number;
+};
+
+/**
+ * Subscribes to the hovered residue: calls the callback with the current one at once and on each
+ * change, and returns the unsubscribe function.
+ */
+export type HoveredResidueSubscription = (callback: (residue: HoveredResidue | null) => void) => () => void;

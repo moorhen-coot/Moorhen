@@ -3,10 +3,12 @@
  * (`mapRepresentations` slice), saved in scenes and sessions. Drawn by `MapRepresentation` (MapRepresentation.ts).
  * See .roadmaps/map-display.md.
  */
+import type { MapStyle } from "../../store/mapContourSettingsSlice";
 import type { MoorhenMap } from "../MoorhenMap";
 import { guid } from "../utils";
 
-export type MapStyle = "lines" | "lit-lines" | "solid";
+/** "slice" draws a contoured 2D slice (MoorhenMap.drawMapSlice), the others a 3D contour */
+export type { MapStyle };
 /** "full": draw the whole map around a fixed centre (origin lock, offered for EM maps); "local": follow the view */
 export type MapDrawMode = "local" | "full";
 /** 0-1 */
@@ -36,7 +38,7 @@ export type MapRepresentationData = {
 
 export const drawModeOf = (data: MapRepresentationData): MapDrawMode => (data.originLock ? "full" : "local");
 export const currentRadius = (data: MapRepresentationData): number => data.radius[drawModeOf(data)];
-export const currentAlpha = (data: MapRepresentationData): number => data.alpha[data.style];
+export const currentAlpha = (data: MapRepresentationData): number => data.alpha[data.style] ?? 1;
 
 /**
  * The display a map gets when it is loaded.
@@ -46,11 +48,17 @@ export const createDefaultMapRepresentationData = (
     map: MoorhenMap,
     preferences: { defaultMapLitLines: boolean; defaultMapSurface: boolean }
 ): MapRepresentationData => {
-    const localRadius = map.suggestedRadius ? map.suggestedRadius * 1.2 : 15;
+    // The 1.2 is headroom so a map does not stop just past the edge of the view. A cube's suggested radius is a
+    // hard limit instead (the cell repeats beyond it), so it is taken as given.
+    const localRadius = map.isCube ? map.suggestedRadius || 5 : map.suggestedRadius ? map.suggestedRadius * 1.2 : 15;
     // Enough to cover the whole cell from its centre (same as the map card's slider maximum)
     const fullRadius = map.isEM && map.headerInfo?.cell.a ? Math.ceil((map.headerInfo.cell.a * 1.732) / 2) : localRadius;
     let contourLevel: number;
-    if (map.isEM) {
+    if (map.isCube) {
+        // A cube says what level to contour at, in the field's own units (Psi4 writes the range covering 85% of the
+        // density). Signed cube fields are flagged as difference maps, hence before the isDifference tests.
+        contourLevel = map.suggestedContourLevel;
+    } else if (map.isEM) {
         contourLevel = map.isDifference ? 5 * map.mapRmsd : map.suggestedContourLevel;
     } else {
         contourLevel = map.isDifference ? 3 * map.mapRmsd : map.mapRmsd;
@@ -64,7 +72,7 @@ export const createDefaultMapRepresentationData = (
         contourLevel,
         radius: { local: localRadius, full: fullRadius },
         style: map.isEM ? "solid" : preferredStyle,
-        alpha: { lines: 1, "lit-lines": 1, solid: 1 },
+        alpha: { lines: 1, "lit-lines": 1, solid: 1, slice: 1 },
         colour: null,
         positiveColour: null,
         negativeColour: null,

@@ -23,7 +23,7 @@ export type UserScene = {
 };
 
 /** Scenes that ship with Moorhen: they cannot be deleted and their settings are user preferences */
-export const BUILT_IN_SCENE_IDS = ["Overview", "Model Building"] as const;
+export const BUILT_IN_SCENE_IDS = ["General", "Model Building"] as const;
 
 export type BuiltInSceneId = (typeof BUILT_IN_SCENE_IDS)[number];
 
@@ -39,19 +39,21 @@ export const isBuiltInScene = (sceneId: string): sceneId is BuiltInSceneId => (B
 const { fogClipOffset } = sceneSettingsInitialState;
 
 /**
- * What each built-in scene changes from the default scene settings: "Overview" looks at the whole structure
+ * What each built-in scene changes from the default scene settings: "General" looks at the whole structure
  * (fixed clipping and fog), "Model Building" has clipping and fog following the zoom.
  */
 const BUILT_IN_SCENE_PRESETS: Record<BuiltInSceneId, SceneSettingsSnapshot> = {
-    Overview: {
-        resetClippingFogging: false,
-        clipStart: 40,
-        clipEnd: 40,
+    General: {
+        autoFog: true,
+        autoClip: false,
+        doClip: false,
         fogStart: fogClipOffset - 2,
         fogEnd: fogClipOffset + 120,
     },
     "Model Building": {
-        resetClippingFogging: true,
+        autoFog: true,
+        autoClip: true,
+        defaultRepresentationStyle: "CBs",
     },
 };
 
@@ -90,11 +92,11 @@ const initialState: {
     // Until preferences are restored (userScene.applySavedScenes), built-in scenes start from their defaults
     scenes: BUILT_IN_SCENE_IDS.map(id => ({ id, name: id, content: emptyContent(builtInSceneDefaults(id)) })),
     snapshots: [],
-    selectedScene: "Overview",
+    selectedScene: "General",
     isSceneChanging: false,
     shownRevision: 0,
     savedSceneSettings: {
-        Overview: builtInSceneDefaults("Overview"),
+        General: builtInSceneDefaults("General"),
         "Model Building": builtInSceneDefaults("Model Building"),
     },
 };

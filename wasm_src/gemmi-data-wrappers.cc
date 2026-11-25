@@ -621,6 +621,7 @@ GlobWalk
     function("get_chem_shift_info",&get_chem_shift_info);
 
     function("cidToNeighboursCid",&cidToNeighboursCid);
+    function("cidToNeighboursCidAcross",&cidToNeighboursCidAcross);
 
     value_array<std::array<double, 9>>("array_native_double_9")
         .element(emscripten::index<0>())

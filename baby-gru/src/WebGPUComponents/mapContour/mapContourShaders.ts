@@ -45,6 +45,9 @@ struct Params {
     level: vec4f,
     // x: room for vertices; y: room for triangles; z: room for lines.
     caps: vec4u,
+    // An EM map's data, in fractional coordinates (xyz): from emMin to emMax. The cell otherwise.
+    emMin: vec4f,
+    emMax: vec4f,
 };
 @group(0) @binding(0) var<uniform> P: Params;
 
@@ -191,7 +194,7 @@ fn keepMidpoint(middle: vec3f) -> bool {
     var keep = dot(d, d) <= P.centre.w;
     if (keep && P.box.w != 0u) {
         let f = toFrac(middle);
-        keep = all(f >= vec3f(0.0)) && all(f <= vec3f(1.0));
+        keep = all(f >= P.emMin.xyz) && all(f <= P.emMax.xyz);
     }
     return keep;
 }

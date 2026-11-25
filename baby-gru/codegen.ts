@@ -9,6 +9,10 @@ const config: CodegenConfig = {
       plugins: [],
       presetConfig: {
         gqlTagName: 'gql',
+      },
+      config: {
+        // client-preset 6 types custom scalars (e.g. RCSB's Date) as unknown; keep them as any, as before
+        defaultScalarType: 'any',
       }
     }
   },

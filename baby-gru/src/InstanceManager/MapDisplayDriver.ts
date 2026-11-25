@@ -23,7 +23,9 @@ import type { MoorhenInstance } from "./MoorhenInstance";
  * - (transition) updates each map's first record from the old `mapContourSettings` lists (legacyMapDisplay.ts);
  * - creates / disposes a `MapRepresentation` per record, and tells it when its record changed;
  * - re-contours representations that follow the view when the view moves (or on mouse up, with
- *   `reContourMapOnlyOnMouseUp`), and all of them when the line width changes.
+ *   `reContourMapOnlyOnMouseUp`), and all of them when the line width changes;
+ * - (transition) redraws "slice" representations when a slice's placement, nodal lines or contour spacing change
+ *   (still in `mapContourSettings`, not in the records).
  *
  * See .roadmaps/map-display.md.
  */
@@ -39,6 +41,7 @@ export class MapDisplayDriver {
     private lastRecords: Record<string, MapRepresentationData> = {};
     private lastOrigin: number[] | null = null;
     private lastLineWidth: number | null = null;
+    private lastSliceSettings: unknown[] | null = null;
     private lastFastRadii = new Map<string, number | null>();
 
     private unsubscribe: (() => void) | null = null;
@@ -82,6 +85,7 @@ export class MapDisplayDriver {
         this.knownMapUids = new Set();
         this.lastMaps = null;
         this.lastContourSettings = null;
+        this.lastSliceSettings = null;
         this.lastRecords = {};
         this.lastFastRadii.clear();
     }
@@ -156,6 +160,17 @@ export class MapDisplayDriver {
 
         this.syncRepresentations(state.mapRepresentations.representations);
         this.syncFastRadii(state);
+
+        const { mapSlices, mapSliceNodalLines, mapSliceContourSpacings } = state.mapContourSettings;
+        const sliceSettings = [mapSlices, mapSliceNodalLines, mapSliceContourSpacings];
+        if (!this.lastSliceSettings || sliceSettings.some((item, i) => item !== this.lastSliceSettings[i])) {
+            this.lastSliceSettings = sliceSettings;
+            this.representations.forEach(representation => {
+                if (representation.data?.style === "slice") {
+                    representation.update();
+                }
+            });
+        }
 
         if (state.mapContourSettings.mapLineWidth !== this.lastLineWidth) {
             this.lastLineWidth = state.mapContourSettings.mapLineWidth;

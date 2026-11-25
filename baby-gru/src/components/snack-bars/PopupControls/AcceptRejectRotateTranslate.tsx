@@ -87,12 +87,15 @@ export const AcceptRejectRotateTranslate = () => {
                         .filter(item => {
                             return [
                                 "CRs",
+                                "Worm",
+                                "Tubes",
                                 "CBs",
                                 "CAs",
                                 "ligands",
                                 "gaussian",
                                 "MolecularSurface",
                                 "VdWSurface",
+                                "AccessibleSurface",
                                 "VdwSpheres",
                                 "allHBonds",
                                 "glycoBlocks",

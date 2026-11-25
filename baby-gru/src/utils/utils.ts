@@ -88,13 +88,22 @@ export const parseAtomInfoLabel = (atomInfo: moorhen.AtomInfo) => {
     return `/${atomInfo.mol_name}/${atomInfo.chain_id}/${atomInfo.res_no}(${atomInfo.res_name})/${atomInfo.name}${atomInfo.has_altloc ? `:${atomInfo.alt_loc}` : ""}`;
 };
 
+/**
+ * Which residue the view is centred on.
+ *
+ * @param origin where the camera is, in the store's negated convention. Defaults to the store's
+ *     copy, which is right whenever the store is current. A movie export passes the camera's live
+ *     origin instead: during an export the store is deliberately left behind, because the export
+ *     drives the origin-dependent updates itself rather than through the listeners that watch it.
+ */
 export const getCentreAtom = async (
     molecules: MoorhenMolecule[],
     commandCentre: CommandCentre,
-    store: MoorhenReduxStoreType
+    store: MoorhenReduxStoreType,
+    origin?: readonly [number, number, number]
 ): Promise<[MoorhenMolecule, string]> => {
     const visibleMolecules: MoorhenMolecule[] = molecules.filter((molecule: MoorhenMolecule) => molecule.isVisible());
-    const originState = store.getState().sceneSettings.origin;
+    const originState = origin ?? store.getState().sceneSettings.origin;
     if (visibleMolecules.length === 0) {
         return [null, null];
     }
@@ -344,6 +353,13 @@ export const doDownloadText = (text: string, fileName: string) => {
     downloadFile(file, fileName);
 };
 
+/**
+ * A molecule's name from the file it was read from: the file name without its coordinate or
+ * dictionary extension (.pdb, .pdbqt, .ent, .cif, .mmcif, any case, optionally .gz). One pattern, so
+ * ".mmcif" is not first stripped as ".cif" (which left "name.m").
+ */
+export const moleculeNameFromFileName = (fileName: string): string => fileName.replace(/\.(pdbqt|pdb|ent|mmcif|cif)(\.gz)?$/i, "");
+
 export const readGemmiStructure = (coordData: ArrayBuffer | string, molName: string): gemmi.Structure => {
     const structure: gemmi.Structure = window.gemmiModule.read_structure_from_string(coordData, molName);
     return structure;
@@ -446,6 +462,39 @@ export const parseCid = (cid: string): ParsedCID => {
 }
 
 
+
+/**
+ * Get the alternate conformation a CID is restricted to, i.e. the `X` of a CID ending in `:X`
+ * (e.g. `//A/42/*:B` or `//A/42/*:,B` -> `B`). Multi-CIDs (`||`) only count if every part names
+ * the same alt conf.
+ * @returns The alt conf, or null if the CID is not restricted to a single one
+ */
+export const getCidAltConf = (cid: string): string | null => {
+    const altConfs = cid.split("||").map(part => part.match(/\/[^/]*:[\s,]*([A-Za-z0-9])$/)?.[1] ?? null);
+    return altConfs.every(altConf => altConf !== null && altConf === altConfs[0]) ? altConfs[0] : null;
+};
+
+/**
+ * Turn a (multi-)CID into a residue-level selection of one alternate conformation plus the atoms
+ * with no alt conf, e.g. `//A/41-43/*` -> `//A/41-43/*:,B`. Any atom name in the CID is dropped.
+ */
+export const restrictCidToAltConf = (cid: string, altConf: string): string => {
+    return cid
+        .split("||")
+        .map(part => {
+            const [, model = "", chain = "", residue = ""] = part.split("/");
+            return `/${model}/${chain || "*"}/${residue || "*"}/*:,${altConf}`;
+        })
+        .join("||");
+};
+
+/**
+ * CID of the residue to refine for a clicked atom, keeping the clicked atom's alt conf
+ * (e.g. `//A/42` or `//A/42/*:B`), so that only that conformation gets refined.
+ */
+export const residueCidForRefinement = (atom: { chain_id: string; res_no: number; alt_conf?: string }): string => {
+    return `//${atom.chain_id}/${atom.res_no}${atom.alt_conf ? `/*:${atom.alt_conf}` : ""}`;
+};
 
 export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     //molNo, chain_id, res_no, ins_code, alt_conf

@@ -442,6 +442,8 @@ export interface molecules_container_t extends ClassHandle {
   get_mesh_for_ligand_validation_vs_dictionary(_0: number, _1: EmbindString): simple_mesh_t;
   get_gaussian_surface(_0: number, _1: number, _2: number, _3: number, _4: number, _5: number): simple_mesh_t;
   get_molecular_representation_mesh(_0: number, _1: EmbindString, _2: EmbindString, _3: EmbindString, _4: number): simple_mesh_t;
+  set_residue_properties(_0: number, _1: EmbindString): boolean;
+  clear_residue_properties(_0: number): void;
   test_origin_cube(): simple_mesh_t;
   get_ramachandran_validation_markup_mesh(_0: number): simple_mesh_t;
   get_rotamer_dodecs(_0: number): simple_mesh_t;
@@ -494,6 +496,8 @@ export interface molecules_container_t extends ClassHandle {
 
 export interface molecules_container_js extends molecules_container_t {
   get_validation(_0: number): string;
+  save_and_clear_residue_secondary_structure(_0: number): void;
+  restore_residue_secondary_structure(_0: number): void;
   get_B_validation(_0: number): string;
   writePDBASCII(_0: number, _1: EmbindString): number;
   writeCIFASCII(_0: number, _1: EmbindString): number;
@@ -528,6 +532,7 @@ export interface molecules_container_js extends molecules_container_t {
   count_simple_mesh_vertices(_0: simple_mesh_t): number;
   DrawMoorhenMetaBalls(_0: number, _1: EmbindString, _2: number, _3: number, _4: number, _5: number): simple_mesh_t;
   DrawGlycoBlocks(_0: number, _1: EmbindString): instanced_mesh_t;
+  DrawBloboids(_0: number, _1: EmbindString, _2: VectorString, _3: VectorFloat): simple_mesh_t;
   smiles_to_pdb(_0: EmbindString, _1: EmbindString, _2: number, _3: number): string_string_pair;
   mol_text_to_pdb(_0: EmbindString, _1: EmbindString, _2: number, _3: number, _4: boolean, _5: boolean): string_string_pair;
   read_coords_string(_0: EmbindString, _1: EmbindString): int_string_pair;

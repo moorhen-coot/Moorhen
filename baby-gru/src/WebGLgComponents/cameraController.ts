@@ -94,7 +94,25 @@ export type DriverName = "user" | "centring" | "movie" | "session" | "api";
  */
 export type SlabPolicy =
     | { kind: "manual" }
-    | { kind: "auto"; fieldDepthFront: number; fieldDepthBack: number };
+    | {
+          kind: "auto";
+          fieldDepthFront: number;
+          fieldDepthBack: number;
+          /** The fog follows the zoom (Auto fog). Default true */
+          fog?: boolean;
+          /** The clip planes follow the zoom (Auto clip). Default true */
+          clip?: boolean;
+      };
+
+/** The slab fields an auto policy sets for a zoom: only the fog, only the clip planes, or both */
+const autoSlab = (policy: Extract<SlabPolicy, { kind: "auto" }>, zoom: number): Partial<CameraState> => {
+    const front = zoom * policy.fieldDepthFront;
+    const back = zoom * policy.fieldDepthBack;
+    return {
+        ...(policy.clip !== false && { clipFront: front, clipBack: back }),
+        ...(policy.fog !== false && { fogFront: front, fogBack: back }),
+    };
+};
 
 export interface MoveResult {
     /** False when another driver took over before this move finished. */
@@ -223,6 +241,25 @@ interface ActiveMove {
     settle: (result: MoveResult) => void;
 }
 
+/**
+ * How far the view centre may travel during a driven move before listeners are told.
+ *
+ * The at-rest contract below is what keeps playback cheap, and it is right for everything that
+ * only needs to know where the camera *ended up*. It is wrong for the things that follow the view
+ * centre around: a crystallographic map is contoured in a sphere about the origin, and so are the
+ * environment distances, the adaptive bonds, the symmetry mates and the NEF restraints. All of
+ * them read the store's copy of the origin, so for the whole length of a movie they were looking
+ * at where the camera stood when Play was pressed - and the map slid off the screen.
+ *
+ * Distance rather than time, because distance is what the question is actually about: a contoured
+ * sphere stops covering the view when the centre has moved, and not before. A held frame or a pure
+ * rotation costs nothing, which no interval could manage.
+ */
+export interface MotionEcho {
+    /** Angstrom of travel that warrants telling anyone. */
+    distance: number;
+}
+
 export class CameraController {
 
     private current: CameraState;
@@ -232,8 +269,30 @@ export class CameraController {
     /** Turns that arrived while a move was in flight, applied when it lands. */
     private pendingTurn: Quat | null = null;
     private listeners = new Set<(state: Readonly<CameraState>) => void>();
+    /** Where the camera was when motion was last echoed; null means nothing has been. */
+    private lastEchoedOrigin: Vec3 | null = null;
 
     slabPolicy: SlabPolicy;
+
+    /**
+     * Tell listeners during a driven move, once the centre has travelled this far.
+     *
+     * Null - the default, and what every non-movie path leaves it at - keeps the at-rest contract
+     * exactly as it was. A movie sets it for its duration and puts it back, the way it does with
+     * the slab policy.
+     */
+    private echoPolicy: MotionEcho | null = null;
+
+    get motionEcho(): MotionEcho | null {
+        return this.echoPolicy;
+    }
+
+    set motionEcho(policy: MotionEcho | null) {
+        this.echoPolicy = policy;
+        // From here, not from wherever the camera last happened to be announced. Otherwise a movie
+        // that starts far from the last echo fires on its first frame for no reason.
+        this.lastEchoedOrigin = policy ? [...this.current.origin] as Vec3 : null;
+    }
 
     constructor(initial: CameraState, slabPolicy: SlabPolicy = { kind: "manual" }) {
         this.current = clone(initial);
@@ -303,12 +362,7 @@ export class CameraController {
      */
     reapplySlab(): void {
         if (this.slabPolicy.kind === "manual") return;
-        const { fieldDepthFront, fieldDepthBack } = this.slabPolicy;
-        const front = this.current.zoom * fieldDepthFront;
-        const back = this.current.zoom * fieldDepthBack;
-        this.current = {
-            ...this.current, clipFront: front, clipBack: back, fogFront: front, fogBack: back,
-        };
+        this.current = { ...this.current, ...autoSlab(this.slabPolicy, this.current.zoom) };
         this.notify();
     }
 
@@ -381,6 +435,7 @@ export class CameraController {
         if (this.sampler) {
             // A driven sequence owns the clock; it is told the time and says where to be.
             this.current = this.applySlab(mergeLive(this.current, this.sampler(seconds)));
+            this.echoIfTravelled();
             return;
         }
 
@@ -400,6 +455,7 @@ export class CameraController {
         if (writes.has("fogFront")) next.fogFront = sample.fogFront;
         if (writes.has("fogBack")) next.fogBack = sample.fogBack;
         this.current = this.applySlab(next, writes.has("clipFront"));
+        this.echoIfTravelled();
 
         if (elapsed >= this.move.duration) {
             const settle = this.move.settle;
@@ -565,16 +621,35 @@ export class CameraController {
         if (wroteSlab) return state;
         // `this.current` is still the pre-write state here: every caller assigns the result.
         if (state.zoom === this.current.zoom) return state;
-        const { fieldDepthFront, fieldDepthBack } = this.slabPolicy;
         // Expressed as offsets from the centre, fog and clip are the same two distances. The old
         // derivation looked like four numbers because two of them were measured from the eye.
-        const front = state.zoom * fieldDepthFront;
-        const back = state.zoom * fieldDepthBack;
-        return { ...state, clipFront: front, clipBack: back, fogFront: front, fogBack: back };
+        return { ...state, ...autoSlab(this.slabPolicy, state.zoom) };
     }
 
     private notify(): void {
         this.listeners.forEach(listener => listener(this.current));
+    }
+
+    /**
+     * Tell listeners mid-move if the centre has gone far enough to matter.
+     *
+     * Squared distance, so a moving camera does not pay for a square root on every frame to answer
+     * a question that only ever needs comparing. Nothing happens at all without a policy, which is
+     * every path except a movie.
+     */
+    private echoIfTravelled(): void {
+        if (!this.echoPolicy) return;
+        const origin = this.current.origin;
+        const from = this.lastEchoedOrigin;
+        if (from) {
+            const dx = origin[0] - from[0];
+            const dy = origin[1] - from[1];
+            const dz = origin[2] - from[2];
+            const limit = this.echoPolicy.distance;
+            if (dx * dx + dy * dy + dz * dz < limit * limit) return;
+        }
+        this.lastEchoedOrigin = [...origin] as Vec3;
+        this.notify();
     }
 }
 

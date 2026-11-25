@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { MoorhenSequenceViewer, MoorhenSequenceViewerSequence } from "@/components/sequence-viewer";
-import { MoorhenSelectionToSeqViewer, handleResiduesSelection, useHoveredResidue } from "@/components/sequence-viewer/utils";
+import { MoorhenSelectionToSeqViewer, handleResiduesSelection, useHoveredResidueSubscription } from "@/components/sequence-viewer/utils";
 import { RootState, setHoveredAtom } from "@/store";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 
@@ -41,7 +41,7 @@ export const BaseSequenceViewerPanel = ({
     }, [moleculeList, selectedMolecule]);
 
     const sequenceSelection = useMemo(() => MoorhenSelectionToSeqViewer(residueSelection), [residueSelection]);
-    const hoveredResidue = useHoveredResidue();
+    const subscribeToHoveredResidue = useHoveredResidueSubscription();
 
     const handleClick = useCallback(
         (modelIndex: number, molName: string, chain: string, seqNum: number) => {
@@ -76,7 +76,7 @@ export const BaseSequenceViewerPanel = ({
             key={seqViewerKey}
             sequences={sequences}
             selectedResidues={sequenceSelection}
-            hoveredResidue={hoveredResidue}
+            subscribeToHoveredResidue={subscribeToHoveredResidue}
             displayHeight={displayHeight}
             showTitleBar={showTitleBar}
             onResidueClick={handleClick}

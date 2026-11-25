@@ -21,7 +21,13 @@ const initialState: {
     theme: string;
     residueSelection: ResidueSelection;
     selectedThreeDObjectId: string | null;
+    /** Which map's 2D slice is showing manipulation handles, or none (by its molNo). */
+    movingMapSlice: number | null;
     isShowingTomograms: boolean;
+    /** Progress of a long task that reports it (e.g. files.batchLoadLigands), shown by the long job notification */
+    jobProgress: { label: string; done: number; total: number } | null;
+    /** How many files.batchLoadLigands are running: the ligand list waits for them to end before rendering its rows */
+    ligandBatchLoads: number;
     isAnimatingTrajectory: boolean;
     isChangingRotamers: boolean;
     isDraggingAtoms: boolean;
@@ -36,7 +42,9 @@ const initialState: {
     showHoverInfo: boolean;
     viewOnly: boolean;
     allowScripting: boolean;
+    /** @deprecated Read by nothing: the Fit ligand modal always offers to save a pose as a new molecule. */
     allowAddNewFittedLigand: boolean;
+    /** @deprecated Read by nothing: the Fit ligand modal no longer merges a pose into the model. */
     allowMergeFittedLigand: boolean;
     disableFileUpload: boolean;
 } = {
@@ -50,6 +58,7 @@ const initialState: {
 
     showHoverInfo: true,
     selectedThreeDObjectId: null,
+    movingMapSlice: null,
     residueSelection: {
         molecule: null,
         first: null,
@@ -62,6 +71,8 @@ const initialState: {
     defaultExpandDisplayCards: null,
     transparentModalsOnMouseOut: null,
     isShowingTomograms: false,
+    jobProgress: null,
+    ligandBatchLoads: 0,
     isAnimatingTrajectory: false,
     isChangingRotamers: false,
     isDraggingAtoms: false,
@@ -86,6 +97,14 @@ const generalStatesSlice = createSlice({
         },
         setIsShowingTomograms: (state, action: PayloadAction<boolean>) => {
             state.isShowingTomograms = action.payload;
+        },
+        // API globalUI
+        setJobProgress: (state, action: PayloadAction<{ label: string; done: number; total: number } | null>) => {
+            state.jobProgress = action.payload;
+        },
+        /** true when a ligand batch load starts, false when it ends (however it ends) */
+        setLigandBatchLoading: (state, action: PayloadAction<boolean>) => {
+            state.ligandBatchLoads = Math.max(0, state.ligandBatchLoads + (action.payload ? 1 : -1));
         },
         setIsAnimatingTrajectory: (state, action: PayloadAction<boolean>) => {
             state.isAnimatingTrajectory = action.payload;
@@ -161,6 +180,16 @@ const generalStatesSlice = createSlice({
          */
         setSelectedThreeDObject: (state, action: PayloadAction<string | null>) => {
             state.selectedThreeDObjectId = action.payload;
+            // One thing has handles at a time.
+            if (action.payload !== null) state.movingMapSlice = null;
+        },
+        /**
+         * Which map's 2D slice is showing manipulation handles, or none: as setSelectedThreeDObject
+         * for a 3D object, and the two take turns.
+         */
+        setMovingMapSlice: (state, action: PayloadAction<number | null>) => {
+            state.movingMapSlice = action.payload;
+            if (action.payload !== null) state.selectedThreeDObjectId = null;
         },
         setResidueSelection: (state, action: PayloadAction<ResidueSelection>) => {
             state.residueSelection = action.payload as unknown as typeof state.residueSelection; 
@@ -186,9 +215,11 @@ const generalStatesSlice = createSlice({
         setAllowScripting: (state, action: PayloadAction<boolean>) => {
             state.allowScripting = action.payload;
         },
+        /** @deprecated No effect (see allowAddNewFittedLigand); kept so hosts that call it still compile. */
         setAllowAddNewFittedLigand: (state, action: PayloadAction<boolean>) => {
             state.allowAddNewFittedLigand = action.payload;
         },
+        /** @deprecated No effect (see allowMergeFittedLigand); kept so hosts that call it still compile. */
         setAllowMergeFittedLigand: (state, action: PayloadAction<boolean>) => {
             state.allowMergeFittedLigand = action.payload;
         },
@@ -202,6 +233,7 @@ const generalStatesSlice = createSlice({
 
 export const {
     setSelectedThreeDObject,
+    setMovingMapSlice,
     setActiveMap,
     setViewOnly,
     setTheme,
@@ -224,6 +256,8 @@ export const {
     setIsAnimatingTrajectory,
     resetGeneralStates,
     setIsShowingTomograms,
+    setJobProgress,
+    setLigandBatchLoading,
     setDefaultExpandDisplayCards,
     setTransparentModalsOnMouseOut,
     setUseGemmi,

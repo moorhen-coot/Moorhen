@@ -31,7 +31,7 @@ const record = (id: string, mapUid: string, changes: Partial<MapRepresentationDa
     contourLevel: 0.3,
     radius: { local: 15, full: 120 },
     style: "lines",
-    alpha: { lines: 1, "lit-lines": 1, solid: 1 },
+    alpha: { lines: 1, "lit-lines": 1, solid: 1, slice: 1 },
     colour: null,
     positiveColour: null,
     negativeColour: null,
@@ -62,7 +62,7 @@ describe("mapRepresentations slice", () => {
 
         const mesh = selectMapRepresentation(store.getState(), "mesh");
         expect(mesh.contourLevel).toBe(0.6);
-        expect(mesh.alpha).toEqual({ lines: 1, "lit-lines": 1, solid: 0.4 });
+        expect(mesh.alpha).toEqual({ lines: 1, "lit-lines": 1, solid: 0.4, slice: 1 });
         expect(mesh.radius).toEqual({ local: 15, full: 150 });
         expect(Object.keys(store.getState().mapRepresentations.representations)).toEqual(["mesh"]);
     });
@@ -133,6 +133,7 @@ describe("createDefaultMapRepresentationData", () => {
             showOnLoad: true,
             isEM: false,
             isDifference: false,
+            isCube: false,
             mapRmsd: 0.25,
             suggestedContourLevel: 0.4,
             suggestedRadius: 10,
@@ -149,7 +150,7 @@ describe("createDefaultMapRepresentationData", () => {
         expect(map.radius.local).toBe(12);
         expect(map.style).toBe("lit-lines");
         expect(map.originLock).toBeNull();
-        expect(map.alpha).toEqual({ lines: 1, "lit-lines": 1, solid: 1 });
+        expect(map.alpha).toEqual({ lines: 1, "lit-lines": 1, solid: 1, slice: 1 });
 
         expect(createDefaultMapRepresentationData(fakeMap({ isDifference: true }), preferences).contourLevel).toBe(0.75);
     });
@@ -168,5 +169,11 @@ describe("createDefaultMapRepresentationData", () => {
         expect(map.radius.full).toBe(Math.ceil((200 * 1.732) / 2));
         // mapCentre is a scene origin (negated world coordinates)
         expect(map.originLock).toEqual({ centre: [100, 50, 25] });
+    });
+
+    test("Gaussian cube: the file's suggested level and radius as given, even when signed", () => {
+        const map = createDefaultMapRepresentationData(fakeMap({ isCube: true, isDifference: true, suggestedContourLevel: 0.05, suggestedRadius: 8 }), preferences);
+        expect(map.contourLevel).toBe(0.05);
+        expect(map.radius.local).toBe(8);
     });
 });

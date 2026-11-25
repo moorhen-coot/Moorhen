@@ -1,4 +1,3 @@
-import { useSnackbar } from "notistack";
 import { useDispatch } from "react-redux";
 import { memo, useState } from "react";
 import { MoorhenLigandSelect } from "@/components/inputs/Selector/MoorhenLigandSelect";
@@ -26,8 +25,6 @@ export const PictureWizardCard = memo(
 
         const dispatch = useDispatch();
 
-        const { enqueueSnackbar } = useSnackbar();
-
         const handleCreateRepresentation = async () => {
             props.setBusy?.(true);
             try {
@@ -46,7 +43,8 @@ export const PictureWizardCard = memo(
                 });
             } catch (err) {
                 console.warn(err);
-                enqueueSnackbar(`Something went wrong while creating a new custom representation`, {
+                moorhenInstance.snackbar.enqueueSnackbar({
+                    message: "Something went wrong while creating a new custom representation",
                     variant: "error",
                 });
             } finally {

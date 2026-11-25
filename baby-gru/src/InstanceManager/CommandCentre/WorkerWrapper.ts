@@ -47,7 +47,7 @@
  *     type from WorkerResponse is a breaking change for its callers.
  */
 import { libcootApi } from "@/types/libcoot";
-import { CommandSquashedError, commandName, throwIfCootFailed } from "./CootCommandError";
+import { CommandSquashedError, CootCommandError, commandName, throwIfCootFailed } from "./CootCommandError";
 import { WorkerResponse, cootCommandKwargs } from "./MoorhenCommandCentre";
 
 export type WorkerCommandOptions = {
@@ -125,6 +125,78 @@ export type ResidueValidationData = {
 } & Record<string, number | null>;
 
 export type ValidationData = Record<string, ResidueValidationData[]>;
+
+/** An atom as the selection contacts give it (wasm_src/selection-contacts.h). */
+export type CootContactAtom = {
+    /** Relative to the molecule analysed, e.g. "//A/45/NZ" */
+    cid: string;
+    chainId: string;
+    resNo: number;
+    insCode: string;
+    resName: string;
+    atomName: string;
+    altLoc: string;
+    xyz: [number, number, number];
+};
+
+/** A molecule made by make_merged_molecule, and where each of its chains came from. */
+export type MergedMolecule = {
+    imol: number;
+    chains: { chainId: string; imol: number; sourceChainId: string }[];
+};
+
+export type SelectionHBond = {
+    /** Null when the bond was found from its hydrogen only (McDonald & Thornton) */
+    donor: CootContactAtom | null;
+    hydrogen: CootContactAtom | null;
+    acceptor: CootContactAtom;
+    /** H...A when the bond has its hydrogen, else D...A */
+    distance: number;
+    /** The selection the donor is in */
+    donorSelection: 1 | 2;
+};
+
+export type SaltBridge = {
+    /** From the first selection */
+    atom1: CootContactAtom;
+    /** From the second selection */
+    atom2: CootContactAtom;
+    distance: number;
+    /** The charge of atom1; atom2 has the opposite one */
+    charge1: -1 | 1;
+};
+
+/** One XH-π interaction found by XPID (checkout/xpid_moorhen/interface.h). */
+export type XhpiInteraction = {
+    pdb: string;
+    model: string;
+    pi_chain: string;
+    pi_res: string;
+    pi_id: number;
+    pi_seqid: string;
+    pi_ring: string;
+    X_chain: string;
+    X_res: string;
+    X_id: number;
+    X_seqid: string;
+    X_atom: string;
+    H_atom: string;
+    dist_X_Pi: number;
+    is_plevin: number;
+    is_hudson: number;
+    remark: string;
+    pi_center_x: number;
+    pi_center_y: number;
+    pi_center_z: number;
+    X_xyz_x: number;
+    X_xyz_y: number;
+    X_xyz_z: number;
+    method: string;
+    theta: number;
+    angle_xh_pi: number;
+    angle_xpcn: number;
+    proj_dist: number;
+} & Record<string, string | number | null>;
 
 /**
  * Wrapper allowing the execution of web worker commands.
@@ -238,10 +310,94 @@ export class WorkerWrapper {
     }
 
     /** Queue a command, throw a CootCommandError naming it if it failed, return its result */
-    private async run<T>(kwargs: cootCommandKwargs, doJournal: boolean, options?: WorkerCommandOptions): Promise<T> {
+    private async run<T>(kwargs: cootCommandKwargs, doJournal: boolean = false, options?: WorkerCommandOptions): Promise<T> {
         const reply = await this.enqueue(kwargs, doJournal, options);
         throwIfCootFailed(reply, kwargs);
         return reply.data.result.result as T;
+    }
+
+    /** Run a command that returns JSON and parse it; throw a CootCommandError on {"error": ...}. */
+    private async runJson<T>(command: string, commandArgs: unknown[]): Promise<T> {
+        const parsed = JSON.parse(await this.run<string>({ command, commandArgs, returnType: "string" }));
+        if (parsed && !Array.isArray(parsed) && typeof parsed.error === "string") {
+            throw new CootCommandError(command, parsed.error);
+        }
+        return parsed as T;
+    }
+
+    /**
+     * The residue types of a molecule for which Coot has no dictionary (no restraints in its
+     * geometry store): such residues are drawn from guessed bonds and cannot be refined.
+     */
+    async get_residue_names_with_no_dictionary(imol: number): Promise<string[]> {
+        return this.run<string[]>({ command: "get_residue_names_with_no_dictionary", commandArgs: [imol], returnType: "string_array" });
+    }
+
+    /**
+     * Make a temporary molecule holding the atoms of `cid1` in molecule `imol1` and of `cid2` in
+     * `imol2`, so that analyses of one molecule (H-bonds, salt bridges, XH-π, FLEV...) can look
+     * across two. The first selection keeps its chain ids; a chain of the second gets a new id if
+     * the first already uses its own (`chains` says where each came from). Residue numbers are
+     * kept. Delete it with {@link delete_merged_molecule} when done.
+     *
+     * @param imol1 - The molecule of the first selection.
+     * @param cid1 - The first selection; several CIDs can be joined with "||".
+     * @param imol2 - The molecule of the second selection.
+     * @param cid2 - The second selection.
+     */
+    async make_merged_molecule(imol1: number, cid1: string, imol2: number, cid2: string): Promise<MergedMolecule> {
+        return this.runJson<MergedMolecule>("make_merged_molecule_json", [imol1, cid1, imol2, cid2]);
+    }
+
+    /**
+     * Delete a molecule made by {@link make_merged_molecule}, and any closed molecules after it,
+     * so that their indices are reused.
+     */
+    async delete_merged_molecule(imol: number): Promise<void> {
+        await this.run<number>({ command: "delete_merged_molecule", commandArgs: [imol], returnType: "status" });
+    }
+
+    /**
+     * Hydrogen bonds between two selections of a molecule. The second selection never includes
+     * atoms of the first, so "/*" as the second means "everything else".
+     *
+     * @param mcdonaldAndThornton - Use explicit hydrogens (McDonald & Thornton). Otherwise donors and
+     * acceptors come from the dictionaries and no hydrogens are needed.
+     */
+    async get_h_bonds_between(imol: number, cid1: string, cid2: string, mcdonaldAndThornton: boolean = false): Promise<SelectionHBond[]> {
+        return this.runJson<SelectionHBond[]>("get_h_bonds_between_json", [imol, cid1, cid2, mcdonaldAndThornton]);
+    }
+
+    /**
+     * Salt bridges between two selections of a molecule: oppositely charged N / O / S atoms within
+     * `maxDistance`, once per pair of charged groups. Standard residues use a fixed table, other
+     * residues the formal charges of their dictionaries. "/*" as the second selection means
+     * "everything else".
+     */
+    async get_salt_bridges(imol: number, cid1: string, cid2: string, maxDistance: number = 4.0): Promise<SaltBridge[]> {
+        return this.runJson<SaltBridge[]>("get_salt_bridges_json", [imol, cid1, cid2, maxDistance]);
+    }
+
+    /**
+     * XH-π interactions in a molecule, by XPID. XPID adds hydrogens from the monomer library, so
+     * dictionaries it would not find there (ligands) are passed by comp id.
+     */
+    async detect_xhpi_interactions(imol: number, ligandDictionaries: Record<string, string> = {}): Promise<XhpiInteraction[]> {
+        return this.runJson<XhpiInteraction[]>("shim_detect_xhpi_interactions", [imol, ligandDictionaries]);
+    }
+
+    /**
+     * Coot's 2D ligand environment diagram (FLEV) as SVG; empty when Coot cannot draw it. The
+     * ligand's dictionary must be loaded.
+     *
+     * @param residueCid - The ligand residue, e.g. "//B/1".
+     */
+    async get_svg_for_2d_ligand_environment_view(imol: number, residueCid: string, addKey: boolean = false): Promise<string> {
+        return this.run<string>({
+            command: "get_svg_for_2d_ligand_environment_view",
+            commandArgs: [imol, residueCid, addKey],
+            returnType: "string",
+        });
     }
 
     /**

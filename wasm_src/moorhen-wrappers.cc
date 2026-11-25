@@ -1,4 +1,22 @@
 #include "moorhen-wrappers-helpers.h"
+#include <emscripten/eventloop.h>
+
+// Keep the runtime alive for the life of the module.
+//
+// This module has no main(). In a pthreads build that is linked without noExitRuntime in
+// INCOMING_MODULE_JS_API, emscripten decides whether the runtime may exit by
+// runtimeKeepaliveCounter alone - which only main() (through emscripten_exit_with_live_runtime)
+// would raise. So it stays at 0, and the first callback the glue runs on the main thread - such
+// as a pthread proxying its stdout there, or the clean-up of a pthread that has exited - ends in
+// maybeExit() -> exit(): every pthread in the pool is terminated and the runtime is marked
+// aborted. Direct calls still work afterwards, but the next one to start a thread finds no
+// worker left ("Tried to spawn a new thread, but the thread pool is exhausted") and hangs.
+//
+// CMakeLists.txt passes noExitRuntime, which is enough on its own. This push does not depend on
+// the link flags, so it still holds if that list is edited again. Static initializers run once,
+// on the main thread, before any pthread is started.
+// Checked by baby-gru/tests/__tests__/runtimeKeepalive.test.js.
+static const bool moorhen_runtime_kept_alive = (emscripten_runtime_keepalive_push(), true);
 
 EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_t>("molecules_container_t")
@@ -115,6 +133,8 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("get_cavities",&molecules_container_t::get_cavities)
     .function("get_monomer_from_dictionary",&molecules_container_t::get_monomer_from_dictionary)
     .function("get_molecular_representation_mesh",&molecules_container_t::get_molecular_representation_mesh)
+    .function("set_residue_properties",&molecules_container_t::set_residue_properties)
+    .function("clear_residue_properties",&molecules_container_t::clear_residue_properties)
     .function("get_map_weight",&molecules_container_t::get_map_weight)
     .function("set_map_weight",&molecules_container_t::set_map_weight)
     .function("set_show_timings",&molecules_container_t::set_show_timings)
@@ -282,11 +302,17 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
     .function("get_validation",&molecules_container_js::get_validation)
+    .function("save_and_clear_residue_secondary_structure",&molecules_container_js::save_and_clear_residue_secondary_structure)
+    .function("restore_residue_secondary_structure",&molecules_container_js::restore_residue_secondary_structure)
     .function("debug_throw_exception",&molecules_container_js::debug_throw_exception)
     .function("get_map_unit_cell_grid_info",&molecules_container_js::get_map_unit_cell_grid_info)
     .function("get_map_unit_cell_grid",&molecules_container_js::get_map_unit_cell_grid)
     .function("debug_abort",&molecules_container_js::debug_abort)
     .function("get_B_validation",&molecules_container_js::get_B_validation)
+    .function("make_merged_molecule_json",&molecules_container_js::make_merged_molecule_json)
+    .function("delete_merged_molecule",&molecules_container_js::delete_merged_molecule)
+    .function("get_h_bonds_between_json",&molecules_container_js::get_h_bonds_between_json)
+    .function("get_salt_bridges_json",&molecules_container_js::get_salt_bridges_json)
     .function("rotamer_analysis_json",&molecules_container_js::rotamer_analysis_json)
     .function("ramachandran_analysis_json",&molecules_container_js::ramachandran_analysis_json)
     .function("peptide_omega_analysis_json",&molecules_container_js::peptide_omega_analysis_json)
@@ -308,6 +334,7 @@ EMSCRIPTEN_BINDINGS(moorhen_container) {
     .function("get_neighbours_cid",&molecules_container_js::get_neighbours_cid)
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
+    .function("DrawBloboids",&molecules_container_js::DrawBloboids)
     .function("privateer_validate",&molecules_container_js::privateer_validate)
     .function("privateer_calculate_cremer_pople_parameters",&molecules_container_js::privateer_calculate_cremer_pople_parameters)
     .function("DrawCremerPopleSphere",&molecules_container_js::DrawCremerPopleSphere)

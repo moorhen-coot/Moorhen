@@ -8,6 +8,9 @@
  *
  * The map display driver (MapDisplayDriver) creates / disposes instances as records appear / disappear,
  * and calls `update()` when a record changes and `onViewMoved()` when the view origin moves.
+ *
+ * The "slice" style is not a Coot contour: the map draws it (`MoorhenMap.drawMapSlice`, from the slice placement and
+ * spacing still kept in `mapContourSettings`), so one representation per map can show it for now.
  */
 import { appendOtherData, buildBuffers } from "../../WebGLgComponents/buildBuffers";
 import type { DisplayBuffer } from "../../WebGLgComponents/displayBuffer";
@@ -48,7 +51,7 @@ type AppearanceKey = { alpha: number; colour: MapColour; positiveColour: MapColo
 const sameAppearance = (a: AppearanceKey | null, b: AppearanceKey): boolean =>
     a !== null && JSON.stringify(a) === JSON.stringify(b);
 
-const MESH_TYPES: Record<MapStyle, MapContourMeshType> = { lines: "lines_mesh", "lit-lines": "lit_lines_mesh", solid: "mesh_perm" };
+const MESH_TYPES: Record<Exclude<MapStyle, "slice">, MapContourMeshType> = { lines: "lines_mesh", "lit-lines": "lit_lines_mesh", solid: "mesh_perm" };
 
 type ContourBuffer = { buffer: DisplayBuffer; sign: "single" | "positive" | "negative" };
 
@@ -62,6 +65,8 @@ export class MapRepresentation {
     private lastAppearance: AppearanceKey | null = null;
     /** Smaller radius while the user drags a control (today `mapFastRadii`), not a setting */
     private fastRadius: number | null = null;
+    /** Whether the map's 2D slice was drawn for this representation ("slice" style) */
+    private showingSlice = false;
     private disposed = false;
 
     constructor(id: string, map: MoorhenMap, instance: MoorhenInstance) {
@@ -78,8 +83,20 @@ export class MapRepresentation {
     /** Called by the driver when the record changed: does the minimum (hide, re-contour or recolour) */
     update(): void {
         const data = this.data;
-        if (!data || !data.visible || gpuMapContourSetting.enabled) {
+        if (!data || !data.visible) {
             this.hide();
+            return;
+        }
+        if (data.style === "slice") {
+            // Drawn by the map, on WebGL or WebGPU alike; drawMapSlice does nothing if the slice is unchanged
+            this.hideContour();
+            this.showingSlice = true;
+            void this.map.drawMapSlice();
+            return;
+        }
+        this.hideSlice();
+        if (gpuMapContourSetting.enabled) {
+            this.hideContour();
             return;
         }
         const contour = this.contourKey(data);
@@ -94,7 +111,7 @@ export class MapRepresentation {
     /** Called by the driver when the view origin moves */
     onViewMoved(): void {
         const data = this.data;
-        if (data?.visible && !data.originLock) {
+        if (data?.visible && !data.originLock && data.style !== "slice") {
             void this.requestContour();
         }
     }
@@ -104,6 +121,10 @@ export class MapRepresentation {
      * refinement, reflections replaced), or the line width. Resolves once drawn (or replaced by a newer contour).
      */
     redraw(): Promise<void> {
+        if (this.data?.style === "slice") {
+            this.update();
+            return Promise.resolve();
+        }
         this.lastContour = null;
         return this.requestContour();
     }
@@ -115,6 +136,18 @@ export class MapRepresentation {
     }
 
     hide(): void {
+        this.hideSlice();
+        this.hideContour();
+    }
+
+    private hideSlice(): void {
+        if (this.showingSlice) {
+            this.showingSlice = false;
+            this.map.hideMapSlice();
+        }
+    }
+
+    private hideContour(): void {
         if (this.buffers.length === 0) {
             return;
         }
@@ -168,8 +201,8 @@ export class MapRepresentation {
     private requestContour(): Promise<void> {
         const data = this.data;
         // On the GPU, the WebGPU main view contours and draws the map itself (mapContour/setting.ts)
-        if (!data?.visible || gpuMapContourSetting.enabled) {
-            this.hide();
+        if (!data?.visible || data.style === "slice" || gpuMapContourSetting.enabled) {
+            this.update();
             return Promise.resolve();
         }
         return this.contour(this.contourKey(data), this.appearanceKey(data)).catch(err => {
@@ -181,7 +214,7 @@ export class MapRepresentation {
 
     private async contour(key: ContourKey, appearance: AppearanceKey): Promise<void> {
         const worker = this.instance.workerCommand;
-        const meshType = MESH_TYPES[key.style];
+        const meshType = MESH_TYPES[key.style as Exclude<MapStyle, "slice">];
         const options = { squashKey: this.squashKey };
         const mesh = key.colourByMap
             ? await worker.get_map_contours_mesh_using_other_map_for_colours(
@@ -198,7 +231,7 @@ export class MapRepresentation {
               )
             : await worker.get_map_contours_mesh(this.map.molNo, key.centre, key.radius, key.level, meshType, options);
         // Hidden, removed or moved to the GPU while the contour was running
-        if (this.disposed || !this.data?.visible || gpuMapContourSetting.enabled) {
+        if (this.disposed || !this.data?.visible || this.data.style === "slice" || gpuMapContourSetting.enabled) {
             return;
         }
         this.buildContourBuffers(mesh, appearance, key.colourByMap !== null);

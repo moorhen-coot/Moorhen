@@ -90,12 +90,16 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const edgeDetectNormalScale = useSelector((state: moorhen.State) => state.sceneSettings.edgeDetectNormalScale)
     const ssaoRadius = useSelector((state: moorhen.State) => state.sceneSettings.ssaoRadius)
     const ssaoBias = useSelector((state: moorhen.State) => state.sceneSettings.ssaoBias)
-    const resetClippingFogging = useSelector((state: moorhen.State) => state.sceneSettings.resetClippingFogging)
+    const autoFog = useSelector((state: RootState) => state.sceneSettings.autoFog)
+    const autoClip = useSelector((state: RootState) => state.sceneSettings.autoClip)
+    const doFog = useSelector((state: RootState) => state.sceneSettings.doFog)
+    const doClip = useSelector((state: RootState) => state.sceneSettings.doClip)
     const clipCap = useSelector((state: moorhen.State) => state.sceneSettings.clipCap)
     const doPerspectiveProjection = useSelector((state: moorhen.State) => state.sceneSettings.doPerspectiveProjection)
     const useOffScreenBuffers = useSelector((state: moorhen.State) => state.sceneSettings.useOffScreenBuffers)
     const doShadowDepthDebug = useSelector((state: moorhen.State) => state.sceneSettings.doShadowDepthDebug)
     const shadowMapQuality = useSelector((state: moorhen.State) => state.sceneSettings.shadowMapQuality)
+    const shadowSoftness = useSelector((state: moorhen.State) => state.sceneSettings.shadowSoftness)
     const doShadow = useSelector((state: moorhen.State) => state.sceneSettings.doShadow)
     const doSpin = useSelector((state: moorhen.State) => state.sceneSettings.doSpin)
     const doAnaglyphStereo = useSelector((state: moorhen.State) => state.sceneSettings.doAnaglyphStereo)
@@ -143,7 +147,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const clipEnd = useSelector((state: moorhen.State) => state.sceneSettings.clipEnd)
     const updateSwitch = useSelector((state: moorhen.State) => state.glRef.envUpdate.switch)
     const clearLabelsSwitch = useSelector((state: moorhen.State) => state.glRef.clearLabels.switch)
-    const requestDrawSceneSwitch = useSelector((state: moorhen.State) => state.glRef.requestDrawScene.switch)
+    const requestDrawSceneCount = useSelector((state: moorhen.State) => state.glRef.requestDrawScene.count)
     const labelBuffers = useSelector((state: moorhen.State) => state.glRef.labelBuffers)
 
     const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
@@ -278,6 +282,14 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     // dragging a handle drags the other along with it. Zoom is a dependency because the handles
     // are a constant size on screen, which means a changing size in the world.
     const selectedThreeDObjectId = useSelector((state: moorhen.State) => state.generalStates.selectedThreeDObjectId)
+    // ...or on a map's 2D slice: whether it has them, where it is, and whether it is still shown
+    // as a slice and how big (handleTargetOf).
+    const movingMapSlice = useSelector((state: moorhen.State) => state.generalStates.movingMapSlice)
+    const movingSlice = useSelector((state: moorhen.State) =>
+        state.mapContourSettings.mapSlices.find(item => item.molNo === state.generalStates.movingMapSlice))
+    const mapStyles = useSelector((state: moorhen.State) => state.mapContourSettings.mapStyles)
+    const visibleMaps = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps)
+    const mapRadii = useSelector((state: moorhen.State) => state.mapContourSettings.mapRadii)
     useEffect(() => {
         if (glRef === null || typeof glRef === 'function') return
         let superseded = false
@@ -296,7 +308,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
         rebuildGizmo()
         return () => { superseded = true }
-    }, [selectedThreeDObjectId, threeDObjects, zoom, backgroundColor, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
+    }, [selectedThreeDObjectId, threeDObjects, movingMapSlice, movingSlice, mapStyles, visibleMaps, mapRadii, zoom, backgroundColor, glRef, store, buildDisplayBuffers, publishDisplayBuffers])
 
     const commandCentre = useCommandCentre()
 
@@ -308,7 +320,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
      * listening for, and because removing it is a separate decision from this one.
      */
     const handleZoomChanged = useCallback(evt => {
-    }, [glRef, resetClippingFogging])
+    }, [glRef])
 
     const handleGoToBlobDoubleClick = useCallback(async (evt) => {
         const response = await commandCentre.current.cootCommand({
@@ -374,6 +386,17 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.drawScene()
         }
     }, [shadowMapQuality])
+
+    // Softness is pushed on mount too (the renderer starts at 0 and the store may hold a saved
+    // preference), but only redrawn on later changes, for the same first-frame reason as above.
+    const shadowSoftnessMounted = useRef(false)
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.setShadowSoftness(shadowSoftness)
+            if (shadowSoftnessMounted.current) glRef.current.drawScene()
+        }
+        shadowSoftnessMounted.current = true
+    }, [shadowSoftness])
 
     /*
     useEffect(() => {
@@ -717,12 +740,12 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(lab.label,lab.uuid)
             })
             glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
-            glRef.current.drawScene()
+            glRef.current.requestDrawScene()
         }
     }, [labelBuffers, glRef])
 
     /**
-     * How the slab follows the camera: the switch the user sees as "Reset clip and fog on zoom".
+     * How the slab follows the camera: the switches the user sees as "Auto fog" and "Auto clip".
      *
      * It used to be a listener - a zoomChanged event, a dispatch, a reducer recomputing four
      * numbers, two effects pushing them back into the renderer. It is now a policy the camera
@@ -737,13 +760,20 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
      */
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.cameraController.slabPolicy = resetClippingFogging
-                ? { kind: "auto", fieldDepthFront: FIELD_DEPTH_FRONT, fieldDepthBack: FIELD_DEPTH_BACK }
+            glRef.current.cameraController.slabPolicy = autoFog || autoClip
+                ? { kind: "auto", fieldDepthFront: FIELD_DEPTH_FRONT, fieldDepthBack: FIELD_DEPTH_BACK, fog: autoFog, clip: autoClip }
                 : { kind: "manual" }
             glRef.current.cameraController.reapplySlab()
             glRef.current.drawScene()
         }
-    }, [resetClippingFogging, glRef])
+    }, [autoFog, autoClip, glRef])
+
+    // Fog and clipping on or off: applySlabToRenderer reads them on every frame, so a frame is enough
+    useEffect(() => {
+        if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
+            glRef.current.drawScene()
+        }
+    }, [doFog, doClip, glRef])
 
     /**
      * THE EYE MUST BE RECONCILED BEFORE THE SLAB. THIS EFFECT STAYS ABOVE THE NEXT TWO.
@@ -797,9 +827,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.drawScene()
+            // Once per frame, however many requests: loading many molecules asks once per molecule.
+            glRef.current.requestDrawScene()
         }
-    }, [requestDrawSceneSwitch])
+    }, [requestDrawSceneCount])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {

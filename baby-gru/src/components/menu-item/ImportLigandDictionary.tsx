@@ -8,9 +8,11 @@ import { addMolecule } from "../../store/moleculesSlice";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { ALL_MOLECULES, readDictionary } from "../../utils/dictionaries";
 import { MoorhenButton, MoorhenFileInput, MoorhenNumberInput, MoorhenSelect, MoorhenTextInput, MoorhenToggle } from "../inputs";
 import { MoorhenMoleculeSelect } from "../inputs";
 import { MoorhenInfoCard, MoorhenStack } from "../interface-base";
+import { drawLigandBonds } from "@/utils/Representation/defaultRepresentation";
 
 const ImportLigandDictionary = (props: {
     id: string;
@@ -69,16 +71,8 @@ const ImportLigandDictionary = (props: {
                     molNosToUpdate.push(selectedMolecule.molNo);
                 }
             } else {
-                selectedMoleculeIndex = -999999;
-                await commandCentre.cootCommand(
-                    {
-                        returnType: "status",
-                        command: "read_dictionary_string",
-                        commandArgs: [fileContent, selectedMoleculeIndex],
-                        changesMolecules: [],
-                    },
-                    false
-                );
+                selectedMoleculeIndex = ALL_MOLECULES;
+                await readDictionary(moorhenInstance, fileContent, null, "Import dictionary");
                 await Promise.all(
                     molecules.map(molecule => {
                         molecule.cacheLigandDict(fileContent);
@@ -106,7 +100,7 @@ const ImportLigandDictionary = (props: {
                     newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness;
                     newMolecule.coordsFormat = "mmcif";
                     await Promise.all([newMolecule.fetchDefaultColourRules(), newMolecule.addDict(fileContent)]);
-                    await newMolecule.fetchIfDirtyAndDraw("CBs");
+                    await drawLigandBonds(newMolecule);
                     dispatch(addMolecule(newMolecule));
                     if (addToMoleculeValueRef.current !== -1) {
                         const toMolecule = molecules.find(molecule => molecule.molNo === addToMoleculeValueRef.current);

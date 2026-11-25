@@ -6,7 +6,7 @@ import { RootState } from "@/store";
 /**
  * Save a built-in scene's settings for the next time Moorhen starts. Disabled while they are
  * already saved, so it doubles as the unsaved-changes indicator.
- * @param sceneId - "Overview" or "Model Building".
+ * @param sceneId - "General" or "Model Building".
  * @param iconOnly - An icon button (scene selector) instead of a labelled one (scene settings).
  */
 export const SaveSceneButton = (props: { sceneId: string; iconOnly?: boolean }) => {

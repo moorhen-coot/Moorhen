@@ -550,7 +550,7 @@ describe('Testing molecules_container_js', () => {
     test('undo restores the right molecule when two molecules have been edited', () => {
         // Every molecule used to back up to coot-backup/placeholder-<n>, so the
         // second molecule's backup overwrote the first's, and undo() on the
-        // first molecule loaded the second (patches/coot-undo-backup-per-molecule.patch).
+        // first molecule loaded the second (fixed in coot by pemsley/coot#416).
         const imolA = molecules_container.read_pdb('./5a3h.pdb')
         const imolB = molecules_container.read_pdb('./tm-A.pdb')
         const nAtomsA = molecules_container.get_number_of_atoms(imolA)
@@ -571,6 +571,36 @@ describe('Testing molecules_container_js', () => {
         molecules_container.undo(imolB)
         expect(molecules_container.get_number_of_atoms(imolB)).toBe(nAtomsB)
         expect(molecules_container.get_number_of_atoms(imolA)).toBe(nAtomsA)
+    })
+
+    test('validation_information_t type is a readable string', () => {
+        // coot::validation_information_t only has a std::string "type" in wasm builds
+        // (#ifdef __EMSCRIPTEN__ in api/validation-information.hh). A coot checkout that
+        // still tested the old EMSCRIPTEN macro gave the coot library and the embind
+        // wrappers different layouts for this class, and "type" came back as garbage.
+        const imol = molecules_container.read_pdb('./5a3h.pdb')
+        const rota = molecules_container.rotamer_analysis(imol)
+        expect(rota.type).toBe('PROBABILITY')
+        const omega = molecules_container.peptide_omega_analysis(imol)
+        expect(omega.type).toBe('TORSION_ANGLE')
+        cleanUpVariables.push(rota, omega)
+    })
+
+    test('SSM_superpose', () => {
+        // With the layout mismatch above, destroying the result's alignment_info_vec
+        // aborted or raised "memory access out of bounds".
+        const imolRef = molecules_container.read_pdb('./5a3h.pdb')
+        const imolMov = molecules_container.read_pdb('./5a3h.pdb')
+        const result = molecules_container.SSM_superpose(imolRef, 'A', imolMov, 'A')
+        const info = JSON.parse(result.superpose_info)
+        expect(info.nalgn).toBe(300)
+        expect(info.rmsd).toBeLessThan(0.01)
+        expect(result.alignment_info_vec.size()).toBe(1)
+        const vi = result.alignment_info_vec.get(0)
+        expect(vi.cviv.size()).toBe(1)
+        expect(vi.cviv.get(0).rviv.size()).toBe(300)
+        expect(result.aligned_pairs.size()).toBe(300)
+        cleanUpVariables.push(vi, result.alignment_info_vec, result.aligned_pairs)
     })
 
     test.skip('flip_peptide by residue spec', () => {
@@ -663,6 +693,121 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.vertices.size()).toBeCloseTo(147864, -4)
         expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -4)
         cleanUpVariables.push(simpleMesh)
+    })
+
+    test("Tubes (Bendix: bendy helices)", () => {
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const simpleMesh = molecules_container.get_molecular_representation_mesh(coordMolNo, "//A", "", "Tubes", 2)
+        cleanUpVariables.push(simpleMesh)
+        expect(simpleMesh.vertices.size()).toBeGreaterThan(1000)
+        expect(simpleMesh.triangles.size()).toBeGreaterThan(1000)
+    })
+
+    test("worm radii from residue properties", () => {
+        // Coot's worm: a Ribbon with no secondary structure (all coil), each residue's radius a
+        // multiple ("worm-radius") of the coil thickness, until the properties are cleared.
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        molecules_container.M2T_updateFloatParameter(coordMolNo, "ribbonStyleCoilThickness", 0.3)
+        const width = () => {
+            const simpleMesh = molecules_container.get_molecular_representation_mesh(coordMolNo, "//A/10-30", "Chain", "Ribbon", 1)
+            cleanUpVariables.push(simpleMesh)
+            const vertices = simpleMesh.vertices
+            let lo = Infinity, hi = -Infinity
+            for (let i = 0; i < vertices.size(); i++) {
+                const x = vertices.get(i).pos[0]
+                lo = Math.min(lo, x)
+                hi = Math.max(hi, x)
+            }
+            return hi - lo
+        }
+        const thin = width()
+        const properties = []
+        for (let resNo = 5; resNo <= 35; resNo++) {
+            properties.push({ "chain-id": "A", "res-no": resNo, "ins-code": "", "worm-radius": 10 })
+        }
+        expect(molecules_container.set_residue_properties(coordMolNo, JSON.stringify(properties))).toBe(true)
+        const fat = width()
+        molecules_container.clear_residue_properties(coordMolNo)
+        const again = width()
+        // radius 0.3 A -> 3 A: wider by about twice the difference
+        expect(fat - thin).toBeGreaterThan(4)
+        expect(again).toBeCloseTo(thin, 3)
+    })
+
+    test("a worm has no secondary structure, even after a ribbon", () => {
+        // DONT_USE leaves the residues' secondary structure as the last Ribbon calculated it, so
+        // Moorhen clears it (keeping it) around a worm. Drawn that way, a worm after a ribbon is
+        // the same as one before any; drawn without clearing, it has the ribbon's helices.
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const nVertices = (ssUsage) => {
+            const simpleMesh = molecules_container.get_molecular_representation_mesh(coordMolNo, "//A", "Chain", "Ribbon", ssUsage)
+            cleanUpVariables.push(simpleMesh)
+            return simpleMesh.vertices.size()
+        }
+        const worm = () => {
+            molecules_container.save_and_clear_residue_secondary_structure(coordMolNo)
+            const n = nVertices(1)
+            molecules_container.restore_residue_secondary_structure(coordMolNo)
+            return n
+        }
+        const before = worm()
+        const ribbon = nVertices(2)
+        const stuck = nVertices(1)
+        const after = worm()
+        expect(after).toBe(before)
+        expect(stuck).not.toBe(before)
+        // and the ribbon's secondary structure is back
+        expect(nVertices(1)).toBe(stuck)
+        expect(ribbon).toBeGreaterThan(0)
+    })
+
+    test("a header-secondary-structure ribbon is the header's, even after a calculated one", () => {
+        // USE_HEADER only adds the header's helices and strands to the residues' secondary
+        // structure; Moorhen clears it (keeping it) first, so a calculated ribbon in between
+        // leaves no trace.
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const nVertices = (ssUsage) => {
+            const simpleMesh = molecules_container.get_molecular_representation_mesh(coordMolNo, "//A", "Chain", "Ribbon", ssUsage)
+            cleanUpVariables.push(simpleMesh)
+            return simpleMesh.vertices.size()
+        }
+        const fromHeader = () => {
+            molecules_container.save_and_clear_residue_secondary_structure(coordMolNo)
+            const n = nVertices(0)
+            molecules_container.restore_residue_secondary_structure(coordMolNo)
+            return n
+        }
+        const before = fromHeader()
+        nVertices(2)
+        expect(fromHeader()).toBe(before)
+    })
+
+    test("Van der Waals and solvent accessible surfaces", () => {
+        // The other two surface types MoleculesToTriangles makes. The accessible surface is the van
+        // der Waals one grown by the probe radius: along x, wider by twice the probe radius (the
+        // atom furthest out is the same one; the tessellation misses its extreme by << 0.5 A).
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        molecules_container.M2T_updateFloatParameter(coordMolNo, "surfaceStyleProbeRadius", 1.4)
+        molecules_container.M2T_updateFloatParameter(coordMolNo, "ballsStyleRadiusMultiplier", 1.0)
+        const surface = (style) => {
+            const simpleMesh = molecules_container.get_molecular_representation_mesh(
+                coordMolNo, "//A/10-30", "Chain", style, true
+            )
+            cleanUpVariables.push(simpleMesh)
+            const vertices = simpleMesh.vertices
+            let lo = Infinity, hi = -Infinity
+            for (let i = 0; i < vertices.size(); i++) {
+                const x = vertices.get(i).pos[0]
+                lo = Math.min(lo, x)
+                hi = Math.max(hi, x)
+            }
+            return { nVertices: vertices.size(), nTriangles: simpleMesh.triangles.size(), width: hi - lo }
+        }
+        const vdw = surface("VdWSurface")
+        const accessible = surface("AccessibleSurface")
+        expect(vdw.nTriangles).toBeGreaterThan(100)
+        expect(accessible.nTriangles).toBeGreaterThan(100)
+        expect(accessible.width - vdw.width).toBeCloseTo(2 * 1.4, 0)
     })
 
     test("ligand surface", () => {

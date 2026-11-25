@@ -9,9 +9,16 @@ import { type PreviewFrameReport, WebGPUPreviewRenderer } from "../../WebGPUComp
 import { GpuMapLayer } from "../../WebGPUComponents/mapContour/gpuMapLayer";
 import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
 import { formatCount } from "../../WebGPUComponents/rendererReport";
+import type { PreviewCameraSource } from "../../WebGPUComponents/previewScene";
 
 /** Devices lost within a minute before WebGL takes the view for good. */
 const MAX_LOSSES = 3;
+
+/**
+ * A second view (drawSecondView) is drawn at most this often, in ms: while the main view turns
+ * it follows at 20 frames a second, and its last frame comes when the turning stops.
+ */
+const SECOND_VIEW_INTERVAL = 50;
 
 /** What the main view's WebGPU renderer says about itself, for the instance API and tests. */
 export interface WebGPUMainViewRenderer extends ExternalRenderer {
@@ -84,6 +91,42 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
         let lastReason: string | null | undefined = undefined;
         let redrawRequest = 0;
         let unsubscribe: () => void = () => {};
+        // Other canvases this renderer draws the scene into (drawSecondView): the camera each was
+        // last asked for, the GPU maps' contour count when it was drawn (to draw it again when the
+        // maps are contoured again), and when it was drawn.
+        const secondViews = new Map<HTMLCanvasElement, { camera: PreviewCameraSource; contours: number; drawn: number; timer: number }>();
+        const drawSecondNow = (target: HTMLCanvasElement) => {
+            const entry = secondViews.get(target);
+            if (!entry || !renderer) return;
+            entry.timer = 0;
+            try {
+                const state = store.getState();
+                // The scene's origin, not this view's camera: the maps are contoured once for the
+                // whole scene, and a second view that re-contoured them about its own viewpoint
+                // would be undoing the main view's work every frame.
+                renderer.renderTo(
+                    target, state.glRef.displayBuffers ?? [], entry.camera,
+                    maps?.frame(state, view.cameraController.state.origin) ?? []);
+                entry.contours = maps?.contoursMade ?? 0;
+                entry.drawn = performance.now();
+            } catch (err) {
+                fail(err instanceof Error ? err.message : String(err));
+            }
+        };
+        const drawSecond = (target: HTMLCanvasElement) => {
+            const entry = secondViews.get(target);
+            if (!entry || entry.timer) return;
+            const wait = entry.drawn + SECOND_VIEW_INTERVAL - performance.now();
+            if (wait <= 0) drawSecondNow(target);
+            else entry.timer = window.setTimeout(() => drawSecondNow(target), wait);
+        };
+        const releaseSecondViews = () => {
+            secondViews.forEach((entry, target) => {
+                if (entry.timer) clearTimeout(entry.timer);
+                renderer?.releaseCanvas(target);
+            });
+            secondViews.clear();
+        };
 
         const show = (visible: boolean) => {
             const visibility = visible ? "visible" : "hidden";
@@ -96,6 +139,7 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
             applyGpuMapContours();
         };
         const dropRenderer = () => {
+            releaseSecondViews();
             maps?.destroy();
             maps = null;
             mapsFailed = false;
@@ -150,7 +194,7 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
             async snapshot(width: number, height: number, options: { transparentBackground?: boolean } = {}) {
                 if (!renderer) throw new Error("WebGPU is not drawing the main view");
                 const state = store.getState();
-                const shot = await renderer.snapshot(state.glRef.displayBuffers ?? [], view, maps?.frame(state) ?? [], width, height, {
+                const shot = await renderer.snapshot(state.glRef.displayBuffers ?? [], view, maps?.frame(state, view.cameraController.state.origin) ?? [], width, height, {
                     softShadows: true, transparentBackground: !!options.transparentBackground,
                 });
                 return shot.data;
@@ -198,12 +242,34 @@ export const MoorhenWebGPUMainView = (props: { glRef: React.RefObject<MGWebGL> }
                 if (canvas.style.height !== glCanvas.style.height) canvas.style.height = glCanvas.style.height;
                 try {
                     const state = store.getState();
-                    const gpuDraws = maps?.frame(state) ?? [];
+                    // The camera rather than the store's copy of it: during a movie the store is
+                    // told where the camera settles, not where it is passing through, and a map
+                    // contoured to that stays where the movie started.
+                    const gpuDraws = maps?.frame(state, view.cameraController.state.origin) ?? [];
                     lastReport = renderer.render(state.glRef.displayBuffers ?? [], view, gpuDraws);
                     (external as { framesDrawn: number }).framesDrawn++;
                 } catch (err) {
                     fail(err instanceof Error ? err.message : String(err));
+                    return;
                 }
+                // A map contoured again (the origin moved) is drawn again in the other views too.
+                const contours = maps?.contoursMade ?? 0;
+                secondViews.forEach((entry, target) => { if (entry.contours !== contours) drawSecond(target); });
+            },
+            drawSecondView(target: HTMLCanvasElement, camera: PreviewCameraSource) {
+                if (!external.isShowing()) return false;
+                const entry = secondViews.get(target);
+                if (entry) entry.camera = camera;
+                else secondViews.set(target, { camera, contours: -1, drawn: -Infinity, timer: 0 });
+                drawSecond(target);
+                return true;
+            },
+            releaseSecondView(target: HTMLCanvasElement) {
+                const entry = secondViews.get(target);
+                if (!entry) return;
+                if (entry.timer) clearTimeout(entry.timer);
+                secondViews.delete(target);
+                renderer?.releaseCanvas(target);
             },
             statsText() {
                 if (!renderer || !lastReport) return "WebGPU";

@@ -109,7 +109,7 @@ export const SCENE_LOOKS: SceneLook[] = [
     },
     {
         id: "depth-of-field",
-        label: "Depth of field",
+        label: "Bokeh",
         description: "Moorhen's default lighting, blurring what is far from the centre of the view",
         settings: {
             ...CLASSIC,

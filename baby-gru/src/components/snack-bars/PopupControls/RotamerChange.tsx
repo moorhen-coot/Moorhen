@@ -74,12 +74,15 @@ export const RotamerChange = () => {
                         .filter(item => {
                             return [
                                 "CRs",
+                                "Worm",
+                                "Tubes",
                                 "CBs",
                                 "CAs",
                                 "ligands",
                                 "gaussian",
                                 "MolecularSurface",
                                 "VdWSurface",
+                                "AccessibleSurface",
                                 "VdwSpheres",
                                 "allHBonds",
                                 "glycoBlocks",

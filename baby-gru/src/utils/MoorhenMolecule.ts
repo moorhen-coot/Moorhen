@@ -6,8 +6,8 @@ import * as vec3 from "gl-matrix/vec3";
 import "pako";
 import { quatToMat4 } from "../WebGLgComponents/quatToMat4.js";
 import { isDarkBackground } from "../WebGLgComponents/webGLUtils";
-import { setOrigin, setQuat, setRequestDrawScene, setZoom } from "../store";
-import { hideMolecule } from "../store/moleculesSlice";
+import { enqueueSnackbar, setOrigin, setQuat, setRequestDrawScene, setZoom } from "../store";
+import { type MoleculeRecord, hideMolecule, removeMoleculeRecord } from "../store/moleculesSlice";
 import { gemmi } from "../types/gemmi";
 import { libcootApi } from "../types/libcoot";
 import { webGL } from "../types/mgWebGL";
@@ -15,23 +15,30 @@ import { moorhen } from "../types/moorhen";
 import { privateer } from "../types/privateer";
 import { ColourRule, ColourRuleType } from "./MoorhenColourRule";
 import { MoleculeRepresentation, RepresentationStyles, gaussianSurfSettings, m2tParameters, residueEnvironmentOptions } from "./Representation/MoorhenMoleculeRepresentation";
+import type { wormOptions } from "./Representation/wormRadii";
 import { cidBuildParams } from "./Representation/RepresentationBuilder";
 import {
     centreOnGemmiAtoms,
     doDownload,
     formatLigandSVG,
     getCentreAtom,
+    getCidAltConf,
     getRandomMoleculeColour,
     guid,
+    moleculeNameFromFileName,
     parseAtomInfoLabel,
     readGemmiCifDocument,
     readGemmiStructure,
+    restrictCidToAltConf,
 } from "./utils";
 import { ZOOM_DIVISOR, moleculeDiameter } from "./moleculeExtent";
 import { SeqElement } from "@/components/sequence-viewer/MoorhenSeqViewTypes";
 import { MoleculeToSeqViewerSequences } from "@/components/sequence-viewer/utils";
 import { MoorhenInstance } from "@/InstanceManager/index";
 import { CommandCentre } from "@/InstanceManager/CommandCentre/index";
+import { fetchMonomerDictionary } from "./monomerLibrary";
+import { queueMoleculeRecord, queuedMoleculeRecord } from "./moleculeRecords";
+import { ALL_MOLECULES, readDictionary, splitDictionary } from "./dictionaries";
 
 export type ResidueInfo = {
     resCode: string;
@@ -92,6 +99,11 @@ export type NEFRestraint = {
 const isMeshBuffer = (buffer: unknown): buffer is moorhen.DisplayObject =>
     typeof buffer === "object" && buffer !== null && "bufferTypes" in buffer;
 
+/** The metadata key of a fitted ligand pose's correlation with the map (higher is better) */
+export const FIT_CORRELATION_KEY = "Fit correlation";
+/** The metadata key of the volume of the density blob a ligand pose was fitted into */
+export const FIT_CLUSTER_VOLUME_KEY = "Fitted density volume";
+
 /**
  * Represents a molecule
  * @property {string} name - The name assigned to this molecule instance
@@ -146,6 +158,13 @@ export class MoorhenMolecule {
     representations: moorhen.MoleculeRepresentation[];
     ligands: LigandInfo[];
     ligandDicts: { [comp_id: string]: string };
+    /**
+     * Facts about the molecule as plain strings, by name: what a file said about it that is not a
+     * structure (a docking score: "Vina score" from a PDBQT), or whatever a host wants to attach (set
+     * entries on it directly). Every entry is shown under a ligand's 2D drawing on its ligand card,
+     * and saved in sessions.
+     */
+    metadata: Record<string, string>;
     connectedToMaps: number[];
     excludedSelections: string[];
     excludedCids: string[];
@@ -207,6 +226,7 @@ export class MoorhenMolecule {
         this.cachedPrivateerValidation = null;
         this.ligands = null;
         this.ligandDicts = {};
+        this.metadata = {};
         this.connectedToMaps = null;
         this.representations = [];
         this.excludedSelections = [];
@@ -551,12 +571,27 @@ export class MoorhenMolecule {
     }
 
     /**
+     * Tell the user that gemmi could not read this molecule's coordinates.
+     *
+     * Coot may still have read them, so the molecule draws, but everything Moorhen takes from the
+     * gemmi copy - sequences, ligands, hovered-atom details, selections by CID - will be missing
+     * or stale. That is worth a toast rather than only a line in the console.
+     */
+    private warnGemmiParseFailure(err: unknown): void {
+        console.warn("Issue parsing coordinates into Gemmi structure", err);
+        this.store.dispatch(
+            enqueueSnackbar({
+                message: `Could not fully read ${this.name}: sequences, ligands and atom details may be missing`,
+                variant: "warning",
+            })
+        );
+    }
+
+    /**
      * Update the cached gemmi structure for this molecule
      */
     async updateGemmiStructure(coordString: string): Promise<void> {
-        if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
-            this.gemmiStructure.delete();
-        }
+        this.freeGemmiStructure();
         this.cachedGemmiAtoms = null;
         this.gemmiStructure = readGemmiStructure(coordString, this.name);
         window.gemmiModule.gemmi_setup_entities(this.gemmiStructure);
@@ -699,6 +734,16 @@ export class MoorhenMolecule {
      * Check if the molecule instance consists of a ligand
      * @returns {boolean} True if the molecule is a ligand
      */
+    /**
+     * Whether this molecule is only ligands: no polymer residue (see checkIsLigand, a gemmi test on
+     * entity types) and at least one ligand, so a molecule of waters only is not one. The Models panel
+     * lists these molecules together, by name, instead of a full card each, and a molecule that is not
+     * one cannot be merged into one.
+     */
+    isLigandOnly(): boolean {
+        return this.isLigand && (this.ligands?.length ?? 0) > 0;
+    }
+
     checkIsLigand(): boolean {
         const isLigand = true;
         this.isLigand = window.gemmiModule.structure_is_ligand(this.gemmiStructure);
@@ -708,14 +753,16 @@ export class MoorhenMolecule {
     /**
      * Delete this molecule instance
      * @param {boolean} [popBackImol=false] - Indicates whether the imol for this molecule instance should be popped back (useful for ephemeral molecules)
+     * @param {boolean} [doJournal=true] - Record the deletion in the command history (false for a molecule that never made it into the session, e.g. a file a batch failed to load)
      */
-    async delete(popBackImol: boolean = false): Promise<moorhen.WorkerResponse> {
+    async delete(popBackImol: boolean = false, doJournal: boolean = true): Promise<moorhen.WorkerResponse> {
         this.hoverRepresentation?.deleteBuffers();
         this.unitCellRepresentation?.deleteBuffers();
         this.environmentRepresentation?.deleteBuffers();
         this.selectionRepresentation?.deleteBuffers();
         this.adaptativeBondsRepresentation?.deleteBuffers();
         this.representations.forEach(representation => representation.deleteBuffers());
+        this.closeRecord();
         this.store.dispatch(setRequestDrawScene(true));
         const response = (await this.commandCentre.cootCommand(
             {
@@ -723,12 +770,42 @@ export class MoorhenMolecule {
                 command: popBackImol ? "pop_back" : "close_molecule",
                 commandArgs: popBackImol ? [] : [this.molNo],
             },
-            true
+            doJournal
         )) as moorhen.WorkerResponse<number>;
+        this.freeGemmiStructure();
+        return response;
+    }
+
+    /**
+     * Forget a molecule that Coot never read (e.g. a file that failed to load): its record, the
+     * dictionaries recorded for it and its gemmi structure. Use delete() for a molecule Coot read.
+     */
+    forget(): void {
+        this.closeRecord();
+        this.freeGemmiStructure();
+    }
+
+    /**
+     * Free the gemmi structure and drop the reference to it.
+     *
+     * Dropping it matters as much as freeing it: anything still holding this molecule (an old
+     * props object, a closure) would otherwise reach a freed embind object, and every property on
+     * it throws "cannot call emscripten binding method ... on deleted object" when read. React's
+     * development build reads them when it diffs a changed `molecules` prop for its performance
+     * track - it walks inherited enumerable keys, which embind getters are.
+     */
+    private freeGemmiStructure(): void {
         if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
             this.gemmiStructure.delete();
         }
-        return response;
+        this.gemmiStructure = null;
+    }
+
+    /** No more record for this molecule, and none written back by a refresh still in flight */
+    private closeRecord(): void {
+        this.recordClosed = true;
+        queueMoleculeRecord(this.store, this.uniqueId, null);
+        this.store.dispatch(removeMoleculeRecord(this.uniqueId));
     }
 
     /**
@@ -757,11 +834,9 @@ export class MoorhenMolecule {
      */
     async transferLigandDicts(toMolecule: moorhen.Molecule, override: boolean = false) {
         await Promise.all(
-            Object.keys(this.ligandDicts).map(key => {
-                if (!override && Object.hasOwn(toMolecule.ligandDicts, key)) {
-                    return;
-                } else {
-                    toMolecule.addDict(this.ligandDicts[key]);
+            Object.keys(this.ligandDicts).map(async key => {
+                if (override || !Object.hasOwn(toMolecule.ligandDicts, key)) {
+                    await toMolecule.addDict(this.ligandDicts[key]);
                 }
             })
         );
@@ -864,6 +939,9 @@ export class MoorhenMolecule {
 
         if (copyResult.data.result.result !== -1) {
             newMolecule.molNo = copyResult.data.result.result;
+            // Coot keeps dictionaries per molecule, and the copy is a new one: it needs the ligand
+            // dictionaries before its refinement is set up, or a ligand is refined with no restraints
+            await this.transferLigandDicts(newMolecule);
             await this.commandCentre.cootCommand(
                 {
                     returnType: "status",
@@ -872,7 +950,6 @@ export class MoorhenMolecule {
                 },
                 false
             );
-            await this.transferLigandDicts(newMolecule);
             newMolecule.setAtomsDirty(true);
             if (redraw) {
                 const drawMissingLoops = this.store.getState().sceneSettings.drawMissingLoops;
@@ -992,33 +1069,11 @@ export class MoorhenMolecule {
     async loadToCootFromFile(source: File): Promise<moorhen.Molecule> {
         try {
             const coordData = await source.text();
-            let is_small = false;
-            if (source.name.endsWith(".mmcif") || source.name.endsWith(".cif") || source.name.endsWith(".pdbx"))
-                is_small = window.gemmiModule.is_small_structure(coordData as string);
-            if (is_small) {
-                const small_to_cif_response = (await this.commandCentre.cootCommand(
-                    {
-                        command: "SmallMoleculeCifToMMCif",
-                        commandArgs: [coordData],
-                        returnType: "str_str_pair",
-                    },
-                    true
-                )) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>;
-                const coordContent = small_to_cif_response.data.result.result.first;
-                const dictContent = small_to_cif_response.data.result.result.second;
-                //FIXME - I think I want specific molecule, but there is a circular dependency between mol and dicts
-                const anyMolNo = -999999;
-                await this.commandCentre.cootCommand(
-                    {
-                        returnType: "status",
-                        command: "read_dictionary_string",
-                        commandArgs: [dictContent, anyMolNo],
-                    },
-                    false
-                );
-                return await this.loadToCootFromString(coordContent, source.name);
-            }
-            if (source.name.endsWith(".mol")) {
+            const lowerName = source.name.toLowerCase();
+            // A small-molecule CIF needs no handling here: loadToCootFromString recognises one
+            // whichever way it arrives, so a file opened from the menu, a dropped file, a URL and
+            // a string all load the same way.
+            if (lowerName.endsWith(".mol")) {
                 const response = (await this.commandCentre.cootCommand(
                     {
                         command: "mol_text_to_pdb",
@@ -1030,15 +1085,7 @@ export class MoorhenMolecule {
                 const pdb = response.data.result.result.first;
                 const dict = response.data.result.result.second;
                 const mol = await this.loadToCootFromString(pdb, source.name);
-                await this.commandCentre.cootCommand(
-                    {
-                        returnType: "status",
-                        command: "read_dictionary_string",
-                        commandArgs: [dict, mol.molNo],
-                        changesMolecules: [],
-                    },
-                    false
-                );
+                await readDictionary(this, dict, mol, source.name);
                 return mol;
             }
             return await this.loadToCootFromString(coordData, source.name);
@@ -1077,18 +1124,65 @@ export class MoorhenMolecule {
     }
 
     /**
-     * Load a new molecule from a string
+     * Whether a coordinate string is a small-molecule (coreCIF) file rather than mmCIF or PDB.
+     *
+     * Such a file - from the COD or the CSD, say - gives its atoms as fractional coordinates in
+     * _atom_site_fract_x, a tag no mmCIF or PDB file has, so that cheap test comes first and
+     * gemmi's full parse is only run on files that pass it. Without it, every protein loaded
+     * would be parsed twice.
+     */
+    static isSmallMoleculeCif(coordData: ArrayBuffer | string): boolean {
+        if (typeof coordData !== "string" || !/_atom_site[._]fract_x/i.test(coordData)) {
+            return false;
+        }
+        try {
+            return window.gemmiModule.is_small_structure(coordData);
+        } catch (err) {
+            console.warn(err);
+            return false;
+        }
+    }
+
+    /**
+     * Turn a small-molecule CIF into an mmCIF that Coot and gemmi can read, and give Coot the
+     * restraint dictionary that comes with it.
+     *
+     * The structure becomes one residue in chain A, named after the CIF's data block. Coot alone
+     * cannot read the original: it fails, and the loader then tries the file as a monomer
+     * dictionary, which fails with a gemmi binding error instead of a useful message.
+     * @returns {Promise<string>} The mmCIF text
+     */
+    private async smallMoleculeCifToMMCif(coordData: string, name: string): Promise<string> {
+        const response = (await this.commandCentre.cootCommand(
+            {
+                command: "SmallMoleculeCifToMMCif",
+                commandArgs: [coordData],
+                returnType: "str_str_pair",
+            },
+            true
+        )) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>;
+        const coordContent = response.data.result.result.first;
+        const dictContent = response.data.result.result.second;
+        //FIXME - I think I want specific molecule, but there is a circular dependency between mol and dicts
+        // Read for every molecule, through readDictionary: recorded in the instance's list, so sessions save it
+        await readDictionary(this, dictContent, null, name);
+        return coordContent;
+    }
+
+    /**
+     * Load a new molecule from a string: PDB, mmCIF, or a small-molecule CIF (made into mmCIF first)
      * @param {string} coordData - The molecule data
      * @param {string} name - The new molecule name
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
     async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<moorhen.Molecule> {
-        if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
-            this.gemmiStructure.delete();
+        this.freeGemmiStructure();
+
+        if (MoorhenMolecule.isSmallMoleculeCif(coordData)) {
+            coordData = await this.smallMoleculeCifToMMCif(coordData as string, name);
         }
 
-        // One pattern, so ".mmcif" is not first stripped as ".cif" (which left "name.m")
-        this.name = name.replace(/\.(pdb|ent|mmcif|cif)$/, "");
+        this.name = moleculeNameFromFileName(name);
 
         try {
             const state = this.store.getState();
@@ -1101,7 +1195,17 @@ export class MoorhenMolecule {
                 },
                 true
             );
-            this.updateGemmiStructure(coordData as string);
+            // Awaited so that a string gemmi cannot read is reported here rather than as an
+            // unhandled rejection. It does not stop the load: Coot may still read what gemmi
+            // cannot, and whether it did is what the caller checks, through molNo. Not a structure
+            // at all, e.g. a ligand dictionary (from a .cif file or from SMILES): Coot's read below
+            // says so too, and the caller then tries it as a dictionary.
+            let gemmiParseError: unknown = null;
+            try {
+                await this.updateGemmiStructure(coordData as string);
+            } catch (err) {
+                gemmiParseError = err;
+            }
             this.atomsDirty = false;
             const response = (await this.commandCentre.cootCommand(
                 {
@@ -1113,12 +1217,24 @@ export class MoorhenMolecule {
             )) as moorhen.WorkerResponse<libcootApi.PairType<number, moorhen.coorFormats>>;
             this.molNo = response.data.result.result.first;
             this.coordsFormat = response.data.result.result.second;
+            // Not a structure (e.g. a ligand dictionary): the caller checks molNo === -1 and tries
+            // something else, so don't query Coot about a molecule that does not exist.
+            if (this.molNo === -1) {
+                return this;
+            }
             await Promise.all([
                 this.getNumberOfAtoms(),
                 this.loadMissingMonomers(),
                 this.checkHasGlycans(),
                 this.fetchDefaultColourRules(),
             ]);
+            // Only when Coot found atoms. A file that is not coordinates at all - a reflection
+            // CIF, a restraint dictionary - fails in gemmi too, but the loader already says so:
+            // "Failed to read molecule" when Coot gives up (molNo -1), or "no atoms found" when it
+            // returns an empty molecule, which it does when Moorhen's "use gemmi" setting is off.
+            if (gemmiParseError !== null && this.molNo !== -1 && this.atomCount > 0) {
+                this.warnGemmiParseFailure(gemmiParseError);
+            }
             return this;
         } catch (err) {
             console.log("Error in loadToCootFromString", err);
@@ -1131,55 +1247,18 @@ export class MoorhenMolecule {
      * @param {number} attachToMolecule - Molecule number for which the dicitonary will be associated
      */
     async loadMissingMonomer(newTlc: string, attachToMolecule: number): Promise<string> {
-        let fileContent = "";
-        let response: Response | null;
-        try {
-            response = await fetch(`${this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`);
-            if (response.ok) {
-                fileContent = await response.text();
-            }
-        } catch (err) {
-            console.log(err);
-            console.log(`Unable to fetch ligand dictionary ${newTlc} from local url`);
-        }
-        let dictContent: string;
-
-        if (!fileContent.includes("data_")) {
-            console.log(`Unable to fetch ligand dictionary ${newTlc} from local monomer library...`);
-            try {
-                const url = `https://raw.githubusercontent.com/MonomerLibrary/monomers/master/${
-                    newTlc.toLowerCase()[0]
-                }/${newTlc.toUpperCase()}.cif`;
-                response = await fetch(url);
-                if (response.ok) {
-                    dictContent = await response.text();
-                } else {
-                    console.log(`Unable to fetch ligand dictionary ${newTlc} from remote monomer library...`);
-                    const url = `https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${newTlc.toUpperCase()}.cif`;
-                    response = await fetch(url);
-                    if (response.ok) {
-                        dictContent = await response.text();
-                    } else {
-                        console.log(`Unable to fetch ligand dictionary ${newTlc} from PDBe chem...`);
-                    }
-                }
-            } catch (err) {
-                console.log(err);
-                console.log(`Unable to fetch ligand dictionary ${newTlc}`);
-            }
-        } else {
-            dictContent = fileContent;
-        }
+        const dictContent = await fetchMonomerDictionary(newTlc, this.monomerLibraryPath);
 
         if (dictContent) {
-            await this.commandCentre.cootCommand(
-                {
-                    returnType: "status",
-                    command: "read_dictionary_string",
-                    commandArgs: [dictContent, attachToMolecule],
-                },
-                false
-            );
+            const molecule =
+                attachToMolecule === ALL_MOLECULES
+                    ? null
+                    : attachToMolecule === this.molNo
+                      ? this
+                      : this.store.getState().molecules.moleculeList.find(other => other.molNo === attachToMolecule);
+            // A molecule number not in the store (a host's addLigandOfType) is still that molecule's,
+            // not every molecule's
+            await readDictionary(this, dictContent, molecule ?? (attachToMolecule === ALL_MOLECULES ? null : { molNo: attachToMolecule }), "monomer library");
         }
 
         return dictContent;
@@ -1200,13 +1279,20 @@ export class MoorhenMolecule {
         )) as moorhen.WorkerResponse<string[]>;
 
         if (response.data.result.status === "Completed") {
+            // Nothing missing: that is the record's answer, no need to ask again
+            if (response.data.result.result.length === 0) {
+                this.refreshRecord([]);
+                return;
+            }
             try {
                 const ligandDicts = await Promise.all(
                     response.data.result.result.map(newTlc => {
                         return this.loadMissingMonomer(newTlc, this.molNo);
                     })
                 );
-                ligandDicts.forEach(ligandDict => this.cacheLigandDict(ligandDict));
+                // A type no source has a dictionary for (e.g. UNL) has nothing to cache
+                ligandDicts.filter(Boolean).forEach(ligandDict => this.cacheLigandDict(ligandDict));
+                await this.refreshMissingDictionaries();
             } catch (err) {
                 console.log(err);
                 console.warn("Error in loadMissingMonomers...");
@@ -1301,18 +1387,27 @@ export class MoorhenMolecule {
      * Update the cached atoms with the latest information from the libcoot api
      */
     async updateAtoms() {
-        if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
-            this.gemmiStructure.delete();
-        }
+        this.freeGemmiStructure();
         // The diameter used to be fetched here too, on every atom update. It fed only the initial
         // zoom, which now measures the atoms directly, so this is one fewer round trip to the
         // worker after every modification.
         const [_hasGlycans, coordString] = await Promise.all([this.checkHasGlycans(), this.getAtoms()]);
         try {
-            this.updateGemmiStructure(coordString);
+            // Awaited: updateGemmiStructure is async, so without it an error from gemmi escaped
+            // this catch as an unhandled rejection instead of the warning and toast below.
+            await this.updateGemmiStructure(coordString);
         } catch (err) {
-            console.log(err);
-            console.warn("Issue parsing coordinates into Gemmi structure", coordString);
+            // The text Coot handed back is the useful thing to see when this happens.
+            console.warn("Coordinates gemmi could not parse:", coordString);
+            // A molecule whose atoms have all been deleted fails here too: Coot's gemmi-based
+            // mmCIF writer gives an empty molecule a file gemmi will not read back. That is not
+            // news to the user, so the toast is only for a molecule that still has atoms. The
+            // count is fetched only on this path, so a normal update costs nothing extra.
+            if ((await this.getNumberOfAtoms()) > 0) {
+                this.warnGemmiParseFailure(err);
+            } else {
+                console.warn("Issue parsing coordinates into Gemmi structure (molecule has no atoms)", err);
+            }
         }
         this.atomsDirty = false;
     }
@@ -1535,6 +1630,8 @@ export class MoorhenMolecule {
      * @param {moorhen.ColourRule[]} [colourRules=undefined] - A list of colour rules that will be applied to the new representation
      * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
      * @param {moorhen.m2tParameters} [m2tParams=undefined] - An object that describes ribbon width, nucleotide style and other ribbon settings.
+     * @param {string} [neighboursMoleculeUid=""] - The molecule neighboursCid is in (uniqueId), if not this one.
+     * @param {wormOptions} [wormOptions=undefined] - A "Worm"'s own options (see wormRadii.ts); none: the general ones.
      * @deprecated Use MoleculeRepresentation.create() instead.
      */
     async addRepresentation(
@@ -1551,7 +1648,9 @@ export class MoorhenMolecule {
         excludeNeighbours: boolean = false,
         hbondedToCid: string = "",
         hbondedTo: boolean = false,
-        neighboursDistance: number = 6.0
+        neighboursDistance: number = 6.0,
+        neighboursMoleculeUid: string = "",
+        wormOptions?: Partial<wormOptions>
     ) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules();
@@ -1571,6 +1670,8 @@ export class MoorhenMolecule {
         representation.hbondedToCid = hbondedToCid;
         representation.hbondedTo = hbondedTo;
         representation.neighboursDistance = neighboursDistance;
+        representation.neighboursMoleculeUid = neighboursMoleculeUid;
+        representation.setWormOptions(wormOptions);
         representation.interfaceOption = { visible: undefined, selectionType: cid === "/*/*/*/*:*" ? "molecule" : "cid" };
         representation.buildParams = cidBuildParams(representation);
 
@@ -2120,30 +2221,8 @@ export class MoorhenMolecule {
             return;
         }
 
-        const possibleIndentedLines = fileContent.split("\n");
-        let unindentedLines: string[] = [];
-        let comp_id = "list";
-        const rx_1 = /data_comp_(.*)/;
-        const rx_2 = /data_(.*)/;
-
-        for (const line of possibleIndentedLines) {
-            const trimmedLine = line.trim();
-            const arr = rx_1.exec(trimmedLine) ?? rx_2.exec(trimmedLine);
-            if (arr !== null) {
-                //Had we encountered a previous compound ?  If so, add it into the energy lib
-                if (comp_id !== "list") {
-                    const reassembledCif = unindentedLines.join("\n");
-                    this.ligandDicts[comp_id] = reassembledCif;
-                    unindentedLines = [];
-                }
-                comp_id = arr[1];
-            }
-            unindentedLines.push(line.trim());
-        }
-
-        if (comp_id !== "list") {
-            const reassembledCif = unindentedLines.join("\n");
-            this.ligandDicts[comp_id] = reassembledCif;
+        for (const [compId, block] of splitDictionary(fileContent)) {
+            this.ligandDicts[compId] = block;
         }
         this.moorhenInstance.triggerMoleculeChanged(this.uniqueId)
     }
@@ -2158,16 +2237,10 @@ export class MoorhenMolecule {
             return;
         }
 
-        await this.commandCentre.cootCommand(
-            {
-                returnType: "status",
-                command: "read_dictionary_string",
-                commandArgs: [fileContent, this.molNo],
-            },
-            false
-        );
+        await readDictionary(this, fileContent, this);
 
         this.cacheLigandDict(fileContent);
+        await this.refreshMissingDictionaries();
     }
 
     /**
@@ -2224,6 +2297,48 @@ export class MoorhenMolecule {
 
         this.ligands = ligandList;
         this.checkIsLigand();
+        this.refreshRecord();
+        void this.refreshMissingDictionaries();
+    }
+
+    /** Set once deleted: a refresh still in flight must not write the record back */
+    private recordClosed = false;
+
+    /**
+     * Refresh this molecule's record in the store (molecules.moleculeRecords, see MoleculeRecord):
+     * written only when a field differs from what the store holds or will hold.
+     * @param missingDictionaries - New missing dictionaries; by default the record keeps its own
+     */
+    refreshRecord(missingDictionaries?: string[]): void {
+        if (this.recordClosed || !this.store) return;
+        const queued = queuedMoleculeRecord(this.store, this.uniqueId);
+        const previous: MoleculeRecord | undefined =
+            queued !== undefined ? (queued ?? undefined) : this.store.getState()?.molecules?.moleculeRecords?.[this.uniqueId];
+        const record: MoleculeRecord = {
+            uniqueId: this.uniqueId,
+            isLigandOnly: this.isLigandOnly(),
+            ligands: (this.ligands ?? []).map(({ resName, chainName, resNum, modelName, cid }) => ({ resName, chainName, resNum, modelName, cid })),
+            missingDictionaries: missingDictionaries ?? previous?.missingDictionaries ?? [],
+        };
+        if (JSON.stringify(record) !== JSON.stringify(previous)) queueMoleculeRecord(this.store, this.uniqueId, record);
+    }
+
+    /**
+     * Ask Coot which residue types of this molecule have no dictionary, into its record (a store sync
+     * warns about new ones). Done when its atoms change and when it is given a dictionary; drawing a
+     * representation does not ask.
+     */
+    async refreshMissingDictionaries(): Promise<void> {
+        // Not in Coot yet (a molecule's gemmi structure is read before Coot gives it a number)
+        if (this.recordClosed || typeof this.molNo !== "number" || this.molNo < 0) return;
+        let missing: string[] = [];
+        try {
+            missing = (await this.moorhenInstance?.cootCommand?.get_residue_names_with_no_dictionary(this.molNo)) ?? [];
+        } catch {
+            // Not known: the record keeps what it had
+            return;
+        }
+        this.refreshRecord([...missing].sort());
     }
 
     /**
@@ -2232,7 +2347,7 @@ export class MoorhenMolecule {
      * @returns {Promise<moorhen.AtomInfo[]>} JS objects containing atom information
      */
     async gemmiAtomsForCid(cid: string, omitExcludedCids: boolean = false): Promise<moorhen.AtomInfo[]> {
-        if (this.atomsDirty || this.gemmiStructure.isDeleted()) {
+        if (this.atomsDirty || !this.gemmiStructure || this.gemmiStructure.isDeleted()) {
             await this.updateAtoms();
         }
 
@@ -2274,7 +2389,6 @@ export class MoorhenMolecule {
             "transformation",
             "contact_dots",
             "chemical_features",
-            "VdWSurface",
         ]
     ): boolean {
         const state = this.store.getState();
@@ -2440,22 +2554,174 @@ export class MoorhenMolecule {
     }
 
     /**
+     * Check whether a residue is partial, i.e. has atoms missing compared to its dictionary.
+     * Atoms missing in only some of a residue's alt confs do not count.
+     * @param {string} chainId - The chain ID of the residue
+     * @param {number} resNo - The residue number
+     * @param {string} [insCode=""] - The insertion code of the residue
+     * @returns {Promise<boolean>} True if the residue has missing atoms
+     */
+    async residueHasMissingAtoms(chainId: string, resNo: number, insCode: string = ""): Promise<boolean> {
+        const response = (await this.commandCentre.cootCommand(
+            {
+                returnType: "residue_specs",
+                command: "residues_with_missing_atoms",
+                commandArgs: [this.molNo],
+            },
+            false
+        )) as moorhen.WorkerResponse<libcootApi.ResidueSpecJS[]>;
+        return (response.data.result.result ?? []).some(
+            residue => residue.chainId === chainId && residue.resNum === resNo && (residue.insCode ?? "") === (insCode ?? "")
+        );
+    }
+
+    /**
+     * Auto-fit the rotamer of a residue into a map
+     *
+     * With an alt conf only that conformation is fitted. libcoot's auto_fit_rotamer copies the fitted
+     * coordinates onto every conformation of the residue, so the fit is done on a fragment holding only
+     * that alt conf (and the atoms without one) and merged back.
+     * @param {string} chainId - The chain ID of the residue
+     * @param {number} resNo - The residue number
+     * @param {string} insCode - The insertion code of the residue
+     * @param {string} altConf - The alt conf to fit, or "" for a residue without alt confs
+     * @param {moorhen.Map} map - The map to fit into
+     * @returns {Promise<number>} 1 if the rotamer was fitted, 0 otherwise
+     */
+    async autoFitRotamer(chainId: string, resNo: number, insCode: string, altConf: string, map: moorhen.Map): Promise<number> {
+        if (!altConf) {
+            const result = (await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "auto_fit_rotamer",
+                    commandArgs: [this.molNo, chainId, resNo, insCode, "", map.molNo],
+                    changesMolecules: [this.molNo],
+                },
+                true
+            )) as moorhen.WorkerResponse<number>;
+            this.setAtomsDirty(true);
+            return result.data.result.result;
+        }
+
+        // The flanking residues give the fit its backrub neighbours
+        const residue = `${resNo - 1}-${resNo + 1}`;
+        const fragmentCid = restrictCidToAltConf(`//${chainId}/${residue}`, altConf);
+        const copyResult = (await this.commandCentre.cootCommand(
+            {
+                returnType: "status",
+                command: "copy_fragment_using_cid",
+                commandArgs: [this.molNo, fragmentCid],
+            },
+            false
+        )) as moorhen.WorkerResponse<number>;
+        const fragmentMolNo = copyResult.data.result.result;
+        if (fragmentMolNo === -1) {
+            return 0;
+        }
+
+        try {
+            const fitResult = (await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "auto_fit_rotamer",
+                    commandArgs: [fragmentMolNo, chainId, resNo, insCode, altConf, map.molNo],
+                },
+                false
+            )) as moorhen.WorkerResponse<number>;
+            if (fitResult.data.result.result !== 1) {
+                return 0;
+            }
+            await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "replace_fragment",
+                    commandArgs: [this.molNo, fragmentMolNo, fragmentCid],
+                    changesMolecules: [this.molNo],
+                },
+                true
+            );
+            this.setAtomsDirty(true);
+            return 1;
+        } finally {
+            await this.commandCentre.cootCommand(
+                {
+                    returnType: "status",
+                    command: "close_molecule",
+                    commandArgs: [fragmentMolNo],
+                },
+                false
+            );
+        }
+    }
+
+    /**
+     * Get the residue CIDs that libcoot's refinement `mode` would select around `cid`
+     * (mirrors coot::molecule_t::select_residues). Only used for alt-conf refinement, where
+     * libcoot cannot be asked to do the selection itself.
+     * @param {string} cid - The (multi-)CID of the central residue(s)
+     * @param {string} mode - Refinement mode (SINGLE, LITERAL, TRIPLE, QUINTUPLE, HEPTUPLE, SPHERE, BIG_SPHERE, CHAIN, ALL)
+     * @returns {Promise<string[]>} Residue CIDs
+     */
+    private async getResidueCidsForRefinementMode(cid: string, mode: string): Promise<string[]> {
+        const sequenceWindow = { TRIPLE: 1, QUINTUPLE: 2, HEPTUPLE: 3 }[mode];
+        const sphereRadius = { SPHERE: 4.2, BIG_SPHERE: 8.0 }[mode];
+        const parts = cid.split("||");
+        if (sphereRadius) {
+            return this.getNeighborResiduesCids(cid, sphereRadius);
+        } else if (mode === "ALL") {
+            return ["//*/*"];
+        } else if (mode === "CHAIN") {
+            return parts.map(part => `//${part.split("/")[2] || "*"}/*`);
+        } else if (sequenceWindow) {
+            return parts.map(part => {
+                const [, model = "", chain = "", residue = ""] = part.split("/");
+                const resNo = /^-?\d+$/.test(residue) ? parseInt(residue) : null;
+                return resNo === null ? part : `/${model}/${chain}/${resNo - sequenceWindow}-${resNo + sequenceWindow}`;
+            });
+        }
+        return parts;
+    }
+
+    /**
      * Refine a set of residues
+     *
+     * If the CID ends in `:X` (e.g. `//A/42/*:B`) only alternate conformation X and the atoms without
+     * an alt conf are refined, the other conformations stay fixed. libcoot's in-place refinement
+     * ignores alt confs, so that case goes through a refinement fragment restricted to the alt conf.
      * @param {string} cid - The CID selection with the atoms that should be refined
      * @param {string} mode - Refinement mode (SINGLE, TRIPLE ...etc.)
      * @param {number} [ncyc=4000] - Number of refinement cycles
      * @param {boolean} [redraw=true] - Indicates if the molecule should be redrawn
      */
     async refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number = 4000, redraw: boolean = true): Promise<void> {
-        await this.commandCentre.cootCommand(
-            {
-                command: "refine_residues_using_atom_cid",
-                returnType: "status",
-                commandArgs: [this.molNo, cid, mode, ncyc],
-                changesMolecules: [this.molNo],
-            },
-            true
-        );
+        const altConf = getCidAltConf(cid);
+        const refinementMap = this.store.getState().generalStates.activeMap as unknown as moorhen.Map | null;
+        if (altConf && refinementMap) {
+            const residueCids = await this.getResidueCidsForRefinementMode(cid, mode);
+            const fragmentCid = residueCids.map(residueCid => restrictCidToAltConf(residueCid, altConf)).join("||");
+            const fragment = await this.copyFragmentForRefinement([fragmentCid], refinementMap, false);
+            if (fragment.molNo !== null) {
+                await this.commandCentre.cootCommand(
+                    {
+                        returnType: "status_instanced_mesh_pair",
+                        command: "refine",
+                        commandArgs: [fragment.molNo, ncyc],
+                    },
+                    false
+                );
+                await this.mergeFragmentFromRefinement(fragmentCid, fragment, true, false);
+            }
+        } else {
+            await this.commandCentre.cootCommand(
+                {
+                    command: "refine_residues_using_atom_cid",
+                    returnType: "status",
+                    commandArgs: [this.molNo, cid, mode, ncyc],
+                    changesMolecules: [this.molNo],
+                },
+                true
+            );
+        }
 
         this.setAtomsDirty(true);
         if (redraw) {
@@ -2512,6 +2778,11 @@ export class MoorhenMolecule {
             cidList = [cid];
         } else {
             cidList = await this.getNeighborResiduesCids(cid, dist);
+        }
+        // A CID ending in `:X` refines only alt conf X (plus the atoms with no alt conf)
+        const altConf = getCidAltConf(cid);
+        if (altConf) {
+            cidList = cidList.map(residueCid => restrictCidToAltConf(residueCid, altConf));
         }
 
         const newMolecule = await this.copyFragmentForRefinement(cidList, activeMap, redraw, redrawFragmentFirst);
@@ -2672,7 +2943,9 @@ export class MoorhenMolecule {
      * @param {boolean} [redraw=false] - Indicates if the fitted ligands should be drawn
      * @param {boolean} [useConformers=false] - Indicates if there is need to test multiple conformers
      * @param {number} [conformerCount=0] - Conformer count
-     * @returns {Promise<moorhen.Molecule[]>} - A list of fitted ligands
+     * @returns {Promise<moorhen.Molecule[]>} - A list of fitted ligands. When fitting anywhere, best correlation
+     * with the map first, each with its correlation and the volume of its density blob in `metadata`
+     * (FIT_CORRELATION_KEY, FIT_CLUSTER_VOLUME_KEY). Fitting right here gives no scores, in Coot's order.
      */
     async fitLigand(
         mapMolNo: number,
@@ -2706,11 +2979,25 @@ export class MoorhenMolecule {
             const ligandMolecule: moorhen.Molecule = this.store
                 .getState()
                 .molecules.moleculeList.find((molecule: moorhen.Molecule) => molecule.molNo === ligandMolNo);
+            // Coot lists the poses cluster by cluster, biggest blob of density first, and sorts by
+            // correlation only within a cluster: the best pose of the biggest blob need not be the
+            // best fit. Best correlation first across all of them, so that #1 is the best fit.
+            const fits = fitRightHere
+                ? (result.data.result.result as number[]).map(imol => ({ imol, info: null as libcootApi.fitLigandInfo | null }))
+                : [...(result.data.result.result as libcootApi.fitLigandInfo[])]
+                      .sort((a, b) => b.fitting_score - a.fitting_score)
+                      .map(info => ({ imol: info.imol, info }));
             newMolecules = await Promise.all(
-                result.data.result.result.map(async (fitLigandResult: number | libcootApi.fitLigandInfo, idx: number) => {
+                fits.map(async ({ imol, info }, idx: number) => {
                     const newMolecule = new MoorhenMolecule(this.moorhenInstance);
-                    newMolecule.molNo = fitRightHere ? (fitLigandResult as number) : (fitLigandResult as libcootApi.fitLigandInfo).imol;
+                    newMolecule.molNo = imol;
                     newMolecule.name = `${ligandMolecule?.name ? ligandMolecule.name : "Lig."} fit. #${idx + 1}`;
+                    if (info && info.fitting_score >= 0) {
+                        newMolecule.metadata[FIT_CORRELATION_KEY] = info.fitting_score.toFixed(3);
+                    }
+                    if (info && info.cluster_volume >= 0) {
+                        newMolecule.metadata[FIT_CLUSTER_VOLUME_KEY] = `${info.cluster_volume.toFixed(0)} Å³`;
+                    }
                     newMolecule.isDarkBackground = this.isDarkBackground;
                     newMolecule.defaultBondOptions = this.defaultBondOptions;
                     await ligandMolecule?.transferLigandDicts?.(newMolecule);
@@ -3203,9 +3490,10 @@ export class MoorhenMolecule {
     /**
      * Split a molecule with multiple models into separate molecules (one for each model)
      * @param {boolean} [draw=false] - Indicates whether the new molecules should be drawn
+     * @param {boolean} [transferDicts=true] - Read this molecule's ligand dictionaries for each new molecule (false: the caller makes them available another way)
      * @returns {moorhen.Molecule[]} - A list with the new molecules
      */
-    async splitMultiModels(draw: boolean = false): Promise<moorhen.Molecule[]> {
+    async splitMultiModels(draw: boolean = false, transferDicts: boolean = true): Promise<moorhen.Molecule[]> {
         const result = (await this.commandCentre.cootCommand(
             {
                 returnType: "int_array",
@@ -3224,7 +3512,7 @@ export class MoorhenMolecule {
                     const newMolecule = new MoorhenMolecule(this.moorhenInstance);
                     newMolecule.name = `${this.name}-${index + 1}`;
                     newMolecule.molNo = molNo;
-                    await this.transferMetaData(newMolecule);
+                    await this.transferMetaData(newMolecule, transferDicts);
                     newMolecule.setAtomsDirty(true);
                     await newMolecule.fetchDefaultColourRules();
                     if (draw) {

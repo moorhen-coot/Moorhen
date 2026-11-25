@@ -1,4 +1,5 @@
-import Fasta from "biojs-io-fasta";
+import { parseFasta } from "./fasta";
+import { drawDefaultRepresentation } from "./Representation/defaultRepresentation";
 import { centreOfObject } from "../store/threeDObjectsSlice";
 import pako from "pako";
 import type { Dispatch, Store } from "redux";
@@ -10,11 +11,13 @@ import { setActiveMap } from "../store/generalStatesSlice";
 import { setValidationJson } from "../store/jsonValidation";
 import { addMap } from "../store/mapsSlice";
 import { showModal } from "../store/modalsSlice";
-import { addCustomRepresentation, addMoleculeList } from "../store/moleculesSlice";
+import { addCustomRepresentation, addMoleculeList, removeMolecule } from "../store/moleculesSlice";
 import { setAfJson, setEsmJson, setHomologsJson, setMrParseModels, setTargetSequence } from "../store/mrParseSlice";
 import { moorhen } from "../types/moorhen";
 import { MoorhenMap } from "./MoorhenMap";
 import { MoorhenMolecule } from "./MoorhenMolecule";
+import { CubeFormatError } from "./cubeFile";
+import { isCubeFileName, loadCubeFile } from "./loadCubeFile";
 import { loadMtzMaps } from "./MtzLoading";
 import { processNEFFileAutoLoader } from "./NEFFileAutoLoader"
 import { MoorhenTimeCapsule } from "./MoorhenTimeCapsule";
@@ -25,6 +28,9 @@ import { decompressDracoGltf } from "./gltfDraco";
 import { createDracoDecode } from "./gltfDracoDecoder";
 import { gltfExternalUris, gltfIsDracoCompressed, gltfUnsupportedFeature, isRemoteUri } from "./gltfInspect";
 import { gltfMaterials } from "./gltfTextures";
+import { moleculeNameFromFileName } from "./utils";
+import { readDictionary } from "./dictionaries";
+import { drawLigandBonds } from "./Representation/defaultRepresentation";
 // import { pdbqtToPdb } from "./pdbqtToPdb";
 
 interface MrParsePDBModelJson {
@@ -108,16 +114,9 @@ export const drawModels = async (newMolecules: MoorhenMolecule[], moorhenInstanc
 
     for (const newMolecule of newMolecules) {
         const hasLongSequence = newMolecule.sequences.some(item => item.sequence.length > 10);
-        const representation = hasLongSequence ? moorhenInstance.representation.defaultStyle : "CBs";
-        if (
-            representation === "ribbons-and-ligands" ||
-            representation === "ribbons-and-side-chains" ||
-            representation === "site-and-ribbons"
-        ) {
-            await moorhenInstance.representation.wizard(newMolecule.uniqueId, representation, true);
-        } else {
-            await moorhenInstance.representation.create(newMolecule.uniqueId, { representationStyle: representation });
-        }
+        // The shown scene's default style; a short chain (a peptide, a ligand) as bonds
+        const style = hasLongSequence ? moorhenInstance.representation.defaultStyle : "CBs";
+        await drawDefaultRepresentation(moorhenInstance, newMolecule.uniqueId, style, true);
     }
 };
 
@@ -129,7 +128,8 @@ export const loadCoordFiles = async (
 ): Promise<Promise<moorhen.Molecule>[]> => {
     const loadPromises: Promise<moorhen.Molecule>[] = [];
     for (const file of files) {
-        if (file.name.endsWith(".pdb") || file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
+        const lowerName = file.name.toLowerCase();
+        if (lowerName.endsWith(".pdb") || lowerName.endsWith(".ent") || lowerName.endsWith(".cif") || lowerName.endsWith(".mmcif")) {
             const contents = await file.text();
             loadPromises.push(
                 readCoordsString(contents, file.name, moorhenInstance, backgroundColor, defaultBondSmoothness)
@@ -174,7 +174,7 @@ const parseJSONAndGetModelFiles = (json_contents, dispatch) => {
     const modelFiles: string[] = [];
     if (fastaContents) {
         try {
-            const seqs = Fasta.parse(fastaContents);
+            const seqs = parseFasta(fastaContents);
             dispatch(setTargetSequence(seqs[0].seq));
         } catch (e) {
             console.log("Failed to extract sequence from input.fasta");
@@ -228,16 +228,17 @@ const loadMrParseJson = async (files: File[]) => {
     let homologsContents = "";
 
     for (const file of files) {
-        if (file.name.endsWith("input.fasta")) {
+        const lowerName = file.name.toLowerCase();
+        if (lowerName.endsWith("input.fasta")) {
             fastaContents = await file.text();
         }
-        if (file.name.endsWith("af_models.json")) {
+        if (lowerName.endsWith("af_models.json")) {
             afModelContents = await file.text();
         }
-        if (file.name.endsWith("esm_models.json")) {
+        if (lowerName.endsWith("esm_models.json")) {
             esmModelContents = await file.text();
         }
-        if (file.name.endsWith("homologs.json")) {
+        if (lowerName.endsWith("homologs.json")) {
             homologsContents = await file.text();
         }
     }
@@ -294,9 +295,8 @@ export const loadMrParseFiles = async (
         backgroundColor,
         defaultBondSmoothness
     );
-
-    await drawModels(newMolecules, moorhenInstance);
-    dispatch(addMoleculeList(newMolecules));
+    await dispatch(addMoleculeList(newMolecules));
+    await drawModels(newMolecules, moorhenInstance); 
     newMolecules.at(-1).centreOn("/*/*/*/*", true);
 
     moorhenInstance.store.dispatch(setMrParseModels(newMolecules));
@@ -403,15 +403,7 @@ const readCifDictionary = async (
     const newMonomers: MoorhenMolecule[] = [];
     for (const dict of dictionary) {
         const newMonomer = new MoorhenMolecule(moorhenInstance);
-        await moorhenInstance.commandCentre.cootCommand(
-            {
-                returnType: "status",
-                command: "read_dictionary_string",
-                commandArgs: [dict.dict_contents, -999999],
-                changesMolecules: [],
-            },
-            false
-        );
+        await readDictionary(moorhenInstance, dict.dict_contents, null, file.name);
         // dictionaryFilesContent.push(content);
         // const compIdsVector = window.gemmiModule.parse_ligand_dict_info(content);
 
@@ -423,26 +415,30 @@ const readCifDictionary = async (
             },
             true
         );
-        if (result.data.result.status === "Completed") {
+        // "Completed" says only that the command ran. Coot answers -1 when it could not make the
+        // monomer - a CIF that is not really a dictionary, or one with no coordinates to place -
+        // and a molecule built on -1 has no atoms to fetch: drawing it failed with a gemmi
+        // binding error when its coordinates came back as nothing.
+        if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
             newMonomer.molNo = result.data.result.result;
-            newMonomer.name = file.name;
+            newMonomer.name = moleculeNameFromFileName(file.name);
             newMonomer.setBackgroundColour(backgroundColor);
             newMonomer.defaultBondOptions.smoothness = defaultBondSmoothness;
             newMonomer.coordsFormat = "mmcif";
-            newMonomer.addDict(dict.dict_contents);
+            await newMonomer.addDict(dict.dict_contents);
             newMonomers.push(newMonomer);
-            moorhenInstance.getMoleculeList().forEach(molecule => {
-                if (molecule.ligands.length > 0) {
-                    molecule.representations.forEach(representation => {
-                        if (representation.style === "CBs") {
-                            representation.redraw();
-                        }
-                    });
-                }
-            });
+            // Only molecules containing this residue type draw differently with the new dictionary.
+            await Promise.all(
+                moorhenInstance
+                    .getMoleculeList()
+                    .filter(molecule => molecule.ligands?.some(ligand => ligand.resName === dict.comp_id))
+                    .flatMap(molecule => molecule.representations.filter(representation => representation.style === "CBs"))
+                    .map(representation => representation.redraw())
+            );
         }
     }
-    return newMonomers;
+    // None made is a failure, as no dictionary is: the caller tells the user only on null.
+    return newMonomers.length > 0 ? newMonomers : null;
 };
 
 /**
@@ -496,6 +492,61 @@ const loadMapFile = async (
 
     // );
     return;
+};
+
+/**
+ * A ligand-only molecule with several models (docking poses: a Vina PDBQT, conformers...) as one
+ * ligand-only molecule per model, in model order, so that each pose is a ligand of its own in the
+ * ligand list (to show, compare, take contacts of, merge). Any other molecule is returned as is: the
+ * models of a protein (NMR, ensembles) belong together.
+ * @returns The molecules to add: the poses, the original having been deleted; or the molecule itself.
+ */
+const splitLigandPoses = async (molecule: MoorhenMolecule, moorhenInstance: MoorhenInstance): Promise<MoorhenMolecule[]> => {
+    if (!molecule.isLigandOnly() || molecule.numberOfModels < 2) return [molecule];
+    // The dictionaries read for the file (its missing monomers), shared by the poses: read once for
+    // every molecule, as batch loading does, rather than once more for each pose
+    const dictionaries = Object.values(molecule.ligandDicts ?? {});
+    const poses = (await molecule.splitMultiModels(false, false)) as MoorhenMolecule[] | undefined;
+    if (!poses?.length) return [molecule];
+    for (const dictionary of dictionaries) {
+        await readDictionary(moorhenInstance, dictionary, null, molecule.name);
+    }
+    // Cached on each pose all the same: what sessions and exports save with a molecule
+    poses.forEach(pose => dictionaries.forEach(dictionary => pose.cacheLigandDict(dictionary)));
+    await molecule.delete();
+    // Never in the molecule list, but its dictionary entries were recorded for it: removed with it
+    moorhenInstance.store.dispatch(removeMolecule(molecule));
+    // Their ligands read, so that they are listed as ligand-only molecules from the start
+    await Promise.all(poses.map(pose => pose.updateAtoms()));
+    return poses;
+};
+
+/** The metadata key of a pose's AutoDock Vina score (kcal/mol, lower is better) */
+export const VINA_SCORE_KEY = "Vina score";
+
+/**
+ * The Vina score of each model of a PDBQT, in model order: the first value of its
+ * `REMARK VINA RESULT:` line (the next two are RMSDs from the best pose). A file without MODEL
+ * records is one model. undefined for a model without the remark.
+ */
+export const vinaScores = (pdbqtString: string): (string | undefined)[] => {
+    const scores: (string | undefined)[] = [];
+    let current = -1;
+    for (const line of pdbqtString.split("\n")) {
+        if (line.startsWith("MODEL")) {
+            scores.push(undefined);
+            current = scores.length - 1;
+            continue;
+        }
+        const match = /^REMARK VINA RESULT:\s+(-?\d+(?:\.\d+)?)/.exec(line);
+        if (!match) continue;
+        if (current === -1) {
+            scores.push(undefined);
+            current = 0;
+        }
+        scores[current] ??= match[1];
+    }
+    return scores;
 };
 
 const pdbqtToPdb = (pdbqtString: string) => {
@@ -732,7 +783,7 @@ export const autoOpenFiles = async (
 
     let isMrParse = false;
     let isRelionLocresFolder = false;
-    const fileNames = files.map(file => file.name);
+    const fileNames = files.map(file => file.name.toLowerCase());
 
     // Check for MrParse directory
     if (fileNames.some(name => name.endsWith("input.fasta"))) {
@@ -780,13 +831,16 @@ export const autoOpenFiles = async (
     }
 
     for (const file of files) {
+        // Extensions compared in lower case, so TEST.PDB or MAP.MRC load like test.pdb and map.mrc
+        const lowerName = file.name.toLowerCase();
         //Structures
-        if (file.name.endsWith(".pdb") || file.name.endsWith(".pdbqt") ||file.name.endsWith(".ent") || file.name.endsWith(".cif") || file.name.endsWith(".mmcif")) {
+        if (lowerName.endsWith(".pdb") || lowerName.endsWith(".pdbqt") ||lowerName.endsWith(".ent") || lowerName.endsWith(".cif") || lowerName.endsWith(".mmcif")) {
             let content = await file.text();
-            if (file.name.endsWith(".pdbqt")) {
+            // Docking scores, read before the remarks go with the conversion to PDB
+            const scores = lowerName.endsWith(".pdbqt") ? vinaScores(content) : [];
+            if (lowerName.endsWith(".pdbqt")) {
                 // keep only the first 66 characters of each line to make a kinda pdb
-                content =  pdbqtToPdb(content);
-                console.log(content);
+                content = pdbqtToPdb(content);
             }
             const newMolecule = await readCoordsString(
                 content,
@@ -814,24 +868,48 @@ export const autoOpenFiles = async (
                     );
                     continue;
                 }
-                await Promise.all(newMonomer.flatMap(monomer => [monomer.fetchIfDirtyAndDraw("CBs"), monomer.fetchDefaultColourRules()]));
+                // Drawn with their default colour rules, fetched by the representation
+                await Promise.all(newMonomer.map(monomer => drawLigandBonds(monomer)));
                 dispatch(addMoleculeList(newMonomer));
                 moleculesCreated.push(...newMonomer);
+                // Reported like any other loaded molecule (ligandFromSmiles and loadCifString return this too)
+                returnValues.push(
+                    ...newMonomer.map(monomer => ({
+                        type: "molecule" as const,
+                        uniqueID: monomer.uniqueId,
+                        molNo: monomer.molNo,
+                        fileName: file.name,
+                    }))
+                );
             } else if (newMolecule.atomCount === 0) {
                 console.log(`Molecule ${file.name} has no atoms, skipping...`);
                 dispatch(enqueueSnackbar({ message: `Failed to read molecule ${file.name}, no atoms found`, variant: "warning" }));
                 continue;
             } else {
                 console.log(`Successfully read molecule ${file.name} molno ${newMolecule.molNo}`);
-                dispatch(addMoleculeList([newMolecule]));
-                await drawModels([newMolecule], moorhenInstance);
+                const loaded = await splitLigandPoses(newMolecule, moorhenInstance);
+                // One score per pose (the poses are in model order); none if they do not match up
+                if (scores.length === loaded.length) {
+                    loaded.forEach((molecule, index) => {
+                        if (scores[index] !== undefined) molecule.metadata[VINA_SCORE_KEY] = scores[index];
+                    });
+                }
+                dispatch(addMoleculeList(loaded));
+                await drawModels(loaded, moorhenInstance);
 
-                moleculesCreated.push(newMolecule);
-                returnValues.push({ type: "molecule", uniqueID: newMolecule.uniqueId, molNo: newMolecule.molNo, fileName: file.name });
+                moleculesCreated.push(...loaded);
+                returnValues.push(
+                    ...loaded.map(molecule => ({
+                        type: "molecule" as const,
+                        uniqueID: molecule.uniqueId,
+                        molNo: molecule.molNo,
+                        fileName: file.name,
+                    }))
+                );
             }
-        } else if (file.name.endsWith(".mtz")) {
+        } else if (lowerName.endsWith(".mtz")) {
             returnValues.push(...(await loadMtzMaps(moorhenInstance, file)));
-        } else if (file.name.endsWith(".pb")) {
+        } else if (lowerName.endsWith(".pb")) {
             //Session file
             try {
                 await handleSessionUpload(file, moorhenInstance);
@@ -843,7 +921,7 @@ export const autoOpenFiles = async (
                 dispatch(enqueueSnackbar({ message, variant: "warning" }));
             }
             break; //We only load the first session.
-        } else if (file.name.toLowerCase().endsWith(MOVIE_EXTENSION)) {
+        } else if (lowerName.endsWith(MOVIE_EXTENSION)) {
             // A movie file, which is a movie description plus the session it was made against.
             // Handled like a session and for the same reason: it rebuilds the whole scene, so
             // there is nothing sensible to do with a second one, or with anything opened after it.
@@ -853,7 +931,7 @@ export const autoOpenFiles = async (
                 variant: opened.ok ? "info" : "warning",
             }));
             break;
-        } else if (file.name.toLowerCase().endsWith(".gltf") || file.name.toLowerCase().endsWith(".glb")) {
+        } else if (lowerName.endsWith(".gltf") || lowerName.endsWith(".glb")) {
             try {
                 // The whole selection, not just this file: a .gltf takes its buffers and images
                 // from whatever was opened alongside it.
@@ -869,7 +947,7 @@ export const autoOpenFiles = async (
                 }));
                 console.warn(e);
             }
-        } else if (file.name.endsWith(".json")) {
+        } else if (lowerName.endsWith(".json")) {
             try {
                 const fileContents = await file.text();
                 const json = JSON.parse(fileContents);
@@ -878,7 +956,7 @@ export const autoOpenFiles = async (
             } catch (e) {
                 dispatch(enqueueSnackbar({ message: `Failed to load json validation ${file.name}`, variant: "warning" }));
             }
-        } else if (file.name.endsWith(".nef") || file.name.endsWith(".nef.gz")) {
+        } else if (lowerName.endsWith(".nef") || lowerName.endsWith(".nef.gz")) {
             const molecules = store.getState().molecules.moleculeList;
 
             await processNEFFileAutoLoader(file, molecules, dispatch);
@@ -886,18 +964,18 @@ export const autoOpenFiles = async (
         }
 
         else if (
-            file.name.endsWith(".mrc") ||
-            file.name.endsWith(".map") ||
-            file.name.endsWith(".ccp4") ||
-            file.name.endsWith(".mrc.gz") ||
-            file.name.endsWith(".map.gz")
+            lowerName.endsWith(".mrc") ||
+            lowerName.endsWith(".map") ||
+            lowerName.endsWith(".ccp4") ||
+            lowerName.endsWith(".mrc.gz") ||
+            lowerName.endsWith(".map.gz")
         ) {
             try {
                 let newMap: MoorhenMap = null;
                 const isDiff = /fofc|diff|delfwt|mfo-?dfc/i.test(file.name);
-                const isLocres = file.name.includes("_locres.mrc");
+                const isLocres = lowerName.includes("_locres.mrc");
                 try {
-                    if (file.name.endsWith(".gz")) {
+                    if (lowerName.endsWith(".gz")) {
                         newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, true);
                     } else {
                         newMap = await MoorhenMap.loadToCootFromMapFile(file, moorhenInstance, isDiff, false);
@@ -918,7 +996,8 @@ export const autoOpenFiles = async (
                     newMap.showOnLoad = false;
                 }
                 dispatch(addMap(newMap));
-                if (!isLocres) {
+                // Difference maps are never made active by default
+                if (!isLocres && !newMap.isDifference) {
                     dispatch(setActiveMap(newMap));
                 }
                 mapsCreated.push(newMap);
@@ -927,6 +1006,40 @@ export const autoOpenFiles = async (
                 console.warn(err);
                 // dispatch(enqueueSnackbar({ message:"Error reading map files",  variant: "error" }));
                 console.log(`Cannot read files`);
+            } finally {
+                document.body.click();
+            }
+        } else if (isCubeFileName(file.name)) {
+            // A Gaussian Cube. Parsed here and converted to a map per field, so a file of several
+            // orbitals opens as several maps - one card each, named for the orbital.
+            try {
+                const cubeMaps = await loadCubeFile(file, moorhenInstance);
+                for (const newMap of cubeMaps) {
+                    if (newMap.molNo === -1) {
+                        throw new Error("Cannot read the cube file!");
+                    }
+                    dispatch(addMap(newMap));
+                    mapsCreated.push(newMap);
+                    returnValues.push({
+                        type: "map", uniqueID: newMap.uniqueId, molNo: newMap.molNo,
+                        fileName: file.name,
+                    });
+                }
+                // Centred on only when there is nothing else to look at, and only on the first -
+                // the fields of one cube share a grid, so they would all centre on the same place.
+                if (molecules.length === 0 && cubeMaps.length > 0) {
+                    await cubeMaps[0].centreOnMap();
+                }
+                // Deliberately no setActiveMap: an orbital is not something to refine against, and
+                // making one active would take the active map away from a real map already open.
+            } catch (err) {
+                console.warn(err);
+                dispatch(enqueueSnackbar({
+                    message: err instanceof CubeFormatError
+                        ? `${file.name}: ${err.message}`
+                        : `Failed to load cube file ${file.name}`,
+                    variant: "warning",
+                }));
             } finally {
                 document.body.click();
             }

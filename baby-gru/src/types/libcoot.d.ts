@@ -64,6 +64,8 @@ export namespace libcootApi {
         get_chem_shift_info(nef_input:string): string;
 
         cidToNeighboursCid: (arg0: gemmi.Structure, arg1: string, arg2: string, arg3: number, arg4: boolean) => string;
+        /** The residues of the first selection near those of the second, in another structure */
+        cidToNeighboursCidAcross: (st: gemmi.Structure, cid: string, stNeighbours: gemmi.Structure, cidNeighbours: string, distance: number, exclude: boolean) => string;
         // Gemmi free functions
         read_structure_file(filePath: string, format: number): gemmi.Structure;
         read_mtz_file(filePath: string): gemmi.Mtz;
@@ -360,16 +362,18 @@ export namespace libcootApi {
     interface SimpleMeshT {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;
-        /** 1 if the mesh was built, 0 if it could not be. */
-        status: number;
-        /**
-         * What the mesh is, and - when status is 0 - why it is not.
-         *
-         * simple_mesh_t has no other field to put a reason in, so a failing generator writes one
-         * here. Both are plain value_object fields, so they are ordinary JavaScript values on
-         * this side and remain readable after the two vectors have been deleted.
-         */
-        name: string;
+        // 1 if the mesh is the answer, 0 if Coot threw while building it. Not the same as an
+        // empty mesh, which is a perfectly good answer for a selection that matched nothing.
+        status?: number;
+        // Which residue each vertex belongs to, and the residues as CIDs. Present but empty
+        // for every mesh that does not know where its vertices came from.
+        vertex_owner?: emscriptem.vector<number>;
+        // A vertex in the groove between two atoms belongs to both: the second residue, and
+        // how much of the vertex belongs to the first.
+        vertex_owner_other?: emscriptem.vector<number>;
+        vertex_owner_weight?: emscriptem.vector<number>;
+        owners?: emscriptem.vector<string>;
+        name?: string;
     }
     /**
      * One material's worth of an imported glTF.
@@ -395,15 +399,15 @@ export namespace libcootApi {
         additional_norm_tri?: [[number[] | Float32Array]];
         norm_tri: [[number[] | Float32Array]];
         col_tri: [[number[] | Float32Array]];
-        /**
-         * Carried through from simple_mesh_t by the callers that need it.
-         *
-         * simpleMeshToMeshData returns only the buffer arrays, so these are absent unless the
-         * worker function attaches them. A caller that has to tell a failure from an empty
-         * result - the glTF import, which must report which feature it could not read - needs
-         * them and says so in its own return type.
-         */
+        //! 1 if the mesh is the answer, 0 if Coot threw while building it.
         status?: number;
+        // One entry per vertex, indexing owners. Absent unless the mesh knows.
+        vertex_owners?: Uint32Array;
+        // The second owner of a saddle vertex, and the share belonging to the first. Present
+        // together with vertex_owners or not at all.
+        vertex_owners_other?: Uint32Array;
+        vertex_owner_weights?: Float32Array;
+        owners?: string[];
         name?: string;
     }
     interface SymmetryData {
@@ -610,14 +614,32 @@ export namespace libcootApi {
     };
     type fitLigandInfo = {
         imol: number;
+        /** Index of the density cluster (blob) the pose was fitted into; Coot orders clusters by their density score */
         cluster_idx: number;
+        /** Index of the pose within its cluster */
         ligand_idx: number;
+        /** Correlation of the pose with the map (higher is better); -1 when Coot did not score it */
+        fitting_score: number;
+        /** Volume of the density cluster, in cubic Angstroms */
+        cluster_volume: number;
     };
     type compoundInfo = {
         name: string;
         three_letter_code: string;
     };
     type CootModule = {
+        /**
+         * The number of threads that coot may use: the number to give to
+         * `set_max_number_of_threads()`. It is the number of cores, at least 4 and at most 8, unless
+         * `moorhenThreadLimit` was passed in the module options. Set in `wasm_src/coot_env_web.js`.
+         */
+        moorhenThreadLimit?: number;
+        /**
+         * The number of pthread workers that the module started with, `2 * moorhenThreadLimit + 4`.
+         * Giving coot a bigger thread limit than `moorhenThreadLimit` can use them all up, and a
+         * call that needs a worker when none is free never returns.
+         */
+        moorhenPthreadPoolSize?: number;
         /**
          * Read a glTF or glb file from the module's filesystem and return it as one mesh.
          *
@@ -674,19 +696,18 @@ export namespace libcootApi {
         getReversedNormalsFromSimpleMesh(arg0: any): Float32Array;
         getColoursFromSimpleMesh(arg0: any): Float32Array;
         getTextureArray(arg0: any, arg1: any): void;
-        getPositionsFromSimpleMesh2(arg0: any, arg1: any): void;
-        getNormalsFromSimpleMesh2(arg0: any, arg1: any): void;
-        getReversedNormalsFromSimpleMesh2(arg0: any, arg1: any): void;
-        getReversedNormalsFromSimpleMesh3(arg0: any, arg1: any): void;
-        getColoursFromSimpleMesh2(arg0: any, arg1: any): void;
+        getPositionsFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
+        getNormalsFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
+        getReversedNormalsFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
+        getColoursFromVertices(vertices: emscriptem.vector<VncVertex>, out: Float32Array): void;
         getFloat32ArrayFromVector(arg0: any, arg1: any): void;
         getUint32ArrayFromVector(arg0: any, arg1: any): void;
         getLineIndicesFromSimpleMesh(arg0: any): Uint32Array;
         getPermutedTriangleIndicesFromSimpleMesh(arg0: any): Uint32Array;
         getTriangleIndicesFromSimpleMesh(arg0: any): Uint32Array;
-        getLineIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
-        getPermutedTriangleIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
-        getTriangleIndicesFromSimpleMesh2(arg0: any, arg1: any): void;
+        getLineIndicesFromTriangles(triangles: emscriptem.vector<gTriangle>, out: Uint32Array): void;
+        getPermutedTriangleIndicesFromTriangles(triangles: emscriptem.vector<gTriangle>, out: Uint32Array): void;
+        getTriangleIndicesFromTriangles(triangles: emscriptem.vector<gTriangle>, out: Uint32Array): void;
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
         validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
         calculate_cremer_pople_parameters(arg0: string, arg1: string): emscriptem.vector<PrivateerCremerPopleParameters>;
@@ -705,6 +726,7 @@ export namespace libcootApi {
         SeqId: { new (arg0: string): gemmi.SeqId };
         AtomAddress: { new (arg0: string, arg1: SeqId, arg2: string, arg3: string, arg4: number): gemmi.AtomAddress };
         VectorDouble: { new (): emscriptem.vector<double> };
+        VectorFloat: { new (): emscriptem.vector<number> };
         is64bit(): boolean;
         run_conkit_validate(options:ValidateOptions): number;
         get_nef_info(nef_input:string): string;
@@ -765,6 +787,13 @@ export namespace libcootApi {
         set_refinement_is_verbose(arg0: boolean): void;
         set_use_gemmi(arg0: boolean): void;
         get_use_gemmi(): boolean;
+        get_molecular_representation_mesh(imol: number, cid: string, colourScheme: string, style: string, secondaryStructureUsageFlag: number): SimpleMeshJS;
+        /** Per-residue properties of a molecule's M2T Ribbon, as JSON: `[{"chain-id": "A", "res-no": 34, "ins-code": "", "worm-radius": 1.2}]` (or `"worm-radius-aniso": [x, y, z]`) */
+        set_residue_properties(imol: number, jsonString: string): boolean;
+        clear_residue_properties(imol: number): void;
+        /** Moorhen's (molecules_container_js): clear every residue's secondary structure, keeping it, for a worm */
+        save_and_clear_residue_secondary_structure(imol: number): void;
+        restore_residue_secondary_structure(imol: number): void;
         export_molecular_representation_as_gltf(
             imol: number,
             cid: string,
