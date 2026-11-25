@@ -1,9 +1,8 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
 import { MoorhenGradientPickerButton, MoorhenMapSelect, MoorhenMoleculeSelect, MoorhenNumberInput, MoorhenSelect } from "@/components/inputs";
-import { type GradientColourTable, gradientPresets } from "@/components/inputs/MoorhenGradientPicker/gradientPresets";
 import { MoorhenInfoCard, MoorhenStack } from "@/components/interface-base";
-import { RootState, setShownBottomPanel, setValidationOption } from "@/store";
+import { RootState, setShownBottomPanel, setValidationGradient, setValidationOption } from "@/store";
 import { BaseSequenceViewerTab } from "./BaseSequenceViewerTab";
 import { validationDoc } from "./ValidationDoc";
 
@@ -18,6 +17,7 @@ const presets = {
 export const ValidationTab = () => {
     const isActiveTab = useSelector((state: RootState) => state.bottomPanels.shownBottomPanel === "validation");
     const validationOption = useSelector((state: RootState) => state.bottomPanels.validationOption);
+    const validationGradient = useSelector((state: RootState) => state.bottomPanels.validationGradient);
     const [preset, setPreset] = useState<string>("Default");
     const dispatch = useDispatch();
 
@@ -45,10 +45,6 @@ export const ValidationTab = () => {
 
     const handleColumnWidthChange = (val: number) => {
         dispatch(setValidationOption({ ...validationOption, columnWidth: val }));
-    }
-
-    const handleColourTableChange = (colourTable: GradientColourTable) => {
-        dispatch(setValidationOption({ ...validationOption, colourTable }));
     }
 
     const handleNumberOfLinesChange = (val: number) => {
@@ -116,12 +112,11 @@ export const ValidationTab = () => {
             />
             <MoorhenGradientPickerButton
                 label="Colours"
-                colourTable={validationOption.colourTable ?? (gradientPresets["Pool Party"] as GradientColourTable)}
-                setColourTable={handleColourTableChange}
+                colourTable={validationGradient}
+                setColourTable={colourTable => dispatch(setValidationGradient(colourTable))}
                 menu="validation-tab"
-                defaultPreset="Pool Party"
                 showValues={false}
-                popoverPlacement="right"
+                popoverPlacement="top"
             />
         </MoorhenStack>
 

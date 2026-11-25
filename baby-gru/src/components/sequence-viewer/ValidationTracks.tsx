@@ -12,7 +12,7 @@ interface ValidationTracksProps {
     columnWidth?: number;
     handleResidueMouseUp?: (evt: React.MouseEvent<HTMLDivElement>) => void;
     validationTracks?: string[];
-    /** The gradient of the tracks that have none of their own: 0 is the good end, 1 the poor one */
+    /** The colour gradient of the tracks: 0 is the good end, 1 the poor one */
     gradient?: GradientPreset | GradientColourTable;
     popoverRef?: React.RefObject<HTMLDivElement>;
 }
@@ -42,7 +42,7 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
                 style={
                     {
                         "--column-width": `${columnWidth}rem`,
-                        "--bar-color": `${getColorFromGradient(data.gradientPreset ?? gradient, value, reverseGradient, true)}`,
+                        "--bar-color": `${getColorFromGradient(gradient, value, reverseGradient, true)}`,
                         "--bar-height": `${value * 100}%`,
                     } as React.CSSProperties
                 }
@@ -79,7 +79,7 @@ export const ValidationTracks = memo((props: ValidationTracksProps) => {
                                     label={key}
                                     value={data.value}
                                     reverseColour={data.reverseGradient}
-                                    gradient={data.gradientPreset ?? gradient}
+                                    gradient={gradient}
                                 />
                             ))}
                     </MoorhenStack>

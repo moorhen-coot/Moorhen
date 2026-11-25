@@ -3,14 +3,12 @@ import { MoorhenButton, MoorhenColourPicker, MoorhenSelect } from "..";
 import { MoorhenNumberInput } from "../";
 import { usePersistentState } from "../../../store/menusSlice";
 import { MoorhenStack } from "../../interface-base/Stack/Stack";
-import { colourTableToCssGradient, gradientPresets } from "./gradientPresets";
+import { colourTableToCssGradient, findGradientPreset, gradientPresets } from "./gradientPresets";
 
 export type MoorhenGradientPickerType = {
     colourTable: [number, [number, number, number]][];
     setColourTable: (colourTable: [number, [number, number, number]][]) => void;
     menu: string;
-    /** The preset shown as selected until the user picks another one */
-    defaultPreset?: string;
     showValues?: boolean;
     modifyValues?: boolean;
     minValue?: number;
@@ -24,7 +22,6 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
         colourTable,
         setColourTable,
         menu,
-        defaultPreset = "red-white-blue",
         showValues = true,
         modifyValues = false,
         minValue = 0,
@@ -34,7 +31,13 @@ export const MoorhenGradientPicker = memo((props: MoorhenGradientPickerType) => 
     } = props;
 
     const [internalColourTable, setInternalColourTable] = useState<[number, [number, number, number]][]>(colourTable);
-    const [selectedPreset, setSelectedPreset] = usePersistentState(menu, "gradientPresets", defaultPreset, true);
+    // Until the user picks a preset, the one shown is the one the colour table matches
+    const [selectedPreset, setSelectedPreset] = usePersistentState<string>(
+        menu,
+        "gradientPresets",
+        findGradientPreset(colourTable) ?? "Custom",
+        true
+    );
     const nOfPoints = internalColourTable.length;
 
     const updateExternalColourTable = () => {
