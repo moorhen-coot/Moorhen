@@ -539,7 +539,7 @@ export const RibbonSettingsPanel = (props: MoleculeSettingPanelProps) => {
                 onChange={evt => setSsUsageScheme(parseInt(evt.target.value))}
             >
                 <option value={"0"}>Use header</option>
-                <option value={"1"}>Do not use header</option>
+                <option value={"1"}>None</option>
                 <option value={"2"}>Calculate secondary structure</option>
             </MoorhenSelect>
             <MoorhenSelect
