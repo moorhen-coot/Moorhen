@@ -15,6 +15,8 @@ export interface ContourCase {
     level: number;
     /** GpuIsosurface.vertexRoomPerPoint: tiny forces the grow-and-remake path. */
     room: number;
+    /** An EM map whose data starts this many sections from the cell's origin (as a map file's NSSTART). */
+    emStart?: number;
 }
 
 export interface ContourReport {
@@ -38,6 +40,7 @@ export interface ContourReport {
 export default defineCase(async (device: GPUDevice, c: ContourCase): Promise<ContourReport> => {
     const kernels = await MapContourKernels.create(device);
     const grid = syntheticMap(c.em);
+    if (c.emStart !== undefined) grid.emRange = { min: [0, 0, c.emStart], max: [grid.nu, grid.nv, grid.nw + c.emStart] };
     const mapGrid = new GpuMapGrid(kernels, grid);
     const saved = GpuIsosurface.vertexRoomPerPoint;
     GpuIsosurface.vertexRoomPerPoint = c.room;
