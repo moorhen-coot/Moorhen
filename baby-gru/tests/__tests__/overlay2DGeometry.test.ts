@@ -176,6 +176,15 @@ describe("picking", () => {
         const order = pickOrder({ textOverlayList: [text], svgPathOverlayList: [], imageOverlayList: [], fracPathOverlayList: [], shapeOverlayList: [a, b, c] });
         expect(order.map(o => o.uniqueId)).toEqual(["t", "c", "b", "a"]);
     });
+
+    test("LaTeX text is tried as painted: after images, not with the plain text", () => {
+        const plain: Overlay2DTextFrac = { type: "Text", x: 0, y: 0, text: "p", fontFamily: "serif", fontPixelSize: 10, uniqueId: "plain" };
+        const latex: Overlay2DTextFrac = { ...plain, text: "x^2", latex: true, uniqueId: "latex" };
+        const image = { type: "Image", x: 0, y: 0, src: "", width: 1, height: 1, uniqueId: "image" } as Overlay2DImageSrcFrac;
+        const path = { type: "SvgPath", path: "M0 0", uniqueId: "path" } as never;
+        const order = pickOrder({ textOverlayList: [latex, plain], svgPathOverlayList: [path], imageOverlayList: [image], fracPathOverlayList: [], shapeOverlayList: [] });
+        expect(order.map(o => o.uniqueId)).toEqual(["latex", "image", "path", "plain"]);
+    });
 });
 
 describe("drawing helpers", () => {

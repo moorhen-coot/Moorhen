@@ -435,10 +435,14 @@ export const pickOrder = (lists: {
     fracPathOverlayList: Overlay2DObject[];
     shapeOverlayList: Overlay2DObject[];
 }): Overlay2DObject[] => {
+    // LaTeX text is painted typeset, after the image overlays (see drawOn2DContext), not with the
+    // plain text.
+    const isLatex = (o: Overlay2DObject) => "latex" in o && !!o.latex;
     const painted = [
-        ...lists.textOverlayList,
+        ...lists.textOverlayList.filter(o => !isLatex(o)),
         ...lists.svgPathOverlayList,
         ...lists.imageOverlayList,
+        ...lists.textOverlayList.filter(isLatex),
         ...lists.fracPathOverlayList,
         ...lists.shapeOverlayList,
     ];

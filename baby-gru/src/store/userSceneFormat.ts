@@ -111,7 +111,7 @@ const readMoleculeDefaults = (value: unknown): MoleculeDefaults =>
 export const fromFileEntry = (entry: UserSceneFileEntry): UserScene => {
     const scene: UserScene = { id: entry.id, name: entry.name };
     if (!isObject(entry.sections)) return scene;
-    const { representations, sceneSettings, moleculeDefaults, vectors, threeDObjects } = entry.sections;
+    const { representations, sceneSettings, moleculeDefaults, vectors, threeDObjects, annotations } = entry.sections;
     const molecules = isObject(entry.objects?.molecules) ? entry.objects.molecules : {};
     const content: SceneContent = {
         objects: {
@@ -131,6 +131,7 @@ export const fromFileEntry = (entry: UserSceneFileEntry): UserScene => {
         content.sections.threeDObjects = readIdentified(threeDObjects).filter(
             item => typeof item.type === "string"
         ) as unknown as ThreeDObject[];
+    if (annotations !== undefined) content.sections.annotations = readIdentified(annotations) as unknown as MoorhenAnnotation[];
     const camera = entry.camera;
     if (isObject(camera) && isNumberArray(camera.origin, 3) && typeof camera.zoom === "number" && isNumberArray(camera.quat, 4)) {
         content.camera = { origin: [...camera.origin] as [number, number, number], zoom: camera.zoom, quat: [...camera.quat] };

@@ -231,9 +231,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         return newBuffers
     }, [store])
 
-    // Vectors rebuild only when the vector list changes. This is the expensive side: it runs gemmi
-    // atom selections and awaits MathJax for any LaTeX label, so it must not be dragged along by
-    // an unrelated 3D object edit.
+    // Vectors rebuild only when the vector list or the background changes. This is the expensive
+    // side: it runs gemmi atom selections and awaits MathJax for any LaTeX label, so it must not be
+    // dragged along by an unrelated 3D object edit. The background counts because LaTeX labels are
+    // rasterised in a colour contrasting with it (plain labels are recoloured by the atlas).
     useEffect(() => {
         if (glRef === null || typeof glRef === 'function') return
         let superseded = false
@@ -257,7 +258,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
         rebuildVectors()
         return () => { superseded = true }
-    }, [vectorsList, glRef, store, buildDisplayBuffers, publishDisplayBuffers, publishLabelBuffers])
+    }, [vectorsList, backgroundColor, glRef, store, buildDisplayBuffers, publishDisplayBuffers, publishLabelBuffers])
 
     // 3D objects rebuild only when they change, which is now potentially every animation frame
     // while one of them is being dragged in the editor.

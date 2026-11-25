@@ -1278,8 +1278,9 @@ export class MoorhenTimeCapsule {
         dispatch(emptyAnnotations());
         if (sessionData.annotationData) {
             // Through the factory, so that fields protobuf leaves out (a coordinate of 0, say) get
-            // their defaults rather than coming back undefined.
-            dispatch(addAnnotations(sessionData.annotationData.map(d => newAnnotation(d))));
+            // their defaults rather than coming back undefined. Text is the exception: protobuf
+            // leaves out an empty string too, and that must stay empty, not become the default.
+            dispatch(addAnnotations(sessionData.annotationData.map(d => newAnnotation({ text: "", ...d }))));
         }
 
         // Load 2D canvas overlays

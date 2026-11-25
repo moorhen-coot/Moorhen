@@ -84,12 +84,14 @@ const vectorsSlice = createSlice({
     initialState: initialState,
     reducers: {
         // API
+        // Vectors that do not say whether their label is LaTeX are read the old way ($...$), so a
+        // caller or scene from before the switch keeps its typeset labels.
         addVectors: (state, action: PayloadAction<MoorhenVector[]>) => {
-            state.vectorsList.push(...action.payload);
+            state.vectorsList.push(...action.payload.map(migrateVectorLatexLabel));
         },
         // API
         addVector: (state, action: PayloadAction<MoorhenVector>) => {
-            state.vectorsList.push(action.payload);
+            state.vectorsList.push(migrateVectorLatexLabel(action.payload));
         },
         // API
         removeVectors: (state, action: PayloadAction<MoorhenVector[]>) => {
