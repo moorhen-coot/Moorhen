@@ -151,10 +151,11 @@ export const LigandContacts = (props: { molecule: MoorhenMolecule; ligand?: Liga
     const [partnerUid, setPartnerUid] = useState<string | undefined>(() =>
         partners.some(other => other.uniqueId === drawnBefore?.partnerUid) ? drawnBefore.partnerUid : undefined
     );
-    // A partner since deleted counts as none chosen, so that the selector picks one again (it only
-    // does when given none); else this would wait for its contacts forever
-    const partner = partners.find(other => other.uniqueId === partnerUid) ?? null;
-    const selectedUid = partner ? partnerUid : undefined;
+    // The chosen partner, else the first: none chosen yet, or the chosen one since deleted. Picked here
+    // and not by the selector, which keeps the choice it last made (a deleted molecule's, then for
+    // ever waited for)
+    const partner = partners.find(other => other.uniqueId === partnerUid) ?? partners[0] ?? null;
+    const selectedUid = partner?.uniqueId;
     const [result, setResult] = useState<{ partnerUid: string; contacts: ContactsState; computation: number } | null>(null);
     // Contacts are not recomputed when either molecule's coordinates change (refined, moved...): asked
     // for with the recompute button, each press a new computation

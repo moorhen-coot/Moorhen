@@ -47,6 +47,38 @@ const recordDictionaries = (store: Store, dictionaries: LoadedDictionary[]) => {
 export const ALL_MOLECULES = -999999;
 
 /**
+ * Whether this dictionary text is already read for every molecule, as it is (each of its compounds,
+ * with the same content). A molecule given it then needs no read of its own, only its cached copy
+ * (cacheLigandDict): a thousand poses of one ligand share the one read.
+ */
+export const isReadForEveryMolecule = (store: Store, text: string): boolean => {
+    if (!text) return false;
+    const recorded = new Map<string, string>();
+    const loaded: Record<string, LoadedDictionary> = store.getState().dictionaries?.loaded ?? {};
+    // Those read but not recorded yet too, the later one standing (as in the store)
+    for (const dictionary of [...Object.values(loaded), ...(pending.get(store) ?? [])]) {
+        if (dictionary.moleculeUid === null) recorded.set(dictionary.compId, dictionary.content);
+    }
+    const blocks = splitDictionary(text);
+    return blocks.length > 0 && blocks.every(([compId, content]) => recorded.get(compId) === content);
+};
+
+/**
+ * Give molecules a dictionary that some other molecule was made with (fitted poses, from their
+ * template's). One read for every molecule is theirs already: only cached on them, so that they save
+ * it. One read for one molecule only is not, and is read for each of them (addDict).
+ */
+export const giveDictionary = async (
+    store: Store,
+    molecules: { cacheLigandDict: (text: string) => void; addDict: (text: string) => Promise<void> }[],
+    text: string | undefined
+): Promise<void> => {
+    if (!text) return;
+    if (isReadForEveryMolecule(store, text)) molecules.forEach(molecule => molecule.cacheLigandDict(text));
+    else await Promise.all(molecules.map(molecule => molecule.addDict(text)));
+};
+
+/**
  * Split dictionary text into its data_comp_ blocks: [comp_id, block]. The data_comp_list block (the
  * list of what the file defines) is not a compound of its own: it stays at the start of the first one.
  */

@@ -296,8 +296,9 @@ export class MoorhenUserSceneManager {
      * Replace all the scenes and snapshots with the ones from a session file, and show the selected
      * one as it was recorded. The session loader has already put the molecules and their shown
      * representations on screen; showing the scene keeps those (identical ones are reused), adds the
-     * hidden ones (the session's own list has shown ones only) and applies its settings. Malformed
-     * entries are dropped.
+     * hidden ones (the session's own list has shown ones only) and applies its settings. A selected
+     * snapshot is not shown again, only its settings applied: changes made while it was shown are
+     * in the session, not in the snapshot. Malformed entries are dropped.
      *
      * **Internal use only.** Called by the session loader.
      * @private
@@ -321,8 +322,10 @@ export class MoorhenUserSceneManager {
         this.notShownYet = new Set(BUILT_IN_SCENE_IDS.filter(sceneId => sceneId !== selectedScene && !withContent.has(sceneId)));
         const content = this.contentOf(selectedScene);
         if (!content) return;
-        // A scene recorded with its representations is shown whole; an older one only has settings
-        if (content.sections.representations) await this.showScene(selectedScene, content);
+        // A scene recorded with its representations is shown whole; an older one only has settings.
+        // Not a snapshot: saving does not record it again (it is immutable), so what was on screen
+        // when the session was saved is what the loader restored, not what the snapshot holds
+        if (content.sections.representations && !isSnapshot(selectedScene)) await this.showScene(selectedScene, content);
         else this.applySceneSettings(content);
     }
 
@@ -748,9 +751,11 @@ export class MoorhenUserSceneManager {
         const toShow: number[] = [];
         const toHide: number[] = [];
         for (const molecule of this.instance.getMoleculeList()) {
-            // Its environment and NEF restraints count too: what its eye button hides with it
+            // Its environment and NEF restraints count too (what its eye button hides with it), and
+            // its adaptive bonds, which are no representation of the scene's (as molecule.isVisible())
             const shown =
                 molecule.representations.some(representation => representation.visible) ||
+                molecule.adaptativeBondsEnabled ||
                 !!molecule.environmentRepresentation?.visible ||
                 !!molecule.NEFRestraintRepresentation?.visible;
             if (shown !== visible.has(molecule.molNo)) (shown ? toShow : toHide).push(molecule.molNo);

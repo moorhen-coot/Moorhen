@@ -13,6 +13,7 @@ import { triggerUpdate } from "@/store/moleculeMapUpdateSlice";
 import type { MoleculeLigandRecord } from "@/store/moleculesSlice";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { MoleculeRepresentation, type RepresentationStyles } from "@/utils/Representation/MoorhenMoleculeRepresentation";
+import { mmdbLigandCid } from "@/utils/ligandContacts";
 import { type LigandEntry, type LigandSite, centreOnSite, groupLigandsBySite } from "@/utils/ligandSites";
 import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_SOURCE } from "@/utils/tags";
 import { setMoleculeListVisible, setMoleculeVisible } from "@/utils/moleculeVisibility";
@@ -446,6 +447,13 @@ const defaultCarbonColour = (molecule: MoorhenMolecule): string =>
     molecule.defaultColourRules?.find(rule => !rule.isMultiColourRule && rule.color)?.color ?? FALLBACK_SWATCH;
 
 /**
+ * The selection of a ligand inside a model, with or without its hydrogens. A "cid" selection is
+ * drawn as given (the representation's notH only applies to the other selection types), so the
+ * hydrogens are left out in the cid itself: /1/A/301(ATP) -> /1/A/301(ATP)/*[!H]
+ */
+const ligandSelection = (cid: string, hideHydrogens: boolean) => (hideHydrogens ? `${cid}/*[!H]` : cid);
+
+/**
  * The open part of a ligand's row (mounted only while open): a choice of one representation among
  * bonds, surface and MetaBalls, and one carbon colour for it (other elements keep their colours).
  * These are the molecule's custom representations, the same ones the molecule card's chips edit:
@@ -535,7 +543,7 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string 
             const representation = await MoleculeRepresentation.create({
                 representationStyle: style,
                 molecule,
-                ...(cid ? { ruleType: "cid" as const, cid } : { ruleType: "molecule" as const }),
+                ...(cid ? { ruleType: "cid" as const, cid: ligandSelection(cid, hideHydrogens) } : { ruleType: "molecule" as const }),
                 isCustom: true,
                 // As the molecule is (its eye button): a hidden ligand given a new style stays hidden
                 visible: store.getState().molecules.visibleMolecules.includes(molecule.molNo),
@@ -560,7 +568,11 @@ const LigandRepresentations = (props: { molecule: MoorhenMolecule; cid?: string 
         const hide = !hideHydrogens;
         setHideHydrogens(hide);
         for (const representation of ligandRepresentations) {
-            representation.edit({ representationStyle: representation.style, notH: hide });
+            representation.edit({
+                representationStyle: representation.style,
+                notH: hide,
+                ...(cid ? { cid: ligandSelection(cid, hide) } : {}),
+            });
         }
     };
 
@@ -714,14 +726,21 @@ const LigandMergeInto = (props: { molecule: MoorhenMolecule }) => {
     const records = useSelector((state: RootState) => state.molecules.moleculeRecords);
     const targets = moleculeList.filter(other => other !== molecule && !records[other.uniqueId]?.isLigandOnly);
     const [targetUid, setTargetUid] = useState<string | undefined>(undefined);
+    // The chosen model, else the first: none chosen yet, or the chosen one since deleted (the selector
+    // keeps the choice it last made, which would then be no model at all)
+    const target = targets.find(other => other.uniqueId === targetUid) ?? targets[0] ?? null;
     const [busy, setBusy] = useState<boolean>(false);
 
     const merge = async () => {
-        const target = targets.find(other => other.uniqueId === targetUid);
         if (!target) return;
         setBusy(true);
         try {
+            // mergeMolecules reports nothing (it logs what goes wrong): checked on the model itself,
+            // as the ligand is deleted next and would be lost with a merge that did not happen
+            const atomsBefore = await target.getNumberOfAtoms();
             await target.mergeMolecules([molecule]);
+            const atomsAfter = await target.getNumberOfAtoms();
+            if (!(atomsAfter > atomsBefore)) throw new Error(`${molecule.name} was not merged into ${target.name}`);
             dispatch(removeMolecule(molecule));
             await molecule.delete();
             dispatch(triggerUpdate(target.molNo));
@@ -738,8 +757,8 @@ const LigandMergeInto = (props: { molecule: MoorhenMolecule }) => {
     if (targets.length === 0) return <span>No model to merge into</span>;
     return (
         <MoorhenStack direction="row" gap="0.5rem" align="center">
-            <MoorhenMoleculeSelect useUniqueId={true} molecules={targets} selectedMolecule={targetUid} setSelectedMolecule={setTargetUid} label="Into" />
-            <MoorhenButton onClick={merge} disabled={busy || !targetUid}>
+            <MoorhenMoleculeSelect useUniqueId={true} molecules={targets} selectedMolecule={target?.uniqueId} setSelectedMolecule={setTargetUid} label="Into" />
+            <MoorhenButton onClick={merge} disabled={busy || !target}>
                 Merge
             </MoorhenButton>
         </MoorhenStack>
@@ -764,7 +783,10 @@ const LigandDelete = (props: { molecule: MoorhenMolecule; ligand?: MoleculeLigan
         try {
             if (ligand) {
                 dispatch(removeVectorsByTag({ [TAG_SOURCE]: SOURCE_LIGAND_CONTACTS, [TAG_MOLECULE]: molecule.uniqueId, ligand: ligand.cid }));
-                const result = await molecule.deleteCid(ligand.cid);
+                // Coot's selection (mmdb), which reads an insertion code differently from the ligand's cid
+                const result = await molecule.deleteCid(mmdbLigandCid(ligand));
+                // Nothing deleted: said, not passed over (the row would stay with no word of why)
+                if (result.first !== 1) throw new Error(`Coot deleted nothing for ${ligand.cid}`);
                 if (result.second < 1) {
                     dispatch(removeMolecule(molecule));
                     await molecule.delete();

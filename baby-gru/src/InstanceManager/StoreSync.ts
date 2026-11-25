@@ -6,6 +6,7 @@ import { setHoveredAtom } from "@/store/hoveringStatesSlice";
 import { enqueueSnackbar } from "@/store/snackbarSlice";
 import { removeVectorsByTag } from "@/store/vectorsSlice";
 import { setRequestDrawScene } from "@/store/glRefSlice";
+import { setBusy } from "@/store/globalUISlice";
 import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_PARTNER, TAG_SOURCE, matchesTags } from "@/utils/tags";
 import type { MoorhenInstance } from "./MoorhenInstance";
 
@@ -152,6 +153,18 @@ const STORE_SYNCS: StoreSync<unknown>[] = [
         selector: state => state.mapContourSettings.defaultMapSamplingRate,
         apply: (instance, rate) =>
             instance.commandCentre?.cootCommand({ command: "set_map_sampling_rate", commandArgs: [rate], returnType: "status" }, false),
+    }),
+    // The spinner is kept on while a task reports its progress, whatever the worker's queue
+    // (MoorhenInstance, onActiveMessagesChanged): once it reports none it follows the queue again,
+    // which may have emptied before that (a host clearing globalUI.setJobProgress after its last command)
+    sync({
+        name: "the busy spinner follows the worker once no task reports its progress",
+        selector: state => state.generalStates.jobProgress === null,
+        apply: (instance, noProgress) => {
+            if (!noProgress) return;
+            const busy = (instance.commandCentre?.activeMessages?.length ?? 0) !== 0;
+            if (instance.store.getState().globalUI.busy !== busy) instance.store.dispatch(setBusy(busy));
+        },
     }),
     // However a molecule stops being shown (eye button, scene, delete, script): contacts are drawn
     // between two shown molecules, so one that is not, ligand or partner, takes its contact vectors

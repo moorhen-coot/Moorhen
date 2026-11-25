@@ -63,7 +63,7 @@ import type {
 } from "../store/overlaysSlice";
 import { MoorhenVector, addVector, emptyVectors } from "../store/vectorsSlice";
 import { type LoadedDictionary, emptyDictionaries } from "../store/dictionariesSlice";
-import { readDictionary } from "./dictionaries";
+import { isReadForEveryMolecule, readDictionary } from "./dictionaries";
 import { whileRestoringSession } from "../InstanceManager/StoreSync";
 import { ThreeDObject, addObject, emptyObjects } from "../store/threeDObjectsSlice";
 import { withMigratedTags } from "./tags";
@@ -1057,7 +1057,13 @@ export class MoorhenTimeCapsule {
             const storedMoleculeData = sessionData.moleculeData[i];
             if (storedMoleculeData.ligandDicts) {
                 await Promise.all(
-                    Object.keys(storedMoleculeData.ligandDicts).map(compId => molecule.addDict(storedMoleculeData.ligandDicts[compId]))
+                    Object.keys(storedMoleculeData.ligandDicts).map(compId => {
+                        const content = storedMoleculeData.ligandDicts[compId];
+                        // Read above for every molecule, as it is: only its cached copy (a thousand poses
+                        // of one ligand would else each read it again, and record a copy of their own)
+                        if (isReadForEveryMolecule(store, content)) return molecule.cacheLigandDict(content);
+                        return molecule.addDict(content);
+                    })
                 );
             }
             // An empty list is not written to a session file (protobuf), so it can be absent

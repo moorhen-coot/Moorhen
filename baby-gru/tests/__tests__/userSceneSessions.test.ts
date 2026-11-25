@@ -78,6 +78,26 @@ describe("loading a session", () => {
         expect(await storedKeys()).toEqual(storedBefore);
     });
 
+    test("saved while a snapshot was shown comes back as it was saved, not as the snapshot", async () => {
+        const { userScene, representation } = cloud.instance;
+        const [molecule] = cloud.instance.getMoleculeList();
+        const snapshotId = userScene.takeSnapshot("Before");
+        await userScene.select(snapshotId);
+        const snapshotStyles = representationStyles();
+        // Changed while the snapshot is shown: the snapshot does not record it (immutable), the session does
+        await representation.create(molecule.uniqueId, { representationStyle: "MolecularSurface" });
+        const stylesAtSave = representationStyles();
+        expect(stylesAtSave).not.toEqual(snapshotStyles);
+        const session = await saveSession();
+
+        expect(await loadSession(session)).toBe(0);
+        expect(userScene.selected).toBe(snapshotId);
+        expect(representationStyles()).toEqual(stylesAtSave);
+        // The snapshot itself is as it was taken
+        await userScene.select(snapshotId);
+        expect(representationStyles()).toEqual(snapshotStyles);
+    });
+
     test("without scenes (older Moorhen) makes it the General scene, keeping settings it does not carry", async () => {
         const { userScene } = cloud.instance;
         const session = JSON.parse(await saveSession());
@@ -153,6 +173,21 @@ describe("molecule visibility across scenes", () => {
         await userScene.select(hidden);
         expect(molecule.representations.some(representation => representation.visible)).toBe(false);
         expect(shown()).toBe(false);
+    });
+});
+
+describe("molecule visibility across scenes, adaptive bonds", () => {
+    test("a molecule drawn only with adaptive bonds stays shown", async () => {
+        const { userScene } = cloud.instance;
+        const [molecule] = cloud.instance.getMoleculeList();
+        const shown = () => state().molecules.visibleMolecules.includes(molecule.molNo);
+        // Nothing of it shown but its adaptive bonds (drawn around the view's centre, not a scene's representation)
+        molecule.representations.forEach(representation => representation.hide());
+        molecule.adaptativeBondsEnabled = true;
+        const snapshotId = userScene.takeSnapshot("Adaptive");
+        await userScene.select(snapshotId);
+        expect(molecule.representations.some(representation => representation.visible)).toBe(false);
+        expect(shown()).toBe(true);
     });
 });
 

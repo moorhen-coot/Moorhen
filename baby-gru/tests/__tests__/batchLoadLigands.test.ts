@@ -16,6 +16,8 @@
  *   MOORHEN_BATCH_MAX_RATIO   slowest allowed ratio of late to early chunk time (default 1.5; flat runs give
  *                             about 1, the bug this guards against about 2 at 500 ligands)
  */
+import { setJobProgress } from "@/store/generalStatesSlice";
+import { setBusy } from "@/store/globalUISlice";
 import { MoleculeRepresentation } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { createCloudInstance, flush, jobUrl, loadCootModules, readTestData, resetFetch, type CloudInstance } from "./cloudHost/cloudHostHarness";
 
@@ -225,5 +227,19 @@ describe("batchLoadLigands", () => {
         expect(loaded.map(entry => entry.fileName)).toEqual([poses[1].name, poses[2].name, poses[3].name]);
         expect(Object.keys(store.getState().molecules.moleculeRecords).sort()).toEqual(loaded.map(entry => entry.uniqueID).sort());
         expect(store.getState().generalStates.jobProgress).toBeNull();
+    });
+});
+
+describe("a task's progress (setJobProgress)", () => {
+    test("leaves the busy spinner off once cleared, when the worker has nothing left to do", async () => {
+        const { store } = cloud;
+        // As a host does: report a progress, run its commands, then clear it after the last one. While
+        // it is reported the spinner is kept on, and no command is left to switch it off
+        store.dispatch(setJobProgress({ label: "Host job", done: 1, total: 2 }));
+        store.dispatch(setBusy(true));
+        store.dispatch(setJobProgress({ label: "Host job", done: 2, total: 2 }));
+        expect(store.getState().globalUI.busy).toBe(true);
+        store.dispatch(setJobProgress(null));
+        expect(store.getState().globalUI.busy).toBe(false);
     });
 });

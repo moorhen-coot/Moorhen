@@ -67,6 +67,16 @@ export const mmdbResidueNumber = (seqid: string): string => {
 };
 
 /**
+ * A ligand's cid as mmdb (Coot's selections) reads it. Its own `cid` is as gemmi writes it, which is
+ * the same thing unless the residue has an insertion code: /1/A/301A(ATP) is then /1/A/301(ATP).A for
+ * mmdb, which selects nothing with gemmi's.
+ */
+export const mmdbLigandCid = (ligand: Pick<LigandInfo, "cid" | "modelName" | "chainName" | "resNum" | "resName">): string => {
+    const match = /^(-?\d+)([A-Za-z])$/.exec(ligand.resNum.trim());
+    return match ? `/${ligand.modelName}/${ligand.chainName}/${match[1]}(${ligand.resName}).${match[2]}` : ligand.cid;
+};
+
+/**
  * The contacts of a ligand with another molecule, or with the rest of its own: H-bonds, salt bridges
  * and, optionally, XH-π (XPID adds hydrogens from the monomer library, so the ligand's dictionaries
  * are passed to it) and the FLEV diagram.
@@ -90,7 +100,7 @@ export const getLigandContacts = async (
             ligand,
             {
                 imol: ligand.molNo,
-                ligandSelection: ligandInfo.cid,
+                ligandSelection: mmdbLigandCid(ligandInfo),
                 partnerSelection: `/${ligandInfo.modelName}`,
                 isLigand: (chainId, seqid) => chainId === ligandInfo.chainName && seqid === ligandInfo.resNum,
                 sourceChain: chainId => chainId,
@@ -102,7 +112,7 @@ export const getLigandContacts = async (
     }
 
     // The partner first: it keeps its chain ids, the ligand's chain is renamed if they clash
-    const merged = await coot.make_merged_molecule(partner.molNo, "/*", ligand.molNo, ligandInfo.cid);
+    const merged = await coot.make_merged_molecule(partner.molNo, "/*", ligand.molNo, mmdbLigandCid(ligandInfo));
     try {
         const ligandChains = merged.chains.filter(chain => chain.imol === ligand.molNo);
         const sourceChain = new Map(merged.chains.map(chain => [chain.chainId, chain.sourceChainId]));

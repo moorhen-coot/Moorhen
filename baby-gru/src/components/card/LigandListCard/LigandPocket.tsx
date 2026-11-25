@@ -68,6 +68,9 @@ const LigandPocket = (props: { molecule: MoorhenMolecule; ligand?: MoleculeLigan
     // One pocket per ligand: should there be more (made elsewhere), the first stands for them
     const current = pockets[0] ?? null;
     const [targetUid, setTargetUid] = useState<string | undefined>(() => current?.parentMolecule?.uniqueId);
+    // The chosen model, else the first: none chosen yet, or the chosen one since deleted (the selector
+    // keeps the choice it last made, which would then be no model at all)
+    const target = targets.find(other => other.uniqueId === targetUid) ?? targets[0] ?? null;
     const [distance, setDistance] = useState<number>(() => current?.neighboursDistance ?? DEFAULT_DISTANCE);
     // From the settings it was built with (its cid is the resolved residue list by now)
     const built = (current as unknown as MoleculeRepresentation | null)?.buildParams ?? null;
@@ -76,11 +79,13 @@ const LigandPocket = (props: { molecule: MoorhenMolecule; ligand?: MoleculeLigan
     const [busy, setBusy] = useState<boolean>(false);
 
     const createPocket = async () => {
-        const target = targets.find(other => other.uniqueId === targetUid);
         if (!target) return;
         const neighboursCid = pocketNeighboursCid(ligand);
-        // Checked first: an empty neighbourhood would draw the whole model
-        if (!neighbourResidues(target, "/*/*/*/", neighboursCid, distance, false, molecule.uniqueId)) {
+        // Checked first: an empty neighbourhood would draw the whole model. Among the residues the
+        // pocket is made of (buildCidSelection): without the waters, a ligand with only waters around
+        // it has none
+        const candidates = waters ? "/*/*/*/" : "/*/*/(!HOH)/";
+        if (!neighbourResidues(target, candidates, neighboursCid, distance, false, molecule.uniqueId)) {
             dispatch(enqueueSnackbar({ message: `No residue of ${target.name} within ${distance} Å`, variant: "warning" }));
             return;
         }
@@ -146,7 +151,7 @@ const LigandPocket = (props: { molecule: MoorhenMolecule; ligand?: MoleculeLigan
                     <MoorhenMoleculeSelect
                         useUniqueId={true}
                         molecules={targets}
-                        selectedMolecule={targetUid}
+                        selectedMolecule={target?.uniqueId}
                         setSelectedMolecule={setTargetUid}
                         label="In"
                     />
@@ -166,7 +171,7 @@ const LigandPocket = (props: { molecule: MoorhenMolecule; ligand?: MoleculeLigan
                         <MoorhenToggle label="Side chains only" checked={sideChainsOnly} onChange={() => setSideChainsOnly(!sideChainsOnly)} />
                         <MoorhenToggle label="Waters" checked={waters} onChange={() => setWaters(!waters)} />
                     </MoorhenStack>
-                    <MoorhenButton onClick={createPocket} disabled={busy || !targetUid} style={{ alignSelf: "flex-end" }}>
+                    <MoorhenButton onClick={createPocket} disabled={busy || !target} style={{ alignSelf: "flex-end" }}>
                         {current ? "Update pocket" : "Create pocket"}
                     </MoorhenButton>
                 </>

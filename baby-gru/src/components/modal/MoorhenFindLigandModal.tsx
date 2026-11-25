@@ -15,6 +15,7 @@ import { ModalComponentProps } from "../interface-base/ModalBase/ModalsContainer
 import { OverlayModal } from "../interface-base/ModalBase/OverlayModal";
 import { FIT_CLUSTER_VOLUME_KEY, FIT_CORRELATION_KEY, type MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { drawLigandBonds } from "@/utils/Representation/defaultRepresentation";
+import { giveDictionary } from "@/utils/dictionaries";
 import { getMonomerMolecule } from "@/utils/monomers";
 import { useMoorhenInstance } from "@/InstanceManager";
 import { type MonomerChoice, MonomerPicker } from "../menu-item/GetMonomer";
@@ -142,9 +143,9 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
         }
         setBusy(true);
         const selectedMolecule = molecules.find(molecule => molecule.molNo === parseInt(intoMoleculeRef.current.value));
-        // The ligand made in Coot as Get Monomer does, used as the template, then deleted (its dictionary
-        // stays read, for the poses)
+        // The ligand made in Coot as Get Monomer does, used as the template, then deleted
         let templateMolNo: number | null = null;
+        let templateDictionary: string | undefined;
         if (selectedMolecule) {
             // A dictionary loaded for one molecule only is found too (getMonomerMolecule looks in the
             // session's dictionary list first)
@@ -155,6 +156,7 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
                 return;
             }
             templateMolNo = monomer.molNo;
+            templateDictionary = monomer.dictionary;
         }
         if (selectedMolecule) {
             const newMolecules = await selectedMolecule.fitLigand(
@@ -175,6 +177,10 @@ export const MoorhenFindLigandModal = (props: ModalComponentProps) => {
                     pose.name = `${libraryChoice.code} fit. #${index + 1}`;
                 });
             }
+            // The poses are new molecules in Coot: a template made from a dictionary read for one molecule
+            // only (a ligand whose dictionary was fetched when its model was loaded) leaves them none,
+            // so they would be drawn from guessed bonds, reported as missing it, and not refinable
+            await giveDictionary(moorhenInstance.store, newMolecules, templateDictionary);
             for (const newMolecule of newMolecules) {
                 if (newMolecule.gemmiStructure === null) {
                     console.warn(`Failed to fit ligand ${newMolecule.name} into map ${mapSelectRef.current.value}`);
