@@ -38,7 +38,7 @@ export const MoorhenRefineResiduesButton = (props: ContextButtonProps) => {
             dispatch(triggerUpdate(molecule.molNo));
             moorhenInstance.triggerMoleculeChanged(props.selectedMolecule.uniqueId, "refine")
         },
-        [animateRefine, refinementSelection]
+        [animateRefine, refinementSelection, activeMap, moorhenInstance, props.selectedMolecule]
     );
 
     return (

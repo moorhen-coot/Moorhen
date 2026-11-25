@@ -84,25 +84,6 @@ export {
     setPAEFileContents,
 }  from "./sliceNDiceSlice";
 export { setSeqViewerOption, setValidationOption, setShownBottomPanel }  from "./bottomPanelsSlice";
-export {
-    setRequestDrawScene,
-    setIsWebGL2,
-    setActiveMolecule,
-    setQuat,
-    setCursorPosition,
-    setShortCutHelp,
-    setDraggableMolecule,
-    triggerRedrawEnv,
-    triggerClearLabels,
-    setGLCtx,
-    setDisplayBuffers,
-    setHoverSize,
-    setLabelBuffers,
-    setTexturedShapes,
-    setRttFramebufferSize,
-    setCanvasSize,
-    setElementsIndicesRestrict,
-}  from "./glRefSlice";
 export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
 export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
@@ -128,6 +109,67 @@ export {
 
 }  from "./threeDObjectsSlice";
 export {
+    setBusy,
+    setTimeCapsuleBusy,
+    setGlobalInstanceReady,
+    setSearchBarActive,
+    setMainMenuOpen,
+    setSceneSelectorOpen,
+    setShortCutsBlocked,
+    setShownSidePanel,
+    setSidePanelWidth,
+    setBottomPanelHeight,
+    setShownControl,
+    lockControls,
+    unlockControls,
+    closeResidueSelectionTools,
+    pauseClickAwayListener,
+    resumeClickAwayListener,
+}  from "./globalUISlice";
+export {
+    setMovieDocument, setMovieName, setMovieFileName, newMovie,
+    setMoviePlaying, selectKeyframe,
+    appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
+    duplicateKeyframe,
+    updateSegment, updateMotion, clearTrailingMotion,
+    spreadSceneFromKeyframe, updateMovieOutput,
+    updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
+}  from "./movieSlice";
+export {
+    addUserScene,
+    addUserSnapshot,
+    removeUserScene,
+    renameUserScene,
+    setSelectedScene,
+    setSceneChanging,
+    sceneShown,
+    setSceneContent,
+    setUserSceneState,
+    setSavedSceneSetting,
+    saveSceneSettings,
+}  from "./userScenesSlice";
+export { addDictionaries, emptyDictionaries }  from "./dictionariesSlice";
+export {
+    setRequestDrawScene,
+    setDrawsThrottled,
+    setIsWebGL2,
+    setActiveMolecule,
+    setQuat,
+    setCursorPosition,
+    setShortCutHelp,
+    setDraggableMolecule,
+    triggerRedrawEnv,
+    triggerClearLabels,
+    setGLCtx,
+    setDisplayBuffers,
+    setHoverSize,
+    setLabelBuffers,
+    setTexturedShapes,
+    setRttFramebufferSize,
+    setCanvasSize,
+    setElementsIndicesRestrict,
+}  from "./glRefSlice";
+export {
     setSelectedThreeDObject,
     setMovingMapSlice,
     setActiveMap,
@@ -152,6 +194,8 @@ export {
     setIsAnimatingTrajectory,
     resetGeneralStates,
     setIsShowingTomograms,
+    setJobProgress,
+    setLigandBatchLoading,
     setDefaultExpandDisplayCards,
     setTransparentModalsOnMouseOut,
     setUseGemmi,
@@ -185,44 +229,21 @@ export {
     resetMapContourSettings,
 }  from "./mapContourSettingsSlice";
 export {
-    setBusy,
-    setTimeCapsuleBusy,
-    setGlobalInstanceReady,
-    setSearchBarActive,
-    setMainMenuOpen,
-    setSceneSelectorOpen,
-    setShortCutsBlocked,
-    setShownSidePanel,
-    setSidePanelWidth,
-    setBottomPanelHeight,
-    setShownControl,
-    lockControls,
-    unlockControls,
-    closeResidueSelectionTools,
-    pauseClickAwayListener,
-    resumeClickAwayListener,
-}  from "./globalUISlice";
-export {
     addMolecule,
     removeMolecule,
     emptyMolecules,
     addMoleculeList,
+    setMoleculeRecords,
+    removeMoleculeRecord,
     addGeneralRepresentation,
+    setMoleculesVisible,
     showMolecule,
     hideMolecule,
     addCustomRepresentation,
+    addCustomRepresentationList,
     removeCustomRepresentation,
     removeGeneralRepresentation,
 }  from "./moleculesSlice";
-export {
-    setMovieDocument, setMovieName, setMovieFileName, newMovie,
-    setMoviePlaying, selectKeyframe,
-    appendKeyframe, insertKeyframe, updateKeyframe, removeKeyframe, reorderKeyframe,
-    duplicateKeyframe,
-    updateSegment, updateMotion, clearTrailingMotion,
-    spreadSceneFromKeyframe, updateMovieOutput,
-    updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
-}  from "./movieSlice";
 export {
     setOrigin,
     setDrawCrosshairs,
@@ -290,19 +311,6 @@ export {
     autoClipFogByZoom,
     applySceneSettingsSnapshot,
 }  from "./sceneSettingsSlice";
-export {
-    addUserScene,
-    addUserSnapshot,
-    removeUserScene,
-    renameUserScene,
-    setSelectedScene,
-    setSceneChanging,
-    sceneShown,
-    setSceneContent,
-    setUserSceneState,
-    setSavedSceneSetting,
-    saveSceneSettings,
-}  from "./userScenesSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";

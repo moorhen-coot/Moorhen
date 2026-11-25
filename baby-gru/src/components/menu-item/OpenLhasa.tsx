@@ -1,7 +1,8 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useRef, useState, useEffect } from "react";
 import { enqueueSnackbar } from "@/store";
-import { useCommandCentre, usePaths } from "../../InstanceManager";
+import { useCommandCentre, useMoorhenInstance, usePaths } from "../../InstanceManager";
+import { readDictionary } from "../../utils/dictionaries";
 import { addRdkitMoleculePickle } from "../../store/lhasaSlice";
 import { showModal } from "../../store/modalsSlice";
 import { moorhen } from "../../types/moorhen";
@@ -15,6 +16,7 @@ import { windowCootCCP4Loader } from "../../utils/windowCootCCP4Loader";
 export const OpenLhasa = () => {
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList);
     const commandCentre = useCommandCentre();
+    const moorhenInstance = useMoorhenInstance();
     const monomerLibraryPath = usePaths().monomerLibraryPath;
     const [selectedCoordMolNo, setSelectedCoordMolNo] = useState<number>(molecules[0]?.molNo ?? null);
     const [onStartLigandSource, setOnStartLigandSource] = useState<string>("none");
@@ -109,15 +111,7 @@ export const OpenLhasa = () => {
                     const response = await fetch(url);
                     if (response.ok) {
                         const ligandDict = await response.text();
-                        await commandCentre.current.cootCommand(
-                            {
-                                returnType: "status",
-                                command: "read_dictionary_string",
-                                commandArgs: [ligandDict, -999999],
-                                changesMolecules: [],
-                            },
-                            false
-                        );
+                        await readDictionary(moorhenInstance, ligandDict, null, "Lhasa");
                         await fetchAndAddRdkitPickle(tlcRef.current.value.toUpperCase(), -999999);
                     }
                 }

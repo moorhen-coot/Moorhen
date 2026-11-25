@@ -10,6 +10,8 @@
     "entryPointStrategy": "resolve",
     "tsconfig": "./tsconfig.json",
     "out": "docs/api",
+    "plugin": ["./scripts/typedoc-api-groups.mjs"],
+    "router": "moorhen-api-groups",
     "readme": "none",
     "includeVersion": true,
     "excludePrivate": true,
