@@ -66,14 +66,30 @@ export function drawTextLabels(self: MGWebGL, up, right) {
 
 }
 
-export function drawDistancesAndLabels(self: MGWebGL) {
+/**
+ * Draw the 3D text of one pass: "inScene" depth-tested and fogged as the scene is, "onTop" over
+ * everything and unfogged.
+ *
+ * Measurements and atom labels go in whichever pass atomLabelDepthMode puts them in, all
+ * together; annotations each choose, so both passes may have some.
+ */
+export function drawDistancesAndLabels(self: MGWebGL, pass: "inScene" | "onTop") {
 
     // Labels, angles, etc. instanced by texture coords, positions using contextBig
+
+    const labelsPass = self.atomLabelDepthMode ? "inScene" : "onTop";
+    const annotations = pass === "inScene" ? self.annotationsInSceneTextCanvasTexture : self.annotationsOnTopTextCanvasTexture;
+    const atlases = [
+        ...(pass === labelsPass ? [self.measureTextCanvasTexture, self.labelsTextCanvasTexture] : []),
+        // Skipped when empty, so that a pass with nothing in it costs nothing.
+        ...(annotations && annotations.nBigTextures > 0 ? [annotations] : []),
+    ];
+    if (atlases.length === 0) return;
 
     self.gl.useProgram(self.shaderProgramTextInstanced);
     self.setMatrixUniforms(self.shaderProgramTextInstanced);
 
-    if (self.atomLabelDepthMode) {
+    if (pass === "inScene") {
         //If we want to fog them
         self.gl.depthFunc(self.gl.LESS);
     } else {
@@ -86,7 +102,7 @@ export function drawDistancesAndLabels(self: MGWebGL) {
     for(let i = 0; i<16; i++)
         self.gl.disableVertexAttribArray(i);
 
-    [self.measureTextCanvasTexture,self.labelsTextCanvasTexture].forEach((canvasTexture) => {
+    atlases.forEach((canvasTexture) => {
         canvasTexture.draw();
     })
 

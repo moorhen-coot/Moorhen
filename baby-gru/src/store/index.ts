@@ -47,20 +47,6 @@ export {
     setHomologsDisplaySettings,
 }  from "./mrParseSlice";
 export {
-    addImageOverlay,
-    addTextOverlay,
-    addSvgPathOverlay,
-    addFracPathOverlay,
-    emptyOverlays,
-    addCallback,
-    addLatexOverlay,
-    removeImageOverlay,
-    removeLatexOverlay,
-    removeTextOverlay,
-    removeSvgPathOverlay,
-    removeFracPathOverlay,
-}  from "./overlaysSlice";
-export {
     setAnimateRefine,
     setEnableRefineAfterMod,
     setUseRamaRefinementRestraints,
@@ -83,31 +69,10 @@ export {
     setClusteringType,
     setPAEFileContents,
 }  from "./sliceNDiceSlice";
-export { setSeqViewerOption, setValidationOption, setShownBottomPanel }  from "./bottomPanelsSlice";
 export { showModal, hideModal, focusOnModal, unFocusModal, resetActiveModals }  from "./modalsSlice";
 export { addMap, removeMap, emptyMaps, addMapList }  from "./mapsSlice";
 export { enqueueSnackbar, closeSnackbar, clearSnackbar }  from "./snackbarSlice";
-export {
-    addVector,
-    removeVector,
-    emptyVectors,
-    addVectors,
-    removeVectors,
-    removeVectorsMatchingIDString,
-    removeVectorsByTag,
-    removeVectorById,
-    removeVectorsByIds
-}  from "./vectorsSlice";
 export { setCursorStyle, setEnableAtomHovering, setHoveredAtom, setHoveredSection, resetHoveringStates }  from "./hoveringStatesSlice";
-export {
-    addObject,
-    removeObject,
-    removeObjectById,
-    removeObjectsByTag,
-    updateObject,
-    emptyObjects,
-
-}  from "./threeDObjectsSlice";
 export {
     setBusy,
     setTimeCapsuleBusy,
@@ -148,63 +113,6 @@ export {
     setSavedSceneSetting,
     saveSceneSettings,
 }  from "./userScenesSlice";
-export { addDictionaries, emptyDictionaries }  from "./dictionariesSlice";
-export {
-    setRequestDrawScene,
-    setDrawsThrottled,
-    setIsWebGL2,
-    setActiveMolecule,
-    setQuat,
-    setCursorPosition,
-    setShortCutHelp,
-    setDraggableMolecule,
-    triggerRedrawEnv,
-    triggerClearLabels,
-    setGLCtx,
-    setDisplayBuffers,
-    setHoverSize,
-    setLabelBuffers,
-    setTexturedShapes,
-    setRttFramebufferSize,
-    setCanvasSize,
-    setElementsIndicesRestrict,
-}  from "./glRefSlice";
-export {
-    setSelectedThreeDObject,
-    setMovingMapSlice,
-    setActiveMap,
-    setViewOnly,
-    setTheme,
-    setIsDraggingAtoms,
-    setAppTittle,
-    setUserPreferencesMounted,
-    setDevMode,
-    setCootInitialized,
-    setStopResidueSelection,
-    setStartResidueSelection,
-    clearResidueSelection,
-    setMoleculeResidueSelection,
-    setResidueSelection,
-    setCidResidueSelection,
-    setIsRotatingAtoms,
-    setIsChangingRotamers,
-    setShowResidueSelection,
-    toggleCootCommandExit,
-    toggleCootCommandStart,
-    setIsAnimatingTrajectory,
-    resetGeneralStates,
-    setIsShowingTomograms,
-    setJobProgress,
-    setLigandBatchLoading,
-    setDefaultExpandDisplayCards,
-    setTransparentModalsOnMouseOut,
-    setUseGemmi,
-    setShowHoverInfo,
-    setAllowScripting,
-    setAllowAddNewFittedLigand,
-    setAllowMergeFittedLigand,
-    setDisableFileUpload,
-}  from "./generalStatesSlice";
 export {
     showMap,
     hideMap,
@@ -228,22 +136,6 @@ export {
     setReContourMapOnlyOnMouseUp,
     resetMapContourSettings,
 }  from "./mapContourSettingsSlice";
-export {
-    addMolecule,
-    removeMolecule,
-    emptyMolecules,
-    addMoleculeList,
-    setMoleculeRecords,
-    removeMoleculeRecord,
-    addGeneralRepresentation,
-    setMoleculesVisible,
-    showMolecule,
-    hideMolecule,
-    addCustomRepresentation,
-    addCustomRepresentationList,
-    removeCustomRepresentation,
-    removeGeneralRepresentation,
-}  from "./moleculesSlice";
 export {
     setOrigin,
     setDrawCrosshairs,
@@ -311,6 +203,119 @@ export {
     autoClipFogByZoom,
     applySceneSettingsSnapshot,
 }  from "./sceneSettingsSlice";
+export { setSeqViewerOption, setValidationOption, setShownBottomPanel }  from "./bottomPanelsSlice";
+export { addAnnotation, addAnnotations, updateAnnotation, removeAnnotationById, removeAnnotationsByTag, emptyAnnotations }  from "./annotationsSlice";
+export {
+    addImageOverlay,
+    addTextOverlay,
+    addSvgPathOverlay,
+    addFracPathOverlay,
+    emptyOverlays,
+    addCallback,
+    addLatexOverlay,
+    removeImageOverlay,
+    removeLatexOverlay,
+    removeTextOverlay,
+    removeSvgPathOverlay,
+    removeFracPathOverlay,
+    addShapeOverlay,
+    removeShapeOverlay,
+    updateOverlay,
+}  from "./overlaysSlice";
+export {
+    addObject,
+    removeObject,
+    removeObjectById,
+    removeObjectsByTag,
+    updateObject,
+    emptyObjects,
+
+}  from "./threeDObjectsSlice";
+export {
+    addVector,
+    removeVector,
+    emptyVectors,
+    addVectors,
+    removeVectors,
+    removeVectorsMatchingIDString,
+    removeVectorsByTag,
+    removeVectorById,
+    removeVectorsByIds
+}  from "./vectorsSlice";
+export { addDictionaries, emptyDictionaries }  from "./dictionariesSlice";
+export {
+    setSelectedThreeDObject,
+    setSelected2DObject,
+    setMovingMapSlice,
+    setActiveMap,
+    setViewOnly,
+    setTheme,
+    setIsDraggingAtoms,
+    setAppTittle,
+    setUserPreferencesMounted,
+    setDevMode,
+    setCootInitialized,
+    setStopResidueSelection,
+    setStartResidueSelection,
+    clearResidueSelection,
+    setMoleculeResidueSelection,
+    setResidueSelection,
+    setCidResidueSelection,
+    setIsRotatingAtoms,
+    setIsChangingRotamers,
+    setShowResidueSelection,
+    toggleCootCommandExit,
+    toggleCootCommandStart,
+    setIsAnimatingTrajectory,
+    resetGeneralStates,
+    setIsShowingTomograms,
+    setJobProgress,
+    setLigandBatchLoading,
+    setDefaultExpandDisplayCards,
+    setTransparentModalsOnMouseOut,
+    setUseGemmi,
+    setShowHoverInfo,
+    setAllowScripting,
+    setAllowAddNewFittedLigand,
+    setAllowMergeFittedLigand,
+    setDisableFileUpload,
+}  from "./generalStatesSlice";
+export {
+    setRequestDrawScene,
+    setDrawsThrottled,
+    setIsWebGL2,
+    setActiveMolecule,
+    setQuat,
+    setCursorPosition,
+    setShortCutHelp,
+    setDraggableMolecule,
+    triggerRedrawEnv,
+    triggerClearLabels,
+    setGLCtx,
+    setDisplayBuffers,
+    setHoverSize,
+    setLabelBuffers,
+    setTexturedShapes,
+    setRttFramebufferSize,
+    setCanvasSize,
+    setElementsIndicesRestrict,
+}  from "./glRefSlice";
+export {
+    addMolecule,
+    removeMolecule,
+    emptyMolecules,
+    addMoleculeList,
+    setMoleculeRecords,
+    removeMoleculeRecord,
+    addGeneralRepresentation,
+    setMoleculesVisible,
+    showMolecule,
+    hideMolecule,
+    addCustomRepresentation,
+    addCustomRepresentationList,
+    removeCustomRepresentation,
+    removeGeneralRepresentation,
+}  from "./moleculesSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";
