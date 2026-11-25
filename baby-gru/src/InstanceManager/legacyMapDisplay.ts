@@ -16,6 +16,7 @@ import {
     type MapRepresentationData,
     type Vec3,
     createDefaultMapRepresentationData,
+    currentRadius,
     drawModeOf,
 } from "../utils/Representation/mapRepresentationData";
 
@@ -43,7 +44,8 @@ export const initialiseLegacyMapSettings = (map: MoorhenMap, settings: ContourSe
         dispatch(setContourLevel({ molNo, contourLevel: defaults.contourLevel }));
     }
     if (!byMolNo(settings.mapRadii, molNo)) {
-        dispatch(setMapRadius({ molNo, radius: defaults.radius.local }));
+        // The radius of the draw mode the map starts in: the whole map for EM maps (origin locked)
+        dispatch(setMapRadius({ molNo, radius: currentRadius(defaults) }));
     }
     if (!byMolNo(settings.mapStyles, molNo)) {
         dispatch(setMapStyle({ molNo, style: defaults.style }));

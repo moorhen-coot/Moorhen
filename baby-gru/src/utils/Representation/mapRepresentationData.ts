@@ -40,6 +40,9 @@ export const drawModeOf = (data: MapRepresentationData): MapDrawMode => (data.or
 export const currentRadius = (data: MapRepresentationData): number => data.radius[drawModeOf(data)];
 export const currentAlpha = (data: MapRepresentationData): number => data.alpha[data.style] ?? 1;
 
+/** The radius an EM map is drawn at around the view ("Draw Local Map"), until changed */
+export const EM_LOCAL_RADIUS = 30;
+
 /**
  * The display a map gets when it is loaded.
  * `preferences` are the global map preferences (`mapContourSettings.defaultMapLitLines` / `defaultMapSurface`).
@@ -50,9 +53,18 @@ export const createDefaultMapRepresentationData = (
 ): MapRepresentationData => {
     // The 1.2 is headroom so a map does not stop just past the edge of the view. A cube's suggested radius is a
     // hard limit instead (the cell repeats beyond it), so it is taken as given.
-    const localRadius = map.isCube ? map.suggestedRadius || 5 : map.suggestedRadius ? map.suggestedRadius * 1.2 : 15;
-    // Enough to cover the whole cell from its centre (same as the map card's slider maximum)
-    const fullRadius = map.isEM && map.headerInfo?.cell.a ? Math.ceil((map.headerInfo.cell.a * 1.732) / 2) : localRadius;
+    const suggested = map.isCube ? map.suggestedRadius || 5 : map.suggestedRadius ? map.suggestedRadius * 1.2 : 15;
+    // An EM map's suggested radius covers the whole map (its bounding sphere), drawn around its centre ("full");
+    // around the view ("local") it is drawn small. Without a suggested radius, enough to cover the whole cell from
+    // its centre (same as the map card's slider maximum)
+    let localRadius = suggested;
+    let fullRadius = suggested;
+    if (map.isEM) {
+        localRadius = EM_LOCAL_RADIUS;
+        if (!map.suggestedRadius && map.headerInfo?.cell.a) {
+            fullRadius = Math.ceil((map.headerInfo.cell.a * 1.732) / 2);
+        }
+    }
     let contourLevel: number;
     if (map.isCube) {
         // A cube says what level to contour at, in the field's own units (Psi4 writes the range covering 85% of the

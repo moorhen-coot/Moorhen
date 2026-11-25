@@ -16,6 +16,7 @@ import mapRepresentationsReducer, {
 } from "../../src/store/mapRepresentationsSlice";
 import {
     type MapRepresentationData,
+    EM_LOCAL_RADIUS,
     createDefaultMapRepresentationData,
     currentAlpha,
     currentRadius,
@@ -166,7 +167,15 @@ describe("createDefaultMapRepresentationData", () => {
         );
         expect(map.contourLevel).toBe(0.4);
         expect(map.style).toBe("solid");
-        expect(map.radius.full).toBe(Math.ceil((200 * 1.732) / 2));
+        // The whole map (suggested radius, with headroom) around its centre; small around the view
+        expect(map.radius.full).toBe(12);
+        expect(map.radius.local).toBe(EM_LOCAL_RADIUS);
+        // Without a suggested radius, the whole cell
+        const noSuggestion = createDefaultMapRepresentationData(
+            fakeMap({ isEM: true, suggestedRadius: null, headerInfo: { spacegroup: "P 1", cell: { a: 200 } as MoorhenMap["headerInfo"]["cell"], resolution: 3 } }),
+            preferences
+        );
+        expect(noSuggestion.radius.full).toBe(Math.ceil((200 * 1.732) / 2));
         // mapCentre is a scene origin (negated world coordinates)
         expect(map.originLock).toEqual({ centre: [100, 50, 25] });
     });
