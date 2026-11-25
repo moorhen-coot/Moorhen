@@ -1,9 +1,11 @@
 const crypto = require('node:crypto');
 
-const CAP_MARKER = 'var pthreadPoolSize=32;';
+// The statement that sets the size of the pthread worker pool. The size is whatever was given
+// to -sPTHREAD_POOL_SIZE: a number, or an expression such as Module.moorhenPthreadPoolSize.
+const CAP_MARKER = /var pthreadPoolSize=[^;]+;/;
 
 const patchPthreadPoolSize = (source) => {
-    if (!source.includes(CAP_MARKER)) {
+    if (!CAP_MARKER.test(source)) {
         return source;
     }
 
@@ -21,7 +23,7 @@ module.exports = {
 
         return crypto
             .createHash('sha256')
-            .update('moorhen-transform-v1')
+            .update('moorhen-transform-v2')
             .update(sourceText)
             .update(sourcePath)
             .update(configValue)

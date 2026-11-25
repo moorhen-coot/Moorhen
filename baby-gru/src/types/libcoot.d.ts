@@ -629,6 +629,18 @@ export namespace libcootApi {
     };
     type CootModule = {
         /**
+         * The number of threads that coot may use: the number to give to
+         * `set_max_number_of_threads()`. It is the number of cores, at least 4 and at most 8, unless
+         * `moorhenThreadLimit` was passed in the module options. Set in `wasm_src/coot_env_web.js`.
+         */
+        moorhenThreadLimit?: number;
+        /**
+         * The number of pthread workers that the module started with, `2 * moorhenThreadLimit + 4`.
+         * Giving coot a bigger thread limit than `moorhenThreadLimit` can use them all up, and a
+         * call that needs a worker when none is free never returns.
+         */
+        moorhenPthreadPoolSize?: number;
+        /**
          * Read a glTF or glb file from the module's filesystem and return it as one mesh.
          *
          * By path rather than from a string, because a .glb may refer to buffers or images in
