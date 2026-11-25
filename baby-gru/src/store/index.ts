@@ -100,7 +100,6 @@ export {
     spreadSceneFromKeyframe, updateMovieOutput,
     updateObjectOpacity, addObjectToMovie, removeObjectFromMovie,
 }  from "./movieSlice";
-export { setSeqViewerOption, setValidationOption, setShownBottomPanel }  from "./bottomPanelsSlice";
 export {
     addImageOverlay,
     addTextOverlay,
@@ -135,15 +134,6 @@ export {
     removeVectorById,
     removeVectorsByIds
 }  from "./vectorsSlice";
-export {
-    addMapRepresentation,
-    removeMapRepresentation,
-    removeMapRepresentationsOfMap,
-    emptyMapRepresentations,
-    setMapRepresentation,
-    setMapRepresentationAlpha,
-    setMapRepresentationRadius,
-}  from "./mapRepresentationsSlice";
 export { addDictionaries, emptyDictionaries }  from "./dictionariesSlice";
 export {
     setSelectedThreeDObject,
@@ -320,6 +310,16 @@ export {
     setSavedSceneSetting,
     saveSceneSettings,
 }  from "./userScenesSlice";
+export {
+    addMapRepresentation,
+    removeMapRepresentation,
+    removeMapRepresentationsOfMap,
+    emptyMapRepresentations,
+    setMapRepresentation,
+    setMapRepresentationAlpha,
+    setMapRepresentationRadius,
+}  from "./mapRepresentationsSlice";
+export { setSeqViewerOption, setValidationOption, setValidationGradient, setShownBottomPanel }  from "./bottomPanelsSlice";
 
 // Export store configuration and types
 export { reducers, type MoorhenReduxStoreType, type RootState, type AppDispatch } from "./MoorhenReduxStore";
