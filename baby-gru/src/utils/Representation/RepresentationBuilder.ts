@@ -21,7 +21,47 @@ export interface BuildCidSelectionParams {
     neighboursDistance: number;
     sequenceResidueRange: [number, number] | null;
     cid: string;
+    /** The molecule the neighbours (neighboursCid) are in, by uniqueId; this molecule if empty */
+    neighboursMoleculeUid?: string;
 }
+
+/**
+ * The residues of `selection` in the molecule with an atom within `distance` of the atoms of
+ * `neighboursCid` (or, with `exclude`, those without), as "A/12||A/45".
+ *
+ * The neighbours are in `neighboursMoleculeUid`'s structure when it is given, else in the molecule's own:
+ * a pocket on a protein around a ligand that is a molecule of its own (a docked pose). When it is given,
+ * the neighbours' own residues are left out even if they are in the same molecule: a pocket around a
+ * ligand of the model is the residues around it, not the ligand itself.
+ */
+export const neighbourResidues = (
+    molecule: MoorhenMolecule,
+    selection: string,
+    neighboursCid: string,
+    distance: number,
+    exclude: boolean,
+    neighboursMoleculeUid?: string
+): string => {
+    if (!neighboursMoleculeUid) {
+        return window.gemmiModule.cidToNeighboursCid(molecule.gemmiStructure, selection, neighboursCid, distance, exclude);
+    }
+    const other = molecule.store.getState().molecules.moleculeList.find(item => item.uniqueId === neighboursMoleculeUid);
+    if (!other?.gemmiStructure || other.gemmiStructure.isDeleted()) return "";
+    const residues = window.gemmiModule
+        .cidToNeighboursCidAcross(molecule.gemmiStructure, selection, other.gemmiStructure, neighboursCid, distance, exclude)
+        .split("||")
+        .filter(Boolean);
+    if (other !== molecule) return residues.join("||");
+    // The neighbours' own residues ("/1/A/301(ATP)" -> "A/301"), as cidToNeighboursCid writes residues
+    const own = new Set(
+        neighboursCid
+            .split("||")
+            .map(part => /^\/[^/]*\/([^/]+)\/(-?\d+)/.exec(part.trim()))
+            .filter(Boolean)
+            .map(match => `${match[1]}/${match[2]}`)
+    );
+    return residues.filter(residue => !own.has(residue)).join("||");
+};
 
 /**
  * The model a CID selects, from its first component ("/2/A/..." -> 2), or null for all models (a
@@ -60,6 +100,7 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
         neighboursDistance,
         sequenceResidueRange,
         cid,
+        neighboursMoleculeUid,
     } = params;
 
     let cidSelection: string;
@@ -102,12 +143,13 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
                 (representationStyle === "MetaBalls" || representationStyle === "VdwSpheres" || representationStyle === "CBs") &&
                 restrictToNeighbours
             ) {
-                const restrictedCid = window.gemmiModule.cidToNeighboursCid(
-                    theMolecule.gemmiStructure,
+                const restrictedCid = neighbourResidues(
+                    theMolecule,
                     unRestrictedCidSelection,
                     neighboursCid,
                     neighboursDistance,
-                    excludeNeighbours
+                    excludeNeighbours,
+                    neighboursMoleculeUid
                 );
                 let extraRestrict = "";
                 if (sideChainOnly) extraRestrict += "/!O,C,N,H";
@@ -120,12 +162,13 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
                     .map(r => r + extraRestrict)
                     .join("||");
             } else if (representationStyle === "CAs" && restrictToNeighbours) {
-                const restrictedCid = window.gemmiModule.cidToNeighboursCid(
-                    theMolecule.gemmiStructure,
+                const restrictedCid = neighbourResidues(
+                    theMolecule,
                     unRestrictedCidSelection,
                     neighboursCid,
                     neighboursDistance,
-                    excludeNeighbours
+                    excludeNeighbours,
+                    neighboursMoleculeUid
                 );
                 cidSelection = restrictedCid;
             } else {
@@ -141,12 +184,13 @@ export function buildCidSelection(params: BuildCidSelectionParams): string | nul
                     restrictToNeighbours
                 ) {
                     const waterSelection = "/*/*/(HOH)";
-                    const restrictedWaterCid = window.gemmiModule.cidToNeighboursCid(
-                        theMolecule.gemmiStructure,
+                    const restrictedWaterCid = neighbourResidues(
+                        theMolecule,
                         waterSelection,
                         neighboursCid,
                         neighboursDistance,
-                        excludeNeighbours
+                        excludeNeighbours,
+                        neighboursMoleculeUid
                     );
                     if (restrictedWaterCid.length > 2) cidSelection += "||" + restrictedWaterCid;
                 } else {
@@ -294,6 +338,8 @@ export interface CreateRepresentationParams {
     excludeNeighbours?: boolean;
     neighboursCid?: string;
     neighboursDistance?: number;
+    /** The molecule neighboursCid is in (uniqueId), if not this one: a pocket around a docked ligand */
+    neighboursMoleculeUid?: string;
     sequenceResidueRange?: [number, number] | null ;
     cid?: string;
     /** Colour-related options (default to default colours) */
@@ -346,6 +392,8 @@ export interface RepresentationBackup {
     excludeNeighbours: boolean;
     neighboursCid: string;
     neighboursDistance: number;
+    /** Absent in backups written before it existed */
+    neighboursMoleculeUid?: string;
     hbondedTo: boolean;
     useDefaultColours: boolean;
     colourMode: string;
@@ -428,6 +476,7 @@ export function extractRepresentationParams(representation: MoleculeRepresentati
         excludeNeighbours: representation.excludeNeighbours,
         neighboursCid: representation.neighboursCid,
         neighboursDistance: representation.neighboursDistance,
+        neighboursMoleculeUid: representation.neighboursMoleculeUid ?? "",
         hbondedTo: representation.hbondedTo,
         useDefaultColours: representation.useDefaultColourRules,
         colourMode: snapshot.colourMode,
@@ -484,6 +533,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         excludeNeighbours = existingParams?.excludeNeighbours ?? false,
         neighboursCid = existingParams?.neighboursCid ?? "",
         neighboursDistance = existingParams?.neighboursDistance ?? 6.0,
+        neighboursMoleculeUid = existingParams?.neighboursMoleculeUid ?? "",
         sequenceResidueRange = existingParams?.sequenceResidueRange ?? null,
         cid = existingParams?.cid ?? "/*/*/*/*:*",
         colourMode = existingParams?.colourMode ?? "custom",
@@ -540,6 +590,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
         neighboursDistance,
         sequenceResidueRange,
         cid,
+        neighboursMoleculeUid,
     });
     if (!cidSelection) {
         console.warn("Invalid CID selection to create a custom representation");
@@ -590,6 +641,7 @@ export async function createRepresentation(params: CreateRepresentationParams): 
     representation.neighboursDistance = neighboursDistance;
     representation.excludeNeighbours = excludeNeighbours;
     representation.neighboursCid = neighboursCid;
+    representation.neighboursMoleculeUid = neighboursMoleculeUid;
     representation.hbondedTo = hbondedTo;
     representation.hbondedToCid = neighboursCid;
     representation.colourRules =

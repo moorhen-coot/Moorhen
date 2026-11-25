@@ -147,7 +147,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const clipEnd = useSelector((state: moorhen.State) => state.sceneSettings.clipEnd)
     const updateSwitch = useSelector((state: moorhen.State) => state.glRef.envUpdate.switch)
     const clearLabelsSwitch = useSelector((state: moorhen.State) => state.glRef.clearLabels.switch)
-    const requestDrawSceneSwitch = useSelector((state: moorhen.State) => state.glRef.requestDrawScene.switch)
+    const requestDrawSceneCount = useSelector((state: moorhen.State) => state.glRef.requestDrawScene.count)
     const labelBuffers = useSelector((state: moorhen.State) => state.glRef.labelBuffers)
 
     const GLLabelsFontFamily = useSelector((state: moorhen.State) => state.labelSettings.GLLabelsFontFamily)
@@ -740,7 +740,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 glRef.current.labelsTextCanvasTexture.addBigTextureTextImage(lab.label,lab.uuid)
             })
             glRef.current.labelsTextCanvasTexture.recreateBigTextureBuffers()
-            glRef.current.drawScene()
+            glRef.current.requestDrawScene()
         }
     }, [labelBuffers, glRef])
 
@@ -827,9 +827,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.drawScene()
+            // Once per frame, however many requests: loading many molecules asks once per molecule.
+            glRef.current.requestDrawScene()
         }
-    }, [requestDrawSceneSwitch])
+    }, [requestDrawSceneCount])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {

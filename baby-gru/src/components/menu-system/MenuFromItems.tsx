@@ -9,7 +9,17 @@ import { MoorhenToggle } from "../inputs";
 import { MoorhenMenuItem, MoorhenMenuItemPopover, MoorhenStack } from "../interface-base";
 import type { MenuItemType } from "./subMenuConfig";
 
-export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: string }): React.JSX.Element => {
+/**
+ * A menu's items as menu entries.
+ * @param popoverPlacement - Where popover items open: right of the menu by default; "left" for a menu
+ * shown at the right edge (a side panel).
+ */
+export const MenuFromItems = (props: {
+    menuItemList: MenuItemType[];
+    title?: string;
+    popoverPlacement?: "left" | "right";
+}): React.JSX.Element => {
+    const popoverPlacement = props.popoverPlacement ?? "right";
     const dispatch = useDispatch();
     const isDev = useSelector((state: RootState) => state.generalStates.devMode);
     const disableFileUploads = useSelector((state: RootState) => state.generalStates.disableFileUpload);
@@ -32,7 +42,12 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
         if (!("devOnly" in menuItem) || !menuItem.devOnly || (menuItem.devOnly && isDev)) {
             if (menuItem.type === "popover") {
                 return (
-                    <MoorhenMenuItemPopover key={keyForItem} menuItemText={menuItem.label} ariaLabel={menuItem.ariaLabel ?? menuItem.label}>
+                    <MoorhenMenuItemPopover
+                        key={keyForItem}
+                        menuItemText={menuItem.label}
+                        ariaLabel={menuItem.ariaLabel ?? menuItem.label}
+                        popoverPlacement={popoverPlacement}
+                    >
                         <menuItem.content />
                     </MoorhenMenuItemPopover>
                 );
@@ -66,7 +81,15 @@ export const MenuFromItems = (props: { menuItemList: MenuItemType[]; title?: str
             } else if (menuItem.type === "separator") {
                 return <hr key={keyForItem} className="moorhen_menu-hr"></hr>;
             } else if (menuItem.type === "subMenu") {
-                return <SubMenuPopover menu={menuItem.menu} label={menuItem.label} key={keyForItem} ariaLabel={menuItem.ariaLabel ?? menuItem.label} />;
+                return (
+                    <SubMenuPopover
+                        menu={menuItem.menu}
+                        label={menuItem.label}
+                        key={keyForItem}
+                        ariaLabel={menuItem.ariaLabel ?? menuItem.label}
+                        popoverPlacement={popoverPlacement}
+                    />
+                );
             } else if (menuItem.type === "showPanel") {
                 return (
                     <MoorhenMenuItem
@@ -125,13 +148,13 @@ const PreferenceChecker = (props: {
     );
 };
 
-const SubMenuPopover = (props: { menu: string; label: string; ariaLabel: string }) => {
+const SubMenuPopover = (props: { menu: string; label: string; ariaLabel: string; popoverPlacement: "left" | "right" }) => {
     const moorhenInstance = useMoorhenInstance();
     const menuSystem = moorhenInstance.menuSystem;
     const items = menuSystem.getItems(props.menu);
     return (
-        <MoorhenMenuItemPopover menuItemText={props.label} ariaLabel={props.ariaLabel}>
-            <MenuFromItems menuItemList={items} title={props.label} />
+        <MoorhenMenuItemPopover menuItemText={props.label} ariaLabel={props.ariaLabel} popoverPlacement={props.popoverPlacement}>
+            <MenuFromItems menuItemList={items} title={props.label} popoverPlacement={props.popoverPlacement} />
         </MoorhenMenuItemPopover>
     );
 };
