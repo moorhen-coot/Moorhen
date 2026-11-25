@@ -31,7 +31,17 @@ import { MoleculeRepresentation } from "./Representation/MoorhenMoleculeRepresen
  *   sequence viewer change, one summary snackbar instead of one per failed file.
  */
 
-export type BatchLigandSource = File | string | URL | { url: string | URL; filename: string };
+/**
+ * One ligand file: a `File`, a URL, or either with facts to attach to its molecule (`metadata`: a
+ * docking score, a rank... as strings by name, see MoorhenMolecule.metadata). They are shown on the
+ * ligand's card and saved in sessions.
+ */
+export type BatchLigandSource =
+    | File
+    | string
+    | URL
+    | { url: string | URL; filename: string; metadata?: Record<string, string> }
+    | { file: File; metadata?: Record<string, string> };
 
 export type BatchLoadLigandsOptions = {
     /** Dictionaries known up front: read into Coot once, and not looked up for the comp_ids they define. */
@@ -72,16 +82,37 @@ const PREPARE_AHEAD = 2;
 /** How many batches are loading, per store (their progress notification is shared) */
 const runningBatches = new WeakMap<object, number>();
 
-const sourceName = (source: BatchLigandSource): string => {
-    if (source instanceof File) return source.name;
-    const url = typeof source === "object" && "url" in source ? source.url : source;
-    if (typeof source === "object" && "filename" in source && source.filename) return source.filename;
-    return url.toString().split("?")[0].split("/").pop() || "ligand";
+/** The file or URL of a source given with metadata, else the source itself */
+const sourceContent = (source: BatchLigandSource): File | string | URL => {
+    if (source instanceof File || source instanceof URL || typeof source === "string") return source;
+    return "file" in source ? source.file : source.url;
 };
 
-const readSource = async (source: BatchLigandSource | File | string | URL): Promise<string> => {
-    if (source instanceof File) return source.text();
-    const url = typeof source === "object" && "url" in source ? source.url : source;
+const sourceName = (source: BatchLigandSource): string => {
+    const content = sourceContent(source);
+    if (content instanceof File) return content.name;
+    if (typeof source === "object" && "filename" in source && source.filename) return source.filename;
+    return content.toString().split("?")[0].split("/").pop() || "ligand";
+};
+
+/**
+ * The metadata given with a source, as the molecule keeps it: a copy, its values as strings (a host
+ * may pass numbers, which a session file would refuse), those without a value left out.
+ */
+const sourceMetadata = (source: BatchLigandSource): Record<string, string> => {
+    const metadata = typeof source === "object" && "metadata" in source ? source.metadata : undefined;
+    if (!metadata || typeof metadata !== "object") return {};
+    return Object.fromEntries(
+        Object.entries(metadata as Record<string, unknown>)
+            .filter(([, value]) => value !== null && value !== undefined)
+            .map(([key, value]) => [key, String(value)])
+    );
+};
+
+const readSource = async (source: BatchLigandSource): Promise<string> => {
+    const content = sourceContent(source);
+    if (content instanceof File) return content.text();
+    const url = content;
     const response = await fetch(url);
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
     return response.text();
@@ -223,6 +254,8 @@ export const batchLoadLigands = async (
             molecule.setBackgroundColour(backgroundColor);
             molecule.defaultBondOptions.smoothness = defaultBondSmoothness;
             molecule.name = moleculeNameFromFileName(fileName);
+            // What the caller knows about this ligand (a score, a rank...), on it from the start
+            molecule.metadata = sourceMetadata(sources[index]);
             try {
                 await molecule.updateGemmiStructure(text);
                 molecule.atomsDirty = false;

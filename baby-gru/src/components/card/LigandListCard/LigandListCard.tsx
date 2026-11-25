@@ -4,7 +4,15 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { MoorhenIcon, MoorhenSpinner } from "@/components/icons";
 import { useMoleculeChanged } from "@/hooks";
 import { MoorhenLinearProgress } from "@/components/icons/MoorhenLinearProgress";
-import { MoorhenButton, MoorhenColourPicker, MoorhenMoleculeSelect, MoorhenPopoverButton, MoorhenSlider, MoorhenToggle } from "@/components/inputs";
+import {
+    MoorhenButton,
+    MoorhenColourPicker,
+    MoorhenMoleculeSelect,
+    MoorhenPopoverButton,
+    MoorhenSelect,
+    MoorhenSlider,
+    MoorhenToggle,
+} from "@/components/inputs";
 import type { RGBAColour } from "@/components/inputs/MoorhenColourPicker/MoorhenColourPicker";
 import { MoorhenAccordion, MoorhenStack, MoorhenTooltip } from "@/components/interface-base";
 import { type RootState, addCustomRepresentation, enqueueSnackbar, removeCustomRepresentation, removeMolecule, removeVectorsByTag, setHoveredAtom } from "@/store";
@@ -14,6 +22,15 @@ import type { MoleculeLigandRecord } from "@/store/moleculesSlice";
 import type { MoorhenMolecule } from "@/utils/MoorhenMolecule";
 import { MoleculeRepresentation, type RepresentationStyles } from "@/utils/Representation/MoorhenMoleculeRepresentation";
 import { mmdbLigandCid } from "@/utils/ligandContacts";
+import {
+    type LigandOrder,
+    isNumericMetadata,
+    ligandMetadataKeys,
+    ligandMetadataValue,
+    metadataOrder,
+    orderMetadataKey,
+    sortLigandEntries,
+} from "@/utils/ligandOrder";
 import { type LigandEntry, type LigandSite, centreOnSite, groupLigandsBySite } from "@/utils/ligandSites";
 import { SOURCE_LIGAND_CONTACTS, TAG_MOLECULE, TAG_SOURCE } from "@/utils/tags";
 import { setMoleculeListVisible, setMoleculeVisible } from "@/utils/moleculeVisibility";
@@ -74,9 +91,6 @@ const useHoveredRowHighlight = (store: ReturnType<typeof useStore<RootState>>) =
     }, []);
 };
 
-// Natural order ("pose_2" before "pose_10"), ignoring case
-const byName = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
-
 /**
  * The ligands of the Ligands panel, each with its ligand card (2D view, centre-on, representation,
  * contacts...):
@@ -112,17 +126,23 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
         state.molecules.moleculeList.some(molecule => (state.molecules.moleculeRecords[molecule.uniqueId]?.ligands.length ?? 0) > 0)
     );
 
-    // A–Z by default; load order kept as the other choice, since it may carry the caller's ranking
-    const [order, setOrder] = useState<"name" | "load">("name");
-    const entryName = ({ molecule, ligand }: LigandEntry) =>
-        ligand ? `${molecule.name} ${ligand.resName} ${ligand.chainName}/${ligand.resNum}` : molecule.name;
-    const sorted = (list: LigandEntry[]) => (order === "load" ? list : [...list].sort((a, b) => byName.compare(entryName(a), entryName(b))));
-
     // Every ligand: those of the models, then the ligand-only molecules
     const entries: LigandEntry[] = [
         ...hosts.flatMap(host => ligandsOf(host).map(ligand => ({ molecule: host, ligand }))),
         ...molecules.map(molecule => ({ molecule })),
     ];
+
+    // A–Z by default; load order kept as a choice, since it may carry the caller's ranking; or by one
+    // of the facts the ligand-only molecules carry (molecule.metadata: a docking score, a rank...).
+    // Read from the molecules as the list renders: metadata is given as a ligand is loaded.
+    const [chosenOrder, setOrder] = useState<LigandOrder>({ by: "name", descending: false });
+    const metadataKeys = ligandMetadataKeys(entries);
+    // A key no ligand has any more (its ligands deleted): back to A–Z
+    const chosenKey = orderMetadataKey(chosenOrder);
+    const order: LigandOrder = chosenKey !== null && !metadataKeys.includes(chosenKey) ? { ...chosenOrder, by: "name" } : chosenOrder;
+    const orderKey = orderMetadataKey(order);
+    const numericOrder = orderKey !== null && isNumericMetadata(entries, orderKey);
+    const sorted = (list: LigandEntry[]) => sortLigandEntries(list, order, numericOrder);
     const entryKey = ({ molecule, ligand }: LigandEntry) => (ligand ? `${molecule.uniqueId}|${ligand.cid}` : molecule.uniqueId);
 
     // Grouping by position, of all the ligands: computed when switched on, again only if the ligands change
@@ -174,6 +194,7 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
                     molecule={entry.molecule}
                     ligand={entry.ligand}
                     noDictionary={noDictionary(entry.molecule, entry.ligand).join(", ")}
+                    detail={orderKey === null ? undefined : ligandMetadataValue(entry, orderKey)}
                     isVisible={visible.has(entry.molecule.molNo)}
                     registerRow={registerRow}
                 />
@@ -272,14 +293,24 @@ export const LigandListCard = (props: { molecules: MoorhenMolecule[] }) => {
                     tooltip={grouped ? "Grouped by position: click to group by molecule" : "Group by position"}
                     onClick={() => setGrouped(!grouped)}
                 />,
-                <MoorhenButton
-                    key="order"
-                    size="accordion"
-                    type="icon-only"
-                    icon="MatSymSwapVert"
-                    tooltip={order === "name" ? "Sorted A–Z: click for load order" : "In load order: click to sort A–Z"}
-                    onClick={() => setOrder(order === "name" ? "load" : "name")}
-                />,
+                <MoorhenPopoverButton key="order" size="accordion" icon="MatSymSwapVert" tooltip="Sort the ligands" popoverPlacement="left">
+                    <MoorhenStack gap="0.5rem">
+                        <MoorhenSelect label="Sort by" value={order.by} setValue={by => setOrder({ ...order, by: String(by) })}>
+                            <option value="name">Name</option>
+                            <option value="load">Load order</option>
+                            {metadataKeys.map(key => (
+                                <option key={key} value={metadataOrder(key)}>
+                                    {key}
+                                </option>
+                            ))}
+                        </MoorhenSelect>
+                        <MoorhenToggle
+                            label="Descending"
+                            checked={order.descending}
+                            onChange={() => setOrder({ ...order, descending: !order.descending })}
+                        />
+                    </MoorhenStack>
+                </MoorhenPopoverButton>,
             ]}
         >
             {content}
@@ -296,10 +327,12 @@ const LigandListRow = memo(function LigandListRow(props: {
     ligand?: MoleculeLigandRecord;
     /** The ligand residue types with no dictionary, comma-separated; empty if none (a string, for memo) */
     noDictionary: string;
+    /** Shown after the name: the value the list is sorted by (a score), if it is sorted by one */
+    detail?: string;
     isVisible: boolean;
     registerRow: (uid: string, element: HTMLElement | null) => void;
 }) {
-    const { molecule, ligand, noDictionary, isVisible, registerRow } = props;
+    const { molecule, ligand, noDictionary, detail, isVisible, registerRow } = props;
     const store = useStore<RootState>();
     const key = rowKey(molecule, ligand);
     const rowRef = useCallback((element: HTMLDivElement | null) => registerRow(key, element), [key, registerRow]);
@@ -354,6 +387,7 @@ const LigandListRow = memo(function LigandListRow(props: {
                         <span className="moorhen__ligand-list-row-name" title={name}>
                             {name}
                         </span>
+                        {detail !== undefined && <span className="moorhen__ligand-list-row-detail">{detail}</span>}
                     </span>
                 }
                 extraControls={[

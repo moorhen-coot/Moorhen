@@ -41,7 +41,7 @@
         <div><b>Monomer load stress test</b> <span id="libInfo" class="hint">loading index…</span></div>
         <fieldset>
             <legend>What to load</legend>
-            <label for="count">N monomers</label><input id="count" type="number" min="1" value="100" />
+            <label for="count">N monomers</label><input id="count" type="number" min="1" value="1500" />
             <label for="pick">Pick</label>
             <select id="pick"><option value="random">random</option><option value="first">first N from offset</option></select>
             <label for="seed">Seed / offset</label><input id="seed" type="number" min="0" value="1" />
@@ -58,10 +58,11 @@
             <legend>How to load</legend>
             <label for="method">Method</label>
             <select id="method">
-                <option value="loadFiles">files.loadFiles</option>
                 <option value="batch">files.batchLoadLigands</option>
+                <option value="loadFiles">files.loadFiles</option>
+                
             </select>
-            <label for="batch">Batch size</label><input id="batch" type="number" min="1" value="50" />
+            <label for="batch">Batch size</label><input id="batch" type="number" min="1" value="1500" />
             <span></span><span class="hint">Each batch is one call of the chosen method. Batch size ≥ N = a single call, like a consumer loading everything at once.</span>
             <label for="prefetch">Prefetch</label><label><input id="prefetch" type="checkbox" checked /> fetch all files before timing</label>
         </fieldset>
@@ -232,6 +233,7 @@
             drawChart([]);
 
             poseRandom = mulberry32(seed + 1);
+            const metadataRandom = mulberry32(seed + 2);
             const runResult = { n: paths.length, method: $("method").value, format: $("format").value, batchSize, mode, seed, prefetch, startMolecules: instance.getMoleculeList().length, batches: [] };
             let files = null;
             if (prefetch) {
@@ -254,7 +256,17 @@
                 longTaskMs = 0;
                 const t0 = performance.now();
                 if ($("method").value === "batch") {
-                    const { failed } = await instance.files.batchLoadLigands(batchFiles, {
+                    // Made-up metadata with each file (a score, a rank in the run, a made-up source), to
+                    // check it reaches the ligand's card: seeded, so a run gives the same values again
+                    const sources = batchFiles.map((file, k) => ({
+                        file,
+                        metadata: {
+                            Score: (-4 - metadataRandom() * 8).toFixed(2),
+                            Rank: String(i + k + 1),
+                            Source: ["docking", "screen", "manual"][Math.floor(metadataRandom() * 3)],
+                        },
+                    }));
+                    const { failed } = await instance.files.batchLoadLigands(sources, {
                         onProgress: done => setStatus(`Loading ${i + done} of ${total}… (batchLoadLigands)`),
                     }, "monomer-stress-test");
                     if (failed.length > 0) console.warn("batchLoadLigands failures", failed);

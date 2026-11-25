@@ -41,6 +41,15 @@
     white-space: nowrap;
 }
 
+/* After the name: the value the list is sorted by (a score). Never squeezed out by a long name */
+.moorhen__ligand-list-row-detail {
+    flex: none;
+    margin-left: auto;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
 /* A ligand's metadata, under its 2D drawing: one "key  value" line per entry */
 .moorhen__ligand-list-metadata {
     margin: 0.5rem 0 0;

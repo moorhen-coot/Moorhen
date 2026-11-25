@@ -230,6 +230,37 @@ describe("batchLoadLigands", () => {
     });
 });
 
+describe("batchLoadLigands with metadata", () => {
+    test("sets what is given with each file on its molecule, and saves it in sessions", async () => {
+        const { instance } = cloud;
+        const [first, second, third, fourth] = makePoses(4);
+        const empty = new File([""], "empty.pdb");
+        const { loaded, failed } = await instance.files.batchLoadLigands(
+            [
+                { file: first, metadata: { Score: "-7.2", Rank: "1" } },
+                // Not a string: kept as one (a session file only holds strings)
+                { file: second, metadata: { Score: -6.5 as unknown as string, Note: undefined } },
+                third,
+                // A file that fails: those after it still get their own
+                { file: empty, metadata: { Score: "-1" } },
+                { file: fourth, metadata: { Score: "-5.1" } },
+            ],
+            { dictionaries: [jobUrl("nitrobenzene.cif")] }
+        );
+        await flush();
+        expect(failed.map(entry => entry.fileName)).toEqual(["empty.pdb"]);
+        const metadataOf = (fileName: string) => instance.getMolecule(loaded.find(entry => entry.fileName === fileName).uniqueID).metadata;
+        expect(metadataOf(first.name)).toEqual({ Score: "-7.2", Rank: "1" });
+        expect(metadataOf(second.name)).toEqual({ Score: "-6.5" });
+        expect(metadataOf(third.name)).toEqual({});
+        expect(metadataOf(fourth.name)).toEqual({ Score: "-5.1" });
+
+        const session = await instance.getTimeCapsuleRef().current.fetchSession(false);
+        const saved = session.moleculeData.find(molecule => molecule.uniqueId === loaded[0].uniqueID);
+        expect(saved.metadata).toEqual({ Score: "-7.2", Rank: "1" });
+    });
+});
+
 describe("a task's progress (setJobProgress)", () => {
     test("leaves the busy spinner off once cleared, when the worker has nothing left to do", async () => {
         const { store } = cloud;

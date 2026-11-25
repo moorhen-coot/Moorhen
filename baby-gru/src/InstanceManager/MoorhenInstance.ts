@@ -591,6 +591,9 @@ export class MoorhenInstance extends StoreExtension {
              * instead of a full card per molecule.
              *
              * @param sources - PDB or mmCIF files, one ligand each: `File`s, URLs, or `{ url, filename }`.
+             * A source may come with `metadata` (`{ url, filename, metadata }` or `{ file, metadata }`):
+             * facts about that ligand as strings by name, such as a docking score. They are set on the
+             * molecule (`MoorhenMolecule.metadata`), shown on its ligand card and saved in sessions.
              * @param options.dictionaries - Restraint dictionaries known up front; the residue types they
              * define are not looked up.
              * @param options.centre - Centre the view on the last loaded ligand at the end (default false).
@@ -603,6 +606,11 @@ export class MoorhenInstance extends StoreExtension {
              * const { loaded, failed } = await instance.files.batchLoadLigands(poseUrls, {
              *     onProgress: (done, total) => console.log(`${done}/${total}`),
              * });
+             * @example
+             * // Each pose with its score
+             * await instance.files.batchLoadLigands(
+             *     poses.map(pose => ({ url: pose.url, filename: pose.name, metadata: { Score: pose.score.toFixed(2) } }))
+             * );
              */
             async batchLoadLigands(
                 sources: BatchLigandSource[],

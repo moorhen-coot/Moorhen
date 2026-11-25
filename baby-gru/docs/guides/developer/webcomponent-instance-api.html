@@ -137,9 +137,10 @@
         <h2>Loading structures and maps</h2>
 
         <p>
-            Molecules and maps are loaded through <code>moorhenInstance.files.loadFiles()</code>. It accepts one or
+            Molecules and maps are loaded through
+            <a href="../../api/classes/moorhen.MoorhenInstance.html#files-loadfiles"><code>moorhenInstance.files.loadFiles()</code></a>. It accepts one or
             more URLs (or <code>File</code>s, strings, <code>URL</code>s&hellip;) and resolves to a
-            <a href="../../api/types/WebComponent_entry.LoadFilesResult.html"><code>LoadFilesResult</code></a>:
+            <a href="../../api/types/moorhen.LoadFilesResult.html"><code>LoadFilesResult</code></a>:
             one entry per successfully loaded file, telling you what was loaded and how to refer to it.
         </p>
 
@@ -173,9 +174,12 @@ const moleculeUid = results.find((item) =&gt; item.type === "molecule")?.uniqueI
         </p>
 
         <p>
-            For hundreds to thousands of single-ligand files (docking poses, say), use
-            <code>moorhenInstance.files.batchLoadLigands(files)</code> instead: it resolves to
-            <code>{ loaded, failed }</code> and is one step, with no undo entry or backup.
+            For hundreds to thousands of single-ligand files (docking poses), use
+            <a href="../../api/classes/moorhen.MoorhenInstance.html#files-batchloadligands"><code>moorhenInstance.files.batchLoadLigands(files)</code></a>
+            instead: it resolves to
+            <code>{ loaded, failed }</code> and is one step, with no undo entry or backup. A file given as
+            <code>{ file, metadata }</code> or <code>{ url, filename, metadata }</code> carries facts about its
+            ligand (a docking score, as strings by name), shown on the ligand&rsquo;s card and saved in sessions.
         </p>
     </section>
 
