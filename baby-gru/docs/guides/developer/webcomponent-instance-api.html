@@ -171,6 +171,12 @@ const moleculeUid = results.find((item) =&gt; item.type === "molecule")?.uniqueI
             molecules at any time with <code>moorhenInstance.getMoleculeList()</code> (or
             <code>getMolecule(uniqueID)</code>).
         </p>
+
+        <p>
+            For hundreds to thousands of single-ligand files (docking poses, say), use
+            <code>moorhenInstance.files.batchLoadLigands(files)</code> instead: it resolves to
+            <code>{ loaded, failed }</code> and is one step, with no undo entry or backup.
+        </p>
     </section>
 
     <section>
