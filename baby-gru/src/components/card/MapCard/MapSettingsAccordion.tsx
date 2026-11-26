@@ -156,11 +156,12 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                 ? "Thicken the surface where it is seen edge-on, as looking along a shell would."
                 : "Lower the opacity to use this: a solid surface has no shell to look along."}
             onChange={() => {
+                // Only the dispatch. MoorhenMapManager listens and reaches the buffers - which is
+                // what makes a session restore and a scripted dispatch work as well as this
+                // switch. Applying it here too would be a second writer saying the same thing.
                 dispatch(setMapViewDependentTransparency({
                     molNo: props.map.molNo, enabled: !viewDependentTransparency,
                 }));
-                // The buffers are already drawn and do not change shape; only a uniform moves.
-                props.map.applyViewDependentTransparency();
             }}
         />
     );

@@ -10,6 +10,8 @@
  * does nothing, and nothing about the picture would say so.
  */
 import { describe, expect, it } from "@jest/globals";
+import { readFileSync } from "fs";
+import { join } from "path";
 import mapContourSettingsReducer, {
     setMapAlpha, setMapViewDependentTransparency,
 } from "../../src/store/mapContourSettingsSlice";
@@ -86,6 +88,59 @@ describe("a map, reading its own setting", () => {
         };
         expect(MoorhenMap.prototype.getMapContourParams
             .call({ molNo: 7, store }).viewDependentTransparency).toBe(false);
+    });
+});
+
+/**
+ * The switch lives in the store, so the store is what has to reach the buffers.
+ *
+ * Raised in review, and right: the map card's switch applied the change itself, which left every
+ * other way of dispatching it - a session restore, a script calling the exported action - changing
+ * a number nothing read until the map was next contoured. The fix is the arrangement the opacity
+ * already uses: one listener in MoorhenMapManager, and the switch only dispatches.
+ */
+describe("the map switch, reaching the buffers", () => {
+    const source = (path: string) =>
+        readFileSync(join(__dirname, "../../src", path), "utf8");
+
+    it("sets the uniform on every drawn buffer and asks for a frame", async () => {
+        const { MoorhenMap } = await import("../../src/utils/MoorhenMap");
+        const buffers = [{ viewDependentTransparency: false }, { viewDependentTransparency: false }];
+        const dispatched: unknown[] = [];
+        MoorhenMap.prototype.applyViewDependentTransparency.call({
+            molNo: 7,
+            displayObjects: { Coot: buffers },
+            getMapContourParams: MoorhenMap.prototype.getMapContourParams,
+            store: {
+                dispatch: (action: unknown) => dispatched.push(action),
+                getState: () => ({
+                    mapContourSettings: {
+                        mapRadii: [], contourLevels: [], mapAlpha: [], mapStyles: [],
+                        mapColours: [], negativeMapColours: [], positiveMapColours: [],
+                        mapViewDependentTransparency: [7],
+                    },
+                }),
+            },
+        });
+        expect(buffers.every(buffer => buffer.viewDependentTransparency)).toBe(true);
+        // A uniform changed and nothing else did, so something has to ask for the next frame.
+        expect(dispatched).toHaveLength(1);
+    });
+
+    it("is applied by a listener on the store, beside the one the opacity uses", () => {
+        const manager = source("components/managers/maps/MoorhenMapManager.tsx");
+        expect(manager).toContain("applyViewDependentTransparency");
+        expect(manager).toContain("mapViewDependentTransparency.includes(map.molNo)");
+        // The boolean, not the array: a dispatch about another map must not redraw this one.
+        expect(manager).not.toMatch(/selector:?\s*\(state: RootState\) =>\s*state\.mapContourSettings\.mapViewDependentTransparency,/);
+    });
+
+    it("is not also applied by the switch itself", () => {
+        // Two writers for one setting is how they drift apart: the one in the card would keep
+        // working while the one everything else depends on quietly stopped.
+        const accordion = source("components/card/MapCard/MapSettingsAccordion.tsx");
+        expect(accordion).toContain("setMapViewDependentTransparency");
+        expect(accordion).not.toContain("applyViewDependentTransparency");
     });
 });
 

@@ -276,6 +276,52 @@ describe("arrival, as listeners are told about it", () => {
     });
 });
 
+/**
+ * Raised in review: that stopping a movie partway would leave the store holding the pre-movie view,
+ * because `arrived` is false for a cut-short move and the view echo is now gated on it.
+ *
+ * It does not, and the reason is worth writing down rather than rediscovering. A movie *drives* the
+ * camera - a sampler, asked where to be on each tick - and has no in-flight move to abandon. So
+ * letting go of it is an arrival by the rule in `driverRelease`, and the store is told where the
+ * camera was left. The gate only closes on a `moveTo` released before it lands, which is a
+ * destination nobody reached.
+ *
+ * Both endings are tested because they differ in *which* view is the right one, not in whether the
+ * store hears about it.
+ */
+describe("a movie stopped partway", () => {
+    const stoppedAfter = (seconds: number, restoreView: boolean) => {
+        const controller = new CameraController(startingAt());
+        const heard: { origin: number[]; arrived: boolean }[] = [];
+        controller.subscribe((state, arrived) => heard.push({ origin: [...state.origin], arrived }));
+        // No echo policy: this is about the release, not about what the journey announced.
+        const hold = holdCameraForMovie({ cameraController: controller }, restoreView, null);
+        hold.play(travelling);
+        controller.tick(0);
+        controller.tick(seconds);
+        hold.release();
+        return { controller, heard };
+    };
+
+    it("tells the store where it left the camera, when the view is not restored", () => {
+        const { controller, heard } = stoppedAfter(3, false);
+        const last = heard.at(-1)!;
+        expect(last.arrived).toBe(true);
+        // Partway: neither the start nor the end of the journey.
+        expect(last.origin[0]).toBeGreaterThan(0);
+        expect(last.origin[0]).toBeLessThan(100);
+        expect(last.origin[0]).toBeCloseTo(controller.state.origin[0], 10);
+    });
+
+    it("tells the store the view it put back, when it restores", () => {
+        const { controller, heard } = stoppedAfter(3, true);
+        const last = heard.at(-1)!;
+        expect(last.arrived).toBe(true);
+        expect(last.origin[0]).toBeCloseTo(0, 10);
+        expect(controller.state.origin[0]).toBeCloseTo(0, 10);
+    });
+});
+
 describe("an eased move, which is not a movie", () => {
     it("echoes on the way when a policy is set, and settles as it always did", () => {
         // moveTo runs through the same tick. Nothing sets a policy for it today, but if anything
