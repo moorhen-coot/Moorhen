@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/MoorhenReduxStore";
-import { selectIsMapVisible, selectSelectedMapRepresentation } from "../store/mapRepresentationsSlice";
+import { selectIsMapVisible, selectMapRepresentationsOfMap, selectSelectedMapRepresentation } from "../store/mapRepresentationsSlice";
 import { type MapColour, type MapRepresentationData, type MapStyle, currentAlpha, currentRadius } from "../utils/Representation/mapRepresentationData";
 
 /**
@@ -58,3 +58,14 @@ export const useMapDisplay = (map: DisplayedMap | null | undefined): MapDisplay 
     const mapVisible = useSelector((state: RootState) => (map ? selectIsMapVisible(state, map.uniqueId) : false));
     return map ? mapDisplayOf(map, record, mapVisible) : null;
 };
+
+/**
+ * Whether a map's card is in multi-representation mode: its toggle is on, or it has more than one representation
+ * (its controls would otherwise act on one you cannot see)
+ */
+export const useIsMultiRepresentation = (map: { uniqueId: string }): boolean => {
+    const toggledOn = useSelector((state: RootState) => state.generalStates.multiRepresentationMaps.includes(map.uniqueId));
+    const count = useSelector((state: RootState) => selectMapRepresentationsOfMap(state, map.uniqueId).length);
+    return toggledOn || count > 1;
+};
+

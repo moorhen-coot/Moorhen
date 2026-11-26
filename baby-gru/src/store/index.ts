@@ -228,6 +228,7 @@ export {
     setMapRepresentationRadius,
     setMapRepresentationSlice,
     setMapVisible,
+    shiftMapRepresentationLevels,
     setPrimaryMapRepresentation,
     setPrimaryMapRepresentationAlpha,
     setPrimaryMapRepresentationRadius,

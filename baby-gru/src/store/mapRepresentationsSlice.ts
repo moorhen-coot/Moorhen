@@ -143,6 +143,19 @@ const mapRepresentationsSlice = createSlice({
         },
         // API
         /**
+         * Move the level of every shown representation of a map by the same amount (`by`, in map units), in one go: the
+         * card's level in multi-representation mode, and the scroll wheel then. Hidden ones stay where they are.
+         */
+        shiftMapRepresentationLevels: (state, action: PayloadAction<{ mapUid: string; by: number }>) => {
+            if (!Number.isFinite(action.payload.by)) return;
+            Object.values(state.representations).forEach(representation => {
+                if (representation.mapUid === action.payload.mapUid && representation.visible) {
+                    representation.contourLevel += action.payload.by;
+                }
+            });
+        },
+        // API
+        /**
          * Change a representation's 2D slice: some of where it is (centre, orientation), its nodal lines, its contour
          * spacing. A representation without a slice yet gets one, through the origin facing down z where not given.
          */
@@ -206,6 +219,17 @@ export const selectSelectedMapRepresentation = (
     return selected && selected.mapUid === mapUid ? selected : primaryOf(state.mapRepresentations, mapUid);
 };
 
+/**
+ * The level a map's shown representations move from together (multi-representation mode): the lowest of their levels,
+ * undefined when none is shown
+ */
+export const selectShownLevelsBase = (state: StateWithMapRepresentations, mapUid: string): number | undefined => {
+    const levels = Object.values(state.mapRepresentations.representations)
+        .filter(representation => representation.mapUid === mapUid && representation.visible)
+        .map(representation => representation.contourLevel);
+    return levels.length > 0 ? Math.min(...levels) : undefined;
+};
+
 /** Whether a map is shown: any of its representations is */
 export const selectIsMapVisible = (state: StateWithMapRepresentations, mapUid: string): boolean =>
     Object.values(state.mapRepresentations.representations).some(representation => representation.mapUid === mapUid && representation.visible);
@@ -227,6 +251,7 @@ export const {
     setMapRepresentationRadius,
     setMapRepresentationSlice,
     setMapVisible,
+    shiftMapRepresentationLevels,
     setPrimaryMapRepresentation,
     setPrimaryMapRepresentationAlpha,
     setPrimaryMapRepresentationRadius,

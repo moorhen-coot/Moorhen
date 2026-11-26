@@ -1,10 +1,10 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
-import { MoorhenButton } from "@/components/inputs";
+import { MoorhenButton, MoorhenToggle } from "@/components/inputs";
 import { MoorhenStack } from "@/components/interface-base";
 import { MoorhenPopoverButton } from "@/components/interface-base/Popovers/PopoverButton";
 import { MoorhenMenuItem } from "@/components/interface-base/MenuItems/MenuItem";
-import { setSelectedMapRepresentation } from "../../../store/generalStatesSlice";
+import { setMapMultiRepresentation, setSelectedMapRepresentation } from "../../../store/generalStatesSlice";
 import {
     addMapRepresentation,
     removeMapRepresentation,
@@ -17,6 +17,7 @@ import type { RootState } from "../../../store/MoorhenReduxStore";
 import type { MoorhenMap } from "../../../utils/MoorhenMap";
 import type { MapRepresentationData, MapStyle } from "../../../utils/Representation/mapRepresentationData";
 import { guid } from "../../../utils/utils";
+import { useIsMultiRepresentation } from "../../../hooks/useMapDisplay";
 import { MAP_REPRESENTATION_PRESETS, type MapRepresentationPreset, presetRecords } from "../../../utils/Representation/mapRepresentationPresets";
 import "../MoleculeCard/representation.css";
 
@@ -27,10 +28,11 @@ const levelLabel = (map: MoorhenMap, level: number) =>
     map.mapRmsd ? `${(level / map.mapRmsd).toFixed(2)}σ` : Number(level.toPrecision(3)).toString();
 
 /**
- * A map's representations (.roadmaps/map-display.md), as chips. Clicking a chip selects it, and the card's controls
- * (level, draw settings, colour) then act on it; each chip has its own eye and a delete (not the last one).
+ * A map's representations (.roadmaps/map-display.md), as chips: each with its eye, an edit popover (`editor`: its
+ * level and draw settings, opened on it: the chip is selected first, and the editor acts on the selected one) and a
+ * delete (not the last one). Clicking a chip selects it.
  */
-export const MapRepresentationChips = (props: { map: MoorhenMap }) => {
+export const MapRepresentationChips = (props: { map: MoorhenMap; editor?: React.ReactNode }) => {
     const { map } = props;
     const dispatch = useDispatch();
     const isDark = useSelector((state: RootState) => state.sceneSettings.isDark);
@@ -89,6 +91,21 @@ export const MapRepresentationChips = (props: { map: MoorhenMap }) => {
                                     dispatch(setMapRepresentation({ id: record.id, changes: { visible: !record.visible } }));
                                 }}
                             />
+                            {props.editor && (
+                                <MoorhenPopoverButton
+                                    type="icon-only"
+                                    size="accordion"
+                                    icon="MatSymEdit"
+                                    tooltip="Edit this representation"
+                                    ariaLabel="Edit this representation"
+                                    popoverPlacement="left"
+                                    extraOnClick={() => select(record)}
+                                >
+                                    <MoorhenStack direction="vertical" gap="0.5rem" style={{ minWidth: "22rem" }}>
+                                        {props.editor}
+                                    </MoorhenStack>
+                                </MoorhenPopoverButton>
+                            )}
                             <MoorhenButton
                                 type="icon-only"
                                 size="accordion"
@@ -177,20 +194,41 @@ export const MapRepresentationPresetsMenu = (props: { map: MoorhenMap; disabled?
     );
 };
 
-/**
- * The representations card at the top of a map's card: chips and "+". Shown when its Draw Settings toggle is on, and
- * always for a map with more than one representation (the controls would otherwise act on one you cannot see).
- */
-export const MapRepresentationsCard = (props: { map: MoorhenMap }) => {
+/** "Multiple representations": the map card's switch to multi-representation mode, locked on with more than one */
+export const MapMultiRepresentationToggle = (props: { map: MoorhenMap }) => {
     const { map } = props;
+    const dispatch = useDispatch();
     const toggledOn = useSelector((state: RootState) => state.generalStates.multiRepresentationMaps.includes(map.uniqueId));
     const count = useSelector((state: RootState) => selectMapRepresentationsOfMap(state, map.uniqueId).length);
-    if (!toggledOn && count < 2) {
+    return (
+        <MoorhenToggle
+            id={`map-multi-representation-${map.molNo}`}
+            type="switch"
+            checked={toggledOn || count > 1}
+            disabled={count > 1}
+            onChange={() => dispatch(setMapMultiRepresentation({ mapUid: map.uniqueId, on: !toggledOn }))}
+            label="Multiple representations"
+            tooltip={
+                count > 1
+                    ? "This map has several representations: delete all but one to turn this off"
+                    : "Draw this map several ways at once (e.g. a mesh and a surface), each edited from its chip"
+            }
+        />
+    );
+};
+
+/**
+ * The representations card at the top of a map's card, in multi-representation mode: chips (each with its `editor`),
+ * "+" and presets.
+ */
+export const MapRepresentationsCard = (props: { map: MoorhenMap; editor: React.ReactNode }) => {
+    const { map } = props;
+    if (!useIsMultiRepresentation(map)) {
         return null;
     }
     return (
         <MoorhenStack card direction="row" align="center" justify="flex-end" gap="0.25rem">
-            <MapRepresentationChips map={map} />
+            <MapRepresentationChips map={map} editor={props.editor} />
             <AddMapRepresentationButton map={map} />
             <MapRepresentationPresetsMenu map={map} />
         </MoorhenStack>

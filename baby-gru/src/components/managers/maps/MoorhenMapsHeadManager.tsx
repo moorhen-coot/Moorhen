@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
-import { useMapDisplay } from "../../../hooks/useMapDisplay";
+import { useIsMultiRepresentation, useMapDisplay } from "../../../hooks/useMapDisplay";
+import { selectShownLevelsBase } from "../../../store/mapRepresentationsSlice";
 import { moorhen } from "../../../types/moorhen";
 import { MapScrollWheelListener } from "./MapScrollWheelListener";
 
@@ -14,11 +15,14 @@ export const MoorhenMapsHeadManager = () => {
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap);
     const map = useSelector((state: moorhen.State) => state.maps.find(item => item.molNo === activeMap?.molNo) ?? null);
     const display = useMapDisplay(map);
-    const mapIsVisible = display?.visible ?? false;
-    const mapContourLevel = display?.record ? display.contourLevel : map?.suggestedContourLevel ?? 0.003;
+    // Multi-representation mode: the wheel moves all shown representations together, from the lowest level
+    const allShown = useIsMultiRepresentation(map ?? { uniqueId: "" });
+    const shownBase = useSelector((state: moorhen.State) => (map ? selectShownLevelsBase(state, map.uniqueId) : undefined));
+    const mapIsVisible = allShown ? shownBase !== undefined : display?.visible ?? false;
+    const mapContourLevel = allShown && shownBase !== undefined ? shownBase : display?.record ? display.contourLevel : map?.suggestedContourLevel ?? 0.003;
 
     if (!map) {
         return null;
     }
-    return <MapScrollWheelListener key={map.uniqueId} map={map} mapIsVisible={mapIsVisible} mapContourLevel={mapContourLevel} />;
+    return <MapScrollWheelListener key={map.uniqueId} map={map} mapIsVisible={mapIsVisible} mapContourLevel={mapContourLevel} allShown={allShown} />;
 };

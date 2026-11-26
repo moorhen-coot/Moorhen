@@ -19,6 +19,8 @@ import mapRepresentationsReducer, {
     selectIsMapVisible,
     selectSelectedMapRepresentation,
     setMapVisible,
+    selectShownLevelsBase,
+    shiftMapRepresentationLevels,
 } from "../../src/store/mapRepresentationsSlice";
 import {
     type MapRepresentationData,
@@ -154,6 +156,24 @@ describe("mapRepresentations slice", () => {
         ["mesh", "surface"].forEach(id => store.dispatch(setMapRepresentation({ id, changes: { visible: false } })));
         store.dispatch(setMapVisible({ mapUid: "map-a", visible: true }));
         expect(visibility()).toEqual({ mesh: true, surface: false, hidden: false, other: true });
+    });
+
+    test("the shown representations of a map move together by the same amount, the hidden ones stay", () => {
+        const store = makeStore();
+        store.dispatch(addMapRepresentation(record("one", "map-a", { contourLevel: 0.25 })));
+        store.dispatch(addMapRepresentation(record("two", "map-a", { contourLevel: 0.5 })));
+        store.dispatch(addMapRepresentation(record("hidden", "map-a", { contourLevel: 0.75, visible: false })));
+        store.dispatch(addMapRepresentation(record("other", "map-b", { contourLevel: 0.25 })));
+        // From the lowest shown level
+        expect(selectShownLevelsBase(store.getState(), "map-a")).toBe(0.25);
+
+        store.dispatch(shiftMapRepresentationLevels({ mapUid: "map-a", by: 0.125 }));
+        const levels = Object.fromEntries(Object.values(store.getState().mapRepresentations.representations).map(item => [item.id, item.contourLevel]));
+        expect(levels).toEqual({ one: 0.375, two: 0.625, hidden: 0.75, other: 0.25 });
+        expect(selectShownLevelsBase(store.getState(), "map-a")).toBe(0.375);
+
+        store.dispatch(setMapVisible({ mapUid: "map-a", visible: false }));
+        expect(selectShownLevelsBase(store.getState(), "map-a")).toBeUndefined();
     });
 
     test("the selected representation of a map, else its first", () => {

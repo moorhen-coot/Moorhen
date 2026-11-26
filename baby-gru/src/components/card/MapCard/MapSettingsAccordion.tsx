@@ -10,7 +10,7 @@ import {
     setMapRepresentationSlice,
 } from "../../../store/mapRepresentationsSlice";
 import { currentAlpha } from "../../../utils/Representation/mapRepresentationData";
-import { setMapMultiRepresentation, setMovingMapSlice } from "../../../store/generalStatesSlice";
+import { setMovingMapSlice } from "../../../store/generalStatesSlice";
 import { setQuat } from "../../../store/glRefSlice";
 import { setOrigin } from "../../../store/sceneSettingsSlice";
 import { quatFacingSlice } from "../../../utils/mapSlice/sliceView";
@@ -40,6 +40,8 @@ interface MoorhenMapCardSettings {
      * nothing about the slice itself is particular to them.
      */
     offerSlice?: boolean;
+    /** The settings alone, without the "Draw Settings" accordion (in a representation's edit popover) */
+    bare?: boolean;
 }
 
 export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
@@ -56,12 +58,6 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
     const otherIsSlice = useSelector((state: moorhen.State) =>
         selectMapRepresentationsOfMap(state, props.map.uniqueId).some(other => other.id !== record?.id && other.style === "slice")
     );
-    /**
-     * The representations card at the top of the map's card: on when toggled here, and always while the map has more
-     * than one representation (MapRepresentationsCard)
-     */
-    const representationCount = useSelector((state: moorhen.State) => selectMapRepresentationsOfMap(state, props.map.uniqueId).length);
-    const multiRepresentationOn = useSelector((state: moorhen.State) => state.generalStates.multiRepresentationMaps.includes(props.map.uniqueId));
     const change = (changes: Parameters<typeof setMapRepresentation>[0]["changes"]) => {
         if (record) dispatch(setMapRepresentation({ id: record.id, changes }));
     };
@@ -137,21 +133,9 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
         />
     );
 
+    const Wrapper = props.bare ? BareSettings : DrawSettingsAccordion;
     return (
-        <MoorhenAccordion title="Draw Settings">
-            <MoorhenToggle
-                id={`map-multi-representation-${props.map.molNo}`}
-                type="switch"
-                checked={multiRepresentationOn || representationCount > 1}
-                disabled={representationCount > 1}
-                onChange={() => dispatch(setMapMultiRepresentation({ mapUid: props.map.uniqueId, on: !multiRepresentationOn }))}
-                label="Multiple representations"
-                tooltip={
-                    representationCount > 1
-                        ? "This map has several representations: delete all but one to turn this off"
-                        : "Show this map's representations, to add more (e.g. a mesh and a surface)"
-                }
-            />
+        <Wrapper>
             <MoorhenStack direction="line">
                 <MoorhenStack direction="vertical" gap={"0.5rem"}>
                     {props.map.isEM && !props.hideRadiusControls &&
@@ -263,6 +247,9 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                     )}
                 </MoorhenStack>
             )}
-        </MoorhenAccordion>
+        </Wrapper>
     );
 };
+
+const DrawSettingsAccordion = (props: { children?: React.ReactNode }) => <MoorhenAccordion title="Draw Settings">{props.children}</MoorhenAccordion>;
+const BareSettings = (props: { children?: React.ReactNode }) => <>{props.children}</>;

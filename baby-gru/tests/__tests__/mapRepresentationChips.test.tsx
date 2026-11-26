@@ -1,14 +1,16 @@
 /**
- * Several representations of a map in its card (.roadmaps/map-display.md): a representations card (chips and "+")
- * shown by a Draw Settings toggle, and always for a map with more than one; the selected one is what the card's
- * controls act on; "+" adds a copy of it; only one representation of a map can be a 2D slice.
+ * Several representations of a map in its card (.roadmaps/map-display.md): a representations card (chips, "+",
+ * presets) shown by the card's "Multiple representations" toggle, and always for a map with more than one; each
+ * chip's edit popover holds its level and draw settings; "+" adds a copy; only one representation of a map can be a
+ * 2D slice.
  */
 import "@testing-library/jest-dom";
-import { render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
-import { MapRepresentationsCard } from "../../src/components/card/MapCard/MapRepresentationChips";
-import { MapSettingsAccordion } from "../../src/components/card/MapCard/MapSettingsAccordion";
+import { MapMultiRepresentationToggle, MapRepresentationsCard } from "../../src/components/card/MapCard/MapRepresentationChips";
+import { MapLevelControls } from "../../src/components/card/MapCard/MapLevelControls";
+import { MapRepresentationEditor } from "../../src/components/card/MapCard/MapRepresentationEditor";
 import { MoorhenMenuSystem } from "../../src/components/menu-system/MenuSystem";
 import { MoorhenInstanceProvider } from "../../src/InstanceManager";
 import { createMoorhenStore } from "../../src/store/MoorhenReduxStore";
@@ -26,7 +28,10 @@ const map = {
     isDifference: false,
     headerInfo: null,
     mapRmsd: 0.25,
+    levelRange: [0.01, 2],
     defaultMapColour: { r: 0.3, g: 0.3, b: 0.7 },
+    defaultPositiveMapColour: { r: 0.4, g: 0.8, b: 0.4 },
+    defaultNegativeMapColour: { r: 0.8, g: 0.4, b: 0.4 },
 } as unknown as moorhen.Map;
 
 const record = (id: string, changes: Partial<MapRepresentationData> = {}): MapRepresentationData => ({
@@ -55,14 +60,13 @@ const renderCard = async (...records: MapRepresentationData[]) => {
     const view = () => (
         <Provider store={store}>
             <MoorhenInstanceProvider menuSystem={menuSystem}>
-                <MapRepresentationsCard map={map} />
-                <MapSettingsAccordion map={map} mapIsVisible={true} mapStyle={selected()?.style} mapRadius={15} mapOpacity={1} offerSlice={true} />
+                <MapMultiRepresentationToggle map={map} />
+                <MapRepresentationsCard map={map} editor={<MapRepresentationEditor map={map} level={<MapLevelControls map={map} />} offerSlice={true} />} />
             </MoorhenInstanceProvider>
         </Provider>
     );
     const { rerender } = render(view());
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /keyboard/i }));
     return { store, user, selected, update: () => rerender(view()) };
 };
 
@@ -157,12 +161,84 @@ describe("a map's representations in its card", () => {
         expect(selected().id).toBe(records[0].id);
     });
 
+    test("the card's level, in multi-representation mode, moves every shown representation by the same amount", async () => {
+        const store = createMoorhenStore();
+        store.dispatch(addMap(map));
+        [record("mesh"), record("surface", { style: "solid", contourLevel: 0.5 }), record("hidden", { visible: false, contourLevel: 1 })].forEach(item =>
+            store.dispatch(addMapRepresentation(item))
+        );
+        render(
+            <Provider store={store}>
+                <MoorhenInstanceProvider menuSystem={new MoorhenMenuSystem()}>
+                    <MapLevelControls map={map} allShown />
+                </MoorhenInstanceProvider>
+            </Provider>
+        );
+        const user = userEvent.setup();
+        // Shows the lowest shown level, 0.25 (1.00 rms)
+        const rmsInput = screen.getAllByRole("textbox").find(input => (input as HTMLInputElement).value === "1.00") as HTMLInputElement;
+        await user.clear(rmsInput);
+        await user.type(rmsInput, "2{Enter}");
+        // + 1 rms (0.25) for each shown one
+        expect(selectMapRepresentationsOfMap(store.getState(), "map-3").map(item => [item.id, item.contourLevel])).toEqual([
+            ["mesh", 0.5],
+            ["surface", 0.75],
+            ["hidden", 1],
+        ]);
+    });
+
+    test("dragging that slider's thumb moves the levels to where it is, the gaps kept (it used to run away to NaN)", async () => {
+        const store = createMoorhenStore();
+        store.dispatch(addMap(map));
+        [record("mesh"), record("surface", { style: "solid", contourLevel: 0.5 })].forEach(item => store.dispatch(addMapRepresentation(item)));
+        const { container } = render(
+            <Provider store={store}>
+                <MoorhenInstanceProvider menuSystem={new MoorhenMenuSystem()}>
+                    <MapLevelControls map={map} allShown />
+                </MoorhenInstanceProvider>
+            </Provider>
+        );
+        // The slider follows the pointer through window listeners made when the drag starts, with the handler of that
+        // moment: the levels must be read when it is called. The track is given 1000 px (jsdom lays nothing out); the
+        // scale is log, from 0.01 to 2 (levelRange).
+        const track = container.querySelector(".moorhen__slider-track") as HTMLElement;
+        Object.defineProperty(track, "clientWidth", { value: 1000 });
+        track.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 10, width: 1000, height: 10, x: 0, y: 0, toJSON: () => ({}) });
+        const positionOf = (level: number) => Math.round((1000 * (Math.log10(level) - Math.log10(0.01))) / (Math.log10(2) - Math.log10(0.01)));
+        fireEvent.mouseDown(container.querySelector(".moorhen__slider-thumb"));
+        for (const level of [0.3, 0.4, 0.6]) {
+            act(() => {
+                window.dispatchEvent(new MouseEvent("pointermove", { clientX: positionOf(level), cancelable: true }));
+            });
+        }
+        act(() => {
+            window.dispatchEvent(new MouseEvent("pointerup"));
+        });
+        const levels = selectMapRepresentationsOfMap(store.getState(), "map-3").map(item => item.contourLevel);
+        levels.forEach(level => expect(Number.isFinite(level)).toBe(true));
+        expect(levels[0]).toBeCloseTo(0.6, 2);
+        // The gap between them as it was (0.25)
+        expect(levels[1] - levels[0]).toBeCloseTo(0.25, 6);
+    });
+
+    const openEditor = async (user: ReturnType<typeof userEvent.setup>, chip: HTMLElement) =>
+        user.click(within(chip).getByRole("button", { name: /edit this representation/i }));
+
+    test("a chip's edit popover selects it, and holds its level and draw settings", async () => {
+        const { user, selected } = await renderCard(record("mesh"), record("surface", { style: "solid", contourLevel: 0.5 }));
+        await openEditor(user, chips()[1]);
+        expect(selected().id).toBe("surface");
+        expect(await screen.findByRole("checkbox", { name: /draw as a surface/i })).toBeChecked();
+        expect(screen.getByRole("checkbox", { name: /draw as mesh/i })).not.toBeChecked();
+        expect(screen.getByText("RMSD:")).toBeInTheDocument();
+        // Its colour, with the card's colour picker
+        expect(screen.getByText("Colour")).toBeInTheDocument();
+    });
+
     test("only one representation of a map can be a 2D slice", async () => {
-        const { user, update } = await renderCard(record("mesh"), record("slice", { style: "slice" }));
-        // The mesh is selected: its slice option is taken by the other one
-        expect(screen.getByRole("checkbox", { name: /draw as 2d slice/i })).toBeDisabled();
-        await user.click(chips()[1]);
-        update();
-        expect(screen.getByRole("checkbox", { name: /draw as 2d slice/i })).not.toBeDisabled();
+        const { user } = await renderCard(record("mesh"), record("slice", { style: "slice" }));
+        // The mesh's slice option is taken by the other one
+        await openEditor(user, chips()[0]);
+        expect(await screen.findByRole("checkbox", { name: /draw as 2d slice/i })).toBeDisabled();
     });
 });

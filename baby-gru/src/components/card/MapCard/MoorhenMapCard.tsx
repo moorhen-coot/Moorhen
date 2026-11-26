@@ -1,15 +1,17 @@
 import { useDispatch, useSelector } from "react-redux";
-import { setMapRepresentation, setMapVisible } from "@/store/mapRepresentationsSlice";
-import { MapRepresentationsCard } from "./MapRepresentationChips";
-import { useMemo, useState } from "react";
-import { useFastContourMode } from "../../../hooks/useFastContourMode";
+import { setMapVisible } from "@/store/mapRepresentationsSlice";
+import { MapMultiRepresentationToggle, MapRepresentationsCard } from "./MapRepresentationChips";
+import { useIsMultiRepresentation } from "../../../hooks/useMapDisplay";
+import { MapLevelControls } from "./MapLevelControls";
+import { MapRepresentationEditor } from "./MapRepresentationEditor";
+import { useMemo } from "react";
 import { useMapDisplay } from "../../../hooks/useMapDisplay";
 import { setActiveMap } from "../../../store/generalStatesSlice";
 import { setRequestDrawScene } from "../../../store/glRefSlice";
 import { addMap } from "../../../store/mapsSlice";
 import { moorhen } from "../../../types/moorhen";
 import { doDownload } from "../../../utils/utils";
-import { MoorhenNumberInput, MoorhenPopoverButton, MoorhenSlider } from "../../inputs";
+import { MoorhenPopoverButton } from "../../inputs";
 import { MoorhenButton } from "../../inputs";
 import { MoorhenAccordion, MoorhenMenuItemPopover } from "../../interface-base";
 import { MoorhenStack } from "../../interface-base";
@@ -46,25 +48,8 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const mapIsVisible = display.visible;
     const dispatch = useDispatch();
 
-    const [lastCall, setLastCall] = useState<number>(0);
-
-    const { fastMapContourLevel } = useFastContourMode({
-        map: props.map,
-        mapRadius,
-        radiusThreshold: 25,
-        fastRadius: "auto",
-        timeoutDelay: 1000,
-    });
-
-    const handleContourLevelChange = (newContourLevel: number) => {
-        if (!props.map) return;
-        if (Date.now() - lastCall < 500) {
-            fastMapContourLevel(newContourLevel);
-        } else {
-            if (display.record) dispatch(setMapRepresentation({ id: display.record.id, changes: { contourLevel: newContourLevel } }));
-        }
-        setLastCall(Date.now());
-    };
+    // Multi-representation mode: each representation's level and draw settings are in its chip's edit popover
+    const isMultiRepresentation = useIsMultiRepresentation(props.map);
 
     const cardTitle = useMemo(() => {
         return (
@@ -132,7 +117,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             size="accordion"
             tooltip="Save model file"
         />,
-        <MoorhenPopoverButton size="accordion" popoverPlacement="left" tooltip="More">
+        <MoorhenPopoverButton key="more" size="accordion" popoverPlacement="left" tooltip="More">
             {dropDownMenu}
         </MoorhenPopoverButton>,
     ];
@@ -147,7 +132,11 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             open={props.isOpen}
         >
             <MoorhenStack direction="vertical">
-                <MapRepresentationsCard map={props.map} />
+                <MapMultiRepresentationToggle map={props.map} />
+                <MapRepresentationsCard
+                    map={props.map}
+                    editor={<MapRepresentationEditor map={props.map} level={<MapLevelControls map={props.map} initialContour={initialContour} />} />}
+                />
                 <MoorhenStack direction="horizontal" gap="1rem" align="center">
                     <MoorhenButton
                         id={`active-map-toggle-${props.map.molNo}`}
@@ -159,63 +148,19 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                     >
                         {props.map.molNo === activeMap?.molNo ? "Active\u00A0\u00A0" : "Inactive"}
                     </MoorhenButton>
-                    <MoorhenStack direction="vertical" gap={"0.5rem"} style={{ justifyContent: "center" }}>
-                        <MoorhenStack direction="row" justify="center" align="center">
-                            <MoorhenNumberInput
-                                style={{ justifyContent: "center" }}
-                                value={mapContourLevel}
-                                setValue={newVal => {
-                                    handleContourLevelChange(+newVal);
-                                }}
-                                label={"Level:"}
-                                decimalDigits={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
-                                allowNegativeValues={true}
-                                disabled={!mapIsVisible}
-                                waitReturn={true}
-                            />
-                            &nbsp;
-                            {props.map.mapRmsd && (
-                                <MoorhenNumberInput
-                                    style={{ justifyContent: "center" }}
-                                    allowNegativeValues={true}
-                                    value={mapContourLevel / props.map.mapRmsd}
-                                    setValue={newVal => {
-                                        handleContourLevelChange(+newVal * props.map.mapRmsd);
-                                    }}
-                                    label={"RMSD:"}
-                                    decimalDigits={2}
-                                    disabled={!mapIsVisible}
-                                    waitReturn={true}
-                                />
-                            )}
-                        </MoorhenStack>
-                        <MoorhenSlider
-                            minVal={props.map.isEM ? props.map.levelRange[0] * 10 : 0.01}
-                            maxVal={props.map.levelRange[1]}
-                            decimalPlaces={props.map.isEM ? Math.abs(Math.floor(Math.log10(props.map.levelRange[0]))) : 2}
-                            showButtons={true}
-                            scale="log"
-                            isDisabled={!mapIsVisible}
-                            value={mapContourLevel}
-                            setValue={newVal => {
-                                handleContourLevelChange(newVal);
-                            }}
-                            piWaitReturn={true}
-                            showTicks
-                            logMajorTickBase={1}
-                            autoLabelMajorTicks
-                            logMinorTickStep={1}
-                        />
-                    </MoorhenStack>
+                    {/* In multi-representation mode: all shown representations together, by the same amount */}
+                    <MapLevelControls map={props.map} initialContour={initialContour} allShown={isMultiRepresentation} />
                 </MoorhenStack>
                 <MapHistogramAccordion map={props.map} currentContourLevel={mapContourLevel} />
-                <MapSettingsAccordion
-                    map={props.map}
-                    mapIsVisible={mapIsVisible}
-                    mapStyle={mapStyle}
-                    mapRadius={mapRadius}
-                    mapOpacity={mapOpacity}
-                />
+                {!isMultiRepresentation && (
+                    <MapSettingsAccordion
+                        map={props.map}
+                        mapIsVisible={mapIsVisible}
+                        mapStyle={mapStyle}
+                        mapRadius={mapRadius}
+                        mapOpacity={mapOpacity}
+                    />
+                )}
             </MoorhenStack>
         </MoorhenAccordion>
     );
