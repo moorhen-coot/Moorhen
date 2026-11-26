@@ -61,6 +61,13 @@ export function thumbnailSize(
 export interface ThumbnailSource {
     drawScene: () => void;
     getCanvasRef: () => { current: HTMLCanvasElement | null } | null | undefined;
+    /**
+     * Set while the picture is drawn, so that nothing the pointer is over is in it.
+     *
+     * A thumbnail is a record of where the camera was, and a lit ribbon section says only where
+     * the mouse happened to be resting when the keyframe was added. See MGWebGL.hoverSuppressed.
+     */
+    hoverSuppressed?: boolean;
 }
 
 /**
@@ -83,7 +90,9 @@ export function drawThenCapture(
     const size = thumbnailSize(canvas.width, canvas.height, width);
     if (!size) return undefined;
 
+    const hoverWasSuppressed = source.hoverSuppressed;
     try {
+        source.hoverSuppressed = true;
         source.drawScene();
 
         const target = document.createElement("canvas");
@@ -98,5 +107,10 @@ export function drawThenCapture(
         // A tainted canvas, a lost context, a browser that declines the encode. None of them are
         // worth failing an "add keyframe" over.
         return undefined;
+    } finally {
+        // Put it back however this ended, and draw once more so the view on screen has its
+        // highlight again - the frame just drawn into the canvas is the one without it.
+        source.hoverSuppressed = hoverWasSuppressed;
+        if (!hoverWasSuppressed) source.drawScene();
     }
 }

@@ -206,63 +206,68 @@ export class ScreenRecorder  {
         const canvasWidth = canvasSize[0]
         const canvasHeight = canvasSize[1]
 
-        // Drawn by WebGPU when that is what shows the view (externalRenderer.ts): offscreen, at the size
-        // WebGL's screenshot would be, with its soft shadows, and transparent if asked.
-        const external = this.glRef.current?.externalRenderer;
-        if (external?.isShowing()) {
-            const { width, height } = screenshotSize(canvasWidth, canvasHeight, SCREENSHOT_SIDE);
-            const rgba = await external.snapshot(width, height, { transparentBackground: doTransparentBackground });
-            saveCanvas.width = width;
-            saveCanvas.height = height;
-            imgData = ctx.createImageData(width, height);
-            imgData.data.set(rgba);
-        } else if(!isWebGL2){
-            //Transparent backgound currently only works with WebGL2
-            pixels = this.glRef.current.getPixelData(doTransparentBackground)
+        // Nothing the pointer happens to be over belongs in the picture. Around the draw
+        // rather than by clearing the hover first: the hover lives in three places at once,
+        // and clearing them raced with the redraw that put it back. See MGWebGL.withoutHover.
+        await this.glRef.current?.withoutHover(async () => {
+            // Drawn by WebGPU when that is what shows the view (externalRenderer.ts): offscreen, at the size
+            // WebGL's screenshot would be, with its soft shadows, and transparent if asked.
+            const external = this.glRef.current?.externalRenderer;
+            if (external?.isShowing()) {
+                const { width, height } = screenshotSize(canvasWidth, canvasHeight, SCREENSHOT_SIDE);
+                const rgba = await external.snapshot(width, height, { transparentBackground: doTransparentBackground });
+                saveCanvas.width = width;
+                saveCanvas.height = height;
+                imgData = ctx.createImageData(width, height);
+                imgData.data.set(rgba);
+            } else if(!isWebGL2){
+                //Transparent backgound currently only works with WebGL2
+                pixels = this.glRef.current.getPixelData(doTransparentBackground)
 
-            saveCanvas.width = canvasWidth
-            saveCanvas.height = canvasHeight
+                saveCanvas.width = canvasWidth
+                saveCanvas.height = canvasHeight
 
-            imgData = ctx.createImageData(canvasWidth,canvasHeight);
+                imgData = ctx.createImageData(canvasWidth,canvasHeight);
 
-            const data = imgData.data;
-            for (let pixi = 0; pixi < canvasHeight; pixi++) {
-                for (let pixj = 0; pixj < canvasWidth * 4; pixj++) {
-                    data[(canvasHeight - pixi - 1) * canvasWidth * 4 + pixj] = pixels[pixi * canvasWidth * 4 + pixj];
+                const data = imgData.data;
+                for (let pixi = 0; pixi < canvasHeight; pixi++) {
+                    for (let pixj = 0; pixj < canvasWidth * 4; pixj++) {
+                        data[(canvasHeight - pixi - 1) * canvasWidth * 4 + pixj] = pixels[pixi * canvasWidth * 4 + pixj];
+                    }
                 }
-            }
-        } else {
-
-            pixels = this.glRef.current.getPixelData(doTransparentBackground)
-            const fbSize = this.store.getState().glRef.rttFramebufferSize
-            const w = fbSize[0]
-            const h = fbSize[1]
-
-            const ratio = 1.0 * canvasWidth / canvasHeight;
-
-            if(canvasWidth>canvasHeight){
-                target_w = w;
-                target_h = Math.floor(h / ratio);
-                target_xoff = 0;
-                target_yoff = Math.floor(0.5*h - 0.5 / ratio * h);
             } else {
-                target_w = Math.floor(w * ratio);
-                target_h = h;
-                target_xoff = Math.floor(0.5*w - 0.5 * ratio * w);
-                target_yoff = 0;
-            }
-            saveCanvas.width = target_w;
-            saveCanvas.height = target_h;
 
-            imgData = ctx.createImageData(saveCanvas.width,saveCanvas.height);
+                pixels = this.glRef.current.getPixelData(doTransparentBackground)
+                const fbSize = this.store.getState().glRef.rttFramebufferSize
+                const w = fbSize[0]
+                const h = fbSize[1]
 
-            const data = imgData.data;
-            for (let pixi = 0; pixi < saveCanvas.height; pixi++) {
-                for (let pixj = 0; pixj < saveCanvas.width * 4; pixj++) {
-                    data[(saveCanvas.height - pixi - 1) * saveCanvas.width * 4 + pixj] = pixels[(pixi+target_yoff) * w * 4 + pixj+target_xoff*4];
+                const ratio = 1.0 * canvasWidth / canvasHeight;
+
+                if(canvasWidth>canvasHeight){
+                    target_w = w;
+                    target_h = Math.floor(h / ratio);
+                    target_xoff = 0;
+                    target_yoff = Math.floor(0.5*h - 0.5 / ratio * h);
+                } else {
+                    target_w = Math.floor(w * ratio);
+                    target_h = h;
+                    target_xoff = Math.floor(0.5*w - 0.5 * ratio * w);
+                    target_yoff = 0;
+                }
+                saveCanvas.width = target_w;
+                saveCanvas.height = target_h;
+
+                imgData = ctx.createImageData(saveCanvas.width,saveCanvas.height);
+
+                const data = imgData.data;
+                for (let pixi = 0; pixi < saveCanvas.height; pixi++) {
+                    for (let pixj = 0; pixj < saveCanvas.width * 4; pixj++) {
+                        data[(saveCanvas.height - pixi - 1) * saveCanvas.width * 4 + pixj] = pixels[(pixi+target_yoff) * w * 4 + pixj+target_xoff*4];
+                    }
                 }
             }
-        }
+        });
 
         ctx.putImageData(imgData, 0,0);
         const imageOverlays = this.store.getState().overlays.imageOverlayList

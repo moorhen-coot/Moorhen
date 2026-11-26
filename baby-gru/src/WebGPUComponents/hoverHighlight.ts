@@ -32,6 +32,8 @@ export interface HoverSource {
     state?: { hoveridx?: number; hover_point?: number };
     pickLevel?: number;
     store?: { getState(): { hoveringStates?: { hoveredSection?: { bufferId: string; section: number } | null } } };
+    /** True while a picture is being taken: the hover is a pointer artefact and is not in it. */
+    hoverSuppressed?: boolean;
 }
 
 /** The hovered point's code that matches every vertex: drawCore's sentinel for "the whole mesh". */
@@ -77,6 +79,9 @@ export const NO_HOVER: HoverHighlight = Object.freeze({ overlays: [], forBuffer:
  * the end of drawCore's GLrender, condition for condition.
  */
 export function hoverHighlight(source: HoverSource, displayBuffers: readonly DisplayBuffer[]): HoverHighlight {
+    // Before anything is read, so that a capture cannot depend on what the pointer happens to be
+    // over. See MGWebGL.hoverSuppressed.
+    if (source.hoverSuppressed) return NO_HOVER;
     const hoveridx = source.state?.hoveridx ?? -1;
     const hoverPoint = source.state?.hover_point ?? -1;
     const level = source.pickLevel ?? 0;

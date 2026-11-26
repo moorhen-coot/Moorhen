@@ -2557,6 +2557,43 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
      */
     pickLevel: number = 0;
 
+    /**
+     * True while a picture is being taken, so that nothing the pointer is over appears in it.
+     *
+     * The hover is a pointer artefact - a lit ribbon section, a lit instance, an orange overlay on
+     * a surface, the hover spheres - and none of it belongs in a screenshot, a keyframe thumbnail
+     * or an exported movie frame. It is read by drawTriangles and, for the WebGPU renderer, by
+     * hoverHighlight, which are the only two places that decide what a hover lights.
+     *
+     * A flag rather than clearing the hover, which is what the screenshot button used to do: the
+     * hover lives in three places at once - this component's own state (what the pick wrote), the
+     * store's hoveredSection (what the sequence viewer asked for) and the "hover" style buffers -
+     * so clearing meant clearing all three and then hoping no redraw put them back before the
+     * capture. It usually worked, which is the worst kind of usually. This cannot race, it cannot
+     * miss one of the three, and it leaves the user still pointing at whatever they were pointing
+     * at when the picture was taken.
+     *
+     * Set it around a capture with `withoutHover`, which puts it back however the capture ends.
+     */
+    hoverSuppressed: boolean = false;
+
+    /**
+     * Take a picture with no hover in it, and leave the hover as it was.
+     *
+     * @param capture draws and reads back; anything it draws has the highlight suppressed.
+     */
+    async withoutHover<T>(capture: () => Promise<T> | T): Promise<T> {
+        const wasSuppressed = this.hoverSuppressed;
+        this.hoverSuppressed = true;
+        try {
+            return await capture();
+        } finally {
+            this.hoverSuppressed = wasSuppressed;
+            // The view on screen still has a pointer over it, so put the highlight back.
+            if (!this.hoverSuppressed) this.drawScene();
+        }
+    }
+
     doHover(event, self) {
         doHover(this, event)
     }

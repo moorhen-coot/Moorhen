@@ -226,6 +226,11 @@ export async function recordMovieToMp4(
     const hold = holdCameraForMovie(gl, true, null);
     hold.play(movie, options.onSample);
     const scene = sceneFollowingOrigin(gl);
+    // Every frame of the file is a picture, and the hover is a pointer artefact: a lit ribbon
+    // section in frame 90 because the mouse was resting there is not part of the movie. Set for
+    // the whole export rather than per frame, and put back in the finally below.
+    const hoverWasSuppressed = gl.hoverSuppressed;
+    gl.hoverSuppressed = true;
     let finalised = false;
     const cover = showCover("Rendering movie", options.coverOpacity ?? 1);
 
@@ -262,6 +267,8 @@ export async function recordMovieToMp4(
         };
     } finally {
         if (resizing) gl.setDrawingBufferSize(originalBufferWidth, originalBufferHeight);
+        // Before the restoring draw below, so the view comes back as the user left it.
+        gl.hoverSuppressed = hoverWasSuppressed;
         // Back to the wall clock before the camera is handed back, or the restoring draw would
         // advance it to the last frame's time instead of now.
         gl.cameraTime = null;

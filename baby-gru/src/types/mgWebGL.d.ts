@@ -392,6 +392,13 @@ export namespace webGL {
         //These 2 are used in MoorhenScreenRecorder
         getCanvasRef(): React.RefObject<HTMLCanvasElement>;
         getPixelData(doTransparentBackground?: boolean): Uint8Array;
+        /**
+         * Take a picture with no hover highlight in it, and leave the hover as it was. Everything
+         * the capture draws is drawn without it; see MGWebGL.hoverSuppressed.
+         */
+        withoutHover<T>(capture: () => Promise<T> | T): Promise<T>;
+        /** True while `withoutHover` is running. Read by the renderers, set by nothing else. */
+        hoverSuppressed: boolean;
         /** Another renderer drawing the view (the WebGPU main view); screenshots ask it. */
         externalRenderer: ExternalRenderer | null;
         //These 2 are used in MoorhenVercelBuild

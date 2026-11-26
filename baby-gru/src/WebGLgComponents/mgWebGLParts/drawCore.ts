@@ -531,7 +531,17 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         // A section lit from outside the 3D view - the sequence viewer, say. Read once per draw
         // rather than per buffer, and already resolved to a buffer and an index so that nothing
         // here has to know what it stands for.
-        const hoveredSection = self.store.getState().hoveringStates.hoveredSection
+        // Nothing the pointer is over is in a picture. One flag, read once, and the three ways a
+        // hover lights something all go through the locals below - so a capture cannot be caught
+        // between a cleared buffer and a draw that puts the highlight back, which is what made
+        // this intermittent. See MGWebGL.hoverSuppressed.
+        const hoverSuppressed = !!self.hoverSuppressed
+        const hoveredSection = hoverSuppressed
+            ? null
+            : self.store.getState().hoveringStates.hoveredSection
+        const hoveridx = hoverSuppressed ? -1 : self.state.hoveridx
+        const hoverPoint = hoverSuppressed ? -1 : self.state.hover_point
+        const hoverIndices = hoverSuppressed ? [] : self.state.hoverIndices
 
         // How much of a sectioned mesh counts as one thing at this zoom. Settled once per draw
         // and kept on the renderer, so that the highlight below and the pick in doMouseUp agree
@@ -737,13 +747,13 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                 const allLevels = displayBuffers[idx].pick_info?.section_level_ranges
                 const sectionRanges = allLevels?.[self.pickLevel]
                     ?? displayBuffers[idx].pick_info?.section_ranges
-                const isHovered = idx === self.state.hoveridx && self.state.hover_point>-1
+                const isHovered = idx === hoveridx && hoverPoint>-1
 
                 if(theShader.uHoveredInstance){
                     let hoveredInstance = -1
                     if(!sectionRanges && isHovered && displayBuffers[idx].triangleInstanceOriginBuffer[j]){
                         const pickPointInstances = displayBuffers[idx].pick_info?.pick_point_instances
-                        hoveredInstance = pickPointInstances ? pickPointInstances[self.state.hover_point] ?? -1 : self.state.hover_point
+                        hoveredInstance = pickPointInstances ? pickPointInstances[hoverPoint] ?? -1 : hoverPoint
                     }
                     self.gl.uniform1i(theShader.uHoveredInstance, hoveredInstance);
                 }
@@ -756,7 +766,7 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                     let to = -1
                     if(sectionRanges && isHovered && displayBuffers[idx].triangleInstanceOriginBuffer[j]){
                         const sections = displayBuffers[idx].pick_info?.pick_point_sections
-                        const section = sections ? sections[self.state.hover_point] ?? -1 : -1
+                        const section = sections ? sections[hoverPoint] ?? -1 : -1
                         if(section > -1 && sectionRanges[section]){
                             from = sectionRanges[section][0]
                             to = sectionRanges[section][1]
@@ -1553,8 +1563,8 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
         // naming a residue - and a surface can light that residue just as well, because
         // uHoveredPoint does not care where the index came from. The pointer wins where both
         // have an opinion, matching the instanced path above.
-        let overlayIdx = self.state.hoveridx
-        let overlayPoint = self.state.hover_point
+        let overlayIdx = hoveridx
+        let overlayPoint = hoverPoint
         if(!(overlayIdx > -1 && overlayPoint > -1) && hoveredSection){
             const asked = displayBuffers.findIndex(buffer => buffer.id === hoveredSection.bufferId)
             // Only a mesh with the influence data can be lit this way. A sectioned mesh is
@@ -1692,13 +1702,13 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
 
         // Same restriction and the same stale-index guard. This overlay needs no blend state of
         // its own: it draws fully opaque, so it lands the same way whether blending is on or off.
-        if(drawingVisibleImage && hoveredBuffer && self.state.hoverIndices.length>0){
+        if(drawingVisibleImage && hoveredBuffer && hoverIndices.length>0){
 
-            const bufferTypes = displayBuffers[self.state.hoveridx].bufferTypes
+            const bufferTypes = displayBuffers[hoveridx].bufferTypes
             if(bufferTypes[0]==="TRIANGLES"){
 
-                 const triangleVertexNormalBuffer = displayBuffers[self.state.hoveridx].triangleVertexNormalBuffer
-                 const triangleVertexPositionBuffer = displayBuffers[self.state.hoveridx].triangleVertexPositionBuffer
+                 const triangleVertexNormalBuffer = displayBuffers[hoveridx].triangleVertexNormalBuffer
+                 const triangleVertexPositionBuffer = displayBuffers[hoveridx].triangleVertexPositionBuffer
 
                  const theShader = self.shaderProgram
                  self.gl.useProgram(theShader)
@@ -1717,8 +1727,8 @@ export function drawTriangles(self: MGWebGL, calculatingShadowMap, invMat) {
                  self.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0)
 
                  self.gl.bindBuffer(self.gl.ELEMENT_ARRAY_BUFFER, self.hoverBuffer)
-                 self.gl.bufferData(self.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(self.state.hoverIndices), self.gl.DYNAMIC_DRAW)
-                 self.drawMaxElementsUInt(self.gl.TRIANGLES, self.state.hoverIndices.length)
+                 self.gl.bufferData(self.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(hoverIndices), self.gl.DYNAMIC_DRAW)
+                 self.drawMaxElementsUInt(self.gl.TRIANGLES, hoverIndices.length)
 
                  // Put the depth state back. This overlay deliberately draws in front of
                  // everything, but leaving DEPTH_TEST off and depthFunc at ALWAYS would carry
