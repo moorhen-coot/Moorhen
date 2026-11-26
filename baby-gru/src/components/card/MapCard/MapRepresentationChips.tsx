@@ -19,6 +19,7 @@ import type { MoorhenMap } from "../../../utils/MoorhenMap";
 import type { MapRepresentationData, MapStyle } from "../../../utils/Representation/mapRepresentationData";
 import { guid } from "../../../utils/utils";
 import { useIsMultiRepresentation } from "../../../hooks/useMapDisplay";
+import { mapChipTint } from "./mapChipTint";
 import { MAP_REPRESENTATION_PRESETS, type MapRepresentationPreset, presetRecords } from "../../../utils/Representation/mapRepresentationPresets";
 import "../MoleculeCard/representation.css";
 
@@ -49,7 +50,6 @@ export const MapRepresentationChips = (props: { map: MoorhenMap; editor?: (recor
     return (
         <div className="moorhen__molecule_card_representation-chip-container">
             {records.map(record => {
-                const colour = (map.isDifference ? record.positiveColour : record.colour) ?? map.defaultMapColour;
                 return (
                     <div
                         key={record.id}
@@ -58,8 +58,7 @@ export const MapRepresentationChips = (props: { map: MoorhenMap; editor?: (recor
                         style={{
                             maxWidth: "13rem",
                             color: isDark ? "white" : undefined,
-                            backgroundColor: `rgba(${colour.r * 255}, ${colour.g * 255}, ${colour.b * 255}, ${record.visible ? 0.5 : 0.1})`,
-                            borderColor: `rgb(${colour.r * 255}, ${colour.g * 255}, ${colour.b * 255})`,
+                            ...mapChipTint(map, record),
                         }}
                     >
                         <MoorhenStack direction="row" align="center" gap="0.2rem">

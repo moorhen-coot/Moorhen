@@ -1381,9 +1381,16 @@ export class MoorhenMap {
             false
         )) as moorhen.WorkerResponse<any>;
         return response.data.result.result;
-    }0
+    }
 
-    async getVerticesHistogram(map2: number, nBins: number = 200): Promise<libcootApi.HistogramInfoJS> {
+    /**
+     * The histogram of another map's values at the vertices of this map's contour, around the view (or its locked
+     * origin): what colouring this map by the other one spans.
+     * @param map2 - The other map's molNo.
+     * @param nBins - The number of bins.
+     * @param at - The contour level and radius to contour at (a representation's), else the first representation's.
+     */
+    async getVerticesHistogram(map2: number, nBins: number = 200, at?: { contourLevel: number; radius: number }): Promise<libcootApi.HistogramInfoJS> {
         let posX: number, posY: number, posZ: number;
         if (this.isOriginLocked) {
             // Negated, not made positive. Both drawOrigin and mapCentre are stored the same way
@@ -1399,7 +1406,9 @@ export class MoorhenMap {
             [posX, posY, posZ] = this.store.getState().sceneSettings.origin.map(coord => -coord) as [number, number, number];
         }
 
-        const { mapRadius, contourLevel, mapStyle } = this.getMapContourParams();
+        const params = this.getMapContourParams();
+        const mapRadius = at?.radius ?? params.mapRadius;
+        const contourLevel = at?.contourLevel ?? params.contourLevel;
         const response = (await this.commandCentre.cootCommand(
             {
                 command: "get_map_vertices_histogram",

@@ -9,8 +9,10 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { MapRepresentationsCard, MapRepresentationsToolbar } from "../../src/components/card/MapCard/MapRepresentationChips";
+import { mapChipTint } from "../../src/components/card/MapCard/mapChipTint";
 import { MapLevelControls } from "../../src/components/card/MapCard/MapLevelControls";
 import { MapRepresentationEditor } from "../../src/components/card/MapCard/MapRepresentationEditor";
+import { MapColourSelector } from "../../src/components/card/MapCard/MapColourSelector";
 import { MoorhenMenuSystem } from "../../src/components/menu-system/MenuSystem";
 import { MoorhenInstanceProvider } from "../../src/InstanceManager";
 import { createMoorhenStore } from "../../src/store/MoorhenReduxStore";
@@ -213,6 +215,36 @@ describe("a map's representations in its card", () => {
         expect(levels[0]).toBeCloseTo(0.6, 2);
         // The gap between them as it was (0.25)
         expect(levels[1] - levels[0]).toBeCloseTo(0.25, 6);
+    });
+
+    test("coloured by another map: its chip is tinted with the gradient, its colour swatch names the map", async () => {
+        const gradient: [number, [number, number, number]][] = [
+            [0, [0, 0, 255]],
+            [0.5, [255, 255, 255]],
+            [1, [255, 0, 0]],
+        ];
+        const coloured = record("coloured", { colourByMap: { mapUid: "map-4", min: 0, max: 1, gradient } });
+        // (jsdom drops CSS gradients: what the chip and the swatch draw is checked in map-colour-by-map.spec.ts)
+        expect(mapChipTint(map, coloured)).toEqual({
+            backgroundImage: "linear-gradient(to right, rgba(0,0,255,0.5) 0%, rgba(255,255,255,0.5) 50%, rgba(255,0,0,0.5) 100%)",
+            borderColor: "rgb(255, 255, 255)",
+        });
+        expect(mapChipTint(map, { ...coloured, visible: false }).backgroundImage).toContain("rgba(0,0,255,0.1)");
+        expect(mapChipTint(map, record("mesh"))).toEqual({ backgroundColor: "rgba(76.5, 76.5, 178.5, 0.5)", borderColor: "rgb(76.5, 76.5, 178.5)" });
+
+        const store = createMoorhenStore();
+        store.dispatch(addMap(map));
+        store.dispatch(addMap({ ...map, molNo: 4, uniqueId: "map-4", name: "local-resolution.map" } as unknown as moorhen.Map));
+        store.dispatch(addMapRepresentation(coloured));
+        render(
+            <Provider store={store}>
+                <MoorhenInstanceProvider menuSystem={new MoorhenMenuSystem()}>
+                    <MapColourSelector map={map} mapIsVisible={true} recordId="coloured" />
+                </MoorhenInstanceProvider>
+            </Provider>
+        );
+        await userEvent.setup().hover(screen.getByRole("button", { name: "Colour picker" }));
+        expect(await screen.findByText(/coloured by local-resolution\.map/i)).toBeInTheDocument();
     });
 
     const openEditor = async (user: ReturnType<typeof userEvent.setup>, chip: HTMLElement) =>

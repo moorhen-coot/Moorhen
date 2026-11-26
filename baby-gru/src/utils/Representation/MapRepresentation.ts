@@ -60,7 +60,7 @@ const sameAppearance = (a: AppearanceKey | null, b: AppearanceKey): boolean =>
 const MESH_TYPES: Record<Exclude<MapStyle, "slice">, MapContourMeshType> = { lines: "lines_mesh", "lit-lines": "lit_lines_mesh", solid: "mesh_perm" };
 
 /** Coot contours a representation unless the GPU does; the GPU cannot colour by another map */
-const drawnByCoot = (data: MapRepresentationData): boolean => !gpuMapContourSetting.enabled || data.colourByMap !== null;
+export const drawnByCoot = (data: MapRepresentationData): boolean => !gpuMapContourSetting.enabled || data.colourByMap !== null;
 
 type ContourBuffer = { buffer: DisplayBuffer; sign: "single" | "positive" | "negative" };
 

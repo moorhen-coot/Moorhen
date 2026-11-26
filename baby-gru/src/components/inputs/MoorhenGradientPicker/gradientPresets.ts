@@ -74,10 +74,10 @@ export const findGradientPreset = (colourTable: GradientColourTable): GradientPr
     return match ? (match[0] as GradientPreset) : null;
 };
 
-/** The CSS `linear-gradient(...)` image of a colour table, running from left to right */
-export const colourTableToCssGradient = (colourTable: GradientColourTable): string =>
+/** The CSS `linear-gradient(...)` image of a colour table, running from left to right, `alpha` opaque */
+export const colourTableToCssGradient = (colourTable: GradientColourTable, alpha = 1): string =>
     `linear-gradient(to right, ${colourTable
-        .map(([position, [r, g, b]]) => `rgb(${r},${g},${b}) ${Math.round(position * 100)}%`)
+        .map(([position, [r, g, b]]) => `${alpha < 1 ? `rgba(${r},${g},${b},${alpha})` : `rgb(${r},${g},${b})`} ${Math.round(position * 100)}%`)
         .join(", ")})`;
 
 export const getColorFromGradient = (

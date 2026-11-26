@@ -1,8 +1,10 @@
-import { useDispatch, useStore } from "react-redux";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import { useMapDisplay } from "../../../hooks/useMapDisplay";
 import { selectMapRepresentationsOfMap, setMapRepresentation } from "../../../store/mapRepresentationsSlice";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenColourPicker } from "../../inputs";
+import { colourTableToCssGradient } from "../../inputs/MoorhenGradientPicker/gradientPresets";
+import { ColourByMapSection } from "./ColourByMapControls";
 
 interface MoorhenMapColorSelector {
     map: moorhen.Map;
@@ -24,6 +26,14 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
     const mapColour = to255(display.colour);
     const negativeMapColour = to255(display.negativeColour);
     const positiveMapColour = to255(display.positiveColour);
+
+    // Coloured by another map: the swatch shows its gradient, and picking a colour goes back to a plain one
+    const colourByMap = display.record?.colourByMap ?? null;
+    const byMapName = useSelector((state: moorhen.State) =>
+        colourByMap ? state.maps.find(item => item.uniqueId === colourByMap.mapUid)?.name : undefined
+    );
+    const swatch = colourByMap ? { style: { backgroundImage: colourTableToCssGradient(colourByMap.gradient) } } : {};
+    const tooltip = colourByMap ? `Coloured by ${byMapName ?? "another map"}: pick a colour to use a plain one` : "Change Map Colour";
 
     if (mapColour === null) {
         return null;
@@ -55,7 +65,9 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
                         handleColorChange({ r: color[0], g: color[1], b: color[2] });
                     }}
                     position="bottom"
-                    tooltip="Change Map Colour"
+                    tooltip={tooltip}
+                    {...swatch}
+                    extra={<ColourByMapSection map={props.map} recordId={props.recordId} />}
                 />
             );
         } else {
@@ -72,7 +84,9 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
                     }}
                     label="Positive"
                     label2="Negative"
-                    tooltip="Change Map Colour"
+                    tooltip={tooltip}
+                    {...swatch}
+                    extra={<ColourByMapSection map={props.map} recordId={props.recordId} />}
                 />
             );
         }

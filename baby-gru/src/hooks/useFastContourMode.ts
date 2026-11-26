@@ -1,10 +1,17 @@
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useEffect, useRef } from 'react';
 import { RootState } from '../store/MoorhenReduxStore';
-import { selectMapRepresentation, selectPrimaryMapRepresentation, selectShownLevelsBase, setMapRepresentation, shiftMapRepresentationLevels } from '../store/mapRepresentationsSlice';
+import {
+    selectMapRepresentation,
+    selectMapRepresentationsOfMap,
+    selectPrimaryMapRepresentation,
+    selectShownLevelsBase,
+    setMapRepresentation,
+    shiftMapRepresentationLevels,
+} from '../store/mapRepresentationsSlice';
+import { drawnByCoot } from '../utils/Representation/MapRepresentation';
 import { useMoorhenInstance } from '../InstanceManager/useMoorhenInstance';
 import { moorhen } from '../types/moorhen';
-import { gpuMapContourSetting } from '../WebGPUComponents/mapContour/setting';
 import { useStateWithRef } from './useStateWithRef';
 
 interface UseFastContourModeProps {
@@ -33,7 +40,8 @@ interface FastContourModeReturn {
  * While the user changes the contour level quickly, the map is drawn with a smaller radius around the view (even
  * if its origin is locked), then as its display record says again after a timeout. The smaller radius is a
  * transient override on the map display driver (`mapDisplay.setFastRadius`): nothing is written to the store but
- * the level. GPU contours are fast at any radius, so they never use it.
+ * the level. GPU contours are fast at any radius and never use it, but a map can have representations drawn by Coot
+ * with GPU contours on (coloured by another map, drawn into the GPU frame): fast mode is for those.
  *
  * @param map - The map to change the level of.
  * @param mapRadius - The current radius of the map.
@@ -101,8 +109,11 @@ export const useFastContourMode = ({
     const fastMapContourLevel = (newContourLevel: number) => {
         if (!map) return;
 
-        // GPU contours are drawn at the full radius anyway
-        if ((mapRadius <= radiusThreshold || gpuMapContourSetting.enabled) && !isInFastModeRef.current) {
+        // Only Coot's contours need it: GPU ones are drawn at the full radius anyway
+        const cootDrawn = selectMapRepresentationsOfMap(store.getState(), map.uniqueId).some(
+            record => record.visible && record.style !== 'slice' && drawnByCoot(record)
+        );
+        if ((mapRadius <= radiusThreshold || !cootDrawn) && !isInFastModeRef.current) {
             setLevel(newContourLevel);
             return;
         }

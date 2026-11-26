@@ -26,6 +26,8 @@ type MoorhenColourPickerBase = {
     asPopoverButton?: boolean;
     hexFormat?: boolean;
     showColourSwatches?: boolean;
+    /** More in the popover, below the picker (e.g. a map's "Colour by another map") */
+    extra?: React.ReactNode;
 };
 
 type MoorhenColourPickerSingle = MoorhenColourPickerBase & {
@@ -166,6 +168,7 @@ export const MoorhenColourPicker = (props: MoorhenColourPickerType) => {
                         ))}
                 </MoorhenStack>
                 {onApply && <MoorhenButton onClick={() => onApply(internalColourRef.current)}>Apply</MoorhenButton>}
+                {props.extra}
         </> 
     );
 
