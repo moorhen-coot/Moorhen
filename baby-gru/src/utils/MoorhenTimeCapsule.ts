@@ -1186,9 +1186,10 @@ export class MoorhenTimeCapsule {
                 ...(storedMapData.radius && { currentRadius: storedMapData.radius }),
                 // proto3 has no unset float: a session without alpha reads back 0, which means the default
                 currentAlpha: storedMapData.rgba?.a || 1,
-                colour: toUnit(storedMapData.rgba?.mapColour),
-                positiveColour: toUnit(storedMapData.rgba?.positiveDiffColour),
-                negativeColour: toUnit(storedMapData.rgba?.negativeDiffColour),
+                // Only colours the file has: without, the map keeps the default it was given (its record holds it)
+                ...(storedMapData.rgba?.mapColour && { colour: toUnit(storedMapData.rgba.mapColour) }),
+                ...(storedMapData.rgba?.positiveDiffColour && { positiveColour: toUnit(storedMapData.rgba.positiveDiffColour) }),
+                ...(storedMapData.rgba?.negativeDiffColour && { negativeColour: toUnit(storedMapData.rgba.negativeDiffColour) }),
             };
             // A map saved as a slice is drawn where it was rather than through the centre of the view
             const storedSlice = storedMapData.slice;

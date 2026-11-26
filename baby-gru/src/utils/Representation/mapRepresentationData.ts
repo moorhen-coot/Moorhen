@@ -122,9 +122,11 @@ export const createDefaultMapRepresentationData = (
         radius: { local: localRadius, full: fullRadius },
         style: map.isEM ? "solid" : preferredStyle,
         alpha: { lines: 1, "lit-lines": 1, solid: 1, slice: 1 },
-        colour: null,
-        positiveColour: null,
-        negativeColour: null,
+        // The map's own default colours, kept in the record: a map's default depends on the maps loaded before it
+        // (MoorhenMap.setDefaultColour), so it would change over a save and reload, or between scenes
+        colour: map.defaultMapColour ? { ...map.defaultMapColour } : null,
+        positiveColour: map.defaultPositiveMapColour ? { ...map.defaultPositiveMapColour } : null,
+        negativeColour: map.defaultNegativeMapColour ? { ...map.defaultNegativeMapColour } : null,
         colourByMap: null,
         // mapCentre / cellCentre are scene origins (negated world coordinates)
         originLock: map.isEM && centre ? { centre: centre.map(coord => -coord) as Vec3 } : null,
