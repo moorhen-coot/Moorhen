@@ -18,6 +18,7 @@ import {
     setSpecular,
     setSpecularPower,
     setZoom,
+    setCameraSnap,
     addMap, emptyMaps, enableUpdatingMaps,
     setConnectedMoleculeMolNo,
     setFoFcMapMolNo,
@@ -113,6 +114,11 @@ export type moleculeSessionData = {
         /** A "Worm"'s own options; absent for a worm with the general ones, other styles and sessions written before them. */
         wormOptions?: Partial<wormOptions> | null;
         nonCustomOpacity: number;
+        /**
+         * Whether the surface thickens where it is seen edge-on. Absent in sessions written
+         * before it existed, which read as off.
+         */
+        viewDependentTransparency?: boolean;
         resEnvOptions: residueEnvironmentOptions;
         neighboursCid: string;
         restrictToNeighbours: boolean;
@@ -161,6 +167,11 @@ export type mapDataSession = {
      * never had one, and in sessions written before slices.
      */
     slice?: { origin: number[]; orientation: number[]; nodalLines?: boolean; contourSpacing?: string } | null;
+    /**
+     * Whether the surface thickens where it is seen edge-on. Absent in sessions written before it
+     * existed, which read as off.
+     */
+    viewDependentTransparency?: boolean;
     selectedColumns: moorhen.selectedMtzColumns;
     hasReflectionData: boolean;
     associatedReflectionFileName: string;
@@ -516,6 +527,7 @@ export class MoorhenTimeCapsule {
                             m2tParams: item.useDefaultM2tParams ? null : item.m2tParams,
                             wormOptions: item.style === "Worm" && !item.useDefaultWormOptions ? item.wormOptions : null,
                             nonCustomOpacity: item.nonCustomOpacity,
+                            viewDependentTransparency: item.viewDependentTransparency,
                             resEnvOptions: item.useDefaultResidueEnvironmentOptions ? null : item.residueEnvironmentOptions,
                             neighboursCid: item.neighboursCid,
                             restrictToNeighbours: item.restrictToNeighbours,
@@ -565,6 +577,8 @@ export class MoorhenTimeCapsule {
                 style: record?.style,
                 isDifference: map.isDifference,
                 isCube: map.isCube,
+                // Thickens where seen edge-on (main's #794): the first record's
+                viewDependentTransparency: record?.viewDependentTransparency ?? false,
                 slice: record?.slice
                     ? {
                           origin: [...record.slice.origin],
@@ -1138,6 +1152,13 @@ export class MoorhenTimeCapsule {
                     );
                     representationIdsTaken.add(representation.uniqueId);
 
+                    // After the representation exists rather than through addRepresentation,
+                    // which takes its arguments positionally and is long enough already. It is a
+                    // uniform, so setting it afterwards costs nothing: the buffers are drawn and
+                    // the next frame reads it. Coerced because it is absent in older sessions.
+                    representation.setViewDependentTransparency(
+                        Boolean(item.viewDependentTransparency));
+
                     if (item.isCustom) {
                         dispatch(addCustomRepresentation(representation));
                     }
@@ -1204,6 +1225,8 @@ export class MoorhenTimeCapsule {
                 ...(storedMapData.rgba?.mapColour && { colour: toUnit(storedMapData.rgba.mapColour) }),
                 ...(storedMapData.rgba?.positiveDiffColour && { positiveColour: toUnit(storedMapData.rgba.positiveDiffColour) }),
                 ...(storedMapData.rgba?.negativeDiffColour && { negativeColour: toUnit(storedMapData.rgba.negativeDiffColour) }),
+                // Absent in sessions written before it existed, which read as off
+                viewDependentTransparency: Boolean(storedMapData.viewDependentTransparency),
             };
             // A map saved as a slice is drawn where it was rather than through the centre of the view
             const storedSlice = storedMapData.slice;
@@ -1337,6 +1360,11 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setClipStart, finiteOrAbsent(restoredCamera.clipFront));
         guardedDispatch(setClipEnd, finiteOrAbsent(restoredCamera.clipBack));
         guardedDispatch(setQuat, sessionData.viewData.quat4);
+        // After the three it applies to, so that one render carries both the view and the
+        // instruction to take it up at once. A restored view should not be animated to - and the
+        // quarter second an ease takes is a window in which it can be interrupted and the view
+        // left part of the way there, which is what used to happen. See glRefSlice.cameraSnap.
+        dispatch(setCameraSnap(true));
         guardedDispatch(setBackgroundColor, sessionData.viewData.backgroundColor);
         guardedDispatch(setEdgeDetectDepthScale, sessionData.viewData.edgeDetection.depthScale);
         guardedDispatch(setEdgeDetectDepthThreshold, sessionData.viewData.edgeDetection.depthThreshold);

@@ -111,3 +111,39 @@ test("one map drawn by two representations at once, each with its own buffers, k
     await expect.poll(async () => (await drawn(page)).length, { timeout: 30_000 }).toBe(1);
     await expect.poll(async () => (await drawn(page))[0].buffers.length, { timeout: 60_000 }).toBeGreaterThan(0);
 });
+
+test("thickening where seen edge-on reaches the drawn buffers without recontouring, and is kept over save and reload", async ({ page, browserName }) => {
+    test.skip(browserName !== "chromium", "Map drawing is browser independent; run once");
+    test.setTimeout(240_000);
+    const moorhen = await startAndGetInstance(page);
+    await moorhen.loadFiles([MAP_DISPLAY_SESSION]);
+    await expect.poll(async () => (await drawn(page)).length, { timeout: 120_000 }).toBe(1);
+    // A half-transparent surface: the effect needs transparency
+    const setPrimary = (changes: Record<string, unknown>) =>
+        page.evaluate(async changes => {
+            const instance = await (document.getElementById("moorhen-test") as any).getMoorhenInstance();
+            const { setPrimaryMapRepresentation } = await import("/src/store/mapRepresentationsSlice.ts");
+            const map = instance.store.getState().maps.find((item: any) => item.name === "map-1 ");
+            instance.dispatch(setPrimaryMapRepresentation({ mapUid: map.uniqueId, changes }));
+        }, changes);
+    await setPrimary({ visible: true, style: "solid", alpha: { solid: 0.5 } });
+    await expect.poll(async () => (await drawn(page))[0].buffers.length, { timeout: 60_000 }).toBeGreaterThan(0);
+    await waitForWebGLRenderSettle(page, { timeoutMs: 60_000 });
+    const flags = () =>
+        page.evaluate(async () => {
+            const instance = await (document.getElementById("moorhen-test") as any).getMoorhenInstance();
+            const map = instance.store.getState().maps.find((item: any) => item.name === "map-1 ");
+            return instance.mapDisplay.getRepresentations(map.uniqueId)[0].displayBuffers.map((buffer: any) => buffer.viewDependentTransparency);
+        });
+    expect((await flags()).every(flag => flag === false)).toBe(true);
+    const before = (await drawn(page))[0].buffers;
+
+    await setPrimary({ viewDependentTransparency: true });
+    await expect.poll(async () => (await flags()).every(flag => flag === true), { timeout: 30_000 }).toBe(true);
+    // Repainted, not contoured again: the same buffers
+    expect((await drawn(page))[0].buffers).toEqual(before);
+
+    expect(await saveAndReload(page)).toBe(0);
+    await expect.poll(async () => (await drawn(page))[0]?.buffers.length ?? 0, { timeout: 120_000 }).toBeGreaterThan(0);
+    await expect.poll(async () => (await flags()).every(flag => flag === true), { timeout: 30_000 }).toBe(true);
+});

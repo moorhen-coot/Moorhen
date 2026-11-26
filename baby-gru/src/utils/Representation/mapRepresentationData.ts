@@ -56,6 +56,11 @@ export type MapRepresentationData = {
     /** The 2D slice, null until the map is first drawn as one (then through the centre of the view) */
     slice: MapSliceSettings | null;
     /**
+     * Thicken the surface where it is seen edge-on, as looking along a shell would (viewDependentTransparency.ts).
+     * Only shows while it is transparent; kept whatever the opacity, so lowering it again finds it as left.
+     */
+    viewDependentTransparency: boolean;
+    /**
      * Shown when its map was hidden as a whole (`setMapVisible`): shown again when the map is. Absent otherwise.
      */
     hiddenWithMap?: boolean;
@@ -135,6 +140,7 @@ export const createDefaultMapRepresentationData = (
         // mapCentre / cellCentre are scene origins (negated world coordinates)
         originLock: map.isEM && centre ? { centre: centre.map(coord => -coord) as Vec3 } : null,
         slice: null,
+        viewDependentTransparency: false,
     };
 };
 

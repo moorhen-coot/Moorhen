@@ -154,6 +154,7 @@ const readMapRecords = (value: unknown): MapRepresentationData[] =>
                       isObject(item.originLock) && isNumberArray(item.originLock.centre, 3)
                           ? (item.originLock as MapRepresentationData["originLock"])
                           : null,
+                  viewDependentTransparency: item.viewDependentTransparency === true,
                   slice:
                       isObject(item.slice) && isNumberArray(item.slice.origin, 3) && isNumberArray(item.slice.orientation, 16)
                           ? (item.slice as MapRepresentationData["slice"])

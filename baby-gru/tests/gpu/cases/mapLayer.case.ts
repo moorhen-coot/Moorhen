@@ -68,7 +68,7 @@ export default defineCase(async (device: GPUDevice): Promise<LayerStep[]> => {
                 "rep-1": {
                     id: "rep-1", mapUid: "map-1", visible: true, contourLevel: 0.5, radius: { local: 10, full: 10 }, style: "lines",
                     alpha: { lines: 1, "lit-lines": 1, solid: 1, slice: 1 }, colour: null, positiveColour: null, negativeColour: null,
-                    colourByMap: null, originLock: null, slice: null,
+                    colourByMap: null, originLock: null, slice: null, viewDependentTransparency: false,
                 },
             },
         },

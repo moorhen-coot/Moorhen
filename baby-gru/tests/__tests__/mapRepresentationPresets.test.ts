@@ -19,6 +19,7 @@ const base: MapRepresentationData = {
     colourByMap: null,
     originLock: { centre: [1, 2, 3] },
     slice: null,
+    viewDependentTransparency: false,
     hiddenWithMap: true,
 };
 

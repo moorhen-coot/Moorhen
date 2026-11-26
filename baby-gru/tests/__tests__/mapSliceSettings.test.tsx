@@ -27,7 +27,7 @@ const renderSettings = async (offerSlice: boolean, map = orbital) => {
     store.dispatch(addMapRepresentation({
         id: "rep-7", mapUid: map.uniqueId, visible: true, contourLevel: 0.02, radius: { local: 5, full: 5 }, style: "lines",
         alpha: { lines: 1, "lit-lines": 1, solid: 1, slice: 1 }, colour: null, positiveColour: null, negativeColour: null,
-        colourByMap: null, originLock: null, slice: null,
+        colourByMap: null, originLock: null, slice: null, viewDependentTransparency: false,
     }));
     const styleOf = () => selectPrimaryMapRepresentation(store.getState(), map.uniqueId)?.style;
     const menuSystem = new MoorhenMenuSystem();

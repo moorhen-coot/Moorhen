@@ -49,6 +49,7 @@ const record = (id: string, mapUid: string, changes: Partial<MapRepresentationDa
     colourByMap: null,
     originLock: null,
     slice: null,
+    viewDependentTransparency: false,
     ...changes,
 });
 

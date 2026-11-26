@@ -203,6 +203,8 @@ export class MoleculeRepresentation {
     /** Whether a "Worm" is drawn with the general (default) worm options rather than its own. */
     useDefaultWormOptions: boolean;
     nonCustomOpacity: number;
+    /** Whether this representation thickens where it is seen edge-on. Nothing while it is solid. */
+    viewDependentTransparency: boolean;
     residueEnvironmentOptions: residueEnvironmentOptions;
     ligandsCid: string;
     hoverColor: number[];
@@ -229,6 +231,7 @@ export class MoleculeRepresentation {
         this._useDefaultColourRules = true;
         this.useDefaultBondOptions = true;
         this.nonCustomOpacity = 1.0;
+        this.viewDependentTransparency = false;
         this.useDefaultM2tParams = true;
         this.useDefaultResidueEnvironmentOptions = true;
         this.bondOptions = {
@@ -403,6 +406,19 @@ export class MoleculeRepresentation {
             buildBuffers(this.buffers, this.parentMolecule.store);
         }
         this.parentMolecule.store.dispatch(setRequestDrawScene(true));
+    }
+
+    /**
+     * Whether this representation thickens where it is seen edge-on.
+     *
+     * The companion to nonCustomOpacity and useless without it - the effect is absorption through
+     * a shell, and a solid surface has no shell to look along. A uniform, so unlike the opacity
+     * there are no vertices to rewrite and no buffers to rebuild: the next frame reads it.
+     */
+    setViewDependentTransparency(enabled: boolean) {
+        this.viewDependentTransparency = enabled;
+        this.buffers?.forEach(buffer => { buffer.viewDependentTransparency = enabled; });
+        this.parentMolecule?.store.dispatch(setRequestDrawScene(true));
     }
 
     /**
@@ -737,6 +753,11 @@ export class MoleculeRepresentation {
         if (this.nonCustomOpacity < 0.99) {
             this.setNonCustomOpacity(this.nonCustomOpacity);
         }
+        // Alongside the opacity, because fresh buffers start without it and a representation that
+        // was drawn edge-dense must still be after a rebuild.
+        if (this.viewDependentTransparency) {
+            this.setViewDependentTransparency(true);
+        }
         if(this.style==="cavities"&&this.colourRules.length>0&&this.colourRules[0].color){
             const rgb = hexToRGB(this.colourRules[0].color)
             this.setBufferColour(rgb[0]/255,rgb[1]/255,rgb[2]/255)
@@ -766,6 +787,11 @@ export class MoleculeRepresentation {
         });
         if (this.nonCustomOpacity < 0.99) {
             this.setNonCustomOpacity(this.nonCustomOpacity);
+        }
+        // Alongside the opacity, because fresh buffers start without it and a representation that
+        // was drawn edge-dense must still be after a rebuild.
+        if (this.viewDependentTransparency) {
+            this.setViewDependentTransparency(true);
         }
         if(this.style==="cavities"&&this.colourRules.length>0&&this.colourRules[0].color){
             const rgb = hexToRGB(this.colourRules[0].color)

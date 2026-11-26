@@ -51,7 +51,8 @@ const sameContour = (a: ContourKey | null, b: ContourKey): boolean =>
     JSON.stringify(a.colourByMap?.gradient) === JSON.stringify(b.colourByMap?.gradient);
 
 /** What only needs recolouring existing buffers */
-type AppearanceKey = { alpha: number; colour: MapColour; positiveColour: MapColour; negativeColour: MapColour };
+/** What only needs repainting the existing buffers: colours, opacity, and thickening where seen edge-on (a uniform) */
+type AppearanceKey = { alpha: number; colour: MapColour; positiveColour: MapColour; negativeColour: MapColour; viewDependentTransparency: boolean };
 
 const sameAppearance = (a: AppearanceKey | null, b: AppearanceKey): boolean =>
     a !== null && JSON.stringify(a) === JSON.stringify(b);
@@ -224,6 +225,7 @@ export class MapRepresentation {
             colour: data.colour ?? this.map.defaultMapColour,
             positiveColour: data.positiveColour ?? this.map.defaultPositiveMapColour,
             negativeColour: data.negativeColour ?? this.map.defaultNegativeMapColour,
+            viewDependentTransparency: data.viewDependentTransparency ?? false,
         };
     }
 
@@ -341,6 +343,8 @@ export class MapRepresentation {
             const transparent = alpha < OPAQUE_ALPHA;
             buffer.transparent = transparent;
             buffer.alphaChanged = true;
+            // A uniform: the shader ignores it unless the surface is transparent
+            buffer.viewDependentTransparency = appearance.viewDependentTransparency;
             if (!transparent && !keepCootColours) {
                 // Opaque single colour: no need to touch vertex colours
                 buffer.setCustomColour([colour.r, colour.g, colour.b, 1.0]);

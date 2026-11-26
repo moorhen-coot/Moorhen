@@ -18,6 +18,7 @@ const record = {
     colourByMap: null,
     originLock: null,
     slice: null,
+    viewDependentTransparency: false,
 };
 
 describe("a scene's maps section, read from a file", () => {

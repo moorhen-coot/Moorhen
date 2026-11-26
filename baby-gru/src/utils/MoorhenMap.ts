@@ -756,6 +756,8 @@ export class MoorhenMap {
         mapColour: { r: number; g: number; b: number };
         positiveMapColour: { r: number; g: number; b: number };
         negativeMapColour: { r: number; g: number; b: number };
+        /** Whether the surface thickens where it is seen edge-on. */
+        viewDependentTransparency: boolean;
     } {
         // Not in the store yet: what its first record will be (MapDisplayDriver)
         return this.getMapContourParamsOf(this.primaryRepresentation ?? this.prospectiveRepresentation());
@@ -770,6 +772,7 @@ export class MoorhenMap {
             mapColour: record.colour ?? this.defaultMapColour,
             positiveMapColour: record.positiveColour ?? this.defaultPositiveMapColour,
             negativeMapColour: record.negativeColour ?? this.defaultNegativeMapColour,
+            viewDependentTransparency: record.viewDependentTransparency ?? false,
         };
     }
 

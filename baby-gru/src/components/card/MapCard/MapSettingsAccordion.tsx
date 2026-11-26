@@ -133,6 +133,30 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
         />
     );
 
+    /**
+     * Whether the representation thickens where it is seen edge-on (main's #794, now in its record).
+     *
+     * Offered beside the opacity because it is the opacity's companion and does nothing without
+     * it: the effect is absorption through a shell, so a solid surface has no shell to look
+     * along. Disabled rather than hidden while it is opaque, so that it is discoverable -
+     * somebody who has not met the effect can see that it exists and what it waits for.
+     */
+    const viewDependentTransparency = record?.viewDependentTransparency ?? false;
+    const isTransparent = opacity < 0.99;
+    const viewDependentToggle = (
+        <MoorhenToggle
+            type="switch"
+            checked={viewDependentTransparency && isTransparent}
+            disabled={!props.mapIsVisible || !isTransparent}
+            label="Denser at edges"
+            tooltip={isTransparent
+                ? "Thicken the surface where it is seen edge-on, as looking along a shell would."
+                : "Lower the opacity to use this: a solid surface has no shell to look along."}
+            // The record change repaints the representation (a uniform: no recontouring)
+            onChange={() => change({ viewDependentTransparency: !viewDependentTransparency })}
+        />
+    );
+
     const Wrapper = props.bare ? BareSettings : DrawSettingsAccordion;
     return (
         <Wrapper>
@@ -207,6 +231,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         piWidth={"3rem"}
                     />}
                     {opacitySlider}
+                    {viewDependentToggle}
                 </MoorhenStack>
             </MoorhenStack>
             {props.offerSlice && props.mapStyle === "slice" && (

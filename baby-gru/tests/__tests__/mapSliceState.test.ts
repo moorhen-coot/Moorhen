@@ -34,6 +34,7 @@ const record = (id: string, changes: Partial<MapRepresentationData> = {}): MapRe
     colourByMap: null,
     originLock: null,
     slice: null,
+    viewDependentTransparency: false,
     ...changes,
 });
 

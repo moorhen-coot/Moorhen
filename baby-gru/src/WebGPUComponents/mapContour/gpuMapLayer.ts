@@ -152,6 +152,8 @@ export class GpuMapLayer {
                         lineWidth: settings.mapLineWidth ?? 1,
                         colour: [colour.r, colour.g, colour.b, alpha],
                         transparent: alpha < 0.99,
+                        // From the record: a GPU-contoured map has no Coot buffers to carry it
+                        viewDependentTransparency: record.viewDependentTransparency ?? false,
                     });
                 }
             }
