@@ -3,8 +3,8 @@ import { gpuMapContourSetting, notifyMapDataChanged } from "../WebGPUComponents/
 import { correctExportedGltf } from "./gltfWinding";
 import pako from "pako";
 import { appendOtherData, buildBuffers } from "../WebGLgComponents/buildBuffers";
-import { setDisplayBuffers, setMapSlice, setOrigin, setZoom } from "../store";
-import { selectPrimaryMapRepresentation, setMapRepresentation } from "../store/mapRepresentationsSlice";
+import { setDisplayBuffers, setOrigin, setZoom } from "../store";
+import { selectPrimaryMapRepresentation, setMapRepresentation, setMapRepresentationSlice } from "../store/mapRepresentationsSlice";
 import {
     type MapInitialDisplay,
     type MapRepresentationData,
@@ -874,8 +874,8 @@ export class MoorhenMap {
 
     /**
      * Draw the map as a 2D slice: contour lines across a square in a plane (mapSlice.ts), as
-     * placed in the store (mapSlices). The first time, there is no slice yet: one is made through
-     * the centre of the view, facing down z, and kept there for next time.
+     * placed in its display record (`slice`, map-display.md). The first time, there is no slice
+     * yet: one is made through the centre of the view, facing down z, and kept there for next time.
      *
      * The square is twice the map's radius across. Contoured at the map's level - the outermost
      * contour - and in equal steps from there up to the slice's largest value, or doubling up to
@@ -886,17 +886,18 @@ export class MoorhenMap {
     async drawMapSlice(): Promise<void> {
         const call = ++this.sliceDrawCount;
         const state = this.store.getState();
-        let slice = state.mapContourSettings.mapSlices.find(item => item.molNo === this.molNo);
+        const owner = this.primaryRepresentation;
+        if (!owner) return;
+        let slice = owner.slice;
         if (!slice) {
             const origin = state.sceneSettings.origin.map(coord => -coord) as [number, number, number];
-            slice = { molNo: this.molNo, ...newMapSlice(origin) };
-            this.store.dispatch(setMapSlice(slice));
+            this.store.dispatch(setMapRepresentationSlice({ id: owner.id, changes: newMapSlice(origin) }));
+            slice = this.primaryRepresentation.slice;
         }
         const { contourLevel, mapAlpha, mapColour, positiveMapColour, negativeMapColour } = this.getMapContourParams();
         const halfSize = sliceHalfSize(this.getMapContourParams().mapRadius, this.suggestedRadius);
-        const nodalLines = this.isDifference && state.mapContourSettings.mapSliceNodalLines.includes(this.molNo);
-        const spacing = state.mapContourSettings.mapSliceContourSpacings.find(item => item.molNo === this.molNo)?.spacing
-            ?? DEFAULT_SLICE_CONTOUR_SPACING;
+        const nodalLines = this.isDifference && slice.nodalLines;
+        const spacing = slice.contourSpacing ?? DEFAULT_SLICE_CONTOUR_SPACING;
         const colours = this.isDifference
             ? { positive: positiveMapColour, negative: negativeMapColour }
             : { positive: mapColour, negative: mapColour };

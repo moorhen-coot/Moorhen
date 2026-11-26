@@ -286,7 +286,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     // as a slice and how big (handleTargetOf).
     const movingMapSlice = useSelector((state: moorhen.State) => state.generalStates.movingMapSlice)
     const movingSlice = useSelector((state: moorhen.State) =>
-        state.mapContourSettings.mapSlices.find(item => item.molNo === state.generalStates.movingMapSlice))
+        state.mapRepresentations.representations[state.generalStates.movingMapSlice ?? ""]?.slice)
     // Shown or not, how (slice) and how big: the maps' display records (map-display.md)
     const mapRepresentations = useSelector((state: moorhen.State) => state.mapRepresentations.representations)
     useEffect(() => {

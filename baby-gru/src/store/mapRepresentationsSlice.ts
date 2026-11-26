@@ -1,5 +1,12 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { type MapRepresentationChanges, type MapRepresentationData, drawModeOf } from "../utils/Representation/mapRepresentationData";
+import {
+    type MapRepresentationChanges,
+    type MapRepresentationData,
+    type MapSliceChanges,
+    type MapSliceSettings,
+    drawModeOf,
+} from "../utils/Representation/mapRepresentationData";
+import { DEFAULT_SLICE_CONTOUR_SPACING, IDENTITY_ORIENTATION } from "../utils/mapSlice/mapSlice";
 
 /**
  * Map representations: how each map is displayed, one or more records per map, keyed by representation id.
@@ -52,6 +59,16 @@ const mapRepresentationsSlice = createSlice({
                 .forEach(representation => delete state.representations[representation.id]);
         },
         emptyMapRepresentations: () => initialState,
+        /**
+         * Replace the records of some maps by others, in one go: a scene shown (its maps section). The records of the
+         * other maps are kept. Records whose map is not one of `mapUids` are left out.
+         */
+        replaceMapRepresentationsOfMaps: (state, action: PayloadAction<{ mapUids: string[]; records: MapRepresentationData[] }>) => {
+            const mapUids = new Set(action.payload.mapUids);
+            const kept = Object.values(state.representations).filter(representation => !mapUids.has(representation.mapUid));
+            const added = action.payload.records.filter(record => mapUids.has(record.mapUid));
+            state.representations = Object.fromEntries([...kept, ...added].map(record => [record.id, record]));
+        },
         /** Change some fields of a representation; unknown ids are ignored */
         setMapRepresentation: (state, action: PayloadAction<{ id: string; changes: MapRepresentationChanges }>) => {
             const representation = state.representations[action.payload.id];
@@ -91,6 +108,30 @@ const mapRepresentationsSlice = createSlice({
             const mode = drawModeOf(representation);
             const radius = "radius" in action.payload ? action.payload.radius : representation.radius[mode] + action.payload.by;
             representation.radius[mode] = Math.max(1, radius);
+        },
+        // API
+        /**
+         * Change a representation's 2D slice: some of where it is (centre, orientation), its nodal lines, its contour
+         * spacing. A representation without a slice yet gets one, through the origin facing down z where not given.
+         */
+        setMapRepresentationSlice: (state, action: PayloadAction<{ id: string; changes: MapSliceChanges }>) => {
+            const representation = state.representations[action.payload.id];
+            if (!representation) {
+                return;
+            }
+            const current: MapSliceSettings = representation.slice ?? {
+                origin: [0, 0, 0],
+                orientation: [...IDENTITY_ORIENTATION],
+                nodalLines: false,
+                contourSpacing: DEFAULT_SLICE_CONTOUR_SPACING,
+            };
+            const { origin, orientation, ...rest } = action.payload.changes;
+            representation.slice = {
+                ...current,
+                ...rest,
+                origin: origin ? ([...origin] as [number, number, number]) : current.origin,
+                orientation: orientation ? [...orientation] : current.orientation,
+            };
         },
         /** The opacity of the style in use (each style keeps its own) */
         setMapRepresentationAlpha: (state, action: PayloadAction<{ id: string; alpha: number }>) => {
@@ -132,9 +173,11 @@ export const {
     removeMapRepresentation,
     removeMapRepresentationsOfMap,
     emptyMapRepresentations,
+    replaceMapRepresentationsOfMaps,
     setMapRepresentation,
     setMapRepresentationAlpha,
     setMapRepresentationRadius,
+    setMapRepresentationSlice,
     setPrimaryMapRepresentation,
     setPrimaryMapRepresentationAlpha,
     setPrimaryMapRepresentationRadius,

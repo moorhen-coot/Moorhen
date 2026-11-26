@@ -1,9 +1,9 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useMemo } from "react";
-import { setMapSliceContourSpacing, setMapSliceNodalLines } from "../../../store/mapContourSettingsSlice";
 import type { MapStyle } from "../../../store/mapContourSettingsSlice";
 import {
     selectPrimaryMapRepresentation,
+    setMapRepresentationSlice,
     setPrimaryMapRepresentation,
     setPrimaryMapRepresentationAlpha,
     setPrimaryMapRepresentationRadius,
@@ -77,12 +77,16 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
         return record ? currentAlpha(record) : props.mapOpacity;
     });
 
+    /** The map's display record (map-display.md), which holds its 2D slice */
+    const record = useSelector((state: moorhen.State) => selectPrimaryMapRepresentation(state, props.map.uniqueId));
     /** Whether this map's slice is showing its handles. */
-    const isMovingSlice = useSelector((state: moorhen.State) => state.generalStates.movingMapSlice === props.map.molNo);
+    const isMovingSlice = useSelector((state: moorhen.State) => !!record && state.generalStates.movingMapSlice === record.id);
     /** Whether this map's slice shows its nodal lines (only a difference map, with two signs, has any). */
-    const showsNodalLines = useSelector((state: moorhen.State) => state.mapContourSettings.mapSliceNodalLines.includes(props.map.molNo));
-    const sliceContourSpacing = useSelector((state: moorhen.State) =>
-        state.mapContourSettings.mapSliceContourSpacings.find(item => item.molNo === props.map.molNo)?.spacing ?? DEFAULT_SLICE_CONTOUR_SPACING);
+    const showsNodalLines = record?.slice?.nodalLines ?? false;
+    const sliceContourSpacing = record?.slice?.contourSpacing ?? DEFAULT_SLICE_CONTOUR_SPACING;
+    const changeSlice = (changes: Parameters<typeof setMapRepresentationSlice>[0]["changes"]) => {
+        if (record) dispatch(setMapRepresentationSlice({ id: record.id, changes }));
+    };
 
     const store = useStore<moorhen.State>();
     /**
@@ -92,7 +96,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
      */
     const alignViewToSlice = () => {
         const state = store.getState();
-        const slice = state.mapContourSettings.mapSlices.find(item => item.molNo === props.map.molNo);
+        const slice = selectPrimaryMapRepresentation(state, props.map.uniqueId)?.slice;
         if (!slice) return;
         dispatch(setQuat(quatFacingSlice(state.glRef.quat, slice.orientation)));
         // Moorhen's origin is the point that puts a centre in view: its negative.
@@ -203,7 +207,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         type="switch"
                         checked={isMovingSlice}
                         disabled={!props.mapIsVisible}
-                        onChange={() => dispatch(setMovingMapSlice(isMovingSlice ? null : props.map.molNo))}
+                        onChange={() => dispatch(setMovingMapSlice(isMovingSlice || !record ? null : record.id))}
                         label="Move & turn"
                     />
                     <MoorhenButton size="small" disabled={!props.mapIsVisible} onClick={alignViewToSlice} tooltip="Look straight at the slice, centred on it; the side nearest the screen's x made horizontal">
@@ -214,7 +218,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         value={sliceContourSpacing}
                         disabled={!props.mapIsVisible}
                         onChange={evt =>
-                            dispatch(setMapSliceContourSpacing({ molNo: props.map.molNo, spacing: evt.target.value as SliceContourSpacing }))
+                            changeSlice({ contourSpacing: evt.target.value as SliceContourSpacing })
                         }
                     >
                         <option value="linear">Equal steps</option>
@@ -226,7 +230,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                             type="switch"
                             checked={showsNodalLines}
                             disabled={!props.mapIsVisible}
-                            onChange={() => dispatch(setMapSliceNodalLines({ molNo: props.map.molNo, show: !showsNodalLines }))}
+                            onChange={() => changeSlice({ nodalLines: !showsNodalLines })}
                             label="Nodal lines"
                         />
                     )}

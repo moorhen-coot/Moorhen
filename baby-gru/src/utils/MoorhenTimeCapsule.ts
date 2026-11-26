@@ -18,9 +18,7 @@ import {
     setSpecular,
     setSpecularPower,
     setZoom,
-    setMapSlice,
-    setMapSliceNodalLines,
-    setMapSliceContourSpacing, addMap, emptyMaps, enableUpdatingMaps,
+    addMap, emptyMaps, enableUpdatingMaps,
     setConnectedMoleculeMolNo,
     setFoFcMapMolNo,
     setReflectionMapMolNo,
@@ -74,6 +72,7 @@ import { USER_SCENE_FORMAT_VERSION, type UserSceneState } from "@/store/userScen
 import { Root } from "protobufjs";
 import type { MapStyle } from "../store/mapContourSettingsSlice";
 import { selectPrimaryMapRepresentation } from "../store/mapRepresentationsSlice";
+import { DEFAULT_SLICE_CONTOUR_SPACING } from "./mapSlice/mapSlice";
 import { currentAlpha, currentRadius } from "./Representation/mapRepresentationData";
 
 export interface backupKey {
@@ -555,15 +554,14 @@ export class MoorhenTimeCapsule {
                 style: record?.style,
                 isDifference: map.isDifference,
                 isCube: map.isCube,
-                slice: (() => {
-                    const slice = state.mapContourSettings.mapSlices.find(item => item.molNo === map.molNo);
-                    return slice ? {
-                        origin: [...slice.origin],
-                        orientation: [...slice.orientation],
-                        nodalLines: state.mapContourSettings.mapSliceNodalLines.includes(map.molNo),
-                        contourSpacing: state.mapContourSettings.mapSliceContourSpacings.find(item => item.molNo === map.molNo)?.spacing,
-                    } : null;
-                })(),
+                slice: record?.slice
+                    ? {
+                          origin: [...record.slice.origin],
+                          orientation: [...record.slice.orientation],
+                          nodalLines: record.slice.nodalLines,
+                          contourSpacing: record.slice.contourSpacing,
+                      }
+                    : null,
                 selectedColumns: map.selectedColumns,
                 hasReflectionData: map.hasReflectionData,
                 associatedReflectionFileName: map.associatedReflectionFileName,
@@ -1190,23 +1188,18 @@ export class MoorhenTimeCapsule {
                 positiveColour: toUnit(storedMapData.rgba?.positiveDiffColour),
                 negativeColour: toUnit(storedMapData.rgba?.negativeDiffColour),
             };
+            // A map saved as a slice is drawn where it was rather than through the centre of the view
+            const storedSlice = storedMapData.slice;
+            if (storedSlice?.origin?.length === 3 && storedSlice.orientation?.length === 16) {
+                const spacing = storedSlice.contourSpacing;
+                map.initialDisplay.slice = {
+                    origin: storedSlice.origin as [number, number, number],
+                    orientation: [...storedSlice.orientation],
+                    nodalLines: Boolean(storedSlice.nodalLines),
+                    contourSpacing: spacing === "linear" || spacing === "geometric" ? spacing : DEFAULT_SLICE_CONTOUR_SPACING,
+                };
+            }
             batch(() => {
-                // Before the map, so that a map saved as a slice is drawn where it was rather than
-                // through the centre of the view.
-                if (storedMapData.slice?.origin?.length === 3 && storedMapData.slice.orientation?.length === 16) {
-                    dispatch(
-                        setMapSlice({
-                            molNo: map.molNo,
-                            origin: storedMapData.slice.origin as [number, number, number],
-                            orientation: storedMapData.slice.orientation,
-                        })
-                    );
-                    dispatch(setMapSliceNodalLines({ molNo: map.molNo, show: Boolean(storedMapData.slice.nodalLines) }));
-                    const spacing = storedMapData.slice.contourSpacing;
-                    if (spacing === "linear" || spacing === "geometric") {
-                        dispatch(setMapSliceContourSpacing({ molNo: map.molNo, spacing }));
-                    }
-                }
                 dispatch(addMap(map));
             });
         });

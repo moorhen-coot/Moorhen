@@ -13,8 +13,8 @@
  * representations instead, except those coloured by another map, which it cannot do: Coot still contours those, and
  * the WebGPU view draws their buffers with the other display buffers.
  *
- * The "slice" style is not a Coot contour: the map draws it (`MoorhenMap.drawMapSlice`, from the slice placement and
- * spacing still kept in `mapContourSettings`), so one representation per map can show it for now.
+ * The "slice" style is not a Coot contour: the map draws it (`MoorhenMap.drawMapSlice`, from the record's `slice`),
+ * with one buffer set per map, so one representation per map can show it for now.
  */
 import { appendOtherData, buildBuffers } from "../../WebGLgComponents/buildBuffers";
 import type { DisplayBuffer } from "../../WebGLgComponents/displayBuffer";

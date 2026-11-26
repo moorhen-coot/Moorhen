@@ -286,8 +286,8 @@ test.describe("Map display in session files", () => {
     });
 
     test("map-display.pb: each style's opacity survives a protobuf save and reload", async ({ page }) => {
-        // Known gap: sessions save one alpha per map (see the test above); drop test.fail() once both are saved.
-        test.fail();
+        // Was a gap: sessions save one alpha per map. Fixed 2026-11-26: the map records are in the scenes, which the
+        // session saves (map-display.md Phase 5)
         test.setTimeout(240_000);
         const stored = await loadSession(page, MAP_DISPLAY_SESSION);
         const mapUid = stored.find(map => map.name === "map-1 ").uniqueId;
@@ -309,8 +309,7 @@ test.describe("Map display in session files", () => {
     });
 
     test("map-display.pb: an EM map's radius per draw mode survives a protobuf save and reload", async ({ page }) => {
-        // Known gap: sessions save one radius per map, and no draw mode (see the test above)
-        test.fail();
+        // Was a gap: sessions save one radius per map, and no draw mode. Fixed 2026-11-26 as above, through the scenes
         test.setTimeout(240_000);
         const stored = await loadSession(page, MAP_DISPLAY_SESSION);
         const emMapUid = stored.find(map => map.name === "low-res-emd-32143").uniqueId;
@@ -321,13 +320,31 @@ test.describe("Map display in session files", () => {
         expect(await getRadiusPerDrawMode(page, emMapUid)).toEqual(MODE_RADII);
     });
 
-    test("map-display.pb: colouring by another map is restored", async ({ page }) => {
-        // Known gap: colour by another map lives on the MoorhenMap instance (otherMapForColouring) and is not
-        // saved in sessions. Planned for the map display record (.roadmaps/map-display.md); drop test.fail() then.
-        test.fail();
-        test.setTimeout(180_000);
-        await loadSession(page, MAP_DISPLAY_SESSION);
-        const colouredMap = (await getMapDisplays(page)).find(map => map.name === "Copy of map-1 coloured by diff");
-        expect(colouredMap.colouredByMap).toBe(true);
+    test("map-display.pb: colouring by another map, with its gradient, survives a protobuf save and reload", async ({ page }) => {
+        // Was a gap: colour by another map lived on the MoorhenMap instance and was not saved. Now in the map's record
+        // (with its gradient), saved with the scenes (map-display.md). map-display.pb itself was saved before that, so
+        // its "coloured by diff" map comes back plain: what is checked is colouring set now, saved and reloaded.
+        test.setTimeout(240_000);
+        const stored = await loadSession(page, MAP_DISPLAY_SESSION);
+        const colouring = { min: -0.4, max: 0.4, gradient: [[0, [255, 0, 0]], [1, [0, 0, 255]]] };
+        const [mapUid, diffUid] = await page.evaluate(async colouring => {
+            const instance = await (document.getElementById("moorhen-test") as any).getMoorhenInstance();
+            const { setPrimaryMapRepresentation } = await import("/src/store/mapRepresentationsSlice.ts");
+            const maps = instance.store.getState().maps;
+            const map = maps.find((item: any) => item.name === "map-1 ");
+            const difference = maps.find((item: any) => item.isDifference);
+            instance.dispatch(setPrimaryMapRepresentation({ mapUid: map.uniqueId, changes: { colourByMap: { mapUid: difference.uniqueId, ...colouring } } }));
+            return [map.uniqueId, difference.uniqueId];
+        }, colouring);
+
+        expect(await saveAndReload(page)).toBe(0);
+        await waitForMapsDrawn(page, stored.map(map => map.uniqueId));
+        const colourByMap = await page.evaluate(async mapUid => {
+            const instance = await (document.getElementById("moorhen-test") as any).getMoorhenInstance();
+            const map = instance.store.getState().maps.find((item: any) => item.uniqueId === mapUid);
+            return map.primaryRepresentation.colourByMap;
+        }, mapUid);
+        expect(colourByMap).toEqual({ mapUid: diffUid, ...colouring });
+        expect((await getMapDisplays(page)).find(map => map.uniqueId === mapUid).colouredByMap).toBe(true);
     });
 });

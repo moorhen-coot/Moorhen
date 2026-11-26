@@ -21,8 +21,8 @@ const initialState: {
     theme: string;
     residueSelection: ResidueSelection;
     selectedThreeDObjectId: string | null;
-    /** Which map's 2D slice is showing manipulation handles, or none (by its molNo). */
-    movingMapSlice: number | null;
+    /** The map representation whose 2D slice shows manipulation handles (its id), or none */
+    movingMapSlice: string | null;
     isShowingTomograms: boolean;
     /** Progress of a long task that reports it (e.g. files.batchLoadLigands), shown by the long job notification */
     jobProgress: { label: string; done: number; total: number } | null;
@@ -184,10 +184,10 @@ const generalStatesSlice = createSlice({
             if (action.payload !== null) state.movingMapSlice = null;
         },
         /**
-         * Which map's 2D slice is showing manipulation handles, or none: as setSelectedThreeDObject
-         * for a 3D object, and the two take turns.
+         * Which map representation's 2D slice is showing manipulation handles (its id), or none: as
+         * setSelectedThreeDObject for a 3D object, and the two take turns.
          */
-        setMovingMapSlice: (state, action: PayloadAction<number | null>) => {
+        setMovingMapSlice: (state, action: PayloadAction<string | null>) => {
             state.movingMapSlice = action.payload;
             if (action.payload !== null) state.selectedThreeDObjectId = null;
         },

@@ -43,6 +43,7 @@ const record = (id: string, mapUid: string, changes: Partial<MapRepresentationDa
     negativeColour: null,
     colourByMap: null,
     originLock: null,
+    slice: null,
     ...changes,
 });
 

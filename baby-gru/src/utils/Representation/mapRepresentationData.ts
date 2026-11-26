@@ -5,6 +5,21 @@
  */
 import type { MapStyle } from "../../store/mapContourSettingsSlice";
 import { type GradientColourTable, gradientPresets } from "../../components/inputs/MoorhenGradientPicker/gradientPresets";
+import type { MapSlicePlacement, SliceContourSpacing } from "../mapSlice/mapSlice";
+
+/**
+ * Where a map's 2D slice is and how it is contoured (the "slice" style, MoorhenMap.drawMapSlice). Kept when the map is
+ * drawn another way, so that going back to the slice finds it where it was.
+ */
+export type MapSliceSettings = MapSlicePlacement & {
+    /** Show the zero contour between a difference map's positive and negative ones */
+    nodalLines: boolean;
+    /** Equal steps ("linear") or each double the last ("geometric") */
+    contourSpacing: SliceContourSpacing;
+};
+
+/** Some of a slice's settings, to change them (`setMapRepresentationSlice`) */
+export type MapSliceChanges = Partial<MapSliceSettings>;
 import type { MoorhenMap } from "../MoorhenMap";
 import { guid } from "../utils";
 
@@ -38,6 +53,8 @@ export type MapRepresentationData = {
     colourByMap: { mapUid: string; min: number; max: number; gradient: GradientColourTable } | null;
     /** Draw around a fixed centre (world coordinates, as given to Coot) instead of the view origin */
     originLock: { centre: Vec3 } | null;
+    /** The 2D slice, null until the map is first drawn as one (then through the centre of the view) */
+    slice: MapSliceSettings | null;
 };
 
 /** Fields that can be changed; `radius` and `alpha` can be given for some draw modes / styles only */
@@ -111,6 +128,7 @@ export const createDefaultMapRepresentationData = (
         colourByMap: null,
         // mapCentre / cellCentre are scene origins (negated world coordinates)
         originLock: map.isEM && centre ? { centre: centre.map(coord => -coord) as Vec3 } : null,
+        slice: null,
     };
 };
 

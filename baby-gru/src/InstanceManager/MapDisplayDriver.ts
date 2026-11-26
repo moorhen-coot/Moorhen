@@ -17,9 +17,7 @@ import type { MoorhenInstance } from "./MoorhenInstance";
  *   maps;
  * - creates / disposes a `MapRepresentation` per record, and tells it when its record changed;
  * - re-contours representations that follow the view when the view moves (or on mouse up, with
- *   `reContourMapOnlyOnMouseUp`), and all of them when the line width changes;
- * - (transition) redraws "slice" representations when a slice's placement, nodal lines or contour spacing change
- *   (still in `mapContourSettings`, not in the records).
+ *   `reContourMapOnlyOnMouseUp`), and all of them when the line width changes.
  *
  * See .roadmaps/map-display.md.
  */
@@ -34,7 +32,6 @@ export class MapDisplayDriver {
     private lastRecords: Record<string, MapRepresentationData> = {};
     private lastOrigin: number[] | null = null;
     private lastLineWidth: number | null = null;
-    private lastSliceSettings: unknown[] | null = null;
     private lastFastRadii = new Map<string, number | null>();
 
     private unsubscribe: (() => void) | null = null;
@@ -76,7 +73,6 @@ export class MapDisplayDriver {
         this.fastRadii.clear();
         this.knownMapUids = new Set();
         this.lastMaps = null;
-        this.lastSliceSettings = null;
         this.lastRecords = {};
         this.lastFastRadii.clear();
     }
@@ -159,17 +155,6 @@ export class MapDisplayDriver {
         this.syncRepresentations(state.mapRepresentations.representations);
         this.syncFastRadii(state);
 
-        const { mapSlices, mapSliceNodalLines, mapSliceContourSpacings } = state.mapContourSettings;
-        const sliceSettings = [mapSlices, mapSliceNodalLines, mapSliceContourSpacings];
-        if (!this.lastSliceSettings || sliceSettings.some((item, i) => item !== this.lastSliceSettings[i])) {
-            this.lastSliceSettings = sliceSettings;
-            this.representations.forEach(representation => {
-                if (representation.data?.style === "slice") {
-                    representation.update();
-                }
-            });
-        }
-
         if (state.mapContourSettings.mapLineWidth !== this.lastLineWidth) {
             this.lastLineWidth = state.mapContourSettings.mapLineWidth;
             this.representations.forEach(representation => void representation.redraw());
@@ -208,6 +193,14 @@ export class MapDisplayDriver {
         if (records === this.lastRecords) {
             return;
         }
+        // Removed ones first: a record replaced by another for the same map (a scene shown) must not take down what
+        // the new one draws (a map's 2D slice buffers are the map's: hiding the old one would cancel the new one's)
+        this.representations.forEach((representation, id) => {
+            if (!records[id]) {
+                representation.dispose();
+                this.representations.delete(id);
+            }
+        });
         Object.values(records).forEach(record => {
             const existing = this.representations.get(record.id);
             if (existing) {
@@ -221,12 +214,6 @@ export class MapDisplayDriver {
                 const representation = new MapRepresentation(record.id, map, this.instance);
                 this.representations.set(record.id, representation);
                 representation.update();
-            }
-        });
-        this.representations.forEach((representation, id) => {
-            if (!records[id]) {
-                representation.dispose();
-                this.representations.delete(id);
             }
         });
         this.lastRecords = records;

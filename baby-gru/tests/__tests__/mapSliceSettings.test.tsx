@@ -10,9 +10,8 @@ import { MapSettingsAccordion } from "../../src/components/card/MapCard/MapSetti
 import { MoorhenMenuSystem } from "../../src/components/menu-system/MenuSystem";
 import { MoorhenInstanceProvider } from "../../src/InstanceManager";
 import { createMoorhenStore } from "../../src/store/MoorhenReduxStore";
-import { setMapSlice } from "../../src/store/mapContourSettingsSlice";
 import { addMap } from "../../src/store/mapsSlice";
-import { addMapRepresentation, selectPrimaryMapRepresentation } from "../../src/store/mapRepresentationsSlice";
+import { addMapRepresentation, selectPrimaryMapRepresentation, setMapRepresentationSlice } from "../../src/store/mapRepresentationsSlice";
 import { setQuat } from "../../src/store/glRefSlice";
 import { quatToMat4 } from "../../src/WebGLgComponents/quatToMat4.js";
 import { moorhen } from "../../src/types/moorhen";
@@ -28,7 +27,7 @@ const renderSettings = async (offerSlice: boolean, map = orbital) => {
     store.dispatch(addMapRepresentation({
         id: "rep-7", mapUid: map.uniqueId, visible: true, contourLevel: 0.02, radius: { local: 5, full: 5 }, style: "lines",
         alpha: { lines: 1, "lit-lines": 1, solid: 1, slice: 1 }, colour: null, positiveColour: null, negativeColour: null,
-        colourByMap: null, originLock: null,
+        colourByMap: null, originLock: null, slice: null,
     }));
     const styleOf = () => selectPrimaryMapRepresentation(store.getState(), map.uniqueId)?.style;
     const menuSystem = new MoorhenMenuSystem();
@@ -60,7 +59,8 @@ describe("the 2D slice in a map's Draw Settings", () => {
         expect(selectPrimaryMapRepresentation(store.getState(), "orbital-7")?.style).toBe("slice");
         update();
         await user.click(screen.getByText("Move & turn"));
-        expect(store.getState().generalStates.movingMapSlice).toBe(7);
+        // The handles are the representation's
+        expect(store.getState().generalStates.movingMapSlice).toBe("rep-7");
 
         // Drawn another way, the slice puts its handles away.
         update();
@@ -74,11 +74,12 @@ describe("the 2D slice in a map's Draw Settings", () => {
         const { store, user, update } = await renderSettings(true);
         await user.click(screen.getByText("Draw as 2D slice"));
         update();
+        const sliceOf = () => selectPrimaryMapRepresentation(store.getState(), "orbital-7")?.slice;
         await user.click(screen.getByText("Nodal lines"));
-        expect(store.getState().mapContourSettings.mapSliceNodalLines).toEqual([7]);
+        expect(sliceOf()?.nodalLines).toBe(true);
         update();
         await user.click(screen.getByText("Nodal lines"));
-        expect(store.getState().mapContourSettings.mapSliceNodalLines).toEqual([]);
+        expect(sliceOf()?.nodalLines).toBe(false);
     });
 
     test("spaces its contours in equal steps unless asked to double them", async () => {
@@ -88,14 +89,14 @@ describe("the 2D slice in a map's Draw Settings", () => {
         const spacing = screen.getByLabelText("Contours") as HTMLSelectElement;
         expect(spacing.value).toBe("linear");
         await user.selectOptions(spacing, "geometric");
-        expect(store.getState().mapContourSettings.mapSliceContourSpacings).toEqual([{ molNo: 7, spacing: "geometric" }]);
+        expect(selectPrimaryMapRepresentation(store.getState(), "orbital-7")?.slice?.contourSpacing).toBe("geometric");
     });
 
     test("can turn the view to look straight at the slice, centred on it", async () => {
         const { store, user, update } = await renderSettings(true);
         await user.click(screen.getByText("Draw as 2D slice"));
         // A slice standing in the xz plane (normal -y), away from the view's centre.
-        store.dispatch(setMapSlice({ molNo: 7, origin: [3, 4, 5], orientation: [1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1] }));
+        store.dispatch(setMapRepresentationSlice({ id: "rep-7", changes: { origin: [3, 4, 5], orientation: [1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1] } }));
         store.dispatch(setQuat([0.1, 0.05, 0, -0.99]));
         update();
         await user.click(screen.getByText("Align view"));
