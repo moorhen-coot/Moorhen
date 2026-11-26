@@ -19,7 +19,7 @@
 
 import { useDispatch } from "react-redux";
 import { setMapVisible } from "@/store/mapRepresentationsSlice";
-import { MapMultiRepresentationToggle, MapRepresentationsCard } from "./MapRepresentationChips";
+import { MapRepresentationsToolbar, MapRepresentationsCard } from "./MapRepresentationChips";
 import { useIsMultiRepresentation } from "../../../hooks/useMapDisplay";
 import { OrbitalLevelControls } from "./MapLevelControls";
 import { MapRepresentationEditor } from "./MapRepresentationEditor";
@@ -114,17 +114,18 @@ export const MoorhenOrbitalCard = (props: MoorhenOrbitalCardPropsInterface) => {
             open={props.isOpen}
         >
             <MoorhenStack direction="vertical">
-                <MapMultiRepresentationToggle map={props.map} />
+                <MapRepresentationsToolbar map={props.map} />
                 <MapRepresentationsCard
                     map={props.map}
-                    editor={
+                    editor={recordId => (
                         <MapRepresentationEditor
                             map={props.map}
-                            level={<OrbitalLevelControls map={props.map} initialContour={initialContour} />}
+                            recordId={recordId}
+                            level={<OrbitalLevelControls map={props.map} initialContour={initialContour} recordId={recordId} />}
                             hideRadiusControls={true}
                             offerSlice={true}
                         />
-                    }
+                    )}
                 />
                 {/* In multi-representation mode: all shown representations together, by the same amount */}
                 <OrbitalLevelControls map={props.map} initialContour={initialContour} allShown={isMultiRepresentation} />

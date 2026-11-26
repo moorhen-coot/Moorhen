@@ -8,13 +8,13 @@ import { MoorhenNumberInput, MoorhenSlider } from "../../inputs";
 import { MoorhenStack } from "../../interface-base";
 
 /**
- * The level the controls show and set: the representation a map's card acts on (the selected one, else the map's
- * first; map-display.md), or with `allShown` the lowest of the shown ones, all shown ones moving by the same amount
- * (multi-representation mode). Set at once, or in fast contour mode (smaller radius) while it changes quickly.
+ * The level the controls show and set: `recordId`'s representation (a chip's), else the map's first
+ * (map-display.md), or with `allShown` the lowest of the shown ones, all shown ones moving by the same amount
+ * (multi-representation mode: the card's level). Set at once, or in fast contour mode (smaller radius) while it changes quickly.
  */
-const useLevel = (map: moorhen.Map, allShown: boolean, initialContour: number) => {
+const useLevel = (map: moorhen.Map, allShown: boolean, initialContour: number, recordId?: string) => {
     const dispatch = useDispatch();
-    const display = useMapDisplay(map);
+    const display = useMapDisplay(map, recordId);
     const store = useStore<moorhen.State>();
     const base = useSelector((state: moorhen.State) => selectShownLevelsBase(state, map.uniqueId));
     // A ref, not state: a slider drag calls this many times between renders
@@ -26,6 +26,7 @@ const useLevel = (map: moorhen.Map, allShown: boolean, initialContour: number) =
         fastRadius: "auto",
         timeoutDelay: 1000,
         allShown,
+        recordId: display.record?.id,
     });
     const level = allShown ? base ?? display.contourLevel : display.record ? display.contourLevel : initialContour;
     const changeLevel = (newContourLevel: number) => {
@@ -54,10 +55,11 @@ const useLevel = (map: moorhen.Map, allShown: boolean, initialContour: number) =
 /**
  * A map's level: in map units and in rms (where it has one), and a slider.
  * @param allShown - Move all shown representations together, showing the lowest level (multi-representation mode).
+ * @param recordId - The representation it sets (a chip's), else the map's first.
  */
-export const MapLevelControls = (props: { map: moorhen.Map; initialContour?: number; allShown?: boolean }) => {
+export const MapLevelControls = (props: { map: moorhen.Map; initialContour?: number; allShown?: boolean; recordId?: string }) => {
     const { map, initialContour = 0.8, allShown = false } = props;
-    const { level, changeLevel, enabled } = useLevel(map, allShown, initialContour);
+    const { level, changeLevel, enabled } = useLevel(map, allShown, initialContour, props.recordId);
     const decimals = map.isEM ? Math.abs(Math.floor(Math.log10(map.levelRange[0]))) : 2;
     return (
         <MoorhenStack direction="vertical" gap={"0.5rem"} style={{ justifyContent: "center" }}>
@@ -108,10 +110,11 @@ export const MapLevelControls = (props: { map: moorhen.Map; initialContour?: num
 /**
  * An orbital's level (±, both lobes), with as many decimals as its small amplitudes need.
  * @param allShown - Move all shown representations together, showing the lowest level (multi-representation mode).
+ * @param recordId - The representation it sets (a chip's), else the map's first.
  */
-export const OrbitalLevelControls = (props: { map: moorhen.Map; initialContour?: number; allShown?: boolean }) => {
+export const OrbitalLevelControls = (props: { map: moorhen.Map; initialContour?: number; allShown?: boolean; recordId?: string }) => {
     const { map, initialContour = 0.02, allShown = false } = props;
-    const { level, changeLevel, enabled } = useLevel(map, allShown, initialContour);
+    const { level, changeLevel, enabled } = useLevel(map, allShown, initialContour, props.recordId);
 
     /**
      * How many decimals the level is worth showing.

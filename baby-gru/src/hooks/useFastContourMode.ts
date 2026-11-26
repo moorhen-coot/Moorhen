@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useEffect, useRef } from 'react';
 import { RootState } from '../store/MoorhenReduxStore';
-import { selectSelectedMapRepresentation, selectShownLevelsBase, setMapRepresentation, shiftMapRepresentationLevels } from '../store/mapRepresentationsSlice';
+import { selectMapRepresentation, selectPrimaryMapRepresentation, selectShownLevelsBase, setMapRepresentation, shiftMapRepresentationLevels } from '../store/mapRepresentationsSlice';
 import { useMoorhenInstance } from '../InstanceManager/useMoorhenInstance';
 import { moorhen } from '../types/moorhen';
 import { gpuMapContourSetting } from '../WebGPUComponents/mapContour/setting';
@@ -18,6 +18,8 @@ interface UseFastContourModeProps {
      * lowest one (selectShownLevelsBase), and all shown ones move by the same amount
      */
     allShown?: boolean;
+    /** The representation whose level is set (a chip's), else the map's first */
+    recordId?: string;
 }
 
 interface FastContourModeReturn {
@@ -50,6 +52,7 @@ export const useFastContourMode = ({
     fastRadius = 'auto',
     timeoutDelay = 1000,
     allShown = false,
+    recordId,
 }: UseFastContourModeProps): FastContourModeReturn => {
     const store = useStore<RootState>();
     const dispatch = useDispatch();
@@ -78,8 +81,8 @@ export const useFastContourMode = ({
     };
 
     /**
-     * The level of the representation the map's card acts on (the selected one, else the map's first), or with
-     * `allShown` the lowest of the shown ones, the others moving by as much
+     * The level of `recordId`'s representation (a chip's), else the map's first, or with `allShown` the lowest of the
+     * shown ones, the others moving by as much
      */
     const setLevel = (contourLevel: number) => {
         if (allShown) {
@@ -90,7 +93,8 @@ export const useFastContourMode = ({
             }
             return;
         }
-        const record = selectSelectedMapRepresentation(store.getState(), map.uniqueId);
+        const state = store.getState();
+        const record = (recordId ? selectMapRepresentation(state, recordId) : undefined) ?? selectPrimaryMapRepresentation(state, map.uniqueId);
         if (record) dispatch(setMapRepresentation({ id: record.id, changes: { contourLevel } }));
     };
 

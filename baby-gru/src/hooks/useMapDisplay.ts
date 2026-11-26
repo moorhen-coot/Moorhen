@@ -1,11 +1,16 @@
 import { useSelector } from "react-redux";
 import type { RootState } from "../store/MoorhenReduxStore";
-import { selectIsMapVisible, selectMapRepresentationsOfMap, selectSelectedMapRepresentation } from "../store/mapRepresentationsSlice";
+import {
+    selectIsMapVisible,
+    selectMapRepresentation,
+    selectMapRepresentationsOfMap,
+    selectPrimaryMapRepresentation,
+} from "../store/mapRepresentationsSlice";
 import { type MapColour, type MapRepresentationData, type MapStyle, currentAlpha, currentRadius } from "../utils/Representation/mapRepresentationData";
 
 /**
- * What a map shows, as the map card and its controls read it: from the representation they act on (the selected one,
- * else the map's first)
+ * What a map shows, as the map card and its controls read it: from one representation (a chip's), else the map's
+ * first (single-representation mode: its only one)
  */
 export type MapDisplay = {
     /** Undefined until the map display driver has given the map its records (once the map is in the store) */
@@ -50,11 +55,15 @@ export const mapDisplayOf = (map: DisplayedMap, record: MapRepresentationData | 
 });
 
 /**
- * A map's display, read from the representation its controls act on (`selectSelectedMapRepresentation`, see
- * .roadmaps/map-display.md). Re-renders only when that record, or whether the map is shown, changes.
+ * A map's display (see .roadmaps/map-display.md), read from one of its representations: `recordId`'s (a chip's), else
+ * the map's first. Re-renders only when that record, or whether the map is shown, changes.
  */
-export const useMapDisplay = (map: DisplayedMap | null | undefined): MapDisplay | null => {
-    const record = useSelector((state: RootState) => (map ? selectSelectedMapRepresentation(state, map.uniqueId) : undefined));
+export const useMapDisplay = (map: DisplayedMap | null | undefined, recordId?: string): MapDisplay | null => {
+    const record = useSelector((state: RootState) => {
+        if (!map) return undefined;
+        const own = recordId ? selectMapRepresentation(state, recordId) : undefined;
+        return own?.mapUid === map.uniqueId ? own : selectPrimaryMapRepresentation(state, map.uniqueId);
+    });
     const mapVisible = useSelector((state: RootState) => (map ? selectIsMapVisible(state, map.uniqueId) : false));
     return map ? mapDisplayOf(map, record, mapVisible) : null;
 };

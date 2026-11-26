@@ -3,7 +3,8 @@ import { useMemo } from "react";
 import type { MapStyle } from "../../../store/mapContourSettingsSlice";
 import {
     selectMapRepresentationsOfMap,
-    selectSelectedMapRepresentation,
+    selectMapRepresentation,
+    selectPrimaryMapRepresentation,
     setMapRepresentation,
     setMapRepresentationAlpha,
     setMapRepresentationRadius,
@@ -42,6 +43,8 @@ interface MoorhenMapCardSettings {
     offerSlice?: boolean;
     /** The settings alone, without the "Draw Settings" accordion (in a representation's edit popover) */
     bare?: boolean;
+    /** The representation they act on (a chip's), else the map's first */
+    recordId?: string;
 }
 
 export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
@@ -49,10 +52,14 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
     const dispatch = useDispatch();
     const store = useStore<moorhen.State>();
     /**
-     * The representation these settings act on (the selected one, else the map's first; map-display.md), which holds
-     * its 2D slice
+     * The representation these settings act on (`recordId`'s: a chip's, else the map's first; map-display.md), which
+     * holds its 2D slice
      */
-    const record = useSelector((state: moorhen.State) => selectSelectedMapRepresentation(state, props.map.uniqueId));
+    const recordOf = (state: moorhen.State) => {
+        const own = props.recordId ? selectMapRepresentation(state, props.recordId) : undefined;
+        return own?.mapUid === props.map.uniqueId ? own : selectPrimaryMapRepresentation(state, props.map.uniqueId);
+    };
+    const record = useSelector(recordOf);
     const isOriginLocked = !!record?.originLock;
     /** Another representation of this map is a 2D slice: one per map for now (its buffers are the map's) */
     const otherIsSlice = useSelector((state: moorhen.State) =>
@@ -104,7 +111,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
      */
     const alignViewToSlice = () => {
         const state = store.getState();
-        const slice = selectSelectedMapRepresentation(state, props.map.uniqueId)?.slice;
+        const slice = recordOf(state)?.slice;
         if (!slice) return;
         dispatch(setQuat(quatFacingSlice(state.glRef.quat, slice.orientation)));
         // Moorhen's origin is the point that puts a centre in view: its negative.

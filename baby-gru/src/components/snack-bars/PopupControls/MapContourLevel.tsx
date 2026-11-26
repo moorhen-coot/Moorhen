@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef } from "react";
 import { RootState, setShownControl } from "@/store";
-import { selectSelectedMapRepresentation } from "@/store/mapRepresentationsSlice";
+import { selectPrimaryMapRepresentation, selectShownLevelsBase } from "@/store/mapRepresentationsSlice";
 
 export const MapContourLevel = () => {
     const currentContourLevelRef = useRef<number | null>(null);
@@ -13,8 +13,9 @@ export const MapContourLevel = () => {
     const mapPrecision = (shownControl?.name === "mapContourLvl" ? shownControl.payload?.mapPrecision : undefined) || 1;
     const contourLevel = useSelector((state: RootState) => {
         const map = state.maps.find(item => item.molNo === mapMolNo);
-        // The representation the scroll wheel changes: the selected one, else the map's first
-        return map ? selectSelectedMapRepresentation(state, map.uniqueId)?.contourLevel : undefined;
+        // The map's level, as the scroll wheel changes it: the lowest shown one (all shown move together in
+        // multi-representation mode), else its first representation's
+        return map ? selectShownLevelsBase(state, map.uniqueId) ?? selectPrimaryMapRepresentation(state, map.uniqueId)?.contourLevel : undefined;
     });
     const dispatch = useDispatch();
 

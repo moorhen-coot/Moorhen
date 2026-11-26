@@ -1,19 +1,25 @@
-import { useDispatch } from "react-redux";
+import { useDispatch, useStore } from "react-redux";
 import { useMapDisplay } from "../../../hooks/useMapDisplay";
-import { setMapRepresentation } from "../../../store/mapRepresentationsSlice";
+import { selectMapRepresentationsOfMap, setMapRepresentation } from "../../../store/mapRepresentationsSlice";
 import { moorhen } from "../../../types/moorhen";
 import { MoorhenColourPicker } from "../../inputs";
 
 interface MoorhenMapColorSelector {
     map: moorhen.Map;
     mapIsVisible: boolean;
+    /**
+     * The representation it colours (a chip's edit panel). Without, every representation of the map (the card's title:
+     * the only one in single-representation mode), showing the first one's colour.
+     */
+    recordId?: string;
 }
 
 export const MapColourSelector = (props: MoorhenMapColorSelector) => {
     const dispatch = useDispatch();
 
     // The map's display record has colours 0-1 (map default where none is set); the picker and the old lists 0-255
-    const display = useMapDisplay(props.map);
+    const display = useMapDisplay(props.map, props.recordId);
+    const store = useStore<moorhen.State>();
     const to255 = (colour: { r: number; g: number; b: number }) => ({ r: colour.r * 255, g: colour.g * 255, b: colour.b * 255 });
     const mapColour = to255(display.colour);
     const negativeMapColour = to255(display.negativeColour);
@@ -25,9 +31,12 @@ export const MapColourSelector = (props: MoorhenMapColorSelector) => {
 
     // The picker gives colours 0-255, the map's display record keeps them 0-1. A record change redraws the map.
     const toUnit = (colour: { r: number; g: number; b: number }) => ({ r: colour.r / 255, g: colour.g / 255, b: colour.b / 255 });
-    // On the representation the card acts on (the selected one, else the map's first)
+    // On `recordId`'s representation, else on every representation of the map
     const changeDisplay = (changes: Parameters<typeof setMapRepresentation>[0]["changes"]) => {
-        if (display.record) dispatch(setMapRepresentation({ id: display.record.id, changes }));
+        const ids = props.recordId
+            ? [props.recordId]
+            : selectMapRepresentationsOfMap(store.getState(), props.map.uniqueId).map(record => record.id);
+        ids.forEach(id => dispatch(setMapRepresentation({ id, changes })));
     };
 
     const handlePositiveMapColorChange = (color: { r: number; g: number; b: number }) => changeDisplay({ positiveColour: toUnit(color) });

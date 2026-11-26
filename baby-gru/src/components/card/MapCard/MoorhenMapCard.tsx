@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { setMapVisible } from "@/store/mapRepresentationsSlice";
-import { MapMultiRepresentationToggle, MapRepresentationsCard } from "./MapRepresentationChips";
+import { MapRepresentationsToolbar, MapRepresentationsCard } from "./MapRepresentationChips";
 import { useIsMultiRepresentation } from "../../../hooks/useMapDisplay";
 import { MapLevelControls } from "./MapLevelControls";
 import { MapRepresentationEditor } from "./MapRepresentationEditor";
@@ -132,10 +132,16 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             open={props.isOpen}
         >
             <MoorhenStack direction="vertical">
-                <MapMultiRepresentationToggle map={props.map} />
+                <MapRepresentationsToolbar map={props.map} />
                 <MapRepresentationsCard
                     map={props.map}
-                    editor={<MapRepresentationEditor map={props.map} level={<MapLevelControls map={props.map} initialContour={initialContour} />} />}
+                    editor={recordId => (
+                        <MapRepresentationEditor
+                            map={props.map}
+                            recordId={recordId}
+                            level={<MapLevelControls map={props.map} initialContour={initialContour} recordId={recordId} />}
+                        />
+                    )}
                 />
                 <MoorhenStack direction="horizontal" gap="1rem" align="center">
                     <MoorhenButton

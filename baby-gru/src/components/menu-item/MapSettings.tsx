@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { selectSelectedMapRepresentation, setMapRepresentation, setMapRepresentationAlpha } from "../../store/mapRepresentationsSlice";
+import { selectPrimaryMapRepresentation, setMapRepresentation, setMapRepresentationAlpha } from "../../store/mapRepresentationsSlice";
 import type { MapStyle } from "../../store/mapContourSettingsSlice";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenSlider, MoorhenToggle } from "../inputs";
@@ -12,8 +12,8 @@ export const MapSettings = (props: {
     disabled: boolean;
 }) => {
     const dispatch = useDispatch();
-    // The representation the map's card acts on (the selected one, else its first)
-    const selectedId = useSelector((state: moorhen.State) => selectSelectedMapRepresentation(state, props.map.uniqueId)?.id);
+    // The map's first representation
+    const selectedId = useSelector((state: moorhen.State) => selectPrimaryMapRepresentation(state, props.map.uniqueId)?.id);
 
     const menuItemText = "Draw settings";
 

@@ -17,7 +17,7 @@ import mapRepresentationsReducer, {
     setPrimaryMapRepresentationAlpha,
     setPrimaryMapRepresentationRadius,
     selectIsMapVisible,
-    selectSelectedMapRepresentation,
+    changeMapRepresentationRadii,
     setMapVisible,
     selectShownLevelsBase,
     shiftMapRepresentationLevels,
@@ -177,16 +177,20 @@ describe("mapRepresentations slice", () => {
         expect(selectShownLevelsBase(store.getState(), "map-a")).toBeUndefined();
     });
 
-    test("the selected representation of a map, else its first", () => {
+    test("the keyboard's radius changes every shown representation of a map, each in its draw mode, never below 1 Å", () => {
         const store = makeStore();
-        store.dispatch(addMapRepresentation(record("mesh", "map-a")));
-        store.dispatch(addMapRepresentation(record("surface", "map-a")));
-        const withSelection = (selected: Record<string, string>) => ({ ...store.getState(), generalStates: { selectedMapRepresentations: selected } });
-        expect(selectSelectedMapRepresentation(withSelection({}), "map-a").id).toBe("mesh");
-        expect(selectSelectedMapRepresentation(withSelection({ "map-a": "surface" }), "map-a").id).toBe("surface");
-        // Gone, or another map's: the first
-        expect(selectSelectedMapRepresentation(withSelection({ "map-a": "deleted" }), "map-a").id).toBe("mesh");
-        expect(selectSelectedMapRepresentation(withSelection({ "map-b": "surface" }), "map-b")).toBeUndefined();
+        store.dispatch(addMapRepresentation(record("local", "map-a", { radius: { local: 15, full: 60 } })));
+        store.dispatch(addMapRepresentation(record("full", "map-a", { radius: { local: 15, full: 60 }, originLock: { centre: [0, 0, 0] } })));
+        store.dispatch(addMapRepresentation(record("hidden", "map-a", { visible: false })));
+        store.dispatch(addMapRepresentation(record("small", "map-a", { radius: { local: 2, full: 2 } })));
+        store.dispatch(changeMapRepresentationRadii({ mapUid: "map-a", by: -2 }));
+        const radii = Object.fromEntries(Object.values(store.getState().mapRepresentations.representations).map(item => [item.id, item.radius]));
+        expect(radii).toEqual({
+            local: { local: 13, full: 60 },
+            full: { local: 15, full: 58 },
+            hidden: { local: 15, full: 120 },
+            small: { local: 1, full: 2 },
+        });
     });
 
     test("closing a map removes its representations only", () => {

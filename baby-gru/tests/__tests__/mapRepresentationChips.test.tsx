@@ -1,22 +1,23 @@
 /**
- * Several representations of a map in its card (.roadmaps/map-display.md): a representations card (chips, "+",
- * presets) shown by the card's "Multiple representations" toggle, and always for a map with more than one; each
- * chip's edit popover holds its level and draw settings; "+" adds a copy; only one representation of a map can be a
- * 2D slice.
+ * Several representations of a map in its card (.roadmaps/map-display.md): a "Multiple representations" switch and the map
+ * wizard (presets) at the top; a representations card (chips) shown by the switch, and always for a map with more than one; each
+ * chip acts on its own representation (eye, edit popover with its colour, level and draw settings, duplicate, delete);
+ * the card's level moves all shown ones together; only one representation of a map can be a 2D slice.
  */
 import "@testing-library/jest-dom";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
-import { MapMultiRepresentationToggle, MapRepresentationsCard } from "../../src/components/card/MapCard/MapRepresentationChips";
+import { MapRepresentationsCard, MapRepresentationsToolbar } from "../../src/components/card/MapCard/MapRepresentationChips";
 import { MapLevelControls } from "../../src/components/card/MapCard/MapLevelControls";
 import { MapRepresentationEditor } from "../../src/components/card/MapCard/MapRepresentationEditor";
 import { MoorhenMenuSystem } from "../../src/components/menu-system/MenuSystem";
 import { MoorhenInstanceProvider } from "../../src/InstanceManager";
 import { createMoorhenStore } from "../../src/store/MoorhenReduxStore";
 import { addMap } from "../../src/store/mapsSlice";
-import { addMapRepresentation, selectMapRepresentationsOfMap, selectSelectedMapRepresentation } from "../../src/store/mapRepresentationsSlice";
+import { addMapRepresentation, selectMapRepresentationsOfMap } from "../../src/store/mapRepresentationsSlice";
 import type { MapRepresentationData } from "../../src/utils/Representation/mapRepresentationData";
+import { MAP_REPRESENTATION_PRESETS } from "../../src/utils/Representation/mapRepresentationPresets";
 import { moorhen } from "../../src/types/moorhen";
 import "./testUtils";
 
@@ -52,44 +53,47 @@ const record = (id: string, changes: Partial<MapRepresentationData> = {}): MapRe
     ...changes,
 });
 
-const renderCard = async (...records: MapRepresentationData[]) => {
+const renderCard = async (...initial: MapRepresentationData[]) => {
     const store = createMoorhenStore();
     store.dispatch(addMap(map));
-    records.forEach(item => store.dispatch(addMapRepresentation(item)));
+    initial.forEach(item => store.dispatch(addMapRepresentation(item)));
     const menuSystem = new MoorhenMenuSystem();
-    const selected = () => selectSelectedMapRepresentation(store.getState(), "map-3");
     const view = () => (
         <Provider store={store}>
             <MoorhenInstanceProvider menuSystem={menuSystem}>
-                <MapMultiRepresentationToggle map={map} />
-                <MapRepresentationsCard map={map} editor={<MapRepresentationEditor map={map} level={<MapLevelControls map={map} />} offerSlice={true} />} />
+                <MapRepresentationsToolbar map={map} />
+                <MapRepresentationsCard
+                    map={map}
+                    editor={recordId => (
+                        <MapRepresentationEditor map={map} recordId={recordId} level={<MapLevelControls map={map} recordId={recordId} />} offerSlice={true} />
+                    )}
+                />
             </MoorhenInstanceProvider>
         </Provider>
     );
     const { rerender } = render(view());
     const user = userEvent.setup();
-    return { store, user, selected, update: () => rerender(view()) };
+    const records = () => selectMapRepresentationsOfMap(store.getState(), "map-3");
+    return { store, user, records, update: () => rerender(view()) };
 };
 
-const chips = () => screen.queryAllByRole("button", { pressed: undefined }).filter(element => element.classList.contains("moorhen__representation-chip"));
+const chips = () => screen.queryAllByTestId("map-representation-chip");
 
 describe("a map's representations in its card", () => {
-    const addButton = () => screen.queryByRole("button", { name: /add a copy of the selected representation/i });
-    const presetsButton = () => screen.queryByRole("button", { name: /representation presets/i });
+    const wizardButton = () => screen.getByRole("button", { name: /map wizard/i });
     const toggle = () => screen.getByRole("checkbox", { name: /multiple representations/i });
+    const chipButton = (chip: HTMLElement, name: RegExp) => within(chip).getByRole("button", { name });
 
-    test("one representation: no representations card until Draw Settings' toggle is on", async () => {
+    test("one representation: no representations card until the toggle is on", async () => {
         const { user, update } = await renderCard(record("mesh"));
         expect(chips()).toHaveLength(0);
-        expect(addButton()).toBeNull();
         expect(toggle()).not.toBeChecked();
 
         await user.click(toggle());
         update();
         expect(chips()).toHaveLength(1);
         // The last one cannot be deleted
-        expect(within(chips()[0]).getByRole("button", { name: /delete this representation/i })).toBeDisabled();
-        expect(addButton()).not.toBeNull();
+        expect(chipButton(chips()[0], /delete this representation/i)).toBeDisabled();
 
         await user.click(toggle());
         update();
@@ -103,63 +107,52 @@ describe("a map's representations in its card", () => {
         expect(toggle()).toBeDisabled();
     });
 
-    test("two: a chip each, with its style and level; clicking one selects it", async () => {
-        const { user, selected } = await renderCard(record("mesh"), record("surface", { style: "solid", contourLevel: 0.5 }));
+    test("a chip each, with its style and level", async () => {
+        await renderCard(record("mesh"), record("surface", { style: "solid", contourLevel: 0.5 }));
         expect(chips().map(chip => chip.textContent)).toEqual(["Mesh1.00σ", "Surface2.00σ"]);
-        expect(selected().id).toBe("mesh");
-        await user.click(chips()[1]);
-        expect(selected().id).toBe("surface");
-        expect(chips()[1]).toHaveAttribute("aria-pressed", "true");
     });
 
-    test("each chip shows, hides and deletes its own representation", async () => {
-        const { store, user, update } = await renderCard(record("mesh"), record("surface", { style: "solid" }));
-        await user.click(chips()[1]);
-        update();
-        await user.click(within(chips()[1]).getByRole("button", { name: /hide this representation/i }));
-        const byId = () => Object.fromEntries(selectMapRepresentationsOfMap(store.getState(), "map-3").map(item => [item.id, item.visible]));
-        expect(byId()).toEqual({ mesh: true, surface: false });
-
-        // Deleting the selected one: the card goes on with the other; the representations card goes (toggle off)
-        update();
-        await user.click(within(chips()[1]).getByRole("button", { name: /delete this representation/i }));
-        expect(byId()).toEqual({ mesh: true });
-        expect(selectSelectedMapRepresentation(store.getState(), "map-3").id).toBe("mesh");
-        update();
-        expect(chips()).toHaveLength(0);
-    });
-
-    test("+ adds a copy of the selected one, and selects it", async () => {
+    test("each chip shows, hides, duplicates and deletes its own representation", async () => {
         const surface = record("surface", { style: "solid", contourLevel: 0.5, colour: { r: 1, g: 0, b: 0 } });
-        const { store, user, selected, update } = await renderCard(record("mesh"), surface);
-        await user.click(chips()[1]);
-        update();
-        await user.click(addButton());
-        const records = selectMapRepresentationsOfMap(store.getState(), "map-3");
-        expect(records).toHaveLength(3);
-        expect(selected().id).toBe(records[2].id);
-        expect(records[2]).toEqual({ ...surface, id: records[2].id });
-    });
-
-    test("a copy of a 2D slice is drawn as a mesh: one slice per map", async () => {
-        const { store, user } = await renderCard(record("slice", { style: "slice" }), record("mesh"));
-        await user.click(addButton());
-        expect(selectMapRepresentationsOfMap(store.getState(), "map-3").map(item => item.style)).toEqual(["slice", "lines", "lines"]);
-    });
-
-    test("a preset replaces the map's representations, and selects its first", async () => {
-        const { store, user, selected } = await renderCard(record("mesh"), record("surface", { style: "solid" }));
-        await user.click(presetsButton());
-        await user.click(await screen.findByRole("button", { name: "Preset: Cascade" }));
-        const records = selectMapRepresentationsOfMap(store.getState(), "map-3");
-        // 1, 2 and 3σ of an rms of 0.25
-        expect(records.map(item => [item.style, item.contourLevel])).toEqual([
-            ["solid", 0.25],
-            ["solid", 0.5],
-            ["solid", 0.75],
+        const { user, update, records } = await renderCard(record("mesh"), surface);
+        await user.click(chipButton(chips()[1], /hide this representation/i));
+        expect(records().map(item => [item.id, item.visible])).toEqual([
+            ["mesh", true],
+            ["surface", false],
         ]);
-        expect(records.some(item => item.id === "mesh" || item.id === "surface")).toBe(false);
-        expect(selected().id).toBe(records[0].id);
+
+        // A copy of exactly that one, shown
+        update();
+        await user.click(chipButton(chips()[1], /duplicate this representation/i));
+        expect(records()).toHaveLength(3);
+        expect(records()[2]).toEqual({ ...surface, id: records()[2].id, visible: true });
+
+        update();
+        await user.click(chipButton(chips()[1], /delete this representation/i));
+        expect(records().map(item => item.id)).toEqual(["mesh", records()[1].id]);
+        expect(records()[1].style).toBe("solid");
+    });
+
+    test("a duplicate of a 2D slice is drawn as a mesh: one slice per map", async () => {
+        const { user, records } = await renderCard(record("slice", { style: "slice" }), record("mesh"));
+        await user.click(chipButton(chips()[0], /duplicate this representation/i));
+        expect(records().map(item => item.style)).toEqual(["slice", "lines", "lines"]);
+    });
+
+    test("the wizard, beside the switch, is there with one representation too", async () => {
+        await renderCard(record("mesh"));
+        expect(wizardButton()).toBeEnabled();
+    });
+
+    test("a wizard preset replaces the map's representations, at multiples of the map's level (the lowest shown)", async () => {
+        const { user, records } = await renderCard(record("mesh", { contourLevel: 0.4 }), record("surface", { style: "solid", contourLevel: 0.2 }));
+        await user.click(wizardButton());
+        await user.click(await screen.findByRole("button", { name: "Wizard: Cascade" }));
+        const cascade = MAP_REPRESENTATION_PRESETS.find(preset => preset.id === "cascade");
+        expect(records().map(item => [item.style, Number(item.contourLevel.toFixed(4))])).toEqual(
+            cascade.layers.map(layer => ["solid", Number((0.2 * layer.times).toFixed(4))])
+        );
+        expect(records().some(item => item.id === "mesh" || item.id === "surface")).toBe(false);
     });
 
     test("the card's level, in multi-representation mode, moves every shown representation by the same amount", async () => {
@@ -225,15 +218,20 @@ describe("a map's representations in its card", () => {
     const openEditor = async (user: ReturnType<typeof userEvent.setup>, chip: HTMLElement) =>
         user.click(within(chip).getByRole("button", { name: /edit this representation/i }));
 
-    test("a chip's edit popover selects it, and holds its level and draw settings", async () => {
-        const { user, selected } = await renderCard(record("mesh"), record("surface", { style: "solid", contourLevel: 0.5 }));
+    test("a chip's edit popover holds its colour, level and draw settings, and changes only it", async () => {
+        const { user, records } = await renderCard(record("mesh"), record("surface", { style: "solid", contourLevel: 0.5 }));
         await openEditor(user, chips()[1]);
-        expect(selected().id).toBe("surface");
         expect(await screen.findByRole("checkbox", { name: /draw as a surface/i })).toBeChecked();
         expect(screen.getByRole("checkbox", { name: /draw as mesh/i })).not.toBeChecked();
-        expect(screen.getByText("RMSD:")).toBeInTheDocument();
-        // Its colour, with the card's colour picker
         expect(screen.getByText("Colour")).toBeInTheDocument();
+        // Its level in rms, 2.00: set to 3, the mesh stays at 1
+        const rmsInput = screen.getAllByRole("textbox").find(input => (input as HTMLInputElement).value === "2.00") as HTMLInputElement;
+        await user.clear(rmsInput);
+        await user.type(rmsInput, "3{Enter}");
+        expect(records().map(item => [item.id, item.contourLevel])).toEqual([
+            ["mesh", 0.25],
+            ["surface", 0.75],
+        ]);
     });
 
     test("only one representation of a map can be a 2D slice", async () => {

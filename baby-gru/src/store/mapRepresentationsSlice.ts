@@ -156,6 +156,20 @@ const mapRepresentationsSlice = createSlice({
         },
         // API
         /**
+         * Change the radius of every shown representation of a map by the same amount (`by`, Å), each in the draw mode
+         * it is in, never below 1 Å: the keyboard's +/- radius. Hidden ones stay as they are.
+         */
+        changeMapRepresentationRadii: (state, action: PayloadAction<{ mapUid: string; by: number }>) => {
+            if (!Number.isFinite(action.payload.by)) return;
+            Object.values(state.representations).forEach(representation => {
+                if (representation.mapUid === action.payload.mapUid && representation.visible) {
+                    const mode = drawModeOf(representation);
+                    representation.radius[mode] = Math.max(1, representation.radius[mode] + action.payload.by);
+                }
+            });
+        },
+        // API
+        /**
          * Change a representation's 2D slice: some of where it is (centre, orientation), its nodal lines, its contour
          * spacing. A representation without a slice yet gets one, through the origin facing down z where not given.
          */
@@ -208,18 +222,6 @@ export const selectPrimaryMapRepresentation = (state: StateWithMapRepresentation
     primaryOf(state.mapRepresentations, mapUid);
 
 /**
- * The representation of a map its card's controls act on (`generalStates.selectedMapRepresentations`), or its first
- * when none is selected or the selected one is gone.
- */
-export const selectSelectedMapRepresentation = (
-    state: StateWithMapRepresentations & { generalStates: { selectedMapRepresentations?: Record<string, string> } },
-    mapUid: string
-): MapRepresentationData | undefined => {
-    const selected = state.mapRepresentations.representations[state.generalStates.selectedMapRepresentations?.[mapUid] ?? ""];
-    return selected && selected.mapUid === mapUid ? selected : primaryOf(state.mapRepresentations, mapUid);
-};
-
-/**
  * The level a map's shown representations move from together (multi-representation mode): the lowest of their levels,
  * undefined when none is shown
  */
@@ -252,6 +254,7 @@ export const {
     setMapRepresentationSlice,
     setMapVisible,
     shiftMapRepresentationLevels,
+    changeMapRepresentationRadii,
     setPrimaryMapRepresentation,
     setPrimaryMapRepresentationAlpha,
     setPrimaryMapRepresentationRadius,

@@ -1,5 +1,6 @@
 import { Chart, registerables } from "chart.js";
-import { selectSelectedMapRepresentation, setMapRepresentation } from "@/store/mapRepresentationsSlice";
+import { selectPrimaryMapRepresentation, selectShownLevelsBase, setMapRepresentation, shiftMapRepresentationLevels } from "@/store/mapRepresentationsSlice";
+import { useIsMultiRepresentation } from "../../../hooks/useMapDisplay";
 import annotationPlugin from "chartjs-plugin-annotation";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
@@ -26,8 +27,11 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [zoomFactor, setZoomFactor] = useState<number>(1);
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark);
-    // The representation the card acts on
-    const selectedId = useSelector((state: moorhen.State) => selectSelectedMapRepresentation(state, props.map.uniqueId)?.id);
+    // The card's level: in multi-representation mode all shown representations move by the same amount, else the
+    // map's one representation
+    const isMultiRepresentation = useIsMultiRepresentation(props.map);
+    const firstId = useSelector((state: moorhen.State) => selectPrimaryMapRepresentation(state, props.map.uniqueId)?.id);
+    const shownBase = useSelector((state: moorhen.State) => selectShownLevelsBase(state, props.map.uniqueId));
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width);
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height);
     const [exponential, setExponential] = useState<boolean>(props.map.isEM); // set Y axis to logarithmic if EM map
@@ -46,13 +50,11 @@ export const MapHistogramAccordion = (props: MapHistogramProps) => {
                 }
                 const peakIndex = points[0].index;
 
-                if (selectedId) {
-                    dispatch(
-                        setMapRepresentation({
-                            id: selectedId,
-                            changes: { contourLevel: histogramData.base + histogramData.bin_width * (peakIndex + 1) },
-                        })
-                    );
+                const level = histogramData.base + histogramData.bin_width * (peakIndex + 1);
+                if (isMultiRepresentation) {
+                    if (shownBase !== undefined) dispatch(shiftMapRepresentationLevels({ mapUid: props.map.uniqueId, by: level - shownBase }));
+                } else if (firstId) {
+                    dispatch(setMapRepresentation({ id: firstId, changes: { contourLevel: level } }));
                 }
             }
         };

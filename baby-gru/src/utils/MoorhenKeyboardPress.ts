@@ -8,7 +8,7 @@ import { vec3Create } from '../WebGLgComponents/mgMaths';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { setHoveredAtom } from "../store/hoveringStatesSlice";
-import { selectSelectedMapRepresentation, setMapRepresentationRadius } from "../store/mapRepresentationsSlice";
+import { changeMapRepresentationRadii } from "../store/mapRepresentationsSlice";
 import { triggerUpdate } from "../store/moleculeMapUpdateSlice";
 import { setOrigin, setZoom, setQuat, setShortCutHelp,setClipStart, setClipEnd, triggerClearLabels } from "../store";
 import { Shortcut } from '../InstanceManager/Preferences';
@@ -337,12 +337,8 @@ export const moorhenKeyPress = (
 
     else if (action === 'increase_map_radius' || action === 'decrease_map_radius') {
         if (activeMap) {
-            // The radius of the draw mode of the representation its card acts on (map-display.md), never below 1 Å
-            const record = selectSelectedMapRepresentation(store.getState(), activeMap.uniqueId)
-            if (record) {
-                const radius = record.radius[record.originLock ? "full" : "local"] + (action === 'increase_map_radius' ? 2 : -2)
-                dispatch( setMapRepresentationRadius({ id: record.id, radius: Math.max(1, radius) }) )
-            }
+            // Every shown representation of the active map, each in the draw mode it is in (map-display.md)
+            dispatch( changeMapRepresentationRadii({ mapUid: activeMap.uniqueId, by: action === 'increase_map_radius' ? 2 : -2 }) )
         }
     }
 
