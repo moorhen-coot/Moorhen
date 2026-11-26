@@ -1024,9 +1024,14 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         initGraphicsContext(this)
         attachCanvasListeners(this)
         initGraphics(this)
-        this.unsubscribeCamera = this._camera.controller.subscribe(() => {
+        this.unsubscribeCamera = this._camera.controller.subscribe((_state, arrived) => {
+            // The slab is current either way: it is derived from the camera, not a target.
             this.echoSlabToStore()
-            this.echoViewToStore()
+            // The view only when the camera is somewhere that was asked for. A move cut short
+            // leaves it at a point nobody chose, and writing that into the store would overwrite
+            // the place the view was being sent to - after which the reconciling effect sees the
+            // two agree and has no reason to try again. See CameraController.subscribe.
+            if (arrived) this.echoViewToStore()
         })
     }
 

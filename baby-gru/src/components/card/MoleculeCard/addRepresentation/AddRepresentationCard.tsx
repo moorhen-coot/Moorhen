@@ -71,10 +71,11 @@ export const AddCustomRepresentationCard = memo(
 
         const [colourMode, setColourMode] = useState<string>(existingParams?.colourMode ?? "custom");
         const [nonCustomOpacity, setNonCustomOpacity] = useState<number>(existingParams?.nonCustomOpacity ?? 1.0);
-        // From the representation itself rather than the build parameters: it is a uniform, not
-        // something the geometry is built from, so it never took part in a rebuild.
+        // From the build parameters, as the opacity beside it is, falling back to the live
+        // representation for one built before the params carried it.
         const [viewDependentTransparency, setViewDependentTransparency] = useState<boolean>(
-            props.representation?.viewDependentTransparency ?? false);
+            existingParams?.viewDependentTransparency
+            ?? props.representation?.viewDependentTransparency ?? false);
         const [colour, setColour] = useState<string>(
             existingParams && !existingParams.useDefaultColours && existingParams.colour !== ""
                 ? existingParams.colour

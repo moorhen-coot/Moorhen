@@ -283,6 +283,7 @@ export {
 }  from "./generalStatesSlice";
 export {
     setRequestDrawScene,
+    setCameraSnap,
     setDrawsThrottled,
     setIsWebGL2,
     setActiveMolecule,

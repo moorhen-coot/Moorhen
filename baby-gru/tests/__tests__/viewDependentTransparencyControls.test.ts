@@ -135,6 +135,57 @@ describe("a representation's switch", () => {
     });
 });
 
+describe("the scene's copy of a representation", () => {
+    /**
+     * A scene records its representations as build parameters of its own and rebuilds them from
+     * those when it is shown - which happens *after* the session loader has restored everything
+     * else. So a setting the parameters do not carry is restored and then immediately thrown
+     * away, which is exactly what happened to this one: saved correctly in the session file, gone
+     * by the time the scene had finished showing.
+     */
+    const builder = () => import("../../src/utils/Representation/RepresentationBuilder");
+
+    it("is captured from the representation", async () => {
+        const { extractRepresentationParams } = await builder();
+        const params = extractRepresentationParams({
+            style: "MetaBalls", cid: "//B", nonCustomOpacity: 0.47,
+            viewDependentTransparency: true,
+            useDefaultColourRules: true, colourRules: [], useDefaultBondOptions: true,
+            useDefaultM2tParams: true, useDefaultResidueEnvironmentOptions: true,
+            useDefaultGaussianSurfaceSettings: true, useDefaultWormOptions: true,
+            uniqueId: "rep-1", isCustom: true, visible: true, interfaceOption: { visible: true },
+        } as never);
+        expect(params.viewDependentTransparency).toBe(true);
+    });
+
+    it("is captured as off when it is off", async () => {
+        const { extractRepresentationParams } = await builder();
+        const params = extractRepresentationParams({
+            style: "CBs", cid: "//A", nonCustomOpacity: 1, viewDependentTransparency: false,
+            useDefaultColourRules: true, colourRules: [], useDefaultBondOptions: true,
+            useDefaultM2tParams: true, useDefaultResidueEnvironmentOptions: true,
+            useDefaultGaussianSurfaceSettings: true, useDefaultWormOptions: true,
+            uniqueId: "rep-2", isCustom: true, visible: true, interfaceOption: { visible: true },
+        } as never);
+        expect(params.viewDependentTransparency).toBe(false);
+    });
+
+    it("is applied when a scene rebuilds the representation", async () => {
+        // Source-level: running the builder needs a molecule, Coot and a renderer. The pairing
+        // with setNonCustomOpacity is the thing worth holding - they are restored together or
+        // the scene drops one of them.
+        const { readFileSync } = await import("fs");
+        const { join } = await import("path");
+        const source = readFileSync(join(
+            __dirname, "../../src/utils/Representation/RepresentationBuilder.ts"), "utf8");
+        const opacity = source.indexOf("representation.setNonCustomOpacity(nonCustomOpacity);");
+        const ours = source.indexOf("representation.setViewDependentTransparency(");
+        expect(opacity).toBeGreaterThan(-1);
+        expect(ours).toBeGreaterThan(opacity);
+        expect(source).toContain("viewDependentTransparency = existingParams?.viewDependentTransparency ?? false,");
+    });
+});
+
 describe("rebuilding a representation", () => {
     it("re-applies the switch wherever it re-applies the opacity", async () => {
         // Fresh buffers start without it, so anything that rebuilds has to put it back. The two

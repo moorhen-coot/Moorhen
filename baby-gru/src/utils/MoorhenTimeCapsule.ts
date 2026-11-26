@@ -22,6 +22,7 @@ import {
     setMapColours,
     setMapRadius,
     setMapStyle,
+    setCameraSnap,
     setMapSlice,
     setMapViewDependentTransparency,
     setMapSliceNodalLines,
@@ -1388,6 +1389,11 @@ export class MoorhenTimeCapsule {
         guardedDispatch(setClipStart, finiteOrAbsent(restoredCamera.clipFront));
         guardedDispatch(setClipEnd, finiteOrAbsent(restoredCamera.clipBack));
         guardedDispatch(setQuat, sessionData.viewData.quat4);
+        // After the three it applies to, so that one render carries both the view and the
+        // instruction to take it up at once. A restored view should not be animated to - and the
+        // quarter second an ease takes is a window in which it can be interrupted and the view
+        // left part of the way there, which is what used to happen. See glRefSlice.cameraSnap.
+        dispatch(setCameraSnap(true));
         guardedDispatch(setBackgroundColor, sessionData.viewData.backgroundColor);
         guardedDispatch(setEdgeDetectDepthScale, sessionData.viewData.edgeDetection.depthScale);
         guardedDispatch(setEdgeDetectDepthThreshold, sessionData.viewData.edgeDetection.depthThreshold);

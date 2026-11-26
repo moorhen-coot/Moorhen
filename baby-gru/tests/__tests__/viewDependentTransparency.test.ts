@@ -123,6 +123,50 @@ describe("the shader and this module", () => {
     });
 });
 
+describe("the WebGPU shader", () => {
+    const wgsl = readFileSync(
+        join(__dirname, "../../src/WebGPUComponents/previewShaders.ts"), "utf8");
+
+    it("computes the same shell and the same power", () => {
+        // Written a third time because it has to run on a third thing. The two renderers drawing
+        // the same scene differently is the failure this guards, and nobody would see it unless
+        // they had both open side by side.
+        expect(wgsl).toContain(
+            `let facing = max(abs(dot(normalize(normal), normalize(frame.eyeDir.xyz))), ${MINIMUM_FACING});`);
+        expect(wgsl).toContain("let shell = 1.0 - pow(transmitted, 1.0 / facing);");
+        expect(wgsl).toContain("return " + "shell" + " * shell".repeat(BULK_FALLOFF - 1) + ";");
+    });
+
+    it("guards both ends of the opacity range as the others do", () => {
+        expect(wgsl).toContain("if (transmitted <= 0.0) { return 1.0; }");
+        expect(wgsl).toContain("if (transmitted >= 1.0) { return 0.0; }");
+    });
+
+    it("reads its switch from the draw uniform the renderer writes", () => {
+        // The two halves of one integration point: the shader reads output.y, and drawBlock puts
+        // the flag in the second slot of the output vector. A mismatch here is a switch that
+        // silently does nothing, or - worse - one that reads the opaque flag instead.
+        expect(wgsl).toContain("if (draw.output.y < 0.5) { return base; }");
+        const renderer = readFileSync(
+            join(__dirname, "../../src/WebGPUComponents/previewRenderer.ts"), "utf8");
+        expect(renderer).toContain(
+            "out.set([opaque ? 1 : 0, viewDependentTransparency ? 1 : 0, 0, 0], offset + 32);");
+    });
+
+    it("applies it to the surfaces WebGL applies it to, and not the others", () => {
+        // In WebGL the reach of the effect is decided by which programs share the triangle
+        // fragment shader: meshes, textured meshes and lit lines do; plain lines and the perfect
+        // spheres have their own. WebGPU has to draw that same line by hand.
+        const applications = wgsl.match(/viewDependentAlpha\(in\.colour\.a, /g) ?? [];
+        expect(applications).toHaveLength(3);
+        // The textured path takes the mapped normal, as the WebGL one does: it applies this to
+        // `norm` after mappedNormal has had it, so a bumped surface thickens along its bumps.
+        expect(wgsl).toContain("viewDependentAlpha(in.colour.a, n)");
+        // fs_line and fs_line_peel pass the alpha straight through, as WebGL's lines shader does.
+        expect(wgsl).toContain("fn fs_line(in: VOut) -> @location(0) vec4f {\n    return fogged(in.colour, in.colour.a, in.eyeDistance);");
+    });
+});
+
 /**
  * Coot's own shader, where the checkout is to hand.
  *
