@@ -14,7 +14,7 @@ import {
 import { checkerboardTexture, registerTexture } from "../../WebGLgComponents/textureRegistry";
 import { webGPUAdapterSummary, webGPUUnavailableReason } from "../../WebGPUComponents/gpu";
 import { applyGpuMapContours, gpuMapContourSetting } from "../../WebGPUComponents/mapContour/setting";
-import { grazingDensitySetting } from "../../WebGLgComponents/grazingDensity";
+import { viewDependentTransparencySetting } from "../../WebGLgComponents/viewDependentTransparency";
 import { setRequestDrawScene } from "../../store/glRefSlice";
 import { gpuMetaBallsSetting } from "../../WebGPUComponents/metaballs";
 import { setUseGemmi } from "../../store/generalStatesSlice";
@@ -203,8 +203,8 @@ export const MoorhenDevMenu = () => {
     const [centreOnHighlight, setCentreOnHighlight] = useState<boolean>(meshCentringSetting.followHighlight);
     const [splitField, setSplitField] = useState<boolean>(gpuMetaBallsSetting.splitField);
     const [gpuMapContours, setGpuMapContours] = useState<boolean>(gpuMapContourSetting.wanted);
-    const [grazingDensity, setGrazingDensity] = useState<number>(grazingDensitySetting.strength);
-    const [grazingAnchor, setGrazingAnchor] = useState<number>(grazingDensitySetting.anchor);
+    const [viewDependentTransparency, setViewDependentTransparency] =
+        useState<boolean>(viewDependentTransparencySetting.enabled);
     // Why there is no WebGPU here, or null: no navigator.gpu at once, no adapter once asked. Then
     // every WebGPU switch shows off and cannot be changed, whatever it is set to.
     const [noWebGPU, setNoWebGPU] = useState<string | null>(webGPUUnavailableReason());
@@ -651,46 +651,22 @@ export const MoorhenDevMenu = () => {
                         Log triangles by representation
                     </MoorhenMenuItem>
                     {/*
-                      * Here, and not in map or molecule settings, because it is not the control
-                      * this wants to be: it drives every transparent surface at once, so that the
-                      * effect can be judged on a real map before anything in the interface
-                      * commits to it. The per-representation slider replaces it.
+                      * Here, and not in map or molecule settings, because it drives every
+                      * transparent surface at once - enough to judge the effect on a real map
+                      * before the interface commits to it. The per-representation switch replaces
+                      * this one.
                       */}
-                    <MoorhenSlider
-                        minVal={0}
-                        maxVal={1}
-                        decimalPlaces={2}
-                        sliderTitle="Edge density (all transparent surfaces)"
-                        usePreciseInput={true}
-                        showButtons={false}
-                        value={grazingDensity}
-                        setValue={value => {
-                            grazingDensitySetting.strength = value;
-                            setGrazingDensity(value);
-                            // A uniform changes nothing until something draws, and moving a
-                            // slider asks for no frame of its own.
-                            dispatch(setRequestDrawScene(true));
-                        }}
-                    />
-                    {/*
-                      * Which angle the opacity slider is describing. 1.0 is face-on, where the
-                      * effect only works on a surface already thinned by hand; lower moves it to
-                      * a glancing view, where an ordinary opacity behaves as a very low one does
-                      * face-on. Adjustable because the right value is a matter of how it looks,
-                      * and 0.5 is a starting point rather than an answer.
-                      */}
-                    <MoorhenSlider
-                        minVal={0.05}
-                        maxVal={1}
-                        decimalPlaces={2}
-                        sliderTitle="Edge density anchor (1 = face-on)"
-                        usePreciseInput={true}
-                        showButtons={false}
-                        isDisabled={grazingDensity <= 0}
-                        value={grazingAnchor}
-                        setValue={value => {
-                            grazingDensitySetting.anchor = value;
-                            setGrazingAnchor(value);
+                    <MoorhenToggle
+                        type="switch"
+                        checked={viewDependentTransparency}
+                        label="View-dependent transparency (all surfaces)"
+                        tooltip="Transparent surfaces thicken where they are seen edge-on. Coot's curve; needs an opacity below 1 to do anything, and little happens below about 0.3."
+                        onChange={() => {
+                            const enabled = !viewDependentTransparency;
+                            viewDependentTransparencySetting.enabled = enabled;
+                            setViewDependentTransparency(enabled);
+                            // A uniform changes nothing until something draws, and a switch asks
+                            // for no frame of its own.
                             dispatch(setRequestDrawScene(true));
                         }}
                     />

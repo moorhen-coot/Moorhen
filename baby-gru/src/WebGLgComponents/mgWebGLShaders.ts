@@ -52,21 +52,14 @@ const locateAlphaMultiplier = (program, gl) => {
     // fragment shader cannot get one of the two and not the other - which is the exact shape of
     // the lit-lines bug described above.
     //
-    // Zero is the safe start for this one, and for the opposite reason to the fade: an unwritten
-    // float is 0.0, and 0.0 is the identity here. A program nobody tells about it draws exactly
+    // False is the safe start, and for once the unwritten value agrees: an unset bool uniform is
+    // false, and false is this effect's identity. A program nobody tells about it draws exactly
     // what it drew before the uniform existed.
-    program.grazingDensity = gl.getUniformLocation(program, "grazingDensity");
-    if (program.grazingDensity != null) {
+    program.viewDependentTransparency =
+        gl.getUniformLocation(program, "viewDependentTransparency");
+    if (program.viewDependentTransparency != null) {
         gl.useProgram(program);
-        gl.uniform1f(program.grazingDensity, 0.0);
-    }
-    // 1.0, not 0.0, and for the opposite reason to its neighbour: the anchor divides, so the
-    // unwritten zero would be the one value that means nothing at all. At 1.0 a program nobody
-    // tells about it anchors face-on, which is a sensible picture rather than a broken one.
-    program.grazingAnchor = gl.getUniformLocation(program, "grazingAnchor");
-    if (program.grazingAnchor != null) {
-        gl.useProgram(program);
-        gl.uniform1f(program.grazingAnchor, 1.0);
+        gl.uniform1i(program.viewDependentTransparency, 0);
     }
 };
 

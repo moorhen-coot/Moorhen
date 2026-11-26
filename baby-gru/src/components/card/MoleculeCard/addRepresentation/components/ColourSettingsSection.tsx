@@ -19,6 +19,8 @@ interface ColourSettingsSectionProps {
     setColour: React.Dispatch<React.SetStateAction<string>>;
     nonCustomOpacity: number;
     setNonCustomOpacity: (val: number) => void;
+    viewDependentTransparency: boolean;
+    setViewDependentTransparency: (val: boolean) => void;
     representationStyle: RepresentationStyles;
     mode: "add" | "edit";
     molecule: moorhen.Molecule;
@@ -39,6 +41,8 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
         setColour,
         nonCustomOpacity,
         setNonCustomOpacity,
+        viewDependentTransparency,
+        setViewDependentTransparency,
         representationStyle,
         mode,
         molecule,
@@ -88,6 +92,13 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
         if (representation) {
             representation.setNonCustomOpacity(newVal);
         }
+    };
+
+    const handleViewDependentTransparencyChange = (enabled: boolean) => {
+        setViewDependentTransparency(enabled);
+        // Straight onto the buffers, as the opacity is: it is a uniform, so the representation
+        // does not have to be rebuilt or reapplied to take it.
+        representation?.setViewDependentTransparency(enabled);
     };
 
     const applyNcsColourChange = async () => {
@@ -259,6 +270,23 @@ export const ColourSettingsSection = (props: ColourSettingsSectionProps) => {
                             sliderTitle="Opacity"
                             value={nonCustomOpacity}
                             setValue={(newVal: number) => handleOpacityChange(newVal)}
+                        />
+                        {/*
+                          * Beside the opacity because it is the opacity's companion and does
+                          * nothing without it: the effect is absorption through a shell, so a
+                          * solid surface has no shell to look along. Disabled rather than hidden
+                          * while it is solid, so somebody who has not met the effect can still
+                          * see that it is there and what it is waiting for.
+                          */}
+                        <MoorhenToggle
+                            type="switch"
+                            label="Denser at edges"
+                            tooltip={nonCustomOpacity < 0.99
+                                ? "Thicken the surface where it is seen edge-on, as looking along a shell would."
+                                : "Lower the opacity to use this: a solid surface has no shell to look along."}
+                            disabled={nonCustomOpacity >= 0.99}
+                            checked={viewDependentTransparency && nonCustomOpacity < 0.99}
+                            onChange={() => handleViewDependentTransparencyChange(!viewDependentTransparency)}
                         />
                     </MoorhenStack>
                 </>

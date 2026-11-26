@@ -87,15 +87,10 @@ const triangle_fragment_shader_body = (discards) => `#version 300 es\n
     // a single vertex. Defaults to 1.0 for the many draws that never set it.
     uniform float alphaMultiplier;
 
-    // How much a transparent surface thickens where it is seen edge-on, 0 to 1. See
-    // WebGLgComponents/grazingDensity.ts, which holds the same arithmetic and the reasoning.
-    // 0 - what every draw that does not set it gets - is the identity, so nothing changes.
-    uniform float grazingDensity;
-
-    // The |N.V| at which the surface shows the opacity that was asked for. 1.0 is face-on, which
-    // is what an unwritten-but-defaulted program gets and is the behaviour this had before the
-    // anchor existed. See grazingDensity.ts for why face-on is the wrong place to anchor it.
-    uniform float grazingAnchor;
+    // Whether a transparent surface thickens where it is seen edge-on. See
+    // WebGLgComponents/viewDependentTransparency.ts, which holds the same arithmetic and the
+    // reasoning. False - what every draw that does not set it gets - leaves the alpha alone.
+    uniform bool viewDependentTransparency;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
 
@@ -211,20 +206,17 @@ ${anaglyph_colour_snippet}
     // per fragment at the top of main. See lookup.
     highp vec2 shadowDepthSlope;
 
-    // Beer-Lambert through a shell: a surface seen at angle to its normal is more of itself to
-    // look through, so the silhouette closes up while the face-on opacity is left exactly as the
-    // user set it. grazingDensity dials the path length, not the alpha, so 0 is the identity
-    // rather than merely close to it. The clamp is against bad normals at the silhouette, not
-    // against infinity - see MINIMUM_FACING in grazingDensity.ts.
-    float grazingAlpha(float base, vec3 n, vec3 viewDir) {
-        if(grazingDensity <= 0.0) return base;
+    // Beer-Lambert through a shell, then the fifth power that keeps the bulk glassy while the rim
+    // stays solid. Coot's curve, from meshes.shader, matched deliberately so that the same figure
+    // made in either program comes out the same - see viewDependentTransparency.ts.
+    float viewDependentAlpha(float base, vec3 n, vec3 viewDir) {
+        if(!viewDependentTransparency) return base;
         float transmitted = 1.0 - clamp(base, 0.0, 1.0);
         if(transmitted <= 0.0) return 1.0;
         if(transmitted >= 1.0) return 0.0;
-        float facing = max(abs(dot(normalize(n), normalize(viewDir))), 0.03);
-        float reference = clamp(grazingAnchor, 0.03, 1.0);
-        float path = 1.0 + grazingDensity * (reference / facing - 1.0);
-        return 1.0 - pow(transmitted, path);
+        float facing = max(abs(dot(normalize(n), normalize(viewDir))), 0.01);
+        float shell = 1.0 - pow(transmitted, 1.0 / facing);
+        return shell * shell * shell * shell * shell;
     }
 
     // The receiver plane: solve the screen-space derivatives of ShadowCoord for dz/du and dz/dv.
@@ -478,7 +470,7 @@ ${discards ? clipAndPeelDiscards : ""}
       fragColor = mix(anaglyphColour(color), fogColour, fogFactor );
       // Before the hover fade and the object fade below, so that both still scale whatever this
       // decided - a movie fading a surface out must still reach nothing, however edge-on it is.
-      fragColor.a = grazingAlpha(vColor.a, norm, E);
+      fragColor.a = viewDependentAlpha(vColor.a, norm, E);
 
       float ring = smoothstep(0.4, 0.45, vHighlight) - smoothstep(0.45, 0.5, vHighlight);
 

@@ -54,15 +54,16 @@ export class DisplayBuffer {
      */
     alphaMultiplier: number;
     /**
-     * How much this surface thickens where it is seen edge-on, 0 to 1.
+     * Whether this surface thickens where it is seen edge-on.
      *
      * Distinct from alphaMultiplier, which fades the whole object: this changes how a transparent
-     * surface reads, leaving its face-on opacity exactly as set. 0 - the default - is the
-     * identity, so a buffer that never sets it draws as it always did. See grazingDensity.ts.
+     * surface reads, and does nothing at all to an opaque one. False - the default - is the
+     * identity, so a buffer that never sets it draws as it always did. Coot's curve; see
+     * viewDependentTransparency.ts.
      *
      * Ignored on a WebGL1 context, like the fade, whose shaders declare no such uniform.
      */
-    grazingDensity: number;
+    viewDependentTransparency: boolean;
     alphaChanged: boolean;
     atoms: moorhen.AtomInfo[];
     symmetryAtoms: {chain_id: string, has_altloc: boolean, mol_name: string, serial: number, res_no:string, res_name:string, name: string, charge: number, tempFactor: number, pos: vec3, element: string}[][];
@@ -154,7 +155,7 @@ export class DisplayBuffer {
         this.display_class = "NONE";
         this.transparent = false;
         this.alphaMultiplier = 1.0;
-        this.grazingDensity = 0.0;
+        this.viewDependentTransparency = false;
         this.alphaChanged = false;
         this.atoms = [];
         this.symmetryMatrices = [];

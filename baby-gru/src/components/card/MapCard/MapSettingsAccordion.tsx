@@ -1,6 +1,6 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { setMapAlpha, setMapRadius, setMapSliceContourSpacing, setMapSliceNodalLines, setMapStyle } from "../../../store/mapContourSettingsSlice";
+import { setMapAlpha, setMapRadius, setMapSliceContourSpacing, setMapSliceNodalLines, setMapStyle, setMapViewDependentTransparency } from "../../../store/mapContourSettingsSlice";
 import type { MapStyle } from "../../../store/mapContourSettingsSlice";
 import { setMovingMapSlice } from "../../../store/generalStatesSlice";
 import { setQuat } from "../../../store/glRefSlice";
@@ -134,6 +134,37 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
             decimalPlaces={2}
         />
     );
+
+    /**
+     * Whether the map thickens where it is seen edge-on.
+     *
+     * Offered beside the opacity because it is the opacity's companion and does nothing without
+     * it: the effect is absorption through a shell, so a solid surface has no shell to look
+     * along. Disabled rather than hidden while the map is opaque, so that it is discoverable -
+     * somebody who has not met the effect can see that it exists and what it waits for.
+     */
+    const viewDependentTransparency = useSelector((state: moorhen.State) =>
+        state.mapContourSettings.mapViewDependentTransparency.includes(props.map.molNo));
+    const isTransparent = props.mapOpacity < 0.99;
+    const viewDependentToggle = (
+        <MoorhenToggle
+            type="switch"
+            checked={viewDependentTransparency && isTransparent}
+            disabled={!props.mapIsVisible || !isTransparent}
+            label="Denser at edges"
+            tooltip={isTransparent
+                ? "Thicken the surface where it is seen edge-on, as looking along a shell would."
+                : "Lower the opacity to use this: a solid surface has no shell to look along."}
+            onChange={() => {
+                dispatch(setMapViewDependentTransparency({
+                    molNo: props.map.molNo, enabled: !viewDependentTransparency,
+                }));
+                // The buffers are already drawn and do not change shape; only a uniform moves.
+                props.map.applyViewDependentTransparency();
+            }}
+        />
+    );
+
     useEffect(() => {
         let newValue: number;
         if (props.mapStyle === "lines") {
@@ -229,6 +260,7 @@ export const MapSettingsAccordion = (props: MoorhenMapCardSettings) => {
                         piWidth={"3rem"}
                     />}
                     {opacitySlider}
+                    {viewDependentToggle}
                 </MoorhenStack>
             </MoorhenStack>
             {props.offerSlice && props.mapStyle === "slice" && (
