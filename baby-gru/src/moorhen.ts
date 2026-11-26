@@ -1,5 +1,6 @@
 /* Main entry point */
 // @ts-strict
+import "./reactVersionCheck";
 
 export { ErrorBoundary } from "./ErrorBoundary";
 export { MoorhenApp } from "./components/MoorhenApp";
