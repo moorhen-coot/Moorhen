@@ -165,7 +165,7 @@ export interface WebGPUApi {
     simulateDeviceLoss(): Promise<boolean>;
 }
 
-/** Who owns a DisplayBuffer: a molecule's representation or a map's display object, if either. */
+/** Who owns a DisplayBuffer: a molecule's representation, a map's representation (its contour) or a map's slice. */
 function ownerOf(host: WebGPUApiHost, buffer: DisplayBuffer): string {
     type Named = { name?: string };
     const state = host.store.getState();
@@ -174,10 +174,10 @@ function ownerOf(host: WebGPUApiHost, buffer: DisplayBuffer): string {
             if (representation.buffers?.includes(buffer)) return `${molecule.name ?? "molecule"} ${representation.style ?? "?"}`;
         }
     }
-    for (const map of (state.maps ?? []) as (Named & { displayObjects?: Record<string, unknown> })[]) {
-        for (const [key, objects] of Object.entries(map.displayObjects ?? {})) {
-            if (Array.isArray(objects) && objects.includes(buffer)) return `${map.name ?? "map"} ${key}`;
-        }
+    for (const map of (state.maps ?? []) as (Named & { uniqueId?: string; displayObjects?: { Slice?: unknown[] } })[]) {
+        const contours = map.uniqueId ? host.mapDisplay?.getRepresentations(map.uniqueId) ?? [] : [];
+        if (contours.some(representation => representation.displayBuffers.includes(buffer))) return `${map.name ?? "map"} contour`;
+        if (map.displayObjects?.Slice?.includes(buffer)) return `${map.name ?? "map"} slice`;
     }
     return buffer.statsLabel ?? "unknown";
 }
@@ -318,20 +318,20 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                 maps?: { uniqueId: string }[];
                 mapContourSettings?: { reContourMapOnlyOnMouseUp?: boolean };
             };
-            const visibleMaps = (walkState.maps ?? [])
+            const shownContours = (walkState.maps ?? [])
                 .flatMap(map => host.mapDisplay?.getRepresentations(map.uniqueId) ?? [])
                 .filter(representation => representation.data?.visible && representation.data.style !== "slice");
 
             // How much the maps shown draw: their contours' triangles and, in the line styles, lines.
             let mapCounts: RendererReportFacts["mapCounts"] = null;
-            if (visibleMaps.length > 0) {
-                const lineStyle = visibleMaps.some(representation => representation.data?.style !== "solid");
+            if (shownContours.length > 0) {
+                const lineStyle = shownContours.some(representation => representation.data?.style !== "solid");
                 if (external && gpuMapContourSetting.enabled) {
                     const last = external.lastFrame;
                     mapCounts = { triangles: last?.mapTriangles ?? 0, lines: lineStyle ? last?.mapLines ?? 0 : null };
                 } else {
                     let triangles = 0, lines = 0;
-                    for (const representation of visibleMaps) {
+                    for (const representation of shownContours) {
                         for (const buffer of representation.displayBuffers) {
                             (buffer.bufferTypes ?? []).forEach((type, j) => {
                                 const indices = buffer.triangleIndexs?.[j]?.length ?? 0;
@@ -352,7 +352,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
             // counted as timed out (a map with its origin locked, say).
             const walkSteps = Math.max(0, Math.round(options.mapWalk ?? 20));
             let mapWalk: RendererReportFacts["mapWalk"] = null;
-            if (walkSteps > 0 && visibleMaps.length > 0) {
+            if (walkSteps > 0 && shownContours.length > 0) {
                 const onGpu = !!external && gpuMapContourSetting.enabled;
                 const start = [view.origin[0], view.origin[1], view.origin[2]] as [number, number, number];
                 const steps: [number, number, number][] = [[1, 0, 0], [0, 1, 0], [-1, 0, 0], [0, -1, 0]];
@@ -363,7 +363,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                     const step = steps[i % steps.length];
                     for (let k = 0; k < 3; k++) position[k] += step[k];
                     const madeBefore = external?.mapContoursMade() ?? 0;
-                    const cootBefore = visibleMaps.map(representation => representation.displayBuffers[0] ?? null);
+                    const cootBefore = shownContours.map(representation => representation.displayBuffers[0] ?? null);
                     const started = performance.now();
                     view.setOrigin([...position] as [number, number, number], false, true);
                     // Contouring only on mouse up (a preference): as a pan ends.
@@ -375,7 +375,7 @@ export function makeWebGPUApi(host: WebGPUApiHost): WebGPUApi {
                             await external.gpuIdle();
                             done = external.mapContoursMade() > madeBefore;
                         } else {
-                            done = visibleMaps.every((representation, k) => (representation.displayBuffers[0] ?? null) !== cootBefore[k]);
+                            done = shownContours.every((representation, k) => (representation.displayBuffers[0] ?? null) !== cootBefore[k]);
                         }
                         if (!done) {
                             await nextFrame();

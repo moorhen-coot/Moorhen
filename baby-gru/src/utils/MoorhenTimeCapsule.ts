@@ -1141,7 +1141,9 @@ export class MoorhenTimeCapsule {
         await Promise.all(
             newMaps.map((map, index) => {
                 const storedMapData = sessionData.mapData[index];
-                if (sessionData.includesAdditionalMapData && storedMapData.reflectionData) {
+                // Only with MTZ columns to read it with, and data: a map saved with an empty reflection data field (an
+                // EM map) used to stop the whole load
+                if (sessionData.includesAdditionalMapData && storedMapData.reflectionData?.length > 0 && storedMapData.selectedColumns) {
                     return map.associateToReflectionData(storedMapData.selectedColumns, storedMapData.reflectionData);
                 } else if (storedMapData.associatedReflectionFileName && storedMapData.selectedColumns) {
                     return timeCapsuleRef.current

@@ -260,19 +260,6 @@ describe('Testing MoorhenMap', () => {
         expect(histogramData.counts).toHaveLength(200);
     });
 
-    test.skip('doCootContour', async () => {
-        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz');
-        const map = new MoorhenMap(mockInstance);
-        await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: 'FWT', PHI: 'PHWT', isDifference: false, useWeight: false, calcStructFact: false });
-        const f_1 = jest.spyOn(glRef.current, 'buildBuffers');
-        const f_2 = jest.spyOn(glRef.current, 'drawScene');
-        await map.doCootContour(55, 10, 10, 30, 0.48, "solid");
-        expect(f_1).toHaveBeenCalledTimes(1);
-        expect(f_2).toHaveBeenCalledTimes(1);
-        expect(glRef.current.buffers).toHaveLength(1);
-        expect(glRef.current.buffers[0].vert_tri[0][0]).toHaveLength(1174200);
-    });
-
 });
 
 const testDataFiles = ['5fjj.pdb', '5a3h.pdb', '5a3h.mmcif', '5a3h_no_ligand.pdb', 'LZA.cif', 'nitrobenzene.cif', 'benzene.cif', '5a3h_sigmaa.mtz', 'rnasa-1.8-all_refmac1.mtz', 'tm-A.pdb'];

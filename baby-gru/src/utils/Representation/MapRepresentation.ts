@@ -278,8 +278,8 @@ export class MapRepresentation {
      * Turn a Coot mesh into GL buffers. Difference maps are split into a positive and a negative buffer, using the
      * colours Coot gives each vertex. With `keepCootColours` (colour by map) only the alpha is applied.
      *
-     * TODO: MoorhenMap.setupContourBuffers reuses the existing GL buffer for non-difference maps when the
-     * primitive type is unchanged (marked "may be broken"); measure re-contour cost on view moves before adding it.
+     * New buffers each time. The old MoorhenMap code (removed 2026-11-26) reused the GL buffer of a non-difference map
+     * when the primitive type was unchanged; measure re-contour cost on view moves before bringing that back.
      */
     private buildContourBuffers(mesh: MapContourMesh | null, appearance: AppearanceKey, keepCootColours: boolean): void {
         if (!mesh) {

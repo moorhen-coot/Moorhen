@@ -103,9 +103,9 @@ export class MoorhenMap {
     suggestedContourLevel: number;
     suggestedRadius: number;
     levelRange: [number, number];
-    webMGContour: boolean;
     showOnLoad: boolean;
-    displayObjects: any;
+    /** The 2D slice's buffers (drawMapSlice). 3D contours are their representations' (MapRepresentation) */
+    displayObjects: { Slice: any[] };
     cellCentre: [number, number, number];
     isDifference: boolean;
     /**
@@ -125,7 +125,6 @@ export class MoorhenMap {
     mapMean: number;
     suggestedMapWeight: number;
     mapWeight: number;
-    diffMapColourBuffers: { positiveDiffColour: number[]; negativeDiffColour: number[] };
     defaultMapColour: { r: number; g: number; b: number };
     defaultPositiveMapColour: { r: number; g: number; b: number };
     defaultNegativeMapColour: { r: number; g: number; b: number };
@@ -154,10 +153,8 @@ export class MoorhenMap {
         this.molNo = null;
         this.commandCentre = moorhenInstance.commandCentre;
         this.levelRange = null;
-        this.webMGContour = false;
         this.showOnLoad = true;
-        // Coot: the 3D contours. Slice: the 2D contour slice (drawMapSlice).
-        this.displayObjects = { Coot: [], Slice: [] };
+        this.displayObjects = { Slice: [] };
         this.isDifference = false;
         this.isCube = false;
         this.hasReflectionData = false;
@@ -172,7 +169,6 @@ export class MoorhenMap {
         this.suggestedRadius = null;
         this.mapCentre = null;
         this.cellCentre = null;
-        this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] };
         this.defaultMapColour = _DEFAULT_MAP_COLOUR;
         this.defaultPositiveMapColour = _DEFAULT_POSITIVE_MAP_COLOUR;
         this.defaultNegativeMapColour = _DEFAULT_NEGATIVE_MAP_COLOUR;
@@ -227,12 +223,8 @@ export class MoorhenMap {
      */
     async delete(): Promise<void> {
         const displayBuffers = this.store.getState().glRef.displayBuffers;
-        let newBuffers = displayBuffers;
-        Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-            if (this.displayObjects[displayObject].length > 0) {
-                newBuffers = this.clearBuffersOfStyle(displayObject, newBuffers);
-            }
-        });
+        // The slice's; its contours' are taken down with its representations (MapDisplayDriver, on removeMap)
+        const newBuffers = this.displayObjects.Slice.length > 0 ? this.clearBuffersOfStyle("Slice", displayBuffers) : displayBuffers;
         const promises = [
             this.commandCentre.cootCommand(
                 {
@@ -943,7 +935,7 @@ export class MoorhenMap {
      * Clear MGWebGL buffers of a given style for this map
      * @param {string} style - The map style that will be cleared
      */
-    clearBuffersOfStyle(style: string, displayBuffers: any[]): any[] {
+    clearBuffersOfStyle(style: "Slice", displayBuffers: any[]): any[] {
         //Empty existing buffers of this type
         let newBuffers = displayBuffers;
         this.displayObjects[style].forEach(buffer => {
@@ -952,247 +944,6 @@ export class MoorhenMap {
         });
         this.displayObjects[style] = [];
         return newBuffers;
-    }
-
-    setupContourBuffers(objects: any[], keepCootColours: boolean = false) {
-        const displayBuffers = this.store.getState().glRef.displayBuffers;
-        const { mapAlpha, mapColour, positiveMapColour, negativeMapColour } = this.getMapContourParams();
-        const print_timing = false;
-        const t1 = performance.now();
-        const oldBuffers = this.clearBuffersOfStyle("Coot", displayBuffers);
-        let newBuffers = [];
-
-        try {
-            const diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] };
-            objects
-                .filter(object => typeof object !== "undefined" && object !== null)
-                .forEach(object => {
-                    let object_positive;
-                    let object_negative;
-                    if (this.isDifference) {
-                        object_positive = structuredClone(object);
-                        object_negative = structuredClone(object);
-                        object_positive.idx_tri = [];
-                        object_negative.idx_tri = [];
-                        const tc = performance.now();
-                        if (print_timing) console.log("End clone", tc - t1);
-                        let i = 0;
-                        object.idx_tri.forEach((idxss: number[][]) => {
-                            let j = 0;
-                            const pos_idx = [];
-                            const neg_idx = [];
-                            idxss.forEach((idxs: number[]) => {
-                                const this_pos_idx = [];
-                                const this_neg_idx = [];
-                                for (let idx = 0; idx < idxs.length; idx++) {
-                                    const col = object.col_tri[i][j][idxs[idx] * 4];
-                                    if (col < 0.5) {
-                                        this_pos_idx.push(idxs[idx]);
-                                        diffMapColourBuffers.positiveDiffColour.push(idxs[idx] * 4);
-                                        object_positive.col_tri[i][j][idxs[idx] * 4] = positiveMapColour.r;
-                                        object_positive.col_tri[i][j][idxs[idx] * 4 + 1] = positiveMapColour.g;
-                                        object_positive.col_tri[i][j][idxs[idx] * 4 + 2] = positiveMapColour.b;
-                                        object_positive.col_tri[i][j][idxs[idx] * 4 + 3] = mapAlpha;
-                                    } else {
-                                        this_neg_idx.push(idxs[idx]);
-                                        diffMapColourBuffers.negativeDiffColour.push(idxs[idx] * 4);
-                                        object_negative.col_tri[i][j][idxs[idx] * 4] = negativeMapColour.r;
-                                        object_negative.col_tri[i][j][idxs[idx] * 4 + 1] = negativeMapColour.g;
-                                        object_negative.col_tri[i][j][idxs[idx] * 4 + 2] = negativeMapColour.b;
-                                        object_negative.col_tri[i][j][idxs[idx] * 4 + 3] = mapAlpha;
-                                    }
-                                }
-                                pos_idx.push(this_pos_idx);
-                                neg_idx.push(this_neg_idx);
-                                j++;
-                            });
-                            object_positive.idx_tri.push(pos_idx);
-                            object_negative.idx_tri.push(neg_idx);
-                            i++;
-                        });
-                        const tl = performance.now();
-                        if (print_timing) console.log("End loop", tl - t1);
-                    } else if (!keepCootColours) {
-                        if (mapAlpha < 0.98) {
-                            object.col_tri.forEach((cols: number[][]) => {
-                                cols.forEach((col: number[]) => {
-                                    for (let idx = 0; idx < col.length; idx += 4) {
-                                        col[idx] = mapColour.r;
-                                        col[idx + 1] = mapColour.g;
-                                        col[idx + 2] = mapColour.b;
-                                        col[idx + 3] = mapAlpha;
-                                    }
-                                });
-                            });
-                        }
-                        const tl = performance.now();
-                        if (print_timing) console.log("End loop", tl - t1);
-                    }
-                    if (this.isDifference) {
-                        const a = appendOtherData(object_positive, this.store, true);
-                        const b = appendOtherData(object_negative, this.store, true);
-                        if (mapAlpha < 0.99) {
-                            a[0].transparent = true;
-                            b[0].transparent = true;
-                        }
-                        buildBuffers(a, this.store);
-                        buildBuffers(b, this.store);
-                        newBuffers = [...newBuffers, ...a, ...b];
-                        const ta = performance.now();
-                        if (print_timing) console.log("End _appendOtherData", ta - t1);
-                        this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(
-                            diffMapColourBuffers.positiveDiffColour
-                        );
-                        this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(
-                            diffMapColourBuffers.negativeDiffColour
-                        );
-                        this.displayObjects["Coot"] = this.displayObjects["Coot"].concat(a);
-                        this.displayObjects["Coot"] = this.displayObjects["Coot"].concat(b);
-                    } else if (!keepCootColours) {
-                        //console.log("DEBUG: Old buffers?", object.vert_tri[0][0],object.norm_tri[0][0])
-                        if (
-                            this.displayObjects["Coot"].length > 0 &&
-                            object.prim_types[0][0] === this.displayObjects["Coot"][0].bufferTypes[0]
-                        ) {
-                            //This may be broken!!!
-                            this.displayObjects["Coot"][0].triangleVertices[0] = object.vert_tri[0][0];
-                            this.displayObjects["Coot"][0].triangleNormals[0] = object.norm_tri[0][0];
-                            if (mapAlpha > 0.98) {
-                                //console.log("DEBUG: Old buffers setCustomColour")
-                                this.displayObjects["Coot"][0].setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                            } else {
-                                this.displayObjects["Coot"][0].triangleColours[0] = object.col_tri[0][0];
-                            }
-                            this.displayObjects["Coot"][0].triangleIndexs[0] = object.idx_tri[0][0];
-                            this.displayObjects["Coot"][0].isDirty = true;
-                            buildBuffers(this.displayObjects["Coot"], this.store);
-                            newBuffers = [...newBuffers, ...this.displayObjects["Coot"]];
-                        } else {
-                            const a = appendOtherData(object, this.store, true);
-                            if (mapAlpha > 0.98) {
-                                a[0].setCustomColour([mapColour.r, mapColour.g, mapColour.b, 1.0]);
-                            }
-                            this.displayObjects["Coot"] = this.displayObjects["Coot"].concat(a);
-                            buildBuffers(a, this.store);
-                            newBuffers = [...newBuffers, ...a];
-                        }
-
-                        const ta = performance.now();
-                        if (print_timing) console.log("End _appendOtherData", ta - t1);
-                        this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(
-                            diffMapColourBuffers.positiveDiffColour
-                        );
-                        this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(
-                            diffMapColourBuffers.negativeDiffColour
-                        );
-                    } else {
-                        //console.log("MOORHEN MAP do what keepCootColours wants")
-                        const a = appendOtherData(object, this.store, true);
-                        this.displayObjects["Coot"] = this.displayObjects["Coot"].concat(a);
-                        buildBuffers(a, this.store);
-                        newBuffers = [...newBuffers, ...a];
-                    }
-                });
-            const ts = performance.now();
-            if (print_timing) console.log("After _drawScene", ts - t1);
-        } catch (err) {
-            console.log(err);
-        }
-        const t2 = performance.now();
-        if (print_timing) console.log("Finished setupContourBuffers", t2 - t1);
-        // Labelled here rather than in each of the three branches above, which is the one point
-        // they all converge on. Descriptive only - see DisplayBuffer.statsLabel.
-        newBuffers.forEach(buf => { buf.statsLabel = this.isDifference ? "map (difference)" : "map"; });
-        this.store.dispatch(setDisplayBuffers([...oldBuffers, ...newBuffers]));
-    }
-
-    /**
-     * Draw the map contour around a given origin
-     * @deprecated Maps are drawn by their representations (MapDisplayDriver); this draws a second, separate copy.
-     * Change the display through the store and use {@link drawMapContour} to redraw.
-     * @param {number} x - Origin coord. X
-     * @param {number} y - Origin coord. Y
-     * @param {number} z - Origin coord. Z
-     * @param {number} radius - Radius around the origin that will be drawn
-     * @param {number} contourLevel - The map contour level
-     */
-    async doCootContour(
-        x: number,
-        y: number,
-        z: number,
-        radius: number,
-        contourLevel: number,
-        style: MapStyle
-    ): Promise<void> {
-        // Drawn as a 2D slice now (drawMapSlice), whatever this was asked for when it was queued.
-        if (style === "slice" || this.getMapContourParams().mapStyle === "slice") {
-            // Not hideMapContour: that hides the map.
-            if (this.displayObjects["Coot"].length > 0) {
-                this.store.dispatch(setDisplayBuffers(this.clearBuffersOfStyle("Coot", this.store.getState().glRef.displayBuffers)));
-            }
-            return;
-        }
-        if (gpuMapContourSetting.enabled) {
-            // Contoured on the GPU and drawn by the WebGPU main view instead (mapContour/setting.ts):
-            // nothing to ask Coot for, and nothing for the WebGL view. Not hideMapContour: that hides the map.
-            if (this.displayObjects["Coot"].length > 0) {
-                this.store.dispatch(setDisplayBuffers(this.clearBuffersOfStyle("Coot", this.store.getState().glRef.displayBuffers)));
-            }
-            return;
-        }
-        if (this.isOriginLocked) {
-            if (this.drawOrigin === null) {
-                this.drawOrigin = [-x, -y, -z];
-            } else {
-                x = -this.drawOrigin[0];
-                y = -this.drawOrigin[1];
-                z = -this.drawOrigin[2];
-            }
-        }
-
-        let returnType: string;
-        if (style === "solid") {
-            returnType = "mesh_perm";
-        } else if (style === "lit-lines") {
-            returnType = "lit_lines_mesh";
-        } else {
-            returnType = "lines_mesh";
-        }
-
-        let response: moorhen.WorkerResponse<any>;
-        if (this.otherMapForColouring !== null) {
-            response = await this.commandCentre.cootCommand(
-                {
-                    returnType: returnType,
-                    command: "get_map_contours_mesh_using_other_map_for_colours",
-                    commandArgs: [
-                        this.molNo,
-                        this.otherMapForColouring.molNo,
-                        x,
-                        y,
-                        z,
-                        radius,
-                        contourLevel,
-                        this.otherMapForColouring.min,
-                        this.otherMapForColouring.max,
-                        false,
-                    ],
-                },
-                false
-            );
-        } else {
-            response = await this.commandCentre.cootCommand(
-                {
-                    returnType: returnType,
-                    command: "get_map_contours_mesh",
-                    commandArgs: [this.molNo, x, y, z, radius, contourLevel],
-                },
-                false
-            );
-        }
-
-        const objects = [response.data.result.result];
-        this.setupContourBuffers(objects, this.otherMapForColouring !== null);
     }
 
     /**
@@ -1209,43 +960,6 @@ export class MoorhenMap {
         } else {
             this.otherMapForColouring = { molNo, min, max, gradient };
         }
-    }
-
-    /**
-     * Redraw a difference map with its colours from the redux store. Colour changes in the store are drawn
-     * automatically (see MapDisplayDriver): kept for callers that still call it after dispatching.
-     * @param {'positiveDiffColour' | 'negativeDiffColour'} type - Indicates whether the negative or positive colours will be set
-     * @returns {Promise<void>}
-     */
-    async fetchDiffMapColourAndRedraw(type: "positiveDiffColour" | "negativeDiffColour"): Promise<void> {
-        if (!this.isDifference) {
-            console.error(
-                "Cannot use moorhen.Map.fetchDiffMapColourAndRedraw to change non-diff map colour. Use moorhen.Map.fetchColourAndRedraw instead..."
-            );
-            return;
-        }
-    }
-
-    /**
-     * Redraw a non-difference map with its colour from the redux store, no longer coloured by another map.
-     * Colour changes in the store are drawn automatically (see MapDisplayDriver).
-     */
-    async fetchColourAndRedraw(): Promise<void> {
-        if (this.isDifference) {
-            console.error(
-                "Cannot use moorhen.Map.fetchColourAndRedraw to change difference map colour. Use moorhen.Map.fetchDiffMapColourAndRedraw instead..."
-            );
-            return;
-        }
-        this.otherMapForColouring = null;
-    }
-
-    /**
-     * Redraw the map with its alpha (transparency) from the redux store. Alpha changes in the store are drawn
-     * automatically (see MapDisplayDriver): kept for callers that still call it after dispatching.
-     */
-    async fetchMapAlphaAndRedraw(): Promise<void> {
-        return;
     }
 
     /**
