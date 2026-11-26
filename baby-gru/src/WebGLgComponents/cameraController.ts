@@ -268,7 +268,7 @@ export class CameraController {
     private sampler: ((seconds: number) => CameraTarget) | null = null;
     /** Turns that arrived while a move was in flight, applied when it lands. */
     private pendingTurn: Quat | null = null;
-    private listeners = new Set<(state: Readonly<CameraState>) => void>();
+    private listeners = new Set<(state: Readonly<CameraState>, arrived: boolean) => void>();
     /** Where the camera was when motion was last echoed; null means nothing has been. */
     private lastEchoedOrigin: Vec3 | null = null;
 
@@ -473,8 +473,18 @@ export class CameraController {
      * So there is no React cost during motion and nothing is stale once anything stops. A live
      * echo can be added later if measurement says it is affordable; starting there and retreating
      * would be the wrong way round.
+     *
+     * `arrived` says whether the camera is where somebody asked it to be, or merely where it was
+     * left. A move that is cut short reports false, and a listener that keeps its own copy of the
+     * view must not take that as the answer.
+     *
+     * That distinction is not pedantry. The store is where the view *should* be and the camera
+     * echoes into it; a listener that wrote back an abandoned position would overwrite the target
+     * with a point nobody chose, and then the reconciler - seeing the two agree - would have no
+     * reason to try again. A session restore stranded the view 0.13% of the way to the ligand
+     * exactly this way.
      */
-    subscribe(listener: (state: Readonly<CameraState>) => void): () => void {
+    subscribe(listener: (state: Readonly<CameraState>, arrived: boolean) => void): () => void {
         this.listeners.add(listener);
         return () => { this.listeners.delete(listener); };
     }
@@ -567,11 +577,15 @@ export class CameraController {
         if (this.activeDriver !== driver) return;
         this.activeDriver = null;
         this.sampler = null;
+        // A move still in flight is being cut short, so the camera is left wherever it had got to
+        // - a point nobody chose. Listeners are still told (the slab has to stay current), but
+        // told that this is not an arrival, so that nothing writes it down as the view.
+        const abandoning = this.move !== null;
         const settle = this.move?.settle;
         this.move = null;
         this.applyPendingTurn();
         settle?.({ completed: false });
-        this.notify();
+        this.notify(!abandoning);
     }
 
     // ---- internals -----------------------------------------------------------------------
@@ -626,8 +640,18 @@ export class CameraController {
         return { ...state, ...autoSlab(this.slabPolicy, state.zoom) };
     }
 
-    private notify(): void {
-        this.listeners.forEach(listener => listener(this.current));
+    /**
+     * `arrived` defaults to "no move is in flight", which is the honest answer for every caller
+     * that does not know better.
+     *
+     * It is not enough to ask what prompted the notification. A zoom or a slab write lands through
+     * `writeLive` and is a deliberate change, so it would announce itself as an arrival - but if a
+     * move happens to be running, the *origin* it carries is a point the camera is passing
+     * through, and a listener keeping its own copy of the view would write that down as the view.
+     * What matters is not why the camera is being announced but whether it is still travelling.
+     */
+    private notify(arrived = !this.moving): void {
+        this.listeners.forEach(listener => listener(this.current, arrived));
     }
 
     /**
@@ -649,7 +673,11 @@ export class CameraController {
             if (dx * dx + dy * dy + dz * dz < limit * limit) return;
         }
         this.lastEchoedOrigin = [...origin] as Vec3;
-        this.notify();
+        // Explicitly an arrival, against the default, which would say otherwise because a movie is
+        // by definition in flight. This is where the movie asked the camera to be at this instant,
+        // and telling the store is the whole point of the echo - it is how a contoured map and the
+        // environment distances keep up with a travelling camera.
+        this.notify(true);
     }
 }
 

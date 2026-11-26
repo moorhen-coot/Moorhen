@@ -120,6 +120,7 @@ export {
     setMapRadius,
     setMapFastRadius,
     setMapAlpha,
+    setMapViewDependentTransparency,
     setMapStyle,
     setMapSlice,
     setMapSliceNodalLines,
@@ -282,6 +283,7 @@ export {
 }  from "./generalStatesSlice";
 export {
     setRequestDrawScene,
+    setCameraSnap,
     setDrawsThrottled,
     setIsWebGL2,
     setActiveMolecule,

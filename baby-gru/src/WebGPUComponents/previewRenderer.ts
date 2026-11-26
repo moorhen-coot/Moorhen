@@ -87,12 +87,13 @@ const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
  */
 function drawBlock(colour: ArrayLike<number>, alpha: number, halfWidth: number, copyColour: number[] | null,
                    model: ArrayLike<number>, out: Float32Array, offset = 0, segmentColours = 0, ambient: number | null = null,
-                   opaque = true, highlight: SubBufferHighlight = NO_HIGHLIGHT, firstVertex: number | null = 0): void {
+                   opaque = true, highlight: SubBufferHighlight = NO_HIGHLIGHT, firstVertex: number | null = 0,
+                   viewDependentTransparency = false): void {
     out.set([colour[0], colour[1], colour[2], colour[3], alpha, halfWidth, copyColour ? 1 : 0, segmentColours], offset);
     out.set(copyColour ?? [0, 0, 0, 0], offset + 8);
     out.set(Array.from(model).slice(0, 16), offset + 12);
     out.set(ambient === null ? [0, 0, 0, 0] : [ambient, ambient, ambient, 1], offset + 28);
-    out.set([opaque ? 1 : 0, 0, 0, 0], offset + 32);
+    out.set([opaque ? 1 : 0, viewDependentTransparency ? 1 : 0, 0, 0], offset + 32);
     const ints = new Int32Array(out.buffer, out.byteOffset, out.length);
     const sectionKnown = firstVertex !== null && highlight.from >= 0;
     ints.set([highlight.instance, sectionKnown ? highlight.from : -1, sectionKnown ? highlight.to : -1, firstVertex ?? 0], offset + 36);
@@ -170,6 +171,8 @@ export interface PreviewGpuDraw {
     lineWidth: number;
     colour: [number, number, number, number];
     transparent: boolean;
+    /** Whether the surface thickens where it is seen edge-on (viewDependentTransparency.ts). */
+    viewDependentTransparency?: boolean;
 }
 
 export interface PreviewFrameReport {
@@ -1289,9 +1292,10 @@ export class WebGPUPreviewRenderer {
         chunks.forEach((chunk, c) => {
             const firstVertex = chunk ? chunk.firstVertex : 0;
             const at = (k: number) => (c * copies + k) * DRAW_STRIDE / 4;
-            drawBlock(custom, alpha, halfWidth, null, model, data, at(0), segmentColours, glow, !item.transparent, highlight, firstVertex);
+            const edgeDense = !!b.viewDependentTransparency;
+            drawBlock(custom, alpha, halfWidth, null, model, data, at(0), segmentColours, glow, !item.transparent, highlight, firstVertex, edgeDense);
             item.copies.forEach((model, n) => drawBlock(custom, alpha, halfWidth, grey, model, data, at(n + 1), segmentColours, null,
-                !item.transparent, highlight, firstVertex));
+                !item.transparent, highlight, firstVertex, edgeDense));
         });
         this.device.queue.writeBuffer(sub.drawUniforms, 0, data);
     }
@@ -1408,7 +1412,8 @@ export class WebGPUPreviewRenderer {
         }
         const halfWidth = item.style === "triangles" ? 0 : thickLineHalfWidth(item.lineWidth, zoom);
         const block = new Float32Array(DRAW_FLOATS);
-        drawBlock(item.colour, 1, halfWidth, null, IDENTITY, block, 0, 0, null, !item.transparent);
+        drawBlock(item.colour, 1, halfWidth, null, IDENTITY, block, 0, 0, null, !item.transparent,
+                  NO_HIGHLIGHT, 0, !!item.viewDependentTransparency);
         this.device.queue.writeBuffer(uniforms.buffer, 0, block);
         pass.setBindGroup(1, uniforms.bindGroup);
         if (item.style === "triangles") {

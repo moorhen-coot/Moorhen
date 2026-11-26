@@ -223,13 +223,17 @@ export function setViewAnimated(self: MGWebGL, o, q, z) {
  * And the duration is now wall-clock rather than a frame count, so a heavy scene gets a move of the
  * same length with fewer frames in it, rather than a longer move.
  */
-export function setOriginOrientationAndZoomAnimated(self: MGWebGL, o: number[], q: quat4, z: number): void {
+export function setOriginOrientationAndZoomAnimated(self: MGWebGL, o: number[], q: quat4, z: number,
+    options: { instant?: boolean } = {}): void {
     const oldZoom = self.zoom
+    // `instant` takes the view up at once (a session restore) but still does the arrival work
+    // below, which a bare moveCameraTo would skip: environment distances, recontouring and
+    // autoClipFogByZoom all hang off it.
     moveCameraTo(self, {
         origin: [o[0], o[1], o[2]],
         quat: [q[0], q[1], q[2], q[3]],
         zoom: z,
-    }, { kind: "ease", seconds: CENTRING_SECONDS }).then(result => {
+    }, options.instant ? { kind: "instant" } : { kind: "ease", seconds: CENTRING_SECONDS }).then(result => {
         if(!result.completed) return
         self.handleOriginUpdated(true)
         const zoomChanged = new CustomEvent("zoomChanged", { detail: { oldZoom, newZoom: self.zoom } })

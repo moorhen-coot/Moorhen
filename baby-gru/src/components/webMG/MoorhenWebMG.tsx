@@ -132,6 +132,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const activeMap = useSelector((state: moorhen.State) => state.generalStates.activeMap)
     const originState = useSelector((state: moorhen.State) => state.sceneSettings.origin)
+    /** Bumped when the next view asked for is to be taken up at once (a session restore). */
+    const cameraSnap = useSelector((state: moorhen.State) => state.glRef.cameraSnap.count)
+    const lastCameraSnap = useRef(cameraSnap)
     const activeMolecule = useSelector((state: moorhen.State) => state.glRef.activeMolecule)
     const draggableMolecule = useSelector((state: moorhen.State) => state.glRef.draggableMolecule)
 
@@ -973,10 +976,19 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 { origin: originState, quat, zoom },
                 { origin: glRef.current.origin, quat: glRef.current.myQuat, zoom: glRef.current.zoom })
             if(!isSilent(wanted)){
-                glRef.current.setOriginOrientationAndZoomAnimated(originState,quat,zoom)
+                // A session restore says so: taken up at once rather than eased into. See
+                // glRefSlice.cameraSnap - nobody wants to watch the camera cross the molecule on
+                // opening a file, and the ease is a window in which the move can be interrupted.
+                // Compared against what this effect last saw, so the snap applies to the view it
+                // arrived with and to nothing afterwards.
+                glRef.current.setOriginOrientationAndZoomAnimated(originState, quat, zoom,
+                    { instant: cameraSnap !== lastCameraSnap.current })
             }
         }
-    }, [zoom,quat,originState])
+        // Consumed whether or not the renderer was there to take it, or a snap dispatched before
+        // it mounted would wait and turn some later, unrelated centring into a jump.
+        lastCameraSnap.current = cameraSnap
+    }, [zoom,quat,originState,cameraSnap])
 
     return  <>
                 <figure style={{position: "absolute", top: 0, left: 0, width: `${width}px`, height: `${height}px`, margin: "0px"}}>
